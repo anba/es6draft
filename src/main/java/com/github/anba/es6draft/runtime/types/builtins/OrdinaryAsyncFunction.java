@@ -120,7 +120,7 @@ public final class OrdinaryAsyncFunction extends FunctionObject implements Const
      */
     public static OrdinaryAsyncFunction FunctionAllocate(ExecutionContext cx,
             ScriptObject functionPrototype, boolean strict, FunctionKind kind) {
-        assert kind != FunctionKind.ConstructorMethod;
+        assert kind != FunctionKind.ClassConstructor;
         Realm realm = cx.getRealm();
         /* steps 1-3 (implicit) */
         /* steps 4-8 */
@@ -146,7 +146,7 @@ public final class OrdinaryAsyncFunction extends FunctionObject implements Const
      */
     public static OrdinaryAsyncFunction AsyncFunctionCreate(ExecutionContext cx, FunctionKind kind,
             RuntimeInfo.Function function, LexicalEnvironment<?> scope) {
-        assert function.isAsync() && kind != FunctionKind.ConstructorMethod;
+        assert function.isAsync() && kind != FunctionKind.ClassConstructor;
         /* step 1 */
         ScriptObject functionPrototype = cx.getIntrinsic(Intrinsics.FunctionPrototype);
         /* step 2 */

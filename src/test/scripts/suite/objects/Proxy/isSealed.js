@@ -20,5 +20,5 @@ const {
     }
   });
   Object.isSealed(p);
-  assertSame("ab", log);
+  assertSame("a", log);
 }

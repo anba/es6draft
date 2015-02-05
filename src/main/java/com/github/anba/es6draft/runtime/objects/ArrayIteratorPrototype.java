@@ -178,7 +178,7 @@ public final class ArrayIteratorPrototype extends OrdinaryObject implements Init
             }
             /* step 11 */
             iter.nextIndex = index + 1;
-            /* steps 12-15 */
+            /* steps 12-17 */
             Object result;
             if (itemKind == ArrayIterationKind.Key) {
                 /* step 12 */
@@ -186,12 +186,13 @@ public final class ArrayIteratorPrototype extends OrdinaryObject implements Init
             } else {
                 /* step 13 */
                 long elementKey = index;
+                /* steps 14-15 */
                 Object elementValue = Get(cx, array, elementKey);
                 if (itemKind == ArrayIterationKind.Value) {
-                    /* step 14 */
+                    /* step 16 */
                     result = elementValue;
                 } else {
-                    /* step 15 */
+                    /* step 17 */
                     assert itemKind == ArrayIterationKind.KeyValue;
                     ArrayObject _result = ArrayCreate(cx, 2);
                     CreateDataProperty(cx, _result, 0, (Long) index);
@@ -199,7 +200,7 @@ public final class ArrayIteratorPrototype extends OrdinaryObject implements Init
                     result = _result;
                 }
             }
-            /* step 16 */
+            /* steps 12, 18 */
             return CreateIterResultObject(cx, result, false);
         }
 

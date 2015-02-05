@@ -29,53 +29,61 @@ final class PropertyGenerator extends
         // class: ScriptRuntime
         static final MethodName ScriptRuntime_EvaluatePropertyDefinition = MethodName.findStatic(
                 Types.ScriptRuntime, "EvaluatePropertyDefinition", Type.methodType(Type.VOID_TYPE,
-                        Types.OrdinaryObject, Types.Object, Types.RuntimeInfo$Function,
-                        Types.ExecutionContext));
+                        Types.OrdinaryObject, Types.Object, Type.BOOLEAN_TYPE,
+                        Types.RuntimeInfo$Function, Types.ExecutionContext));
 
         static final MethodName ScriptRuntime_EvaluatePropertyDefinition_String = MethodName
                 .findStatic(Types.ScriptRuntime, "EvaluatePropertyDefinition", Type.methodType(
-                        Type.VOID_TYPE, Types.OrdinaryObject, Types.String,
+                        Type.VOID_TYPE, Types.OrdinaryObject, Types.String, Type.BOOLEAN_TYPE,
                         Types.RuntimeInfo$Function, Types.ExecutionContext));
 
         static final MethodName ScriptRuntime_EvaluatePropertyDefinitionAsync = MethodName
                 .findStatic(Types.ScriptRuntime, "EvaluatePropertyDefinitionAsync", Type
                         .methodType(Type.VOID_TYPE, Types.OrdinaryObject, Types.Object,
-                                Types.RuntimeInfo$Function, Types.ExecutionContext));
+                                Type.BOOLEAN_TYPE, Types.RuntimeInfo$Function,
+                                Types.ExecutionContext));
 
         static final MethodName ScriptRuntime_EvaluatePropertyDefinitionAsync_String = MethodName
                 .findStatic(Types.ScriptRuntime, "EvaluatePropertyDefinitionAsync", Type
                         .methodType(Type.VOID_TYPE, Types.OrdinaryObject, Types.String,
-                                Types.RuntimeInfo$Function, Types.ExecutionContext));
+                                Type.BOOLEAN_TYPE, Types.RuntimeInfo$Function,
+                                Types.ExecutionContext));
 
         static final MethodName ScriptRuntime_EvaluatePropertyDefinitionGenerator = MethodName
                 .findStatic(Types.ScriptRuntime, "EvaluatePropertyDefinitionGenerator", Type
                         .methodType(Type.VOID_TYPE, Types.OrdinaryObject, Types.Object,
-                                Types.RuntimeInfo$Function, Types.ExecutionContext));
+                                Type.BOOLEAN_TYPE, Types.RuntimeInfo$Function,
+                                Types.ExecutionContext));
 
         static final MethodName ScriptRuntime_EvaluatePropertyDefinitionGenerator_String = MethodName
                 .findStatic(Types.ScriptRuntime, "EvaluatePropertyDefinitionGenerator", Type
                         .methodType(Type.VOID_TYPE, Types.OrdinaryObject, Types.String,
-                                Types.RuntimeInfo$Function, Types.ExecutionContext));
+                                Type.BOOLEAN_TYPE, Types.RuntimeInfo$Function,
+                                Types.ExecutionContext));
 
         static final MethodName ScriptRuntime_EvaluatePropertyDefinitionGetter = MethodName
                 .findStatic(Types.ScriptRuntime, "EvaluatePropertyDefinitionGetter", Type
                         .methodType(Type.VOID_TYPE, Types.OrdinaryObject, Types.Object,
-                                Types.RuntimeInfo$Function, Types.ExecutionContext));
+                                Type.BOOLEAN_TYPE, Types.RuntimeInfo$Function,
+                                Types.ExecutionContext));
 
         static final MethodName ScriptRuntime_EvaluatePropertyDefinitionGetter_String = MethodName
                 .findStatic(Types.ScriptRuntime, "EvaluatePropertyDefinitionGetter", Type
                         .methodType(Type.VOID_TYPE, Types.OrdinaryObject, Types.String,
-                                Types.RuntimeInfo$Function, Types.ExecutionContext));
+                                Type.BOOLEAN_TYPE, Types.RuntimeInfo$Function,
+                                Types.ExecutionContext));
 
         static final MethodName ScriptRuntime_EvaluatePropertyDefinitionSetter = MethodName
                 .findStatic(Types.ScriptRuntime, "EvaluatePropertyDefinitionSetter", Type
                         .methodType(Type.VOID_TYPE, Types.OrdinaryObject, Types.Object,
-                                Types.RuntimeInfo$Function, Types.ExecutionContext));
+                                Type.BOOLEAN_TYPE, Types.RuntimeInfo$Function,
+                                Types.ExecutionContext));
 
         static final MethodName ScriptRuntime_EvaluatePropertyDefinitionSetter_String = MethodName
                 .findStatic(Types.ScriptRuntime, "EvaluatePropertyDefinitionSetter", Type
                         .methodType(Type.VOID_TYPE, Types.OrdinaryObject, Types.String,
-                                Types.RuntimeInfo$Function, Types.ExecutionContext));
+                                Type.BOOLEAN_TYPE, Types.RuntimeInfo$Function,
+                                Types.ExecutionContext));
 
         static final MethodName ScriptRuntime_defineMethod = MethodName.findStatic(
                 Types.ScriptRuntime, "defineMethod", Type.methodType(Type.VOID_TYPE,
@@ -109,8 +117,11 @@ final class PropertyGenerator extends
                         Types.OrdinaryObject, Types.Object, Types.ExecutionContext));
     }
 
-    public PropertyGenerator(CodeGenerator codegen) {
+    private final boolean enumerable;
+
+    public PropertyGenerator(CodeGenerator codegen, boolean enumerable) {
         super(codegen);
+        this.enumerable = enumerable;
     }
 
     @Override
@@ -135,11 +146,9 @@ final class PropertyGenerator extends
     public ValType visit(PropertyDefinitionsMethod node, ExpressionVisitor mv) {
         codegen.compile(node, mv);
 
-        // stack: [<object>] -> [cx, <object>]
+        // stack: [<object>] -> []
         mv.loadExecutionContext();
         mv.swap();
-
-        // stack: [<object>] -> []
         mv.invoke(codegen.methodDesc(node));
 
         return null;
@@ -153,13 +162,13 @@ final class PropertyGenerator extends
     public ValType visit(MethodDefinition node, ExpressionVisitor mv) {
         codegen.compile(node);
 
-        // stack: [<object>]
-
+        // stack: [<object>] -> []
         String propName = PropName(node);
         if (propName == null) {
             assert node.getPropertyName() instanceof ComputedPropertyName;
             node.getPropertyName().accept(this, mv);
 
+            mv.iconst(enumerable);
             mv.invoke(codegen.methodDesc(node, FunctionName.RTI));
             mv.loadExecutionContext();
             mv.lineInfo(node);
@@ -186,6 +195,7 @@ final class PropertyGenerator extends
             }
         } else {
             mv.aconst(propName);
+            mv.iconst(enumerable);
             mv.invoke(codegen.methodDesc(node, FunctionName.RTI));
             mv.loadExecutionContext();
             mv.lineInfo(node);
@@ -222,10 +232,13 @@ final class PropertyGenerator extends
      */
     @Override
     public ValType visit(PropertyNameDefinition node, ExpressionVisitor mv) {
+        assert enumerable : String.format("non-enumerable %s", node.getClass());
+
         IdentifierReference propertyName = node.getPropertyName();
         String propName = PropName(propertyName);
         assert propName != null;
 
+        // stack: [<object>] -> []
         mv.aconst(propName);
         expressionBoxedValue(propertyName, mv);
         mv.loadExecutionContext();
@@ -242,11 +255,9 @@ final class PropertyGenerator extends
      */
     @Override
     public ValType visit(PropertyValueDefinition node, ExpressionVisitor mv) {
-        // stack: [<object>]
+        assert enumerable : String.format("non-enumerable %s", node.getClass());
 
-        PropertyName propertyName = node.getPropertyName();
         Expression propertyValue = node.getPropertyValue();
-
         boolean defineMethod, isAnonymousFunctionDefinition;
         if (IsFunctionDefinition(propertyValue)) {
             if (propertyValue instanceof ClassExpression) {
@@ -270,15 +281,15 @@ final class PropertyGenerator extends
             isAnonymousFunctionDefinition = false;
         }
 
+        PropertyName propertyName = node.getPropertyName();
         String propName = PropName(propertyName);
         long propIndex = propName != null ? IndexedMap.toIndex(propName) : -1;
+
+        // stack: [<object>] -> []
         if (propName == null) {
             assert propertyName instanceof ComputedPropertyName;
             ValType type = propertyName.accept(this, mv);
-
-            // stack: [<object>, pk]
             expressionBoxedValue(propertyValue, mv);
-            // stack: [<object>, pk, value]
             if (isAnonymousFunctionDefinition) {
                 SetFunctionName(propertyValue, type, mv);
             }

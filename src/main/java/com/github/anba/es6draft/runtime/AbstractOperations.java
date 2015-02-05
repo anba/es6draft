@@ -857,6 +857,7 @@ public final class AbstractOperations {
      * @return {@code true} if the value is a callable object
      */
     public static boolean IsCallable(Object value) {
+        /* steps 1-4 */
         return value instanceof Callable;
     }
 
@@ -1404,18 +1405,11 @@ public final class AbstractOperations {
      * @return the property value
      */
     public static Object GetV(ExecutionContext cx, Object value, long propertyKey) {
-        /* step 1 */
-        if (Type.isUndefinedOrNull(value)) {
-            throw newTypeError(cx, Messages.Key.UndefinedOrNull);
-        }
-        /* step 2 */
-        if (Type.isObject(value)) {
-            return Get(cx, Type.objectValue(value), propertyKey);
-        }
-        /* steps 3-4 */
-        ScriptObject box = ToObject(cx, value);
-        /* step 5 */
-        return box.get(cx, propertyKey, value);
+        /* step 1 (not applicable) */
+        /* steps 2-3 */
+        ScriptObject obj = ToObject(cx, value);
+        /* step 4 */
+        return obj.get(cx, propertyKey, value);
     }
 
     /**
@@ -1430,18 +1424,11 @@ public final class AbstractOperations {
      * @return the property value
      */
     public static Object GetV(ExecutionContext cx, Object value, String propertyKey) {
-        /* step 1 */
-        if (Type.isUndefinedOrNull(value)) {
-            throw newTypeError(cx, Messages.Key.UndefinedOrNull);
-        }
-        /* step 2 */
-        if (Type.isObject(value)) {
-            return Get(cx, Type.objectValue(value), propertyKey);
-        }
-        /* steps 3-4 */
-        ScriptObject box = ToObject(cx, value);
-        /* step 5 */
-        return box.get(cx, propertyKey, value);
+        /* step 1 (not applicable) */
+        /* steps 2-3 */
+        ScriptObject obj = ToObject(cx, value);
+        /* step 4 */
+        return obj.get(cx, propertyKey, value);
     }
 
     /**
@@ -1456,18 +1443,11 @@ public final class AbstractOperations {
      * @return the property value
      */
     public static Object GetV(ExecutionContext cx, Object value, Symbol propertyKey) {
-        /* step 1 */
-        if (Type.isUndefinedOrNull(value)) {
-            throw newTypeError(cx, Messages.Key.UndefinedOrNull);
-        }
-        /* step 2 */
-        if (Type.isObject(value)) {
-            return Get(cx, Type.objectValue(value), propertyKey);
-        }
-        /* steps 3-4 */
-        ScriptObject box = ToObject(cx, value);
-        /* step 5 */
-        return box.get(cx, propertyKey, value);
+        /* step 1 (not applicable) */
+        /* steps 2-3 */
+        ScriptObject obj = ToObject(cx, value);
+        /* step 4 */
+        return obj.get(cx, propertyKey, value);
     }
 
     /**
@@ -2501,6 +2481,7 @@ public final class AbstractOperations {
             IntegrityLevel level) {
         /* steps 1-2 */
         assert level == IntegrityLevel.Sealed || level == IntegrityLevel.Frozen;
+        boolean isFrozen = level == IntegrityLevel.Frozen;
         /* steps 3-4 */
         boolean status = IsExtensible(cx, object);
         /* steps 5-6 */
@@ -2509,12 +2490,10 @@ public final class AbstractOperations {
         }
         /* steps 7-8 */
         List<?> keys = object.ownPropertyKeys(cx);
-        /* step 9 */
-        boolean configurable = false;
-        /* step 10 */
-        boolean writable = false;
+        /* steps 9-10 (FIXME: spec bug - unused variables) */
         /* step 11 */
         for (Object key : keys) {
+            /* steps 11.a-b */
             Property currentDesc;
             if (key instanceof String) {
                 currentDesc = object.getOwnProperty(cx, (String) key);
@@ -2522,22 +2501,17 @@ public final class AbstractOperations {
                 assert key instanceof Symbol;
                 currentDesc = object.getOwnProperty(cx, (Symbol) key);
             }
+            /* step 11.c */
             if (currentDesc != null) {
-                configurable |= currentDesc.isConfigurable();
-                if (currentDesc.isDataDescriptor()) {
-                    writable |= currentDesc.isWritable();
+                if (currentDesc.isConfigurable()) {
+                    return false;
+                }
+                if (isFrozen && currentDesc.isDataDescriptor() && currentDesc.isWritable()) {
+                    return false;
                 }
             }
         }
         /* step 12 */
-        if (level == IntegrityLevel.Frozen && writable) {
-            return false;
-        }
-        /* step 13 */
-        if (configurable) {
-            return false;
-        }
-        /* step 14 */
         return true;
     }
 
@@ -2898,39 +2872,6 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.4.? IteratorReturn ( iterator, value )
-     * 
-     * @param cx
-     *            the execution context
-     * @param iterator
-     *            the script iterator object
-     * @param value
-     *            the value to pass to the throw() function
-     * @return the next value from the iterator
-     */
-    public static Object IteratorReturn(ExecutionContext cx, ScriptObject iterator, Object value) {
-        Object result = Invoke(cx, iterator, "return", value);
-        if (!Type.isObject(result)) {
-            throw newTypeError(cx, Messages.Key.NotObjectType);
-        }
-        return IteratorValue(cx, Type.objectValue(result));
-    }
-
-    /**
-     * 7.4.? IteratorThrow ( iterator, value )
-     * 
-     * @param cx
-     *            the execution context
-     * @param iterator
-     *            the script iterator object
-     * @param value
-     *            the value to pass to the throw() function
-     */
-    public static void IteratorThrow(ExecutionContext cx, ScriptObject iterator, Object value) {
-        Invoke(cx, iterator, "throw", value);
-    }
-
-    /**
      * 7.4.3 IteratorComplete (iterResult)
      * 
      * @param cx
@@ -2996,21 +2937,26 @@ public final class AbstractOperations {
             boolean isThrowCompletion) {
         /* steps 1-2 (not applicable) */
         /* steps 3-4 */
-        // FIXME: spec issue - change to GetMethod to avoid Has+Get?
-        boolean hasReturn = HasProperty(cx, iterator, "return");
-        /* step 5 */
-        if (hasReturn) {
+        Callable returnMethod = GetMethod(cx, iterator, "return");
+        /* steps 5-8 */
+        if (returnMethod != null) {
             if (isThrowCompletion) {
+                /* steps 6-7 */
                 try {
-                    Invoke(cx, iterator, "return");
+                    returnMethod.call(cx, iterator);
                 } catch (ScriptException e) {
-                    // ignore
+                    // Ignore exceptions from "return" method.
                 }
             } else {
-                Invoke(cx, iterator, "return");
+                /* steps 6, 8 */
+                Object innerResult = returnMethod.call(cx, iterator);
+                /* step 9 */
+                if (!Type.isObject(innerResult)) {
+                    throw newTypeError(cx, Messages.Key.NotObjectType);
+                }
             }
         }
-        /* step 6 (not applicable) */
+        /* step 10 (not applicable) */
     }
 
     /**

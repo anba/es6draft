@@ -118,16 +118,14 @@ public final class RegExpConstructor extends BuiltinConstructor implements Initi
             /* step 5.a */
             p = regexp.getOriginalSource();
             /* steps 5.b-5.c */
-            if (Type.isUndefined(flags)) {
-                f = regexp.getOriginalFlags();
-            } else {
-                f = flags;
-            }
+            f = Type.isUndefined(flags) ? regexp.getOriginalFlags() : flags;
         } else if (patternIsRegExp) {
             /* step 6 */
             ScriptObject patternObject = Type.objectValue(pattern);
+            /* steps 6.a-b */
             p = Get(cx, patternObject, "source");
-            f = Get(cx, patternObject, "flags");
+            /* steps 6.c-d */
+            f = Type.isUndefined(flags) ? Get(cx, patternObject, "flags") : flags;
         } else {
             /* step 7 */
             p = pattern;
@@ -159,12 +157,12 @@ public final class RegExpConstructor extends BuiltinConstructor implements Initi
      * @return the new regular expression object
      */
     public static RegExpObject RegExpAlloc(ExecutionContext cx, Constructor constructor) {
-        /* step 1 */
+        /* steps 1-2 */
         RegExpObject obj = OrdinaryCreateFromConstructor(cx, constructor,
                 Intrinsics.RegExpPrototype, RegExpObjectAllocator.INSTANCE);
-        /* steps 2-3 */
+        /* steps 3-4 */
         obj.infallibleDefineOwnProperty("lastIndex", new Property(0, true, false, false));
-        /* step 4 */
+        /* step 5 */
         return obj;
     }
 

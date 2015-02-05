@@ -7,6 +7,7 @@
 package com.github.anba.es6draft.runtime.internal;
 
 import static com.github.anba.es6draft.runtime.types.Null.NULL;
+import static com.github.anba.es6draft.runtime.types.PropertyDescriptor.AccessorPropertyDescriptor;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import java.lang.annotation.Annotation;
@@ -1569,15 +1570,13 @@ public final class Properties {
 
     private static PropertyDescriptor accessorPropertyDescriptor(AccessorLayout layout,
             NativeFunction accessor) {
-        PropertyDescriptor descriptor = new PropertyDescriptor();
-        descriptor.setEnumerable(layout.enumerable());
-        descriptor.setConfigurable(layout.configurable());
         if (layout.type == Accessor.Type.Getter) {
-            descriptor.setGetter(accessor);
+            return AccessorPropertyDescriptor(accessor, null, layout.enumerable(),
+                    layout.configurable());
         } else {
-            descriptor.setSetter(accessor);
+            return AccessorPropertyDescriptor(null, accessor, layout.enumerable(),
+                    layout.configurable());
         }
-        return descriptor;
     }
 
     private static String accessorName(Accessor.Type type, String name, BuiltinSymbol symbol) {

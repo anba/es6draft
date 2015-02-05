@@ -74,7 +74,7 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
     }
 
     public enum FunctionKind {
-        Normal, ConstructorMethod, Method, Arrow
+        Normal, ClassConstructor, Method, Arrow
     }
 
     public enum ConstructorKind {

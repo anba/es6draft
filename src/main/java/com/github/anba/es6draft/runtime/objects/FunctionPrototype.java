@@ -19,9 +19,11 @@ import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.S
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
+import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.Initializable;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
+import com.github.anba.es6draft.runtime.internal.Properties.CompatibilityExtension;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.TailCall;
@@ -62,6 +64,7 @@ public final class FunctionPrototype extends BuiltinFunction implements Initiali
     @Override
     public void initialize(Realm realm) {
         createProperties(realm, this, Properties.class);
+        createProperties(realm, this, AdditionalProperties.class);
     }
 
     @Override
@@ -229,14 +232,42 @@ public final class FunctionPrototype extends BuiltinFunction implements Initiali
             if (!Type.isString(targetName)) {
                 targetName = "";
             }
-            /* steps 14-15 */
+            /* step 14 */
             SetFunctionName(f, Type.stringValue(targetName).toString(), "bound");
-            /* step 16 */
+            /* step 15 */
             return f;
         }
 
         /**
-         * 19.2.3.5 Function.prototype.toMethod (newHome)
+         * 19.2.3.7 Function.prototype[@@hasInstance] (V)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param v
+         *            the value
+         * @return {@code true} if the value is an instance of this function
+         */
+        @Function(
+                name = "[Symbol.hasInstance]",
+                arity = 1,
+                symbol = BuiltinSymbol.hasInstance,
+                attributes = @Attributes(writable = false, enumerable = false, configurable = false))
+        public static Object hasInstance(ExecutionContext cx, Object thisValue, Object v) {
+            return OrdinaryHasInstance(cx, thisValue, v);
+        }
+    }
+
+    /**
+     * Proposed ECMAScript 7 additions
+     */
+    @CompatibilityExtension(CompatibilityOption.FunctionToMethod)
+    public enum AdditionalProperties {
+        ;
+
+        /**
+         * 19.2.3.? Function.prototype.toMethod (newHome)
          * 
          * @param cx
          *            the execution context
@@ -271,26 +302,6 @@ public final class FunctionPrototype extends BuiltinFunction implements Initiali
             }
             /* steps 5-6 */
             return func.clone(cx);
-        }
-
-        /**
-         * 19.2.3.7 Function.prototype[@@hasInstance] (V)
-         * 
-         * @param cx
-         *            the execution context
-         * @param thisValue
-         *            the function this-value
-         * @param v
-         *            the value
-         * @return {@code true} if the value is an instance of this function
-         */
-        @Function(
-                name = "[Symbol.hasInstance]",
-                arity = 1,
-                symbol = BuiltinSymbol.hasInstance,
-                attributes = @Attributes(writable = false, enumerable = false, configurable = false))
-        public static Object hasInstance(ExecutionContext cx, Object thisValue, Object v) {
-            return OrdinaryHasInstance(cx, thisValue, v);
         }
     }
 }

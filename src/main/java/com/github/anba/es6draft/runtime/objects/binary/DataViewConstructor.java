@@ -177,10 +177,8 @@ public final class DataViewConstructor extends BuiltinConstructor implements Ini
     public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
         ExecutionContext calleeContext = calleeContext();
         /* step 1 */
-        // FIXME: spec bug (bug 3665)
-        /* step 2 */
         throw newTypeError(calleeContext, Messages.Key.InvalidCall, "DataView");
-        /* steps 3-20 (not applicable) */
+        /* steps 2-19 (not applicable) */
     }
 
     /**
@@ -193,33 +191,31 @@ public final class DataViewConstructor extends BuiltinConstructor implements Ini
         Object buffer = argument(args, 0);
         Object byteOffset = argument(args, 1, 0);
         Object byteLength = argument(args, 2);
-        /* step 1 */
-        // FIXME: spec bug (bug 3665)
-        /* step 2 (not applicable)*/
-        /* steps 3-4 */
+        /* step 1 (not applicable)*/
+        /* steps 2-3 */
         if (!(buffer instanceof ArrayBufferObject)) {
             throw newTypeError(calleeContext, Messages.Key.IncompatibleObject);
         }
         ArrayBufferObject bufferObj = (ArrayBufferObject) buffer;
-        /* step 5 */
+        /* step 4 */
         double numberOffset = ToNumber(calleeContext, byteOffset);
-        /* steps 6-7 */
+        /* steps 5-6 */
         double offset = ToInteger(numberOffset);
-        /* step 8 */
+        /* step 7 */
         if (numberOffset != offset || offset < 0) {
             throw newRangeError(calleeContext, Messages.Key.InvalidByteOffset);
         }
-        /* step 9 */
+        /* step 8 */
         if (IsDetachedBuffer(bufferObj)) {
             throw newTypeError(calleeContext, Messages.Key.BufferDetached);
         }
-        /* step 10 */
+        /* step 9 */
         long bufferByteLength = bufferObj.getByteLength();
-        /* step 11 */
+        /* step 10 */
         if (offset > bufferByteLength) {
             throw newRangeError(calleeContext, Messages.Key.ArrayOffsetOutOfRange);
         }
-        /* steps 12-13 */
+        /* steps 11-12 */
         long viewByteLength, viewByteOffset = (long) offset;
         if (Type.isUndefined(byteLength)) {
             viewByteLength = bufferByteLength - viewByteOffset;
@@ -235,14 +231,14 @@ public final class DataViewConstructor extends BuiltinConstructor implements Ini
                 throw newRangeError(calleeContext, Messages.Key.ArrayOffsetOutOfRange);
             }
         }
-        /* steps 14-16 */
+        /* steps 13-15 */
         DataViewObject dataView = OrdinaryCreateFromConstructor(calleeContext, newTarget,
                 Intrinsics.DataViewPrototype, DataViewObjectAllocator.INSTANCE);
-        /* steps 17-19 */
+        /* steps 16-18 */
         dataView.setBuffer(bufferObj);
         dataView.setByteLength(viewByteLength);
         dataView.setByteOffset(viewByteOffset);
-        /* step 20 */
+        /* step 19 */
         return dataView;
     }
 

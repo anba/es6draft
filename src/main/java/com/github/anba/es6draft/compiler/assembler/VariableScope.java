@@ -6,17 +6,18 @@
  */
 package com.github.anba.es6draft.compiler.assembler;
 
-import java.util.ArrayDeque;
 import java.util.Collections;
 import java.util.Iterator;
 
 import org.objectweb.asm.Label;
 
+import com.github.anba.es6draft.runtime.internal.InlineArrayList;
+
 /**
  * 
  */
 final class VariableScope implements Iterable<Variable<?>> {
-    private final ArrayDeque<Variable<?>> variables = new ArrayDeque<>(6);
+    private final InlineArrayList<Variable<?>> variables = new InlineArrayList<>();
     final VariableScope parent;
     final int firstSlot;
     final Label start = new Label(), end = new Label();

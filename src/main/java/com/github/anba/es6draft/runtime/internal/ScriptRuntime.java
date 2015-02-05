@@ -13,16 +13,13 @@ import static com.github.anba.es6draft.runtime.modules.ModuleSemantics.GetModule
 import static com.github.anba.es6draft.runtime.modules.ModuleSemantics.ResolveExport;
 import static com.github.anba.es6draft.runtime.objects.internal.ListIterator.FromScriptIterator;
 import static com.github.anba.es6draft.runtime.objects.iteration.GeneratorAbstractOperations.GeneratorYield;
-import static com.github.anba.es6draft.runtime.types.Null.NULL;
+import static com.github.anba.es6draft.runtime.types.PropertyDescriptor.AccessorPropertyDescriptor;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.ArgumentsObject.CreateUnmappedArgumentsObject;
 import static com.github.anba.es6draft.runtime.types.builtins.ArrayObject.ArrayCreate;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryAsyncFunction.AsyncFunctionCreate;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryConstructorFunction.ConstructorFunctionCreate;
-import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.FunctionCreate;
-import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.MakeConstructor;
-import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.MakeMethod;
-import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.SetFunctionName;
+import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.*;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryGenerator.GeneratorFunctionCreate;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject.ObjectCreate;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject.OrdinaryCreateFromConstructor;
@@ -49,7 +46,6 @@ import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.FunctionEnvironmentRecord;
 import com.github.anba.es6draft.runtime.GlobalEnvironmentRecord;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
-import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.modules.ModuleExport;
 import com.github.anba.es6draft.runtime.modules.ModuleRecord;
 import com.github.anba.es6draft.runtime.modules.ResolutionException;
@@ -248,8 +244,6 @@ public final class ScriptRuntime {
      * 
      * @param cx
      *            the execution context
-     * @param realm
-     *            the realm instance
      * @param moduleSet
      *            the list of modules
      * @param identifierMap
@@ -258,11 +252,11 @@ public final class ScriptRuntime {
      *            the module identifier
      * @return the module namespace object
      */
-    public static ModuleNamespaceObject getModuleNamespace(ExecutionContext cx, Realm realm,
+    public static ModuleNamespaceObject getModuleNamespace(ExecutionContext cx,
             Map<SourceIdentifier, ModuleRecord> moduleSet,
             Map<String, SourceIdentifier> identifierMap, String moduleName) {
         SourceIdentifier moduleId = identifierMap.get(moduleName);
-        return GetModuleNamespace(cx, realm, moduleSet, moduleId);
+        return GetModuleNamespace(cx, moduleSet, moduleId);
     }
 
     /* ***************************************************************************************** */
@@ -940,7 +934,7 @@ public final class ScriptRuntime {
      * 12.3.3 The new Operator
      * <p>
      * 12.3.3.1 Runtime Semantics: Evaluation<br>
-     * 12.3.5.2 Runtime Semantics: Evaluation
+     * 12.3.5.1 Runtime Semantics: Evaluation
      * <ul>
      * <li>NewExpression : new NewExpression
      * <li>MemberExpression : new MemberExpression Arguments
@@ -970,7 +964,7 @@ public final class ScriptRuntime {
      * 12.3.3 The new Operator
      * <p>
      * 12.3.3.1 Runtime Semantics: Evaluation<br>
-     * 12.3.5.2 Runtime Semantics: Evaluation
+     * 12.3.5.1 Runtime Semantics: Evaluation
      * <ul>
      * <li>NewExpression : new NewExpression
      * <li>MemberExpression : new MemberExpression Arguments
@@ -1117,10 +1111,10 @@ public final class ScriptRuntime {
      *            the execution context
      * @return the NewTarget constructor object
      */
-    public static Object GetNewTargetOrNull(ExecutionContext cx) {
+    public static Object GetNewTargetOrUndefined(ExecutionContext cx) {
         Constructor newTarget = cx.getNewTarget();
         if (newTarget == null) {
-            return NULL;
+            return UNDEFINED;
         }
         return newTarget;
     }
@@ -1133,25 +1127,6 @@ public final class ScriptRuntime {
      * @return the NewTarget constructor object
      */
     public static Constructor GetNewTarget(ExecutionContext cx) {
-        Constructor newTarget = cx.getNewTarget();
-        if (newTarget == null) {
-            throw newTypeError(cx, Messages.Key.MissingNewTarget);
-        }
-        return newTarget;
-    }
-
-    /**
-     * 12.3.5 The super Keyword
-     * 
-     * @param cx
-     *            the execution context
-     * @return the NewTarget constructor object
-     */
-    public static Constructor GetNewTargetAndThisUninitialized(ExecutionContext cx) {
-        // FIXME: spec bug - invert condition
-        if (cx.isThisInitialized()) {
-            throw newTypeError(cx, Messages.Key.InitializedThis);
-        }
         Constructor newTarget = cx.getNewTarget();
         if (newTarget == null) {
             throw newTypeError(cx, Messages.Key.MissingNewTarget);
@@ -1682,21 +1657,6 @@ public final class ScriptRuntime {
      * <p>
      * 13.2.3.5 Runtime Semantics: IteratorBindingInitialization
      * 
-     * @param value
-     *            the value object
-     * @param cx
-     *            the execution context
-     * @return the object iterator
-     */
-    public static Iterator<?> getIterator(Object value, ExecutionContext cx) {
-        return FromScriptIterator(cx, GetIterator(cx, value));
-    }
-
-    /**
-     * 12.14.5.3 Runtime Semantics: IteratorDestructuringAssignmentEvaluation
-     * <p>
-     * 13.2.3.5 Runtime Semantics: IteratorBindingInitialization
-     * 
      * @param iterator
      *            the iterator
      */
@@ -1723,8 +1683,9 @@ public final class ScriptRuntime {
 
     /**
      * 13.6.4 The for-in and for-of Statements
-     * <p>
-     * 13.6.4.12 Runtime Semantics: ForIn/OfExpressionEvaluation Abstract Operation
+     * <ul>
+     * <li>13.6.4.12 Runtime Semantics: ForIn/OfExpressionEvaluation Abstract Operation
+     * </ul>
      * 
      * @param value
      *            the object to enumerate
@@ -1741,8 +1702,13 @@ public final class ScriptRuntime {
 
     /**
      * 13.6.4 The for-in and for-of Statements
+     * <ul>
+     * <li>13.6.4.12 Runtime Semantics: ForIn/OfExpressionEvaluation Abstract Operation
+     * </ul>
      * <p>
-     * 13.6.4.12 Runtime Semantics: ForIn/OfExpressionEvaluation Abstract Operation
+     * 12.14.5.3 Runtime Semantics: IteratorDestructuringAssignmentEvaluation
+     * <p>
+     * 13.2.3.5 Runtime Semantics: IteratorBindingInitialization
      * 
      * @param value
      *            the object to iterate
@@ -1874,9 +1840,9 @@ public final class ScriptRuntime {
         }
         /* step 5 */
         MakeConstructor(cx, f);
-        /* steps 6-7 */
+        /* step 6 */
         SetFunctionName(f, name);
-        /* step 8 */
+        /* step 7 */
         return f;
     }
 
@@ -1931,19 +1897,19 @@ public final class ScriptRuntime {
             }
             /* step 9 */
             MakeConstructor(cx, closure);
-            /* steps 10-11 */
+            /* step 10 */
             SetFunctionName(closure, name);
-            /* step 12 */
+            /* step 11 */
             envRec.initializeBinding(name, closure);
         }
-        /* step 6/13 */
+        /* step 6/12 */
         return closure;
     }
 
     /**
      * 14.2 Arrow Function Definitions
      * <p>
-     * 14.2.18 Runtime Semantics: Evaluation
+     * 14.2.17 Runtime Semantics: Evaluation
      * <ul>
      * <li>ArrowFunction : ArrowParameters {@literal =>} ConciseBody
      * </ul>
@@ -1959,7 +1925,7 @@ public final class ScriptRuntime {
         /* step 1 (not applicable) */
         /* step 2 */
         LexicalEnvironment<?> scope = cx.getLexicalEnvironment();
-        /* steps 3-4 */
+        /* step 4 */
         OrdinaryFunction closure = FunctionCreate(cx, FunctionKind.Arrow, fd, scope);
         /* step 5 */
         return closure;
@@ -1984,26 +1950,27 @@ public final class ScriptRuntime {
     public static OrdinaryConstructorFunction EvaluateConstructorMethod(
             ScriptObject constructorParent, OrdinaryObject proto, RuntimeInfo.Function fd,
             ExecutionContext cx) {
-        // ClassDefinitionEvaluation - steps 12-17
-        // -> calls DefineMethod
-        String propKey = "constructor";
+        // ClassDefinitionEvaluation - steps 11-12 (call DefineMethod)
         LexicalEnvironment<?> scope = cx.getLexicalEnvironment();
         OrdinaryConstructorFunction constructor = ConstructorFunctionCreate(cx,
-                FunctionKind.ConstructorMethod, fd, scope, constructorParent);
+                FunctionKind.ClassConstructor, fd, scope, constructorParent);
         if (fd.hasSuperReference()) {
             MakeMethod(constructor, proto);
         }
 
-        // ClassDefinitionEvaluation - step 14 (see FunctionCreate)
+        // ClassDefinitionEvaluation - step 13 (not applicable, cf. ConstructorFunctionCreate)
+
+        // ClassDefinitionEvaluation - step 14
+        MakeConstructor(constructor, false, proto);
 
         // ClassDefinitionEvaluation - step 15
-        MakeConstructor(constructor, false, proto);
+        MakeClassConstructor(constructor);
 
         // ClassDefinitionEvaluation - step 16
         PropertyDescriptor desc = new PropertyDescriptor(constructor, true, false, true);
 
         // ClassDefinitionEvaluation - step 17
-        proto.defineOwnProperty(cx, propKey, desc);
+        proto.defineOwnProperty(cx, "constructor", desc);
 
         return constructor;
     }
@@ -2020,17 +1987,19 @@ public final class ScriptRuntime {
      *            the script object
      * @param propKey
      *            the property key
+     * @param enumerable
+     *            the enumerable property attribute
      * @param fd
      *            the function runtime info object
      * @param cx
      *            the execution context
      */
     public static void EvaluatePropertyDefinition(OrdinaryObject object, Object propKey,
-            RuntimeInfo.Function fd, ExecutionContext cx) {
+            boolean enumerable, RuntimeInfo.Function fd, ExecutionContext cx) {
         if (propKey instanceof String) {
-            EvaluatePropertyDefinition(object, (String) propKey, fd, cx);
+            EvaluatePropertyDefinition(object, (String) propKey, enumerable, fd, cx);
         } else {
-            EvaluatePropertyDefinition(object, (Symbol) propKey, fd, cx);
+            EvaluatePropertyDefinition(object, (Symbol) propKey, enumerable, fd, cx);
         }
     }
 
@@ -2046,13 +2015,15 @@ public final class ScriptRuntime {
      *            the script object
      * @param propKey
      *            the property key
+     * @param enumerable
+     *            the enumerable property attribute
      * @param fd
      *            the function runtime info object
      * @param cx
      *            the execution context
      */
     public static void EvaluatePropertyDefinition(OrdinaryObject object, String propKey,
-            RuntimeInfo.Function fd, ExecutionContext cx) {
+            boolean enumerable, RuntimeInfo.Function fd, ExecutionContext cx) {
         /* steps 1-2 (DefineMethod) */
         /* DefineMethod: steps 1-3 (generated code) */
         /* DefineMethod: step 4 */
@@ -2063,10 +2034,12 @@ public final class ScriptRuntime {
         if (fd.hasSuperReference()) {
             MakeMethod(closure, object);
         }
-        /* steps 3-4 */
+        /* step 3 */
         SetFunctionName(closure, propKey);
         /* step 4 */
-        CreateDataPropertyOrThrow(cx, object, propKey, closure);
+        PropertyDescriptor desc = new PropertyDescriptor(closure, true, enumerable, true);
+        /* step 5 */
+        DefinePropertyOrThrow(cx, object, propKey, desc);
     }
 
     /**
@@ -2081,14 +2054,16 @@ public final class ScriptRuntime {
      *            the script object
      * @param propKey
      *            the property key
+     * @param enumerable
+     *            the enumerable property attribute
      * @param fd
      *            the function runtime info object
      * @param cx
      *            the execution context
      */
     public static void EvaluatePropertyDefinition(OrdinaryObject object, Symbol propKey,
-            RuntimeInfo.Function fd, ExecutionContext cx) {
-        /* steps 1-2 (DefineMethod) */
+            boolean enumerable, RuntimeInfo.Function fd, ExecutionContext cx) {
+        /* steps 1-2 (Call DefineMethod) */
         /* DefineMethod: steps 1-3 (generated code) */
         /* DefineMethod: step 4 */
         LexicalEnvironment<?> scope = cx.getLexicalEnvironment();
@@ -2098,10 +2073,12 @@ public final class ScriptRuntime {
         if (fd.hasSuperReference()) {
             MakeMethod(closure, object);
         }
-        /* steps 3-4 */
+        /* step 3 */
         SetFunctionName(closure, propKey);
         /* step 4 */
-        CreateDataPropertyOrThrow(cx, object, propKey, closure);
+        PropertyDescriptor desc = new PropertyDescriptor(closure, true, enumerable, true);
+        /* step 5 */
+        DefinePropertyOrThrow(cx, object, propKey, desc);
     }
 
     /**
@@ -2116,17 +2093,19 @@ public final class ScriptRuntime {
      *            the script object
      * @param propKey
      *            the property key
+     * @param enumerable
+     *            the enumerable property attribute
      * @param fd
      *            the function runtime info object
      * @param cx
      *            the execution context
      */
     public static void EvaluatePropertyDefinitionGetter(OrdinaryObject object, Object propKey,
-            RuntimeInfo.Function fd, ExecutionContext cx) {
+            boolean enumerable, RuntimeInfo.Function fd, ExecutionContext cx) {
         if (propKey instanceof String) {
-            EvaluatePropertyDefinitionGetter(object, (String) propKey, fd, cx);
+            EvaluatePropertyDefinitionGetter(object, (String) propKey, enumerable, fd, cx);
         } else {
-            EvaluatePropertyDefinitionGetter(object, (Symbol) propKey, fd, cx);
+            EvaluatePropertyDefinitionGetter(object, (Symbol) propKey, enumerable, fd, cx);
         }
     }
 
@@ -2142,13 +2121,15 @@ public final class ScriptRuntime {
      *            the script object
      * @param propKey
      *            the property key
+     * @param enumerable
+     *            the enumerable property attribute
      * @param fd
      *            the function runtime info object
      * @param cx
      *            the execution context
      */
     public static void EvaluatePropertyDefinitionGetter(OrdinaryObject object, String propKey,
-            RuntimeInfo.Function fd, ExecutionContext cx) {
+            boolean enumerable, RuntimeInfo.Function fd, ExecutionContext cx) {
         /* steps 1-3 (generated code) */
         /* step 4 */
         LexicalEnvironment<?> scope = cx.getLexicalEnvironment();
@@ -2161,10 +2142,7 @@ public final class ScriptRuntime {
         /* steps 8-9 */
         SetFunctionName(closure, propKey, "get");
         /* step 10 */
-        PropertyDescriptor desc = new PropertyDescriptor();
-        desc.setGetter(closure);
-        desc.setEnumerable(true);
-        desc.setConfigurable(true);
+        PropertyDescriptor desc = AccessorPropertyDescriptor(closure, null, enumerable, true);
         /* step 11 */
         DefinePropertyOrThrow(cx, object, propKey, desc);
     }
@@ -2181,13 +2159,15 @@ public final class ScriptRuntime {
      *            the script object
      * @param propKey
      *            the property key
+     * @param enumerable
+     *            the enumerable property attribute
      * @param fd
      *            the function runtime info object
      * @param cx
      *            the execution context
      */
     public static void EvaluatePropertyDefinitionGetter(OrdinaryObject object, Symbol propKey,
-            RuntimeInfo.Function fd, ExecutionContext cx) {
+            boolean enumerable, RuntimeInfo.Function fd, ExecutionContext cx) {
         /* steps 1-3 (generated code) */
         /* step 4 */
         LexicalEnvironment<?> scope = cx.getLexicalEnvironment();
@@ -2200,10 +2180,7 @@ public final class ScriptRuntime {
         /* steps 8-9 */
         SetFunctionName(closure, propKey, "get");
         /* step 10 */
-        PropertyDescriptor desc = new PropertyDescriptor();
-        desc.setGetter(closure);
-        desc.setEnumerable(true);
-        desc.setConfigurable(true);
+        PropertyDescriptor desc = AccessorPropertyDescriptor(closure, null, enumerable, true);
         /* step 11 */
         DefinePropertyOrThrow(cx, object, propKey, desc);
     }
@@ -2220,17 +2197,19 @@ public final class ScriptRuntime {
      *            the script object
      * @param propKey
      *            the property key
+     * @param enumerable
+     *            the enumerable property attribute
      * @param fd
      *            the function runtime info object
      * @param cx
      *            the execution context
      */
     public static void EvaluatePropertyDefinitionSetter(OrdinaryObject object, Object propKey,
-            RuntimeInfo.Function fd, ExecutionContext cx) {
+            boolean enumerable, RuntimeInfo.Function fd, ExecutionContext cx) {
         if (propKey instanceof String) {
-            EvaluatePropertyDefinitionSetter(object, (String) propKey, fd, cx);
+            EvaluatePropertyDefinitionSetter(object, (String) propKey, enumerable, fd, cx);
         } else {
-            EvaluatePropertyDefinitionSetter(object, (Symbol) propKey, fd, cx);
+            EvaluatePropertyDefinitionSetter(object, (Symbol) propKey, enumerable, fd, cx);
         }
     }
 
@@ -2246,13 +2225,15 @@ public final class ScriptRuntime {
      *            the script object
      * @param propKey
      *            the property key
+     * @param enumerable
+     *            the enumerable property attribute
      * @param fd
      *            the function runtime info object
      * @param cx
      *            the execution context
      */
     public static void EvaluatePropertyDefinitionSetter(OrdinaryObject object, String propKey,
-            RuntimeInfo.Function fd, ExecutionContext cx) {
+            boolean enumerable, RuntimeInfo.Function fd, ExecutionContext cx) {
         /* steps 1-3 (generated code) */
         /* step 4 */
         LexicalEnvironment<?> scope = cx.getLexicalEnvironment();
@@ -2265,10 +2246,7 @@ public final class ScriptRuntime {
         /* steps 7-8 */
         SetFunctionName(closure, propKey, "set");
         /* step 9 */
-        PropertyDescriptor desc = new PropertyDescriptor();
-        desc.setSetter(closure);
-        desc.setEnumerable(true);
-        desc.setConfigurable(true);
+        PropertyDescriptor desc = AccessorPropertyDescriptor(null, closure, enumerable, true);
         /* step 10 */
         DefinePropertyOrThrow(cx, object, propKey, desc);
     }
@@ -2285,13 +2263,15 @@ public final class ScriptRuntime {
      *            the script object
      * @param propKey
      *            the property key
+     * @param enumerable
+     *            the enumerable property attribute
      * @param fd
      *            the function runtime info object
      * @param cx
      *            the execution context
      */
     public static void EvaluatePropertyDefinitionSetter(OrdinaryObject object, Symbol propKey,
-            RuntimeInfo.Function fd, ExecutionContext cx) {
+            boolean enumerable, RuntimeInfo.Function fd, ExecutionContext cx) {
         /* steps 1-3 (generated code) */
         /* step 4 */
         LexicalEnvironment<?> scope = cx.getLexicalEnvironment();
@@ -2304,10 +2284,7 @@ public final class ScriptRuntime {
         /* steps 7-8 */
         SetFunctionName(closure, propKey, "set");
         /* step 9 */
-        PropertyDescriptor desc = new PropertyDescriptor();
-        desc.setSetter(closure);
-        desc.setEnumerable(true);
-        desc.setConfigurable(true);
+        PropertyDescriptor desc = AccessorPropertyDescriptor(null, closure, enumerable, true);
         /* step 10 */
         DefinePropertyOrThrow(cx, object, propKey, desc);
     }
@@ -2330,19 +2307,19 @@ public final class ScriptRuntime {
         /* step 1 (not applicable) */
         /* step 2 */
         String name = fd.functionName();
-        /* steps 3-4 */
+        /* step 3 */
         OrdinaryGenerator f = GeneratorFunctionCreate(cx, FunctionKind.Normal, fd, scope);
-        /* step 5 */
+        /* step 4 */
         if (fd.hasSuperReference()) {
             MakeMethod(f, null);
         }
-        /* step 6 */
+        /* step 5 */
         OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.GeneratorPrototype);
-        /* step 7 */
+        /* step 6 */
         MakeConstructor(f, true, prototype);
-        /* steps 8-9 */
+        /* step 7 */
         SetFunctionName(f, name);
-        /* step 10 */
+        /* step 8 */
         return f;
     }
 
@@ -2364,19 +2341,19 @@ public final class ScriptRuntime {
         /* step 1 (not applicable) */
         /* step 2 */
         String name = fd.functionName();
-        /* steps 3-4 */
+        /* step 3 */
         OrdinaryGenerator f = GeneratorFunctionCreate(cx, FunctionKind.Normal, fd, scope);
-        /* step 5 */
+        /* step 4 */
         if (fd.hasSuperReference()) {
             MakeMethod(f, null);
         }
-        /* step 6 */
+        /* step 5 */
         OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.LegacyGeneratorPrototype);
-        /* step 7 */
+        /* step 6 */
         MakeConstructor(f, true, prototype);
-        /* steps 8-9 */
+        /* step 7 */
         SetFunctionName(f, name);
-        /* step 10 */
+        /* step 8 */
         return f;
     }
 
@@ -2392,17 +2369,19 @@ public final class ScriptRuntime {
      *            the script object
      * @param propKey
      *            the property key
+     * @param enumerable
+     *            the enumerable property attribute
      * @param fd
      *            the function runtime info object
      * @param cx
      *            the execution context
      */
     public static void EvaluatePropertyDefinitionGenerator(OrdinaryObject object, Object propKey,
-            RuntimeInfo.Function fd, ExecutionContext cx) {
+            boolean enumerable, RuntimeInfo.Function fd, ExecutionContext cx) {
         if (propKey instanceof String) {
-            EvaluatePropertyDefinitionGenerator(object, (String) propKey, fd, cx);
+            EvaluatePropertyDefinitionGenerator(object, (String) propKey, enumerable, fd, cx);
         } else {
-            EvaluatePropertyDefinitionGenerator(object, (Symbol) propKey, fd, cx);
+            EvaluatePropertyDefinitionGenerator(object, (Symbol) propKey, enumerable, fd, cx);
         }
     }
 
@@ -2418,32 +2397,35 @@ public final class ScriptRuntime {
      *            the script object
      * @param propKey
      *            the property key
+     * @param enumerable
+     *            the enumerable property attribute
      * @param fd
      *            the function runtime info object
      * @param cx
      *            the execution context
      */
     public static void EvaluatePropertyDefinitionGenerator(OrdinaryObject object, String propKey,
-            RuntimeInfo.Function fd, ExecutionContext cx) {
+            boolean enumerable, RuntimeInfo.Function fd, ExecutionContext cx) {
         /* steps 1-2 (bytecode) */
         /* step 3 (not applicable) */
         /* step 4 */
         LexicalEnvironment<?> scope = cx.getLexicalEnvironment();
-        /* step 5 (not applicable) */
-        /* step 6 */
+        /* step 5 */
         OrdinaryGenerator closure = GeneratorFunctionCreate(cx, FunctionKind.Method, fd, scope);
-        /* step 7 */
+        /* step 6 */
         if (fd.hasSuperReference()) {
             MakeMethod(closure, object);
         }
-        /* step 8 */
+        /* step 7 */
         OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.GeneratorPrototype);
-        /* step 9 */
+        /* step 8 */
         MakeConstructor(closure, true, prototype);
-        /* steps 10-11 */
+        /* step 9 */
         SetFunctionName(closure, propKey);
-        /* step 12 */
-        CreateDataPropertyOrThrow(cx, object, propKey, closure);
+        /* step 10 */
+        PropertyDescriptor desc = new PropertyDescriptor(closure, true, enumerable, true);
+        /* step 11 */
+        DefinePropertyOrThrow(cx, object, propKey, desc);
     }
 
     /**
@@ -2458,32 +2440,35 @@ public final class ScriptRuntime {
      *            the script object
      * @param propKey
      *            the property key
+     * @param enumerable
+     *            the enumerable property attribute
      * @param fd
      *            the function runtime info object
      * @param cx
      *            the execution context
      */
     public static void EvaluatePropertyDefinitionGenerator(OrdinaryObject object, Symbol propKey,
-            RuntimeInfo.Function fd, ExecutionContext cx) {
+            boolean enumerable, RuntimeInfo.Function fd, ExecutionContext cx) {
         /* steps 1-2 (bytecode) */
         /* step 3 (not applicable) */
         /* step 4 */
         LexicalEnvironment<?> scope = cx.getLexicalEnvironment();
-        /* step 5 (not applicable) */
-        /* step 6 */
+        /* step 5 */
         OrdinaryGenerator closure = GeneratorFunctionCreate(cx, FunctionKind.Method, fd, scope);
-        /* step 7 */
+        /* step 6 */
         if (fd.hasSuperReference()) {
             MakeMethod(closure, object);
         }
-        /* step 8 */
+        /* step 7 */
         OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.GeneratorPrototype);
-        /* step 9 */
+        /* step 8 */
         MakeConstructor(closure, true, prototype);
-        /* steps 10-11 */
+        /* step 9 */
         SetFunctionName(closure, propKey);
-        /* step 12 */
-        CreateDataPropertyOrThrow(cx, object, propKey, closure);
+        /* step 10 */
+        PropertyDescriptor desc = new PropertyDescriptor(closure, true, enumerable, true);
+        /* step 11 */
+        DefinePropertyOrThrow(cx, object, propKey, desc);
     }
 
     /**
@@ -2505,48 +2490,48 @@ public final class ScriptRuntime {
             ExecutionContext cx) {
         OrdinaryGenerator closure;
         if (!fd.hasScopedName()) {
-            /* steps 1-2 (generated code) */
-            /* step 3 */
+            /* step 1 (not applicable) */
+            /* step 2 */
             LexicalEnvironment<?> scope = cx.getLexicalEnvironment();
-            /* step 4 */
+            /* step 3 */
             closure = GeneratorFunctionCreate(cx, FunctionKind.Normal, fd, scope);
-            /* step 5 */
+            /* step 4 */
             if (fd.hasSuperReference()) {
                 MakeMethod(closure, null);
             }
-            /* step 6 */
+            /* step 5 */
             OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.GeneratorPrototype);
-            /* step 7 */
+            /* step 6 */
             MakeConstructor(closure, true, prototype);
         } else {
-            /* steps 1-2 (generated code) */
-            /* step 3 */
+            /* step 1 (not applicable) */
+            /* step 2 */
             LexicalEnvironment<?> runningContext = cx.getLexicalEnvironment();
-            /* step 4 */
+            /* step 3 */
             LexicalEnvironment<DeclarativeEnvironmentRecord> funcEnv = LexicalEnvironment
                     .newDeclarativeEnvironment(runningContext);
-            /* step 5 */
+            /* step 4 */
             DeclarativeEnvironmentRecord envRec = funcEnv.getEnvRec();
-            /* step 6 */
+            /* step 5 */
             String name = fd.functionName();
-            /* step 7 */
+            /* step 6 */
             envRec.createImmutableBinding(name, false);
-            /* step 8 */
+            /* step 7 */
             closure = GeneratorFunctionCreate(cx, FunctionKind.Normal, fd, funcEnv);
-            /* step 9 */
+            /* step 8 */
             if (fd.hasSuperReference()) {
                 MakeMethod(closure, null);
             }
-            /* step 10 */
+            /* step 9 */
             OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.GeneratorPrototype);
-            /* step 11 */
+            /* step 10 */
             MakeConstructor(closure, true, prototype);
-            /* steps 12-13 */
+            /* step 11 */
             SetFunctionName(closure, name);
-            /* step 14 */
+            /* step 12 */
             envRec.initializeBinding(name, closure);
         }
-        /* step 8/15 */
+        /* step 7/13 */
         return closure;
     }
 
@@ -2569,55 +2554,55 @@ public final class ScriptRuntime {
             ExecutionContext cx) {
         OrdinaryGenerator closure;
         if (!fd.hasScopedName()) {
-            /* steps 1-2 (generated code) */
-            /* step 3 */
+            /* step 1 (not applicable) */
+            /* step 2 */
             LexicalEnvironment<?> scope = cx.getLexicalEnvironment();
-            /* step 4 */
+            /* step 3 */
             closure = GeneratorFunctionCreate(cx, FunctionKind.Normal, fd, scope);
-            /* step 5 */
+            /* step 4 */
             if (fd.hasSuperReference()) {
                 MakeMethod(closure, null);
             }
-            /* step 6 */
+            /* step 5 */
             OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.LegacyGeneratorPrototype);
-            /* step 7 */
+            /* step 6 */
             MakeConstructor(closure, true, prototype);
         } else {
-            /* steps 1-2 (generated code) */
-            /* step 3 */
+            /* step 1 (not applicable) */
+            /* step 2 */
             LexicalEnvironment<?> runningContext = cx.getLexicalEnvironment();
-            /* step 4 */
+            /* step 2 */
             LexicalEnvironment<DeclarativeEnvironmentRecord> funcEnv = LexicalEnvironment
                     .newDeclarativeEnvironment(runningContext);
-            /* step 5 */
+            /* step 4 */
             DeclarativeEnvironmentRecord envRec = funcEnv.getEnvRec();
-            /* step 6 */
+            /* step 5 */
             String name = fd.functionName();
-            /* step 7 */
+            /* step 6 */
             envRec.createImmutableBinding(name, false);
-            /* step 8 */
+            /* step 7 */
             closure = GeneratorFunctionCreate(cx, FunctionKind.Normal, fd, funcEnv);
-            /* step 9 */
+            /* step 8 */
             if (fd.hasSuperReference()) {
                 MakeMethod(closure, null);
             }
-            /* step 10 */
+            /* step 9 */
             OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.LegacyGeneratorPrototype);
-            /* step 11 */
+            /* step 10 */
             MakeConstructor(closure, true, prototype);
-            /* step 12 */
+            /* step 11 */
             SetFunctionName(closure, name);
-            /* step 13 */
+            /* step 12 */
             envRec.initializeBinding(name, closure);
         }
-        /* step 8/14 */
+        /* step 7/13 */
         return closure;
     }
 
     /**
      * 14.4 Generator Function Definitions
      * <p>
-     * 14.4.16 Runtime Semantics: Evaluation
+     * 14.4.15 Runtime Semantics: Evaluation
      * <ul>
      * <li>YieldExpression : yield
      * <li>YieldExpression : yield AssignmentExpression
@@ -2638,26 +2623,7 @@ public final class ScriptRuntime {
     /**
      * 14.4 Generator Function Definitions
      * <p>
-     * 14.4.16 Runtime Semantics: Evaluation
-     * <ul>
-     * <li>YieldExpression : yield * AssignmentExpression
-     * </ul>
-     * 
-     * @param value
-     *            the iterator value
-     * @param cx
-     *            the execution context
-     * @return the iterator object
-     */
-    public static ScriptObject getIteratorObject(Object value, ExecutionContext cx) {
-        // TODO: move to generated code
-        return GetIterator(cx, value);
-    }
-
-    /**
-     * 14.4 Generator Function Definitions
-     * <p>
-     * 14.4.16 Runtime Semantics: Evaluation
+     * 14.4.15 Runtime Semantics: Evaluation
      * <ul>
      * <li>YieldExpression : yield * AssignmentExpression
      * </ul>
@@ -2677,7 +2643,7 @@ public final class ScriptRuntime {
         /* step 5 */
         Object received = UNDEFINED;
         /* step 6 */
-        for (;;) {
+        outer: for (;;) {
             /* steps 6.a.i-6.a.ii */
             ScriptObject innerResult = IteratorNext(cx, iterator, received);
             /* steps 6.a.iii-6.a.iv */
@@ -2686,32 +2652,148 @@ public final class ScriptRuntime {
             if (done) {
                 return IteratorValue(cx, innerResult);
             }
-            try {
-                /* step 6.a.vi */
-                received = GeneratorYield(cx, innerResult);
-            } catch (ScriptException e) {
-                // FIXME: spec issue - change to GetMethod to avoid Has+Get?
-                /* step 6.b */
-                /* step 6.b.i-6.b.iii */
-                if (HasProperty(cx, iterator, "throw")) {
-                    IteratorThrow(cx, iterator, e.getValue());
-                }
-                /* step 6.b.iv */
-                throw e;
-            } catch (ReturnValue e) {
-                // FIXME: spec issue - change to GetMethod to avoid Has+Get?
-                /* step 6.c */
-                /* step 6.c.i-6.c.iii */
-                if (HasProperty(cx, iterator, "return")) {
-                    /* step 6.c.v-6.c.ix */
-                    Object innerReturnValue = IteratorReturn(cx, iterator, e.getValue());
+            inner: for (;;) {
+                try {
+                    /* step 6.a.vi */
+                    received = GeneratorYield(cx, innerResult);
+                    continue outer;
+                } catch (ScriptException e) {
+                    /* step 6.b */
+                    /* steps 6.b.i-6.b.ii */
+                    Callable throwMethod = GetMethod(cx, iterator, "throw");
+                    /* steps 6.b.iii-iv */
+                    if (throwMethod != null) {
+                        /* step 6.b.iii */
+                        /* steps 6.b.iii.1-3 */
+                        Object innerThrowResult = throwMethod.call(cx, iterator, e.getValue());
+                        /* step 6.b.iii.4 */
+                        if (!Type.isObject(innerThrowResult)) {
+                            throw newTypeError(cx, Messages.Key.NotObjectType);
+                        }
+                        ScriptObject innerThrowResultObj = Type.objectValue(innerThrowResult);
+                        /* steps 6.b.iii.5-6 */
+                        boolean doneThrow = IteratorComplete(cx, innerThrowResultObj);
+                        /* step 6.b.iii.7 */
+                        if (doneThrow) {
+                            /* step 6.b.iii.7.a */
+                            Object innerResultValue = IteratorValue(cx, innerThrowResultObj);
+                            throw new ReturnValue(innerResultValue);
+                        }
+                        /* step 6.b.iii.8 */
+                        // GeneratorYield
+                        innerResult = innerThrowResultObj;
+                        continue inner;
+                    } else {
+                        /* step 6.b.iv */
+                        /* steps 6.b.iv.1-2 */
+                        IteratorClose(cx, iterator, true);
+                        /* steps 6.b.iv.3 */
+                        throw newTypeError(cx, Messages.Key.PropertyNotCallable, "throw");
+                    }
+                } catch (ReturnValue e) {
+                    /* step 6.c */
+                    /* steps 6.c.i-6.c.iii */
+                    Callable returnMethod = GetMethod(cx, iterator, "return");
+                    /* step 6.c.iv */
+                    if (returnMethod == null) {
+                        throw e;
+                    }
+                    /* steps 6.c.v-6.c.vi */
+                    Object innerReturnResult = returnMethod.call(cx, iterator, e.getValue());
+                    /* step 6.c.vii */
+                    if (!Type.isObject(innerReturnResult)) {
+                        throw newTypeError(cx, Messages.Key.NotObjectType);
+                    }
+                    ScriptObject innerReturnResultObj = Type.objectValue(innerReturnResult);
+                    /* steps 6.c.viii-ix */
+                    boolean doneReturn = IteratorComplete(cx, innerReturnResultObj);
                     /* step 6.c.x */
-                    throw new ReturnValue(innerReturnValue);
+                    if (doneReturn) {
+                        /* step 6.c.x.1 */
+                        Object innerResultValue = IteratorValue(cx, innerReturnResultObj);
+                        throw new ReturnValue(innerResultValue);
+                    }
+                    /* step 6.c.xi */
+                    // GeneratorYield
+                    innerResult = innerReturnResultObj;
+                    continue inner;
                 }
-                /* step 6.c.iv */
-                throw e;
             }
         }
+    }
+
+    /**
+     * 14.4 Generator Function Definitions
+     * <p>
+     * 14.4.15 Runtime Semantics: Evaluation
+     * <ul>
+     * <li>YieldExpression : yield * AssignmentExpression
+     * </ul>
+     * 
+     * @param cx
+     *            the execution context
+     * @param iterator
+     *            the iterator object
+     * @param e
+     *            the script exception
+     * @return the {@code throw} method result value
+     */
+    public static ScriptObject yieldThrowCompletion(ExecutionContext cx, ScriptObject iterator,
+            ScriptException e) {
+        /* step 6.b */
+        /* steps 6.b.i-6.b.ii */
+        Callable throwMethod = GetMethod(cx, iterator, "throw");
+        /* steps 6.b.iii-iv */
+        if (throwMethod != null) {
+            /* step 6.b.iii */
+            /* steps 6.b.iii.1-3 */
+            Object innerThrowResult = throwMethod.call(cx, iterator, e.getValue());
+            /* step 6.b.iii.4 */
+            if (!Type.isObject(innerThrowResult)) {
+                throw newTypeError(cx, Messages.Key.NotObjectType);
+            }
+            return Type.objectValue(innerThrowResult);
+        } else {
+            /* step 6.b.iv */
+            /* steps 6.b.iv.1-2 */
+            IteratorClose(cx, iterator, true);
+            /* steps 6.b.iv.3 */
+            throw newTypeError(cx, Messages.Key.PropertyNotCallable, "throw");
+        }
+    }
+
+    /**
+     * 14.4 Generator Function Definitions
+     * <p>
+     * 14.4.15 Runtime Semantics: Evaluation
+     * <ul>
+     * <li>YieldExpression : yield * AssignmentExpression
+     * </ul>
+     * 
+     * @param cx
+     *            the execution context
+     * @param iterator
+     *            the iterator object
+     * @param e
+     *            the return value wrapper
+     * @return the {@code return} method result value or {@code null}
+     */
+    public static ScriptObject yieldReturnCompletion(ExecutionContext cx, ScriptObject iterator,
+            ReturnValue e) {
+        /* step 6.c */
+        /* steps 6.c.i-6.c.iii */
+        Callable returnMethod = GetMethod(cx, iterator, "return");
+        /* step 6.c.iv */
+        if (returnMethod == null) {
+            return null;
+        }
+        /* steps 6.c.v-6.c.vi */
+        Object innerReturnResult = returnMethod.call(cx, iterator, e.getValue());
+        /* step 6.c.vii */
+        if (!Type.isObject(innerReturnResult)) {
+            throw newTypeError(cx, Messages.Key.NotObjectType);
+        }
+        return Type.objectValue(innerReturnResult);
     }
 
     public static CallSite runtimeBootstrap(MethodHandles.Lookup caller, String name,
@@ -2876,7 +2958,7 @@ public final class ScriptRuntime {
 
     public static Object DefaultConstructor(ExecutionContext cx) {
         // EvaluateCall: super(...args)
-        Constructor newTarget = GetNewTargetAndThisUninitialized(cx);
+        Constructor newTarget = GetNewTarget(cx);
         Constructor superConstructor = GetSuperConstructor(cx);
         Object[] argList = SpreadArray(cx.resolveBindingValue("args", true), cx);
         ScriptObject result = EvaluateSuperConstructorCall(newTarget, superConstructor, argList, cx);
@@ -2886,11 +2968,7 @@ public final class ScriptRuntime {
 
     public static Object DefaultConstructorCall(OrdinaryFunction callee,
             ExecutionContext callerContext, Object thisValue, Object[] args) {
-        ExecutionContext calleeContext = ExecutionContext.newFunctionExecutionContext(
-                callerContext, callee, null, thisValue);
-        DefaultConstructorInit(calleeContext, callee, args);
-        DefaultConstructor(calleeContext);
-        return UNDEFINED;
+        throw newTypeError(callerContext, Messages.Key.InvalidCallClass);
     }
 
     public static ScriptObject DefaultConstructorConstruct(OrdinaryConstructorFunction callee,
@@ -2946,11 +3024,7 @@ public final class ScriptRuntime {
 
     public static Object DefaultEmptyConstructorCall(OrdinaryFunction callee,
             ExecutionContext callerContext, Object thisValue, Object[] args) {
-        ExecutionContext calleeContext = ExecutionContext.newFunctionExecutionContext(
-                callerContext, callee, null, thisValue);
-        DefaultEmptyConstructorInit(calleeContext, callee, args);
-        DefaultEmptyConstructor(calleeContext);
-        return UNDEFINED;
+        throw newTypeError(callerContext, Messages.Key.InvalidCallClass);
     }
 
     public static ScriptObject DefaultEmptyConstructorConstruct(OrdinaryConstructorFunction callee,
@@ -2981,19 +3055,19 @@ public final class ScriptRuntime {
         /* step 1 (not applicable) */
         /* step 2 */
         String name = fd.functionName();
-        /* steps 3-4 */
+        /* step 3 */
         OrdinaryAsyncFunction f = AsyncFunctionCreate(cx, FunctionKind.Normal, fd, scope);
-        /* step 5 */
+        /* step 4 */
         if (fd.hasSuperReference()) {
             MakeMethod(f, null);
         }
-        /* step 6 */
+        /* step 5 */
         OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.FunctionPrototype);
-        /* step 7 */
+        /* step 6 */
         MakeConstructor(f, true, prototype);
-        /* step 8 */
+        /* step 7 */
         SetFunctionName(f, name);
-        /* step 9 */
+        /* step 8 */
         return f;
     }
 
@@ -3010,48 +3084,48 @@ public final class ScriptRuntime {
             ExecutionContext cx) {
         OrdinaryAsyncFunction closure;
         if (!fd.hasScopedName()) {
-            /* steps 1-2 (generated code) */
-            /* step 3 */
+            /* step 1 (not applicable) */
+            /* step 2 */
             LexicalEnvironment<?> scope = cx.getLexicalEnvironment();
-            /* step 4 */
+            /* step 3 */
             closure = AsyncFunctionCreate(cx, FunctionKind.Normal, fd, scope);
-            /* step 5 */
+            /* step 4 */
             if (fd.hasSuperReference()) {
                 MakeMethod(closure, null);
             }
-            /* step 6 */
+            /* step 5 */
             OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.FunctionPrototype);
-            /* step 7 */
+            /* step 6 */
             MakeConstructor(closure, true, prototype);
         } else {
-            /* steps 1-2 (generated code) */
-            /* step 3 */
+            /* step 1 (not applicable) */
+            /* step 2 */
             LexicalEnvironment<?> runningContext = cx.getLexicalEnvironment();
-            /* step 4 */
+            /* step 3 */
             LexicalEnvironment<DeclarativeEnvironmentRecord> funcEnv = LexicalEnvironment
                     .newDeclarativeEnvironment(runningContext);
-            /* step 5 */
+            /* step 4 */
             DeclarativeEnvironmentRecord envRec = funcEnv.getEnvRec();
-            /* step 6 */
+            /* step 5 */
             String name = fd.functionName();
-            /* step 7 */
+            /* step 6 */
             envRec.createImmutableBinding(name, false);
-            /* step 8 */
+            /* step 7 */
             closure = AsyncFunctionCreate(cx, FunctionKind.Normal, fd, funcEnv);
-            /* step 9 */
+            /* step 8 */
             if (fd.hasSuperReference()) {
                 MakeMethod(closure, null);
             }
-            /* step 10 */
+            /* step 9 */
             OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.FunctionPrototype);
-            /* step 11 */
+            /* step 10 */
             MakeConstructor(closure, true, prototype);
-            /* step 12 */
+            /* step 11 */
             SetFunctionName(closure, name);
-            /* step 13 */
+            /* step 12 */
             envRec.initializeBinding(name, closure);
         }
-        /* step 8/14 */
+        /* step 7/13 */
         return closure;
     }
 
@@ -3069,7 +3143,7 @@ public final class ScriptRuntime {
         /* step 1 (not applicable) */
         /* step 2 */
         LexicalEnvironment<?> scope = cx.getLexicalEnvironment();
-        /* steps 3-4 */
+        /* step 3 */
         OrdinaryAsyncFunction closure = AsyncFunctionCreate(cx, FunctionKind.Arrow, fd, scope);
         /* step ? */
         OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.FunctionPrototype);
@@ -3086,17 +3160,19 @@ public final class ScriptRuntime {
      *            the script object
      * @param propKey
      *            the property key
+     * @param enumerable
+     *            the enumerable property attribute
      * @param cx
      *            the execution context
      * @param fd
      *            the function runtime info object
      */
     public static void EvaluatePropertyDefinitionAsync(OrdinaryObject object, Object propKey,
-            RuntimeInfo.Function fd, ExecutionContext cx) {
+            boolean enumerable, RuntimeInfo.Function fd, ExecutionContext cx) {
         if (propKey instanceof String) {
-            EvaluatePropertyDefinitionAsync(object, (String) propKey, fd, cx);
+            EvaluatePropertyDefinitionAsync(object, (String) propKey, enumerable, fd, cx);
         } else {
-            EvaluatePropertyDefinitionAsync(object, (Symbol) propKey, fd, cx);
+            EvaluatePropertyDefinitionAsync(object, (Symbol) propKey, enumerable, fd, cx);
         }
     }
 
@@ -3107,32 +3183,35 @@ public final class ScriptRuntime {
      *            the script object
      * @param propKey
      *            the property key
+     * @param enumerable
+     *            the enumerable property attribute
      * @param cx
      *            the execution context
      * @param fd
      *            the function runtime info object
      */
     public static void EvaluatePropertyDefinitionAsync(OrdinaryObject object, String propKey,
-            RuntimeInfo.Function fd, ExecutionContext cx) {
+            boolean enumerable, RuntimeInfo.Function fd, ExecutionContext cx) {
         /* steps 1-2 (bytecode) */
         /* step 3 (not applicable) */
         /* step 4 */
         LexicalEnvironment<?> scope = cx.getLexicalEnvironment();
-        /* step 5 (not applicable) */
-        /* step 6 */
+        /* step 5 */
         OrdinaryAsyncFunction closure = AsyncFunctionCreate(cx, FunctionKind.Method, fd, scope);
-        /* step 7 */
+        /* step 6 */
         if (fd.hasSuperReference()) {
             MakeMethod(closure, object);
         }
-        /* step 8 */
+        /* step 7 */
         OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.FunctionPrototype);
-        /* step 9 */
+        /* step 8 */
         MakeConstructor(closure, true, prototype);
-        /* steps 10-11 */
+        /* step 9 */
         SetFunctionName(closure, propKey);
-        /* step 12 */
-        CreateDataPropertyOrThrow(cx, object, propKey, closure);
+        /* step 10 */
+        PropertyDescriptor desc = new PropertyDescriptor(closure, true, enumerable, true);
+        /* step 11 */
+        DefinePropertyOrThrow(cx, object, propKey, desc);
     }
 
     /**
@@ -3142,32 +3221,35 @@ public final class ScriptRuntime {
      *            the script object
      * @param propKey
      *            the property key
+     * @param enumerable
+     *            the enumerable property attribute
      * @param fd
      *            the function runtime info object
      * @param cx
      *            the execution context
      */
     public static void EvaluatePropertyDefinitionAsync(OrdinaryObject object, Symbol propKey,
-            RuntimeInfo.Function fd, ExecutionContext cx) {
+            boolean enumerable, RuntimeInfo.Function fd, ExecutionContext cx) {
         /* steps 1-2 (bytecode) */
         /* step 3 (not applicable) */
         /* step 4 */
         LexicalEnvironment<?> scope = cx.getLexicalEnvironment();
-        /* step 5 (not applicable) */
-        /* step 6 */
+        /* step 5 */
         OrdinaryAsyncFunction closure = AsyncFunctionCreate(cx, FunctionKind.Method, fd, scope);
-        /* step 7 */
+        /* step 6 */
         if (fd.hasSuperReference()) {
             MakeMethod(closure, object);
         }
-        /* step 8 */
+        /* step 7 */
         OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.FunctionPrototype);
-        /* step 9 */
+        /* step 8 */
         MakeConstructor(closure, true, prototype);
-        /* steps 10-11 */
+        /* step 9 */
         SetFunctionName(closure, propKey);
-        /* step 12 */
-        CreateDataPropertyOrThrow(cx, object, propKey, closure);
+        /* step 10 */
+        PropertyDescriptor desc = new PropertyDescriptor(closure, true, enumerable, true);
+        /* step 11 */
+        DefinePropertyOrThrow(cx, object, propKey, desc);
     }
 
     /**

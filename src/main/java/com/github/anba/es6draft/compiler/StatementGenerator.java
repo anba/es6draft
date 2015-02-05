@@ -30,7 +30,6 @@ import com.github.anba.es6draft.compiler.assembler.Type;
 import com.github.anba.es6draft.compiler.assembler.Variable;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
-import com.github.anba.es6draft.runtime.internal.ReturnValue;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
 import com.github.anba.es6draft.runtime.internal.ScriptIterator;
 import com.github.anba.es6draft.runtime.types.Reference;
@@ -113,11 +112,6 @@ final class StatementGenerator extends
     }
 
     private static final class Methods {
-        // class: AbstractOperations
-        static final MethodName AbstractOperations_IteratorClose = MethodName.findStatic(
-                Types.AbstractOperations, "IteratorClose", Type.methodType(Type.VOID_TYPE,
-                        Types.ExecutionContext, Types.ScriptObject, Type.BOOLEAN_TYPE));
-
         // class: EnvironmentRecord
         static final MethodName EnvironmentRecord_createMutableBinding = MethodName.findInterface(
                 Types.EnvironmentRecord, "createMutableBinding",
@@ -157,10 +151,6 @@ final class StatementGenerator extends
 
         static final MethodName ScriptException_getValue = MethodName.findVirtual(
                 Types.ScriptException, "getValue", Type.methodType(Types.Object));
-
-        // class: ScriptIterator
-        static final MethodName ScriptIterator_getScriptObject = MethodName.findInterface(
-                Types.ScriptIterator, "getScriptObject", Type.methodType(Types.ScriptObject));
 
         // class: ScriptRuntime
         static final MethodName ScriptRuntime_debugger = MethodName.findStatic(Types.ScriptRuntime,
@@ -864,115 +854,32 @@ final class StatementGenerator extends
     }
 
     private <FORSTATEMENT extends IterationStatement & ScopedNode> Completion ForInOfBodyEvaluationWrap(
-            FORSTATEMENT node, Node lhs, Statement stmt, Variable<ScriptIterator<?>> iterator,
-            Variable<Reference<?, ?>> lhsRef, Jump loopstart, StatementVisitor mv) {
-        TryCatchLabel startIteration = new TryCatchLabel(), endIteration = new TryCatchLabel();
-        TryCatchLabel handlerCatch = new TryCatchLabel();
-        TryCatchLabel handlerCatchStackOverflow = new TryCatchLabel();
-        TryCatchLabel handlerReturn = null;
-        if (mv.isGeneratorOrAsync()
-                && !(mv.isResumable() && !codegen.isEnabled(Compiler.Option.NoResume))) {
-            handlerReturn = new TryCatchLabel();
-        }
-
-        mv.enterVariableScope();
-        Variable<Object> completion = mv.enterIterationBody(node);
-
-        // Emit loop body
-        mv.mark(startIteration);
-        mv.enterWrapped();
-        Completion loopBodyResult = ForInOfBodyEvaluationInner(node, lhs, stmt, lhsRef, mv);
-        mv.exitWrapped();
-        if (!loopBodyResult.isAbrupt()) {
-            mv.goTo(loopstart);
-        }
-        mv.mark(endIteration);
-
-        // Restore temporary abrupt targets
-        List<TempLabel> tempLabels = mv.exitIterationBody(node);
-
-        // Emit throw handler
-        Completion throwResult = emitForInOfThrowHandler(node, iterator, handlerCatch,
-                handlerCatchStackOverflow, mv);
-
-        // Emit return handler
-        Completion returnResult = emitForInOfReturnHandler(node, iterator, completion,
-                handlerReturn, tempLabels, mv);
-
-        mv.exitVariableScope();
-        mv.tryCatch(startIteration, endIteration, handlerCatch, Types.ScriptException);
-        mv.tryCatch(startIteration, endIteration, handlerCatchStackOverflow, Types.Error);
-        if (handlerReturn != null) {
-            mv.tryCatch(startIteration, endIteration, handlerReturn, Types.ReturnValue);
-        }
-
-        if (handlerReturn == null && tempLabels.isEmpty()) {
-            // No Return handler installed
-            return throwResult.select(loopBodyResult);
-        }
-        return returnResult.select(throwResult.select(loopBodyResult));
-    }
-
-    private <FORSTATEMENT extends IterationStatement & ScopedNode> Completion emitForInOfThrowHandler(
-            FORSTATEMENT node, Variable<ScriptIterator<?>> iterator, TryCatchLabel handlerCatch,
-            TryCatchLabel handlerCatchStackOverflow, StatementVisitor mv) {
-        mv.enterVariableScope();
-        Variable<Throwable> throwable = mv.newVariable("throwable", Throwable.class);
-
-        mv.catchHandler(handlerCatchStackOverflow, Types.Error);
-        mv.invoke(Methods.ScriptRuntime_getStackOverflowError);
-        mv.catchHandler(handlerCatch, Types.ScriptException);
-        mv.store(throwable);
-
-        IteratorClose(node, iterator, true, mv);
-
-        mv.load(throwable);
-        mv.athrow();
-        mv.exitVariableScope();
-
-        return Completion.Throw;
-    }
-
-    private <FORSTATEMENT extends IterationStatement & ScopedNode> Completion emitForInOfReturnHandler(
-            FORSTATEMENT node, Variable<ScriptIterator<?>> iterator, Variable<Object> completion,
-            TryCatchLabel handlerReturn, List<TempLabel> tempLabels, StatementVisitor mv) {
-        // (1) Optional ReturnValue exception handler
-        if (handlerReturn != null) {
-            mv.enterVariableScope();
-            Variable<ReturnValue> returnValue = mv.newVariable("returnValue", ReturnValue.class);
-            mv.catchHandler(handlerReturn, Types.ReturnValue);
-            mv.store(returnValue);
-
-            IteratorClose(node, iterator, false, mv);
-
-            mv.load(returnValue);
-            mv.athrow();
-            mv.exitVariableScope();
-        }
-
-        // (2) Intercept return/break instructions
-        for (TempLabel temp : tempLabels) {
-            if (temp.isTarget()) {
-                mv.mark(temp);
-
-                IteratorClose(node, iterator, false, mv);
-
-                mv.goTo(temp, completion);
+            FORSTATEMENT node, final Node lhs, final Statement stmt,
+            Variable<ScriptIterator<?>> iterator, final Variable<Reference<?, ?>> lhsRef,
+            final Jump loopstart, StatementVisitor mv) {
+        return new IterationGenerator<FORSTATEMENT, StatementVisitor>(codegen) {
+            @Override
+            protected Completion generateCode(FORSTATEMENT node,
+                    Variable<ScriptIterator<?>> iterator, StatementVisitor mv) {
+                mv.enterWrapped();
+                Completion loopBodyResult = ForInOfBodyEvaluationInner(node, lhs, stmt, lhsRef, mv);
+                mv.exitWrapped();
+                if (!loopBodyResult.isAbrupt()) {
+                    mv.goTo(loopstart);
+                }
+                return loopBodyResult;
             }
-        }
 
-        return Completion.Abrupt; // Return or Break
-    }
+            @Override
+            protected Variable<Object> enterIteration(FORSTATEMENT node, StatementVisitor mv) {
+                return mv.enterIterationBody(node);
+            }
 
-    private <FORSTATEMENT extends IterationStatement & ScopedNode> void IteratorClose(
-            FORSTATEMENT node, Variable<ScriptIterator<?>> iterator, boolean throwCompletion,
-            StatementVisitor mv) {
-        mv.loadExecutionContext();
-        mv.load(iterator);
-        mv.invoke(Methods.ScriptIterator_getScriptObject);
-        mv.iconst(throwCompletion);
-        mv.lineInfo(node);
-        mv.invoke(Methods.AbstractOperations_IteratorClose);
+            @Override
+            protected List<TempLabel> exitIteration(FORSTATEMENT node, StatementVisitor mv) {
+                return mv.exitIterationBody(node);
+            }
+        }.generate(node, iterator, mv);
     }
 
     private <FORSTATEMENT extends IterationStatement & ScopedNode> Completion ForInOfBodyEvaluationInner(

@@ -187,6 +187,7 @@ public final class Messages {
         PropertyNotCallable("type.property_not_callable"),
         InvalidSuperClass("type.invalid_super_class"),
         InvalidCall("type.invalid_call"),
+        InvalidCallClass("type.invalid_call_class"),
         MissingNewTarget("type.missing_new_target"),
         NotObjectTypeFromConstructor("type.not_object_type_from_constructor"),
         InitializedThis("type.initialized_this"),

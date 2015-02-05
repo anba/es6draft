@@ -97,6 +97,9 @@ object-literal-multiple-proto-fields.js
 # invalid test, RegExp.prototype.source can only be applied on RegExp objects
 regress/regress-447561.js
 
+# super(expr) evaluates expr before checking this-initialization state
+harmony/classes-experimental.js
+
 
 ###################
 # Misc issues     #

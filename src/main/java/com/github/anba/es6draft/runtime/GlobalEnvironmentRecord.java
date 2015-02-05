@@ -129,8 +129,8 @@ public final class GlobalEnvironmentRecord implements EnvironmentRecord {
             declRec.initializeBinding(name, value);
             return;
         }
-        /* step 4 */
-        // TODO: assert?
+        // FIXME: InitializeBinding for ObjectEnvironment unreachable
+        /* step 4 (not applicable) */
         /* step 5 (omitted) */
         /* step 6 */
         objectRec.initializeBinding(name, value);

@@ -45,6 +45,9 @@ final class FunctionCodeGenerator {
                 Types.FunctionObject$ConstructorKind, "Derived",
                 Types.FunctionObject$ConstructorKind);
 
+        static final FieldName MessagesKey_InvalidCallClass = FieldName.findStatic(
+                Types.Messages$Key, "InvalidCallClass", Types.Messages$Key);
+
         static final FieldName MessagesKey_NotObjectTypeFromConstructor = FieldName.findStatic(
                 Types.Messages$Key, "NotObjectTypeFromConstructor", Types.Messages$Key);
     }
@@ -254,6 +257,8 @@ final class FunctionCodeGenerator {
 
             if (isLegacy(node)) {
                 generateLegacyFunctionCall(node, mv);
+            } else if (isConstructorMethod(node)) {
+                generateClassConstructorCall(node, mv);
             } else {
                 generateFunctionCall(node, mv);
             }
@@ -410,6 +415,16 @@ final class FunctionCodeGenerator {
         // (3) Return result value
         /* steps 9-10 */
         returnResultOrUndefined(mv);
+    }
+
+    private void generateClassConstructorCall(FunctionNode node, InstructionVisitor mv) {
+        Variable<ExecutionContext> callerContext = mv.getParameter(EXECUTION_CONTEXT,
+                ExecutionContext.class);
+
+        mv.load(callerContext);
+        mv.get(Fields.MessagesKey_InvalidCallClass);
+        mv.invoke(Methods.Errors_newTypeError);
+        mv.athrow();
     }
 
     private void generateLegacyFunctionConstruct(FunctionNode node, InstructionVisitor mv) {
@@ -684,7 +699,7 @@ final class FunctionCodeGenerator {
     }
 
     /**
-     * 9.2.2.1 PrepareOrdinaryCall( F, newTarget )<br>
+     * 9.2.2.1 PrepareForOrdinaryCall( F, newTarget )<br>
      * 9.2.2.2 OrdinaryCallBindThis ( F, calleeContext, thisArgument )
      * 
      * <code>
@@ -721,7 +736,7 @@ final class FunctionCodeGenerator {
     }
 
     /**
-     * 9.2.2.1 PrepareOrdinaryCall( F, newTarget )<br>
+     * 9.2.2.1 PrepareForOrdinaryCall( F, newTarget )<br>
      * 9.2.2.2 OrdinaryCallBindThis ( F, calleeContext, thisArgument )
      * 
      * @param calleeContext
@@ -749,7 +764,7 @@ final class FunctionCodeGenerator {
     }
 
     /**
-     * 9.2.2.1 PrepareOrdinaryCall( F, newTarget )<br>
+     * 9.2.2.1 PrepareForOrdinaryCall( F, newTarget )<br>
      * 9.2.2.2 OrdinaryCallBindThis ( F, calleeContext, thisArgument )
      * 
      * @param calleeContext

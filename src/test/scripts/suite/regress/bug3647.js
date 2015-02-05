@@ -39,6 +39,6 @@ var result = RegExp.prototype[Symbol.match].call(re, "");
 
 assertNotNull(result);
 assertSame(1, result.length);
-assertSame(matchResult, result[0]);
+assertSame("", result[0]);
 
 assertSame(1, re.lastIndex);

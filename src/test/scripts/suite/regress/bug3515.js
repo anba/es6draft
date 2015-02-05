@@ -5,11 +5,11 @@
  * <https://github.com/anba/es6draft>
  */
 const {
-  assertTrue
+  assertFalse
 } = Assert;
 
 // Classes: Inherited methods and properties ought to be non-enumerable
 // https://bugs.ecmascript.org/show_bug.cgi?id=3515
 
-assertTrue(Object.getOwnPropertyDescriptor(class { m() {}}.prototype, "m").enumerable);
-assertTrue(Object.getOwnPropertyDescriptor(class { static m() {}}, "m").enumerable);
+assertFalse(Object.getOwnPropertyDescriptor(class { m() {}}.prototype, "m").enumerable);
+assertFalse(Object.getOwnPropertyDescriptor(class { static m() {}}, "m").enumerable);

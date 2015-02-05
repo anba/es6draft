@@ -296,6 +296,7 @@ public final class InlineArrayList<E> extends AbstractList<E> implements List<E>
     public void trimToSize() {
         E[] ext = this.extended;
         if (ext != null && size < ext.length) {
+            modCount++;
             extended = Arrays.copyOf(ext, size);
         }
     }

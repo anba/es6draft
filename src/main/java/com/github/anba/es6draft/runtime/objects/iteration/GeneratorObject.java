@@ -335,7 +335,6 @@ public final class GeneratorObject extends OrdinaryObject {
                 return (ScriptObject) value;
             }
             genObject.close();
-            // FIXME: spec bug - handle implicit return (bug 3669)
             if (result == null) {
                 result = UNDEFINED;
             }
@@ -424,7 +423,6 @@ public final class GeneratorObject extends OrdinaryObject {
                         throw new RuntimeException(e);
                     }
                     out.put(COMPLETED);
-                    // FIXME: spec bug - handle implicit return (bug 3669)
                     if (result == null) {
                         result = UNDEFINED;
                     }

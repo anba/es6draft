@@ -5,7 +5,7 @@
  * <https://github.com/anba/es6draft>
  */
 const {
-  assertInstanceOf, assertNull, assertNotNull
+  assertInstanceOf, assertUndefined, assertNotUndefined
 } = Assert;
 
 // 15.1.1
@@ -32,7 +32,7 @@ assertInstanceOf(SyntaxError, err);
 // Direct eval, function code ([[Call]])
 (function() {
   var newTarget = eval("new.target");
-  assertNull(newTarget);
+  assertUndefined(newTarget);
 })();
 
 // Indirect eval, function code ([[Call]])
@@ -49,7 +49,7 @@ assertInstanceOf(SyntaxError, err);
 // Direct eval, function code ([[Construct]])
 new function() {
   var newTarget = eval("new.target");
-  assertNotNull(newTarget);
+  assertNotUndefined(newTarget);
 };
 
 // Indirect eval, function code ([[Construct]])

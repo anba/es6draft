@@ -13,15 +13,19 @@ import static com.github.anba.es6draft.semantics.StaticSemantics.IsAnonymousFunc
 import static com.github.anba.es6draft.semantics.StaticSemantics.PropName;
 
 import java.util.Iterator;
+import java.util.List;
 
 import com.github.anba.es6draft.ast.*;
 import com.github.anba.es6draft.ast.scope.Name;
 import com.github.anba.es6draft.compiler.DefaultCodeGenerator.ValType;
+import com.github.anba.es6draft.compiler.Labels.TempLabel;
+import com.github.anba.es6draft.compiler.StatementGenerator.Completion;
 import com.github.anba.es6draft.compiler.assembler.Jump;
 import com.github.anba.es6draft.compiler.assembler.MethodName;
 import com.github.anba.es6draft.compiler.assembler.Type;
 import com.github.anba.es6draft.compiler.assembler.Variable;
 import com.github.anba.es6draft.runtime.EnvironmentRecord;
+import com.github.anba.es6draft.runtime.internal.ScriptIterator;
 
 /**
  * <h1>Runtime Semantics: BindingInitialization</h1>
@@ -57,6 +61,10 @@ final class BindingInitializationGenerator {
                 Types.AbstractOperations, "GetV",
                 Type.methodType(Types.Object, Types.ExecutionContext, Types.Object, Types.String));
 
+        static final MethodName AbstractOperations_RequireObjectCoercible = MethodName.findStatic(
+                Types.AbstractOperations, "RequireObjectCoercible",
+                Type.methodType(Types.Object, Types.ExecutionContext, Types.Object));
+
         // class: EnvironmentRecord
         static final MethodName EnvironmentRecord_initializeBinding = MethodName.findInterface(
                 Types.EnvironmentRecord, "initializeBinding",
@@ -71,9 +79,9 @@ final class BindingInitializationGenerator {
                 Types.ScriptRuntime, "createRestArray",
                 Type.methodType(Types.ArrayObject, Types.Iterator, Types.ExecutionContext));
 
-        static final MethodName ScriptRuntime_getIterator = MethodName.findStatic(
-                Types.ScriptRuntime, "getIterator",
-                Type.methodType(Types.Iterator, Types.Object, Types.ExecutionContext));
+        static final MethodName ScriptRuntime_iterate = MethodName.findStatic(Types.ScriptRuntime,
+                "iterate",
+                Type.methodType(Types.ScriptIterator, Types.Object, Types.ExecutionContext));
 
         static final MethodName ScriptRuntime_iteratorNextAndIgnore = MethodName.findStatic(
                 Types.ScriptRuntime, "iteratorNextAndIgnore",
@@ -292,7 +300,7 @@ final class BindingInitializationGenerator {
         }
 
         protected final void IteratorBindingInitialization(ArrayBindingPattern node,
-                Variable<Iterator<?>> iterator) {
+                Variable<? extends Iterator<?>> iterator) {
             node.accept(new IteratorBindingInitialization(codegen, mv, environment, envRec),
                     iterator);
         }
@@ -380,16 +388,48 @@ final class BindingInitializationGenerator {
         public void visit(ArrayBindingPattern node, Void value) {
             // step 1-2:
             // stack: [(env), value] -> [(env)]
-            Variable<Iterator<?>> iterator = mv.newScratchVariable(Iterator.class).uncheckedCast();
+            mv.enterVariableScope();
+            Variable<ScriptIterator<?>> iterator = mv.newVariable("iterator", ScriptIterator.class)
+                    .uncheckedCast();
             mv.lineInfo(node);
             mv.loadExecutionContext();
-            mv.invoke(Methods.ScriptRuntime_getIterator);
+            mv.invoke(Methods.ScriptRuntime_iterate);
             mv.store(iterator);
 
-            // step 3:
-            IteratorBindingInitialization(node, iterator);
+            new IterationGenerator<ArrayBindingPattern, ExpressionVisitor>(codegen) {
+                final Jump iterationComplete = new Jump();
 
-            mv.freeVariable(iterator);
+                @Override
+                protected Completion generateCode(ArrayBindingPattern node,
+                        Variable<ScriptIterator<?>> iterator, ExpressionVisitor mv) {
+                    // step 3
+                    IteratorBindingInitialization(node, iterator);
+                    mv.goTo(iterationComplete);
+                    return Completion.Normal;
+                }
+
+                @Override
+                protected void generateEpilogue(ArrayBindingPattern node,
+                        Variable<ScriptIterator<?>> iterator, ExpressionVisitor mv) {
+                    // step 4
+                    mv.mark(iterationComplete);
+                    IteratorClose(node, iterator, false, mv);
+                }
+
+                @Override
+                protected Variable<Object> enterIteration(ArrayBindingPattern node,
+                        ExpressionVisitor mv) {
+                    return mv.enterIteration();
+                }
+
+                @Override
+                protected List<TempLabel> exitIteration(ArrayBindingPattern node,
+                        ExpressionVisitor mv) {
+                    return mv.exitIteration();
+                }
+            }.generate(node, iterator, mv);
+
+            mv.exitVariableScope();
 
             // stack: [(env)] -> []
             popEnvIfPresent();
@@ -397,8 +437,23 @@ final class BindingInitializationGenerator {
 
         @Override
         public void visit(ObjectBindingPattern node, Void value) {
+            if (node.getProperties().isEmpty()) {
+                // stack: [(env), value] -> [(env)]
+                mv.lineInfo(node);
+                mv.loadExecutionContext();
+                mv.swap();
+                mv.invoke(Methods.AbstractOperations_RequireObjectCoercible);
+                mv.pop();
+
+                // stack: [(env)] -> []
+                popEnvIfPresent();
+
+                return;
+            }
+
             // stack: [(env), value] -> [(env)]
-            Variable<Object> val = mv.newScratchVariable(Object.class);
+            mv.enterVariableScope();
+            Variable<Object> val = mv.newVariable("value", Object.class);
             mv.store(val);
 
             // step 1: [...]
@@ -421,7 +476,7 @@ final class BindingInitializationGenerator {
                 }
             }
 
-            mv.freeVariable(val);
+            mv.exitVariableScope();
 
             // stack: [(env)] -> []
             popEnvIfPresent();
@@ -438,14 +493,14 @@ final class BindingInitializationGenerator {
      * </ul>
      */
     private static final class IteratorBindingInitialization extends
-            RuntimeSemantics<Variable<Iterator<?>>> {
+            RuntimeSemantics<Variable<? extends Iterator<?>>> {
         IteratorBindingInitialization(CodeGenerator codegen, ExpressionVisitor mv,
                 EnvironmentType environment, Variable<? extends EnvironmentRecord> envRec) {
             super(codegen, mv, environment, envRec);
         }
 
         @Override
-        public void visit(FormalParameterList node, Variable<Iterator<?>> iterator) {
+        public void visit(FormalParameterList node, Variable<? extends Iterator<?>> iterator) {
             // stack: [(env)] -> [(env)]
             for (FormalParameter formal : node) {
                 formal.accept(this, iterator);
@@ -453,7 +508,7 @@ final class BindingInitializationGenerator {
         }
 
         @Override
-        public void visit(ArrayBindingPattern node, Variable<Iterator<?>> iterator) {
+        public void visit(ArrayBindingPattern node, Variable<? extends Iterator<?>> iterator) {
             // stack: [(env)] -> [(env)]
             for (BindingElementItem element : node.getElements()) {
                 element.accept(this, iterator);
@@ -461,14 +516,14 @@ final class BindingInitializationGenerator {
         }
 
         @Override
-        public void visit(BindingElision node, Variable<Iterator<?>> iterator) {
+        public void visit(BindingElision node, Variable<? extends Iterator<?>> iterator) {
             // stack: [(env)] -> [(env)]
             mv.load(iterator);
             mv.invoke(Methods.ScriptRuntime_iteratorNextAndIgnore);
         }
 
         @Override
-        public void visit(BindingElement node, Variable<Iterator<?>> iterator) {
+        public void visit(BindingElement node, Variable<? extends Iterator<?>> iterator) {
             Binding binding = node.getBinding();
             Expression initializer = node.getInitializer();
 
@@ -539,7 +594,7 @@ final class BindingInitializationGenerator {
         }
 
         @Override
-        public void visit(BindingRestElement node, Variable<Iterator<?>> iterator) {
+        public void visit(BindingRestElement node, Variable<? extends Iterator<?>> iterator) {
             /* step 1 */
             // stack: [(env)] -> [(env), <env, id>|ref]
             dupEnvIfPresent();

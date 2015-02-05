@@ -38,7 +38,8 @@ import com.github.anba.es6draft.runtime.modules.ModuleRecord;
  */
 public final class Compiler {
     public enum Option {
-        PrintCode, PrintFullCode, DebugInfo, NoResume, NoTailCall, SourceMap
+        PrintCode, PrintFullCode, DebugInfo, NoResume, NoTailCall, SourceMap,
+        IterationCatchStackOverflow
     }
 
     private final ExecutorService executor;

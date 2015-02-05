@@ -64,14 +64,14 @@ assertThrows(ValidError, () => {
 assertSame("ok", log);
 
 var log = "";
-assertSame(123, function() {
+assertThrows(TypeError, () => {
   var iter = returnIter(() => { log += "k"; return null });
   for (var o of iter) {
     log += "o";
     break;
   }
-  return 123;
-}());
+  fail `unreachable`;
+});
 assertSame("ok", log);
 
 var log = "";
@@ -86,12 +86,12 @@ assertThrows(ValidError, () => {
 assertSame("ok", log);
 
 var log = "";
-assertSame(123, function() {
+assertThrows(TypeError, () => {
   var iter = returnIter(() => { log += "k"; return null });
   for (var o of iter) {
     log += "o";
     return 123;
   }
   fail `unreachable`;
-}());
+});
 assertSame("ok", log);

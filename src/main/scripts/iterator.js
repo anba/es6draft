@@ -100,14 +100,14 @@ function MakeIterator() {
     return Object(o) === o && %CallFunction(Object_prototype_hasOwnProperty, o, nextSym);
   }
 
-  class IteratorTemplate {
-    constructor(obj, keys) {
-      if (new.target) {
-        return ToIterator(this, obj, keys);
-      } else {
-        return new Iterator(obj, keys);
-      }
+  function Iterator(obj, keys) {
+    if (new.target) {
+      return ToIterator(this, obj, keys);
+    } else {
+      return new Iterator(obj, keys);
     }
+  }
+  Object.assign(Iterator.prototype, {
     next() {
       if (!IsInitializedIterator(this)) {
         throw new TypeError();
@@ -119,25 +119,21 @@ function MakeIterator() {
         }
         return next.value;
       }
-    }
+    },
     [iteratorSym]() {
       return new LegacyIterator(this);
-    }
+    },
     get [toStringTagSym]() {
       return "Iterator";
-    }
-  }
-
-  Object.defineProperties(IteratorTemplate.prototype, {
+    },
+  });
+  Object.defineProperties(Iterator.prototype, {
     constructor: {enumerable: false},
     next: {enumerable: false},
     [iteratorSym]: {enumerable: false},
     [toStringTagSym]: {enumerable: false},
   });
-
-  const Iterator = IteratorTemplate.toMethod({});
-  Reflect.defineProperty(Iterator, "length", {value: 2, configurable: true});
-  Reflect.defineProperty(Iterator, "prototype", {value: ToIterator(IteratorTemplate.prototype, [])});
+  Iterator.prototype = ToIterator(Iterator.prototype, []);
 
   return Iterator;
 }
@@ -178,11 +174,6 @@ function MakeLegacyIterator() {
 
   delete LegacyIterator.prototype.constructor;
 
-  Object.defineProperties(LegacyIterator.prototype, {
-    next: {enumerable: false},
-    [iteratorSym]: {enumerable: false},
-  });
-
   Object.setPrototypeOf(LegacyIterator, Iterator);
   Object.setPrototypeOf(LegacyIterator.prototype, Iterator.prototype);
 
@@ -219,12 +210,6 @@ function MakeBuiltinIterator(tag, throwErrorIfPrototype) {
   }
 
   delete BuiltinIterator.prototype.constructor;
-
-  Object.defineProperties(BuiltinIterator.prototype, {
-    next: {enumerable: false},
-    [iteratorSym]: {enumerable: false},
-    [toStringTagSym]: {enumerable: false},
-  });
 
   Object.setPrototypeOf(BuiltinIterator, Iterator);
   Object.setPrototypeOf(BuiltinIterator.prototype, Iterator.prototype);

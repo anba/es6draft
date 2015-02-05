@@ -81,7 +81,7 @@ public class OrdinaryFunction extends FunctionObject {
      */
     public static OrdinaryFunction FunctionAllocate(ExecutionContext cx,
             ScriptObject functionPrototype, boolean strict, FunctionKind functionKind) {
-        assert !(functionKind == FunctionKind.Normal || functionKind == FunctionKind.ConstructorMethod);
+        assert !(functionKind == FunctionKind.Normal || functionKind == FunctionKind.ClassConstructor);
         Realm realm = cx.getRealm();
         /* steps 1-5 (implicit) */
         /* steps 6-11 */
@@ -217,7 +217,20 @@ public class OrdinaryFunction extends FunctionObject {
     }
 
     /**
-     * 9.2.10 MakeMethod ( F, homeObject ) Abstract Operation
+     * 9.2.10 MakeClassConstructor ( F) Abstract Operation
+     * 
+     * @param f
+     *            the function object
+     */
+    public static void MakeClassConstructor(OrdinaryConstructorFunction f) {
+        /* step 1 (not applicable) */
+        /* steps 2-3 */
+        assert f.getFunctionKind() == FunctionKind.ClassConstructor;
+        /* step 4 (return) */
+    }
+
+    /**
+     * 9.2.11 MakeMethod ( F, homeObject ) Abstract Operation
      * 
      * @param f
      *            the function object
@@ -232,7 +245,7 @@ public class OrdinaryFunction extends FunctionObject {
     }
 
     /**
-     * 9.2.11 SetFunctionName (F, name, prefix) Abstract Operation
+     * 9.2.12 SetFunctionName (F, name, prefix) Abstract Operation
      * 
      * @param f
      *            the function object
@@ -244,7 +257,7 @@ public class OrdinaryFunction extends FunctionObject {
     }
 
     /**
-     * 9.2.11 SetFunctionName (F, name, prefix) Abstract Operation
+     * 9.2.12 SetFunctionName (F, name, prefix) Abstract Operation
      * 
      * @param f
      *            the function object
@@ -268,7 +281,7 @@ public class OrdinaryFunction extends FunctionObject {
     }
 
     /**
-     * 9.2.11 SetFunctionName (F, name, prefix) Abstract Operation
+     * 9.2.12 SetFunctionName (F, name, prefix) Abstract Operation
      * 
      * @param f
      *            the function object
@@ -280,7 +293,7 @@ public class OrdinaryFunction extends FunctionObject {
     }
 
     /**
-     * 9.2.11 SetFunctionName (F, name, prefix) Abstract Operation
+     * 9.2.12 SetFunctionName (F, name, prefix) Abstract Operation
      * 
      * @param f
      *            the function object
@@ -306,7 +319,7 @@ public class OrdinaryFunction extends FunctionObject {
     }
 
     /**
-     * 9.2.11 SetFunctionName (F, name, prefix) Abstract Operation
+     * 9.2.12 SetFunctionName (F, name, prefix) Abstract Operation
      * 
      * @param f
      *            the function object
@@ -330,7 +343,7 @@ public class OrdinaryFunction extends FunctionObject {
     }
 
     /**
-     * 9.2.12 CloneMethod(function, newHome) Abstract Operation
+     * 9.2.? CloneMethod(function, newHome) Abstract Operation
      * 
      * @param cx
      *            the execution context
@@ -355,7 +368,7 @@ public class OrdinaryFunction extends FunctionObject {
     }
 
     /**
-     * 9.2.12 CloneMethod(function, newHome, newName) Abstract Operation
+     * 9.2.? CloneMethod(function, newHome, newName) Abstract Operation
      * 
      * @param cx
      *            the execution context

@@ -22,6 +22,7 @@ const {
       return(...args) {
         assertSame(0, args.length);
         returnCalled = true;
+        return {};
       }
     };
     let rval = fn(iter);
@@ -94,6 +95,7 @@ const {
         argsLength = args.length;
         returnCalled = true;
         handler(args[0]);
+        return {};
       }
     };
     let rval;

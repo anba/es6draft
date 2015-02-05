@@ -799,9 +799,7 @@ public final class MathObject extends OrdinaryObject implements Initializable {
          */
         @Function(name = "clz32", arity = 1)
         public static Object clz32(ExecutionContext cx, Object thisValue, Object x) {
-            /* steps 1-2 */
             long n = ToUint32(cx, x);
-            /* steps 3-4 */
             return Integer.numberOfLeadingZeros((int) n);
         }
     }

@@ -24,7 +24,7 @@ function* g() {
 }
 
 function* wrap(iter) {
-  yield* iter;
+  return yield* iter;
 }
 
 {
@@ -43,7 +43,8 @@ function* wrap(iter) {
   let it = wrap(g());
   assertEquals({value: 1, done: false}, it.next());
   assertEquals({value: 2, done: false}, it.next());
-  assertThrows(Err, () => it.throw(new Err));
-  assertEquals({value: void 0, done: true}, it.next());
+  assertEquals({value: 3, done: false}, it.throw(new Error));
+  assertEquals({value: 4, done: false}, it.next());
+  assertEquals({value: 5, done: true}, it.next());
   assertEquals({value: void 0, done: true}, it.next());
 }

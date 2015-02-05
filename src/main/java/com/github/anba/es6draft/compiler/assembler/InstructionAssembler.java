@@ -345,6 +345,10 @@ public class InstructionAssembler {
         return !(stack instanceof EmptyStack);
     }
 
+    public final int getStackSize() {
+        return stack.getStackPointer();
+    }
+
     public final Type[] getStack() {
         return stack.getStack();
     }

@@ -13,10 +13,10 @@ const {
 
 // IteratorBindingInitialization
 {
-  let [{}] = [void 0];
+  assertThrows(TypeError, () => { let [{}] = [void 0]; });
   assertThrows(TypeError, () => { let [{p}] = [void 0]; });
 
-  let [{}] = [null];
+  assertThrows(TypeError, () => { let [{}] = [null]; });
   assertThrows(TypeError, () => { let [{p}] = [null]; });
 
   {
@@ -24,10 +24,10 @@ const {
     assertSame(Boolean.prototype.valueOf, valueOf);
   }
 
-  let [{} = void 0] = [void 0];
+  assertThrows(TypeError, () => { let [{} = void 0] = [void 0]; });
   assertThrows(TypeError, () => { let [{p} = void 0] = [void 0]; });
 
-  let [{} = null] = [void 0];
+  assertThrows(TypeError, () => { let [{} = null] = [void 0]; });
   assertThrows(TypeError, () => { let [{p} = null] = [void 0]; });
 
   {
@@ -38,10 +38,10 @@ const {
 
 // KeyedBindingInitialization
 {
-  let {p: {}} = {p: void 0};
+  assertThrows(TypeError, () => { let {p: {}} = {p: void 0}; });
   assertThrows(TypeError, () => { let {p: {q}} = {p: void 0}; });
 
-  let {p: {}} = {p: null};
+  assertThrows(TypeError, () => { let {p: {}} = {p: null}; });
   assertThrows(TypeError, () => { let {p: {q}} = {p: null}; });
 
   {
@@ -49,10 +49,10 @@ const {
     assertSame(Boolean.prototype.valueOf, valueOf);
   }
 
-  let {p: {} = void 0} = {p: void 0};
+  assertThrows(TypeError, () => { let {p: {} = void 0} = {p: void 0}; });
   assertThrows(TypeError, () => { let {p: {q} = void 0} = {p: void 0}; });
 
-  let {p: {} = null} = {p: void 0};
+  assertThrows(TypeError, () => { let {p: {} = null} = {p: void 0}; });
   assertThrows(TypeError, () => { let {p: {q} = null} = {p: void 0}; });
 
   {

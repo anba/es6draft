@@ -49,9 +49,9 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
                 Types.AbstractOperations, "HasOwnProperty", Type.methodType(Type.BOOLEAN_TYPE,
                         Types.ExecutionContext, Types.ScriptObject, Types.String));
 
-        static final MethodName AbstractOperations_HasProperty = MethodName.findStatic(
-                Types.AbstractOperations, "HasProperty", Type.methodType(Type.BOOLEAN_TYPE,
-                        Types.ExecutionContext, Types.ScriptObject, Types.String));
+        static final MethodName AbstractOperations_GetIterator = MethodName.findStatic(
+                Types.AbstractOperations, "GetIterator",
+                Type.methodType(Types.ScriptObject, Types.ExecutionContext, Types.Object));
 
         static final MethodName AbstractOperations_IteratorComplete = MethodName.findStatic(
                 Types.AbstractOperations, "IteratorComplete",
@@ -59,14 +59,6 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
 
         static final MethodName AbstractOperations_IteratorNext = MethodName.findStatic(
                 Types.AbstractOperations, "IteratorNext", Type.methodType(Types.ScriptObject,
-                        Types.ExecutionContext, Types.ScriptObject, Types.Object));
-
-        static final MethodName AbstractOperations_IteratorReturn = MethodName.findStatic(
-                Types.AbstractOperations, "IteratorReturn", Type.methodType(Types.Object,
-                        Types.ExecutionContext, Types.ScriptObject, Types.Object));
-
-        static final MethodName AbstractOperations_IteratorThrow = MethodName.findStatic(
-                Types.AbstractOperations, "IteratorThrow", Type.methodType(Type.VOID_TYPE,
                         Types.ExecutionContext, Types.ScriptObject, Types.Object));
 
         static final MethodName AbstractOperations_IteratorValue = MethodName.findStatic(
@@ -205,10 +197,6 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
         static final MethodName ReturnValue_getValue = MethodName.findVirtual(Types.ReturnValue,
                 "getValue", Type.methodType(Types.Object));
 
-        // class: ScriptException
-        static final MethodName ScriptException_getValue = MethodName.findVirtual(
-                Types.ScriptException, "getValue", Type.methodType(Types.Object));
-
         // class: ScriptRuntime
         static final MethodName ScriptRuntime_CreateDefaultConstructor = MethodName.findStatic(
                 Types.ScriptRuntime, "CreateDefaultConstructor",
@@ -239,12 +227,16 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
                 Types.ScriptRuntime, "getDefaultClassProto",
                 Type.methodType(Types.ScriptObject_, Types.ExecutionContext));
 
-        static final MethodName ScriptRuntime_getIteratorObject = MethodName.findStatic(
-                Types.ScriptRuntime, "getIteratorObject",
-                Type.methodType(Types.ScriptObject, Types.Object, Types.ExecutionContext));
-
         static final MethodName ScriptRuntime_yield = MethodName.findStatic(Types.ScriptRuntime,
                 "yield", Type.methodType(Types.Object, Types.Object, Types.ExecutionContext));
+
+        static final MethodName ScriptRuntime_yieldThrowCompletion = MethodName.findStatic(
+                Types.ScriptRuntime, "yieldThrowCompletion", Type.methodType(Types.ScriptObject,
+                        Types.ExecutionContext, Types.ScriptObject, Types.ScriptException));
+
+        static final MethodName ScriptRuntime_yieldReturnCompletion = MethodName.findStatic(
+                Types.ScriptRuntime, "yieldReturnCompletion", Type.methodType(Types.ScriptObject,
+                        Types.ExecutionContext, Types.ScriptObject, Types.ReturnValue));
 
         // class: Type
         static final MethodName Type_isNull = MethodName.findStatic(Types._Type, "isNull",
@@ -1267,6 +1259,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
     protected final void ClassDefinitionEvaluation(ClassDefinition def, String className,
             ExpressionVisitor mv) {
         mv.enterClassDefinition();
+        mv.enterVariableScope();
 
         // step 1 (not applicable)
         // steps 2-4
@@ -1306,7 +1299,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
         }
 
         // stack: [superCls?, <constructorParent,proto>] -> [superCls?, <constructorParent,proto>]
-        Variable<OrdinaryObject> proto = mv.newScratchVariable(OrdinaryObject.class);
+        Variable<OrdinaryObject> proto = mv.newVariable("proto", OrdinaryObject.class);
         mv.dup();
         mv.aload(1, Types.ScriptObject);
         mv.checkcast(Types.OrdinaryObject);
@@ -1355,8 +1348,8 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
         mv.invoke(Methods.ScriptRuntime_EvaluateConstructorMethod);
 
         // stack: [F] -> []
-        Variable<OrdinaryConstructorFunction> F = mv
-                .newScratchVariable(OrdinaryConstructorFunction.class);
+        Variable<OrdinaryConstructorFunction> F = mv.newVariable("F",
+                OrdinaryConstructorFunction.class);
         mv.store(F);
 
         // steps 18-20
@@ -1383,8 +1376,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
         // stack: [] -> [F]
         mv.load(F);
 
-        mv.freeVariable(proto);
-        mv.freeVariable(F);
+        mv.exitVariableScope();
 
         // step 23 (return F)
         mv.exitClassDefinition();
@@ -1410,6 +1402,8 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
         if (mv.isResumable() && !codegen.isEnabled(Compiler.Option.NoResume)) {
             assert mv.hasStack();
             Jump iteratorNext = new Jump();
+            Jump generatorYield = new Jump();
+            Jump generatorYieldOrReturn = new Jump();
             Jump done = new Jump();
 
             mv.enterVariableScope();
@@ -1420,7 +1414,8 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
             /* steps 3-4 */
             // stack: [value] -> []
             mv.loadExecutionContext();
-            mv.invoke(Methods.ScriptRuntime_getIteratorObject);
+            mv.swap();
+            mv.invoke(Methods.AbstractOperations_GetIterator);
             mv.store(iterator);
 
             /* step 5 */
@@ -1447,6 +1442,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
             /* step 6.a.vi */
             // stack: [] -> [Object(innerResult)]
             // force stack top to Object-type
+            mv.mark(generatorYield);
             mv.load(innerResult);
             mv.checkcast(Types.Object);
             mv.newResumptionPoint();
@@ -1458,24 +1454,15 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
             mv.instanceOf(Types.ScriptException);
             mv.ifeq(isException);
             {
-                Jump hasThrow = new Jump();
+                /* steps 6.b.iii.1-4, 6.b.iv */
                 mv.loadExecutionContext();
                 mv.load(iterator);
-                mv.aconst("throw");
-                mv.invoke(Methods.AbstractOperations_HasProperty);
-                mv.ifeq(hasThrow);
-                {
-                    mv.loadExecutionContext();
-                    mv.load(iterator);
-                    mv.load(received);
-                    mv.checkcast(Types.ScriptException);
-                    mv.invoke(Methods.ScriptException_getValue);
-                    mv.invoke(Methods.AbstractOperations_IteratorThrow);
-                }
-                mv.mark(hasThrow);
                 mv.load(received);
                 mv.checkcast(Types.ScriptException);
-                mv.athrow();
+                mv.invoke(Methods.ScriptRuntime_yieldThrowCompletion);
+                mv.store(innerResult);
+
+                mv.goTo(generatorYieldOrReturn);
             }
             mv.mark(isException);
 
@@ -1484,27 +1471,38 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
             mv.instanceOf(Types.ReturnValue);
             mv.ifeq(iteratorNext);
             {
-                Jump hasReturn = new Jump();
+                /* steps 6.c.i-vii */
                 mv.loadExecutionContext();
                 mv.load(iterator);
-                mv.aconst("return");
-                mv.invoke(Methods.AbstractOperations_HasProperty);
-                mv.ifeq(hasReturn);
+                mv.load(received);
+                mv.checkcast(Types.ReturnValue);
+                mv.invoke(Methods.ScriptRuntime_yieldReturnCompletion);
+                mv.store(innerResult);
+
+                mv.load(innerResult);
+                mv.ifnonnull(generatorYieldOrReturn);
                 {
-                    mv.loadExecutionContext();
-                    mv.load(iterator);
+                    /* step 6.c.iv */
                     mv.load(received);
                     mv.checkcast(Types.ReturnValue);
                     mv.invoke(Methods.ReturnValue_getValue);
-                    mv.invoke(Methods.AbstractOperations_IteratorReturn);
                     popStackAndReturn(mv);
                 }
-                mv.mark(hasReturn);
-                mv.load(received);
-                mv.checkcast(Types.ReturnValue);
-                mv.invoke(Methods.ReturnValue_getValue);
-                popStackAndReturn(mv);
             }
+
+            mv.mark(generatorYieldOrReturn);
+
+            /* steps 6.b.iii.5-6, 6.c.viii-ix */
+            mv.loadExecutionContext();
+            mv.load(innerResult);
+            mv.invoke(Methods.AbstractOperations_IteratorComplete);
+            mv.ifeq(generatorYield);
+
+            /* step 6.b.iii.7, 6.c.x */
+            mv.loadExecutionContext();
+            mv.load(innerResult);
+            mv.invoke(Methods.AbstractOperations_IteratorValue);
+            popStackAndReturn(mv);
 
             /* step 6.a.v */
             mv.mark(done);

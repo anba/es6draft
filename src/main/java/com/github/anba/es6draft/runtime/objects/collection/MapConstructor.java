@@ -19,6 +19,7 @@ import com.github.anba.es6draft.runtime.internal.Properties.Accessor;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
+import com.github.anba.es6draft.runtime.internal.ScriptException;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Constructor;
@@ -98,19 +99,24 @@ public final class MapConstructor extends BuiltinConstructor implements Initiali
             return map;
         }
         /* step 9 */
-        for (;;) {
-            ScriptObject next = IteratorStep(calleeContext, iter);
-            if (next == null) {
-                return map;
+        try {
+            for (;;) {
+                ScriptObject next = IteratorStep(calleeContext, iter);
+                if (next == null) {
+                    return map;
+                }
+                Object nextItem = IteratorValue(calleeContext, next);
+                if (!Type.isObject(nextItem)) {
+                    throw newTypeError(calleeContext, Messages.Key.NotObjectType);
+                }
+                ScriptObject entry = Type.objectValue(nextItem);
+                Object k = Get(calleeContext, entry, 0);
+                Object v = Get(calleeContext, entry, 1);
+                adder.call(calleeContext, map, k, v);
             }
-            Object nextItem = IteratorValue(calleeContext, next);
-            if (!Type.isObject(nextItem)) {
-                throw newTypeError(calleeContext, Messages.Key.NotObjectType);
-            }
-            ScriptObject entry = Type.objectValue(nextItem);
-            Object k = Get(calleeContext, entry, 0);
-            Object v = Get(calleeContext, entry, 1);
-            adder.call(calleeContext, map, k, v);
+        } catch (ScriptException e) {
+            IteratorClose(calleeContext, iter, true);
+            throw e;
         }
     }
 

@@ -226,9 +226,9 @@ public final class NumberConstructor extends BuiltinConstructor implements Initi
                 r = 16;
                 index += 2;
             }
-            /* steps 13-16 */
+            /* steps 13-15 */
             double number = StringToNumber.stringToNumber(s, index, r);
-            /* step 17 */
+            /* step 16-18 */
             return isPos ? number : -number;
         }
 
@@ -253,7 +253,7 @@ public final class NumberConstructor extends BuiltinConstructor implements Initi
             if (trimmedString.isEmpty()) {
                 return Double.NaN;
             }
-            /* steps 5-6 */
+            /* steps 5-8 */
             return readDecimalLiteralPrefix(trimmedString);
         }
 

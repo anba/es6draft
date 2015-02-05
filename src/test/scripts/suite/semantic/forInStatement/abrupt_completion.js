@@ -26,6 +26,7 @@ function toEnumerator(iter) {
       return(...args) {
         assertSame(0, args.length);
         returnCalled = true;
+        return {};
       }
     };
     let rval = fn(iter);
@@ -98,6 +99,7 @@ function toEnumerator(iter) {
         argsLength = args.length;
         returnCalled = true;
         handler(args[0]);
+        return {};
       }
     };
     let rval;

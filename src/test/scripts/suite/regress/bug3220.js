@@ -46,16 +46,16 @@ function makeSource(v) {
 
 log = [];
 assertThrows(CollectionError, () => new ThrowMap(makeSource([])));
-assertEquals(["yield"], log);
+assertEquals(["yield", "finally"], log);
 
 log = [];
 assertThrows(CollectionError, () => new ThrowSet(makeSource([])));
-assertEquals(["yield"], log);
+assertEquals(["yield", "finally"], log);
 
 log = [];
 assertThrows(CollectionError, () => new ThrowWeakMap(makeSource([])));
-assertEquals(["yield"], log);
+assertEquals(["yield", "finally"], log);
 
 log = [];
 assertThrows(CollectionError, () => new ThrowWeakSet(makeSource([])));
-assertEquals(["yield"], log);
+assertEquals(["yield", "finally"], log);

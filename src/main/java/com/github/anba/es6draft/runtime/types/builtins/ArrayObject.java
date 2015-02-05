@@ -291,7 +291,27 @@ public final class ArrayObject extends OrdinaryObject {
     }
 
     /**
-     * Helper method to create dense arrays
+     * Helper method to create dense arrays.
+     * 
+     * @param cx
+     *            the execution context
+     * @param proto
+     *            the prototype object
+     * @param values
+     *            the element values
+     * @return the new array object
+     */
+    public static ArrayObject DenseArrayCreate(ExecutionContext cx, ScriptObject proto,
+            Object[] values) {
+        ArrayObject array = ArrayCreate(cx, values.length, proto);
+        for (int i = 0, len = values.length; i < len; ++i) {
+            array.setIndexed(i, values[i]);
+        }
+        return array;
+    }
+
+    /**
+     * Helper method to create dense arrays.
      * <p>
      * [Called from generated code]
      * 
@@ -310,7 +330,7 @@ public final class ArrayObject extends OrdinaryObject {
     }
 
     /**
-     * Helper method to create sparse arrays
+     * Helper method to create sparse arrays.
      * <p>
      * [Called from generated code]
      * 
@@ -370,7 +390,7 @@ public final class ArrayObject extends OrdinaryObject {
             }
         }
         /* step 5 */
-        if (Type.isUndefinedOrNull(c)) {
+        if (Type.isUndefined(c)) {
             return ArrayCreate(cx, length);
         }
         /* step 6 */
@@ -400,26 +420,28 @@ public final class ArrayObject extends OrdinaryObject {
         }
         /* step 2 */
         PropertyDescriptor newLenDesc = desc.clone();
-        /* step 3 */
+        /* steps 3-4 */
         long newLen = ToUint32(cx, desc.getValue());
-        /* step 4 */
-        if (newLen != ToNumber(cx, desc.getValue())) {
+        /* steps 5-6 */
+        double numberLen = ToNumber(cx, desc.getValue());
+        /* step 7 */
+        if (newLen != numberLen) {
             throw newRangeError(cx, Messages.Key.InvalidArrayLength);
         }
-        /* step 5 */
+        /* step 8 */
         newLenDesc.setValue(newLen);
-        /* steps 6-8 (not applicable) */
-        /* step 9 */
+        /* steps 8-11 (not applicable) */
+        /* step 12 */
         long oldLen = array.length;
-        /* step 10 */
+        /* step 13 */
         if (newLen >= oldLen) {
             return array.defineLength(newLenDesc, newLen);
         }
-        /* step 11 */
+        /* step 14 */
         if (!array.lengthWritable) {
             return false;
         }
-        /* steps 12-13 */
+        /* steps 15-16 */
         boolean newWritable;
         if (!newLenDesc.hasWritable() || newLenDesc.isWritable()) {
             newWritable = true;
@@ -427,15 +449,15 @@ public final class ArrayObject extends OrdinaryObject {
             newWritable = false;
             newLenDesc.setWritable(true);
         }
-        /* steps 14-15 */
+        /* steps 17-18 */
         boolean succeeded = array.defineLength(newLenDesc, newLen);
-        /* step 16 */
+        /* step 19 */
         if (!succeeded) {
             return false;
         }
-        /* step 17 */
+        /* step 20 */
         long nonDeletableIndex = array.deleteRange(newLen, oldLen);
-        /* step 17.d */
+        /* step 20.d */
         if (nonDeletableIndex >= 0) {
             array.length = nonDeletableIndex + 1;
             if (!newWritable) {
@@ -443,47 +465,49 @@ public final class ArrayObject extends OrdinaryObject {
             }
             return false;
         }
-        /* step 18 */
+        /* step 21 */
         if (!newWritable) {
             array.lengthWritable = false;
         }
-        /* step 19 */
+        /* step 22 */
         return true;
     }
 
     private static boolean ArraySetLength(ExecutionContext cx, ArrayObject array, Object lenValue) {
         /* steps 1-2 (not applicable) */
-        /* step 3 */
+        /* steps 3-4 */
         long newLen = ToUint32(cx, lenValue);
-        /* step 4 */
-        if (newLen != ToNumber(cx, lenValue)) {
+        /* steps 5-6 */
+        double numberLen = ToNumber(cx, lenValue);
+        /* step 7 */
+        if (newLen != numberLen) {
             throw newRangeError(cx, Messages.Key.InvalidArrayLength);
         }
-        /* steps 5-8 (not applicable) */
-        /* step 9 */
+        /* steps 8-11 (not applicable) */
+        /* step 12 */
         long oldLen = array.length;
-        /* step 10 */
+        /* step 13 */
         if (newLen >= oldLen) {
             return array.defineLength(newLen);
         }
-        /* step 11 */
+        /* step 14 */
         if (!array.lengthWritable) {
             return false;
         }
-        /* steps 12-13 (not applicable) */
-        /* steps 14-15 */
+        /* steps 15-16 (not applicable) */
+        /* steps 17-18 */
         boolean succeeded = array.defineLength(newLen);
-        /* step 16 */
+        /* step 19 */
         assert succeeded;
-        /* step 17 */
+        /* step 20 */
         long nonDeletableIndex = array.deleteRange(newLen, oldLen);
-        /* step 17.d */
+        /* step 20.d */
         if (nonDeletableIndex >= 0) {
             array.length = nonDeletableIndex + 1;
             return false;
         }
-        /* step 18 (not applicable) */
-        /* step 19 */
+        /* step 21 (not applicable) */
+        /* step 22 */
         return true;
     }
 

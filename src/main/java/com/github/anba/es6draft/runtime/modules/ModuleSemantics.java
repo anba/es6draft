@@ -214,7 +214,7 @@ public final class ModuleSemantics {
             importedModules.put(requestedSrcId, importedModule);
         }
         /* step 18 */
-        m.setImportedModules(importedModules);
+        m.setImportedModules(new ArrayList<>(importedModules.values()));
         /* step 19 */
         List<ImportEntry> importEntries = ImportEntries(parsedBody);
         /* step 20 */
@@ -679,16 +679,16 @@ public final class ModuleSemantics {
      */
     public static void ModuleDeclarationInstantiation(ModuleRecord module, Realm realm,
             Map<SourceIdentifier, ModuleRecord> moduleSet) throws ResolutionException {
-        /* steps 1, 3-4, 6 (not applicable) */
-        /* step 2 */
+        /* step 1 */
         Module code = module.getScriptCode();
-        /* step 5 */
+        /* step 4 */
         LexicalEnvironment<ModuleEnvironmentRecord> env = newModuleEnvironment(realm.getGlobalEnv());
-        /* step 7 */
+        /* step 5 (not applicable) */
+        /* step 6 */
         module.setEnvironment(env);
-        /* steps 8-13 */
+        /* steps 2-3, 7-12 */
         ExecutionContext context = newModuleDeclarationExecutionContext(realm, code);
-        code.getModuleBody().moduleDeclarationInstantiation(context, env, realm, moduleSet,
+        code.getModuleBody().moduleDeclarationInstantiation(context, env, moduleSet,
                 sourceIdentifierMap(module));
     }
 
@@ -705,8 +705,8 @@ public final class ModuleSemantics {
      */
     public static ModuleNamespaceObject GetModuleNamespace(ExecutionContext cx, Realm realm,
             SourceIdentifier moduleId) {
-        /* steps 8.a.ii-8.a.v */
-        return GetModuleNamespace(cx, realm, realm.getModules(), moduleId);
+        /* steps 7.a.i-7.a.iv */
+        return GetModuleNamespace(cx, realm.getModules(), moduleId);
     }
 
     /**
@@ -714,15 +714,13 @@ public final class ModuleSemantics {
      * 
      * @param cx
      *            the execution context
-     * @param realm
-     *            the realm instance
      * @param moduleSet
      *            the list of modules
      * @param moduleId
      *            the module identifier
      * @return the module namespace object
      */
-    public static ModuleNamespaceObject GetModuleNamespace(ExecutionContext cx, Realm realm,
+    public static ModuleNamespaceObject GetModuleNamespace(ExecutionContext cx,
             Map<SourceIdentifier, ModuleRecord> moduleSet, SourceIdentifier moduleId) {
         /* step 7.a.i */
         ModuleRecord importedModule = ModuleAt(moduleSet, moduleId);
@@ -734,7 +732,7 @@ public final class ModuleSemantics {
         if (namespace == null) {
             Set<String> exportedNames = GetExportedNames(importedModule,
                     new HashSet<ModuleRecord>());
-            namespace = ModuleNamespaceCreate(cx, importedModule, realm, exportedNames);
+            namespace = ModuleNamespaceCreate(cx, importedModule, exportedNames);
         }
         return namespace;
     }
@@ -756,10 +754,9 @@ public final class ModuleSemantics {
         /* step 2 */
         module.setEvaluated(true);
         /* step 3 */
-        for (Map.Entry<SourceIdentifier, ModuleRecord> required : module.getImportedModules()
-                .entrySet()) {
-            assert realm.getModules().containsKey(required.getKey());
-            ModuleEvaluation(required.getValue(), realm);
+        for (ModuleRecord required : module.getImportedModules()) {
+            assert realm.getModules().get(required.getSourceCodeId()) == required;
+            ModuleEvaluation(required, realm);
         }
         /* steps 4-9 */
         ExecutionContext moduleContext = newModuleExecutionContext(realm, module);

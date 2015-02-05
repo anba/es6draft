@@ -110,8 +110,9 @@ final class BlockDeclarationInstantiationGenerator extends DeclarationBindingIns
      *            the expression visitor
      */
     private void generateInline(List<Declaration> declarations, ExpressionVisitor mv) {
-        Variable<EnvironmentRecord> envRec = mv.newScratchVariable(EnvironmentRecord.class);
-        Variable<LexicalEnvironment<?>> env = mv.newScratchVariable(LexicalEnvironment.class)
+        mv.enterVariableScope();
+        Variable<EnvironmentRecord> envRec = mv.newVariable("envRec", EnvironmentRecord.class);
+        Variable<LexicalEnvironment<?>> env = mv.newVariable("env", LexicalEnvironment.class)
                 .uncheckedCast();
 
         // stack: [env] -> [env, envRec]
@@ -154,7 +155,6 @@ final class BlockDeclarationInstantiationGenerator extends DeclarationBindingIns
         // stack: [] -> [env]
         mv.load(env);
 
-        mv.freeVariable(env);
-        mv.freeVariable(envRec);
+        mv.exitVariableScope();
     }
 }

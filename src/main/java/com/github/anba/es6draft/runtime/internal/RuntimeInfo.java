@@ -13,7 +13,6 @@ import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.GlobalEnvironmentRecord;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.ModuleEnvironmentRecord;
-import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.modules.ModuleRecord;
 import com.github.anba.es6draft.runtime.modules.ResolutionException;
 import com.github.anba.es6draft.runtime.modules.SourceIdentifier;
@@ -326,8 +325,6 @@ public final class RuntimeInfo {
          *            the execution context
          * @param env
          *            the lexical environment
-         * @param realm
-         *            the realm
          * @param moduleSet
          *            the module set
          * @param identifierMap
@@ -336,7 +333,7 @@ public final class RuntimeInfo {
          *             if any export or import binding cannot be resolved
          */
         void moduleDeclarationInstantiation(ExecutionContext cx,
-                LexicalEnvironment<ModuleEnvironmentRecord> env, Realm realm,
+                LexicalEnvironment<ModuleEnvironmentRecord> env,
                 Map<SourceIdentifier, ModuleRecord> moduleSet,
                 Map<String, SourceIdentifier> identifierMap) throws ResolutionException;
 
@@ -373,11 +370,11 @@ public final class RuntimeInfo {
 
         @Override
         public void moduleDeclarationInstantiation(ExecutionContext cx,
-                LexicalEnvironment<ModuleEnvironmentRecord> env, Realm realm,
+                LexicalEnvironment<ModuleEnvironmentRecord> env,
                 Map<SourceIdentifier, ModuleRecord> moduleSet,
                 Map<String, SourceIdentifier> identifierMap) {
             try {
-                initialization.invokeExact(cx, env, realm, moduleSet, identifierMap);
+                initialization.invokeExact(cx, env, moduleSet, identifierMap);
             } catch (RuntimeException | Error e) {
                 throw e;
             } catch (Throwable e) {

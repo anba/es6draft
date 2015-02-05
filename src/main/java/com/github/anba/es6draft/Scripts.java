@@ -25,7 +25,7 @@ public final class Scripts {
     }
 
     /**
-     * [15.1.7 Runtime Semantics: Script Evaluation]
+     * 15.1.7 Runtime Semantics: ScriptEvaluation
      * 
      * @param script
      *            the script object

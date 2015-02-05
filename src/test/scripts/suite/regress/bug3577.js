@@ -11,7 +11,7 @@ const {
 // 7.3.19 SpeciesConstructor, 9.4.2.3 ArraySpeciesCreate: inconsistency in the handling of originalObj.constructor === null
 // https://bugs.ecmascript.org/show_bug.cgi?id=3577
 
-for (let ctor of [void 0, null]) {
+for (let ctor of [void 0]) {
   class MyArray extends Array {
     get ["constructor"]() {
       return ctor;
@@ -21,7 +21,7 @@ for (let ctor of [void 0, null]) {
   assertSame(Array.prototype, Object.getPrototypeOf(array));
 }
 
-for (let ctor of ["", 0, false, Symbol.iterator]) {
+for (let ctor of [null, "", 0, false, Symbol.iterator]) {
   class MyArray extends Array {
     get ["constructor"]() {
       return ctor;
@@ -30,7 +30,7 @@ for (let ctor of ["", 0, false, Symbol.iterator]) {
   assertThrows(TypeError, () => MyArray.of(1, 2, 3).map(x => x));
 }
 
-for (let species of [void 0, null]) {
+for (let species of [void 0]) {
   class MyArray extends Array {
     get ["constructor"]() {
       return {[Symbol.species]: species};
@@ -40,7 +40,7 @@ for (let species of [void 0, null]) {
   assertSame(Array.prototype, Object.getPrototypeOf(array));
 }
 
-for (let species of ["", 0, false, Symbol.iterator, {}, () => {}]) {
+for (let species of [null, "", 0, false, Symbol.iterator, {}, () => {}]) {
   class MyArray extends Array {
     get ["constructor"]() {
       return {[Symbol.species]: species};

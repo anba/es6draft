@@ -445,7 +445,6 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
                     /* steps 7.d.ii-7.d.iii */
                     long len = ToLength(cx, Get(cx, e, "length"));
                     /* step 7.d.iv */
-                    // FIXME: spec bug - change ">=" to ">" (bug 3649)
                     if (n + len > ARRAY_LENGTH_LIMIT) {
                         throw newTypeError(cx, Messages.Key.InvalidArrayLength);
                     }
@@ -580,15 +579,15 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
             if (Type.isUndefined(separator)) {
                 separator = ",";
             }
-            /* step 6 */
+            /* steps 6-7 */
             String sep = ToFlatString(cx, separator);
-            /* step 7 */
+            /* step 8 */
             if (len == 0) {
                 return "";
             }
-            /* step 8 */
+            /* step 9 */
             Object element0 = Get(cx, o, 0);
-            /* steps 9-10 */
+            /* steps 10-11 */
             StringBuilder r = new StringBuilder();
             if (Type.isUndefinedOrNull(element0)) {
                 r.append("");
@@ -597,10 +596,10 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
             }
             IterationKind iteration = iterationKind(o, len);
             if (iteration.isSparse()) {
-                /* steps 11-12 (Optimization: Sparse Array objects) */
+                /* steps 12-13 (Optimization: Sparse Array objects) */
                 joinSparse(cx, (OrdinaryObject) o, len, sep, r, iteration.isInherited());
             } else {
-                /* steps 11-12 */
+                /* steps 12-13 */
                 for (long k = 1; k < len; ++k) {
                     Object element = Get(cx, o, k);
                     if (Type.isUndefinedOrNull(element)) {
@@ -610,7 +609,7 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
                     }
                 }
             }
-            /* step 13 */
+            /* step 14 */
             return r.toString();
         }
 
@@ -712,7 +711,6 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
             long len = ToLength(cx, Get(cx, o, "length"));
             /* step 5 (not applicable) */
             /* steps 6-7 */
-            // FIXME: spec bug - change ">=" to ">" (bug 3650)
             if (len + items.length > ARRAY_LENGTH_LIMIT) {
                 throw newTypeError(cx, Messages.Key.InvalidArrayLength);
             }

@@ -11,6 +11,7 @@ import static com.github.anba.es6draft.runtime.internal.Errors.newRangeError;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.types.builtins.ArrayObject.ArrayCreate;
+import static com.github.anba.es6draft.runtime.types.builtins.ArrayObject.DenseArrayCreate;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
@@ -21,6 +22,7 @@ import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
+import com.github.anba.es6draft.runtime.internal.ScriptException;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Constructor;
@@ -88,46 +90,25 @@ public final class ArrayConstructor extends BuiltinConstructor implements Initia
         if (numberOfArgs == 0) {
             // [22.1.1.1]
             /* step 6 */
-            ArrayObject array = ArrayCreate(calleeContext, 0, proto);
-            /* steps 7-8 */
-            Put(calleeContext, array, "length", 0, true);
-            /* step 9 */
-            return array;
+            return ArrayCreate(calleeContext, 0, proto);
         } else if (numberOfArgs == 1) {
             // [22.1.1.2]
             Object len = args[0];
-            /* step 6 */
-            ArrayObject array = ArrayCreate(calleeContext, 0, proto);
-            /* steps 7-8 */
-            long intLen;
+            /* steps 6-11 */
             if (!Type.isNumber(len)) {
-                CreateDataPropertyOrThrow(calleeContext, array, 0, len);
-                intLen = 1;
+                return DenseArrayCreate(calleeContext, proto, new Object[] { len });
             } else {
                 double llen = Type.numberValue(len);
-                intLen = ToUint32(llen);
+                long intLen = ToUint32(llen);
                 if (intLen != llen) {
                     throw newRangeError(calleeContext, Messages.Key.InvalidArrayLength);
                 }
+                return ArrayCreate(calleeContext, intLen, proto);
             }
-            /* steps 9-10 */
-            Put(calleeContext, array, "length", intLen, true);
-            /* step 11 */
-            return array;
         } else {
             // [22.1.1.3]
-            /* steps 6-7 */
-            ArrayObject array = ArrayCreate(calleeContext, numberOfArgs, proto);
-            /* steps 8-10 */
-            for (int k = 0; k < numberOfArgs; ++k) {
-                int pk = k;
-                Object itemK = args[k];
-                CreateDataPropertyOrThrow(calleeContext, array, pk, itemK);
-            }
-            /* steps 11-12 */
-            Put(calleeContext, array, "length", numberOfArgs, true);
-            /* step 13 */
-            return array;
+            /* steps 6-13 */
+            return DenseArrayCreate(calleeContext, proto, args);
         }
     }
 
@@ -254,22 +235,31 @@ public final class ArrayConstructor extends BuiltinConstructor implements Initia
                 /* steps 6d-6e */
                 ScriptObject iterator = GetIterator(cx, items, usingIterator);
                 /* steps 6f-6g */
-                for (int k = 0;; ++k) {
-                    int pk = k;
-                    ScriptObject next = IteratorStep(cx, iterator);
-                    if (next == null) {
-                        Put(cx, a, "length", k, true);
-                        return a;
+                int k = 0;
+                try {
+                    while (true) {
+                        int pk = k;
+                        ScriptObject next = IteratorStep(cx, iterator);
+                        if (next == null) {
+                            break;
+                        }
+                        Object nextValue = IteratorValue(cx, next);
+                        Object mappedValue;
+                        if (mapping) {
+                            mappedValue = mapper.call(cx, thisArg, nextValue, k);
+                        } else {
+                            mappedValue = nextValue;
+                        }
+                        CreateDataPropertyOrThrow(cx, a, pk, mappedValue);
+                        k += 1;
                     }
-                    Object nextValue = IteratorValue(cx, next);
-                    Object mappedValue;
-                    if (mapping) {
-                        mappedValue = mapper.call(cx, thisArg, nextValue, k);
-                    } else {
-                        mappedValue = nextValue;
-                    }
-                    CreateDataPropertyOrThrow(cx, a, pk, mappedValue);
+                } catch (ScriptException e) {
+                    IteratorClose(cx, iterator, true);
+                    throw e;
                 }
+                /* step 6.g.iv */
+                Put(cx, a, "length", k, true);
+                return a;
             }
             /* step 7 (?) */
             /* steps 8-9 */

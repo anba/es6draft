@@ -352,9 +352,9 @@ public final class StringPrototype extends OrdinaryObject implements Initializab
                     return matcher.call(cx, regexp, s);
                 }
             }
-            /* step 5 */
+            /* steps 5-6 */
             RegExpObject rx = RegExpCreate(cx, regexp, UNDEFINED);
-            /* step 6 */
+            /* step 7 */
             return Invoke(cx, rx, BuiltinSymbol.match.get(), s);
         }
 
@@ -533,17 +533,17 @@ public final class StringPrototype extends OrdinaryObject implements Initializab
             CharSequence s = ToString(cx, obj);
             /* step 4 */
             int len = s.length();
-            /* step 5 */
+            /* steps 5-6 */
             double intStart = ToInteger(cx, start);
-            /* step 6 */
+            /* steps 7-8 */
             double intEnd = Type.isUndefined(end) ? len : ToInteger(cx, end);
-            /* step 7 */
-            int from = (int) (intStart < 0 ? Math.max(len + intStart, 0) : Math.min(intStart, len));
-            /* step 8 */
-            int to = (int) (intEnd < 0 ? Math.max(len + intEnd, 0) : Math.min(intEnd, len));
             /* step 9 */
-            int span = Math.max(to - from, 0);
+            int from = (int) (intStart < 0 ? Math.max(len + intStart, 0) : Math.min(intStart, len));
             /* step 10 */
+            int to = (int) (intEnd < 0 ? Math.max(len + intEnd, 0) : Math.min(intEnd, len));
+            /* step 11 */
+            int span = Math.max(to - from, 0);
+            /* step 12 */
             return s.subSequence(from, from + span);
         }
 
@@ -675,19 +675,19 @@ public final class StringPrototype extends OrdinaryObject implements Initializab
             CharSequence s = ToString(cx, obj);
             /* step 4 */
             int len = s.length();
-            /* step 5 */
+            /* steps 5-6 */
             double intStart = ToInteger(cx, start);
-            /* step 6 */
+            /* steps 7-8 */
             double intEnd = Type.isUndefined(end) ? len : ToInteger(cx, end);
-            /* step 7 */
-            int finalStart = (int) Math.min(Math.max(intStart, 0), len);
-            /* step 8 */
-            int finalEnd = (int) Math.min(Math.max(intEnd, 0), len);
             /* step 9 */
-            int from = Math.min(finalStart, finalEnd);
+            int finalStart = (int) Math.min(Math.max(intStart, 0), len);
             /* step 10 */
-            int to = Math.max(finalStart, finalEnd);
+            int finalEnd = (int) Math.min(Math.max(intEnd, 0), len);
             /* step 11 */
+            int from = Math.min(finalStart, finalEnd);
+            /* step 12 */
+            int to = Math.max(finalStart, finalEnd);
+            /* step 13 */
             return s.subSequence(from, to);
         }
 
@@ -1089,27 +1089,27 @@ public final class StringPrototype extends OrdinaryObject implements Initializab
                 Object length) {
             /* step 1 */
             Object obj = RequireObjectCoercible(cx, thisValue);
-            /* step 2 */
+            /* steps 2-3 */
             String s = ToFlatString(cx, obj);
-            /* steps 3-4 */
+            /* steps 4-5 */
             double intStart = ToInteger(cx, start);
-            /* steps 5-6 */
+            /* steps 6-7 */
             double end = Type.isUndefined(length) ? Double.POSITIVE_INFINITY
                     : ToInteger(cx, length);
-            /* step 7 */
-            int size = s.length();
             /* step 8 */
+            int size = s.length();
+            /* step 9 */
             if (intStart < 0) {
                 intStart = Math.max(size + intStart, 0);
             }
-            /* step 9 */
-            double resultLength = Math.min(Math.max(end, 0), size - intStart);
             /* step 10 */
+            double resultLength = Math.min(Math.max(end, 0), size - intStart);
+            /* step 11 */
             if (resultLength <= 0) {
                 return "";
             }
             assert 0 <= intStart && intStart + resultLength <= size;
-            /* step 11 */
+            /* step 12 */
             return s.substring((int) intStart, (int) (intStart + resultLength));
         }
 

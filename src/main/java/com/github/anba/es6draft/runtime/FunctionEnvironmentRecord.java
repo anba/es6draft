@@ -7,7 +7,6 @@
 package com.github.anba.es6draft.runtime;
 
 import static com.github.anba.es6draft.runtime.internal.Errors.newReferenceError;
-import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import com.github.anba.es6draft.runtime.internal.Messages;
@@ -116,17 +115,19 @@ public final class FunctionEnvironmentRecord extends DeclarativeEnvironmentRecor
      *            the function {@code this} value
      */
     public void bindThisValue(ScriptObject thisValue) {
-        /* step 1 */
-        // FIXME: spec bug - throw TypeError (bug 3675)
-        // assert !thisInitializationState;
+        /* step 1 (not applicable) */
+        // FIXME: spec bug - step 4 misplaced.
+        /* step 4 */
         if (thisInitializationState) {
-            throw newTypeError(cx, Messages.Key.InitializedThis);
+            throw newReferenceError(cx, Messages.Key.InitializedThis);
         }
         /* step 2 */
-        this.thisValue = thisValue;
+        assert !thisInitializationState;
         /* step 3 */
+        this.thisValue = thisValue;
+        /* step 5 */
         this.thisInitializationState = true;
-        /* step 4 (not applicable) */
+        /* step 6 (not applicable) */
     }
 
     /**
@@ -134,7 +135,7 @@ public final class FunctionEnvironmentRecord extends DeclarativeEnvironmentRecor
      */
     @Override
     public boolean hasThisBinding() {
-        /* step 1 */
+        /* steps 1-2 */
         return thisValue != null;
     }
 
@@ -143,7 +144,7 @@ public final class FunctionEnvironmentRecord extends DeclarativeEnvironmentRecor
      */
     @Override
     public boolean hasSuperBinding() {
-        /* steps 1-2 */
+        /* steps 1-3 */
         return thisValue != null && homeObject != null;
     }
 
@@ -152,11 +153,12 @@ public final class FunctionEnvironmentRecord extends DeclarativeEnvironmentRecor
      */
     @Override
     public Object getThisBinding() {
-        /* step 1 */
+        /* step 1 (not applicable) */
+        /* step 2 */
         if (!thisInitializationState) {
             throw newReferenceError(cx, Messages.Key.UninitializedThis);
         }
-        /* step 2 */
+        /* step 3 */
         return thisValue;
     }
 
@@ -166,14 +168,15 @@ public final class FunctionEnvironmentRecord extends DeclarativeEnvironmentRecor
      * @return the prototype of the home object or {@code null} if no super binding was set
      */
     public ScriptObject getSuperBase() {
-        /* step 1 */
-        ScriptObject home = homeObject;
+        /* step 1 (not applicable) */
         /* step 2 */
+        ScriptObject home = homeObject;
+        /* step 3 */
         if (home == null) {
             return null;
         }
-        /* step 3 (not applicable) */
-        /* step 4 */
+        /* step 4 (not applicable) */
+        /* step 5 */
         return home.getPrototypeOf(cx);
     }
 }

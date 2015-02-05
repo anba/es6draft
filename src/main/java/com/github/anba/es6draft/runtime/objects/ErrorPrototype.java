@@ -103,21 +103,21 @@ public final class ErrorPrototype extends OrdinaryObject implements Initializabl
             ScriptObject o = Type.objectValue(thisValue);
             /* steps 3-4 */
             Object name = Get(cx, o, "name");
-            /* step 5 */
+            /* steps 5-6 */
             CharSequence sname = Type.isUndefined(name) ? "Error" : ToString(cx, name);
-            /* steps 6-7 */
+            /* steps 7-8 */
             Object msg = Get(cx, o, "message");
-            /* step 8 */
+            /* steps 9-10 */
             CharSequence smsg = Type.isUndefined(msg) ? "" : ToString(cx, msg);
-            /* step 9 */
+            /* step 11 */
             if (sname.length() == 0) {
                 return smsg;
             }
-            /* step 10 */
+            /* step 12 */
             if (smsg.length() == 0) {
                 return sname;
             }
-            /* step 11 */
+            /* step 13 */
             return sname + ": " + smsg;
         }
 

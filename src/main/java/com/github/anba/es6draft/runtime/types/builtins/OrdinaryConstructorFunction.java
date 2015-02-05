@@ -82,7 +82,7 @@ public final class OrdinaryConstructorFunction extends OrdinaryFunction implemen
     public static OrdinaryConstructorFunction FunctionAllocate(ExecutionContext cx,
             ScriptObject functionPrototype, boolean strict, FunctionKind functionKind,
             ConstructorKind constructorKind) {
-        assert (functionKind == FunctionKind.Normal || functionKind == FunctionKind.ConstructorMethod);
+        assert (functionKind == FunctionKind.Normal || functionKind == FunctionKind.ClassConstructor);
         Realm realm = cx.getRealm();
         /* steps 1-5 (implicit) */
         /* steps 6-11 */

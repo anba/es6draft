@@ -95,8 +95,7 @@ public final class PropertyDescriptor implements Cloneable {
 
     /**
      * Constructs a new data property descriptor with an initial value and initial attributes:<br>
-     * <code>{[[Value]]: ?, [[Writable]]: ?, [[Enumerable]]: ?,
-     * [[Configurable]]: ?}</code>
+     * <code>{[[Value]]: ?, [[Writable]]: ?, [[Enumerable]]: ?, [[Configurable]]: ?}</code>
      * 
      * @param value
      *            the property value
@@ -117,25 +116,9 @@ public final class PropertyDescriptor implements Cloneable {
     }
 
     /**
-     * Constructs a new accessor property descriptor with initial getter and setter:<br>
-     * <code>{[[Get]]: ?, [[Set]]: ?}</code>
-     * 
-     * @param getter
-     *            the accessor getter function
-     * @param setter
-     *            the accessor setter function
-     */
-    public PropertyDescriptor(Callable getter, Callable setter) {
-        this.getter = getter;
-        this.setter = setter;
-        this.present = GET | SET;
-    }
-
-    /**
      * Constructs a new accessor property descriptor with initial getter and setter and initial
      * attributes:<br>
-     * <code>{[[Get]]: ?, [[Set]]: ?, [[Enumerable]]: ?, [[Configurable]]: ?}
-     * </code>
+     * <code>{[[Get]]: ?, [[Set]]: ?, [[Enumerable]]: ?, [[Configurable]]: ?}</code>
      * 
      * @param getter
      *            the accessor getter function, may be {@code null}
@@ -153,6 +136,33 @@ public final class PropertyDescriptor implements Cloneable {
         this.enumerable = enumerable;
         this.configurable = configurable;
         this.present = GET | SET | ENUMERABLE | CONFIGURABLE;
+    }
+
+    /**
+     * Constructs a new accessor property descriptor with initial getter and setter and initial
+     * attributes:<br>
+     * <code>{[[Get]]: ?, [[Set]]: ?, [[Enumerable]]: ?, [[Configurable]]: ?}</code>
+     * 
+     * @param getter
+     *            the accessor getter function, may be {@code null}
+     * @param setter
+     *            the accessor setter function, may be {@code null}
+     * @param enumerable
+     *            the writable flag
+     * @param configurable
+     *            the configurable flag
+     * @return the new accessor property descriptor
+     */
+    public static PropertyDescriptor AccessorPropertyDescriptor(Callable getter, Callable setter,
+            boolean enumerable, boolean configurable) {
+        PropertyDescriptor desc = new PropertyDescriptor(getter, setter, enumerable, configurable);
+        if (getter == null) {
+            desc.present &= ~GET;
+        }
+        if (setter == null) {
+            desc.present &= ~SET;
+        }
+        return desc;
     }
 
     /**

@@ -16,7 +16,7 @@ const {
   let ta = new Int8Array(buf);
 
   // Basic test to ensure call is valid
-  ta.set(ta, 0)
+  ta.set(ta, 0);
 
   let getterCalled = false;
   Object.defineProperty(buf, "constructor", {
@@ -29,8 +29,8 @@ const {
     }
   });
 
-  assertThrows(TypeError, () => ta.set(ta, 0));
-  assertTrue(getterCalled);
+  ta.set(ta, 0);
+  assertFalse(getterCalled);
 }
 
 {
@@ -38,7 +38,7 @@ const {
   let ta = new Int8Array(buf);
 
   // Basic test to ensure call is valid
-  ta.set(ta, 0)
+  ta.set(ta, 0);
 
   let getterCalled = false;
   Object.defineProperty(buf, "constructor", {
@@ -57,6 +57,6 @@ const {
     }
   });
 
-  assertThrows(TypeError, () => ta.set(ta, 0));
-  assertTrue(getterCalled);
+  ta.set(ta, 0);
+  assertFalse(getterCalled);
 }

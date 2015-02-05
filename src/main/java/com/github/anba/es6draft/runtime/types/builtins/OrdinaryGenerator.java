@@ -144,7 +144,7 @@ public final class OrdinaryGenerator extends FunctionObject implements Construct
      */
     public static OrdinaryGenerator FunctionAllocate(ExecutionContext cx,
             ScriptObject functionPrototype, boolean strict, FunctionKind kind) {
-        assert kind != FunctionKind.ConstructorMethod;
+        assert kind != FunctionKind.ClassConstructor;
         Realm realm = cx.getRealm();
         /* steps 1-3 (implicit) */
         /* steps 4-8 */
@@ -170,7 +170,7 @@ public final class OrdinaryGenerator extends FunctionObject implements Construct
      */
     public static OrdinaryGenerator GeneratorFunctionCreate(ExecutionContext cx, FunctionKind kind,
             RuntimeInfo.Function function, LexicalEnvironment<?> scope) {
-        assert function.isGenerator() && kind != FunctionKind.ConstructorMethod;
+        assert function.isGenerator() && kind != FunctionKind.ClassConstructor;
         /* step 1 */
         ScriptObject functionPrototype = cx.getIntrinsic(Intrinsics.Generator);
         /* step 2 */

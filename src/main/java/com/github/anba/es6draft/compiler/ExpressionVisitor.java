@@ -7,7 +7,6 @@
 package com.github.anba.es6draft.compiler;
 
 import static com.github.anba.es6draft.semantics.StaticSemantics.TailCallNodes;
-import static java.util.Collections.emptySet;
 
 import java.lang.invoke.CallSite;
 import java.lang.invoke.MethodHandles;
@@ -15,12 +14,15 @@ import java.lang.invoke.MethodType;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 
 import com.github.anba.es6draft.ast.Expression;
 import com.github.anba.es6draft.ast.Node;
 import com.github.anba.es6draft.ast.ScopedNode;
 import com.github.anba.es6draft.ast.scope.Scope;
+import com.github.anba.es6draft.compiler.Labels.ReturnLabel;
+import com.github.anba.es6draft.compiler.Labels.TempLabel;
 import com.github.anba.es6draft.compiler.assembler.Code.MethodCode;
 import com.github.anba.es6draft.compiler.assembler.FieldName;
 import com.github.anba.es6draft.compiler.assembler.Handle;
@@ -30,6 +32,7 @@ import com.github.anba.es6draft.compiler.assembler.Type;
 import com.github.anba.es6draft.compiler.assembler.Variable;
 import com.github.anba.es6draft.compiler.assembler.VariablesSnapshot;
 import com.github.anba.es6draft.runtime.ExecutionContext;
+import com.github.anba.es6draft.runtime.internal.InlineArrayList;
 import com.github.anba.es6draft.runtime.internal.ResumptionPoint;
 import com.github.anba.es6draft.runtime.internal.ScriptRuntime;
 
@@ -71,7 +74,7 @@ abstract class ExpressionVisitor extends InstructionVisitor {
     private Scope scope;
     // tail-call support
     private boolean hasTailCalls = false;
-    private Set<Expression> tailCallNodes = emptySet();
+    private Set<Expression> tailCallNodes = Collections.emptySet();
 
     protected ExpressionVisitor(MethodCode method, ExpressionVisitor parent) {
         super(method);
@@ -149,6 +152,15 @@ abstract class ExpressionVisitor extends InstructionVisitor {
         return !syntheticMethod;
     }
 
+    /**
+     * Returns {@code true} if compiling generator or async function code.
+     * 
+     * @return {@code true} if generator or async function
+     */
+    boolean isGeneratorOrAsync() {
+        return false;
+    }
+
     void enterClassDefinition() {
         ++classDefDepth;
     }
@@ -195,6 +207,33 @@ abstract class ExpressionVisitor extends InstructionVisitor {
         return isTaillCall;
     }
 
+    Variable<Object> enterIteration() {
+        return null;
+    }
+
+    List<TempLabel> exitIteration() {
+        return Collections.emptyList();
+    }
+
+    /**
+     * Emit goto instruction to jump to {@code label}'s wrapped target.
+     * 
+     * @param label
+     *            the target instruction
+     * @param completion
+     *            the variable which holds the current completion value
+     */
+    void goTo(TempLabel label, Variable<Object> completion) {
+        Jump wrapped = label.getWrapped();
+        if (wrapped instanceof ReturnLabel) {
+            // specialize return label to emit direct return instruction
+            load(completion);
+            _return();
+        } else {
+            goTo(wrapped);
+        }
+    }
+
     /**
      * Pops the stack's top element and emits a return instruction.
      */
@@ -211,6 +250,7 @@ abstract class ExpressionVisitor extends InstructionVisitor {
         private final Jump instruction;
         private final int offset;
         private final int line;
+        private InlineArrayList<ExecutionState> shared = null;
 
         ExecutionState(VariablesSnapshot locals, Type[] stack, Jump instruction, int offset,
                 int line) {
@@ -220,12 +260,26 @@ abstract class ExpressionVisitor extends InstructionVisitor {
             this.offset = offset;
             this.line = line;
         }
+
+        boolean isCompatible(VariablesSnapshot locals, Type[] stack) {
+            return this.locals.equals(locals) && Arrays.equals(this.stack, stack);
+        }
+
+        ExecutionState addShared(Jump instruction, int offset, int line) {
+            if (shared == null) {
+                shared = new InlineArrayList<>();
+            }
+            ExecutionState state = new ExecutionState(locals, stack, instruction, offset, line);
+            shared.add(state);
+            return state;
+        }
     }
 
     /**
      * List of saved execution states
      */
     private ArrayList<ExecutionState> states = null;
+    private int stateOffsetCounter = 0;
 
     /**
      * Create a new object to save the current execution state.
@@ -236,8 +290,17 @@ abstract class ExpressionVisitor extends InstructionVisitor {
         if (states == null) {
             states = new ArrayList<>();
         }
-        ExecutionState state = new ExecutionState(getVariablesSnapshot(), getStack(), new Jump(),
-                states.size(), getLastLineNumber());
+        VariablesSnapshot locals = getVariablesSnapshot();
+        Type[] stack = getStack();
+        Jump instruction = new Jump();
+        int offset = stateOffsetCounter++;
+        int line = getLastLineNumber();
+        for (ExecutionState state : states) {
+            if (state.isCompatible(locals, stack)) {
+                return state.addShared(instruction, offset, line);
+            }
+        }
+        ExecutionState state = new ExecutionState(locals, stack, instruction, offset, line);
         states.add(state);
         return state;
     }
@@ -291,18 +354,29 @@ abstract class ExpressionVisitor extends InstructionVisitor {
         if (states == null) {
             goTo(state.startBody);
         } else {
-            assert !states.isEmpty();
-            int count = states.size();
-            Jump[] restore = new Jump[count];
-            for (int i = 0; i < count; ++i) {
-                restore[i] = new Jump();
-            }
-            load(resume);
-            invoke(Methods.ResumptionPoint_getOffset);
-            tableswitch(0, count - 1, state.startBody, restore);
-            for (int i = 0; i < count; ++i) {
-                mark(restore[i]);
-                resume(resume, states.get(i));
+            int count = stateOffsetCounter;
+            int uniqueCount = states.size();
+            assert count > 0 && uniqueCount > 0;
+            if (uniqueCount == 1) {
+                resume(resume, states.get(0));
+            } else {
+                Jump[] restore = new Jump[count];
+                for (ExecutionState execState : states) {
+                    Jump target = new Jump();
+                    restore[execState.offset] = target;
+                    if (execState.shared != null) {
+                        for (ExecutionState shared : execState.shared) {
+                            restore[shared.offset] = target;
+                        }
+                    }
+                }
+                load(resume);
+                invoke(Methods.ResumptionPoint_getOffset);
+                tableswitch(0, count - 1, state.startBody, restore);
+                for (ExecutionState execState : states) {
+                    mark(restore[execState.offset]);
+                    resume(resume, execState);
+                }
             }
         }
     }
@@ -317,6 +391,8 @@ abstract class ExpressionVisitor extends InstructionVisitor {
         restoreStack(state.stack);
         // mark the resumption point for further method execution
         mark(state.instruction);
+        // emit line info for debugging
+        lineInfo(state.line);
     }
 
     /**
@@ -399,7 +475,7 @@ abstract class ExpressionVisitor extends InstructionVisitor {
      */
     private void resume(Variable<ResumptionPoint> resume, ExecutionState state) {
         assert hasStack() && isResumable();
-        assert getStack().length == 0;
+        assert getStackSize() == 0;
 
         // emit line info for debugging
         lineInfo(state.line);
@@ -425,18 +501,36 @@ abstract class ExpressionVisitor extends InstructionVisitor {
         // stack: [r, <locals>] -> [r]
         pop();
 
-        assert getStack().length == 1 && getStack()[0].equals(Types.ResumptionPoint) : Arrays
+        assert getStackSize() == 1 && getStack()[0].equals(Types.ResumptionPoint) : Arrays
                 .toString(getStack());
+
+        boolean hasSimpleStack = state.stack.length == 1;
+        if (!hasSimpleStack) {
+            enterVariableScope();
+        }
+
+        // stack: [r] -> [r?, r]
+        boolean hasShared = state.shared != null;
+        Variable<Integer> offset = null;
+        if (hasShared) {
+            // stack: [r] -> [r, r]
+            dup();
+            if (!hasSimpleStack) {
+                // stack: [r, r] -> [r]
+                invoke(Methods.ResumptionPoint_getOffset);
+                offset = newVariable("offset", int.class);
+                store(offset);
+            }
+        }
 
         // (2) Restore stack
         // stack: [r] -> [<stack>]
         invoke(Methods.ResumptionPoint_getStack);
         Type[] stack = state.stack;
-        if (stack.length == 1) {
+        if (hasSimpleStack) {
             // stack: [<stack>] -> [v]
             loadFromArray(0, stack[0]);
         } else {
-            enterVariableScope();
             Variable<Object[]> stackContent = newVariable("stack", Object[].class);
             // stack: [<stack>] -> []
             store(stackContent);
@@ -449,13 +543,60 @@ abstract class ExpressionVisitor extends InstructionVisitor {
             // Set 'stackContent' variable to null to avoid leaking the saved stack
             aconst(null);
             store(stackContent);
+        }
+
+        // stack: [...] -> [..., offset]
+        if (hasShared) {
+            if (!hasSimpleStack) {
+                load(offset);
+            } else {
+                swap(Types.ResumptionPoint, stack[0]);
+                invoke(Methods.ResumptionPoint_getOffset);
+            }
+        }
+
+        if (!hasSimpleStack) {
             exitVariableScope();
         }
 
-        assert Arrays.deepEquals(stack, getStack()) : String.format("%s != %s",
-                Arrays.toString(stack), Arrays.toString(getStack()));
+        if (hasShared) {
+            assert getStackSize() >= 1
+                    && Arrays.equals(stack, Arrays.copyOf(getStack(), getStackSize() - 1)) : String
+                    .format("%s != %s", Arrays.toString(stack), Arrays.toString(getStack()));
 
-        goTo(state.instruction);
+            InlineArrayList<ExecutionState> sharedStates = state.shared;
+            int sharedSize = sharedStates.size();
+            assert sharedSize > 0;
+
+            if (sharedSize == 1) {
+                iconst(state.offset);
+                ificmpeq(state.instruction);
+                goTo(sharedStates.get(0).instruction);
+            } else {
+                Jump[] restore = new Jump[sharedSize];
+                for (int i = 0; i < sharedSize; ++i) {
+                    restore[i] = sharedStates.get(i).instruction;
+                }
+
+                int firstOffset = sharedStates.get(0).offset;
+                int lastOffset = sharedStates.get(sharedSize - 1).offset;
+                boolean consecutiveOffsets = (lastOffset - firstOffset) == (sharedSize - 1);
+                if (consecutiveOffsets) {
+                    tableswitch(firstOffset, lastOffset, state.instruction, restore);
+                } else {
+                    int[] keys = new int[sharedSize];
+                    for (int i = 0; i < sharedSize; ++i) {
+                        keys[i] = sharedStates.get(i).offset;
+                    }
+                    lookupswitch(state.instruction, keys, restore);
+                }
+            }
+        } else {
+            assert Arrays.equals(stack, getStack()) : String.format("%s != %s",
+                    Arrays.toString(stack), Arrays.toString(getStack()));
+
+            goTo(state.instruction);
+        }
     }
 
     /**

@@ -59,4 +59,4 @@ var a, b, c, d, e;
 with (object) {
  a; b; c; d; e;
 }
-assertSame("aAbcde", log);
+assertSame("aAbBcCde", log);

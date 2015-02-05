@@ -13,7 +13,10 @@ const {
 
 var log;
 Object.defineProperty(Object.prototype, "return", {
-  value() { log += "|return"; }, configurable: true
+  value() {
+    log += "|return";
+    return {value: void 0, done: true};
+  }, configurable: true
 });
 
 log = "";

@@ -12,7 +12,7 @@ const {
 // https://bugs.ecmascript.org/show_bug.cgi?id=3523
 
 // .constructor present but not a Constructor function, @@species not defined
-for (let ctor of [void 0, null, () => {}, {}]) {
+for (let ctor of [void 0, () => {}, {}]) {
   class MyArray extends Array {
     get ["constructor"]() {
       return ctor;
@@ -20,6 +20,16 @@ for (let ctor of [void 0, null, () => {}, {}]) {
   }
   let array = MyArray.of(1, 2, 3).map(x => x);
   assertSame(Array.prototype, Object.getPrototypeOf(array));
+}
+
+// .constructor present but primitive except for undefined, @@species not defined
+for (let ctor of [null, false, true, 0, 1, "", Symbol()]) {
+  class MyArray extends Array {
+    get ["constructor"]() {
+      return ctor;
+    }
+  }
+  assertThrows(TypeError, () => MyArray.of(1, 2, 3).map(x => x));
 }
 
 // .constructor present and a Constructor function, @@species not defined
@@ -33,8 +43,8 @@ for (let ctor of [Array, Date, class {}]) {
   assertSame(Array.prototype, Object.getPrototypeOf(array));
 }
 
-// .constructor and @@species defined, @@species undefined or null
-for (let species of [void 0, null]) {
+// .constructor and @@species defined, @@species undefined
+for (let species of [void 0]) {
   class MyArray extends Array {
     get ["constructor"]() {
       return {[Symbol.species]: species};
@@ -42,6 +52,16 @@ for (let species of [void 0, null]) {
   }
   let array = MyArray.of(1, 2, 3).map(x => x);
   assertSame(Array.prototype, Object.getPrototypeOf(array));
+}
+
+// .constructor and @@species defined, @@species primitive except for undefined
+for (let species of [null, false, true, 0, 1, "", Symbol()]) {
+  class MyArray extends Array {
+    get ["constructor"]() {
+      return {[Symbol.species]: species};
+    }
+  }
+  assertThrows(TypeError, () => MyArray.of(1, 2, 3).map(x => x));
 }
 
 // .constructor and @@species defined, and @@species a Constructor function

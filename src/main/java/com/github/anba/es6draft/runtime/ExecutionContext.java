@@ -253,7 +253,7 @@ public final class ExecutionContext {
      * </ul>
      * </ul>
      * <p>
-     * 9.2.2.1 PrepareOrdinaryCall( F, newTarget )
+     * 9.2.2.1 PrepareForOrdinaryCall( F, newTarget )
      * 
      * @param callerContext
      *            the caller execution context
@@ -283,7 +283,7 @@ public final class ExecutionContext {
      * </ul>
      * </ul>
      * <p>
-     * 9.2.2.1 PrepareOrdinaryCall( F, newTarget )<br>
+     * 9.2.2.1 PrepareForOrdinaryCall( F, newTarget )<br>
      * 9.2.2.2 OrdinaryCallBindThis ( F, calleeContext, thisArgument )
      * 
      * @param callerContext
@@ -336,8 +336,6 @@ public final class ExecutionContext {
             /* step 6 */
             if (Type.isUndefinedOrNull(thisArgument)) {
                 thisValue = calleeRealm.getGlobalThis();
-            } else if (Type.isObject(thisArgument)) {
-                thisValue = thisArgument;
             } else {
                 thisValue = ToObject(calleeRealm.defaultContext(), thisArgument);
             }
@@ -430,21 +428,5 @@ public final class ExecutionContext {
         Realm currentRealm = realm;
         /* step 3 */
         return currentRealm.getGlobalThis();
-    }
-
-    /**
-     * 8.3.6 IsThisInitialized ( ) Abstract Operation
-     * 
-     * @return the {@code true} if the {@code this} binding has been initialized
-     */
-    public boolean isThisInitialized() {
-        /* step 1 */
-        EnvironmentRecord envRec = getThisEnvironment();
-        /* step 2 */
-        if (!(envRec instanceof FunctionEnvironmentRecord)) {
-            return true;
-        }
-        /* step 3 */
-        return ((FunctionEnvironmentRecord) envRec).isThisInitialized();
     }
 }

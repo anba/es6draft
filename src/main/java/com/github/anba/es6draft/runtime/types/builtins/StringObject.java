@@ -33,15 +33,18 @@ public final class StringObject extends OrdinaryObject {
      * 
      * @param realm
      *            the realm object
-     * @param prototype
-     *            the prototype object
      * @param stringData
      *            the string data
+     * @param prototype
+     *            the prototype object
      */
-    public StringObject(Realm realm, ScriptObject prototype, CharSequence stringData) {
+    public StringObject(Realm realm, CharSequence stringData, ScriptObject prototype) {
         super(realm);
+        // StringCreate - step 4
         this.stringData = stringData;
+        // StringCreate - step 9
         setPrototype(prototype);
+        // StringCreate - steps 11-13
         infallibleDefineOwnProperty("length",
                 new Property(stringData.length(), false, false, false));
     }
@@ -154,7 +157,7 @@ public final class StringObject extends OrdinaryObject {
     }
 
     /**
-     * 9.4.3.6 StringCreate Abstract Operation
+     * 9.4.3.5 StringCreate(value, prototype) Abstract Operation
      * 
      * @param cx
      *            the execution context
@@ -163,24 +166,24 @@ public final class StringObject extends OrdinaryObject {
      * @return the new string object
      */
     public static StringObject StringCreate(ExecutionContext cx, CharSequence stringData) {
-        return StringCreate(cx, cx.getIntrinsic(Intrinsics.StringPrototype), stringData);
+        return StringCreate(cx, stringData, cx.getIntrinsic(Intrinsics.StringPrototype));
     }
 
     /**
-     * 9.4.3.6 StringCreate Abstract Operation
+     * 9.4.3.5 StringCreate(value, prototype) Abstract Operation
      * 
      * @param cx
      *            the execution context
-     * @param prototype
-     *            the prototype object
      * @param stringData
      *            the string value
+     * @param prototype
+     *            the prototype object
      * @return the new string object
      */
-    public static StringObject StringCreate(ExecutionContext cx, ScriptObject prototype,
-            CharSequence stringData) {
-        /* step 1 (not applicable) */
-        /* steps 2-9 */
-        return new StringObject(cx.getRealm(), prototype, stringData);
+    public static StringObject StringCreate(ExecutionContext cx, CharSequence stringData,
+            ScriptObject prototype) {
+        /* steps 1-2 (not applicable) */
+        /* steps 3-14 */
+        return new StringObject(cx.getRealm(), stringData, prototype);
     }
 }

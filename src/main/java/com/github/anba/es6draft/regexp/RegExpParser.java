@@ -567,8 +567,14 @@ public final class RegExpParser {
                     continue charclass;
                 }
 
+                case '-': {
+                    // ClassEscape :: [+U] -
+                    out.append('\\').append(get());
+                    cv = '-';
+                    break classatom;
+                }
                 case 'b':
-                    // CharacterEscape :: ControlEscape
+                    // ClassEscape :: b
                     mustMatch('b');
                     out.append('\u0008');
                     cv = 0x08;

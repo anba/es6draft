@@ -265,17 +265,13 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
                 Types.ScriptRuntime, "BindThisValue",
                 Type.methodType(Type.VOID_TYPE, Types.ScriptObject, Types.ExecutionContext));
 
-        static final MethodName ScriptRuntime_GetNewTargetOrNull = MethodName.findStatic(
-                Types.ScriptRuntime, "GetNewTargetOrNull",
+        static final MethodName ScriptRuntime_GetNewTargetOrUndefined = MethodName.findStatic(
+                Types.ScriptRuntime, "GetNewTargetOrUndefined",
                 Type.methodType(Types.Object, Types.ExecutionContext));
 
         static final MethodName ScriptRuntime_GetNewTarget = MethodName.findStatic(
                 Types.ScriptRuntime, "GetNewTarget",
                 Type.methodType(Types.Constructor, Types.ExecutionContext));
-
-        static final MethodName ScriptRuntime_GetNewTargetAndThisUninitialized = MethodName
-                .findStatic(Types.ScriptRuntime, "GetNewTargetAndThisUninitialized",
-                        Type.methodType(Types.Constructor, Types.ExecutionContext));
 
         static final MethodName ScriptRuntime_GetSuperConstructor = MethodName.findStatic(
                 Types.ScriptRuntime, "GetSuperConstructor",
@@ -2603,7 +2599,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
     @Override
     public ValType visit(NewTarget node, ExpressionVisitor mv) {
         mv.loadExecutionContext();
-        mv.invoke(Methods.ScriptRuntime_GetNewTargetOrNull);
+        mv.invoke(Methods.ScriptRuntime_GetNewTargetOrUndefined);
         return ValType.Any;
     }
 
@@ -2712,31 +2708,31 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
     }
 
     /**
-     * 12.3.5.2 Runtime Semantics: Evaluation
+     * 12.3.5.1 Runtime Semantics: Evaluation
      */
     @Override
     public ValType visit(SuperCallExpression node, ExpressionVisitor mv) {
-        /* steps 1-3 */
+        /* steps 1-2 */
         // stack: [] -> [newTarget]
         mv.loadExecutionContext();
-        mv.invoke(Methods.ScriptRuntime_GetNewTargetAndThisUninitialized);
+        mv.invoke(Methods.ScriptRuntime_GetNewTarget);
 
-        /* steps 4-5 */
+        /* steps 3-4 */
         // stack: [newTarget] -> [newTarget, constructor]
         mv.loadExecutionContext();
         mv.invoke(Methods.ScriptRuntime_GetSuperConstructor);
 
-        /* steps 6-7 */
+        /* steps 5-6 */
         // stack: [newTarget, constructor] -> [newTarget, constructor, argList]
         ArgumentListEvaluation(node.getArguments(), mv);
 
-        /* steps 8-9 */
+        /* steps 7-8 */
         // stack: [newTarget, constructor, argList] -> [result]
         mv.lineInfo(node);
         mv.loadExecutionContext();
         mv.invoke(Methods.ScriptRuntime_EvaluateSuperConstructorCall);
 
-        /* steps 10-11 */
+        /* steps 9-10 */
         // stack: [result] -> [result]
         mv.dup();
         mv.loadExecutionContext();
@@ -2746,7 +2742,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
     }
 
     /**
-     * 12.3.5.2 Runtime Semantics: Evaluation
+     * 12.3.5.1 Runtime Semantics: Evaluation
      */
     @Override
     public ValType visit(SuperElementAccessor node, ExpressionVisitor mv) {
@@ -2762,7 +2758,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
     }
 
     /**
-     * 12.3.5.2 Runtime Semantics: Evaluation
+     * 12.3.5.1 Runtime Semantics: Evaluation
      */
     @Override
     public ValType visit(SuperElementAccessorValue node, ExpressionVisitor mv) {
@@ -2778,7 +2774,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
     }
 
     /**
-     * 12.3.5.2 Runtime Semantics: Evaluation
+     * 12.3.5.1 Runtime Semantics: Evaluation
      */
     @Override
     public ValType visit(SuperNewExpression node, ExpressionVisitor mv) {
@@ -2805,7 +2801,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
     }
 
     /**
-     * 12.3.5.2 Runtime Semantics: Evaluation
+     * 12.3.5.1 Runtime Semantics: Evaluation
      */
     @Override
     public ValType visit(SuperPropertyAccessor node, ExpressionVisitor mv) {
@@ -2820,7 +2816,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
     }
 
     /**
-     * 12.3.5.2 Runtime Semantics: Evaluation
+     * 12.3.5.1 Runtime Semantics: Evaluation
      */
     @Override
     public ValType visit(SuperPropertyAccessorValue node, ExpressionVisitor mv) {

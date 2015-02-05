@@ -75,8 +75,9 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
         /* step 1 (not applicable) */
         /* step 2 */
         if (Type.isUndefinedOrNull(value)) {
-            // TODO: spec issue - change to OrdinaryCreateFromConstructor()? (bug 3136, 3550)
-            return ObjectCreate(calleeContext, Intrinsics.ObjectPrototype);
+            // OrdinaryCreateFromConstructor instead of ObjectCreate in case the active function
+            // (= `this`) is not the intrinsic %Object% constructor function.
+            return OrdinaryCreateFromConstructor(calleeContext, this, Intrinsics.ObjectPrototype);
         }
         /* step 3 */
         return ToObject(calleeContext, value);
@@ -97,8 +98,9 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
         }
         /* step 2 */
         if (Type.isUndefinedOrNull(value)) {
-            // TODO: spec issue - change to OrdinaryCreateFromConstructor()? (bug 3136, 3550)
-            return ObjectCreate(calleeContext, Intrinsics.ObjectPrototype);
+            // OrdinaryCreateFromConstructor instead of ObjectCreate in case the active function
+            // (= `this`) is not the intrinsic %Object% constructor function.
+            return OrdinaryCreateFromConstructor(calleeContext, this, Intrinsics.ObjectPrototype);
         }
         /* step 3 */
         return ToObject(calleeContext, value);

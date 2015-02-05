@@ -44,10 +44,6 @@ public final class ModuleNamespaceObject extends OrdinaryObject {
     /** [[Module]] */
     private final ModuleRecord module;
 
-    /** [[Realm]] */
-    @SuppressWarnings("unused")
-    private final Realm realm;
-
     /** [[Exports]] */
     private final Set<String> exports;
 
@@ -60,16 +56,12 @@ public final class ModuleNamespaceObject extends OrdinaryObject {
      *            the realm object
      * @param module
      *            the module record
-     * @param moduleRealm
-     *            the module realm object
      * @param exports
      *            the list of exported bindings
      */
-    public ModuleNamespaceObject(Realm realm, ModuleRecord module, Realm moduleRealm,
-            Set<String> exports) {
+    public ModuleNamespaceObject(Realm realm, ModuleRecord module, Set<String> exports) {
         super(realm);
         this.module = module;
-        this.realm = moduleRealm;
         this.exports = exports;
     }
 
@@ -232,27 +224,24 @@ public final class ModuleNamespaceObject extends OrdinaryObject {
         }
         /* step 5 */
         ModuleRecord m = this.module;
-        /* step 6 */
-        // FIXME: spec bug - no longer needed
-        // Realm realm = this.realm;
-        /* steps 7-9 */
+        /* steps 6-8 */
         ModuleExport binding;
         try {
-            /* steps 7, 9 */
+            /* steps 6, 8 */
             binding = ResolveExport(m, propertyKey, new HashMap<ModuleRecord, Set<String>>());
         } catch (ResolutionException e) {
-            /* step 8 */
+            /* step 7 */
             throw Errors.newReferenceError(cx, Messages.Key.ModulesAmbiguousExport, propertyKey);
         }
-        /* step 10 */
+        /* step 9 */
         assert binding != null;
-        /* step 11 */
+        /* step 10 */
         ModuleRecord targetModule = binding.getModule();
-        /* step 12 */
+        /* step 11 */
         assert targetModule != null;
-        /* step 13 */
+        /* step 12 */
         ModuleEnvironmentRecord targetEnvRec = targetModule.getEnvironment().getEnvRec();
-        /* step 14 */
+        /* step 13 */
         return targetEnvRec.getBindingValue(binding.getBindingName(), true);
     }
 
@@ -329,36 +318,36 @@ public final class ModuleNamespaceObject extends OrdinaryObject {
     }
 
     /**
-     * 9.4.6.13 ModuleNamespaceCreate (module, realm, exports)
+     * 9.4.6.13 ModuleNamespaceCreate (module, exports)
      *
      * @param cx
      *            the execution context
      * @param module
      *            the module record
-     * @param realm
-     *            the realm instance
      * @param exports
      *            the exported bindings
      * @return the new module namespace object
      */
     public static ModuleNamespaceObject ModuleNamespaceCreate(ExecutionContext cx,
-            ModuleRecord module, Realm realm, Set<String> exports) {
+            ModuleRecord module, Set<String> exports) {
         /* step 1 (not applicable) */
         /* step 2 */
         assert module.getNamespace() == null;
-        /* step 3 (not applicable) */
-        /* steps 5-9 */
-        ModuleNamespaceObject m = new ModuleNamespaceObject(cx.getRealm(), module, realm, exports);
-        /* step 10 */
+        /* step 3 */
+        // FIXME: spec bug - stale assertion
+        /* step 4 (not applicable) */
+        /* steps 5-8 */
+        ModuleNamespaceObject m = new ModuleNamespaceObject(cx.getRealm(), module, exports);
+        /* step 9 */
         // 26.3.1 @@toStringTag
         m.infallibleDefineOwnProperty(BuiltinSymbol.toStringTag.get(), new Property("Module",
                 false, false, true));
         // 26.3.2 [ @@iterator ] ( )
         m.infallibleDefineOwnProperty(BuiltinSymbol.iterator.get(), new Property(
                 new ModuleIteratorFunction(cx.getRealm()), true, false, true));
-        /* step 11 */
+        /* step 10 */
         module.setNamespace(m);
-        /* step 12 */
+        /* step 11 */
         return m;
     }
 

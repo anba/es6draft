@@ -20,7 +20,7 @@ const {
     }
   });
   Object.isFrozen(p);
-  assertSame("ab", log);
+  assertSame("a", log);
 }
 
 {
@@ -35,5 +35,5 @@ const {
     }
   });
   Object.isFrozen(p);
-  assertSame("ab", log);
+  assertSame("a", log);
 }

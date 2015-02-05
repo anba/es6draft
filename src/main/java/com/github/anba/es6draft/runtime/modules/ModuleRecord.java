@@ -7,10 +7,8 @@
 package com.github.anba.es6draft.runtime.modules;
 
 import static java.util.Collections.unmodifiableList;
-import static java.util.Collections.unmodifiableMap;
 
 import java.util.List;
-import java.util.Map;
 
 import com.github.anba.es6draft.Module;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
@@ -29,7 +27,7 @@ public final class ModuleRecord implements Cloneable {
     /**
      * [[ImportedModules]]
      */
-    private Map<SourceIdentifier, ModuleRecord> importedModules;
+    private List<ModuleRecord> importedModules;
 
     /**
      * [[ECMAScriptCode]]
@@ -126,8 +124,8 @@ public final class ModuleRecord implements Cloneable {
      * 
      * @return the list of imported modules
      */
-    public Map<SourceIdentifier, ModuleRecord> getImportedModules() {
-        return unmodifiableMap(importedModules);
+    public List<ModuleRecord> getImportedModules() {
+        return unmodifiableList(importedModules);
     }
 
     /**
@@ -136,7 +134,7 @@ public final class ModuleRecord implements Cloneable {
      * @param importedModules
      *            the list of imported modules
      */
-    public void setImportedModules(Map<SourceIdentifier, ModuleRecord> importedModules) {
+    public void setImportedModules(List<ModuleRecord> importedModules) {
         assert this.importedModules == null && importedModules != null;
         this.importedModules = importedModules;
     }

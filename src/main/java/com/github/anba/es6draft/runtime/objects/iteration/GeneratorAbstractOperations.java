@@ -63,13 +63,8 @@ public final class GeneratorAbstractOperations {
         if (!(generator instanceof GeneratorObject)) {
             throw newTypeError(cx, Messages.Key.IncompatibleObject);
         }
-        GeneratorObject gen = (GeneratorObject) generator;
-        /* step 3 (not applicable) */
-        /* steps 4-5 */
-        // FIXME: spec bug - [[GeneratorState]] never undefined (bug 3670)
-        assert gen.getState() != null;
-        /* step 6 */
-        return gen;
+        /* steps 3-6 (execution state checked in GeneratorObject) */
+        return (GeneratorObject) generator;
     }
 
     /**

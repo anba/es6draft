@@ -158,8 +158,7 @@ public final class MapIteratorPrototype extends OrdinaryObject implements Initia
             if (m == null) {
                 return CreateIterResultObject(cx, UNDEFINED, true);
             }
-            /* step 8 */
-            assert m.getMapData() != null;
+            /* step 8 (implicit) */
             /* step 9 */
             Iterator<Entry<Object, Object>> iter = o.iterator;
             /* step 10 */

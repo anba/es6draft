@@ -177,7 +177,7 @@ abstract class StatementVisitor extends ExpressionVisitor {
      * 
      * @return the top level node for this statement visitor
      */
-    TopLevelNode<?> getTopLevelNode() {
+    final TopLevelNode<?> getTopLevelNode() {
         return topLevelNode;
     }
 
@@ -186,16 +186,12 @@ abstract class StatementVisitor extends ExpressionVisitor {
      * 
      * @return the code type for this statement visitor
      */
-    CodeType getCodeType() {
+    final CodeType getCodeType() {
         return codeType;
     }
 
-    /**
-     * Returns {@code true} if compiling generator or async function code.
-     * 
-     * @return {@code true} if generator or async function
-     */
-    boolean isGeneratorOrAsync() {
+    @Override
+    final boolean isGeneratorOrAsync() {
         return isGeneratorOrAsync;
     }
 
@@ -264,6 +260,22 @@ abstract class StatementVisitor extends ExpressionVisitor {
         labels = labels.parent;
         assert labels != null;
         return tempLabels != null ? tempLabels : Collections.<TempLabel> emptyList();
+    }
+
+    @Override
+    Variable<Object> enterIteration() {
+        if (isGeneratorOrAsync()) {
+            return enterAbruptRegion();
+        }
+        return super.enterIteration();
+    }
+
+    @Override
+    List<TempLabel> exitIteration() {
+        if (isGeneratorOrAsync()) {
+            return exitAbruptRegion();
+        }
+        return super.exitIteration();
     }
 
     /**
@@ -550,24 +562,5 @@ abstract class StatementVisitor extends ExpressionVisitor {
      */
     Jump catchWithGuardedLabel() {
         return labels.catchLabels.peek();
-    }
-
-    /**
-     * Emit goto instruction to jump to {@code label}'s wrapped target.
-     * 
-     * @param label
-     *            the target instruction
-     * @param completion
-     *            the variable which holds the current completion value
-     */
-    void goTo(TempLabel label, Variable<Object> completion) {
-        Jump wrapped = label.getWrapped();
-        if (wrapped instanceof ReturnLabel) {
-            // specialize return label to emit direct return instruction
-            load(completion);
-            _return();
-        } else {
-            goTo(wrapped);
-        }
     }
 }

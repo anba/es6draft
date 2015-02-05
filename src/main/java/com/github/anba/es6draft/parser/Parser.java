@@ -7177,6 +7177,8 @@ public final class Parser {
      *     new NewExpression<span><sub>[?Yield]</sub></span>
      *     NewSuper
      * MetaProperty :
+     *     NewTarget
+     * NewTarget :
      *     new . target
      * CallExpression<span><sub>[Yield]</sub></span> :
      *     MemberExpression<span><sub>[?Yield]</sub></span> Arguments<span><sub>[?Yield]</sub></span>
@@ -7207,8 +7209,9 @@ public final class Parser {
                 consume(Token.DOT);
                 consume("target");
                 return new NewTarget(begin, ts.endPosition());
-            } else if (token() == Token.SUPER && !(LOOKAHEAD(Token.DOT) || LOOKAHEAD(Token.LB))) {
-                superNew();
+            } else if (token() == Token.SUPER && !(LOOKAHEAD(Token.DOT) || LOOKAHEAD(Token.LB))
+                    && isEnabled(CompatibilityOption.NewSuper)) {
+                newSuper();
 
                 consume(Token.SUPER);
                 if (token() == Token.LP) {
@@ -7320,7 +7323,7 @@ public final class Parser {
         }
     }
 
-    private void superNew() {
+    private void newSuper() {
         ParseContext superContext = context.findSuperContext();
         // 12.2.5.1 Static Semantics: Early Errors
         // 14.4.1 Static Semantics: Early Errors

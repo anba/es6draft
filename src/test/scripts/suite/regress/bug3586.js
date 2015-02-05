@@ -22,5 +22,5 @@ for (let testFn of [Object.isSealed, Object.isFrozen]) {
   Object.preventExtensions(proxy);
 
   testFn(proxy);
-  assertEquals(["a", "b"], log);
+  assertEquals(["a"], log);
 }

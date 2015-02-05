@@ -25,13 +25,11 @@ gen.prototype.throw = function(e) {
 };
 
 // Note: Rev27 disabled error recovery
+// Note: Rev32 re-enabled error recovery
 
 let g = function*(){ yield* gen(); }();
 g.next();
-// g.throw("Stop!");
-let exc; try { g.throw("Stop!"); } catch(e) { exc = e; }
-assertSame("Stop!", exc);
+g.throw("Stop!");
 g.next();
 
-// assertSame("{start}{throw}{stop}", log);
-assertSame("{start}{throw}", log);
+assertSame("{start}{throw}{stop}", log);

@@ -23,12 +23,14 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * </ul>
  */
 final class ClassPropertyGenerator extends DefaultCodeGenerator<Void, ExpressionVisitor> {
+    private final PropertyGenerator propgen;
     private final Variable<OrdinaryConstructorFunction> F;
     private final Variable<OrdinaryObject> proto;
 
     private ClassPropertyGenerator(CodeGenerator codegen, Variable<OrdinaryConstructorFunction> F,
             Variable<OrdinaryObject> proto) {
         super(codegen);
+        this.propgen = new PropertyGenerator(codegen, false);
         this.F = F;
         this.proto = proto;
     }
@@ -51,12 +53,13 @@ final class ClassPropertyGenerator extends DefaultCodeGenerator<Void, Expression
     @Override
     public Void visit(MethodDefinition node, ExpressionVisitor mv) {
         if (node.getType() != MethodDefinition.MethodType.Constructor) {
+            // stack: [] -> []
             if (node.isStatic()) {
                 mv.load(F);
             } else {
                 mv.load(proto);
             }
-            codegen.propertyDefinition(node, mv);
+            node.accept(propgen, mv);
         }
         return null;
     }
@@ -65,12 +68,10 @@ final class ClassPropertyGenerator extends DefaultCodeGenerator<Void, Expression
     public Void visit(MethodDefinitionsMethod node, ExpressionVisitor mv) {
         codegen.compile(node, mv);
 
-        // stack: [] -> [cx, F, proto]
+        // stack: [] -> []
         mv.loadExecutionContext();
         mv.load(F);
         mv.load(proto);
-
-        // stack: [cx, F, proto] -> []
         mv.invoke(codegen.methodDesc(node));
 
         return null;

@@ -6,10 +6,7 @@
  */
 package com.github.anba.es6draft.runtime.objects.binary;
 
-import static com.github.anba.es6draft.runtime.AbstractOperations.SameValueZero;
-import static com.github.anba.es6draft.runtime.AbstractOperations.SpeciesConstructor;
-import static com.github.anba.es6draft.runtime.AbstractOperations.ToLength;
-import static com.github.anba.es6draft.runtime.AbstractOperations.ToNumber;
+import static com.github.anba.es6draft.runtime.AbstractOperations.*;
 import static com.github.anba.es6draft.runtime.internal.Errors.newRangeError;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
@@ -208,35 +205,58 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
      */
     public static ArrayBufferObject CloneArrayBuffer(ExecutionContext cx,
             ArrayBufferObject srcBuffer, long srcByteOffset) {
+        return CloneArrayBuffer(cx, srcBuffer, srcByteOffset, null);
+    }
+
+    /**
+     * 24.1.1.4 CloneArrayBuffer (srcBuffer, srcByteOffset)
+     * 
+     * @param cx
+     *            the execution context
+     * @param srcBuffer
+     *            the source buffer
+     * @param srcByteOffset
+     *            the source offset
+     * @param cloneConstructor
+     *            the intrinsic constructor function
+     * @return the new array buffer object
+     */
+    public static ArrayBufferObject CloneArrayBuffer(ExecutionContext cx,
+            ArrayBufferObject srcBuffer, long srcByteOffset, Intrinsics cloneConstructor) {
         /* step 1 (implicit) */
         /* steps 2-3 */
-        Constructor bufferConstructor = SpeciesConstructor(cx, srcBuffer, Intrinsics.ArrayBuffer);
+        Constructor bufferConstructor;
+        if (cloneConstructor == null) {
+            /* steps 2.a-b */
+            bufferConstructor = SpeciesConstructor(cx, srcBuffer, Intrinsics.ArrayBuffer);
+            /* step 2.c */
+            if (IsDetachedBuffer(srcBuffer)) {
+                throw newTypeError(cx, Messages.Key.BufferDetached);
+            }
+        } else {
+            /* step 3 */
+            assert IsConstructor(cx.getIntrinsic(cloneConstructor));
+            bufferConstructor = (Constructor) cx.getIntrinsic(cloneConstructor);
+        }
         /* step 4 */
-        if (IsDetachedBuffer(srcBuffer)) {
-            throw newTypeError(cx, Messages.Key.BufferDetached);
-        }
-        /* step 5 */
         ByteBuffer srcBlock = srcBuffer.getData();
-        /* step 6 */
+        /* step 5 */
         long srcLength = srcBuffer.getByteLength();
-        /* step 7 */
+        /* step 6 */
         assert srcByteOffset <= srcLength;
-        /* step 8 */
+        /* step 7 */
         long cloneLength = srcLength - srcByteOffset;
-        /* step 9 */
-        // FIXME: spec issue - unnecessary step (bug 3661)
-        assert srcBlock == srcBuffer.getData();
-        /* steps 10-11 */
+        /* steps 8-9 */
         ArrayBufferObject targetBuffer = AllocateArrayBuffer(cx, bufferConstructor, cloneLength);
-        // FIXME: spec bug - missing test (bug 3678)
+        /* step 10 */
         if (IsDetachedBuffer(srcBuffer)) {
             throw newTypeError(cx, Messages.Key.BufferDetached);
         }
-        /* step 12 */
+        /* step 11 */
         ByteBuffer targetBlock = targetBuffer.getData();
-        /* step 13 */
+        /* step 12 */
         CopyDataBlockBytes(targetBlock, 0, srcBlock, srcByteOffset, cloneLength);
-        /* step 14 */
+        /* step 13 */
         return targetBuffer;
     }
 

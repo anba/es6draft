@@ -224,7 +224,7 @@ public abstract class IntegerIndexedObject extends OrdinaryObject {
     /** 9.4.5.7 [[OwnPropertyKeys]] () */
     @Override
     protected final List<Object> getOwnPropertyKeys(ExecutionContext cx) {
-        /* steps 1-8 */
+        /* steps 1-7 */
         return new CompoundList<>(new IndexedPropertyKeyList(getLength()),
                 super.getOwnPropertyKeys(cx));
     }

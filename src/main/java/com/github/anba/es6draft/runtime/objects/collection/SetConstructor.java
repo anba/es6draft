@@ -19,6 +19,7 @@ import com.github.anba.es6draft.runtime.internal.Properties.Accessor;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
+import com.github.anba.es6draft.runtime.internal.ScriptException;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Constructor;
@@ -95,19 +96,22 @@ public final class SetConstructor extends BuiltinConstructor implements Initiali
         }
 
         /* step 8 */
-        // FIXME: spec bug (bug 3658)
-        /* step 9 */
         if (iter == null) {
             return set;
         }
-        /* step 11 */
-        for (;;) {
-            ScriptObject next = IteratorStep(calleeContext, iter);
-            if (next == null) {
-                return set;
+        /* step 9 */
+        try {
+            for (;;) {
+                ScriptObject next = IteratorStep(calleeContext, iter);
+                if (next == null) {
+                    return set;
+                }
+                Object nextValue = IteratorValue(calleeContext, next);
+                adder.call(calleeContext, set, nextValue);
             }
-            Object nextValue = IteratorValue(calleeContext, next);
-            adder.call(calleeContext, set, nextValue);
+        } catch (ScriptException e) {
+            IteratorClose(calleeContext, iter, true);
+            throw e;
         }
     }
 

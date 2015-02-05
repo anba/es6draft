@@ -23,7 +23,7 @@ var iter = {
   return() {
     return {
       get done() {
-        fail `done property not ignored`;
+        return true;
       },
       get value() {
         throw new Err;

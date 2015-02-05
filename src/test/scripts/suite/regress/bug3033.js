@@ -68,25 +68,29 @@ const {
         return this;
       },
       next() {
+        if (returnCalled) {
+          return {value: -3, done: true};
+        }
         return {value: 0, done: false};
       },
       return() {
         returnCalled = true;
-        // 'done' value is ignored
+        // 'done' value is not ignored
         return {value: -2, done: false};
       }
     };
     let v = yield* iter;
-    assertSame(-2, v);
+    assertSame(-3, v);
     normalComplete = true;
-    return -3;
+    return -4;
   }
   let gen = g();
   assertEquals({value: 0, done: false}, gen.next());
   assertFalse(normalComplete);
   assertFalse(returnCalled);
-  assertEquals({value: -2, done: true}, gen.return(-1));
+  assertEquals({value: -2, done: false}, gen.return(-1));
+  assertEquals({value: -4, done: true}, gen.next());
   assertTrue(returnCalled);
-  assertFalse(normalComplete);
+  assertTrue(normalComplete);
   assertEquals({value: void 0, done: true}, gen.next());
 }

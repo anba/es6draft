@@ -28,7 +28,6 @@ import com.github.anba.es6draft.runtime.EnvironmentRecord;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.ModuleEnvironmentRecord;
-import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.modules.ExportEntry;
 import com.github.anba.es6draft.runtime.modules.ImportEntry;
 import com.github.anba.es6draft.runtime.modules.ModuleExport;
@@ -61,8 +60,8 @@ final class ModuleDeclarationInstantiationGenerator extends
         // class: ScriptRuntime
         static final MethodName ScriptRuntime_getModuleNamespace = MethodName.findStatic(
                 Types.ScriptRuntime, "getModuleNamespace", Type.methodType(
-                        Types.ModuleNamespaceObject, Types.ExecutionContext, Types.Realm,
-                        Types.Map, Types.Map, Types.String));
+                        Types.ModuleNamespaceObject, Types.ExecutionContext, Types.Map, Types.Map,
+                        Types.String));
 
         static final MethodName ScriptRuntime_resolveExportOrThrow = MethodName.findStatic(
                 Types.ScriptRuntime, "resolveExportOrThrow",
@@ -75,9 +74,8 @@ final class ModuleDeclarationInstantiationGenerator extends
 
     private static final int EXECUTION_CONTEXT = 0;
     private static final int MODULE_ENV = 1;
-    private static final int REALM = 2;
-    private static final int MODULE_SET = 3;
-    private static final int IDENTIFIER_MAP = 4;
+    private static final int MODULE_SET = 2;
+    private static final int IDENTIFIER_MAP = 3;
 
     private static final class ModuleDeclInitMethodGenerator extends ExpressionVisitor {
         ModuleDeclInitMethodGenerator(MethodCode method, Module module) {
@@ -89,7 +87,6 @@ final class ModuleDeclarationInstantiationGenerator extends
             super.begin();
             setParameterName("cx", EXECUTION_CONTEXT, Types.ExecutionContext);
             setParameterName("moduleEnv", MODULE_ENV, Types.LexicalEnvironment);
-            setParameterName("realm", REALM, Types.Realm);
             setParameterName("moduleSet", MODULE_SET, Types.Map);
             setParameterName("identifierMap", IDENTIFIER_MAP, Types.Map);
         }
@@ -114,7 +111,6 @@ final class ModuleDeclarationInstantiationGenerator extends
                 ExecutionContext.class);
         Variable<LexicalEnvironment<ModuleEnvironmentRecord>> env = mv.getParameter(MODULE_ENV,
                 LexicalEnvironment.class).uncheckedCast();
-        Variable<Realm> realm = mv.getParameter(REALM, Realm.class);
         Variable<Map<SourceIdentifier, ModuleRecord>> moduleSet = mv.getParameter(MODULE_SET,
                 Map.class).uncheckedCast();
         Variable<Map<String, SourceIdentifier>> identifierMap = mv.getParameter(IDENTIFIER_MAP,
@@ -154,7 +150,6 @@ final class ModuleDeclarationInstantiationGenerator extends
                 mv.aconst(importEntry.getLocalName());
                 {
                     mv.load(context);
-                    mv.load(realm);
                     mv.load(moduleSet);
                     mv.load(identifierMap);
                     mv.aconst(importedModule.getSourceCodeId().toString());

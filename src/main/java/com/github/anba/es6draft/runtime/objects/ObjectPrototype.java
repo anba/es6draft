@@ -12,9 +12,6 @@ import static com.github.anba.es6draft.runtime.internal.Properties.createPropert
 import static com.github.anba.es6draft.runtime.types.Null.NULL;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
-import java.util.Arrays;
-import java.util.HashSet;
-
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
@@ -123,29 +120,16 @@ public final class ObjectPrototype extends OrdinaryObject implements Initializab
             }
             /* steps 14-15 */
             Object ttag = Get(cx, o, BuiltinSymbol.toStringTag.get());
-            /* steps 16-17 */
+            /* step 16 */
             String tag;
-            if (Type.isUndefined(ttag)) {
-                /* step 16 */
+            if (!Type.isString(ttag)) {
                 tag = builtinTag;
             } else {
-                /* step 17 */
-                if (!Type.isString(ttag)) {
-                    tag = "???";
-                } else {
-                    tag = Type.stringValue(ttag).toString();
-                    if (censoredNames.contains(tag) && !builtinTag.equals(tag)) {
-                        tag = "~" + tag;
-                    }
-                }
+                tag = Type.stringValue(ttag).toString();
             }
-            /* step 18 */
+            /* step 17 */
             return "[object " + tag + "]";
         }
-
-        private static final HashSet<String> censoredNames = new HashSet<>(Arrays.asList(
-                "Arguments", "Array", "Boolean", "Date", "Error", "Function", "Number", "RegExp",
-                "String"));
 
         /**
          * 19.1.3.5 Object.prototype.toLocaleString ( [ reserved1 [ , reserved2 ] ] )

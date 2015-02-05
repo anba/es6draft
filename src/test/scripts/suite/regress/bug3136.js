@@ -14,12 +14,10 @@ const {
 var Obj = Object.toMethod({});
 Obj.prototype = {};
 
-// FIXME: Update test after bug 3550 is fixed
+assertSame(Obj.prototype, Object.getPrototypeOf(Obj()));
+assertSame(Obj.prototype, Object.getPrototypeOf(Obj(void 0)));
+assertSame(Obj.prototype, Object.getPrototypeOf(Obj(null)));
 
-assertSame(Object.prototype, Object.getPrototypeOf(Obj()));
-assertSame(Object.prototype, Object.getPrototypeOf(Obj(void 0)));
-assertSame(Object.prototype, Object.getPrototypeOf(Obj(null)));
-
-assertSame(Object.prototype, Object.getPrototypeOf(new Obj()));
-assertSame(Object.prototype, Object.getPrototypeOf(new Obj(void 0)));
-assertSame(Object.prototype, Object.getPrototypeOf(new Obj(null)));
+assertSame(Obj.prototype, Object.getPrototypeOf(new Obj()));
+assertSame(Obj.prototype, Object.getPrototypeOf(new Obj(void 0)));
+assertSame(Obj.prototype, Object.getPrototypeOf(new Obj(null)));

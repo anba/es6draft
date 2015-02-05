@@ -199,6 +199,16 @@ public enum CompatibilityOption {
     ArrayIncludes,
 
     /**
+     * ES7-Extension: Function.prototype.toMethod
+     */
+    FunctionToMethod,
+
+    /**
+     * ES7-Extension: new super()
+     */
+    NewSuper,
+
+    /**
      * Track unhandled rejected promise objects
      */
     PromiseRejection,
@@ -248,7 +258,7 @@ public enum CompatibilityOption {
      * @return the options set for proposed ES7 extensions
      */
     public static final Set<CompatibilityOption> ECMAScript7() {
-        return EnumSet.range(AsyncFunction, ArrayIncludes);
+        return EnumSet.range(AsyncFunction, NewSuper);
     }
 
     @SafeVarargs

@@ -6,7 +6,6 @@
  */
 package com.github.anba.es6draft.runtime.objects.iteration;
 
-import static com.github.anba.es6draft.runtime.AbstractOperations.HasOwnProperty;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToFlatString;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.FunctionInitialize;
@@ -118,7 +117,7 @@ public final class GeneratorFunctionConstructor extends BuiltinConstructor imple
             bodyText = ToFlatString(cx, args[k - 1]);
         }
 
-        /* steps 11-13 */
+        /* steps 11, 13-17 */
         Source source = generatorSource(cx);
         CompiledGenerator exec = new CompiledGenerator(source);
         RuntimeInfo.Function function;
@@ -129,29 +128,27 @@ public final class GeneratorFunctionConstructor extends BuiltinConstructor imple
             throw e.toScriptException(cx);
         }
 
-        /* step 14 */
+        /* step 12 */
         boolean strict = function.isStrict();
-        /* steps 15-16 */
+        /* steps 18-19 */
         ScriptObject proto = GetPrototypeFromConstructor(cx, newTarget, fallbackProto);
-        /* steps 17-18 */
+        /* steps 20-21 */
         OrdinaryGenerator f = FunctionAllocate(cx, proto, strict, FunctionKind.Normal);
-        /* steps 19-20 */
+        /* steps 22-23 */
         LexicalEnvironment<GlobalEnvironmentRecord> scope = f.getRealm().getGlobalEnv();
-        /* steps 21-22 */
+        /* step 24 */
         FunctionInitialize(f, FunctionKind.Normal, strict, function, scope, exec);
-        /* step 23 */
+        /* step 25 */
         if (function.hasSuperReference()) {
             MakeMethod(f, null);
         }
-        /* step 25 (not applicable) */
-        /* steps 24, 26 */
+        /* step 26 */
         OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.GeneratorPrototype);
         MakeConstructor(f, true, prototype);
-        /* steps 27-29 */
-        if (!HasOwnProperty(cx, f, "name")) {
-            SetFunctionName(f, "anonymous");
-        }
-        /* step 30 */
+        /* step 27 (not applicable) */
+        /* step 28 */
+        SetFunctionName(f, "anonymous");
+        /* step 29 */
         return f;
     }
 

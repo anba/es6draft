@@ -14,23 +14,22 @@ const {
   assertThrows(ToStringError, () => ({get [Symbol.toStringTag](){ throw new ToStringError }}).toString());
 }
 
-// Non-String values are changed to "???" (except for undefined)
-for (let tag of [null, true, false, 0, 1, 1.4, 0/0, {}, function(){}, Symbol()]) {
-  assertSame("[object ???]", {[Symbol.toStringTag]: tag}.toString());
+// Non-String values are ignored
+for (let tag of [void 0, null, true, false, 0, 1, 1.4, 0/0, {}, function(){}, Symbol()]) {
+  assertSame("[object Object]", {[Symbol.toStringTag]: tag}.toString());
 }
-assertSame("[object Object]", {[Symbol.toStringTag]: void 0}.toString());
 
 // String values are accepted
 for (let tag of ["", "MyObject"]) {
   assertSame(`[object ${tag}]`, {[Symbol.toStringTag]: tag}.toString());
 }
 
-// Restricted names are prepended with ~
+// No restriction on toStringTag values
 for (let tag of ["Arguments", "Array", "Boolean", "Date", "Error", "Function", "Number", "RegExp", "String"]) {
-  assertSame(`[object ~${tag}]`, {[Symbol.toStringTag]: tag}.toString());
+  assertSame(`[object ${tag}]`, {[Symbol.toStringTag]: tag}.toString());
 }
 
-// Restricted names are not prepended with ~ if the original built-in tag matches
+// No restriction on toStringTag values
 let restricted = {
   Arguments: [function(){ return arguments }(), function(){ "use strict"; return arguments }()],
   Array: [[]],
@@ -58,7 +57,7 @@ for (let tag of ["Arguments", "Array", "Boolean", "Date", "Error", "Function", "
       if (tag === kind) {
         assertSame(`[object ${tag}]`, Object.prototype.toString.call(v));
       } else {
-        assertSame(`[object ~${tag}]`, Object.prototype.toString.call(v));
+        assertSame(`[object ${tag}]`, Object.prototype.toString.call(v));
       }
       if (isPrimitive) {
         delete global[kind].prototype[Symbol.toStringTag];

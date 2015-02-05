@@ -160,11 +160,6 @@ tests/auto-regress/bug589103.js
 # SpiderMonkey __proto__ not own property on Object.prototype
 tests/basic/__proto__-not-prototype-mutation.js
 
-# Proxy for RegExp/TypedArray/DataView is not supported
-tests/auto-regress/bug743000.js
-tests/basic/testBug748212.js
-tests/basic/testBug761439.js
-
 # missing [object Function] for proxied functions
 tests/basic/bug807623.js
 
@@ -378,6 +373,9 @@ tests/tracelogger/setupTraceLogger.js
 
 # Spidermonkey strict/werror options
 tests/basic/bug629858.js
+tests/collections/Map-constructor-1.js
+tests/collections/Set-constructor-1.js
+tests/collections/WeakMap-constructor-1.js
 
 # Unsupported shell functions
 # shapeOf

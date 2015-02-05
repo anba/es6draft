@@ -20,9 +20,6 @@ feature/DefaultParameters/Error_SetAccessor.js
 # Wrong Array subclass in test case (Traceur limitation)
 feature/ArrayExtras/From.js
 
-# yield* no longer performs complete error recovery
-feature/Yield/GeneratorReturn.js
-
 # Derived class without super() constructor call
 feature/Classes/ConstructorMember.js
 
@@ -32,6 +29,10 @@ feature/Classes/ExtendStrange.js
 # Access to 'this' before super() constructor call
 feature/Classes/NestedClassSuperAnimal.js
 feature/Classes/SimpleSuper.js
+
+# class methods are non-enumerable
+feature/Classes/Method.js
+feature/NumericLiteral/Simple.js
 
 
 ############################################

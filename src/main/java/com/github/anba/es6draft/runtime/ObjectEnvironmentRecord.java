@@ -99,7 +99,7 @@ public final class ObjectEnvironmentRecord implements EnvironmentRecord {
         /* step 9 */
         if (Type.isObject(unscopables)) {
             Object blocked = Get(cx, Type.objectValue(unscopables), name);
-            if (!Type.isUndefined(blocked)) {
+            if (ToBoolean(blocked)) {
                 return false;
             }
         }
@@ -131,6 +131,7 @@ public final class ObjectEnvironmentRecord implements EnvironmentRecord {
      */
     @Override
     public void initializeBinding(String name, Object value) {
+        // FIXME: InitializeBinding for ObjectEnvironment unreachable
         assert value != null;
         /* step 1 (omitted) */
         /* step 2 */

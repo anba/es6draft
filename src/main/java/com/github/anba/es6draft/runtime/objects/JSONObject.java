@@ -333,7 +333,6 @@ public final class JSONObject extends OrdinaryObject implements Initializable {
             } else if (o instanceof StringObject) {
                 value = ToString(cx, value);
             } else if (o instanceof BooleanObject) {
-                // FIXME: spec bug - invalid check (bug 3668)
                 value = ((BooleanObject) o).getBooleanData();
             }
         }

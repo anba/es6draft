@@ -7,7 +7,6 @@
 package com.github.anba.es6draft.runtime.objects.promise;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.*;
-import static com.github.anba.es6draft.runtime.internal.Errors.newInternalError;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.objects.promise.PromiseAbstractOperations.CreateResolvingFunctions;
@@ -95,23 +94,23 @@ public final class PromiseConstructor extends BuiltinConstructor implements Init
         if (!IsCallable(executor)) {
             throw newTypeError(calleeContext, Messages.Key.NotCallable);
         }
-        /* step 3 */
+        /* steps 3-4 */
         PromiseObject promise = OrdinaryCreateFromConstructor(calleeContext, newTarget,
                 Intrinsics.PromisePrototype, GetPromiseAllocator(calleeContext.getRealm()));
-        /* steps 4-7 */
+        /* steps 5-8 */
         promise.initialize(newTarget);
-        /* step 8 */
+        /* step 9 */
         ResolvingFunctions resolvingFunctions = CreateResolvingFunctions(calleeContext, promise);
-        /* steps 9-10 */
+        /* steps 10-11 */
         try {
-            /* step 9 */
+            /* step 10 */
             ((Callable) executor).call(calleeContext, UNDEFINED, resolvingFunctions.getResolve(),
                     resolvingFunctions.getReject());
         } catch (ScriptException e) {
-            /* step 10 */
+            /* step 11 */
             resolvingFunctions.getReject().call(calleeContext, UNDEFINED, e.getValue());
         }
-        /* step 11 */
+        /* step 12 */
         return promise;
     }
 
@@ -180,8 +179,17 @@ public final class PromiseConstructor extends BuiltinConstructor implements Init
                 /* step 9 */
                 return IfAbruptRejectPromise(cx, e, promiseCapability);
             }
-            /* step 10 */
-            return PerformPromiseAll(cx, iterator, c, promiseCapability);
+            /* steps 10-12 */
+            try {
+                return PerformPromiseAll(cx, iterator, c, promiseCapability);
+            } catch (ScriptException e) {
+                try {
+                    IteratorClose(cx, iterator, true);
+                } catch (ScriptException inner) {
+                    return IfAbruptRejectPromise(cx, inner, promiseCapability);
+                }
+                return IfAbruptRejectPromise(cx, e, promiseCapability);
+            }
         }
 
         /**
@@ -209,40 +217,16 @@ public final class PromiseConstructor extends BuiltinConstructor implements Init
                 /* step 9 */
                 return IfAbruptRejectPromise(cx, e, promiseCapability);
             }
-            /* step 10 */
-            for (;;) {
-                /* steps 10.a-10.b */
-                ScriptObject next;
+            /* steps 10-13 */
+            try {
+                return PerformPromiseRaceLoop(cx, iterator, c, promiseCapability);
+            } catch (ScriptException e) {
                 try {
-                    next = IteratorStep(cx, iterator);
-                } catch (ScriptException e) {
-                    return IfAbruptRejectPromise(cx, e, promiseCapability);
+                    IteratorClose(cx, iterator, true);
+                } catch (ScriptException inner) {
+                    return IfAbruptRejectPromise(cx, inner, promiseCapability);
                 }
-                /* step 10.c */
-                if (next == null) {
-                    return promiseCapability.getPromise();
-                }
-                /* steps 10.d-10.e */
-                Object nextValue;
-                try {
-                    nextValue = IteratorValue(cx, next);
-                } catch (ScriptException e) {
-                    return IfAbruptRejectPromise(cx, e, promiseCapability);
-                }
-                /* steps 10.f-10.g */
-                Object nextPromise;
-                try {
-                    nextPromise = Invoke(cx, c, "resolve", nextValue);
-                } catch (ScriptException e) {
-                    return IfAbruptRejectPromise(cx, e, promiseCapability);
-                }
-                /* steps 10.h-10.i */
-                try {
-                    Invoke(cx, nextPromise, "then", promiseCapability.getResolve(),
-                            promiseCapability.getReject());
-                } catch (ScriptException e) {
-                    return IfAbruptRejectPromise(cx, e, promiseCapability);
-                }
+                return IfAbruptRejectPromise(cx, e, promiseCapability);
             }
         }
 
@@ -331,7 +315,7 @@ public final class PromiseConstructor extends BuiltinConstructor implements Init
      *            the new promise capability record
      * @return the new promise object
      */
-    public static <PROMISE extends ScriptObject> PROMISE PerformPromiseAll(ExecutionContext cx,
+    public static <PROMISE extends ScriptObject> Object PerformPromiseAll(ExecutionContext cx,
             ScriptObject iterator, Constructor constructor,
             PromiseCapability<PROMISE> resultCapability) {
         /* steps 1-3 (not applicable) */
@@ -340,39 +324,20 @@ public final class PromiseConstructor extends BuiltinConstructor implements Init
         /* step 5 */
         AtomicInteger remainingElementsCount = new AtomicInteger(1);
         /* steps 6-7 */
-        for (int index = 0; index + 1 > 0;) {
+        for (int index = 0;;) {
             /* steps 7.a-7.b */
-            ScriptObject next;
-            try {
-                next = IteratorStep(cx, iterator);
-            } catch (ScriptException e) {
-                return IfAbruptRejectPromise(cx, e, resultCapability);
-            }
+            ScriptObject next = IteratorStep(cx, iterator);
             /* step 7.c */
             if (next == null) {
-                if (remainingElementsCount.decrementAndGet() == 0) {
-                    ArrayObject valuesArray = CreateArrayFromList(cx, values);
-                    resultCapability.getResolve().call(cx, UNDEFINED, valuesArray);
-                }
-                return resultCapability.getPromise();
+                break;
             }
             /* steps 7.d-7.e */
-            Object nextValue;
-            try {
-                nextValue = IteratorValue(cx, next);
-            } catch (ScriptException e) {
-                return IfAbruptRejectPromise(cx, e, resultCapability);
-            }
+            Object nextValue = IteratorValue(cx, next);
             /* step 7.f */
             // Using 'null' instead of undefined to be able to verify that no values are overwritten
             values.add(null);
             /* steps 7.g-7.h */
-            Object nextPromise;
-            try {
-                nextPromise = Invoke(cx, constructor, "resolve", nextValue);
-            } catch (ScriptException e) {
-                return IfAbruptRejectPromise(cx, e, resultCapability);
-            }
+            Object nextPromise = Invoke(cx, constructor, "resolve", nextValue);
             /* steps 7.i-7.n */
             PromiseAllResolveElementFunction resolveElement = new PromiseAllResolveElementFunction(
                     cx.getRealm(), new AtomicBoolean(false), index, values, resultCapability,
@@ -380,16 +345,21 @@ public final class PromiseConstructor extends BuiltinConstructor implements Init
             /* step 7.o */
             remainingElementsCount.incrementAndGet();
             /* steps 7.p-7.q */
-            try {
-                Invoke(cx, nextPromise, "then", resolveElement, resultCapability.getReject());
-            } catch (ScriptException e) {
-                return IfAbruptRejectPromise(cx, e, resultCapability);
-            }
+            Invoke(cx, nextPromise, "then", resolveElement, resultCapability.getReject());
             /* step 7.r */
             index += 1;
         }
-        // prevent integer overflow for 'index'
-        throw newInternalError(cx, Messages.Key.InternalError, "integer overflow");
+        /* step 7.c */
+        if (remainingElementsCount.decrementAndGet() == 0) {
+            ArrayObject valuesArray = CreateArrayFromList(cx, values);
+            try {
+                resultCapability.getResolve().call(cx, UNDEFINED, valuesArray);
+            } catch (ScriptException e) {
+                // FIXME: return e.getValue() or UNDEFINED?
+                return e.getValue();
+            }
+        }
+        return resultCapability.getPromise();
     }
 
     /**
@@ -462,6 +432,42 @@ public final class PromiseConstructor extends BuiltinConstructor implements Init
             }
             /* step 11 */
             return UNDEFINED;
+        }
+    }
+
+    /**
+     * 25.4.4.3.1 PerformPromiseRaceLoop( iterator, promiseCapability, C )
+     * 
+     * @param <PROMISE>
+     *            the promise type
+     * @param cx
+     *            the execution context
+     * @param iterator
+     *            the iterator object
+     * @param constructor
+     *            the constructor object
+     * @param promiseCapability
+     *            the new promise capability record
+     * @return the new promise object
+     */
+    public static <PROMISE extends ScriptObject> PROMISE PerformPromiseRaceLoop(
+            ExecutionContext cx, ScriptObject iterator, Constructor constructor,
+            PromiseCapability<PROMISE> promiseCapability) {
+        /* step 1 */
+        for (;;) {
+            /* steps 1.a-1.b */
+            ScriptObject next = IteratorStep(cx, iterator);
+            /* step 1.c */
+            if (next == null) {
+                return promiseCapability.getPromise();
+            }
+            /* steps 1.d-1.e */
+            Object nextValue = IteratorValue(cx, next);
+            /* steps 1.f-1.g */
+            Object nextPromise = Invoke(cx, constructor, "resolve", nextValue);
+            /* steps 1.h-1.i */
+            Invoke(cx, nextPromise, "then", promiseCapability.getResolve(),
+                    promiseCapability.getReject());
         }
     }
 }

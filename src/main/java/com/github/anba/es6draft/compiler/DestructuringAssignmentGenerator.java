@@ -12,14 +12,17 @@ import static com.github.anba.es6draft.semantics.StaticSemantics.IsAnonymousFunc
 import static com.github.anba.es6draft.semantics.StaticSemantics.IsIdentifierRef;
 import static com.github.anba.es6draft.semantics.StaticSemantics.PropName;
 
-import java.util.Iterator;
+import java.util.List;
 
 import com.github.anba.es6draft.ast.*;
 import com.github.anba.es6draft.compiler.DefaultCodeGenerator.ValType;
+import com.github.anba.es6draft.compiler.Labels.TempLabel;
+import com.github.anba.es6draft.compiler.StatementGenerator.Completion;
 import com.github.anba.es6draft.compiler.assembler.Jump;
 import com.github.anba.es6draft.compiler.assembler.MethodName;
 import com.github.anba.es6draft.compiler.assembler.Type;
 import com.github.anba.es6draft.compiler.assembler.Variable;
+import com.github.anba.es6draft.runtime.internal.ScriptIterator;
 
 /**
  * <h1>12 ECMAScript Language: Expressions</h1><br>
@@ -39,6 +42,10 @@ final class DestructuringAssignmentGenerator {
                 Types.AbstractOperations, "GetV",
                 Type.methodType(Types.Object, Types.ExecutionContext, Types.Object, Types.String));
 
+        static final MethodName AbstractOperations_RequireObjectCoercible = MethodName.findStatic(
+                Types.AbstractOperations, "RequireObjectCoercible",
+                Type.methodType(Types.Object, Types.ExecutionContext, Types.Object));
+
         // class: Reference
         static final MethodName Reference_putValue = MethodName.findVirtual(Types.Reference,
                 "putValue", Type.methodType(Type.VOID_TYPE, Types.Object, Types.ExecutionContext));
@@ -48,9 +55,9 @@ final class DestructuringAssignmentGenerator {
                 Types.ScriptRuntime, "createRestArray",
                 Type.methodType(Types.ArrayObject, Types.Iterator, Types.ExecutionContext));
 
-        static final MethodName ScriptRuntime_getIterator = MethodName.findStatic(
-                Types.ScriptRuntime, "getIterator",
-                Type.methodType(Types.Iterator, Types.Object, Types.ExecutionContext));
+        static final MethodName ScriptRuntime_iterate = MethodName.findStatic(Types.ScriptRuntime,
+                "iterate",
+                Type.methodType(Types.ScriptIterator, Types.Object, Types.ExecutionContext));
 
         static final MethodName ScriptRuntime_iteratorNextAndIgnore = MethodName.findStatic(
                 Types.ScriptRuntime, "iteratorNextAndIgnore",
@@ -86,6 +93,7 @@ final class DestructuringAssignmentGenerator {
 
     private static void PutValue(LeftHandSideExpression node, ValType type, ExpressionVisitor mv) {
         assert type == ValType.Reference : "lhs is not reference: " + type;
+        mv.lineInfo(node);
         mv.loadExecutionContext();
         mv.invoke(Methods.Reference_putValue);
     }
@@ -104,7 +112,7 @@ final class DestructuringAssignmentGenerator {
         }
 
         protected final void IteratorDestructuringAssignmentEvaluation(AssignmentElementItem node,
-                Variable<Iterator<?>> iterator) {
+                Variable<ScriptIterator<?>> iterator) {
             node.accept(new IteratorDestructuringAssignmentEvaluation(codegen, mv), iterator);
         }
 
@@ -147,25 +155,69 @@ final class DestructuringAssignmentGenerator {
         @Override
         public void visit(ArrayAssignmentPattern node, Void value) {
             // stack: [value] -> []
-            Variable<Iterator<?>> iterator = mv.newScratchVariable(Iterator.class).uncheckedCast();
+            mv.enterVariableScope();
+            Variable<ScriptIterator<?>> iterator = mv.newVariable("iterator", ScriptIterator.class)
+                    .uncheckedCast();
             mv.lineInfo(node);
             mv.loadExecutionContext();
-            mv.invoke(Methods.ScriptRuntime_getIterator);
+            mv.invoke(Methods.ScriptRuntime_iterate);
             mv.store(iterator);
 
-            for (AssignmentElementItem element : node.getElements()) {
-                IteratorDestructuringAssignmentEvaluation(element, iterator);
-            }
+            new IterationGenerator<ArrayAssignmentPattern, ExpressionVisitor>(codegen) {
+                final Jump iterationComplete = new Jump();
 
-            mv.freeVariable(iterator);
+                @Override
+                protected Completion generateCode(ArrayAssignmentPattern node,
+                        Variable<ScriptIterator<?>> iterator, ExpressionVisitor mv) {
+                    for (AssignmentElementItem element : node.getElements()) {
+                        IteratorDestructuringAssignmentEvaluation(element, iterator);
+                    }
+                    mv.goTo(iterationComplete);
+                    return Completion.Normal;
+                }
+
+                @Override
+                protected void generateEpilogue(ArrayAssignmentPattern node,
+                        Variable<ScriptIterator<?>> iterator, ExpressionVisitor mv) {
+                    mv.mark(iterationComplete);
+                    IteratorClose(node, iterator, false, mv);
+                }
+
+                @Override
+                protected Variable<Object> enterIteration(ArrayAssignmentPattern node,
+                        ExpressionVisitor mv) {
+                    return mv.enterIteration();
+                }
+
+                @Override
+                protected List<TempLabel> exitIteration(ArrayAssignmentPattern node,
+                        ExpressionVisitor mv) {
+                    return mv.exitIteration();
+                }
+            }.generate(node, iterator, mv);
+
+            mv.exitVariableScope();
         }
 
         @Override
         public void visit(ObjectAssignmentPattern node, Void value) {
+            // ObjectAssignmentPattern : { }
+            if (node.getProperties().isEmpty()) {
+                // stack: [value] -> []
+                mv.lineInfo(node);
+                mv.loadExecutionContext();
+                mv.swap();
+                mv.invoke(Methods.AbstractOperations_RequireObjectCoercible);
+                mv.pop();
+                return;
+            }
+
             // stack: [value] -> []
-            Variable<Object> val = mv.newScratchVariable(Object.class);
+            mv.enterVariableScope();
+            Variable<Object> val = mv.newVariable("value", Object.class);
             mv.store(val);
 
+            // ObjectAssignmentPattern : { AssignmentPropertyList }
             for (AssignmentProperty property : node.getProperties()) {
                 if (property.getPropertyName() == null) {
                     // AssignmentProperty : IdentifierReference Initializer{opt}
@@ -186,7 +238,7 @@ final class DestructuringAssignmentGenerator {
                 }
             }
 
-            mv.freeVariable(val);
+            mv.exitVariableScope();
         }
     }
 
@@ -194,20 +246,21 @@ final class DestructuringAssignmentGenerator {
      * 12.14.5.3 Runtime Semantics: IteratorDestructuringAssignmentEvaluation
      */
     private static final class IteratorDestructuringAssignmentEvaluation extends
-            RuntimeSemantics<Variable<Iterator<?>>> {
+            RuntimeSemantics<Variable<ScriptIterator<?>>> {
         IteratorDestructuringAssignmentEvaluation(CodeGenerator codegen, ExpressionVisitor mv) {
             super(codegen, mv);
         }
 
         @Override
-        public void visit(Elision node, Variable<Iterator<?>> iterator) {
+        public void visit(Elision node, Variable<ScriptIterator<?>> iterator) {
             // stack: [] -> []
+            mv.lineInfo(node);
             mv.load(iterator);
             mv.invoke(Methods.ScriptRuntime_iteratorNextAndIgnore);
         }
 
         @Override
-        public void visit(AssignmentElement node, Variable<Iterator<?>> iterator) {
+        public void visit(AssignmentElement node, Variable<ScriptIterator<?>> iterator) {
             LeftHandSideExpression target = node.getTarget();
             Expression initializer = node.getInitializer();
 
@@ -220,6 +273,7 @@ final class DestructuringAssignmentGenerator {
 
             /* steps 2-5 */
             // stack: [(lref)] -> [(lref), v]
+            mv.lineInfo(node);
             mv.load(iterator);
             mv.invoke(Methods.ScriptRuntime_iteratorNextOrUndefined);
 
@@ -254,7 +308,7 @@ final class DestructuringAssignmentGenerator {
         }
 
         @Override
-        public void visit(AssignmentRestElement node, Variable<Iterator<?>> iterator) {
+        public void visit(AssignmentRestElement node, Variable<ScriptIterator<?>> iterator) {
             LeftHandSideExpression target = node.getTarget();
 
             /* step 1 */
@@ -266,6 +320,7 @@ final class DestructuringAssignmentGenerator {
 
             /* steps 2-5 */
             // stack: [(lref)] -> [(lref), rest]
+            mv.lineInfo(node);
             mv.load(iterator);
             mv.loadExecutionContext();
             mv.invoke(Methods.ScriptRuntime_createRestArray);
@@ -343,6 +398,7 @@ final class DestructuringAssignmentGenerator {
 
             /* steps 2-3 */
             // stack: [(lref), cx, value, propertyName] -> [(lref), v]
+            mv.lineInfo(node);
             if (type == ValType.String) {
                 mv.invoke(Methods.AbstractOperations_GetV_String);
             } else {

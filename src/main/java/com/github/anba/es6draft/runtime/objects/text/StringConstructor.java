@@ -62,24 +62,22 @@ public final class StringConstructor extends BuiltinConstructor implements Initi
     @Override
     public CharSequence call(ExecutionContext callerContext, Object thisValue, Object... args) {
         ExecutionContext calleeContext = calleeContext();
-        /* step 1 */
-        // FIXME: spec issue
-        /* steps 2-3 */
+        /* steps 1-3 */
         CharSequence s;
         if (args.length == 0) {
-            /* step 2 */
+            /* step 1 */
             s = "";
         } else {
-            /* step 3 */
+            /* steps 2-3 */
             Object value = args[0];
             if (Type.isSymbol(value)) {
                 return SymbolDescriptiveString(Type.symbolValue(value));
             }
             s = ToString(calleeContext, value);
         }
-        /* step 5 */
+        /* step 4 */
+        /* step 5 (not applicable) */
         return s;
-        /* steps 6-12 (not applicable) */
     }
 
     /**
@@ -89,15 +87,12 @@ public final class StringConstructor extends BuiltinConstructor implements Initi
     public StringObject construct(ExecutionContext callerContext, Constructor newTarget,
             Object... args) {
         ExecutionContext calleeContext = calleeContext();
-        /* step 1 */
-        // FIXME: spec issue
-        /* steps 2-3 */
+        /* steps 1-3 */
         CharSequence s = args.length == 0 ? "" : ToString(calleeContext, args[0]);
-        /* step 5 (not applicable) */
-        /* steps 6-12 */
-        ScriptObject proto = GetPrototypeFromConstructor(calleeContext, newTarget,
-                Intrinsics.StringPrototype);
-        return StringCreate(calleeContext, proto, s);
+        /* step 4 (not applicable) */
+        /* step 5 */
+        return StringCreate(calleeContext, s,
+                GetPrototypeFromConstructor(calleeContext, newTarget, Intrinsics.StringPrototype));
     }
 
     /**

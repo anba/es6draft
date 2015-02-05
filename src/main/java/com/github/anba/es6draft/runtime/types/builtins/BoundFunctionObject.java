@@ -52,7 +52,7 @@ public class BoundFunctionObject extends OrdinaryObject implements Callable {
         }
 
         /**
-         * 9.4.1.2 [[Construct]]
+         * 9.4.1.2 [[Construct]] (argumentsList, newTarget)
          */
         @Override
         public ScriptObject construct(ExecutionContext callerContext, Constructor newTarget,
@@ -67,7 +67,6 @@ public class BoundFunctionObject extends OrdinaryObject implements Callable {
             Object[] args = concatArguments(callerContext, boundArgs, extraArgs);
             /* step 5 */
             if (SameValue(this, newTarget)) {
-                // FIXME: spec bug
                 newTarget = (Constructor) target;
             }
             /* step 6 */
@@ -75,7 +74,7 @@ public class BoundFunctionObject extends OrdinaryObject implements Callable {
         }
 
         /**
-         * 9.4.1.2 [[Construct]]
+         * 9.4.1.2 [[Construct]] (argumentsList, newTarget)
          */
         @Override
         public Object tailConstruct(ExecutionContext callerContext, Constructor newTarget,
@@ -90,7 +89,6 @@ public class BoundFunctionObject extends OrdinaryObject implements Callable {
             Object[] args = concatArguments(callerContext, boundArgs, extraArgs);
             /* step 5 */
             if (SameValue(this, newTarget)) {
-                // FIXME: spec bug
                 newTarget = (Constructor) target;
             }
             /* step 6 */
@@ -145,17 +143,17 @@ public class BoundFunctionObject extends OrdinaryObject implements Callable {
     }
 
     /**
-     * 9.4.1.1 [[Call]]
+     * 9.4.1.1 [[Call]] (thisArgument, argumentsList)
      */
     @Override
     public final Object call(ExecutionContext callerContext, Object thisValue,
             Object... argumentsList) {
         /* step 1 */
-        Object[] boundArgs = getBoundArguments();
+        Callable target = getFlattenedTargetFunction();
         /* step 2 */
         Object boundThis = getBoundThis();
         /* step 3 */
-        Callable target = getFlattenedTargetFunction();
+        Object[] boundArgs = getBoundArguments();
         /* step 4 */
         Object[] args = concatArguments(callerContext, boundArgs, argumentsList);
         /* step 5 */
@@ -163,17 +161,17 @@ public class BoundFunctionObject extends OrdinaryObject implements Callable {
     }
 
     /**
-     * 9.4.1.1 [[Call]]
+     * 9.4.1.1 [[Call]] (thisArgument, argumentsList)
      */
     @Override
     public final Object tailCall(ExecutionContext callerContext, Object thisValue,
             Object... argumentsList) throws Throwable {
         /* step 1 */
-        Object[] boundArgs = getBoundArguments();
+        Callable target = getFlattenedTargetFunction();
         /* step 2 */
         Object boundThis = getBoundThis();
         /* step 3 */
-        Callable target = getFlattenedTargetFunction();
+        Object[] boundArgs = getBoundArguments();
         /* step 4 */
         Object[] args = concatArguments(callerContext, boundArgs, argumentsList);
         /* step 5 */

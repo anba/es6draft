@@ -25,7 +25,7 @@ const {
       });
     }
   }
-  assertThrows(TypeError, () => new Derived);
+  assertThrows(ReferenceError, () => new Derived);
 }
 
 // super() in ArgumentsList
@@ -36,5 +36,5 @@ const {
       super(super());
     }
   }
-  assertThrows(TypeError, () => new Derived);
+  assertThrows(ReferenceError, () => new Derived);
 }

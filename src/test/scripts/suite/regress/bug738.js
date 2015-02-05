@@ -11,7 +11,7 @@ const {
 // 15.14.1.1: algorithm control flow
 // https://bugs.ecmascript.org/show_bug.cgi?id=738
 
-assertThrows(TypeError, () => {
+assertThrows(ReferenceError, () => {
   new class extends Map {
     constructor() {
       let iter = {[Symbol.iterator]: () => {

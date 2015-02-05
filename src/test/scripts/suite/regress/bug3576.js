@@ -25,7 +25,7 @@ assertSame("", log);
 
 var log = "";
 var [a] = g();
-assertSame("", log);
+assertSame("done", log);
 
 var log = "";
 let [] = g();
@@ -33,7 +33,7 @@ assertSame("", log);
 
 var log = "";
 let [b] = g();
-assertSame("", log);
+assertSame("done", log);
 
 var log = "";
 [] = g();
@@ -41,4 +41,4 @@ assertSame("", log);
 
 var log = "";
 var c; [c] = g();
-assertSame("", log);
+assertSame("done", log);

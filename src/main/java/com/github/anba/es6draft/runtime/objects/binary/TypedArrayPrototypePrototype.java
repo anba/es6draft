@@ -327,11 +327,9 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
                 /* steps 24-25 */
                 long srcByteIndex;
                 if (SameValue(srcBuffer, targetBuffer)) {
-                    srcBuffer = CloneArrayBuffer(cx, srcBuffer, srcByteOffset);
-                    // FIXME: spec bug - change to assert? (bug 3699)
-                    if (IsDetachedBuffer(targetBuffer)) {
-                        throw newTypeError(cx, Messages.Key.BufferDetached);
-                    }
+                    srcBuffer = CloneArrayBuffer(cx, targetBuffer, srcByteOffset,
+                            Intrinsics.ArrayBuffer);
+                    assert !IsDetachedBuffer(targetBuffer);
                     srcByteIndex = 0;
                 } else {
                     srcByteIndex = srcByteOffset;
@@ -1031,10 +1029,7 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
                 return UNDEFINED;
             }
             TypedArrayObject array = (TypedArrayObject) thisValue;
-            /* steps 4-5 */
-            // FIXME: spec bug - `name` is never undefined (bug 3656)
-            /* step 6 (not applicable) */
-            /* step 7 */
+            /* steps 4-6 */
             return array.getTypedArrayName();
         }
     }

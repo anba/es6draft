@@ -11,7 +11,7 @@ const {
 // 23.2.1.1, 23.3.1.1, 23.4.1.1: Missing constructor reentrancy checks
 // https://bugs.ecmascript.org/show_bug.cgi?id=2397
 
-assertThrows(TypeError, () => {
+assertThrows(ReferenceError, () => {
   new class extends Set {
     constructor() {
       let iter = {[Symbol.iterator]: () => {
@@ -23,7 +23,7 @@ assertThrows(TypeError, () => {
   }
 });
 
-assertThrows(TypeError, () => {
+assertThrows(ReferenceError, () => {
   new class extends WeakMap {
     constructor() {
       let iter = {[Symbol.iterator]: () => {
@@ -35,7 +35,7 @@ assertThrows(TypeError, () => {
   }
 });
 
-assertThrows(TypeError, () => {
+assertThrows(ReferenceError, () => {
   new class extends WeakSet {
     constructor() {
       let iter = {[Symbol.iterator]: () => {

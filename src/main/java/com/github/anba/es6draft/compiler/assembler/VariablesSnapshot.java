@@ -6,6 +6,7 @@
  */
 package com.github.anba.es6draft.compiler.assembler;
 
+import java.util.Arrays;
 import java.util.BitSet;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
@@ -22,6 +23,29 @@ public final class VariablesSnapshot implements Iterable<Variable<?>> {
         this.variables = variables;
         this.active = active;
         this.types = types;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == this) {
+            return true;
+        }
+        if (obj == null || obj.getClass() != VariablesSnapshot.class) {
+            return false;
+        }
+        VariablesSnapshot other = (VariablesSnapshot) obj;
+        return variables.equals(other.variables) && active.equals(other.active)
+                && Arrays.equals(types, other.types);
+    }
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + variables.hashCode();
+        result = prime * result + active.hashCode();
+        result = prime * result + Arrays.hashCode(types);
+        return result;
     }
 
     BitSet getVariables() {

@@ -12,11 +12,9 @@ const {
 // https://bugs.ecmascript.org/show_bug.cgi?id=3030
 
 function testNoBindingException() {
-  let bodyEntered = false;
-  for (let {} of [null]) bodyEntered = true;
-  assertTrue(bodyEntered);
+  for (let {} of [null]) fail `loop body entered`;
 }
-testNoBindingException();
+assertThrows(TypeError, testNoBindingException);
 
 function testBindingException() {
   for (let {a: b} of [null]) fail `loop body entered`;

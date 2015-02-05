@@ -12,4 +12,4 @@ const {
 // https://bugs.ecmascript.org/show_bug.cgi?id=3519
 
 assertTrue(/[\-]/.test("-"));
-assertSyntaxError(String.raw `/[\-]/u`);
+assertTrue(/[\-]/u.test("-"));
