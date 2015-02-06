@@ -41,10 +41,6 @@ final class FunctionCodeGenerator {
         static final FieldName Intrinsics_ObjectPrototype = FieldName.findStatic(Types.Intrinsics,
                 "ObjectPrototype", Types.Intrinsics);
 
-        static final FieldName ConstructorKind_Derived = FieldName.findStatic(
-                Types.FunctionObject$ConstructorKind, "Derived",
-                Types.FunctionObject$ConstructorKind);
-
         static final FieldName MessagesKey_InvalidCallClass = FieldName.findStatic(
                 Types.Messages$Key, "InvalidCallClass", Types.Messages$Key);
 
@@ -72,10 +68,6 @@ final class FunctionCodeGenerator {
                 Types.ExecutionContext, "resolveThisBinding", Type.methodType(Types.Object));
 
         // FunctionObject
-        static final MethodName FunctionObject_getConstructorKind = MethodName.findVirtual(
-                Types.FunctionObject, "getConstructorKind",
-                Type.methodType(Types.FunctionObject$ConstructorKind));
-
         static final MethodName FunctionObject_getLegacyArguments = MethodName.findVirtual(
                 Types.FunctionObject, "getLegacyArguments", Type.methodType(Types.Object));
 
@@ -257,7 +249,7 @@ final class FunctionCodeGenerator {
 
             if (isLegacy(node)) {
                 generateLegacyFunctionCall(node, mv);
-            } else if (isConstructorMethod(node)) {
+            } else if (isClassConstructor(node)) {
                 generateClassConstructorCall(node, mv);
             } else {
                 generateFunctionCall(node, mv);
@@ -296,8 +288,8 @@ final class FunctionCodeGenerator {
             if (isLegacy(node)) {
                 assert !tailCall;
                 generateLegacyFunctionConstruct(node, mv);
-            } else if (isConstructorMethod(node)) {
-                generateClassConstructorConstruct(node, tailCall, mv);
+            } else if (isDerivedClassConstructor(node)) {
+                generateDerivedClassConstructorConstruct(node, tailCall, mv);
             } else {
                 generateFunctionConstruct(node, tailCall, mv);
             }
@@ -421,6 +413,7 @@ final class FunctionCodeGenerator {
         Variable<ExecutionContext> callerContext = mv.getParameter(EXECUTION_CONTEXT,
                 ExecutionContext.class);
 
+        // 9.2.2 [[Call]] ( thisArgument, argumentsList) - step 2
         mv.load(callerContext);
         mv.get(Fields.MessagesKey_InvalidCallClass);
         mv.invoke(Methods.Errors_newTypeError);
@@ -514,7 +507,7 @@ final class FunctionCodeGenerator {
         returnConstructResultOrThis(thisArgument, tailCall, mv);
     }
 
-    private void generateClassConstructorConstruct(FunctionNode node, boolean tailCall,
+    private void generateDerivedClassConstructorConstruct(FunctionNode node, boolean tailCall,
             InstructionVisitor mv) {
         Variable<OrdinaryConstructorFunction> function = mv.getParameter(FUNCTION,
                 OrdinaryConstructorFunction.class);
@@ -523,27 +516,13 @@ final class FunctionCodeGenerator {
         Variable<Constructor> newTarget = mv.getParameter(NEW_TARGET, Constructor.class);
         Variable<Object[]> arguments = mv.getParameter(ARGUMENTS, Object[].class);
 
-        Variable<ScriptObject> thisArg = mv.newVariable("thisArgument", ScriptObject.class);
         Variable<ExecutionContext> calleeContext = mv.newVariable("calleeContext",
                 ExecutionContext.class);
 
-        Jump isDerived = new Jump(), callBody = new Jump();
-        mv.load(function);
-        mv.invoke(Methods.FunctionObject_getConstructorKind);
-        mv.get(Fields.ConstructorKind_Derived);
-        mv.ifacmpeq(isDerived);
-        {
-            // Base constructor
-            ordinaryCreateFromConstructor(callerContext, newTarget, thisArg, mv);
-            prepareCallAndBindThis(calleeContext, callerContext, function, newTarget, thisArg, mv);
-            mv.goTo(callBody);
-        }
-        mv.mark(isDerived);
-        {
-            // Derived constructor
-            prepareCall(calleeContext, callerContext, function, newTarget, thisArg, mv);
-        }
-        mv.mark(callBody);
+        /* steps 1-5 (not applicable) */
+        /* steps 6-8 */
+        prepareCall(calleeContext, callerContext, function, newTarget, mv);
+        /* steps 9-11 (not applicable) */
 
         // (2) Call OrdinaryCallEvaluateBody
         /* steps 12-13 */
@@ -551,7 +530,7 @@ final class FunctionCodeGenerator {
 
         // (3) Return result value
         /* steps 14-16 */
-        returnConstructResultOrThis(callerContext, calleeContext, function, thisArg, tailCall, mv);
+        returnConstructResultOrThis(callerContext, calleeContext, tailCall, mv);
     }
 
     /**
@@ -703,7 +682,7 @@ final class FunctionCodeGenerator {
      * 9.2.2.2 OrdinaryCallBindThis ( F, calleeContext, thisArgument )
      * 
      * <code>
-     * calleeContext = newCallFunctionExecutionContext(callerContext, function, newTarget, thisValue)
+     * calleeContext = newFunctionExecutionContext(callerContext, function, newTarget, thisValue)
      * </code>
      * 
      * @param calleeContext
@@ -736,36 +715,11 @@ final class FunctionCodeGenerator {
     }
 
     /**
-     * 9.2.2.1 PrepareForOrdinaryCall( F, newTarget )<br>
-     * 9.2.2.2 OrdinaryCallBindThis ( F, calleeContext, thisArgument )
+     * 9.2.2.1 PrepareForOrdinaryCall( F, newTarget )
      * 
-     * @param calleeContext
-     *            the variable which holds the callee context
-     * @param callerContext
-     *            the variable which holds the caller context
-     * @param function
-     *            the variable which holds the function object
-     * @param thisArgument
-     *            the variable which holds the thisArgument
-     * @param mv
-     *            the instruction visitor
-     */
-    private void prepareCall(Variable<ExecutionContext> calleeContext,
-            Variable<ExecutionContext> callerContext, Variable<? extends FunctionObject> function,
-            Variable<Constructor> newTarget, Variable<? extends Object> thisArgument,
-            InstructionVisitor mv) {
-        mv.load(callerContext);
-        mv.load(function);
-        mv.load(newTarget);
-        mv.invoke(Methods.ExecutionContext_newFunctionExecutionContextConstructDerived);
-        mv.store(calleeContext);
-        mv.anull();
-        mv.store(thisArgument);
-    }
-
-    /**
-     * 9.2.2.1 PrepareForOrdinaryCall( F, newTarget )<br>
-     * 9.2.2.2 OrdinaryCallBindThis ( F, calleeContext, thisArgument )
+     * <code>
+     * calleeContext = newFunctionExecutionContext(callerContext, function, newTarget)
+     * </code>
      * 
      * @param calleeContext
      *            the variable which holds the callee context
@@ -993,7 +947,7 @@ final class FunctionCodeGenerator {
      * <pre>
      * if (result != null) {
      *     if (tailCall &amp;&amp; result instanceof TailCallInvocation) {
-     *         return ((TailCallInvocation) result).toConstructTailCall(thisArgument);
+     *         return ((TailCallInvocation) result).toConstructTailCall(null);
      *     }
      *     if (Type.isObject(result)) {
      *         return Type.objectValue(result);
@@ -1007,18 +961,13 @@ final class FunctionCodeGenerator {
      *            the variable which holds the caller context
      * @param calleeContext
      *            the variable which holds the callee context
-     * @param function
-     *            the variable which holds the function object
-     * @param thisArgument
-     *            the variable which holds the thisArgument
      * @param tailCall
      *            {@code true} if the constructor function contains a tail-call
      * @param mv
      *            the instruction visitor
      */
     private void returnConstructResultOrThis(Variable<ExecutionContext> callerContext,
-            Variable<ExecutionContext> calleeContext, Variable<? extends FunctionObject> function,
-            Variable<ScriptObject> thisArgument, boolean tailCall, InstructionVisitor mv) {
+            Variable<ExecutionContext> calleeContext, boolean tailCall, InstructionVisitor mv) {
         Jump noResult = new Jump();
         mv.dup();
         mv.ifnull(noResult);
@@ -1030,7 +979,7 @@ final class FunctionCodeGenerator {
                 mv.ifeq(noTailCall);
                 {
                     mv.checkcast(Types.TailCallInvocation);
-                    mv.load(thisArgument);
+                    mv.anull();
                     mv.invoke(Methods.TailCallInvocation_toConstructTailCall);
                     mv._return();
                 }
@@ -1047,15 +996,6 @@ final class FunctionCodeGenerator {
             }
             mv.mark(noObject);
             mv.pop();
-
-            Jump throwTypeError = new Jump();
-            mv.load(thisArgument);
-            mv.ifnull(throwTypeError);
-            {
-                mv.load(thisArgument);
-                mv._return();
-            }
-            mv.mark(throwTypeError);
 
             mv.load(callerContext);
             mv.get(Fields.MessagesKey_NotObjectTypeFromConstructor);
@@ -1081,9 +1021,16 @@ final class FunctionCodeGenerator {
                 && codegen.isEnabled(CompatibilityOption.FunctionPrototype);
     }
 
-    private boolean isConstructorMethod(FunctionNode node) {
+    private boolean isClassConstructor(FunctionNode node) {
         if (node instanceof MethodDefinition) {
-            return ((MethodDefinition) node).getType() == MethodDefinition.MethodType.Constructor;
+            return ((MethodDefinition) node).isClassConstructor();
+        }
+        return false;
+    }
+
+    private boolean isDerivedClassConstructor(FunctionNode node) {
+        if (node instanceof MethodDefinition) {
+            return ((MethodDefinition) node).getType() == MethodDefinition.MethodType.DerivedConstructor;
         }
         return false;
     }

@@ -96,7 +96,7 @@ public final class ArrayConstructor extends BuiltinConstructor implements Initia
             Object len = args[0];
             /* steps 6-11 */
             if (!Type.isNumber(len)) {
-                return DenseArrayCreate(calleeContext, proto, new Object[] { len });
+                return DenseArrayCreate(calleeContext, proto, len);
             } else {
                 double llen = Type.numberValue(len);
                 long intLen = ToUint32(llen);

@@ -14,6 +14,7 @@ import java.util.*;
 
 import com.github.anba.es6draft.ast.AbruptNode.Abrupt;
 import com.github.anba.es6draft.ast.*;
+import com.github.anba.es6draft.ast.MethodDefinition.MethodAllocation;
 import com.github.anba.es6draft.ast.MethodDefinition.MethodType;
 import com.github.anba.es6draft.ast.scope.BlockScope;
 import com.github.anba.es6draft.ast.scope.FunctionScope;
@@ -2946,26 +2947,24 @@ public final class Parser {
      *     set PropertyName<span><sub>[?Yield]</sub></span> ( PropertySetParameterList ) { FunctionBody }
      * </pre>
      * 
-     * @param isClass
-     *            {@code true} for class methods
-     * @param isStatic
-     *            {@code true} for <tt>static</tt> class methods
+     * @param allocation
+     *            the method allocation kind
+     * @param hasExtends
+     *            {@code true} if the ClassHeritage expression is present
      * @return the parsed method definition
      */
-    private MethodDefinition methodDefinition(boolean isClass, boolean isStatic) {
+    private MethodDefinition methodDefinition(MethodAllocation allocation, boolean hasExtends) {
         switch (methodType()) {
         case AsyncFunction:
-            return asyncMethod(isStatic);
+            return asyncMethod(allocation);
         case Generator:
-            return generatorMethod(isStatic);
+            return generatorMethod(allocation);
         case Getter:
-            return getterMethod(isStatic);
+            return getterMethod(allocation);
         case Setter:
-            return setterMethod(isStatic);
-        case Constructor:
-        case Function:
+            return setterMethod(allocation);
         default:
-            return normalMethod(isClass, isStatic);
+            return normalMethod(allocation, hasExtends);
         }
     }
 
@@ -2977,24 +2976,29 @@ public final class Parser {
      *     PropertyName<span><sub>[?Yield]</sub></span> ( StrictFormalParameters ) { FunctionBody }
      * </pre>
      * 
-     * @param isClass
-     *            {@code true} for class methods
-     * @param isStatic
-     *            {@code true} for <tt>static</tt> class methods
+     * @param allocation
+     *            the method allocation kind
+     * @param hasExtends
+     *            {@code true} if the ClassHeritage expression is present
      * @return the parsed method definition
      */
-    private MethodDefinition normalMethod(boolean isClass, boolean isStatic) {
+    private MethodDefinition normalMethod(MethodAllocation allocation, boolean hasExtends) {
         long begin = ts.beginPosition();
         PropertyName propertyName = propertyName();
-        return normalMethod(isClass, isStatic, begin, propertyName);
+        return normalMethod(allocation, hasExtends, begin, propertyName);
     }
 
-    private MethodDefinition normalMethod(boolean isClass, boolean isStatic, long begin,
-            PropertyName propertyName) {
+    private MethodDefinition normalMethod(MethodAllocation allocation, boolean hasExtends,
+            long begin, PropertyName propertyName) {
         newContext(ContextKind.Method);
         try {
-            if (isClass && !isStatic && "constructor".equals(propertyName.getName())) {
+            MethodType type;
+            if (allocation == MethodAllocation.Prototype
+                    && "constructor".equals(propertyName.getName())) {
                 context.isConstructor = true;
+                type = hasExtends ? MethodType.DerivedConstructor : MethodType.BaseConstructor;
+            } else {
+                type = MethodType.Function;
             }
             consume(Token.LP);
             int startFunction = ts.position() - 1;
@@ -3010,9 +3014,8 @@ public final class Parser {
             String body = ts.range(startBody, endFunction);
 
             FunctionContext scope = context.funContext;
-            MethodType type = context.isConstructor ? MethodType.Constructor : MethodType.Function;
             MethodDefinition method = new MethodDefinition(begin, ts.endPosition(), scope, type,
-                    isStatic, propertyName, parameters, statements, header, body);
+                    allocation, propertyName, parameters, statements, header, body);
             scope.node = method;
 
             methodDefinition_EarlyErrors(method);
@@ -3031,11 +3034,11 @@ public final class Parser {
      *     get PropertyName<span><sub>[?Yield]</sub></span> ( ) { FunctionBody }
      * </pre>
      * 
-     * @param isStatic
-     *            {@code true} for <tt>static</tt> class methods
+     * @param allocation
+     *            the method allocation kind
      * @return the parsed getter method definition
      */
-    private MethodDefinition getterMethod(boolean isStatic) {
+    private MethodDefinition getterMethod(MethodAllocation allocation) {
         long begin = ts.beginPosition();
 
         consume(Token.NAME); // "get"
@@ -3071,7 +3074,7 @@ public final class Parser {
             FunctionContext scope = context.funContext;
             MethodType type = MethodType.Getter;
             MethodDefinition method = new MethodDefinition(begin, ts.endPosition(), scope, type,
-                    isStatic, propertyName, parameters, statements, header, body);
+                    allocation, propertyName, parameters, statements, header, body);
             scope.node = method;
 
             methodDefinition_EarlyErrors(method);
@@ -3090,11 +3093,11 @@ public final class Parser {
      *     set PropertyName<span><sub>[?Yield]</sub></span> ( PropertySetParameterList ) { FunctionBody }
      * </pre>
      * 
-     * @param isStatic
-     *            {@code true} for <tt>static</tt> class methods
+     * @param allocation
+     *            the method allocation kind
      * @return the parsed setter method definition
      */
-    private MethodDefinition setterMethod(boolean isStatic) {
+    private MethodDefinition setterMethod(MethodAllocation allocation) {
         long begin = ts.beginPosition();
 
         consume(Token.NAME); // "set"
@@ -3130,7 +3133,7 @@ public final class Parser {
             FunctionContext scope = context.funContext;
             MethodType type = MethodType.Setter;
             MethodDefinition method = new MethodDefinition(begin, ts.endPosition(), scope, type,
-                    isStatic, propertyName, parameters, statements, header, body);
+                    allocation, propertyName, parameters, statements, header, body);
             scope.node = method;
 
             methodDefinition_EarlyErrors(method);
@@ -3200,7 +3203,8 @@ public final class Parser {
 
         switch (method.getType()) {
         case AsyncFunction:
-        case Constructor:
+        case BaseConstructor:
+        case DerivedConstructor:
         case Function:
         case Generator: {
             checkFormalParameterDuplication(method, boundNames, scope.parameterNames);
@@ -3226,11 +3230,11 @@ public final class Parser {
      *     * PropertyName<span><sub>[?Yield]</sub></span> ( StrictFormalParameters<span><sub>[Yield, GeneratorParameter]</sub></span> ) { FunctionBody<span><sub>[Yield]</sub></span> }
      * </pre>
      * 
-     * @param isStatic
-     *            {@code true} for <tt>static</tt> class methods
+     * @param allocation
+     *            the method allocation kind
      * @return the parsed generator method definition
      */
-    private MethodDefinition generatorMethod(boolean isStatic) {
+    private MethodDefinition generatorMethod(MethodAllocation allocation) {
         long begin = ts.beginPosition();
 
         consume(Token.MUL);
@@ -3254,7 +3258,7 @@ public final class Parser {
             FunctionContext scope = context.funContext;
             MethodType type = MethodType.Generator;
             MethodDefinition method = new MethodDefinition(begin, ts.endPosition(), scope, type,
-                    isStatic, propertyName, parameters, statements, header, body);
+                    allocation, propertyName, parameters, statements, header, body);
             scope.node = method;
 
             methodDefinition_EarlyErrors(method);
@@ -3582,7 +3586,7 @@ public final class Parser {
                 heritage = classHeritage();
             }
             consume(Token.LC);
-            List<MethodDefinition> methods = classBody(identifier);
+            List<MethodDefinition> methods = classBody(identifier, heritage != null);
             if (hasName) {
                 exitBlockContext();
             }
@@ -3635,7 +3639,7 @@ public final class Parser {
                 heritage = classHeritage();
             }
             consume(Token.LC);
-            List<MethodDefinition> methods = classBody(name);
+            List<MethodDefinition> methods = classBody(name, heritage != null);
             if (name != null) {
                 exitBlockContext();
             }
@@ -3683,10 +3687,12 @@ public final class Parser {
      * </pre>
      * 
      * @param className
-     *            the class' name if present, otherwise {@code null}
+     *            the class name if present, otherwise {@code null}
+     * @param hasExtends
+     *            {@code true} if the ClassHeritage expression is present
      * @return the class methods in source order
      */
-    private List<MethodDefinition> classBody(BindingIdentifier className) {
+    private List<MethodDefinition> classBody(BindingIdentifier className, boolean hasExtends) {
         InlineArrayList<MethodDefinition> methods = newList();
         InlineArrayList<MethodDefinition> staticMethods = newList();
         InlineArrayList<MethodDefinition> prototypeMethods = newList();
@@ -3698,10 +3704,10 @@ public final class Parser {
             MethodDefinition method;
             if (token() == Token.STATIC && !LOOKAHEAD(Token.LP)) {
                 consume(Token.STATIC);
-                method = methodDefinition(true, true);
+                method = methodDefinition(MethodAllocation.Class, hasExtends);
                 staticMethods.add(method);
             } else {
-                method = methodDefinition(true, false);
+                method = methodDefinition(MethodAllocation.Prototype, hasExtends);
                 prototypeMethods.add(method);
             }
             if (className != null) {
@@ -4023,11 +4029,11 @@ public final class Parser {
      *     async PropertyName ( StrictFormalParameters ) { FunctionBody }
      * </pre>
      * 
-     * @param isStatic
-     *            {@code true} for <tt>static</tt> class methods
+     * @param allocation
+     *            the method allocation kind
      * @return the parsed async method
      */
-    private MethodDefinition asyncMethod(boolean isStatic) {
+    private MethodDefinition asyncMethod(MethodAllocation allocation) {
         long begin = ts.beginPosition();
 
         consume(Token.ASYNC);
@@ -4051,7 +4057,7 @@ public final class Parser {
             FunctionContext scope = context.funContext;
             MethodType type = MethodType.AsyncFunction;
             MethodDefinition method = new MethodDefinition(begin, ts.endPosition(), scope, type,
-                    isStatic, propertyName, parameters, statements, header, body);
+                    allocation, propertyName, parameters, statements, header, body);
             scope.node = method;
 
             methodDefinition_EarlyErrors(method);
@@ -6844,7 +6850,7 @@ public final class Parser {
                 return new PropertyValueDefinition(begin, ts.endPosition(), propertyName,
                         propertyValue);
             }
-            return normalMethod(false, false, begin, propertyName);
+            return normalMethod(MethodAllocation.Object, false, begin, propertyName);
         }
         if (SAFE_LOOKAHEAD(Token.COLON)) {
             PropertyName propertyName = literalPropertyName();
@@ -6868,7 +6874,7 @@ public final class Parser {
             }
             return new CoverInitializedName(begin, ts.endPosition(), identifier, initializer);
         }
-        return methodDefinition(false, false);
+        return methodDefinition(MethodAllocation.Object, false);
     }
 
     /**
@@ -7208,7 +7214,7 @@ public final class Parser {
 
                 consume(Token.DOT);
                 consume("target");
-                return new NewTarget(begin, ts.endPosition());
+                lhs = new NewTarget(begin, ts.endPosition());
             } else if (token() == Token.SUPER && !(LOOKAHEAD(Token.DOT) || LOOKAHEAD(Token.LB))
                     && isEnabled(CompatibilityOption.NewSuper)) {
                 newSuper();

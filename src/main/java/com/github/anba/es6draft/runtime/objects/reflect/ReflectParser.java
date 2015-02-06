@@ -10,7 +10,6 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.*;
 import static com.github.anba.es6draft.runtime.objects.text.RegExpConstructor.RegExpCreate;
 import static com.github.anba.es6draft.runtime.types.Null.NULL;
 import static com.github.anba.es6draft.runtime.types.Type.isUndefinedOrNull;
-import static com.github.anba.es6draft.runtime.types.builtins.ArrayObject.DenseArrayCreate;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject.ObjectCreate;
 import static com.github.anba.es6draft.semantics.StaticSemantics.LexicallyScopedDeclarations;
 import static com.github.anba.es6draft.semantics.StaticSemantics.Substitutions;
@@ -411,11 +410,11 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
         for (Node node : nodes) {
             values[index++] = node.accept(this, value);
         }
-        return DenseArrayCreate(cx, values);
+        return CreateArrayFromList(cx, values);
     }
 
     private ArrayObject createListFromValues(List<? extends Object> values) {
-        return DenseArrayCreate(cx, values.toArray());
+        return CreateArrayFromList(cx, values);
     }
 
     private Object acceptOrNull(Node node, Void value) {
@@ -612,7 +611,8 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
         case Setter:
             return "set";
         case AsyncFunction:
-        case Constructor:
+        case BaseConstructor:
+        case DerivedConstructor:
         case Function:
         case Generator:
         default:
@@ -626,7 +626,8 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
         case Setter:
             return true;
         case AsyncFunction:
-        case Constructor:
+        case BaseConstructor:
+        case DerivedConstructor:
         case Function:
         case Generator:
         default:

@@ -19,7 +19,7 @@ import com.github.anba.es6draft.ast.scope.FunctionScope;
 public final class MethodDefinition extends PropertyDefinition implements FunctionNode {
     private final FunctionScope scope;
     private final MethodType type;
-    private final boolean isStatic;
+    private final MethodAllocation allocation;
     private final PropertyName propertyName;
     private final FormalParameterList parameters;
     private List<StatementListItem> statements;
@@ -29,17 +29,21 @@ public final class MethodDefinition extends PropertyDefinition implements Functi
     private boolean syntheticNodes;
 
     public enum MethodType {
-        AsyncFunction, Constructor, Function, Generator, Getter, Setter
+        AsyncFunction, BaseConstructor, DerivedConstructor, Function, Generator, Getter, Setter
+    }
+
+    public enum MethodAllocation {
+        Object, Prototype, Class
     }
 
     public MethodDefinition(long beginPosition, long endPosition, FunctionScope scope,
-            MethodType type, boolean isStatic, PropertyName propertyName,
+            MethodType type, MethodAllocation allocation, PropertyName propertyName,
             FormalParameterList parameters, List<StatementListItem> statements,
             String headerSource, String bodySource) {
         super(beginPosition, endPosition);
         this.scope = scope;
         this.type = type;
-        this.isStatic = isStatic;
+        this.allocation = allocation;
         this.propertyName = propertyName;
         this.parameters = parameters;
         this.statements = statements;
@@ -62,12 +66,36 @@ public final class MethodDefinition extends PropertyDefinition implements Functi
     }
 
     /**
+     * Returns the method's allocation kind.
+     * 
+     * @return the method's allocation kind
+     */
+    public MethodAllocation getAllocation() {
+        return allocation;
+    }
+
+    /**
      * Returns {@code true} if this method is a <tt>static</tt> class method definition.
      * 
      * @return {@code true} if this method is a <tt>static</tt> method definition
      */
     public boolean isStatic() {
-        return isStatic;
+        return allocation == MethodAllocation.Class;
+    }
+
+    /**
+     * Returns {@code true} if this method is a <tt>class constructor</tt> method definition.
+     * 
+     * @return {@code true} if this method is a <tt>class constructor</tt> method definition
+     */
+    public boolean isClassConstructor() {
+        switch (type) {
+        case BaseConstructor:
+        case DerivedConstructor:
+            return true;
+        default:
+            return false;
+        }
     }
 
     @Override
@@ -91,6 +119,7 @@ public final class MethodDefinition extends PropertyDefinition implements Functi
      *            the class name
      */
     public void setClassName(String className) {
+        assert allocation != MethodAllocation.Object;
         this.className = className;
     }
 
@@ -100,8 +129,8 @@ public final class MethodDefinition extends PropertyDefinition implements Functi
         final String fname;
         String pname = propertyName.getName();
         if (pname != null) {
-            if (!isStatic && className != null) {
-                if ("constructor".equals(pname)) {
+            if (allocation == MethodAllocation.Prototype && className != null) {
+                if (isClassConstructor()) {
                     fname = className;
                 } else {
                     fname = className + '.' + pname;
@@ -112,7 +141,7 @@ public final class MethodDefinition extends PropertyDefinition implements Functi
         } else {
             assert propertyName instanceof ComputedPropertyName;
             String cname = ((ComputedPropertyName) propertyName).toString();
-            if (!isStatic && className != null) {
+            if (allocation == MethodAllocation.Prototype && className != null) {
                 fname = className + cname;
             } else {
                 fname = cname;
@@ -124,7 +153,8 @@ public final class MethodDefinition extends PropertyDefinition implements Functi
         case Setter:
             return "set " + fname;
         case AsyncFunction:
-        case Constructor:
+        case BaseConstructor:
+        case DerivedConstructor:
         case Function:
         case Generator:
         default:
@@ -153,7 +183,8 @@ public final class MethodDefinition extends PropertyDefinition implements Functi
         case Setter:
             return "set " + fname;
         case AsyncFunction:
-        case Constructor:
+        case BaseConstructor:
+        case DerivedConstructor:
         case Function:
         case Generator:
         default:
@@ -220,7 +251,8 @@ public final class MethodDefinition extends PropertyDefinition implements Functi
     public boolean isConstructor() {
         switch (getType()) {
         case AsyncFunction:
-        case Constructor:
+        case BaseConstructor:
+        case DerivedConstructor:
         case Generator:
             return true;
         case Function:

@@ -302,10 +302,28 @@ public final class ArrayObject extends OrdinaryObject {
      * @return the new array object
      */
     public static ArrayObject DenseArrayCreate(ExecutionContext cx, ScriptObject proto,
-            Object[] values) {
+            Object... values) {
         ArrayObject array = ArrayCreate(cx, values.length, proto);
         for (int i = 0, len = values.length; i < len; ++i) {
             array.setIndexed(i, values[i]);
+        }
+        return array;
+    }
+
+    /**
+     * Helper method to create dense arrays.
+     * 
+     * @param cx
+     *            the execution context
+     * @param values
+     *            the element values
+     * @return the new array object
+     */
+    public static ArrayObject DenseArrayCreate(ExecutionContext cx, List<?> values) {
+        ArrayObject array = ArrayCreate(cx, values.size());
+        int i = 0;
+        for (Object value : values) {
+            array.setIndexed(i++, value);
         }
         return array;
     }
@@ -321,7 +339,7 @@ public final class ArrayObject extends OrdinaryObject {
      *            the element values
      * @return the new array object
      */
-    public static ArrayObject DenseArrayCreate(ExecutionContext cx, Object[] values) {
+    public static ArrayObject DenseArrayCreate(ExecutionContext cx, Object... values) {
         ArrayObject array = ArrayCreate(cx, values.length);
         for (int i = 0, len = values.length; i < len; ++i) {
             array.setIndexed(i, values[i]);

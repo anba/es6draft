@@ -6,12 +6,11 @@
  */
 package com.github.anba.es6draft.runtime.objects.collection;
 
-import static com.github.anba.es6draft.runtime.AbstractOperations.CreateDataProperty;
+import static com.github.anba.es6draft.runtime.AbstractOperations.CreateArrayFromList;
 import static com.github.anba.es6draft.runtime.AbstractOperations.CreateIterResultObject;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
-import static com.github.anba.es6draft.runtime.types.builtins.ArrayObject.ArrayCreate;
 
 import java.util.Iterator;
 import java.util.Map.Entry;
@@ -28,7 +27,6 @@ import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Type;
-import com.github.anba.es6draft.runtime.types.builtins.ArrayObject;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
@@ -164,13 +162,13 @@ public final class SetIteratorPrototype extends OrdinaryObject implements Initia
             /* step 10 */
             if (iter.hasNext()) {
                 Entry<Object, Void> e = iter.next();
-                if (itemKind == SetIterationKind.KeyValue) {
-                    ArrayObject result = ArrayCreate(cx, 2);
-                    CreateDataProperty(cx, result, 0, e.getKey());
-                    CreateDataProperty(cx, result, 1, e.getKey());
-                    return CreateIterResultObject(cx, result, false);
+                Object result;
+                if (itemKind != SetIterationKind.KeyValue) {
+                    result = e.getKey();
+                } else {
+                    result = CreateArrayFromList(cx, e.getKey(), e.getKey());
                 }
-                return CreateIterResultObject(cx, e.getKey(), false);
+                return CreateIterResultObject(cx, result, false);
             }
             /* step 11 */
             o.set = null;

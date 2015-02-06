@@ -108,7 +108,7 @@ public final class OrdinaryConstructorFunction extends OrdinaryFunction implemen
      */
     public static OrdinaryConstructorFunction ConstructorFunctionCreate(ExecutionContext cx,
             FunctionKind kind, RuntimeInfo.Function function, LexicalEnvironment<?> scope) {
-        return ConstructorFunctionCreate(cx, kind, function, scope, null);
+        return ConstructorFunctionCreate(cx, kind, ConstructorKind.Base, function, scope, null);
     }
 
     /**
@@ -120,6 +120,8 @@ public final class OrdinaryConstructorFunction extends OrdinaryFunction implemen
      *            the function kind
      * @param function
      *            the function code
+     * @param constructorKind
+     *            the constructor kind
      * @param scope
      *            the lexical environment
      * @param functionPrototype
@@ -127,19 +129,12 @@ public final class OrdinaryConstructorFunction extends OrdinaryFunction implemen
      * @return the new function object
      */
     public static OrdinaryConstructorFunction ConstructorFunctionCreate(ExecutionContext cx,
-            FunctionKind kind, RuntimeInfo.Function function, LexicalEnvironment<?> scope,
-            ScriptObject functionPrototype) {
+            FunctionKind kind, ConstructorKind constructorKind, RuntimeInfo.Function function,
+            LexicalEnvironment<?> scope, ScriptObject functionPrototype) {
         assert !function.isGenerator() && !function.isAsync();
-        OrdinaryObject intrinsicFunctionPrototype = cx.getIntrinsic(Intrinsics.FunctionPrototype);
         /* step 1 */
         if (functionPrototype == null) {
-            functionPrototype = intrinsicFunctionPrototype;
-        }
-        ConstructorKind constructorKind;
-        if (functionPrototype == intrinsicFunctionPrototype) {
-            constructorKind = ConstructorKind.Base;
-        } else {
-            constructorKind = ConstructorKind.Derived;
+            functionPrototype = cx.getIntrinsic(Intrinsics.FunctionPrototype);
         }
         /* step 2 */
         OrdinaryConstructorFunction f = FunctionAllocate(cx, functionPrototype,

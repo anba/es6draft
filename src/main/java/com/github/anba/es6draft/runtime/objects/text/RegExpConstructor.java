@@ -231,13 +231,21 @@ public final class RegExpConstructor extends BuiltinConstructor implements Initi
      * 21.2.3.2 Abstract Operations for the RegExp Constructor<br>
      * 21.2.3.2.4 Runtime Semantics: EscapeRegExpPattern Abstract Operation
      * 
+     * @param cx
+     *            the execution context
      * @param p
      *            the regular expression pattern
      * @param f
      *            the regular expression flags
      * @return the escaped regular expression pattern
      */
-    public static String EscapeRegExpPattern(String p, String f) {
+    public static String EscapeRegExpPattern(ExecutionContext cx, String p, String f) {
+        if (p.isEmpty()) {
+            if (cx.getRealm().isEnabled(CompatibilityOption.RegExpEmptySource)) {
+                return "";
+            }
+            return "(?:)";
+        }
         StringBuilder sb = new StringBuilder(p.length());
         for (int i = 0, len = p.length(); i < len; ++i) {
             char c = p.charAt(i);
@@ -283,14 +291,7 @@ public final class RegExpConstructor extends BuiltinConstructor implements Initi
                 sb.append(c);
             }
         }
-
-        String s = sb.toString();
-        if (s.isEmpty()) {
-            // web reality vs. spec compliance o_O
-            // s = "(?:)";
-        }
-
-        return s;
+        return sb.toString();
     }
 
     /**

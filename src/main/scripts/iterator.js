@@ -60,8 +60,10 @@ function MakeIterator() {
 
   class KeyIterator extends null {
     constructor(o) {
-      this._keys = Object_keys(o);
-      this._index = 0;
+      var obj = Object_create(new.target.prototype);
+      obj._keys = Object_keys(o);
+      obj._index = 0;
+      return obj;
     }
 
     next() {
@@ -75,9 +77,11 @@ function MakeIterator() {
 
   class KeyValueIterator extends null {
     constructor(o) {
-      this._object = Object(o);
-      this._keys = Object_keys(o);
-      this._index = 0;
+      var obj = Object_create(new.target.prototype);
+      obj._object = Object(o);
+      obj._keys = Object_keys(o);
+      obj._index = 0;
+      return obj;
     }
 
     next() {

@@ -13,7 +13,7 @@ import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.Instanceof
 import static com.github.anba.es6draft.runtime.objects.BooleanObject.BooleanCreate;
 import static com.github.anba.es6draft.runtime.objects.SymbolObject.SymbolCreate;
 import static com.github.anba.es6draft.runtime.objects.number.NumberObject.NumberCreate;
-import static com.github.anba.es6draft.runtime.types.builtins.ArrayObject.ArrayCreate;
+import static com.github.anba.es6draft.runtime.types.builtins.ArrayObject.DenseArrayCreate;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject.ObjectCreate;
 import static com.github.anba.es6draft.runtime.types.builtins.StringObject.StringCreate;
 
@@ -2525,19 +2525,22 @@ public final class AbstractOperations {
      * @return the array object
      */
     public static ArrayObject CreateArrayFromList(ExecutionContext cx, List<?> elements) {
-        /* step 1 (not applicable) */
-        /* step 2 */
-        ArrayObject array = ArrayCreate(cx, 0);
-        /* step 3 */
-        int n = 0;
-        /* step 4 */
-        for (Object e : elements) {
-            boolean status = CreateDataProperty(cx, array, n, e);
-            assert status;
-            n += 1;
-        }
-        /* step 5 */
-        return array;
+        /* steps 1-5 */
+        return DenseArrayCreate(cx, elements);
+    }
+
+    /**
+     * 7.3.16 CreateArrayFromList (elements)
+     * 
+     * @param cx
+     *            the execution context
+     * @param elements
+     *            the array elements
+     * @return the array object
+     */
+    public static ArrayObject CreateArrayFromList(ExecutionContext cx, Object... elements) {
+        /* steps 1-5 */
+        return DenseArrayCreate(cx, elements);
     }
 
     /**

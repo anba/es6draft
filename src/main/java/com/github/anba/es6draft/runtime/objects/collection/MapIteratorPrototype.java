@@ -6,12 +6,11 @@
  */
 package com.github.anba.es6draft.runtime.objects.collection;
 
-import static com.github.anba.es6draft.runtime.AbstractOperations.CreateDataProperty;
+import static com.github.anba.es6draft.runtime.AbstractOperations.CreateArrayFromList;
 import static com.github.anba.es6draft.runtime.AbstractOperations.CreateIterResultObject;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
-import static com.github.anba.es6draft.runtime.types.builtins.ArrayObject.ArrayCreate;
 
 import java.util.Iterator;
 import java.util.Map.Entry;
@@ -28,7 +27,6 @@ import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Type;
-import com.github.anba.es6draft.runtime.types.builtins.ArrayObject;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
@@ -171,10 +169,7 @@ public final class MapIteratorPrototype extends OrdinaryObject implements Initia
                     result = e.getValue();
                 } else {
                     assert itemKind == MapIterationKind.KeyValue;
-                    ArrayObject array = ArrayCreate(cx, 2);
-                    CreateDataProperty(cx, array, 0, e.getKey());
-                    CreateDataProperty(cx, array, 1, e.getValue());
-                    result = array;
+                    result = CreateArrayFromList(cx, e.getKey(), e.getValue());
                 }
                 return CreateIterResultObject(cx, result, false);
             }

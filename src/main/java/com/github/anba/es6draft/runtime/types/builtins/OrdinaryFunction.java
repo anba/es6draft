@@ -178,19 +178,21 @@ public class OrdinaryFunction extends FunctionObject {
      */
     public static <CONSTRUCTOR extends FunctionObject & Constructor> void MakeConstructor(
             ExecutionContext cx, CONSTRUCTOR f) {
-        /* steps 1-3 (not applicable) */
-        /* step 4 */
+        /* steps 1-2 (not applicable) */
+        /* step 3 */
+        assert f.isExtensible() && !f.ordinaryHasOwnProperty("prototype");
+        /* steps 4-5 (not applicable) */
+        /* step 6 */
         OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.ObjectPrototype);
-        /* step 5 */
-        boolean writablePrototype = true;
-        /* step 6 (FIXME: spec bug) */
         /* step 7 */
+        boolean writablePrototype = true;
+        /* step 8 */
         prototype.infallibleDefineOwnProperty("constructor", new Property(f, writablePrototype,
                 false, writablePrototype));
-        /* steps 8-9 */
+        /* steps 9-10 */
         f.infallibleDefineOwnProperty("prototype", new Property(prototype, writablePrototype,
                 false, false));
-        /* step 10 (return) */
+        /* step 11 (return) */
     }
 
     /**
@@ -207,13 +209,16 @@ public class OrdinaryFunction extends FunctionObject {
      */
     public static <CONSTRUCTOR extends FunctionObject & Constructor> void MakeConstructor(
             CONSTRUCTOR f, boolean writablePrototype, ScriptObject prototype) {
-        /* steps 1-5 (not applicable) */
-        /* step 6 (FIXME: spec bug) */
-        /* step 7 (not applicable) */
-        /* steps 8-9 */
+        /* steps 1-2 (not applicable) */
+        /* step 3 */
+        assert f.isExtensible() && !f.ordinaryHasOwnProperty("prototype");
+        /* step 4 */
+        // FIXME: spec bug - unnecessary assertion
+        /* steps 5-8 (not applicable) */
+        /* steps 9-10 */
         f.infallibleDefineOwnProperty("prototype", new Property(prototype, writablePrototype,
                 false, false));
-        /* step 10 (return) */
+        /* step 11 (return) */
     }
 
     /**

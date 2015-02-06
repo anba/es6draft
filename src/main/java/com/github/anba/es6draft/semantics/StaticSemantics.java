@@ -240,7 +240,7 @@ public final class StaticSemantics {
      */
     public static MethodDefinition ConstructorMethod(List<MethodDefinition> methods) {
         for (MethodDefinition m : methods) {
-            if (m.getType() == MethodDefinition.MethodType.Constructor) {
+            if (m.isClassConstructor()) {
                 return m;
             }
         }
@@ -1142,7 +1142,8 @@ public final class StaticSemantics {
         case Getter:
         case Setter:
             return true;
-        case Constructor:
+        case BaseConstructor:
+        case DerivedConstructor:
         case Function:
         default:
             return false;

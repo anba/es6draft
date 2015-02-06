@@ -221,7 +221,7 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
             /* steps 1-4 */
             RegExpObject r = thisRegExpObject(cx, thisValue);
             /* steps 5-7 */
-            return EscapeRegExpPattern(r.getOriginalSource(), r.getOriginalFlags());
+            return EscapeRegExpPattern(cx, r.getOriginalSource(), r.getOriginalFlags());
         }
 
         /**
@@ -289,8 +289,8 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
             ScriptObject r = Type.objectValue(thisValue);
             /* steps 3-4 */
             CharSequence pattern = ToString(cx, Get(cx, r, "source"));
-            // FIXME: spec bug - web compat..
-            if (pattern.length() == 0) {
+            if (pattern.length() == 0
+                    && cx.getRealm().isEnabled(CompatibilityOption.RegExpEmptySource)) {
                 pattern = "(?:)";
             }
             /* steps 5-6 */

@@ -861,7 +861,7 @@ public final class Properties {
         // Create default constructor
         RuntimeInfo.Function fd = ScriptRuntime.CreateDefaultEmptyConstructor();
         OrdinaryFunction constructor = ScriptRuntime.EvaluateConstructorMethod(constructorParent,
-                proto, fd, cx);
+                proto, fd, false, cx);
         OrdinaryFunction.SetFunctionName(constructor, className);
         return constructor;
     }

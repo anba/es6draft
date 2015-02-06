@@ -1647,7 +1647,7 @@ public final class ScriptRuntime {
         ArrayObject result = ArrayCreate(cx, 0);
         for (int n = 0; iterator.hasNext(); ++n) {
             Object nextValue = iterator.next();
-            CreateDataPropertyOrThrow(cx, result, n, nextValue);
+            CreateDataProperty(cx, result, n, nextValue);
         }
         return result;
     }
@@ -1943,17 +1943,21 @@ public final class ScriptRuntime {
      *            the class prototype
      * @param fd
      *            the function runtime info object
+     * @param isDerived
+     *            {@code true} if evaluating the constructor of a derived class
      * @param cx
      *            the execution context
      * @return the new function instance
      */
     public static OrdinaryConstructorFunction EvaluateConstructorMethod(
             ScriptObject constructorParent, OrdinaryObject proto, RuntimeInfo.Function fd,
-            ExecutionContext cx) {
+            boolean isDerived, ExecutionContext cx) {
         // ClassDefinitionEvaluation - steps 11-12 (call DefineMethod)
         LexicalEnvironment<?> scope = cx.getLexicalEnvironment();
+        ConstructorKind constructorKind = isDerived ? ConstructorKind.Derived
+                : ConstructorKind.Base;
         OrdinaryConstructorFunction constructor = ConstructorFunctionCreate(cx,
-                FunctionKind.ClassConstructor, fd, scope, constructorParent);
+                FunctionKind.ClassConstructor, constructorKind, fd, scope, constructorParent);
         if (fd.hasSuperReference()) {
             MakeMethod(constructor, proto);
         }

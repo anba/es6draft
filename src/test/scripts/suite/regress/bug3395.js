@@ -15,6 +15,9 @@ const IteratorPrototype = Object.getPrototypeOf(Object.getPrototypeOf([][Symbol.
 
 function returnIter(returnAction) {
   class Iter extends null {
+    constructor() {
+      return Object.create(new.target.prototype);
+    }
     next() {
       return {value: 0, done: false};
     }

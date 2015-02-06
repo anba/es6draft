@@ -18,7 +18,9 @@ const Object_create = Object.create;
 
 class Module extends null {
   constructor(exports = Object_create(null)){
-    this.exports = exports;
+    var obj = Object_create(new.target.prototype);
+    obj.exports = exports;
+    return obj;
   }
 }
 

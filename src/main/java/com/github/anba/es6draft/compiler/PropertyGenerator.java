@@ -117,11 +117,8 @@ final class PropertyGenerator extends
                         Types.OrdinaryObject, Types.Object, Types.ExecutionContext));
     }
 
-    private final boolean enumerable;
-
-    public PropertyGenerator(CodeGenerator codegen, boolean enumerable) {
+    public PropertyGenerator(CodeGenerator codegen) {
         super(codegen);
-        this.enumerable = enumerable;
     }
 
     @Override
@@ -168,7 +165,7 @@ final class PropertyGenerator extends
             assert node.getPropertyName() instanceof ComputedPropertyName;
             node.getPropertyName().accept(this, mv);
 
-            mv.iconst(enumerable);
+            mv.iconst(node.getAllocation() == MethodDefinition.MethodAllocation.Object);
             mv.invoke(codegen.methodDesc(node, FunctionName.RTI));
             mv.loadExecutionContext();
             mv.lineInfo(node);
@@ -177,7 +174,6 @@ final class PropertyGenerator extends
             case AsyncFunction:
                 mv.invoke(Methods.ScriptRuntime_EvaluatePropertyDefinitionAsync);
                 break;
-            case Constructor:
             case Function:
                 mv.invoke(Methods.ScriptRuntime_EvaluatePropertyDefinition);
                 break;
@@ -190,12 +186,14 @@ final class PropertyGenerator extends
             case Setter:
                 mv.invoke(Methods.ScriptRuntime_EvaluatePropertyDefinitionSetter);
                 break;
+            case BaseConstructor:
+            case DerivedConstructor:
             default:
                 throw new AssertionError("invalid method type");
             }
         } else {
             mv.aconst(propName);
-            mv.iconst(enumerable);
+            mv.iconst(node.getAllocation() == MethodDefinition.MethodAllocation.Object);
             mv.invoke(codegen.methodDesc(node, FunctionName.RTI));
             mv.loadExecutionContext();
             mv.lineInfo(node);
@@ -204,7 +202,6 @@ final class PropertyGenerator extends
             case AsyncFunction:
                 mv.invoke(Methods.ScriptRuntime_EvaluatePropertyDefinitionAsync_String);
                 break;
-            case Constructor:
             case Function:
                 mv.invoke(Methods.ScriptRuntime_EvaluatePropertyDefinition_String);
                 break;
@@ -217,6 +214,8 @@ final class PropertyGenerator extends
             case Setter:
                 mv.invoke(Methods.ScriptRuntime_EvaluatePropertyDefinitionSetter_String);
                 break;
+            case BaseConstructor:
+            case DerivedConstructor:
             default:
                 throw new AssertionError("invalid method type");
             }
@@ -232,8 +231,6 @@ final class PropertyGenerator extends
      */
     @Override
     public ValType visit(PropertyNameDefinition node, ExpressionVisitor mv) {
-        assert enumerable : String.format("non-enumerable %s", node.getClass());
-
         IdentifierReference propertyName = node.getPropertyName();
         String propName = PropName(propertyName);
         assert propName != null;
@@ -255,8 +252,6 @@ final class PropertyGenerator extends
      */
     @Override
     public ValType visit(PropertyValueDefinition node, ExpressionVisitor mv) {
-        assert enumerable : String.format("non-enumerable %s", node.getClass());
-
         Expression propertyValue = node.getPropertyValue();
         boolean defineMethod, isAnonymousFunctionDefinition;
         if (IsFunctionDefinition(propertyValue)) {

@@ -164,7 +164,7 @@ final class CodeGenerator {
 
     private final StatementGenerator stmtgen = new StatementGenerator(this);
     private final ExpressionGenerator exprgen = new ExpressionGenerator(this);
-    private final PropertyGenerator propgen = new PropertyGenerator(this, true);
+    private final PropertyGenerator propgen = new PropertyGenerator(this);
 
     CodeGenerator(Code code, ExecutorService executor, EnumSet<CompatibilityOption> options,
             EnumSet<Parser.Option> parserOptions, EnumSet<Compiler.Option> compilerOptions) {

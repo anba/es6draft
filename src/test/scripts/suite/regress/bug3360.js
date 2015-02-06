@@ -31,6 +31,9 @@ assertThrows(ValidError, () => {
   var value = () => { throw new InvalidError };
 
   new class Derived extends null {
+    constructor() {
+      return Object.create(new.target.prototype);
+    }
     m() {
       super[property()] = value();
     }
@@ -53,6 +56,9 @@ assertThrows(ValidError, () => {
   var value = () => { throw new InvalidError };
 
   new class Derived extends null {
+    constructor() {
+      return Object.create(new.target.prototype);
+    }
     m() {
       super[property()] = value();
     }
@@ -75,6 +81,9 @@ assertThrows(TypeError, () => {
   var value = () => { throw new InvalidError };
 
   new class Derived extends null {
+    constructor() {
+      return Object.create(new.target.prototype);
+    }
     m() {
       super[property()] = value();
     }

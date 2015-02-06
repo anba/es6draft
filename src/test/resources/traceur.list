@@ -34,6 +34,9 @@ feature/Classes/SimpleSuper.js
 feature/Classes/Method.js
 feature/NumericLiteral/Simple.js
 
+# `extends null` now marked as derived constructor
+feature/Classes/DefaultConstructor.js
+
 
 ############################################
 # Implementation specific differences      #

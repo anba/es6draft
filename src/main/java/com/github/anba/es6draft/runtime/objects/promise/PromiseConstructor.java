@@ -180,16 +180,7 @@ public final class PromiseConstructor extends BuiltinConstructor implements Init
                 return IfAbruptRejectPromise(cx, e, promiseCapability);
             }
             /* steps 10-12 */
-            try {
-                return PerformPromiseAll(cx, iterator, c, promiseCapability);
-            } catch (ScriptException e) {
-                try {
-                    IteratorClose(cx, iterator, true);
-                } catch (ScriptException inner) {
-                    return IfAbruptRejectPromise(cx, inner, promiseCapability);
-                }
-                return IfAbruptRejectPromise(cx, e, promiseCapability);
-            }
+            return PerformPromiseAll(cx, iterator, c, promiseCapability);
         }
 
         /**
@@ -315,7 +306,7 @@ public final class PromiseConstructor extends BuiltinConstructor implements Init
      *            the new promise capability record
      * @return the new promise object
      */
-    public static <PROMISE extends ScriptObject> Object PerformPromiseAll(ExecutionContext cx,
+    public static <PROMISE extends ScriptObject> PROMISE PerformPromiseAll(ExecutionContext cx,
             ScriptObject iterator, Constructor constructor,
             PromiseCapability<PROMISE> resultCapability) {
         /* steps 1-3 (not applicable) */
@@ -323,6 +314,49 @@ public final class PromiseConstructor extends BuiltinConstructor implements Init
         ArrayList<Object> values = new ArrayList<>();
         /* step 5 */
         AtomicInteger remainingElementsCount = new AtomicInteger(1);
+        /* steps 6-7 */
+        try {
+            PerformPromiseAllLoop(cx, iterator, constructor, resultCapability, values,
+                    remainingElementsCount);
+        } catch (ScriptException e) {
+            try {
+                IteratorClose(cx, iterator, true);
+            } catch (ScriptException inner) {
+                return IfAbruptRejectPromise(cx, inner, resultCapability);
+            }
+            return IfAbruptRejectPromise(cx, e, resultCapability);
+        }
+        /* step 7.c */
+        if (remainingElementsCount.decrementAndGet() == 0) {
+            ArrayObject valuesArray = CreateArrayFromList(cx, values);
+            resultCapability.getResolve().call(cx, UNDEFINED, valuesArray);
+        }
+        return resultCapability.getPromise();
+    }
+
+    /**
+     * 25.4.4.1.1 PerformPromiseAll( iterator, constructor, resultCapability) Abstract Operation
+     * 
+     * @param <PROMISE>
+     *            the promise type
+     * @param cx
+     *            the execution context
+     * @param iterator
+     *            the iterator object
+     * @param constructor
+     *            the constructor object
+     * @param resultCapability
+     *            the new promise capability record
+     * @param values
+     *            the list of result values
+     * @param remainingElementsCount
+     *            the remaining element counter
+     */
+    public static <PROMISE extends ScriptObject> void PerformPromiseAllLoop(ExecutionContext cx,
+            ScriptObject iterator, Constructor constructor,
+            PromiseCapability<PROMISE> resultCapability, ArrayList<Object> values,
+            AtomicInteger remainingElementsCount) {
+        /* steps 1-5 (not applicable) */
         /* steps 6-7 */
         for (int index = 0;;) {
             /* steps 7.a-7.b */
@@ -349,17 +383,6 @@ public final class PromiseConstructor extends BuiltinConstructor implements Init
             /* step 7.r */
             index += 1;
         }
-        /* step 7.c */
-        if (remainingElementsCount.decrementAndGet() == 0) {
-            ArrayObject valuesArray = CreateArrayFromList(cx, values);
-            try {
-                resultCapability.getResolve().call(cx, UNDEFINED, valuesArray);
-            } catch (ScriptException e) {
-                // FIXME: return e.getValue() or UNDEFINED?
-                return e.getValue();
-            }
-        }
-        return resultCapability.getPromise();
     }
 
     /**

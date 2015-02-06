@@ -18,6 +18,7 @@ const {
 } = Reflect;
 
 const {
+  create: Object_create,
   getOwnPropertyDescriptor: Object_getOwnPropertyDescriptor,
   is: Object_is,
 } = Object;
@@ -90,10 +91,12 @@ function IsDataPropertyDescriptor(desc) {
 
 class PropertyKeySet extends null {
   constructor(keys) {
-    this._set = new Set();
+    var obj = Object_create(new.target.prototype);
+    obj._set = new Set();
     for (let i = 0, len = keys.length; i < len; ++i) {
-      this.add(keys[i]);
+      obj.add(keys[i]);
     }
+    return obj;
   }
 
   add(value) {

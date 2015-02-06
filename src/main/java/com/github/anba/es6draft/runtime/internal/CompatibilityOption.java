@@ -164,6 +164,11 @@ public enum CompatibilityOption {
     ProxyProtoSkipEnumerate,
 
     /**
+     * Moz-Extension: RegExp.prototype.source returns the empty string instead of {@code (?:)}
+     */
+    RegExpEmptySource,
+
+    /**
      * ES7-Extension: Async Function Definitions
      */
     AsyncFunction,
@@ -239,7 +244,7 @@ public enum CompatibilityOption {
      * @return the options set for mozilla-compatibility
      */
     public static final Set<CompatibilityOption> MozCompatibility() {
-        return addAll(WebCompatibility(), EnumSet.range(ForEachStatement, ProxyProtoSkipEnumerate),
+        return addAll(WebCompatibility(), EnumSet.range(ForEachStatement, RegExpEmptySource),
                 EnumSet.of(Comprehension));
     }
 

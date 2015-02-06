@@ -213,7 +213,8 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
         static final MethodName ScriptRuntime_EvaluateConstructorMethod = MethodName.findStatic(
                 Types.ScriptRuntime, "EvaluateConstructorMethod", Type.methodType(
                         Types.OrdinaryConstructorFunction, Types.ScriptObject,
-                        Types.OrdinaryObject, Types.RuntimeInfo$Function, Types.ExecutionContext));
+                        Types.OrdinaryObject, Types.RuntimeInfo$Function, Type.BOOLEAN_TYPE,
+                        Types.ExecutionContext));
 
         static final MethodName ScriptRuntime_getClassProto = MethodName.findStatic(
                 Types.ScriptRuntime, "getClassProto",
@@ -239,9 +240,6 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
                         Types.ExecutionContext, Types.ScriptObject, Types.ReturnValue));
 
         // class: Type
-        static final MethodName Type_isNull = MethodName.findStatic(Types._Type, "isNull",
-                Type.methodType(Type.BOOLEAN_TYPE, Types.Object));
-
         static final MethodName Type_isUndefinedOrNull = MethodName.findStatic(Types._Type,
                 "isUndefinedOrNull", Type.methodType(Type.BOOLEAN_TYPE, Types.Object));
     }
@@ -1280,7 +1278,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
         }
 
         // steps 5-7
-        // stack: [] -> [superCls?, <constructorParent,proto>]
+        // stack: [] -> [<constructorParent,proto>]
         Expression classHeritage = def.getHeritage();
         if (classHeritage == null) {
             mv.loadExecutionContext();
@@ -1290,59 +1288,39 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
             mv.invoke(Methods.ScriptRuntime_getClassProto_Null);
         } else {
             expressionBoxedValue(classHeritage, mv);
-            if (ConstructorMethod(def) == null) {
-                mv.dup();
-            }
             mv.loadExecutionContext();
             mv.lineInfo(def);
             mv.invoke(Methods.ScriptRuntime_getClassProto);
         }
 
-        // stack: [superCls?, <constructorParent,proto>] -> [superCls?, <constructorParent,proto>]
+        // stack: [<constructorParent,proto>] -> [<constructorParent,proto>]
         Variable<OrdinaryObject> proto = mv.newVariable("proto", OrdinaryObject.class);
         mv.dup();
         mv.aload(1, Types.ScriptObject);
         mv.checkcast(Types.OrdinaryObject);
         mv.store(proto);
 
-        // stack: [superCls?, <constructorParent,proto>] -> [superCls?, constructorParent]
+        // stack: [<constructorParent,proto>] -> [constructorParent, proto]
         mv.aload(0, Types.ScriptObject);
+        mv.load(proto);
 
-        // steps 8-10
-        // stack: [superCls?, constructorParent] -> [constructorParent, proto, <rti>]
+        // steps 8-9
+        // stack: [constructorParent, proto] -> [constructorParent, proto, <rti>]
         MethodDefinition constructor = ConstructorMethod(def);
         if (constructor != null) {
-            mv.load(proto);
             codegen.compile(constructor);
             // Runtime Semantics: Evaluation -> MethodDefinition
             mv.invoke(codegen.methodDesc(constructor, FunctionName.RTI));
+        } else if (classHeritage != null) {
+            mv.invoke(Methods.ScriptRuntime_CreateDefaultConstructor);
         } else {
-            // step 10
-            if (classHeritage != null && !(classHeritage instanceof NullLiteral)) {
-                // stack: [superCls, constructorParent] -> [constructorParent, superCls]
-                mv.swap();
-                // stack: [constructorParent, superCls] -> [constructorParent, proto, <rti>]
-                Jump superClassIsNull = new Jump(), after = new Jump();
-                mv.invoke(Methods.Type_isNull);
-                mv.ifeq(superClassIsNull);
-                {
-                    mv.load(proto);
-                    mv.invoke(Methods.ScriptRuntime_CreateDefaultEmptyConstructor);
-                    mv.goTo(after);
-                }
-                mv.mark(superClassIsNull);
-                mv.load(proto);
-                mv.invoke(Methods.ScriptRuntime_CreateDefaultConstructor);
-                mv.mark(after);
-            } else {
-                mv.load(proto);
-                mv.invoke(Methods.ScriptRuntime_CreateDefaultEmptyConstructor);
-            }
+            mv.invoke(Methods.ScriptRuntime_CreateDefaultEmptyConstructor);
         }
 
-        // step 11 (not applicable)
-        // steps 12-17
+        // step 10 (not applicable)
+        // steps 11-17
         // stack: [constructorParent, proto, <rti>] -> [F]
+        mv.iconst(classHeritage != null);
         mv.loadExecutionContext();
         mv.lineInfo(def);
         mv.invoke(Methods.ScriptRuntime_EvaluateConstructorMethod);
