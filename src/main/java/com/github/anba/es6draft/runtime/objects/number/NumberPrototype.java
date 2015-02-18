@@ -132,7 +132,7 @@ public final class NumberPrototype extends OrdinaryObject implements Initializab
 
         /**
          * 20.1.3.4 Number.prototype.toLocaleString( [ reserved1 [ ., reserved2 ] ])<br>
-         * 13.2.1 Number.prototype.toLocaleString ([locales [, options]])
+         * 13.2.1 Number.prototype.toLocaleString ([locales [, options ]])
          * 
          * @param cx
          *            the execution context
@@ -152,10 +152,13 @@ public final class NumberPrototype extends OrdinaryObject implements Initializab
             // return ToString(thisNumberValue(cx, thisValue));
 
             // ECMA-402
+            /* steps 1-2 */
             double x = thisNumberValue(cx, thisValue);
+            /* step 3 */
             NumberFormatConstructor ctor = (NumberFormatConstructor) cx
                     .getIntrinsic(Intrinsics.Intl_NumberFormat);
             NumberFormatObject numberFormat = ctor.construct(cx, ctor, locales, options);
+            /* step 4 */
             return FormatNumber(cx, numberFormat, x);
         }
 

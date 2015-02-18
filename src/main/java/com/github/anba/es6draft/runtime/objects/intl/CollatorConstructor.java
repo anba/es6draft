@@ -57,6 +57,13 @@ public final class CollatorConstructor extends BuiltinConstructor implements Ini
         }
     };
 
+    /**
+     * [[availableLocales]]
+     * 
+     * @param cx
+     *            the execution context
+     * @return the set of available locales supported by {@code Intl.Collator}
+     */
     public static Set<String> getAvailableLocales(ExecutionContext cx) {
         return getAvailableLocalesLazy(cx).get();
     }
@@ -364,45 +371,43 @@ public final class CollatorConstructor extends BuiltinConstructor implements Ini
     }
 
     /**
-     * 10.1.2.1 Intl.Collator.call (this [, locales [, options]])
+     * 10.1.2.1 Intl.Collator (this [, locales [, options ]])
      */
     @Override
     public ScriptObject call(ExecutionContext callerContext, Object thisValue, Object... args) {
         ExecutionContext calleeContext = calleeContext();
-        /* step 1 */
         Object locales = argument(args, 0);
-        /* step 2 */
         Object options = argument(args, 1);
-        /* step 3 */
+        /* step 1 */
         if (Type.isUndefined(thisValue) || thisValue == calleeContext.getIntrinsic(Intrinsics.Intl)) {
             return construct(calleeContext, this, args);
         }
-        /* step 4 */
+        /* steps 2-3 */
         ScriptObject obj = ToObject(calleeContext, thisValue);
-        /* step 5 */
+        /* step 4 */
         if (!IsExtensible(calleeContext, obj)) {
             throw newTypeError(calleeContext, Messages.Key.NotExtensible);
         }
-        /* step 6 */
+        /* step 5 */
         InitializeCollator(calleeContext, obj, locales, options);
-        /* step 7 */
+        /* step 6 */
         return obj;
     }
 
     /**
-     * 10.1.3.1 new Intl.Collator ([locales [, options]])
+     * 10.1.3.1 new Intl.Collator ([locales [, options ]])
      */
     @Override
     public CollatorObject construct(ExecutionContext callerContext, Constructor newTarget,
             Object... args) {
         ExecutionContext calleeContext = calleeContext();
+        Object locales = argument(args, 0);
+        Object options = argument(args, 1);
+
+        /* step 1 */
         CollatorObject obj = OrdinaryCreateFromConstructor(calleeContext, newTarget,
                 Intrinsics.Intl_CollatorPrototype, CollatorObjectAllocator.INSTANCE);
-        /* step 1 */
-        Object locales = argument(args, 0);
         /* step 2 */
-        Object options = argument(args, 1);
-        /* step 3 */
         InitializeCollator(calleeContext, obj, locales, options);
         return obj;
     }
@@ -441,7 +446,7 @@ public final class CollatorConstructor extends BuiltinConstructor implements Ini
         public static final Intrinsics prototype = Intrinsics.Intl_CollatorPrototype;
 
         /**
-         * 10.2.2 Intl.Collator.supportedLocalesOf (locales [, options])
+         * 10.2.2 Intl.Collator.supportedLocalesOf (locales [, options ])
          * 
          * @param cx
          *            the execution context
@@ -456,13 +461,10 @@ public final class CollatorConstructor extends BuiltinConstructor implements Ini
         @Function(name = "supportedLocalesOf", arity = 1)
         public static Object supportedLocalesOf(ExecutionContext cx, Object thisValue,
                 Object locales, Object options) {
-            /* step 1 (implicit) */
-            /* step 2 */
-            Set<String> availableLocales = getAvailableLocales(cx);
-            /* step 3 */
+            /* step 1 */
             Set<String> requestedLocales = CanonicalizeLocaleList(cx, locales);
-            /* step 4 */
-            return SupportedLocales(cx, availableLocales, requestedLocales, options);
+            /* step 2 */
+            return SupportedLocales(cx, getAvailableLocales(cx), requestedLocales, options);
         }
     }
 }

@@ -7,8 +7,19 @@
 package com.github.anba.es6draft.runtime.objects.intl;
 
 /**
+ * <h1>Unicode Locale Data Markup Language (LDML)</h1>
+ * <p>
+ * Date Format Patterns
+ * <ul>
+ * <li>Date Field Symbol Table
+ * </ul>
+ * <p>
+ * Version: 26
+ * 
  * @see <a
- *      href="http://unicode.org/reports/tr35/tr35-dates.html#Date_Field_Symbol_Table">Date_Field_Symbol_Table</a>
+ *      href="http://unicode.org/reports/tr35/tr35-dates.html#Date_Format_Patterns">Date&nbsp;Format&nbsp;Patterns</a>
+ * @see <a
+ *      href="http://unicode.org/reports/tr35/tr35-dates.html#Date_Field_Symbol_Table">Date&nbsp;Field&nbsp;Symbol&nbsp;Table</a>
  */
 final class DateFieldSymbolTable {
     private DateFieldSymbolTable() {
@@ -25,6 +36,10 @@ final class DateFieldSymbolTable {
             boolean hour12 = false;
             for (int i = 0, len = skeleton.length(); i < len;) {
                 char sym = skeleton.charAt(i++);
+                if (sym == ':') {
+                    // Skip time separator.
+                    continue;
+                }
                 int length = 1;
                 for (; i < len && skeleton.charAt(i) == sym; ++i) {
                     length += 1;
@@ -159,7 +174,7 @@ final class DateFieldSymbolTable {
                     if (count == 5) {
                         return FieldWeight.Narrow;
                     }
-                } else if (symbol == 'y' || symbol == 'Y' || symbol == 'u') {
+                } else if (symbol == 'y' || symbol == 'Y' || symbol == 'u' || symbol == 'r') {
                     if (count == 2) {
                         return FieldWeight.TwoDigit;
                     }
@@ -182,6 +197,9 @@ final class DateFieldSymbolTable {
                     }
                     if (count == 4) {
                         return FieldWeight.Long;
+                    }
+                    if (count == 5) {
+                        return FieldWeight.Narrow;
                     }
                 }
                 throw new IllegalArgumentException();
@@ -297,8 +315,16 @@ final class DateFieldSymbolTable {
         Period('a') {
             @Override
             public FieldWeight getWeight(char symbol, int count) {
-                if (symbol == 'a' && count == 1) {
-                    return FieldWeight.Short;
+                if (symbol == 'a') {
+                    if (count >= 1 && count <= 3) {
+                        return FieldWeight.Short;
+                    }
+                    if (count == 4) {
+                        return FieldWeight.Long;
+                    }
+                    if (count == 5) {
+                        return FieldWeight.Narrow;
+                    }
                 }
                 throw new IllegalArgumentException();
             }

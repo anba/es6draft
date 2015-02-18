@@ -58,6 +58,13 @@ public final class NumberFormatConstructor extends BuiltinConstructor implements
         }
     };
 
+    /**
+     * [[availableLocales]]
+     * 
+     * @param cx
+     *            the execution context
+     * @return the set of available locales supported by {@code Intl.NumberFormat}
+     */
     public static Set<String> getAvailableLocales(ExecutionContext cx) {
         return getAvailableLocalesLazy(cx).get();
     }
@@ -199,7 +206,7 @@ public final class NumberFormatConstructor extends BuiltinConstructor implements
         /* step 17 */
         String c = GetStringOption(cx, options, "currency", null, null);
         /* step 18 */
-        if (c != null && !IsWellFormedCurrencyCode(cx, c)) {
+        if (c != null && !IsWellFormedCurrencyCode(c)) {
             throw newRangeError(cx, Messages.Key.IntlInvalidCurrency, c);
         }
         /* step 19 */
@@ -307,7 +314,7 @@ public final class NumberFormatConstructor extends BuiltinConstructor implements
      */
     private static int CurrencyDigits(String c) {
         // http://www.currency-iso.org/dam/downloads/table_a1.xml
-        // Last updated: 2014-08-15
+        // Last updated: 2015-01-01
         switch (c) {
         case "BIF":
         case "BYR":
@@ -344,45 +351,44 @@ public final class NumberFormatConstructor extends BuiltinConstructor implements
     }
 
     /**
-     * 11.1.2.1 Intl.NumberFormat.call (this [, locales [, options]])
+     * 11.1.2.1 Intl.NumberFormat (this [, locales [, options ]])
      */
     @Override
     public ScriptObject call(ExecutionContext callerContext, Object thisValue, Object... args) {
         ExecutionContext calleeContext = calleeContext();
-        /* step 1 */
         Object locales = argument(args, 0);
-        /* step 2 */
         Object options = argument(args, 1);
-        /* step 3 */
+
+        /* step 1 */
         if (Type.isUndefined(thisValue) || thisValue == calleeContext.getIntrinsic(Intrinsics.Intl)) {
             return construct(calleeContext, this, args);
         }
-        /* step 4 */
+        /* steps 2-3 */
         ScriptObject obj = ToObject(calleeContext, thisValue);
-        /* step 5 */
+        /* step 4 */
         if (!IsExtensible(calleeContext, obj)) {
             throw newTypeError(calleeContext, Messages.Key.NotExtensible);
         }
-        /* step 6 */
+        /* step 5 */
         InitializeNumberFormat(calleeContext, obj, locales, options);
-        /* step 7 */
+        /* step 6 */
         return obj;
     }
 
     /**
-     * 11.1.3.1 new Intl.NumberFormat ([locales [, options]])
+     * 11.1.3.1 new Intl.NumberFormat ([locales [, options ]])
      */
     @Override
     public NumberFormatObject construct(ExecutionContext callerContext, Constructor newTarget,
             Object... args) {
         ExecutionContext calleeContext = calleeContext();
+        Object locales = argument(args, 0);
+        Object options = argument(args, 1);
+
+        /* step 1 */
         NumberFormatObject obj = OrdinaryCreateFromConstructor(calleeContext, newTarget,
                 Intrinsics.Intl_NumberFormatPrototype, NumberFormatObjectAllocator.INSTANCE);
-        /* step 1 */
-        Object locales = argument(args, 0);
         /* step 2 */
-        Object options = argument(args, 1);
-        /* step 3 */
         InitializeNumberFormat(calleeContext, obj, locales, options);
         return obj;
     }
@@ -422,7 +428,7 @@ public final class NumberFormatConstructor extends BuiltinConstructor implements
         public static final Intrinsics prototype = Intrinsics.Intl_NumberFormatPrototype;
 
         /**
-         * 11.2.2 Intl.NumberFormat.supportedLocalesOf (locales [, options])
+         * 11.2.2 Intl.NumberFormat.supportedLocalesOf (locales [, options ])
          * 
          * @param cx
          *            the execution context
@@ -437,12 +443,11 @@ public final class NumberFormatConstructor extends BuiltinConstructor implements
         @Function(name = "supportedLocalesOf", arity = 1)
         public static Object supportedLocalesOf(ExecutionContext cx, Object thisValue,
                 Object locales, Object options) {
-            /* step 1 (implicit) */
-            /* step 2 */
+            /* step 1 */
             Set<String> availableLocales = getAvailableLocales(cx);
-            /* step 3 */
+            /* step 2 */
             Set<String> requestedLocales = CanonicalizeLocaleList(cx, locales);
-            /* step 4 */
+            /* steps 3-4 */
             return SupportedLocales(cx, availableLocales, requestedLocales, options);
         }
     }

@@ -295,7 +295,7 @@ public final class StringPrototype extends OrdinaryObject implements Initializab
 
         /**
          * 21.1.3.10 String.prototype.localeCompare ( that [, reserved1 [ , reserved2 ] ] )<br>
-         * 13.1.1 String.prototype.localeCompare (that [, locales [, options]])
+         * 13.1.1 String.prototype.localeCompare (that [, locales [, options ]])
          * 
          * @param cx
          *            the execution context
@@ -312,17 +312,22 @@ public final class StringPrototype extends OrdinaryObject implements Initializab
         @Function(name = "localeCompare", arity = 1)
         public static Object localeCompare(ExecutionContext cx, Object thisValue, Object that,
                 Object locales, Object options) {
+            /* step 1 */
             Object obj = RequireObjectCoercible(cx, thisValue);
+            /* steps 2-3 */
             String s = ToFlatString(cx, obj);
+            /* steps 4-5 */
             String t = ToFlatString(cx, that);
 
             // ES5/6
             // return cx.getRealm().getCollator().compare(s, t);
 
             // ECMA-402
+            /* step 7 */
             CollatorConstructor ctor = (CollatorConstructor) cx
                     .getIntrinsic(Intrinsics.Intl_Collator);
             CollatorObject collator = ctor.construct(cx, ctor, locales, options);
+            /* steps 8-9 */
             return CompareStrings(cx, collator, s, t);
         }
 
@@ -724,23 +729,29 @@ public final class StringPrototype extends OrdinaryObject implements Initializab
          */
         @Function(name = "toLocaleLowerCase", arity = 0)
         public static Object toLocaleLowerCase(ExecutionContext cx, Object thisValue, Object locales) {
+            /* step 1 */
             Object obj = RequireObjectCoercible(cx, thisValue);
+            /* steps 2-3 */
             String s = ToFlatString(cx, obj);
 
             // ES5/6
             // return s.toLowerCase(cx.getRealm().getLocale());
 
+            /* step 4 */
             Set<String> requestedLocales = CanonicalizeLocaleList(cx, locales);
-            int len = requestedLocales.size();
-            String requestedLocale = len > 0 ? requestedLocales.iterator().next()
-                    : DefaultLocale(cx.getRealm());
+            /* steps 5-7 */
+            String requestedLocale = !requestedLocales.isEmpty() ? requestedLocales.iterator()
+                    .next() : DefaultLocale(cx.getRealm());
+            /* step 9 */
             HashSet<String> availableLocales = new HashSet<>(Arrays.asList("az", "lt", "tr"));
-            // FIXME: spec issue? spec should just call LookupSupportedLocales abstract operation..
+            /* steps 8, 10 */
+            // NB: Calling LookupSupportedLocales is equivalent to calling BestAvailableLocale.
             List<String> supportedLocales = LookupSupportedLocales(cx, availableLocales,
                     Collections.singleton(requestedLocale));
+            /* step 11 */
             String supportedLocale = supportedLocales.isEmpty() ? "und" : supportedLocales.get(0);
-            ULocale locale = ULocale.forLanguageTag(supportedLocale);
-            return UCharacter.toLowerCase(locale, s);
+            /* steps 12-17 */
+            return UCharacter.toLowerCase(ULocale.forLanguageTag(supportedLocale), s);
         }
 
         /**
@@ -763,7 +774,8 @@ public final class StringPrototype extends OrdinaryObject implements Initializab
         }
 
         /**
-         * 21.1.3.21 String.prototype.toLocaleUpperCase ( )
+         * 21.1.3.21 String.prototype.toLocaleUpperCase ( )<br>
+         * 13.1.3 String.prototype.toLocaleUpperCase ([locales ])
          * 
          * @param cx
          *            the execution context
@@ -775,23 +787,29 @@ public final class StringPrototype extends OrdinaryObject implements Initializab
          */
         @Function(name = "toLocaleUpperCase", arity = 0)
         public static Object toLocaleUpperCase(ExecutionContext cx, Object thisValue, Object locales) {
+            /* step 1 */
             Object obj = RequireObjectCoercible(cx, thisValue);
+            /* steps 2-3 */
             String s = ToFlatString(cx, obj);
 
             // ES5/6
             // return s.toUpperCase(cx.getRealm().getLocale());
 
+            /* step 4 */
             Set<String> requestedLocales = CanonicalizeLocaleList(cx, locales);
-            int len = requestedLocales.size();
-            String requestedLocale = len > 0 ? requestedLocales.iterator().next()
-                    : DefaultLocale(cx.getRealm());
+            /* steps 5-7 */
+            String requestedLocale = !requestedLocales.isEmpty() ? requestedLocales.iterator()
+                    .next() : DefaultLocale(cx.getRealm());
+            /* step 9 */
             HashSet<String> availableLocales = new HashSet<>(Arrays.asList("az", "lt", "tr"));
-            // FIXME: spec issue? spec should just call LookupSupportedLocales abstract operation..
+            /* steps 8, 10 */
+            // NB: Calling LookupSupportedLocales is equivalent to calling BestAvailableLocale.
             List<String> supportedLocales = LookupSupportedLocales(cx, availableLocales,
                     Collections.singleton(requestedLocale));
+            /* step 11 */
             String supportedLocale = supportedLocales.isEmpty() ? "und" : supportedLocales.get(0);
-            ULocale locale = ULocale.forLanguageTag(supportedLocale);
-            return UCharacter.toUpperCase(locale, s);
+            /* steps 12-17 */
+            return UCharacter.toUpperCase(ULocale.forLanguageTag(supportedLocale), s);
         }
 
         /**

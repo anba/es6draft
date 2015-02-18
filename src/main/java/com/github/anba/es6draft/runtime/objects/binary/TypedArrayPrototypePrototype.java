@@ -428,13 +428,18 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
          *            the execution context
          * @param thisValue
          *            the function this-value
+         * @param locales
+         *            the optional locales array
+         * @param options
+         *            the optional options object
          * @return the locale specific string representation
          */
         @Function(name = "toLocaleString", arity = 0)
-        public static Object toLocaleString(ExecutionContext cx, Object thisValue) {
+        public static Object toLocaleString(ExecutionContext cx, Object thisValue, Object locales,
+                Object options) {
             TypedArrayObject array = thisTypedArrayObjectChecked(cx, thisValue);
             long len = array.getArrayLength();
-            return ArrayPrototype.Properties.toLocaleString(cx, array, len);
+            return ArrayPrototype.Properties.toLocaleString(cx, array, len, locales, options);
         }
 
         /**

@@ -5,7 +5,7 @@
  * <https://github.com/anba/es6draft>
  */
 const {
-  assertSame, assertThrows, fail
+  assertThrows
 } = Assert;
 
 // 12.1.1.1 ToDateTimeOptions: Change Throw parameter to true
@@ -14,4 +14,4 @@ const {
 var options = {get second() {
   Object.defineProperty(this, "year", {value: "2-digit"});
 }};
-new Intl.DateTimeFormat("de", options).format(new Date);
+assertThrows(TypeError, () => new Intl.DateTimeFormat("de", options).format(new Date));

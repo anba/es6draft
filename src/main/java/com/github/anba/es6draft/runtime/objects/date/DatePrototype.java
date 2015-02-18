@@ -238,7 +238,7 @@ public final class DatePrototype extends OrdinaryObject implements Initializable
 
         /**
          * 20.3.4.39 Date.prototype.toLocaleString ( [ reserved1 [ , reserved2 ] ] )<br>
-         * 13.3.1 Date.prototype.toLocaleString ([locales [, options]])
+         * 13.3.1 Date.prototype.toLocaleString ([locales [, options ]])
          * 
          * @param cx
          *            the execution context
@@ -253,22 +253,27 @@ public final class DatePrototype extends OrdinaryObject implements Initializable
         @Function(name = "toLocaleString", arity = 0)
         public static Object toLocaleString(ExecutionContext cx, Object thisValue, Object locales,
                 Object options) {
+            /* step 1 */
             double t = thisTimeValue(cx, thisValue);
+            /* step 2 */
             if (Double.isNaN(t)) {
                 return "Invalid Date";
             }
 
             // ECMA-402
+            /* step 3 */
             options = ToDateTimeOptions(cx, options, "any", "all");
+            /* step 4 */
             DateTimeFormatConstructor ctor = (DateTimeFormatConstructor) cx
                     .getIntrinsic(Intrinsics.Intl_DateTimeFormat);
             DateTimeFormatObject dateTimeFormat = ctor.construct(cx, ctor, locales, options);
+            /* step 5 */
             return FormatDateTime(cx, dateTimeFormat, t);
         }
 
         /**
          * 20.3.4.38 Date.prototype.toLocaleDateString ( [ reserved1 [ , reserved2 ] ] )<br>
-         * 13.3.2 Date.prototype.toLocaleDateString ([locales [, options]])
+         * 13.3.2 Date.prototype.toLocaleDateString ([locales [, options ]])
          * 
          * @param cx
          *            the execution context
@@ -283,22 +288,27 @@ public final class DatePrototype extends OrdinaryObject implements Initializable
         @Function(name = "toLocaleDateString", arity = 0)
         public static Object toLocaleDateString(ExecutionContext cx, Object thisValue,
                 Object locales, Object options) {
+            /* step 1 */
             double t = thisTimeValue(cx, thisValue);
+            /* step 2 */
             if (Double.isNaN(t)) {
                 return "Invalid Date";
             }
 
             // ECMA-402
+            /* step 3 */
             options = ToDateTimeOptions(cx, options, "date", "date");
+            /* step 4 */
             DateTimeFormatConstructor ctor = (DateTimeFormatConstructor) cx
                     .getIntrinsic(Intrinsics.Intl_DateTimeFormat);
             DateTimeFormatObject dateTimeFormat = ctor.construct(cx, ctor, locales, options);
+            /* step 5 */
             return FormatDateTime(cx, dateTimeFormat, t);
         }
 
         /**
          * 20.3.4.40 Date.prototype.toLocaleTimeString ( [ reserved1 [ , reserved2 ] ] )<br>
-         * 13.3.3 Date.prototype.toLocaleTimeString ([locales [, options]])
+         * 13.3.3 Date.prototype.toLocaleTimeString ([locales [, options ]])
          * 
          * @param cx
          *            the execution context
@@ -313,16 +323,21 @@ public final class DatePrototype extends OrdinaryObject implements Initializable
         @Function(name = "toLocaleTimeString", arity = 0)
         public static Object toLocaleTimeString(ExecutionContext cx, Object thisValue,
                 Object locales, Object options) {
+            /* step 1 */
             double t = thisTimeValue(cx, thisValue);
+            /* step 2 */
             if (Double.isNaN(t)) {
                 return "Invalid Date";
             }
 
             // ECMA-402
+            /* step 3 */
             options = ToDateTimeOptions(cx, options, "time", "time");
+            /* step 4 */
             DateTimeFormatConstructor ctor = (DateTimeFormatConstructor) cx
                     .getIntrinsic(Intrinsics.Intl_DateTimeFormat);
             DateTimeFormatObject dateTimeFormat = ctor.construct(cx, ctor, locales, options);
+            /* step 5 */
             return FormatDateTime(cx, dateTimeFormat, t);
         }
 

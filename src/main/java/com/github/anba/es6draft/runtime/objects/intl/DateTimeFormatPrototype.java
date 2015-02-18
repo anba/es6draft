@@ -19,6 +19,7 @@ import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initializable;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.Properties.Accessor;
+import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
@@ -27,6 +28,7 @@ import com.github.anba.es6draft.runtime.objects.date.DateConstructor;
 import com.github.anba.es6draft.runtime.objects.intl.DateFieldSymbolTable.DateField;
 import com.github.anba.es6draft.runtime.objects.intl.DateFieldSymbolTable.FieldWeight;
 import com.github.anba.es6draft.runtime.objects.intl.DateFieldSymbolTable.Skeleton;
+import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Type;
@@ -55,7 +57,7 @@ public final class DateTimeFormatPrototype extends DateTimeFormatObject implemen
     public void initialize(Realm realm) {
         createProperties(realm, this, Properties.class);
 
-        // initialize Intl.DateTimeFormat.prototype's internal state
+        // Initialize Intl.DateTimeFormat.prototype's internal state.
         DateTimeFormatConstructor.InitializeDefaultDateTimeFormat(realm, this);
     }
 
@@ -87,7 +89,14 @@ public final class DateTimeFormatPrototype extends DateTimeFormatObject implemen
         public static final Intrinsics constructor = Intrinsics.Intl_DateTimeFormat;
 
         /**
-         * 12.3.2 Intl.DateTimeFormat.prototype.format
+         * 12.3.2 Intl.DateTimeFormat.prototype[@@toStringTag]]
+         */
+        @Value(name = "[Symbol.toStringTag]", symbol = BuiltinSymbol.toStringTag,
+                attributes = @Attributes(writable = false, enumerable = false, configurable = true))
+        public static final String toStringTag = "Object";
+
+        /**
+         * 12.3.3 Intl.DateTimeFormat.prototype.format
          * 
          * @param cx
          *            the execution context
@@ -97,22 +106,23 @@ public final class DateTimeFormatPrototype extends DateTimeFormatObject implemen
          */
         @Accessor(name = "format", type = Accessor.Type.Getter)
         public static Object format(ExecutionContext cx, Object thisValue) {
-            DateTimeFormatObject dateTimeFormat = thisDateTimeFormatObject(cx, thisValue);
             /* step 1 */
+            DateTimeFormatObject dateTimeFormat = thisDateTimeFormatObject(cx, thisValue);
+            /* step 2 */
             if (dateTimeFormat.getBoundFormat() == null) {
-                /* step 1.a */
+                /* step 2.a */
                 FormatFunction f = new FormatFunction(cx.getRealm());
-                /* steps 1.b-c */
+                /* step 2.b */
                 Callable bf = (Callable) FunctionPrototype.Properties.bind(cx, f, thisValue);
-                /* step 1.d */
+                /* step 2.c */
                 dateTimeFormat.setBoundFormat(bf);
             }
-            /* step 2 */
+            /* step 3 */
             return dateTimeFormat.getBoundFormat();
         }
 
         /**
-         * 12.3.3 Intl.DateTimeFormat.prototype.resolvedOptions ()
+         * 12.3.4 Intl.DateTimeFormat.prototype.resolvedOptions ()
          * 
          * @param cx
          *            the execution context
@@ -130,7 +140,7 @@ public final class DateTimeFormatPrototype extends DateTimeFormatObject implemen
             assert dateTimeFormat.getTimeZone() != null;
             CreateDataProperty(cx, object, "timeZone", dateTimeFormat.getTimeZone());
             // hour12, weekday, era, year, month, day, hour, minute, second, and timeZoneName
-            // properties are restored from pattern field or rather its corresponding skeleton
+            // properties are restored from pattern field or rather its corresponding skeleton.
             DateTimePatternGenerator generator = DateTimePatternGenerator.getEmptyInstance();
             Skeleton skeleton = new Skeleton(generator.getSkeleton(dateTimeFormat.getPattern()));
             for (DateField field : DateField.values()) {
@@ -191,13 +201,13 @@ public final class DateTimeFormatPrototype extends DateTimeFormatObject implemen
             assert thisValue instanceof DateTimeFormatObject;
             ExecutionContext calleeContext = calleeContext();
             Object date = argument(args, 0);
-            /* step 1.a.i (12.3.2) */
+            /* step 2.a.i (12.3.3) */
             if (Type.isUndefined(date)) {
                 date = DateConstructor.Properties.now(calleeContext, null);
             }
-            /* step 1.a.ii (12.3.2) */
+            /* step 2.a.ii (12.3.3) */
             double x = ToNumber(calleeContext, date);
-            /* step 1.a.iii (12.3.2) */
+            /* step 2.a.iii (12.3.3) */
             return FormatDateTime(calleeContext, (DateTimeFormatObject) thisValue, x);
         }
     }

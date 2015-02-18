@@ -1,7 +1,7 @@
 es6draft
 ========
 
-ECMAScript 6 compiler and runtime written in Java.
+ECMAScript 2015 (ECMA-262 6th Edition) compiler and runtime written in Java.
 
 [![Build Status](https://travis-ci.org/anba/es6draft.png?branch=master)](https://travis-ci.org/anba/es6draft)
 
@@ -9,9 +9,9 @@ ECMAScript 6 compiler and runtime written in Java.
 
 ## Implementation Status ##
 
-Full support of [ECMAScript 6 draft rev. 32] [es6drafts].
+Full support of [ECMAScript 2015, Rev 32, February 2, 2015 Draft] [es6drafts].
 
-[ECMAScript Internationalization API 2.0, draft 2013-02-28] [intldrafts]:
+[ECMAScript Internationalization API 2.0, Rev 9, 2015-02-09 Draft] [intldrafts]:
 * Sub-classing intentionally restricted to ES6 classes
 
 

@@ -11,8 +11,6 @@ import static com.github.anba.es6draft.runtime.internal.Errors.newRangeError;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.objects.intl.IntlAbstractOperations.*;
-import static com.github.anba.es6draft.runtime.types.Null.NULL;
-import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static java.util.Arrays.asList;
 
 import java.util.ArrayList;
@@ -31,7 +29,6 @@ import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
-import com.github.anba.es6draft.runtime.objects.ObjectConstructor;
 import com.github.anba.es6draft.runtime.objects.intl.DateFieldSymbolTable.DateField;
 import com.github.anba.es6draft.runtime.objects.intl.DateFieldSymbolTable.FieldWeight;
 import com.github.anba.es6draft.runtime.objects.intl.DateFieldSymbolTable.Skeleton;
@@ -69,6 +66,13 @@ public final class DateTimeFormatConstructor extends BuiltinConstructor implemen
         }
     };
 
+    /**
+     * [[availableLocales]]
+     * 
+     * @param cx
+     *            the execution context
+     * @return the set of available locales supported by {@code Intl.DateTimeFormat}
+     */
     public static Set<String> getAvailableLocales(ExecutionContext cx) {
         return getAvailableLocalesLazy(cx).get();
     }
@@ -84,7 +88,7 @@ public final class DateTimeFormatConstructor extends BuiltinConstructor implemen
             ExtensionKey.nu);
 
     /**
-     * Calendar algorithm keys (BCP 47; CLDR, version 25)
+     * Calendar algorithm keys (BCP 47; CLDR, version 26)
      */
     private enum CalendarAlgorithm {/* @formatter:off */
         buddhist("buddhist"),
@@ -393,17 +397,16 @@ public final class DateTimeFormatConstructor extends BuiltinConstructor implemen
      */
     public static ScriptObject ToDateTimeOptions(ExecutionContext cx, Object opts, String required,
             String defaults) {
-        /* steps 1-3 */
-        Object o = Type.isUndefined(opts) ? NULL : ToObject(cx, opts);
-        ScriptObject options = (ScriptObject) ObjectConstructor.Properties.create(cx, UNDEFINED, o,
-                UNDEFINED);
+        /* steps 1-4 */
+        ScriptObject options = ObjectCreate(cx, Type.isUndefined(opts) ? null : ToObject(cx, opts));
+        // FIXME: spec bug - steps 5-7 are incorrect in the current spec draft (rev9)
         /* step 4 */
         boolean needDefaults = true;
         /* step 5 */
         if ("date".equals(required) || "any".equals(required)) {
             // FIXME: spec vs. impl (short circuit after first undefined value?)
-            for (String pk : array("weekday", "year", "month", "day")) {
-                Object kvalue = Get(cx, options, pk);
+            for (String prop : array("weekday", "year", "month", "day")) {
+                Object kvalue = Get(cx, options, prop);
                 if (!Type.isUndefined(kvalue)) {
                     needDefaults = false;
                 }
@@ -412,8 +415,8 @@ public final class DateTimeFormatConstructor extends BuiltinConstructor implemen
         /* step 6 */
         if ("time".equals(required) || "any".equals(required)) {
             // FIXME: spec vs. impl (short circuit after first undefined value?)
-            for (String pk : array("hour", "minute", "second")) {
-                Object kvalue = Get(cx, options, pk);
+            for (String prop : array("hour", "minute", "second")) {
+                Object kvalue = Get(cx, options, prop);
                 if (!Type.isUndefined(kvalue)) {
                     needDefaults = false;
                 }
@@ -421,16 +424,14 @@ public final class DateTimeFormatConstructor extends BuiltinConstructor implemen
         }
         /* step 7 */
         if (needDefaults && ("date".equals(defaults) || "all".equals(defaults))) {
-            for (String pk : array("year", "month", "day")) {
-                // FIXME: spec issue? (https://bugs.ecmascript.org/show_bug.cgi?id=3399)
-                CreateDataProperty(cx, options, pk, "numeric");
+            for (String prop : array("year", "month", "day")) {
+                CreateDataPropertyOrThrow(cx, options, prop, "numeric");
             }
         }
         /* step 8 */
         if (needDefaults && ("time".equals(defaults) || "all".equals(defaults))) {
-            for (String pk : array("hour", "minute", "second")) {
-                // FIXME: spec issue? (https://bugs.ecmascript.org/show_bug.cgi?id=3399)
-                CreateDataProperty(cx, options, pk, "numeric");
+            for (String prop : array("hour", "minute", "second")) {
+                CreateDataPropertyOrThrow(cx, options, prop, "numeric");
             }
         }
         /* step 9 */
@@ -814,45 +815,44 @@ public final class DateTimeFormatConstructor extends BuiltinConstructor implemen
     }
 
     /**
-     * 12.1.2.1 Intl.DateTimeFormat.call (this [, locales [, options]])
+     * 12.1.2.1 Intl.DateTimeFormat (this [, locales [, options ]])
      */
     @Override
     public ScriptObject call(ExecutionContext callerContext, Object thisValue, Object... args) {
         ExecutionContext calleeContext = calleeContext();
-        /* step 1 */
         Object locales = argument(args, 0);
-        /* step 2 */
         Object options = argument(args, 1);
-        /* step 3 */
+
+        /* step 1 */
         if (Type.isUndefined(thisValue) || thisValue == calleeContext.getIntrinsic(Intrinsics.Intl)) {
             return construct(calleeContext, this, args);
         }
-        /* step 4 */
+        /* step 2 */
         ScriptObject obj = ToObject(calleeContext, thisValue);
-        /* step 5 */
+        /* step 3 */
         if (!IsExtensible(calleeContext, obj)) {
             throw newTypeError(calleeContext, Messages.Key.NotExtensible);
         }
-        /* step 6 */
+        /* step 4 */
         InitializeDateTimeFormat(calleeContext, obj, locales, options);
-        /* step 7 */
+        /* step 5 */
         return obj;
     }
 
     /**
-     * 12.1.3.1 new Intl.DateTimeFormat ([locales [, options]])
+     * 12.1.3.1 new Intl.DateTimeFormat ([locales [, options ]])
      */
     @Override
     public DateTimeFormatObject construct(ExecutionContext callerContext, Constructor newTarget,
             Object... args) {
         ExecutionContext calleeContext = calleeContext();
+        Object locales = argument(args, 0);
+        Object options = argument(args, 1);
+
+        /* step 1 */
         DateTimeFormatObject obj = OrdinaryCreateFromConstructor(calleeContext, newTarget,
                 Intrinsics.Intl_DateTimeFormatPrototype, DateTimeFormatObjectAllocator.INSTANCE);
-        /* step 1 */
-        Object locales = argument(args, 0);
         /* step 2 */
-        Object options = argument(args, 1);
-        /* step 3 */
         InitializeDateTimeFormat(calleeContext, obj, locales, options);
         return obj;
     }
@@ -907,12 +907,11 @@ public final class DateTimeFormatConstructor extends BuiltinConstructor implemen
         @Function(name = "supportedLocalesOf", arity = 1)
         public static Object supportedLocalesOf(ExecutionContext cx, Object thisValue,
                 Object locales, Object options) {
-            /* step 1 (implicit) */
-            /* step 2 */
+            /* step 1 */
             Set<String> availableLocales = getAvailableLocales(cx);
-            /* step 3 */
+            /* steps 2-3 */
             Set<String> requestedLocales = CanonicalizeLocaleList(cx, locales);
-            /* step 4 */
+            /* steps 4-6 */
             return SupportedLocales(cx, availableLocales, requestedLocales, options);
         }
     }

@@ -16,10 +16,12 @@ import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initializable;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.Properties.Accessor;
+import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.objects.FunctionPrototype;
+import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
@@ -46,7 +48,7 @@ public final class NumberFormatPrototype extends NumberFormatObject implements I
     public void initialize(Realm realm) {
         createProperties(realm, this, Properties.class);
 
-        // initialize Intl.NumberFormat.prototype's internal state
+        // Initialize Intl.NumberFormat.prototype's internal state.
         NumberFormatConstructor.InitializeDefaultNumberFormat(realm, this);
     }
 
@@ -77,7 +79,14 @@ public final class NumberFormatPrototype extends NumberFormatObject implements I
         public static final Intrinsics constructor = Intrinsics.Intl_NumberFormat;
 
         /**
-         * 11.3.2 Intl.NumberFormat.prototype.format
+         * 11.3.2 Intl.NumberFormat.prototype[@@toStringTag]
+         */
+        @Value(name = "[Symbol.toStringTag]", symbol = BuiltinSymbol.toStringTag,
+                attributes = @Attributes(writable = false, enumerable = false, configurable = true))
+        public static final String toStringTag = "Object";
+
+        /**
+         * 11.3.3 Intl.NumberFormat.prototype.format
          * 
          * @param cx
          *            the execution context
@@ -87,22 +96,23 @@ public final class NumberFormatPrototype extends NumberFormatObject implements I
          */
         @Accessor(name = "format", type = Accessor.Type.Getter)
         public static Object format(ExecutionContext cx, Object thisValue) {
-            NumberFormatObject numberFormat = thisNumberFormatObject(cx, thisValue);
             /* step 1 */
+            NumberFormatObject numberFormat = thisNumberFormatObject(cx, thisValue);
+            /* step 2 */
             if (numberFormat.getBoundFormat() == null) {
-                /* step 1.a */
+                /* step 2.a */
                 FormatFunction f = new FormatFunction(cx.getRealm());
-                /* steps 1.b-c */
+                /* steps 2.b */
                 Callable bf = (Callable) FunctionPrototype.Properties.bind(cx, f, thisValue);
-                /* step 1.d */
+                /* step 2.c */
                 numberFormat.setBoundFormat(bf);
             }
-            /* step 2 */
+            /* step 3 */
             return numberFormat.getBoundFormat();
         }
 
         /**
-         * 11.3.3 Intl.NumberFormat.prototype.resolvedOptions ()
+         * 11.3.4 Intl.NumberFormat.prototype.resolvedOptions ()
          * 
          * @param cx
          *            the execution context
@@ -181,11 +191,11 @@ public final class NumberFormatPrototype extends NumberFormatObject implements I
         public String call(ExecutionContext callerContext, Object thisValue, Object... args) {
             assert thisValue instanceof NumberFormatObject;
             ExecutionContext calleeContext = calleeContext();
-            /* step 1.a.i (11.3.2) */
+            /* step 2.a.i (11.3.3) */
             Object value = argument(args, 0);
-            /* step 1.a.ii (11.3.2) */
+            /* steps 2.a.ii-iii (11.3.3) */
             double x = ToNumber(calleeContext, value);
-            /* step 1.a.iii (11.3.2) */
+            /* step 2.a.iv (11.3.3) */
             return FormatNumber(calleeContext, (NumberFormatObject) thisValue, x);
         }
     }

@@ -292,13 +292,14 @@ final class IntlDataTools {
                 .compile("Link\\s+([a-zA-Z0-9_+\\-/]+)\\s+([a-zA-Z0-9_+\\-/]+)(?:\\s+#.*)?");
         Pattern pFileName = Pattern.compile("[a-z0-9]+");
 
+        HashSet<String> ignoreFiles = new HashSet<>(Arrays.asList("backzone"));
         TreeSet<String> names = new TreeSet<>();
         TreeMap<String, String> links = new TreeMap<>();
 
         try (DirectoryStream<Path> stream = Files.newDirectoryStream(tzdataDir)) {
             for (Path path : stream) {
                 String filename = path.getFileName().toString();
-                if (pFileName.matcher(filename).matches()) {
+                if (pFileName.matcher(filename).matches() && !ignoreFiles.contains(filename)) {
                     try (BufferedReader reader = Files.newBufferedReader(path,
                             StandardCharsets.UTF_8)) {
                         for (String line; (line = reader.readLine()) != null;) {
@@ -318,7 +319,7 @@ final class IntlDataTools {
                                 String target = m.group(1);
                                 String source = m.group(2);
                                 boolean changed = links.put(source, target) == null;
-                                assert changed : line;
+                                assert changed : String.format("%s: %s", filename, line);
                             }
                         }
                     }

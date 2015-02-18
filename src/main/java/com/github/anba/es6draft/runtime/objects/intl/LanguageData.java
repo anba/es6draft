@@ -23,14 +23,32 @@ final class LanguageData {
     private LanguageData() {
     }
 
+    /**
+     * Returns the set of available locales supported by the {@link Collator} class.
+     * 
+     * @return the set of available locales
+     * @see Collator#getAvailableULocales()
+     */
     static Set<String> getAvailableCollatorLocales() {
         return addDerivedLanguages(toLanguageTags(Collator.getAvailableULocales()));
     }
 
+    /**
+     * Returns the set of available locales supported by the {@link DateFormat} class.
+     * 
+     * @return the set of available locales
+     * @see DateFormat#getAvailableULocales()
+     */
     static List<String> getAvailableDateFormatLocales() {
         return toLanguageTags(DateFormat.getAvailableULocales());
     }
 
+    /**
+     * Returns the set of available locales supported by the {@link NumberFormat} class.
+     * 
+     * @return the set of available locales
+     * @see NumberFormat#getAvailableULocales()
+     */
     static List<String> getAvailableNumberFormatLocales() {
         return toLanguageTags(NumberFormat.getAvailableULocales());
     }

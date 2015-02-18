@@ -16,10 +16,12 @@ import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initializable;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.Properties.Accessor;
+import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.objects.FunctionPrototype;
+import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
@@ -46,7 +48,7 @@ public final class CollatorPrototype extends CollatorObject implements Initializ
     public void initialize(Realm realm) {
         createProperties(realm, this, Properties.class);
 
-        // initialize Intl.Collator.prototype's internal state
+        // Initialize Intl.Collator.prototype's internal state.
         CollatorConstructor.InitializeDefaultCollator(realm, this);
     }
 
@@ -77,7 +79,14 @@ public final class CollatorPrototype extends CollatorObject implements Initializ
         public static final Intrinsics constructor = Intrinsics.Intl_Collator;
 
         /**
-         * 10.3.2 Intl.Collator.prototype.compare
+         * 10.3.2 Intl.Collator.prototype[@@toStringTag]
+         */
+        @Value(name = "[Symbol.toStringTag]", symbol = BuiltinSymbol.toStringTag,
+                attributes = @Attributes(writable = false, enumerable = false, configurable = true))
+        public static final String toStringTag = "Object";
+
+        /**
+         * 10.3.3 Intl.Collator.prototype.compare
          * 
          * @param cx
          *            the execution context
@@ -87,22 +96,23 @@ public final class CollatorPrototype extends CollatorObject implements Initializ
          */
         @Accessor(name = "compare", type = Accessor.Type.Getter)
         public static Object compare(ExecutionContext cx, Object thisValue) {
-            CollatorObject collator = thisCollatorObject(cx, thisValue);
             /* step 1 */
+            CollatorObject collator = thisCollatorObject(cx, thisValue);
+            /* step 2 */
             if (collator.getBoundCompare() == null) {
-                /* step 1.a */
+                /* step 2.a */
                 CompareFunction f = new CompareFunction(cx.getRealm());
-                /* steps 1.b-c */
+                /* steps 2.b */
                 Callable bf = (Callable) FunctionPrototype.Properties.bind(cx, f, thisValue);
-                /* step 1.d */
+                /* step 2.c */
                 collator.setBoundCompare(bf);
             }
-            /* step 2 */
+            /* step 3 */
             return collator.getBoundCompare();
         }
 
         /**
-         * 10.3.3 Intl.Collator.prototype.resolvedOptions ()
+         * 10.3.4 Intl.Collator.prototype.resolvedOptions ()
          * 
          * @param cx
          *            the execution context
@@ -113,7 +123,7 @@ public final class CollatorPrototype extends CollatorObject implements Initializ
         @Function(name = "resolvedOptions", arity = 0)
         public static Object resolvedOptions(ExecutionContext cx, Object thisValue) {
             CollatorObject collator = thisCollatorObject(cx, thisValue);
-            OrdinaryObject object = OrdinaryObject.ObjectCreate(cx, Intrinsics.ObjectPrototype);
+            OrdinaryObject object = ObjectCreate(cx, Intrinsics.ObjectPrototype);
             CreateDataProperty(cx, object, "locale", collator.getLocale());
             CreateDataProperty(cx, object, "usage", collator.getUsage());
             CreateDataProperty(cx, object, "sensitivity", collator.getSensitivity());
@@ -162,15 +172,15 @@ public final class CollatorPrototype extends CollatorObject implements Initializ
         public Integer call(ExecutionContext callerContext, Object thisValue, Object... args) {
             assert thisValue instanceof CollatorObject;
             ExecutionContext calleeContext = calleeContext();
-            /* step 1.a.i (10.3.2) */
+            /* step 2.a.i (10.3.3) */
             Object arg0 = argument(args, 0);
-            /* step 1.a.ii (10.3.2) */
+            /* step 2.a.ii (10.3.3) */
             Object arg1 = argument(args, 1);
-            /* step 1.a.iii (10.3.2) */
+            /* step 2.a.iii (10.3.3) */
             String x = ToFlatString(calleeContext, arg0);
-            /* step 1.a.iv (10.3.2) */
+            /* step 2.a.iv (10.3.3) */
             String y = ToFlatString(calleeContext, arg1);
-            /* step 1.a.v (10.3.2) */
+            /* step 2.a.v (10.3.3) */
             return CompareStrings(calleeContext, (CollatorObject) thisValue, x, y);
         }
     }

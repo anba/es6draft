@@ -356,26 +356,33 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
         }
 
         /**
-         * 22.1.3.26 Array.prototype.toLocaleString ( [ reserved1 [ , reserved2 ] ] )
+         * 22.1.3.26 Array.prototype.toLocaleString ( [ reserved1 [ , reserved2 ] ] )<br>
+         * 13.4.1 Array.prototype.toLocaleString([locales [, options ]])
          * 
          * @param cx
          *            the execution context
          * @param thisValue
          *            the function this-value
+         * @param locales
+         *            the optional locales array
+         * @param options
+         *            the optional options object
          * @return the locale specific string representation
          */
         @Function(name = "toLocaleString", arity = 0)
-        public static Object toLocaleString(ExecutionContext cx, Object thisValue) {
+        public static Object toLocaleString(ExecutionContext cx, Object thisValue, Object locales,
+                Object options) {
             /* steps 1-2 */
             ScriptObject array = ToObject(cx, thisValue);
             /* steps 3-4 */
             long len = ToLength(cx, Get(cx, array, "length"));
             /* steps 5-13 */
-            return toLocaleString(cx, array, len);
+            return toLocaleString(cx, array, len, locales, options);
         }
 
         /**
-         * 22.1.3.26 Array.prototype.toLocaleString ( [ reserved1 [ , reserved2 ] ] )
+         * 22.1.3.26 Array.prototype.toLocaleString ( [ reserved1 [ , reserved2 ] ] )<br>
+         * 13.4.1 Array.prototype.toLocaleString([locales [, options ]])
          * 
          * @param cx
          *            the execution context
@@ -383,11 +390,17 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
          *            the script object
          * @param len
          *            the length value
+         * @param locales
+         *            the optional locales array
+         * @param options
+         *            the optional options object
          * @return the locale specific string representation
-         * @see #toLocaleString(ExecutionContext, Object)
-         * @see TypedArrayPrototypePrototype.Properties#toLocaleString(ExecutionContext, Object)
+         * @see #toLocaleString(ExecutionContext, Object, Object, Object)
+         * @see TypedArrayPrototypePrototype.Properties#toLocaleString(ExecutionContext, Object,
+         *      Object, Object)
          */
-        public static String toLocaleString(ExecutionContext cx, ScriptObject array, long len) {
+        public static String toLocaleString(ExecutionContext cx, ScriptObject array, long len,
+                Object locales, Object options) {
             /* steps 1-4 (not applicable) */
             /* step 5 */
             String separator = cx.getRealm().getListSeparator();
@@ -400,14 +413,15 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
             /* steps 9-10 */
             StringBuilder r = new StringBuilder();
             if (!Type.isUndefinedOrNull(firstElement)) {
-                r.append(ToString(cx, Invoke(cx, firstElement, "toLocaleString")));
+                r.append(ToString(cx, Invoke(cx, firstElement, "toLocaleString", locales, options)));
             }
             /* steps 11-12 */
             for (long k = 1; k < len; ++k) {
                 r.append(separator);
                 Object nextElement = Get(cx, array, k);
                 if (!Type.isUndefinedOrNull(nextElement)) {
-                    r.append(ToString(cx, Invoke(cx, nextElement, "toLocaleString")));
+                    r.append(ToString(cx,
+                            Invoke(cx, nextElement, "toLocaleString", locales, options)));
                 }
             }
             /* step 13 */

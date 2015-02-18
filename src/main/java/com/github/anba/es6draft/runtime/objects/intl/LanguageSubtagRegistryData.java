@@ -11,7 +11,7 @@ import java.util.HashMap;
 /**
  * Supplemental data for canonicalization of language tags.
  * <p>
- * Data generated from: language-subtag-registry, 2014-04-10
+ * Data generated from: language-subtag-registry, 2014-12-17
  * 
  * @see <a
  *      href="http://www.iana.org/assignments/language-subtag-registry">language-subtag-registry</a>
