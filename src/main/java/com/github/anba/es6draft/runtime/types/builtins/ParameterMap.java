@@ -71,10 +71,14 @@ final class ParameterMap {
      */
     static ParameterMap create(int len, String[] parameterNames,
             LexicalEnvironment<? extends DeclarativeEnvironmentRecord> env) {
-        boolean hasMapped = false;
         /* step 13 */
         int numberOfParameters = parameterNames.length;
+        // Return early if no named parameters or arguments are present.
+        if (numberOfParameters == 0 || len == 0) {
+            return null;
+        }
         /* step 17 */
+        boolean hasMapped = false;
         ParameterMap map = new ParameterMap(env, len);
         /* steps 18-20 */
         for (int index = numberOfParameters - 1; index >= 0; --index) {

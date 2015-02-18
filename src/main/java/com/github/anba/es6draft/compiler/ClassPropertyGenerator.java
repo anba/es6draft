@@ -37,9 +37,9 @@ final class ClassPropertyGenerator extends DefaultCodeGenerator<Void, Expression
             List<? extends PropertyDefinition> properties,
             Variable<OrdinaryConstructorFunction> function, Variable<OrdinaryObject> proto,
             ExpressionVisitor mv) {
-        ClassPropertyGenerator cdg = new ClassPropertyGenerator(codegen, function, proto);
+        ClassPropertyGenerator classgen = new ClassPropertyGenerator(codegen, function, proto);
         for (PropertyDefinition property : properties) {
-            property.accept(cdg, mv);
+            property.accept(classgen, mv);
         }
     }
 

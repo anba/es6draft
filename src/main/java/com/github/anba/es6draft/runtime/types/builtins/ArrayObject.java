@@ -174,25 +174,16 @@ public final class ArrayObject extends OrdinaryObject {
 
     @Override
     protected List<Object> getOwnPropertyKeys(ExecutionContext cx) {
-        int indexedSize = indexedProperties().size();
-        int propertiesSize = properties().size();
-        int symbolsSize = symbolProperties().size();
-        int totalSize = indexedSize + propertiesSize + symbolsSize + 1; // + 1 for length property
+        int totalSize = countProperties(true) + 1; // + 1 for length property
         /* step 1 */
         ArrayList<Object> ownKeys = new ArrayList<>(totalSize);
         /* step 2 */
-        if (indexedSize != 0) {
-            ownKeys.addAll(indexedProperties().keys());
-        }
+        appendIndexedProperties(ownKeys);
         /* step 3 */
         ownKeys.add("length");
-        if (propertiesSize != 0) {
-            ownKeys.addAll(properties().keySet());
-        }
+        appendProperties(ownKeys);
         /* step 4 */
-        if (symbolsSize != 0) {
-            ownKeys.addAll(symbolProperties().keySet());
-        }
+        appendSymbolProperties(ownKeys);
         /* step 5 */
         return ownKeys;
     }

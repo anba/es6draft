@@ -39,6 +39,15 @@ public final class Messages {
     }
 
     /**
+     * Returns the resource bundle.
+     * 
+     * @return the resource bundle
+     */
+    public ResourceBundle getResourceBundle() {
+        return resourceBundle;
+    }
+
+    /**
      * Returns the localized message for {@code key} from the resource bundle.
      * 
      * @param key
@@ -322,6 +331,10 @@ public final class Messages {
 
         private Key(String id) {
             this.id = id;
+        }
+
+        public String getId() {
+            return id;
         }
     }
 }

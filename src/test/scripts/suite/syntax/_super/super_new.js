@@ -5,8 +5,14 @@
  * <https://github.com/anba/es6draft>
  */
 const {
-  assertThrows, assertSyntaxError
+  assertThrows, assertSyntaxError, assertInstanceOf, fail
 } = Assert;
+
+System.load("lib/promises.jsm");
+const {
+  reportFailure
+} = System.get("lib/promises.jsm");
+
 
 function SuperConstructor() { }
 
@@ -158,3 +164,16 @@ var obj = class {
   }
 };
 `);
+
+// 15.1 Scripts
+assertThrows(SyntaxError, () => evalScript(`
+  new super();
+`));
+
+// 15.2 Modules
+System
+.define("parse-new-super", `
+  new super();
+`)
+.then(() => fail `no SyntaxError`, e => assertInstanceOf(SyntaxError, e))
+.catch(reportFailure);

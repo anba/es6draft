@@ -20,7 +20,8 @@ final class StackImpl extends Stack {
 
     @Override
     protected Type commonType(Type left, Type right) {
-        // Hard coded type relationships to avoid dynamic class loading...
+        // Hard coded type relationships to avoid dynamic class loading.
+        // TODO: Change to a less brittle approach.
         Type commonType = Types.Object;
         if (isCharSequence(left)) {
             if (isCharSequence(right)) {

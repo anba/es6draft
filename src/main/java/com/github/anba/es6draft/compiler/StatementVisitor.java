@@ -281,11 +281,14 @@ abstract class StatementVisitor extends ExpressionVisitor {
     /**
      * Enter an iteration body block.
      * 
+     * @param <FORSTATEMENT>
+     *            the for-statement node type
      * @param node
      *            the iteration statement
      * @return the temporary completion object variable
      */
-    Variable<Object> enterIterationBody(IterationStatement node) {
+    <FORSTATEMENT extends IterationStatement & ForIterationNode> Variable<Object> enterIterationBody(
+            FORSTATEMENT node) {
         Variable<Object> completion = enterAbruptRegion();
         if (node.hasContinue()) {
             // Copy current continue labels from parent to new labelset, so we won't create
@@ -305,11 +308,14 @@ abstract class StatementVisitor extends ExpressionVisitor {
     /**
      * Exit an iteration body block.
      * 
+     * @param <FORSTATEMENT>
+     *            the for-statement node type
      * @param node
      *            the iteration statement
      * @return the list of generated labels
      */
-    List<TempLabel> exitIterationBody(IterationStatement node) {
+    <FORSTATEMENT extends IterationStatement & ForIterationNode> List<TempLabel> exitIterationBody(
+            FORSTATEMENT node) {
         return exitAbruptRegion();
     }
 

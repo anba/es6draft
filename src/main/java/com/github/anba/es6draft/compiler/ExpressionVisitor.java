@@ -18,13 +18,11 @@ import java.util.List;
 import java.util.Set;
 
 import com.github.anba.es6draft.ast.Expression;
-import com.github.anba.es6draft.ast.Node;
 import com.github.anba.es6draft.ast.ScopedNode;
 import com.github.anba.es6draft.ast.scope.Scope;
 import com.github.anba.es6draft.compiler.Labels.ReturnLabel;
 import com.github.anba.es6draft.compiler.Labels.TempLabel;
 import com.github.anba.es6draft.compiler.assembler.Code.MethodCode;
-import com.github.anba.es6draft.compiler.assembler.FieldName;
 import com.github.anba.es6draft.compiler.assembler.Handle;
 import com.github.anba.es6draft.compiler.assembler.Jump;
 import com.github.anba.es6draft.compiler.assembler.MethodName;
@@ -40,13 +38,6 @@ import com.github.anba.es6draft.runtime.internal.ScriptRuntime;
  * 
  */
 abstract class ExpressionVisitor extends InstructionVisitor {
-    private static final class Fields {
-        static final FieldName Null_NULL = FieldName.findStatic(Types.Null, "NULL", Types.Null);
-
-        static final FieldName Undefined_UNDEFINED = FieldName.findStatic(Types.Undefined,
-                "UNDEFINED", Types.Undefined);
-    }
-
     private static final class Methods {
         // class: ResumptionPoint
         static final MethodName ResumptionPoint_create = MethodName
@@ -126,20 +117,6 @@ abstract class ExpressionVisitor extends InstructionVisitor {
         load(executionContext);
     }
 
-    /**
-     * &#x2205; → undefined
-     */
-    final void loadUndefined() {
-        get(Fields.Undefined_UNDEFINED);
-    }
-
-    /**
-     * &#x2205; → null
-     */
-    final void loadNull() {
-        get(Fields.Null_NULL);
-    }
-
     final boolean isStrict() {
         return strict || classDefDepth != 0;
     }
@@ -180,10 +157,6 @@ abstract class ExpressionVisitor extends InstructionVisitor {
 
     void exitScope() {
         scope = scope.getParent();
-    }
-
-    void lineInfo(Node node) {
-        lineInfo(node.getBeginLine());
     }
 
     void enterTailCallPosition(Expression expr) {

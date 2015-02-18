@@ -18,7 +18,7 @@ import com.github.anba.es6draft.ast.scope.BlockScope;
  * <li>Extension: 'for-each' statement
  * </ul>
  */
-public final class ForEachStatement extends IterationStatement implements ScopedNode {
+public final class ForEachStatement extends IterationStatement implements ForIterationNode {
     private final BlockScope scope;
     private final Node head;
     private final Expression expression;
@@ -50,6 +50,7 @@ public final class ForEachStatement extends IterationStatement implements Scoped
      * 
      * @return the head node
      */
+    @Override
     public Node getHead() {
         return head;
     }
@@ -59,6 +60,7 @@ public final class ForEachStatement extends IterationStatement implements Scoped
      * 
      * @return the expression node
      */
+    @Override
     public Expression getExpression() {
         return expression;
     }
@@ -68,6 +70,7 @@ public final class ForEachStatement extends IterationStatement implements Scoped
      * 
      * @return the statement node
      */
+    @Override
     public Statement getStatement() {
         return statement;
     }

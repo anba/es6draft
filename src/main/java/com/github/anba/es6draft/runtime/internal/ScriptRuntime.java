@@ -7,6 +7,7 @@
 package com.github.anba.es6draft.runtime.internal;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.*;
+import static com.github.anba.es6draft.runtime.LexicalEnvironment.newDeclarativeEnvironment;
 import static com.github.anba.es6draft.runtime.internal.Errors.*;
 import static com.github.anba.es6draft.runtime.internal.TailCallInvocation.newTailCallInvocation;
 import static com.github.anba.es6draft.runtime.modules.ModuleSemantics.GetModuleNamespace;
@@ -1608,31 +1609,6 @@ public final class ScriptRuntime {
     }
 
     /**
-     * 12.14.2 Runtime Semantics<br>
-     * Runtime Semantics: Evaluation
-     * <p>
-     * 13.2.1.2 Runtime Semantics<br>
-     * Runtime Semantics: Evaluation
-     * <p>
-     * 13.2.2.2 Runtime Semantics<br>
-     * Runtime Semantics: Evaluation
-     * 
-     * @param val
-     *            the value
-     * @param cx
-     *            the execution context
-     * @return <var>val</var> if it is a script object
-     * @throws ScriptException
-     *             if <var>val</var> is not a script object
-     */
-    public static ScriptObject ensureObject(Object val, ExecutionContext cx) throws ScriptException {
-        if (!Type.isObject(val)) {
-            throw newTypeError(cx, Messages.Key.NotObjectType);
-        }
-        return Type.objectValue(val);
-    }
-
-    /**
      * 12.14.5.3 Runtime Semantics: IteratorDestructuringAssignmentEvaluation
      * <p>
      * 13.2.3.5 Runtime Semantics: IteratorBindingInitialization
@@ -1881,8 +1857,7 @@ public final class ScriptRuntime {
             /* step 2 */
             LexicalEnvironment<?> runningContext = cx.getLexicalEnvironment();
             /* step 3 */
-            LexicalEnvironment<DeclarativeEnvironmentRecord> funcEnv = LexicalEnvironment
-                    .newDeclarativeEnvironment(runningContext);
+            LexicalEnvironment<DeclarativeEnvironmentRecord> funcEnv = newDeclarativeEnvironment(runningContext);
             /* step 4 */
             DeclarativeEnvironmentRecord envRec = funcEnv.getEnvRec();
             /* step 5 */
@@ -2512,8 +2487,7 @@ public final class ScriptRuntime {
             /* step 2 */
             LexicalEnvironment<?> runningContext = cx.getLexicalEnvironment();
             /* step 3 */
-            LexicalEnvironment<DeclarativeEnvironmentRecord> funcEnv = LexicalEnvironment
-                    .newDeclarativeEnvironment(runningContext);
+            LexicalEnvironment<DeclarativeEnvironmentRecord> funcEnv = newDeclarativeEnvironment(runningContext);
             /* step 4 */
             DeclarativeEnvironmentRecord envRec = funcEnv.getEnvRec();
             /* step 5 */
@@ -2576,8 +2550,7 @@ public final class ScriptRuntime {
             /* step 2 */
             LexicalEnvironment<?> runningContext = cx.getLexicalEnvironment();
             /* step 2 */
-            LexicalEnvironment<DeclarativeEnvironmentRecord> funcEnv = LexicalEnvironment
-                    .newDeclarativeEnvironment(runningContext);
+            LexicalEnvironment<DeclarativeEnvironmentRecord> funcEnv = newDeclarativeEnvironment(runningContext);
             /* step 4 */
             DeclarativeEnvironmentRecord envRec = funcEnv.getEnvRec();
             /* step 5 */
@@ -3106,8 +3079,7 @@ public final class ScriptRuntime {
             /* step 2 */
             LexicalEnvironment<?> runningContext = cx.getLexicalEnvironment();
             /* step 3 */
-            LexicalEnvironment<DeclarativeEnvironmentRecord> funcEnv = LexicalEnvironment
-                    .newDeclarativeEnvironment(runningContext);
+            LexicalEnvironment<DeclarativeEnvironmentRecord> funcEnv = newDeclarativeEnvironment(runningContext);
             /* step 4 */
             DeclarativeEnvironmentRecord envRec = funcEnv.getEnvRec();
             /* step 5 */
@@ -3316,20 +3288,19 @@ public final class ScriptRuntime {
      * @param cx
      *            the execution context
      */
-    @SuppressWarnings("unchecked")
     public static void setFunctionBlockBinding(String name, ExecutionContext cx) {
-        assert cx.getVariableEnvironment().getEnvRec() instanceof DeclarativeEnvironmentRecord;
-        assert cx.getLexicalEnvironment().getEnvRec() instanceof DeclarativeEnvironmentRecord;
+        assert cx.getVariableEnvironmentRecord() instanceof DeclarativeEnvironmentRecord;
+        assert cx.getLexicalEnvironmentRecord() instanceof DeclarativeEnvironmentRecord;
         /* step 2.b.1 */
-        LexicalEnvironment<DeclarativeEnvironmentRecord> fenv = (LexicalEnvironment<DeclarativeEnvironmentRecord>) cx
-                .getVariableEnvironment();
+        DeclarativeEnvironmentRecord fenv = (DeclarativeEnvironmentRecord) cx
+                .getVariableEnvironmentRecord();
         /* step 2.b.2 */
-        LexicalEnvironment<DeclarativeEnvironmentRecord> benv = (LexicalEnvironment<DeclarativeEnvironmentRecord>) cx
-                .getLexicalEnvironment();
+        DeclarativeEnvironmentRecord benv = (DeclarativeEnvironmentRecord) cx
+                .getLexicalEnvironmentRecord();
         /* step 2.b.3-2.b.4 */
-        Object fobj = benv.getEnvRec().getBindingValue(name, false);
+        Object fobj = benv.getBindingValue(name, false);
         /* step 2.b.5-2.b.6 */
-        fenv.getEnvRec().setMutableBinding(name, fobj, false);
+        fenv.setMutableBinding(name, fobj, false);
         /* step 2.b.7 (return) */
     }
 }

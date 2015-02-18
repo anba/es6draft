@@ -12,6 +12,14 @@ package com.github.anba.es6draft.ast;
 abstract class AstNode implements Node {
     private final long beginPosition, endPosition;
 
+    /**
+     * Constructs a new ast node.
+     * 
+     * @param beginPosition
+     *            the begin source position
+     * @param endPosition
+     *            the end source position
+     */
     protected AstNode(long beginPosition, long endPosition) {
         this.beginPosition = beginPosition;
         this.endPosition = endPosition;

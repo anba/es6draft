@@ -11,6 +11,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
@@ -39,7 +40,7 @@ public class FileModuleLoader implements ModuleLoader {
             this(Paths.get("").toAbsolutePath().toUri().relativize(path.toUri()).toString());
         }
 
-        public Path getPath() {
+        public Path getPath() throws InvalidPathException {
             return Paths.get(file);
         }
 

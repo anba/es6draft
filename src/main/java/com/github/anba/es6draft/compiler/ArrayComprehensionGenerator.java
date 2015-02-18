@@ -18,7 +18,7 @@ import com.github.anba.es6draft.compiler.assembler.Variable;
  * <h1>12 ECMAScript Language: Expressions</h1><br>
  * <h2>12.2 Primary Expression</h2>
  * <ul>
- * <li>12.2.4.2 Array Comprehension
+ * <li>Array Comprehension
  * </ul>
  */
 final class ArrayComprehensionGenerator extends ComprehensionGenerator {
@@ -36,15 +36,14 @@ final class ArrayComprehensionGenerator extends ComprehensionGenerator {
                 Type.methodType(Type.BOOLEAN_TYPE, Types.Object));
     }
 
-    @SuppressWarnings("rawtypes")
-    private Variable<ArrayList> result;
+    private Variable<ArrayList<?>> result;
 
     private ArrayComprehensionGenerator(CodeGenerator codegen) {
         super(codegen);
     }
 
     /**
-     * 12.2.4.2.5 Runtime Semantics: Evaluation
+     * Runtime Semantics: Evaluation
      */
     static ValType EvaluateArrayComprehension(CodeGenerator codegen, ArrayComprehension node,
             ExpressionVisitor mv) {
@@ -52,7 +51,7 @@ final class ArrayComprehensionGenerator extends ComprehensionGenerator {
 
         /* step 1 */
         mv.enterVariableScope();
-        generator.result = mv.newVariable("result", ArrayList.class);
+        generator.result = mv.newVariable("result", ArrayList.class).uncheckedCast();
         mv.anew(Types.ArrayList, Methods.ArrayList_init);
         mv.store(generator.result);
 
@@ -69,7 +68,7 @@ final class ArrayComprehensionGenerator extends ComprehensionGenerator {
     }
 
     /**
-     * 12.2.4.2.3 Runtime Semantics: ComprehensionEvaluation
+     * Runtime Semantics: ComprehensionEvaluation
      * <p>
      * ComprehensionTail : AssignmentExpression
      */

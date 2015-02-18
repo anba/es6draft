@@ -52,7 +52,6 @@ import com.google.doubleconversion.DoubleConversion;
  * <li>7.2 Testing and Comparison Operations
  * <li>7.3 Operations on Objects
  * <li>7.4 Operations on Iterator Objects
- * <li>7.5 Operations on Promise Objects
  * </ul>
  */
 public final class AbstractOperations {
@@ -735,13 +734,17 @@ public final class AbstractOperations {
      * @return the canonical number or -1 if not canonical
      */
     public static long CanonicalNumericIndexString(String value) {
+        // Shortcut if value does not start with a valid canonical numeric index character
+        if (value.isEmpty() || !isCanonicalNumericIndexStringPrefix(value.charAt(0))) {
+            return -1;
+        }
         /* step 1 (not applicable) */
         /* step 2 */
         if ("-0".equals(value)) {
             return Long.MAX_VALUE;
         }
         /* step 3 */
-        double n = ToNumber(value);
+        double n = ToNumberParser.readDecimalLiteral(value);
         // FIXME: spec issue (bug 3272)
         /* step 4 */
         if (!value.equals(ToString(n))) {
@@ -753,6 +756,10 @@ public final class AbstractOperations {
         }
         /* step 5 */
         return (long) n;
+    }
+
+    private static boolean isCanonicalNumericIndexStringPrefix(char c) {
+        return ('0' <= c && c <= '9') || c == '-' || c == 'I' || c == 'N';
     }
 
     public enum CanonicalNumericString {
@@ -768,13 +775,17 @@ public final class AbstractOperations {
      */
     public static CanonicalNumericString CanonicalNumericIndexStringType(String value) {
         // TODO: Remove after bug 3619 is fixed
+        // Shortcut if value does not start with a valid canonical numeric index character
+        if (value.isEmpty() || !isCanonicalNumericIndexStringPrefix(value.charAt(0))) {
+            return CanonicalNumericString.None;
+        }
         /* step 1 (not applicable) */
         /* step 2 */
         if ("-0".equals(value)) {
             return CanonicalNumericString.NegativeZero;
         }
         /* step 3 */
-        double n = ToNumber(value);
+        double n = ToNumberParser.readDecimalLiteral(value);
         // FIXME: spec issue (bug 3272)
         /* step 4 */
         if (!value.equals(ToString(n))) {
@@ -3099,6 +3110,7 @@ public final class AbstractOperations {
         }
 
         static double readDecimalLiteral(String s) {
+            assert !s.isEmpty();
             final int Infinity_length = "Infinity".length();
 
             outOfBounds: invalidChar: {

@@ -44,6 +44,11 @@ public final class MethodName {
         this.descriptor = descriptor;
     }
 
+    /**
+     * Returns a {@link Handle} object for this method.
+     * 
+     * @return a handle for this method
+     */
     public Handle toHandle() {
         return new Handle(this);
     }

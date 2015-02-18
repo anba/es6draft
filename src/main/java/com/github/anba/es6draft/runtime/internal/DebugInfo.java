@@ -6,20 +6,11 @@
  */
 package com.github.anba.es6draft.runtime.internal;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.objectweb.asm.ClassReader;
-import org.objectweb.asm.ClassVisitor;
-import org.objectweb.asm.MethodVisitor;
-import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.util.Printer;
-import org.objectweb.asm.util.TraceMethodVisitor;
-
-import com.github.anba.es6draft.compiler.assembler.SimpleTypeTextifier;
+import com.github.anba.es6draft.compiler.assembler.Code;
 
 /**
  *
@@ -77,37 +68,7 @@ public final class DebugInfo {
             } catch (ReflectiveOperationException e) {
                 throw new RuntimeException(e);
             }
-
-            Printer p = new SimpleTypeTextifier();
-            ClassReader cr = new ClassReader(bytes);
-            cr.accept(new FilterMethodVisitor(p, getName()), ClassReader.EXPAND_FRAMES);
-
-            StringWriter sw = new StringWriter();
-            PrintWriter pw = new PrintWriter(sw);
-            p.print(pw);
-            pw.flush();
-            return sw.toString();
-        }
-
-        private static final class FilterMethodVisitor extends ClassVisitor {
-            private final Printer printer;
-            private final String methodName;
-
-            public FilterMethodVisitor(Printer p, String methodName) {
-                super(Opcodes.ASM5);
-                this.printer = p;
-                this.methodName = methodName;
-            }
-
-            @Override
-            public MethodVisitor visitMethod(int access, String name, String desc,
-                    String signature, String[] exceptions) {
-                if (methodName.equals(name)) {
-                    Printer p = printer.visitMethod(access, name, desc, signature, exceptions);
-                    return new TraceMethodVisitor(null, p);
-                }
-                return null;
-            }
+            return Code.methodToByteCode(bytes, getName());
         }
     }
 

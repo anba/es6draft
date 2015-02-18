@@ -8,7 +8,6 @@ package com.github.anba.es6draft.compiler;
 
 import com.github.anba.es6draft.ast.BindingIdentifier;
 import com.github.anba.es6draft.ast.IdentifierReference;
-import com.github.anba.es6draft.ast.scope.Name;
 import com.github.anba.es6draft.compiler.DefaultCodeGenerator.ValType;
 import com.github.anba.es6draft.compiler.assembler.MethodName;
 import com.github.anba.es6draft.compiler.assembler.Type;
@@ -18,12 +17,10 @@ import com.github.anba.es6draft.compiler.assembler.Type;
  */
 final class IdentifierResolution {
     private static final class Methods {
-        // identifierResolution()
         static final MethodName ExecutionContext_resolveBinding = MethodName.findVirtual(
                 Types.ExecutionContext, "resolveBinding",
                 Type.methodType(Types.Reference, Types.String, Type.BOOLEAN_TYPE));
 
-        // identifierValue()
         static final MethodName ExecutionContext_resolveBindingValue = MethodName.findVirtual(
                 Types.ExecutionContext, "resolveBindingValue",
                 Type.methodType(Types.Object, Types.String, Type.BOOLEAN_TYPE));
@@ -36,10 +33,6 @@ final class IdentifierResolution {
 
     ValType resolve(BindingIdentifier node, ExpressionVisitor mv) {
         return resolve(node.getName().getIdentifier(), mv);
-    }
-
-    ValType resolve(Name name, ExpressionVisitor mv) {
-        return resolve(name.getIdentifier(), mv);
     }
 
     ValType resolveValue(IdentifierReference node, ExpressionVisitor mv) {

@@ -16,7 +16,7 @@ import com.github.anba.es6draft.ast.HoistableDeclaration;
 import com.github.anba.es6draft.ast.SwitchStatement;
 import com.github.anba.es6draft.ast.scope.Name;
 import com.github.anba.es6draft.compiler.assembler.Variable;
-import com.github.anba.es6draft.runtime.EnvironmentRecord;
+import com.github.anba.es6draft.runtime.DeclarativeEnvironmentRecord;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 
 /**
@@ -111,17 +111,14 @@ final class BlockDeclarationInstantiationGenerator extends DeclarationBindingIns
      */
     private void generateInline(List<Declaration> declarations, ExpressionVisitor mv) {
         mv.enterVariableScope();
-        Variable<EnvironmentRecord> envRec = mv.newVariable("envRec", EnvironmentRecord.class);
-        Variable<LexicalEnvironment<?>> env = mv.newVariable("env", LexicalEnvironment.class)
-                .uncheckedCast();
+        Variable<LexicalEnvironment<DeclarativeEnvironmentRecord>> env = mv.newVariable("env",
+                LexicalEnvironment.class).uncheckedCast();
+        Variable<DeclarativeEnvironmentRecord> envRec = mv.newVariable("envRec",
+                DeclarativeEnvironmentRecord.class);
 
-        // stack: [env] -> [env, envRec]
-        mv.dup();
-        getEnvironmentRecord(mv);
-
-        // stack: [env, envRec] -> []
-        mv.store(envRec);
+        // stack: [env] -> []
         mv.store(env);
+        storeEnvironmentRecord(envRec, env, mv);
 
         /* steps 1-3 */
         for (Declaration d : declarations) {

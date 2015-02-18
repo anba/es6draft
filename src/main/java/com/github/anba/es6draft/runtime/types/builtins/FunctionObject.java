@@ -24,6 +24,7 @@ import com.github.anba.es6draft.runtime.internal.TailCallInvocation;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Property;
+import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 
 /**
@@ -60,8 +61,8 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
     private MethodHandle constructMethod;
     private MethodHandle tailConstructMethod;
 
-    private Property caller = new Property(NULL, false, false, false);
-    private Property arguments = new Property(NULL, false, false, false);
+    private Property caller = new Property(NULL, true, false, false);
+    private Property arguments = new Property(NULL, true, false, false);
 
     /**
      * Constructs a new Function object.
@@ -164,9 +165,9 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
      */
     public final void setLegacyCaller(FunctionObject caller) {
         if (caller == null || caller.isStrict()) {
-            this.caller.setValue(NULL);
+            setPropertyValueIfWritable(this.caller, NULL);
         } else {
-            this.caller.setValue(caller);
+            setPropertyValueIfWritable(this.caller, caller);
         }
     }
 
@@ -177,7 +178,7 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
      *            the new arguments value
      */
     public final void setLegacyArguments(LegacyArgumentsObject arguments) {
-        this.arguments.setValue(arguments);
+        setPropertyValueIfWritable(this.arguments, arguments);
     }
 
     /**
@@ -189,8 +190,14 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
      *            the old arguments value
      */
     public final void restoreLegacyProperties(Object oldCaller, Object oldArguments) {
-        this.caller.setValue(oldCaller);
-        this.arguments.setValue(oldArguments);
+        setPropertyValueIfWritable(this.caller, oldCaller);
+        setPropertyValueIfWritable(this.arguments, oldArguments);
+    }
+
+    private void setPropertyValueIfWritable(Property property, Object value) {
+        if (property.isWritable()) {
+            property.setValue(value);
+        }
     }
 
     @Override
@@ -240,27 +247,57 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
     }
 
     @Override
-    protected final List<Object> getOwnPropertyKeys(ExecutionContext cx) {
-        int indexedSize = indexedProperties().size();
-        int propertiesSize = properties().size();
-        int symbolsSize = symbolProperties().size();
-        boolean isLegacy = isLegacy();
-        int totalSize = indexedSize + propertiesSize + symbolsSize + (isLegacy ? 2 : 0);
-        ArrayList<Object> ownKeys = new ArrayList<>(totalSize);
-        if (indexedSize != 0) {
-            ownKeys.addAll(indexedProperties().keys());
+    protected boolean defineProperty(ExecutionContext cx, String propertyKey,
+            PropertyDescriptor desc) {
+        if (isLegacy()) {
+            if ("arguments".equals(propertyKey)) {
+                return defineLegacyProperty(arguments, desc);
+            }
+            if ("caller".equals(propertyKey)) {
+                return defineLegacyProperty(caller, desc);
+            }
         }
+        return super.defineProperty(cx, propertyKey, desc);
+    }
+
+    private boolean defineLegacyProperty(Property property, PropertyDescriptor desc) {
+        // If the property descriptor is compatible and the [[Writable]] field is present, assume
+        // this call to [[DefineOwnProperty]] is meant to freeze the property value. Also reset the
+        // property value by setting its value to `null`, so we won't leak previous .arguments or
+        // .caller objects.
+        boolean compatible = IsCompatiblePropertyDescriptor(isExtensible(), desc, property);
+        if (compatible && desc.hasWritable() && !desc.isWritable()) {
+            property.apply(new PropertyDescriptor(NULL, false, false, false));
+        }
+        return compatible;
+    }
+
+    @Override
+    protected boolean setPropertyValue(ExecutionContext cx, String propertyKey, Object value,
+            Property current) {
+        if (isLegacy()) {
+            // Disallow direct [[Set]] on .arguments and .caller, but still return `true` so the
+            // result value is consistent with [[DefineOwnProperty]].
+            if ("arguments".equals(propertyKey) || "caller".equals(propertyKey)) {
+                return true;
+            }
+        }
+        return super.setPropertyValue(cx, propertyKey, value, current);
+    }
+
+    @Override
+    protected final List<Object> getOwnPropertyKeys(ExecutionContext cx) {
+        boolean isLegacy = isLegacy();
+        int totalSize = countProperties(true) + (isLegacy ? 2 : 0);
+        ArrayList<Object> ownKeys = new ArrayList<>(totalSize);
+        appendIndexedProperties(ownKeys);
         if (isLegacy) {
             // TODO: add test case for property order
             ownKeys.add("arguments");
             ownKeys.add("caller");
         }
-        if (propertiesSize != 0) {
-            ownKeys.addAll(properties().keySet());
-        }
-        if (symbolsSize != 0) {
-            ownKeys.addAll(symbolProperties().keySet());
-        }
+        appendProperties(ownKeys);
+        appendSymbolProperties(ownKeys);
         return ownKeys;
     }
 

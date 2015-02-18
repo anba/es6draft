@@ -148,6 +148,8 @@ ecma/Date/15.9.5.js
 # RegExp.prototype
 ecma_5/RegExp/instance-property-storage-introspection.js
 ecma_6/RegExp/flags.js
+ecma_6/RegExp/flag-accessors.js
+ecma_6/RegExp/source.js
 
 
 ###################

@@ -250,7 +250,6 @@ harmony/regress/regress-405844.js
 
 # Inline module syntax
 harmony/module-linking.js
-harmony/module-parsing.js
 harmony/module-recompile.js
 harmony/module-resolution.js
 
@@ -421,7 +420,6 @@ mul-exhaustive-part10.js
 regexp-capture-3.js
 regress/regress-1200351.js
 regress/regress-581.js
-regress/regress-634.js
 regress/regress-685.js
 regress/regress-deep-proto.js
 regress/regress-splice-large-index.js

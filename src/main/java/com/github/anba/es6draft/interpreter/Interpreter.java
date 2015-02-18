@@ -55,15 +55,17 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
         return new InterpretedScript(parsedScript);
     }
 
-    private boolean strict;
-    private boolean globalCode;
-    private boolean globalScope;
-    private boolean enclosedByWithStatement;
+    private final boolean strict;
+    private final boolean globalCode;
+    private final boolean globalScope;
+    private final boolean globalThis;
+    private final boolean enclosedByWithStatement;
 
     public Interpreter(Script parsedScript) {
         this.strict = parsedScript.isStrict();
         this.globalCode = parsedScript.isGlobalCode();
         this.globalScope = parsedScript.isGlobalScope();
+        this.globalThis = parsedScript.isGlobalThis();
         this.enclosedByWithStatement = parsedScript.isEnclosedByWithStatement();
     }
 
@@ -904,6 +906,9 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
             }
             if (globalScope) {
                 evalFlags |= EvalFlags.GlobalScope.getValue();
+            }
+            if (globalThis) {
+                evalFlags |= EvalFlags.GlobalThis.getValue();
             }
             if (enclosedByWithStatement) {
                 evalFlags |= EvalFlags.EnclosedByWithStatement.getValue();

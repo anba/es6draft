@@ -676,6 +676,11 @@ public final class Parser {
         FunctionCode,
 
         /**
+         * Source code does not receive global object as this-binding.
+         */
+        FunctionThis,
+
+        /**
          * Source code is not in global scope.
          */
         LocalScope,
@@ -721,6 +726,7 @@ public final class Parser {
 
         // eval-script option must be set if one of the following options is used
         assert !(parserOptions.contains(Option.FunctionCode)
+                || parserOptions.contains(Option.FunctionThis)
                 || parserOptions.contains(Option.LocalScope)
                 || parserOptions.contains(Option.DirectEval)
                 || parserOptions.contains(Option.EnclosedByWithStatement) || parserOptions
@@ -7304,7 +7310,7 @@ public final class Parser {
         ParseContext superContext = context.findSuperContext();
         // 15.1.1 Static Semantics: Early Errors
         // 15.2.1.1 Static Semantics: Early Errors
-        if ((superContext.kind == ContextKind.Script && !isEnabled(Option.FunctionCode))
+        if ((superContext.kind == ContextKind.Script && !isEnabled(Option.FunctionThis))
                 || superContext.kind == ContextKind.Module) {
             reportSyntaxError(Messages.Key.InvalidSuperExpression);
         }
@@ -7319,7 +7325,7 @@ public final class Parser {
         // 14.5.1 Static Semantics: Early Errors
         // 15.1.1 Static Semantics: Early Errors
         // 15.2.1.1 Static Semantics: Early Errors
-        if ((superContext.kind == ContextKind.Script && !isEnabled(Option.FunctionCode))
+        if ((superContext.kind == ContextKind.Script && !isEnabled(Option.FunctionThis))
                 || superContext.kind == ContextKind.Module
                 || superContext.kind == ContextKind.Function
                 || superContext.kind == ContextKind.Generator
@@ -7336,7 +7342,7 @@ public final class Parser {
         // 14.5.1 Static Semantics: Early Errors
         // 15.1.1 Static Semantics: Early Errors
         // 15.2.1.1 Static Semantics: Early Errors
-        if ((superContext.kind == ContextKind.Script && !isEnabled(Option.FunctionCode))
+        if ((superContext.kind == ContextKind.Script && !isEnabled(Option.FunctionThis))
                 || superContext.kind == ContextKind.Module
                 || superContext.kind == ContextKind.Generator
                 || superContext.kind == ContextKind.AsyncFunction
@@ -7349,11 +7355,11 @@ public final class Parser {
         ParseContext superContext = context.findSuperContext();
         // 15.1.1 Static Semantics: Early Errors
         // 15.2.1.1 Static Semantics: Early Errors
-        if ((superContext.kind == ContextKind.Script && !isEnabled(Option.FunctionCode))
+        if ((superContext.kind == ContextKind.Script && !isEnabled(Option.FunctionThis))
                 || superContext.kind == ContextKind.Module) {
             reportSyntaxError(Messages.Key.InvalidNewTarget);
         }
-        // FIXME: spec bug - add early error for `new.target` outside of constructor functions?
+        // FIXME: spec bug? - add early error for `new.target` outside of constructor functions?
     }
 
     /**

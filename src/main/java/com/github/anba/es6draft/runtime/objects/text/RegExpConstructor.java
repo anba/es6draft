@@ -246,11 +246,18 @@ public final class RegExpConstructor extends BuiltinConstructor implements Initi
             }
             return "(?:)";
         }
+        boolean inClass = false;
         StringBuilder sb = new StringBuilder(p.length());
         for (int i = 0, len = p.length(); i < len; ++i) {
             char c = p.charAt(i);
-            if (c == '/') {
+            if (c == '/' && !inClass) {
                 sb.append("\\/");
+            } else if (c == '[') {
+                inClass = true;
+                sb.append(c);
+            } else if (c == ']' && inClass) {
+                inClass = false;
+                sb.append(c);
             } else if (c == '\\') {
                 assert i + 1 < len;
                 switch (c = p.charAt(++i)) {

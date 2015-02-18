@@ -112,6 +112,10 @@ public class InstructionAssembler {
         @Override
         public void visitEnd() {
             super.visitEnd();
+            trace();
+        }
+
+        public void trace() {
             PrintWriter printWriter = new PrintWriter(System.out);
             printWriter.format("%nClass=%s, Method=%s [%s]%n", method.classCode.className,
                     method.methodName, method.methodDescriptor);
@@ -192,6 +196,15 @@ public class InstructionAssembler {
             mv = new $TraceMethodVisitor(method, mv);
         }
         return mv;
+    }
+
+    /**
+     * Print current bytecode.
+     */
+    public void trace() {
+        if (methodVisitor instanceof $TraceMethodVisitor) {
+            (($TraceMethodVisitor) methodVisitor).trace();
+        }
     }
 
     /* */
@@ -339,6 +352,12 @@ public class InstructionAssembler {
         variables.freeVariable(variable);
     }
 
+    /* annotations */
+
+    public void annotation(Type type, boolean visible) {
+        methodVisitor.visitAnnotation(type.descriptor(), visible);
+    }
+
     /* stack operations */
 
     public final boolean hasStack() {
@@ -373,8 +392,8 @@ public class InstructionAssembler {
     /* */
 
     public void mark(TryCatchLabel label) {
-        // no stack or resolve!
         methodVisitor.visitLabel(label.label());
+        // NB: Stack object does not need to be updated.
     }
 
     public void mark(Jump jump) {

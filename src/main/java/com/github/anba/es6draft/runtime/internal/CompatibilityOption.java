@@ -244,7 +244,7 @@ public enum CompatibilityOption {
      * @return the options set for mozilla-compatibility
      */
     public static final Set<CompatibilityOption> MozCompatibility() {
-        return addAll(WebCompatibility(), EnumSet.range(ForEachStatement, RegExpEmptySource),
+        return addAll(WebCompatibility(), EnumSet.range(ForEachStatement, ProxyProtoSkipEnumerate),
                 EnumSet.of(Comprehension));
     }
 

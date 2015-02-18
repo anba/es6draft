@@ -53,8 +53,8 @@ public class MozShellGlobalObject extends ShellGlobalObject {
     }
 
     @Override
-    protected void initializeExtensions(ExecutionContext cx) {
-        super.initializeExtensions(cx);
+    protected void initializeExtensions() {
+        super.initializeExtensions();
         install(this, MozShellGlobalObject.class);
     }
 
@@ -93,7 +93,7 @@ public class MozShellGlobalObject extends ShellGlobalObject {
             Script script = getScriptLoader().script(source, sourceCode);
             return Scripts.ScriptEvaluation(script, realm);
         } catch (ParserException | CompilationException e) {
-            // create a script exception from the requested code realm, not from the caller's realm!
+            // Create a script exception from the requested code realm, not from the caller's realm!
             throw e.toScriptException(realm.defaultContext());
         }
     }

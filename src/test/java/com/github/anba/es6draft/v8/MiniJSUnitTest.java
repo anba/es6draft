@@ -58,9 +58,9 @@ public final class MiniJSUnitTest {
     private static final Configuration configuration = loadConfiguration(MiniJSUnitTest.class);
 
     @Parameters(name = "{0}")
-    public static List<TestInfo> suiteValues() throws IOException {
+    public static List<V8TestInfo> suiteValues() throws IOException {
         return loadTests(configuration,
-                new Function<Path, BiFunction<Path, Iterator<String>, TestInfo>>() {
+                new Function<Path, BiFunction<Path, Iterator<String>, V8TestInfo>>() {
                     @Override
                     public TestInfos apply(Path basedir) {
                         return new TestInfos(basedir);
@@ -98,7 +98,20 @@ public final class MiniJSUnitTest {
     public ScriptExceptionHandler exceptionHandler = new ScriptExceptionHandler();
 
     @Parameter(0)
-    public TestInfo test;
+    public V8TestInfo test;
+
+    private static final class V8TestInfo extends TestInfo {
+        private boolean module = false;
+
+        public V8TestInfo(Path basedir, Path file) {
+            super(basedir, file);
+        }
+
+        @Override
+        public boolean isModule() {
+            return module;
+        }
+    }
 
     private V8TestGlobalObject global;
 
@@ -120,14 +133,17 @@ public final class MiniJSUnitTest {
 
     @Test
     public void runTest() throws Throwable {
-        // Evaluate actual test-script
-        global.eval(test.getScript(), test.toFile());
+        if (test.isModule()) {
+            global.eval(test.toModuleName(), null);
+        } else {
+            global.eval(test.getScript(), test.toFile());
+        }
 
         // Wait for pending tasks to finish
         global.getRealm().getWorld().runEventLoop();
     }
 
-    private static final class TestInfos implements BiFunction<Path, Iterator<String>, TestInfo> {
+    private static final class TestInfos implements BiFunction<Path, Iterator<String>, V8TestInfo> {
         private static final Pattern FlagsPattern = Pattern.compile("\\s*//\\s*Flags:\\s*(.*)\\s*");
         private final Path basedir;
 
@@ -136,8 +152,8 @@ public final class MiniJSUnitTest {
         }
 
         @Override
-        public TestInfo apply(Path file, Iterator<String> lines) {
-            TestInfo test = new TestInfo(basedir, file);
+        public V8TestInfo apply(Path file, Iterator<String> lines) {
+            V8TestInfo test = new V8TestInfo(basedir, file);
             Pattern p = FlagsPattern;
             while (lines.hasNext()) {
                 String line = lines.next();
@@ -161,13 +177,13 @@ public final class MiniJSUnitTest {
                             }
                             test.setEnabled(false);
                         } else if (flag.equals("--expose-externalize-string")) {
-                            // don't run tests with natives or lazy compilation
+                            // don't run tests with externalize-string
                             test.setEnabled(false);
                         } else if (flag.equals("--allow-natives-syntax")) {
-                            // don't run tests with natives or lazy compilation
+                            // don't run tests with native syntax
                             test.setEnabled(false);
                         } else if (flag.equals("--lazy")) {
-                            // don't run tests with natives or lazy compilation
+                            // don't run tests with lazy compilation
                             test.setEnabled(false);
                         } else if (flag.equals("--expose-trigger-failure")) {
                             // don't run tests with trigger-failure
@@ -176,6 +192,8 @@ public final class MiniJSUnitTest {
                             // ignore other flags
                         }
                     }
+                } else if (line.equals("// MODULE")) {
+                    test.module = true;
                 }
             }
             return test;

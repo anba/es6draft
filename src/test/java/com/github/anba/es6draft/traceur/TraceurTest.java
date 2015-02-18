@@ -6,8 +6,6 @@
  */
 package com.github.anba.es6draft.traceur;
 
-import static com.github.anba.es6draft.runtime.modules.ModuleSemantics.ModuleEvaluationJob;
-import static com.github.anba.es6draft.runtime.modules.ModuleSemantics.NormalizeModuleName;
 import static com.github.anba.es6draft.traceur.TraceurTestGlobalObject.newGlobalObjectAllocator;
 import static com.github.anba.es6draft.util.Resources.loadConfiguration;
 import static com.github.anba.es6draft.util.Resources.loadTests;
@@ -17,6 +15,7 @@ import static org.junit.Assume.assumeTrue;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.EnumSet;
 import java.util.Iterator;
@@ -41,14 +40,12 @@ import org.junit.runners.Parameterized.Parameters;
 import org.junit.runners.Parameterized.UseParametersRunnerFactory;
 
 import com.github.anba.es6draft.repl.console.ShellConsole;
-import com.github.anba.es6draft.runtime.ExecutionContext;
-import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.extensions.timer.Timers;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.Properties;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
-import com.github.anba.es6draft.runtime.modules.SourceIdentifier;
+import com.github.anba.es6draft.runtime.modules.ResolutionException;
 import com.github.anba.es6draft.util.Functional.BiFunction;
 import com.github.anba.es6draft.util.Functional.Function;
 import com.github.anba.es6draft.util.Parallelized;
@@ -98,8 +95,8 @@ public final class TraceurTest {
         }
 
         @Override
-        protected TraceurFileModuleLoader createModuleLoader(Path baseDirectory) {
-            return new TraceurFileModuleLoader(baseDirectory);
+        protected TraceurFileModuleLoader createModuleLoader() {
+            return new TraceurFileModuleLoader(getBaseDirectory());
         }
     };
 
@@ -155,8 +152,15 @@ public final class TraceurTest {
             timers = global.install(new Timers(), Timers.class);
         }
         if (test.negative) {
-            expected.expect(Matchers.either(StandardErrorHandler.defaultMatcher()).or(
-                    ScriptExceptionHandler.defaultMatcher()));
+            if (test.isModule()) {
+                expected.expect(Matchers.either(StandardErrorHandler.defaultMatcher())
+                        .or(ScriptExceptionHandler.defaultMatcher())
+                        .or(Matchers.instanceOf(ResolutionException.class))
+                        .or(Matchers.instanceOf(NoSuchFileException.class)));
+            } else {
+                expected.expect(Matchers.either(StandardErrorHandler.defaultMatcher()).or(
+                        ScriptExceptionHandler.defaultMatcher()));
+            }
         } else {
             errorHandler.match(StandardErrorHandler.defaultMatcher());
             exceptionHandler.match(ScriptExceptionHandler.defaultMatcher());
@@ -174,11 +178,7 @@ public final class TraceurTest {
     public void runTest() throws Throwable {
         // evaluate actual test-script
         if (test.isModule()) {
-            Realm realm = global.getRealm();
-            ExecutionContext cx = realm.defaultContext();
-            SourceIdentifier normalizedModuleName = NormalizeModuleName(cx, realm,
-                    test.toModuleName(), null);
-            ModuleEvaluationJob(cx, realm, normalizedModuleName);
+            global.eval(test.toModuleName(), null);
         } else {
             global.eval(test.getScript(), test.toFile());
         }

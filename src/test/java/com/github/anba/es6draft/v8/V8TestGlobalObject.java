@@ -8,7 +8,6 @@ package com.github.anba.es6draft.v8;
 
 import com.github.anba.es6draft.repl.console.ShellConsole;
 import com.github.anba.es6draft.repl.global.V8ShellGlobalObject;
-import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
@@ -24,8 +23,8 @@ final class V8TestGlobalObject extends V8ShellGlobalObject {
     }
 
     @Override
-    protected void initializeExtensions(ExecutionContext cx) {
-        super.initializeExtensions(cx);
+    protected void initializeExtensions() {
+        super.initializeExtensions();
         install(new TestingFunctions(), TestingFunctions.class);
     }
 

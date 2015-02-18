@@ -8,7 +8,6 @@ package com.github.anba.es6draft.scripting;
 
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 
-import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
@@ -24,9 +23,11 @@ public final class ScriptingGlobalObject extends GlobalObject {
     }
 
     @Override
-    protected void initializeExtensions(ExecutionContext cx) {
-        super.initializeExtensions(cx);
-        createProperties(cx, cx.getGlobalObject(), this, ScriptingGlobalObject.class);
+    protected void initializeExtensions() {
+        super.initializeExtensions();
+        Realm realm = getRealm();
+        createProperties(realm.defaultContext(), realm.getGlobalThis(), this,
+                ScriptingGlobalObject.class);
     }
 
     /**

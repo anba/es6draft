@@ -35,9 +35,6 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryGenerator;
  */
 final class FunctionCodeGenerator {
     private static final class Fields {
-        static final FieldName Undefined_UNDEFINED = FieldName.findStatic(Types.Undefined,
-                "UNDEFINED", Types.Undefined);
-
         static final FieldName Intrinsics_ObjectPrototype = FieldName.findStatic(Types.Intrinsics,
                 "ObjectPrototype", Types.Intrinsics);
 
@@ -228,7 +225,7 @@ final class FunctionCodeGenerator {
         MethodCode method = codegen.newMethod(node, FunctionName.Call);
         if (node.isGenerator()) {
             InstructionVisitor mv = new GeneratorCallMethodGenerator(method);
-            mv.lineInfo(node.getBeginLine());
+            mv.lineInfo(node);
             mv.begin();
 
             generateGeneratorCall(node, mv);
@@ -236,7 +233,7 @@ final class FunctionCodeGenerator {
             mv.end();
         } else if (node.isAsync()) {
             InstructionVisitor mv = new AsyncFunctionCallMethodGenerator(method);
-            mv.lineInfo(node.getBeginLine());
+            mv.lineInfo(node);
             mv.begin();
 
             generateAsyncFunctionCall(node, mv);
@@ -244,7 +241,7 @@ final class FunctionCodeGenerator {
             mv.end();
         } else {
             InstructionVisitor mv = new FunctionCallMethodGenerator(method);
-            mv.lineInfo(node.getBeginLine());
+            mv.lineInfo(node);
             mv.begin();
 
             if (isLegacy(node)) {
@@ -265,7 +262,7 @@ final class FunctionCodeGenerator {
         if (node.isGenerator()) {
             assert !tailCall;
             InstructionVisitor mv = new GeneratorConstructMethodGenerator(method);
-            mv.lineInfo(node.getBeginLine());
+            mv.lineInfo(node);
             mv.begin();
 
             generateGeneratorConstruct(node, mv);
@@ -274,7 +271,7 @@ final class FunctionCodeGenerator {
         } else if (node.isAsync()) {
             assert !tailCall;
             InstructionVisitor mv = new AsyncFunctionConstructMethodGenerator(method);
-            mv.lineInfo(node.getBeginLine());
+            mv.lineInfo(node);
             mv.begin();
 
             generateAsyncFunctionConstruct(node, mv);
@@ -282,7 +279,7 @@ final class FunctionCodeGenerator {
             mv.end();
         } else {
             InstructionVisitor mv = new FunctionConstructMethodGenerator(method);
-            mv.lineInfo(node.getBeginLine());
+            mv.lineInfo(node);
             mv.begin();
 
             if (isLegacy(node)) {
@@ -306,9 +303,9 @@ final class FunctionCodeGenerator {
      * oldArguments = function.getLegacyArguments()
      * function.setLegacyCaller(callerContext.getCurrentFunction())
      * try {
-     *   calleeContext = newCallFunctionExecutionContext(callerContext, function, thisValue)
-     *   function_init(calleeContext, function, arguments)
-     *   return function_code(calleeContext)
+     *   calleeContext = newFunctionExecutionContext(callerContext, function, null, thisValue)
+     *   result = OrdinaryCallEvaluateBody(calleeContext, function)
+     *   return returnResultOrUndefined(result)
      * } finally {
      *   function.restoreLegacyProperties(oldCaller, oldArguments)
      * }
@@ -358,7 +355,7 @@ final class FunctionCodeGenerator {
             restoreLegacyProperties(function, oldCaller, oldArguments, mv);
 
             // (6) Return result value
-            returnResultOrUndefined(mv);
+            mv._return();
         }
         mv.mark(endFinally);
 
@@ -376,9 +373,9 @@ final class FunctionCodeGenerator {
      * Generate bytecode for:
      * 
      * <pre>
-     * calleeContext = newFunctionExecutionContext(callerContext, function, thisValue)
-     * function_init(calleeContext, function, arguments)
-     * return function_code(calleeContext)
+     * calleeContext = newFunctionExecutionContext(callerContext, function, null, thisValue)
+     * result = OrdinaryCallEvaluateBody(calleeContext, function)
+     * return returnResultOrUndefined(result)
      * </pre>
      * 
      * @param node
@@ -406,9 +403,21 @@ final class FunctionCodeGenerator {
 
         // (3) Return result value
         /* steps 9-10 */
-        returnResultOrUndefined(mv);
+        mv._return();
     }
 
+    /**
+     * Generate bytecode for:
+     * 
+     * <pre>
+     * throw Errors.newTypeError()
+     * </pre>
+     * 
+     * @param node
+     *            the function node
+     * @param mv
+     *            the instruction visitor
+     */
     private void generateClassConstructorCall(FunctionNode node, InstructionVisitor mv) {
         Variable<ExecutionContext> callerContext = mv.getParameter(EXECUTION_CONTEXT,
                 ExecutionContext.class);
@@ -420,6 +429,28 @@ final class FunctionCodeGenerator {
         mv.athrow();
     }
 
+    /**
+     * Generate bytecode for:
+     * 
+     * <pre>
+     * oldCaller = function.getLegacyCaller()
+     * oldArguments = function.getLegacyArguments()
+     * function.setLegacyCaller(callerContext.getCurrentFunction())
+     * try {
+     *   thisArgument = OrdinaryCreateFromConstructor(callerContext, newTarget, %ObjectPrototype%)
+     *   calleeContext = newFunctionExecutionContext(callerContext, function, newTarget, thisArgument)
+     *   result = OrdinaryCallEvaluateBody(calleeContext, function)
+     *   return returnResultOrThis(result)
+     * } finally {
+     *   function.restoreLegacyProperties(oldCaller, oldArguments)
+     * }
+     * </pre>
+     * 
+     * @param node
+     *            the function node
+     * @param mv
+     *            the instruction visitor
+     */
     private void generateLegacyFunctionConstruct(FunctionNode node, InstructionVisitor mv) {
         Variable<OrdinaryConstructorFunction> function = mv.getParameter(FUNCTION,
                 OrdinaryConstructorFunction.class);
@@ -464,7 +495,7 @@ final class FunctionCodeGenerator {
             restoreLegacyProperties(function, oldCaller, oldArguments, mv);
 
             // (7) Return result value
-            returnConstructResultOrThis(thisArg, false, mv);
+            returnResultOrThis(thisArg, false, mv);
         }
         mv.mark(endFinally);
 
@@ -478,6 +509,23 @@ final class FunctionCodeGenerator {
         mv.tryFinally(startFinally, endFinally, handlerFinally);
     }
 
+    /**
+     * Generate bytecode for:
+     * 
+     * <pre>
+     * thisArgument = OrdinaryCreateFromConstructor(callerContext, newTarget, %ObjectPrototype%)
+     * calleeContext = newFunctionExecutionContext(callerContext, function, newTarget, thisArgument)
+     * result = OrdinaryCallEvaluateBody(calleeContext, function)
+     * return returnResultOrThis(result)
+     * </pre>
+     * 
+     * @param node
+     *            the function node
+     * @param tailCall
+     *            {@code true} if the constructor function contains a tail-call
+     * @param mv
+     *            the instruction visitor
+     */
     private void generateFunctionConstruct(FunctionNode node, boolean tailCall,
             InstructionVisitor mv) {
         Variable<OrdinaryConstructorFunction> function = mv.getParameter(FUNCTION,
@@ -504,9 +552,25 @@ final class FunctionCodeGenerator {
 
         // (3) Return result value
         /* steps 14-16 */
-        returnConstructResultOrThis(thisArgument, tailCall, mv);
+        returnResultOrThis(thisArgument, tailCall, mv);
     }
 
+    /**
+     * Generate bytecode for:
+     * 
+     * <pre>
+     * calleeContext = newFunctionExecutionContext(callerContext, function, newTarget)
+     * result = OrdinaryCallEvaluateBody(calleeContext, function)
+     * return returnResultOrThis(result)
+     * </pre>
+     * 
+     * @param node
+     *            the function node
+     * @param tailCall
+     *            {@code true} if the constructor function contains a tail-call
+     * @param mv
+     *            the instruction visitor
+     */
     private void generateDerivedClassConstructorConstruct(FunctionNode node, boolean tailCall,
             InstructionVisitor mv) {
         Variable<OrdinaryConstructorFunction> function = mv.getParameter(FUNCTION,
@@ -530,14 +594,14 @@ final class FunctionCodeGenerator {
 
         // (3) Return result value
         /* steps 14-16 */
-        returnConstructResultOrThis(callerContext, calleeContext, tailCall, mv);
+        returnResultOrThis(callerContext, calleeContext, tailCall, mv);
     }
 
     /**
      * Generate bytecode for:
      * 
      * <pre>
-     * calleeContext = newFunctionExecutionContext(callerContext, function, thisValue)
+     * calleeContext = newFunctionExecutionContext(callerContext, function, null, thisValue)
      * function_init(calleeContext, function, arguments)
      * return EvaluateBody(calleeContext, generator)
      * </pre>
@@ -573,6 +637,22 @@ final class FunctionCodeGenerator {
         mv._return();
     }
 
+    /**
+     * Generate bytecode for:
+     * 
+     * <pre>
+     * calleeContext = newFunctionExecutionContext(callerContext, generator, newTarget)
+     * function_init(calleeContext, generator, arguments)
+     * promiseObject = EvaluateBody(calleeContext, generator)
+     * BindThisValue(calleeContext, promiseObject)
+     * return promiseObject
+     * </pre>
+     * 
+     * @param node
+     *            the function node
+     * @param mv
+     *            the instruction visitor
+     */
     private void generateAsyncFunctionConstruct(FunctionNode node, InstructionVisitor mv) {
         Variable<OrdinaryAsyncFunction> function = mv.getParameter(FUNCTION,
                 OrdinaryAsyncFunction.class);
@@ -584,7 +664,7 @@ final class FunctionCodeGenerator {
         Variable<ExecutionContext> calleeContext = mv.newVariable("calleeContext",
                 ExecutionContext.class);
 
-        // 9.2.4 FunctionAllocate - Async functions are always derived constructor kinds
+        // 9.2.4 FunctionAllocate - Async functions are always derived constructor kinds.
 
         // (1) Create a new ExecutionContext
         prepareCall(calleeContext, callerContext, function, newTarget, mv);
@@ -610,7 +690,7 @@ final class FunctionCodeGenerator {
      * Generate bytecode for:
      * 
      * <pre>
-     * calleeContext = newFunctionExecutionContext(callerContext, generator, thisValue)
+     * calleeContext = newFunctionExecutionContext(callerContext, generator, null, thisValue)
      * function_init(calleeContext, generator, arguments)
      * return EvaluateBody(calleeContext, generator)
      * </pre>
@@ -645,6 +725,22 @@ final class FunctionCodeGenerator {
         mv._return();
     }
 
+    /**
+     * Generate bytecode for:
+     * 
+     * <pre>
+     * calleeContext = newFunctionExecutionContext(callerContext, generator, newTarget)
+     * function_init(calleeContext, generator, arguments)
+     * generatorObject = EvaluateBody(calleeContext, generator)
+     * BindThisValue(calleeContext, generatorObject)
+     * return generatorObject
+     * </pre>
+     * 
+     * @param node
+     *            the function node
+     * @param mv
+     *            the instruction visitor
+     */
     private void generateGeneratorConstruct(FunctionNode node, InstructionVisitor mv) {
         Variable<OrdinaryGenerator> generator = mv.getParameter(GENERATOR, OrdinaryGenerator.class);
         Variable<ExecutionContext> callerContext = mv.getParameter(EXECUTION_CONTEXT,
@@ -655,7 +751,7 @@ final class FunctionCodeGenerator {
         Variable<ExecutionContext> calleeContext = mv.newVariable("calleeContext",
                 ExecutionContext.class);
 
-        // 9.2.4 FunctionAllocate - Generator functions are always derived constructor kinds
+        // 9.2.4 FunctionAllocate - Generator functions are always derived constructor kinds.
 
         // (1) Create a new ExecutionContext
         prepareCall(calleeContext, callerContext, generator, newTarget, mv);
@@ -681,9 +777,9 @@ final class FunctionCodeGenerator {
      * 9.2.2.1 PrepareForOrdinaryCall( F, newTarget )<br>
      * 9.2.2.2 OrdinaryCallBindThis ( F, calleeContext, thisArgument )
      * 
-     * <code>
+     * <pre>
      * calleeContext = newFunctionExecutionContext(callerContext, function, newTarget, thisValue)
-     * </code>
+     * </pre>
      * 
      * @param calleeContext
      *            the variable which holds the callee context
@@ -717,9 +813,9 @@ final class FunctionCodeGenerator {
     /**
      * 9.2.2.1 PrepareForOrdinaryCall( F, newTarget )
      * 
-     * <code>
+     * <pre>
      * calleeContext = newFunctionExecutionContext(callerContext, function, newTarget)
-     * </code>
+     * </pre>
      * 
      * @param calleeContext
      *            the variable which holds the callee context
@@ -727,6 +823,8 @@ final class FunctionCodeGenerator {
      *            the variable which holds the caller context
      * @param function
      *            the variable which holds the function object
+     * @param newTarget
+     *            the variable which holds the newTarget constructor
      * @param mv
      *            the instruction visitor
      */
@@ -850,6 +948,20 @@ final class FunctionCodeGenerator {
         mv.invoke(Methods.FunctionObject_restoreLegacyProperties);
     }
 
+    /**
+     * <code>
+     * thisArgument = OrdinaryCreateFromConstructor(callerContext, newTarget, %ObjectPrototype%)
+     * </code>
+     * 
+     * @param callerContext
+     *            the variable which holds the caller context
+     * @param newTarget
+     *            the variable which holds the newTarget constructor
+     * @param thisArgument
+     *            the variable which holds the thisArgument
+     * @param mv
+     *            the instruction visitor
+     */
     private void ordinaryCreateFromConstructor(Variable<ExecutionContext> callerContext,
             Variable<Constructor> newTarget, Variable<ScriptObject> thisArgument,
             InstructionVisitor mv) {
@@ -864,37 +976,11 @@ final class FunctionCodeGenerator {
      * Generate bytecode for:
      * 
      * <pre>
-     * if (result != null) {
-     *     return result;
+     * if (tailCall &amp;&amp; result instanceof TailCallInvocation) {
+     *     return ((TailCallInvocation) result).toConstructTailCall(thisArgument);
      * }
-     * return Undefined.UNDEFINED;
-     * </pre>
-     * 
-     * @param mv
-     *            the instruction visitor
-     */
-    private void returnResultOrUndefined(InstructionVisitor mv) {
-        Jump noResult = new Jump();
-        mv.dup();
-        mv.ifnull(noResult);
-        mv._return();
-        mv.mark(noResult);
-        mv.pop();
-        mv.get(Fields.Undefined_UNDEFINED);
-        mv._return();
-    }
-
-    /**
-     * Generate bytecode for:
-     * 
-     * <pre>
-     * if (result != null) {
-     *     if (tailCall &amp;&amp; result instanceof TailCallInvocation) {
-     *         return ((TailCallInvocation) result).toConstructTailCall(thisArgument);
-     *     }
-     *     if (Type.isObject(result)) {
-     *         return Type.objectValue(result);
-     *     }
+     * if (Type.isObject(result)) {
+     *     return Type.objectValue(result);
      * }
      * return thisArgument;
      * </pre>
@@ -906,33 +992,29 @@ final class FunctionCodeGenerator {
      * @param mv
      *            the instruction visitor
      */
-    private void returnConstructResultOrThis(Variable<ScriptObject> thisArgument, boolean tailCall,
+    private void returnResultOrThis(Variable<ScriptObject> thisArgument, boolean tailCall,
             InstructionVisitor mv) {
-        Jump noResult = new Jump();
-        mv.dup();
-        mv.ifnull(noResult);
-        {
-            if (tailCall) {
-                Jump noTailCall = new Jump();
-                mv.dup();
-                mv.instanceOf(Types.TailCallInvocation);
-                mv.ifeq(noTailCall);
-                {
-                    mv.checkcast(Types.TailCallInvocation);
-                    mv.load(thisArgument);
-                    mv.invoke(Methods.TailCallInvocation_toConstructTailCall);
-                    mv._return();
-                }
-                mv.mark(noTailCall);
-            }
-
+        if (tailCall) {
+            Jump noTailCall = new Jump();
             mv.dup();
-            mv.instanceOf(Types.ScriptObject);
-            mv.ifeq(noResult);
+            mv.instanceOf(Types.TailCallInvocation);
+            mv.ifeq(noTailCall);
             {
-                mv.checkcast(Types.ScriptObject);
+                mv.checkcast(Types.TailCallInvocation);
+                mv.load(thisArgument);
+                mv.invoke(Methods.TailCallInvocation_toConstructTailCall);
                 mv._return();
             }
+            mv.mark(noTailCall);
+        }
+
+        Jump noResult = new Jump();
+        mv.dup();
+        mv.instanceOf(Types.ScriptObject);
+        mv.ifeq(noResult);
+        {
+            mv.checkcast(Types.ScriptObject);
+            mv._return();
         }
         mv.mark(noResult);
         mv.pop();
@@ -966,7 +1048,7 @@ final class FunctionCodeGenerator {
      * @param mv
      *            the instruction visitor
      */
-    private void returnConstructResultOrThis(Variable<ExecutionContext> callerContext,
+    private void returnResultOrThis(Variable<ExecutionContext> callerContext,
             Variable<ExecutionContext> calleeContext, boolean tailCall, InstructionVisitor mv) {
         Jump noResult = new Jump();
         mv.dup();
@@ -979,7 +1061,7 @@ final class FunctionCodeGenerator {
                 mv.ifeq(noTailCall);
                 {
                     mv.checkcast(Types.TailCallInvocation);
-                    mv.anull();
+                    mv.anull(); // Use <null> as a placeholder object.
                     mv.invoke(Methods.TailCallInvocation_toConstructTailCall);
                     mv._return();
                 }
@@ -1009,8 +1091,9 @@ final class FunctionCodeGenerator {
         // `calleeContext().getFunctionVariableEnvironment().getThisBinding()`.
         mv.load(calleeContext);
         mv.invoke(Methods.ExecutionContext_resolveThisBinding);
-        // The this-binding is either an ScriptObject or ReferenceError is thrown, so it's valid to
-        // emit a checkcast instruction.
+        // If the this-binding is present it's a ScriptObject; if it's not present calling
+        // resolveThisBinding() will result in a ReferenceError being thrown. So emitting a
+        // checkcast instruction is safe here.
         mv.checkcast(Types.ScriptObject);
         mv._return();
     }

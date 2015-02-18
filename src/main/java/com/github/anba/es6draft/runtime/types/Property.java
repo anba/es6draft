@@ -163,14 +163,14 @@ public final class Property implements Cloneable {
     }
 
     /**
-     * Updates the [[Value]] field of this {@link Property} object. Only applicable for
+     * Updates the [[Value]] field of this {@link Property} object. Only applicable for writable
      * data-properties.
      * 
      * @param value
      *            the new value
      */
     public void setValue(Object value) {
-        assert isDataDescriptor() && value != null;
+        assert isDataDescriptor() && writable && value != null;
         this.value = value;
     }
 

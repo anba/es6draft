@@ -9,7 +9,7 @@ package com.github.anba.es6draft.compiler.assembler;
 import org.objectweb.asm.Label;
 
 /**
- * 
+ * Label class for jump, goto, and switch instructions.
  */
 public class Jump {
     private final Label label;

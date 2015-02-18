@@ -16,5 +16,10 @@ import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
  * </ul>
  */
 public interface Executable {
+    /**
+     * Returns the runtime source object if available.
+     * 
+     * @return the source object or {@code null} if not available
+     */
     RuntimeInfo.SourceObject getSourceObject();
 }

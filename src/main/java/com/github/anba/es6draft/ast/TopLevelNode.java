@@ -9,7 +9,7 @@ package com.github.anba.es6draft.ast;
 import java.util.List;
 
 /**
- * Super-interface for {@link Script} and {@link FunctionNode}
+ * Super-interface for {@link Script}, {@link Module} and {@link FunctionNode}.
  */
 public interface TopLevelNode<STATEMENT extends ModuleItem> extends ScopedNode {
     /**
@@ -21,7 +21,7 @@ public interface TopLevelNode<STATEMENT extends ModuleItem> extends ScopedNode {
     List<STATEMENT> getStatements();
 
     /**
-     * Updates this node's statement list, may throw an {@link IllegalStateException} if the
+     * Updates this node's statement list, may throw an {@link UnsupportedOperationException} if the
      * operation is not supported by this node.
      * 
      * @param statements

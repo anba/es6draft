@@ -92,7 +92,7 @@ public final class GeneratorComprehension extends Expression implements Function
 
     @Override
     public void setStatements(List<StatementListItem> statements) {
-        throw new IllegalStateException();
+        throw new UnsupportedOperationException();
     }
 
     @Override

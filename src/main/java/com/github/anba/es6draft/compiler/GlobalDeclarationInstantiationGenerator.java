@@ -39,9 +39,9 @@ final class GlobalDeclarationInstantiationGenerator extends
     private static final int EXECUTION_CONTEXT = 0;
     private static final int GLOBAL_ENV = 1;
 
-    private static final class GlobalDeclInitMethodGenerator extends ExpressionVisitor {
-        GlobalDeclInitMethodGenerator(MethodCode method, Script node) {
-            super(method, IsStrict(node), false, false);
+    private static final class GlobalDeclInitMethodGenerator extends InstructionVisitor {
+        GlobalDeclInitMethodGenerator(MethodCode method) {
+            super(method);
         }
 
         @Override
@@ -58,7 +58,7 @@ final class GlobalDeclarationInstantiationGenerator extends
 
     void generate(Script script) {
         MethodCode method = codegen.newMethod(script, ScriptName.Init);
-        ExpressionVisitor mv = new GlobalDeclInitMethodGenerator(method, script);
+        InstructionVisitor mv = new GlobalDeclInitMethodGenerator(method);
 
         mv.lineInfo(script);
         mv.begin();

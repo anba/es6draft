@@ -10,6 +10,7 @@ import static com.github.anba.es6draft.interpreter.DeclarationBindingInstantiati
 import static com.github.anba.es6draft.interpreter.DeclarationBindingInstantiation.GlobalDeclarationInstantiation;
 
 import com.github.anba.es6draft.ast.Script;
+import com.github.anba.es6draft.runtime.DeclarativeEnvironmentRecord;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.GlobalEnvironmentRecord;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
@@ -45,7 +46,7 @@ final class InterpretedScriptBody implements RuntimeInfo.ScriptBody {
 
     @Override
     public void evalDeclarationInstantiation(ExecutionContext cx, LexicalEnvironment<?> varEnv,
-            LexicalEnvironment<?> lexEnv) {
+            LexicalEnvironment<DeclarativeEnvironmentRecord> lexEnv) {
         EvalDeclarationInstantiation(cx, parsedScript, varEnv, lexEnv);
     }
 

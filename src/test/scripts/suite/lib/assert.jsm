@@ -299,7 +299,7 @@ export function assertBuiltinFunction(fun, name, arity) {
     assertDataProperty(fun, "name", {value: name, writable: false, enumerable: false, configurable: true});
   } else {
     // anonymous function
-    assertFalse($CallFunction(Object_prototype_hasOwnProperty, fun, "name"));
+    assertUndefined(Reflect_getOwnPropertyDescriptor(fun, "name"));
   }
   assertUndefined(Reflect_getOwnPropertyDescriptor(fun, "arguments"));
   assertUndefined(Reflect_getOwnPropertyDescriptor(fun, "caller"));

@@ -105,6 +105,9 @@ public final class GeneratorObject extends OrdinaryObject {
     }
 
     /**
+     * Starts generator execution and sets {@link #state} to its initial value
+     * {@link GeneratorState#SuspendedStart}.
+     * 
      * @param cx
      *            the execution context
      * @param code
@@ -123,6 +126,8 @@ public final class GeneratorObject extends OrdinaryObject {
     }
 
     /**
+     * Resumes generator execution.
+     * 
      * @param cx
      *            the execution context
      * @param value
@@ -147,6 +152,8 @@ public final class GeneratorObject extends OrdinaryObject {
     }
 
     /**
+     * Stops generator execution with a {@code return} event.
+     * 
      * @param cx
      *            the execution context
      * @param value
@@ -171,6 +178,8 @@ public final class GeneratorObject extends OrdinaryObject {
     }
 
     /**
+     * Stops generator execution with a {@code throw} event.
+     * 
      * @param cx
      *            the execution context
      * @param value
@@ -195,6 +204,8 @@ public final class GeneratorObject extends OrdinaryObject {
     }
 
     /**
+     * Suspends the current generator execution.
+     * 
      * @param value
      *            the iteration result object to yield
      * @return the yield result
@@ -208,7 +219,7 @@ public final class GeneratorObject extends OrdinaryObject {
     }
 
     /**
-     * Generator implementation abstraction
+     * Generator implementation abstraction.
      */
     private interface Generator {
         /**
@@ -266,7 +277,7 @@ public final class GeneratorObject extends OrdinaryObject {
     }
 
     /**
-     * ResumptionPoint-based generator implementation
+     * ResumptionPoint-based generator implementation.
      */
     private static final class ResumeGenerator implements Generator {
         private final GeneratorObject generatorObject;
@@ -335,9 +346,7 @@ public final class GeneratorObject extends OrdinaryObject {
                 return (ScriptObject) value;
             }
             genObject.close();
-            if (result == null) {
-                result = UNDEFINED;
-            }
+            assert result != null;
             return CreateIterResultObject(cx, result, true);
         }
 
@@ -348,7 +357,7 @@ public final class GeneratorObject extends OrdinaryObject {
     }
 
     /**
-     * Thread-based generator implementation
+     * Thread-based generator implementation.
      */
     private static final class ThreadGenerator implements Generator {
         private static final Object COMPLETED = new Object();
@@ -423,9 +432,7 @@ public final class GeneratorObject extends OrdinaryObject {
                         throw new RuntimeException(e);
                     }
                     out.put(COMPLETED);
-                    if (result == null) {
-                        result = UNDEFINED;
-                    }
+                    assert result != null;
                     return result;
                 }
             });

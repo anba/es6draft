@@ -24,6 +24,11 @@ public final class ArrayAssignmentPattern extends AssignmentPattern {
         this.elements = elements;
     }
 
+    /**
+     * Returns the assignment elements of this array assignment pattern.
+     * 
+     * @return the assignment elements
+     */
     public List<AssignmentElementItem> getElements() {
         return elements;
     }

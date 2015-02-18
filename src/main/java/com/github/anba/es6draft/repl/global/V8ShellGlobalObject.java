@@ -13,7 +13,6 @@ import java.nio.file.Path;
 import com.github.anba.es6draft.compiler.CompilationException;
 import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.repl.console.ShellConsole;
-import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
@@ -32,8 +31,8 @@ public class V8ShellGlobalObject extends ShellGlobalObject {
     }
 
     @Override
-    protected void initializeExtensions(ExecutionContext cx) {
-        super.initializeExtensions(cx);
+    protected void initializeExtensions() {
+        super.initializeExtensions();
         install(this, V8ShellGlobalObject.class);
     }
 

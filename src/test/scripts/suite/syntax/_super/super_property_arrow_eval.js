@@ -5,8 +5,14 @@
  * <https://github.com/anba/es6draft>
  */
 const {
-  assertSyntaxError
+  assertThrows, assertSyntaxError, assertInstanceOf, fail
 } = Assert;
+
+System.load("lib/promises.jsm");
+const {
+  reportFailure
+} = System.get("lib/promises.jsm");
+
 
 var home = {};
 
@@ -191,3 +197,20 @@ var obj = class {
   }
 };
 obj.m().next();
+
+// 15.1 Scripts
+assertThrows(SyntaxError, () => evalScript(`
+(() => {
+  eval("super.property_from_eval");
+})();
+`));
+
+// 15.2 Modules
+System
+.define("parse-super-property-arrow-eval", `
+(() => {
+  eval("super.property_from_eval");
+})();
+`)
+.then(() => fail `no SyntaxError`, e => assertInstanceOf(SyntaxError, e))
+.catch(reportFailure);

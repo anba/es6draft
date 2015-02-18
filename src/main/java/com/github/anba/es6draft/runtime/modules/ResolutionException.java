@@ -15,13 +15,21 @@ import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
 
 /**
- * 
+ * Exception for module resolution errors.
  */
 @SuppressWarnings("serial")
 public final class ResolutionException extends InternalException {
     private final Messages.Key messageKey;
     private final String messageArgument;
 
+    /**
+     * Constructs a new module resolution exception.
+     * 
+     * @param messageKey
+     *            the message key
+     * @param messageArgument
+     *            the message argument
+     */
     public ResolutionException(Messages.Key messageKey, String messageArgument) {
         this.messageKey = messageKey;
         this.messageArgument = messageArgument;

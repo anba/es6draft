@@ -129,7 +129,7 @@ abstract class DeclarationBindingInstantiationGenerator {
      * @param mv
      *            the instruction visitor
      */
-    protected void generateExceptionThrower(ExpressionVisitor mv) {
+    protected void generateExceptionThrower(InstructionVisitor mv) {
         mv.anew(Types.IllegalStateException, Methods.IllegalStateException_init);
         mv.athrow();
     }
@@ -350,20 +350,10 @@ abstract class DeclarationBindingInstantiationGenerator {
             InstructionVisitor mv) {
         mv.load(env);
         mv.invoke(Methods.LexicalEnvironment_getEnvRec);
-        mv.checkcast(envRec.getType());
+        if (envRec.getType() != Types.EnvironmentRecord) {
+            mv.checkcast(envRec.getType());
+        }
         mv.store(envRec);
-    }
-
-    /**
-     * Emit function call for: {@link LexicalEnvironment#getEnvRec()}
-     * <p>
-     * stack: [env] {@literal ->} [envRec]
-     * 
-     * @param mv
-     *            the instruction visitor
-     */
-    protected void getEnvironmentRecord(InstructionVisitor mv) {
-        mv.invoke(Methods.LexicalEnvironment_getEnvRec);
     }
 
     /**

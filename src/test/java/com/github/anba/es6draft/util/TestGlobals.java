@@ -84,8 +84,8 @@ public abstract class TestGlobals<GLOBAL extends ShellGlobalObject, TEST extends
                 getCompilerOptions());
     }
 
-    protected ModuleLoader createModuleLoader(Path baseDirectory) {
-        return new FileModuleLoader(baseDirectory);
+    protected ModuleLoader createModuleLoader() {
+        return new FileModuleLoader(getBaseDirectory());
     }
 
     protected Locale getLocale(TEST test) {
@@ -125,7 +125,7 @@ public abstract class TestGlobals<GLOBAL extends ShellGlobalObject, TEST extends
     public final GLOBAL newGlobal(ShellConsole console, TEST test) throws IOException,
             URISyntaxException {
         ObjectAllocator<GLOBAL> allocator = newAllocator(console, test, scriptCache);
-        ModuleLoader moduleLoader = createModuleLoader(getBaseDirectory());
+        ModuleLoader moduleLoader = createModuleLoader();
         ScriptLoader scriptLoader = createScriptLoader();
         Locale locale = getLocale(test);
         TimeZone timeZone = getTimeZone(test);
@@ -185,7 +185,7 @@ public abstract class TestGlobals<GLOBAL extends ShellGlobalObject, TEST extends
         if (moduleNames.isEmpty()) {
             return Collections.emptyList();
         }
-        ModuleLoader moduleLoader = createModuleLoader(getBaseDirectory());
+        ModuleLoader moduleLoader = createModuleLoader();
         ScriptLoader scriptLoader = createScriptLoader();
         PreloaderRealm realm = new PreloaderRealm(moduleLoader, scriptLoader);
         ArrayList<PreloadedModule> modules = new ArrayList<>();

@@ -18,7 +18,7 @@ import com.github.anba.es6draft.ast.scope.BlockScope;
  * <li>13.6.4 The for-in and for-of Statements
  * </ul>
  */
-public final class ForInStatement extends IterationStatement implements ScopedNode {
+public final class ForInStatement extends IterationStatement implements ForIterationNode {
     private final BlockScope scope;
     private final Node head;
     private final Expression expression;
@@ -50,6 +50,7 @@ public final class ForInStatement extends IterationStatement implements ScopedNo
      * 
      * @return the head node
      */
+    @Override
     public Node getHead() {
         return head;
     }
@@ -59,6 +60,7 @@ public final class ForInStatement extends IterationStatement implements ScopedNo
      * 
      * @return the expression node
      */
+    @Override
     public Expression getExpression() {
         return expression;
     }
@@ -68,6 +70,7 @@ public final class ForInStatement extends IterationStatement implements ScopedNo
      * 
      * @return the statement node
      */
+    @Override
     public Statement getStatement() {
         return statement;
     }

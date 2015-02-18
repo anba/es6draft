@@ -16,6 +16,8 @@ import com.github.anba.es6draft.ast.*;
 import com.github.anba.es6draft.compiler.CodeGenerator.FunctionName;
 import com.github.anba.es6draft.compiler.CodeGenerator.ModuleName;
 import com.github.anba.es6draft.compiler.CodeGenerator.ScriptName;
+import com.github.anba.es6draft.compiler.assembler.Code.MethodCode;
+import com.github.anba.es6draft.compiler.assembler.InstructionAssembler;
 import com.github.anba.es6draft.compiler.assembler.MethodName;
 import com.github.anba.es6draft.compiler.assembler.Type;
 import com.github.anba.es6draft.parser.Parser;
@@ -162,163 +164,121 @@ final class RuntimeInfoGenerator {
     }
 
     void runtimeInfo(FunctionNode node, boolean tailCall, Future<String> source) {
-        InstructionVisitor mv = new InstructionVisitor(codegen.newMethod(node, FunctionName.RTI));
-        mv.begin();
+        InstructionAssembler asm = new InstructionAssembler(codegen.newMethod(node,
+                FunctionName.RTI));
+        asm.begin();
 
-        mv.aconst(node.getFunctionName());
-        mv.iconst(functionFlags(node, tailCall));
-        mv.iconst(ExpectedArgumentCount(node.getParameters()));
-        mv.aconst(get(source));
-        mv.iconst(node.getHeaderSource().length());
-        mv.handle(codegen.methodDesc(node, FunctionName.Code));
-        mv.handle(codegen.methodDesc(node, FunctionName.Call));
+        asm.aconst(node.getFunctionName());
+        asm.iconst(functionFlags(node, tailCall));
+        asm.iconst(ExpectedArgumentCount(node.getParameters()));
+        asm.aconst(get(source));
+        asm.iconst(node.getHeaderSource().length());
+        asm.handle(codegen.methodDesc(node, FunctionName.Code));
+        asm.handle(codegen.methodDesc(node, FunctionName.Call));
         if (node.isConstructor()) {
-            mv.handle(codegen.methodDesc(node, tailCall ? FunctionName.ConstructTailCall
-                    : FunctionName.Construct));
+            FunctionName constructName = tailCall ? FunctionName.ConstructTailCall
+                    : FunctionName.Construct;
+            asm.handle(codegen.methodDesc(node, constructName));
         } else {
-            mv.anull();
+            asm.anull();
         }
         if (codegen.isEnabled(Compiler.Option.DebugInfo)) {
             debugInfo(node, tailCall);
-            mv.handle(codegen.methodDesc(node, FunctionName.DebugInfo));
-            mv.invoke(Methods.RTI_newFunctionDebug);
+            asm.handle(codegen.methodDesc(node, FunctionName.DebugInfo));
+            asm.invoke(Methods.RTI_newFunctionDebug);
         } else {
-            mv.invoke(Methods.RTI_newFunction);
+            asm.invoke(Methods.RTI_newFunction);
         }
-        mv._return();
+        asm._return();
 
-        mv.end();
+        asm.end();
     }
 
     void runtimeInfo(Script node) {
-        InstructionVisitor mv = new InstructionVisitor(codegen.newMethod(node, ScriptName.RTI));
-        mv.begin();
+        InstructionAssembler asm = new InstructionAssembler(codegen.newMethod(node, ScriptName.RTI));
+        asm.begin();
 
-        mv.aconst(node.getSource().getName());
-        mv.aconst(node.getSource().getFileString());
-        mv.iconst(IsStrict(node));
-        mv.handle(codegen.methodDesc(node, ScriptName.Init));
-        mv.handle(codegen.methodDesc(node, ScriptName.EvalInit));
-        mv.handle(codegen.methodDesc(node, ScriptName.Code));
+        asm.aconst(node.getSource().getName());
+        asm.aconst(node.getSource().getFileString());
+        asm.iconst(IsStrict(node));
+        asm.handle(codegen.methodDesc(node, ScriptName.Init));
+        asm.handle(codegen.methodDesc(node, ScriptName.EvalInit));
+        asm.handle(codegen.methodDesc(node, ScriptName.Code));
         if (codegen.isEnabled(Compiler.Option.DebugInfo)) {
             debugInfo(node);
-            mv.handle(codegen.methodDesc(node, ScriptName.DebugInfo));
-            mv.invoke(Methods.RTI_newScriptBodyDebug);
+            asm.handle(codegen.methodDesc(node, ScriptName.DebugInfo));
+            asm.invoke(Methods.RTI_newScriptBodyDebug);
         } else {
-            mv.invoke(Methods.RTI_newScriptBody);
+            asm.invoke(Methods.RTI_newScriptBody);
         }
-        mv._return();
+        asm._return();
 
-        mv.end();
+        asm.end();
     }
 
     void runtimeInfo(Module node) {
-        InstructionVisitor mv = new InstructionVisitor(codegen.newMethod(node, ModuleName.RTI));
-        mv.begin();
+        InstructionAssembler asm = new InstructionAssembler(codegen.newMethod(node, ModuleName.RTI));
+        asm.begin();
 
-        mv.aconst(node.getSource().getName());
-        mv.aconst(node.getSource().getFileString());
-        mv.handle(codegen.methodDesc(node, ModuleName.Init));
-        mv.handle(codegen.methodDesc(node, ModuleName.Code));
+        asm.aconst(node.getSource().getName());
+        asm.aconst(node.getSource().getFileString());
+        asm.handle(codegen.methodDesc(node, ModuleName.Init));
+        asm.handle(codegen.methodDesc(node, ModuleName.Code));
         if (codegen.isEnabled(Compiler.Option.DebugInfo)) {
             debugInfo(node);
-            mv.handle(codegen.methodDesc(node, ModuleName.DebugInfo));
-            mv.invoke(Methods.RTI_newModuleBodyDebug);
+            asm.handle(codegen.methodDesc(node, ModuleName.DebugInfo));
+            asm.invoke(Methods.RTI_newModuleBodyDebug);
         } else {
-            mv.invoke(Methods.RTI_newModuleBody);
+            asm.invoke(Methods.RTI_newModuleBody);
         }
-        mv._return();
+        asm._return();
 
-        mv.end();
+        asm.end();
     }
 
     private void debugInfo(FunctionNode node, boolean tailCall) {
-        InstructionVisitor mv = new InstructionVisitor(codegen.newMethod(node,
-                FunctionName.DebugInfo));
-        mv.begin();
-
-        mv.anew(Types.DebugInfo, Methods.DebugInfo_init);
-
-        MethodName callDesc = codegen.methodDesc(node, FunctionName.Call);
-        mv.dup();
-        mv.tconst(callDesc.owner);
-        mv.aconst(callDesc.name);
-        mv.invoke(Methods.DebugInfo_addMethod);
-
         if (node.isConstructor()) {
-            MethodName constructDesc = codegen.methodDesc(node,
-                    tailCall ? FunctionName.ConstructTailCall : FunctionName.Construct);
-            mv.dup();
-            mv.tconst(constructDesc.owner);
-            mv.aconst(constructDesc.name);
-            mv.invoke(Methods.DebugInfo_addMethod);
+            FunctionName constructName = tailCall ? FunctionName.ConstructTailCall
+                    : FunctionName.Construct;
+            debugInfo(codegen.newMethod(node, FunctionName.DebugInfo),
+                    codegen.methodDesc(node, FunctionName.Call),
+                    codegen.methodDesc(node, constructName),
+                    codegen.methodDesc(node, FunctionName.Init),
+                    codegen.methodDesc(node, FunctionName.Code));
+        } else {
+            debugInfo(codegen.newMethod(node, FunctionName.DebugInfo),
+                    codegen.methodDesc(node, FunctionName.Call),
+                    codegen.methodDesc(node, FunctionName.Init),
+                    codegen.methodDesc(node, FunctionName.Code));
         }
-
-        MethodName initDesc = codegen.methodDesc(node, FunctionName.Init);
-        mv.dup();
-        mv.tconst(initDesc.owner);
-        mv.aconst(initDesc.name);
-        mv.invoke(Methods.DebugInfo_addMethod);
-
-        MethodName codeDesc = codegen.methodDesc(node, FunctionName.Code);
-        mv.dup();
-        mv.tconst(codeDesc.owner);
-        mv.aconst(codeDesc.name);
-        mv.invoke(Methods.DebugInfo_addMethod);
-
-        mv._return();
-        mv.end();
     }
 
     private void debugInfo(Script node) {
-        InstructionVisitor mv = new InstructionVisitor(
-                codegen.newMethod(node, ScriptName.DebugInfo));
-        mv.begin();
-
-        mv.anew(Types.DebugInfo, Methods.DebugInfo_init);
-
-        MethodName initDesc = codegen.methodDesc(node, ScriptName.Init);
-        mv.dup();
-        mv.tconst(initDesc.owner);
-        mv.aconst(initDesc.name);
-        mv.invoke(Methods.DebugInfo_addMethod);
-
-        MethodName evalInitDesc = codegen.methodDesc(node, ScriptName.EvalInit);
-        mv.dup();
-        mv.tconst(evalInitDesc.owner);
-        mv.aconst(evalInitDesc.name);
-        mv.invoke(Methods.DebugInfo_addMethod);
-
-        MethodName codeDesc = codegen.methodDesc(node, ScriptName.Code);
-        mv.dup();
-        mv.tconst(codeDesc.owner);
-        mv.aconst(codeDesc.name);
-        mv.invoke(Methods.DebugInfo_addMethod);
-
-        mv._return();
-        mv.end();
+        debugInfo(codegen.newMethod(node, ScriptName.DebugInfo),
+                codegen.methodDesc(node, ScriptName.Init),
+                codegen.methodDesc(node, ScriptName.EvalInit),
+                codegen.methodDesc(node, ScriptName.Code));
     }
 
     private void debugInfo(Module node) {
-        InstructionVisitor mv = new InstructionVisitor(
-                codegen.newMethod(node, ModuleName.DebugInfo));
-        mv.begin();
+        debugInfo(codegen.newMethod(node, ModuleName.DebugInfo),
+                codegen.methodDesc(node, ModuleName.Init),
+                codegen.methodDesc(node, ModuleName.Code));
+    }
 
-        mv.anew(Types.DebugInfo, Methods.DebugInfo_init);
+    private void debugInfo(MethodCode code, MethodName... names) {
+        InstructionAssembler asm = new InstructionAssembler(code);
+        asm.begin();
 
-        MethodName initDesc = codegen.methodDesc(node, ModuleName.Init);
-        mv.dup();
-        mv.tconst(initDesc.owner);
-        mv.aconst(initDesc.name);
-        mv.invoke(Methods.DebugInfo_addMethod);
+        asm.anew(Types.DebugInfo, Methods.DebugInfo_init);
+        for (MethodName name : names) {
+            asm.dup();
+            asm.tconst(name.owner);
+            asm.aconst(name.name);
+            asm.invoke(Methods.DebugInfo_addMethod);
+        }
 
-        MethodName codeDesc = codegen.methodDesc(node, ModuleName.Code);
-        mv.dup();
-        mv.tconst(codeDesc.owner);
-        mv.aconst(codeDesc.name);
-        mv.invoke(Methods.DebugInfo_addMethod);
-
-        mv._return();
-        mv.end();
+        asm._return();
+        asm.end();
     }
 }

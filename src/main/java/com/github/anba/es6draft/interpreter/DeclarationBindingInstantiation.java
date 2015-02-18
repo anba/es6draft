@@ -99,7 +99,7 @@ final class DeclarationBindingInstantiation {
      *            the deletable flag for bindings
      */
     public static void EvalDeclarationInstantiation(ExecutionContext cx, Script script,
-            LexicalEnvironment<?> varEnv, LexicalEnvironment<?> lexEnv) {
+            LexicalEnvironment<?> varEnv, LexicalEnvironment<DeclarativeEnvironmentRecord> lexEnv) {
         boolean strict = script.isStrict();
         boolean nonStrictGlobal = !strict && script.isGlobalCode() && !script.isScripting();
 
@@ -123,8 +123,8 @@ final class DeclarationBindingInstantiation {
                 }
             } else if (script.isFunctionCode()) {
                 /* step 6.b */
-                DeclarativeEnvironmentRecord topLexEnvRec = cx.getFunctionVariableEnvironment()
-                        .getEnvRec().getTopLex();
+                DeclarativeEnvironmentRecord topLexEnvRec = cx
+                        .getFunctionVariableEnvironmentRecord().getTopLex();
                 for (Name name : varNames) {
                     ScriptRuntime.canDeclareVarOrThrow(cx, topLexEnvRec, name.getIdentifier());
                 }

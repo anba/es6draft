@@ -8,7 +8,6 @@ package com.github.anba.es6draft.traceur;
 
 import com.github.anba.es6draft.repl.console.ShellConsole;
 import com.github.anba.es6draft.repl.global.V8ShellGlobalObject;
-import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
@@ -21,11 +20,6 @@ final class TraceurTestGlobalObject extends V8ShellGlobalObject {
     protected TraceurTestGlobalObject(Realm realm, ShellConsole console, TestInfo test,
             ScriptCache scriptCache) {
         super(realm, console, test.getBaseDir(), test.getScript(), scriptCache);
-    }
-
-    @Override
-    protected void initializeExtensions(ExecutionContext cx) {
-        super.initializeExtensions(cx);
     }
 
     /**

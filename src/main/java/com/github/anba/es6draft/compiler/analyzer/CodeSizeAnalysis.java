@@ -269,6 +269,11 @@ public final class CodeSizeAnalysis {
         }
 
         @Override
+        public int visit(Module node, Integer size) {
+            return visit(node, size, new TopLevelSubMethod.ModuleSubMethod());
+        }
+
+        @Override
         public int visit(ObjectLiteral node, Integer size) {
             return visit(node, size, new ObjectLiteralSubMethod());
         }

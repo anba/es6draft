@@ -6,17 +6,19 @@
  */
 package com.github.anba.es6draft.compiler.assembler;
 
+import org.objectweb.asm.Label;
+
 /**
  * Label class for try-catch handlers.
  */
 public final class TryCatchLabel {
-    private final org.objectweb.asm.Label label;
+    private final Label label;
 
     public TryCatchLabel() {
-        this.label = new org.objectweb.asm.Label();
+        this.label = new Label();
     }
 
-    /*package*/org.objectweb.asm.Label label() {
+    /*package*/Label label() {
         return label;
     }
 }

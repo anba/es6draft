@@ -9,7 +9,7 @@ package com.github.anba.es6draft.compiler.assembler;
 import org.objectweb.asm.Opcodes;
 
 /**
- *
+ * Method handles.
  */
 public final class Handle {
     private final org.objectweb.asm.Handle handle;

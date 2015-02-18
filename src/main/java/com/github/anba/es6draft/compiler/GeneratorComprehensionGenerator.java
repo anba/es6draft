@@ -13,7 +13,7 @@ import com.github.anba.es6draft.ast.GeneratorComprehension;
  * <h1>12 ECMAScript Language: Expressions</h1><br>
  * <h2>12.2 Primary Expression</h2>
  * <ul>
- * <li>12.2.7 Generator Comprehensions
+ * <li>Generator Comprehensions
  * </ul>
  */
 final class GeneratorComprehensionGenerator extends ComprehensionGenerator {
@@ -22,7 +22,7 @@ final class GeneratorComprehensionGenerator extends ComprehensionGenerator {
     }
 
     /**
-     * 12.2.7.2 Runtime Semantics: Evaluation
+     * Runtime Semantics: Evaluation
      */
     static void EvaluateGeneratorComprehension(CodeGenerator codegen, GeneratorComprehension node,
             ExpressionVisitor mv) {
@@ -30,7 +30,7 @@ final class GeneratorComprehensionGenerator extends ComprehensionGenerator {
     }
 
     /**
-     * 12.2.4.2.3 Runtime Semantics: ComprehensionEvaluation
+     * Runtime Semantics: ComprehensionEvaluation
      * <p>
      * ComprehensionTail : AssignmentExpression
      */

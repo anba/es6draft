@@ -108,7 +108,11 @@ public final class OrdinaryConstructorFunction extends OrdinaryFunction implemen
      */
     public static OrdinaryConstructorFunction ConstructorFunctionCreate(ExecutionContext cx,
             FunctionKind kind, RuntimeInfo.Function function, LexicalEnvironment<?> scope) {
-        return ConstructorFunctionCreate(cx, kind, ConstructorKind.Base, function, scope, null);
+        /* step 1 */
+        ScriptObject functionPrototype = cx.getIntrinsic(Intrinsics.FunctionPrototype);
+        /* steps 2-3 */
+        return ConstructorFunctionCreate(cx, kind, ConstructorKind.Base, function, scope,
+                functionPrototype);
     }
 
     /**
@@ -132,10 +136,7 @@ public final class OrdinaryConstructorFunction extends OrdinaryFunction implemen
             FunctionKind kind, ConstructorKind constructorKind, RuntimeInfo.Function function,
             LexicalEnvironment<?> scope, ScriptObject functionPrototype) {
         assert !function.isGenerator() && !function.isAsync();
-        /* step 1 */
-        if (functionPrototype == null) {
-            functionPrototype = cx.getIntrinsic(Intrinsics.FunctionPrototype);
-        }
+        /* step 1 (not applicable) */
         /* step 2 */
         OrdinaryConstructorFunction f = FunctionAllocate(cx, functionPrototype,
                 function.isStrict(), kind, constructorKind);

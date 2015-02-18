@@ -24,6 +24,11 @@ public final class ArrayBindingPattern extends BindingPattern {
         this.elements = elements;
     }
 
+    /**
+     * Returns the binding elements of this array binding pattern.
+     * 
+     * @return the binding elements
+     */
     public List<BindingElementItem> getElements() {
         return elements;
     }

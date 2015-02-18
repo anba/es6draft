@@ -11,27 +11,31 @@ import static com.github.anba.es6draft.semantics.StaticSemantics.LexicallyDeclar
 
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 
-import com.github.anba.es6draft.ast.BindingPattern;
 import com.github.anba.es6draft.ast.Comprehension;
 import com.github.anba.es6draft.ast.ComprehensionFor;
 import com.github.anba.es6draft.ast.ComprehensionIf;
+import com.github.anba.es6draft.ast.ComprehensionQualifier;
 import com.github.anba.es6draft.ast.Expression;
 import com.github.anba.es6draft.ast.LegacyComprehension;
 import com.github.anba.es6draft.ast.LegacyComprehensionFor;
 import com.github.anba.es6draft.ast.LegacyComprehensionFor.IterationKind;
 import com.github.anba.es6draft.ast.Node;
 import com.github.anba.es6draft.ast.scope.Name;
+import com.github.anba.es6draft.compiler.Labels.TempLabel;
+import com.github.anba.es6draft.compiler.StatementGenerator.Completion;
 import com.github.anba.es6draft.compiler.assembler.Jump;
 import com.github.anba.es6draft.compiler.assembler.MethodName;
 import com.github.anba.es6draft.compiler.assembler.Type;
 import com.github.anba.es6draft.compiler.assembler.Variable;
+import com.github.anba.es6draft.runtime.internal.ScriptIterator;
 
 /**
  * <h1>12 ECMAScript Language: Expressions</h1><br>
  * <h2>12.2 Primary Expression</h2>
  * <ul>
- * <li>12.2.4.2 Array Comprehension
+ * <li>Array Comprehension
  * </ul>
  */
 abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void, ExpressionVisitor> {
@@ -61,10 +65,6 @@ abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void, Express
                 Types.LexicalEnvironment, "getEnvRec", Type.methodType(Types.EnvironmentRecord));
 
         // class: ScriptRuntime
-        static final MethodName ScriptRuntime_ensureObject = MethodName.findStatic(
-                Types.ScriptRuntime, "ensureObject",
-                Type.methodType(Types.ScriptObject, Types.Object, Types.ExecutionContext));
-
         static final MethodName ScriptRuntime_enumerate = MethodName.findStatic(
                 Types.ScriptRuntime, "enumerate",
                 Type.methodType(Types.ScriptIterator, Types.Object, Types.ExecutionContext));
@@ -79,11 +79,38 @@ abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void, Express
     }
 
     private Iterator<Node> elements;
-
-    private Iterator<Variable<Iterator<?>>> iterators;
+    private Iterator<Variable<ScriptIterator<?>>> iterators;
 
     protected ComprehensionGenerator(CodeGenerator codegen) {
         super(codegen);
+    }
+
+    /**
+     * stack: [env] {@literal ->} [env, envRec]
+     * 
+     * @param mv
+     *            the statement visitor
+     */
+    private void getEnvRec(ExpressionVisitor mv) {
+        mv.dup();
+        mv.invoke(Methods.LexicalEnvironment_getEnvRec);
+    }
+
+    /**
+     * stack: [envRec] {@literal ->} [envRec]
+     * 
+     * @param name
+     *            the binding name
+     * @param deletable
+     *            the deletable flag
+     * @param mv
+     *            the statement visitor
+     */
+    private void createMutableBinding(Name name, boolean deletable, ExpressionVisitor mv) {
+        mv.dup();
+        mv.aconst(name.getIdentifier());
+        mv.iconst(deletable);
+        mv.invoke(Methods.EnvironmentRecord_createMutableBinding);
     }
 
     @Override
@@ -92,7 +119,7 @@ abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void, Express
     }
 
     /**
-     * 12.2.4.2.3 Runtime Semantics: ComprehensionEvaluation
+     * Runtime Semantics: ComprehensionEvaluation
      * <p>
      * ComprehensionTail : AssignmentExpression
      */
@@ -100,7 +127,7 @@ abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void, Express
     protected abstract Void visit(Expression node, ExpressionVisitor mv);
 
     /**
-     * 12.2.4.2.3 Runtime Semantics: ComprehensionEvaluation
+     * Runtime Semantics: ComprehensionEvaluation
      */
     @Override
     public Void visit(Comprehension node, ExpressionVisitor mv) {
@@ -109,41 +136,38 @@ abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void, Express
         list.add(node.getExpression());
         elements = list.iterator();
 
-        // create variables early for the sake of generating useful local variable maps
-        ArrayList<Variable<Iterator<?>>> iters = new ArrayList<>();
-        for (Node e : list) {
+        // Create variables early so they'll appear next to each other in the local variable map.
+        ArrayList<Variable<ScriptIterator<?>>> iters = new ArrayList<>();
+        for (ComprehensionQualifier e : node.getList()) {
             if (e instanceof ComprehensionFor || e instanceof LegacyComprehensionFor) {
-                Variable<Iterator<?>> iter = mv.newVariable("iter", Iterator.class).uncheckedCast();
+                Variable<ScriptIterator<?>> iter = mv.newVariable("iter", ScriptIterator.class)
+                        .uncheckedCast();
                 iters.add(iter);
             }
         }
         iterators = iters.iterator();
 
-        // start generating code
+        // Start generating code.
         elements.next().accept(this, mv);
 
         return null;
     }
 
     /**
-     * 12.2.4.2.3 Runtime Semantics: ComprehensionEvaluation
+     * Runtime Semantics: ComprehensionEvaluation
      */
     @Override
     public Void visit(LegacyComprehension node, ExpressionVisitor mv) {
-        // create new declarative lexical environment
+        // Create a new declarative lexical environment.
         // stack: [] -> [env]
         newDeclarativeEnvironment(mv);
         {
             // stack: [env] -> [env, envRec]
-            mv.dup();
-            mv.invoke(Methods.LexicalEnvironment_getEnvRec);
+            getEnvRec(mv);
 
             // stack: [env, envRec] -> [env]
             for (Name name : LexicallyDeclaredNames(node.getScope())) {
-                mv.dup();
-                mv.aconst(name.getIdentifier());
-                mv.iconst(false);
-                mv.invoke(Methods.EnvironmentRecord_createMutableBinding);
+                createMutableBinding(name, false, mv);
 
                 mv.dup();
                 mv.aconst(name.getIdentifier());
@@ -159,14 +183,14 @@ abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void, Express
         visit((Comprehension) node, mv);
         mv.exitScope();
 
-        // restore previous lexical environment
+        // Restore the previous lexical environment.
         popLexicalEnvironment(mv);
 
         return null;
     }
 
     /**
-     * 12.2.4.2.4 Runtime Semantics: ComprehensionComponentEvaluation
+     * Runtime Semantics: ComprehensionComponentEvaluation
      * <p>
      * ComprehensionIf : if ( AssignmentExpression )
      */
@@ -189,22 +213,22 @@ abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void, Express
     }
 
     /**
-     * 12.2.4.2.4 Runtime Semantics: ComprehensionComponentEvaluation
+     * Runtime Semantics: ComprehensionComponentEvaluation
      * <p>
      * ComprehensionFor : for ( ForBinding of AssignmentExpression )
      */
     @Override
     public Void visit(ComprehensionFor node, ExpressionVisitor mv) {
         Jump lblTest = new Jump(), lblLoop = new Jump();
+        Variable<ScriptIterator<?>> iter = iterators.next();
 
         /* steps 1-2 */
         expressionBoxedValue(node.getExpression(), mv);
 
         /* steps 3-4 */
         mv.loadExecutionContext();
+        mv.lineInfo(node.getExpression());
         mv.invoke(Methods.ScriptRuntime_iterate);
-
-        Variable<Iterator<?>> iter = iterators.next();
         mv.store(iter);
 
         /* step 5 (not applicable) */
@@ -215,10 +239,11 @@ abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void, Express
         /* steps 9d-9e */
         mv.mark(lblLoop);
         mv.load(iter);
+        mv.lineInfo(node);
         mv.invoke(Methods.Iterator_next);
 
         /* steps 6f-6j */
-        // create new declarative lexical environment
+        // Create a new declarative lexical environment.
         // stack: [nextValue] -> [nextValue, forEnv]
         newDeclarativeEnvironment(mv);
         {
@@ -228,19 +253,9 @@ abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void, Express
 
             // stack: [forEnv, nextValue, envRec] -> [forEnv, envRec, nextValue]
             for (Name name : BoundNames(node.getBinding())) {
-                mv.dup();
-                mv.aconst(name.getIdentifier());
-                mv.iconst(false);
-                mv.invoke(Methods.EnvironmentRecord_createMutableBinding);
+                createMutableBinding(name, false, mv);
             }
             mv.swap();
-
-            // 12.2.4.2.2 Runtime Semantics: BindingInitialization :: ForBinding
-            if (node.getBinding() instanceof BindingPattern) {
-                mv.lineInfo(node.getBinding());
-                mv.loadExecutionContext();
-                mv.invoke(Methods.ScriptRuntime_ensureObject);
-            }
 
             // stack: [forEnv, envRec, nextValue] -> [forEnv]
             BindingInitializationWithEnvironment(node.getBinding(), mv);
@@ -248,18 +263,40 @@ abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void, Express
         // stack: [forEnv] -> []
         pushLexicalEnvironment(mv);
 
-        /* steps 6k, 6m */
+        /* steps 6k-6m */
         mv.enterScope(node);
-        elements.next().accept(this, mv);
-        mv.exitScope();
+        new IterationGenerator<ComprehensionFor, ExpressionVisitor>(codegen) {
+            @Override
+            protected Completion iterationBody(ComprehensionFor node,
+                    Variable<ScriptIterator<?>> iterator, ExpressionVisitor mv) {
+                elements.next().accept(ComprehensionGenerator.this, mv);
+                return Completion.Normal;
+            }
 
-        /* step 6l */
-        // restore previous lexical environment
-        popLexicalEnvironment(mv);
+            @Override
+            protected void epilogue(ComprehensionFor node, Variable<ScriptIterator<?>> iterator,
+                    ExpressionVisitor mv) {
+                /* step 6l */
+                // Restore the previous lexical environment.
+                popLexicalEnvironment(mv);
+            }
+
+            @Override
+            protected Variable<Object> enterIteration(ComprehensionFor node, ExpressionVisitor mv) {
+                return mv.enterIteration();
+            }
+
+            @Override
+            protected List<TempLabel> exitIteration(ComprehensionFor node, ExpressionVisitor mv) {
+                return mv.exitIteration();
+            }
+        }.generate(node, iter, mv);
+        mv.exitScope();
 
         /* steps 6a-6c */
         mv.mark(lblTest);
         mv.load(iter);
+        mv.lineInfo(node);
         mv.invoke(Methods.Iterator_hasNext);
         mv.ifne(lblLoop);
 
@@ -267,19 +304,19 @@ abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void, Express
     }
 
     /**
-     * 12.2.4.2.4 Runtime Semantics: ComprehensionComponentEvaluation
+     * Runtime Semantics: ComprehensionComponentEvaluation
      * <p>
      * ComprehensionFor : for ( ForBinding of AssignmentExpression )
      */
     @Override
     public Void visit(LegacyComprehensionFor node, ExpressionVisitor mv) {
         Jump lblTest = new Jump(), lblLoop = new Jump(), lblFail = new Jump();
+        Variable<ScriptIterator<?>> iter = iterators.next();
 
-        ValType type = expressionValue(node.getExpression(), mv);
+        ValType type = expressionBoxedValue(node.getExpression(), mv);
         if (type != ValType.Object) {
             // fail-safe behaviour for null/undefined values in legacy comprehensions
             Jump loopstart = new Jump();
-            mv.toBoxed(type);
             mv.dup();
             isUndefinedOrNull(mv);
             mv.ifeq(loopstart);
@@ -301,10 +338,12 @@ abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void, Express
             mv.invoke(Methods.GeneratorObject_isLegacyGenerator);
             mv.ifeq(l0);
             mv.loadExecutionContext();
+            mv.lineInfo(node.getExpression());
             mv.invoke(Methods.ScriptRuntime_iterate);
             mv.goTo(l1);
             mv.mark(l0);
             mv.loadExecutionContext();
+            mv.lineInfo(node.getExpression());
             if (iterationKind == IterationKind.Enumerate) {
                 mv.invoke(Methods.ScriptRuntime_enumerate);
             } else {
@@ -314,29 +353,43 @@ abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void, Express
         } else {
             assert iterationKind == IterationKind.Iterate;
             mv.loadExecutionContext();
+            mv.lineInfo(node.getExpression());
             mv.invoke(Methods.ScriptRuntime_iterate);
         }
-
-        Variable<Iterator<?>> iter = iterators.next();
         mv.store(iter);
 
         mv.nonDestructiveGoTo(lblTest);
         mv.mark(lblLoop);
         mv.load(iter);
+        mv.lineInfo(node);
         mv.invoke(Methods.Iterator_next);
 
-        if (node.getBinding() instanceof BindingPattern) {
-            // ToObject(...)
-            ToObject(node.getBinding(), ValType.Any, mv);
-        }
+        new IterationGenerator<LegacyComprehensionFor, ExpressionVisitor>(codegen) {
+            @Override
+            protected Completion iterationBody(LegacyComprehensionFor node,
+                    Variable<ScriptIterator<?>> iterator, ExpressionVisitor mv) {
+                // stack: [nextValue] -> []
+                BindingInitialization(node.getBinding(), mv);
+                elements.next().accept(ComprehensionGenerator.this, mv);
+                return Completion.Normal;
+            }
 
-        // stack: [nextValue] -> []
-        BindingInitialization(node.getBinding(), mv);
+            @Override
+            protected Variable<Object> enterIteration(LegacyComprehensionFor node,
+                    ExpressionVisitor mv) {
+                return mv.enterIteration();
+            }
 
-        elements.next().accept(this, mv);
+            @Override
+            protected List<TempLabel> exitIteration(LegacyComprehensionFor node,
+                    ExpressionVisitor mv) {
+                return mv.exitIteration();
+            }
+        }.generate(node, iter, lblTest, mv);
 
         mv.mark(lblTest);
         mv.load(iter);
+        mv.lineInfo(node);
         mv.invoke(Methods.Iterator_hasNext);
         mv.ifne(lblLoop);
         mv.mark(lblFail);

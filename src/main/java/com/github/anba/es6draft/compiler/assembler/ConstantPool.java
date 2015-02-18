@@ -10,7 +10,7 @@ import java.util.HashMap;
 import java.util.Map.Entry;
 
 /**
- * 
+ * Constant pool abstraction to handle the Java bytecode limitation on constant entries per class.
  */
 abstract class ConstantPool {
     private final HashMap<Object, Integer> constantsMap = new HashMap<>(64);
@@ -186,19 +186,19 @@ abstract class ConstantPool {
     }
 
     /**
-     * Close this constant pool
+     * Closes this constant pool.
      */
     protected abstract void close();
 
     /**
-     * Create a new constant pool when this pool's limit has been exceeded.
+     * Creates a new constant pool when this pool's limit has been exceeded.
      * 
      * @return the new constant pool
      */
     protected abstract ConstantPool newConstantPool();
 
     /**
-     * Load the indexed integer constant {@code cst} for the given method.
+     * Loads the indexed integer constant {@code cst} for the given method.
      * 
      * @param assembler
      *            the instruction assembler
@@ -210,7 +210,7 @@ abstract class ConstantPool {
     protected abstract void iconst(InstructionAssembler assembler, Integer cst, int index);
 
     /**
-     * Load the indexed long constant {@code cst} for the given method.
+     * Loads the indexed long constant {@code cst} for the given method.
      * 
      * @param assembler
      *            the instruction assembler
@@ -222,7 +222,7 @@ abstract class ConstantPool {
     protected abstract void lconst(InstructionAssembler assembler, Long cst, int index);
 
     /**
-     * Load the indexed float constant {@code cst} for the given method.
+     * Loads the indexed float constant {@code cst} for the given method.
      * 
      * @param assembler
      *            the instruction assembler
@@ -234,7 +234,7 @@ abstract class ConstantPool {
     protected abstract void fconst(InstructionAssembler assembler, Float cst, int index);
 
     /**
-     * Load the indexed double constant {@code cst} for the given method.
+     * Loads the indexed double constant {@code cst} for the given method.
      * 
      * @param assembler
      *            the instruction assembler
@@ -246,7 +246,7 @@ abstract class ConstantPool {
     protected abstract void dconst(InstructionAssembler assembler, Double cst, int index);
 
     /**
-     * Load the indexed string constant {@code cst} for the given method.
+     * Loads the indexed string constant {@code cst} for the given method.
      * 
      * @param assembler
      *            the instruction assembler

@@ -50,9 +50,9 @@ final class EvalDeclarationInstantiationGenerator extends DeclarationBindingInst
                 Type.methodType(Types.DeclarativeEnvironmentRecord));
 
         // class: ExecutionContext
-        static final MethodName ExecutionContext_getFunctionVariableEnvironment = MethodName
-                .findVirtual(Types.ExecutionContext, "getFunctionVariableEnvironment",
-                        Type.methodType(Types.LexicalEnvironment));
+        static final MethodName ExecutionContext_getFunctionVariableEnvironmentRecord = MethodName
+                .findVirtual(Types.ExecutionContext, "getFunctionVariableEnvironmentRecord",
+                        Type.methodType(Types.FunctionEnvironmentRecord));
 
         // class: ScriptRuntime
         static final MethodName ScriptRuntime_canDeclareVarOrThrow = MethodName.findStatic(
@@ -64,9 +64,9 @@ final class EvalDeclarationInstantiationGenerator extends DeclarationBindingInst
     private static final int VAR_ENV = 1;
     private static final int LEX_ENV = 2;
 
-    private static final class EvalDeclInitMethodGenerator extends ExpressionVisitor {
-        EvalDeclInitMethodGenerator(MethodCode method, Script node) {
-            super(method, IsStrict(node), false, false);
+    private static final class EvalDeclInitMethodGenerator extends InstructionVisitor {
+        EvalDeclInitMethodGenerator(MethodCode method) {
+            super(method);
         }
 
         @Override
@@ -84,7 +84,7 @@ final class EvalDeclarationInstantiationGenerator extends DeclarationBindingInst
 
     void generate(Script evalScript) {
         MethodCode method = codegen.newMethod(evalScript, ScriptName.EvalInit);
-        ExpressionVisitor mv = new EvalDeclInitMethodGenerator(method, evalScript);
+        InstructionVisitor mv = new EvalDeclInitMethodGenerator(method);
 
         mv.lineInfo(evalScript);
         mv.begin();
@@ -99,15 +99,15 @@ final class EvalDeclarationInstantiationGenerator extends DeclarationBindingInst
         mv.end();
     }
 
-    private void generateGlobal(Script evalScript, ExpressionVisitor mv) {
-        assert evalScript.isGlobalCode() && !evalScript.isStrict();
+    private void generateGlobal(Script evalScript, InstructionVisitor mv) {
+        assert evalScript.isGlobalCode() && !evalScript.isStrict() && !evalScript.isScripting();
 
         Variable<ExecutionContext> context = mv.getParameter(EXECUTION_CONTEXT,
                 ExecutionContext.class);
         Variable<LexicalEnvironment<GlobalEnvironmentRecord>> varEnv = mv.getParameter(VAR_ENV,
                 LexicalEnvironment.class).uncheckedCast();
-        Variable<LexicalEnvironment<EnvironmentRecord>> lexEnv = mv.getParameter(LEX_ENV,
-                LexicalEnvironment.class).uncheckedCast();
+        Variable<LexicalEnvironment<DeclarativeEnvironmentRecord>> lexEnv = mv.getParameter(
+                LEX_ENV, LexicalEnvironment.class).uncheckedCast();
 
         /* step 1 */
         @SuppressWarnings("unused")
@@ -117,8 +117,8 @@ final class EvalDeclarationInstantiationGenerator extends DeclarationBindingInst
         /* step 3 */
         List<StatementListItem> varDeclarations = VarScopedDeclarations(evalScript);
         /* step 4 */
-        Variable<EnvironmentRecord> lexEnvRec = mv
-                .newVariable("lexEnvRec", EnvironmentRecord.class);
+        Variable<DeclarativeEnvironmentRecord> lexEnvRec = mv.newVariable("lexEnvRec",
+                DeclarativeEnvironmentRecord.class);
         storeEnvironmentRecord(lexEnvRec, lexEnv, mv);
         /* step 5 */
         Variable<GlobalEnvironmentRecord> varEnvRec = mv.newVariable("varEnvRec",
@@ -185,17 +185,18 @@ final class EvalDeclarationInstantiationGenerator extends DeclarationBindingInst
         mv._return();
     }
 
-    private void generate(Script evalScript, ExpressionVisitor mv) {
+    private void generate(Script evalScript, InstructionVisitor mv) {
         assert evalScript.isFunctionCode() || evalScript.isStrict() || evalScript.isScripting();
+        final boolean strict = IsStrict(evalScript);
+        final boolean nonStrictOrScripting = !strict || evalScript.isScripting();
 
         Variable<ExecutionContext> context = mv.getParameter(EXECUTION_CONTEXT,
                 ExecutionContext.class);
         Variable<LexicalEnvironment<EnvironmentRecord>> varEnv = mv.getParameter(VAR_ENV,
                 LexicalEnvironment.class).uncheckedCast();
-        Variable<LexicalEnvironment<EnvironmentRecord>> lexEnv = mv.getParameter(LEX_ENV,
-                LexicalEnvironment.class).uncheckedCast();
-        Variable<FunctionObject> fo = mv.newVariable("fo", FunctionObject.class);
-        boolean strict = IsStrict(evalScript);
+        Variable<LexicalEnvironment<DeclarativeEnvironmentRecord>> lexEnv = mv.getParameter(
+                LEX_ENV, LexicalEnvironment.class).uncheckedCast();
+        Variable<FunctionObject> fo = null;
 
         Variable<Undefined> undef = mv.newVariable("undef", Undefined.class);
         mv.loadUndefined();
@@ -209,8 +210,8 @@ final class EvalDeclarationInstantiationGenerator extends DeclarationBindingInst
         /* step 3 */
         List<StatementListItem> varDeclarations = VarScopedDeclarations(evalScript);
         /* step 4 */
-        Variable<EnvironmentRecord> lexEnvRec = mv
-                .newVariable("lexEnvRec", EnvironmentRecord.class);
+        Variable<DeclarativeEnvironmentRecord> lexEnvRec = mv.newVariable("lexEnvRec",
+                DeclarativeEnvironmentRecord.class);
         storeEnvironmentRecord(lexEnvRec, lexEnv, mv);
         /* step 5 */
         Variable<EnvironmentRecord> varEnvRec = mv
@@ -246,6 +247,9 @@ final class EvalDeclarationInstantiationGenerator extends DeclarationBindingInst
                 }
             }
         }
+        if (!functionsToInitialize.isEmpty()) {
+            fo = mv.newVariable("fo", FunctionObject.class);
+        }
         /* step 10 */
         LinkedHashSet<Name> declaredVarNames = new LinkedHashSet<>();
         /* step 11 */
@@ -280,36 +284,46 @@ final class EvalDeclarationInstantiationGenerator extends DeclarationBindingInst
             InstantiateFunctionObject(context, lexEnv, f, mv);
             mv.store(fo);
 
-            hasBinding(varEnvRec, fn, mv);
+            if (nonStrictOrScripting) {
+                hasBinding(varEnvRec, fn, mv);
 
-            Jump funcAlreadyDeclared = new Jump(), after = new Jump();
-            mv.ifne(funcAlreadyDeclared);
-            createMutableBinding(varEnvRec, fn, true, mv);
-            initializeBinding(varEnvRec, fn, fo, mv);
-            mv.goTo(after);
-            mv.mark(funcAlreadyDeclared);
-            setMutableBinding(varEnvRec, fn, fo, strict, mv);
-            mv.mark(after);
+                Jump funcAlreadyDeclared = new Jump(), after = new Jump();
+                mv.ifne(funcAlreadyDeclared);
+                createMutableBinding(varEnvRec, fn, true, mv);
+                initializeBinding(varEnvRec, fn, fo, mv);
+                mv.goTo(after);
+                mv.mark(funcAlreadyDeclared);
+                setMutableBinding(varEnvRec, fn, fo, strict, mv);
+                mv.mark(after);
+            } else {
+                // Early error semantics ensure that fn does not already exist in varEnvRec.
+                createMutableBinding(varEnvRec, fn, true, mv);
+                initializeBinding(varEnvRec, fn, fo, mv);
+            }
         }
         /* step 16 */
         for (Name vn : declaredVarNames) {
-            hasBinding(varEnvRec, vn, mv);
+            if (nonStrictOrScripting) {
+                hasBinding(varEnvRec, vn, mv);
 
-            Jump varAlreadyDeclared = new Jump();
-            mv.ifne(varAlreadyDeclared);
-            createMutableBinding(varEnvRec, vn, true, mv);
-            initializeBinding(varEnvRec, vn, undef, mv);
-            mv.mark(varAlreadyDeclared);
+                Jump varAlreadyDeclared = new Jump();
+                mv.ifne(varAlreadyDeclared);
+                createMutableBinding(varEnvRec, vn, true, mv);
+                initializeBinding(varEnvRec, vn, undef, mv);
+                mv.mark(varAlreadyDeclared);
+            } else {
+                // Early error semantics ensure that vn does not already exist in varEnvRec.
+                createMutableBinding(varEnvRec, vn, true, mv);
+                initializeBinding(varEnvRec, vn, undef, mv);
+            }
         }
         /* step 17 */
         mv._return();
     }
 
-    private void getTopLex(Variable<ExecutionContext> context, ExpressionVisitor mv) {
+    private void getTopLex(Variable<ExecutionContext> context, InstructionVisitor mv) {
         mv.load(context);
-        mv.invoke(Methods.ExecutionContext_getFunctionVariableEnvironment);
-        getEnvironmentRecord(mv);
-        mv.checkcast(Types.FunctionEnvironmentRecord);
+        mv.invoke(Methods.ExecutionContext_getFunctionVariableEnvironmentRecord);
         mv.invoke(Methods.FunctionEnvironmentRecord_getTopLex);
     }
 }

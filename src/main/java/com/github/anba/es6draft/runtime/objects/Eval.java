@@ -7,6 +7,7 @@
 package com.github.anba.es6draft.runtime.objects;
 
 import static com.github.anba.es6draft.runtime.ExecutionContext.newEvalExecutionContext;
+import static com.github.anba.es6draft.runtime.LexicalEnvironment.newDeclarativeEnvironment;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import java.util.EnumSet;
@@ -15,6 +16,7 @@ import com.github.anba.es6draft.Script;
 import com.github.anba.es6draft.compiler.CompilationException;
 import com.github.anba.es6draft.parser.Parser;
 import com.github.anba.es6draft.parser.ParserException;
+import com.github.anba.es6draft.runtime.DeclarativeEnvironmentRecord;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.Realm;
@@ -38,27 +40,32 @@ public final class Eval {
         /**
          * Flag for direct eval calls
          */
-        Direct(0b00001),
+        Direct(0x0001),
 
         /**
          * Flag for strict-mode eval calls
          */
-        Strict(0b00010),
+        Strict(0x0002),
 
         /**
          * Flag for global code eval calls
          */
-        GlobalCode(0b00100),
+        GlobalCode(0x0004),
 
         /**
          * Flag for global scope eval calls
          */
-        GlobalScope(0b01000),
+        GlobalScope(0x0008),
+
+        /**
+         * Flag for global this eval calls
+         */
+        GlobalThis(0x0010),
 
         /**
          * Flag for eval calls enclosed by with-statement
          */
-        EnclosedByWithStatement(0b10000);
+        EnclosedByWithStatement(0x0020);
 
         private final int value;
 
@@ -76,17 +83,20 @@ public final class Eval {
 
         static EnumSet<Parser.Option> toOptions(int flags) {
             EnumSet<Parser.Option> options = EnumSet.of(Parser.Option.EvalScript);
+            if (EvalFlags.Direct.isSet(flags)) {
+                options.add(Parser.Option.DirectEval);
+            }
             if (EvalFlags.Strict.isSet(flags)) {
                 options.add(Parser.Option.Strict);
             }
             if (!EvalFlags.GlobalCode.isSet(flags)) {
                 options.add(Parser.Option.FunctionCode);
             }
-            if (EvalFlags.Direct.isSet(flags)) {
-                options.add(Parser.Option.DirectEval);
-            }
             if (!EvalFlags.GlobalScope.isSet(flags)) {
                 options.add(Parser.Option.LocalScope);
+            }
+            if (!EvalFlags.GlobalThis.isSet(flags)) {
+                options.add(Parser.Option.FunctionThis);
             }
             if (EvalFlags.EnclosedByWithStatement.isSet(flags)) {
                 options.add(Parser.Option.EnclosedByWithStatement);
@@ -132,7 +142,7 @@ public final class Eval {
     public static Object indirectEval(ExecutionContext cx, ExecutionContext caller, Object source) {
         // TODO: let's assume for now that this is the no-hook entry point (probably rename method)
         return PerformEval(cx, caller, source, EvalFlags.GlobalCode.getValue()
-                | EvalFlags.GlobalScope.getValue());
+                | EvalFlags.GlobalScope.getValue() | EvalFlags.GlobalThis.getValue());
     }
 
     /**
@@ -218,14 +228,15 @@ public final class Eval {
         assert !strictCaller || strictEval : "'strictCaller => strictEval' does not hold";
         /* step 8 (omitted) */
         /* steps 9-10 */
-        LexicalEnvironment<?> lexEnv, varEnv;
+        LexicalEnvironment<DeclarativeEnvironmentRecord> lexEnv;
+        LexicalEnvironment<?> varEnv;
         if (direct) {
             /* step 9 */
-            lexEnv = LexicalEnvironment.newDeclarativeEnvironment(cx.getLexicalEnvironment());
+            lexEnv = newDeclarativeEnvironment(cx.getLexicalEnvironment());
             varEnv = cx.getVariableEnvironment();
         } else {
             /* step 10 */
-            lexEnv = LexicalEnvironment.newDeclarativeEnvironment(evalRealm.getGlobalEnv());
+            lexEnv = newDeclarativeEnvironment(evalRealm.getGlobalEnv());
             varEnv = evalRealm.getGlobalEnv();
         }
         /* step 11 */

@@ -7,8 +7,9 @@
 package com.github.anba.es6draft.compiler.assembler;
 
 /**
-  * 
-  */
+ * Concrete {@link ConstantPool} implementation which handles all constant values as inline
+ * constants, i.e. the constant value is directly written into the current class.
+ */
 final class InlineConstantPool extends ConstantPool {
     private static final int INLINE_CONSTANTS_LIMIT = 0x2000;
 

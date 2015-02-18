@@ -81,8 +81,8 @@ public class DeclarativeEnvironmentRecord implements EnvironmentRecord {
 
         @Override
         public String toString() {
-            return String.format("{value = %s, mutable = %b, deletable = %b}",
-                    Objects.toString(value, "<uninitialized>"), mutable, deletable);
+            return String.format("{mutable = %b, deletable = %b, strict = %b, value = %s}",
+                    mutable, deletable, strict, Objects.toString(value, "<uninitialized>"));
         }
 
         @Override

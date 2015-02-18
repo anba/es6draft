@@ -111,30 +111,51 @@ public class OrdinaryObject implements ScriptObject {
     }
 
     /**
-     * Returns the string valued properties.
+     * Returns the number of properties.
      * 
-     * @return the string valued properties
+     * @param withSymbols
+     *            {@code true} to include symbol properties
+     * @return the number of properties
      */
-    final PropertyMap<String, Property> properties() {
-        return properties;
+    final int countProperties(boolean withSymbols) {
+        return properties.size() + indexedProperties.size()
+                + (withSymbols ? symbolProperties.size() : 0);
     }
 
     /**
-     * Returns the symbol valued properties.
+     * Appends all own string valued properties to the target list.
      * 
-     * @return the symbol valued properties
+     * @param list
+     *            the target list
      */
-    final PropertyMap<Symbol, Property> symbolProperties() {
-        return symbolProperties;
+    final void appendProperties(List<? super String> list) {
+        if (!properties.isEmpty()) {
+            list.addAll(properties.keySet());
+        }
     }
 
     /**
-     * Returns the integer indexed properties.
+     * Appends all own symbol valued properties to the target list.
      * 
-     * @return the integer indexed properties
+     * @param list
+     *            the target list
      */
-    final IndexedMap<Property> indexedProperties() {
-        return indexedProperties;
+    final void appendSymbolProperties(List<? super Symbol> list) {
+        if (!symbolProperties.isEmpty()) {
+            list.addAll(symbolProperties.keySet());
+        }
+    }
+
+    /**
+     * Appends all own integer indexed properties to the target list.
+     * 
+     * @param list
+     *            the target list
+     */
+    final void appendIndexedProperties(List<? super String> list) {
+        if (!indexedProperties.isEmpty()) {
+            list.addAll(indexedProperties.keys());
+        }
     }
 
     final void defineOwnPropertyUnchecked(String propertyKey, Property property) {
@@ -1701,19 +1722,13 @@ public class OrdinaryObject implements ScriptObject {
      * @return the list of enumerable string valued property keys
      */
     protected List<String> getEnumerableKeys(ExecutionContext cx) {
-        int indexedSize = indexedProperties.size();
-        int propertiesSize = properties.size();
-        int totalSize = indexedSize + propertiesSize;
+        int totalSize = countProperties(false);
         if (totalSize == 0) {
             return Collections.emptyList();
         }
         ArrayList<String> keys = new ArrayList<>(totalSize);
-        if (indexedSize != 0) {
-            keys.addAll(indexedProperties.keys());
-        }
-        if (propertiesSize != 0) {
-            keys.addAll(properties.keySet());
-        }
+        appendIndexedProperties(keys);
+        appendProperties(keys);
         return keys;
     }
 
@@ -1877,27 +1892,18 @@ public class OrdinaryObject implements ScriptObject {
      * @return the list of own property keys
      */
     protected List<Object> getOwnPropertyKeys(ExecutionContext cx) {
-        int indexedSize = indexedProperties.size();
-        int propertiesSize = properties.size();
-        int symbolsSize = symbolProperties.size();
-        int totalSize = indexedSize + propertiesSize + symbolsSize;
+        int totalSize = countProperties(true);
         if (totalSize == 0) {
             return Collections.emptyList();
         }
         /* step 1 */
         ArrayList<Object> ownKeys = new ArrayList<>(totalSize);
         /* step 2 */
-        if (indexedSize != 0) {
-            ownKeys.addAll(indexedProperties.keys());
-        }
+        appendIndexedProperties(ownKeys);
         /* step 3 */
-        if (propertiesSize != 0) {
-            ownKeys.addAll(properties.keySet());
-        }
+        appendProperties(ownKeys);
         /* step 4 */
-        if (symbolsSize != 0) {
-            ownKeys.addAll(symbolProperties.keySet());
-        }
+        appendSymbolProperties(ownKeys);
         /* step 5 */
         return ownKeys;
     }
@@ -2101,13 +2107,14 @@ public class OrdinaryObject implements ScriptObject {
      */
     public static ScriptObject GetPrototypeFromConstructor(ExecutionContext cx,
             Constructor constructor, Intrinsics intrinsicDefaultProto) {
-        /* step 1 (not applicable) */
-        /* step 2 (not applicable) */
+        /* steps 1-2 (not applicable) */
         /* steps 3-4 */
         Object proto = Get(cx, constructor, "prototype");
         /* step 5 */
         if (!Type.isObject(proto)) {
+            /* step 5.a */
             Realm realm = GetFunctionRealm(cx, constructor);
+            /* step 5.b */
             proto = realm.getIntrinsic(intrinsicDefaultProto);
         }
         /* step 6 */

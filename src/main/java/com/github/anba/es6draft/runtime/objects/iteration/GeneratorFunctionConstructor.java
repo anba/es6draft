@@ -87,6 +87,17 @@ public final class GeneratorFunctionConstructor extends BuiltinConstructor imple
         return CreateDynamicFunction(calleeContext, newTarget, args);
     }
 
+    /**
+     * 19.2.1.1.1 RuntimeSemantics: CreateDynamicFunction(constructor, newTarget, kind, args)
+     * 
+     * @param cx
+     *            the execution context
+     * @param newTarget
+     *            the newTarget constructor function
+     * @param args
+     *            the function arguments
+     * @return the new generator function object
+     */
     private OrdinaryGenerator CreateDynamicFunction(ExecutionContext cx, Constructor newTarget,
             Object[] args) {
         /* step 1 (not applicable) */

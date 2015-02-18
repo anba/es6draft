@@ -9,8 +9,6 @@ package com.github.anba.es6draft.repl.global;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToFlatString;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToInt32;
 import static com.github.anba.es6draft.runtime.modules.ModuleSemantics.GetModuleNamespace;
-import static com.github.anba.es6draft.runtime.modules.ModuleSemantics.ModuleEvaluationJob;
-import static com.github.anba.es6draft.runtime.modules.ModuleSemantics.NormalizeModuleName;
 import static com.github.anba.es6draft.runtime.objects.binary.ArrayBufferConstructor.DetachArrayBuffer;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
@@ -34,6 +32,8 @@ import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
 import com.github.anba.es6draft.runtime.internal.Source;
+import com.github.anba.es6draft.runtime.modules.MalformedNameException;
+import com.github.anba.es6draft.runtime.modules.ResolutionException;
 import com.github.anba.es6draft.runtime.modules.SourceIdentifier;
 import com.github.anba.es6draft.runtime.objects.ErrorObject;
 import com.github.anba.es6draft.runtime.objects.binary.ArrayBufferObject;
@@ -55,8 +55,8 @@ public class SimpleShellGlobalObject extends ShellGlobalObject {
     }
 
     @Override
-    protected void initializeExtensions(ExecutionContext cx) {
-        super.initializeExtensions(cx);
+    protected void initializeExtensions() {
+        super.initializeExtensions();
         install(this, SimpleShellGlobalObject.class);
     }
 
@@ -200,8 +200,15 @@ public class SimpleShellGlobalObject extends ShellGlobalObject {
         } else {
             realm = cx.getRealm();
         }
-        SourceIdentifier normalizedModuleName = NormalizeModuleName(cx, realm, moduleName, null);
-        ModuleEvaluationJob(cx, realm, normalizedModuleName);
+        SourceIdentifier normalizedModuleName;
+        try {
+            normalizedModuleName = eval(realm, moduleName, null);
+        } catch (MalformedNameException | ParserException | CompilationException
+                | ResolutionException e) {
+            throw e.toScriptException(cx);
+        } catch (IOException e) {
+            throw newError(cx, e.getMessage());
+        }
         return GetModuleNamespace(cx, realm, normalizedModuleName);
     }
 
@@ -249,7 +256,9 @@ public class SimpleShellGlobalObject extends ShellGlobalObject {
      */
     @Function(name = "dumpScope", arity = 0)
     public void dumpScope(ExecutionContext cx, ExecutionContext caller) {
-        console.print(caller.getLexicalEnvironment().toString());
+        if (caller.getLexicalEnvironment() != null) {
+            console.print(caller.getLexicalEnvironment().toString());
+        }
     }
 
     /**

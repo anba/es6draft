@@ -11,6 +11,7 @@ import java.util.List;
 import com.github.anba.es6draft.ast.Node;
 import com.github.anba.es6draft.compiler.Labels.TempLabel;
 import com.github.anba.es6draft.compiler.StatementGenerator.Completion;
+import com.github.anba.es6draft.compiler.assembler.Jump;
 import com.github.anba.es6draft.compiler.assembler.MethodName;
 import com.github.anba.es6draft.compiler.assembler.TryCatchLabel;
 import com.github.anba.es6draft.compiler.assembler.Type;
@@ -44,18 +45,86 @@ abstract class IterationGenerator<NODE extends Node, VISITOR extends ExpressionV
         this.codegen = codegen;
     }
 
-    protected abstract Completion generateCode(NODE node, Variable<ScriptIterator<?>> iterator,
+    /**
+     * Emit code for the iteration body.
+     * 
+     * @param node
+     *            the ast node
+     * @param iterator
+     *            the iterator variable
+     * @param mv
+     *            the expression visitor
+     * @return the completion value
+     */
+    protected abstract Completion iterationBody(NODE node, Variable<ScriptIterator<?>> iterator,
             VISITOR mv);
 
-    protected void generateEpilogue(NODE node, Variable<ScriptIterator<?>> iterator, VISITOR mv) {
+    /**
+     * Emit code for the iteration epilogue.
+     * 
+     * @param node
+     *            the ast node
+     * @param iterator
+     *            the iterator variable
+     * @param mv
+     *            the expression visitor
+     */
+    protected void epilogue(NODE node, Variable<ScriptIterator<?>> iterator, VISITOR mv) {
         // Default implementation is empty.
     }
 
+    /**
+     * Called before emitting the iteration body.
+     * 
+     * @param node
+     *            the ast node
+     * @param mv
+     *            the expression visitor
+     * @return the temporary completion object variable or {@code null}
+     */
     protected abstract Variable<Object> enterIteration(NODE node, VISITOR mv);
 
+    /**
+     * Called after emitting the iteration body.
+     * 
+     * @param node
+     *            the ast node
+     * @param mv
+     *            the expression visitor
+     * @return the list of generated labels
+     */
     protected abstract List<TempLabel> exitIteration(NODE node, VISITOR mv);
 
+    /**
+     * Emit code for the wrapped iteration.
+     * 
+     * @param node
+     *            the ast node
+     * @param iterator
+     *            the iterator variable
+     * @param mv
+     *            the expression visitor
+     * @return the completion value
+     */
     public Completion generate(NODE node, Variable<ScriptIterator<?>> iterator, VISITOR mv) {
+        return generate(node, iterator, null, mv);
+    }
+
+    /**
+     * Emit code for the wrapped iteration.
+     * 
+     * @param node
+     *            the ast node
+     * @param iterator
+     *            the iterator variable
+     * @param target
+     *            the target label
+     * @param mv
+     *            the expression visitor
+     * @return the completion value
+     */
+    public Completion generate(NODE node, Variable<ScriptIterator<?>> iterator, Jump target,
+            VISITOR mv) {
         TryCatchLabel startIteration = new TryCatchLabel(), endIteration = new TryCatchLabel();
         TryCatchLabel handlerCatch = new TryCatchLabel();
         TryCatchLabel handlerCatchStackOverflow = null;
@@ -67,13 +136,20 @@ abstract class IterationGenerator<NODE extends Node, VISITOR extends ExpressionV
                 && !(mv.isResumable() && !codegen.isEnabled(Compiler.Option.NoResume))) {
             handlerReturn = new TryCatchLabel();
         }
+        boolean hasTarget = target != null;
+        if (!hasTarget) {
+            target = new Jump();
+        }
 
         mv.enterVariableScope();
         Variable<Object> completion = enterIteration(node, mv);
 
         // Emit loop body
         mv.mark(startIteration);
-        Completion loopBodyResult = generateCode(node, iterator, mv);
+        Completion loopBodyResult = iterationBody(node, iterator, mv);
+        if (!loopBodyResult.isAbrupt()) {
+            mv.goTo(target);
+        }
         mv.mark(endIteration);
 
         // Restore temporary abrupt targets
@@ -96,7 +172,10 @@ abstract class IterationGenerator<NODE extends Node, VISITOR extends ExpressionV
             mv.tryCatch(startIteration, endIteration, handlerReturn, Types.ReturnValue);
         }
 
-        generateEpilogue(node, iterator, mv);
+        if (!hasTarget) {
+            mv.mark(target);
+        }
+        epilogue(node, iterator, mv);
 
         if (handlerReturn == null && tempLabels.isEmpty()) {
             // No Return handler installed

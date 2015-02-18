@@ -609,7 +609,7 @@ final class CodeGenerator {
         if (!isCompiled(node)) {
             MethodCode method = newMethod(node);
             InstructionVisitor body = new InstructionVisitor(method);
-            body.lineInfo(node.getBeginLine());
+            body.lineInfo(node);
             body.begin();
 
             List<TemplateCharacters> strings = TemplateStrings(node);
@@ -841,19 +841,29 @@ final class CodeGenerator {
         body.exitScope();
 
         if (!result.isAbrupt()) {
-            // fall-thru, return <null> from function
-            body.anull();
+            // fall-thru, return <null> or undefined from function
+            if (isDerivedClassConstructor(node)) {
+                body.anull();
+            } else {
+                body.loadUndefined();
+            }
             body._return();
         }
-
         body.end();
 
         return body.hasTailCalls();
     }
 
+    private boolean isDerivedClassConstructor(FunctionNode node) {
+        if (node instanceof MethodDefinition) {
+            return ((MethodDefinition) node).getType() == MethodDefinition.MethodType.DerivedConstructor;
+        }
+        return false;
+    }
+
     private boolean conciseAsyncFunctionBody(AsyncArrowFunction node) {
         MethodCode method = newMethod(node, FunctionName.Code);
-        AsyncArrowFunctionVisitor body = new AsyncArrowFunctionVisitor(method, node);
+        GeneratorStatementVisitor body = new GeneratorStatementVisitor(method, node);
         body.lineInfo(node);
         body.begin();
         Variable<ResumptionPoint> resume = body.getResumeParameter();
@@ -896,12 +906,10 @@ final class CodeGenerator {
         body.exitScope();
 
         if (!result.isAbrupt()) {
-            // TODO: change back to <undefined> and update GeneratorObject
-            // fall-thru, return <null> from function
-            body.anull();
+            // fall-thru, return undefined from function
+            body.loadUndefined();
             body._return();
         }
-
         if (state != null) {
             body.epilogue(resume, state);
         }
@@ -912,7 +920,7 @@ final class CodeGenerator {
 
     private boolean generatorComprehensionBody(GeneratorComprehension node) {
         MethodCode method = newMethod(node, FunctionName.Code);
-        GeneratorComprehensionVisitor body = new GeneratorComprehensionVisitor(method, node);
+        GeneratorStatementVisitor body = new GeneratorStatementVisitor(method, node);
         body.lineInfo(node);
         body.begin();
         Variable<ResumptionPoint> resume = body.getResumeParameter();
@@ -927,7 +935,6 @@ final class CodeGenerator {
 
         body.loadUndefined();
         body._return();
-
         if (state != null) {
             body.epilogue(resume, state);
         }
@@ -951,7 +958,6 @@ final class CodeGenerator {
                 body.loadCompletionValue();
                 body._return();
             }
-
             body.end();
         }
     }
@@ -1178,50 +1184,6 @@ final class CodeGenerator {
         public void begin() {
             super.begin();
             setParameterName("cx", 0, Types.ExecutionContext);
-        }
-    }
-
-    private static final class AsyncArrowFunctionVisitor extends ExpressionVisitor {
-        AsyncArrowFunctionVisitor(MethodCode method, AsyncArrowFunction node) {
-            super(method, IsStrict(node), false, node.hasSyntheticNodes());
-        }
-
-        @Override
-        protected Stack createStack(Variables variables) {
-            return new StackImpl(variables);
-        }
-
-        @Override
-        public void begin() {
-            super.begin();
-            setParameterName("cx", 0, Types.ExecutionContext);
-            setParameterName("rp", 1, Types.ResumptionPoint);
-        }
-
-        Variable<ResumptionPoint> getResumeParameter() {
-            return getParameter(1, ResumptionPoint.class);
-        }
-    }
-
-    private static final class GeneratorComprehensionVisitor extends ExpressionVisitor {
-        GeneratorComprehensionVisitor(MethodCode method, GeneratorComprehension node) {
-            super(method, IsStrict(node), false, node.hasSyntheticNodes());
-        }
-
-        @Override
-        protected Stack createStack(Variables variables) {
-            return new StackImpl(variables);
-        }
-
-        @Override
-        public void begin() {
-            super.begin();
-            setParameterName("cx", 0, Types.ExecutionContext);
-            setParameterName("rp", 1, Types.ResumptionPoint);
-        }
-
-        Variable<ResumptionPoint> getResumeParameter() {
-            return getParameter(1, ResumptionPoint.class);
         }
     }
 

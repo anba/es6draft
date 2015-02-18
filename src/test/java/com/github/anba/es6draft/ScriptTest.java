@@ -7,8 +7,6 @@
 package com.github.anba.es6draft;
 
 import static com.github.anba.es6draft.TestGlobalObject.newGlobalObjectAllocator;
-import static com.github.anba.es6draft.runtime.modules.ModuleSemantics.ModuleEvaluationJob;
-import static com.github.anba.es6draft.runtime.modules.ModuleSemantics.NormalizeModuleName;
 import static com.github.anba.es6draft.util.Resources.loadConfiguration;
 import static com.github.anba.es6draft.util.Resources.loadTests;
 import static org.junit.Assume.assumeTrue;
@@ -33,12 +31,9 @@ import org.junit.runners.Parameterized.Parameters;
 import org.junit.runners.Parameterized.UseParametersRunnerFactory;
 
 import com.github.anba.es6draft.repl.console.ShellConsole;
-import com.github.anba.es6draft.runtime.ExecutionContext;
-import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
-import com.github.anba.es6draft.runtime.modules.SourceIdentifier;
 import com.github.anba.es6draft.util.Parallelized;
 import com.github.anba.es6draft.util.ParameterizedRunnerFactory;
 import com.github.anba.es6draft.util.TestConfiguration;
@@ -113,11 +108,7 @@ public class ScriptTest {
     public void runTest() throws Throwable {
         // Evaluate actual test-script
         if (test.isModule()) {
-            Realm realm = global.getRealm();
-            ExecutionContext cx = realm.defaultContext();
-            SourceIdentifier normalizedModuleName = NormalizeModuleName(cx, realm,
-                    test.toModuleName(), null);
-            ModuleEvaluationJob(cx, realm, normalizedModuleName);
+            global.eval(test.toModuleName(), null);
         } else {
             global.eval(test.getScript(), test.toFile());
         }

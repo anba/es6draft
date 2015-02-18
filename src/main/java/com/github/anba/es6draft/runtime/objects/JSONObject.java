@@ -315,8 +315,7 @@ public final class JSONObject extends OrdinaryObject implements Initializable {
         Object value = Get(cx, holder, key);
         /* step 3 */
         if (Type.isObject(value)) {
-            ScriptObject objValue = Type.objectValue(value);
-            Object toJSON = Get(cx, objValue, "toJSON");
+            Object toJSON = Get(cx, Type.objectValue(value), "toJSON");
             if (IsCallable(toJSON)) {
                 value = ((Callable) toJSON).call(cx, value, key);
             }

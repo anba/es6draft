@@ -182,6 +182,17 @@ public final class Type {
     }
 
     /**
+     * Returns the binary name for an internal name.
+     * 
+     * @param internalName
+     *            the internal name
+     * @return the corresponding binary name
+     */
+    public static String className(String internalName) {
+        return internalName.replace('/', '.');
+    }
+
+    /**
      * Create a type instance for the given type descriptor string.
      * 
      * @param descriptor

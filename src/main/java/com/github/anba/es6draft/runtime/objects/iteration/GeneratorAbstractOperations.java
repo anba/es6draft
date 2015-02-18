@@ -142,7 +142,7 @@ public final class GeneratorAbstractOperations {
         /* step 1 (?) */
         /* steps 2-4 */
         GeneratorObject generator = genContext.getCurrentGenerator();
-        assert generator != null;
+        assert generator != null : "not evaluating a generator function";
         /* steps 5-11 */
         return generator.yield(iterNextObj);
     }

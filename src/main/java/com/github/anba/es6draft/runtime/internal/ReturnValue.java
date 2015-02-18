@@ -14,7 +14,7 @@ public final class ReturnValue extends Throwable {
     private final Object value;
 
     /**
-     * Constructs a new ReturnValue instance with the given value.
+     * Constructs a new ReturnValue instance with the given completion value.
      * 
      * @param value
      *            the completion value

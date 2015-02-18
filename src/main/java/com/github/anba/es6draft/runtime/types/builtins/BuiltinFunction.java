@@ -87,7 +87,7 @@ public abstract class BuiltinFunction extends OrdinaryObject implements Callable
     /**
      * Returns the callee execution context.
      * 
-     * @return the callee context
+     * @return the callee execution context
      */
     protected final ExecutionContext calleeContext() {
         return realm.defaultContext();
@@ -241,9 +241,7 @@ public abstract class BuiltinFunction extends OrdinaryObject implements Callable
     @Override
     protected List<String> getEnumerableKeys(ExecutionContext cx) {
         if (hasDefaultLength || hasDefaultName) {
-            int indexedSize = indexedProperties().size();
-            int propertiesSize = properties().size();
-            int totalSize = indexedSize + propertiesSize;
+            int totalSize = countProperties(false);
             if (hasDefaultLength) {
                 totalSize += 1;
             }
@@ -251,18 +249,14 @@ public abstract class BuiltinFunction extends OrdinaryObject implements Callable
                 totalSize += 1;
             }
             ArrayList<String> keys = new ArrayList<>(totalSize);
-            if (indexedSize != 0) {
-                keys.addAll(indexedProperties().keys());
-            }
+            appendIndexedProperties(keys);
             if (hasDefaultLength) {
                 keys.add("length");
             }
             if (hasDefaultName) {
                 keys.add("name");
             }
-            if (propertiesSize != 0) {
-                keys.addAll(properties().keySet());
-            }
+            appendProperties(keys);
             return keys;
         }
         return super.getEnumerableKeys(cx);
@@ -282,10 +276,7 @@ public abstract class BuiltinFunction extends OrdinaryObject implements Callable
     @Override
     protected List<Object> getOwnPropertyKeys(ExecutionContext cx) {
         if (hasDefaultLength || hasDefaultName) {
-            int indexedSize = indexedProperties().size();
-            int propertiesSize = properties().size();
-            int symbolsSize = symbolProperties().size();
-            int totalSize = indexedSize + propertiesSize + symbolsSize;
+            int totalSize = countProperties(true);
             if (hasDefaultLength) {
                 totalSize += 1;
             }
@@ -295,9 +286,7 @@ public abstract class BuiltinFunction extends OrdinaryObject implements Callable
             /* step 1 */
             ArrayList<Object> ownKeys = new ArrayList<>(totalSize);
             /* step 2 */
-            if (indexedSize != 0) {
-                ownKeys.addAll(indexedProperties().keys());
-            }
+            appendIndexedProperties(ownKeys);
             /* step 3 */
             if (hasDefaultLength) {
                 ownKeys.add("length");
@@ -305,13 +294,9 @@ public abstract class BuiltinFunction extends OrdinaryObject implements Callable
             if (hasDefaultName) {
                 ownKeys.add("name");
             }
-            if (propertiesSize != 0) {
-                ownKeys.addAll(properties().keySet());
-            }
+            appendProperties(ownKeys);
             /* step 4 */
-            if (symbolsSize != 0) {
-                ownKeys.addAll(symbolProperties().keySet());
-            }
+            appendSymbolProperties(ownKeys);
             /* step 5 */
             return ownKeys;
         }

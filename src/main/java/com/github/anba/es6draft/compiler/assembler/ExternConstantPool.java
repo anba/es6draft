@@ -12,7 +12,8 @@ import com.github.anba.es6draft.compiler.assembler.Code.ClassCode;
 import com.github.anba.es6draft.compiler.assembler.Code.MethodCode;
 
 /**
- * 
+ * Concrete {@link ConstantPool} implementation which handles all constant values as extern
+ * constants, i.e. the constant value is retrieved from an external class.
  */
 final class ExternConstantPool extends ConstantPool {
     private static final int EXTERN_CONSTANTS_LIMIT = 0x6000;

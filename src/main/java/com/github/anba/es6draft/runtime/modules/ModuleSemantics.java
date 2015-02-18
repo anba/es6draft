@@ -26,6 +26,7 @@ import java.util.Map;
 import java.util.Set;
 
 import com.github.anba.es6draft.Module;
+import com.github.anba.es6draft.compiler.CompilationException;
 import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
@@ -136,10 +137,12 @@ public final class ModuleSemantics {
      *             if any imported module request cannot be normalized
      * @throws ParserException
      *             if the module source contains any syntax errors
+     * @throws CompilationException
+     *             if the parsed module source cannot be compiled
      */
     public static ModuleRecord ParseModuleAndImports(ShadowRealm realm,
             SourceIdentifier moduleSrcId, LinkedHashMap<SourceIdentifier, ModuleRecord> visited)
-            throws IOException, MalformedNameException, ParserException {
+            throws IOException, MalformedNameException, ParserException, CompilationException {
         /* steps 1-2 (not applicable) */
         /* step 3 */
         ModuleRecord visitedModule = ModuleAt(visited, moduleSrcId);
@@ -185,11 +188,13 @@ public final class ModuleSemantics {
      *             if any imported module request cannot be normalized
      * @throws ParserException
      *             if the module source contains any syntax errors
+     * @throws CompilationException
+     *             if the parsed module source cannot be compiled
      */
     private static ModuleRecord ParseModuleAndImports(ShadowRealm realm,
             SourceIdentifier moduleSrcId, ModuleSource source,
             LinkedHashMap<SourceIdentifier, ModuleRecord> visited) throws IOException,
-            MalformedNameException, ParserException {
+            MalformedNameException, ParserException, CompilationException {
         HashMap<String, SourceIdentifier> normalizedNames = new HashMap<>();
         /* steps 1-7 (not applicable) */
         /* step 8 */
@@ -275,7 +280,7 @@ public final class ModuleSemantics {
      * @param unnormalizedName
      *            the unnormalized module name
      * @param referrerSrcId
-     *            the parent module source code identifier
+     *            the parent module source code identifier or {@code null} if not available
      * @return the normalized module identifier
      * @throws ScriptException
      *             if the module name cannot be normalized
@@ -299,7 +304,7 @@ public final class ModuleSemantics {
      * @param unnormalizedName
      *            the unnormalized module name
      * @param referrerSrcId
-     *            the parent module source code identifier
+     *            the parent module source code identifier or {@code null} if not available
      * @return the normalized module identifier
      * @throws MalformedNameException
      *             if the module name cannot be normalized
@@ -323,7 +328,7 @@ public final class ModuleSemantics {
      * @param unnormalizedName
      *            the unnormalized module name
      * @param referrerSrcId
-     *            the parent module source code identifier
+     *            the parent module source code identifier or {@code null} if not available
      * @return the normalized module identifier
      * @throws MalformedNameException
      *             if the module name cannot be normalized
@@ -483,7 +488,8 @@ public final class ModuleSemantics {
             SourceIdentifier sourceCodeId) throws ScriptException {
         try {
             return LoadModule(realm, sourceCodeId);
-        } catch (MalformedNameException | ParserException | ResolutionException e) {
+        } catch (MalformedNameException | ParserException | CompilationException
+                | ResolutionException e) {
             throw e.toScriptException(cx);
         } catch (IOException e) {
             throw Errors.newInternalError(cx, Messages.Key.ModulesIOException, e.getMessage());
@@ -504,11 +510,14 @@ public final class ModuleSemantics {
      *             if any imported module request cannot be normalized
      * @throws ParserException
      *             if the module source contains any syntax errors
+     * @throws CompilationException
+     *             if the parsed module source cannot be compiled
      * @throws ResolutionException
      *             if any export binding cannot be resolved
      */
     public static ModuleRecord LoadModule(Realm realm, SourceIdentifier sourceCodeId)
-            throws IOException, MalformedNameException, ParserException, ResolutionException {
+            throws IOException, MalformedNameException, ParserException, CompilationException,
+            ResolutionException {
         /* steps 1-2 (not applicable) */
         /* step 3 (not applicable) */
         /* step 4 */
@@ -543,7 +552,8 @@ public final class ModuleSemantics {
             SourceIdentifier sourceCodeId) throws ScriptException {
         try {
             ModuleEvaluationJob(realm, sourceCodeId);
-        } catch (MalformedNameException | ParserException | ResolutionException e) {
+        } catch (MalformedNameException | ParserException | CompilationException
+                | ResolutionException e) {
             throw e.toScriptException(cx);
         } catch (IOException e) {
             throw Errors.newInternalError(cx, Messages.Key.ModulesIOException, e.getMessage());
@@ -563,11 +573,14 @@ public final class ModuleSemantics {
      *             if any imported module request cannot be normalized
      * @throws ParserException
      *             if the module source contains any syntax errors
+     * @throws CompilationException
+     *             if the parsed module source cannot be compiled
      * @throws ResolutionException
      *             if any export binding cannot be resolved
      */
     public static void ModuleEvaluationJob(Realm realm, SourceIdentifier sourceCodeId)
-            throws IOException, MalformedNameException, ParserException, ResolutionException {
+            throws IOException, MalformedNameException, ParserException, CompilationException,
+            ResolutionException {
         /* steps 1-6 */
         ModuleRecord m = LoadModule(realm, sourceCodeId);
         /* steps 7-8 */
@@ -592,7 +605,8 @@ public final class ModuleSemantics {
             SourceIdentifier sourceCodeId, ModuleSource source) throws ScriptException {
         try {
             ModuleEvaluationJob(realm, sourceCodeId, source);
-        } catch (MalformedNameException | ParserException | ResolutionException e) {
+        } catch (MalformedNameException | ParserException | CompilationException
+                | ResolutionException e) {
             throw e.toScriptException(cx);
         } catch (IOException e) {
             throw Errors.newInternalError(cx, Messages.Key.ModulesIOException, e.getMessage());
@@ -614,12 +628,14 @@ public final class ModuleSemantics {
      *             if any imported module request cannot be normalized
      * @throws ParserException
      *             if the module source contains any syntax errors
+     * @throws CompilationException
+     *             if the parsed module source cannot be compiled
      * @throws ResolutionException
      *             if any export binding cannot be resolved
      */
     public static void ModuleEvaluationJob(Realm realm, SourceIdentifier sourceCodeId,
             ModuleSource source) throws IOException, MalformedNameException, ParserException,
-            ResolutionException {
+            CompilationException, ResolutionException {
         /* steps 1-2 (not applicable) */
         /* step 3 (not applicable) */
         /* step 4 */

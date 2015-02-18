@@ -12,6 +12,7 @@ import static com.github.anba.es6draft.runtime.LexicalEnvironment.newFunctionEnv
 import com.github.anba.es6draft.Executable;
 import com.github.anba.es6draft.Module;
 import com.github.anba.es6draft.Script;
+import com.github.anba.es6draft.runtime.internal.RuntimeInfo.SourceObject;
 import com.github.anba.es6draft.runtime.modules.ModuleRecord;
 import com.github.anba.es6draft.runtime.objects.iteration.GeneratorObject;
 import com.github.anba.es6draft.runtime.types.Constructor;
@@ -49,43 +50,123 @@ public final class ExecutionContext {
         this.function = function;
     }
 
+    /**
+     * Returns the {@code Realm} component of this execution context.
+     * 
+     * @return the {@code Realm} component
+     */
     public Realm getRealm() {
         return realm;
     }
 
-    public LexicalEnvironment<?> getLexicalEnvironment() {
-        return lexEnv;
-    }
-
-    public LexicalEnvironment<?> getVariableEnvironment() {
-        return varEnv;
-    }
-
-    public LexicalEnvironment<FunctionEnvironmentRecord> getFunctionVariableEnvironment() {
-        return funVarEnv;
-    }
-
+    /**
+     * Returns the requested intrinsic from this execution context's {@code Realm}.
+     * 
+     * @param id
+     *            the intrinsic identifier
+     * @return the intrinsic object
+     * @see Realm#getIntrinsic(Intrinsics)
+     */
     public OrdinaryObject getIntrinsic(Intrinsics id) {
         return realm.getIntrinsic(id);
     }
 
+    /**
+     * Returns the current executable object.
+     * 
+     * @return the executable object
+     */
     public Executable getCurrentExecutable() {
         return executable;
     }
 
-    // called from generated code
+    /**
+     * Returns the {@code Function} component of this execution context.
+     * 
+     * @return the {@code Function} component or {@code null} if not evaluating a function
+     */
     public FunctionObject getCurrentFunction() {
         return function;
     }
 
+    /**
+     * Returns the {@code Generator} component of this execution context.
+     * 
+     * @return the {@code Generator} component or {@code null} if not evaluating a generator
+     */
     public GeneratorObject getCurrentGenerator() {
-        assert generator != null;
         return generator;
     }
 
+    /**
+     * Sets the {@code Generator} component of this execution context.
+     * 
+     * @param generator
+     *            the {@code Generator} component
+     */
     public void setCurrentGenerator(GeneratorObject generator) {
         assert this.generator == null && generator != null;
         this.generator = generator;
+    }
+
+    /**
+     * Returns the {@code LexicalEnvironment} component of this execution context.
+     * 
+     * @return the {@code LexicalEnvironment} component or {@code null} if not evaluating ECMAScript
+     *         code
+     */
+    public LexicalEnvironment<?> getLexicalEnvironment() {
+        return lexEnv;
+    }
+
+    /**
+     * Returns the {@code VariableEnvironment} component of this execution context.
+     * 
+     * @return the {@code VariableEnvironment} component or {@code null} if not evaluating
+     *         ECMAScript code
+     */
+    public LexicalEnvironment<?> getVariableEnvironment() {
+        return varEnv;
+    }
+
+    /**
+     * Returns the {@code FunctionVariableEnvironment} component of this execution context.
+     * 
+     * @return the {@code FunctionVariableEnvironment} component or {@code null} if not evaluating
+     *         ECMAScript function code
+     */
+    public LexicalEnvironment<FunctionEnvironmentRecord> getFunctionVariableEnvironment() {
+        return funVarEnv;
+    }
+
+    /**
+     * Returns the environment record of the {@code LexicalEnvironment} component of this execution
+     * context. Must not be called if not evaluating ECMAScript code.
+     * 
+     * @return the environment record
+     */
+    public EnvironmentRecord getLexicalEnvironmentRecord() {
+        return lexEnv.getEnvRec();
+    }
+
+    /**
+     * Returns the environment record of the {@code VariableEnvironment} component of this execution
+     * context. Must not be called if not evaluating ECMAScript code.
+     * 
+     * @return the environment record
+     */
+    public EnvironmentRecord getVariableEnvironmentRecord() {
+        return varEnv.getEnvRec();
+    }
+
+    /**
+     * Returns the environment record of the {@code FunctionVariableEnvironment} component of this
+     * execution context. Must not be called if not evaluating ECMAScript function code.
+     * 
+     * @return the environment record
+     */
+    public FunctionEnvironmentRecord getFunctionVariableEnvironmentRecord() {
+        return funVarEnv.getEnvRec();
     }
 
     /**
@@ -148,6 +229,26 @@ public final class ExecutionContext {
     }
 
     /**
+     * Creates a new default execution context.
+     * 
+     * @param realm
+     *            the realm instance
+     * @return the new default execution context
+     */
+    static ExecutionContext newDefaultExecutionContext(Realm realm) {
+        return new ExecutionContext(realm, null, null, null, DefaultExecutable.INSTANCE, null);
+    }
+
+    private static final class DefaultExecutable implements Executable {
+        private static final DefaultExecutable INSTANCE = new DefaultExecutable();
+
+        @Override
+        public SourceObject getSourceObject() {
+            return null;
+        }
+    }
+
+    /**
      * <ul>
      * <li>15 ECMAScript Language: Scripts and Modules
      * <ul>
@@ -180,7 +281,7 @@ public final class ExecutionContext {
      * </ul>
      * </ul>
      * <p>
-     * 15.2.1.22 Runtime Semantics: ModuleEvaluation(module, realm)
+     * 15.2.1.21 Runtime Semantics: ModuleDeclarationInstantiation( module, realm, moduleSet )
      * 
      * @param realm
      *            the realm instance
@@ -188,10 +289,9 @@ public final class ExecutionContext {
      *            the module object
      * @return the new module execution context
      */
-    public static ExecutionContext newModuleExecutionContext(Realm realm, ModuleRecord module) {
-        /* steps 8-11 */
-        return new ExecutionContext(realm, module.getEnvironment(), module.getEnvironment(), null,
-                module.getScriptCode(), null);
+    public static ExecutionContext newModuleDeclarationExecutionContext(Realm realm, Module module) {
+        return new ExecutionContext(realm, realm.getGlobalEnv(), realm.getGlobalEnv(), null,
+                module, null);
     }
 
     /**
@@ -213,9 +313,10 @@ public final class ExecutionContext {
      *            the module object
      * @return the new module execution context
      */
-    public static ExecutionContext newModuleDeclarationExecutionContext(Realm realm, Module module) {
-        return new ExecutionContext(realm, realm.getGlobalEnv(), realm.getGlobalEnv(), null,
-                module, null);
+    public static ExecutionContext newModuleExecutionContext(Realm realm, ModuleRecord module) {
+        /* steps 4-9 */
+        return new ExecutionContext(realm, module.getEnvironment(), module.getEnvironment(), null,
+                module.getScriptCode(), null);
     }
 
     /**
@@ -226,7 +327,7 @@ public final class ExecutionContext {
      * </ul>
      * </ul>
      * <p>
-     * 18.2.1 eval (x)
+     * 18.2.1.1 Runtime Semantics: PerformEval( x, evalRealm, strictCaller, direct)
      * 
      * @param callerContext
      *            the caller execution context
@@ -235,12 +336,13 @@ public final class ExecutionContext {
      * @param varEnv
      *            the current variable environment
      * @param lexEnv
-     *            the current lexical environment
+     *            the new lexical environment
      * @return the new eval execution context
      */
     public static ExecutionContext newEvalExecutionContext(ExecutionContext callerContext,
-            Script evalScript, LexicalEnvironment<?> varEnv, LexicalEnvironment<?> lexEnv) {
-        /* steps 17-20 */
+            Script evalScript, LexicalEnvironment<?> varEnv,
+            LexicalEnvironment<DeclarativeEnvironmentRecord> lexEnv) {
+        /* steps 12-17 */
         return new ExecutionContext(callerContext.realm, varEnv, lexEnv, callerContext.funVarEnv,
                 evalScript, callerContext.function);
     }

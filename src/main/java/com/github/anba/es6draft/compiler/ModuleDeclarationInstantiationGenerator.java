@@ -77,9 +77,9 @@ final class ModuleDeclarationInstantiationGenerator extends
     private static final int MODULE_SET = 2;
     private static final int IDENTIFIER_MAP = 3;
 
-    private static final class ModuleDeclInitMethodGenerator extends ExpressionVisitor {
+    private static final class ModuleDeclInitMethodGenerator extends InstructionVisitor {
         ModuleDeclInitMethodGenerator(MethodCode method, Module module) {
-            super(method, true, false, false);
+            super(method);
         }
 
         @Override
@@ -98,7 +98,7 @@ final class ModuleDeclarationInstantiationGenerator extends
 
     void generate(Module module, ModuleRecord moduleRecord) {
         MethodCode method = codegen.newMethod(module, ModuleName.Init);
-        ExpressionVisitor mv = new ModuleDeclInitMethodGenerator(method, module);
+        InstructionVisitor mv = new ModuleDeclInitMethodGenerator(method, module);
 
         mv.lineInfo(module);
         mv.begin();
@@ -106,7 +106,7 @@ final class ModuleDeclarationInstantiationGenerator extends
         mv.end();
     }
 
-    private void generate(Module module, ModuleRecord moduleRecord, ExpressionVisitor mv) {
+    private void generate(Module module, ModuleRecord moduleRecord, InstructionVisitor mv) {
         Variable<ExecutionContext> context = mv.getParameter(EXECUTION_CONTEXT,
                 ExecutionContext.class);
         Variable<LexicalEnvironment<ModuleEnvironmentRecord>> env = mv.getParameter(MODULE_ENV,

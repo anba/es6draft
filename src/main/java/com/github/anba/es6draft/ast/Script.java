@@ -84,6 +84,10 @@ public final class Script extends AstNode implements TopLevelNode<StatementListI
         return !parserOptions.contains(Parser.Option.LocalScope);
     }
 
+    public boolean isGlobalThis() {
+        return !parserOptions.contains(Parser.Option.FunctionThis);
+    }
+
     public boolean isGlobalCode() {
         return !parserOptions.contains(Parser.Option.FunctionCode);
     }

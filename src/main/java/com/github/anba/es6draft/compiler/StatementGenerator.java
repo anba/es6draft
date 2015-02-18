@@ -216,6 +216,17 @@ final class StatementGenerator extends
     }
 
     /**
+     * stack: [env] {@literal ->} [env, envRec]
+     * 
+     * @param mv
+     *            the statement visitor
+     */
+    private void getEnvRec(StatementVisitor mv) {
+        mv.dup();
+        mv.invoke(Methods.LexicalEnvironment_getEnvRec);
+    }
+
+    /**
      * stack: [envRec] {@literal ->} [envRec]
      * 
      * @param name
@@ -524,8 +535,7 @@ final class StatementGenerator extends
      */
     @Override
     public Completion visit(ForEachStatement node, StatementVisitor mv) {
-        return visitForInOfLoop(node, node.getExpression(), node.getHead(), node.getStatement(),
-                IterationKind.EnumerateValues, mv);
+        return visitForInOfLoop(node, IterationKind.EnumerateValues, mv);
     }
 
     /**
@@ -535,8 +545,7 @@ final class StatementGenerator extends
      */
     @Override
     public Completion visit(ForInStatement node, StatementVisitor mv) {
-        return visitForInOfLoop(node, node.getExpression(), node.getHead(), node.getStatement(),
-                IterationKind.Enumerate, mv);
+        return visitForInOfLoop(node, IterationKind.Enumerate, mv);
     }
 
     /**
@@ -546,8 +555,7 @@ final class StatementGenerator extends
      */
     @Override
     public Completion visit(ForOfStatement node, StatementVisitor mv) {
-        return visitForInOfLoop(node, node.getExpression(), node.getHead(), node.getStatement(),
-                IterationKind.Iterate, mv);
+        return visitForInOfLoop(node, IterationKind.Iterate, mv);
     }
 
     /**
@@ -569,27 +577,15 @@ final class StatementGenerator extends
      *            the statement visitor
      * @return the completion value
      */
-    private <FORSTATEMENT extends IterationStatement & ScopedNode> Completion visitForInOfLoop(
-            FORSTATEMENT node, Expression expr, Node lhs, Statement stmt,
-            IterationKind iterationKind, StatementVisitor mv) {
+    private <FORSTATEMENT extends IterationStatement & ForIterationNode> Completion visitForInOfLoop(
+            FORSTATEMENT node, IterationKind iterationKind, StatementVisitor mv) {
         Jump lblFail = new Jump();
 
-        List<Name> tdzNames;
-        if (lhs instanceof Expression || lhs instanceof VariableStatement) {
-            tdzNames = null;
-        } else {
-            assert lhs instanceof LexicalDeclaration;
-            LexicalDeclaration lexDecl = (LexicalDeclaration) lhs;
-            assert lexDecl.getElements().size() == 1;
-            LexicalBinding lexicalBinding = lexDecl.getElements().get(0);
-            tdzNames = BoundNames(lexicalBinding.getBinding());
-        }
-
         /* steps 1-2 */
-        ValType type = ForInOfExpressionEvaluation(node, tdzNames, expr, iterationKind, lblFail, mv);
+        ValType type = ForInOfExpressionEvaluation(node, iterationKind, lblFail, mv);
 
         /* step 3 */
-        Completion result = ForInOfBodyEvaluation(node, lhs, stmt, mv);
+        Completion result = ForInOfBodyEvaluation(node, mv);
 
         if (type != ValType.Object) {
             mv.mark(lblFail);
@@ -606,30 +602,30 @@ final class StatementGenerator extends
      *            the for-statement node type
      * @param node
      *            the for-statement node
-     * @param tdzNames
-     *            list of temporary dead zones names
-     * @param expr
-     *            the expression node
      * @param iterationKind
      *            the for-statement's iteration kind
      * @param lblFail
-     *            the target instruction if expression node does not produce an object type
+     *            the target instruction if the expression node does not produce an object type
      * @param mv
      *            the statement visitor
      * @return the value type of the expression
      */
-    private <FORSTATEMENT extends IterationStatement & ScopedNode> ValType ForInOfExpressionEvaluation(
-            FORSTATEMENT node, List<Name> tdzNames, Expression expr, IterationKind iterationKind,
-            Jump lblFail, StatementVisitor mv) {
+    private <FORSTATEMENT extends IterationStatement & ForIterationNode> ValType ForInOfExpressionEvaluation(
+            FORSTATEMENT node, IterationKind iterationKind, Jump lblFail, StatementVisitor mv) {
         /* steps 1-2 */
-        if (tdzNames != null) {
+        Node lhs = node.getHead();
+        List<Name> tdzNames = null;
+        if (lhs instanceof LexicalDeclaration) {
+            LexicalDeclaration lexDecl = (LexicalDeclaration) lhs;
+            assert lexDecl.getElements().size() == 1;
+            LexicalBinding lexicalBinding = lexDecl.getElements().get(0);
+            tdzNames = BoundNames(lexicalBinding.getBinding());
             if (!tdzNames.isEmpty()) {
                 // stack: [] -> [TDZ]
                 newDeclarativeEnvironment(mv);
                 {
                     // stack: [TDZ] -> [TDZ, TDZRec]
-                    mv.dup();
-                    mv.invoke(Methods.LexicalEnvironment_getEnvRec);
+                    getEnvRec(mv);
 
                     // stack: [TDZ, TDZRec] -> [TDZ]
                     for (Name name : tdzNames) {
@@ -645,6 +641,7 @@ final class StatementGenerator extends
         }
 
         /* steps 3, 5-6 */
+        Expression expr = node.getExpression();
         ValType type = expressionBoxedValue(expr, mv);
 
         /* step 4 */
@@ -723,16 +720,13 @@ final class StatementGenerator extends
      *            the for-statement node type
      * @param node
      *            the for-statement node
-     * @param lhs
-     *            the left-hand side node
-     * @param stmt
-     *            the statement node
      * @param mv
      *            the statement visitor
      * @return the completion value
      */
-    private <FORSTATEMENT extends IterationStatement & ScopedNode> Completion ForInOfBodyEvaluation(
-            FORSTATEMENT node, Node lhs, Statement stmt, StatementVisitor mv) {
+    private <FORSTATEMENT extends IterationStatement & ForIterationNode> Completion ForInOfBodyEvaluation(
+            FORSTATEMENT node, StatementVisitor mv) {
+        Node lhs = node.getHead();
         final boolean destructuring = IsDestructuring(lhs);
         ContinueLabel lblContinue = new ContinueLabel();
         BreakLabel lblBreak = new BreakLabel();
@@ -743,12 +737,15 @@ final class StatementGenerator extends
                 .uncheckedCast();
         // stack: [Iterator] -> []
         mv.store(iterator);
+
         Variable<LexicalEnvironment<?>> savedEnv = saveEnvironment(node, mv);
-        Variable<Reference<?, ?>> lhsRef = null;
+        final Variable<Reference<?, ?>> lhsRef;
         if (!destructuring) {
             lhsRef = mv.newVariable("lhsRef", Reference.class).uncheckedCast();
             mv.anull();
             mv.store(lhsRef);
+        } else {
+            lhsRef = null;
         }
 
         /* steps 1-4 (not applicable) */
@@ -769,7 +766,25 @@ final class StatementGenerator extends
         Completion result;
         {
             mv.enterIteration(node, lblBreak, lblContinue);
-            result = ForInOfBodyEvaluationWrap(node, lhs, stmt, iterator, lhsRef, loopstart, mv);
+            mv.enterWrapped();
+            result = new IterationGenerator<FORSTATEMENT, StatementVisitor>(codegen) {
+                @Override
+                protected Completion iterationBody(FORSTATEMENT node,
+                        Variable<ScriptIterator<?>> iterator, StatementVisitor mv) {
+                    return ForInOfBodyEvaluationInner(node, lhsRef, mv);
+                }
+
+                @Override
+                protected Variable<Object> enterIteration(FORSTATEMENT node, StatementVisitor mv) {
+                    return mv.enterIterationBody(node);
+                }
+
+                @Override
+                protected List<TempLabel> exitIteration(FORSTATEMENT node, StatementVisitor mv) {
+                    return mv.exitIterationBody(node);
+                }
+            }.generate(node, iterator, loopstart, mv);
+            mv.exitWrapped();
             mv.exitIteration(node);
         }
 
@@ -807,18 +822,9 @@ final class StatementGenerator extends
             LexicalBinding lexicalBinding = lexDecl.getElements().get(0);
             boolean isConst = IsConstantDeclaration(lexDecl);
 
-            // stack: [] -> [iterEnv]
+            // stack: [] -> []
             newDeclarativeEnvironment(mv);
-            {
-                // stack: [iterEnv] -> [iterEnv, envRec]
-                mv.dup();
-                mv.invoke(Methods.LexicalEnvironment_getEnvRec);
-
-                // stack: [iterEnv, envRec] -> [iterEnv]
-                BindingInstantiation(lexicalBinding, isConst, mv);
-                mv.pop();
-            }
-            // stack: [iterEnv] -> []
+            BindingInstantiation(lexicalBinding, isConst, mv);
             pushLexicalEnvironment(mv);
             mv.enterScope(node);
 
@@ -853,38 +859,9 @@ final class StatementGenerator extends
                 Completion.Normal);
     }
 
-    private <FORSTATEMENT extends IterationStatement & ScopedNode> Completion ForInOfBodyEvaluationWrap(
-            FORSTATEMENT node, final Node lhs, final Statement stmt,
-            Variable<ScriptIterator<?>> iterator, final Variable<Reference<?, ?>> lhsRef,
-            final Jump loopstart, StatementVisitor mv) {
-        return new IterationGenerator<FORSTATEMENT, StatementVisitor>(codegen) {
-            @Override
-            protected Completion generateCode(FORSTATEMENT node,
-                    Variable<ScriptIterator<?>> iterator, StatementVisitor mv) {
-                mv.enterWrapped();
-                Completion loopBodyResult = ForInOfBodyEvaluationInner(node, lhs, stmt, lhsRef, mv);
-                mv.exitWrapped();
-                if (!loopBodyResult.isAbrupt()) {
-                    mv.goTo(loopstart);
-                }
-                return loopBodyResult;
-            }
-
-            @Override
-            protected Variable<Object> enterIteration(FORSTATEMENT node, StatementVisitor mv) {
-                return mv.enterIterationBody(node);
-            }
-
-            @Override
-            protected List<TempLabel> exitIteration(FORSTATEMENT node, StatementVisitor mv) {
-                return mv.exitIterationBody(node);
-            }
-        }.generate(node, iterator, mv);
-    }
-
-    private <FORSTATEMENT extends IterationStatement & ScopedNode> Completion ForInOfBodyEvaluationInner(
-            FORSTATEMENT node, Node lhs, Statement stmt, Variable<Reference<?, ?>> lhsRef,
-            StatementVisitor mv) {
+    private <FORSTATEMENT extends IterationStatement & ForIterationNode> Completion ForInOfBodyEvaluationInner(
+            FORSTATEMENT node, Variable<Reference<?, ?>> lhsRef, StatementVisitor mv) {
+        Node lhs = node.getHead();
         assert (lhsRef != null) == !IsDestructuring(lhs);
         /* steps 3i-3k */
         if (lhsRef != null) {
@@ -936,7 +913,7 @@ final class StatementGenerator extends
         }
 
         /* steps 3l-3m */
-        Completion result = stmt.accept(this, mv);
+        Completion result = node.getStatement().accept(this, mv);
 
         /* step 3n */
         if (lhs instanceof LexicalDeclaration) {
@@ -969,7 +946,10 @@ final class StatementGenerator extends
      */
     private void BindingInstantiation(LexicalBinding lexicalBinding, boolean isConst,
             StatementVisitor mv) {
-        // stack: [envRec] -> [envRec]
+        // stack: [iterEnv] -> [iterEnv, envRec]
+        getEnvRec(mv);
+
+        // stack: [iterEnv, envRec] -> [iterEnv, envRec]
         for (Name name : BoundNames(lexicalBinding.getBinding())) {
             if (isConst) {
                 // FIXME: spec bug (CreateImmutableBinding concrete method of `env`)
@@ -979,6 +959,9 @@ final class StatementGenerator extends
                 createMutableBinding(name, false, mv);
             }
         }
+
+        // stack: [iterEnv, envRec] -> [iterEnv]
+        mv.pop();
     }
 
     /**
@@ -1008,8 +991,7 @@ final class StatementGenerator extends
             newDeclarativeEnvironment(mv);
             {
                 // stack: [loopEnv] -> [loopEnv, envRec]
-                mv.dup();
-                mv.invoke(Methods.LexicalEnvironment_getEnvRec);
+                getEnvRec(mv);
 
                 for (Name dn : boundNames) {
                     if (isConst) {
@@ -1252,8 +1234,7 @@ final class StatementGenerator extends
         newDeclarativeEnvironment(mv);
         {
             // stack: [env] -> [env, envRec]
-            mv.dup();
-            mv.invoke(Methods.LexicalEnvironment_getEnvRec);
+            getEnvRec(mv);
 
             // stack: [env, envRec] -> [env]
             for (LexicalBinding binding : node.getBindings()) {
@@ -1267,10 +1248,7 @@ final class StatementGenerator extends
 
                 Expression initializer = binding.getInitializer();
                 if (initializer != null) {
-                    ValType type = expressionBoxedValue(initializer, mv);
-                    if (binding.getBinding() instanceof BindingPattern) {
-                        ToObject(binding.getBinding(), type, mv);
-                    }
+                    expressionBoxedValue(initializer, mv);
                 } else {
                     assert binding.getBinding() instanceof BindingIdentifier;
                     mv.loadUndefined();
@@ -1744,8 +1722,7 @@ final class StatementGenerator extends
         newDeclarativeEnvironment(mv);
         {
             // stack: [ex, catchEnv] -> [ex, catchEnv, envRec]
-            mv.dup();
-            mv.invoke(Methods.LexicalEnvironment_getEnvRec);
+            getEnvRec(mv);
 
             /* step 3 */
             // FIXME: spec bug (CreateMutableBinding concrete method of `catchEnv`)
@@ -1799,8 +1776,7 @@ final class StatementGenerator extends
         newDeclarativeEnvironment(mv);
         {
             // stack: [ex, catchEnv] -> [ex, catchEnv, envRec]
-            mv.dup();
-            mv.invoke(Methods.LexicalEnvironment_getEnvRec);
+            getEnvRec(mv);
 
             /* step 3 */
             // FIXME: spec bug (CreateMutableBinding concrete method of `catchEnv`)

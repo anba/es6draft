@@ -68,11 +68,8 @@ public class GlobalObject extends OrdinaryObject implements Initializable {
 
     /**
      * Initializes implementation defined extensions.
-     * 
-     * @param cx
-     *            the execution context
      */
-    protected void initializeExtensions(ExecutionContext cx) {
+    protected void initializeExtensions() {
         /* empty */
     }
 
@@ -116,7 +113,7 @@ public class GlobalObject extends OrdinaryObject implements Initializable {
         /* steps 4-5 */
         SetDefaultGlobalBindings(cx, getRealm());
         /* step 6 */
-        initializeExtensions(cx);
+        initializeExtensions();
     }
 
     /**

@@ -6,6 +6,8 @@
  */
 package com.github.anba.es6draft.repl.global;
 
+import static com.github.anba.es6draft.runtime.modules.ModuleSemantics.ModuleEvaluationJob;
+import static com.github.anba.es6draft.runtime.modules.ModuleSemantics.NormalizeModuleName;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import java.io.BufferedReader;
@@ -36,6 +38,9 @@ import com.github.anba.es6draft.runtime.internal.ScriptException;
 import com.github.anba.es6draft.runtime.internal.ScriptLoader;
 import com.github.anba.es6draft.runtime.internal.Source;
 import com.github.anba.es6draft.runtime.internal.Strings;
+import com.github.anba.es6draft.runtime.modules.MalformedNameException;
+import com.github.anba.es6draft.runtime.modules.ResolutionException;
+import com.github.anba.es6draft.runtime.modules.SourceIdentifier;
 import com.github.anba.es6draft.runtime.objects.GlobalObject;
 
 /**
@@ -57,8 +62,8 @@ public abstract class ShellGlobalObject extends GlobalObject {
     }
 
     @Override
-    protected void initializeExtensions(ExecutionContext cx) {
-        super.initializeExtensions(cx);
+    protected void initializeExtensions() {
+        super.initializeExtensions();
         install(this, ShellGlobalObject.class);
     }
 
@@ -124,6 +129,59 @@ public abstract class ShellGlobalObject extends GlobalObject {
     protected final Path relativePathToScript(ExecutionContext caller, Path file) {
         Source source = getRealm().sourceInfo(caller);
         return baseDir.resolve(source.getFile().getParent().resolve(file));
+    }
+
+    /**
+     * Parses, compiles and executes the javascript module file.
+     * 
+     * @param moduleName
+     *            the unnormalized module name
+     * @param referrerSrcId
+     *            the optional parent module source code identifier
+     * @throws IOException
+     *             if there was any I/O error
+     * @throws MalformedNameException
+     *             if any imported module request cannot be normalized
+     * @throws ParserException
+     *             if the module source contains any syntax errors
+     * @throws CompilationException
+     *             if the parsed module source cannot be compiled
+     * @throws ResolutionException
+     *             if any export binding cannot be resolved
+     */
+    public void eval(String moduleName, SourceIdentifier referrerSrcId) throws IOException,
+            MalformedNameException, ParserException, CompilationException, ResolutionException {
+        eval(getRealm(), moduleName, referrerSrcId);
+    }
+
+    /**
+     * Parses, compiles and executes the javascript module file.
+     * 
+     * @param realm
+     *            the target realm instance
+     * @param moduleName
+     *            the unnormalized module name
+     * @param referrerSrcId
+     *            the optional parent module source code identifier
+     * @return the normalized module name
+     * @throws IOException
+     *             if there was any I/O error
+     * @throws MalformedNameException
+     *             if any imported module request cannot be normalized
+     * @throws ParserException
+     *             if the module source contains any syntax errors
+     * @throws CompilationException
+     *             if the parsed module source cannot be compiled
+     * @throws ResolutionException
+     *             if any export binding cannot be resolved
+     */
+    protected SourceIdentifier eval(Realm realm, String moduleName, SourceIdentifier referrerSrcId)
+            throws IOException, MalformedNameException, ParserException, CompilationException,
+            ResolutionException {
+        SourceIdentifier normalizedModuleName = NormalizeModuleName(realm, moduleName,
+                referrerSrcId);
+        ModuleEvaluationJob(realm, normalizedModuleName);
+        return normalizedModuleName;
     }
 
     /**

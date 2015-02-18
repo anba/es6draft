@@ -23,8 +23,11 @@ final class TraceurFileModuleLoader extends FileModuleLoader {
 
     @Override
     public FileSourceIdentifier normalizeName(String unnormalizedName, SourceIdentifier referrerId) {
+        FileSourceIdentifier normalizedName = super.normalizeName(unnormalizedName, referrerId);
+        if (normalizedName == null) {
+            return null;
+        }
         try {
-            FileSourceIdentifier normalizedName = super.normalizeName(unnormalizedName, referrerId);
             Path fileName = normalizedName.getPath().getFileName();
             if (!fileName.toString().endsWith(".js")) {
                 Path path = Paths.get(normalizedName.getPath() + ".js");

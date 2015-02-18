@@ -12,14 +12,16 @@ import com.github.anba.es6draft.runtime.internal.InternalException;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
 
-/** 
- *
+/**
+ * Exception for malformed module name errors.
  */
 @SuppressWarnings("serial")
 public final class MalformedNameException extends InternalException {
     private final String unnormalizedName;
 
     /**
+     * Constructs a new malformed-name exception.
+     * 
      * @param unnormalizedName
      *            the unnormalized module name
      */

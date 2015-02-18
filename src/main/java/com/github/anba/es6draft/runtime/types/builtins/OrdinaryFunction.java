@@ -136,9 +136,8 @@ public class OrdinaryFunction extends FunctionObject {
     public static OrdinaryFunction FunctionCreate(ExecutionContext cx, FunctionKind kind,
             RuntimeInfo.Function function, LexicalEnvironment<?> scope) {
         assert !function.isGenerator() && !function.isAsync();
-        OrdinaryObject intrinsicFunctionPrototype = cx.getIntrinsic(Intrinsics.FunctionPrototype);
         /* step 1 */
-        ScriptObject functionPrototype = intrinsicFunctionPrototype;
+        ScriptObject functionPrototype = cx.getIntrinsic(Intrinsics.FunctionPrototype);
         /* step 2 */
         OrdinaryFunction f = FunctionAllocate(cx, functionPrototype, function.isStrict(), kind);
         /* step 3 */

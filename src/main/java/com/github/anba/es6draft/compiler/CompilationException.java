@@ -13,10 +13,16 @@ import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
 
 /**
- * Exception for compilation errors
+ * Exception for compilation errors.
  */
 @SuppressWarnings("serial")
 public final class CompilationException extends InternalException {
+    /**
+     * Constructs a new compilation exception.
+     * 
+     * @param message
+     *            the error message
+     */
     public CompilationException(String message) {
         super(message);
     }

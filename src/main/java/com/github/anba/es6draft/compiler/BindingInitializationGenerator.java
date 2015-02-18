@@ -397,22 +397,18 @@ final class BindingInitializationGenerator {
             mv.store(iterator);
 
             new IterationGenerator<ArrayBindingPattern, ExpressionVisitor>(codegen) {
-                final Jump iterationComplete = new Jump();
-
                 @Override
-                protected Completion generateCode(ArrayBindingPattern node,
+                protected Completion iterationBody(ArrayBindingPattern node,
                         Variable<ScriptIterator<?>> iterator, ExpressionVisitor mv) {
                     // step 3
                     IteratorBindingInitialization(node, iterator);
-                    mv.goTo(iterationComplete);
                     return Completion.Normal;
                 }
 
                 @Override
-                protected void generateEpilogue(ArrayBindingPattern node,
+                protected void epilogue(ArrayBindingPattern node,
                         Variable<ScriptIterator<?>> iterator, ExpressionVisitor mv) {
                     // step 4
-                    mv.mark(iterationComplete);
                     IteratorClose(node, iterator, false, mv);
                 }
 

@@ -164,22 +164,18 @@ final class DestructuringAssignmentGenerator {
             mv.store(iterator);
 
             new IterationGenerator<ArrayAssignmentPattern, ExpressionVisitor>(codegen) {
-                final Jump iterationComplete = new Jump();
-
                 @Override
-                protected Completion generateCode(ArrayAssignmentPattern node,
+                protected Completion iterationBody(ArrayAssignmentPattern node,
                         Variable<ScriptIterator<?>> iterator, ExpressionVisitor mv) {
                     for (AssignmentElementItem element : node.getElements()) {
                         IteratorDestructuringAssignmentEvaluation(element, iterator);
                     }
-                    mv.goTo(iterationComplete);
                     return Completion.Normal;
                 }
 
                 @Override
-                protected void generateEpilogue(ArrayAssignmentPattern node,
+                protected void epilogue(ArrayAssignmentPattern node,
                         Variable<ScriptIterator<?>> iterator, ExpressionVisitor mv) {
-                    mv.mark(iterationComplete);
                     IteratorClose(node, iterator, false, mv);
                 }
 

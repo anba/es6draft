@@ -6,16 +6,49 @@
  */
 package com.github.anba.es6draft.compiler;
 
+import com.github.anba.es6draft.ast.Node;
 import com.github.anba.es6draft.compiler.DefaultCodeGenerator.ValType;
 import com.github.anba.es6draft.compiler.assembler.Code.MethodCode;
+import com.github.anba.es6draft.compiler.assembler.FieldName;
 import com.github.anba.es6draft.compiler.assembler.InstructionAssembler;
 
 /**
  *
  */
 class InstructionVisitor extends InstructionAssembler {
+    private static final class Fields {
+        static final FieldName Null_NULL = FieldName.findStatic(Types.Null, "NULL", Types.Null);
+
+        static final FieldName Undefined_UNDEFINED = FieldName.findStatic(Types.Undefined,
+                "UNDEFINED", Types.Undefined);
+    }
+
     protected InstructionVisitor(MethodCode method) {
         super(method);
+    }
+
+    /**
+     * &#x2205; → undefined
+     */
+    final void loadUndefined() {
+        get(Fields.Undefined_UNDEFINED);
+    }
+
+    /**
+     * &#x2205; → null
+     */
+    final void loadNull() {
+        get(Fields.Null_NULL);
+    }
+
+    /**
+     * Emit a line number declaration.
+     * 
+     * @param node
+     *            the node instance
+     */
+    final void lineInfo(Node node) {
+        lineInfo(node.getBeginLine());
     }
 
     /**
@@ -112,7 +145,9 @@ class InstructionVisitor extends InstructionAssembler {
      *            the value type
      */
     public void toBoxed(ValType type) {
-        toBoxed(type.toType());
+        if (type.isJavaPrimitive()) {
+            toBoxed(type.toType());
+        }
     }
 
     /**
@@ -122,6 +157,8 @@ class InstructionVisitor extends InstructionAssembler {
      *            the value type
      */
     public void toUnboxed(ValType type) {
-        toUnboxed(type.toType());
+        if (type.isJavaPrimitive()) {
+            toUnboxed(type.toType());
+        }
     }
 }

@@ -14,7 +14,8 @@ import com.github.anba.es6draft.runtime.modules.ModuleRecord;
 import com.github.anba.es6draft.runtime.modules.SourceIdentifier;
 
 /**
- * 
+ * Minimum Realm interface to support module name resolution and parsing when no actual
+ * {@link Realm} instance is available.
  */
 public interface ShadowRealm {
     /**

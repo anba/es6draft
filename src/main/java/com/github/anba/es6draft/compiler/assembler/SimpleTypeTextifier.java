@@ -15,7 +15,7 @@ import org.objectweb.asm.Type;
 import org.objectweb.asm.util.Textifier;
 
 /**
- *
+ * Modified {@link Textifier} to strip package names from class names.
  */
 public final class SimpleTypeTextifier extends Textifier {
     public SimpleTypeTextifier() {

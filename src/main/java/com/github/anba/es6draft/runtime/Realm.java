@@ -7,7 +7,7 @@
 package com.github.anba.es6draft.runtime;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.DefinePropertyOrThrow;
-import static com.github.anba.es6draft.runtime.ExecutionContext.newScriptExecutionContext;
+import static com.github.anba.es6draft.runtime.ExecutionContext.newDefaultExecutionContext;
 import static com.github.anba.es6draft.runtime.LexicalEnvironment.newGlobalEnvironment;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.AddRestrictedFunctionProperties;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject.ObjectCreate;
@@ -23,11 +23,8 @@ import java.util.Random;
 import java.util.TimeZone;
 
 import com.github.anba.es6draft.Executable;
-import com.github.anba.es6draft.Script;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.Messages;
-import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
-import com.github.anba.es6draft.runtime.internal.RuntimeInfo.SourceObject;
 import com.github.anba.es6draft.runtime.internal.ScriptLoader;
 import com.github.anba.es6draft.runtime.internal.Source;
 import com.github.anba.es6draft.runtime.modules.ModuleLoader;
@@ -157,7 +154,7 @@ public final class Realm implements ShadowRealm {
 
     private Realm(World<? extends GlobalObject> world) {
         this.world = world;
-        this.defaultContext = newScriptExecutionContext(this, new RealmScript());
+        this.defaultContext = newDefaultExecutionContext(this);
         this.globalObject = world.newGlobal(this);
         this.globalThis = world.newGlobal(this); // TODO: yuk...
         this.globalEnv = newGlobalEnvironment(defaultContext, globalThis);
@@ -182,7 +179,7 @@ public final class Realm implements ShadowRealm {
 
     private Realm(World<? extends GlobalObject> world, RealmObject realmObject) {
         this.world = world;
-        this.defaultContext = newScriptExecutionContext(this, new RealmScript());
+        this.defaultContext = newDefaultExecutionContext(this);
         this.globalObject = world.newGlobal(this);
         this.globalThis = ObjectCreate(defaultContext, (ScriptObject) null);
         this.globalEnv = newGlobalEnvironment(defaultContext, globalThis);
@@ -204,7 +201,7 @@ public final class Realm implements ShadowRealm {
     private Realm(World<? extends GlobalObject> world, RealmObject realmObject,
             ScriptObject globalThis) {
         this.world = world;
-        this.defaultContext = newScriptExecutionContext(this, new RealmScript());
+        this.defaultContext = newDefaultExecutionContext(this);
         this.globalObject = world.newGlobal(this);
         this.globalThis = globalThis;
         this.globalEnv = newGlobalEnvironment(defaultContext, globalThis);
@@ -218,23 +215,6 @@ public final class Realm implements ShadowRealm {
 
         // Store reference to built-in eval
         builtinEval = (Callable) globalObject.lookupOwnProperty("eval").getValue();
-    }
-
-    private static final class RealmScript implements Script {
-        @Override
-        public SourceObject getSourceObject() {
-            return null;
-        }
-
-        @Override
-        public RuntimeInfo.ScriptBody getScriptBody() {
-            return null;
-        }
-
-        @Override
-        public Object evaluate(ExecutionContext cx) {
-            throw new IllegalStateException();
-        }
     }
 
     /**
@@ -262,8 +242,9 @@ public final class Realm implements ShadowRealm {
         return null;
     }
 
-    private static boolean hasSourceInfo(Executable exec) {
-        assert exec == null || exec.getSourceObject() != null || exec instanceof RealmScript;
+    private boolean hasSourceInfo(Executable exec) {
+        assert exec == null || exec.getSourceObject() != null
+                || exec == defaultContext.getCurrentExecutable();
         return exec != null && exec.getSourceObject() != null;
     }
 

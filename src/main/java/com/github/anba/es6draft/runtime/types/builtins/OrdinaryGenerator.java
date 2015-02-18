@@ -109,12 +109,10 @@ public final class OrdinaryGenerator extends FunctionObject implements Construct
      * @return the generator result value
      */
     public static GeneratorObject EvaluateBody(ExecutionContext cx, OrdinaryGenerator functionObject) {
-        /* step 1 */
-        assert cx.getFunctionVariableEnvironment() != null;
-        /* steps 2-3 */
+        /* steps 1-2 */
         GeneratorObject gen = OrdinaryCreateFromConstructor(cx, functionObject,
                 Intrinsics.GeneratorPrototype, GeneratorObjectAllocator.INSTANCE);
-        /* step 4 */
+        /* steps 3-5 */
         return GeneratorStart(cx, gen, functionObject.getCode());
     }
 

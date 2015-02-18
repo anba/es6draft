@@ -9,6 +9,7 @@ package com.github.anba.es6draft.runtime.internal;
 import java.lang.invoke.MethodHandle;
 import java.util.Map;
 
+import com.github.anba.es6draft.runtime.DeclarativeEnvironmentRecord;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.GlobalEnvironmentRecord;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
@@ -189,7 +190,7 @@ public final class RuntimeInfo {
     }
 
     /**
-     * Compiled script body information
+     * Compiled script body information.
      */
     public interface ScriptBody extends SourceObject {
         /**
@@ -221,7 +222,7 @@ public final class RuntimeInfo {
          *            the current lexical environment
          */
         void evalDeclarationInstantiation(ExecutionContext cx, LexicalEnvironment<?> variableEnv,
-                LexicalEnvironment<?> lexicalEnv);
+                LexicalEnvironment<DeclarativeEnvironmentRecord> lexicalEnv);
 
         /**
          * Performs 15.1.7 Runtime Semantics: Script Evaluation.
@@ -278,7 +279,8 @@ public final class RuntimeInfo {
 
         @Override
         public void evalDeclarationInstantiation(ExecutionContext cx,
-                LexicalEnvironment<?> variableEnv, LexicalEnvironment<?> lexicalEnv) {
+                LexicalEnvironment<?> variableEnv,
+                LexicalEnvironment<DeclarativeEnvironmentRecord> lexicalEnv) {
             try {
                 evalinitialization.invokeExact(cx, variableEnv, lexicalEnv);
             } catch (RuntimeException | Error e) {
@@ -315,7 +317,7 @@ public final class RuntimeInfo {
     }
 
     /**
-     * Compiled module information
+     * Compiled module information.
      */
     public interface ModuleBody extends SourceObject {
         /**
