@@ -11,8 +11,8 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
+import com.github.anba.es6draft.runtime.FunctionEnvironmentRecord;
 import com.github.anba.es6draft.runtime.types.Callable;
-import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
 
@@ -29,20 +29,25 @@ public abstract class TailCallInvocation {
      * Converts this tail-call invocation into a construct tail-call invocation.
      * 
      * @param object
-     *            the constructor object or {@code null} if called from derived constructor
+     *            the this-argument object
      * @return the tail call trampoline object
      */
     // Called from generated code
     public abstract TailCallInvocation toConstructTailCall(ScriptObject object);
 
+    /**
+     * Converts this tail-call invocation into a construct tail-call invocation.
+     * 
+     * @param envRec
+     *            the function environment record
+     * @return the tail call trampoline object
+     */
+    // Called from generated code
+    public abstract TailCallInvocation toConstructTailCall(FunctionEnvironmentRecord envRec);
+
     public static TailCallInvocation newTailCallInvocation(Callable function, Object thisValue,
             Object[] argumentsList) {
         return new CallTailCallInvocation(function, thisValue, argumentsList);
-    }
-
-    public static TailCallInvocation newTailCallInvocation(Constructor constructor,
-            Constructor newTarget, Object[] argumentsList) {
-        return new ConstructTailCallInvocation(constructor, newTarget, argumentsList);
     }
 
     private static final class CallTailCallInvocation extends TailCallInvocation {
@@ -63,38 +68,20 @@ public abstract class TailCallInvocation {
 
         @Override
         public TailCallInvocation toConstructTailCall(ScriptObject object) {
-            return new ConstructResultTailCallInvocation(this, object);
-        }
-    }
-
-    private static final class ConstructTailCallInvocation extends TailCallInvocation {
-        private final Constructor constructor;
-        private final Constructor newTarget;
-        private final Object[] argumentsList;
-
-        ConstructTailCallInvocation(Constructor constructor, Constructor newTarget,
-                Object[] argumentsList) {
-            this.constructor = constructor;
-            this.newTarget = newTarget;
-            this.argumentsList = argumentsList;
+            return new ConstructBaseTailCallInvocation(this, object);
         }
 
         @Override
-        protected Object apply(ExecutionContext callerContext) throws Throwable {
-            return constructor.tailConstruct(callerContext, newTarget, argumentsList);
-        }
-
-        @Override
-        public TailCallInvocation toConstructTailCall(ScriptObject object) {
-            return new ConstructResultTailCallInvocation(this, object);
+        public TailCallInvocation toConstructTailCall(FunctionEnvironmentRecord envRec) {
+            return new ConstructDerivedTailCallInvocation(this, envRec);
         }
     }
 
-    private static final class ConstructResultTailCallInvocation extends TailCallInvocation {
+    private static final class ConstructBaseTailCallInvocation extends TailCallInvocation {
         private final TailCallInvocation invocation;
         private final ScriptObject object;
 
-        private ConstructResultTailCallInvocation(TailCallInvocation invocation, ScriptObject object) {
+        private ConstructBaseTailCallInvocation(TailCallInvocation invocation, ScriptObject object) {
             this.invocation = invocation;
             this.object = object;
         }
@@ -105,18 +92,55 @@ public abstract class TailCallInvocation {
             if (result instanceof TailCallInvocation) {
                 return ((TailCallInvocation) result).toConstructTailCall(object);
             }
-            if (!Type.isObject(result)) {
-                result = object;
-                if (result == null) {
-                    throw Errors.newTypeError(callerContext,
-                            Messages.Key.NotObjectTypeFromConstructor);
-                }
+            if (Type.isObject(result)) {
+                return result;
             }
-            return result;
+            return object;
         }
 
         @Override
         public TailCallInvocation toConstructTailCall(ScriptObject object) {
+            return this;
+        }
+
+        @Override
+        public TailCallInvocation toConstructTailCall(FunctionEnvironmentRecord envRec) {
+            return this;
+        }
+    }
+
+    private static final class ConstructDerivedTailCallInvocation extends TailCallInvocation {
+        private final TailCallInvocation invocation;
+        private final FunctionEnvironmentRecord envRec;
+
+        private ConstructDerivedTailCallInvocation(TailCallInvocation invocation,
+                FunctionEnvironmentRecord envRec) {
+            this.invocation = invocation;
+            this.envRec = envRec;
+        }
+
+        @Override
+        protected Object apply(ExecutionContext callerContext) throws Throwable {
+            Object result = invocation.apply(callerContext);
+            if (result instanceof TailCallInvocation) {
+                return ((TailCallInvocation) result).toConstructTailCall(envRec);
+            }
+            if (Type.isObject(result)) {
+                return result;
+            }
+            if (!Type.isUndefined(result)) {
+                throw Errors.newTypeError(callerContext, Messages.Key.NotObjectTypeFromConstructor);
+            }
+            return envRec.getThisBinding(callerContext);
+        }
+
+        @Override
+        public TailCallInvocation toConstructTailCall(ScriptObject object) {
+            return this;
+        }
+
+        @Override
+        public TailCallInvocation toConstructTailCall(FunctionEnvironmentRecord envRec) {
             return this;
         }
     }

@@ -196,7 +196,7 @@ public final class ObjectEnvironmentRecord implements EnvironmentRecord {
      * -
      */
     @Override
-    public Object getThisBinding() {
+    public Object getThisBinding(ExecutionContext cx) {
         throw new IllegalStateException();
     }
 

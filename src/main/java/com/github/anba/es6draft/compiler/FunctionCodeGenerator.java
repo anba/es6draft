@@ -61,8 +61,14 @@ final class FunctionCodeGenerator {
                 .findVirtual(Types.ExecutionContext, "getCurrentFunction",
                         Type.methodType(Types.FunctionObject));
 
-        static final MethodName ExecutionContext_resolveThisBinding = MethodName.findVirtual(
-                Types.ExecutionContext, "resolveThisBinding", Type.methodType(Types.Object));
+        static final MethodName ExecutionContext_getFunctionVariableEnvironmentRecord = MethodName
+                .findVirtual(Types.ExecutionContext, "getFunctionVariableEnvironmentRecord",
+                        Type.methodType(Types.FunctionEnvironmentRecord));
+
+        // FunctionEnvironmentRecord
+        static final MethodName FunctionEnvironmentRecord_getThisBinding = MethodName.findVirtual(
+                Types.FunctionEnvironmentRecord, "getThisBinding",
+                Type.methodType(Types.Object, Types.ExecutionContext));
 
         // FunctionObject
         static final MethodName FunctionObject_getLegacyArguments = MethodName.findVirtual(
@@ -104,6 +110,10 @@ final class FunctionCodeGenerator {
         static final MethodName TailCallInvocation_toConstructTailCall = MethodName.findVirtual(
                 Types.TailCallInvocation, "toConstructTailCall",
                 Type.methodType(Types.TailCallInvocation, Types.ScriptObject));
+
+        static final MethodName TailCallInvocation_toConstructTailCallWithEnvironment = MethodName
+                .findVirtual(Types.TailCallInvocation, "toConstructTailCall",
+                        Type.methodType(Types.TailCallInvocation, Types.FunctionEnvironmentRecord));
 
         // class: ScriptRuntime
         static final MethodName ScriptRuntime_BindThisValue = MethodName.findStatic(
@@ -304,7 +314,7 @@ final class FunctionCodeGenerator {
      * function.setLegacyCaller(callerContext.getCurrentFunction())
      * try {
      *   calleeContext = newFunctionExecutionContext(callerContext, function, null, thisValue)
-     *   result = OrdinaryCallEvaluateBody(calleeContext, function)
+     *   result = OrdinaryCallEvaluateBody(function, argumentsList)
      *   return returnResultOrUndefined(result)
      * } finally {
      *   function.restoreLegacyProperties(oldCaller, oldArguments)
@@ -374,7 +384,7 @@ final class FunctionCodeGenerator {
      * 
      * <pre>
      * calleeContext = newFunctionExecutionContext(callerContext, function, null, thisValue)
-     * result = OrdinaryCallEvaluateBody(calleeContext, function)
+     * result = OrdinaryCallEvaluateBody(function, argumentsList)
      * return returnResultOrUndefined(result)
      * </pre>
      * 
@@ -439,7 +449,7 @@ final class FunctionCodeGenerator {
      * try {
      *   thisArgument = OrdinaryCreateFromConstructor(callerContext, newTarget, %ObjectPrototype%)
      *   calleeContext = newFunctionExecutionContext(callerContext, function, newTarget, thisArgument)
-     *   result = OrdinaryCallEvaluateBody(calleeContext, function)
+     *   result = OrdinaryCallEvaluateBody(function, argumentsList)
      *   return returnResultOrThis(result)
      * } finally {
      *   function.restoreLegacyProperties(oldCaller, oldArguments)
@@ -515,7 +525,7 @@ final class FunctionCodeGenerator {
      * <pre>
      * thisArgument = OrdinaryCreateFromConstructor(callerContext, newTarget, %ObjectPrototype%)
      * calleeContext = newFunctionExecutionContext(callerContext, function, newTarget, thisArgument)
-     * result = OrdinaryCallEvaluateBody(calleeContext, function)
+     * result = OrdinaryCallEvaluateBody(function, argumentsList)
      * return returnResultOrThis(result)
      * </pre>
      * 
@@ -560,7 +570,7 @@ final class FunctionCodeGenerator {
      * 
      * <pre>
      * calleeContext = newFunctionExecutionContext(callerContext, function, newTarget)
-     * result = OrdinaryCallEvaluateBody(calleeContext, function)
+     * result = OrdinaryCallEvaluateBody(function, argumentsList)
      * return returnResultOrThis(result)
      * </pre>
      * 
@@ -839,7 +849,7 @@ final class FunctionCodeGenerator {
     }
 
     /**
-     * 9.2.2.3 OrdinaryCallEvaluateBody ( F, calleeContext, argumentsList )
+     * 9.2.2.3 OrdinaryCallEvaluateBody ( F, argumentsList )
      * 
      * @param node
      *            the function node
@@ -856,10 +866,10 @@ final class FunctionCodeGenerator {
             Variable<ExecutionContext> calleeContext,
             Variable<? extends OrdinaryFunction> function, Variable<Object[]> arguments,
             InstructionVisitor mv) {
-        /* steps 1-3 (Perform FunctionDeclarationInstantiation) */
+        /* steps 1-2 (Perform FunctionDeclarationInstantiation) */
         functionDeclarationInstantiation(node, calleeContext, function, arguments, mv);
 
-        /* step 4 (Perform EvaluateBody) */
+        /* step 3 (Perform EvaluateBody) */
         evaluateBody(node, calleeContext, mv);
     }
 
@@ -1027,16 +1037,16 @@ final class FunctionCodeGenerator {
      * Generate bytecode for:
      * 
      * <pre>
-     * if (result != null) {
-     *     if (tailCall &amp;&amp; result instanceof TailCallInvocation) {
-     *         return ((TailCallInvocation) result).toConstructTailCall(null);
-     *     }
-     *     if (Type.isObject(result)) {
-     *         return Type.objectValue(result);
-     *     }
+     * if (tailCall &amp;&amp; result instanceof TailCallInvocation) {
+     *     return ((TailCallInvocation) result).toConstructTailCall(envRec);
+     * }
+     * if (Type.isObject(result)) {
+     *     return Type.objectValue(result);
+     * }
+     * if (!Type.isUndefined(result)) {
      *     throw Errors.newTypeError();
      * }
-     * return calleeContext.resolveThisBinding();
+     * return envRec.getThisBinding(callerContext);
      * </pre>
      * 
      * @param callerContext
@@ -1050,49 +1060,50 @@ final class FunctionCodeGenerator {
      */
     private void returnResultOrThis(Variable<ExecutionContext> callerContext,
             Variable<ExecutionContext> calleeContext, boolean tailCall, InstructionVisitor mv) {
-        Jump noResult = new Jump();
-        mv.dup();
-        mv.ifnull(noResult);
-        {
-            if (tailCall) {
-                Jump noTailCall = new Jump();
-                mv.dup();
-                mv.instanceOf(Types.TailCallInvocation);
-                mv.ifeq(noTailCall);
-                {
-                    mv.checkcast(Types.TailCallInvocation);
-                    mv.anull(); // Use <null> as a placeholder object.
-                    mv.invoke(Methods.TailCallInvocation_toConstructTailCall);
-                    mv._return();
-                }
-                mv.mark(noTailCall);
-            }
-
-            Jump noObject = new Jump();
+        if (tailCall) {
+            Jump noTailCall = new Jump();
             mv.dup();
-            mv.instanceOf(Types.ScriptObject);
-            mv.ifeq(noObject);
+            mv.instanceOf(Types.TailCallInvocation);
+            mv.ifeq(noTailCall);
             {
-                mv.checkcast(Types.ScriptObject);
+                mv.checkcast(Types.TailCallInvocation);
+                mv.load(calleeContext);
+                mv.invoke(Methods.ExecutionContext_getFunctionVariableEnvironmentRecord);
+                mv.invoke(Methods.TailCallInvocation_toConstructTailCallWithEnvironment);
                 mv._return();
             }
-            mv.mark(noObject);
-            mv.pop();
+            mv.mark(noTailCall);
+        }
 
+        Jump notObject = new Jump();
+        mv.dup();
+        mv.instanceOf(Types.ScriptObject);
+        mv.ifeq(notObject);
+        {
+            mv.checkcast(Types.ScriptObject);
+            mv._return();
+        }
+        mv.mark(notObject);
+
+        Jump notUndefined = new Jump();
+        mv.dup();
+        mv.loadUndefined();
+        mv.ifacmpeq(notUndefined);
+        {
             mv.load(callerContext);
             mv.get(Fields.MessagesKey_NotObjectTypeFromConstructor);
             mv.invoke(Methods.Errors_newTypeError);
             mv.athrow();
         }
-        mv.mark(noResult);
+        mv.mark(notUndefined);
         mv.pop();
 
-        // Calling `calleeContext.resolveThisBinding()` is equivalent to
-        // `calleeContext().getFunctionVariableEnvironment().getThisBinding()`.
         mv.load(calleeContext);
-        mv.invoke(Methods.ExecutionContext_resolveThisBinding);
+        mv.invoke(Methods.ExecutionContext_getFunctionVariableEnvironmentRecord);
+        mv.load(callerContext);
+        mv.invoke(Methods.FunctionEnvironmentRecord_getThisBinding);
         // If the this-binding is present it's a ScriptObject; if it's not present calling
-        // resolveThisBinding() will result in a ReferenceError being thrown. So emitting a
+        // getThisBinding() will result in a ReferenceError being thrown. So emitting a
         // checkcast instruction is safe here.
         mv.checkcast(Types.ScriptObject);
         mv._return();

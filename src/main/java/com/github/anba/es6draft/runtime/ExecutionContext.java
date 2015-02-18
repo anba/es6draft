@@ -502,7 +502,7 @@ public final class ExecutionContext {
         /* step 1 */
         EnvironmentRecord envRec = getThisEnvironment();
         /* step 2 */
-        return envRec.getThisBinding();
+        return envRec.getThisBinding(this);
     }
 
     /**

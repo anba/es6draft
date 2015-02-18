@@ -76,7 +76,7 @@ public final class ModuleEnvironmentRecord extends DeclarativeEnvironmentRecord 
      * 8.1.1.5.4 GetThisBinding ()
      */
     @Override
-    public Object getThisBinding() {
+    public Object getThisBinding(ExecutionContext cx) {
         return UNDEFINED;
     }
 

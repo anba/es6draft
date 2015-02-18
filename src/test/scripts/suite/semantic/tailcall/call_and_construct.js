@@ -5,7 +5,7 @@
  * <https://github.com/anba/es6draft>
  */
 const {
-  assertSame
+  assertSame, assertNotSame, assertNull
 } = Assert;
 
 // Ensure tail-call works when mixing [[Call]] and [[Construct]]
@@ -26,7 +26,8 @@ const {
 
   function start() {
     let caller = Construct();
-    assertSame(start, caller);
+    assertNotSame(start, caller);
+    assertSame(Call.prototype, Object.getPrototypeOf(caller));
   }
 
   start();
@@ -50,7 +51,8 @@ const {
 
   function start() {
     let caller = Call();
-    assertSame(start, caller);
+    assertNotSame(start, caller);
+    assertSame(returnCaller.prototype, Object.getPrototypeOf(caller));
   }
 
   start();

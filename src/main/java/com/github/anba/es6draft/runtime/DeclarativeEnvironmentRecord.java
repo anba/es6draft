@@ -109,7 +109,7 @@ public class DeclarativeEnvironmentRecord implements EnvironmentRecord {
         }
     }
 
-    protected final ExecutionContext cx;
+    private final ExecutionContext cx;
     private final HashMap<String, Binding> bindings;
 
     public DeclarativeEnvironmentRecord(ExecutionContext cx) {
@@ -333,7 +333,7 @@ public class DeclarativeEnvironmentRecord implements EnvironmentRecord {
      * -
      */
     @Override
-    public Object getThisBinding() {
+    public Object getThisBinding(ExecutionContext cx) {
         throw new IllegalStateException();
     }
 

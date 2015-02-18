@@ -7,7 +7,7 @@
 "use strict";
 
 const {
-  assertSame
+  assertThrows
 } = Assert;
 
 const stackLimit = (function() {
@@ -29,6 +29,4 @@ function gauss(n) {
   return (n * n + n) / 2;
 }
 
-let result = sum(stackLimit * 10, 0);
-assertSame(0, result.n);
-assertSame(gauss(stackLimit * 10), result.acc);
+assertThrows(Error, () => sum(stackLimit * 10, 0));

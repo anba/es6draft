@@ -5,7 +5,7 @@
  * <https://github.com/anba/es6draft>
  */
 const {
-  assertSame
+  assertSame, assertNotSame
 } = Assert;
 
 // Ensure tailcall removes intermediate caller from stack
@@ -40,7 +40,7 @@ const {
 
   function start() {
     let caller = tail();
-    assertSame(start, caller);
+    assertNotSame(start, caller);
   }
 
   start();

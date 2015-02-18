@@ -1244,9 +1244,7 @@ public final class StaticSemantics {
     }
 
     private static boolean IsTailCallExpression(Expression expr) {
-        return expr instanceof CallExpression || expr instanceof NewExpression
-                || expr instanceof TemplateCallExpression || expr instanceof SuperCallExpression
-                || expr instanceof SuperNewExpression;
+        return expr instanceof CallExpression || expr instanceof TemplateCallExpression;
     }
 
     private static <T> T last(List<T> list) {

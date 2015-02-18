@@ -841,24 +841,13 @@ final class CodeGenerator {
         body.exitScope();
 
         if (!result.isAbrupt()) {
-            // fall-thru, return <null> or undefined from function
-            if (isDerivedClassConstructor(node)) {
-                body.anull();
-            } else {
-                body.loadUndefined();
-            }
+            // fall-thru, return undefined from function
+            body.loadUndefined();
             body._return();
         }
         body.end();
 
         return body.hasTailCalls();
-    }
-
-    private boolean isDerivedClassConstructor(FunctionNode node) {
-        if (node instanceof MethodDefinition) {
-            return ((MethodDefinition) node).getType() == MethodDefinition.MethodType.DerivedConstructor;
-        }
-        return false;
     }
 
     private boolean conciseAsyncFunctionBody(AsyncArrowFunction node) {

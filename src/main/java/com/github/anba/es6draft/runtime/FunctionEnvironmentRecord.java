@@ -111,23 +111,22 @@ public final class FunctionEnvironmentRecord extends DeclarativeEnvironmentRecor
     /**
      * 8.1.1.3.1 BindThisValue(V)
      * 
+     * @param cx
+     *            the execution context
      * @param thisValue
      *            the function {@code this} value
      */
-    public void bindThisValue(ScriptObject thisValue) {
+    public void bindThisValue(ExecutionContext cx, ScriptObject thisValue) {
         /* step 1 (not applicable) */
-        // FIXME: spec bug - step 4 misplaced.
-        /* step 4 */
+        /* step 2 */
         if (thisInitializationState) {
             throw newReferenceError(cx, Messages.Key.InitializedThis);
         }
-        /* step 2 */
-        assert !thisInitializationState;
         /* step 3 */
         this.thisValue = thisValue;
-        /* step 5 */
+        /* step 4 */
         this.thisInitializationState = true;
-        /* step 6 (not applicable) */
+        /* step 5 (not applicable) */
     }
 
     /**
@@ -150,9 +149,12 @@ public final class FunctionEnvironmentRecord extends DeclarativeEnvironmentRecor
 
     /**
      * 8.1.1.3.4 GetThisBinding ()
+     * 
+     * @param cx
+     *            the execution context
      */
     @Override
-    public Object getThisBinding() {
+    public Object getThisBinding(ExecutionContext cx) {
         /* step 1 (not applicable) */
         /* step 2 */
         if (!thisInitializationState) {
@@ -165,9 +167,11 @@ public final class FunctionEnvironmentRecord extends DeclarativeEnvironmentRecor
     /**
      * 8.1.1.3.5 GetSuperBase ()
      * 
+     * @param cx
+     *            the execution context
      * @return the prototype of the home object or {@code null} if no super binding was set
      */
-    public ScriptObject getSuperBase() {
+    public ScriptObject getSuperBase(ExecutionContext cx) {
         /* step 1 (not applicable) */
         /* step 2 */
         ScriptObject home = homeObject;

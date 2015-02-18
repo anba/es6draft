@@ -36,7 +36,7 @@ import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
  * <h1>9 Ordinary and Exotic Objects Behaviours</h1><br>
  * <h2>9.2 ECMAScript Function Objects</h2>
  * <ul>
- * <li>9.2.13 Function Declaration Instantiation(func, argumentsList, env) Abstract Operation
+ * <li>9.2.13 FunctionDeclarationInstantiation(func, argumentsList) Abstract Operation
  * </ul>
  */
 final class FunctionDeclarationInstantiationGenerator extends

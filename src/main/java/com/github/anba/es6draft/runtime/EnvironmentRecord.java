@@ -141,10 +141,12 @@ public interface EnvironmentRecord {
     /**
      * GetThisBinding ()
      * 
+     * @param cx
+     *            the execution context
      * @return the this-binding
      * @throws IllegalStateException
      *             if this operation is not valid
      */
     // assert: FunctionEnvironmentRecord or GlobalEnvironmentRecord
-    Object getThisBinding() throws IllegalStateException;
+    Object getThisBinding(ExecutionContext cx) throws IllegalStateException;
 }

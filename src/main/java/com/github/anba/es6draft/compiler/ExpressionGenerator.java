@@ -183,19 +183,10 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
                 Types.ScriptRuntime, "EvaluateConstructorCall", Type.methodType(Types.ScriptObject,
                         Types.Object, Types.Object_, Types.ExecutionContext));
 
-        static final MethodName ScriptRuntime_EvaluateConstructorTailCall = MethodName.findStatic(
-                Types.ScriptRuntime, "EvaluateConstructorTailCall",
-                Type.methodType(Types.Object, Types.Object, Types.Object_, Types.ExecutionContext));
-
         static final MethodName ScriptRuntime_EvaluateSuperConstructorCall = MethodName.findStatic(
                 Types.ScriptRuntime, "EvaluateSuperConstructorCall", Type.methodType(
                         Types.ScriptObject, Types.Constructor, Types.Constructor, Types.Object_,
                         Types.ExecutionContext));
-
-        static final MethodName ScriptRuntime_EvaluateSuperConstructorTailCall = MethodName
-                .findStatic(Types.ScriptRuntime, "EvaluateSuperConstructorTailCall", Type
-                        .methodType(Types.Object, Types.Constructor, Types.Constructor,
-                                Types.Object_));
 
         static final MethodName ScriptRuntime_EvaluateFunctionExpression = MethodName.findStatic(
                 Types.ScriptRuntime, "EvaluateFunctionExpression", Type.methodType(
@@ -443,10 +434,6 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
         /* steps 9-14 */
         mv.loadExecutionContext();
         mv.lineInfo(node);
-        if (isTailCall(node, mv)) {
-            mv.invoke(Methods.ScriptRuntime_EvaluateConstructorTailCall);
-            return ValType.Any;
-        }
         mv.invoke(Methods.ScriptRuntime_EvaluateConstructorCall);
         return ValType.Object;
     }
@@ -2826,11 +2813,6 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
         ArgumentListEvaluation(node, node.getArguments(), mv);
 
         /* steps 7-13 */
-        if (isTailCall(node, mv)) {
-            mv.lineInfo(node);
-            mv.invoke(Methods.ScriptRuntime_EvaluateSuperConstructorTailCall);
-            return ValType.Any;
-        }
         mv.loadExecutionContext();
         mv.lineInfo(node);
         mv.invoke(Methods.ScriptRuntime_EvaluateSuperConstructorCall);

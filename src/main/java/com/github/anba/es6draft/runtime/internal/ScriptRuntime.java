@@ -962,36 +962,6 @@ public final class ScriptRuntime {
     }
 
     /**
-     * 12.3.3 The new Operator
-     * <p>
-     * 12.3.3.1 Runtime Semantics: Evaluation<br>
-     * 12.3.5.1 Runtime Semantics: Evaluation
-     * <ul>
-     * <li>NewExpression : new NewExpression
-     * <li>MemberExpression : new MemberExpression Arguments
-     * <li>MemberExpression : NewSuper Arguments<span><sub>opt</sub></span>
-     * </ul>
-     * 
-     * @param constructor
-     *            the constructor object
-     * @param args
-     *            the arguments for the new-call
-     * @param cx
-     *            the execution context
-     * @return the tail call trampoline object
-     */
-    public static Object EvaluateConstructorTailCall(Object constructor, Object[] args,
-            ExecutionContext cx) {
-        /* steps 1-3/1-3/1-4 (generated code) */
-        /* steps 4/6/7 */
-        if (!IsConstructor(constructor)) {
-            throw newTypeError(cx, Messages.Key.NotConstructor);
-        }
-        /* steps 5/7/8 */
-        return PrepareForTailCall((Constructor) constructor, (Constructor) constructor, args);
-    }
-
-    /**
      * 12.3.4 Function Calls
      * <p>
      * Runtime Semantics: EvaluateCall Abstract Operation
@@ -1146,7 +1116,7 @@ public final class ScriptRuntime {
     public static void BindThisValue(ScriptObject result, ExecutionContext cx) {
         EnvironmentRecord thisEnvironment = cx.getThisEnvironment();
         assert thisEnvironment instanceof FunctionEnvironmentRecord;
-        ((FunctionEnvironmentRecord) thisEnvironment).bindThisValue(result);
+        ((FunctionEnvironmentRecord) thisEnvironment).bindThisValue(cx, result);
     }
 
     /**
@@ -1206,30 +1176,6 @@ public final class ScriptRuntime {
     /**
      * 12.3.5 The super Keyword
      * <p>
-     * 12.3.5.1 Runtime Semantics: Evaluation
-     * <ul>
-     * <li>MemberExpression : NewSuper Arguments
-     * <li>NewExpression : NewSuper
-     * </ul>
-     * 
-     * @param newTarget
-     *            the NewTarget constructor object
-     * @param constructor
-     *            the constructor object
-     * @param args
-     *            the arguments for the new-call
-     * @return the tail call trampoline object
-     */
-    public static Object EvaluateSuperConstructorTailCall(Constructor newTarget,
-            Constructor constructor, Object[] args) {
-        /* steps 1-6/1-5  (generated code) */
-        /* steps 7-13/6-12 */
-        return PrepareForTailCall(constructor, newTarget, args);
-    }
-
-    /**
-     * 12.3.5 The super Keyword
-     * <p>
      * 12.3.5.3 Runtime Semantics: MakeSuperPropertyReference(propertyKey, strict)
      * 
      * @param cx
@@ -1273,9 +1219,9 @@ public final class ScriptRuntime {
         assert envRec instanceof FunctionEnvironmentRecord;
         FunctionEnvironmentRecord fEnvRec = (FunctionEnvironmentRecord) envRec;
         /* steps 3-4 */
-        Object actualThis = fEnvRec.getThisBinding();
+        Object actualThis = fEnvRec.getThisBinding(cx);
         /* step 5 */
-        ScriptObject baseValue = fEnvRec.getSuperBase();
+        ScriptObject baseValue = fEnvRec.getSuperBase(cx);
         /* steps 6-7 */
         // RequireObjectCoercible(cx.getRealm(), baseValue);
         if (baseValue == null) {
@@ -1309,9 +1255,9 @@ public final class ScriptRuntime {
         assert envRec instanceof FunctionEnvironmentRecord;
         FunctionEnvironmentRecord fEnvRec = (FunctionEnvironmentRecord) envRec;
         /* steps 3-4 */
-        Object actualThis = fEnvRec.getThisBinding();
+        Object actualThis = fEnvRec.getThisBinding(cx);
         /* step 5 */
-        ScriptObject baseValue = fEnvRec.getSuperBase();
+        ScriptObject baseValue = fEnvRec.getSuperBase(cx);
         /* steps 6-7 */
         // RequireObjectCoercible(cx.getRealm(), baseValue);
         if (baseValue == null) {
@@ -3243,11 +3189,6 @@ public final class ScriptRuntime {
      */
     public static Object PrepareForTailCall(Callable function, Object thisValue, Object[] args) {
         return newTailCallInvocation(function, thisValue, args);
-    }
-
-    public static Object PrepareForTailCall(Constructor constructor, Constructor newTarget,
-            Object[] args) {
-        return newTailCallInvocation(constructor, newTarget, args);
     }
 
     // Called from generated code

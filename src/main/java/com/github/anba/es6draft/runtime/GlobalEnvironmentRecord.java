@@ -221,7 +221,7 @@ public final class GlobalEnvironmentRecord implements EnvironmentRecord {
      * 8.1.1.4.11 GetThisBinding ()
      */
     @Override
-    public ScriptObject getThisBinding() {
+    public ScriptObject getThisBinding(ExecutionContext cx) {
         /* steps 1-3 (omitted) */
         /* step 4 */
         return globalObject;

@@ -11,8 +11,8 @@ const {
 // 9.2.3 [[Construct]], step 14: Handle explicit return with no value for derived constructor
 // https://bugs.ecmascript.org/show_bug.cgi?id=3684
 
-assertThrows(TypeError, () => new class extends class {} {
-  constructor(){
+new class extends class {} {
+  constructor() {
     super();
     return;
-}});
+}};
