@@ -199,6 +199,7 @@ final class Test262Info extends TestInfo {
         private List<String> features = Collections.emptyList();
         private String negative;
         private String es5id;
+        private String es6id;
         private String bestPractice;
         private String author;
 
@@ -256,6 +257,14 @@ final class Test262Info extends TestInfo {
 
         public void setEs5id(String es5id) {
             this.es5id = es5id;
+        }
+
+        public String getEs6id() {
+            return es6id;
+        }
+
+        public void setEs6id(String es6id) {
+            this.es6id = es6id;
         }
 
         public String getBestPractice() {
