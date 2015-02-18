@@ -7,13 +7,18 @@
 package com.github.anba.es6draft.runtime.objects.reflect;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToFlatString;
+import static com.github.anba.es6draft.runtime.internal.Errors.newInternalError;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.modules.Loader.CreateLoader;
-import static com.github.anba.es6draft.runtime.modules.ModuleSemantics.*;
+import static com.github.anba.es6draft.runtime.modules.ModuleSemantics.GetModuleNamespace;
 import static com.github.anba.es6draft.runtime.objects.promise.PromiseAbstractOperations.PromiseOf;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
+import java.io.IOException;
+
+import com.github.anba.es6draft.compiler.CompilationException;
+import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
@@ -24,8 +29,11 @@ import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
 import com.github.anba.es6draft.runtime.internal.Source;
 import com.github.anba.es6draft.runtime.modules.Loader;
+import com.github.anba.es6draft.runtime.modules.MalformedNameException;
+import com.github.anba.es6draft.runtime.modules.ModuleLoader;
 import com.github.anba.es6draft.runtime.modules.ModuleRecord;
 import com.github.anba.es6draft.runtime.modules.ModuleSource;
+import com.github.anba.es6draft.runtime.modules.ResolutionException;
 import com.github.anba.es6draft.runtime.modules.SourceIdentifier;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
@@ -102,6 +110,19 @@ public final class SystemObject extends LoaderObject implements Initializable {
             throw newTypeError(cx, Messages.Key.IncompatibleObject);
         }
 
+        private static SourceIdentifier normalize(ExecutionContext cx, ModuleLoader moduleLoader,
+                String unnormalizedName) {
+            try {
+                return moduleLoader.normalizeName(unnormalizedName, null);
+            } catch (MalformedNameException e) {
+                throw e.toScriptException(cx);
+            }
+        }
+
+        private static ScriptException toScriptException(ExecutionContext cx, IOException e) {
+            return newInternalError(cx, Messages.Key.ModulesIOException, e.getMessage());
+        }
+
         @Prototype
         public static final ScriptObject __proto__ = null;
 
@@ -123,17 +144,35 @@ public final class SystemObject extends LoaderObject implements Initializable {
                 Object source) {
             LoaderObject loader = thisLoader(cx, thisValue);
             Realm realm = loader.getLoader().getRealm();
+            ModuleLoader moduleLoader = realm.getModuleLoader();
+
             String unnormalizedName = ToFlatString(cx, moduleName);
-            SourceIdentifier normalizedModuleName = NormalizeModuleName(cx, realm,
-                    unnormalizedName, null);
             String sourceCode = ToFlatString(cx, source);
-            ModuleSource src = new StringModuleSource(normalizedModuleName, sourceCode);
-            try {
-                ModuleEvaluationJob(cx, realm, normalizedModuleName, src);
-            } catch (ScriptException e) {
-                return PromiseOf(cx, e);
+            SourceIdentifier identifier = normalize(cx, moduleLoader, unnormalizedName);
+            ModuleRecord module = moduleLoader.get(identifier);
+            if (module == null) {
+                ModuleSource src = new StringModuleSource(identifier, sourceCode);
+                try {
+                    module = moduleLoader.define(identifier, src);
+                } catch (IOException e) {
+                    return PromiseOf(cx, toScriptException(cx, e));
+                } catch (ParserException | CompilationException e) {
+                    return PromiseOf(cx, e.toScriptException(cx));
+                }
             }
-            return PromiseOf(cx, GetModuleNamespace(cx, realm, normalizedModuleName));
+            try {
+                if (moduleLoader.link(module, realm)) {
+                    module.instantiate();
+                }
+                module.evaluate();
+                return PromiseOf(cx, GetModuleNamespace(cx, module));
+            } catch (IOException e) {
+                return PromiseOf(cx, toScriptException(cx, e));
+            } catch (MalformedNameException | ResolutionException e) {
+                return PromiseOf(cx, e.toScriptException(cx));
+            } catch (ScriptException | ParserException | CompilationException e) {
+                return PromiseOf(cx, e.toScriptException(cx));
+            }
         }
 
         /**
@@ -151,15 +190,23 @@ public final class SystemObject extends LoaderObject implements Initializable {
         public static Object _import(ExecutionContext cx, Object thisValue, Object moduleName) {
             LoaderObject loader = thisLoader(cx, thisValue);
             Realm realm = loader.getLoader().getRealm();
+            ModuleLoader moduleLoader = realm.getModuleLoader();
+
             String unnormalizedName = ToFlatString(cx, moduleName);
-            SourceIdentifier normalizedModuleName = NormalizeModuleName(cx, realm,
-                    unnormalizedName, null);
+            SourceIdentifier normalizedModuleName = normalize(cx, moduleLoader, unnormalizedName);
             try {
-                ModuleEvaluationJob(cx, realm, normalizedModuleName);
-            } catch (ScriptException e) {
-                return PromiseOf(cx, e);
+                ModuleRecord module = moduleLoader.resolve(normalizedModuleName);
+                if (moduleLoader.link(module, realm)) {
+                    module.instantiate();
+                }
+                return PromiseOf(cx, GetModuleNamespace(cx, module));
+            } catch (IOException e) {
+                return PromiseOf(cx, toScriptException(cx, e));
+            } catch (MalformedNameException | ResolutionException e) {
+                return PromiseOf(cx, e.toScriptException(cx));
+            } catch (ScriptException | ParserException | CompilationException e) {
+                return PromiseOf(cx, e.toScriptException(cx));
             }
-            return PromiseOf(cx, GetModuleNamespace(cx, realm, normalizedModuleName));
         }
 
         /**
@@ -177,13 +224,19 @@ public final class SystemObject extends LoaderObject implements Initializable {
         public static Object load(ExecutionContext cx, Object thisValue, Object moduleName) {
             LoaderObject loader = thisLoader(cx, thisValue);
             Realm realm = loader.getLoader().getRealm();
+            ModuleLoader moduleLoader = realm.getModuleLoader();
+
             String unnormalizedName = ToFlatString(cx, moduleName);
-            SourceIdentifier normalizedModuleName = NormalizeModuleName(cx, realm,
-                    unnormalizedName, null);
+            SourceIdentifier normalizedModuleName = normalize(cx, moduleLoader, unnormalizedName);
             try {
-                LoadModule(cx, realm, normalizedModuleName);
-            } catch (ScriptException e) {
-                return PromiseOf(cx, e);
+                ModuleRecord module = moduleLoader.resolve(normalizedModuleName);
+                moduleLoader.fetch(module);
+            } catch (IOException e) {
+                return PromiseOf(cx, toScriptException(cx, e));
+            } catch (MalformedNameException e) {
+                return PromiseOf(cx, e.toScriptException(cx));
+            } catch (ParserException | CompilationException e) {
+                return PromiseOf(cx, e.toScriptException(cx));
             }
             return PromiseOf(cx, UNDEFINED);
         }
@@ -203,15 +256,27 @@ public final class SystemObject extends LoaderObject implements Initializable {
         public static Object get(ExecutionContext cx, Object thisValue, Object moduleName) {
             LoaderObject loader = thisLoader(cx, thisValue);
             Realm realm = loader.getLoader().getRealm();
+            ModuleLoader moduleLoader = realm.getModuleLoader();
+
             String unnormalizedName = ToFlatString(cx, moduleName);
-            SourceIdentifier normalizedModuleName = NormalizeModuleName(cx, realm,
-                    unnormalizedName, null);
-            ModuleRecord module = ModuleAt(realm.getModules(), normalizedModuleName);
+            SourceIdentifier normalizedModuleName = normalize(cx, moduleLoader, unnormalizedName);
+            ModuleRecord module = moduleLoader.get(normalizedModuleName);
             if (module == null) {
                 return UNDEFINED;
             }
-            ModuleEvaluation(module, realm);
-            return GetModuleNamespace(cx, realm, normalizedModuleName);
+            try {
+                if (moduleLoader.link(module, realm)) {
+                    module.instantiate();
+                }
+                module.evaluate();
+                return GetModuleNamespace(cx, module);
+            } catch (IOException e) {
+                throw toScriptException(cx, e);
+            } catch (MalformedNameException | ResolutionException e) {
+                throw e.toScriptException(cx);
+            } catch (ParserException | CompilationException e) {
+                throw e.toScriptException(cx);
+            }
         }
 
         /**
@@ -229,8 +294,10 @@ public final class SystemObject extends LoaderObject implements Initializable {
         public static Object normalize(ExecutionContext cx, Object thisValue, Object moduleName) {
             LoaderObject loader = thisLoader(cx, thisValue);
             Realm realm = loader.getLoader().getRealm();
+            ModuleLoader moduleLoader = realm.getModuleLoader();
+
             String unnormalizedName = ToFlatString(cx, moduleName);
-            return NormalizeModuleName(cx, realm, unnormalizedName, null).toString();
+            return normalize(cx, moduleLoader, unnormalizedName).toString();
         }
     }
 }

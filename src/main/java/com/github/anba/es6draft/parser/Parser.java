@@ -148,7 +148,7 @@ public final class Parser {
         boolean inArrowParameters = false;
         boolean legacyGenerator = false;
         boolean explicitStrict = false;
-        boolean isConstructor = false;
+        boolean isClassConstructor = false;
 
         StrictMode strictMode = StrictMode.Unknown;
         ParserException strictError = null;
@@ -210,6 +210,12 @@ public final class Parser {
                 default:
                     return cx;
                 }
+            }
+        }
+
+        void setHasEval() {
+            if (funContext != null) {
+                funContext.directEval = true;
             }
         }
 
@@ -299,6 +305,8 @@ public final class Parser {
         NameSet parameterNames = null;
         InlineArrayList<FunctionDeclaration> blockFunctions = null;
         boolean needsArguments = false;
+        boolean directEval = false;
+        boolean directEvalInFormals = false;
         boolean superReference = false;
         final Name arguments;
 
@@ -312,6 +320,11 @@ public final class Parser {
                 blockFunctions = newList();
             }
             blockFunctions.add(function);
+        }
+
+        void setParameterNames(List<Name> names) {
+            this.directEvalInFormals = directEval;
+            this.parameterNames = new NameSet(names);
         }
 
         @Override
@@ -332,6 +345,11 @@ public final class Parser {
         @Override
         public boolean isDynamic() {
             return directEval && !IsStrict(node);
+        }
+
+        @Override
+        public boolean hasFormalInitializerEval() {
+            return directEvalInFormals;
         }
 
         @Override
@@ -417,7 +435,6 @@ public final class Parser {
 
     private static abstract class TopContext extends ScopeContext implements TopLevelScope {
         final ScopeContext enclosing;
-        boolean directEval = false;
         InlineArrayList<StatementListItem> varScopedDeclarations = null;
 
         TopContext(ScopeContext enclosing) {
@@ -2633,7 +2650,7 @@ public final class Parser {
                 }
             }
         }
-        context.funContext.parameterNames = new NameSet(BoundNames(formals));
+        context.funContext.setParameterNames(BoundNames(formals));
         return new FormalParameterList(begin, ts.endPosition(), formals);
     }
 
@@ -3001,7 +3018,7 @@ public final class Parser {
             MethodType type;
             if (allocation == MethodAllocation.Prototype
                     && "constructor".equals(propertyName.getName())) {
-                context.isConstructor = true;
+                context.isClassConstructor = true;
                 type = hasExtends ? MethodType.DerivedConstructor : MethodType.BaseConstructor;
             } else {
                 type = MethodType.Function;
@@ -3163,7 +3180,7 @@ public final class Parser {
     private FormalParameterList propertySetParameterList() {
         long begin = ts.beginPosition();
         FormalParameter setParameter = formalParameter();
-        context.funContext.parameterNames = new NameSet(BoundNames(setParameter));
+        context.funContext.setParameterNames(BoundNames(setParameter));
         return new FormalParameterList(begin, ts.endPosition(), singletonList(setParameter));
     }
 
@@ -7291,7 +7308,7 @@ public final class Parser {
                 }
                 if (lhs instanceof IdentifierReference
                         && "eval".equals(((IdentifierReference) lhs).getName())) {
-                    context.topContext.directEval = true;
+                    context.setHasEval();
                 }
                 List<Expression> args = arguments();
                 lhs = new CallExpression(begin, ts.endPosition(), lhs, args);
@@ -7308,10 +7325,14 @@ public final class Parser {
 
     private void superPropertyAccess() {
         ParseContext superContext = context.findSuperContext();
+        // 14.1.2 Static Semantics: Early Errors
         // 15.1.1 Static Semantics: Early Errors
         // 15.2.1.1 Static Semantics: Early Errors
         if ((superContext.kind == ContextKind.Script && !isEnabled(Option.FunctionThis))
-                || superContext.kind == ContextKind.Module) {
+                || superContext.kind == ContextKind.Module
+                || superContext.kind == ContextKind.Function
+                || superContext.kind == ContextKind.Generator
+                || superContext.kind == ContextKind.AsyncFunction) {
             reportSyntaxError(Messages.Key.InvalidSuperExpression);
         }
         superContext.setNeedsSuperBinding();
@@ -7330,7 +7351,7 @@ public final class Parser {
                 || superContext.kind == ContextKind.Function
                 || superContext.kind == ContextKind.Generator
                 || superContext.kind == ContextKind.AsyncFunction
-                || (superContext.kind.isMethod() && !superContext.isConstructor)) {
+                || (superContext.kind.isMethod() && !superContext.isClassConstructor)) {
             reportSyntaxError(Messages.Key.InvalidSuperCallExpression);
         }
     }
@@ -7344,9 +7365,10 @@ public final class Parser {
         // 15.2.1.1 Static Semantics: Early Errors
         if ((superContext.kind == ContextKind.Script && !isEnabled(Option.FunctionThis))
                 || superContext.kind == ContextKind.Module
+                || superContext.kind == ContextKind.Function
                 || superContext.kind == ContextKind.Generator
                 || superContext.kind == ContextKind.AsyncFunction
-                || (superContext.kind.isMethod() && !superContext.isConstructor)) {
+                || (superContext.kind.isMethod() && !superContext.isClassConstructor)) {
             reportSyntaxError(Messages.Key.InvalidNewSuperExpression);
         }
     }

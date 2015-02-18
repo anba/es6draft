@@ -12,7 +12,6 @@ import static com.github.anba.es6draft.v8.V8TestGlobalObject.newGlobalObjectAllo
 import static org.junit.Assume.assumeTrue;
 
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.util.Iterator;
 import java.util.List;
@@ -116,7 +115,7 @@ public final class MiniJSUnitTest {
     private V8TestGlobalObject global;
 
     @Before
-    public void setUp() throws IOException, URISyntaxException {
+    public void setUp() throws Throwable {
         // Filter disabled tests
         assumeTrue(test.isEnabled());
 
@@ -134,7 +133,7 @@ public final class MiniJSUnitTest {
     @Test
     public void runTest() throws Throwable {
         if (test.isModule()) {
-            global.eval(test.toModuleName(), null);
+            global.eval(test.toModuleName());
         } else {
             global.eval(test.getScript(), test.toFile());
         }

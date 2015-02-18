@@ -15,13 +15,14 @@ var callCount = 0;
 Object.setPrototypeOf(Object.prototype, new Proxy(Object.create(null), {
   __proto__: null,
   getPrototypeOf(t) {
+    fail `unreachable`;
     callCount++;
     return Reflect.getPrototypeOf(t);
   }
 }));
 
 // Called once during Object.setPrototypeOf()
-assertSame(1, callCount);
+assertSame(0, callCount);
 
 function f(a) { return arguments[0] }
 assertSame(0, f(0));
@@ -30,4 +31,4 @@ function g(a) { return eval("arguments[0]") }
 assertSame(0, g(0));
 
 // Not called when arguments objects are created.
-assertSame(1, callCount);
+assertSame(0, callCount);

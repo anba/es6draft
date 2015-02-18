@@ -191,11 +191,11 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
         // class: OrdinaryFunction
         static final MethodName OrdinaryFunction_SetFunctionName_String = MethodName.findStatic(
                 Types.OrdinaryFunction, "SetFunctionName",
-                Type.methodType(Type.VOID_TYPE, Types.FunctionObject, Types.String));
+                Type.methodType(Type.VOID_TYPE, Types.OrdinaryObject, Types.String));
 
         static final MethodName OrdinaryFunction_SetFunctionName_Symbol = MethodName.findStatic(
                 Types.OrdinaryFunction, "SetFunctionName",
-                Type.methodType(Type.VOID_TYPE, Types.FunctionObject, Types.Symbol));
+                Type.methodType(Type.VOID_TYPE, Types.OrdinaryObject, Types.Symbol));
 
         // class: ReturnValue
         static final MethodName ReturnValue_getValue = MethodName.findVirtual(Types.ReturnValue,

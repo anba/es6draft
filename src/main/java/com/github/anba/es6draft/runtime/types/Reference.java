@@ -333,7 +333,7 @@ public abstract class Reference<BASE, NAME> {
             assert Type.of(w) != null : "invalid value type";
 
             /* step 6 (not applicable) */
-            /* step 4-5, 7-8 */
+            /* step 4-5, 7 */
             if (isUnresolvableReference()) {
                 /* steps 5, 8 */
                 if (isStrictReference()) {
@@ -343,7 +343,7 @@ public abstract class Reference<BASE, NAME> {
                 ScriptObject globalObj = cx.getGlobalObject();
                 Put(cx, globalObj, getReferencedName(), w, false);
             } else {
-                /* steps 4, 7-8 */
+                /* steps 4, 7 */
                 getBase().setMutableBinding(getReferencedName(), w, isStrictReference());
             }
         }

@@ -10,6 +10,7 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.*;
 import static com.github.anba.es6draft.runtime.internal.Errors.newRangeError;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
+import static com.github.anba.es6draft.runtime.objects.internal.ListIterator.FromScriptIterator;
 import static com.github.anba.es6draft.runtime.types.builtins.ArrayObject.ArrayCreate;
 import static com.github.anba.es6draft.runtime.types.builtins.ArrayObject.DenseArrayCreate;
 
@@ -23,6 +24,7 @@ import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
+import com.github.anba.es6draft.runtime.internal.ScriptIterator;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Constructor;
@@ -150,7 +152,7 @@ public final class ArrayConstructor extends BuiltinConstructor implements Initia
         @Function(name = "isArray", arity = 1)
         public static Object isArray(ExecutionContext cx, Object thisValue, Object arg) {
             /* step 1 */
-            return IsArray(arg);
+            return IsArray(cx, arg);
         }
 
         /**
@@ -233,17 +235,14 @@ public final class ArrayConstructor extends BuiltinConstructor implements Initia
                     a = ArrayCreate(cx, 0);
                 }
                 /* steps 6d-6e */
-                ScriptObject iterator = GetIterator(cx, items, usingIterator);
+                ScriptIterator<?> iterator = FromScriptIterator(cx,
+                        GetIterator(cx, items, usingIterator));
                 /* steps 6f-6g */
                 int k = 0;
                 try {
-                    while (true) {
+                    while (iterator.hasNext()) {
                         int pk = k;
-                        ScriptObject next = IteratorStep(cx, iterator);
-                        if (next == null) {
-                            break;
-                        }
-                        Object nextValue = IteratorValue(cx, next);
+                        Object nextValue = iterator.next();
                         Object mappedValue;
                         if (mapping) {
                             mappedValue = mapper.call(cx, thisArg, nextValue, k);

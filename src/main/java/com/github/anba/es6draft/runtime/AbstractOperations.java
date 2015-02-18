@@ -31,6 +31,7 @@ import org.mozilla.javascript.v8dtoa.FastDtoa;
 import com.github.anba.es6draft.parser.NumberParser;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
+import com.github.anba.es6draft.runtime.internal.ScriptIterator;
 import com.github.anba.es6draft.runtime.internal.ScriptRuntime;
 import com.github.anba.es6draft.runtime.internal.Strings;
 import com.github.anba.es6draft.runtime.objects.FunctionPrototype;
@@ -745,7 +746,6 @@ public final class AbstractOperations {
         }
         /* step 3 */
         double n = ToNumberParser.readDecimalLiteral(value);
-        // FIXME: spec issue (bug 3272)
         /* step 4 */
         if (!value.equals(ToString(n))) {
             return -1;
@@ -760,46 +760,6 @@ public final class AbstractOperations {
 
     private static boolean isCanonicalNumericIndexStringPrefix(char c) {
         return ('0' <= c && c <= '9') || c == '-' || c == 'I' || c == 'N';
-    }
-
-    public enum CanonicalNumericString {
-        PositiveInteger, NegativeInteger, NonInteger, NegativeZero, None
-    }
-
-    /**
-     * 7.1.16 CanonicalNumericIndexString ( argument )
-     * 
-     * @param value
-     *            the argument value
-     * @return the canonical number or -1 if not canonical
-     */
-    public static CanonicalNumericString CanonicalNumericIndexStringType(String value) {
-        // TODO: Remove after bug 3619 is fixed
-        // Shortcut if value does not start with a valid canonical numeric index character
-        if (value.isEmpty() || !isCanonicalNumericIndexStringPrefix(value.charAt(0))) {
-            return CanonicalNumericString.None;
-        }
-        /* step 1 (not applicable) */
-        /* step 2 */
-        if ("-0".equals(value)) {
-            return CanonicalNumericString.NegativeZero;
-        }
-        /* step 3 */
-        double n = ToNumberParser.readDecimalLiteral(value);
-        // FIXME: spec issue (bug 3272)
-        /* step 4 */
-        if (!value.equals(ToString(n))) {
-            return CanonicalNumericString.None;
-        }
-        // Directly perform IsInteger() check and encode negative and non-integer indices.
-        if (!IsInteger(n)) {
-            return CanonicalNumericString.NonInteger;
-        }
-        if (n < 0) {
-            return CanonicalNumericString.NegativeInteger;
-        }
-        /* step 5 */
-        return CanonicalNumericString.PositiveInteger;
     }
 
     /**
@@ -821,11 +781,13 @@ public final class AbstractOperations {
     /**
      * 7.2.2 IsArray ( argument )
      * 
+     * @param cx
+     *            the execution context
      * @param value
      *            the argument value
      * @return {@code true} if the argument is an Array object
      */
-    public static boolean IsArray(Object value) {
+    public static boolean IsArray(ExecutionContext cx, Object value) {
         /* step 1 (implicit) */
         /* step 2 */
         if (value instanceof ArrayObject) {
@@ -833,7 +795,11 @@ public final class AbstractOperations {
         }
         /* step 3 */
         if (value instanceof ProxyObject) {
-            return ((ProxyObject) value).unwrap() instanceof ArrayObject;
+            ScriptObject target = ((ProxyObject) value).unwrap();
+            if (target == null) {
+                throw newTypeError(cx, Messages.Key.ProxyRevoked);
+            }
+            return target instanceof ArrayObject;
         }
         /* step 4 */
         return false;
@@ -842,11 +808,13 @@ public final class AbstractOperations {
     /**
      * 7.2.2 IsArray ( argument )
      * 
+     * @param cx
+     *            the execution context
      * @param value
      *            the argument value
      * @return {@code true} if the argument is an Array object
      */
-    public static boolean IsArray(ScriptObject value) {
+    public static boolean IsArray(ExecutionContext cx, ScriptObject value) {
         /* step 1 (not applicable) */
         /* step 2 */
         if (value instanceof ArrayObject) {
@@ -854,7 +822,11 @@ public final class AbstractOperations {
         }
         /* step 3 */
         if (value instanceof ProxyObject) {
-            return ((ProxyObject) value).unwrap() instanceof ArrayObject;
+            ScriptObject target = ((ProxyObject) value).unwrap();
+            if (target == null) {
+                throw newTypeError(cx, Messages.Key.ProxyRevoked);
+            }
+            return target instanceof ArrayObject;
         }
         /* step 4 */
         return false;
@@ -2501,10 +2473,9 @@ public final class AbstractOperations {
         }
         /* steps 7-8 */
         List<?> keys = object.ownPropertyKeys(cx);
-        /* steps 9-10 (FIXME: spec bug - unused variables) */
-        /* step 11 */
+        /* step 9 */
         for (Object key : keys) {
-            /* steps 11.a-b */
+            /* steps 9.a-b */
             Property currentDesc;
             if (key instanceof String) {
                 currentDesc = object.getOwnProperty(cx, (String) key);
@@ -2512,7 +2483,7 @@ public final class AbstractOperations {
                 assert key instanceof Symbol;
                 currentDesc = object.getOwnProperty(cx, (Symbol) key);
             }
-            /* step 11.c */
+            /* step 9.c */
             if (currentDesc != null) {
                 if (currentDesc.isConfigurable()) {
                     return false;
@@ -2522,7 +2493,7 @@ public final class AbstractOperations {
                 }
             }
         }
-        /* step 12 */
+        /* step 10 */
         return true;
     }
 
@@ -2935,6 +2906,23 @@ public final class AbstractOperations {
         }
         /* step 6 */
         return result;
+    }
+
+    /**
+     * 7.4.6 IteratorClose( iterator, completion )
+     * 
+     * @param cx
+     *            the execution context
+     * @param iterator
+     *            the script iterator object
+     * @param isThrowCompletion
+     *            {@code true} if the completion is Throw
+     */
+    public static void IteratorClose(ExecutionContext cx, ScriptIterator<?> iterator,
+            boolean isThrowCompletion) {
+        if (!iterator.isDone()) {
+            IteratorClose(cx, iterator.getScriptObject(), isThrowCompletion);
+        }
     }
 
     /**

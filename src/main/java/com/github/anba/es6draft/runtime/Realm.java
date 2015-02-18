@@ -28,8 +28,6 @@ import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.ScriptLoader;
 import com.github.anba.es6draft.runtime.internal.Source;
 import com.github.anba.es6draft.runtime.modules.ModuleLoader;
-import com.github.anba.es6draft.runtime.modules.ModuleRecord;
-import com.github.anba.es6draft.runtime.modules.SourceIdentifier;
 import com.github.anba.es6draft.runtime.objects.*;
 import com.github.anba.es6draft.runtime.objects.NativeErrorConstructor.ErrorType;
 import com.github.anba.es6draft.runtime.objects.binary.ArrayBufferConstructor;
@@ -89,7 +87,7 @@ import com.github.anba.es6draft.runtime.types.builtins.TypeErrorThrower;
  * <li>8.2 Code Realms
  * </ul>
  */
-public final class Realm implements ShadowRealm {
+public final class Realm {
     /**
      * [[intrinsics]]
      */
@@ -114,11 +112,6 @@ public final class Realm implements ShadowRealm {
      * [[templateMap]]
      */
     private final HashMap<String, ArrayObject> templateMap = new HashMap<>();
-
-    /**
-     * [[modules]]
-     */
-    private final HashMap<SourceIdentifier, ModuleRecord> modules = new HashMap<>();
 
     /**
      * [[ThrowTypeError]]
@@ -168,6 +161,7 @@ public final class Realm implements ShadowRealm {
 
         // Store reference to built-in eval
         builtinEval = (Callable) globalObject.lookupOwnProperty("eval").getValue();
+        intrinsics.put(Intrinsics.eval, (OrdinaryObject) builtinEval);
 
         // [[Prototype]] for default global is implementation-dependent
         globalThis.setPrototypeOf(defaultContext, getIntrinsic(Intrinsics.ObjectPrototype));
@@ -193,8 +187,9 @@ public final class Realm implements ShadowRealm {
 
         // Store reference to built-in eval
         builtinEval = (Callable) globalObject.lookupOwnProperty("eval").getValue();
+        intrinsics.put(Intrinsics.eval, (OrdinaryObject) builtinEval);
 
-        // Set prototype to %ObjectPrototype%, cf. 8.2.3 SetRealmGlobalObj
+        // Set prototype to %ObjectPrototype%, cf. 8.2.3 SetRealmGlobalObject
         globalThis.setPrototypeOf(defaultContext, getIntrinsic(Intrinsics.ObjectPrototype));
     }
 
@@ -215,6 +210,7 @@ public final class Realm implements ShadowRealm {
 
         // Store reference to built-in eval
         builtinEval = (Callable) globalObject.lookupOwnProperty("eval").getValue();
+        intrinsics.put(Intrinsics.eval, (OrdinaryObject) builtinEval);
     }
 
     /**
@@ -305,16 +301,6 @@ public final class Realm implements ShadowRealm {
      */
     public Map<String, ArrayObject> getTemplateMap() {
         return templateMap;
-    }
-
-    /**
-     * [[modules]]
-     * 
-     * @return the map of resolved modules
-     */
-    @Override
-    public Map<SourceIdentifier, ModuleRecord> getModules() {
-        return modules;
     }
 
     /**
@@ -465,7 +451,6 @@ public final class Realm implements ShadowRealm {
      * 
      * @return the module loader
      */
-    @Override
     public ModuleLoader getModuleLoader() {
         return world.getModuleLoader();
     }
@@ -475,7 +460,6 @@ public final class Realm implements ShadowRealm {
      * 
      * @return the script loader
      */
-    @Override
     public ScriptLoader getScriptLoader() {
         return world.getScriptLoader();
     }
@@ -586,7 +570,7 @@ public final class Realm implements ShadowRealm {
 
     /**
      * 8.2.1 CreateRealm ( ) Abstract Operation<br>
-     * 8.2.3 SetRealmGlobalObj ( realmRec, globalObj ) Abstract Operation
+     * 8.2.3 SetRealmGlobalObject ( realmRec, globalObj ) Abstract Operation
      * <p>
      * Creates a new {@link Realm} object.
      * 
@@ -598,7 +582,7 @@ public final class Realm implements ShadowRealm {
      *            the global this object or {@code null}
      * @return the new realm instance
      */
-    public static Realm CreateRealmAndSetRealmGlobalObj(ExecutionContext cx,
+    public static Realm CreateRealmAndSetRealmGlobalObject(ExecutionContext cx,
             RealmObject realmObject, ScriptObject globalObj) {
         World<? extends GlobalObject> world = cx.getRealm().getWorld();
         if (globalObj == null) {
@@ -661,7 +645,7 @@ public final class Realm implements ShadowRealm {
     }
 
     /**
-     * 8.2.3 SetRealmGlobalObj ( realmRec, globalObj ) Abstract Operation
+     * 8.2.3 SetRealmGlobalObject ( realmRec, globalObj ) Abstract Operation
      * 
      * @param cx
      *            the execution context
@@ -671,7 +655,8 @@ public final class Realm implements ShadowRealm {
      *            the global this object or {@code null}
      * @return the new realm instance
      */
-    public static Realm SetRealmGlobalObj(ExecutionContext cx, Realm realm, ScriptObject globalObj) {
+    public static Realm SetRealmGlobalObject(ExecutionContext cx, Realm realm,
+            ScriptObject globalObj) {
         // The operation is not supported in this implementation.
         throw new UnsupportedOperationException();
     }
@@ -683,14 +668,10 @@ public final class Realm implements ShadowRealm {
      *            the realm instance
      */
     private static void CreateIntrinsics(Realm realm) {
-        /* steps 1-18 */
-
-        // intrinsics: 19, 20, 21, 22.1, 24.3
+        /* steps 1-14 */
         initializeFundamentalObjects(realm);
         initializeStandardObjects(realm);
         initializeNativeErrors(realm);
-
-        // intrinsics: 22.2, 23, 24.1, 24.2, 25
         initializeBinaryModule(realm);
         initializeCollectionModule(realm);
         initializeReflectModule(realm);

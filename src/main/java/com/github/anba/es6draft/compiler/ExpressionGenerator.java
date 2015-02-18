@@ -35,6 +35,7 @@ import com.github.anba.es6draft.compiler.assembler.FieldName;
 import com.github.anba.es6draft.compiler.assembler.Jump;
 import com.github.anba.es6draft.compiler.assembler.MethodName;
 import com.github.anba.es6draft.compiler.assembler.Type;
+import com.github.anba.es6draft.compiler.assembler.Variable;
 import com.github.anba.es6draft.runtime.internal.Bootstrap;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.NativeCalls;
@@ -155,7 +156,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
 
         static final MethodName ScriptRuntime_directEvalFallbackArguments = MethodName.findStatic(
                 Types.ScriptRuntime, "directEvalFallbackArguments", Type.methodType(Types.Object_,
-                        Types.Object, Types.Object_, Types.Callable, Types.ExecutionContext));
+                        Types.Callable, Types.ExecutionContext, Types.Object, Types.Object_));
 
         static final MethodName ScriptRuntime_directEvalFallbackThisArgument = MethodName
                 .findStatic(Types.ScriptRuntime, "directEvalFallbackThisArgument",
@@ -289,8 +290,8 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
                         Types.Reference, Types.ExecutionContext, Types.String, Type.BOOLEAN_TYPE));
 
         static final MethodName ScriptRuntime_PrepareForTailCall = MethodName.findStatic(
-                Types.ScriptRuntime, "PrepareForTailCall",
-                Type.methodType(Types.Object, Types.Object, Types.Object_, Types.Callable));
+                Types.ScriptRuntime, "PrepareForTailCall", Type.methodType(Types.Object,
+                        Types.Callable, Types.ExecutionContext, Types.Object, Types.Object_));
 
         static final MethodName ScriptRuntime_PrepareForTailCallUnchecked = MethodName.findStatic(
                 Types.ScriptRuntime, "PrepareForTailCall", Type.methodType(Types.Object,
@@ -686,9 +687,11 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
         ValType type = base.accept(this, mv);
         assert type == ValType.Reference;
 
-        /* steps 1-2 */
-        // stack: [ref] -> [func, ref]
+        // stack: [ref] -> [ref, ref]
         mv.dup();
+
+        /* steps 1-2 */
+        // stack: [ref, ref] -> [func, ref]
         GetValue(base, type, mv);
         mv.swap();
 
@@ -707,17 +710,14 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
 
     private ValType EvaluateCallEval(Expression call, IdentifierReference base,
             List<Expression> arguments, ExpressionVisitor mv) {
-        /* steps 3-4 */
-        // stack: [] -> [thisValue]
-        mv.loadUndefined();
-
         /* steps 1-2 */
-        // stack: [thisValue] -> [thisValue, func]
+        // stack: [] -> [func]
         evalAndGetValue(base, mv);
 
+        /* steps 3-4 (omitted) */
         /* step 5 */
-        // stack: [thisValue, func] -> [result]
-        return EvaluateDirectCallEval(call, arguments, mv);
+        // stack: [func] -> [result]
+        return EvaluateDirectCallEval(call, arguments, false, mv);
     }
 
     private ValType EvaluateCallEvalWith(Expression call, IdentifierReference base,
@@ -726,18 +726,21 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
         ValType type = base.accept(this, mv);
         assert type == ValType.Reference;
 
-        /* steps 1-2 */
-        // stack: [ref] -> [func, ref]
+        // stack: [ref] -> [ref, ref]
         mv.dup();
-        GetValue(base, type, mv);
-        mv.swap();
 
         /* step 3-4 */
-        // stack: [func, ref] -> [thisValue, func]
+        // stack: [ref, ref] -> [thisValue, ref]
         withBaseObject(mv);
         mv.swap();
 
-        return EvaluateDirectCallEval(call, arguments, mv);
+        /* steps 1-2 */
+        // stack: [thisValue, ref] -> [thisValue, func]
+        GetValue(base, type, mv);
+
+        /* step 5 */
+        // stack: [thisValue, func] -> [result]
+        return EvaluateDirectCallEval(call, arguments, true, mv);
     }
 
     private void withBaseObject(ExpressionVisitor mv) {
@@ -792,35 +795,70 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
      *            the function call expression
      * @param arguments
      *            the function arguments
+     * @param hasThisValue
+     *            {@code true} if the thisValue is on the stack
      * @param mv
      *            the expression visitor
      */
     private ValType EvaluateDirectCallEval(Expression call, List<Expression> arguments,
-            ExpressionVisitor mv) {
+            boolean hasThisValue, ExpressionVisitor mv) {
         Jump afterCall = new Jump(), notEval = new Jump();
 
         /* steps 1-2 (EvaluateDirectCall) */
-        // stack: [thisValue, func] -> [thisValue, args, func]
-        ArgumentListEvaluation(call, arguments, mv);
-        mv.swap();
+        // stack: [thisValue?, func] -> [thisValue?, args?, func]
+        boolean constantArguments = hasConstantArguments(arguments);
+        if (!constantArguments) {
+            ArgumentListEvaluation(call, arguments, mv);
+            mv.swap();
+        }
 
         // Emit line info after evaluating arguments.
         mv.lineInfo(call);
 
         /* steps 3-4 (EvaluateDirectCall) */
-        // stack: [thisValue, args, func] -> [thisValue, args, func(Callable)]
+        // stack: [thisValue?, args?, func] -> [thisValue?, args?, func(Callable)]
         mv.loadExecutionContext();
         mv.invoke(Methods.ScriptRuntime_CheckCallable);
 
-        // stack: [thisValue, args, func(Callable)] -> [thisValue, args, func(Callable)]
+        // stack: [thisValue?, args?, func(Callable)] -> [thisValue?, args?, func(Callable)]
         mv.dup();
         mv.loadExecutionContext();
         mv.invoke(Methods.ScriptRuntime_IsBuiltinEval);
         mv.ifeq(notEval);
         {
-            PerformEval(arguments, afterCall, mv);
+            PerformEval(call, arguments, hasThisValue, afterCall, mv);
         }
         mv.mark(notEval);
+
+        // stack: [thisValue?, args?, func(Callable)] -> [func(Callable), cx, thisValue, args]
+        if (constantArguments) {
+            if (hasThisValue) {
+                // stack: [thisValue, func(Callable)] -> [...]
+                mv.loadExecutionContext();
+                mv.dup2X1();
+                mv.pop2();
+                ArgumentListEvaluation(call, arguments, mv);
+            } else {
+                // stack: [func(Callable)] -> [...]
+                mv.loadExecutionContext();
+                mv.loadUndefined();
+                ArgumentListEvaluation(call, arguments, mv);
+            }
+        } else {
+            if (hasThisValue) {
+                // stack: [thisValue, args, func(Callable)] -> [...]
+                mv.loadExecutionContext();
+                mv.dup2X2();
+                mv.pop2();
+            } else {
+                // stack: [args, func(Callable)] -> [...]
+                mv.swap();
+                mv.loadExecutionContext();
+                mv.loadUndefined();
+                mv.dup2X1();
+                mv.pop2();
+            }
+        }
 
         if (codegen.isEnabled(CompatibilityOption.Realm)) {
             // direct-eval fallback hook
@@ -829,30 +867,31 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
             mv.invoke(Methods.ScriptRuntime_directEvalFallbackHook);
             mv.ifnull(noEvalHook);
             {
-                // stack: [thisValue, args, func(Callable)] -> [args']
-                mv.loadExecutionContext();
+                // stack: [func(Callable), cx, thisValue, args] -> [args']
                 mv.invoke(Methods.ScriptRuntime_directEvalFallbackArguments);
-                // stack: [args'] -> [thisValue', args']
-                mv.loadExecutionContext();
-                mv.invoke(Methods.ScriptRuntime_directEvalFallbackThisArgument);
-                mv.swap();
-                // stack: [thisValue', args'] -> [thisValue', args', fallback(Callable)]
+
+                // stack: [args'] -> []
+                Variable<Object[]> fallbackArguments = mv.newScratchVariable(Object[].class);
+                mv.store(fallbackArguments);
+
+                // stack: [] -> [func(Callable), cx, thisValue, args']
                 mv.loadExecutionContext();
                 mv.invoke(Methods.ScriptRuntime_directEvalFallbackHook);
+                mv.loadExecutionContext();
+                mv.loadExecutionContext();
+                mv.invoke(Methods.ScriptRuntime_directEvalFallbackThisArgument);
+                mv.load(fallbackArguments);
+
+                mv.freeVariable(fallbackArguments);
             }
             mv.mark(noEvalHook);
         }
 
         /* steps 5-9 (EvaluateDirectCall) */
         if (isTailCall(call, mv)) {
-            // stack: [thisValue, args, func(Callable)] -> [<func(Callable), thisValue, args>]
+            // stack: [func(Callable), cx, thisValue, args'] -> [<func(Callable), thisValue, args>]
             mv.invoke(Methods.ScriptRuntime_PrepareForTailCall);
         } else {
-            // stack: [thisValue, args, func(Callable)] -> [func(Callable), cx, thisValue, args]
-            mv.loadExecutionContext();
-            mv.dup2X2();
-            mv.pop2();
-
             // stack: [func(Callable), cx, thisValue, args] -> [result]
             invokeDynamicCall(mv);
         }
@@ -864,14 +903,19 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
     /**
      * [18.2.1.1] Direct Call to Eval
      * 
+     * @param call
+     *            the function call expression
      * @param arguments
      *            the list of function call arguments
+     * @param hasThisValue
+     *            {@code true} if the thisValue is on the stack
      * @param afterCall
      *            the label after the call instruction
      * @param mv
      *            the expression visitor
      */
-    private void PerformEval(List<Expression> arguments, Jump afterCall, ExpressionVisitor mv) {
+    private void PerformEval(Expression call, List<Expression> arguments, boolean hasThisValue,
+            Jump afterCall, ExpressionVisitor mv) {
         int evalFlags = EvalFlags.Direct.getValue();
         if (mv.isStrict()) {
             evalFlags |= EvalFlags.Strict.getValue();
@@ -889,12 +933,27 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
             evalFlags |= EvalFlags.EnclosedByWithStatement.getValue();
         }
 
-        // stack: [thisValue, args, func(Callable)] -> [args]
-        mv.pop();
-        mv.swap();
+        // stack: [thisValue?, args?, func(Callable)] -> [thisValue?, args?]
         mv.pop();
 
+        // stack: [thisValue?, args?] -> [args?]
+        boolean constantArguments = hasConstantArguments(arguments);
+        if (hasThisValue) {
+            if (constantArguments) {
+                // stack: [thisValue] -> []
+                mv.pop();
+            } else {
+                // stack: [thisValue, args] -> [args]
+                mv.swap();
+                mv.pop();
+            }
+        }
+
         if (codegen.isEnabled(CompatibilityOption.Realm)) {
+            if (constantArguments) {
+                // stack: [] -> [args]
+                ArgumentListEvaluation(call, arguments, mv);
+            }
             // stack: [args] -> [result]
             mv.loadExecutionContext();
             mv.iconst(evalFlags);
@@ -902,19 +961,25 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
             mv.goTo(afterCall);
         } else {
             if (arguments.isEmpty()) {
-                // stack: [args(empty)] -> [result]
-                mv.pop();
+                assert constantArguments : "empty arguments list is constant";
+                // stack: [] -> [result]
                 mv.loadUndefined();
                 mv.goTo(afterCall);
             } else if (hasArguments(arguments)) {
-                // stack: [args] -> [arg_0]
-                mv.iconst(0);
-                mv.aaload();
+                if (constantArguments) {
+                    // stack: [] -> [arg_0]
+                    evalAndGetBoxedValue(arguments.get(0), mv);
+                } else {
+                    // stack: [args] -> [arg_0]
+                    mv.iconst(0);
+                    mv.aaload();
+                }
                 mv.loadExecutionContext();
                 mv.iconst(evalFlags);
                 mv.invoke(Methods.Eval_directEval);
                 mv.goTo(afterCall);
             } else {
+                assert !constantArguments : "spread arguments list is not constant";
                 Jump emptyArguments = new Jump();
                 mv.dup();
                 mv.arraylength();
@@ -942,6 +1007,15 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
             }
         }
         return false;
+    }
+
+    private static boolean hasConstantArguments(List<Expression> arguments) {
+        for (Expression argument : arguments) {
+            if (!(argument instanceof Literal)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /**

@@ -6,9 +6,13 @@
  */
 package com.github.anba.es6draft.runtime.objects.collection;
 
-import static com.github.anba.es6draft.runtime.AbstractOperations.*;
+import static com.github.anba.es6draft.runtime.AbstractOperations.Get;
+import static com.github.anba.es6draft.runtime.AbstractOperations.GetIterator;
+import static com.github.anba.es6draft.runtime.AbstractOperations.IsCallable;
+import static com.github.anba.es6draft.runtime.AbstractOperations.IteratorClose;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
+import static com.github.anba.es6draft.runtime.objects.internal.ListIterator.FromScriptIterator;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
@@ -20,11 +24,11 @@ import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
+import com.github.anba.es6draft.runtime.internal.ScriptIterator;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
-import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
 
@@ -82,7 +86,7 @@ public final class SetConstructor extends BuiltinConstructor implements Initiali
                 Intrinsics.SetPrototype, SetObjectAllocator.INSTANCE);
 
         /* steps 5-7 */
-        ScriptObject iter;
+        ScriptIterator<?> iter;
         Callable adder = null;
         if (Type.isUndefinedOrNull(iterable)) {
             iter = null;
@@ -92,7 +96,7 @@ public final class SetConstructor extends BuiltinConstructor implements Initiali
                 throw newTypeError(calleeContext, Messages.Key.PropertyNotCallable, "add");
             }
             adder = (Callable) _adder;
-            iter = GetIterator(calleeContext, iterable);
+            iter = FromScriptIterator(calleeContext, GetIterator(calleeContext, iterable));
         }
 
         /* step 8 */
@@ -101,14 +105,11 @@ public final class SetConstructor extends BuiltinConstructor implements Initiali
         }
         /* step 9 */
         try {
-            for (;;) {
-                ScriptObject next = IteratorStep(calleeContext, iter);
-                if (next == null) {
-                    return set;
-                }
-                Object nextValue = IteratorValue(calleeContext, next);
+            while (iter.hasNext()) {
+                Object nextValue = iter.next();
                 adder.call(calleeContext, set, nextValue);
             }
+            return set;
         } catch (ScriptException e) {
             IteratorClose(calleeContext, iter, true);
             throw e;

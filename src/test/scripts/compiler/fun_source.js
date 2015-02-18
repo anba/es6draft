@@ -12,7 +12,8 @@ function assertEq(actual, expected) {
 
 assertEq(Function.prototype.toString(), "function () { [native code] }");
 assertEq(Function.prototype.toString.toString(), "function toString() { [native code] }");
-assertEq(Function.prototype.bind().toString(), "function BoundFunction() { [native code] }");
+assertEq(Function.prototype.bind().toString(), "[object Function]");
+assertEq((function(){}).bind().toString(), "function BoundFunction() { [native code] }");
 
 {
   class NewFunction extends Function {

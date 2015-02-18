@@ -10,12 +10,9 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.ArrayDeque;
 import java.util.Locale;
-import java.util.Set;
 import java.util.TimeZone;
 
 import com.github.anba.es6draft.compiler.CompilationException;
-import com.github.anba.es6draft.compiler.Compiler;
-import com.github.anba.es6draft.parser.Parser;
 import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.Messages;
@@ -73,26 +70,6 @@ public final class World<GLOBAL extends GlobalObject> {
      */
     public static ObjectAllocator<GlobalObject> getDefaultGlobalObjectAllocator() {
         return DEFAULT_GLOBAL_OBJECT;
-    }
-
-    /**
-     * Creates a new {@link World} object.
-     * 
-     * @param allocator
-     *            the global object allocator
-     * @param moduleLoader
-     *            the module loader
-     * @param options
-     *            the compatibility options
-     * @param parserOptions
-     *            the parser options
-     * @param compilerOptions
-     *            the compiler options
-     */
-    public World(ObjectAllocator<GLOBAL> allocator, ModuleLoader moduleLoader,
-            Set<CompatibilityOption> options, Set<Parser.Option> parserOptions,
-            Set<Compiler.Option> compilerOptions) {
-        this(allocator, moduleLoader, new ScriptLoader(options, parserOptions, compilerOptions));
     }
 
     /**

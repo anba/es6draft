@@ -11,7 +11,7 @@ import static com.github.anba.es6draft.runtime.LexicalEnvironment.newDeclarative
 import static com.github.anba.es6draft.runtime.internal.Errors.*;
 import static com.github.anba.es6draft.runtime.internal.TailCallInvocation.newTailCallInvocation;
 import static com.github.anba.es6draft.runtime.modules.ModuleSemantics.GetModuleNamespace;
-import static com.github.anba.es6draft.runtime.modules.ModuleSemantics.ResolveExport;
+import static com.github.anba.es6draft.runtime.modules.ModuleSemantics.HostResolveImportedModule;
 import static com.github.anba.es6draft.runtime.objects.internal.ListIterator.FromScriptIterator;
 import static com.github.anba.es6draft.runtime.objects.iteration.GeneratorAbstractOperations.GeneratorYield;
 import static com.github.anba.es6draft.runtime.types.PropertyDescriptor.AccessorPropertyDescriptor;
@@ -26,6 +26,7 @@ import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject.Obj
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject.OrdinaryCreateFromConstructor;
 import static java.util.Arrays.asList;
 
+import java.io.IOException;
 import java.lang.invoke.CallSite;
 import java.lang.invoke.ConstantCallSite;
 import java.lang.invoke.MethodHandle;
@@ -34,6 +35,7 @@ import java.lang.invoke.MethodType;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
@@ -47,10 +49,11 @@ import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.FunctionEnvironmentRecord;
 import com.github.anba.es6draft.runtime.GlobalEnvironmentRecord;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
+import com.github.anba.es6draft.runtime.modules.MalformedNameException;
 import com.github.anba.es6draft.runtime.modules.ModuleExport;
 import com.github.anba.es6draft.runtime.modules.ModuleRecord;
 import com.github.anba.es6draft.runtime.modules.ResolutionException;
-import com.github.anba.es6draft.runtime.modules.SourceIdentifier;
+import com.github.anba.es6draft.runtime.modules.SourceTextModuleRecord;
 import com.github.anba.es6draft.runtime.objects.ArrayIteratorPrototype;
 import com.github.anba.es6draft.runtime.objects.ArrayPrototype;
 import com.github.anba.es6draft.runtime.objects.FunctionPrototype;
@@ -187,77 +190,106 @@ public final class ScriptRuntime {
     }
 
     /**
-     * 15.2.1.21 Runtime Semantics: ModuleDeclarationInstantiation( module, realm, moduleSet )
+     * 18.2.1.2 Runtime Semantics: EvalDeclarationInstantiation( body, varEnv, lexEnv, strict)
      * 
-     * @param moduleSet
-     *            the list of available modules
-     * @param identifierMap
-     *            the source identifier map
-     * @param moduleName
-     *            the normalized module name
-     * @param exportName
-     *            the requested export name
+     * @param cx
+     *            the execution context
+     * @param envRec
+     *            the environment record
+     * @param name
+     *            the variable name
      */
-    public static void resolveExportOrThrow(Map<SourceIdentifier, ModuleRecord> moduleSet,
-            Map<String, SourceIdentifier> identifierMap, String moduleName, String exportName)
-            throws ResolutionException {
-        SourceIdentifier moduleId = identifierMap.get(moduleName);
-        ModuleRecord module = moduleSet.get(moduleId);
-        /* steps 2.a-2.b */
-        ModuleExport resolution = ResolveExport(module, exportName,
-                new HashMap<ModuleRecord, Set<String>>());
-        /* step 2.c */
-        if (resolution == null) {
+    public static void canDeclareVarOrThrow(ExecutionContext cx, EnvironmentRecord envRec,
+            String name) {
+        /* steps 6.b.ii.2 - 6.b.ii.3 */
+        if (envRec.hasBinding(name)) {
+            throw newSyntaxError(cx, Messages.Key.VariableRedeclaration, name);
+        }
+    }
+
+    /**
+     * 15.2.1.16.4 ModuleDeclarationInstantiation( ) Concrete Method
+     * 
+     * @param module
+     *            the module record
+     * @param exportName
+     *            the export name
+     * @throws IOException
+     *             if there was any I/O error
+     * @throws MalformedNameException
+     *             if the module specifier cannot be normalized
+     * @throws ResolutionException
+     *             if the export cannot be resolved
+     */
+    public static void resolveExportOrThrow(SourceTextModuleRecord module, String exportName)
+            throws IOException, MalformedNameException, ResolutionException {
+        /* steps 6.a-b */
+        ModuleExport resolution = module.resolveExport(exportName,
+                new HashMap<ModuleRecord, Set<String>>(), new HashSet<ModuleRecord>());
+        /* step 6.c */
+        if (resolution == null || resolution.isAmbiguous()) {
             throw new ResolutionException(Messages.Key.ModulesUnresolvedExport, exportName);
         }
     }
 
     /**
-     * 15.2.1.21 Runtime Semantics: ModuleDeclarationInstantiation( module, realm, moduleSet )
+     * 15.2.1.16.4 ModuleDeclarationInstantiation( ) Concrete Method
      * 
-     * @param moduleSet
-     *            the list of available modules
-     * @param identifierMap
-     *            the source identifier map
-     * @param moduleName
-     *            the normalized module name
+     * @param cx
+     *            the execution context
+     * @param module
+     *            the module record
+     * @param moduleRequest
+     *            the module specifier string
      * @param importName
-     *            the requested import name
+     *            the import name
      * @return the resolved module import
+     * @throws IOException
+     *             if there was any I/O error
+     * @throws MalformedNameException
+     *             if the module specifier cannot be normalized
+     * @throws ResolutionException
+     *             if the export cannot be resolved
      */
-    public static ModuleExport resolveImportOrThrow(Map<SourceIdentifier, ModuleRecord> moduleSet,
-            Map<String, SourceIdentifier> identifierMap, String moduleName, String importName)
-            throws ResolutionException {
-        SourceIdentifier moduleId = identifierMap.get(moduleName);
-        ModuleRecord module = moduleSet.get(moduleId);
-        /* steps 7.b.i-7.b.ii */
-        ModuleExport resolution = ResolveExport(module, importName,
-                new HashMap<ModuleRecord, Set<String>>());
-        /* step 7.b.iii */
-        if (resolution == null) {
+    public static ModuleExport resolveImportOrThrow(ExecutionContext cx,
+            SourceTextModuleRecord module, String moduleRequest, String importName)
+            throws IOException, MalformedNameException, ResolutionException {
+        /* steps 10.a-b */
+        ModuleRecord importedModule = HostResolveImportedModule(module, moduleRequest);
+        /* steps 10.d.i-ii */
+        ModuleExport resolution = importedModule.resolveExport(importName,
+                new HashMap<ModuleRecord, Set<String>>(), new HashSet<ModuleRecord>());
+        /* step 10.d.iii */
+        if (resolution == null || resolution.isAmbiguous()) {
             throw new ResolutionException(Messages.Key.ModulesUnresolvedImport, importName);
         }
         return resolution;
     }
 
     /**
-     * 15.2.1.21 Runtime Semantics: ModuleDeclarationInstantiation( module, realm, moduleSet )
+     * 15.2.1.16.4 ModuleDeclarationInstantiation( ) Concrete Method
      * 
      * @param cx
      *            the execution context
-     * @param moduleSet
-     *            the list of modules
-     * @param identifierMap
-     *            the source identifier map
-     * @param moduleName
-     *            the module identifier
+     * @param module
+     *            the module record
+     * @param moduleRequest
+     *            the module specifier string
      * @return the module namespace object
+     * @throws IOException
+     *             if there was any I/O error
+     * @throws MalformedNameException
+     *             if the module specifier cannot be normalized
+     * @throws ResolutionException
+     *             if the export cannot be resolved
      */
     public static ModuleNamespaceObject getModuleNamespace(ExecutionContext cx,
-            Map<SourceIdentifier, ModuleRecord> moduleSet,
-            Map<String, SourceIdentifier> identifierMap, String moduleName) {
-        SourceIdentifier moduleId = identifierMap.get(moduleName);
-        return GetModuleNamespace(cx, moduleSet, moduleId);
+            SourceTextModuleRecord module, String moduleRequest) throws IOException,
+            MalformedNameException, ResolutionException {
+        /* steps 10.a-b */
+        ModuleRecord importedModule = HostResolveImportedModule(module, moduleRequest);
+        /* steps 10.c.i-ii */
+        return GetModuleNamespace(cx, importedModule);
     }
 
     /* ***************************************************************************************** */
@@ -1043,18 +1075,18 @@ public final class ScriptRuntime {
      * <p>
      * Runtime Semantics: EvaluateCall Abstract Operation
      * 
-     * @param thisValue
-     *            the function this-value
-     * @param args
-     *            the function call arguments
      * @param callee
      *            the function callee
      * @param cx
      *            the execution context
+     * @param thisValue
+     *            the function this-value
+     * @param args
+     *            the function call arguments
      * @return the direct eval fallback arguments
      */
-    public static Object[] directEvalFallbackArguments(Object thisValue, Object[] args,
-            Callable callee, ExecutionContext cx) {
+    public static Object[] directEvalFallbackArguments(Callable callee, ExecutionContext cx,
+            Object thisValue, Object[] args) {
         Object[] fallbackArgs = new Object[3];
         fallbackArgs[0] = callee;
         fallbackArgs[1] = thisValue;
@@ -1686,6 +1718,11 @@ public final class ScriptRuntime {
         @Override
         public ScriptObject getScriptObject() {
             return keysIterator.getScriptObject();
+        }
+
+        @Override
+        public boolean isDone() {
+            return keysIterator.isDone();
         }
     }
 
@@ -2865,18 +2902,14 @@ public final class ScriptRuntime {
     }
 
     private static void DefaultConstructorInit(ExecutionContext cx, FunctionObject f, Object[] args) {
-        LexicalEnvironment<?> env = cx.getVariableEnvironment();
+        LexicalEnvironment<?> env = cx.getLexicalEnvironment();
         FunctionEnvironmentRecord envRec = (FunctionEnvironmentRecord) env.getEnvRec();
-
-        envRec.createMutableBinding("args", false);
         if (DefaultConstructorArguments) {
             envRec.createImmutableBinding("arguments", false);
             envRec.initializeBinding("arguments", CreateUnmappedArgumentsObject(cx, args));
         }
+        envRec.createMutableBinding("args", false);
         envRec.initializeBinding("args", createRestArray(asList(args).iterator(), cx));
-
-        envRec.setTopLex(envRec);
-        cx.setLexicalEnvironment(env);
     }
 
     public static Object DefaultConstructor(ExecutionContext cx) {
@@ -2886,7 +2919,7 @@ public final class ScriptRuntime {
         Object[] argList = SpreadArray(cx.resolveBindingValue("args", true), cx);
         ScriptObject result = EvaluateSuperConstructorCall(newTarget, superConstructor, argList, cx);
         BindThisValue(result, cx);
-        return null;
+        return UNDEFINED;
     }
 
     public static Object DefaultConstructorCall(OrdinaryFunction callee,
@@ -2929,20 +2962,16 @@ public final class ScriptRuntime {
 
     private static void DefaultEmptyConstructorInit(ExecutionContext cx, FunctionObject f,
             Object[] args) {
-        LexicalEnvironment<?> env = cx.getVariableEnvironment();
+        LexicalEnvironment<?> env = cx.getLexicalEnvironment();
         FunctionEnvironmentRecord envRec = (FunctionEnvironmentRecord) env.getEnvRec();
-
         if (DefaultEmptyConstructorArguments) {
             envRec.createImmutableBinding("arguments", false);
             envRec.initializeBinding("arguments", CreateUnmappedArgumentsObject(cx, args));
         }
-
-        envRec.setTopLex(envRec);
-        cx.setLexicalEnvironment(env);
     }
 
     public static Object DefaultEmptyConstructor(ExecutionContext cx) {
-        return null;
+        return UNDEFINED;
     }
 
     public static Object DefaultEmptyConstructorCall(OrdinaryFunction callee,
@@ -3192,7 +3221,8 @@ public final class ScriptRuntime {
     }
 
     // Called from generated code
-    public static Object PrepareForTailCall(Object thisValue, Object[] args, Callable function) {
+    public static Object PrepareForTailCall(Callable function, ExecutionContext cx,
+            Object thisValue, Object[] args) {
         return newTailCallInvocation(function, thisValue, args);
     }
 

@@ -8,6 +8,9 @@ const {
   assertSame, assertThrows, fail
 } = Assert;
 
+// TODO: super property accessor no longer valid in normal functions/generators.
+
+/*
 // Non-computed property names
 {
   let obj = {
@@ -101,3 +104,4 @@ const {
   assertSame("B'", obj[symB].toMethod(home)());
   assertSame("C'", obj[symC].toMethod(home)());
 }
+*/

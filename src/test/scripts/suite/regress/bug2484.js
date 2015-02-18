@@ -12,17 +12,19 @@ const {
 // https://bugs.ecmascript.org/show_bug.cgi?id=2484
 
 let realm = new Reflect.Realm();
+
+// Wrapper created in callee's realm
 realm.eval(`
   function returnThis() {
     return this;
   }
-  function noSuperBinding() {
-    super.foo();
-  }
 `);
-
-// Wrapper created in callee's realm
 assertSame(realm.global.Number.prototype, Object.getPrototypeOf(realm.global.returnThis.call(1)));
 
 // ReferenceError created in caller's realm
-assertThrows(ReferenceError, () => realm.global.noSuperBinding());
+assertThrows(realm.global.SyntaxError, () => realm.eval(`
+  function noSuperBinding() {
+    super.foo();
+  }
+`));
+// assertThrows(ReferenceError, () => realm.global.noSuperBinding());

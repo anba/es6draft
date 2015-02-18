@@ -8,7 +8,7 @@ package com.github.anba.es6draft.runtime;
 
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
-import com.github.anba.es6draft.runtime.modules.ModuleRecord;
+import com.github.anba.es6draft.runtime.modules.SourceTextModuleRecord;
 
 /**
  * <h1>8 Executable Code and Execution Contexts</h1><br>
@@ -20,10 +20,10 @@ import com.github.anba.es6draft.runtime.modules.ModuleRecord;
  */
 public final class ModuleEnvironmentRecord extends DeclarativeEnvironmentRecord {
     private static final class IndirectBinding extends Binding {
-        private final ModuleRecord module;
+        private final SourceTextModuleRecord module;
         private final String otherName;
 
-        IndirectBinding(ModuleRecord module, String otherName) {
+        IndirectBinding(SourceTextModuleRecord module, String otherName) {
             super(false, false, false);
             this.module = module;
             this.otherName = otherName;
@@ -90,7 +90,7 @@ public final class ModuleEnvironmentRecord extends DeclarativeEnvironmentRecord 
      * @param otherName
      *            the binding name in the module
      */
-    public void createImportBinding(String name, ModuleRecord module, String otherName) {
+    public void createImportBinding(String name, SourceTextModuleRecord module, String otherName) {
         /* step 1 (omitted) */
         /* step 2 */
         assert !hasBinding(name);

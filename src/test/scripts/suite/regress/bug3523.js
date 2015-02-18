@@ -43,8 +43,8 @@ for (let ctor of [Array, Date, class {}]) {
   assertSame(Array.prototype, Object.getPrototypeOf(array));
 }
 
-// .constructor and @@species defined, @@species undefined
-for (let species of [void 0]) {
+// .constructor and @@species defined, @@species undefined or null
+for (let species of [void 0, null]) {
   class MyArray extends Array {
     get ["constructor"]() {
       return {[Symbol.species]: species};
@@ -54,8 +54,8 @@ for (let species of [void 0]) {
   assertSame(Array.prototype, Object.getPrototypeOf(array));
 }
 
-// .constructor and @@species defined, @@species primitive except for undefined
-for (let species of [null, false, true, 0, 1, "", Symbol()]) {
+// .constructor and @@species defined, @@species primitive except for undefined/null
+for (let species of [false, true, 0, 1, "", Symbol()]) {
   class MyArray extends Array {
     get ["constructor"]() {
       return {[Symbol.species]: species};

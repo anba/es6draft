@@ -17,18 +17,22 @@ const {
 var home = {};
 
 // 14.1 FunctionDeclaration
+assertSyntaxError(`
 function fdecl() {
   if (false) { super.add_super_binding; }
   eval("super.property_from_eval");
 }
 fdecl.toMethod(home)();
+`);
 
 // 14.1 FunctionExpression
+assertSyntaxError(`
 var fexpr = function() {
   if (false) { super.add_super_binding; }
   eval("super.property_from_eval");
 };
 fexpr.toMethod(home)();
+`);
 
 // 14.3 Method Definitions [Method]
 var obj = {
@@ -124,18 +128,22 @@ var obj = class {
 Object.getOwnPropertyDescriptor(obj, "x").set();
 
 // 14.4 GeneratorDeclaration
+assertSyntaxError(`
 function* gdecl() {
   if (false) { super.add_super_binding; }
   eval("super.property_from_eval");
 }
 gdecl.toMethod(home)().next();
+`);
 
 // 14.4 GeneratorExpression
+assertSyntaxError(`
 var gexpr = function*() {
   if (false) { super.add_super_binding; }
   eval("super.property_from_eval");
 };
 gexpr.toMethod(home)().next();
+`);
 
 // 14.4 GeneratorMethod
 var obj = {

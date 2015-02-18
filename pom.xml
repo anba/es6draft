@@ -59,7 +59,7 @@
     <mainClass>${project.groupId}.${project.artifactId}.repl.Repl</mainClass>
     <distribution.name>${project.artifactId}</distribution.name>
     <shaded.name>${project.artifactId}</shaded.name>
-    <spec.version>rev32</spec.version>
+    <spec.version>rev33</spec.version>
     <test.user.language>en</test.user.language>
     <test.user.country>US</test.user.country>
     <test.user.timezone>America/Los_Angeles</test.user.timezone>

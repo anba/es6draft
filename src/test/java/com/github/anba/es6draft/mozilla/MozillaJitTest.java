@@ -14,7 +14,6 @@ import static org.hamcrest.Matchers.containsString;
 import static org.junit.Assume.assumeTrue;
 
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.util.Iterator;
 import java.util.List;
@@ -118,7 +117,7 @@ public final class MozillaJitTest {
     private MozTestGlobalObject global;
 
     @Before
-    public void setUp() throws IOException, URISyntaxException {
+    public void setUp() throws Throwable {
         // Filter disabled tests
         assumeTrue(moztest.isEnabled());
 

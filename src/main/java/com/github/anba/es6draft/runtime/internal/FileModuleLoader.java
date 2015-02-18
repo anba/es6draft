@@ -6,6 +6,8 @@
  */
 package com.github.anba.es6draft.runtime.internal;
 
+import static com.github.anba.es6draft.runtime.modules.SourceTextModuleRecord.ParseModule;
+
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -14,18 +16,32 @@ import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Objects;
 
+import com.github.anba.es6draft.compiler.CompilationException;
+import com.github.anba.es6draft.parser.ParserException;
+import com.github.anba.es6draft.runtime.Realm;
+import com.github.anba.es6draft.runtime.modules.MalformedNameException;
 import com.github.anba.es6draft.runtime.modules.ModuleLoader;
+import com.github.anba.es6draft.runtime.modules.ModuleRecord;
 import com.github.anba.es6draft.runtime.modules.ModuleSource;
 import com.github.anba.es6draft.runtime.modules.SourceIdentifier;
+import com.github.anba.es6draft.runtime.modules.SourceTextModuleRecord;
 
 /**
  * 
  */
 public class FileModuleLoader implements ModuleLoader {
+    private final HashMap<SourceIdentifier, SourceTextModuleRecord> modules = new HashMap<>();
+    private final ScriptLoader scriptLoader;
     private final URI baseDirectory;
 
-    public FileModuleLoader(Path baseDirectory) {
+    public FileModuleLoader(ScriptLoader scriptLoader, Path baseDirectory) {
+        this.scriptLoader = scriptLoader;
         this.baseDirectory = baseDirectory.toUri();
     }
 
@@ -92,38 +108,116 @@ public class FileModuleLoader implements ModuleLoader {
     }
 
     @Override
-    public FileSourceIdentifier normalizeName(String unnormalizedName, SourceIdentifier referrerId) {
+    public FileSourceIdentifier normalizeName(String unnormalizedName, SourceIdentifier referrerId)
+            throws MalformedNameException {
+        URI moduleName = parse(unnormalizedName);
+        if (referrerId != null && isRelative(moduleName)) {
+            moduleName = referrerId.toUri().resolve(moduleName);
+        }
+        return new FileSourceIdentifier(moduleName.normalize().getPath());
+    }
+
+    private URI parse(String unnormalizedName) throws MalformedNameException {
+        URI moduleName;
         try {
-            URI moduleName = new URI(unnormalizedName);
-            if (hasIllegalComponents(moduleName) || hasEmptyPath(moduleName)) {
-                return null;
-            }
-            if (isPath(moduleName)) {
-                // TODO: Treat as ?
-                return null;
-            }
-            if (isAbsolute(moduleName)) {
-                // TODO: Treat as ?
-                return null;
-            }
-            if (referrerId != null && isRelative(moduleName)) {
-                moduleName = referrerId.toUri().resolve(moduleName);
-            }
-            return new FileSourceIdentifier(moduleName.normalize().getPath());
+            moduleName = new URI(unnormalizedName);
         } catch (URISyntaxException e) {
-            return null;
+            throw new MalformedNameException(unnormalizedName);
+        }
+        if (hasIllegalComponents(moduleName) || hasEmptyPath(moduleName)) {
+            throw new MalformedNameException(unnormalizedName);
+        }
+        if (isPath(moduleName)) {
+            // TODO: Treat as ?
+            throw new MalformedNameException(unnormalizedName);
+        }
+        if (isAbsolute(moduleName)) {
+            // TODO: Treat as ?
+            throw new MalformedNameException(unnormalizedName);
+        }
+        return moduleName;
+    }
+
+    @Override
+    public FileModuleSource getSource(SourceIdentifier identifier) {
+        if (!(identifier instanceof FileSourceIdentifier)) {
+            throw new IllegalArgumentException();
+        }
+        FileSourceIdentifier sourceId = (FileSourceIdentifier) identifier;
+        Path path = Paths.get(baseDirectory.resolve(sourceId.toUri()));
+        return new FileModuleSource(sourceId, path);
+    }
+
+    @Override
+    public SourceTextModuleRecord resolve(SourceIdentifier identifier) throws IOException,
+            ParserException, CompilationException {
+        SourceTextModuleRecord module = modules.get(identifier);
+        if (module == null) {
+            FileModuleSource source = getSource(identifier);
+            define(identifier, module = ParseModule(scriptLoader, identifier, source));
+        }
+        return module;
+    }
+
+    @Override
+    public SourceTextModuleRecord get(SourceIdentifier identifier) {
+        return modules.get(Objects.requireNonNull(identifier));
+    }
+
+    @Override
+    public void define(SourceIdentifier identifier, ModuleRecord module) {
+        if (!(module instanceof SourceTextModuleRecord)) {
+            throw new IllegalArgumentException();
+        }
+        if (modules.containsKey(identifier)) {
+            throw new IllegalArgumentException();
+        }
+        modules.put(Objects.requireNonNull(identifier), (SourceTextModuleRecord) module);
+    }
+
+    @Override
+    public SourceTextModuleRecord define(SourceIdentifier identifier, ModuleSource source)
+            throws ParserException, CompilationException, IOException {
+        SourceTextModuleRecord module = ParseModule(scriptLoader, identifier, source);
+        define(identifier, module);
+        return module;
+    }
+
+    @Override
+    public void fetch(ModuleRecord module) throws IOException, MalformedNameException {
+        if (!(module instanceof SourceTextModuleRecord)) {
+            throw new IllegalArgumentException();
+        }
+        fetch((SourceTextModuleRecord) module, new HashSet<SourceTextModuleRecord>());
+    }
+
+    private void fetch(SourceTextModuleRecord module, HashSet<SourceTextModuleRecord> visited)
+            throws MalformedNameException, IOException {
+        if (visited.add(module)) {
+            SourceIdentifier referrerId = module.getSourceCodeId();
+            for (String specifier : module.getRequestedModules()) {
+                FileSourceIdentifier identifier = normalizeName(specifier, referrerId);
+                fetch(resolve(identifier), visited);
+            }
         }
     }
 
     @Override
-    public FileModuleSource getSource(SourceIdentifier normalizedName)
-            throws IllegalArgumentException {
-        if (!(normalizedName instanceof FileSourceIdentifier)) {
+    public boolean link(ModuleRecord module, Realm realm) {
+        if (!(module instanceof SourceTextModuleRecord)) {
             throw new IllegalArgumentException();
         }
-        FileSourceIdentifier sourceId = (FileSourceIdentifier) normalizedName;
-        Path path = Paths.get(baseDirectory.resolve(sourceId.toUri()));
-        return new FileModuleSource(sourceId, path);
+        SourceTextModuleRecord mod = (SourceTextModuleRecord) module;
+        if (mod.getRealm() == null) {
+            mod.setRealm(realm);
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    public Collection<SourceTextModuleRecord> getModules() {
+        return Collections.<SourceTextModuleRecord> unmodifiableCollection(modules.values());
     }
 
     private static boolean isAbsolute(URI moduleName) {

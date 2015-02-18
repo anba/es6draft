@@ -10,8 +10,10 @@ const {
 
 // ReferenceError thrown on function entry if [[HomeObject]] not present
 
-assertThrows(ReferenceError, () => function(){ throw 0; super.x }());
-assertThrows(ReferenceError, () => function(a = (() => { throw 0 })){ super.x }());
+// TODO: super property accessor no longer valid in normal functions/generators.
 
-assertThrows(ReferenceError, () => function*(){ throw 0; super.x }());
-assertThrows(ReferenceError, () => function*(a = (() => { throw 0 })){ super.x }());
+// assertThrows(ReferenceError, () => function(){ throw 0; super.x }());
+// assertThrows(ReferenceError, () => function(a = (() => { throw 0 })){ super.x }());
+
+// assertThrows(ReferenceError, () => function*(){ throw 0; super.x }());
+// assertThrows(ReferenceError, () => function*(a = (() => { throw 0 })){ super.x }());

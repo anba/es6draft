@@ -7,7 +7,7 @@
 package com.github.anba.es6draft.runtime.objects.reflect;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.GetMethod;
-import static com.github.anba.es6draft.runtime.Realm.CreateRealmAndSetRealmGlobalObj;
+import static com.github.anba.es6draft.runtime.Realm.CreateRealmAndSetRealmGlobalObject;
 import static com.github.anba.es6draft.runtime.Realm.SetDefaultGlobalBindings;
 import static com.github.anba.es6draft.runtime.internal.Errors.newError;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
@@ -115,7 +115,7 @@ public final class RealmConstructor extends BuiltinConstructor implements Initia
         }
 
         /* steps 6-7 */
-        Realm realm = CreateRealmAndSetRealmGlobalObj(calleeContext, realmObject, newGlobal);
+        Realm realm = CreateRealmAndSetRealmGlobalObject(calleeContext, realmObject, newGlobal);
         /* steps 8-9 */
         Callable translate = GetMethod(calleeContext, realmObject, "directEval");
         /* steps 10-11 */

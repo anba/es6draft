@@ -17,6 +17,7 @@ const {
 var home = {};
 
 // 14.1 FunctionDeclaration
+assertSyntaxError(`
 function fdecl() {
 (() => {
   if (false) { super.add_super_binding; }
@@ -24,8 +25,10 @@ function fdecl() {
 })();
 }
 fdecl.toMethod(home)();
+`);
 
 // 14.1 FunctionExpression
+assertSyntaxError(`
 var fexpr = function() {
 (() => {
   if (false) { super.add_super_binding; }
@@ -33,6 +36,7 @@ var fexpr = function() {
 })();
 };
 fexpr.toMethod(home)();
+`);
 
 // 14.3 Method Definitions [Method]
 var obj = {
@@ -150,6 +154,7 @@ var obj = class {
 Object.getOwnPropertyDescriptor(obj, "x").set();
 
 // 14.4 GeneratorDeclaration
+assertSyntaxError(`
 function* gdecl() {
 (() => {
   if (false) { super.add_super_binding; }
@@ -157,8 +162,10 @@ function* gdecl() {
 })();
 }
 gdecl.toMethod(home)().next();
+`);
 
 // 14.4 GeneratorExpression
+assertSyntaxError(`
 var gexpr = function*() {
 (() => {
   if (false) { super.add_super_binding; }
@@ -166,6 +173,7 @@ var gexpr = function*() {
 })();
 };
 gexpr.toMethod(home)().next();
+`);
 
 // 14.4 GeneratorMethod
 var obj = {

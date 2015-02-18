@@ -378,7 +378,7 @@ public final class ArrayObject extends OrdinaryObject {
         /* step 3 */
         Object c = UNDEFINED;
         /* step 4 */
-        if (IsArray(orginalArray)) {
+        if (IsArray(cx, orginalArray)) {
             /* steps 4.a-4.b */
             c = Get(cx, orginalArray, "constructor");
             /* step 4.c */
@@ -386,9 +386,9 @@ public final class ArrayObject extends OrdinaryObject {
                 Constructor constructor = (Constructor) c;
                 /* step 4.c.i */
                 Realm thisRealm = cx.getRealm();
-                /* step 4.c.ii */
-                Realm realmC = constructor.getRealm(cx);
-                /* step 4.c.iii */
+                /* steps 4.c.ii-iii */
+                Realm realmC = GetFunctionRealm(cx, constructor);
+                /* step 4.c.iv */
                 if (thisRealm != realmC && constructor == realmC.getIntrinsic(Intrinsics.Array)) {
                     c = UNDEFINED;
                 }
@@ -396,6 +396,9 @@ public final class ArrayObject extends OrdinaryObject {
             /* step 4.d */
             if (Type.isObject(c)) {
                 c = Get(cx, Type.objectValue(c), BuiltinSymbol.species.get());
+                if (Type.isNull(c)) {
+                    c = UNDEFINED;
+                }
             }
         }
         /* step 5 */
@@ -439,18 +442,17 @@ public final class ArrayObject extends OrdinaryObject {
         }
         /* step 8 */
         newLenDesc.setValue(newLen);
-        /* steps 8-11 (not applicable) */
-        /* step 12 */
+        /* steps 9-11 */
         long oldLen = array.length;
-        /* step 13 */
+        /* step 12 */
         if (newLen >= oldLen) {
             return array.defineLength(newLenDesc, newLen);
         }
-        /* step 14 */
+        /* step 13 */
         if (!array.lengthWritable) {
             return false;
         }
-        /* steps 15-16 */
+        /* steps 14-15 */
         boolean newWritable;
         if (!newLenDesc.hasWritable() || newLenDesc.isWritable()) {
             newWritable = true;
@@ -458,15 +460,15 @@ public final class ArrayObject extends OrdinaryObject {
             newWritable = false;
             newLenDesc.setWritable(true);
         }
-        /* steps 17-18 */
+        /* steps 16-17 */
         boolean succeeded = array.defineLength(newLenDesc, newLen);
-        /* step 19 */
+        /* step 18 */
         if (!succeeded) {
             return false;
         }
-        /* step 20 */
+        /* step 19 */
         long nonDeletableIndex = array.deleteRange(newLen, oldLen);
-        /* step 20.d */
+        /* step 19.d */
         if (nonDeletableIndex >= 0) {
             array.length = nonDeletableIndex + 1;
             if (!newWritable) {
@@ -474,11 +476,11 @@ public final class ArrayObject extends OrdinaryObject {
             }
             return false;
         }
-        /* step 21 */
+        /* step 20 */
         if (!newWritable) {
             array.lengthWritable = false;
         }
-        /* step 22 */
+        /* step 21 */
         return true;
     }
 
@@ -492,31 +494,31 @@ public final class ArrayObject extends OrdinaryObject {
         if (newLen != numberLen) {
             throw newRangeError(cx, Messages.Key.InvalidArrayLength);
         }
-        /* steps 8-11 (not applicable) */
-        /* step 12 */
+        /* step 8 (not applicable) */
+        /* steps 9-11 */
         long oldLen = array.length;
-        /* step 13 */
+        /* step 12 */
         if (newLen >= oldLen) {
             return array.defineLength(newLen);
         }
-        /* step 14 */
+        /* step 13 */
         if (!array.lengthWritable) {
             return false;
         }
-        /* steps 15-16 (not applicable) */
-        /* steps 17-18 */
+        /* steps 14-15 (not applicable) */
+        /* steps 16-17 */
         boolean succeeded = array.defineLength(newLen);
-        /* step 19 */
+        /* step 18 */
         assert succeeded;
-        /* step 20 */
+        /* step 19 */
         long nonDeletableIndex = array.deleteRange(newLen, oldLen);
-        /* step 20.d */
+        /* step 19.d */
         if (nonDeletableIndex >= 0) {
             array.length = nonDeletableIndex + 1;
             return false;
         }
-        /* step 21 (not applicable) */
-        /* step 22 */
+        /* step 20 (not applicable) */
+        /* step 21 */
         return true;
     }
 

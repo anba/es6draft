@@ -37,6 +37,9 @@ feature/NumericLiteral/Simple.js
 # `extends null` now marked as derived constructor
 feature/Classes/DefaultConstructor.js
 
+# `new` no longer in tail-call position
+feature/ProperTailCalls/New.js
+
 
 ############################################
 # Implementation specific differences      #

@@ -860,7 +860,8 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
     }
 
     /**
-     * 12.3.4.2 Runtime Semantics: EvaluateCall
+     * 12.3.4.2 Runtime Semantics: EvaluateCall( ref, arguments, tailPosition )<br>
+     * 12.3.4.3 Runtime Semantics: EvaluateDirectCall( func, thisValue, arguments, tailPosition )
      * 
      * @param ref
      *            the call base reference
@@ -874,13 +875,9 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
      */
     private Object EvaluateCall(Object ref, List<Expression> arguments, boolean directEval,
             ExecutionContext cx) {
-        /* steps 1-2 */
+        /* steps 1-2 (EvaluateCall) */
         Object func = GetValue(ref, cx);
-        /* steps 3-4 */
-        Object[] argList = ArgumentListEvaluation(arguments, cx);
-        /* steps 5-6 */
-        Callable f = CheckCallable(func, cx);
-        /* steps 7-8 */
+        /* steps 3-4 (EvaluateCall) */
         Object thisValue = UNDEFINED;
         if (ref instanceof Reference) {
             Reference<?, ?> rref = (Reference<?, ?>) ref;
@@ -895,7 +892,11 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
                 }
             }
         }
-        /* [18.2.1.1] Direct Call to Eval */
+        /* steps 1-2 (EvaluateDirectCall) */
+        Object[] argList = ArgumentListEvaluation(arguments, cx);
+        /* steps 3-4 (EvaluateDirectCall) */
+        Callable f = CheckCallable(func, cx);
+        /* [12.3.4.1 Runtime Semantics: Evaluation - step 3] */
         if (directEval && IsBuiltinEval(ref, f, cx)) {
             int evalFlags = EvalFlags.Direct.getValue();
             if (strict) {
@@ -916,12 +917,12 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
             return Eval.directEval(argList, cx, evalFlags);
         }
         if (directEval && ScriptRuntime.directEvalFallbackHook(cx) != null) {
-            argList = ScriptRuntime.directEvalFallbackArguments(thisValue, argList, f, cx);
+            argList = ScriptRuntime.directEvalFallbackArguments(f, cx, thisValue, argList);
             thisValue = ScriptRuntime.directEvalFallbackThisArgument(cx);
             f = ScriptRuntime.directEvalFallbackHook(cx);
         }
-        /* steps 9, 11, 12 (not applicable) */
-        /* steps 10, 13 */
+        /* steps 5, 7-8 (EvaluateDirectCall) (not applicable) */
+        /* steps 6, 9 (EvaluateDirectCall) */
         return f.call(cx, thisValue, argList);
     }
 

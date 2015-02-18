@@ -7,11 +7,9 @@
 package com.github.anba.es6draft.runtime.types.builtins;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.CanonicalNumericIndexString;
-import static com.github.anba.es6draft.runtime.AbstractOperations.CanonicalNumericIndexStringType;
 
 import java.util.List;
 
-import com.github.anba.es6draft.runtime.AbstractOperations.CanonicalNumericString;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.CompoundList;
@@ -51,7 +49,7 @@ public abstract class IntegerIndexedObject extends OrdinaryObject {
     /** [[HasOwnProperty]] (P) */
     @Override
     protected final boolean hasOwnProperty(ExecutionContext cx, long propertyKey) {
-        return elementHasOwn(cx, propertyKey);
+        return elementHas(cx, propertyKey);
     }
 
     /** [[HasOwnProperty]] (P) */
@@ -61,7 +59,7 @@ public abstract class IntegerIndexedObject extends OrdinaryObject {
         /* step 3 */
         long numericIndex = CanonicalNumericIndexString(propertyKey);
         if (isCanonicalNumericIndex(numericIndex)) {
-            return elementHasOwn(cx, numericIndex);
+            return elementHas(cx, numericIndex);
         }
         /* step 4 */
         return super.hasOwnProperty(cx, propertyKey);
@@ -103,9 +101,9 @@ public abstract class IntegerIndexedObject extends OrdinaryObject {
     /** 9.4.5.2 [[HasProperty]](P) */
     @Override
     protected boolean has(ExecutionContext cx, String propertyKey) {
-        CanonicalNumericString numericString = CanonicalNumericIndexStringType(propertyKey);
-        if (numericString != CanonicalNumericString.None) {
-            return elementHas(cx, numericString);
+        long numericIndex = CanonicalNumericIndexString(propertyKey);
+        if (isCanonicalNumericIndex(numericIndex)) {
+            return elementHas(cx, numericIndex);
         }
         return ordinaryHasProperty(cx, propertyKey);
     }
@@ -270,29 +268,7 @@ public abstract class IntegerIndexedObject extends OrdinaryObject {
      *            the integer index
      * @return {@code true} if the element is present
      */
-    protected abstract boolean elementHasOwn(ExecutionContext cx, long index);
-
-    /**
-     * Not in spec
-     * 
-     * @param cx
-     *            the execution context
-     * @param index
-     *            the integer index
-     * @return {@code true} if the element is present
-     */
     protected abstract boolean elementHas(ExecutionContext cx, long index);
-
-    /**
-     * Not in spec
-     * 
-     * @param cx
-     *            the execution context
-     * @param numericString
-     *            the canonical numeric string type
-     * @return {@code true} if the element is present
-     */
-    protected abstract boolean elementHas(ExecutionContext cx, CanonicalNumericString numericString);
 
     /**
      * 9.4.5.9 IntegerIndexedElementGet (O, index) Abstract Operation

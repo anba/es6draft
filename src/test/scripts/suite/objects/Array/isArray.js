@@ -8,6 +8,7 @@ const {
   assertTrue,
   assertFalse,
   assertBuiltinFunction,
+  assertThrows,
   fail
 } = Assert;
 
@@ -23,17 +24,17 @@ assertTrue(Array.isArray(new Proxy(new Proxy([], {}), {})));
 var {proxy, revoke} = Proxy.revocable([], {});
 assertTrue(Array.isArray(proxy));
 revoke();
-assertFalse(Array.isArray(proxy));
+assertThrows(TypeError, () => Array.isArray(proxy));
 
 var {proxy, revoke} = Proxy.revocable({}, {});
 assertFalse(Array.isArray(proxy));
 revoke();
-assertFalse(Array.isArray(proxy));
+assertThrows(TypeError, () => Array.isArray(proxy));
 
 var {proxy, revoke} = Proxy.revocable(function(){}, {});
 assertFalse(Array.isArray(proxy));
 revoke();
-assertFalse(Array.isArray(proxy));
+assertThrows(TypeError, () => Array.isArray(proxy));
 
 Array.isArray(new Proxy([], new Proxy({}, {
   get() {

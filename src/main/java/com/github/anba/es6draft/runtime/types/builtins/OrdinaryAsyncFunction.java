@@ -106,7 +106,7 @@ public final class OrdinaryAsyncFunction extends FunctionObject implements Const
     /* ***************************************************************************************** */
 
     /**
-     * 9.2.3 FunctionAllocate Abstract Operation
+     * 9.2.4 FunctionAllocate (functionPrototype, strict [,functionKind] ) Abstract Operation
      * 
      * @param cx
      *            the execution context
@@ -152,7 +152,7 @@ public final class OrdinaryAsyncFunction extends FunctionObject implements Const
         /* step 2 */
         OrdinaryAsyncFunction f = FunctionAllocate(cx, functionPrototype, function.isStrict(), kind);
         /* step 3 */
-        FunctionInitialize(f, kind, function.isStrict(), function, scope, cx.getCurrentExecutable());
+        FunctionInitialize(f, kind, function, scope, cx.getCurrentExecutable());
         return f;
     }
 }

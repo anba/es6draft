@@ -93,14 +93,12 @@ public class OrdinaryFunction extends FunctionObject {
     }
 
     /**
-     * 9.2.5 FunctionInitialize (F, kind, Strict, ParameterList, Body, Scope) Abstract Operation
+     * 9.2.5 FunctionInitialize (F, kind, ParameterList, Body, Scope) Abstract Operation
      * 
      * @param f
      *            the function object
      * @param kind
      *            the function kind
-     * @param strict
-     *            the strict mode flag
      * @param function
      *            the function code
      * @param scope
@@ -108,7 +106,7 @@ public class OrdinaryFunction extends FunctionObject {
      * @param executable
      *            the executable object
      */
-    public static void FunctionInitialize(FunctionObject f, FunctionKind kind, boolean strict,
+    public static void FunctionInitialize(FunctionObject f, FunctionKind kind,
             RuntimeInfo.Function function, LexicalEnvironment<?> scope, Executable executable) {
         /* step 1 */
         int len = function.expectedArgumentCount();
@@ -116,12 +114,12 @@ public class OrdinaryFunction extends FunctionObject {
         /* steps 3-4 */
         f.infallibleDefineOwnProperty("length", new Property(len, false, false, true));
         /* steps 5-11 */
-        f.initialize(kind, strict, function, scope, executable);
+        f.initialize(kind, function, scope, executable);
         /* step 12 (return) */
     }
 
     /**
-     * 9.2.6 FunctionCreate (kind, ParameterList, Body, Scope, Strict) Abstract Operation
+     * 9.2.6 FunctionCreate (kind, ParameterList, Body, Scope, Strict, prototype) Abstract Operation
      * 
      * @param cx
      *            the execution context
@@ -138,10 +136,11 @@ public class OrdinaryFunction extends FunctionObject {
         assert !function.isGenerator() && !function.isAsync();
         /* step 1 */
         ScriptObject functionPrototype = cx.getIntrinsic(Intrinsics.FunctionPrototype);
-        /* step 2 */
+        /* steps 2-3 (not applicable) */
+        /* step 4 */
         OrdinaryFunction f = FunctionAllocate(cx, functionPrototype, function.isStrict(), kind);
-        /* step 3 */
-        FunctionInitialize(f, kind, function.isStrict(), function, scope, cx.getCurrentExecutable());
+        /* step 5 */
+        FunctionInitialize(f, kind, function, scope, cx.getCurrentExecutable());
         return f;
     }
 
@@ -180,18 +179,18 @@ public class OrdinaryFunction extends FunctionObject {
         /* steps 1-2 (not applicable) */
         /* step 3 */
         assert f.isExtensible() && !f.ordinaryHasOwnProperty("prototype");
-        /* steps 4-5 (not applicable) */
-        /* step 6 */
+        /* step 4 (not applicable) */
+        /* step 5 */
         OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.ObjectPrototype);
-        /* step 7 */
+        /* step 6 */
         boolean writablePrototype = true;
-        /* step 8 */
+        /* step 7 */
         prototype.infallibleDefineOwnProperty("constructor", new Property(f, writablePrototype,
                 false, writablePrototype));
-        /* steps 9-10 */
+        /* steps 8-9 */
         f.infallibleDefineOwnProperty("prototype", new Property(prototype, writablePrototype,
                 false, false));
-        /* step 11 (return) */
+        /* step 10 (return) */
     }
 
     /**
@@ -211,13 +210,11 @@ public class OrdinaryFunction extends FunctionObject {
         /* steps 1-2 (not applicable) */
         /* step 3 */
         assert f.isExtensible() && !f.ordinaryHasOwnProperty("prototype");
-        /* step 4 */
-        // FIXME: spec bug - unnecessary assertion
-        /* steps 5-8 (not applicable) */
-        /* steps 9-10 */
+        /* steps 4-7 (not applicable) */
+        /* steps 8-9 */
         f.infallibleDefineOwnProperty("prototype", new Property(prototype, writablePrototype,
                 false, false));
-        /* step 11 (return) */
+        /* step 10 (return) */
     }
 
     /**
@@ -234,7 +231,7 @@ public class OrdinaryFunction extends FunctionObject {
     }
 
     /**
-     * 9.2.11 MakeMethod ( F, homeObject ) Abstract Operation
+     * 9.2.11 MakeMethod ( F, homeObject) Abstract Operation
      * 
      * @param f
      *            the function object
@@ -242,27 +239,32 @@ public class OrdinaryFunction extends FunctionObject {
      *            the home object
      */
     public static void MakeMethod(FunctionObject f, ScriptObject homeObject) {
-        /* steps 1-3 (not applicable) */
-        /* steps 4-6 */
+        /* steps 1-2 (not applicable) */
+        /* steps 3-4 */
         f.toMethod(homeObject);
-        /* step 7 (return) */
+        /* step 5 (return) */
     }
 
     /**
      * 9.2.12 SetFunctionName (F, name, prefix) Abstract Operation
      * 
+     * @param <FUNCTION>
+     *            the function type
      * @param f
      *            the function object
      * @param name
      *            the function name
      */
-    public static void SetFunctionName(FunctionObject f, String name) {
+    public static <FUNCTION extends OrdinaryObject & Callable> void SetFunctionName(FUNCTION f,
+            String name) {
         SetFunctionName(f, name, null);
     }
 
     /**
      * 9.2.12 SetFunctionName (F, name, prefix) Abstract Operation
      * 
+     * @param <FUNCTION>
+     *            the function type
      * @param f
      *            the function object
      * @param name
@@ -270,35 +272,39 @@ public class OrdinaryFunction extends FunctionObject {
      * @param prefix
      *            the function name prefix
      */
-    public static void SetFunctionName(FunctionObject f, String name, String prefix) {
+    public static <FUNCTION extends OrdinaryObject & Callable> void SetFunctionName(FUNCTION f,
+            String name, String prefix) {
         /* step 1 */
-        assert f.isExtensible() : "function is not extensible";
-        assert !f.ordinaryHasOwnProperty("name") : "function has 'name' property";
-        /* steps 2-3 (implicit) */
-        /* step 4 (not applicable) */
+        assert f.isExtensible() && !f.ordinaryHasOwnProperty("name");
+        /* steps 2-4 (not applicable) */
         /* step 5 */
         if (prefix != null) {
             name = prefix + " " + name;
         }
-        /* step 6 */
+        /* steps 6-7 */
         f.infallibleDefineOwnProperty("name", new Property(name, false, false, true));
     }
 
     /**
      * 9.2.12 SetFunctionName (F, name, prefix) Abstract Operation
      * 
+     * @param <FUNCTION>
+     *            the function type
      * @param f
      *            the function object
      * @param name
      *            the function name
      */
-    public static void SetFunctionName(FunctionObject f, Symbol name) {
+    public static <FUNCTION extends OrdinaryObject & Callable> void SetFunctionName(FUNCTION f,
+            Symbol name) {
         SetFunctionName(f, name, null);
     }
 
     /**
      * 9.2.12 SetFunctionName (F, name, prefix) Abstract Operation
      * 
+     * @param <FUNCTION>
+     *            the function type
      * @param f
      *            the function object
      * @param name
@@ -306,11 +312,11 @@ public class OrdinaryFunction extends FunctionObject {
      * @param prefix
      *            the function name prefix
      */
-    public static void SetFunctionName(FunctionObject f, Symbol name, String prefix) {
+    public static <FUNCTION extends OrdinaryObject & Callable> void SetFunctionName(FUNCTION f,
+            Symbol name, String prefix) {
         /* step 1 */
-        assert f.isExtensible() : "function is not extensible";
-        assert !f.ordinaryHasOwnProperty("name") : "function has 'name' property";
-        /* steps 2-3 (implicit) */
+        assert f.isExtensible() && !f.ordinaryHasOwnProperty("name");
+        /* steps 2-3 (not applicable) */
         /* step 4 */
         String description = name.getDescription();
         String sname = description == null ? "" : "[" + description + "]";
@@ -318,32 +324,8 @@ public class OrdinaryFunction extends FunctionObject {
         if (prefix != null) {
             sname = prefix + " " + sname;
         }
-        /* step 6 */
+        /* steps 6-7 */
         f.infallibleDefineOwnProperty("name", new Property(sname, false, false, true));
-    }
-
-    /**
-     * 9.2.12 SetFunctionName (F, name, prefix) Abstract Operation
-     * 
-     * @param f
-     *            the function object
-     * @param name
-     *            the function name
-     * @param prefix
-     *            the function name prefix
-     */
-    public static void SetFunctionName(BoundFunctionObject f, String name, String prefix) {
-        /* step 1 */
-        assert f.isExtensible() : "function is not extensible";
-        assert !f.ordinaryHasOwnProperty("name") : "function has 'name' property";
-        /* steps 2-3 (implicit) */
-        /* step 4 (not applicable) */
-        /* step 5 */
-        if (prefix != null) {
-            name = prefix + " " + name;
-        }
-        /* step 6 */
-        f.infallibleDefineOwnProperty("name", new Property(name, false, false, true));
     }
 
     /**

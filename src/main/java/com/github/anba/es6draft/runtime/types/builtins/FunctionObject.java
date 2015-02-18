@@ -307,8 +307,7 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
         /* steps 4-6 */
         FunctionObject clone = allocateNew();
         clone.isClone = true;
-        clone.initialize(getFunctionKind(), isStrict(), getCode(), getEnvironment(),
-                getExecutable());
+        clone.initialize(getFunctionKind(), getCode(), getEnvironment(), getExecutable());
         /* step 7 */
         assert clone.isExtensible() : "cloned function not extensible";
         /* step 8 (not applicable) */
@@ -355,12 +354,10 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
     }
 
     /**
-     * 9.2.5 FunctionInitialize (F, kind, Strict, ParameterList, Body, Scope) Abstract Operation
+     * 9.2.5 FunctionInitialize (F, kind, ParameterList, Body, Scope) Abstract Operation
      * 
      * @param kind
      *            the function kind
-     * @param strict
-     *            the strict mode flag
      * @param function
      *            the function code
      * @param scope
@@ -368,13 +365,13 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
      * @param executable
      *            the source executable
      */
-    protected final void initialize(FunctionKind kind, boolean strict,
-            RuntimeInfo.Function function, LexicalEnvironment<?> scope, Executable executable) {
+    protected final void initialize(FunctionKind kind, RuntimeInfo.Function function,
+            LexicalEnvironment<?> scope, Executable executable) {
         assert this.function == null && function != null : "function object already initialized";
         assert this.functionKind == kind : String.format("%s != %s", functionKind, kind);
         assert executable instanceof CompiledObject : "Executable=" + executable;
         /* step 6 */
-        this.strict = strict;
+        boolean strict = this.strict;
         /* step 7 */
         this.environment = scope;
         /* steps 8-9 */
@@ -395,7 +392,7 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
     }
 
     /**
-     * 9.2.10 MakeMethod ( F, homeObject ) Abstract Operation
+     * 9.2.11 MakeMethod ( F, homeObject) Abstract Operation
      * 
      * @param homeObject
      *            the new home object

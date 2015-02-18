@@ -44,7 +44,7 @@ import com.github.anba.es6draft.runtime.internal.JVMNames;
 import com.github.anba.es6draft.runtime.internal.ResumptionPoint;
 import com.github.anba.es6draft.runtime.internal.SourceCompressor;
 import com.github.anba.es6draft.runtime.internal.Strings;
-import com.github.anba.es6draft.runtime.modules.ModuleRecord;
+import com.github.anba.es6draft.runtime.modules.SourceTextModuleRecord;
 import com.github.anba.es6draft.runtime.types.builtins.ArrayObject;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryConstructorFunction;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
@@ -146,7 +146,7 @@ final class CodeGenerator {
         static final MethodTypeDescriptor Module_Code = Type.methodType(Types.Object,
                 Types.ExecutionContext);
         static final MethodTypeDescriptor Module_Init = Type.methodType(Type.VOID_TYPE,
-                Types.ExecutionContext, Types.LexicalEnvironment, Types.Map, Types.Map);
+                Types.ExecutionContext, Types.SourceTextModuleRecord, Types.LexicalEnvironment);
         static final MethodTypeDescriptor Module_RTI = Type
                 .methodType(Types.RuntimeInfo$ScriptBody);
         static final MethodTypeDescriptor Module_DebugInfo = Type.methodType(Types.DebugInfo);
@@ -671,7 +671,7 @@ final class CodeGenerator {
         mv.end();
     }
 
-    void compile(Module node, ModuleRecord moduleRecord) {
+    void compile(Module node, SourceTextModuleRecord moduleRecord) {
         // initialization methods
         new ModuleDeclarationInstantiationGenerator(this).generate(node, moduleRecord);
 

@@ -6,297 +6,125 @@
  */
 package com.github.anba.es6draft.runtime.modules;
 
-import static java.util.Collections.unmodifiableList;
+import java.io.IOException;
+import java.util.Map;
+import java.util.Set;
 
-import java.util.List;
-
-import com.github.anba.es6draft.Module;
+import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.ModuleEnvironmentRecord;
+import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.types.builtins.ModuleNamespaceObject;
 
 /**
- * 15.2.1.12 Static and Runtime Semantics: Module Records
+ * 15.2.1.15 Abstract Module Records
  */
-public final class ModuleRecord implements Cloneable {
+public interface ModuleRecord {
     /**
-     * [[SourceCodeId]]
-     */
-    private final SourceIdentifier sourceCodeId;
-
-    /**
-     * [[ImportedModules]]
-     */
-    private List<ModuleRecord> importedModules;
-
-    /**
-     * [[ECMAScriptCode]]
-     */
-    private Module scriptCode;
-
-    /**
-     * [[ImportEntries]]
-     */
-    private List<ImportEntry> importEntries;
-
-    /**
-     * [[LocalExportEntries]]
-     */
-    private List<ExportEntry> localExportEntries;
-
-    /**
-     * [[IndirectExportEntries]]
-     */
-    private List<ExportEntry> indirectExportEntries;
-
-    /**
-     * [[StarExportEntries]]
-     */
-    private List<ExportEntry> starExportEntries;
-
-    /**
-     * [[Environment]]
-     */
-    private LexicalEnvironment<ModuleEnvironmentRecord> environment;
-
-    /**
-     * [[Namespace]]
-     */
-    private ModuleNamespaceObject namespace;
-
-    /**
-     * [[Evaluated]]
-     */
-    private boolean evaluated;
-
-    /**
-     * Creates a module record.
+     * Returns the source identifier of this module record.
      * 
-     * @param sourceCodeId
-     *            the module source code identifier
+     * @return the source identifier
      */
-    public ModuleRecord(SourceIdentifier sourceCodeId) {
-        assert sourceCodeId != null;
-        this.sourceCodeId = sourceCodeId;
-    }
-
-    @Override
-    public ModuleRecord clone() {
-        ModuleRecord newModule = new ModuleRecord(sourceCodeId);
-        newModule.importedModules = importedModules;
-        newModule.scriptCode = scriptCode;
-        newModule.importEntries = importEntries;
-        newModule.localExportEntries = localExportEntries;
-        newModule.indirectExportEntries = indirectExportEntries;
-        newModule.starExportEntries = starExportEntries;
-        newModule.environment = null;
-        newModule.namespace = null;
-        newModule.evaluated = false;
-        return newModule;
-    }
-
-    @Override
-    public String toString() {
-        return String.format("[Module = %s]", sourceCodeId);
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        return obj == this;
-    }
-
-    @Override
-    public int hashCode() {
-        return sourceCodeId.hashCode();
-    }
+    SourceIdentifier getSourceCodeId();
 
     /**
-     * [[SourceCodeId]]
+     * [[Realm]]
      * 
-     * @return the module source code identifier
+     * @return the realm instance or {@code null} if the module is not linked to a realm
      */
-    public SourceIdentifier getSourceCodeId() {
-        return sourceCodeId;
-    }
-
-    /**
-     * [[ImportedModules]]
-     * 
-     * @return the list of imported modules
-     */
-    public List<ModuleRecord> getImportedModules() {
-        return unmodifiableList(importedModules);
-    }
-
-    /**
-     * [[ImportedModules]]
-     * 
-     * @param importedModules
-     *            the list of imported modules
-     */
-    public void setImportedModules(List<ModuleRecord> importedModules) {
-        assert this.importedModules == null && importedModules != null;
-        this.importedModules = importedModules;
-    }
-
-    /**
-     * [[ECMAScriptCode]]
-     * 
-     * @return the script code for this module
-     */
-    public Module getScriptCode() {
-        return scriptCode;
-    }
-
-    /**
-     * [[ECMAScriptCode]]
-     * 
-     * @param scriptCode
-     *            the script code
-     */
-    public void setScriptCode(Module scriptCode) {
-        assert this.scriptCode == null && scriptCode != null;
-        this.scriptCode = scriptCode;
-    }
-
-    /**
-     * [[ImportEntries]]
-     * 
-     * @return the list of {@code import} entries
-     */
-    public List<ImportEntry> getImportEntries() {
-        return unmodifiableList(importEntries);
-    }
-
-    /**
-     * [[ImportEntries]]
-     * 
-     * @param importEntries
-     *            the list of {@code import} entries
-     */
-    public void setImportEntries(List<ImportEntry> importEntries) {
-        assert this.importEntries == null && importEntries != null;
-        this.importEntries = importEntries;
-    }
-
-    /**
-     * [[LocalExportEntries]]
-     * 
-     * @return the list of local {@code export} entries
-     */
-    public List<ExportEntry> getLocalExportEntries() {
-        return unmodifiableList(localExportEntries);
-    }
-
-    /**
-     * [[LocalExportEntries]]
-     * 
-     * @param localExportEntries
-     *            the list of local {@code export} entries
-     */
-    public void setLocalExportEntries(List<ExportEntry> localExportEntries) {
-        assert this.localExportEntries == null && localExportEntries != null;
-        this.localExportEntries = localExportEntries;
-    }
-
-    /**
-     * [[IndirectExportEntries]]
-     * 
-     * @return the list of indirect {@code export} entries
-     */
-    public List<ExportEntry> getIndirectExportEntries() {
-        return unmodifiableList(indirectExportEntries);
-    }
-
-    /**
-     * [[IndirectExportEntries]]
-     * 
-     * @param indirectExportEntries
-     *            the list of indirect {@code export} entries
-     */
-    public void setIndirectExportEntries(List<ExportEntry> indirectExportEntries) {
-        assert this.indirectExportEntries == null && indirectExportEntries != null;
-        this.indirectExportEntries = indirectExportEntries;
-    }
-
-    /**
-     * [[StarExportEntries]]
-     * 
-     * @return the list of {@code export*} entries
-     */
-    public List<ExportEntry> getStarExportEntries() {
-        return unmodifiableList(starExportEntries);
-    }
-
-    /**
-     * [[StarExportEntries]]
-     * 
-     * @param starExportEntries
-     *            the list of {@code export*} entries
-     */
-    public void setStarExportEntries(List<ExportEntry> starExportEntries) {
-        assert this.starExportEntries == null && starExportEntries != null;
-        this.starExportEntries = starExportEntries;
-    }
+    Realm getRealm();
 
     /**
      * [[Environment]]
      * 
-     * @return the lexical environment of this module
+     * @return the lexical environment or {@code null}
      */
-    public LexicalEnvironment<ModuleEnvironmentRecord> getEnvironment() {
-        assert environment != null : "module not instantiated: " + sourceCodeId;
-        return environment;
-    }
-
-    /**
-     * [[Environment]]
-     * 
-     * @param environment
-     *            the lexical environment of this module
-     */
-    public void setEnvironment(LexicalEnvironment<ModuleEnvironmentRecord> environment) {
-        assert this.environment == null && environment != null : "module already instantiated";
-        this.environment = environment;
-    }
+    LexicalEnvironment<ModuleEnvironmentRecord> getEnvironment();
 
     /**
      * [[Namespace]]
      * 
-     * @return the module namespace object
+     * @return the module namespace object or {@code null}
      */
-    public ModuleNamespaceObject getNamespace() {
-        return namespace;
-    }
+    ModuleNamespaceObject getNamespace();
 
     /**
-     * [[Namespace]]
+     * Creates the module namespace object of this module record.
      * 
-     * @param namespace
-     *            the module namespace object
+     * @param cx
+     *            the current execution context
+     * @param exports
+     *            the list of exported names
+     * @return the new module namespace object
      */
-    public void setNamespace(ModuleNamespaceObject namespace) {
-        assert this.namespace == null && namespace != null;
-        this.namespace = namespace;
-    }
-
-    /**
-     * [[Evaluated]]
-     * 
-     * @return the evaluated flag
-     */
-    public boolean isEvaluated() {
-        return evaluated;
-    }
+    ModuleNamespaceObject createNamespace(ExecutionContext cx, Set<String> exports);
 
     /**
      * [[Evaluated]]
      * 
-     * @param evaluated
-     *            the evaluated flag
+     * @return {@code true} if module evaluation has started
      */
-    public void setEvaluated(boolean evaluated) {
-        assert !this.evaluated && evaluated;
-        this.evaluated = evaluated;
-    }
+    boolean isEvaluated();
+
+    /**
+     * GetExportedNames(exportStarSet)
+     * 
+     * @param exportStarSet
+     *            the list of previously visited modules
+     * @return the list of names that are directly or indirectly exported from this module
+     * @throws IOException
+     *             if there was any I/O error
+     * @throws MalformedNameException
+     *             if the module specifier cannot be normalized
+     * @throws ResolutionException
+     *             if the export cannot be resolved
+     */
+    Set<String> getExportedNames(Set<ModuleRecord> exportStarSet) throws IOException,
+            MalformedNameException, ResolutionException;
+
+    /**
+     * ResolveExport(exportName, resolveSet, exportStarSet)
+     * 
+     * @param exportName
+     *            the requested export name
+     * @param resolveSet
+     *            the list of previously visited modules
+     * @param exportStarSet
+     *            the list of previously visited modules
+     * @return the resolved export binding
+     * @throws IOException
+     *             if there was any I/O error
+     * @throws MalformedNameException
+     *             if the module specifier cannot be normalized
+     * @throws ResolutionException
+     *             if the export cannot be resolved
+     */
+    ModuleExport resolveExport(String exportName, Map<ModuleRecord, Set<String>> resolveSet,
+            Set<ModuleRecord> exportStarSet) throws IOException, MalformedNameException,
+            ResolutionException;
+
+    /**
+     * ModuleDeclarationInstantiation()
+     * 
+     * @throws IOException
+     *             if there was any I/O error
+     * @throws MalformedNameException
+     *             if the module specifier cannot be normalized
+     * @throws ResolutionException
+     *             if the export cannot be resolved
+     */
+    void instantiate() throws IOException, MalformedNameException, ResolutionException;
+
+    /**
+     * Evaluate()
+     * 
+     * @return the module evaluation result
+     * @throws IOException
+     *             if there was any I/O error
+     * @throws MalformedNameException
+     *             if the module specifier cannot be normalized
+     * @throws ResolutionException
+     *             if the export cannot be resolved
+     */
+    Object evaluate() throws IOException, MalformedNameException, ResolutionException;
 }

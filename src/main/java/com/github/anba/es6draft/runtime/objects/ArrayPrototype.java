@@ -548,7 +548,7 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
                 return ToBoolean(spreadable);
             }
             /* step 5 */
-            return IsArray(object);
+            return IsArray(cx, object);
         }
 
         /**

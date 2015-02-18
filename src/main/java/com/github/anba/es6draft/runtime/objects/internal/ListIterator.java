@@ -15,6 +15,7 @@ import java.util.Iterator;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
+import com.github.anba.es6draft.runtime.internal.ScriptException;
 import com.github.anba.es6draft.runtime.internal.ScriptIterator;
 import com.github.anba.es6draft.runtime.internal.SimpleIterator;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
@@ -104,6 +105,7 @@ public final class ListIterator<T> extends OrdinaryObject {
             ScriptIterator<Object> {
         private final ExecutionContext cx;
         private final ScriptObject iterator;
+        private boolean done = false;
 
         ScriptIteratorImpl(ExecutionContext cx, ScriptObject iterator) {
             this.cx = cx;
@@ -112,16 +114,29 @@ public final class ListIterator<T> extends OrdinaryObject {
 
         @Override
         protected Object findNext() {
-            ScriptObject next = IteratorStep(cx, iterator);
-            if (next == null) {
-                return null;
+            if (!done) {
+                try {
+                    ScriptObject next = IteratorStep(cx, iterator);
+                    if (next != null) {
+                        return IteratorValue(cx, next);
+                    }
+                } catch (ScriptException e) {
+                    done = true;
+                    throw e;
+                }
+                done = true;
             }
-            return IteratorValue(cx, next);
+            return null;
         }
 
         @Override
         public ScriptObject getScriptObject() {
             return iterator;
+        }
+
+        @Override
+        public boolean isDone() {
+            return done;
         }
     }
 }

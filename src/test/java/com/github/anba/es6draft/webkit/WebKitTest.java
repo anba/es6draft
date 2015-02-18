@@ -12,7 +12,6 @@ import static com.github.anba.es6draft.webkit.WebKitTestGlobalObject.newGlobalOb
 import static org.junit.Assume.assumeTrue;
 
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
@@ -106,7 +105,7 @@ public final class WebKitTest {
     private WebKitTestGlobalObject global;
 
     @Before
-    public void setUp() throws IOException, URISyntaxException {
+    public void setUp() throws Throwable {
         // Filter disabled tests
         assumeTrue(test.isEnabled());
 

@@ -13,7 +13,7 @@ import com.github.anba.es6draft.Executable;
 import com.github.anba.es6draft.Module;
 import com.github.anba.es6draft.Script;
 import com.github.anba.es6draft.runtime.internal.RuntimeInfo.SourceObject;
-import com.github.anba.es6draft.runtime.modules.ModuleRecord;
+import com.github.anba.es6draft.runtime.modules.SourceTextModuleRecord;
 import com.github.anba.es6draft.runtime.objects.iteration.GeneratorObject;
 import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
@@ -229,6 +229,18 @@ public final class ExecutionContext {
     }
 
     /**
+     * [Called from generated code]
+     * 
+     * @param env
+     *            the new lexical environment
+     */
+    public void setVariableAndLexicalEnvironment(LexicalEnvironment<?> env) {
+        assert this.varEnv == this.lexEnv;
+        this.varEnv = env;
+        this.lexEnv = env;
+    }
+
+    /**
      * Creates a new default execution context.
      * 
      * @param realm
@@ -313,7 +325,8 @@ public final class ExecutionContext {
      *            the module object
      * @return the new module execution context
      */
-    public static ExecutionContext newModuleExecutionContext(Realm realm, ModuleRecord module) {
+    public static ExecutionContext newModuleExecutionContext(Realm realm,
+            SourceTextModuleRecord module) {
         /* steps 4-9 */
         return new ExecutionContext(realm, module.getEnvironment(), module.getEnvironment(), null,
                 module.getScriptCode(), null);
@@ -367,13 +380,13 @@ public final class ExecutionContext {
      */
     public static ExecutionContext newFunctionExecutionContext(ExecutionContext callerContext,
             FunctionObject f, Constructor newTarget) {
-        /* steps 1-3 (not applicable) */
-        /* step 6 */
+        /* steps 1-2 (not applicable) */
+        /* step 5 */
         Realm calleeRealm = f.getRealm();
-        /* steps 8-12 */
+        /* steps 7-11 */
         LexicalEnvironment<FunctionEnvironmentRecord> localEnv = newFunctionEnvironment(
                 callerContext, f, newTarget);
-        /* steps 4-5, 7, 13-16 */
+        /* steps 3-4, 6, 12-15 */
         return new ExecutionContext(calleeRealm, localEnv, localEnv, localEnv, f.getExecutable(), f);
     }
 
@@ -400,14 +413,14 @@ public final class ExecutionContext {
      */
     public static ExecutionContext newFunctionExecutionContext(ExecutionContext callerContext,
             FunctionObject f, Constructor newTarget, Object thisArgument) {
-        /* steps 1-3 (not applicable) */
-        /* step 6 */
+        /* steps 1-2 (not applicable) */
+        /* step 5 */
         Realm calleeRealm = f.getRealm();
         Object thisValue = bindThisValue(f, thisArgument);
-        /* steps 8-12 */
+        /* steps 7-11 */
         LexicalEnvironment<FunctionEnvironmentRecord> localEnv = newFunctionEnvironment(
                 callerContext, f, newTarget, thisValue);
-        /* steps 4-5, 7, 13-16 */
+        /* steps 3-4, 6, 12-15 */
         return new ExecutionContext(calleeRealm, localEnv, localEnv, localEnv, f.getExecutable(), f);
     }
 

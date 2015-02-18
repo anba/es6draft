@@ -112,8 +112,10 @@ public final class OrdinaryGenerator extends FunctionObject implements Construct
         /* steps 1-2 */
         GeneratorObject gen = OrdinaryCreateFromConstructor(cx, functionObject,
                 Intrinsics.GeneratorPrototype, GeneratorObjectAllocator.INSTANCE);
-        /* steps 3-5 */
-        return GeneratorStart(cx, gen, functionObject.getCode());
+        /* step 3 */
+        GeneratorStart(cx, gen, functionObject.getCode());
+        /* step 4 */
+        return gen;
     }
 
     private static final class GeneratorObjectAllocator implements ObjectAllocator<GeneratorObject> {
@@ -128,7 +130,7 @@ public final class OrdinaryGenerator extends FunctionObject implements Construct
     /* ***************************************************************************************** */
 
     /**
-     * 9.2.4 FunctionAllocate (functionPrototype, strict) Abstract Operation
+     * 9.2.4 FunctionAllocate (functionPrototype, strict [,functionKind] ) Abstract Operation
      * 
      * @param cx
      *            the execution context
@@ -154,7 +156,7 @@ public final class OrdinaryGenerator extends FunctionObject implements Construct
     }
 
     /**
-     * 9.2.7 GeneratorFunctionCreate Abstract Operation
+     * 9.2.7 GeneratorFunctionCreate (kind, ParameterList, Body, Scope, Strict) Abstract Operation
      * 
      * @param cx
      *            the execution context
@@ -174,7 +176,7 @@ public final class OrdinaryGenerator extends FunctionObject implements Construct
         /* step 2 */
         OrdinaryGenerator f = FunctionAllocate(cx, functionPrototype, function.isStrict(), kind);
         /* step 3 */
-        FunctionInitialize(f, kind, function.isStrict(), function, scope, cx.getCurrentExecutable());
+        FunctionInitialize(f, kind, function, scope, cx.getCurrentExecutable());
         return f;
     }
 }

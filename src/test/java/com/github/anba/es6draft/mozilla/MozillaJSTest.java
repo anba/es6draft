@@ -13,7 +13,6 @@ import static com.github.anba.es6draft.util.Resources.loadTests;
 import static org.junit.Assume.assumeTrue;
 
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -142,7 +141,7 @@ public final class MozillaJSTest {
     private MozTestGlobalObject global;
 
     @Before
-    public void setUp() throws IOException, URISyntaxException {
+    public void setUp() throws Throwable {
         // Filter disabled tests
         assumeTrue(moztest.isEnabled());
 

@@ -216,11 +216,9 @@ const {
   evalInBody(0);
 
   function evalInParams(_ = eval("var a = 0")) {
-    assertSame(0, a);
+    assertSame(99, a);
     eval("var a = 1");
     assertSame(1, a);
-    assertTrue(delete a);
-    assertSame(0, a);
     assertTrue(delete a);
     assertSame(99, a);
     assertFalse(delete a);
@@ -229,8 +227,8 @@ const {
   evalInParams();
 
   function evalInParamsLater(f = eval("var a = 0")) {
-    assertSame(0, a);
-    assertTrue(delete a);
+    assertSame(99, a);
+    assertFalse(delete a);
     assertSame(99, a);
     eval("var a = 1");
     assertSame(1, a);
@@ -242,16 +240,24 @@ const {
   evalInParamsLater();
 
   function evalParamName(a = 0, b = eval("var a = 1")) {
-    fail `unreachable`;
+    assertSame(0, a);
   }
-  assertThrows(SyntaxError, () => evalParamName());
+  evalParamName();
+
+  function evalParamNameWithInit(a = 0, b = eval("var a = 1")) {
+    assertSame(0, a);
+  }
+  evalParamNameWithInit();
 
   function evalParamNameVar(_ = eval("var a"), a = 1) {
-    fail `unreachable`;
+    assertSame(1, a);
   }
-  assertThrows(SyntaxError, () => evalParamNameVar());
+  evalParamNameVar();
 
-  assertThrows(SyntaxError, function(_ = eval("var a = 0"), a = 1){ });
+  function evalParamNameVarWithInit(_ = eval("var a = 0"), a = 1) {
+    assertSame(1, a);
+  }
+  evalParamNameVarWithInit();
 
   function noAccessToDynamic(f = () => a) {
     assertSame(99, a);

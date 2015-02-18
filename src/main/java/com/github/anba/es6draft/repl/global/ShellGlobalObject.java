@@ -6,8 +6,6 @@
  */
 package com.github.anba.es6draft.repl.global;
 
-import static com.github.anba.es6draft.runtime.modules.ModuleSemantics.ModuleEvaluationJob;
-import static com.github.anba.es6draft.runtime.modules.ModuleSemantics.NormalizeModuleName;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import java.io.BufferedReader;
@@ -39,6 +37,8 @@ import com.github.anba.es6draft.runtime.internal.ScriptLoader;
 import com.github.anba.es6draft.runtime.internal.Source;
 import com.github.anba.es6draft.runtime.internal.Strings;
 import com.github.anba.es6draft.runtime.modules.MalformedNameException;
+import com.github.anba.es6draft.runtime.modules.ModuleLoader;
+import com.github.anba.es6draft.runtime.modules.ModuleRecord;
 import com.github.anba.es6draft.runtime.modules.ResolutionException;
 import com.github.anba.es6draft.runtime.modules.SourceIdentifier;
 import com.github.anba.es6draft.runtime.objects.GlobalObject;
@@ -136,22 +136,20 @@ public abstract class ShellGlobalObject extends GlobalObject {
      * 
      * @param moduleName
      *            the unnormalized module name
-     * @param referrerSrcId
-     *            the optional parent module source code identifier
      * @throws IOException
      *             if there was any I/O error
      * @throws MalformedNameException
      *             if any imported module request cannot be normalized
+     * @throws ResolutionException
+     *             if any export binding cannot be resolved
      * @throws ParserException
      *             if the module source contains any syntax errors
      * @throws CompilationException
      *             if the parsed module source cannot be compiled
-     * @throws ResolutionException
-     *             if any export binding cannot be resolved
      */
-    public void eval(String moduleName, SourceIdentifier referrerSrcId) throws IOException,
-            MalformedNameException, ParserException, CompilationException, ResolutionException {
-        eval(getRealm(), moduleName, referrerSrcId);
+    public void eval(String moduleName) throws IOException, MalformedNameException,
+            ResolutionException, ParserException, CompilationException {
+        eval(getRealm(), moduleName);
     }
 
     /**
@@ -161,27 +159,28 @@ public abstract class ShellGlobalObject extends GlobalObject {
      *            the target realm instance
      * @param moduleName
      *            the unnormalized module name
-     * @param referrerSrcId
-     *            the optional parent module source code identifier
-     * @return the normalized module name
+     * @return the resolved module
      * @throws IOException
      *             if there was any I/O error
      * @throws MalformedNameException
      *             if any imported module request cannot be normalized
+     * @throws ResolutionException
+     *             if any export binding cannot be resolved
      * @throws ParserException
      *             if the module source contains any syntax errors
      * @throws CompilationException
      *             if the parsed module source cannot be compiled
-     * @throws ResolutionException
-     *             if any export binding cannot be resolved
      */
-    protected SourceIdentifier eval(Realm realm, String moduleName, SourceIdentifier referrerSrcId)
-            throws IOException, MalformedNameException, ParserException, CompilationException,
-            ResolutionException {
-        SourceIdentifier normalizedModuleName = NormalizeModuleName(realm, moduleName,
-                referrerSrcId);
-        ModuleEvaluationJob(realm, normalizedModuleName);
-        return normalizedModuleName;
+    protected ModuleRecord eval(Realm realm, String moduleName) throws IOException,
+            MalformedNameException, ResolutionException, ParserException, CompilationException {
+        ModuleLoader moduleLoader = realm.getModuleLoader();
+        SourceIdentifier moduleId = moduleLoader.normalizeName(moduleName, null);
+        ModuleRecord module = moduleLoader.resolve(moduleId);
+        if (moduleLoader.link(module, realm)) {
+            module.instantiate();
+        }
+        module.evaluate();
+        return module;
     }
 
     /**

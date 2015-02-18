@@ -11,22 +11,22 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import com.github.anba.es6draft.runtime.internal.FileModuleLoader;
+import com.github.anba.es6draft.runtime.internal.ScriptLoader;
+import com.github.anba.es6draft.runtime.modules.MalformedNameException;
 import com.github.anba.es6draft.runtime.modules.SourceIdentifier;
 
 /**
  * 
  */
 final class TraceurFileModuleLoader extends FileModuleLoader {
-    TraceurFileModuleLoader(Path baseDirectory) {
-        super(baseDirectory);
+    TraceurFileModuleLoader(ScriptLoader scriptLoader, Path baseDirectory) {
+        super(scriptLoader, baseDirectory);
     }
 
     @Override
-    public FileSourceIdentifier normalizeName(String unnormalizedName, SourceIdentifier referrerId) {
+    public FileSourceIdentifier normalizeName(String unnormalizedName, SourceIdentifier referrerId)
+            throws MalformedNameException {
         FileSourceIdentifier normalizedName = super.normalizeName(unnormalizedName, referrerId);
-        if (normalizedName == null) {
-            return null;
-        }
         try {
             Path fileName = normalizedName.getPath().getFileName();
             if (!fileName.toString().endsWith(".js")) {
@@ -35,7 +35,7 @@ final class TraceurFileModuleLoader extends FileModuleLoader {
             }
             return normalizedName;
         } catch (InvalidPathException e) {
-            return null;
+            throw new MalformedNameException(unnormalizedName);
         }
     }
 }

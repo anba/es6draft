@@ -106,6 +106,19 @@ ecma_6/TypedArray/from_errors.js
 ecma_6/TypedArray/from_mapping.js
 ecma_6/TypedArray/from_string.js
 
+# ES6: IsArray(revoked proxy) throws
+ecma_6/Array/isArray.js
+
+# ES6: lexical redeclaration checks in eval
+js1_5/extensions/regress-245795.js
+js1_7/regress/regress-406477.js
+
+# ES6: "bound " prefix not implemented
+ecma_6/Function/bound-length-and-name.js
+
+# ES6: RegExp unicode not implemented
+ecma_6/RegExp/descriptor.js
+
 
 ####################################
 # Intl only partially supported    #

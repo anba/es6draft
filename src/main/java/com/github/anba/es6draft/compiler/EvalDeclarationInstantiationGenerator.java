@@ -44,20 +44,14 @@ import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
  */
 final class EvalDeclarationInstantiationGenerator extends DeclarationBindingInstantiationGenerator {
     private static final class Methods {
-        // class: FunctionEnvironmentRecord
-        static final MethodName FunctionEnvironmentRecord_getTopLex = MethodName.findVirtual(
-                Types.FunctionEnvironmentRecord, "getTopLex",
-                Type.methodType(Types.DeclarativeEnvironmentRecord));
-
-        // class: ExecutionContext
-        static final MethodName ExecutionContext_getFunctionVariableEnvironmentRecord = MethodName
-                .findVirtual(Types.ExecutionContext, "getFunctionVariableEnvironmentRecord",
-                        Type.methodType(Types.FunctionEnvironmentRecord));
+        // class: LexicalEnvironment
+        static final MethodName LexicalEnvironment_getOuter = MethodName.findVirtual(
+                Types.LexicalEnvironment, "getOuter", Type.methodType(Types.LexicalEnvironment));
 
         // class: ScriptRuntime
         static final MethodName ScriptRuntime_canDeclareVarOrThrow = MethodName.findStatic(
                 Types.ScriptRuntime, "canDeclareVarOrThrow", Type.methodType(Type.VOID_TYPE,
-                        Types.ExecutionContext, Types.DeclarativeEnvironmentRecord, Types.String));
+                        Types.ExecutionContext, Types.EnvironmentRecord, Types.String));
     }
 
     private static final int EXECUTION_CONTEXT = 0;
@@ -124,9 +118,14 @@ final class EvalDeclarationInstantiationGenerator extends DeclarationBindingInst
         Variable<GlobalEnvironmentRecord> varEnvRec = mv.newVariable("varEnvRec",
                 GlobalEnvironmentRecord.class);
         storeEnvironmentRecord(varEnvRec, varEnv, mv);
-        /* step 6  */
-        for (Name name : varNames) {
-            canDeclareVarScopedOrThrow(context, varEnvRec, name, mv);
+        /* step 6 */
+        if (!varNames.isEmpty()) {
+            /* step 6.a */
+            for (Name name : varNames) {
+                canDeclareVarScopedOrThrow(context, varEnvRec, name, mv);
+            }
+            /* steps 6.b-d */
+            checkLexicalRedeclaration(context, varEnv, lexEnv, varNames, mv);
         }
         /* step 7 */
         ArrayDeque<HoistableDeclaration> functionsToInitialize = new ArrayDeque<>();
@@ -218,20 +217,10 @@ final class EvalDeclarationInstantiationGenerator extends DeclarationBindingInst
                 .newVariable("varEnvRec", EnvironmentRecord.class);
         storeEnvironmentRecord(varEnvRec, varEnv, mv);
         /* step 6 */
-        if (!strict && evalScript.isFunctionCode()) {
-            /* step 6.b */
-            /* step 6.b.i */
-            Variable<DeclarativeEnvironmentRecord> topLexEnvRec = mv.newVariable("topLexEnvRec",
-                    DeclarativeEnvironmentRecord.class);
-            getTopLex(context, mv);
-            mv.store(topLexEnvRec);
-            /* step 6.b.ii */
-            for (Name name : varNames) {
-                mv.load(context);
-                mv.load(topLexEnvRec);
-                mv.aconst(name.getIdentifier());
-                mv.invoke(Methods.ScriptRuntime_canDeclareVarOrThrow);
-            }
+        if (!strict && !varNames.isEmpty()) {
+            /* step 6.a (not applicable) */
+            /* steps 6.b-d */
+            checkLexicalRedeclaration(context, varEnv, lexEnv, varNames, mv);
         }
         /* step 7 */
         ArrayDeque<HoistableDeclaration> functionsToInitialize = new ArrayDeque<>();
@@ -321,9 +310,35 @@ final class EvalDeclarationInstantiationGenerator extends DeclarationBindingInst
         mv._return();
     }
 
-    private void getTopLex(Variable<ExecutionContext> context, InstructionVisitor mv) {
-        mv.load(context);
-        mv.invoke(Methods.ExecutionContext_getFunctionVariableEnvironmentRecord);
-        mv.invoke(Methods.FunctionEnvironmentRecord_getTopLex);
+    private void checkLexicalRedeclaration(Variable<ExecutionContext> context,
+            Variable<? extends LexicalEnvironment<? extends EnvironmentRecord>> varEnv,
+            Variable<LexicalEnvironment<DeclarativeEnvironmentRecord>> lexEnv, Set<Name> varNames,
+            InstructionVisitor mv) {
+        Variable<LexicalEnvironment<EnvironmentRecord>> thisLex = mv.newVariable("thisLex",
+                LexicalEnvironment.class).uncheckedCast();
+        Variable<EnvironmentRecord> thisEnvRec = mv.newVariable("thisEnvRec",
+                EnvironmentRecord.class).uncheckedCast();
+
+        Jump loopTest = new Jump(), loop = new Jump();
+        mv.load(lexEnv);
+        mv.store(thisLex);
+        mv.nonDestructiveGoTo(loopTest);
+        {
+            mv.mark(loop);
+            storeEnvironmentRecord(thisEnvRec, thisLex, mv);
+            for (Name name : varNames) {
+                mv.load(context);
+                mv.load(thisEnvRec);
+                mv.aconst(name.getIdentifier());
+                mv.invoke(Methods.ScriptRuntime_canDeclareVarOrThrow);
+            }
+        }
+        mv.mark(loopTest);
+        mv.load(thisLex);
+        mv.invoke(Methods.LexicalEnvironment_getOuter);
+        mv.store(thisLex);
+        mv.load(thisLex);
+        mv.load(varEnv);
+        mv.ifacmpne(loop);
     }
 }

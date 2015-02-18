@@ -28,7 +28,6 @@ public final class FunctionEnvironmentRecord extends DeclarativeEnvironmentRecor
     private final ScriptObject homeObject;
     private Object thisValue;
     private boolean thisInitializationState;
-    private DeclarativeEnvironmentRecord topLex;
 
     public FunctionEnvironmentRecord(ExecutionContext cx, FunctionObject functionObject,
             Constructor newTarget, Object thisValue) {
@@ -83,29 +82,6 @@ public final class FunctionEnvironmentRecord extends DeclarativeEnvironmentRecor
      */
     public boolean isThisInitialized() {
         return thisInitializationState;
-    }
-
-    /**
-     * Returns the {@code topLex} state field.
-     * 
-     * @return the {@code topLex} field
-     */
-    public DeclarativeEnvironmentRecord getTopLex() {
-        // FIXME: spec bug - eval in default parameter initializer (bug 3383)
-        if (topLex == null) {
-            return this;
-        }
-        return topLex;
-    }
-
-    /**
-     * [Called from generated code]
-     * 
-     * @param topLex
-     *            the top lexical environment record
-     */
-    public void setTopLex(DeclarativeEnvironmentRecord topLex) {
-        this.topLex = topLex;
     }
 
     /**

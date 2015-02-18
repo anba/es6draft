@@ -11,6 +11,7 @@ import static com.github.anba.es6draft.runtime.internal.Errors.newRangeError;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.objects.binary.ArrayBufferConstructor.*;
+import static com.github.anba.es6draft.runtime.objects.internal.ListIterator.FromScriptIterator;
 
 import java.util.ArrayList;
 
@@ -23,7 +24,7 @@ import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
-import com.github.anba.es6draft.runtime.internal.ScriptException;
+import com.github.anba.es6draft.runtime.internal.ScriptIterator;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Constructor;
@@ -506,27 +507,20 @@ public final class TypedArrayConstructorPrototype extends BuiltinConstructor imp
         /* step 8 */
         if (usingIterator != null) {
             /* steps 8.a-8.b */
-            ScriptObject iterator = GetIterator(cx, items, usingIterator);
-            /* steps 8.c-8.f */
+            ScriptIterator<?> iterator = FromScriptIterator(cx,
+                    GetIterator(cx, items, usingIterator));
+            /* step 8.c */
             ArrayList<Object> values = new ArrayList<>();
-            try {
-                for (;;) {
-                    ScriptObject next = IteratorStep(cx, iterator);
-                    if (next == null) {
-                        break;
-                    }
-                    Object nextValue = IteratorValue(cx, next);
-                    values.add(nextValue);
-                }
-            } catch (ScriptException e) {
-                IteratorClose(cx, iterator, true);
-                throw e;
+            /* steps 8.d-8.e */
+            while (iterator.hasNext()) {
+                Object nextValue = iterator.next();
+                values.add(nextValue);
             }
-            /* step 8.g */
+            /* step 8.f */
             int len = values.size();
-            /* steps 8.h-8.i */
+            /* steps 8.g-8.h */
             TypedArrayObject targetObj = AllocateTypedArray(cx, constructor, len);
-            /* steps 8.j-8.l */
+            /* steps 8.i-8.k */
             for (int k = 0; k < len; ++k) {
                 long pk = k;
                 Object kValue = values.get(k);
@@ -538,7 +532,7 @@ public final class TypedArrayConstructorPrototype extends BuiltinConstructor imp
                 }
                 Put(cx, targetObj, pk, mappedValue, true);
             }
-            /* step 8.m */
+            /* step 8.l */
             return targetObj;
         }
         /* step 9 (?) */

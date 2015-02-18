@@ -7,9 +7,9 @@
 package com.github.anba.es6draft.runtime.modules;
 
 /**
- * 15.2.1.3 Static Semantics: ExportEntries<br>
- * 15.2.3.4 Static Semantics: ExportEntries<br>
- * 15.2.1.12 Static and Runtime Semantics: Module Records
+ * 15.2.1.7 Static Semantics: ExportEntries<br>
+ * 15.2.3.5 Static Semantics: ExportEntries<br>
+ * 15.2.1.16 Source Text Module Records
  */
 public final class ExportEntry {
     /** [[ModuleRequest]] */
@@ -23,9 +23,6 @@ public final class ExportEntry {
 
     /** [[ExportName]] */
     private final String exportName;
-
-    /** [[ImportModule]] */
-    private ModuleRecord importModule;
 
     private final long sourcePosition;
 
@@ -41,8 +38,8 @@ public final class ExportEntry {
     @Override
     public String toString() {
         return String
-                .format("ExportEntry {moduleRequest=%s, importName=%s, localName=%s, exportName=%s, moduleRequestId=%s}",
-                        moduleRequest, importName, localName, exportName, importModule);
+                .format("ExportEntry {moduleRequest=%s, importName=%s, localName=%s, exportName=%s, moduleRequest=%s}",
+                        moduleRequest, importName, localName, exportName, moduleRequest);
     }
 
     /**
@@ -52,26 +49,6 @@ public final class ExportEntry {
      */
     public String getModuleRequest() {
         return moduleRequest;
-    }
-
-    /**
-     * [[ImportModule]]
-     * 
-     * @return the resolved import module
-     */
-    public ModuleRecord getImportModule() {
-        assert importModule != null;
-        return importModule;
-    }
-
-    /**
-     * [[ImportModule]]
-     * 
-     * @param importModule
-     *            the resolved import module
-     */
-    public void setImportModule(ModuleRecord importModule) {
-        this.importModule = importModule;
     }
 
     public boolean isStarExport() {

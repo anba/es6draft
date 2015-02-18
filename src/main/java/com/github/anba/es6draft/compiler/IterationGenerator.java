@@ -27,11 +27,7 @@ abstract class IterationGenerator<NODE extends Node, VISITOR extends ExpressionV
         // class: AbstractOperations
         static final MethodName AbstractOperations_IteratorClose = MethodName.findStatic(
                 Types.AbstractOperations, "IteratorClose", Type.methodType(Type.VOID_TYPE,
-                        Types.ExecutionContext, Types.ScriptObject, Type.BOOLEAN_TYPE));
-
-        // class: ScriptIterator
-        static final MethodName ScriptIterator_getScriptObject = MethodName.findInterface(
-                Types.ScriptIterator, "getScriptObject", Type.methodType(Types.ScriptObject));
+                        Types.ExecutionContext, Types.ScriptIterator, Type.BOOLEAN_TYPE));
 
         // class: ScriptRuntime
         static final MethodName ScriptRuntime_getStackOverflowError = MethodName.findStatic(
@@ -242,7 +238,6 @@ abstract class IterationGenerator<NODE extends Node, VISITOR extends ExpressionV
             boolean throwCompletion, ExpressionVisitor mv) {
         mv.loadExecutionContext();
         mv.load(iterator);
-        mv.invoke(Methods.ScriptIterator_getScriptObject);
         mv.iconst(throwCompletion);
         mv.lineInfo(node);
         mv.invoke(Methods.AbstractOperations_IteratorClose);

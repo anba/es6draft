@@ -22,6 +22,7 @@ const Object_defineProperty = Object.defineProperty,
 Error.stackTraceLimit = 10;
 
 const getStackTrace = Object.getOwnPropertyDescriptor(Error.prototype, "stackTrace").get;
+var prepareStackTraceLock = false;
 
 delete Error.prototype.stack;
 Object.defineProperty(Error.prototype, "stack", {
@@ -34,8 +35,21 @@ Object.defineProperty(Error.prototype, "stack", {
     if (!stackTrace) {
       return;
     }
-    var out = %CallFunction(Error_prototype_toString, this);
     var len = Math_min(stackTrace.length, Math_floor(limit));
+    var prepare = Error.prepareStackTrace;
+    if (!prepareStackTraceLock && typeof prepare == 'function') {
+      prepareStackTraceLock = true;
+      // Hide additional frames from user.
+      if (len < stackTrace.length) {
+        stackTrace.length = len;
+      }
+      try {
+        return %CallFunction(prepare, Error, this, stackTrace);
+      } finally {
+        prepareStackTraceLock = false;
+      }
+    }
+    var out = %CallFunction(Error_prototype_toString, this);
     for (var i = 0; i < len; ++i) {
       var elem = stackTrace[i];
       out += `\n    at ${elem.methodName} (${elem.fileName}:${elem.lineNumber})`;

@@ -582,7 +582,7 @@ final class StatementGenerator extends
         Jump lblFail = new Jump();
 
         /* steps 1-2 */
-        ValType type = ForInOfExpressionEvaluation(node, iterationKind, lblFail, mv);
+        ValType type = ForInOfHeadEvaluation(node, iterationKind, lblFail, mv);
 
         /* step 3 */
         Completion result = ForInOfBodyEvaluation(node, mv);
@@ -594,7 +594,7 @@ final class StatementGenerator extends
     }
 
     /**
-     * 13.6.4.12 Runtime Semantics: ForIn/OfExpressionEvaluation Abstract Operation
+     * 13.6.4.12 Runtime Semantics: ForIn/OfHeadEvaluation (TDZnames, expr, iterationKind, labelSet)
      * <p>
      * stack: [] {@literal ->} [Iterator]
      * 
@@ -610,7 +610,7 @@ final class StatementGenerator extends
      *            the statement visitor
      * @return the value type of the expression
      */
-    private <FORSTATEMENT extends IterationStatement & ForIterationNode> ValType ForInOfExpressionEvaluation(
+    private <FORSTATEMENT extends IterationStatement & ForIterationNode> ValType ForInOfHeadEvaluation(
             FORSTATEMENT node, IterationKind iterationKind, Jump lblFail, StatementVisitor mv) {
         /* steps 1-2 */
         Node lhs = node.getHead();
@@ -712,7 +712,7 @@ final class StatementGenerator extends
     }
 
     /**
-     * 13.6.4.13 Runtime Semantics: ForIn/OfBodyEvaluation
+     * 13.6.4.13 Runtime Semantics: ForIn/OfBodyEvaluation (lhs, stmt, iterator, lhsKind, labelSet)
      * <p>
      * stack: [Iterator] {@literal ->} []
      * 

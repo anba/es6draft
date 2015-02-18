@@ -99,7 +99,7 @@ public final class NativesV8Test {
     private V8NativeTestGlobalObject global;
 
     @Before
-    public void setUp() throws IOException, URISyntaxException {
+    public void setUp() throws Throwable {
         // Filter disabled tests
         assumeTrue(test.isEnabled());
 

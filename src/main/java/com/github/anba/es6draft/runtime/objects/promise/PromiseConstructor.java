@@ -9,6 +9,7 @@ package com.github.anba.es6draft.runtime.objects.promise;
 import static com.github.anba.es6draft.runtime.AbstractOperations.*;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
+import static com.github.anba.es6draft.runtime.objects.internal.ListIterator.FromScriptIterator;
 import static com.github.anba.es6draft.runtime.objects.promise.PromiseAbstractOperations.CreateResolvingFunctions;
 import static com.github.anba.es6draft.runtime.objects.promise.PromiseAbstractOperations.GetPromiseAllocator;
 import static com.github.anba.es6draft.runtime.objects.promise.PromiseAbstractOperations.IsPromise;
@@ -30,6 +31,7 @@ import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
+import com.github.anba.es6draft.runtime.internal.ScriptIterator;
 import com.github.anba.es6draft.runtime.objects.promise.PromiseAbstractOperations.ResolvingFunctions;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
@@ -172,15 +174,24 @@ public final class PromiseConstructor extends BuiltinConstructor implements Init
             /* steps 6-7 */
             PromiseCapability<?> promiseCapability = NewPromiseCapability(cx, c);
             /* step 8 */
-            ScriptObject iterator;
+            ScriptIterator<?> iterator;
             try {
-                iterator = GetIterator(cx, iterable);
+                iterator = FromScriptIterator(cx, GetIterator(cx, iterable));
             } catch (ScriptException e) {
                 /* step 9 */
                 return IfAbruptRejectPromise(cx, e, promiseCapability);
             }
-            /* steps 10-12 */
-            return PerformPromiseAll(cx, iterator, c, promiseCapability);
+            /* steps 10-13 */
+            try {
+                return PerformPromiseAll(cx, iterator, c, promiseCapability);
+            } catch (ScriptException e) {
+                try {
+                    IteratorClose(cx, iterator, true);
+                } catch (ScriptException inner) {
+                    return IfAbruptRejectPromise(cx, inner, promiseCapability);
+                }
+                return IfAbruptRejectPromise(cx, e, promiseCapability);
+            }
         }
 
         /**
@@ -201,9 +212,9 @@ public final class PromiseConstructor extends BuiltinConstructor implements Init
             /* steps 6-7 */
             PromiseCapability<?> promiseCapability = NewPromiseCapability(cx, c);
             /* step 8 */
-            ScriptObject iterator;
+            ScriptIterator<?> iterator;
             try {
-                iterator = GetIterator(cx, iterable);
+                iterator = FromScriptIterator(cx, GetIterator(cx, iterable));
             } catch (ScriptException e) {
                 /* step 9 */
                 return IfAbruptRejectPromise(cx, e, promiseCapability);
@@ -307,26 +318,36 @@ public final class PromiseConstructor extends BuiltinConstructor implements Init
      * @return the new promise object
      */
     public static <PROMISE extends ScriptObject> PROMISE PerformPromiseAll(ExecutionContext cx,
-            ScriptObject iterator, Constructor constructor,
+            ScriptIterator<?> iterator, Constructor constructor,
             PromiseCapability<PROMISE> resultCapability) {
-        /* steps 1-3 (not applicable) */
-        /* step 4 */
+        /* steps 1-2 (not applicable) */
+        /* step 3 */
         ArrayList<Object> values = new ArrayList<>();
-        /* step 5 */
+        /* step 4 */
         AtomicInteger remainingElementsCount = new AtomicInteger(1);
-        /* steps 6-7 */
-        try {
-            PerformPromiseAllLoop(cx, iterator, constructor, resultCapability, values,
+        /* step 5 */
+        int index = 0;
+        /* step 6 */
+        while (iterator.hasNext()) {
+            /* steps 6.a-c, 6.e-g */
+            Object nextValue = iterator.next();
+            /* step 6.h */
+            // Using 'null' instead of undefined to be able to verify that no values are overwritten
+            values.add(null);
+            /* steps 6.i-j */
+            Object nextPromise = Invoke(cx, constructor, "resolve", nextValue);
+            /* steps 6.k-q */
+            PromiseAllResolveElementFunction resolveElement = new PromiseAllResolveElementFunction(
+                    cx.getRealm(), new AtomicBoolean(false), index, values, resultCapability,
                     remainingElementsCount);
-        } catch (ScriptException e) {
-            try {
-                IteratorClose(cx, iterator, true);
-            } catch (ScriptException inner) {
-                return IfAbruptRejectPromise(cx, inner, resultCapability);
-            }
-            return IfAbruptRejectPromise(cx, e, resultCapability);
+            /* step 6.q */
+            remainingElementsCount.incrementAndGet();
+            /* steps 6.r-s */
+            Invoke(cx, nextPromise, "then", resolveElement, resultCapability.getReject());
+            /* step 6.t */
+            index += 1;
         }
-        /* step 7.c */
+        /* step 6.d */
         if (remainingElementsCount.decrementAndGet() == 0) {
             ArrayObject valuesArray = CreateArrayFromList(cx, values);
             resultCapability.getResolve().call(cx, UNDEFINED, valuesArray);
@@ -357,32 +378,7 @@ public final class PromiseConstructor extends BuiltinConstructor implements Init
             PromiseCapability<PROMISE> resultCapability, ArrayList<Object> values,
             AtomicInteger remainingElementsCount) {
         /* steps 1-5 (not applicable) */
-        /* steps 6-7 */
-        for (int index = 0;;) {
-            /* steps 7.a-7.b */
-            ScriptObject next = IteratorStep(cx, iterator);
-            /* step 7.c */
-            if (next == null) {
-                break;
-            }
-            /* steps 7.d-7.e */
-            Object nextValue = IteratorValue(cx, next);
-            /* step 7.f */
-            // Using 'null' instead of undefined to be able to verify that no values are overwritten
-            values.add(null);
-            /* steps 7.g-7.h */
-            Object nextPromise = Invoke(cx, constructor, "resolve", nextValue);
-            /* steps 7.i-7.n */
-            PromiseAllResolveElementFunction resolveElement = new PromiseAllResolveElementFunction(
-                    cx.getRealm(), new AtomicBoolean(false), index, values, resultCapability,
-                    remainingElementsCount);
-            /* step 7.o */
-            remainingElementsCount.incrementAndGet();
-            /* steps 7.p-7.q */
-            Invoke(cx, nextPromise, "then", resolveElement, resultCapability.getReject());
-            /* step 7.r */
-            index += 1;
-        }
+
     }
 
     /**
@@ -474,23 +470,19 @@ public final class PromiseConstructor extends BuiltinConstructor implements Init
      * @return the new promise object
      */
     public static <PROMISE extends ScriptObject> PROMISE PerformPromiseRaceLoop(
-            ExecutionContext cx, ScriptObject iterator, Constructor constructor,
+            ExecutionContext cx, ScriptIterator<?> iterator, Constructor constructor,
             PromiseCapability<PROMISE> promiseCapability) {
         /* step 1 */
-        for (;;) {
-            /* steps 1.a-1.b */
-            ScriptObject next = IteratorStep(cx, iterator);
-            /* step 1.c */
-            if (next == null) {
-                return promiseCapability.getPromise();
-            }
-            /* steps 1.d-1.e */
-            Object nextValue = IteratorValue(cx, next);
+        while (iterator.hasNext()) {
+            /* steps 1.a-c, 1.e-g */
+            Object nextValue = iterator.next();
             /* steps 1.f-1.g */
             Object nextPromise = Invoke(cx, constructor, "resolve", nextValue);
             /* steps 1.h-1.i */
             Invoke(cx, nextPromise, "then", promiseCapability.getResolve(),
                     promiseCapability.getReject());
         }
+        /* step 1.d */
+        return promiseCapability.getPromise();
     }
 }

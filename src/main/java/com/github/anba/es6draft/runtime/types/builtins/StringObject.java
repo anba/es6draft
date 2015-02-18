@@ -42,9 +42,9 @@ public final class StringObject extends OrdinaryObject {
         super(realm);
         // StringCreate - step 4
         this.stringData = stringData;
-        // StringCreate - step 9
+        // StringCreate - step 10
         setPrototype(prototype);
-        // StringCreate - steps 11-13
+        // StringCreate - steps 12-14
         infallibleDefineOwnProperty("length",
                 new Property(stringData.length(), false, false, false));
     }
@@ -183,7 +183,7 @@ public final class StringObject extends OrdinaryObject {
     public static StringObject StringCreate(ExecutionContext cx, CharSequence stringData,
             ScriptObject prototype) {
         /* steps 1-2 (not applicable) */
-        /* steps 3-14 */
+        /* steps 3-15 */
         return new StringObject(cx.getRealm(), stringData, prototype);
     }
 }

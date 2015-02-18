@@ -180,6 +180,7 @@ function assertSameArray(array1, array2) {
   const obj1 = {}, obj2 = {};
   let array1 = new MyArray(obj1, obj2);
   array1.constructor = array1.constructor.bind(null);
+  Object.defineProperty(array1.constructor, Symbol.species, {value: null});
   let array2 = array1.slice();
 
   // Bound function objects do not have a [[Realm]] internal slot, realm retrieved from bound target
@@ -216,6 +217,7 @@ function assertSameArray(array1, array2) {
   const obj1 = {}, obj2 = {};
   let array1 = new ForeignMyArray(obj1, obj2);
   array1.constructor = array1.constructor.bind(null);
+  Object.defineProperty(array1.constructor, Symbol.species, {value: null});
   let array2 = Array.prototype.slice.call(array1);
 
   // Bound function objects do not have a [[Realm]] internal slot, realm retrieved from bound target
@@ -236,6 +238,7 @@ function assertSameArray(array1, array2) {
   const obj1 = {}, obj2 = {};
   let array1 = new ForeignMyArray(obj1, obj2);
   array1.constructor = Function.prototype.bind.call(array1.constructor, null);
+  Object.defineProperty(array1.constructor, Symbol.species, {value: null});
   let array2 = Array.prototype.slice.call(array1);
 
   // Bound function objects do not have a [[Realm]] internal slot, realm retrieved from bound target
@@ -296,6 +299,7 @@ function assertSameArray(array1, array2) {
   const obj1 = {}, obj2 = {};
   let array1 = new MyArray(obj1, obj2);
   array1.constructor = array1.constructor.bind(null);
+  Object.defineProperty(array1.constructor, Symbol.species, {value: null});
   let array2 = ForeignArray.prototype.slice.call(array1);
 
   // Bound function objects do not have a [[Realm]] internal slot, realm retrieved from bound target
@@ -315,6 +319,7 @@ function assertSameArray(array1, array2) {
   const obj1 = {}, obj2 = {};
   let array1 = new MyArray(obj1, obj2);
   array1.constructor = ForeignFunction.prototype.bind.call(array1.constructor, null);
+  Object.defineProperty(array1.constructor, Symbol.species, {value: null});
   let array2 = ForeignArray.prototype.slice.call(array1);
 
   // Bound function objects do not have a [[Realm]] internal slot, realm retrieved from bound target

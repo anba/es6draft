@@ -64,7 +64,7 @@ const global = this;
   with (object) {
     eval("");
   }
-  assertSame(CreatePrototype() + HasBindingFail("eval") + HasBindingSuccess("eval") + ProtoCheck() + GetBindingValueFail("eval") + GetBindingValueSuccess("eval") + ProtoGet("eval"), record());
+  assertSame(HasBindingFail("eval") + HasBindingSuccess("eval") + ProtoCheck() + GetBindingValueFail("eval") + GetBindingValueSuccess("eval") + ProtoGet("eval"), record());
 }
 
 {
@@ -82,5 +82,5 @@ const global = this;
   with (object) {
     eval("");
   }
-  assertSame(CreatePrototype() + HasBindingFail("eval") + HasBindingSuccess("eval") + ProtoCheck() + GetBindingValueFail("eval") + GetBindingValueSuccess("eval") + ProtoGet("eval"), record());
+  assertSame(HasBindingFail("eval") + HasBindingSuccess("eval") + ProtoCheck() + GetBindingValueFail("eval") + GetBindingValueSuccess("eval") + ProtoGet("eval"), record());
 }

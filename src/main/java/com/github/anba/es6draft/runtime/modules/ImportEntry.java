@@ -7,9 +7,9 @@
 package com.github.anba.es6draft.runtime.modules;
 
 /**
- * 15.2.1.5 Static Semantics: ImportEntries<br>
+ * 15.2.1.8 Static Semantics: ImportEntries<br>
  * 15.2.2.3 Static Semantics: ImportEntries<br>
- * 15.2.1.12 Static and Runtime Semantics: Module Records
+ * 15.2.1.16 Source Text Module Records
  */
 public final class ImportEntry {
     /** [[ModuleRequest]] */
@@ -20,9 +20,6 @@ public final class ImportEntry {
 
     /** [[LocalName]] */
     private final String localName;
-
-    /** [[ImportModule]] */
-    private ModuleRecord importModule;
 
     private final long sourcePosition;
 
@@ -45,27 +42,6 @@ public final class ImportEntry {
      */
     public String getModuleRequest() {
         return moduleRequest;
-    }
-
-    /**
-     * [[ImportModule]]
-     * 
-     * @return the resolved import module
-     */
-    public ModuleRecord getImportModule() {
-        assert importModule != null;
-        return importModule;
-    }
-
-    /**
-     * [[ImportModule]]
-     * 
-     * @param importModule
-     *            the resolved import module
-     */
-    public void setImportModule(ModuleRecord importModule) {
-        assert this.importModule == null && importModule != null;
-        this.importModule = importModule;
     }
 
     /**

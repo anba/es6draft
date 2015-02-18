@@ -216,7 +216,7 @@ public class ProxyObject implements ScriptObject {
         public Realm getRealm(ExecutionContext cx) {
             /* 7.3.21 GetFunctionRealm ( obj ) Abstract Operation */
             if (isRevoked()) {
-                return cx.getRealm();
+                throw newTypeError(cx, Messages.Key.ProxyRevoked);
             }
             return ((Callable) getProxyTarget()).getRealm(cx);
         }
@@ -313,13 +313,21 @@ public class ProxyObject implements ScriptObject {
         if (!Type.isObject(target)) {
             throw newTypeError(cx, Messages.Key.NotObjectType);
         }
+        ScriptObject proxyTarget = Type.objectValue(target);
         /* step 2 */
+        if (proxyTarget instanceof ProxyObject && ((ProxyObject) proxyTarget).isRevoked()) {
+            throw newTypeError(cx, Messages.Key.ProxyRevoked);
+        }
+        /* step 3 */
         if (!Type.isObject(handler)) {
             throw newTypeError(cx, Messages.Key.NotObjectType);
         }
-        ScriptObject proxyTarget = Type.objectValue(target);
         ScriptObject proxyHandler = Type.objectValue(handler);
-        /* steps 3-7 */
+        /* step 4 */
+        if (proxyHandler instanceof ProxyObject && ((ProxyObject) proxyHandler).isRevoked()) {
+            throw newTypeError(cx, Messages.Key.ProxyRevoked);
+        }
+        /* steps 8-9 */
         ProxyObject proxy;
         if (IsCallable(proxyTarget)) {
             if (IsConstructor(proxyTarget)) {
@@ -330,7 +338,7 @@ public class ProxyObject implements ScriptObject {
         } else {
             proxy = new ProxyObject(proxyTarget, proxyHandler);
         }
-        /* step 8 */
+        /* step 10 */
         return proxy;
     }
 

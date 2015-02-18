@@ -30,7 +30,7 @@ for (let ctor of [null, "", 0, false, Symbol.iterator]) {
   assertThrows(TypeError, () => MyArray.of(1, 2, 3).map(x => x));
 }
 
-for (let species of [void 0]) {
+for (let species of [void 0, null]) {
   class MyArray extends Array {
     get ["constructor"]() {
       return {[Symbol.species]: species};
@@ -40,7 +40,7 @@ for (let species of [void 0]) {
   assertSame(Array.prototype, Object.getPrototypeOf(array));
 }
 
-for (let species of [null, "", 0, false, Symbol.iterator, {}, () => {}]) {
+for (let species of ["", 0, false, Symbol.iterator, {}, () => {}]) {
   class MyArray extends Array {
     get ["constructor"]() {
       return {[Symbol.species]: species};

@@ -8,7 +8,7 @@ package com.github.anba.es6draft.runtime.modules;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.internal.Errors;
-import com.github.anba.es6draft.runtime.internal.InternalException;
+import com.github.anba.es6draft.runtime.internal.InternalThrowable;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
 
@@ -16,7 +16,7 @@ import com.github.anba.es6draft.runtime.internal.ScriptException;
  * Exception for malformed module name errors.
  */
 @SuppressWarnings("serial")
-public final class MalformedNameException extends InternalException {
+public final class MalformedNameException extends Exception implements InternalThrowable {
     private final String unnormalizedName;
 
     /**

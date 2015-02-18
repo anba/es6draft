@@ -13,14 +13,19 @@ const {
 
 var ta = new Int8Array(10);
 
-for (let index of [0, 1, 2, 8, 9, Number.MAX_SAFE_INTEGER, Number.MAX_VALUE]) {
+for (let index of [-0, 0, 1, 2, 8, 9]) {
   assertTrue(index in ta);
   assertTrue(("" + index) in ta);
 }
 
-for (let index of [-0, -1, -2, -8, -9, Number.MIN_SAFE_INTEGER, -Number.MAX_VALUE]) {
-  assertTrue(index in ta);
-  assertTrue(("" + index) in ta);
+for (let index of [Number.MAX_SAFE_INTEGER, Number.MAX_VALUE]) {
+  assertFalse(index in ta);
+  assertFalse(("" + index) in ta);
+}
+
+for (let index of [-1, -2, -8, -9, Number.MIN_SAFE_INTEGER, -Number.MAX_VALUE]) {
+  assertFalse(index in ta);
+  assertFalse(("" + index) in ta);
 }
 
 assertFalse("-0" in ta);

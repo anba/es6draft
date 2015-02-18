@@ -22,6 +22,7 @@ import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.IndexedMap;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.PropertyMap;
+import com.github.anba.es6draft.runtime.internal.ScriptException;
 import com.github.anba.es6draft.runtime.internal.ScriptIterator;
 import com.github.anba.es6draft.runtime.internal.SimpleIterator;
 import com.github.anba.es6draft.runtime.types.Callable;
@@ -518,25 +519,15 @@ public class OrdinaryObject implements ScriptObject {
         if (!extensible) {
             return false;
         }
-        /* step 6 */
-        if (prototype != null) {
-            ScriptObject p = prototype;
-            while (p != null) {
-                if (p == this) { // SameValue(p, O)
-                    return false;
-                }
-                p = p.getPrototypeOf(cx);
+        /* steps 6-8 */
+        for (ScriptObject p = prototype; p != null;) {
+            if (p == this) { // SameValue(p, O)
+                return false;
             }
-        }
-        /* step 7 */
-        extensible = this.extensible;
-        /* step 8 */
-        if (!extensible) {
-            ScriptObject current2 = this.prototype;
-            if (prototype == current2) {
-                return true;
+            if (!(p instanceof OrdinaryObject)) {
+                break;
             }
-            return false;
+            p = ((OrdinaryObject) p).prototype;
         }
         /* step 9 */
         this.prototype = prototype;
@@ -1168,19 +1159,19 @@ public class OrdinaryObject implements ScriptObject {
      */
     protected final boolean ordinaryHasProperty(ExecutionContext cx, long propertyKey) {
         /* step 1 (implicit) */
-        /* steps 2-3 */
+        /* step 2 */
         boolean hasOwn = ordinaryHasOwnProperty(propertyKey);
-        /* step 4 */
+        /* step 3 */
         if (hasOwn) {
             return true;
         }
-        /* steps 5-6 */
+        /* steps 4-5 */
         ScriptObject parent = getPrototypeOf(cx);
-        /* step 7 */
+        /* step 6 */
         if (parent != null) {
             return parent.hasProperty(cx, propertyKey);
         }
-        /* step 8 */
+        /* step 7 */
         return false;
     }
 
@@ -1195,19 +1186,19 @@ public class OrdinaryObject implements ScriptObject {
      */
     protected final boolean ordinaryHasProperty(ExecutionContext cx, String propertyKey) {
         /* step 1 (implicit) */
-        /* steps 2-3 */
+        /* step 2 */
         boolean hasOwn = ordinaryHasOwnProperty(propertyKey);
-        /* step 4 */
+        /* step 3 */
         if (hasOwn) {
             return true;
         }
-        /* steps 5-6 */
+        /* steps 4-5 */
         ScriptObject parent = getPrototypeOf(cx);
-        /* step 7 */
+        /* step 6 */
         if (parent != null) {
             return parent.hasProperty(cx, propertyKey);
         }
-        /* step 8 */
+        /* step 7 */
         return false;
     }
 
@@ -1222,19 +1213,19 @@ public class OrdinaryObject implements ScriptObject {
      */
     protected final boolean ordinaryHasProperty(ExecutionContext cx, Symbol propertyKey) {
         /* step 1 (implicit) */
-        /* steps 2-3 */
+        /* step 2 */
         boolean hasOwn = ordinaryHasOwnProperty(propertyKey);
-        /* step 4 */
+        /* step 3 */
         if (hasOwn) {
             return true;
         }
-        /* steps 5-6 */
+        /* steps 4-5 */
         ScriptObject parent = getPrototypeOf(cx);
-        /* step 7 */
+        /* step 6 */
         if (parent != null) {
             return parent.hasProperty(cx, propertyKey);
         }
-        /* step 8 */
+        /* step 7 */
         return false;
     }
 
@@ -1786,7 +1777,7 @@ public class OrdinaryObject implements ScriptObject {
         private OrdinaryObject obj;
         private final HashSet<Object> visitedKeys = new HashSet<>();
         private Iterator<String> keys;
-        private Iterator<?> protoKeys;
+        private ScriptIterator<?> protoKeys;
         private ScriptObject scriptIter;
 
         EnumKeysIterator(ExecutionContext cx, OrdinaryObject obj) {
@@ -1820,46 +1811,58 @@ public class OrdinaryObject implements ScriptObject {
 
         private Object findNextFromProtoKeys() {
             HashSet<Object> visitedKeys = this.visitedKeys;
-            Iterator<?> protoKeys = this.protoKeys;
-            while (protoKeys.hasNext()) {
-                Object key = protoKeys.next();
-                if (visitedKeys.add(key)) {
-                    return key;
+            ScriptIterator<?> protoKeys = this.protoKeys;
+            try {
+                while (protoKeys.hasNext()) {
+                    Object key = protoKeys.next();
+                    if (visitedKeys.add(key)) {
+                        return key;
+                    }
                 }
+                // visited all inherited keys
+                this.protoKeys = null;
+                return null;
+            } catch (ScriptException e) {
+                this.protoKeys = null;
+                throw e;
             }
-            // visited all inherited keys
-            this.protoKeys = null;
-            return null;
         }
 
         private void nextObject() {
             // switch to prototype enumerate
-            ScriptObject proto = obj.getPrototypeOf(cx);
-            if (proto != null) {
-                if (proto instanceof OrdinaryObject) {
-                    this.obj = (OrdinaryObject) proto;
-                    this.keys = ((OrdinaryObject) proto).getEnumerableKeys(cx).iterator();
-                } else if (cx.getRealm().isEnabled(CompatibilityOption.ProxyProtoSkipEnumerate)) {
-                    this.obj = new FakeObject(cx.getRealm(), proto);
-                    this.keys = EnumerableOwnNames(cx, proto).iterator();
-                } else {
-                    ScriptIterator<?> protoKeys = proto.enumerateKeys(cx);
-                    if (protoKeys instanceof EnumKeysIterator) {
-                        EnumKeysIterator keysIterator = (EnumKeysIterator) protoKeys;
-                        assert keysIterator.visitedKeys.isEmpty();
-                        assert keysIterator.keys != null && keysIterator.protoKeys == null;
-                        this.obj = keysIterator.obj;
-                        this.keys = keysIterator.keys;
+            try {
+                ScriptObject proto = obj.getPrototypeOf(cx);
+                if (proto != null) {
+                    if (proto instanceof OrdinaryObject) {
+                        this.obj = (OrdinaryObject) proto;
+                        this.keys = ((OrdinaryObject) proto).getEnumerableKeys(cx).iterator();
+                    } else if (cx.getRealm().isEnabled(CompatibilityOption.ProxyProtoSkipEnumerate)) {
+                        this.obj = new FakeObject(cx.getRealm(), proto);
+                        this.keys = EnumerableOwnNames(cx, proto).iterator();
                     } else {
-                        this.obj = null;
-                        this.keys = null;
-                        this.protoKeys = protoKeys;
+                        ScriptIterator<?> protoKeys = proto.enumerateKeys(cx);
+                        if (protoKeys instanceof EnumKeysIterator) {
+                            EnumKeysIterator keysIterator = (EnumKeysIterator) protoKeys;
+                            assert keysIterator.visitedKeys.isEmpty();
+                            assert keysIterator.keys != null && keysIterator.protoKeys == null;
+                            this.obj = keysIterator.obj;
+                            this.keys = keysIterator.keys;
+                        } else {
+                            this.obj = null;
+                            this.keys = null;
+                            this.protoKeys = protoKeys;
+                        }
                     }
+                } else {
+                    this.obj = null;
+                    this.keys = null;
+                    this.protoKeys = null;
                 }
-            } else {
+            } catch (ScriptException e) {
                 this.obj = null;
                 this.keys = null;
                 this.protoKeys = null;
+                throw e;
             }
         }
 
@@ -1869,6 +1872,11 @@ public class OrdinaryObject implements ScriptObject {
                 scriptIter = CreateListIterator(cx, this);
             }
             return scriptIter;
+        }
+
+        @Override
+        public boolean isDone() {
+            return obj == null && keys == null && protoKeys == null;
         }
     }
 
@@ -2112,9 +2120,9 @@ public class OrdinaryObject implements ScriptObject {
         Object proto = Get(cx, constructor, "prototype");
         /* step 5 */
         if (!Type.isObject(proto)) {
-            /* step 5.a */
+            /* steps 5.a-b */
             Realm realm = GetFunctionRealm(cx, constructor);
-            /* step 5.b */
+            /* step 5.c */
             proto = realm.getIntrinsic(intrinsicDefaultProto);
         }
         /* step 6 */

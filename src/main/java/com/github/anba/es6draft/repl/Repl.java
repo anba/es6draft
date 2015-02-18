@@ -72,8 +72,10 @@ import com.github.anba.es6draft.runtime.Task;
 import com.github.anba.es6draft.runtime.World;
 import com.github.anba.es6draft.runtime.extensions.timer.Timers;
 import com.github.anba.es6draft.runtime.internal.*;
+import com.github.anba.es6draft.runtime.modules.MalformedNameException;
 import com.github.anba.es6draft.runtime.modules.ModuleLoader;
 import com.github.anba.es6draft.runtime.modules.ModuleSource;
+import com.github.anba.es6draft.runtime.modules.ResolutionException;
 import com.github.anba.es6draft.runtime.modules.SourceIdentifier;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
@@ -863,10 +865,12 @@ public final class Repl {
             allocator = SimpleShellGlobalObject.newGlobalObjectAllocator(console, baseDir, script,
                     scriptCache);
         }
-        ModuleLoader moduleLoader = new FileModuleLoader(baseDir);
+        ScriptLoader scriptLoader = new ScriptLoader(compatibilityOptions, parserOptions,
+                compilerOptions);
+        ModuleLoader moduleLoader = new FileModuleLoader(scriptLoader, baseDir);
 
         World<? extends ShellGlobalObject> world = new World<>(allocator, moduleLoader,
-                compatibilityOptions, parserOptions, compilerOptions);
+                scriptLoader);
         final ShellGlobalObject global = world.newGlobal();
         final Realm realm = global.getRealm();
         ScriptObject globalThis = realm.getGlobalThis();
@@ -950,6 +954,8 @@ public final class Repl {
                 } catch (ParserException e) {
                     throw new ParserExceptionWithSource(e, source.toSource(), source.sourceCode());
                 }
+            } catch (MalformedNameException | ResolutionException e) {
+                throw e.toScriptException(realm.defaultContext());
             } catch (IOException e) {
                 throw new UncheckedIOException(e);
             }

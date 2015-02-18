@@ -35,7 +35,7 @@ import com.github.anba.es6draft.compiler.Compiler;
 import com.github.anba.es6draft.interpreter.Interpreter;
 import com.github.anba.es6draft.parser.Parser;
 import com.github.anba.es6draft.parser.ParserException;
-import com.github.anba.es6draft.runtime.modules.ModuleRecord;
+import com.github.anba.es6draft.runtime.modules.SourceTextModuleRecord;
 import com.github.anba.es6draft.runtime.objects.Eval;
 import com.github.anba.es6draft.runtime.objects.FunctionConstructor;
 import com.github.anba.es6draft.runtime.objects.iteration.GeneratorFunctionConstructor;
@@ -384,8 +384,8 @@ public final class ScriptLoader {
      *            the module record
      * @return the module object
      */
-    public Module load(com.github.anba.es6draft.ast.Module parsedModule, ModuleRecord moduleRecord)
-            throws CompilationException {
+    public Module load(com.github.anba.es6draft.ast.Module parsedModule,
+            SourceTextModuleRecord moduleRecord) throws CompilationException {
         return compile(parsedModule, moduleRecord, nextModuleName());
     }
 
@@ -401,8 +401,8 @@ public final class ScriptLoader {
      *            the class name
      * @return the module object
      */
-    public Module load(com.github.anba.es6draft.ast.Module parsedModule, ModuleRecord moduleRecord,
-            String className) throws CompilationException {
+    public Module load(com.github.anba.es6draft.ast.Module parsedModule,
+            SourceTextModuleRecord moduleRecord, String className) throws CompilationException {
         return compile(parsedModule, moduleRecord, className);
     }
 
@@ -434,7 +434,7 @@ public final class ScriptLoader {
      * @return the module object
      */
     public CompiledModule compile(com.github.anba.es6draft.ast.Module parsedModule,
-            ModuleRecord moduleRecord, String className) throws CompilationException {
+            SourceTextModuleRecord moduleRecord, String className) throws CompilationException {
         return tryCompile(parsedModule, moduleRecord, className, executor, compilerOptions);
     }
 
@@ -475,7 +475,7 @@ public final class ScriptLoader {
     }
 
     private static CompiledModule tryCompile(com.github.anba.es6draft.ast.Module parsedModule,
-            ModuleRecord moduleRecord, String className, ExecutorService executor,
+            SourceTextModuleRecord moduleRecord, String className, ExecutorService executor,
             EnumSet<Compiler.Option> options) {
         if (executor.isShutdown()) {
             return compileWithNew(parsedModule, moduleRecord, className, options);
@@ -510,7 +510,7 @@ public final class ScriptLoader {
     }
 
     private static CompiledModule compileWithNew(com.github.anba.es6draft.ast.Module parsedModule,
-            ModuleRecord moduleRecord, String className, EnumSet<Compiler.Option> options)
+            SourceTextModuleRecord moduleRecord, String className, EnumSet<Compiler.Option> options)
             throws CompilationException {
         ExecutorService executor = Executors.newFixedThreadPool(2);
         try {
@@ -547,7 +547,7 @@ public final class ScriptLoader {
     }
 
     private static CompiledModule compileWith(com.github.anba.es6draft.ast.Module parsedModule,
-            ModuleRecord moduleRecord, String className, ExecutorService executor,
+            SourceTextModuleRecord moduleRecord, String className, ExecutorService executor,
             EnumSet<Compiler.Option> options) {
         Compiler compiler = new Compiler(executor, options);
         return compiler.compile(parsedModule, moduleRecord, className);

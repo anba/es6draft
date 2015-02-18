@@ -5,7 +5,7 @@
  * <https://github.com/anba/es6draft>
  */
 const {
-  assertSame
+  assertSame, fail
 } = Assert;
 
 function countIter(iterable) {
@@ -16,7 +16,13 @@ function countIter(iterable) {
   let iter = {
     next() {
       counterNext += 1;
-      return source.next();
+      let result = source.next();
+      if (result.done) {
+        return {done: true, get value() {
+          fail `Called .value on finished iterator`;
+        }};
+      }
+      return result;
     },
     [Symbol.iterator]() {
       counterIterator += 1;
@@ -68,7 +74,7 @@ function countIter(iterable) {
 {
   let {iter, count, countIterator} = countIter([]);
   let [a, b] = iter;
-  assertSame(2, count());
+  assertSame(1, count());
   assertSame(1, countIterator());
   assertSame(void 0, a);
   assertSame(void 0, b);
@@ -106,7 +112,7 @@ function countIter(iterable) {
 {
   let {iter, count, countIterator} = countIter(function*(){ return 0; }());
   let [a, b] = iter;
-  assertSame(2, count());
+  assertSame(1, count());
   assertSame(1, countIterator());
   assertSame(void 0, a);
   assertSame(void 0, b);

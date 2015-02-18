@@ -32,9 +32,11 @@ js/script-tests/typedarray-set-overlapping-elements-of-same-size.js
 # invalid test, `(new Array(1)).findIndex(function(){return true})` is -1
 js/script-tests/array-findIndex.js
 
-# Rename String.prototype.contains -> String.prototype.includes (rev 29?)
 # invalid test, ToString(searchString) appears before ToInteger(position)
 js/script-tests/string-includes.js
+
+# ES6: lexical redeclaration checks in eval
+js/script-tests/eval-and-with.js
 
 
 ###################
@@ -191,6 +193,7 @@ js/script-tests/function-dot-arguments.js
 
 # Too many local variables
 js/script-tests/excessive-comma-usage.js
+js/script-tests/regress-141098.js
 
 # Different maximal stack depth
 js/script-tests/stack-overflow-catch.js

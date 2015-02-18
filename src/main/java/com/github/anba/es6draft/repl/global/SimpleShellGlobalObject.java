@@ -33,8 +33,8 @@ import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
 import com.github.anba.es6draft.runtime.internal.Source;
 import com.github.anba.es6draft.runtime.modules.MalformedNameException;
+import com.github.anba.es6draft.runtime.modules.ModuleRecord;
 import com.github.anba.es6draft.runtime.modules.ResolutionException;
-import com.github.anba.es6draft.runtime.modules.SourceIdentifier;
 import com.github.anba.es6draft.runtime.objects.ErrorObject;
 import com.github.anba.es6draft.runtime.objects.binary.ArrayBufferObject;
 import com.github.anba.es6draft.runtime.objects.collection.WeakMapObject;
@@ -200,16 +200,16 @@ public class SimpleShellGlobalObject extends ShellGlobalObject {
         } else {
             realm = cx.getRealm();
         }
-        SourceIdentifier normalizedModuleName;
         try {
-            normalizedModuleName = eval(realm, moduleName, null);
-        } catch (MalformedNameException | ParserException | CompilationException
-                | ResolutionException e) {
+            ModuleRecord module = eval(realm, moduleName);
+            return GetModuleNamespace(cx, module);
+        } catch (MalformedNameException | ResolutionException e) {
+            throw e.toScriptException(cx);
+        } catch (ParserException | CompilationException e) {
             throw e.toScriptException(cx);
         } catch (IOException e) {
-            throw newError(cx, e.getMessage());
+            throw Errors.newInternalError(cx, Messages.Key.ModulesIOException, e.getMessage());
         }
-        return GetModuleNamespace(cx, realm, normalizedModuleName);
     }
 
     /**

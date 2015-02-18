@@ -55,7 +55,7 @@ import com.github.anba.es6draft.runtime.types.ScriptObject;
 final class ScriptEngineImpl extends AbstractScriptEngine implements ScriptEngine, Compilable,
         Invocable {
     private final ScriptEngineFactoryImpl factory;
-    private final ScriptLoader scriptLoader;
+    private final ScriptLoader evalScriptLoader;
     private final World<ScriptingGlobalObject> world;
 
     ScriptEngineImpl(ScriptEngineFactoryImpl factory) {
@@ -69,16 +69,18 @@ final class ScriptEngineImpl extends AbstractScriptEngine implements ScriptEngin
         EnumSet<Parser.Option> parserOptions = EnumSet.of(Parser.Option.EvalScript,
                 Parser.Option.Scripting);
         EnumSet<Compiler.Option> compilerOptions = EnumSet.noneOf(Compiler.Option.class);
-        ScriptLoader scriptLoader = new ScriptLoader(compatibilityOptions, parserOptions,
+        ScriptLoader evalScriptLoader = new ScriptLoader(compatibilityOptions, parserOptions,
                 compilerOptions);
 
-        this.scriptLoader = scriptLoader;
+        this.evalScriptLoader = evalScriptLoader;
 
         ObjectAllocator<ScriptingGlobalObject> allocator = ScriptingGlobalObject
                 .newGlobalObjectAllocator();
-        ModuleLoader moduleLoader = new FileModuleLoader(Paths.get("").toAbsolutePath());
-        this.world = new World<>(allocator, moduleLoader, compatibilityOptions,
+        ScriptLoader scriptLoader = new ScriptLoader(compatibilityOptions,
                 EnumSet.noneOf(Parser.Option.class), compilerOptions);
+        ModuleLoader moduleLoader = new FileModuleLoader(scriptLoader, Paths.get("")
+                .toAbsolutePath());
+        this.world = new World<>(allocator, moduleLoader, scriptLoader);
         context.setBindings(createBindings(), ScriptContext.ENGINE_SCOPE);
     }
 
@@ -155,7 +157,7 @@ final class ScriptEngineImpl extends AbstractScriptEngine implements ScriptEngin
             throws javax.script.ScriptException {
         Source source = createSource(context);
         try {
-            return scriptLoader.script(source, sourceCode);
+            return evalScriptLoader.script(source, sourceCode);
         } catch (ParserException e) {
             throw new javax.script.ScriptException(e.getMessage(), e.getFile(), e.getLine(),
                     e.getColumn());
@@ -167,7 +169,7 @@ final class ScriptEngineImpl extends AbstractScriptEngine implements ScriptEngin
     private Script script(Reader reader, ScriptContext context) throws javax.script.ScriptException {
         Source source = createSource(context);
         try {
-            return scriptLoader.script(source, reader);
+            return evalScriptLoader.script(source, reader);
         } catch (ParserException e) {
             throw new javax.script.ScriptException(e.getMessage(), e.getFile(), e.getLine(),
                     e.getColumn());

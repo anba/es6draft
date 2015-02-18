@@ -56,6 +56,9 @@ tests/basic/destructuring-default.js
 # SM: toStringTag not implemented
 tests/proxy/operations-on-revoked.js
 
+# ES6: array destructuring tracks completed iterators
+tests/basic/destructuring-iterator.js
+
 
 ###################
 # Misc issues     #

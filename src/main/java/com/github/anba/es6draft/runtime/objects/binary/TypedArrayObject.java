@@ -13,7 +13,6 @@ import static com.github.anba.es6draft.runtime.objects.binary.ArrayBufferConstru
 import static com.github.anba.es6draft.runtime.objects.binary.ArrayBufferConstructor.SetValueInBuffer;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
-import com.github.anba.es6draft.runtime.AbstractOperations.CanonicalNumericString;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Messages;
@@ -58,21 +57,6 @@ public final class TypedArrayObject extends IntegerIndexedObject implements Arra
     }
 
     @Override
-    protected boolean elementHasOwn(ExecutionContext cx, long index) {
-        assert index >= 0;
-        // Steps 1-8 of elementGet to support hasOwnProperty
-        /* steps 1-2 (not applicable) */
-        /* step 3 */
-        ArrayBufferObject buffer = getBuffer();
-        /* step 4 */
-        if (IsDetachedBuffer(buffer)) {
-            throw newTypeError(cx, Messages.Key.BufferDetached);
-        }
-        /* steps 5-8 */
-        return index < getArrayLength();
-    }
-
-    @Override
     protected boolean elementHas(ExecutionContext cx, long index) {
         assert index >= 0;
         // 9.4.5.2 [[HasProperty]](P)
@@ -82,32 +66,8 @@ public final class TypedArrayObject extends IntegerIndexedObject implements Arra
         if (IsDetachedBuffer(buffer)) {
             throw newTypeError(cx, Messages.Key.BufferDetached);
         }
-        /* steps 3.c.iii-v */
-        // FIXME: spec bug - or: index < [[ArrayLength]] ? (bug 3619)
-        return true;
-    }
-
-    @Override
-    protected boolean elementHas(ExecutionContext cx, CanonicalNumericString numericString) {
-        // 9.4.5.2 [[HasProperty]](P)
-        /* step 3.c.i */
-        ArrayBufferObject buffer = getBuffer();
-        /* step 3.c.ii */
-        if (IsDetachedBuffer(buffer)) {
-            throw newTypeError(cx, Messages.Key.BufferDetached);
-        }
-        /* steps 3.c.iii-v */
-        switch (numericString) {
-        case NegativeZero:
-        case NonInteger:
-            return false;
-        case NegativeInteger:
-        case PositiveInteger:
-            return true;
-        case None:
-        default:
-            throw new AssertionError();
-        }
+        /* steps 3.c.iii-vii */
+        return index < getArrayLength();
     }
 
     @Override

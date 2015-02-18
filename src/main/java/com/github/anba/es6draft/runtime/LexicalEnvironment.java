@@ -167,7 +167,7 @@ public final class LexicalEnvironment<RECORD extends EnvironmentRecord> {
     }
 
     /**
-     * 8.1.2.4 NewFunctionEnvironment (F) Abstract Operation
+     * 8.1.2.4 NewFunctionEnvironment ( F, newTarget ) Abstract Operation
      * 
      * @param callerContext
      *            the caller execution context
@@ -182,22 +182,24 @@ public final class LexicalEnvironment<RECORD extends EnvironmentRecord> {
     public static LexicalEnvironment<FunctionEnvironmentRecord> newFunctionEnvironment(
             ExecutionContext callerContext, FunctionObject f, Constructor newTarget,
             Object thisValue) {
-        /* step 6 */
+        /* steps 1-2 (not applicable) */
+        /* step 8 */
         if (f.isNeedsSuper() && f.getHomeObject() == null) {
+            // FIXME: spec bug - unreachable (bug 3963)
             throw newReferenceError(callerContext, Messages.Key.MissingSuperBinding);
         }
         LexicalEnvironment<?> e = f.getEnvironment();
-        /* steps 2-8 */
+        /* steps 4-10 */
         FunctionEnvironmentRecord envRec = new FunctionEnvironmentRecord(e.cx, f, newTarget,
                 thisValue);
-        /* steps 1, 9-10 */
+        /* steps 3, 11-12 */
         LexicalEnvironment<FunctionEnvironmentRecord> env = new LexicalEnvironment<>(e, envRec);
-        /* step 11 */
+        /* step 13 */
         return env;
     }
 
     /**
-     * 8.1.2.4 NewFunctionEnvironment (F) Abstract Operation
+     * 8.1.2.4 NewFunctionEnvironment ( F, newTarget ) Abstract Operation
      * 
      * @param callerContext
      *            the caller execution context
@@ -209,16 +211,18 @@ public final class LexicalEnvironment<RECORD extends EnvironmentRecord> {
      */
     public static LexicalEnvironment<FunctionEnvironmentRecord> newFunctionEnvironment(
             ExecutionContext callerContext, FunctionObject f, Constructor newTarget) {
-        /* step 6 */
+        /* steps 1-2 (not applicable) */
+        /* step 8 */
         if (f.isNeedsSuper() && f.getHomeObject() == null) {
+            // FIXME: spec bug - unreachable (bug 3963)
             throw newReferenceError(callerContext, Messages.Key.MissingSuperBinding);
         }
         LexicalEnvironment<?> e = f.getEnvironment();
-        /* steps 2-8 */
+        /* steps 4-10 */
         FunctionEnvironmentRecord envRec = new FunctionEnvironmentRecord(e.cx, f, newTarget);
-        /* steps 1, 9-10 */
+        /* steps 3, 11-12 */
         LexicalEnvironment<FunctionEnvironmentRecord> env = new LexicalEnvironment<>(e, envRec);
-        /* step 11 */
+        /* step 13 */
         return env;
     }
 
@@ -233,11 +237,11 @@ public final class LexicalEnvironment<RECORD extends EnvironmentRecord> {
      */
     public static LexicalEnvironment<GlobalEnvironmentRecord> newGlobalEnvironment(
             ExecutionContext cx, ScriptObject g) {
-        /* steps 2-8 */
+        /* steps 2-7 */
         GlobalEnvironmentRecord globalRec = new GlobalEnvironmentRecord(cx, g);
-        /* steps 1, 9-10 */
+        /* steps 1, 8-9 */
         LexicalEnvironment<GlobalEnvironmentRecord> env = new LexicalEnvironment<>(cx, globalRec);
-        /* step 11 */
+        /* step 10 */
         return env;
     }
 

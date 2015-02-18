@@ -5,7 +5,7 @@
  * <https://github.com/anba/es6draft>
  */
 const {
-  assertSame, assertNotNull, assertFalse
+  assertSame, assertNotSame, assertNotNull, assertFalse, fail
 } = Assert;
 
 // 6.1.7.3 Invariants of the Essential Internal Methods: Prototype chain may have infinite length
@@ -57,6 +57,7 @@ const {
   let count = 0;
   let p3 = new Proxy(obj3, {
     getPrototypeOf(t) {
+      fail `unreachable`;
       if (count++ === 1) {
         Object.setPrototypeOf(obj2, obj1);
       }
@@ -67,5 +68,6 @@ const {
   Object.setPrototypeOf(obj1, obj2);
 
   assertSame(obj2, Object.getPrototypeOf(obj1));
-  assertSame(obj1, Object.getPrototypeOf(obj2));
+  assertNotSame(obj1, Object.getPrototypeOf(obj2));
+  assertSame(p3, Object.getPrototypeOf(obj2));
 }

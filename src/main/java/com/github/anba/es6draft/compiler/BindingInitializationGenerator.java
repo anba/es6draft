@@ -24,7 +24,10 @@ import com.github.anba.es6draft.compiler.assembler.Jump;
 import com.github.anba.es6draft.compiler.assembler.MethodName;
 import com.github.anba.es6draft.compiler.assembler.Type;
 import com.github.anba.es6draft.compiler.assembler.Variable;
+import com.github.anba.es6draft.runtime.DeclarativeEnvironmentRecord;
 import com.github.anba.es6draft.runtime.EnvironmentRecord;
+import com.github.anba.es6draft.runtime.FunctionEnvironmentRecord;
+import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.internal.ScriptIterator;
 
 /**
@@ -69,6 +72,16 @@ final class BindingInitializationGenerator {
         static final MethodName EnvironmentRecord_initializeBinding = MethodName.findInterface(
                 Types.EnvironmentRecord, "initializeBinding",
                 Type.methodType(Type.VOID_TYPE, Types.String, Types.Object));
+
+        // class: ExecutionContext
+        static final MethodName ExecutionContext_setVariableAndLexicalEnvironment = MethodName
+                .findVirtual(Types.ExecutionContext, "setVariableAndLexicalEnvironment",
+                        Type.methodType(Type.VOID_TYPE, Types.LexicalEnvironment));
+
+        // class: LexicalEnvironment
+        static final MethodName LexicalEnvironment_newDeclarativeEnvironment = MethodName
+                .findStatic(Types.LexicalEnvironment, "newDeclarativeEnvironment",
+                        Type.methodType(Types.LexicalEnvironment, Types.LexicalEnvironment));
 
         // class: Reference
         static final MethodName Reference_putValue = MethodName.findVirtual(Types.Reference,
@@ -169,15 +182,18 @@ final class BindingInitializationGenerator {
      *            the code generator
      * @param node
      *            the function node
+     * @param env
+     *            the current lexical and variable environment
      * @param iterator
      *            the arguments iterator
      * @param mv
      *            the expression visitor
      */
     static void BindingInitialization(CodeGenerator codegen, FunctionNode node,
+            Variable<LexicalEnvironment<FunctionEnvironmentRecord>> env,
             Variable<Iterator<?>> iterator, ExpressionVisitor mv) {
-        IteratorBindingInitialization init = new IteratorBindingInitialization(codegen, mv,
-                EnvironmentType.NoEnvironment, null);
+        FormalsIteratorBindingInitialization init = new FormalsIteratorBindingInitialization(
+                codegen, node, mv, EnvironmentType.NoEnvironment, env, null);
         node.getParameters().accept(init, iterator);
     }
 
@@ -188,16 +204,21 @@ final class BindingInitializationGenerator {
      *            the code generator
      * @param node
      *            the function node
+     * @param env
+     *            the current lexical and variable environment
+     * @param envRec
+     *            the current environment record
      * @param iterator
      *            the arguments iterator
      * @param mv
      *            the expression visitor
      */
-    static void BindingInitializationWithEnvironment(CodeGenerator codegen,
-            Variable<? extends EnvironmentRecord> envRec, FunctionNode node,
-            Variable<Iterator<?>> iterator, ExpressionVisitor mv) {
-        IteratorBindingInitialization init = new IteratorBindingInitialization(codegen, mv,
-                EnvironmentType.EnvironmentFromLocal, envRec);
+    static void BindingInitializationWithEnvironment(CodeGenerator codegen, FunctionNode node,
+            Variable<LexicalEnvironment<FunctionEnvironmentRecord>> env,
+            Variable<? extends EnvironmentRecord> envRec, Variable<Iterator<?>> iterator,
+            ExpressionVisitor mv) {
+        FormalsIteratorBindingInitialization init = new FormalsIteratorBindingInitialization(
+                codegen, node, mv, EnvironmentType.EnvironmentFromLocal, env, envRec);
         node.getParameters().accept(init, iterator);
     }
 
@@ -386,7 +407,7 @@ final class BindingInitializationGenerator {
 
         @Override
         public void visit(ArrayBindingPattern node, Void value) {
-            // step 1-2:
+            // step 1-3:
             // stack: [(env), value] -> [(env)]
             mv.enterVariableScope();
             Variable<ScriptIterator<?>> iterator = mv.newVariable("iterator", ScriptIterator.class)
@@ -400,7 +421,7 @@ final class BindingInitializationGenerator {
                 @Override
                 protected Completion iterationBody(ArrayBindingPattern node,
                         Variable<ScriptIterator<?>> iterator, ExpressionVisitor mv) {
-                    // step 3
+                    // step 4
                     IteratorBindingInitialization(node, iterator);
                     return Completion.Normal;
                 }
@@ -408,7 +429,7 @@ final class BindingInitializationGenerator {
                 @Override
                 protected void epilogue(ArrayBindingPattern node,
                         Variable<ScriptIterator<?>> iterator, ExpressionVisitor mv) {
-                    // step 4
+                    // step 5
                     IteratorClose(node, iterator, false, mv);
                 }
 
@@ -485,14 +506,23 @@ final class BindingInitializationGenerator {
      * <li>13.2.3.6 Runtime Semantics: IteratorBindingInitialization
      * <li>14.1.21 Runtime Semantics: IteratorBindingInitialization
      * <li>14.2.15 Runtime Semantics: IteratorBindingInitialization
-     * <li>
      * </ul>
      */
-    private static final class IteratorBindingInitialization extends
+    private static final class FormalsIteratorBindingInitialization extends
             RuntimeSemantics<Variable<? extends Iterator<?>>> {
-        IteratorBindingInitialization(CodeGenerator codegen, ExpressionVisitor mv,
-                EnvironmentType environment, Variable<? extends EnvironmentRecord> envRec) {
+        private final FunctionNode function;
+        private final Variable<LexicalEnvironment<FunctionEnvironmentRecord>> env;
+        private final IteratorBindingInitialization iteratorBindingInit;
+
+        FormalsIteratorBindingInitialization(CodeGenerator codegen, FunctionNode function,
+                ExpressionVisitor mv, EnvironmentType environment,
+                Variable<LexicalEnvironment<FunctionEnvironmentRecord>> env,
+                Variable<? extends EnvironmentRecord> envRec) {
             super(codegen, mv, environment, envRec);
+            this.function = function;
+            this.env = env;
+            this.iteratorBindingInit = new IteratorBindingInitialization(codegen, mv, environment,
+                    envRec);
         }
 
         @Override
@@ -501,6 +531,63 @@ final class BindingInitializationGenerator {
             for (FormalParameter formal : node) {
                 formal.accept(this, iterator);
             }
+        }
+
+        @Override
+        public void visit(BindingElement node, Variable<? extends Iterator<?>> iterator) {
+            if (node.getInitializer() == null || !function.getScope().hasFormalInitializerEval()) {
+                /* step 1 (+ optimization if no direct eval present in formals) */
+                iteratorBindingInit.visit(node, iterator);
+            } else {
+                mv.enterVariableScope();
+                Variable<LexicalEnvironment<DeclarativeEnvironmentRecord>> paramVarEnv = mv
+                        .newVariable("paramVarEnv", LexicalEnvironment.class).uncheckedCast();
+
+                /* steps 2-4 (not applicable) */
+                /* step 5 */
+                newDeclarativeEnvironment(env);
+                mv.store(paramVarEnv);
+                /* steps 6-7 */
+                setVariableAndLexicalEnvironment(paramVarEnv);
+                /* step 8 */
+                iteratorBindingInit.visit(node, iterator);
+                /* steps 9-10 */
+                setVariableAndLexicalEnvironment(env);
+
+                mv.exitVariableScope();
+            }
+        }
+
+        @Override
+        public void visit(BindingRestElement node, Variable<? extends Iterator<?>> iterator) {
+            iteratorBindingInit.visit(node, iterator);
+        }
+
+        private void newDeclarativeEnvironment(Variable<? extends LexicalEnvironment<?>> env) {
+            // stack: [] -> [env]
+            mv.load(env);
+            mv.invoke(Methods.LexicalEnvironment_newDeclarativeEnvironment);
+        }
+
+        private void setVariableAndLexicalEnvironment(Variable<? extends LexicalEnvironment<?>> env) {
+            // stack: [] -> []
+            mv.loadExecutionContext();
+            mv.load(env);
+            mv.invoke(Methods.ExecutionContext_setVariableAndLexicalEnvironment);
+        }
+    }
+
+    /**
+     * <h2>Runtime Semantics: IteratorBindingInitialization</h2>
+     * <ul>
+     * <li>13.2.3.6 Runtime Semantics: IteratorBindingInitialization
+     * </ul>
+     */
+    private static final class IteratorBindingInitialization extends
+            RuntimeSemantics<Variable<? extends Iterator<?>>> {
+        IteratorBindingInitialization(CodeGenerator codegen, ExpressionVisitor mv,
+                EnvironmentType environment, Variable<? extends EnvironmentRecord> envRec) {
+            super(codegen, mv, environment, envRec);
         }
 
         @Override
@@ -529,16 +616,16 @@ final class BindingInitializationGenerator {
                 /* step 1 */
                 BindingIdentifier bindingIdentifier = (BindingIdentifier) binding;
 
-                /* step 2 */
+                /* steps 2-3 */
                 // stack: [(env)] -> [(env), <env, id>|ref]
                 dupEnvIfPresent();
                 prepareInitializeReferencedBindingOrPut(bindingIdentifier);
 
-                /* steps 3-6 */
+                /* steps 4-5 */
                 mv.load(iterator);
                 mv.invoke(Methods.ScriptRuntime_iteratorNextOrUndefined);
 
-                /* step 7 */
+                /* step 6 */
                 // stack: [(env), <env, id>|ref, v] -> [(env), <env, id>|ref, v']
                 if (initializer != null) {
                     Jump undef = new Jump();
@@ -555,7 +642,7 @@ final class BindingInitializationGenerator {
                     mv.mark(undef);
                 }
 
-                /* steps 8-9 */
+                /* steps 7-8 */
                 // stack: [(env), <env, id>|ref, v'] -> [(env)]
                 initializeReferencedBindingOrPut(bindingIdentifier);
             } else {
@@ -565,11 +652,11 @@ final class BindingInitializationGenerator {
                 // stack: [(env)] -> [(env), (env)]
                 dupEnvIfPresent();
 
-                /* steps 1-4 */
+                /* steps 1-2 */
                 mv.load(iterator);
                 mv.invoke(Methods.ScriptRuntime_iteratorNextOrUndefined);
 
-                /* step 5 */
+                /* step 3 */
                 // stack: [(env), (env), v] -> [(env), (env), v']
                 if (initializer != null) {
                     Jump undef = new Jump();
@@ -583,7 +670,7 @@ final class BindingInitializationGenerator {
                     mv.mark(undef);
                 }
 
-                /* step 6 */
+                /* step 4 */
                 // stack: [(env), (env), v'] -> [(env)]
                 BindingInitialization((BindingPattern) binding);
             }
@@ -591,18 +678,18 @@ final class BindingInitializationGenerator {
 
         @Override
         public void visit(BindingRestElement node, Variable<? extends Iterator<?>> iterator) {
-            /* step 1 */
+            /* steps 1-2 */
             // stack: [(env)] -> [(env), <env, id>|ref]
             dupEnvIfPresent();
             prepareInitializeReferencedBindingOrPut(node.getBindingIdentifier());
 
-            /* steps 2-4 */
+            /* steps 3-5 */
             mv.load(iterator);
             mv.loadExecutionContext();
             // stack: [(env), <env, id>|ref, iterator, cx] -> [(env), <env, id>|ref, array]
             mv.invoke(Methods.ScriptRuntime_createRestArray);
 
-            /* step 4.c */
+            /* step 5.b */
             // stack: [(env), <env, id>|ref, array] -> [(env)]
             initializeReferencedBindingOrPut(node.getBindingIdentifier());
         }

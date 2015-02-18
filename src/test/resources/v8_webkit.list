@@ -18,6 +18,9 @@ fast/js/toString-overrides.js
 # invalid test, `JSON.stringify(Object.assign(new Boolean(true), {valueOf(){ return 2 }}))` is "true"
 run-json-stringify.js
 
+# ES6: lexical redeclaration checks in eval
+eval-and-with.js
+
 
 ###################
 # Misc issues     #

@@ -19,7 +19,7 @@ public interface ModuleSource {
      * 
      * @return the module source code
      * @throws IOException
-     *             if there was any I/O error
+     *             if there was any I/O exception
      */
     String sourceCode() throws IOException;
 

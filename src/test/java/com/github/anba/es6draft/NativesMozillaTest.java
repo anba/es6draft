@@ -99,7 +99,7 @@ public final class NativesMozillaTest {
     private MozNativeTestGlobalObject global;
 
     @Before
-    public void setUp() throws IOException, URISyntaxException {
+    public void setUp() throws Throwable {
         // Filter disabled tests
         assumeTrue(test.isEnabled());
 

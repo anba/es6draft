@@ -27,6 +27,7 @@ import com.github.anba.es6draft.runtime.internal.*;
 import com.github.anba.es6draft.runtime.modules.ModuleExport;
 import com.github.anba.es6draft.runtime.modules.ModuleRecord;
 import com.github.anba.es6draft.runtime.modules.ModuleSemantics;
+import com.github.anba.es6draft.runtime.modules.SourceTextModuleRecord;
 import com.github.anba.es6draft.runtime.objects.Eval;
 import com.github.anba.es6draft.runtime.objects.iteration.GeneratorObject;
 import com.github.anba.es6draft.runtime.objects.promise.PromiseObject;
@@ -106,6 +107,7 @@ final class Types {
     static final Type ModuleExport = Type.of(ModuleExport.class);
     static final Type ModuleRecord = Type.of(ModuleRecord.class);
     static final Type ModuleSemantics = Type.of(ModuleSemantics.class);
+    static final Type SourceTextModuleRecord = Type.of(SourceTextModuleRecord.class);
 
     // runtime.objects
     static final Type Eval = Type.of(Eval.class);

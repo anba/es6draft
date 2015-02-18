@@ -393,6 +393,7 @@ regress/regress-353551.js
 # StackOverflowError during invokedynamic linking (intermittent)
 regress/regress-1132.js
 regress/regress-148378.js
+regress/regress-458987.js
 
 # StackOverflowError in Joni (intermittent)
 regress/regress-crbug-178790.js

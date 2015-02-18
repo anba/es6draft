@@ -6,17 +6,20 @@
  */
 package com.github.anba.es6draft.util;
 
-import static com.github.anba.es6draft.runtime.modules.ModuleSemantics.LinkModules;
-import static com.github.anba.es6draft.runtime.modules.ModuleSemantics.ModuleEvaluation;
-import static com.github.anba.es6draft.runtime.modules.ModuleSemantics.NormalizeModuleName;
-import static com.github.anba.es6draft.runtime.modules.ModuleSemantics.ParseModuleAndImports;
 import static com.github.anba.es6draft.util.Functional.toStrings;
 import static java.util.Collections.emptyList;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Set;
+import java.util.TimeZone;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -30,8 +33,6 @@ import com.github.anba.es6draft.compiler.Compiler;
 import com.github.anba.es6draft.parser.Parser;
 import com.github.anba.es6draft.repl.console.ShellConsole;
 import com.github.anba.es6draft.repl.global.ShellGlobalObject;
-import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.ShadowRealm;
 import com.github.anba.es6draft.runtime.World;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.FileModuleLoader;
@@ -39,9 +40,10 @@ import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
 import com.github.anba.es6draft.runtime.internal.ScriptLoader;
 import com.github.anba.es6draft.runtime.internal.Source;
-import com.github.anba.es6draft.runtime.modules.ModuleLoader;
-import com.github.anba.es6draft.runtime.modules.ModuleRecord;
+import com.github.anba.es6draft.runtime.modules.MalformedNameException;
+import com.github.anba.es6draft.runtime.modules.ResolutionException;
 import com.github.anba.es6draft.runtime.modules.SourceIdentifier;
+import com.github.anba.es6draft.runtime.modules.SourceTextModuleRecord;
 import com.github.anba.es6draft.runtime.objects.GlobalObject;
 
 /**
@@ -53,7 +55,7 @@ public abstract class TestGlobals<GLOBAL extends ShellGlobalObject, TEST extends
     private Set<CompatibilityOption> options;
     private ScriptCache scriptCache;
     private List<Script> scripts;
-    private List<PreloadedModule> modules;
+    private PreloadModules modules;
 
     protected TestGlobals(Configuration configuration) {
         this.configuration = configuration;
@@ -84,8 +86,8 @@ public abstract class TestGlobals<GLOBAL extends ShellGlobalObject, TEST extends
                 getCompilerOptions());
     }
 
-    protected ModuleLoader createModuleLoader() {
-        return new FileModuleLoader(getBaseDirectory());
+    protected FileModuleLoader createModuleLoader(ScriptLoader scriptLoader) {
+        return new FileModuleLoader(scriptLoader, getBaseDirectory());
     }
 
     protected Locale getLocale(TEST test) {
@@ -122,25 +124,25 @@ public abstract class TestGlobals<GLOBAL extends ShellGlobalObject, TEST extends
         modules = compileModules();
     }
 
-    public final GLOBAL newGlobal(ShellConsole console, TEST test) throws IOException,
-            URISyntaxException {
+    public final GLOBAL newGlobal(ShellConsole console, TEST test) throws MalformedNameException,
+            ResolutionException, IOException, URISyntaxException {
         ObjectAllocator<GLOBAL> allocator = newAllocator(console, test, scriptCache);
-        ModuleLoader moduleLoader = createModuleLoader();
         ScriptLoader scriptLoader = createScriptLoader();
+        FileModuleLoader moduleLoader = createModuleLoader(scriptLoader);
         Locale locale = getLocale(test);
         TimeZone timeZone = getTimeZone(test);
         World<GLOBAL> world = new World<>(allocator, moduleLoader, scriptLoader, locale, timeZone);
         GLOBAL global = world.newInitializedGlobal();
         // Evaluate additional initialization scripts and modules
-        for (PreloadedModule preloadModule : modules) {
-            Realm realm = global.getRealm();
-            SourceIdentifier moduleName = preloadModule.getModuleName();
-            LinkedHashMap<SourceIdentifier, ModuleRecord> newModuleSet = preloadModule
-                    .getRequires();
-            assert newModuleSet.containsKey(moduleName);
-            ModuleRecord module = newModuleSet.get(moduleName);
-            LinkModules(realm, newModuleSet);
-            ModuleEvaluation(module, realm);
+        for (SourceTextModuleRecord module : modules.allModules) {
+            moduleLoader.define(module.getSourceCodeId(), module.clone());
+        }
+        for (SourceTextModuleRecord module : modules.mainModules) {
+            SourceTextModuleRecord testModule = moduleLoader.get(module.getSourceCodeId());
+            if (moduleLoader.link(testModule, global.getRealm())) {
+                testModule.instantiate();
+            }
+            testModule.evaluate();
         }
         for (Script script : scripts) {
             global.eval(script);
@@ -180,73 +182,32 @@ public abstract class TestGlobals<GLOBAL extends ShellGlobalObject, TEST extends
         return scripts;
     }
 
-    private List<PreloadedModule> compileModules() throws IOException {
+    private PreloadModules compileModules() throws IOException, MalformedNameException {
         List<?> moduleNames = configuration.getList("modules", emptyList());
         if (moduleNames.isEmpty()) {
-            return Collections.emptyList();
+            return new PreloadModules(Collections.<SourceTextModuleRecord> emptyList(),
+                    Collections.<SourceTextModuleRecord> emptyList());
         }
-        ModuleLoader moduleLoader = createModuleLoader();
         ScriptLoader scriptLoader = createScriptLoader();
-        PreloaderRealm realm = new PreloaderRealm(moduleLoader, scriptLoader);
-        ArrayList<PreloadedModule> modules = new ArrayList<>();
+        FileModuleLoader moduleLoader = createModuleLoader(scriptLoader);
+        ArrayList<SourceTextModuleRecord> modules = new ArrayList<>();
         for (String moduleName : toStrings(moduleNames)) {
-            SourceIdentifier normalizedModuleName = NormalizeModuleName(realm, moduleName, null);
-            if (!realm.getModules().containsKey(normalizedModuleName)) {
-                LinkedHashMap<SourceIdentifier, ModuleRecord> newModules = new LinkedHashMap<>();
-                ModuleRecord module = ParseModuleAndImports(realm, normalizedModuleName, newModules);
-                realm.getModules().putAll(newModules);
-                modules.add(new PreloadedModule(module, newModules));
-            }
+            SourceIdentifier moduleId = moduleLoader.normalizeName(moduleName, null);
+            SourceTextModuleRecord module = moduleLoader.resolve(moduleId);
+            moduleLoader.fetch(module);
+            modules.add(module);
         }
-        return modules;
+        return new PreloadModules(modules, moduleLoader.getModules());
     }
 
-    private static final class PreloadedModule {
-        private final ModuleRecord module;
-        private final LinkedHashMap<SourceIdentifier, ModuleRecord> requires;
+    private static final class PreloadModules {
+        private final List<SourceTextModuleRecord> mainModules;
+        private final Collection<SourceTextModuleRecord> allModules;
 
-        PreloadedModule(ModuleRecord module, LinkedHashMap<SourceIdentifier, ModuleRecord> requires) {
-            this.module = module;
-            this.requires = requires;
-        }
-
-        public SourceIdentifier getModuleName() {
-            return module.getSourceCodeId();
-        }
-
-        public LinkedHashMap<SourceIdentifier, ModuleRecord> getRequires() {
-            LinkedHashMap<SourceIdentifier, ModuleRecord> requiresCopy = new LinkedHashMap<>(
-                    requires);
-            for (Map.Entry<SourceIdentifier, ModuleRecord> entry : requiresCopy.entrySet()) {
-                entry.setValue(entry.getValue().clone());
-            }
-            return requiresCopy;
-        }
-    }
-
-    private static final class PreloaderRealm implements ShadowRealm {
-        private final ModuleLoader moduleLoader;
-        private final ScriptLoader scriptLoader;
-        private final HashMap<SourceIdentifier, ModuleRecord> modules = new HashMap<>();
-
-        PreloaderRealm(ModuleLoader moduleLoader, ScriptLoader scriptLoader) {
-            this.moduleLoader = moduleLoader;
-            this.scriptLoader = scriptLoader;
-        }
-
-        @Override
-        public ModuleLoader getModuleLoader() {
-            return moduleLoader;
-        }
-
-        @Override
-        public ScriptLoader getScriptLoader() {
-            return scriptLoader;
-        }
-
-        @Override
-        public Map<SourceIdentifier, ModuleRecord> getModules() {
-            return modules;
+        PreloadModules(List<SourceTextModuleRecord> modules,
+                Collection<SourceTextModuleRecord> requires) {
+            this.mainModules = Collections.unmodifiableList(modules);
+            this.allModules = Collections.unmodifiableCollection(requires);
         }
     }
 }

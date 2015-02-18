@@ -97,7 +97,7 @@ public final class ObjectPrototype extends OrdinaryObject implements Initializab
             ScriptObject o = ToObject(cx, thisValue);
             /* steps 4-13 */
             String builtinTag;
-            if (IsArray(o)) {
+            if (IsArray(cx, o)) {
                 builtinTag = "Array";
             } else if (o instanceof StringObject) {
                 builtinTag = "String";

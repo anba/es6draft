@@ -6,9 +6,13 @@
  */
 package com.github.anba.es6draft.runtime.objects.collection;
 
-import static com.github.anba.es6draft.runtime.AbstractOperations.*;
+import static com.github.anba.es6draft.runtime.AbstractOperations.Get;
+import static com.github.anba.es6draft.runtime.AbstractOperations.GetIterator;
+import static com.github.anba.es6draft.runtime.AbstractOperations.IsCallable;
+import static com.github.anba.es6draft.runtime.AbstractOperations.IteratorClose;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
+import static com.github.anba.es6draft.runtime.objects.internal.ListIterator.FromScriptIterator;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
@@ -19,6 +23,7 @@ import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
+import com.github.anba.es6draft.runtime.internal.ScriptIterator;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
@@ -80,7 +85,7 @@ public final class WeakMapConstructor extends BuiltinConstructor implements Init
                 Intrinsics.WeakMapPrototype, WeakMapObjectAllocator.INSTANCE);
 
         /* steps 5-7 */
-        ScriptObject iter;
+        ScriptIterator<?> iter;
         Callable adder = null;
         if (Type.isUndefinedOrNull(iterable)) {
             iter = null;
@@ -90,7 +95,7 @@ public final class WeakMapConstructor extends BuiltinConstructor implements Init
                 throw newTypeError(calleeContext, Messages.Key.PropertyNotCallable, "set");
             }
             adder = (Callable) _adder;
-            iter = GetIterator(calleeContext, iterable);
+            iter = FromScriptIterator(calleeContext, GetIterator(calleeContext, iterable));
         }
 
         /* step 8 */
@@ -99,20 +104,17 @@ public final class WeakMapConstructor extends BuiltinConstructor implements Init
         }
         /* step 9 */
         try {
-            for (;;) {
-                ScriptObject next = IteratorStep(calleeContext, iter);
-                if (next == null) {
-                    return map;
-                }
-                Object nextValue = IteratorValue(calleeContext, next);
-                if (!Type.isObject(nextValue)) {
+            while (iter.hasNext()) {
+                Object nextItem = iter.next();
+                if (!Type.isObject(nextItem)) {
                     throw newTypeError(calleeContext, Messages.Key.NotObjectType);
                 }
-                ScriptObject entry = Type.objectValue(nextValue);
-                Object k = Get(calleeContext, entry, 0);
-                Object v = Get(calleeContext, entry, 1);
+                ScriptObject item = Type.objectValue(nextItem);
+                Object k = Get(calleeContext, item, 0);
+                Object v = Get(calleeContext, item, 1);
                 adder.call(calleeContext, map, k, v);
             }
+            return map;
         } catch (ScriptException e) {
             IteratorClose(calleeContext, iter, true);
             throw e;

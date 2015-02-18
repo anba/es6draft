@@ -11,10 +11,15 @@ package com.github.anba.es6draft.runtime.modules;
  *
  */
 public final class ModuleExport {
-    private final ModuleRecord module;
+    /**
+     * Singleton instance to represent ambiguous module exports.
+     */
+    public static final ModuleExport AMBIGUOUS = new ModuleExport(null, null);
+
+    private final SourceTextModuleRecord module;
     private final String bindingName;
 
-    ModuleExport(ModuleRecord module, String bindingName) {
+    ModuleExport(SourceTextModuleRecord module, String bindingName) {
         this.module = module;
         this.bindingName = bindingName;
     }
@@ -24,7 +29,7 @@ public final class ModuleExport {
      * 
      * @return the module record
      */
-    public ModuleRecord getModule() {
+    public SourceTextModuleRecord getModule() {
         return module;
     }
 
@@ -35,5 +40,14 @@ public final class ModuleExport {
      */
     public String getBindingName() {
         return bindingName;
+    }
+
+    /**
+     * Returns {@code true} if the module export is ambiguous.
+     * 
+     * @return {@code true} if the module export is ambiguous
+     */
+    public boolean isAmbiguous() {
+        return this == AMBIGUOUS;
     }
 }

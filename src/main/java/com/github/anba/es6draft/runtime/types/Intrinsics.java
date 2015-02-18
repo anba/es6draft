@@ -15,140 +15,40 @@ package com.github.anba.es6draft.runtime.types;
  * </ul>
  */
 public enum Intrinsics {/* @formatter:off */
-    /** Intrinsic: <tt>%ObjectPrototype%</tt> */
-    ObjectPrototype,
-    /** Intrinsic: <tt>%ThrowTypeError%</tt> */
-    ThrowTypeError,
-    /** Intrinsic: <tt>%FunctionPrototype%</tt> */
-    FunctionPrototype,
-    /** Intrinsic: <tt>%Object%</tt> */
-    Object,
-    /** Intrinsic: <tt>%ObjProto_toString%</tt> */
-    ObjProto_toString,
-    /** Intrinsic: <tt>%Function%</tt> */
-    Function,
     /** Intrinsic: <tt>%Array%</tt> */
     Array,
-    /** Intrinsic: <tt>%ArrayPrototype%</tt> */
-    ArrayPrototype,
-    /** Intrinsic: <tt>%ArrayProto_values%</tt> */
-    ArrayProto_values,
-    /** Intrinsic: <tt>%ArrayIteratorPrototype%</tt> */
-    ArrayIteratorPrototype,
-    /** Intrinsic: <tt>%String%</tt> */
-    String,
-    /** Intrinsic: <tt>%StringPrototype%</tt> */
-    StringPrototype,
-    /** Intrinsic: <tt>%StringIteratorPrototype%</tt> */
-    StringIteratorPrototype,
-    /** Intrinsic: <tt>%Boolean%</tt> */
-    Boolean,
-    /** Intrinsic: <tt>%BooleanPrototype%</tt> */
-    BooleanPrototype,
-    /** Intrinsic: <tt>%Number%</tt> */
-    Number,
-    /** Intrinsic: <tt>%NumberPrototype%</tt> */
-    NumberPrototype,
-    /** Intrinsic: <tt>%Date%</tt> */
-    Date,
-    /** Intrinsic: <tt>%DatePrototype%</tt> */
-    DatePrototype,
-    /** Intrinsic: <tt>%RegExp%</tt> */
-    RegExp,
-    /** Intrinsic: <tt>%RegExpPrototype%</tt> */
-    RegExpPrototype,
-    /** Intrinsic: <tt>%Map%</tt> */
-    Map,
-    /** Intrinsic: <tt>%MapPrototype%</tt> */
-    MapPrototype,
-    /** Intrinsic: <tt>%MapIteratorPrototype%</tt> */
-    MapIteratorPrototype,
-    /** Intrinsic: <tt>%WeakMap%</tt> */
-    WeakMap,
-    /** Intrinsic: <tt>%WeakMapPrototype%</tt> */
-    WeakMapPrototype,
-    /** Intrinsic: <tt>%Set%</tt> */
-    Set,
-    /** Intrinsic: <tt>%SetPrototype%</tt> */
-    SetPrototype,
-    /** Intrinsic: <tt>%SetIteratorPrototype%</tt> */
-    SetIteratorPrototype,
-    /** Intrinsic: <tt>%WeakSet%</tt> */
-    WeakSet,
-    /** Intrinsic: <tt>%WeakSetPrototype%</tt> */
-    WeakSetPrototype,
-    /** Intrinsic: <tt>%GeneratorFunction%</tt> */
-    GeneratorFunction,
-    /** Intrinsic: <tt>%Generator%</tt> */
-    Generator,
-    /** Intrinsic: <tt>%GeneratorPrototype%</tt> */
-    GeneratorPrototype,
-    /** Intrinsic: <tt>%Error%</tt> */
-    Error,
-    /** Intrinsic: <tt>%EvalError%</tt> */
-    EvalError,
-    /** Intrinsic: <tt>%RangeError%</tt> */
-    RangeError,
-    /** Intrinsic: <tt>%ReferenceError%</tt> */
-    ReferenceError,
-    /** Intrinsic: <tt>%SyntaxError%</tt> */
-    SyntaxError,
-    /** Intrinsic: <tt>%TypeError%</tt> */
-    TypeError,
-    /** Intrinsic: <tt>%URIError%</tt> */
-    URIError,
-    /** Intrinsic: <tt>%ErrorPrototype%</tt> */
-    ErrorPrototype,
-    /** Intrinsic: <tt>%EvalErrorPrototype%</tt> */
-    EvalErrorPrototype,
-    /** Intrinsic: <tt>%RangeErrorPrototype%</tt> */
-    RangeErrorPrototype,
-    /** Intrinsic: <tt>%ReferenceErrorPrototype%</tt> */
-    ReferenceErrorPrototype,
-    /** Intrinsic: <tt>%SyntaxErrorPrototype%</tt> */
-    SyntaxErrorPrototype,
-    /** Intrinsic: <tt>%TypeErrorPrototype%</tt> */
-    TypeErrorPrototype,
-    /** Intrinsic: <tt>%URIErrorPrototype%</tt> */
-    URIErrorPrototype,
-
-    // binary module
     /** Intrinsic: <tt>%ArrayBuffer%</tt> */
     ArrayBuffer,
     /** Intrinsic: <tt>%ArrayBufferPrototype%</tt> */
     ArrayBufferPrototype,
-    /** Intrinsic: <tt>%TypedArray%</tt> */
-    TypedArray,
-    /** Intrinsic: <tt>%TypedArrayPrototype%</tt> */
-    TypedArrayPrototype,
-    /** Intrinsic: <tt>%Int8Array%</tt> */
-    Int8Array,
-    /** Intrinsic: <tt>%Int8ArrayPrototype%</tt> */
-    Int8ArrayPrototype,
-    /** Intrinsic: <tt>%Uint8Array%</tt> */
-    Uint8Array,
-    /** Intrinsic: <tt>%Uint8ArrayPrototype%</tt> */
-    Uint8ArrayPrototype,
-    /** Intrinsic: <tt>%Uint8ClampedArray%</tt> */
-    Uint8ClampedArray,
-    /** Intrinsic: <tt>%Uint8ClampedArrayPrototype%</tt> */
-    Uint8ClampedArrayPrototype,
-    /** Intrinsic: <tt>%Int16Array%</tt> */
-    Int16Array,
-    /** Intrinsic: <tt>%Int16ArrayPrototype%</tt> */
-    Int16ArrayPrototype,
-    /** Intrinsic: <tt>%Uint16Array%</tt> */
-    Uint16Array,
-    /** Intrinsic: <tt>%Uint16ArrayPrototype%</tt> */
-    Uint16ArrayPrototype,
-    /** Intrinsic: <tt>%Int32Array%</tt> */
-    Int32Array,
-    /** Intrinsic: <tt>%Int32ArrayPrototype%</tt> */
-    Int32ArrayPrototype,
-    /** Intrinsic: <tt>%Uint32Array%</tt> */
-    Uint32Array,
-    /** Intrinsic: <tt>%Uint32ArrayPrototype%</tt> */
-    Uint32ArrayPrototype,
+    /** Intrinsic: <tt>%ArrayIteratorPrototype%</tt> */
+    ArrayIteratorPrototype,
+    /** Intrinsic: <tt>%ArrayPrototype%</tt> */
+    ArrayPrototype,
+    /** Intrinsic: <tt>%ArrayProto_values%</tt> */
+    ArrayProto_values,
+    /** Intrinsic: <tt>%Boolean%</tt> */
+    Boolean,
+    /** Intrinsic: <tt>%BooleanPrototype%</tt> */
+    BooleanPrototype,
+    /** Intrinsic: <tt>%DataView%</tt> */
+    DataView,
+    /** Intrinsic: <tt>%DataViewPrototype%</tt> */
+    DataViewPrototype,
+    /** Intrinsic: <tt>%Date%</tt> */
+    Date,
+    /** Intrinsic: <tt>%DatePrototype%</tt> */
+    DatePrototype,
+    /** Intrinsic: <tt>%Error%</tt> */
+    Error,
+    /** Intrinsic: <tt>%ErrorPrototype%</tt> */
+    ErrorPrototype,
+    /** Intrinsic: <tt>%eval%</tt> */
+    eval,
+    /** Intrinsic: <tt>%EvalError%</tt> */
+    EvalError,
+    /** Intrinsic: <tt>%EvalErrorPrototype%</tt> */
+    EvalErrorPrototype,
     /** Intrinsic: <tt>%Float32Array%</tt> */
     Float32Array,
     /** Intrinsic: <tt>%Float32ArrayPrototype%</tt> */
@@ -157,34 +57,128 @@ public enum Intrinsics {/* @formatter:off */
     Float64Array,
     /** Intrinsic: <tt>%Float64ArrayPrototype%</tt> */
     Float64ArrayPrototype,
-    /** Intrinsic: <tt>%DataView%</tt> */
-    DataView,
-    /** Intrinsic: <tt>%DataViewPrototype%</tt> */
-    DataViewPrototype,
-
-    // Promise Objects
+    /** Intrinsic: <tt>%Function%</tt> */
+    Function,
+    /** Intrinsic: <tt>%FunctionPrototype%</tt> */
+    FunctionPrototype,
+    /** Intrinsic: <tt>%Generator%</tt> */
+    Generator,
+    /** Intrinsic: <tt>%GeneratorFunction%</tt> */
+    GeneratorFunction,
+    /** Intrinsic: <tt>%GeneratorPrototype%</tt> */
+    GeneratorPrototype,
+    /** Intrinsic: <tt>%Int8Array%</tt> */
+    Int8Array,
+    /** Intrinsic: <tt>%Int8ArrayPrototype%</tt> */
+    Int8ArrayPrototype,
+    /** Intrinsic: <tt>%Int16Array%</tt> */
+    Int16Array,
+    /** Intrinsic: <tt>%Int16ArrayPrototype%</tt> */
+    Int16ArrayPrototype,
+    /** Intrinsic: <tt>%Int32Array%</tt> */
+    Int32Array,
+    /** Intrinsic: <tt>%Int32ArrayPrototype%</tt> */
+    Int32ArrayPrototype,
+    /** Intrinsic: <tt>%IteratorPrototype%</tt> */
+    IteratorPrototype,
+    /** Intrinsic: <tt>%JSON%</tt> */
+    JSON,
+    /** Intrinsic: <tt>%Map%</tt> */
+    Map,
+    /** Intrinsic: <tt>%MapPrototype%</tt> */
+    MapPrototype,
+    /** Intrinsic: <tt>%MapIteratorPrototype%</tt> */
+    MapIteratorPrototype,
+    /** Intrinsic: <tt>%Math%</tt> */
+    Math,
+    /** Intrinsic: <tt>%Number%</tt> */
+    Number,
+    /** Intrinsic: <tt>%NumberPrototype%</tt> */
+    NumberPrototype,
+    /** Intrinsic: <tt>%Object%</tt> */
+    Object,
+    /** Intrinsic: <tt>%ObjectPrototype%</tt> */
+    ObjectPrototype,
+    /** Intrinsic: <tt>%ObjProto_toString%</tt> */
+    ObjProto_toString,
     /** Intrinsic: <tt>%Promise%</tt> */
     Promise,
     /** Intrinsic: <tt>%PromisePrototype%</tt> */
     PromisePrototype,
-
-    // Other
-    /** Intrinsic: <tt>%Symbol%</tt> */
-    Symbol,
-    /** Intrinsic: <tt>%IteratorPrototype%</tt> */
-    IteratorPrototype,
-
-    // not yet (?) in spec
-    /** Intrinsic: <tt>%SymbolPrototype%</tt> */
-    SymbolPrototype,
-    /** Intrinsic: <tt>%Math%</tt> */
-    Math,
-    /** Intrinsic: <tt>%JSON%</tt> */
-    JSON,
     /** Intrinsic: <tt>%Proxy%</tt> */
     Proxy,
+    /** Intrinsic: <tt>%RangeError%</tt> */
+    RangeError,
+    /** Intrinsic: <tt>%RangeErrorPrototype%</tt> */
+    RangeErrorPrototype,
+    /** Intrinsic: <tt>%ReferenceError%</tt> */
+    ReferenceError,
+    /** Intrinsic: <tt>%ReferenceErrorPrototype%</tt> */
+    ReferenceErrorPrototype,
     /** Intrinsic: <tt>%Reflect%</tt> */
     Reflect,
+    /** Intrinsic: <tt>%RegExp%</tt> */
+    RegExp,
+    /** Intrinsic: <tt>%RegExpPrototype%</tt> */
+    RegExpPrototype,
+    /** Intrinsic: <tt>%Set%</tt> */
+    Set,
+    /** Intrinsic: <tt>%SetIteratorPrototype%</tt> */
+    SetIteratorPrototype,
+    /** Intrinsic: <tt>%SetPrototype%</tt> */
+    SetPrototype,
+    /** Intrinsic: <tt>%String%</tt> */
+    String,
+    /** Intrinsic: <tt>%StringIteratorPrototype%</tt> */
+    StringIteratorPrototype,
+    /** Intrinsic: <tt>%StringPrototype%</tt> */
+    StringPrototype,
+    /** Intrinsic: <tt>%Symbol%</tt> */
+    Symbol,
+    /** Intrinsic: <tt>%SymbolPrototype%</tt> */
+    SymbolPrototype,
+    /** Intrinsic: <tt>%SyntaxError%</tt> */
+    SyntaxError,
+    /** Intrinsic: <tt>%SyntaxErrorPrototype%</tt> */
+    SyntaxErrorPrototype,
+    /** Intrinsic: <tt>%ThrowTypeError%</tt> */
+    ThrowTypeError,
+    /** Intrinsic: <tt>%TypedArray%</tt> */
+    TypedArray,
+    /** Intrinsic: <tt>%TypedArrayPrototype%</tt> */
+    TypedArrayPrototype,
+    /** Intrinsic: <tt>%TypeError%</tt> */
+    TypeError,
+    /** Intrinsic: <tt>%TypeErrorPrototype%</tt> */
+    TypeErrorPrototype,
+    /** Intrinsic: <tt>%Uint8Array%</tt> */
+    Uint8Array,
+    /** Intrinsic: <tt>%Uint8ArrayPrototype%</tt> */
+    Uint8ArrayPrototype,
+    /** Intrinsic: <tt>%Uint8ClampedArray%</tt> */
+    Uint8ClampedArray,
+    /** Intrinsic: <tt>%Uint8ClampedArrayPrototype%</tt> */
+    Uint8ClampedArrayPrototype,
+    /** Intrinsic: <tt>%Uint16Array%</tt> */
+    Uint16Array,
+    /** Intrinsic: <tt>%Uint16ArrayPrototype%</tt> */
+    Uint16ArrayPrototype,
+    /** Intrinsic: <tt>%Uint32Array%</tt> */
+    Uint32Array,
+    /** Intrinsic: <tt>%Uint32ArrayPrototype%</tt> */
+    Uint32ArrayPrototype,
+    /** Intrinsic: <tt>%URIError%</tt> */
+    URIError,
+    /** Intrinsic: <tt>%URIErrorPrototype%</tt> */
+    URIErrorPrototype,
+    /** Intrinsic: <tt>%WeakMap%</tt> */
+    WeakMap,
+    /** Intrinsic: <tt>%WeakMapPrototype%</tt> */
+    WeakMapPrototype,
+    /** Intrinsic: <tt>%WeakSet%</tt> */
+    WeakSet,
+    /** Intrinsic: <tt>%WeakSetPrototype%</tt> */
+    WeakSetPrototype,
 
     // Internationalization API
     /** Intrinsic: <tt>%Intl%</tt> */

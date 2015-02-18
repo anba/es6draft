@@ -6,13 +6,11 @@
  */
 package com.github.anba.es6draft.runtime.internal;
 
-import com.github.anba.es6draft.runtime.ExecutionContext;
-
 /**
  * Base class for internal exceptions.
  */
 @SuppressWarnings("serial")
-public abstract class InternalException extends RuntimeException {
+public abstract class InternalException extends RuntimeException implements InternalThrowable {
     /**
      * InternalException constructor
      * 
@@ -74,13 +72,4 @@ public abstract class InternalException extends RuntimeException {
             boolean writableStackTrace) {
         super(message, cause, enableSuppression, writableStackTrace);
     }
-
-    /**
-     * Returns a {@link ScriptException} for this exception object.
-     * 
-     * @param cx
-     *            the execution context to construct the script exception
-     * @return the script exception for this exception.
-     */
-    public abstract ScriptException toScriptException(ExecutionContext cx);
 }

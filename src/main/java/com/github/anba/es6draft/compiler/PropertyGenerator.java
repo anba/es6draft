@@ -267,6 +267,7 @@ final class PropertyGenerator extends
                     assert function instanceof FunctionExpression
                             || function instanceof GeneratorExpression
                             || function instanceof AsyncFunctionExpression;
+                    // FIXME: spec bug - unreachable (bug 3963)
                     defineMethod = function.getScope().hasSuperReference();
                 }
             }

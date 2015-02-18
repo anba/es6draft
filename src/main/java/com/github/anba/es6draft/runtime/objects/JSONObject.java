@@ -135,7 +135,7 @@ public final class JSONObject extends OrdinaryObject implements Initializable {
             if (Type.isObject(replacer)) {
                 if (IsCallable(replacer)) {
                     replacerFunction = (Callable) replacer;
-                } else if (IsArray(replacer)) {
+                } else if (IsArray(cx, replacer)) {
                     propertyList = new LinkedHashSet<>();
                     ScriptObject objReplacer = (ScriptObject) replacer;
                     long len = ToLength(cx, Get(cx, objReplacer, "length"));
@@ -219,7 +219,7 @@ public final class JSONObject extends OrdinaryObject implements Initializable {
         /* step 3 */
         if (Type.isObject(val)) {
             ScriptObject objVal = Type.objectValue(val);
-            if (IsArray(objVal)) {
+            if (IsArray(cx, objVal)) {
                 /* step 3.a */
                 walkArray(cx, reviver, objVal);
             } else {
@@ -250,7 +250,7 @@ public final class JSONObject extends OrdinaryObject implements Initializable {
         /* step 3 */
         if (Type.isObject(val)) {
             ScriptObject objVal = Type.objectValue(val);
-            if (IsArray(objVal)) {
+            if (IsArray(cx, objVal)) {
                 /* step 3.a */
                 walkArray(cx, reviver, objVal);
             } else {
@@ -349,7 +349,7 @@ public final class JSONObject extends OrdinaryObject implements Initializable {
         case Object:
             if (!IsCallable(value)) {
                 ScriptObject valueObj = Type.objectValue(value);
-                if (IsArray(valueObj)) {
+                if (IsArray(cx, valueObj)) {
                     return JA(cx, stack, propertyList, replacerFunction, indent, gap, valueObj);
                 } else {
                     return JO(cx, stack, propertyList, replacerFunction, indent, gap, valueObj);

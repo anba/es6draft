@@ -28,16 +28,16 @@ var {iterator, count} = iter();
 var [a, b] = iterator;
 assertUndefined(a);
 assertUndefined(b);
-assertSame(2, count());
+assertSame(1, count());
 
 var {iterator, count} = iter();
 let [c, d] = iterator;
 assertUndefined(c);
 assertUndefined(d);
-assertSame(2, count());
+assertSame(1, count());
 
 var {iterator, count} = iter();
 var e, f; [e, f] = iterator;
 assertUndefined(e);
 assertUndefined(f);
-assertSame(2, count());
+assertSame(1, count());

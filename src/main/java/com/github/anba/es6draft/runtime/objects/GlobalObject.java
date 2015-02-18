@@ -109,10 +109,10 @@ public class GlobalObject extends OrdinaryObject implements Initializable {
         ExecutionContext cx = getRealm().defaultContext();
         // Execute initialization scripts
         initializeScripted();
-        /* steps 1-3 (not applicable) */
-        /* steps 4-5 */
+        /* steps 1-2 (not applicable) */
+        /* steps 3-4 */
         SetDefaultGlobalBindings(cx, getRealm());
-        /* step 6 */
+        /* step 5 */
         initializeExtensions();
     }
 

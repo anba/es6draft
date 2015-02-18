@@ -9,6 +9,7 @@ package com.github.anba.es6draft.runtime;
 import static com.github.anba.es6draft.runtime.AbstractOperations.DefinePropertyOrThrow;
 import static com.github.anba.es6draft.runtime.AbstractOperations.IsExtensible;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
+import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -341,6 +342,8 @@ public final class GlobalEnvironmentRecord implements EnvironmentRecord {
         /* step 3 */
         if (!objectRec.hasBinding(name)) {
             objectRec.createMutableBinding(name, deletable);
+            // FIXME: spec bug - unnecessary step
+            objectRec.initializeBinding(name, UNDEFINED);
         }
         /* step 4 (omitted) */
         /* step 5 */

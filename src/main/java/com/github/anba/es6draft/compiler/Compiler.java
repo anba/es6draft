@@ -27,7 +27,7 @@ import com.github.anba.es6draft.compiler.assembler.Code.ClassCode;
 import com.github.anba.es6draft.compiler.assembler.Type;
 import com.github.anba.es6draft.parser.Parser;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
-import com.github.anba.es6draft.runtime.modules.ModuleRecord;
+import com.github.anba.es6draft.runtime.modules.SourceTextModuleRecord;
 
 /**
  *
@@ -88,8 +88,8 @@ public final class Compiler {
      * @throws CompilationException
      *             if the module node could not be compiled
      */
-    public CompiledModule compile(Module module, ModuleRecord moduleRecord, String className)
-            throws CompilationException {
+    public CompiledModule compile(Module module, SourceTextModuleRecord moduleRecord,
+            String className) throws CompilationException {
         try {
             CodeSizeAnalysis analysis = new CodeSizeAnalysis(executor);
             analysis.submit(module);

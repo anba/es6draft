@@ -17,20 +17,24 @@ const {
 function SuperConstructor() { }
 
 // 14.1 FunctionDeclaration
+assertSyntaxError(`
 function fdecl() {
   new super();
 }
 Object.setPrototypeOf(fdecl, SuperConstructor);
 assertThrows(TypeError, () => fdecl());
 new fdecl();
+`);
 
 // 14.1 FunctionExpression
+assertSyntaxError(`
 var fexpr = function() {
   new super();
 };
 Object.setPrototypeOf(fexpr, SuperConstructor);
 assertThrows(TypeError, () => fexpr());
 new fexpr();
+`);
 
 // 14.3 Method Definitions [Method]
 assertSyntaxError(`

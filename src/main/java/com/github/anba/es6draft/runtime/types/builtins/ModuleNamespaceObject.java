@@ -8,24 +8,29 @@ package com.github.anba.es6draft.runtime.types.builtins;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToString;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
-import static com.github.anba.es6draft.runtime.modules.ModuleSemantics.ResolveExport;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import com.github.anba.es6draft.compiler.CompilationException;
+import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.ModuleEnvironmentRecord;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.CompoundList;
 import com.github.anba.es6draft.runtime.internal.Errors;
 import com.github.anba.es6draft.runtime.internal.Messages;
+import com.github.anba.es6draft.runtime.modules.MalformedNameException;
 import com.github.anba.es6draft.runtime.modules.ModuleExport;
 import com.github.anba.es6draft.runtime.modules.ModuleRecord;
 import com.github.anba.es6draft.runtime.modules.ResolutionException;
+import com.github.anba.es6draft.runtime.modules.SourceTextModuleRecord;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Property;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
@@ -228,15 +233,25 @@ public final class ModuleNamespaceObject extends OrdinaryObject {
         ModuleExport binding;
         try {
             /* steps 6, 8 */
-            binding = ResolveExport(m, propertyKey, new HashMap<ModuleRecord, Set<String>>());
+            binding = m.resolveExport(propertyKey, new HashMap<ModuleRecord, Set<String>>(),
+                    new HashSet<ModuleRecord>());
         } catch (ResolutionException e) {
             /* step 7 */
             throw Errors.newReferenceError(cx, Messages.Key.ModulesAmbiguousExport, propertyKey);
+        } catch (IOException e) {
+            /* step 7 */
+            throw Errors.newInternalError(cx, Messages.Key.ModulesIOException, e.getMessage());
+        } catch (MalformedNameException e) {
+            /* step 7 */
+            throw e.toScriptException(cx);
+        } catch (ParserException | CompilationException e) {
+            /* step 7 */
+            throw e.toScriptException(cx);
         }
         /* step 9 */
-        assert binding != null;
+        assert binding != null && !binding.isAmbiguous();
         /* step 10 */
-        ModuleRecord targetModule = binding.getModule();
+        SourceTextModuleRecord targetModule = binding.getModule();
         /* step 11 */
         assert targetModule != null;
         /* step 12 */
@@ -333,21 +348,19 @@ public final class ModuleNamespaceObject extends OrdinaryObject {
         /* step 1 (not applicable) */
         /* step 2 */
         assert module.getNamespace() == null;
-        /* step 3 */
-        // FIXME: spec bug - stale assertion
-        /* step 4 (not applicable) */
-        /* steps 5-8 */
+        /* step 3 (not applicable) */
+        /* steps 4-7 */
         ModuleNamespaceObject m = new ModuleNamespaceObject(cx.getRealm(), module, exports);
-        /* step 9 */
+        /* step 8 */
         // 26.3.1 @@toStringTag
         m.infallibleDefineOwnProperty(BuiltinSymbol.toStringTag.get(), new Property("Module",
                 false, false, true));
         // 26.3.2 [ @@iterator ] ( )
         m.infallibleDefineOwnProperty(BuiltinSymbol.iterator.get(), new Property(
                 new ModuleIteratorFunction(cx.getRealm()), true, false, true));
+        /* step 9 (FIXME: spec bug - bug 3975) */
+        // module.setNamespace(m);
         /* step 10 */
-        module.setNamespace(m);
-        /* step 11 */
         return m;
     }
 

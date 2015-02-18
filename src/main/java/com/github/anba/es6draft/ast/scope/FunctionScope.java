@@ -44,6 +44,13 @@ public interface FunctionScope extends TopLevelScope {
     boolean isDynamic();
 
     /**
+     * Returns {@code true} if <tt>eval()</tt> is used within this function's formal initializers.
+     * 
+     * @return {@code true} if the formal initializers contain a direct <tt>eval</tt> call
+     */
+    boolean hasFormalInitializerEval();
+
+    /**
      * Returns {@code true} if the <tt>super</tt> keyword is used within this function.
      * 
      * @return {@code true} if this function contains a <tt>super</tt> reference

@@ -17,7 +17,7 @@ import com.github.anba.es6draft.runtime.types.ScriptObject;
  * Runtime exception to represent exceptions thrown from the ThrowStatement.
  */
 @SuppressWarnings("serial")
-public final class ScriptException extends RuntimeException {
+public final class ScriptException extends RuntimeException implements InternalThrowable {
     private final Object value;
 
     /**
@@ -88,5 +88,10 @@ public final class ScriptException extends RuntimeException {
             }
             return Objects.toString(value);
         }
+    }
+
+    @Override
+    public ScriptException toScriptException(ExecutionContext cx) {
+        return this;
     }
 }

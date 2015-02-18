@@ -20,4 +20,29 @@ public interface ScriptIterator<E> extends Iterator<E> {
      * @return the script iterator object
      */
     ScriptObject getScriptObject();
+
+    /**
+     * Returns {@code true} if the iterator has finished its iteration.
+     * 
+     * @return {@code true} if the iterator is drained
+     */
+    boolean isDone();
+
+    /**
+     * {@inheritDoc}
+     * 
+     * @throws ScriptException
+     *             if an execution error occurs in the scripted iterator
+     */
+    @Override
+    public boolean hasNext() throws ScriptException;
+
+    /**
+     * {@inheritDoc}
+     * 
+     * @throws ScriptException
+     *             if an execution error occurs in the scripted iterator
+     */
+    @Override
+    public E next() throws ScriptException;
 }

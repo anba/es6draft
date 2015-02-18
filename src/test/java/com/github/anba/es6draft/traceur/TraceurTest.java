@@ -14,7 +14,6 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.EnumSet;
@@ -39,12 +38,14 @@ import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
 import org.junit.runners.Parameterized.UseParametersRunnerFactory;
 
+import com.github.anba.es6draft.parser.Parser;
 import com.github.anba.es6draft.repl.console.ShellConsole;
 import com.github.anba.es6draft.runtime.extensions.timer.Timers;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.Properties;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
+import com.github.anba.es6draft.runtime.internal.ScriptLoader;
 import com.github.anba.es6draft.runtime.modules.ResolutionException;
 import com.github.anba.es6draft.util.Functional.BiFunction;
 import com.github.anba.es6draft.util.Functional.Function;
@@ -95,8 +96,8 @@ public final class TraceurTest {
         }
 
         @Override
-        protected TraceurFileModuleLoader createModuleLoader() {
-            return new TraceurFileModuleLoader(getBaseDirectory());
+        protected TraceurFileModuleLoader createModuleLoader(ScriptLoader scriptLoader) {
+            return new TraceurFileModuleLoader(scriptLoader, getBaseDirectory());
         }
     };
 
@@ -118,6 +119,7 @@ public final class TraceurTest {
     private static final class TraceurTestInfo extends TestInfo {
         boolean negative = false;
         boolean async = false;
+        boolean tailCall = false;
 
         TraceurTestInfo(Path basedir, Path script) {
             super(basedir, script);
@@ -141,7 +143,7 @@ public final class TraceurTest {
     private Timers timers;
 
     @Before
-    public void setUp() throws IOException, URISyntaxException {
+    public void setUp() throws Throwable {
         // filter disabled tests
         assumeTrue(test.isEnabled());
 
@@ -165,6 +167,9 @@ public final class TraceurTest {
             errorHandler.match(StandardErrorHandler.defaultMatcher());
             exceptionHandler.match(ScriptExceptionHandler.defaultMatcher());
         }
+        if (test.tailCall) {
+            global.getScriptLoader().getParserOptions().add(Parser.Option.Strict);
+        }
     }
 
     @After
@@ -178,7 +183,7 @@ public final class TraceurTest {
     public void runTest() throws Throwable {
         // evaluate actual test-script
         if (test.isModule()) {
-            global.eval(test.toModuleName(), null);
+            global.eval(test.toModuleName());
         } else {
             global.eval(test.getScript(), test.toFile());
         }
@@ -228,6 +233,9 @@ public final class TraceurTest {
                     } else if (s.startsWith("Error:")) {
                         test.negative = true;
                     } else if (s.startsWith("Options:")) {
+                        if (s.contains("--proper-tail-calls")) {
+                            test.tailCall = true;
+                        }
                         // ignore
                     } else {
                         break;

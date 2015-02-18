@@ -211,11 +211,12 @@ public final class FunctionPrototype extends BuiltinFunction implements Initiali
             }
             /* step 1 */
             Callable target = (Callable) thisValue;
-            /* steps 3-4 */
+            /* step 3 (not applicable) */
+            /* steps 4-5 */
             BoundFunctionObject f = BoundFunctionCreate(cx, target, thisArg, args);
-            /* steps 5-6 */
+            /* steps 6-7 */
             boolean targetHasLength = HasOwnProperty(cx, target, "length");
-            /* steps 7-8 */
+            /* steps 8-9 */
             double l = 0;
             if (targetHasLength) {
                 Object targetLen = Get(cx, target, "length");
@@ -224,17 +225,17 @@ public final class FunctionPrototype extends BuiltinFunction implements Initiali
                     l = Math.max(0, intLength - args.length);
                 }
             }
-            /* steps 9-10 */
+            /* steps 10-11 */
             f.infallibleDefineOwnProperty("length", new Property(l, false, false, true));
-            /* steps 11-12 */
+            /* steps 12-13 */
             Object targetName = Get(cx, target, "name");
-            /* step 13 */
+            /* step 14 */
             if (!Type.isString(targetName)) {
                 targetName = "";
             }
-            /* step 14 */
-            SetFunctionName(f, Type.stringValue(targetName).toString(), "bound");
             /* step 15 */
+            SetFunctionName(f, Type.stringValue(targetName).toString(), "bound");
+            /* step 16 */
             return f;
         }
 

@@ -7,9 +7,7 @@
 package com.github.anba.es6draft.interpreter;
 
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
-import static com.github.anba.es6draft.semantics.StaticSemantics.BoundNames;
-import static com.github.anba.es6draft.semantics.StaticSemantics.VarDeclaredNames;
-import static com.github.anba.es6draft.semantics.StaticSemantics.VarScopedDeclarations;
+import static com.github.anba.es6draft.semantics.StaticSemantics.*;
 
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -103,7 +101,8 @@ final class DeclarationBindingInstantiation {
         boolean strict = script.isStrict();
         boolean nonStrictGlobal = !strict && script.isGlobalCode() && !script.isScripting();
 
-        /* step 1 (not applicable) */
+        /* step 1 */
+        assert LexicallyDeclaredNames(script).isEmpty();
         /* step 2 */
         Set<Name> varNames = VarDeclaredNames(script);
         /* step 3 */
@@ -121,12 +120,13 @@ final class DeclarationBindingInstantiation {
                 for (Name name : varNames) {
                     ScriptRuntime.canDeclareVarScopedOrThrow(cx, gEnvRec, name.getIdentifier());
                 }
-            } else if (script.isFunctionCode()) {
-                /* step 6.b */
-                DeclarativeEnvironmentRecord topLexEnvRec = cx
-                        .getFunctionVariableEnvironmentRecord().getTopLex();
+            }
+            /* steps 6.b-d */
+            // NB: Skip the initial lexEnv which is empty by construction. (TODO: Add assertion)
+            for (LexicalEnvironment<?> thisLex = lexEnv; (thisLex = thisLex.getOuter()) != varEnv;) {
+                EnvironmentRecord envRec = thisLex.getEnvRec();
                 for (Name name : varNames) {
-                    ScriptRuntime.canDeclareVarOrThrow(cx, topLexEnvRec, name.getIdentifier());
+                    ScriptRuntime.canDeclareVarOrThrow(cx, envRec, name.getIdentifier());
                 }
             }
         }
@@ -145,15 +145,17 @@ final class DeclarationBindingInstantiation {
             }
         }
         /* step 12 (note) */
-        /* steps 13-15 (not applicable) */
+        /* step 13 */
+        assert LexicallyScopedDeclarations(script).isEmpty();
+        /* steps 14-15 (not applicable) */
         /* step 16 */
         for (Name vn : declaredNames) {
             if (nonStrictGlobal) {
                 GlobalEnvironmentRecord gEnvRec = (GlobalEnvironmentRecord) varEnvRec;
                 gEnvRec.createGlobalVarBinding(vn.getIdentifier(), true);
             } else {
-                boolean varAlreadyDeclared = varEnvRec.hasBinding(vn.getIdentifier());
-                if (!varAlreadyDeclared) {
+                boolean bindingExists = varEnvRec.hasBinding(vn.getIdentifier());
+                if (!bindingExists) {
                     varEnvRec.createMutableBinding(vn.getIdentifier(), true);
                     varEnvRec.initializeBinding(vn.getIdentifier(), UNDEFINED);
                 }

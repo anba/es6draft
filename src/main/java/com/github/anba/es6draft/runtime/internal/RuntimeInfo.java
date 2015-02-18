@@ -6,17 +6,17 @@
  */
 package com.github.anba.es6draft.runtime.internal;
 
+import java.io.IOException;
 import java.lang.invoke.MethodHandle;
-import java.util.Map;
 
 import com.github.anba.es6draft.runtime.DeclarativeEnvironmentRecord;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.GlobalEnvironmentRecord;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.ModuleEnvironmentRecord;
-import com.github.anba.es6draft.runtime.modules.ModuleRecord;
+import com.github.anba.es6draft.runtime.modules.MalformedNameException;
 import com.github.anba.es6draft.runtime.modules.ResolutionException;
-import com.github.anba.es6draft.runtime.modules.SourceIdentifier;
+import com.github.anba.es6draft.runtime.modules.SourceTextModuleRecord;
 
 /**
  * Classes for function and script code bootstrapping.
@@ -321,26 +321,27 @@ public final class RuntimeInfo {
      */
     public interface ModuleBody extends SourceObject {
         /**
-         * Performs 15.2.1.21 Runtime Semantics: ModuleDeclarationInstantiation.
+         * Performs 15.2.1.16.4 ModuleDeclarationInstantiation( ) Concrete Method.
          * 
          * @param cx
          *            the execution context
+         * @param module
+         *            the module record
          * @param env
          *            the lexical environment
-         * @param moduleSet
-         *            the module set
-         * @param identifierMap
-         *            the source identifier map
+         * @throws IOException
+         *             if there was any I/O error
          * @throws ResolutionException
          *             if any export or import binding cannot be resolved
+         * @throws MalformedNameException
+         *             if any module specifier cannot be normalized
          */
-        void moduleDeclarationInstantiation(ExecutionContext cx,
-                LexicalEnvironment<ModuleEnvironmentRecord> env,
-                Map<SourceIdentifier, ModuleRecord> moduleSet,
-                Map<String, SourceIdentifier> identifierMap) throws ResolutionException;
+        void moduleDeclarationInstantiation(ExecutionContext cx, SourceTextModuleRecord module,
+                LexicalEnvironment<ModuleEnvironmentRecord> env) throws IOException,
+                ResolutionException, MalformedNameException;
 
         /**
-         * Performs 15.2.1.22 Runtime Semantics: ModuleEvaluation.
+         * Performs 15.2.1.16.5 ModuleEvaluation() Concrete Method.
          * 
          * @param cx
          *            the execution context
@@ -372,12 +373,12 @@ public final class RuntimeInfo {
 
         @Override
         public void moduleDeclarationInstantiation(ExecutionContext cx,
-                LexicalEnvironment<ModuleEnvironmentRecord> env,
-                Map<SourceIdentifier, ModuleRecord> moduleSet,
-                Map<String, SourceIdentifier> identifierMap) {
+                SourceTextModuleRecord module, LexicalEnvironment<ModuleEnvironmentRecord> env)
+                throws IOException, ResolutionException, MalformedNameException {
             try {
-                initialization.invokeExact(cx, env, moduleSet, identifierMap);
-            } catch (RuntimeException | Error e) {
+                initialization.invokeExact(cx, module, env);
+            } catch (RuntimeException | Error | IOException | ResolutionException
+                    | MalformedNameException e) {
                 throw e;
             } catch (Throwable e) {
                 throw new RuntimeException(e);

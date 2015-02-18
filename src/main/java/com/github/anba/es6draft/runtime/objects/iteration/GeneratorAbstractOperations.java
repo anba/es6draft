@@ -35,14 +35,12 @@ public final class GeneratorAbstractOperations {
      *            the generator object
      * @param generatorBody
      *            the runtime function code
-     * @return the generator object
      */
-    public static GeneratorObject GeneratorStart(ExecutionContext cx, GeneratorObject generator,
+    public static void GeneratorStart(ExecutionContext cx, GeneratorObject generator,
             RuntimeInfo.Function generatorBody) {
         /* steps 1-6 */
         generator.start(cx, generatorBody);
-        /* step 7 */
-        return generator;
+        /* step 7 (return) */
     }
 
     /**

@@ -55,10 +55,24 @@ Object.keys(data).forEach(key => {
   let d = data[key];
 
   // Ensure example data is correct
-  Function(d);
+  if (key !== "super") {
+    Function(d);
+  }
   Function(d.replace(key, key + key));
 
   // Test SyntaxError is issued
   assertSyntaxError(d.replace(key, escapeFirstChar(key)));
   assertSyntaxError(d.replace(key, escapeSecondChar(key)));
+});
+
+Object.keys(data).forEach(key => {
+  let d = data[key];
+
+  // Ensure example data is correct
+  Function(`({m(){ ${d} }});`);
+  Function(`({m(){ ${d.replace(key, key + key)} }});`);
+
+  // Test SyntaxError is issued
+  assertSyntaxError(`({m(){ ${d.replace(key, escapeFirstChar(key))} }});`);
+  assertSyntaxError(`({m(){ ${d.replace(key, escapeSecondChar(key))} }});`);
 });

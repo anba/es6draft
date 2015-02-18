@@ -150,7 +150,7 @@ public final class FunctionConstructor extends BuiltinConstructor implements Ini
         /* steps 22-23 */
         LexicalEnvironment<GlobalEnvironmentRecord> scope = f.getRealm().getGlobalEnv();
         /* step 24 */
-        FunctionInitialize(f, FunctionKind.Normal, strict, function, scope, exec);
+        FunctionInitialize(f, FunctionKind.Normal, function, scope, exec);
         /* step 25 */
         if (function.hasSuperReference()) {
             MakeMethod(f, null);

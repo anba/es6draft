@@ -10,7 +10,7 @@ import java.util.Locale;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.internal.Errors;
-import com.github.anba.es6draft.runtime.internal.InternalException;
+import com.github.anba.es6draft.runtime.internal.InternalThrowable;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
 
@@ -18,7 +18,7 @@ import com.github.anba.es6draft.runtime.internal.ScriptException;
  * Exception for module resolution errors.
  */
 @SuppressWarnings("serial")
-public final class ResolutionException extends InternalException {
+public final class ResolutionException extends Exception implements InternalThrowable {
     private final Messages.Key messageKey;
     private final String messageArgument;
 

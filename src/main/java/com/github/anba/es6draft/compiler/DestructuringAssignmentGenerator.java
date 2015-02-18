@@ -267,13 +267,13 @@ final class DestructuringAssignmentGenerator {
                 refType = expression(target, mv);
             }
 
-            /* steps 2-5 */
+            /* steps 2-3 */
             // stack: [(lref)] -> [(lref), v]
             mv.lineInfo(node);
             mv.load(iterator);
             mv.invoke(Methods.ScriptRuntime_iteratorNextOrUndefined);
 
-            /* steps 6-7 */
+            /* steps 4-5 */
             // stack: [(lref), v] -> [(lref), v']
             if (initializer != null) {
                 Jump undef = new Jump();
@@ -283,7 +283,7 @@ final class DestructuringAssignmentGenerator {
                 {
                     mv.pop();
                     expressionBoxedValue(initializer, mv);
-                    /* step 9 (moved) */
+                    /* step 7 (moved) */
                     if (!(target instanceof AssignmentPattern)
                             && IsAnonymousFunctionDefinition(initializer)
                             && IsIdentifierRef(target)) {
@@ -293,7 +293,7 @@ final class DestructuringAssignmentGenerator {
                 mv.mark(undef);
             }
 
-            /* steps 8-10 */
+            /* steps 6-8 */
             if (target instanceof AssignmentPattern) {
                 // stack: [v'] -> []
                 DestructuringAssignmentEvaluation((AssignmentPattern) target);
@@ -314,14 +314,14 @@ final class DestructuringAssignmentGenerator {
                 refType = expression(target, mv);
             }
 
-            /* steps 2-5 */
+            /* steps 2-4 */
             // stack: [(lref)] -> [(lref), rest]
             mv.lineInfo(node);
             mv.load(iterator);
             mv.loadExecutionContext();
             mv.invoke(Methods.ScriptRuntime_createRestArray);
 
-            /* steps 6-8 */
+            /* steps 5-7 */
             if (!(target instanceof AssignmentPattern)) {
                 // stack: [lref, rest] -> []
                 PutValue(target, refType, mv);

@@ -65,7 +65,7 @@ public final class OrdinaryConstructorFunction extends OrdinaryFunction implemen
     /* ***************************************************************************************** */
 
     /**
-     * 9.2.4 FunctionAllocate (functionPrototype, strict) Abstract Operation
+     * 9.2.4 FunctionAllocate (functionPrototype, strict [,functionKind] ) Abstract Operation
      * 
      * @param cx
      *            the execution context
@@ -109,14 +109,13 @@ public final class OrdinaryConstructorFunction extends OrdinaryFunction implemen
     public static OrdinaryConstructorFunction ConstructorFunctionCreate(ExecutionContext cx,
             FunctionKind kind, RuntimeInfo.Function function, LexicalEnvironment<?> scope) {
         /* step 1 */
-        ScriptObject functionPrototype = cx.getIntrinsic(Intrinsics.FunctionPrototype);
+        ScriptObject prototype = cx.getIntrinsic(Intrinsics.FunctionPrototype);
         /* steps 2-3 */
-        return ConstructorFunctionCreate(cx, kind, ConstructorKind.Base, function, scope,
-                functionPrototype);
+        return ConstructorFunctionCreate(cx, kind, ConstructorKind.Base, function, scope, prototype);
     }
 
     /**
-     * 9.2.6 FunctionCreate (kind, ParameterList, Body, Scope, Strict) Abstract Operation
+     * 9.2.6 FunctionCreate (kind, ParameterList, Body, Scope, Strict, prototype) Abstract Operation
      * 
      * @param cx
      *            the execution context
@@ -128,20 +127,20 @@ public final class OrdinaryConstructorFunction extends OrdinaryFunction implemen
      *            the constructor kind
      * @param scope
      *            the lexical environment
-     * @param functionPrototype
+     * @param prototype
      *            the function prototype
      * @return the new function object
      */
     public static OrdinaryConstructorFunction ConstructorFunctionCreate(ExecutionContext cx,
             FunctionKind kind, ConstructorKind constructorKind, RuntimeInfo.Function function,
-            LexicalEnvironment<?> scope, ScriptObject functionPrototype) {
+            LexicalEnvironment<?> scope, ScriptObject prototype) {
         assert !function.isGenerator() && !function.isAsync();
-        /* step 1 (not applicable) */
-        /* step 2 */
-        OrdinaryConstructorFunction f = FunctionAllocate(cx, functionPrototype,
-                function.isStrict(), kind, constructorKind);
-        /* step 3 */
-        FunctionInitialize(f, kind, function.isStrict(), function, scope, cx.getCurrentExecutable());
+        /* steps 1-3 (not applicable) */
+        /* step 4 */
+        OrdinaryConstructorFunction f = FunctionAllocate(cx, prototype, function.isStrict(), kind,
+                constructorKind);
+        /* step 5 */
+        FunctionInitialize(f, kind, function, scope, cx.getCurrentExecutable());
         return f;
     }
 }
