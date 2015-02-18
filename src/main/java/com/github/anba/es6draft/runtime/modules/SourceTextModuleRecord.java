@@ -258,30 +258,6 @@ public final class SourceTextModuleRecord implements ModuleRecord, Cloneable {
     /**
      * 15.2.1.16.1 ParseModule ( sourceText ) Abstract Operation
      * 
-     * @param realm
-     *            the realm instance
-     * @param sourceCodeId
-     *            the source code identifier
-     * @param source
-     *            the module source code
-     * @return the parsed module record
-     * @throws IOException
-     *             if there was any I/O error
-     * @throws ParserException
-     *             if the module source contains any syntax errors
-     * @throws CompilationException
-     *             if the parsed module source cannot be compiled
-     */
-    public static SourceTextModuleRecord ParseModule(Realm realm, SourceIdentifier sourceCodeId,
-            ModuleSource source) throws IOException, ParserException, CompilationException {
-        SourceTextModuleRecord module = ParseModule(realm.getScriptLoader(), sourceCodeId, source);
-        module.setRealm(realm);
-        return module;
-    }
-
-    /**
-     * 15.2.1.16.1 ParseModule ( sourceText ) Abstract Operation
-     * 
      * @param scriptLoader
      *            the script loader
      * @param sourceCodeId
@@ -349,7 +325,7 @@ public final class SourceTextModuleRecord implements ModuleRecord, Cloneable {
         /* step 3 */
         HashSet<String> exportedNames = new HashSet<>();
         /* step 4 */
-        for (ExportEntry exportEntry : module.getStarExportEntries()) {
+        for (ExportEntry exportEntry : module.starExportEntries) {
             /* steps 4.a-b */
             ModuleRecord requestedModule = HostResolveImportedModule(module,
                     exportEntry.getModuleRequest());
@@ -370,13 +346,13 @@ public final class SourceTextModuleRecord implements ModuleRecord, Cloneable {
             }
         }
         /* step 5 */
-        for (ExportEntry exportEntry : module.getLocalExportEntries()) {
+        for (ExportEntry exportEntry : module.localExportEntries) {
             /* step 5.a (not applicable) */
             /* step 5.b */
             exportedNames.add(exportEntry.getExportName());
         }
         /* step 6 */
-        for (ExportEntry exportEntry : module.getIndirectExportEntries()) {
+        for (ExportEntry exportEntry : module.indirectExportEntries) {
             /* step 6.a (not applicable) */
             /* step 6.b */
             exportedNames.add(exportEntry.getExportName());
@@ -404,7 +380,7 @@ public final class SourceTextModuleRecord implements ModuleRecord, Cloneable {
         /* step 3 */
         resolvedExports.add(exportName);
         /* step 4 */
-        for (ExportEntry exportEntry : module.getLocalExportEntries()) {
+        for (ExportEntry exportEntry : module.localExportEntries) {
             if (exportName.equals(exportEntry.getExportName())) {
                 /* step 4.a.i (not applicable) */
                 /* step 4.a.ii */
@@ -412,7 +388,7 @@ public final class SourceTextModuleRecord implements ModuleRecord, Cloneable {
             }
         }
         /* step 5 */
-        for (ExportEntry exportEntry : module.getIndirectExportEntries()) {
+        for (ExportEntry exportEntry : module.indirectExportEntries) {
             if (exportName.equals(exportEntry.getExportName())) {
                 /* step 5.a.i (not applicable) */
                 /* steps 5.a.ii-iii */
@@ -435,13 +411,13 @@ public final class SourceTextModuleRecord implements ModuleRecord, Cloneable {
         if ("default".equals(exportName)) {
             /* step 7.a (not applicable) */
             /* step 7.b */
-            throw new ResolutionException(Messages.Key.ModulesMissingDefaultExport, module
-                    .getSourceCodeId().toString());
+            throw new ResolutionException(Messages.Key.ModulesMissingDefaultExport,
+                    module.sourceCodeId.toString());
         }
         /* step 8 */
         ModuleExport starResolution = null;
         /* step 9 */
-        for (ExportEntry exportEntry : module.getStarExportEntries()) {
+        for (ExportEntry exportEntry : module.starExportEntries) {
             /* step 9.a */
             Set<ModuleRecord> exportStarSetCopy = new HashSet<>(exportStarSet);
             /* step 9.b */
@@ -488,7 +464,7 @@ public final class SourceTextModuleRecord implements ModuleRecord, Cloneable {
         /* step 4 */
         assert module.environment == null;
         /* step 5 */
-        Module code = module.getScriptCode();
+        Module code = module.scriptCode;
         /* step 8 */
         LexicalEnvironment<ModuleEnvironmentRecord> env = newModuleEnvironment(realm.getGlobalEnv());
         /* step 15 */
@@ -526,7 +502,7 @@ public final class SourceTextModuleRecord implements ModuleRecord, Cloneable {
         try {
             realm.setScriptContext(moduleContext);
             /* step 14 */
-            Object result = module.getScriptCode().evaluate(moduleContext);
+            Object result = module.scriptCode.evaluate(moduleContext);
             /* step 17 */
             return result;
         } finally {

@@ -6,8 +6,6 @@
  */
 package com.github.anba.es6draft.runtime.modules;
 
-import static com.github.anba.es6draft.runtime.modules.SourceTextModuleRecord.ParseModule;
-
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -132,9 +130,13 @@ public final class ModuleSemantics {
     public static void ModuleEvaluationJob(Realm realm, SourceIdentifier sourceCodeId,
             ModuleSource source) throws IOException, MalformedNameException, ParserException,
             CompilationException, ResolutionException {
+        ModuleLoader moduleLoader = realm.getModuleLoader();
         /* steps 1-2 (not applicable) */
-        /* steps 3-5 */
-        SourceTextModuleRecord m = ParseModule(realm, sourceCodeId, source);
+        /* steps 3-4 */
+        ModuleRecord m = moduleLoader.define(sourceCodeId, source);
+        /* step 5 */
+        boolean linked = moduleLoader.link(m, realm);
+        assert linked : "could not link module: " + sourceCodeId;
         /* step 6 */
         m.instantiate();
         /* steps 7-8 */
