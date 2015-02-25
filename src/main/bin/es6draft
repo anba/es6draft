@@ -88,6 +88,13 @@ if $IS_CYGWIN ; then
   JAVA_OPTS="${JAVA_OPTS} -Dfile.encoding=$(locale charmap)"
 fi
 
+JLINE_ENABLED=true
+for opt in "$@" ; do
+  if [[ "$opt" == "--no-jline" ]] ; then
+    JLINE_ENABLED=false
+  fi
+done
+
 # Configure JLine terminal settings
 CYGWIN_TERM=false
 JLINE_TERMINAL="unix"
@@ -109,17 +116,17 @@ JAVA_OPTS="${JAVA_OPTS} -Djline.terminal=${JLINE_TERMINAL}"
 
 JAVA_OPTS_EXTRA=""
 function configureTerminal() {
-  if $CYGWIN_TERM ; then
+  if [[ $CYGWIN_TERM == "true" && $JLINE_ENABLED == "true" ]] ; then
     # see JLine UnixTerminal
     stty -icanon min 1 -icrnl -inlcr -ixon -echo > /dev/null 2>&1
-    JAVA_OPTS_EXTRA="-Djline.terminal.settings=\"$(stty -a)\""
+    JAVA_OPTS_EXTRA="-Djline.terminal.settings=\"$(stty -a < /dev/tty)\""
     trap restoreTerminal INT
   fi
 }
 
 function restoreTerminal() {
   EXIT_STATUS=$?
-  if $CYGWIN_TERM ; then
+  if [[ $CYGWIN_TERM == "true" && $JLINE_ENABLED == "true" ]] ; then
     stty sane > /dev/null 2>&1
   fi
   exit $EXIT_STATUS

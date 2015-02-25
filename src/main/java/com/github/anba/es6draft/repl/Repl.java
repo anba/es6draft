@@ -602,14 +602,14 @@ public final class Repl {
      *            the realm instance
      * @param line
      *            the current line
-     * @return the parsed script node
+     * @return the parsed script node or {@coden null} if the end of stream has been reached
      */
     private com.github.anba.es6draft.ast.Script read(Realm realm, int line) {
         StringBuilder sourceCode = new StringBuilder();
         for (String prompt = PROMPT;; prompt = "") {
             String s = console.readLine(prompt);
             if (s == null) {
-                continue;
+                return null;
             }
             sourceCode.append(s).append('\n');
             Source source = new Source(Paths.get(".").toAbsolutePath(), "typein", line);
@@ -741,6 +741,9 @@ public final class Repl {
             for (;;) {
                 try {
                     com.github.anba.es6draft.ast.Script parsedScript = read(realm, ++line);
+                    if (parsedScript == null) {
+                        return null;
+                    }
                     if (parsedScript.getStatements().isEmpty()) {
                         continue;
                     }
