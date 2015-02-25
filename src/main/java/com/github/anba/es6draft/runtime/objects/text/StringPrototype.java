@@ -11,18 +11,17 @@ import static com.github.anba.es6draft.runtime.internal.Errors.newRangeError;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.objects.intl.CollatorPrototype.CompareStrings;
+import static com.github.anba.es6draft.runtime.objects.intl.IntlAbstractOperations.BestAvailableLocale;
 import static com.github.anba.es6draft.runtime.objects.intl.IntlAbstractOperations.CanonicalizeLocaleList;
 import static com.github.anba.es6draft.runtime.objects.intl.IntlAbstractOperations.DefaultLocale;
-import static com.github.anba.es6draft.runtime.objects.intl.IntlAbstractOperations.LookupSupportedLocales;
+import static com.github.anba.es6draft.runtime.objects.intl.IntlAbstractOperations.StripUnicodeLocaleExtension;
 import static com.github.anba.es6draft.runtime.objects.text.RegExpConstructor.RegExpCreate;
 import static com.github.anba.es6draft.runtime.objects.text.StringIteratorPrototype.CreateStringIterator;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.ArrayObject.ArrayCreate;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
@@ -568,7 +567,6 @@ public final class StringPrototype extends OrdinaryObject implements Initializab
         @Function(name = "split", arity = 2)
         public static Object split(ExecutionContext cx, Object thisValue, Object separator,
                 Object limit) {
-            // FIXME: spec inconsistent w.r.t. ToString(this value)
             /* steps 1-2 */
             Object obj = RequireObjectCoercible(cx, thisValue);
             /* step 3 */
@@ -742,14 +740,14 @@ public final class StringPrototype extends OrdinaryObject implements Initializab
             /* steps 5-7 */
             String requestedLocale = !requestedLocales.isEmpty() ? requestedLocales.iterator()
                     .next() : DefaultLocale(cx.getRealm());
+            /* step 8 */
+            String noExtensionsLocale = StripUnicodeLocaleExtension(requestedLocale);
             /* step 9 */
             HashSet<String> availableLocales = new HashSet<>(Arrays.asList("az", "lt", "tr"));
-            /* steps 8, 10 */
-            // NB: Calling LookupSupportedLocales is equivalent to calling BestAvailableLocale.
-            List<String> supportedLocales = LookupSupportedLocales(cx, availableLocales,
-                    Collections.singleton(requestedLocale));
+            /* step 10 */
+            String locale = BestAvailableLocale(availableLocales, noExtensionsLocale);
             /* step 11 */
-            String supportedLocale = supportedLocales.isEmpty() ? "und" : supportedLocales.get(0);
+            String supportedLocale = locale == null ? "und" : locale;
             /* steps 12-17 */
             return UCharacter.toLowerCase(ULocale.forLanguageTag(supportedLocale), s);
         }
@@ -800,14 +798,14 @@ public final class StringPrototype extends OrdinaryObject implements Initializab
             /* steps 5-7 */
             String requestedLocale = !requestedLocales.isEmpty() ? requestedLocales.iterator()
                     .next() : DefaultLocale(cx.getRealm());
+            /* step 8 */
+            String noExtensionsLocale = StripUnicodeLocaleExtension(requestedLocale);
             /* step 9 */
             HashSet<String> availableLocales = new HashSet<>(Arrays.asList("az", "lt", "tr"));
-            /* steps 8, 10 */
-            // NB: Calling LookupSupportedLocales is equivalent to calling BestAvailableLocale.
-            List<String> supportedLocales = LookupSupportedLocales(cx, availableLocales,
-                    Collections.singleton(requestedLocale));
+            /* step 10 */
+            String locale = BestAvailableLocale(availableLocales, noExtensionsLocale);
             /* step 11 */
-            String supportedLocale = supportedLocales.isEmpty() ? "und" : supportedLocales.get(0);
+            String supportedLocale = locale == null ? "und" : locale;
             /* steps 12-17 */
             return UCharacter.toUpperCase(ULocale.forLanguageTag(supportedLocale), s);
         }

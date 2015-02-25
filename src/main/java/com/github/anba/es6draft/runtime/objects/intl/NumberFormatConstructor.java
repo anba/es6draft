@@ -190,8 +190,8 @@ public final class NumberFormatConstructor extends BuiltinConstructor implements
         /* steps 9-10 */
         NumberFormatLocaleData localeData = new NumberFormatLocaleData();
         /* step 11 */
-        ResolvedLocale r = ResolveLocale(cx, getAvailableLocalesLazy(cx), requestedLocales, opt,
-                relevantExtensionKeys, localeData);
+        ResolvedLocale r = ResolveLocale(cx.getRealm(), getAvailableLocalesLazy(cx),
+                requestedLocales, opt, relevantExtensionKeys, localeData);
         /* step 12 */
         numberFormat.setLocale(r.getLocale());
         /* step 13 */

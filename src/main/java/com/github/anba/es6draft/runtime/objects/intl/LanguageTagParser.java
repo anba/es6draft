@@ -302,7 +302,7 @@ final class LanguageTagParser {
         for (; i < len; ++i) {
             char c = ca[i];
             if (isUpper(c)) {
-                ca[i] = (char) ('a' + (c - 'A'));
+                ca[i] = (char) (c + ('a' - 'A'));
             } else if (!(isAlpha(c) || isDigit(c) || c == '-')) {
                 return null;
             }

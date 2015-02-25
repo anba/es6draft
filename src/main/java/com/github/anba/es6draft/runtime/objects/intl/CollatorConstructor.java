@@ -298,8 +298,8 @@ public final class CollatorConstructor extends BuiltinConstructor implements Ini
             opt.putValue(ExtensionKey.kf, caseFirst);
         }
         /* steps 14-15 */
-        ResolvedLocale r = ResolveLocale(cx, getAvailableLocalesLazy(cx), requestedLocals, opt,
-                relevantExtensionKeys, localeData);
+        ResolvedLocale r = ResolveLocale(cx.getRealm(), getAvailableLocalesLazy(cx),
+                requestedLocals, opt, relevantExtensionKeys, localeData);
         /* step 16 */
         collator.setLocale(r.getLocale());
         /* steps 17-19 (co-collation) */

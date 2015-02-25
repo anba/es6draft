@@ -282,8 +282,8 @@ public final class DateTimeFormatConstructor extends BuiltinConstructor implemen
         /* steps 8-9 */
         DateTimeFormatLocaleData localeData = new DateTimeFormatLocaleData();
         /* step 10 */
-        ResolvedLocale r = ResolveLocale(cx, getAvailableLocalesLazy(cx), requestedLocales, opt,
-                relevantExtensionKeys, localeData);
+        ResolvedLocale r = ResolveLocale(cx.getRealm(), getAvailableLocalesLazy(cx),
+                requestedLocales, opt, relevantExtensionKeys, localeData);
         /* step 11 */
         dateTimeFormat.setLocale(r.getLocale());
         /* step 12 */
