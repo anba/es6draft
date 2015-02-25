@@ -46,7 +46,7 @@ public final class WeakSetConstructor extends BuiltinConstructor implements Init
      *            the realm object
      */
     public WeakSetConstructor(Realm realm) {
-        super(realm, "WeakSet", 1);
+        super(realm, "WeakSet", 0);
     }
 
     @Override
@@ -134,7 +134,7 @@ public final class WeakSetConstructor extends BuiltinConstructor implements Init
 
         @Value(name = "length", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = true))
-        public static final int length = 1;
+        public static final int length = 0;
 
         @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = true))

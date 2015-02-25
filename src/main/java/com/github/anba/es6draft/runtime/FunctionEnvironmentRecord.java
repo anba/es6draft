@@ -27,38 +27,43 @@ public final class FunctionEnvironmentRecord extends DeclarativeEnvironmentRecor
     private final Constructor newTarget;
     private final ScriptObject homeObject;
     private Object thisValue;
-    private boolean thisInitializationState;
+    private ThisBindingStatus thisBindingStatus;
+
+    public enum ThisBindingStatus {
+        Lexical, Initialized, Uninitialized
+    }
 
     public FunctionEnvironmentRecord(ExecutionContext cx, FunctionObject functionObject,
             Constructor newTarget, Object thisValue) {
-        super(cx);
+        super(cx, false);
         this.functionObject = functionObject;
         this.newTarget = newTarget;
         this.homeObject = functionObject.getHomeObject();
         this.thisValue = thisValue;
-        this.thisInitializationState = true;
+        this.thisBindingStatus = thisValue != null ? ThisBindingStatus.Initialized
+                : ThisBindingStatus.Lexical;
     }
 
     public FunctionEnvironmentRecord(ExecutionContext cx, FunctionObject functionObject,
             Constructor newTarget) {
-        super(cx);
+        super(cx, false);
         this.functionObject = functionObject;
         this.newTarget = newTarget;
         this.homeObject = functionObject.getHomeObject();
         this.thisValue = UNDEFINED;
-        this.thisInitializationState = false;
+        this.thisBindingStatus = ThisBindingStatus.Uninitialized;
     }
 
     @Override
     public String toString() {
         return String
-                .format("%s:{%n\tfunctionObject=%s,%n\tnewTarget=%s,%n\thomeObject=%s,%n\tthisValue=%s,%n\tthisInitializationState=%b,%n\tbindings=%s%n}",
+                .format("%s:{%n\tfunctionObject=%s,%n\tnewTarget=%s,%n\thomeObject=%s,%n\tthisValue=%s,%n\tthisBindingStatus=%b,%n\tbindings=%s%n}",
                         getClass().getSimpleName(), functionObject, newTarget, homeObject,
-                        thisValue, thisInitializationState, bindingsToString());
+                        thisValue, thisBindingStatus, bindingsToString());
     }
 
     /**
-     * Returns the {@code FunctionObject} state field.
+     * Returns the {@code FunctionObject} field.
      * 
      * @return the {@code FunctionObject} field
      */
@@ -67,7 +72,7 @@ public final class FunctionEnvironmentRecord extends DeclarativeEnvironmentRecor
     }
 
     /**
-     * Returns the {@code newTarget} state field.
+     * Returns the {@code newTarget} field.
      * 
      * @return the {@code newTarget} field
      */
@@ -76,12 +81,12 @@ public final class FunctionEnvironmentRecord extends DeclarativeEnvironmentRecor
     }
 
     /**
-     * Returns the {@code thisInitializationState} state field.
+     * Returns the {@code thisBindingStatus} field.
      * 
-     * @return the {@code thisInitializationState} field
+     * @return the {@code thisBindingStatus} field
      */
-    public boolean isThisInitialized() {
-        return thisInitializationState;
+    public ThisBindingStatus getThisBindingStatus() {
+        return thisBindingStatus;
     }
 
     /**
@@ -95,13 +100,15 @@ public final class FunctionEnvironmentRecord extends DeclarativeEnvironmentRecor
     public void bindThisValue(ExecutionContext cx, ScriptObject thisValue) {
         /* step 1 (not applicable) */
         /* step 2 */
-        if (thisInitializationState) {
+        assert thisBindingStatus != ThisBindingStatus.Lexical;
+        /* step 3 */
+        if (thisBindingStatus == ThisBindingStatus.Initialized) {
             throw newReferenceError(cx, Messages.Key.InitializedThis);
         }
-        /* step 3 */
-        this.thisValue = thisValue;
         /* step 4 */
-        this.thisInitializationState = true;
+        this.thisValue = thisValue;
+        /* step 5 */
+        this.thisBindingStatus = ThisBindingStatus.Initialized;
         /* step 5 (not applicable) */
     }
 
@@ -133,10 +140,12 @@ public final class FunctionEnvironmentRecord extends DeclarativeEnvironmentRecor
     public Object getThisBinding(ExecutionContext cx) {
         /* step 1 (not applicable) */
         /* step 2 */
-        if (!thisInitializationState) {
+        assert thisBindingStatus != ThisBindingStatus.Lexical;
+        /* step 3 */
+        if (thisBindingStatus == ThisBindingStatus.Uninitialized) {
             throw newReferenceError(cx, Messages.Key.UninitializedThis);
         }
-        /* step 3 */
+        /* step 4 */
         return thisValue;
     }
 

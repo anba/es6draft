@@ -7,10 +7,16 @@
 package com.github.anba.es6draft.compiler;
 
 import static com.github.anba.es6draft.semantics.StaticSemantics.IsAnonymousFunctionDefinition;
-import static com.github.anba.es6draft.semantics.StaticSemantics.IsFunctionDefinition;
 import static com.github.anba.es6draft.semantics.StaticSemantics.PropName;
 
-import com.github.anba.es6draft.ast.*;
+import com.github.anba.es6draft.ast.ComputedPropertyName;
+import com.github.anba.es6draft.ast.Expression;
+import com.github.anba.es6draft.ast.IdentifierReference;
+import com.github.anba.es6draft.ast.MethodDefinition;
+import com.github.anba.es6draft.ast.Node;
+import com.github.anba.es6draft.ast.PropertyName;
+import com.github.anba.es6draft.ast.PropertyNameDefinition;
+import com.github.anba.es6draft.ast.PropertyValueDefinition;
 import com.github.anba.es6draft.ast.synthetic.PropertyDefinitionsMethod;
 import com.github.anba.es6draft.compiler.CodeGenerator.FunctionName;
 import com.github.anba.es6draft.compiler.assembler.MethodName;
@@ -84,21 +90,6 @@ final class PropertyGenerator extends
                         .methodType(Type.VOID_TYPE, Types.OrdinaryObject, Types.String,
                                 Type.BOOLEAN_TYPE, Types.RuntimeInfo$Function,
                                 Types.ExecutionContext));
-
-        static final MethodName ScriptRuntime_defineMethod = MethodName.findStatic(
-                Types.ScriptRuntime, "defineMethod", Type.methodType(Type.VOID_TYPE,
-                        Types.OrdinaryObject, Types.Object, Types.FunctionObject,
-                        Types.ExecutionContext));
-
-        static final MethodName ScriptRuntime_defineMethod_String = MethodName.findStatic(
-                Types.ScriptRuntime, "defineMethod", Type.methodType(Type.VOID_TYPE,
-                        Types.OrdinaryObject, Types.String, Types.FunctionObject,
-                        Types.ExecutionContext));
-
-        static final MethodName ScriptRuntime_defineMethod_long = MethodName.findStatic(
-                Types.ScriptRuntime, "defineMethod", Type.methodType(Type.VOID_TYPE,
-                        Types.OrdinaryObject, Type.LONG_TYPE, Types.FunctionObject,
-                        Types.ExecutionContext));
 
         static final MethodName ScriptRuntime_defineProperty = MethodName.findStatic(
                 Types.ScriptRuntime, "defineProperty", Type.methodType(Type.VOID_TYPE,
@@ -253,30 +244,7 @@ final class PropertyGenerator extends
     @Override
     public ValType visit(PropertyValueDefinition node, ExpressionVisitor mv) {
         Expression propertyValue = node.getPropertyValue();
-        boolean defineMethod, isAnonymousFunctionDefinition;
-        if (IsFunctionDefinition(propertyValue)) {
-            if (propertyValue instanceof ClassExpression) {
-                // [[HomeObject]] is never undefined if [[NeedsSuper]] is true in class constructor.
-                defineMethod = false;
-            } else {
-                assert propertyValue instanceof FunctionNode : propertyValue.getClass();
-                FunctionNode function = (FunctionNode) propertyValue;
-                if (function.getThisMode() == FunctionNode.ThisMode.Lexical) {
-                    defineMethod = false;
-                } else {
-                    assert function instanceof FunctionExpression
-                            || function instanceof GeneratorExpression
-                            || function instanceof AsyncFunctionExpression;
-                    // FIXME: spec bug - unreachable (bug 3963)
-                    defineMethod = function.getScope().hasSuperReference();
-                }
-            }
-            isAnonymousFunctionDefinition = IsAnonymousFunctionDefinition(propertyValue);
-        } else {
-            defineMethod = false;
-            isAnonymousFunctionDefinition = false;
-        }
-
+        boolean isAnonymousFunctionDefinition = IsAnonymousFunctionDefinition(propertyValue);
         PropertyName propertyName = node.getPropertyName();
         String propName = PropName(propertyName);
         long propIndex = propName != null ? IndexedMap.toIndex(propName) : -1;
@@ -291,11 +259,7 @@ final class PropertyGenerator extends
             }
             mv.loadExecutionContext();
             mv.lineInfo(node);
-            if (defineMethod) {
-                mv.invoke(Methods.ScriptRuntime_defineMethod);
-            } else {
-                mv.invoke(Methods.ScriptRuntime_defineProperty);
-            }
+            mv.invoke(Methods.ScriptRuntime_defineProperty);
         } else if ("__proto__".equals(propName)
                 && codegen.isEnabled(CompatibilityOption.ProtoInitializer)) {
             expressionBoxedValue(propertyValue, mv);
@@ -311,11 +275,7 @@ final class PropertyGenerator extends
             }
             mv.loadExecutionContext();
             mv.lineInfo(node);
-            if (defineMethod) {
-                mv.invoke(Methods.ScriptRuntime_defineMethod_long);
-            } else {
-                mv.invoke(Methods.ScriptRuntime_defineProperty_long);
-            }
+            mv.invoke(Methods.ScriptRuntime_defineProperty_long);
         } else {
             mv.aconst(propName);
             expressionBoxedValue(propertyValue, mv);
@@ -324,11 +284,7 @@ final class PropertyGenerator extends
             }
             mv.loadExecutionContext();
             mv.lineInfo(node);
-            if (defineMethod) {
-                mv.invoke(Methods.ScriptRuntime_defineMethod_String);
-            } else {
-                mv.invoke(Methods.ScriptRuntime_defineProperty_String);
-            }
+            mv.invoke(Methods.ScriptRuntime_defineProperty_String);
         }
 
         return null;

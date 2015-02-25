@@ -306,7 +306,7 @@ public final class Reflect extends OrdinaryObject implements Initializable {
          *            the optional receiver object
          * @return the property value
          */
-        @Function(name = "get", arity = 3)
+        @Function(name = "get", arity = 2)
         public static Object get(ExecutionContext cx, Object thisValue, Object target,
                 Object propertyKey, @Optional(Optional.Default.NONE) Object receiver) {
             /* step 1 */
@@ -345,7 +345,7 @@ public final class Reflect extends OrdinaryObject implements Initializable {
          *            the optional receiver object
          * @return {@code true} on success
          */
-        @Function(name = "set", arity = 4)
+        @Function(name = "set", arity = 3)
         public static Object set(ExecutionContext cx, Object thisValue, Object target,
                 Object propertyKey, Object value, @Optional(Optional.Default.NONE) Object receiver) {
             /* step 1 */

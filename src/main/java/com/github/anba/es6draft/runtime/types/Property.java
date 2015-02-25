@@ -248,10 +248,10 @@ public final class Property implements Cloneable {
                 return false;
             }
         } else {
-            if (desc.hasGetter() && !SameValue(desc.getGetter(), getter)) {
+            if (desc.hasGetter() && desc.getGetter() != getter) {
                 return false;
             }
-            if (desc.hasSetter() && !SameValue(desc.getSetter(), setter)) {
+            if (desc.hasSetter() && desc.getSetter() != setter) {
                 return false;
             }
             if (desc.isDataDescriptor()) {

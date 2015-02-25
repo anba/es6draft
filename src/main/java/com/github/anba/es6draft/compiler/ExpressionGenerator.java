@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Objects;
 
 import com.github.anba.es6draft.ast.*;
+import com.github.anba.es6draft.ast.scope.BlockScope;
 import com.github.anba.es6draft.ast.scope.Name;
 import com.github.anba.es6draft.ast.scope.Scope;
 import com.github.anba.es6draft.ast.scope.TopLevelScope;
@@ -427,12 +428,12 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
      * @return
      */
     private ValType EvaluateNew(NewExpression node, ExpressionVisitor mv) {
-        /* steps 1-3 (not applicable) */
-        /* steps 4-6 */
+        /* steps 1-2 (not applicable) */
+        /* steps 3-5 */
         evalAndGetBoxedValue(node.getExpression(), mv);
-        /* steps 7-8 */
+        /* steps 6-7 */
         ArgumentListEvaluation(node, node.getArguments(), mv);
-        /* steps 9-14 */
+        /* steps 8-9 */
         mv.loadExecutionContext();
         mv.lineInfo(node);
         mv.invoke(Methods.ScriptRuntime_EvaluateConstructorCall);
@@ -477,6 +478,35 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
                 ScopedNode node = scope.getNode();
                 if (node instanceof Script) {
                     return ((Script) node).isEnclosedByWithStatement();
+                }
+                return false;
+            }
+            scope = nextScope;
+        }
+    }
+
+    private static boolean isEnclosedByLexicalDeclaration(Scope currentScope, boolean catchVar) {
+        for (Scope scope = currentScope;;) {
+            BLOCK: if (scope instanceof BlockScope) {
+                if (catchVar) {
+                    ScopedNode node = scope.getNode();
+                    if (node instanceof CatchNode || node instanceof GuardedCatchNode) {
+                        break BLOCK;
+                    }
+                }
+                if (!((BlockScope) scope).lexicallyDeclaredNames().isEmpty()) {
+                    return true;
+                }
+            }
+            Scope nextScope = scope.getParent();
+            if (nextScope == null) {
+                assert scope instanceof TopLevelScope;
+                if (!((TopLevelScope) scope).lexicallyDeclaredNames().isEmpty()) {
+                    return true;
+                }
+                ScopedNode node = scope.getNode();
+                if (node instanceof Script) {
+                    return ((Script) node).isEnclosedByLexicalDeclaration();
                 }
                 return false;
             }
@@ -931,6 +961,10 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
         }
         if (isEnclosedByWithStatement(mv.getScope())) {
             evalFlags |= EvalFlags.EnclosedByWithStatement.getValue();
+        }
+        if (isEnclosedByLexicalDeclaration(mv.getScope(),
+                codegen.isEnabled(CompatibilityOption.CatchVarStatement))) {
+            evalFlags |= EvalFlags.EnclosedByLexicalDeclaration.getValue();
         }
 
         // stack: [thisValue?, args?, func(Callable)] -> [thisValue?, args?]
@@ -2680,7 +2714,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
      */
     @Override
     public ValType visit(NewExpression node, ExpressionVisitor mv) {
-        /* steps 1-2 */
+        /* step 1 */
         return EvaluateNew(node, mv);
     }
 

@@ -47,7 +47,7 @@ public final class WeakMapConstructor extends BuiltinConstructor implements Init
      *            the realm object
      */
     public WeakMapConstructor(Realm realm) {
-        super(realm, "WeakMap", 1);
+        super(realm, "WeakMap", 0);
     }
 
     @Override
@@ -141,7 +141,7 @@ public final class WeakMapConstructor extends BuiltinConstructor implements Init
 
         @Value(name = "length", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = true))
-        public static final int length = 1;
+        public static final int length = 0;
 
         @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = true))

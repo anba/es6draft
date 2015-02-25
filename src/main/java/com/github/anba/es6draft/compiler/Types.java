@@ -14,15 +14,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.github.anba.es6draft.compiler.assembler.Type;
-import com.github.anba.es6draft.runtime.AbstractOperations;
-import com.github.anba.es6draft.runtime.DeclarativeEnvironmentRecord;
-import com.github.anba.es6draft.runtime.EnvironmentRecord;
-import com.github.anba.es6draft.runtime.ExecutionContext;
-import com.github.anba.es6draft.runtime.FunctionEnvironmentRecord;
-import com.github.anba.es6draft.runtime.GlobalEnvironmentRecord;
-import com.github.anba.es6draft.runtime.LexicalEnvironment;
-import com.github.anba.es6draft.runtime.ModuleEnvironmentRecord;
-import com.github.anba.es6draft.runtime.Realm;
+import com.github.anba.es6draft.runtime.*;
 import com.github.anba.es6draft.runtime.internal.*;
 import com.github.anba.es6draft.runtime.modules.ModuleExport;
 import com.github.anba.es6draft.runtime.modules.ModuleRecord;
@@ -100,6 +92,7 @@ final class Types {
     static final Type GlobalEnvironmentRecord = Type.of(GlobalEnvironmentRecord.class);
     static final Type LexicalEnvironment = Type.of(LexicalEnvironment.class);
     static final Type ModuleEnvironmentRecord = Type.of(ModuleEnvironmentRecord.class);
+    static final Type ObjectEnvironmentRecord = Type.of(ObjectEnvironmentRecord.class);
     static final Type Realm = Type.of(Realm.class);
     static final Type ScriptRuntime = Type.of(ScriptRuntime.class);
 

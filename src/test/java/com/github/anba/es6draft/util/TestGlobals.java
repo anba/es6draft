@@ -135,13 +135,12 @@ public abstract class TestGlobals<GLOBAL extends ShellGlobalObject, TEST extends
         GLOBAL global = world.newInitializedGlobal();
         // Evaluate additional initialization scripts and modules
         for (SourceTextModuleRecord module : modules.allModules) {
-            moduleLoader.define(module.getSourceCodeId(), module.clone());
+            moduleLoader.define(module.clone(), global.getRealm());
         }
         for (SourceTextModuleRecord module : modules.mainModules) {
-            SourceTextModuleRecord testModule = moduleLoader.get(module.getSourceCodeId());
-            if (moduleLoader.link(testModule, global.getRealm())) {
-                testModule.instantiate();
-            }
+            SourceTextModuleRecord testModule = moduleLoader.get(module.getSourceCodeId(),
+                    global.getRealm());
+            testModule.instantiate();
             testModule.evaluate();
         }
         for (Script script : scripts) {
@@ -193,9 +192,7 @@ public abstract class TestGlobals<GLOBAL extends ShellGlobalObject, TEST extends
         ArrayList<SourceTextModuleRecord> modules = new ArrayList<>();
         for (String moduleName : toStrings(moduleNames)) {
             SourceIdentifier moduleId = moduleLoader.normalizeName(moduleName, null);
-            SourceTextModuleRecord module = moduleLoader.resolve(moduleId);
-            moduleLoader.fetch(module);
-            modules.add(module);
+            modules.add(moduleLoader.load(moduleId));
         }
         return new PreloadModules(modules, moduleLoader.getModules());
     }

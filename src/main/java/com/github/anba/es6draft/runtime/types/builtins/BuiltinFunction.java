@@ -152,7 +152,7 @@ public abstract class BuiltinFunction extends OrdinaryObject implements Callable
 
     @Override
     public final Realm getRealm(ExecutionContext cx) {
-        /* 7.3.21 GetFunctionRealm ( obj ) Abstract Operation */
+        /* 7.3.22 GetFunctionRealm ( obj ) */
         return realm;
     }
 

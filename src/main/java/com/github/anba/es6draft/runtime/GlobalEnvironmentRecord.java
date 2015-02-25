@@ -7,7 +7,9 @@
 package com.github.anba.es6draft.runtime;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.DefinePropertyOrThrow;
+import static com.github.anba.es6draft.runtime.AbstractOperations.HasOwnProperty;
 import static com.github.anba.es6draft.runtime.AbstractOperations.IsExtensible;
+import static com.github.anba.es6draft.runtime.AbstractOperations.Set;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
@@ -38,8 +40,8 @@ public final class GlobalEnvironmentRecord implements EnvironmentRecord {
     public GlobalEnvironmentRecord(ExecutionContext cx, ScriptObject globalObject) {
         this.cx = cx;
         this.globalObject = globalObject;
-        objectRec = new ObjectEnvironmentRecord(cx, globalObject, false);
-        declRec = new DeclarativeEnvironmentRecord(cx);
+        this.objectRec = new ObjectEnvironmentRecord(cx, globalObject, false);
+        this.declRec = new DeclarativeEnvironmentRecord(cx, false);
     }
 
     @Override
@@ -93,13 +95,11 @@ public final class GlobalEnvironmentRecord implements EnvironmentRecord {
     @Override
     public void createMutableBinding(String name, boolean deletable) {
         /* steps 1-2 (omitted) */
-        /* step 3-4 */
-        boolean alreadyThere = declRec.hasBinding(name);
-        /* step 5 */
-        if (alreadyThere) {
+        /* step 3 */
+        if (declRec.hasBinding(name)) {
             throw newTypeError(cx, Messages.Key.VariableRedeclaration, name);
         }
-        /* step 6 */
+        /* step 4 */
         declRec.createMutableBinding(name, deletable);
     }
 
@@ -109,13 +109,11 @@ public final class GlobalEnvironmentRecord implements EnvironmentRecord {
     @Override
     public void createImmutableBinding(String name, boolean strict) {
         /* steps 1-2 (omitted) */
-        /* step 3-4 */
-        boolean alreadyThere = declRec.hasBinding(name);
-        /* step 5 */
-        if (alreadyThere) {
+        /* step 3 */
+        if (declRec.hasBinding(name)) {
             throw newTypeError(cx, Messages.Key.VariableRedeclaration, name);
         }
-        /* step 6 */
+        /* step 4 */
         declRec.createImmutableBinding(name, strict);
     }
 
@@ -130,7 +128,6 @@ public final class GlobalEnvironmentRecord implements EnvironmentRecord {
             declRec.initializeBinding(name, value);
             return;
         }
-        // FIXME: InitializeBinding for ObjectEnvironment unreachable
         /* step 4 (not applicable) */
         /* step 5 (omitted) */
         /* step 6 */
@@ -179,15 +176,20 @@ public final class GlobalEnvironmentRecord implements EnvironmentRecord {
             return declRec.deleteBinding(name);
         }
         /* step 4 (omitted) */
-        /* step 5 */
-        if (objectRec.hasBinding(name)) {
+        /* steps 5-7 */
+        Property existingProp = globalObject.getOwnProperty(cx, name);
+        /* step 8 */
+        if (existingProp != null) {
+            /* steps 8.a-b */
             boolean status = objectRec.deleteBinding(name);
+            /* step 8.c */
             if (status) {
                 varNames.remove(name);
             }
+            /* step 8.d */
             return status;
         }
-        /* step 6 */
+        /* step 9 */
         return true;
     }
 
@@ -223,8 +225,7 @@ public final class GlobalEnvironmentRecord implements EnvironmentRecord {
      */
     @Override
     public ScriptObject getThisBinding(ExecutionContext cx) {
-        /* steps 1-3 (omitted) */
-        /* step 4 */
+        /* steps 1-4 */
         return globalObject;
     }
 
@@ -236,8 +237,7 @@ public final class GlobalEnvironmentRecord implements EnvironmentRecord {
      * @return {@code true} if the variable binding is present
      */
     public boolean hasVarDeclaration(String name) {
-        /* steps 1-2 (omitted) */
-        /* steps 3-4 */
+        /* steps 1-4 */
         return varNames.contains(name);
     }
 
@@ -249,8 +249,7 @@ public final class GlobalEnvironmentRecord implements EnvironmentRecord {
      * @return {@code true} if the lexical binding is present
      */
     public boolean hasLexicalDeclaration(String name) {
-        /* steps 1-2 (omitted) */
-        /* step 3 */
+        /* steps 1-3 */
         return declRec.hasBinding(name);
     }
 
@@ -285,13 +284,14 @@ public final class GlobalEnvironmentRecord implements EnvironmentRecord {
      * @return {@code true} if the binding can be created
      */
     public boolean canDeclareGlobalVar(String name) {
-        /* steps 1-2 (omitted) */
-        /* step 3 */
-        if (objectRec.hasBinding(name)) {
+        /* steps 1-3 (omitted) */
+        /* steps 4-5 */
+        boolean hasProperty = HasOwnProperty(cx, globalObject, name);
+        /* step 6 */
+        if (hasProperty) {
             return true;
         }
-        /* step 4 (omitted) */
-        /* steps 5-6 */
+        /* steps 7-9 */
         return IsExtensible(cx, globalObject);
     }
 
@@ -305,27 +305,21 @@ public final class GlobalEnvironmentRecord implements EnvironmentRecord {
     public boolean canDeclareGlobalFunction(String name) {
         /* steps 1-3 (omitted) */
         /* steps 4-5 */
-        boolean extensible = IsExtensible(cx, globalObject);
-        /* step 6 */
-        if (!objectRec.hasBinding(name)) {
-            return extensible;
-        }
-        /* steps 7-8 */
         Property existingProp = globalObject.getOwnProperty(cx, name);
-        /* step 9 */
+        /* step 6 */
         if (existingProp == null) {
-            return extensible;
+            return IsExtensible(cx, globalObject);
         }
-        /* step 10 */
+        /* step 7 */
         if (existingProp.isConfigurable()) {
             return true;
         }
-        /* step 11 */
+        /* step 8 */
         if (existingProp.isDataDescriptor() && existingProp.isWritable()
                 && existingProp.isEnumerable()) {
             return true;
         }
-        /* step 12 */
+        /* step 9 */
         return false;
     }
 
@@ -338,18 +332,21 @@ public final class GlobalEnvironmentRecord implements EnvironmentRecord {
      *            the deletable for the binding
      */
     public void createGlobalVarBinding(String name, boolean deletable) {
-        /* steps 1-2 (omitted) */
-        /* step 3 */
-        if (!objectRec.hasBinding(name)) {
+        /* steps 1-3 (omitted) */
+        /* steps 4-5 */
+        boolean hasProperty = HasOwnProperty(cx, globalObject, name);
+        /* steps 6-7 */
+        boolean extensible = IsExtensible(cx, globalObject);
+        /* step 8 */
+        if (!hasProperty && extensible) {
+            /* steps 8.a-b */
             objectRec.createMutableBinding(name, deletable);
-            // FIXME: spec bug - unnecessary step
+            /* steps 8.c-d */
             objectRec.initializeBinding(name, UNDEFINED);
         }
-        /* step 4 (omitted) */
-        /* step 5 */
+        /* steps 9-10 */
         varNames.add(name);
-        /* step 6 */
-        return;
+        /* step 11 (return) */
     }
 
     /**
@@ -375,10 +372,10 @@ public final class GlobalEnvironmentRecord implements EnvironmentRecord {
         }
         /* steps 8-9 */
         DefinePropertyOrThrow(cx, globalObject, name, desc);
-        /* step 10 (omitted) */
-        /* step 11 */
+        /* steps 10-12  */
+        Set(cx, globalObject, name, value, false);
+        /* steps 13-14 */
         varNames.add(name);
-        /* step 12 */
-        return;
+        /* step 15 (return) */
     }
 }

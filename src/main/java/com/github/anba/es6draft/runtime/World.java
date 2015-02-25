@@ -139,7 +139,7 @@ public final class World<GLOBAL extends GlobalObject> {
     }
 
     /**
-     * 8.4.1 EnqueueTask ( queueName, task, arguments) Abstract Operation
+     * 8.4.1 EnqueueTask ( queueName, task, arguments)
      * <p>
      * Enqueues {@code task} to the queue of pending script-tasks.
      * 
@@ -151,7 +151,7 @@ public final class World<GLOBAL extends GlobalObject> {
     }
 
     /**
-     * 8.4.1 EnqueueTask ( queueName, task, arguments) Abstract Operation
+     * 8.4.1 EnqueueTask ( queueName, task, arguments)
      * <p>
      * Enqueues {@code task} to the queue of pending promise-tasks.
      * 
@@ -321,7 +321,7 @@ public final class World<GLOBAL extends GlobalObject> {
     public GLOBAL newInitializedGlobal() throws ParserException, CompilationException, IOException,
             URISyntaxException {
         GLOBAL global = newGlobal();
-        global.initializeFirstRealmGlobal();
+        global.initializeHostDefinedRealm();
         return global;
     }
 

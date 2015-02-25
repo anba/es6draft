@@ -146,9 +146,7 @@ public final class StaticSemantics {
      * @return the bound names
      */
     public static List<Name> BoundNames(FormalParameter node) {
-        InlineArrayList<Name> list = new InlineArrayList<Name>();
-        node.accept(BoundNames.INSTANCE, list);
-        return list;
+        return node.accept(BoundNames.INSTANCE, new InlineArrayList<Name>());
     }
 
     /**
@@ -392,16 +390,13 @@ public final class StaticSemantics {
     }
 
     /**
-     * 14.1.9 Static Semantics: IsAnonymousFunctionDefinition (production) Abstract Operation
+     * 14.1.9 Static Semantics: IsAnonymousFunctionDefinition (production)
      * 
      * @param node
      *            the expression node
      * @return {@code true} if the node is an anonymous function definition
      */
     public static boolean IsAnonymousFunctionDefinition(Expression node) {
-        if (!IsFunctionDefinition(node)) {
-            return false;
-        }
         if (node instanceof ArrowFunction) {
             return !HasName((ArrowFunction) node);
         }
@@ -420,7 +415,8 @@ public final class StaticSemantics {
         if (node instanceof AsyncFunctionExpression) {
             return !HasName((AsyncFunctionExpression) node);
         }
-        throw new AssertionError();
+        assert !IsFunctionDefinition(node);
+        return false;
     }
 
     /**
@@ -559,7 +555,7 @@ public final class StaticSemantics {
      * Static Semantics: IsIdentifierRef
      * <ul>
      * <li>12.2.0.3 Static Semantics: IsIdentifierRef
-     * <li>12.3.1.3 Static Semantics: IsIdentifierRef
+     * <li>12.3.1.4 Static Semantics: IsIdentifierRef
      * </ul>
      * 
      * @param node
@@ -574,7 +570,7 @@ public final class StaticSemantics {
      * Static Semantics: IsSimpleParameterList
      * <ul>
      * <li>14.1.12 Static Semantics: IsSimpleParameterList
-     * <li>14.2.10 Static Semantics: IsSimpleParameterList
+     * <li>14.2.9 Static Semantics: IsSimpleParameterList
      * </ul>
      * 
      * @param formals
@@ -589,7 +585,7 @@ public final class StaticSemantics {
      * Static Semantics: IsSimpleParameterList
      * <ul>
      * <li>14.1.12 Static Semantics: IsSimpleParameterList
-     * <li>14.2.10 Static Semantics: IsSimpleParameterList
+     * <li>14.2.9 Static Semantics: IsSimpleParameterList
      * </ul>
      * 
      * @param formals
@@ -623,7 +619,7 @@ public final class StaticSemantics {
     }
 
     /**
-     * 15.2.0.7 Static Semantics: IsStrict
+     * 15.2.1.9 Static Semantics: IsStrict
      * 
      * @param node
      *            the module node
@@ -645,56 +641,7 @@ public final class StaticSemantics {
     }
 
     /**
-     * Static Semantics: IsValidSimpleAssignmentTarget
-     * <ul>
-     * <li>12.2.0.4 Static Semantics: IsValidSimpleAssignmentTarget
-     * <li>12.2.10.3 Static Semantics: IsValidSimpleAssignmentTarget
-     * <li>12.3.1.3 Static Semantics: IsValidSimpleAssignmentTarget
-     * <li>12.4.3 Static Semantics: IsValidSimpleAssignmentTarget
-     * <li>12.5.3 Static Semantics: IsValidSimpleAssignmentTarget
-     * <li>12.6.2 Static Semantics: IsValidSimpleAssignmentTarget
-     * <li>12.7.2 Static Semantics: IsValidSimpleAssignmentTarget
-     * <li>12.8.2 Static Semantics: IsValidSimpleAssignmentTarget
-     * <li>12.9.2 Static Semantics: IsValidSimpleAssignmentTarget
-     * <li>12.10.2 Static Semantics: IsValidSimpleAssignmentTarget
-     * <li>12.11.2 Static Semantics: IsValidSimpleAssignmentTarget
-     * <li>12.12.2 Static Semantics: IsValidSimpleAssignmentTarget
-     * <li>12.13.2 Static Semantics: IsValidSimpleAssignmentTarget
-     * <li>12.14.3 Static Semantics: IsValidSimpleAssignmentTarget
-     * <li>12.15.2 Static Semantics: IsValidSimpleAssignmentTarget
-     * </ul>
-     * 
-     * @param lhs
-     *            the left-hand side expression
-     * @param strict
-     *            the strict mode flag
-     * @return {@code true} if the left-hand side expression is a simple assignment target
-     */
-    public static boolean IsValidSimpleAssignmentTarget(Expression lhs, boolean strict) {
-        if (lhs instanceof IdentifierReference) {
-            String name = ((IdentifierReference) lhs).getName();
-            if (strict && ("eval".equals(name) || "arguments".equals(name))) {
-                return false;
-            }
-            return true;
-        }
-        if (lhs instanceof ElementAccessor) {
-            return true;
-        }
-        if (lhs instanceof PropertyAccessor) {
-            return true;
-        }
-        if (lhs instanceof SuperElementAccessor) {
-            return true;
-        }
-        if (lhs instanceof SuperPropertyAccessor) {
-            return true;
-        }
-        return false;
-    }
-
-    /**
-     * 13.1.2 Static Semantics: LexicallyScopedDeclarations
+     * 13.1.6 Static Semantics: LexicallyScopedDeclarations
      * 
      * @param node
      *            the block statement node
@@ -705,7 +652,7 @@ public final class StaticSemantics {
     }
 
     /**
-     * 13.11.2 Static Semantics: LexicallyScopedDeclarations
+     * 13.11.6 Static Semantics: LexicallyScopedDeclarations
      * 
      * @param node
      *            the switch statement node
@@ -718,7 +665,7 @@ public final class StaticSemantics {
     /**
      * Static Semantics: LexicallyScopedDeclarations
      * <ul>
-     * <li>14.1.14 Static Semantics: LexicallyScopedDeclarations
+     * <li>14.1.15 Static Semantics: LexicallyScopedDeclarations
      * <li>14.2.11 Static Semantics: LexicallyScopedDeclarations
      * </ul>
      * 
@@ -742,7 +689,7 @@ public final class StaticSemantics {
     }
 
     /**
-     * 13.1.3 Static Semantics: LexicallyDeclaredNames
+     * 13.1.5 Static Semantics: LexicallyDeclaredNames
      * 
      * @param node
      *            the block statement node
@@ -753,7 +700,7 @@ public final class StaticSemantics {
     }
 
     /**
-     * 13.11.3 Static Semantics: LexicalDeclarations
+     * 13.11.5 Static Semantics: LexicallyDeclaredNames
      * 
      * @param node
      *            the switch statement node
@@ -777,8 +724,8 @@ public final class StaticSemantics {
     /**
      * Static Semantics: LexicallyDeclaredNames
      * <ul>
-     * <li>14.1.15 Static Semantics: LexicallyDeclaredNames
-     * <li>14.2.12 Static Semantics: LexicallyDeclaredNames
+     * <li>14.1.14 Static Semantics: LexicallyDeclaredNames
+     * <li>14.2.10 Static Semantics: LexicallyDeclaredNames
      * </ul>
      * 
      * @param node
@@ -803,8 +750,8 @@ public final class StaticSemantics {
     /**
      * Static Semantics: VarDeclaredNames
      * <ul>
-     * <li>14.1.17 Static Semantics: VarDeclaredNames
-     * <li>14.2.14 Static Semantics: VarDeclaredNames
+     * <li>14.1.16 Static Semantics: VarDeclaredNames
+     * <li>14.2.12 Static Semantics: VarDeclaredNames
      * </ul>
      * 
      * <pre>
@@ -834,8 +781,8 @@ public final class StaticSemantics {
     /**
      * Static Semantics: VarScopedDeclarations
      * <ul>
-     * <li>14.1.18 Static Semantics: VarScopedDeclarations
-     * <li>14.2.15 Static Semantics: VarScopedDeclarations
+     * <li>14.1.17 Static Semantics: VarScopedDeclarations
+     * <li>14.2.13 Static Semantics: VarScopedDeclarations
      * </ul>
      * 
      * @param node
@@ -858,8 +805,8 @@ public final class StaticSemantics {
     }
 
     /**
-     * 15.2.0.4 Static Semantics: ExportEntries<br>
-     * 15.2.2.3 Static Semantics: ExportEntries
+     * 15.2.1.7 Static Semantics: ExportEntries<br>
+     * 15.2.3.5 Static Semantics: ExportEntries
      * 
      * @param node
      *            the module node
@@ -923,7 +870,7 @@ public final class StaticSemantics {
     }
 
     /**
-     * 15.2.3.5 Static Semantics: ExportEntriesForModule
+     * 15.2.3.6 Static Semantics: ExportEntriesForModule
      * 
      * @param node
      *            the exports clause node
@@ -954,7 +901,7 @@ public final class StaticSemantics {
     }
 
     /**
-     * 15.2.1.6 Static Semantics: ImportEntries<br>
+     * 15.2.1.8 Static Semantics: ImportEntries<br>
      * 15.2.2.3 Static Semantics: ImportEntries
      * 
      * @param node
@@ -1011,9 +958,9 @@ public final class StaticSemantics {
     }
 
     /**
-     * 15.2.0.9 Static Semantics: ModuleRequests<br>
-     * 15.2.1.5 Static Semantics: ModuleRequests<br>
-     * 15.2.2.5 Static Semantics: ModuleRequests
+     * 15.2.1.10 Static Semantics: ModuleRequests<br>
+     * 15.2.2.5 Static Semantics: ModuleRequests<br>
+     * 15.2.3.9 Static Semantics: ModuleRequests
      * 
      * @param node
      *            the module node
@@ -1051,7 +998,7 @@ public final class StaticSemantics {
     }
 
     /**
-     * 15.2.0.10 Static Semantics: LexicallyDeclaredNames
+     * 15.2.1.11 Static Semantics: LexicallyDeclaredNames
      * 
      * @param node
      *            the module node
@@ -1062,7 +1009,7 @@ public final class StaticSemantics {
     }
 
     /**
-     * 15.2.0.11 Static Semantics: LexicallyScopedDeclarations
+     * 15.2.1.12 Static Semantics: LexicallyScopedDeclarations
      * 
      * @param node
      *            the module node
@@ -1073,7 +1020,7 @@ public final class StaticSemantics {
     }
 
     /**
-     * 15.2.0.13 Static Semantics: VarDeclaredNames
+     * 15.2.1.13 Static Semantics: VarDeclaredNames
      * 
      * @param node
      *            the module node
@@ -1084,7 +1031,7 @@ public final class StaticSemantics {
     }
 
     /**
-     * 15.2.0.14 Static Semantics: VarScopedDeclarations
+     * 15.2.1.14 Static Semantics: VarScopedDeclarations
      * 
      * @param node
      *            the module node
@@ -1095,19 +1042,8 @@ public final class StaticSemantics {
     }
 
     /**
-     * 14.5.x Static Semantics: MethodDefinitions
-     * 
-     * @param node
-     *            the class definition
-     * @return the list of class methods
-     */
-    public static List<MethodDefinition> MethodDefinitions(ClassDefinition node) {
-        return node.getMethods();
-    }
-
-    /**
      * 12.2.5.6 Static Semantics: PropName<br>
-     * 14.3.5 Static Semantics: PropName
+     * 14.3.6 Static Semantics: PropName
      * 
      * @param node
      *            the property definition
@@ -1129,7 +1065,7 @@ public final class StaticSemantics {
     }
 
     /**
-     * 14.3.7 Static Semantics: SpecialMethod
+     * 14.3.8 Static Semantics: SpecialMethod
      * 
      * @param node
      *            the method node
@@ -1151,7 +1087,7 @@ public final class StaticSemantics {
     }
 
     /**
-     * 12.2.9.1.1 Static Semantics: TemplateStrings
+     * 12.2.8.1 Static Semantics: TemplateStrings
      * 
      * @param node
      *            the template literal
@@ -1199,7 +1135,7 @@ public final class StaticSemantics {
      * <p>
      * 14.6 Tail Position Calls
      * <ul>
-     * <li>14.6.1 Static Semantics: IsInTailPosition(nonterminal) Abstract Operation
+     * <li>14.6.1 Static Semantics: IsInTailPosition(nonterminal)
      * <li>14.6.2 Static Semantics: HasProductionInTailPosition
      * </ul>
      * 

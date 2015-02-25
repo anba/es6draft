@@ -90,7 +90,7 @@ public final class LexicalEnvironment<RECORD extends EnvironmentRecord> {
     }
 
     /**
-     * 8.1.2.1 GetIdentifierReference (lex, name, strict) Abstract Operation
+     * 8.1.2.1 GetIdentifierReference (lex, name, strict)
      * 
      * @param lex
      *            the lexical environment
@@ -115,7 +115,7 @@ public final class LexicalEnvironment<RECORD extends EnvironmentRecord> {
     }
 
     /**
-     * 8.1.2.2 NewDeclarativeEnvironment (E) Abstract Operation
+     * 8.1.2.2 NewDeclarativeEnvironment (E)
      * 
      * @param e
      *            the outer lexical environment
@@ -124,7 +124,7 @@ public final class LexicalEnvironment<RECORD extends EnvironmentRecord> {
     public static LexicalEnvironment<DeclarativeEnvironmentRecord> newDeclarativeEnvironment(
             LexicalEnvironment<?> e) {
         /* step 2 */
-        DeclarativeEnvironmentRecord envRec = new DeclarativeEnvironmentRecord(e.cx);
+        DeclarativeEnvironmentRecord envRec = new DeclarativeEnvironmentRecord(e.cx, false);
         /* steps 1, 3-4 */
         LexicalEnvironment<DeclarativeEnvironmentRecord> env = new LexicalEnvironment<>(e, envRec);
         /* step 5 */
@@ -132,7 +132,24 @@ public final class LexicalEnvironment<RECORD extends EnvironmentRecord> {
     }
 
     /**
-     * 8.1.2.3 NewObjectEnvironment (O, E) Abstract Operation
+     * 8.1.2.2 NewDeclarativeEnvironment (E)
+     * 
+     * @param e
+     *            the outer lexical environment
+     * @return the new declarative environment
+     */
+    public static LexicalEnvironment<DeclarativeEnvironmentRecord> newCatchDeclarativeEnvironment(
+            LexicalEnvironment<?> e) {
+        /* step 2 */
+        DeclarativeEnvironmentRecord envRec = new DeclarativeEnvironmentRecord(e.cx, true);
+        /* steps 1, 3-4 */
+        LexicalEnvironment<DeclarativeEnvironmentRecord> env = new LexicalEnvironment<>(e, envRec);
+        /* step 5 */
+        return env;
+    }
+
+    /**
+     * 8.1.2.3 NewObjectEnvironment (O, E)
      * 
      * @param o
      *            the script object
@@ -146,7 +163,7 @@ public final class LexicalEnvironment<RECORD extends EnvironmentRecord> {
     }
 
     /**
-     * 8.1.2.3 NewObjectEnvironment (O, E) Abstract Operation
+     * 8.1.2.3 NewObjectEnvironment (O, E)
      * 
      * @param o
      *            the script object
@@ -167,10 +184,8 @@ public final class LexicalEnvironment<RECORD extends EnvironmentRecord> {
     }
 
     /**
-     * 8.1.2.4 NewFunctionEnvironment ( F, newTarget ) Abstract Operation
+     * 8.1.2.4 NewFunctionEnvironment ( F, newTarget )
      * 
-     * @param callerContext
-     *            the caller execution context
      * @param f
      *            the function object
      * @param newTarget
@@ -180,14 +195,8 @@ public final class LexicalEnvironment<RECORD extends EnvironmentRecord> {
      * @return the new function environment
      */
     public static LexicalEnvironment<FunctionEnvironmentRecord> newFunctionEnvironment(
-            ExecutionContext callerContext, FunctionObject f, Constructor newTarget,
-            Object thisValue) {
+            FunctionObject f, Constructor newTarget, Object thisValue) {
         /* steps 1-2 (not applicable) */
-        /* step 8 */
-        if (f.isNeedsSuper() && f.getHomeObject() == null) {
-            // FIXME: spec bug - unreachable (bug 3963)
-            throw newReferenceError(callerContext, Messages.Key.MissingSuperBinding);
-        }
         LexicalEnvironment<?> e = f.getEnvironment();
         /* steps 4-10 */
         FunctionEnvironmentRecord envRec = new FunctionEnvironmentRecord(e.cx, f, newTarget,
@@ -199,10 +208,8 @@ public final class LexicalEnvironment<RECORD extends EnvironmentRecord> {
     }
 
     /**
-     * 8.1.2.4 NewFunctionEnvironment ( F, newTarget ) Abstract Operation
+     * 8.1.2.4 NewFunctionEnvironment ( F, newTarget )
      * 
-     * @param callerContext
-     *            the caller execution context
      * @param f
      *            the function object
      * @param newTarget
@@ -210,13 +217,8 @@ public final class LexicalEnvironment<RECORD extends EnvironmentRecord> {
      * @return the new function environment
      */
     public static LexicalEnvironment<FunctionEnvironmentRecord> newFunctionEnvironment(
-            ExecutionContext callerContext, FunctionObject f, Constructor newTarget) {
+            FunctionObject f, Constructor newTarget) {
         /* steps 1-2 (not applicable) */
-        /* step 8 */
-        if (f.isNeedsSuper() && f.getHomeObject() == null) {
-            // FIXME: spec bug - unreachable (bug 3963)
-            throw newReferenceError(callerContext, Messages.Key.MissingSuperBinding);
-        }
         LexicalEnvironment<?> e = f.getEnvironment();
         /* steps 4-10 */
         FunctionEnvironmentRecord envRec = new FunctionEnvironmentRecord(e.cx, f, newTarget);
@@ -227,7 +229,7 @@ public final class LexicalEnvironment<RECORD extends EnvironmentRecord> {
     }
 
     /**
-     * 8.1.2.5 NewGlobalEnvironment ( G ) Abstract Operation
+     * 8.1.2.5 NewGlobalEnvironment ( G )
      * 
      * @param cx
      *            the default execution context
@@ -246,7 +248,7 @@ public final class LexicalEnvironment<RECORD extends EnvironmentRecord> {
     }
 
     /**
-     * 8.1.2.6 NewModuleEnvironment (E) Abstract Operation
+     * 8.1.2.6 NewModuleEnvironment (E)
      * 
      * @param e
      *            the outer lexical environment

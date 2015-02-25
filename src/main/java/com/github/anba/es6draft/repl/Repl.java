@@ -889,7 +889,7 @@ public final class Repl {
             @Override
             public void execute() {
                 try {
-                    global.initializeFirstRealmGlobal();
+                    global.initializeHostDefinedRealm();
                 } catch (IOException e) {
                     throw new UncheckedIOException(e);
                 } catch (URISyntaxException e) {

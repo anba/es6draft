@@ -22,6 +22,7 @@ import com.github.anba.es6draft.runtime.EnvironmentRecord;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.GlobalEnvironmentRecord;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
+import com.github.anba.es6draft.runtime.ObjectEnvironmentRecord;
 import com.github.anba.es6draft.runtime.internal.ScriptRuntime;
 
 /**
@@ -124,9 +125,13 @@ final class DeclarationBindingInstantiation {
             /* steps 6.b-d */
             // NB: Skip the initial lexEnv which is empty by construction. (TODO: Add assertion)
             for (LexicalEnvironment<?> thisLex = lexEnv; (thisLex = thisLex.getOuter()) != varEnv;) {
-                EnvironmentRecord envRec = thisLex.getEnvRec();
-                for (Name name : varNames) {
-                    ScriptRuntime.canDeclareVarOrThrow(cx, envRec, name.getIdentifier());
+                EnvironmentRecord thisEnvRec = thisLex.getEnvRec();
+                if (!(thisEnvRec instanceof ObjectEnvironmentRecord)) {
+                    assert thisEnvRec instanceof DeclarativeEnvironmentRecord;
+                    DeclarativeEnvironmentRecord envRec = (DeclarativeEnvironmentRecord) thisEnvRec;
+                    for (Name name : varNames) {
+                        ScriptRuntime.canDeclareVarOrThrow(cx, envRec, name.getIdentifier());
+                    }
                 }
             }
         }

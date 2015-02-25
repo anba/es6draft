@@ -7,6 +7,7 @@
 package com.github.anba.es6draft.runtime.types.builtins;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToString;
+import static com.github.anba.es6draft.runtime.internal.Errors.newReferenceError;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
@@ -21,6 +22,7 @@ import java.util.Set;
 import com.github.anba.es6draft.compiler.CompilationException;
 import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.runtime.ExecutionContext;
+import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.ModuleEnvironmentRecord;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.CompoundList;
@@ -235,28 +237,31 @@ public final class ModuleNamespaceObject extends OrdinaryObject {
             /* steps 6, 8 */
             binding = m.resolveExport(propertyKey, new HashMap<ModuleRecord, Set<String>>(),
                     new HashSet<ModuleRecord>());
-        } catch (ResolutionException e) {
-            /* step 7 */
-            throw Errors.newReferenceError(cx, Messages.Key.ModulesAmbiguousExport, propertyKey);
         } catch (IOException e) {
             /* step 7 */
             throw Errors.newInternalError(cx, Messages.Key.ModulesIOException, e.getMessage());
-        } catch (MalformedNameException e) {
+        } catch (ResolutionException | MalformedNameException e) {
             /* step 7 */
             throw e.toScriptException(cx);
         } catch (ParserException | CompilationException e) {
             /* step 7 */
             throw e.toScriptException(cx);
         }
-        /* step 9 */
+        /* step 8 */
         assert binding != null && !binding.isAmbiguous();
-        /* step 10 */
+        /* step 9 */
         SourceTextModuleRecord targetModule = binding.getModule();
-        /* step 11 */
+        /* step 10 */
         assert targetModule != null;
+        /* step 11 */
+        LexicalEnvironment<ModuleEnvironmentRecord> targetEnv = targetModule.getEnvironment();
         /* step 12 */
-        ModuleEnvironmentRecord targetEnvRec = targetModule.getEnvironment().getEnvRec();
+        if (targetEnv == null) {
+            throw newReferenceError(cx, Messages.Key.UninitializedBinding, binding.getBindingName());
+        }
         /* step 13 */
+        ModuleEnvironmentRecord targetEnvRec = targetEnv.getEnvRec();
+        /* step 14 */
         return targetEnvRec.getBindingValue(binding.getBindingName(), true);
     }
 
@@ -358,8 +363,7 @@ public final class ModuleNamespaceObject extends OrdinaryObject {
         // 26.3.2 [ @@iterator ] ( )
         m.infallibleDefineOwnProperty(BuiltinSymbol.iterator.get(), new Property(
                 new ModuleIteratorFunction(cx.getRealm()), true, false, true));
-        /* step 9 (FIXME: spec bug - bug 3975) */
-        // module.setNamespace(m);
+        /* step 9 (not applicable) */
         /* step 10 */
         return m;
     }

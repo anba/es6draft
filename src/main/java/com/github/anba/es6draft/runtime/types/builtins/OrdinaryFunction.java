@@ -67,7 +67,7 @@ public class OrdinaryFunction extends FunctionObject {
     /* ***************************************************************************************** */
 
     /**
-     * 9.2.4 FunctionAllocate (functionPrototype, strict) Abstract Operation
+     * 9.2.4 FunctionAllocate (functionPrototype, strict)
      * 
      * @param cx
      *            the execution context
@@ -93,7 +93,7 @@ public class OrdinaryFunction extends FunctionObject {
     }
 
     /**
-     * 9.2.5 FunctionInitialize (F, kind, ParameterList, Body, Scope) Abstract Operation
+     * 9.2.5 FunctionInitialize (F, kind, ParameterList, Body, Scope)
      * 
      * @param f
      *            the function object
@@ -109,17 +109,19 @@ public class OrdinaryFunction extends FunctionObject {
     public static void FunctionInitialize(FunctionObject f, FunctionKind kind,
             RuntimeInfo.Function function, LexicalEnvironment<?> scope, Executable executable) {
         /* step 1 */
+        assert f.isExtensible() && !f.ordinaryHasOwnProperty("length");
+        /* step 2 */
         int len = function.expectedArgumentCount();
-        /* step 2 (not applicable) */
-        /* steps 3-4 */
+        /* step 3 (not applicable) */
+        /* steps 4-5 */
         f.infallibleDefineOwnProperty("length", new Property(len, false, false, true));
-        /* steps 5-11 */
+        /* steps 6-12 */
         f.initialize(kind, function, scope, executable);
-        /* step 12 (return) */
+        /* step 13 (return) */
     }
 
     /**
-     * 9.2.6 FunctionCreate (kind, ParameterList, Body, Scope, Strict, prototype) Abstract Operation
+     * 9.2.6 FunctionCreate (kind, ParameterList, Body, Scope, Strict, prototype)
      * 
      * @param cx
      *            the execution context
@@ -145,7 +147,7 @@ public class OrdinaryFunction extends FunctionObject {
     }
 
     /**
-     * 9.2.8 AddRestrictedFunctionProperties ( F, realm ) Abstract Operation
+     * 9.2.8 AddRestrictedFunctionProperties ( F, realm )
      * 
      * @param <FUNCTION>
      *            the function type
@@ -165,7 +167,7 @@ public class OrdinaryFunction extends FunctionObject {
     }
 
     /**
-     * 9.2.9 MakeConstructor (F, writablePrototype, prototype) Abstract Operation
+     * 9.2.9 MakeConstructor (F, writablePrototype, prototype)
      * 
      * @param <CONSTRUCTOR>
      *            the constructor function type
@@ -194,7 +196,7 @@ public class OrdinaryFunction extends FunctionObject {
     }
 
     /**
-     * 9.2.9 MakeConstructor (F, writablePrototype, prototype) Abstract Operation
+     * 9.2.9 MakeConstructor (F, writablePrototype, prototype)
      * 
      * @param <CONSTRUCTOR>
      *            the constructor function type
@@ -218,7 +220,7 @@ public class OrdinaryFunction extends FunctionObject {
     }
 
     /**
-     * 9.2.10 MakeClassConstructor ( F) Abstract Operation
+     * 9.2.10 MakeClassConstructor (F)
      * 
      * @param f
      *            the function object
@@ -231,7 +233,7 @@ public class OrdinaryFunction extends FunctionObject {
     }
 
     /**
-     * 9.2.11 MakeMethod ( F, homeObject) Abstract Operation
+     * 9.2.11 MakeMethod (F, homeObject)
      * 
      * @param f
      *            the function object
@@ -240,13 +242,13 @@ public class OrdinaryFunction extends FunctionObject {
      */
     public static void MakeMethod(FunctionObject f, ScriptObject homeObject) {
         /* steps 1-2 (not applicable) */
-        /* steps 3-4 */
+        /* step 3 */
         f.toMethod(homeObject);
-        /* step 5 (return) */
+        /* step 4 (return) */
     }
 
     /**
-     * 9.2.12 SetFunctionName (F, name, prefix) Abstract Operation
+     * 9.2.12 SetFunctionName (F, name, prefix)
      * 
      * @param <FUNCTION>
      *            the function type
@@ -261,7 +263,7 @@ public class OrdinaryFunction extends FunctionObject {
     }
 
     /**
-     * 9.2.12 SetFunctionName (F, name, prefix) Abstract Operation
+     * 9.2.12 SetFunctionName (F, name, prefix)
      * 
      * @param <FUNCTION>
      *            the function type
@@ -286,7 +288,7 @@ public class OrdinaryFunction extends FunctionObject {
     }
 
     /**
-     * 9.2.12 SetFunctionName (F, name, prefix) Abstract Operation
+     * 9.2.12 SetFunctionName (F, name, prefix)
      * 
      * @param <FUNCTION>
      *            the function type
@@ -301,7 +303,7 @@ public class OrdinaryFunction extends FunctionObject {
     }
 
     /**
-     * 9.2.12 SetFunctionName (F, name, prefix) Abstract Operation
+     * 9.2.12 SetFunctionName (F, name, prefix)
      * 
      * @param <FUNCTION>
      *            the function type
@@ -329,7 +331,7 @@ public class OrdinaryFunction extends FunctionObject {
     }
 
     /**
-     * 9.2.? CloneMethod(function, newHome) Abstract Operation
+     * 9.2.? CloneMethod(function, newHome)
      * 
      * @param cx
      *            the execution context
@@ -346,7 +348,7 @@ public class OrdinaryFunction extends FunctionObject {
         /* steps 4-7, 9 */
         FunctionObject clone = function.clone(cx);
         /* step 8 */
-        if (function.isNeedsSuper()) {
+        if (function.getHomeObject() != null) {
             clone.toMethod(newHome);
         }
         /* step 9 */
@@ -354,7 +356,7 @@ public class OrdinaryFunction extends FunctionObject {
     }
 
     /**
-     * 9.2.? CloneMethod(function, newHome, newName) Abstract Operation
+     * 9.2.? CloneMethod(function, newHome, newName)
      * 
      * @param cx
      *            the execution context

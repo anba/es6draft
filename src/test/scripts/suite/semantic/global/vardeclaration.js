@@ -9,6 +9,7 @@ const {
   assertTrue,
 } = Assert;
 
+// Note: These tests are no longer reproducible, require Reflect.Realm support.
 
 function testDuplicateVar(global, extra) {
   var log = [];
@@ -29,8 +30,8 @@ function testDuplicateVar(global, extra) {
 }
 
 // Test interpreted and compiled code.
-testDuplicateVar(this, "");
-testDuplicateVar(this, "() => {}");
+// testDuplicateVar(this, "");
+// testDuplicateVar(this, "() => {}");
 
 
 function testVarListOrder(global, extra) {
@@ -53,5 +54,5 @@ function testVarListOrder(global, extra) {
 }
 
 // Test interpreted and compiled code.
-testVarListOrder(this, "");
-testVarListOrder(this, "() => {}");
+// testVarListOrder(this, "");
+// testVarListOrder(this, "() => {}");

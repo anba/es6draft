@@ -24,5 +24,7 @@ function triggerAssertion(global, callCounter, code) {
   (1,eval)(`eval("${code}")`)
 }
 
+// Note: No longer reproducible without Reflect.Realm
+
 // 10.2.1.4.16, step 3
-assertThrows(TypeError, () => triggerAssertion(this, 1, "var foo = 0"));
+// assertThrows(TypeError, () => triggerAssertion(this, 1, "var foo = 0"));

@@ -12,7 +12,6 @@ import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.objects.ArrayIteratorPrototype.CreateArrayIterator;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
-import static com.github.anba.es6draft.runtime.types.builtins.ArrayObject.ArraySpeciesCreate;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -50,7 +49,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>22.1.4 Properties of Array Instances
  * </ul>
  */
-public final class ArrayPrototype extends OrdinaryObject implements Initializable {
+public final class ArrayPrototype extends ArrayObject implements Initializable {
     /**
      * Constructs a new Array prototype object.
      * 
@@ -323,8 +322,23 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
     public enum Properties {
         ;
 
+        private static long ToArrayIndex(ExecutionContext cx, Object index, long length) {
+            double relativeIndex = ToInteger(cx, index);
+            if (relativeIndex < 0) {
+                return (long) Math.max(length + relativeIndex, 0);
+            }
+            return (long) Math.min(relativeIndex, length);
+        }
+
         @Prototype
         public static final Intrinsics __proto__ = Intrinsics.ObjectPrototype;
+
+        /**
+         * Array.prototype.length
+         */
+        @Value(name = "length", attributes = @Attributes(writable = true, enumerable = false,
+                configurable = false))
+        public static final int length = 0;
 
         /**
          * 22.1.3.2 Array.prototype.constructor
@@ -495,7 +509,7 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
             }
             /* steps 8-9 */
             assert n <= ARRAY_LENGTH_LIMIT;
-            Put(cx, a, "length", n, true);
+            Set(cx, a, "length", n, true);
             /* step 10 */
             return a;
         }
@@ -527,7 +541,7 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
         }
 
         /**
-         * 22.1.3.3.1 IsConcatSpreadable (O) Abstract Operation
+         * 22.1.3.1.1 Runtime Semantics: IsConcatSpreadable ( O )
          * 
          * @param cx
          *            the execution context
@@ -692,7 +706,7 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
             long len = ToLength(cx, Get(cx, o, "length"));
             if (len == 0) {
                 /* step 5 */
-                Put(cx, o, "length", 0, true);
+                Set(cx, o, "length", 0, true);
                 return UNDEFINED;
             } else {
                 /* step 6 */
@@ -701,7 +715,7 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
                 long index = newLen;
                 Object element = Get(cx, o, index);
                 DeletePropertyOrThrow(cx, o, index);
-                Put(cx, o, "length", newLen, true);
+                Set(cx, o, "length", newLen, true);
                 return element;
             }
         }
@@ -730,12 +744,12 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
             }
             /* steps 8 */
             for (Object e : items) {
-                Put(cx, o, len, e, true);
+                Set(cx, o, len, e, true);
                 len += 1;
             }
             /* steps 9-10 */
             assert len <= ARRAY_LENGTH_LIMIT;
-            Put(cx, o, "length", len, true);
+            Set(cx, o, "length", len, true);
             /* step 11 */
             return len;
         }
@@ -794,14 +808,14 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
                     boolean upperExists = HasProperty(cx, o, upperP);
                     Object upperValue = upperExists ? Get(cx, o, upperP) : null;
                     if (lowerExists && upperExists) {
-                        Put(cx, o, lowerP, upperValue, true);
-                        Put(cx, o, upperP, lowerValue, true);
+                        Set(cx, o, lowerP, upperValue, true);
+                        Set(cx, o, upperP, lowerValue, true);
                     } else if (!lowerExists && upperExists) {
-                        Put(cx, o, lowerP, upperValue, true);
+                        Set(cx, o, lowerP, upperValue, true);
                         DeletePropertyOrThrow(cx, o, upperP);
                     } else if (lowerExists && !upperExists) {
                         DeletePropertyOrThrow(cx, o, lowerP);
-                        Put(cx, o, upperP, lowerValue, true);
+                        Set(cx, o, upperP, lowerValue, true);
                     } else {
                         // no action required
                     }
@@ -827,21 +841,21 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
 
                     Object lowerValue = Get(cx, o, lowerP);
                     Object upperValue = Get(cx, o, upperP);
-                    Put(cx, o, lowerP, upperValue, true);
-                    Put(cx, o, upperP, lowerValue, true);
+                    Set(cx, o, lowerP, upperValue, true);
+                    Set(cx, o, upperP, lowerValue, true);
                 } else if (lower < upper) {
                     long lowerP = lowerIter.next();
                     long upperP = (length - 1) - lower;
 
                     Object lowerValue = Get(cx, o, lowerP);
                     DeletePropertyOrThrow(cx, o, lowerP);
-                    Put(cx, o, upperP, lowerValue, true);
+                    Set(cx, o, upperP, lowerValue, true);
                 } else {
                     long upperP = upperIter.next();
                     long lowerP = upper;
 
                     Object upperValue = Get(cx, o, upperP);
-                    Put(cx, o, lowerP, upperValue, true);
+                    Set(cx, o, lowerP, upperValue, true);
                     DeletePropertyOrThrow(cx, o, upperP);
                 }
             }
@@ -852,7 +866,7 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
 
                 Object lowerValue = Get(cx, o, lowerP);
                 DeletePropertyOrThrow(cx, o, lowerP);
-                Put(cx, o, upperP, lowerValue, true);
+                Set(cx, o, upperP, lowerValue, true);
             }
 
             while (upperIter.hasNext()) {
@@ -860,7 +874,7 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
                 long lowerP = (length - 1) - upperP;
 
                 Object upperValue = Get(cx, o, upperP);
-                Put(cx, o, lowerP, upperValue, true);
+                Set(cx, o, lowerP, upperValue, true);
                 DeletePropertyOrThrow(cx, o, upperP);
             }
         }
@@ -882,7 +896,7 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
             long len = ToLength(cx, Get(cx, o, "length"));
             /* step 5 */
             if (len == 0) {
-                Put(cx, o, "length", 0, true);
+                Set(cx, o, "length", 0, true);
                 return UNDEFINED;
             }
             assert len > 0;
@@ -900,7 +914,7 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
                     boolean fromPresent = HasProperty(cx, o, from);
                     if (fromPresent) {
                         Object fromVal = Get(cx, o, from);
-                        Put(cx, o, to, fromVal, true);
+                        Set(cx, o, to, fromVal, true);
                     } else {
                         DeletePropertyOrThrow(cx, o, to);
                     }
@@ -909,7 +923,7 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
             /* steps 10-11 */
             DeletePropertyOrThrow(cx, o, len - 1);
             /* steps 12-13 */
-            Put(cx, o, "length", len - 1, true);
+            Set(cx, o, "length", len - 1, true);
             /* step 14 */
             return first;
         }
@@ -926,7 +940,7 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
                 long from = k;
                 long to = k - 1;
                 Object fromVal = Get(cx, o, from);
-                Put(cx, o, to, fromVal, true);
+                Set(cx, o, to, fromVal, true);
 
                 long replacement = k + 1;
                 if (replacement < length && !iter.contains(replacement)) {
@@ -954,29 +968,10 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
             ScriptObject o = ToObject(cx, thisValue);
             /* steps 3-4 */
             long len = ToLength(cx, Get(cx, o, "length"));
-            /* steps 5-6 */
-            double relativeStart = ToInteger(cx, start);
-            /* step 7 */
-            long k;
-            if (relativeStart < 0) {
-                k = (long) Math.max(len + relativeStart, 0);
-            } else {
-                k = (long) Math.min(relativeStart, len);
-            }
-            /* steps 8-9 */
-            double relativeEnd;
-            if (Type.isUndefined(end)) {
-                relativeEnd = len;
-            } else {
-                relativeEnd = ToInteger(cx, end);
-            }
-            /* step 10 */
-            long finall;
-            if (relativeEnd < 0) {
-                finall = (long) Math.max(len + relativeEnd, 0);
-            } else {
-                finall = (long) Math.min(relativeEnd, len);
-            }
+            /* steps 5-7 */
+            long k = ToArrayIndex(cx, start, len);
+            /* steps 8-10 */
+            long finall = Type.isUndefined(end) ? len : ToArrayIndex(cx, end, len);
             /* step 11 */
             long count = Math.max(finall - k, 0);
             /* steps 12-13 */
@@ -1001,7 +996,7 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
                 }
             }
             /* steps 16-17 */
-            Put(cx, a, "length", n, true);
+            Set(cx, a, "length", n, true);
             /* step 18 */
             return a;
         }
@@ -1018,7 +1013,7 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
         }
 
         /**
-         * 22.1.3.24.1 Runtime Semantics: SortCompare Abstract Operation
+         * 22.1.3.24.1 Runtime Semantics: SortCompare( x, y )
          */
         private static final class DefaultComparator implements Comparator<Object> {
             private final ExecutionContext cx;
@@ -1029,14 +1024,18 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
 
             @Override
             public int compare(Object o1, Object o2) {
+                /* steps 1-4 (not applicable) */
+                /* steps 5-6 */
                 String x = ToFlatString(cx, o1);
+                /* steps 7-8 */
                 String y = ToFlatString(cx, o2);
+                /* steps 9-11 */
                 return x.compareTo(y);
             }
         }
 
         /**
-         * 22.1.3.24.1 Runtime Semantics: SortCompare Abstract Operation
+         * 22.1.3.24.1 Runtime Semantics: SortCompare( x, y )
          */
         private static final class FunctionComparator implements Comparator<Object> {
             private final ExecutionContext cx;
@@ -1049,6 +1048,8 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
 
             @Override
             public int compare(Object o1, Object o2) {
+                /* steps 1-3, 5-11 (not applicable) */
+                /* step 4 */
                 double c = ToNumber(cx, comparefn.call(cx, UNDEFINED, o1, o2));
                 return (c < 0 ? -1 : c > 0 ? 1 : 0);
             }
@@ -1134,11 +1135,11 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
                 // and finally set sorted elements
                 for (int i = 0, offset = 0; i < count; ++i) {
                     int p = offset + i;
-                    Put(cx, obj, p, elements.get(i), true);
+                    Set(cx, obj, p, elements.get(i), true);
                 }
                 for (int i = 0, offset = count; i < undefCount; ++i) {
                     int p = offset + i;
-                    Put(cx, obj, p, UNDEFINED, true);
+                    Set(cx, obj, p, UNDEFINED, true);
                 }
                 for (int i = 0, offset = count + undefCount; i < emptyCount; ++i) {
                     int p = offset + i;
@@ -1173,11 +1174,11 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
             // and finally set sorted elements
             for (int i = 0, offset = 0; i < count; ++i) {
                 int p = offset + i;
-                Put(cx, obj, p, elements.get(i), true);
+                Set(cx, obj, p, elements.get(i), true);
             }
             for (int i = 0, offset = count; i < undefCount; ++i) {
                 int p = offset + i;
-                Put(cx, obj, p, UNDEFINED, true);
+                Set(cx, obj, p, UNDEFINED, true);
             }
             // User-defined actions in comparefn may have invalidated sparse-property
             IterationKind iterationDelete = iterationKind(obj, length);
@@ -1218,15 +1219,8 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
             ScriptObject o = ToObject(cx, thisValue);
             /* steps 3-4 */
             long len = ToLength(cx, Get(cx, o, "length"));
-            /* steps 5-6 */
-            double relativeStart = (start != null ? ToInteger(cx, start) : 0);
-            /* step 7 */
-            long actualStart;
-            if (relativeStart < 0) {
-                actualStart = (long) Math.max(len + relativeStart, 0);
-            } else {
-                actualStart = (long) Math.min(relativeStart, len);
-            }
+            /* steps 5-7 */
+            long actualStart = start != null ? ToArrayIndex(cx, start, len) : 0;
             /* steps 8-10 */
             int insertCount;
             long actualDeleteCount;
@@ -1264,7 +1258,7 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
                 }
             }
             /* steps 16-17 */
-            Put(cx, a, "length", actualDeleteCount, true);
+            Set(cx, a, "length", actualDeleteCount, true);
             /* steps 18-19 */
             int itemCount = items.length;
             if (itemCount < actualDeleteCount) {
@@ -1282,7 +1276,7 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
                         boolean fromPresent = HasProperty(cx, o, from);
                         if (fromPresent) {
                             Object fromValue = Get(cx, o, from);
-                            Put(cx, o, to, fromValue, true);
+                            Set(cx, o, to, fromValue, true);
                         } else {
                             DeletePropertyOrThrow(cx, o, to);
                         }
@@ -1314,7 +1308,7 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
                         boolean fromPresent = HasProperty(cx, o, from);
                         if (fromPresent) {
                             Object fromValue = Get(cx, o, from);
-                            Put(cx, o, to, fromValue, true);
+                            Set(cx, o, to, fromValue, true);
                         } else {
                             DeletePropertyOrThrow(cx, o, to);
                         }
@@ -1326,11 +1320,11 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
             /* step 23 */
             for (int i = 0; i < itemCount; ++k, ++i) {
                 Object e = items[i];
-                Put(cx, o, k, e, true);
+                Set(cx, o, k, e, true);
             }
             /* steps 24-25 */
             assert len - actualDeleteCount + itemCount <= ARRAY_LENGTH_LIMIT;
-            Put(cx, o, "length", len - actualDeleteCount + itemCount, true);
+            Set(cx, o, "length", len - actualDeleteCount + itemCount, true);
             /* step 26 */
             return a;
         }
@@ -1356,12 +1350,12 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
                     long from = iterSource.next();
                     long to = iterTarget.next();
                     Object fromValue = Get(cx, o, from);
-                    Put(cx, o, to, fromValue, true);
+                    Set(cx, o, to, fromValue, true);
                 } else if (toRel < fromRel) {
                     long from = iterSource.next();
                     long actualTo = from - deleteCount + itemCount;
                     Object fromValue = Get(cx, o, from);
-                    Put(cx, o, actualTo, fromValue, true);
+                    Set(cx, o, actualTo, fromValue, true);
                 } else {
                     long to = iterTarget.next();
                     DeletePropertyOrThrow(cx, o, to);
@@ -1377,7 +1371,7 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
                 long from = iterSource.next();
                 long actualTo = from - deleteCount + itemCount;
                 Object fromValue = Get(cx, o, from);
-                Put(cx, o, actualTo, fromValue, true);
+                Set(cx, o, actualTo, fromValue, true);
             }
         }
 
@@ -1407,7 +1401,7 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
                     long to = iterTarget.next();
                     long from = iterSource.next();
                     Object fromValue = Get(cx, o, from);
-                    Put(cx, o, to, fromValue, true);
+                    Set(cx, o, to, fromValue, true);
                 } else if (toRel < fromRel) {
                     long to = iterTarget.next();
                     DeletePropertyOrThrow(cx, o, to);
@@ -1415,7 +1409,7 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
                     long from = iterSource.next();
                     long actualTo = from - deleteCount + itemCount;
                     Object fromValue = Get(cx, o, from);
-                    Put(cx, o, actualTo, fromValue, true);
+                    Set(cx, o, actualTo, fromValue, true);
                 }
             }
 
@@ -1428,7 +1422,7 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
                 long from = iterSource.next();
                 long actualTo = from - deleteCount + itemCount;
                 Object fromValue = Get(cx, o, from);
-                Put(cx, o, actualTo, fromValue, true);
+                Set(cx, o, actualTo, fromValue, true);
             }
         }
 
@@ -1488,7 +1482,7 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
                         boolean fromPresent = HasProperty(cx, o, from);
                         if (fromPresent) {
                             Object fromValue = Get(cx, o, from);
-                            Put(cx, o, to, fromValue, true);
+                            Set(cx, o, to, fromValue, true);
                         } else {
                             DeletePropertyOrThrow(cx, o, to);
                         }
@@ -1497,12 +1491,12 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
                 /* steps 6.d-6.f */
                 for (int j = 0; j < items.length; ++j) {
                     Object e = items[j];
-                    Put(cx, o, j, e, true);
+                    Set(cx, o, j, e, true);
                 }
             }
             /* steps 7-8 */
             assert len + argCount <= ARRAY_LENGTH_LIMIT;
-            Put(cx, o, "length", len + argCount, true);
+            Set(cx, o, "length", len + argCount, true);
             /* step 9 */
             return len + argCount;
         }
@@ -1521,7 +1515,7 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
                 long from = k;
                 long to = k + argCount;
                 Object fromValue = Get(cx, o, from);
-                Put(cx, o, to, fromValue, true);
+                Set(cx, o, to, fromValue, true);
 
                 long replacement = k - argCount;
                 if (replacement >= 0 && !iter.contains(replacement)) {
@@ -2414,28 +2408,14 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
         public static <OBJECT extends ScriptObject> OBJECT fill(ExecutionContext cx, OBJECT o,
                 long len, Object value, Object start, Object end) {
             /* steps 1-4 (not applicable) */
-            /* steps 5-6 */
-            double relativeStart = ToInteger(cx, start);
-            /* step 7 */
-            long k;
-            if (relativeStart < 0) {
-                k = (long) Math.max((len + relativeStart), 0);
-            } else {
-                k = (long) Math.min(relativeStart, len);
-            }
-            /* steps 8-9 */
-            double relativeEnd = Type.isUndefined(end) ? len : ToInteger(cx, end);
-            /* step 10 */
-            long finall;
-            if (relativeEnd < 0) {
-                finall = (long) Math.max((len + relativeEnd), 0);
-            } else {
-                finall = (long) Math.min(relativeEnd, len);
-            }
+            /* steps 5-7 */
+            long k = ToArrayIndex(cx, start, len);
+            /* steps 8-10 */
+            long finall = Type.isUndefined(end) ? len : ToArrayIndex(cx, end, len);
             /* step 11 */
             for (; k < finall; ++k) {
                 long pk = k;
-                Put(cx, o, pk, value, true);
+                Set(cx, o, pk, value, true);
             }
             /* step 12 */
             return o;
@@ -2493,33 +2473,12 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
         public static <OBJECT extends ScriptObject> OBJECT copyWithin(ExecutionContext cx,
                 OBJECT o, long len, Object target, Object start, Object end) {
             /* steps 1-4 (not applicable) */
-            /* steps 5-6 */
-            double relativeTarget = ToInteger(cx, target);
-            /* step 7 */
-            long to;
-            if (relativeTarget < 0) {
-                to = (long) Math.max((len + relativeTarget), 0);
-            } else {
-                to = (long) Math.min(relativeTarget, len);
-            }
-            /* steps 8-9 */
-            double relativeStart = ToInteger(cx, start);
-            /* step 10 */
-            long from;
-            if (relativeStart < 0) {
-                from = (long) Math.max((len + relativeStart), 0);
-            } else {
-                from = (long) Math.min(relativeStart, len);
-            }
-            /* steps 11-12 */
-            double relativeEnd = Type.isUndefined(end) ? len : ToInteger(cx, end);
-            /* step 13 */
-            long finall;
-            if (relativeEnd < 0) {
-                finall = (long) Math.max((len + relativeEnd), 0);
-            } else {
-                finall = (long) Math.min(relativeEnd, len);
-            }
+            /* steps 5-7 */
+            long to = ToArrayIndex(cx, target, len);
+            /* steps 8-10 */
+            long from = ToArrayIndex(cx, start, len);
+            /* steps 11-13 */
+            long finall = Type.isUndefined(end) ? len : ToArrayIndex(cx, end, len);
             /* step 14 */
             long count = Math.min(finall - from, len - to);
             /* steps 15-16 */
@@ -2538,7 +2497,7 @@ public final class ArrayPrototype extends OrdinaryObject implements Initializabl
                 boolean fromPresent = HasProperty(cx, o, fromKey);
                 if (fromPresent) {
                     Object fromVal = Get(cx, o, fromKey);
-                    Put(cx, o, toKey, fromVal, true);
+                    Set(cx, o, toKey, fromVal, true);
                 } else {
                     DeletePropertyOrThrow(cx, o, toKey);
                 }

@@ -91,7 +91,7 @@ public class GlobalObject extends OrdinaryObject implements Initializable {
     }
 
     /**
-     * 8.5.1 InitializeFirstRealm ( realm ) Abstract Operation
+     * 8.5.1 InitializeHostDefinedRealm ( realm )
      * <p>
      * Initializes the global this with the default properties of the Global Object.
      * 
@@ -104,7 +104,7 @@ public class GlobalObject extends OrdinaryObject implements Initializable {
      * @throws CompilationException
      *             if the parsed source could not be compiled
      */
-    public final void initializeFirstRealmGlobal() throws IOException, URISyntaxException,
+    public final void initializeHostDefinedRealm() throws IOException, URISyntaxException,
             ParserException, CompilationException {
         ExecutionContext cx = getRealm().defaultContext();
         // Execute initialization scripts

@@ -424,7 +424,7 @@ public final class StringPrototype extends OrdinaryObject implements Initializab
         }
 
         /**
-         * Runtime Semantics: GetReplaceSubstitution Abstract Operation
+         * 21.1.3.14.1 Runtime Semantics: GetReplaceSubstitution Abstract Operation
          * 
          * @param matched
          *            the matched substring
@@ -641,7 +641,7 @@ public final class StringPrototype extends OrdinaryObject implements Initializab
         }
 
         /**
-         * Runtime Semantics: SplitMatch Abstract Operation
+         * 21.1.3.17.1 Runtime Semantics: SplitMatch Abstract Operation
          * 
          * @param s
          *            the string
@@ -1130,7 +1130,7 @@ public final class StringPrototype extends OrdinaryObject implements Initializab
         }
 
         /**
-         * B.2.3.2.1 CreateHTML ( string, tag, attribute, value ) Abstract Operation
+         * B.2.3.2.1 Runtime Semantics: CreateHTML ( string, tag, attribute, value )
          * 
          * @param cx
          *            the execution context

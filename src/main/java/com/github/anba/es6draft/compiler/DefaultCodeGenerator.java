@@ -183,6 +183,10 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
                 .findStatic(Types.LexicalEnvironment, "newDeclarativeEnvironment",
                         Type.methodType(Types.LexicalEnvironment, Types.LexicalEnvironment));
 
+        static final MethodName LexicalEnvironment_newCatchDeclarativeEnvironment = MethodName
+                .findStatic(Types.LexicalEnvironment, "newCatchDeclarativeEnvironment",
+                        Type.methodType(Types.LexicalEnvironment, Types.LexicalEnvironment));
+
         static final MethodName LexicalEnvironment_newObjectEnvironment = MethodName.findStatic(
                 Types.LexicalEnvironment, "newObjectEnvironment", Type.methodType(
                         Types.LexicalEnvironment, Types.ScriptObject, Types.LexicalEnvironment,
@@ -435,6 +439,18 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
         mv.loadExecutionContext();
         mv.invoke(Methods.ExecutionContext_getLexicalEnvironment);
         mv.invoke(Methods.LexicalEnvironment_newDeclarativeEnvironment);
+    }
+
+    /**
+     * stack: [] {@literal ->} [lexEnv]
+     * 
+     * @param mv
+     *            the expression visitor
+     */
+    protected final void newCatchDeclarativeEnvironment(ExpressionVisitor mv) {
+        mv.loadExecutionContext();
+        mv.invoke(Methods.ExecutionContext_getLexicalEnvironment);
+        mv.invoke(Methods.LexicalEnvironment_newCatchDeclarativeEnvironment);
     }
 
     /**

@@ -506,7 +506,7 @@ public final class PromiseAbstractOperations {
     }
 
     /**
-     * PromiseNew ( executor ) Abstract Operation
+     * PromiseNew ( executor )
      * 
      * @param cx
      *            the execution context
@@ -520,7 +520,7 @@ public final class PromiseAbstractOperations {
     }
 
     /**
-     * PromiseBuiltinCapability () Abstract Operation
+     * PromiseBuiltinCapability ()
      * 
      * @param cx
      *            the execution context
@@ -535,7 +535,7 @@ public final class PromiseAbstractOperations {
     }
 
     /**
-     * PromiseOf (value) Abstract Operation
+     * PromiseOf (value)
      * 
      * @param cx
      *            the execution context
@@ -553,7 +553,7 @@ public final class PromiseAbstractOperations {
     }
 
     /**
-     * PromiseOf (value) Abstract Operation
+     * PromiseOf (value)
      * 
      * @param cx
      *            the execution context

@@ -43,7 +43,7 @@ public final class SymbolConstructor extends BuiltinConstructor implements Initi
      *            the realm object
      */
     public SymbolConstructor(Realm realm) {
-        super(realm, "Symbol", 1);
+        super(realm, "Symbol", 0);
     }
 
     @Override
@@ -93,7 +93,7 @@ public final class SymbolConstructor extends BuiltinConstructor implements Initi
 
         @Value(name = "length", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = true))
-        public static final int length = 1;
+        public static final int length = 0;
 
         @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = true))

@@ -65,7 +65,12 @@ public final class Eval {
         /**
          * Flag for eval calls enclosed by with-statement
          */
-        EnclosedByWithStatement(0x0020);
+        EnclosedByWithStatement(0x0020),
+
+        /**
+         * Flag for eval calls enclosed by lexical declaration
+         */
+        EnclosedByLexicalDeclaration(0x0040);
 
         private final int value;
 
@@ -100,6 +105,9 @@ public final class Eval {
             }
             if (EvalFlags.EnclosedByWithStatement.isSet(flags)) {
                 options.add(Parser.Option.EnclosedByWithStatement);
+            }
+            if (EvalFlags.EnclosedByLexicalDeclaration.isSet(flags)) {
+                options.add(Parser.Option.EnclosedByLexicalDeclaration);
             }
             return options;
         }

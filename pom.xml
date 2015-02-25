@@ -59,7 +59,7 @@
     <mainClass>${project.groupId}.${project.artifactId}.repl.Repl</mainClass>
     <distribution.name>${project.artifactId}</distribution.name>
     <shaded.name>${project.artifactId}</shaded.name>
-    <spec.version>rev33</spec.version>
+    <spec.version>rev34</spec.version>
     <test.user.language>en</test.user.language>
     <test.user.country>US</test.user.country>
     <test.user.timezone>America/Los_Angeles</test.user.timezone>
@@ -89,7 +89,7 @@
     <dependency>
       <groupId>jline</groupId>
       <artifactId>jline</artifactId>
-      <version>2.12</version>
+      <version>2.12.1</version>
     </dependency>
     <dependency>
       <groupId>args4j</groupId>

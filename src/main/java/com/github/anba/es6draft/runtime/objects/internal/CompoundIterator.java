@@ -6,7 +6,7 @@
  */
 package com.github.anba.es6draft.runtime.objects.internal;
 
-import static com.github.anba.es6draft.runtime.AbstractOperations.CreateDataProperty;
+import static com.github.anba.es6draft.runtime.AbstractOperations.CreateMethodProperty;
 
 import java.util.Iterator;
 
@@ -105,7 +105,7 @@ public final class CompoundIterator<T> extends OrdinaryObject {
         /* step 6 */
         iterator.iteratorNext = next;
         /* step 7 */
-        CreateDataProperty(cx, iterator, "next", next);
+        CreateMethodProperty(cx, iterator, "next", next);
         /* step 8 */
         return iterator;
     }

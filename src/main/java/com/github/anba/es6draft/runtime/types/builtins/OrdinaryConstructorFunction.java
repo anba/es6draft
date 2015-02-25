@@ -65,7 +65,7 @@ public final class OrdinaryConstructorFunction extends OrdinaryFunction implemen
     /* ***************************************************************************************** */
 
     /**
-     * 9.2.4 FunctionAllocate (functionPrototype, strict [,functionKind] ) Abstract Operation
+     * 9.2.4 FunctionAllocate (functionPrototype, strict [,functionKind] )
      * 
      * @param cx
      *            the execution context
@@ -94,7 +94,7 @@ public final class OrdinaryConstructorFunction extends OrdinaryFunction implemen
     }
 
     /**
-     * 9.2.6 FunctionCreate (kind, ParameterList, Body, Scope, Strict) Abstract Operation
+     * 9.2.6 FunctionCreate (kind, ParameterList, Body, Scope, Strict)
      * 
      * @param cx
      *            the execution context
@@ -115,7 +115,7 @@ public final class OrdinaryConstructorFunction extends OrdinaryFunction implemen
     }
 
     /**
-     * 9.2.6 FunctionCreate (kind, ParameterList, Body, Scope, Strict, prototype) Abstract Operation
+     * 9.2.6 FunctionCreate (kind, ParameterList, Body, Scope, Strict, prototype)
      * 
      * @param cx
      *            the execution context

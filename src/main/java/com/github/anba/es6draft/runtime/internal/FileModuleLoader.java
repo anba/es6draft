@@ -20,14 +20,12 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Objects;
 
 import com.github.anba.es6draft.compiler.CompilationException;
 import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.modules.MalformedNameException;
 import com.github.anba.es6draft.runtime.modules.ModuleLoader;
-import com.github.anba.es6draft.runtime.modules.ModuleRecord;
 import com.github.anba.es6draft.runtime.modules.ModuleSource;
 import com.github.anba.es6draft.runtime.modules.SourceIdentifier;
 import com.github.anba.es6draft.runtime.modules.SourceTextModuleRecord;
@@ -138,8 +136,85 @@ public class FileModuleLoader implements ModuleLoader {
         return moduleName;
     }
 
+    /**
+     * Defines a new module record in this module loader.
+     * 
+     * @param module
+     *            the module record
+     * @param realm
+     *            the realm instance
+     */
+    public void define(SourceTextModuleRecord module, Realm realm) {
+        SourceIdentifier identifier = module.getSourceCodeId();
+        if (modules.containsKey(identifier)) {
+            throw new IllegalArgumentException();
+        }
+        modules.put(identifier, module);
+        if (module.getRealm() == null) {
+            module.setRealm(realm);
+        }
+    }
+
+    /**
+     * Returns the collection of modules hold by this module loader.
+     * 
+     * @return the module collection
+     */
+    public Collection<SourceTextModuleRecord> getModules() {
+        return Collections.<SourceTextModuleRecord> unmodifiableCollection(modules.values());
+    }
+
     @Override
-    public FileModuleSource getSource(SourceIdentifier identifier) {
+    public SourceTextModuleRecord resolve(SourceIdentifier identifier, Realm realm)
+            throws IOException, IllegalArgumentException, ParserException, CompilationException {
+        SourceTextModuleRecord module = loadIfAbsent(identifier);
+        if (module.getRealm() == null) {
+            module.setRealm(realm);
+        }
+        return module;
+    }
+
+    @Override
+    public SourceTextModuleRecord get(SourceIdentifier identifier, Realm realm) {
+        SourceTextModuleRecord module = modules.get(identifier);
+        if (module != null && module.getRealm() == null) {
+            module.setRealm(realm);
+        }
+        return module;
+    }
+
+    @Override
+    public SourceTextModuleRecord define(SourceIdentifier identifier, ModuleSource source,
+            Realm realm) throws ParserException, IllegalArgumentException, CompilationException,
+            IOException {
+        SourceTextModuleRecord module = modules.get(identifier);
+        if (module == null) {
+            module = parseModule(identifier, source);
+            module.setRealm(realm);
+        }
+        return module;
+    }
+
+    @Override
+    public SourceTextModuleRecord load(SourceIdentifier identifier) throws IOException,
+            IllegalArgumentException, MalformedNameException {
+        SourceTextModuleRecord module = loadIfAbsent(identifier);
+        load(module, new HashSet<SourceTextModuleRecord>());
+        return module;
+    }
+
+    private void load(SourceTextModuleRecord module, HashSet<SourceTextModuleRecord> visited)
+            throws MalformedNameException, IOException {
+        if (visited.add(module)) {
+            SourceIdentifier referrerId = module.getSourceCodeId();
+            for (String specifier : module.getRequestedModules()) {
+                FileSourceIdentifier identifier = normalizeName(specifier, referrerId);
+                load(loadIfAbsent(identifier), visited);
+            }
+        }
+    }
+
+    private FileModuleSource getSource(SourceIdentifier identifier) {
         if (!(identifier instanceof FileSourceIdentifier)) {
             throw new IllegalArgumentException();
         }
@@ -148,76 +223,19 @@ public class FileModuleLoader implements ModuleLoader {
         return new FileModuleSource(sourceId, path);
     }
 
-    @Override
-    public SourceTextModuleRecord resolve(SourceIdentifier identifier) throws IOException,
-            ParserException, CompilationException {
+    private SourceTextModuleRecord loadIfAbsent(SourceIdentifier identifier) throws IOException {
         SourceTextModuleRecord module = modules.get(identifier);
         if (module == null) {
-            FileModuleSource source = getSource(identifier);
-            define(identifier, module = ParseModule(scriptLoader, identifier, source));
+            module = parseModule(identifier, getSource(identifier));
         }
         return module;
     }
 
-    @Override
-    public SourceTextModuleRecord get(SourceIdentifier identifier) {
-        return modules.get(Objects.requireNonNull(identifier));
-    }
-
-    @Override
-    public void define(SourceIdentifier identifier, ModuleRecord module) {
-        if (!(module instanceof SourceTextModuleRecord)) {
-            throw new IllegalArgumentException();
-        }
-        if (modules.containsKey(identifier)) {
-            throw new IllegalArgumentException();
-        }
-        modules.put(Objects.requireNonNull(identifier), (SourceTextModuleRecord) module);
-    }
-
-    @Override
-    public SourceTextModuleRecord define(SourceIdentifier identifier, ModuleSource source)
-            throws ParserException, CompilationException, IOException {
+    private SourceTextModuleRecord parseModule(SourceIdentifier identifier, ModuleSource source)
+            throws IOException {
         SourceTextModuleRecord module = ParseModule(scriptLoader, identifier, source);
-        define(identifier, module);
+        modules.put(identifier, module);
         return module;
-    }
-
-    @Override
-    public void fetch(ModuleRecord module) throws IOException, MalformedNameException {
-        if (!(module instanceof SourceTextModuleRecord)) {
-            throw new IllegalArgumentException();
-        }
-        fetch((SourceTextModuleRecord) module, new HashSet<SourceTextModuleRecord>());
-    }
-
-    private void fetch(SourceTextModuleRecord module, HashSet<SourceTextModuleRecord> visited)
-            throws MalformedNameException, IOException {
-        if (visited.add(module)) {
-            SourceIdentifier referrerId = module.getSourceCodeId();
-            for (String specifier : module.getRequestedModules()) {
-                FileSourceIdentifier identifier = normalizeName(specifier, referrerId);
-                fetch(resolve(identifier), visited);
-            }
-        }
-    }
-
-    @Override
-    public boolean link(ModuleRecord module, Realm realm) {
-        if (!(module instanceof SourceTextModuleRecord)) {
-            throw new IllegalArgumentException();
-        }
-        SourceTextModuleRecord mod = (SourceTextModuleRecord) module;
-        if (mod.getRealm() == null) {
-            mod.setRealm(realm);
-            return true;
-        }
-        return false;
-    }
-
-    @Override
-    public Collection<SourceTextModuleRecord> getModules() {
-        return Collections.<SourceTextModuleRecord> unmodifiableCollection(modules.values());
     }
 
     private static boolean isAbsolute(URI moduleName) {

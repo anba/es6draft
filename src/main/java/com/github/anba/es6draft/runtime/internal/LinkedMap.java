@@ -48,17 +48,13 @@ public class LinkedMap<KEY, VALUE> implements Iterable<Map.Entry<KEY, VALUE>> {
         head.prev = entry;
     }
 
-    private void remove(Entry<KEY, VALUE> entry) {
-        entry.removed = true;
-        entry.prev.next = entry.next;
-        entry.next.prev = entry.prev;
-    }
-
     private Entry<KEY, VALUE> del(KEY key) {
         KEY hashKey = hashKey(key);
         Entry<KEY, VALUE> entry = map.remove(hashKey);
         if (entry != null) {
-            remove(entry);
+            entry.removed = true;
+            entry.prev.next = entry.next;
+            entry.next.prev = entry.prev;
         }
         return entry;
     }

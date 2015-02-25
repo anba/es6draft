@@ -8,6 +8,7 @@ package com.github.anba.es6draft.runtime.objects.binary;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToBoolean;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToInteger;
+import static com.github.anba.es6draft.runtime.AbstractOperations.ToLength;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToNumber;
 import static com.github.anba.es6draft.runtime.internal.Errors.newRangeError;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
@@ -220,13 +221,7 @@ public final class DataViewConstructor extends BuiltinConstructor implements Ini
         if (Type.isUndefined(byteLength)) {
             viewByteLength = bufferByteLength - viewByteOffset;
         } else {
-            double numberLength = ToNumber(calleeContext, byteLength);
-            // TODO: call ToLength() instead of ToInteger() in spec?
-            double viewLength = ToInteger(numberLength);
-            if (numberLength != viewLength || viewLength < 0) {
-                throw newRangeError(calleeContext, Messages.Key.InvalidByteLength);
-            }
-            viewByteLength = (long) viewLength;
+            viewByteLength = ToLength(calleeContext, byteLength);
             if (offset + viewByteLength > bufferByteLength) {
                 throw newRangeError(calleeContext, Messages.Key.ArrayOffsetOutOfRange);
             }

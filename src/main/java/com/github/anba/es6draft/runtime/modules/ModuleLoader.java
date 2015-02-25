@@ -7,7 +7,6 @@
 package com.github.anba.es6draft.runtime.modules;
 
 import java.io.IOException;
-import java.util.Collection;
 
 import com.github.anba.es6draft.compiler.CompilationException;
 import com.github.anba.es6draft.parser.ParserException;
@@ -32,52 +31,35 @@ public interface ModuleLoader {
             throws MalformedNameException;
 
     /**
-     * Retrieves the source code for the requested module.
-     * 
-     * @param identifier
-     *            the module identifier
-     * @return the module source code
-     * @throws IllegalArgumentException
-     *             if the source identifier cannot be processed by this loader
-     */
-    ModuleSource getSource(SourceIdentifier identifier) throws IllegalArgumentException;
-
-    /**
-     * Resolves, but does not link, the requested module record.
+     * Resolves and links the requested module record.
      * 
      * @param identifier
      *            the module source identifier
-     * @return the parsed module record
+     * @param realm
+     *            the realm instance
+     * @return the module record
      * @throws IOException
      *             if there was any I/O error
+     * @throws IllegalArgumentException
+     *             if the source identifier cannot be processed by this loader
      * @throws ParserException
      *             if the module source contains any syntax errors
      * @throws CompilationException
      *             if the parsed module source cannot be compiled
      */
-    ModuleRecord resolve(SourceIdentifier identifier) throws IOException, ParserException,
-            CompilationException;
+    ModuleRecord resolve(SourceIdentifier identifier, Realm realm) throws IOException,
+            IllegalArgumentException, ParserException, CompilationException;
 
     /**
      * Retrieves the requested module record.
      * 
      * @param identifier
      *            the module source identifier
+     * @param realm
+     *            the realm instance
      * @return the module record or {@code null} if not found
      */
-    ModuleRecord get(SourceIdentifier identifier);
-
-    /**
-     * Defines a new module record in this module loader.
-     * 
-     * @param identifier
-     *            the module source identifier
-     * @param module
-     *            the module record
-     * @throws IllegalArgumentException
-     *             if the module record cannot be processed by this loader
-     */
-    void define(SourceIdentifier identifier, ModuleRecord module) throws IllegalArgumentException;
+    ModuleRecord get(SourceIdentifier identifier, Realm realm);
 
     /**
      * Defines a new module record in this module loader.
@@ -86,49 +68,34 @@ public interface ModuleLoader {
      *            the module source identifier
      * @param source
      *            the module source code
+     * @param realm
+     *            the realm record
      * @return the new module record
      * @throws IOException
      *             if there was any I/O error
+     * @throws IllegalArgumentException
+     *             if the source identifier cannot be processed by this loader
      * @throws ParserException
      *             if the module source contains any syntax errors
      * @throws CompilationException
      *             if the parsed module source cannot be compiled
      */
-    ModuleRecord define(SourceIdentifier identifier, ModuleSource source) throws IOException,
-            ParserException, CompilationException;
+    ModuleRecord define(SourceIdentifier identifier, ModuleSource source, Realm realm)
+            throws IOException, IllegalArgumentException, ParserException, CompilationException;
 
     /**
-     * Resolves all dependencies of a module record.
+     * Loads a module and all of its dependencies.
      * 
-     * @param module
-     *            the module record
+     * @param identifier
+     *            the module source identifier
+     * @return the loaded module record
      * @throws IOException
      *             if there was any I/O error
+     * @throws IllegalArgumentException
+     *             if the source identifier cannot be processed by this loader
      * @throws MalformedNameException
      *             if the module specifier cannot be normalized
-     * @throws IllegalArgumentException
-     *             if the module record cannot be processed by this loader
      */
-    void fetch(ModuleRecord module) throws IOException, MalformedNameException,
-            IllegalArgumentException;
-
-    /**
-     * Links the module record to a realm instance.
-     * 
-     * @param module
-     *            the module record
-     * @param realm
-     *            the realm record
-     * @return {@code true} if the module was successfully linked to the realm
-     * @throws IllegalArgumentException
-     *             if the module record cannot be processed by this loader
-     */
-    boolean link(ModuleRecord module, Realm realm) throws IllegalArgumentException;
-
-    /**
-     * Returns the collection of modules hold by this module loader.
-     * 
-     * @return the module collection
-     */
-    Collection<? extends ModuleRecord> getModules();
+    ModuleRecord load(SourceIdentifier identifier) throws IOException, IllegalArgumentException,
+            MalformedNameException;
 }

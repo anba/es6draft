@@ -48,8 +48,6 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
     private ThisMode thisMode;
     /** [[Strict]] */
     private boolean strict;
-    /** [[NeedsSuper]] */
-    private boolean needsSuper;
     /** [[HomeObject]] */
     private ScriptObject homeObject;
 
@@ -86,8 +84,8 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
         Lexical, Strict, Global
     }
 
-    public static boolean isStrictFunction(Object v) {
-        return v instanceof FunctionObject && ((FunctionObject) v).isStrict();
+    private static boolean isNonStrictFunctionOrNull(Object v) {
+        return v == NULL || (v instanceof FunctionObject && !((FunctionObject) v).isStrict());
     }
 
     /**
@@ -239,7 +237,7 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
                 return arguments;
             }
             if ("caller".equals(propertyKey)) {
-                assert !isStrictFunction(caller.getValue());
+                assert isNonStrictFunctionOrNull(caller.getValue());
                 return caller;
             }
         }
@@ -323,7 +321,7 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
     protected abstract FunctionObject allocateNew();
 
     /**
-     * 9.2.4 FunctionAllocate (functionPrototype, strict) Abstract Operation
+     * 9.2.4 FunctionAllocate (functionPrototype, strict)
      * 
      * @param realm
      *            the realm instance
@@ -354,7 +352,7 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
     }
 
     /**
-     * 9.2.5 FunctionInitialize (F, kind, ParameterList, Body, Scope) Abstract Operation
+     * 9.2.5 FunctionInitialize (F, kind, ParameterList, Body, Scope)
      * 
      * @param kind
      *            the function kind
@@ -392,14 +390,14 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
     }
 
     /**
-     * 9.2.11 MakeMethod ( F, homeObject) Abstract Operation
+     * 9.2.11 MakeMethod ( F, homeObject)
      * 
      * @param homeObject
      *            the new home object
      */
     protected final void toMethod(ScriptObject homeObject) {
-        assert !needsSuper : "function object already method";
-        this.needsSuper = true;
+        assert homeObject != null;
+        assert this.homeObject == null : "function object already method";
         this.homeObject = homeObject;
     }
 
@@ -486,7 +484,7 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
 
     @Override
     public final Realm getRealm(ExecutionContext cx) {
-        /* 7.3.21 GetFunctionRealm ( obj ) Abstract Operation */
+        /* 7.3.22 GetFunctionRealm ( obj ) */
         return realm;
     }
 
@@ -509,33 +507,12 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
     }
 
     /**
-     * [[NeedsSuper]]
-     * 
-     * @return the needs-super field
-     */
-    public final boolean isNeedsSuper() {
-        return needsSuper;
-    }
-
-    /**
      * [[HomeObject]]
      * 
      * @return the home object field
      */
     public final ScriptObject getHomeObject() {
         return homeObject;
-    }
-
-    /**
-     * [[HomeObject]]
-     * 
-     * @param homeObject
-     *            the new home object
-     */
-    public final void setHomeObject(OrdinaryObject homeObject) {
-        assert needsSuper : "function object not method";
-        assert homeObject != null;
-        this.homeObject = homeObject;
     }
 
     /**
@@ -549,8 +526,7 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
 
     @Override
     public String toString() {
-        return String.format(
-                "%s, functionKind=%s, constructorKind=%s, thisMode=%s, needsSuper=%b, cloned=%b",
-                super.toString(), functionKind, constructorKind, thisMode, needsSuper, isClone);
+        return String.format("%s, functionKind=%s, constructorKind=%s, thisMode=%s, cloned=%b",
+                super.toString(), functionKind, constructorKind, thisMode, isClone);
     }
 }

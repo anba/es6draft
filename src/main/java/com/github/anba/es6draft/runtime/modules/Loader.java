@@ -47,7 +47,7 @@ public final class Loader {
     }
 
     /**
-     * CreateLoaderRecord(realm, object) Abstract Operation
+     * CreateLoaderRecord(realm, object)
      * 
      * @param realm
      *            the realm instance

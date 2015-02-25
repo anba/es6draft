@@ -116,7 +116,7 @@ public interface ModuleRecord {
     void instantiate() throws IOException, MalformedNameException, ResolutionException;
 
     /**
-     * Evaluate()
+     * ModuleEvaluation()
      * 
      * @return the module evaluation result
      * @throws IOException

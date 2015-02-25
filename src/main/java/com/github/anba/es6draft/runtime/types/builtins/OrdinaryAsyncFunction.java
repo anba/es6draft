@@ -106,7 +106,7 @@ public final class OrdinaryAsyncFunction extends FunctionObject implements Const
     /* ***************************************************************************************** */
 
     /**
-     * 9.2.4 FunctionAllocate (functionPrototype, strict [,functionKind] ) Abstract Operation
+     * 9.2.4 FunctionAllocate (functionPrototype, strict [,functionKind] )
      * 
      * @param cx
      *            the execution context
@@ -132,7 +132,7 @@ public final class OrdinaryAsyncFunction extends FunctionObject implements Const
     }
 
     /**
-     * AsyncFunctionCreate Abstract Operation
+     * AsyncFunctionCreate (kind, ParameterList, Body, Scope, Strict)
      * 
      * @param cx
      *            the execution context

@@ -303,7 +303,8 @@ public final class PromiseConstructor extends BuiltinConstructor implements Init
     }
 
     /**
-     * 25.4.4.1.1 PerformPromiseAll( iterator, constructor, resultCapability) Abstract Operation
+     * 25.4.4.1.1 Runtime Semantics: PerformPromiseAll( iteratorRecord, constructor,
+     * resultCapability)
      * 
      * @param <PROMISE>
      *            the promise type
@@ -356,33 +357,7 @@ public final class PromiseConstructor extends BuiltinConstructor implements Init
     }
 
     /**
-     * 25.4.4.1.1 PerformPromiseAll( iterator, constructor, resultCapability) Abstract Operation
-     * 
-     * @param <PROMISE>
-     *            the promise type
-     * @param cx
-     *            the execution context
-     * @param iterator
-     *            the iterator object
-     * @param constructor
-     *            the constructor object
-     * @param resultCapability
-     *            the new promise capability record
-     * @param values
-     *            the list of result values
-     * @param remainingElementsCount
-     *            the remaining element counter
-     */
-    public static <PROMISE extends ScriptObject> void PerformPromiseAllLoop(ExecutionContext cx,
-            ScriptObject iterator, Constructor constructor,
-            PromiseCapability<PROMISE> resultCapability, ArrayList<Object> values,
-            AtomicInteger remainingElementsCount) {
-        /* steps 1-5 (not applicable) */
-
-    }
-
-    /**
-     * 25.4.4.1.1 Promise.all Resolve Element Functions
+     * 25.4.4.1.2 Promise.all Resolve Element Functions
      */
     public static final class PromiseAllResolveElementFunction extends BuiltinFunction {
         /** [[AlreadyCalled]] */

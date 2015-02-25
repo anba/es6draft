@@ -30,7 +30,7 @@ function assertPrototypeProperty(object, name = "prototype", value = object[name
 
 /* Set Objects */
 
-assertBuiltinConstructor(Set, "Set", 1);
+assertBuiltinConstructor(Set, "Set", 0);
 assertBuiltinPrototype(Set.prototype);
 assertSame(Set, Set.prototype.constructor);
 

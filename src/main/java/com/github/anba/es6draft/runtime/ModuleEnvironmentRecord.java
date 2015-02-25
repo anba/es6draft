@@ -36,7 +36,8 @@ public final class ModuleEnvironmentRecord extends DeclarativeEnvironmentRecord 
 
         @Override
         public boolean isInitialized() {
-            return true;
+            /* 8.1.1.5.1 GetBindingValue(N,S), step 3.b */
+            return module.getEnvironment() != null;
         }
 
         @Override
@@ -51,13 +52,13 @@ public final class ModuleEnvironmentRecord extends DeclarativeEnvironmentRecord 
 
         @Override
         public Object getValue() {
-            /* 8.1.1.5.1 GetBindingValue(N,S), step 3 */
+            /* 8.1.1.5.1 GetBindingValue(N,S), steps 3.c-d */
             return module.getEnvironment().getEnvRec().getBindingValue(otherName, true);
         }
     }
 
     public ModuleEnvironmentRecord(ExecutionContext cx) {
-        super(cx);
+        super(cx, false);
     }
 
     // Implicitly defined methods:
@@ -96,12 +97,14 @@ public final class ModuleEnvironmentRecord extends DeclarativeEnvironmentRecord 
         assert !hasBinding(name);
         /* step 3 (not applicable) */
         /* step 4 */
-        // FIXME: spec issue (bug 3479)
-        // assert module.getEnvironment() != null : "module not initialized";
-        // assert module.getEnvironment().getEnvRec().hasBinding(otherName) : "Missing binding: "
-        // + otherName;
+        assert !module.isInstantiated() || hasDirectBinding(module, otherName);
         /* step 5 */
         createBinding(name, new IndirectBinding(module, otherName));
         /* step 6 (return) */
+    }
+
+    private static boolean hasDirectBinding(SourceTextModuleRecord module, String name) {
+        Binding binding = module.getEnvironment().getEnvRec().getBinding(name);
+        return binding != null && !(binding instanceof IndirectBinding);
     }
 }

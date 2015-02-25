@@ -10,7 +10,6 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.ToFlatString;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.FunctionInitialize;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.MakeConstructor;
-import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.MakeMethod;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.SetFunctionName;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryGenerator.FunctionAllocate;
 
@@ -128,7 +127,7 @@ public final class GeneratorFunctionConstructor extends BuiltinConstructor imple
             bodyText = ToFlatString(cx, args[k - 1]);
         }
 
-        /* steps 11, 13-17 */
+        /* steps 11, 13-19 */
         Source source = generatorSource(cx);
         CompiledGenerator exec = new CompiledGenerator(source);
         RuntimeInfo.Function function;
@@ -141,25 +140,21 @@ public final class GeneratorFunctionConstructor extends BuiltinConstructor imple
 
         /* step 12 */
         boolean strict = function.isStrict();
-        /* steps 18-19 */
-        ScriptObject proto = GetPrototypeFromConstructor(cx, newTarget, fallbackProto);
         /* steps 20-21 */
-        OrdinaryGenerator f = FunctionAllocate(cx, proto, strict, FunctionKind.Normal);
+        ScriptObject proto = GetPrototypeFromConstructor(cx, newTarget, fallbackProto);
         /* steps 22-23 */
+        OrdinaryGenerator f = FunctionAllocate(cx, proto, strict, FunctionKind.Normal);
+        /* steps 24-25 */
         LexicalEnvironment<GlobalEnvironmentRecord> scope = f.getRealm().getGlobalEnv();
-        /* step 24 */
-        FunctionInitialize(f, FunctionKind.Normal, function, scope, exec);
-        /* step 25 */
-        if (function.hasSuperReference()) {
-            MakeMethod(f, null);
-        }
         /* step 26 */
+        FunctionInitialize(f, FunctionKind.Normal, function, scope, exec);
+        /* step 27 */
         OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.GeneratorPrototype);
         MakeConstructor(f, true, prototype);
-        /* step 27 (not applicable) */
-        /* step 28 */
-        SetFunctionName(f, "anonymous");
+        /* step 28 (not applicable) */
         /* step 29 */
+        SetFunctionName(f, "anonymous");
+        /* step 30 */
         return f;
     }
 

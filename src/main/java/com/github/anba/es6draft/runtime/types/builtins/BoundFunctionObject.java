@@ -7,7 +7,6 @@
 package com.github.anba.es6draft.runtime.types.builtins;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.IsConstructor;
-import static com.github.anba.es6draft.runtime.AbstractOperations.SameValue;
 import static com.github.anba.es6draft.runtime.internal.Errors.newRangeError;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
@@ -65,7 +64,7 @@ public class BoundFunctionObject extends OrdinaryObject implements Callable {
             /* step 4 */
             Object[] args = concatArguments(callerContext, boundArgs, extraArgs);
             /* step 5 */
-            if (SameValue(this, newTarget)) {
+            if (this == newTarget) {
                 newTarget = (Constructor) target;
             }
             /* step 6 */
@@ -87,7 +86,7 @@ public class BoundFunctionObject extends OrdinaryObject implements Callable {
             /* step 4 */
             Object[] args = concatArguments(callerContext, boundArgs, extraArgs);
             /* step 5 */
-            if (SameValue(this, newTarget)) {
+            if (this == newTarget) {
                 newTarget = (Constructor) target;
             }
             /* step 6 */
@@ -198,12 +197,12 @@ public class BoundFunctionObject extends OrdinaryObject implements Callable {
 
     @Override
     public final Realm getRealm(ExecutionContext cx) {
-        /* 7.3.21 GetFunctionRealm ( obj ) Abstract Operation */
+        /* 7.3.22 GetFunctionRealm ( obj ) */
         return getFlattenedTargetFunction().getRealm(cx);
     }
 
     /**
-     * 9.4.1.3 BoundFunctionCreate (targetFunction, boundThis, boundArgs) Abstract Operation
+     * 9.4.1.3 BoundFunctionCreate (targetFunction, boundThis, boundArgs)
      * 
      * @param cx
      *            the execution context
@@ -253,7 +252,7 @@ public class BoundFunctionObject extends OrdinaryObject implements Callable {
     }
 
     /**
-     * BoundFunctionClone ( function ) Abstract Operation
+     * BoundFunctionClone ( function )
      * 
      * @param cx
      *            the execution context

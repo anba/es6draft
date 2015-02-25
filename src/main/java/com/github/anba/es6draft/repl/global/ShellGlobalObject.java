@@ -175,10 +175,8 @@ public abstract class ShellGlobalObject extends GlobalObject {
             MalformedNameException, ResolutionException, ParserException, CompilationException {
         ModuleLoader moduleLoader = realm.getModuleLoader();
         SourceIdentifier moduleId = moduleLoader.normalizeName(moduleName, null);
-        ModuleRecord module = moduleLoader.resolve(moduleId);
-        if (moduleLoader.link(module, realm)) {
-            module.instantiate();
-        }
+        ModuleRecord module = moduleLoader.resolve(moduleId, realm);
+        module.instantiate();
         module.evaluate();
         return module;
     }

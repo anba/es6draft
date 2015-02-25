@@ -157,7 +157,7 @@ public final class StringObject extends OrdinaryObject {
     }
 
     /**
-     * 9.4.3.5 StringCreate(value, prototype) Abstract Operation
+     * 9.4.3.5 StringCreate(value, prototype)
      * 
      * @param cx
      *            the execution context
@@ -170,7 +170,7 @@ public final class StringObject extends OrdinaryObject {
     }
 
     /**
-     * 9.4.3.5 StringCreate(value, prototype) Abstract Operation
+     * 9.4.3.5 StringCreate(value, prototype)
      * 
      * @param cx
      *            the execution context

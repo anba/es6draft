@@ -32,7 +32,7 @@ import com.github.anba.es6draft.runtime.types.Type;
  * <li>9.4.2 Array Exotic Objects
  * </ul>
  */
-public final class ArrayObject extends OrdinaryObject {
+public class ArrayObject extends OrdinaryObject {
     private boolean hasIndexedAccessors = false;
     private boolean lengthWritable = true;
     private long length = 0;
@@ -53,7 +53,7 @@ public final class ArrayObject extends OrdinaryObject {
      * @return the array's length
      */
     @Override
-    public long getLength() {
+    public final long getLength() {
         return length;
     }
 
@@ -63,7 +63,7 @@ public final class ArrayObject extends OrdinaryObject {
      * @param length
      *            the new array length
      */
-    public void setLengthUnchecked(long length) {
+    public final void setLengthUnchecked(long length) {
         assert this.length <= length && lengthWritable;
         this.length = length;
     }
@@ -74,7 +74,7 @@ public final class ArrayObject extends OrdinaryObject {
      * @return {@code true} if the array has indexed accessors
      */
     @Override
-    public boolean hasIndexedAccessors() {
+    public final boolean hasIndexedAccessors() {
         return hasIndexedAccessors;
     }
 
@@ -132,7 +132,7 @@ public final class ArrayObject extends OrdinaryObject {
     }
 
     @Override
-    protected boolean setPropertyValue(ExecutionContext cx, String propertyKey, Object value,
+    protected final boolean setPropertyValue(ExecutionContext cx, String propertyKey, Object value,
             Property current) {
         if ("length".equals(propertyKey)) {
             return ArraySetLength(cx, this, value);
@@ -141,7 +141,7 @@ public final class ArrayObject extends OrdinaryObject {
     }
 
     @Override
-    protected boolean has(ExecutionContext cx, String propertyKey) {
+    protected final boolean has(ExecutionContext cx, String propertyKey) {
         if ("length".equals(propertyKey)) {
             return true;
         }
@@ -149,7 +149,7 @@ public final class ArrayObject extends OrdinaryObject {
     }
 
     @Override
-    protected boolean hasOwnProperty(ExecutionContext cx, String propertyKey) {
+    protected final boolean hasOwnProperty(ExecutionContext cx, String propertyKey) {
         if ("length".equals(propertyKey)) {
             return true;
         }
@@ -157,7 +157,7 @@ public final class ArrayObject extends OrdinaryObject {
     }
 
     @Override
-    protected Property getProperty(ExecutionContext cx, String propertyKey) {
+    protected final Property getProperty(ExecutionContext cx, String propertyKey) {
         if ("length".equals(propertyKey)) {
             return new Property(length, lengthWritable, false, false);
         }
@@ -165,7 +165,7 @@ public final class ArrayObject extends OrdinaryObject {
     }
 
     @Override
-    protected boolean deleteProperty(ExecutionContext cx, String propertyKey) {
+    protected final boolean deleteProperty(ExecutionContext cx, String propertyKey) {
         if ("length".equals(propertyKey)) {
             return false;
         }
@@ -173,7 +173,7 @@ public final class ArrayObject extends OrdinaryObject {
     }
 
     @Override
-    protected List<Object> getOwnPropertyKeys(ExecutionContext cx) {
+    protected final List<Object> getOwnPropertyKeys(ExecutionContext cx) {
         int totalSize = countProperties(true) + 1; // + 1 for length property
         /* step 1 */
         ArrayList<Object> ownKeys = new ArrayList<>(totalSize);
@@ -192,7 +192,8 @@ public final class ArrayObject extends OrdinaryObject {
      * 9.4.2.1 [[DefineOwnProperty]] (P, Desc)
      */
     @Override
-    protected boolean defineProperty(ExecutionContext cx, long propertyKey, PropertyDescriptor desc) {
+    protected final boolean defineProperty(ExecutionContext cx, long propertyKey,
+            PropertyDescriptor desc) {
         /* steps 1-2 (not applicable) */
         /* step 3 */
         if (isArrayIndex(propertyKey)) {
@@ -226,7 +227,7 @@ public final class ArrayObject extends OrdinaryObject {
      * 9.4.2.1 [[DefineOwnProperty]] (P, Desc)
      */
     @Override
-    protected boolean defineProperty(ExecutionContext cx, String propertyKey,
+    protected final boolean defineProperty(ExecutionContext cx, String propertyKey,
             PropertyDescriptor desc) {
         /* steps 1, 3 (not applicable) */
         /* step 2 */
@@ -238,7 +239,7 @@ public final class ArrayObject extends OrdinaryObject {
     }
 
     /**
-     * 9.4.2.2 ArrayCreate(length, proto) Abstract Operation
+     * 9.4.2.2 ArrayCreate(length, proto)
      * 
      * @param cx
      *            the execution context
@@ -251,7 +252,7 @@ public final class ArrayObject extends OrdinaryObject {
     }
 
     /**
-     * 9.4.2.2 ArrayCreate(length, proto) Abstract Operation
+     * 9.4.2.2 ArrayCreate(length, proto)
      * 
      * @param cx
      *            the execution context
@@ -360,7 +361,7 @@ public final class ArrayObject extends OrdinaryObject {
     }
 
     /**
-     * 9.4.2.3 ArraySpeciesCreate(originalArray, length) Abstract Operation
+     * 9.4.2.3 ArraySpeciesCreate(originalArray, length)
      * 
      * @param cx
      *            the execution context
@@ -377,23 +378,23 @@ public final class ArrayObject extends OrdinaryObject {
         /* step 2 (not applicable) */
         /* step 3 */
         Object c = UNDEFINED;
-        /* step 4 */
+        /* steps 4-6 */
         if (IsArray(cx, orginalArray)) {
-            /* steps 4.a-4.b */
+            /* steps 6.a-b */
             c = Get(cx, orginalArray, "constructor");
-            /* step 4.c */
+            /* step 6.c */
             if (IsConstructor(c)) {
                 Constructor constructor = (Constructor) c;
-                /* step 4.c.i */
+                /* step 6.c.i */
                 Realm thisRealm = cx.getRealm();
-                /* steps 4.c.ii-iii */
+                /* steps 6.c.ii-iii */
                 Realm realmC = GetFunctionRealm(cx, constructor);
-                /* step 4.c.iv */
+                /* step 6.c.iv */
                 if (thisRealm != realmC && constructor == realmC.getIntrinsic(Intrinsics.Array)) {
                     c = UNDEFINED;
                 }
             }
-            /* step 4.d */
+            /* step 6.d */
             if (Type.isObject(c)) {
                 c = Get(cx, Type.objectValue(c), BuiltinSymbol.species.get());
                 if (Type.isNull(c)) {
@@ -401,20 +402,20 @@ public final class ArrayObject extends OrdinaryObject {
                 }
             }
         }
-        /* step 5 */
+        /* step 7 */
         if (Type.isUndefined(c)) {
             return ArrayCreate(cx, length);
         }
-        /* step 6 */
+        /* step 8 */
         if (!IsConstructor(c)) {
             throw newTypeError(cx, Messages.Key.NotConstructor);
         }
-        /* step 7 */
+        /* step 9 */
         return ((Constructor) c).construct(cx, (Constructor) c, length);
     }
 
     /**
-     * 9.4.2.4 ArraySetLength(A, Desc) Abstract Operation
+     * 9.4.2.4 ArraySetLength(A, Desc)
      * 
      * @param cx
      *            the execution context
@@ -484,6 +485,17 @@ public final class ArrayObject extends OrdinaryObject {
         return true;
     }
 
+    /**
+     * 9.4.2.4 ArraySetLength(A, Desc)
+     * 
+     * @param cx
+     *            the execution context
+     * @param array
+     *            the array object
+     * @param lenValue
+     *            the new length value
+     * @return {@code true} on success
+     */
     private static boolean ArraySetLength(ExecutionContext cx, ArrayObject array, Object lenValue) {
         /* steps 1-2 (not applicable) */
         /* steps 3-4 */
@@ -532,7 +544,7 @@ public final class ArrayObject extends OrdinaryObject {
      * @param sourceLength
      *            the source object's length
      */
-    public void insertFrom(int index, OrdinaryObject source, long sourceLength) {
+    public final void insertFrom(int index, OrdinaryObject source, long sourceLength) {
         assert isExtensible() && lengthWritable && index >= this.length;
         assert source.isDenseArray(sourceLength);
         assert 0 <= sourceLength && sourceLength <= Integer.MAX_VALUE : "length=" + sourceLength;

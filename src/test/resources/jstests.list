@@ -119,6 +119,12 @@ ecma_6/Function/bound-length-and-name.js
 # ES6: RegExp unicode not implemented
 ecma_6/RegExp/descriptor.js
 
+# ES6: Symbol.length changed to 0
+ecma_6/Symbol/surfaces.js
+
+# TODO: investigate
+ecma_6/String/normalize-generateddata-part1-not-listed.js
+
 
 ####################################
 # Intl only partially supported    #

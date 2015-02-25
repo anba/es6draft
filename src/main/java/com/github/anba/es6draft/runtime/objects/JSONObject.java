@@ -100,7 +100,7 @@ public final class JSONObject extends OrdinaryObject implements Initializable {
                 String rootName = "";
                 boolean status = CreateDataProperty(cx, root, rootName, unfiltered);
                 assert status;
-                return Walk(cx, (Callable) reviver, root, rootName);
+                return InternalizeJSONProperty(cx, (Callable) reviver, root, rootName);
             }
             /* step 9 */
             return unfiltered;
@@ -184,7 +184,8 @@ public final class JSONObject extends OrdinaryObject implements Initializable {
             boolean status = CreateDataProperty(cx, wrapper, "", value);
             assert status;
             /* step 12 */
-            String result = Str(cx, stack, propertyList, replacerFunction, indent, gap, "", wrapper);
+            String result = SerializeJSONProperty(cx, stack, propertyList, replacerFunction,
+                    indent, gap, "", wrapper);
             if (result == null) {
                 return UNDEFINED;
             }
@@ -200,7 +201,7 @@ public final class JSONObject extends OrdinaryObject implements Initializable {
     }
 
     /**
-     * 24.3.1.1 Runtime Semantics: Walk Abstract Operation
+     * 24.3.1.1 Runtime Semantics: InternalizeJSONProperty( holder, name)
      * 
      * @param cx
      *            the execution context
@@ -212,19 +213,17 @@ public final class JSONObject extends OrdinaryObject implements Initializable {
      *            the property key
      * @return the result value
      */
-    public static Object Walk(ExecutionContext cx, Callable reviver, ScriptObject holder,
-            String name) {
+    public static Object InternalizeJSONProperty(ExecutionContext cx, Callable reviver,
+            ScriptObject holder, String name) {
         /* steps 1-2 */
         Object val = Get(cx, holder, name);
         /* step 3 */
         if (Type.isObject(val)) {
             ScriptObject objVal = Type.objectValue(val);
             if (IsArray(cx, objVal)) {
-                /* step 3.a */
-                walkArray(cx, reviver, objVal);
+                internalizeArray(cx, reviver, objVal);
             } else {
-                /* step 3.b */
-                walkObject(cx, reviver, objVal);
+                internalizeObject(cx, reviver, objVal);
             }
         }
         /* step 4 */
@@ -232,7 +231,7 @@ public final class JSONObject extends OrdinaryObject implements Initializable {
     }
 
     /**
-     * 24.3.1.1 Runtime Semantics: Walk Abstract Operation
+     * 24.3.1.1 Runtime Semantics: InternalizeJSONProperty( holder, name)
      * 
      * @param cx
      *            the execution context
@@ -244,29 +243,28 @@ public final class JSONObject extends OrdinaryObject implements Initializable {
      *            the property key
      * @return the result value
      */
-    public static Object Walk(ExecutionContext cx, Callable reviver, ScriptObject holder, long name) {
+    public static Object InternalizeJSONProperty(ExecutionContext cx, Callable reviver,
+            ScriptObject holder, long name) {
         /* steps 1-2 */
         Object val = Get(cx, holder, name);
         /* step 3 */
         if (Type.isObject(val)) {
             ScriptObject objVal = Type.objectValue(val);
             if (IsArray(cx, objVal)) {
-                /* step 3.a */
-                walkArray(cx, reviver, objVal);
+                internalizeArray(cx, reviver, objVal);
             } else {
-                /* step 3.b */
-                walkObject(cx, reviver, objVal);
+                internalizeObject(cx, reviver, objVal);
             }
         }
         /* step 4 */
         return reviver.call(cx, holder, ToString(name), val);
     }
 
-    private static void walkArray(ExecutionContext cx, Callable reviver, ScriptObject val) {
-        /* step 3.a */
+    private static void internalizeArray(ExecutionContext cx, Callable reviver, ScriptObject val) {
+        /* step 3.c */
         long len = ToLength(cx, Get(cx, val, "length"));
         for (long i = 0; i < len; ++i) {
-            Object newElement = Walk(cx, reviver, val, i);
+            Object newElement = InternalizeJSONProperty(cx, reviver, val, i);
             if (Type.isUndefined(newElement)) {
                 val.delete(cx, i);
             } else {
@@ -275,10 +273,10 @@ public final class JSONObject extends OrdinaryObject implements Initializable {
         }
     }
 
-    private static void walkObject(ExecutionContext cx, Callable reviver, ScriptObject val) {
-        /* step 3.b */
+    private static void internalizeObject(ExecutionContext cx, Callable reviver, ScriptObject val) {
+        /* step 3.d */
         for (String p : EnumerableOwnNames(cx, val)) {
-            Object newElement = Walk(cx, reviver, val, p);
+            Object newElement = InternalizeJSONProperty(cx, reviver, val, p);
             if (Type.isUndefined(newElement)) {
                 val.delete(cx, p);
             } else {
@@ -288,7 +286,7 @@ public final class JSONObject extends OrdinaryObject implements Initializable {
     }
 
     /**
-     * 24.3.2.1 Runtime Semantics: Str Abstract Operation
+     * 24.3.2.1 Runtime Semantics: SerializeJSONProperty (key, holder )
      * 
      * @param cx
      *            the execution context
@@ -308,7 +306,7 @@ public final class JSONObject extends OrdinaryObject implements Initializable {
      *            the script object
      * @return the JSON string
      */
-    public static String Str(ExecutionContext cx, Set<ScriptObject> stack,
+    public static String SerializeJSONProperty(ExecutionContext cx, Set<ScriptObject> stack,
             Set<String> propertyList, Callable replacerFunction, String indent, String gap,
             String key, ScriptObject holder) {
         /* steps 1-2 */
@@ -342,7 +340,7 @@ public final class JSONObject extends OrdinaryObject implements Initializable {
         case Boolean:
             return Type.booleanValue(value) ? "true" : "false";
         case String:
-            return Quote(Type.stringValue(value));
+            return QuoteJSONString(Type.stringValue(value));
         case Number:
             double d = Type.numberValue(value);
             return isFinite(d) ? ToString(d) : "null";
@@ -350,9 +348,11 @@ public final class JSONObject extends OrdinaryObject implements Initializable {
             if (!IsCallable(value)) {
                 ScriptObject valueObj = Type.objectValue(value);
                 if (IsArray(cx, valueObj)) {
-                    return JA(cx, stack, propertyList, replacerFunction, indent, gap, valueObj);
+                    return SerializeJSONArray(cx, stack, propertyList, replacerFunction, indent,
+                            gap, valueObj);
                 } else {
-                    return JO(cx, stack, propertyList, replacerFunction, indent, gap, valueObj);
+                    return SerializeJSONObject(cx, stack, propertyList, replacerFunction, indent,
+                            gap, valueObj);
                 }
             } else {
                 return null;
@@ -372,13 +372,13 @@ public final class JSONObject extends OrdinaryObject implements Initializable {
             'a', 'b', 'c', 'd', 'e', 'f' };
 
     /**
-     * 24.3.2.2 Runtime Semantics: Quote Abstract Operation
+     * 24.3.2.2 Runtime Semantics: QuoteJSONString Abstract Operation
      * 
      * @param value
      *            the string
      * @return the quoted string
      */
-    public static String Quote(CharSequence value) {
+    public static String QuoteJSONString(CharSequence value) {
         StringBuilder product = new StringBuilder(value.length() + 2);
         /* step 1 */
         product.append('"');
@@ -424,7 +424,7 @@ public final class JSONObject extends OrdinaryObject implements Initializable {
     }
 
     /**
-     * 24.3.2.3 Runtime Semantics: JO Abstract Operation
+     * 24.3.2.3 Runtime Semantics: SerializeJSONObject ( value )
      * 
      * @param cx
      *            the execution context
@@ -442,8 +442,9 @@ public final class JSONObject extends OrdinaryObject implements Initializable {
      *            the script object
      * @return the JSON string
      */
-    public static String JO(ExecutionContext cx, Set<ScriptObject> stack, Set<String> propertyList,
-            Callable replacerFunction, String indent, String gap, ScriptObject value) {
+    public static String SerializeJSONObject(ExecutionContext cx, Set<ScriptObject> stack,
+            Set<String> propertyList, Callable replacerFunction, String indent, String gap,
+            ScriptObject value) {
         /* steps 1-2 */
         if (!stack.add(value)) {
             throw newTypeError(cx, Messages.Key.JSONCyclicValue);
@@ -463,10 +464,11 @@ public final class JSONObject extends OrdinaryObject implements Initializable {
         ArrayList<String> partial = new ArrayList<>();
         /* step 8 */
         for (String p : k) {
-            String strP = Str(cx, stack, propertyList, replacerFunction, indent, gap, p, value);
+            String strP = SerializeJSONProperty(cx, stack, propertyList, replacerFunction, indent,
+                    gap, p, value);
             if (strP != null) {
                 StringBuilder member = new StringBuilder(p.length() + strP.length() + 4);
-                member.append(Quote(p)).append(":");
+                member.append(QuoteJSONString(p)).append(":");
                 if (!gap.isEmpty()) {
                     member.append(' ');
                 }
@@ -504,7 +506,7 @@ public final class JSONObject extends OrdinaryObject implements Initializable {
     }
 
     /**
-     * 24.3.2.4 Runtime Semantics: JA Abstract Operation
+     * 24.3.2.4 Runtime Semantics: SerializeJSONArray( value )
      * 
      * @param cx
      *            the execution context
@@ -522,8 +524,9 @@ public final class JSONObject extends OrdinaryObject implements Initializable {
      *            the script array object
      * @return the JSON string
      */
-    public static String JA(ExecutionContext cx, Set<ScriptObject> stack, Set<String> propertyList,
-            Callable replacerFunction, String indent, String gap, ScriptObject value) {
+    public static String SerializeJSONArray(ExecutionContext cx, Set<ScriptObject> stack,
+            Set<String> propertyList, Callable replacerFunction, String indent, String gap,
+            ScriptObject value) {
         /* steps 1-2 */
         if (!stack.add(value)) {
             throw newTypeError(cx, Messages.Key.JSONCyclicValue);
@@ -538,8 +541,8 @@ public final class JSONObject extends OrdinaryObject implements Initializable {
         long len = ToLength(cx, Get(cx, value, "length"));
         /* steps 8-9 */
         for (long index = 0; index < len; ++index) {
-            String strP = Str(cx, stack, propertyList, replacerFunction, indent, gap,
-                    ToString(index), value);
+            String strP = SerializeJSONProperty(cx, stack, propertyList, replacerFunction, indent,
+                    gap, ToString(index), value);
             if (strP == null) {
                 partial.add("null");
             } else {

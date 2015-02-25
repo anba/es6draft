@@ -59,6 +59,12 @@ tests/proxy/operations-on-revoked.js
 # ES6: array destructuring tracks completed iterators
 tests/basic/destructuring-iterator.js
 
+# ES6: {Map, Set, WeakMap, WeakSet}.length changed to 0
+tests/collections/Map-surfaces-1.js
+tests/collections/Set-surfaces-1.js
+tests/collections/WeakMap-surfaces.js
+tests/collections/WeakSet-surface.js
+
 
 ###################
 # Misc issues     #

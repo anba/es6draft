@@ -160,7 +160,7 @@ public class OrdinaryObject implements ScriptObject {
     }
 
     final void defineOwnPropertyUnchecked(String propertyKey, Property property) {
-        // Same as infallibleDefineOwnProperty except extensible removed.
+        // Same as infallibleDefineOwnProperty except extensible check removed.
         assert !IndexedMap.isIndex(IndexedMap.toIndex(propertyKey));
         assert !properties.containsKey(propertyKey) : "illegal property = " + propertyKey;
         properties.put(propertyKey, property);
@@ -960,10 +960,10 @@ public class OrdinaryObject implements ScriptObject {
             /* step 9 */
             assert desc.isAccessorDescriptor() && current.isAccessorDescriptor();
             if (!current.isConfigurable()) {
-                if (desc.hasSetter() && !SameValue(desc.getSetter(), current.getSetter())) {
+                if (desc.hasSetter() && desc.getSetter() != current.getSetter()) {
                     return false;
                 }
-                if (desc.hasGetter() && !SameValue(desc.getGetter(), current.getGetter())) {
+                if (desc.hasGetter() && desc.getGetter() != current.getGetter()) {
                     return false;
                 }
             }
@@ -1062,10 +1062,10 @@ public class OrdinaryObject implements ScriptObject {
             /* step 9 */
             assert desc.isAccessorDescriptor() && current.isAccessorDescriptor();
             if (!current.isConfigurable()) {
-                if (desc.hasSetter() && !SameValue(desc.getSetter(), current.getSetter())) {
+                if (desc.hasSetter() && desc.getSetter() != current.getSetter()) {
                     return false;
                 }
-                if (desc.hasGetter() && !SameValue(desc.getGetter(), current.getGetter())) {
+                if (desc.hasGetter() && desc.getGetter() != current.getGetter()) {
                     return false;
                 }
             }
@@ -1926,7 +1926,7 @@ public class OrdinaryObject implements ScriptObject {
     }
 
     /**
-     * 9.1.13 ObjectCreate(proto, internalSlotsList) Abstract Operation
+     * 9.1.13 ObjectCreate(proto, internalSlotsList)
      *
      * @param cx
      *            the execution context
@@ -1939,7 +1939,7 @@ public class OrdinaryObject implements ScriptObject {
     }
 
     /**
-     * 9.1.13 ObjectCreate(proto, internalSlotsList) Abstract Operation
+     * 9.1.13 ObjectCreate(proto, internalSlotsList)
      *
      * @param cx
      *            the execution context
@@ -1952,7 +1952,7 @@ public class OrdinaryObject implements ScriptObject {
     }
 
     /**
-     * 9.1.13 ObjectCreate(proto, internalSlotsList) Abstract Operation
+     * 9.1.13 ObjectCreate(proto, internalSlotsList)
      *
      * @param <OBJECT>
      *            the object type
@@ -1972,7 +1972,7 @@ public class OrdinaryObject implements ScriptObject {
     }
 
     /**
-     * 9.1.13 ObjectCreate(proto, internalSlotsList) Abstract Operation
+     * 9.1.13 ObjectCreate(proto, internalSlotsList)
      *
      * @param <OBJECT>
      *            the object type
@@ -1992,7 +1992,7 @@ public class OrdinaryObject implements ScriptObject {
     }
 
     /**
-     * 9.1.13 ObjectCreate(proto, internalSlotsList) Abstract Operation
+     * 9.1.13 ObjectCreate(proto, internalSlotsList)
      *
      * @param realm
      *            the realm instance
@@ -2005,7 +2005,7 @@ public class OrdinaryObject implements ScriptObject {
     }
 
     /**
-     * 9.1.13 ObjectCreate(proto, internalSlotsList) Abstract Operation
+     * 9.1.13 ObjectCreate(proto, internalSlotsList)
      *
      * @param realm
      *            the realm instance
@@ -2018,7 +2018,7 @@ public class OrdinaryObject implements ScriptObject {
     }
 
     /**
-     * 9.1.13 ObjectCreate(proto, internalSlotsList) Abstract Operation
+     * 9.1.13 ObjectCreate(proto, internalSlotsList)
      *
      * @param <OBJECT>
      *            the object type
@@ -2038,7 +2038,7 @@ public class OrdinaryObject implements ScriptObject {
     }
 
     /**
-     * 9.1.13 ObjectCreate(proto, internalSlotsList) Abstract Operation
+     * 9.1.13 ObjectCreate(proto, internalSlotsList)
      *
      * @param <OBJECT>
      *            the object type

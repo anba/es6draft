@@ -134,10 +134,7 @@ public final class ObjectEnvironmentRecord implements EnvironmentRecord {
         // FIXME: InitializeBinding for ObjectEnvironment unreachable
         assert value != null;
         /* step 1 (omitted) */
-        /* step 2 */
-        // TODO: uninitialized binding in an object environment record?!
-        /* step 3 */
-        // TODO: record the binding has been initialized
+        /* steps 2-3 (not applicable) */
         /* step 4 */
         setMutableBinding(name, value, false);
     }
@@ -149,7 +146,7 @@ public final class ObjectEnvironmentRecord implements EnvironmentRecord {
     public void setMutableBinding(String name, Object value, boolean strict) {
         /* steps 1-2 (omitted) */
         /* step 3 */
-        Put(cx, bindings, name, value, strict);
+        Set(cx, bindings, name, value, strict);
     }
 
     /**

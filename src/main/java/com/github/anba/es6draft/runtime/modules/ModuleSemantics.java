@@ -56,11 +56,7 @@ public final class ModuleSemantics {
         ModuleLoader moduleLoader = realm.getModuleLoader();
         SourceIdentifier moduleId = moduleLoader.normalizeName(specifier,
                 referencingModule.getSourceCodeId());
-        ModuleRecord module = moduleLoader.resolve(moduleId);
-        if (moduleLoader.link(module, realm)) {
-            module.instantiate();
-        }
-        return module;
+        return moduleLoader.resolve(moduleId, realm);
     }
 
     /**
@@ -100,7 +96,7 @@ public final class ModuleSemantics {
                     unambiguousNames.add(name);
                 }
             }
-            /* step 3.f */
+            /* step 3.e */
             namespace = module.createNamespace(cx, unambiguousNames);
         }
         /* step 4 */
@@ -132,11 +128,8 @@ public final class ModuleSemantics {
             CompilationException, ResolutionException {
         ModuleLoader moduleLoader = realm.getModuleLoader();
         /* steps 1-2 (not applicable) */
-        /* steps 3-4 */
-        ModuleRecord m = moduleLoader.define(sourceCodeId, source);
-        /* step 5 */
-        boolean linked = moduleLoader.link(m, realm);
-        assert linked : "could not link module: " + sourceCodeId;
+        /* steps 3-5 */
+        ModuleRecord m = moduleLoader.define(sourceCodeId, source, realm);
         /* step 6 */
         m.instantiate();
         /* steps 7-8 */

@@ -496,10 +496,10 @@ public final class PropertyDescriptor implements Cloneable {
         if (desc.hasValue() && !(hasValue() && SameValue(desc.value, value))) {
             return false;
         }
-        if (desc.hasGetter() && !(hasGetter() && SameValue(desc.getter, getter))) {
+        if (desc.hasGetter() && !(hasGetter() && desc.getter == getter)) {
             return false;
         }
-        if (desc.hasSetter() && !(hasSetter() && SameValue(desc.setter, setter))) {
+        if (desc.hasSetter() && !(hasSetter() && desc.setter == setter)) {
             return false;
         }
         if (desc.hasWritable() && !(hasWritable() && desc.writable == writable)) {

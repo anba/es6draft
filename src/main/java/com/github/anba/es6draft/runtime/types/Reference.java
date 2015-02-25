@@ -6,7 +6,7 @@
  */
 package com.github.anba.es6draft.runtime.types;
 
-import static com.github.anba.es6draft.runtime.AbstractOperations.Put;
+import static com.github.anba.es6draft.runtime.AbstractOperations.Set;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToObject;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToString;
 import static com.github.anba.es6draft.runtime.internal.Errors.newReferenceError;
@@ -341,7 +341,7 @@ public abstract class Reference<BASE, NAME> {
                             getReferencedName());
                 }
                 ScriptObject globalObj = cx.getGlobalObject();
-                Put(cx, globalObj, getReferencedName(), w, false);
+                Set(cx, globalObj, getReferencedName(), w, false);
             } else {
                 /* steps 4, 7 */
                 getBase().setMutableBinding(getReferencedName(), w, isStrictReference());

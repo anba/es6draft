@@ -11,7 +11,6 @@ import static com.github.anba.es6draft.runtime.internal.Properties.createPropert
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryConstructorFunction.FunctionAllocate;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.FunctionInitialize;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.MakeConstructor;
-import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.MakeMethod;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.SetFunctionName;
 
 import com.github.anba.es6draft.compiler.CompilationException;
@@ -129,7 +128,7 @@ public final class FunctionConstructor extends BuiltinConstructor implements Ini
             bodyText = ToFlatString(cx, args[k - 1]);
         }
 
-        /* steps 11, 13-17 */
+        /* steps 11, 13-19 */
         Source source = functionSource(cx);
         CompiledFunction exec = new CompiledFunction(source);
         RuntimeInfo.Function function;
@@ -142,25 +141,21 @@ public final class FunctionConstructor extends BuiltinConstructor implements Ini
 
         /* step 12 */
         boolean strict = function.isStrict();
-        /* steps 18-19 */
-        ScriptObject proto = GetPrototypeFromConstructor(cx, newTarget, fallbackProto);
         /* steps 20-21 */
+        ScriptObject proto = GetPrototypeFromConstructor(cx, newTarget, fallbackProto);
+        /* steps 22-23 */
         OrdinaryConstructorFunction f = FunctionAllocate(cx, proto, strict, FunctionKind.Normal,
                 ConstructorKind.Base);
-        /* steps 22-23 */
+        /* steps 24-25 */
         LexicalEnvironment<GlobalEnvironmentRecord> scope = f.getRealm().getGlobalEnv();
-        /* step 24 */
+        /* step 26 */
         FunctionInitialize(f, FunctionKind.Normal, function, scope, exec);
-        /* step 25 */
-        if (function.hasSuperReference()) {
-            MakeMethod(f, null);
-        }
-        /* step 26 (not applicable) */
-        /* steps 27 */
+        /* step 27 (not applicable) */
+        /* steps 28 */
         MakeConstructor(cx, f);
-        /* step 28 */
-        SetFunctionName(f, "anonymous");
         /* step 29 */
+        SetFunctionName(f, "anonymous");
+        /* step 30 */
         return f;
     }
 

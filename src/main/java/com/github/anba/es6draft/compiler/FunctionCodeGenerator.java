@@ -49,13 +49,12 @@ final class FunctionCodeGenerator {
         // ExecutionContext
         static final MethodName ExecutionContext_newFunctionExecutionContext = MethodName
                 .findStatic(Types.ExecutionContext, "newFunctionExecutionContext", Type.methodType(
-                        Types.ExecutionContext, Types.ExecutionContext, Types.FunctionObject,
-                        Types.Constructor, Types.Object));
+                        Types.ExecutionContext, Types.FunctionObject, Types.Constructor,
+                        Types.Object));
 
         static final MethodName ExecutionContext_newFunctionExecutionContextConstructDerived = MethodName
                 .findStatic(Types.ExecutionContext, "newFunctionExecutionContext", Type.methodType(
-                        Types.ExecutionContext, Types.ExecutionContext, Types.FunctionObject,
-                        Types.Constructor));
+                        Types.ExecutionContext, Types.FunctionObject, Types.Constructor));
 
         static final MethodName ExecutionContext_getCurrentFunction = MethodName
                 .findVirtual(Types.ExecutionContext, "getCurrentFunction",
@@ -313,7 +312,7 @@ final class FunctionCodeGenerator {
      * oldArguments = function.getLegacyArguments()
      * function.setLegacyCaller(callerContext.getCurrentFunction())
      * try {
-     *   calleeContext = newFunctionExecutionContext(callerContext, function, null, thisValue)
+     *   calleeContext = newFunctionExecutionContext(function, null, thisValue)
      *   result = OrdinaryCallEvaluateBody(function, argumentsList)
      *   return returnResultOrUndefined(result)
      * } finally {
@@ -356,7 +355,7 @@ final class FunctionCodeGenerator {
         mv.mark(startFinally);
         {
             // (3) Create a new ExecutionContext
-            prepareCallAndBindThis(calleeContext, callerContext, function, null, thisValue, mv);
+            prepareCallAndBindThis(calleeContext, function, null, thisValue, mv);
 
             // (4) Call OrdinaryCallEvaluateBody
             ordinaryCallEvaluateBody(node, calleeContext, function, arguments, mv);
@@ -383,7 +382,7 @@ final class FunctionCodeGenerator {
      * Generate bytecode for:
      * 
      * <pre>
-     * calleeContext = newFunctionExecutionContext(callerContext, function, null, thisValue)
+     * calleeContext = newFunctionExecutionContext(function, null, thisValue)
      * result = OrdinaryCallEvaluateBody(function, argumentsList)
      * return returnResultOrUndefined(result)
      * </pre>
@@ -395,8 +394,6 @@ final class FunctionCodeGenerator {
      */
     private void generateFunctionCall(FunctionNode node, InstructionVisitor mv) {
         Variable<OrdinaryFunction> function = mv.getParameter(FUNCTION, OrdinaryFunction.class);
-        Variable<ExecutionContext> callerContext = mv.getParameter(EXECUTION_CONTEXT,
-                ExecutionContext.class);
         Variable<Object> thisValue = mv.getParameter(THIS_VALUE, Object.class);
         Variable<Object[]> arguments = mv.getParameter(ARGUMENTS, Object[].class);
 
@@ -405,7 +402,7 @@ final class FunctionCodeGenerator {
 
         // (1) Create a new ExecutionContext
         /* steps 1-6 */
-        prepareCallAndBindThis(calleeContext, callerContext, function, null, thisValue, mv);
+        prepareCallAndBindThis(calleeContext, function, null, thisValue, mv);
 
         // (2) Call OrdinaryCallEvaluateBody
         /* steps 7-8 */
@@ -448,7 +445,7 @@ final class FunctionCodeGenerator {
      * function.setLegacyCaller(callerContext.getCurrentFunction())
      * try {
      *   thisArgument = OrdinaryCreateFromConstructor(callerContext, newTarget, %ObjectPrototype%)
-     *   calleeContext = newFunctionExecutionContext(callerContext, function, newTarget, thisArgument)
+     *   calleeContext = newFunctionExecutionContext(function, newTarget, thisArgument)
      *   result = OrdinaryCallEvaluateBody(function, argumentsList)
      *   return returnResultOrThis(result)
      * } finally {
@@ -496,7 +493,7 @@ final class FunctionCodeGenerator {
             ordinaryCreateFromConstructor(callerContext, newTarget, thisArg, mv);
 
             // (4) Create a new ExecutionContext
-            prepareCallAndBindThis(calleeContext, callerContext, function, newTarget, thisArg, mv);
+            prepareCallAndBindThis(calleeContext, function, newTarget, thisArg, mv);
 
             // (5) Call OrdinaryCallEvaluateBody
             ordinaryCallEvaluateBody(node, calleeContext, function, arguments, mv);
@@ -524,7 +521,7 @@ final class FunctionCodeGenerator {
      * 
      * <pre>
      * thisArgument = OrdinaryCreateFromConstructor(callerContext, newTarget, %ObjectPrototype%)
-     * calleeContext = newFunctionExecutionContext(callerContext, function, newTarget, thisArgument)
+     * calleeContext = newFunctionExecutionContext(function, newTarget, thisArgument)
      * result = OrdinaryCallEvaluateBody(function, argumentsList)
      * return returnResultOrThis(result)
      * </pre>
@@ -554,7 +551,7 @@ final class FunctionCodeGenerator {
 
         // (1) Create a new ExecutionContext
         /* steps 6-11 */
-        prepareCallAndBindThis(calleeContext, callerContext, function, newTarget, thisArgument, mv);
+        prepareCallAndBindThis(calleeContext, function, newTarget, thisArgument, mv);
 
         // (2) Call OrdinaryCallEvaluateBody
         /* steps 12-13 */
@@ -569,7 +566,7 @@ final class FunctionCodeGenerator {
      * Generate bytecode for:
      * 
      * <pre>
-     * calleeContext = newFunctionExecutionContext(callerContext, function, newTarget)
+     * calleeContext = newFunctionExecutionContext(function, newTarget)
      * result = OrdinaryCallEvaluateBody(function, argumentsList)
      * return returnResultOrThis(result)
      * </pre>
@@ -595,7 +592,7 @@ final class FunctionCodeGenerator {
 
         /* steps 1-5 (not applicable) */
         /* steps 6-8 */
-        prepareCall(calleeContext, callerContext, function, newTarget, mv);
+        prepareCall(calleeContext, function, newTarget, mv);
         /* steps 9-11 (not applicable) */
 
         // (2) Call OrdinaryCallEvaluateBody
@@ -611,7 +608,7 @@ final class FunctionCodeGenerator {
      * Generate bytecode for:
      * 
      * <pre>
-     * calleeContext = newFunctionExecutionContext(callerContext, function, null, thisValue)
+     * calleeContext = newFunctionExecutionContext(function, null, thisValue)
      * function_init(calleeContext, function, arguments)
      * return EvaluateBody(calleeContext, generator)
      * </pre>
@@ -624,8 +621,6 @@ final class FunctionCodeGenerator {
     private void generateAsyncFunctionCall(FunctionNode node, InstructionVisitor mv) {
         Variable<OrdinaryAsyncFunction> function = mv.getParameter(FUNCTION,
                 OrdinaryAsyncFunction.class);
-        Variable<ExecutionContext> callerContext = mv.getParameter(EXECUTION_CONTEXT,
-                ExecutionContext.class);
         Variable<Object> thisValue = mv.getParameter(THIS_VALUE, Object.class);
         Variable<Object[]> arguments = mv.getParameter(ARGUMENTS, Object[].class);
 
@@ -633,7 +628,7 @@ final class FunctionCodeGenerator {
                 ExecutionContext.class);
 
         // (1) Create a new ExecutionContext
-        prepareCallAndBindThis(calleeContext, callerContext, function, null, thisValue, mv);
+        prepareCallAndBindThis(calleeContext, function, null, thisValue, mv);
 
         // (2) Perform FunctionDeclarationInstantiation
         functionDeclarationInstantiation(node, calleeContext, function, arguments, mv);
@@ -651,7 +646,7 @@ final class FunctionCodeGenerator {
      * Generate bytecode for:
      * 
      * <pre>
-     * calleeContext = newFunctionExecutionContext(callerContext, generator, newTarget)
+     * calleeContext = newFunctionExecutionContext(generator, newTarget)
      * function_init(calleeContext, generator, arguments)
      * promiseObject = EvaluateBody(calleeContext, generator)
      * BindThisValue(calleeContext, promiseObject)
@@ -666,8 +661,6 @@ final class FunctionCodeGenerator {
     private void generateAsyncFunctionConstruct(FunctionNode node, InstructionVisitor mv) {
         Variable<OrdinaryAsyncFunction> function = mv.getParameter(FUNCTION,
                 OrdinaryAsyncFunction.class);
-        Variable<ExecutionContext> callerContext = mv.getParameter(EXECUTION_CONTEXT,
-                ExecutionContext.class);
         Variable<Constructor> newTarget = mv.getParameter(NEW_TARGET, Constructor.class);
         Variable<Object[]> arguments = mv.getParameter(ARGUMENTS, Object[].class);
 
@@ -677,7 +670,7 @@ final class FunctionCodeGenerator {
         // 9.2.4 FunctionAllocate - Async functions are always derived constructor kinds.
 
         // (1) Create a new ExecutionContext
-        prepareCall(calleeContext, callerContext, function, newTarget, mv);
+        prepareCall(calleeContext, function, newTarget, mv);
 
         // (2) Perform OrdinaryCallEvaluateBody - FunctionDeclarationInstantiation
         functionDeclarationInstantiation(node, calleeContext, function, arguments, mv);
@@ -700,7 +693,7 @@ final class FunctionCodeGenerator {
      * Generate bytecode for:
      * 
      * <pre>
-     * calleeContext = newFunctionExecutionContext(callerContext, generator, null, thisValue)
+     * calleeContext = newFunctionExecutionContext(generator, null, thisValue)
      * function_init(calleeContext, generator, arguments)
      * return EvaluateBody(calleeContext, generator)
      * </pre>
@@ -712,8 +705,6 @@ final class FunctionCodeGenerator {
      */
     private void generateGeneratorCall(FunctionNode node, InstructionVisitor mv) {
         Variable<OrdinaryGenerator> generator = mv.getParameter(GENERATOR, OrdinaryGenerator.class);
-        Variable<ExecutionContext> callerContext = mv.getParameter(EXECUTION_CONTEXT,
-                ExecutionContext.class);
         Variable<Object> thisValue = mv.getParameter(THIS_VALUE, Object.class);
         Variable<Object[]> arguments = mv.getParameter(ARGUMENTS, Object[].class);
 
@@ -721,7 +712,7 @@ final class FunctionCodeGenerator {
                 ExecutionContext.class);
 
         // (1) Create a new ExecutionContext
-        prepareCallAndBindThis(calleeContext, callerContext, generator, null, thisValue, mv);
+        prepareCallAndBindThis(calleeContext, generator, null, thisValue, mv);
 
         // (2) Perform OrdinaryCallEvaluateBody - FunctionDeclarationInstantiation
         functionDeclarationInstantiation(node, calleeContext, generator, arguments, mv);
@@ -739,7 +730,7 @@ final class FunctionCodeGenerator {
      * Generate bytecode for:
      * 
      * <pre>
-     * calleeContext = newFunctionExecutionContext(callerContext, generator, newTarget)
+     * calleeContext = newFunctionExecutionContext(generator, newTarget)
      * function_init(calleeContext, generator, arguments)
      * generatorObject = EvaluateBody(calleeContext, generator)
      * BindThisValue(calleeContext, generatorObject)
@@ -753,8 +744,6 @@ final class FunctionCodeGenerator {
      */
     private void generateGeneratorConstruct(FunctionNode node, InstructionVisitor mv) {
         Variable<OrdinaryGenerator> generator = mv.getParameter(GENERATOR, OrdinaryGenerator.class);
-        Variable<ExecutionContext> callerContext = mv.getParameter(EXECUTION_CONTEXT,
-                ExecutionContext.class);
         Variable<Constructor> newTarget = mv.getParameter(NEW_TARGET, Constructor.class);
         Variable<Object[]> arguments = mv.getParameter(ARGUMENTS, Object[].class);
 
@@ -764,7 +753,7 @@ final class FunctionCodeGenerator {
         // 9.2.4 FunctionAllocate - Generator functions are always derived constructor kinds.
 
         // (1) Create a new ExecutionContext
-        prepareCall(calleeContext, callerContext, generator, newTarget, mv);
+        prepareCall(calleeContext, generator, newTarget, mv);
 
         // (2) Perform OrdinaryCallEvaluateBody - FunctionDeclarationInstantiation
         functionDeclarationInstantiation(node, calleeContext, generator, arguments, mv);
@@ -788,13 +777,11 @@ final class FunctionCodeGenerator {
      * 9.2.2.2 OrdinaryCallBindThis ( F, calleeContext, thisArgument )
      * 
      * <pre>
-     * calleeContext = newFunctionExecutionContext(callerContext, function, newTarget, thisValue)
+     * calleeContext = newFunctionExecutionContext(function, newTarget, thisValue)
      * </pre>
      * 
      * @param calleeContext
      *            the variable which holds the callee context
-     * @param callerContext
-     *            the variable which holds the caller context
      * @param function
      *            the variable which holds the function object
      * @param newTarget
@@ -805,10 +792,8 @@ final class FunctionCodeGenerator {
      *            the instruction visitor
      */
     private void prepareCallAndBindThis(Variable<ExecutionContext> calleeContext,
-            Variable<ExecutionContext> callerContext, Variable<? extends FunctionObject> function,
-            Variable<Constructor> newTarget, Variable<? extends Object> thisArgument,
-            InstructionVisitor mv) {
-        mv.load(callerContext);
+            Variable<? extends FunctionObject> function, Variable<Constructor> newTarget,
+            Variable<? extends Object> thisArgument, InstructionVisitor mv) {
         mv.load(function);
         if (newTarget != null) {
             mv.load(newTarget);
@@ -824,13 +809,11 @@ final class FunctionCodeGenerator {
      * 9.2.2.1 PrepareForOrdinaryCall( F, newTarget )
      * 
      * <pre>
-     * calleeContext = newFunctionExecutionContext(callerContext, function, newTarget)
+     * calleeContext = newFunctionExecutionContext(function, newTarget)
      * </pre>
      * 
      * @param calleeContext
      *            the variable which holds the callee context
-     * @param callerContext
-     *            the variable which holds the caller context
      * @param function
      *            the variable which holds the function object
      * @param newTarget
@@ -839,9 +822,8 @@ final class FunctionCodeGenerator {
      *            the instruction visitor
      */
     private void prepareCall(Variable<ExecutionContext> calleeContext,
-            Variable<ExecutionContext> callerContext, Variable<? extends FunctionObject> function,
-            Variable<Constructor> newTarget, InstructionVisitor mv) {
-        mv.load(callerContext);
+            Variable<? extends FunctionObject> function, Variable<Constructor> newTarget,
+            InstructionVisitor mv) {
         mv.load(function);
         mv.load(newTarget);
         mv.invoke(Methods.ExecutionContext_newFunctionExecutionContextConstructDerived);

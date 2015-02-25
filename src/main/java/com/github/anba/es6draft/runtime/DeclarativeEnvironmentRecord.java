@@ -110,15 +110,18 @@ public class DeclarativeEnvironmentRecord implements EnvironmentRecord {
     }
 
     private final ExecutionContext cx;
+    private final boolean catchEnvironment;
     private final HashMap<String, Binding> bindings;
 
-    public DeclarativeEnvironmentRecord(ExecutionContext cx) {
+    public DeclarativeEnvironmentRecord(ExecutionContext cx, boolean catchEnvironment) {
         this.cx = cx;
+        this.catchEnvironment = catchEnvironment;
         this.bindings = new HashMap<>();
     }
 
     DeclarativeEnvironmentRecord(DeclarativeEnvironmentRecord source) {
         this.cx = source.cx;
+        this.catchEnvironment = source.catchEnvironment;
         this.bindings = source.cloneBindings();
     }
 
@@ -307,9 +310,7 @@ public class DeclarativeEnvironmentRecord implements EnvironmentRecord {
         Binding b = bindings.get(name);
         /* step 1 (omitted) */
         /* step 2 */
-        if (b == null) {
-            return true;
-        }
+        assert b != null;
         /* step 3 */
         if (!b.deletable) {
             return false;
@@ -353,5 +354,14 @@ public class DeclarativeEnvironmentRecord implements EnvironmentRecord {
     public final ScriptObject withBaseObject() {
         /* step 1 */
         return null;
+    }
+
+    /**
+     * Returns {@code true} if this declarative environment was created for a catch clause.
+     * 
+     * @return {@code true} if this environment record is the environment of a catch clause
+     */
+    public final boolean isCatchEnvironment() {
+        return catchEnvironment;
     }
 }

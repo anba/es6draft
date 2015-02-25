@@ -59,7 +59,7 @@ function testNonConfigDataFun() {
 function testNonConfigDataProtoVar() {
   Object.defineProperty(Object.prototype, "nonConfigDataProtoVar", {configurable: false, value: -1});
   indirectEval("var nonConfigDataProtoVar = 0");
-  assertSame(-1, indirectEval("nonConfigDataProtoVar"));
+  assertSame(0, indirectEval("nonConfigDataProtoVar"));
 }
 
 // Test 2b: non-configurable data property on prototype, try function declaration
@@ -88,11 +88,10 @@ function testConfigAccFun() {
 
 // Test 4a: non-configurable data property on prototype, try var declaration
 function testConfigAccProtoVar() {
-  var {accessor, log} = loggingAccessor("configAccProtoVar");
+  var accessor = poisonedAccessor("configAccProtoVar");
   Object.defineProperty(Object.prototype, "configAccProtoVar", accessor);
   indirectEval("var configAccProtoVar = 0");
-  indirectEval("configAccProtoVar");
-  assertEquals(["set 'configAccProtoVar' to: 0", "get 'configAccProtoVar'"], log);
+  assertSame(0, indirectEval("configAccProtoVar"));
 }
 
 // Test 4b: non-configurable data property on prototype, try function declaration

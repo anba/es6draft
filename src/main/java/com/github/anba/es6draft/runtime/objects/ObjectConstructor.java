@@ -523,7 +523,7 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
                     }
                     if (desc != null && desc.isEnumerable()) {
                         Object propValue = Get(cx, from, nextKey);
-                        Put(cx, to, nextKey, propValue, true);
+                        Set(cx, to, nextKey, propValue, true);
                     }
                 }
             }
@@ -627,7 +627,7 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
     }
 
     /**
-     * 19.1.2.8.1 GetOwnPropertyKeys ( O, Type ) Abstract Operation, with Type = String
+     * 19.1.2.8.1 Runtime Semantics: GetOwnPropertyKeys ( O, Type ), with Type = String
      * 
      * @param cx
      *            the execution context
@@ -653,7 +653,7 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
     }
 
     /**
-     * 19.1.2.8.1 GetOwnPropertyKeys ( O, Type ) Abstract Operation, with Type = Symbol
+     * 19.1.2.8.1 Runtime Semantics: GetOwnPropertyKeys ( O, Type ), with Type = Symbol
      * 
      * @param cx
      *            the execution context

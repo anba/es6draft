@@ -123,7 +123,7 @@ final class ScriptEngineImpl extends AbstractScriptEngine implements ScriptEngin
     @Override
     public Object invokeFunction(String name, Object... args) throws javax.script.ScriptException,
             NoSuchMethodException {
-        return invoke(null, name, args);
+        return invoke(null, Objects.requireNonNull(name), args);
     }
 
     @Override
@@ -132,7 +132,7 @@ final class ScriptEngineImpl extends AbstractScriptEngine implements ScriptEngin
         if (!(thisValue instanceof ScriptObject)) {
             throw new IllegalArgumentException();
         }
-        return invoke((ScriptObject) thisValue, name, args);
+        return invoke((ScriptObject) thisValue, Objects.requireNonNull(name), args);
     }
 
     @Override
@@ -185,7 +185,7 @@ final class ScriptEngineImpl extends AbstractScriptEngine implements ScriptEngin
             LexicalEnvironment<ScriptContextEnvironmentRecord> varEnv = new LexicalEnvironment<>(
                     realm.getGlobalEnv(), new ScriptContextEnvironmentRecord(cx, context));
             LexicalEnvironment<DeclarativeEnvironmentRecord> lexEnv = new LexicalEnvironment<>(
-                    varEnv, new DeclarativeEnvironmentRecord(cx));
+                    varEnv, new DeclarativeEnvironmentRecord(cx, false));
             ExecutionContext evalCxt = newEvalExecutionContext(cx, script, varEnv, lexEnv);
             script.getScriptBody().evalDeclarationInstantiation(evalCxt, varEnv, lexEnv);
             Object result = script.evaluate(evalCxt);
@@ -201,9 +201,6 @@ final class ScriptEngineImpl extends AbstractScriptEngine implements ScriptEngin
 
     private Object invoke(ScriptObject thisValue, String name, Object... args)
             throws javax.script.ScriptException, NoSuchMethodException {
-        if (name == null) {
-            throw new NullPointerException();
-        }
         Object[] arguments = TypeConverter.fromJava(args);
         Realm realm = getEvalRealm(context);
         if (thisValue == null) {

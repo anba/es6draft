@@ -903,7 +903,7 @@ final class StatementGenerator extends
                 assert lexDecl.getElements().size() == 1;
                 LexicalBinding lexicalBinding = lexDecl.getElements().get(0);
 
-                // 13.6.4.9 Runtime Semantics: BindingInitialization
+                // 13.6.4.10 Runtime Semantics: BindingInitialization
                 // stack: [nextValue] -> [envRec, nextValue]
                 getEnvironmentRecord(mv);
                 mv.swap();
@@ -967,8 +967,7 @@ final class StatementGenerator extends
     /**
      * 13.0.8 Runtime Semantics: Evaluation<br>
      * 13.0.7 Runtime Semantics: LabelledEvaluation<br>
-     * 13.6.3.7 Runtime Semantics: LabelledEvaluation<br>
-     * 13.6.3.8 Runtime Semantics: ForBodyEvaluation
+     * 13.6.3.7 Runtime Semantics: LabelledEvaluation
      */
     @Override
     public Completion visit(ForStatement node, StatementVisitor mv) {
@@ -1010,7 +1009,23 @@ final class StatementGenerator extends
             lexDecl.accept(this, mv);
         }
 
-        // Runtime Semantics: ForBodyEvaluation
+        Completion result = ForBodyEvaluation(node, perIterationsLets, mv);
+
+        if (head instanceof LexicalDeclaration) {
+            mv.exitScope();
+            if (!result.isAbrupt()) {
+                popLexicalEnvironment(mv);
+            }
+        }
+        return result;
+    }
+
+    /**
+     * 13.6.3.8 Runtime Semantics: ForBodyEvaluation(test, increment, stmt, perIterationBindings,
+     * labelSet)
+     */
+    private Completion ForBodyEvaluation(ForStatement node, boolean perIterationsLets,
+            StatementVisitor mv) {
         mv.enterVariableScope();
         Variable<LexicalEnvironment<?>> savedEnv;
         if (perIterationsLets) {
@@ -1062,13 +1077,6 @@ final class StatementGenerator extends
         }
         mv.exitVariableScope();
 
-        if (head instanceof LexicalDeclaration) {
-            mv.exitScope();
-            if (node.getTest() != null || lblBreak.isTarget()) {
-                popLexicalEnvironment(mv);
-            }
-        }
-
         if (node.getTest() == null) {
             if (!result.isAbrupt() && !lblBreak.isTarget()) {
                 return Completion.Abrupt; // infinite loop
@@ -1080,7 +1088,7 @@ final class StatementGenerator extends
     }
 
     /**
-     * 13.6.3.9 Runtime Semantics: CreatePerIterationEnvironment
+     * 13.6.3.9 Runtime Semantics: CreatePerIterationEnvironment( perIterationBindings )
      * 
      * @param savedEnv
      *            the variable which holds the saved environment
@@ -1719,7 +1727,7 @@ final class StatementGenerator extends
         /* step 1 (not applicable) */
         /* step 2 */
         // stack: [ex] -> [ex, catchEnv]
-        newDeclarativeEnvironment(mv);
+        newCatchDeclarativeEnvironment(mv);
         {
             // stack: [ex, catchEnv] -> [ex, catchEnv, envRec]
             getEnvRec(mv);
@@ -1773,7 +1781,7 @@ final class StatementGenerator extends
         /* step 1 (not applicable) */
         /* step 2 */
         // stack: [ex] -> [ex, catchEnv]
-        newDeclarativeEnvironment(mv);
+        newCatchDeclarativeEnvironment(mv);
         {
             // stack: [ex, catchEnv] -> [ex, catchEnv, envRec]
             getEnvRec(mv);

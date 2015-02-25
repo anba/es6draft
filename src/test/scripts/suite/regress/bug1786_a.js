@@ -24,6 +24,8 @@ function triggerAssertion(global, callCounter, code) {
   (1,eval)(`eval("${code}")`)
 }
 
+// Note: No longer reproducible without Reflect.Realm
+
 // 10.2.1.2.2, step 3
-triggerAssertion(this, 4, "var foo = 0");
-assertSame(0, foo);
+// triggerAssertion(this, 4, "var foo = 0");
+// assertSame(0, foo);

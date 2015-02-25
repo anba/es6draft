@@ -148,7 +148,7 @@ public final class RegExpConstructor extends BuiltinConstructor implements Initi
 
     /**
      * 21.2.3.2 Abstract Operations for the RegExp Constructor<br>
-     * 21.2.3.2.1 Runtime Semantics: RegExpAlloc Abstract Operation
+     * 21.2.3.2.1 Runtime Semantics: RegExpAlloc ( newTarget )
      * 
      * @param cx
      *            the execution context
@@ -168,7 +168,7 @@ public final class RegExpConstructor extends BuiltinConstructor implements Initi
 
     /**
      * 21.2.3.2 Abstract Operations for the RegExp Constructor<br>
-     * 21.2.3.2.2 Runtime Semantics: RegExpInitialize Abstract Operation
+     * 21.2.3.2.2 Runtime Semantics: RegExpInitialize ( obj, pattern, flags )
      * 
      * @param cx
      *            the execution context
@@ -203,14 +203,14 @@ public final class RegExpConstructor extends BuiltinConstructor implements Initi
         /* steps 11-13 */
         obj.initialize(p, f, matcher);
         /* steps 14-15 */
-        Put(cx, obj, "lastIndex", 0, true);
+        Set(cx, obj, "lastIndex", 0, true);
         /* step 16 */
         return obj;
     }
 
     /**
      * 21.2.3.2 Abstract Operations for the RegExp Constructor<br>
-     * 21.2.3.2.3 Runtime Semantics: RegExpCreate Abstract Operation
+     * 21.2.3.2.3 Runtime Semantics: RegExpCreate ( P, F )
      * 
      * @param cx
      *            the execution context
@@ -229,7 +229,7 @@ public final class RegExpConstructor extends BuiltinConstructor implements Initi
 
     /**
      * 21.2.3.2 Abstract Operations for the RegExp Constructor<br>
-     * 21.2.3.2.4 Runtime Semantics: EscapeRegExpPattern Abstract Operation
+     * 21.2.3.2.4 Runtime Semantics: EscapeRegExpPattern ( P, F )
      * 
      * @param cx
      *            the execution context

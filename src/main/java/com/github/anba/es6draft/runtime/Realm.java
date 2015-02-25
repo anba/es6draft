@@ -485,7 +485,7 @@ public final class Realm {
     }
 
     /**
-     * 8.4.1 EnqueueTask ( queueName, task, arguments) Abstract Operation
+     * 8.4.1 EnqueueTask ( queueName, task, arguments)
      * <p>
      * Enqueues {@code task} to the queue of pending script-tasks.
      * 
@@ -497,7 +497,7 @@ public final class Realm {
     }
 
     /**
-     * 8.4.1 EnqueueTask ( queueName, task, arguments) Abstract Operation
+     * 8.4.1 EnqueueTask ( queueName, task, arguments)
      * <p>
      * Enqueues {@code task} to the queue of pending promise-tasks.
      * 
@@ -569,8 +569,8 @@ public final class Realm {
     }
 
     /**
-     * 8.2.1 CreateRealm ( ) Abstract Operation<br>
-     * 8.2.3 SetRealmGlobalObject ( realmRec, globalObj ) Abstract Operation
+     * 8.2.1 CreateRealm ( )<br>
+     * 8.2.3 SetRealmGlobalObject ( realmRec, globalObj )
      * <p>
      * Creates a new {@link Realm} object.
      * 
@@ -593,7 +593,7 @@ public final class Realm {
     }
 
     /**
-     * 8.2.4 SetDefaultGlobalBindings ( realmRec ) Abstract Operation
+     * 8.2.4 SetDefaultGlobalBindings ( realmRec )
      * <p>
      * Initializes {@code [[globalThis]]} with the default properties of the Global Object.
      * 
@@ -645,7 +645,7 @@ public final class Realm {
     }
 
     /**
-     * 8.2.3 SetRealmGlobalObject ( realmRec, globalObj ) Abstract Operation
+     * 8.2.3 SetRealmGlobalObject ( realmRec, globalObj )
      * 
      * @param cx
      *            the execution context
@@ -662,7 +662,7 @@ public final class Realm {
     }
 
     /**
-     * 8.2.2 CreateIntrinsics ( realmRec ) Abstract Operation
+     * 8.2.2 CreateIntrinsics ( realmRec )
      * 
      * @param realm
      *            the realm instance

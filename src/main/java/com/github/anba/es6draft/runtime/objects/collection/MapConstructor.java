@@ -49,7 +49,7 @@ public final class MapConstructor extends BuiltinConstructor implements Initiali
      *            the realm object
      */
     public MapConstructor(Realm realm) {
-        super(realm, "Map", 1);
+        super(realm, "Map", 0);
     }
 
     @Override
@@ -142,7 +142,7 @@ public final class MapConstructor extends BuiltinConstructor implements Initiali
 
         @Value(name = "length", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = true))
-        public static final int length = 1;
+        public static final int length = 0;
 
         @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = true))

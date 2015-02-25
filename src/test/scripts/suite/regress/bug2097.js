@@ -12,5 +12,5 @@ const {
 // https://bugs.ecmascript.org/show_bug.cgi?id=2097
 
 let listIter = Reflect.enumerate({});
-assertDataProperty(listIter, "next", {value: listIter.next, writable: true, enumerable: true, configurable: true});
+assertDataProperty(listIter, "next", {value: listIter.next, writable: true, enumerable: false, configurable: true});
 assertBuiltinFunction(listIter.next, "next", 0);

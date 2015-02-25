@@ -186,7 +186,7 @@ public final class ArrayConstructor extends BuiltinConstructor implements Initia
                 CreateDataPropertyOrThrow(cx, a, pk, kValue);
             }
             /* steps 9-10 */
-            Put(cx, a, "length", len, true);
+            Set(cx, a, "length", len, true);
             /* step 11 */
             return a;
         }
@@ -257,7 +257,7 @@ public final class ArrayConstructor extends BuiltinConstructor implements Initia
                     throw e;
                 }
                 /* step 6.g.iv */
-                Put(cx, a, "length", k, true);
+                Set(cx, a, "length", k, true);
                 return a;
             }
             /* step 7 (?) */
@@ -285,7 +285,7 @@ public final class ArrayConstructor extends BuiltinConstructor implements Initia
                 CreateDataPropertyOrThrow(cx, a, pk, mappedValue);
             }
             /* steps 17-18 */
-            Put(cx, a, "length", len, true);
+            Set(cx, a, "length", len, true);
             /* step 19 */
             return a;
         }

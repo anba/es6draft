@@ -13,6 +13,7 @@ const {
   assertDataProperty,
 } = Assert;
 
+// Note: These tests are no longer reproducible, require Reflect.Realm support.
 
 function testDuplicateFunction(global) {
   var log = [];
@@ -33,7 +34,7 @@ function testDuplicateFunction(global) {
   assertEquals(["has(F)"], log);
 }
 
-testDuplicateFunction(this);
+// testDuplicateFunction(this);
 
 
 function testFunReverseListOrder(global) {
@@ -55,7 +56,7 @@ function testFunReverseListOrder(global) {
   assertEquals(["has(B)", "has(A)"], log);
 }
 
-testFunReverseListOrder(this);
+// testFunReverseListOrder(this);
 
 
 function testFunInitOrder(global) {
@@ -84,4 +85,4 @@ function testFunInitOrder(global) {
   assertEquals(["has(B)", "has(A)", "has(X)"], log);
 }
 
-testFunInitOrder(this);
+// testFunInitOrder(this);

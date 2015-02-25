@@ -111,4 +111,11 @@
   <test id="S15.5.4.12_A1_T9">ES6-change: String.prototype methods throw TypeError if called with undefined/null</test>
   <test id="S15.5.4.14_A1_T5">ES6-change: String.prototype methods throw TypeError if called with undefined/null</test>
   <test id="S15.5.4.14_A2_T8">ES6-change: String.prototype methods throw TypeError if called with undefined/null</test>
+
+  <!-- rev34 changes -->
+  <test id="15.4.3.2-0-5">Array.prototype changed back to Array instance</test>
+  <test id="S15.4.3.1_A5">Array.prototype changed back to Array instance</test>
+  <test id="S15.4.4_A1.1_T2">Array.prototype changed back to Array instance</test>
+  <test id="S15.4.4_A1.2_T1">Array.prototype changed back to Array instance</test>
+  <test id="S15.4.4_A1.3_T1">Array.prototype changed back to Array instance</test>
 </excludeList>

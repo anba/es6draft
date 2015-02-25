@@ -214,7 +214,7 @@ public class ProxyObject implements ScriptObject {
 
         @Override
         public Realm getRealm(ExecutionContext cx) {
-            /* 7.3.21 GetFunctionRealm ( obj ) Abstract Operation */
+            /* 7.3.22 GetFunctionRealm ( obj ) */
             if (isRevoked()) {
                 throw newTypeError(cx, Messages.Key.ProxyRevoked);
             }
@@ -298,7 +298,7 @@ public class ProxyObject implements ScriptObject {
     }
 
     /**
-     * 9.5.15 ProxyCreate(target, handler) Abstract Operation
+     * 9.5.15 ProxyCreate(target, handler)
      * 
      * @param cx
      *            the execution context
@@ -373,7 +373,7 @@ public class ProxyObject implements ScriptObject {
         /* steps 14-15 */
         ScriptObject targetProto = target.getPrototypeOf(cx);
         /* step 16 */
-        if (!SameValue(handlerProto_, targetProto)) {
+        if (handlerProto_ != targetProto) {
             throw newTypeError(cx, Messages.Key.ProxySamePrototype);
         }
         /* step 17 */
@@ -408,7 +408,7 @@ public class ProxyObject implements ScriptObject {
         /* steps 14-15 */
         ScriptObject targetProto = target.getPrototypeOf(cx);
         /* step 16 */
-        if (trapResult && !SameValue(prototype, targetProto)) {
+        if (trapResult && prototype != targetProto) {
             throw newTypeError(cx, Messages.Key.ProxySamePrototype);
         }
         /* step 17 */

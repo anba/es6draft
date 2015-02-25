@@ -65,7 +65,7 @@ public final class RealmConstructor extends BuiltinConstructor implements Initia
     }
 
     /**
-     * Abstract Operation: IndirectEval (realm, source)
+     * IndirectEval (realm, source)
      * 
      * @param caller
      *            the caller context

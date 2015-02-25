@@ -130,7 +130,7 @@ public final class OrdinaryGenerator extends FunctionObject implements Construct
     /* ***************************************************************************************** */
 
     /**
-     * 9.2.4 FunctionAllocate (functionPrototype, strict [,functionKind] ) Abstract Operation
+     * 9.2.4 FunctionAllocate (functionPrototype, strict [,functionKind] )
      * 
      * @param cx
      *            the execution context
@@ -156,7 +156,7 @@ public final class OrdinaryGenerator extends FunctionObject implements Construct
     }
 
     /**
-     * 9.2.7 GeneratorFunctionCreate (kind, ParameterList, Body, Scope, Strict) Abstract Operation
+     * 9.2.7 GeneratorFunctionCreate (kind, ParameterList, Body, Scope, Strict)
      * 
      * @param cx
      *            the execution context

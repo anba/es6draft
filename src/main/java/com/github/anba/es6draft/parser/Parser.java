@@ -718,6 +718,11 @@ public final class Parser {
         EnclosedByWithStatement,
 
         /**
+         * Source code is nested in lexical declaration context.
+         */
+        EnclosedByLexicalDeclaration,
+
+        /**
          * Source is JSR-223 scripting.
          */
         Scripting,
@@ -746,7 +751,8 @@ public final class Parser {
                 || parserOptions.contains(Option.FunctionThis)
                 || parserOptions.contains(Option.LocalScope)
                 || parserOptions.contains(Option.DirectEval)
-                || parserOptions.contains(Option.EnclosedByWithStatement) || parserOptions
+                || parserOptions.contains(Option.EnclosedByWithStatement)
+                || parserOptions.contains(Option.EnclosedByLexicalDeclaration) || parserOptions
                     .contains(Option.Scripting)) || parserOptions.contains(Option.EvalScript) : "Illegal option: "
                 + parserOptions;
     }
@@ -3446,8 +3452,8 @@ public final class Parser {
      * <pre>
      * YieldExpression<span><sub>[In]</sub></span> :
      *     yield
-     *     yield [no <i>LineTerminator</i> here] <span style="font-size:smaller">[Lexical goal <i>InputElementRegExp</i>]</span> AssignmentExpression<span><sub>[?In, Yield]</sub></span>
-     *     yield [no <i>LineTerminator</i> here] * <span style="font-size:smaller">[Lexical goal <i>InputElementRegExp</i>]</span> AssignmentExpression<span><sub>[?In, Yield]</sub></span>
+     *     yield [no <i>LineTerminator</i> here] AssignmentExpression<span><sub>[?In, Yield]</sub></span>
+     *     yield [no <i>LineTerminator</i> here] * AssignmentExpression<span><sub>[?In, Yield]</sub></span>
      * </pre>
      * 
      * @param allowIn
@@ -7097,13 +7103,13 @@ public final class Parser {
      * <pre>
      * TemplateLiteral<span><sub>[Yield]</sub></span> :
      *     NoSubstitutionTemplate
-     *     TemplateHead Expression<span><sub>[In, ?Yield]</sub></span> [Lexical goal <i>InputElementTemplateTail</i>] TemplateSpans<span><sub>[?Yield]</sub></span>
+     *     TemplateHead Expression<span><sub>[In, ?Yield]</sub></span> TemplateSpans<span><sub>[?Yield]</sub></span>
      * TemplateSpans<span><sub>[Yield]</sub></span> :
      *     TemplateTail
-     *     TemplateMiddleList<span><sub>[?Yield]</sub></span> [Lexical goal <i>InputElementTemplateTail</i>] TemplateTail
+     *     TemplateMiddleList<span><sub>[?Yield]</sub></span> TemplateTail
      * TemplateMiddleList<span><sub>[Yield]</sub></span> :
      *     TemplateMiddle Expression<span><sub>[In, ?Yield]</sub></span>
-     *     TemplateMiddleList<span><sub>[?Yield]</sub></span> [Lexical goal <i>InputElementTemplateTail</i>] TemplateMiddle Expression<span><sub>[In, ?Yield]</sub></span>
+     *     TemplateMiddleList<span><sub>[?Yield]</sub></span> TemplateMiddle Expression<span><sub>[In, ?Yield]</sub></span>
      * </pre>
      * 
      * @param tagged
@@ -7188,7 +7194,7 @@ public final class Parser {
      * 
      * <pre>
      * MemberExpression<span><sub>[Yield]</sub></span> :
-     *     [Lexical goal <i>InputElementRegExp</i>] PrimaryExpression<span><sub>[?Yield]</sub></span>
+     *     PrimaryExpression<span><sub>[?Yield]</sub></span>
      *     MemberExpression<span><sub>[?Yield]</sub></span> [ Expression<span><sub>[In, ?Yield]</sub></span> ]
      *     MemberExpression<span><sub>[?Yield]</sub></span> . IdentifierName
      *     MemberExpression<span><sub>[?Yield]</sub></span> TemplateLiteral<span><sub>[?Yield]</sub></span>
@@ -7199,16 +7205,16 @@ public final class Parser {
      * SuperProperty<span><sub>[Yield]</sub></span> :
      *     super [ Expression<span><sub>[In, ?Yield]</sub></span> ]
      *     super . IdentifierName
-     * NewSuper :
-     *     new super
-     * NewExpression<span><sub>[Yield]</sub></span> :
-     *     MemberExpression<span><sub>[?Yield]</sub></span>
-     *     new NewExpression<span><sub>[?Yield]</sub></span>
-     *     NewSuper
      * MetaProperty :
      *     NewTarget
      * NewTarget :
      *     new . target
+     * NewExpression<span><sub>[Yield]</sub></span> :
+     *     MemberExpression<span><sub>[?Yield]</sub></span>
+     *     new NewExpression<span><sub>[?Yield]</sub></span>
+     *     NewSuper
+     * NewSuper :
+     *     new super
      * CallExpression<span><sub>[Yield]</sub></span> :
      *     MemberExpression<span><sub>[?Yield]</sub></span> Arguments<span><sub>[?Yield]</sub></span>
      *     SuperCall<span><sub>[?Yield]</sub></span>

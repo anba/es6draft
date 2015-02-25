@@ -142,12 +142,10 @@ public final class NativeErrorConstructor extends BuiltinConstructor implements 
             Object... args) {
         ExecutionContext calleeContext = calleeContext();
         Object message = argument(args, 0);
-
         /* step 1 (not applicable) */
         /* steps 2-3 */
         ErrorObject obj = OrdinaryCreateFromConstructor(calleeContext, newTarget, type.prototype(),
                 NativeErrorObjectAllocator.INSTANCE);
-
         /* step 4 */
         if (!Type.isUndefined(message)) {
             CharSequence msg = ToString(calleeContext, message);

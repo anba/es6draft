@@ -60,6 +60,7 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
     private final boolean globalScope;
     private final boolean globalThis;
     private final boolean enclosedByWithStatement;
+    private final boolean enclosedByLexicalDeclaration;
 
     public Interpreter(Script parsedScript) {
         this.strict = parsedScript.isStrict();
@@ -67,6 +68,7 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
         this.globalScope = parsedScript.isGlobalScope();
         this.globalThis = parsedScript.isGlobalThis();
         this.enclosedByWithStatement = parsedScript.isEnclosedByWithStatement();
+        this.enclosedByLexicalDeclaration = parsedScript.isEnclosedByLexicalDeclaration();
     }
 
     /* ----------------------------------------------------------------------------------------- */
@@ -849,7 +851,7 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
             }
             nextIndex += 1;
         }
-        Put(cx, array, "length", nextIndex, false);
+        Set(cx, array, "length", nextIndex, false);
         return array;
     }
 
@@ -913,6 +915,9 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
             }
             if (enclosedByWithStatement) {
                 evalFlags |= EvalFlags.EnclosedByWithStatement.getValue();
+            }
+            if (enclosedByLexicalDeclaration) {
+                evalFlags |= EvalFlags.EnclosedByLexicalDeclaration.getValue();
             }
             return Eval.directEval(argList, cx, evalFlags);
         }

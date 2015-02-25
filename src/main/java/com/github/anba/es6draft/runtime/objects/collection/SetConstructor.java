@@ -48,7 +48,7 @@ public final class SetConstructor extends BuiltinConstructor implements Initiali
      *            the realm object
      */
     public SetConstructor(Realm realm) {
-        super(realm, "Set", 1);
+        super(realm, "Set", 0);
     }
 
     @Override
@@ -136,7 +136,7 @@ public final class SetConstructor extends BuiltinConstructor implements Initiali
 
         @Value(name = "length", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = true))
-        public static final int length = 1;
+        public static final int length = 0;
 
         @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = true))

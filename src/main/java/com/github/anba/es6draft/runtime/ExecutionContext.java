@@ -370,23 +370,21 @@ public final class ExecutionContext {
      * <p>
      * 9.2.2.1 PrepareForOrdinaryCall( F, newTarget )
      * 
-     * @param callerContext
-     *            the caller execution context
      * @param f
      *            the callee function object
      * @param newTarget
      *            the newTarget for the function call
      * @return the new function execution context
      */
-    public static ExecutionContext newFunctionExecutionContext(ExecutionContext callerContext,
-            FunctionObject f, Constructor newTarget) {
+    public static ExecutionContext newFunctionExecutionContext(FunctionObject f,
+            Constructor newTarget) {
         /* steps 1-2 (not applicable) */
         /* step 5 */
         Realm calleeRealm = f.getRealm();
-        /* steps 7-11 */
-        LexicalEnvironment<FunctionEnvironmentRecord> localEnv = newFunctionEnvironment(
-                callerContext, f, newTarget);
-        /* steps 3-4, 6, 12-15 */
+        /* steps 7-9 */
+        LexicalEnvironment<FunctionEnvironmentRecord> localEnv = newFunctionEnvironment(f,
+                newTarget);
+        /* steps 3-4, 6, 10-14 */
         return new ExecutionContext(calleeRealm, localEnv, localEnv, localEnv, f.getExecutable(), f);
     }
 
@@ -401,8 +399,6 @@ public final class ExecutionContext {
      * 9.2.2.1 PrepareForOrdinaryCall( F, newTarget )<br>
      * 9.2.2.2 OrdinaryCallBindThis ( F, calleeContext, thisArgument )
      * 
-     * @param callerContext
-     *            the caller execution context
      * @param f
      *            the callee function object
      * @param newTarget
@@ -411,16 +407,16 @@ public final class ExecutionContext {
      *            the this-argument for the function call
      * @return the new function execution context
      */
-    public static ExecutionContext newFunctionExecutionContext(ExecutionContext callerContext,
-            FunctionObject f, Constructor newTarget, Object thisArgument) {
+    public static ExecutionContext newFunctionExecutionContext(FunctionObject f,
+            Constructor newTarget, Object thisArgument) {
         /* steps 1-2 (not applicable) */
         /* step 5 */
         Realm calleeRealm = f.getRealm();
         Object thisValue = bindThisValue(f, thisArgument);
-        /* steps 7-11 */
-        LexicalEnvironment<FunctionEnvironmentRecord> localEnv = newFunctionEnvironment(
-                callerContext, f, newTarget, thisValue);
-        /* steps 3-4, 6, 12-15 */
+        /* steps 7-9 */
+        LexicalEnvironment<FunctionEnvironmentRecord> localEnv = newFunctionEnvironment(f,
+                newTarget, thisValue);
+        /* steps 3-4, 6, 10-14 */
         return new ExecutionContext(calleeRealm, localEnv, localEnv, localEnv, f.getExecutable(), f);
     }
 
@@ -474,7 +470,7 @@ public final class ExecutionContext {
     }
 
     /**
-     * 8.3.1 ResolveBinding(name) Abstract Operation
+     * 8.3.1 ResolveBinding(name)
      * 
      * @param name
      *            the binding name
@@ -488,7 +484,7 @@ public final class ExecutionContext {
     }
 
     /**
-     * 8.3.2 GetThisEnvironment() Abstract Operation
+     * 8.3.2 GetThisEnvironment()
      * 
      * @return the first environment record with a this-binding
      */
@@ -507,7 +503,7 @@ public final class ExecutionContext {
     }
 
     /**
-     * 8.3.3 ResolveThisBinding() Abstract Operation
+     * 8.3.3 ResolveThisBinding()
      * 
      * @return the this-binding object
      */
@@ -519,7 +515,7 @@ public final class ExecutionContext {
     }
 
     /**
-     * 8.3.4 GetNewTarget ( ) Abstract Operation
+     * 8.3.4 GetNewTarget ( )
      * 
      * @return the NewTarget constructor object
      */
@@ -534,7 +530,7 @@ public final class ExecutionContext {
     }
 
     /**
-     * 8.3.5 GetGlobalObject() Abstract Operation
+     * 8.3.5 GetGlobalObject()
      * 
      * @return the global object instance
      */

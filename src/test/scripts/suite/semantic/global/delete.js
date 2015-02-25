@@ -42,7 +42,7 @@ function testDeleteGlobalResolvedRef(global) {
   } finally {
     Object.setPrototypeOf(global, Object.prototype);
   }
-  assertEquals(["has(resolvedRef)", "has(resolvedRef)"], log);
+  assertEquals(["has(resolvedRef)"], log);
 }
 
 testDeleteGlobalResolvedRef(this);

@@ -237,7 +237,7 @@ public abstract class IntegerIndexedObject extends OrdinaryObject {
     }
 
     /**
-     * 9.4.5.8 IntegerIndexedObjectCreate (prototype, internalSlotsList) Abstract Operation
+     * 9.4.5.8 IntegerIndexedObjectCreate (prototype, internalSlotsList)
      * 
      * @param cx
      *            the execution context
@@ -271,7 +271,7 @@ public abstract class IntegerIndexedObject extends OrdinaryObject {
     protected abstract boolean elementHas(ExecutionContext cx, long index);
 
     /**
-     * 9.4.5.9 IntegerIndexedElementGet (O, index) Abstract Operation
+     * 9.4.5.9 IntegerIndexedElementGet (O, index)
      * 
      * @param cx
      *            the execution context
@@ -282,7 +282,7 @@ public abstract class IntegerIndexedObject extends OrdinaryObject {
     protected abstract Object elementGet(ExecutionContext cx, long index);
 
     /**
-     * 9.4.5.10 IntegerIndexedElementSet (O, index, value) Abstract Operation
+     * 9.4.5.10 IntegerIndexedElementSet (O, index, value)
      * 
      * @param cx
      *            the execution context

@@ -73,12 +73,10 @@ public final class ErrorConstructor extends BuiltinConstructor implements Initia
             Object... args) {
         ExecutionContext calleeContext = calleeContext();
         Object message = argument(args, 0);
-
         /* step 1 (not applicable) */
         /* steps 2-3 */
         ErrorObject obj = OrdinaryCreateFromConstructor(calleeContext, newTarget,
                 Intrinsics.ErrorPrototype, ErrorObjectAllocator.INSTANCE);
-
         /* step 4 */
         if (!Type.isUndefined(message)) {
             CharSequence msg = ToString(calleeContext, message);

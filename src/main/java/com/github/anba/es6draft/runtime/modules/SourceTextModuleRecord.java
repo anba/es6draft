@@ -95,6 +95,8 @@ public final class SourceTextModuleRecord implements ModuleRecord, Cloneable {
      */
     private final List<ExportEntry> starExportEntries;
 
+    private boolean instantiated;
+
     private SourceTextModuleRecord(SourceIdentifier sourceCodeId, Set<String> requestedModules,
             List<ImportEntry> importEntries, List<ExportEntry> localExportEntries,
             List<ExportEntry> indirectExportEntries, List<ExportEntry> starExportEntries) {
@@ -109,6 +111,7 @@ public final class SourceTextModuleRecord implements ModuleRecord, Cloneable {
 
     private SourceTextModuleRecord(SourceTextModuleRecord module) {
         this.sourceCodeId = module.sourceCodeId;
+        this.scriptCode = module.scriptCode;
         this.requestedModules = module.requestedModules;
         this.importEntries = module.importEntries;
         this.localExportEntries = module.localExportEntries;
@@ -118,13 +121,7 @@ public final class SourceTextModuleRecord implements ModuleRecord, Cloneable {
 
     @Override
     public SourceTextModuleRecord clone() {
-        SourceTextModuleRecord newModule = new SourceTextModuleRecord(this);
-        newModule.scriptCode = scriptCode;
-        newModule.realm = null;
-        newModule.environment = null;
-        newModule.namespace = null;
-        newModule.evaluated = false;
-        return newModule;
+        return new SourceTextModuleRecord(this);
     }
 
     @Override
@@ -219,11 +216,10 @@ public final class SourceTextModuleRecord implements ModuleRecord, Cloneable {
     /**
      * [[Environment]]
      * 
-     * @return the lexical environment of this module
+     * @return the lexical environment of this module or {@code null} if not instantiated
      */
     @Override
     public LexicalEnvironment<ModuleEnvironmentRecord> getEnvironment() {
-        assert environment != null : "module not instantiated: " + sourceCodeId;
         return environment;
     }
 
@@ -256,7 +252,16 @@ public final class SourceTextModuleRecord implements ModuleRecord, Cloneable {
     }
 
     /**
-     * 15.2.1.16.1 ParseModule ( sourceText ) Abstract Operation
+     * Returns {@code true} if the module is instantiated.
+     * 
+     * @return {@code true} if the module is instantiated
+     */
+    public boolean isInstantiated() {
+        return instantiated;
+    }
+
+    /**
+     * 15.2.1.16.1 Runtime Semantics: ParseModule ( sourceText )
      * 
      * @param scriptLoader
      *            the script loader
@@ -301,8 +306,7 @@ public final class SourceTextModuleRecord implements ModuleRecord, Cloneable {
                 indirectExportEntries.add(exportEntry);
             }
         }
-        /* steps 11-13 (FIXME: spec bug) */
-        /* step 14 */
+        /* step 11 */
         SourceTextModuleRecord m = new SourceTextModuleRecord(sourceCodeId, requestedModules,
                 importEntries, localExportEntries, indirectExportEntries, starExportEntries);
         m.scriptCode = scriptLoader.load(parsedBody, m);
@@ -317,34 +321,12 @@ public final class SourceTextModuleRecord implements ModuleRecord, Cloneable {
             MalformedNameException, ResolutionException {
         /* step 1 */
         SourceTextModuleRecord module = this;
-        /* step 2 */
-        if (exportStarSet.contains(module)) {
-            // FIXME: spec incomplete
+        /* steps 2-3 */
+        if (!exportStarSet.add(module)) {
             return Collections.emptySet();
         }
-        /* step 3 */
-        HashSet<String> exportedNames = new HashSet<>();
         /* step 4 */
-        for (ExportEntry exportEntry : module.starExportEntries) {
-            /* steps 4.a-b */
-            ModuleRecord requestedModule = HostResolveImportedModule(module,
-                    exportEntry.getModuleRequest());
-            /* step 4.c */
-            HashSet<ModuleRecord> exportStarSetCopy = new HashSet<>(exportStarSet);
-            /* step 4.d */
-            exportStarSetCopy.add(module);
-            /* step 4.e */
-            Set<String> starNames = requestedModule.getExportedNames(exportStarSetCopy);
-            /* step 4.c */
-            for (String n : starNames) {
-                if (!"default".equals(n)) {
-                    // FIXME: spec incomplete
-                    if (!exportedNames.contains(n)) {
-                        exportedNames.add(n);
-                    }
-                }
-            }
-        }
+        HashSet<String> exportedNames = new HashSet<>();
         /* step 5 */
         for (ExportEntry exportEntry : module.localExportEntries) {
             /* step 5.a (not applicable) */
@@ -358,6 +340,20 @@ public final class SourceTextModuleRecord implements ModuleRecord, Cloneable {
             exportedNames.add(exportEntry.getExportName());
         }
         /* step 7 */
+        for (ExportEntry exportEntry : module.starExportEntries) {
+            /* steps 7.a-b */
+            ModuleRecord requestedModule = HostResolveImportedModule(module,
+                    exportEntry.getModuleRequest());
+            /* step 7.c */
+            Set<String> starNames = requestedModule.getExportedNames(exportStarSet);
+            /* step 7.d */
+            for (String n : starNames) {
+                if (!"default".equals(n)) {
+                    exportedNames.add(n);
+                }
+            }
+        }
+        /* step 8 */
         return exportedNames;
     }
 
@@ -397,42 +393,38 @@ public final class SourceTextModuleRecord implements ModuleRecord, Cloneable {
                 /* steps 5.a.iv-v */
                 ModuleExport indirectResolution = importedModule.resolveExport(
                         exportEntry.getImportName(), resolveSet, exportStarSet);
-                /* step 5.a.ii */
+                /* step 5.a.vi */
                 if (indirectResolution != null) {
                     return indirectResolution;
                 }
             }
         }
         /* step 6 */
-        if (exportStarSet.contains(module)) {
-            return null;
-        }
-        /* step 7 */
         if ("default".equals(exportName)) {
-            /* step 7.a (not applicable) */
-            /* step 7.b */
+            /* step 6.a (not applicable) */
+            /* step 6.b */
             throw new ResolutionException(Messages.Key.ModulesMissingDefaultExport,
                     module.sourceCodeId.toString());
+        }
+        /* steps 7-8 */
+        if (!exportStarSet.add(module)) {
+            return null;
         }
         /* step 8 */
         ModuleExport starResolution = null;
         /* step 9 */
         for (ExportEntry exportEntry : module.starExportEntries) {
-            /* step 9.a */
-            Set<ModuleRecord> exportStarSetCopy = new HashSet<>(exportStarSet);
-            /* step 9.b */
-            exportStarSetCopy.add(module);
-            /* steps 9.c-d */
+            /* steps 9.a-b */
             ModuleRecord importedModule = HostResolveImportedModule(module,
                     exportEntry.getModuleRequest());
-            /* steps 9.e-f */
+            /* steps 9.c-d */
             ModuleExport resolution = importedModule.resolveExport(exportName, resolveSet,
-                    exportStarSetCopy);
-            /* step 9.g */
+                    exportStarSet);
+            /* step 9.e */
             if (resolution == ModuleExport.AMBIGUOUS) {
                 return ModuleExport.AMBIGUOUS;
             }
-            /* step 9.h */
+            /* step 9.f */
             if (resolution != null) {
                 if (starResolution == null) {
                     starResolution = resolution;
@@ -446,7 +438,7 @@ public final class SourceTextModuleRecord implements ModuleRecord, Cloneable {
                 }
             }
         }
-        /* step 10 */
+        /* step 11 */
         return starResolution;
     }
 
@@ -462,16 +454,28 @@ public final class SourceTextModuleRecord implements ModuleRecord, Cloneable {
         /* step 3 */
         assert realm != null : "module is not linked";
         /* step 4 */
-        assert module.environment == null;
-        /* step 5 */
         Module code = module.scriptCode;
-        /* step 8 */
+        /* step 5 */
+        if (module.environment != null) {
+            return;
+        }
+        /* step 6 */
         LexicalEnvironment<ModuleEnvironmentRecord> env = newModuleEnvironment(realm.getGlobalEnv());
-        /* step 15 */
+        /* step 7 */
         module.environment = env;
-        /* steps 6-16 */
+        /* step 8 */
+        // TODO: Move to generated code...
+        for (String required : module.getRequestedModules()) {
+            /* step 8.a (note) */
+            /* steps 8.b-c */
+            ModuleRecord requiredModule = HostResolveImportedModule(module, required);
+            /* steps 8.d-e */
+            requiredModule.instantiate();
+        }
+        /* steps 9-17 */
         ExecutionContext context = newModuleDeclarationExecutionContext(realm, code);
         code.getModuleBody().moduleDeclarationInstantiation(context, this, env);
+        module.instantiated = true;
     }
 
     /**
@@ -482,31 +486,33 @@ public final class SourceTextModuleRecord implements ModuleRecord, Cloneable {
         /* step 1 */
         SourceTextModuleRecord module = this;
         /* step 2 */
+        assert module.instantiated;
+        /* step 3 */
         Realm realm = module.getRealm();
         assert realm != null : "module is not linked";
-        /* step 3 */
+        /* step 4 */
         if (module.evaluated) {
             return UNDEFINED;
         }
-        /* step 4 */
-        module.evaluated = true;
         /* step 5 */
+        module.evaluated = true;
+        /* step 6 */
         for (String required : module.requestedModules) {
             ModuleRecord requiredModule = HostResolveImportedModule(module, required);
             requiredModule.evaluate();
         }
-        /* steps 6-11 */
+        /* steps 7-12 */
         ExecutionContext moduleContext = newModuleExecutionContext(realm, module);
-        /* steps 12-13 */
+        /* steps 13-14 */
         ExecutionContext oldScriptContext = realm.getScriptContext();
         try {
             realm.setScriptContext(moduleContext);
-            /* step 14 */
+            /* step 15 */
             Object result = module.scriptCode.evaluate(moduleContext);
-            /* step 17 */
+            /* step 18 */
             return result;
         } finally {
-            /* steps 15-16 */
+            /* steps 16-17 */
             realm.setScriptContext(oldScriptContext);
         }
     }

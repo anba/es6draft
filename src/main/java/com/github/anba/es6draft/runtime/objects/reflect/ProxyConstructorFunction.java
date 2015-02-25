@@ -7,6 +7,7 @@
 package com.github.anba.es6draft.runtime.objects.reflect;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.CreateDataProperty;
+import static com.github.anba.es6draft.runtime.AbstractOperations.CreateMethodProperty;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
@@ -120,7 +121,7 @@ public final class ProxyConstructorFunction extends BuiltinConstructor implement
             /* step 6 */
             CreateDataProperty(cx, result, "proxy", p);
             /* step 7 */
-            CreateDataProperty(cx, result, "revoke", revoker);
+            CreateMethodProperty(cx, result, "revoke", revoker);
             /* step 8 */
             return result;
         }

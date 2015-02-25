@@ -7,7 +7,6 @@
 package com.github.anba.es6draft.runtime.types.builtins;
 
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
-import static com.github.anba.es6draft.runtime.types.builtins.FunctionObject.isStrictFunction;
 
 import com.github.anba.es6draft.runtime.DeclarativeEnvironmentRecord;
 import com.github.anba.es6draft.runtime.ExecutionContext;
@@ -54,6 +53,10 @@ public final class ArgumentsObject extends OrdinaryObject {
 
     private boolean isMapped(long propertyKey) {
         return parameterMap != null && parameterMap.hasOwnProperty(propertyKey, false);
+    }
+
+    private static boolean isStrictFunction(Object v) {
+        return v instanceof FunctionObject && ((FunctionObject) v).isStrict();
     }
 
     @Override
@@ -230,7 +233,7 @@ public final class ArgumentsObject extends OrdinaryObject {
     }
 
     /**
-     * 9.4.4.6 CreateUnmappedArgumentsObject(argumentsList) Abstract Operation
+     * 9.4.4.6 CreateUnmappedArgumentsObject(argumentsList)
      * <p>
      * [Called from generated code]
      * 
@@ -267,7 +270,7 @@ public final class ArgumentsObject extends OrdinaryObject {
     }
 
     /**
-     * 9.4.4.7 CreateMappedArgumentsObject ( func, formals, argumentsList, env ) Abstract Operation
+     * 9.4.4.7 CreateMappedArgumentsObject ( func, formals, argumentsList, env )
      * <p>
      * [Called from generated code]
      * 

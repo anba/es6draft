@@ -149,21 +149,10 @@ public final class SystemObject extends LoaderObject implements Initializable {
             String unnormalizedName = ToFlatString(cx, moduleName);
             String sourceCode = ToFlatString(cx, source);
             SourceIdentifier identifier = normalize(cx, moduleLoader, unnormalizedName);
-            ModuleRecord module = moduleLoader.get(identifier);
-            if (module == null) {
-                ModuleSource src = new StringModuleSource(identifier, sourceCode);
-                try {
-                    module = moduleLoader.define(identifier, src);
-                } catch (IOException e) {
-                    return PromiseOf(cx, toScriptException(cx, e));
-                } catch (ParserException | CompilationException e) {
-                    return PromiseOf(cx, e.toScriptException(cx));
-                }
-            }
+            ModuleSource src = new StringModuleSource(identifier, sourceCode);
             try {
-                if (moduleLoader.link(module, realm)) {
-                    module.instantiate();
-                }
+                ModuleRecord module = moduleLoader.define(identifier, src, realm);
+                module.instantiate();
                 module.evaluate();
                 return PromiseOf(cx, GetModuleNamespace(cx, module));
             } catch (IOException e) {
@@ -195,10 +184,8 @@ public final class SystemObject extends LoaderObject implements Initializable {
             String unnormalizedName = ToFlatString(cx, moduleName);
             SourceIdentifier normalizedModuleName = normalize(cx, moduleLoader, unnormalizedName);
             try {
-                ModuleRecord module = moduleLoader.resolve(normalizedModuleName);
-                if (moduleLoader.link(module, realm)) {
-                    module.instantiate();
-                }
+                ModuleRecord module = moduleLoader.resolve(normalizedModuleName, realm);
+                module.instantiate();
                 return PromiseOf(cx, GetModuleNamespace(cx, module));
             } catch (IOException e) {
                 return PromiseOf(cx, toScriptException(cx, e));
@@ -229,8 +216,7 @@ public final class SystemObject extends LoaderObject implements Initializable {
             String unnormalizedName = ToFlatString(cx, moduleName);
             SourceIdentifier normalizedModuleName = normalize(cx, moduleLoader, unnormalizedName);
             try {
-                ModuleRecord module = moduleLoader.resolve(normalizedModuleName);
-                moduleLoader.fetch(module);
+                moduleLoader.load(normalizedModuleName);
             } catch (IOException e) {
                 return PromiseOf(cx, toScriptException(cx, e));
             } catch (MalformedNameException e) {
@@ -260,14 +246,12 @@ public final class SystemObject extends LoaderObject implements Initializable {
 
             String unnormalizedName = ToFlatString(cx, moduleName);
             SourceIdentifier normalizedModuleName = normalize(cx, moduleLoader, unnormalizedName);
-            ModuleRecord module = moduleLoader.get(normalizedModuleName);
+            ModuleRecord module = moduleLoader.get(normalizedModuleName, realm);
             if (module == null) {
                 return UNDEFINED;
             }
             try {
-                if (moduleLoader.link(module, realm)) {
-                    module.instantiate();
-                }
+                module.instantiate();
                 module.evaluate();
                 return GetModuleNamespace(cx, module);
             } catch (IOException e) {

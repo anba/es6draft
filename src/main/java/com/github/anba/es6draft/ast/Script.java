@@ -100,6 +100,10 @@ public final class Script extends AstNode implements TopLevelNode<StatementListI
         return parserOptions.contains(Parser.Option.EnclosedByWithStatement);
     }
 
+    public boolean isEnclosedByLexicalDeclaration() {
+        return parserOptions.contains(Parser.Option.EnclosedByLexicalDeclaration);
+    }
+
     public boolean isScripting() {
         return parserOptions.contains(Parser.Option.Scripting);
     }

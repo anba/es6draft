@@ -258,16 +258,12 @@ public final class TypedArrayConstructorPrototype extends BuiltinConstructor imp
         /* steps 5-6 */
         int elementSize = array.getElementType().size();
         /* steps 7-8 */
-        // TODO: spec issue? - does not follow the ToNumber(v) == ToInteger(v) pattern
         double offset = ToInteger(cx, byteOffset);
-        /* step 9 */
-        if (offset < 0) {
+        /* steps 9-10 */
+        if (offset < 0 || offset % elementSize != 0) {
             throw newRangeError(cx, Messages.Key.InvalidByteOffset);
         }
-        /* step 10 */
-        if (offset % elementSize != 0) {
-            throw newRangeError(cx, Messages.Key.InvalidByteOffset);
-        }
+        long newByteOffset = (long) offset;
         /* step 11 */
         if (IsDetachedBuffer(buffer)) {
             throw newTypeError(cx, Messages.Key.BufferDetached);
@@ -281,7 +277,7 @@ public final class TypedArrayConstructorPrototype extends BuiltinConstructor imp
             if (bufferByteLength % elementSize != 0) {
                 throw newRangeError(cx, Messages.Key.InvalidBufferSize);
             }
-            newByteLength = (long) (bufferByteLength - offset);
+            newByteLength = bufferByteLength - newByteOffset;
             if (newByteLength < 0) {
                 throw newRangeError(cx, Messages.Key.InvalidBufferSize);
             }
@@ -289,14 +285,14 @@ public final class TypedArrayConstructorPrototype extends BuiltinConstructor imp
             /* step 14 */
             long newLength = ToLength(cx, length);
             newByteLength = newLength * elementSize;
-            if (offset + newByteLength > bufferByteLength) {
+            if (newByteOffset + newByteLength > bufferByteLength) {
                 throw newRangeError(cx, Messages.Key.InvalidBufferSize);
             }
         }
         /* steps 15-18 */
         array.setBuffer(buffer);
         array.setByteLength(newByteLength);
-        array.setByteOffset((long) offset);
+        array.setByteOffset(newByteOffset);
         array.setArrayLength(newByteLength / elementSize);
         /* step 19 */
         return array;
@@ -315,58 +311,59 @@ public final class TypedArrayConstructorPrototype extends BuiltinConstructor imp
      */
     public static TypedArrayObject AllocateTypedArray(ExecutionContext cx, Constructor newTarget,
             long length) {
-        /* step 1 */
-        if (SameValue(cx.getIntrinsic(Intrinsics.TypedArray), newTarget)) {
+        /* step 1 (not applicable) */
+        /* step 2 */
+        final OrdinaryObject typedArray = cx.getIntrinsic(Intrinsics.TypedArray);
+        if (typedArray == newTarget) {
             throw newTypeError(cx, Messages.Key.InvalidTypedArrayConstructor);
         }
-        /* step 2 */
-        ElementType elementType = null;
-        /* step 3 */
-        ScriptObject subclass = newTarget;
+        /* step 3 (note) */
         /* step 4 */
-        OrdinaryObject typedArray = cx.getIntrinsic(Intrinsics.TypedArray);
-        while (elementType == null) {
-            /* steps 4.a-b */
+        ElementType elementType;
+        /* steps 5-6 */
+        for (ScriptObject subclass = newTarget;;) {
+            /* steps 6.a-b */
             if (subclass == null || subclass == typedArray) {
                 throw newTypeError(cx, Messages.Key.InvalidTypedArrayConstructor);
             }
-            /* step 4.c */
+            /* step 6.c */
             if (subclass instanceof TypedArrayConstructor) {
                 elementType = ((TypedArrayConstructor) subclass).getElementType();
+                break;
             }
-            /* steps 4.d-e */
+            /* steps 6.d-e */
             subclass = subclass.getPrototypeOf(cx);
         }
-        /* steps 5-6 */
+        /* steps 7-8 */
         ScriptObject proto = GetPrototypeFromConstructor(cx, newTarget,
                 Intrinsics.TypedArrayPrototype);
-        /* steps 7-9 */
+        /* steps 9-11 */
         TypedArrayObject obj = new TypedArrayObject(cx.getRealm());
         obj.setPrototype(proto);
         obj.setElementType(elementType);
-        /* steps 10-11 */
+        /* steps 12-13 */
         if (length < 0) {
-            /* step 10 */
-            /* steps 10.a-c */
+            /* step 12 */
+            /* steps 12.a-c */
             obj.setByteLength(0);
             obj.setByteOffset(0);
             obj.setArrayLength(0);
         } else {
-            /* step 11 */
-            /* step 11.a */
+            /* step 13 */
+            /* step 13.a */
             int elementSize = elementType.size();
-            /* step 11.b */
+            /* step 13.b */
             long byteLength = elementSize * length;
-            /* steps 11.c-d */
+            /* steps 13.c-d */
             ArrayBufferObject data = AllocateArrayBuffer(cx,
                     (Constructor) cx.getIntrinsic(Intrinsics.ArrayBuffer), byteLength);
-            /* steps 11.e-h */
+            /* steps 13.e-h */
             obj.setBuffer(data);
             obj.setByteLength(byteLength);
             obj.setByteOffset(0);
             obj.setArrayLength(length);
         }
-        /* step 12 */
+        /* step 14 */
         return obj;
     }
 
@@ -458,7 +455,7 @@ public final class TypedArrayConstructorPrototype extends BuiltinConstructor imp
             for (int k = 0; k < len; ++k) {
                 int pk = k;
                 Object value = items[k];
-                Put(cx, newObj, pk, value, true);
+                Set(cx, newObj, pk, value, true);
             }
             /* step 9 */
             return newObj;
@@ -530,7 +527,7 @@ public final class TypedArrayConstructorPrototype extends BuiltinConstructor imp
                 } else {
                     mappedValue = kValue;
                 }
-                Put(cx, targetObj, pk, mappedValue, true);
+                Set(cx, targetObj, pk, mappedValue, true);
             }
             /* step 8.l */
             return targetObj;
@@ -552,7 +549,7 @@ public final class TypedArrayConstructorPrototype extends BuiltinConstructor imp
             } else {
                 mappedValue = kValue;
             }
-            Put(cx, targetObj, pk, mappedValue, true);
+            Set(cx, targetObj, pk, mappedValue, true);
         }
         /* step 18 */
         return targetObj;

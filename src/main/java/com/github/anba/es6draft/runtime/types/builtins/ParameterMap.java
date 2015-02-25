@@ -56,7 +56,7 @@ final class ParameterMap {
     }
 
     /**
-     * 9.4.4.7 CreateMappedArgumentsObject ( func, formals, argumentsList, env ) Abstract Operation
+     * 9.4.4.7 CreateMappedArgumentsObject ( func, formals, argumentsList, env )
      * <p>
      * Returns a new {@link ParameterMap} if there are any mapped arguments, otherwise
      * <code>null</code>.
@@ -121,7 +121,7 @@ final class ParameterMap {
     }
 
     /**
-     * 9.4.4.7.1 MakeArgGetter (name, env) Abstract Operation
+     * 9.4.4.7.1 MakeArgGetter (name, env)
      * 
      * @param propertyKey
      *            the property key
@@ -135,7 +135,7 @@ final class ParameterMap {
     }
 
     /**
-     * 9.4.4.7.2 MakeArgSetter (name, env) Abstract Operation
+     * 9.4.4.7.2 MakeArgSetter (name, env)
      * 
      * @param propertyKey
      *            the property key

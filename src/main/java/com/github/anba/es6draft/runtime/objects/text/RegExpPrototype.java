@@ -10,6 +10,7 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.*;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.objects.text.RegExpConstructor.EscapeRegExpPattern;
+import static com.github.anba.es6draft.runtime.objects.text.RegExpConstructor.RegExpCreate;
 import static com.github.anba.es6draft.runtime.objects.text.RegExpConstructor.RegExpInitialize;
 import static com.github.anba.es6draft.runtime.types.Null.NULL;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
@@ -103,11 +104,22 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
          */
         @Function(name = "exec", arity = 1, nativeId = RegExpPrototypeExec.class)
         public static Object exec(ExecutionContext cx, Object thisValue, Object string) {
-            /* steps 1-3 */
-            RegExpObject r = thisRegExpObject(cx, thisValue);
-            /* steps 4-5 */
+            /* steps 1-2 */
+            if (!Type.isObject(thisValue)) {
+                throw newTypeError(cx, Messages.Key.NotObjectType);
+            }
+            /* steps 3-4 */
+            RegExpObject r;
+            if (thisValue == cx.getIntrinsic(Intrinsics.RegExpPrototype)) {
+                /* step 3 */
+                r = RegExpCreate(cx, "", "");
+            } else {
+                /* step 4 */
+                r = thisRegExpObject(cx, thisValue);
+            }
+            /* steps 5-6 */
             String s = ToFlatString(cx, string);
-            /* step 6 */
+            /* step 7 */
             ArrayObject result = RegExpBuiltinExec(cx, r, s);
             return result != null ? result : NULL;
         }
@@ -264,9 +276,14 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
             /* steps 3-4 */
             // TODO: ToFlatString for small strings, ToString for large strings?
             String s = ToFlatString(cx, string);
-            /* steps 5-6 */
+            /* step 5 */
+            // FIXME: spec bug - special case not needed
+            if (r == cx.getIntrinsic(Intrinsics.RegExpPrototype)) {
+                return true;
+            }
+            /* steps 6-7 */
             MatchResult match = getMatcherOrNull(cx, r, s, true);
-            /* step 7 */
+            /* step 8 */
             return match != null;
         }
 
@@ -346,7 +363,7 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
                 return result != null ? result : NULL;
             } else {
                 /* steps 8.a-8.b */
-                Put(cx, rx, "lastIndex", 0, true);
+                Set(cx, rx, "lastIndex", 0, true);
                 /* step 8.c */
                 ArrayObject array = ArrayCreate(cx, 0);
                 /* steps 8.d-8.e */
@@ -362,7 +379,7 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
                     assert status;
                     if (matchStr.length() == 0) {
                         long thisIndex = ToLength(cx, Get(cx, rx, "lastIndex"));
-                        Put(cx, rx, "lastIndex", thisIndex + 1, true);
+                        Set(cx, rx, "lastIndex", thisIndex + 1, true);
                     }
                 }
             }
@@ -408,7 +425,7 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
             boolean global = ToBoolean(Get(cx, rx, "global"));
             /* step 10 */
             if (global) {
-                Put(cx, rx, "lastIndex", 0, true);
+                Set(cx, rx, "lastIndex", 0, true);
             }
             /* step 11 */
             ArrayList<MatchResult> results = new ArrayList<>();
@@ -431,7 +448,7 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
                         String matchStr = result.group(0);
                         if (matchStr.isEmpty()) {
                             long thisIndex = ToLength(cx, Get(cx, rx, "lastIndex"));
-                            Put(cx, rx, "lastIndex", thisIndex + 1, true);
+                            Set(cx, rx, "lastIndex", thisIndex + 1, true);
                         }
                     }
                 }
@@ -507,11 +524,11 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
             /* steps 5-6 */
             Object previousLastIndex = Get(cx, rx, "lastIndex");
             /* steps 7-8 */
-            Put(cx, rx, "lastIndex", 0, true);
+            Set(cx, rx, "lastIndex", 0, true);
             /* steps 9-10 */
             MatchResult result = getMatcherOrNull(cx, rx, s, true);
             /* steps 11-12 */
-            Put(cx, rx, "lastIndex", previousLastIndex, true);
+            Set(cx, rx, "lastIndex", previousLastIndex, true);
             /* step 13 */
             if (result == null) {
                 return -1;
@@ -596,7 +613,7 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
             /* step 24 */
             while (q < size) {
                 /* steps 24.a-b */
-                Put(cx, splitter, "lastIndex", q, true);
+                Set(cx, splitter, "lastIndex", q, true);
                 /* steps 24.c-d */
                 // ScriptObject z = RegExpExec(cx, splitter, s);
                 MatchResult z = getMatcherOrNull(cx, splitter, s, true);
@@ -691,7 +708,7 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
     }
 
     /**
-     * 21.2.5.2.1 Runtime Semantics: RegExpExec ( R, S ) Abstract Operation
+     * 21.2.5.2.1 Runtime Semantics: RegExpExec ( R, S )
      * 
      * @param cx
      *            the execution context
@@ -704,6 +721,7 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
     public static ScriptObject RegExpExec(ExecutionContext cx, ScriptObject r, String s) {
         /* steps 1-2 (not applicable) */
         /* steps 3-4 */
+        // FIXME: spec bug - change to GetMethod ?
         Object exec = Get(cx, r, "exec");
         /* step 5 */
         // Don't take the slow path for built-in RegExp.prototype.exec
@@ -711,13 +729,19 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
             return RegExpUserExec(cx, (Callable) exec, r, s);
         }
         /* step 6 */
-        RegExpObject rx = thisRegExpObject(cx, r);
+        RegExpObject rx;
+        if (r == cx.getIntrinsic(Intrinsics.RegExpPrototype)) {
+            // Handle RegExp.prototype intrinsic.
+            rx = RegExpCreate(cx, "", "");
+        } else {
+            rx = thisRegExpObject(cx, r);
+        }
         /* step 7 */
         return RegExpBuiltinExec(cx, rx, s);
     }
 
     /**
-     * 21.2.5.2.1 Runtime Semantics: RegExpExec ( R, S ) Abstract Operation (1)
+     * 21.2.5.2.1 Runtime Semantics: RegExpExec ( R, S ) (1)
      * 
      * @param cx
      *            the execution context
@@ -741,7 +765,13 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
             return o != null ? new ScriptObjectMatchResult(cx, o) : null;
         }
         /* step 6 */
-        RegExpObject rx = thisRegExpObject(cx, r);
+        RegExpObject rx;
+        if (r == cx.getIntrinsic(Intrinsics.RegExpPrototype)) {
+            // Handle RegExp.prototype intrinsic.
+            rx = RegExpCreate(cx, "", "");
+        } else {
+            rx = thisRegExpObject(cx, r);
+        }
         /* step 7 */
         MatchResult m = getMatcherOrNull(cx, rx, s);
         if (m == null) {
@@ -789,7 +819,7 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
     }
 
     /**
-     * 21.2.5.2.2 Runtime Semantics: RegExpBuiltinExec ( R, S ) Abstract Operation
+     * 21.2.5.2.2 Runtime Semantics: RegExpBuiltinExec ( R, S )
      * 
      * @param cx
      *            the execution context
@@ -811,7 +841,7 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
     }
 
     /**
-     * 21.2.5.2.2 Runtime Semantics: RegExpBuiltinExec ( R, S ) Abstract Operation (1)
+     * 21.2.5.2.2 Runtime Semantics: RegExpBuiltinExec ( R, S ) (1)
      * 
      * @param cx
      *            the execution context
@@ -839,7 +869,7 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
         }
         /* step 15.a */
         if (lastIndex > length) {
-            Put(cx, r, "lastIndex", 0, true);
+            Set(cx, r, "lastIndex", 0, true);
             return null;
         }
         /* step 11 */
@@ -855,20 +885,20 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
         }
         /* step 15.a, 15.c */
         if (!matchSucceeded) {
-            Put(cx, r, "lastIndex", 0, true);
+            Set(cx, r, "lastIndex", 0, true);
             return null;
         }
         /* steps 16-17 */
         int e = m.end();
         /* step 18 */
         if (global || sticky) {
-            Put(cx, r, "lastIndex", e, true);
+            Set(cx, r, "lastIndex", e, true);
         }
         return m.toMatchResult();
     }
 
     /**
-     * 21.2.5.2.2 Runtime Semantics: RegExpBuiltinExec ( R, S ) Abstract Operation (2)
+     * 21.2.5.2.2 Runtime Semantics: RegExpBuiltinExec ( R, S ) (2)
      * 
      * @param cx
      *            the execution context

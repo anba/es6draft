@@ -12,8 +12,9 @@ const {
 // https://bugs.ecmascript.org/show_bug.cgi?id=3021
 
 // This test requires the non-standard evalScript function.
+// Note: No longer reproducible without Reflect.Realm.
 
-{
+if (false) {
   let called = false;
   Object.setPrototypeOf(this, new Proxy({}, {
     has(t, pk) {
@@ -34,7 +35,7 @@ const {
   Object.setPrototypeOf(this, null);
 }
 
-{
+if (false) {
   let called = false;
   Object.setPrototypeOf(this, new Proxy({}, {
     has(t, pk) {

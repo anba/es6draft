@@ -47,7 +47,7 @@ public final class SymbolPrototype extends OrdinaryObject implements Initializab
     }
 
     /**
-     * 19.4.3.2.1 SymbolDescriptiveString ( sym ) Abstract Operation
+     * 19.4.3.2.1 Runtime Semantics: SymbolDescriptiveString ( sym )
      * 
      * @param sym
      *            the symbol value

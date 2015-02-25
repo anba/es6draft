@@ -54,10 +54,8 @@ public final class BooleanConstructor extends BuiltinConstructor implements Init
      */
     @Override
     public Boolean call(ExecutionContext callerContext, Object thisValue, Object... args) {
-        /* step 1 */
-        boolean b = args.length > 0 ? ToBoolean(args[0]) : false;
-        /* step 2 */
-        return b;
+        /* steps 1-2 */
+        return args.length > 0 ? ToBoolean(args[0]) : false;
     }
 
     /**

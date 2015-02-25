@@ -331,7 +331,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.1.5 ToInt32 ( argument ) — Signed 32 Bit Integer
+     * 7.1.5 ToInt32 ( argument )
      * 
      * @param cx
      *            the execution context
@@ -347,7 +347,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.1.5 ToInt32 ( argument ) — Signed 32 Bit Integer
+     * 7.1.5 ToInt32 ( argument )
      * 
      * @param number
      *            the argument value
@@ -360,7 +360,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.1.6 ToUint32 ( argument ) — Unsigned 32 Bit Integer
+     * 7.1.6 ToUint32 ( argument )
      * 
      * @param cx
      *            the execution context
@@ -376,7 +376,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.1.6 ToUint32 ( argument ) — Unsigned 32 Bit Integer
+     * 7.1.6 ToUint32 ( argument )
      * 
      * @param number
      *            the argument value
@@ -389,7 +389,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.1.7 ToInt16 ( argument ) — Signed 16 Bit Integer
+     * 7.1.7 ToInt16 ( argument )
      * 
      * @param cx
      *            the execution context
@@ -405,7 +405,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.1.7 ToInt16 ( argument ) — Signed 16 Bit Integer
+     * 7.1.7 ToInt16 ( argument )
      * 
      * @param number
      *            the argument value
@@ -418,7 +418,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.1.8 ToUint16 ( argument ) — Unsigned 16 Bit Integer
+     * 7.1.8 ToUint16 ( argument )
      * 
      * @param cx
      *            the execution context
@@ -434,7 +434,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.1.8 ToUint16 ( argument ) — Unsigned 16 Bit Integer
+     * 7.1.8 ToUint16 ( argument )
      * 
      * @param number
      *            the argument value
@@ -447,7 +447,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.1.9 ToInt8 ( argument ) — Signed 8 Bit Integer
+     * 7.1.9 ToInt8 ( argument )
      * 
      * @param cx
      *            the execution context
@@ -463,7 +463,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.1.9 ToInt8 ( argument ) — Signed 8 Bit Integer
+     * 7.1.9 ToInt8 ( argument )
      * 
      * @param number
      *            the argument value
@@ -476,7 +476,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.1.10 ToUint8 ( argument ) — Unsigned 8 Bit Integer
+     * 7.1.10 ToUint8 ( argument )
      * 
      * @param cx
      *            the execution context
@@ -492,7 +492,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.1.10 ToUint8 ( argument ) — Unsigned 8 Bit Integer
+     * 7.1.10 ToUint8 ( argument )
      * 
      * @param number
      *            the argument value
@@ -505,7 +505,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.1.11 ToUint8Clamp ( argument ) — Unsigned 8 Bit Integer, Clamped
+     * 7.1.11 ToUint8Clamp ( argument )
      * 
      * @param cx
      *            the execution context
@@ -521,7 +521,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.1.11 ToUint8Clamp ( argument ) — Unsigned 8 Bit Integer, Clamped
+     * 7.1.11 ToUint8Clamp ( argument )
      * 
      * @param number
      *            the argument value
@@ -706,7 +706,7 @@ public final class AbstractOperations {
         if (len <= 0) {
             return 0;
         }
-        /* step 5 */
+        /* steps 5-6 */
         return (long) Math.min(len, 0x1F_FFFF_FFFF_FFFFL);
     }
 
@@ -723,7 +723,7 @@ public final class AbstractOperations {
         if (value <= 0) {
             return 0;
         }
-        /* step 5 */
+        /* steps 5-6 */
         return (long) Math.min(value, 0x1F_FFFF_FFFF_FFFFL);
     }
 
@@ -1026,21 +1026,6 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.2.9 SameValue(x, y)
-     * 
-     * @param x
-     *            the first operand
-     * @param y
-     *            the second operand
-     * @return {@code true} if both operands have the same value
-     */
-    public static boolean SameValue(ScriptObject x, ScriptObject y) {
-        /* steps 1-9 (not applicable) */
-        /* step 10 */
-        return (x == y);
-    }
-
-    /**
      * 7.2.10 SameValueZero(x, y)
      * 
      * @param x
@@ -1211,12 +1196,12 @@ public final class AbstractOperations {
         /* step 6 */
         if (tx == Type.Number && ty == Type.String) {
             // return EqualityComparison(cx, x, ToNumber(cx, y));
-            return Type.numberValue(x) == ToNumber(cx, y);
+            return Type.numberValue(x) == ToNumber(Type.stringValue(y));
         }
         /* step 7 */
         if (tx == Type.String && ty == Type.Number) {
             // return EqualityComparison(cx, ToNumber(cx, x), y);
-            return ToNumber(cx, x) == Type.numberValue(y);
+            return ToNumber(Type.stringValue(x)) == Type.numberValue(y);
         }
         /* step 8 */
         if (tx == Type.Boolean) {
@@ -1434,7 +1419,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.3 Put (O, P, V, Throw)
+     * 7.3.3 Set (O, P, V, Throw)
      * 
      * @param cx
      *            the execution context
@@ -1447,18 +1432,18 @@ public final class AbstractOperations {
      * @param _throw
      *            the throw flag
      */
-    public static void Put(ExecutionContext cx, ScriptObject object, Object propertyKey,
+    public static void Set(ExecutionContext cx, ScriptObject object, Object propertyKey,
             Object value, boolean _throw) {
         /* steps 1-7 */
         if (propertyKey instanceof String) {
-            Put(cx, object, (String) propertyKey, value, _throw);
+            Set(cx, object, (String) propertyKey, value, _throw);
         } else {
-            Put(cx, object, (Symbol) propertyKey, value, _throw);
+            Set(cx, object, (Symbol) propertyKey, value, _throw);
         }
     }
 
     /**
-     * 7.3.3 Put (O, P, V, Throw)
+     * 7.3.3 Set (O, P, V, Throw)
      * 
      * @param cx
      *            the execution context
@@ -1471,7 +1456,7 @@ public final class AbstractOperations {
      * @param _throw
      *            the throw flag
      */
-    public static void Put(ExecutionContext cx, ScriptObject object, long propertyKey,
+    public static void Set(ExecutionContext cx, ScriptObject object, long propertyKey,
             Object value, boolean _throw) {
         /* steps 1-5 */
         boolean success = object.set(cx, propertyKey, value, object);
@@ -1483,7 +1468,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.3 Put (O, P, V, Throw)
+     * 7.3.3 Set (O, P, V, Throw)
      * 
      * @param cx
      *            the execution context
@@ -1496,7 +1481,7 @@ public final class AbstractOperations {
      * @param _throw
      *            the throw flag
      */
-    public static void Put(ExecutionContext cx, ScriptObject object, String propertyKey,
+    public static void Set(ExecutionContext cx, ScriptObject object, String propertyKey,
             Object value, boolean _throw) {
         /* steps 1-5 */
         boolean success = object.set(cx, propertyKey, value, object);
@@ -1508,7 +1493,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.3 Put (O, P, V, Throw)
+     * 7.3.3 Set (O, P, V, Throw)
      * 
      * @param cx
      *            the execution context
@@ -1521,7 +1506,7 @@ public final class AbstractOperations {
      * @param _throw
      *            the throw flag
      */
-    public static void Put(ExecutionContext cx, ScriptObject object, Symbol propertyKey,
+    public static void Set(ExecutionContext cx, ScriptObject object, Symbol propertyKey,
             Object value, boolean _throw) {
         /* steps 1-5 */
         boolean success = object.set(cx, propertyKey, value, object);
@@ -1621,7 +1606,95 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.5 CreateDataPropertyOrThrow (O, P, V)
+     * 7.3.5 CreateMethodProperty (O, P, V)
+     * 
+     * @param cx
+     *            the execution context
+     * @param object
+     *            the script object
+     * @param propertyKey
+     *            the property key
+     * @param value
+     *            the new property value
+     * @return {@code true} on success
+     */
+    public static boolean CreateMethodProperty(ExecutionContext cx, ScriptObject object,
+            Object propertyKey, Object value) {
+        if (propertyKey instanceof String) {
+            return CreateMethodProperty(cx, object, (String) propertyKey, value);
+        } else {
+            return CreateMethodProperty(cx, object, (Symbol) propertyKey, value);
+        }
+    }
+
+    /**
+     * 7.3.5 CreateMethodProperty (O, P, V)
+     * 
+     * @param cx
+     *            the execution context
+     * @param object
+     *            the script object
+     * @param propertyKey
+     *            the property key
+     * @param value
+     *            the new property value
+     * @return {@code true} on success
+     */
+    public static boolean CreateMethodProperty(ExecutionContext cx, ScriptObject object,
+            long propertyKey, Object value) {
+        /* steps 1-2 (not applicable) */
+        /* step 3 */
+        PropertyDescriptor newDesc = new PropertyDescriptor(value, true, false, true);
+        /* step 4 */
+        return object.defineOwnProperty(cx, propertyKey, newDesc);
+    }
+
+    /**
+     * 7.3.5 CreateMethodProperty (O, P, V)
+     * 
+     * @param cx
+     *            the execution context
+     * @param object
+     *            the script object
+     * @param propertyKey
+     *            the property key
+     * @param value
+     *            the new property value
+     * @return {@code true} on success
+     */
+    public static boolean CreateMethodProperty(ExecutionContext cx, ScriptObject object,
+            String propertyKey, Object value) {
+        /* steps 1-2 (not applicable) */
+        /* step 3 */
+        PropertyDescriptor newDesc = new PropertyDescriptor(value, true, false, true);
+        /* step 4 */
+        return object.defineOwnProperty(cx, propertyKey, newDesc);
+    }
+
+    /**
+     * 7.3.5 CreateMethodProperty (O, P, V)
+     * 
+     * @param cx
+     *            the execution context
+     * @param object
+     *            the script object
+     * @param propertyKey
+     *            the property key
+     * @param value
+     *            the new property value
+     * @return {@code true} on success
+     */
+    public static boolean CreateMethodProperty(ExecutionContext cx, ScriptObject object,
+            Symbol propertyKey, Object value) {
+        /* steps 1-2 (not applicable) */
+        /* step 3 */
+        PropertyDescriptor newDesc = new PropertyDescriptor(value, true, false, true);
+        /* step 4 */
+        return object.defineOwnProperty(cx, propertyKey, newDesc);
+    }
+
+    /**
+     * 7.3.6 CreateDataPropertyOrThrow (O, P, V)
      * 
      * @param cx
      *            the execution context
@@ -1642,7 +1715,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.5 CreateDataPropertyOrThrow (O, P, V)
+     * 7.3.6 CreateDataPropertyOrThrow (O, P, V)
      * 
      * @param cx
      *            the execution context
@@ -1666,7 +1739,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.5 CreateDataPropertyOrThrow (O, P, V)
+     * 7.3.6 CreateDataPropertyOrThrow (O, P, V)
      * 
      * @param cx
      *            the execution context
@@ -1690,7 +1763,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.5 CreateDataPropertyOrThrow (O, P, V)
+     * 7.3.6 CreateDataPropertyOrThrow (O, P, V)
      * 
      * @param cx
      *            the execution context
@@ -1714,7 +1787,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.6 DefinePropertyOrThrow (O, P, desc)
+     * 7.3.7 DefinePropertyOrThrow (O, P, desc)
      * 
      * @param cx
      *            the execution context
@@ -1735,7 +1808,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.6 DefinePropertyOrThrow (O, P, desc)
+     * 7.3.7 DefinePropertyOrThrow (O, P, desc)
      * 
      * @param cx
      *            the execution context
@@ -1758,7 +1831,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.6 DefinePropertyOrThrow (O, P, desc)
+     * 7.3.7 DefinePropertyOrThrow (O, P, desc)
      * 
      * @param cx
      *            the execution context
@@ -1781,7 +1854,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.6 DefinePropertyOrThrow (O, P, desc)
+     * 7.3.7 DefinePropertyOrThrow (O, P, desc)
      * 
      * @param cx
      *            the execution context
@@ -1804,7 +1877,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.7 DeletePropertyOrThrow (O, P)
+     * 7.3.8 DeletePropertyOrThrow (O, P)
      * 
      * @param cx
      *            the execution context
@@ -1823,7 +1896,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.7 DeletePropertyOrThrow (O, P)
+     * 7.3.8 DeletePropertyOrThrow (O, P)
      * 
      * @param cx
      *            the execution context
@@ -1844,7 +1917,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.7 DeletePropertyOrThrow (O, P)
+     * 7.3.8 DeletePropertyOrThrow (O, P)
      * 
      * @param cx
      *            the execution context
@@ -1865,7 +1938,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.7 DeletePropertyOrThrow (O, P)
+     * 7.3.8 DeletePropertyOrThrow (O, P)
      * 
      * @param cx
      *            the execution context
@@ -1886,7 +1959,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.8 GetMethod (O, P)
+     * 7.3.9 GetMethod (O, P)
      * 
      * @param cx
      *            the execution context
@@ -1905,7 +1978,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.8 GetMethod (O, P)
+     * 7.3.9 GetMethod (O, P)
      * 
      * @param cx
      *            the execution context
@@ -1931,7 +2004,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.8 GetMethod (O, P)
+     * 7.3.9 GetMethod (O, P)
      * 
      * @param cx
      *            the execution context
@@ -1957,7 +2030,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.8 GetMethod (O, P)
+     * 7.3.9 GetMethod (O, P)
      * 
      * @param cx
      *            the execution context
@@ -1976,7 +2049,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.8 GetMethod (O, P)
+     * 7.3.9 GetMethod (O, P)
      * 
      * @param cx
      *            the execution context
@@ -2002,7 +2075,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.8 GetMethod (O, P)
+     * 7.3.9 GetMethod (O, P)
      * 
      * @param cx
      *            the execution context
@@ -2028,7 +2101,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.9 HasProperty (O, P)
+     * 7.3.10 HasProperty (O, P)
      * 
      * @param cx
      *            the execution context
@@ -2047,7 +2120,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.9 HasProperty (O, P)
+     * 7.3.10 HasProperty (O, P)
      * 
      * @param cx
      *            the execution context
@@ -2063,7 +2136,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.9 HasProperty (O, P)
+     * 7.3.10 HasProperty (O, P)
      * 
      * @param cx
      *            the execution context
@@ -2079,7 +2152,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.9 HasProperty (O, P)
+     * 7.3.10 HasProperty (O, P)
      * 
      * @param cx
      *            the execution context
@@ -2095,7 +2168,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.10 HasOwnProperty (O, P)
+     * 7.3.11 HasOwnProperty (O, P)
      * 
      * @param cx
      *            the execution context
@@ -2115,7 +2188,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.10 HasOwnProperty (O, P)
+     * 7.3.11 HasOwnProperty (O, P)
      * 
      * @param cx
      *            the execution context
@@ -2134,7 +2207,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.10 HasOwnProperty (O, P)
+     * 7.3.11 HasOwnProperty (O, P)
      * 
      * @param cx
      *            the execution context
@@ -2154,7 +2227,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.10 HasOwnProperty (O, P)
+     * 7.3.11 HasOwnProperty (O, P)
      * 
      * @param cx
      *            the execution context
@@ -2174,7 +2247,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.11 Call(F, V, [argumentsList])
+     * 7.3.12 Call(F, V, [argumentsList])
      * 
      * @param cx
      *            the execution context
@@ -2198,7 +2271,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.11 Call(F, V, [argumentsList])
+     * 7.3.12 Call(F, V, [argumentsList])
      * 
      * @param cx
      *            the execution context
@@ -2218,7 +2291,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.12 Invoke(O, P, [argumentsList])
+     * 7.3.13 Invoke(O, P, [argumentsList])
      * 
      * @param cx
      *            the execution context
@@ -2240,7 +2313,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.12 Invoke(O, P, [argumentsList])
+     * 7.3.13 Invoke(O, P, [argumentsList])
      * 
      * @param cx
      *            the execution context
@@ -2266,7 +2339,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.12 Invoke(O, P, [argumentsList])
+     * 7.3.13 Invoke(O, P, [argumentsList])
      * 
      * @param cx
      *            the execution context
@@ -2292,7 +2365,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.12 Invoke(O, P, [argumentsList])
+     * 7.3.13 Invoke(O, P, [argumentsList])
      * 
      * @param cx
      *            the execution context
@@ -2318,7 +2391,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.12 Invoke(O, P, [argumentsList])
+     * 7.3.13 Invoke(O, P, [argumentsList])
      * 
      * @param cx
      *            the execution context
@@ -2344,7 +2417,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.13 Construct (F, [argumentsList], [newTarget])
+     * 7.3.14 Construct (F, [argumentsList], [newTarget])
      * 
      * @param cx
      *            the execution context
@@ -2362,7 +2435,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.13 Construct (F, [argumentsList], [newTarget])
+     * 7.3.14 Construct (F, [argumentsList], [newTarget])
      * 
      * @param cx
      *            the execution context
@@ -2382,7 +2455,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.14 SetIntegrityLevel (O, level)
+     * 7.3.15 SetIntegrityLevel (O, level)
      * 
      * @param cx
      *            the execution context
@@ -2450,7 +2523,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.15 TestIntegrityLevel (O, level)
+     * 7.3.16 TestIntegrityLevel (O, level)
      * 
      * @param cx
      *            the execution context
@@ -2498,7 +2571,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.16 CreateArrayFromList (elements)
+     * 7.3.17 CreateArrayFromList (elements)
      * 
      * @param cx
      *            the execution context
@@ -2512,7 +2585,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.16 CreateArrayFromList (elements)
+     * 7.3.17 CreateArrayFromList (elements)
      * 
      * @param cx
      *            the execution context
@@ -2526,7 +2599,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.17 CreateListFromArrayLike (obj [, elementTypes] )
+     * 7.3.18 CreateListFromArrayLike (obj [, elementTypes] )
      * 
      * @param cx
      *            the execution context
@@ -2576,7 +2649,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.17 CreateListFromArrayLike (obj [, elementTypes] )
+     * 7.3.18 CreateListFromArrayLike (obj [, elementTypes] )
      * 
      * @param cx
      *            the execution context
@@ -2646,7 +2719,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.18 OrdinaryHasInstance (C, O)
+     * 7.3.19 OrdinaryHasInstance (C, O)
      * 
      * @param cx
      *            the execution context
@@ -2682,14 +2755,14 @@ public final class AbstractOperations {
             if (obj == null) {
                 return false;
             }
-            if (SameValue(proto, obj)) {
+            if (proto == obj) {
                 return true;
             }
         }
     }
 
     /**
-     * 7.3.19 SpeciesConstructor ( O, defaultConstructor )
+     * 7.3.20 SpeciesConstructor ( O, defaultConstructor )
      * 
      * @param cx
      *            the execution context
@@ -2727,7 +2800,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.20 EnumerableOwnNames (O)
+     * 7.3.21 EnumerableOwnNames (O)
      * 
      * @param cx
      *            the execution context
@@ -2757,7 +2830,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.21 GetFunctionRealm ( obj ) Abstract Operation
+     * 7.3.22 GetFunctionRealm ( obj )
      * 
      * @param cx
      *            the execution context

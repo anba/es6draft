@@ -6,7 +6,7 @@
  */
 package com.github.anba.es6draft.runtime.objects.internal;
 
-import static com.github.anba.es6draft.runtime.AbstractOperations.CreateDataProperty;
+import static com.github.anba.es6draft.runtime.AbstractOperations.CreateMethodProperty;
 import static com.github.anba.es6draft.runtime.AbstractOperations.IteratorStep;
 import static com.github.anba.es6draft.runtime.AbstractOperations.IteratorValue;
 
@@ -82,7 +82,7 @@ public final class ListIterator<T> extends OrdinaryObject {
         /* step 5 */
         iterator.iteratorNext = next;
         /* step 6 */
-        CreateDataProperty(cx, iterator, "next", next);
+        CreateMethodProperty(cx, iterator, "next", next);
         /* step 7 */
         return iterator;
     }
