@@ -6,12 +6,8 @@
  */
 package com.github.anba.es6draft.repl.global;
 
-import static com.github.anba.es6draft.runtime.AbstractOperations.CreateDataProperty;
-import static com.github.anba.es6draft.runtime.AbstractOperations.CreateListIterator;
-import static com.github.anba.es6draft.runtime.AbstractOperations.HasOwnProperty;
-import static com.github.anba.es6draft.runtime.AbstractOperations.IsCallable;
+import static com.github.anba.es6draft.runtime.AbstractOperations.*;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
-import static com.github.anba.es6draft.runtime.objects.internal.ListIterator.FromScriptIterator;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static java.util.Collections.emptyIterator;
 
@@ -522,7 +518,7 @@ class WrapperProxy implements ScriptObject {
      */
     @Override
     public ScriptIterator<?> enumerateKeys(ExecutionContext cx) {
-        return FromScriptIterator(cx, enumerate(cx));
+        return ToScriptIterator(cx, enumerate(cx));
     }
 
     private static final class AppendIterator extends SimpleIterator<Object> {

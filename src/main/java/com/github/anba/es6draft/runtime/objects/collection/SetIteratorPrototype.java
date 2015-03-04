@@ -19,13 +19,13 @@ import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initializable;
 import com.github.anba.es6draft.runtime.internal.Messages;
-import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
+import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
@@ -60,29 +60,17 @@ public final class SetIteratorPrototype extends OrdinaryObject implements Initia
      * 23.2.5.3 Properties of Set Iterator Instances
      */
     private static final class SetIterator extends OrdinaryObject {
-        /** [[IteratedSet]] */
-        SetObject set;
-
-        /** [[SetNextIndex]] */
-        @SuppressWarnings("unused")
-        int nextIndex;
-
-        /** [[SetIterationKind]] */
-        SetIterationKind iterationKind;
-
+        /** [[IteratedSet]] / [[SetNextIndex]] */
         Iterator<Entry<Object, Void>> iterator;
 
-        SetIterator(Realm realm) {
+        /** [[SetIterationKind]] */
+        final SetIterationKind iterationKind;
+
+        SetIterator(Realm realm, SetObject set, SetIterationKind kind, ScriptObject prototype) {
             super(realm);
-        }
-    }
-
-    private static final class SetIteratorAllocator implements ObjectAllocator<SetIterator> {
-        static final ObjectAllocator<SetIterator> INSTANCE = new SetIteratorAllocator();
-
-        @Override
-        public SetIterator newInstance(Realm realm) {
-            return new SetIterator(realm);
+            this.iterator = set.getSetData().iterator();
+            this.iterationKind = kind;
+            setPrototype(prototype);
         }
     }
 
@@ -104,16 +92,9 @@ public final class SetIteratorPrototype extends OrdinaryObject implements Initia
             throw newTypeError(cx, Messages.Key.IncompatibleObject);
         }
         SetObject set = (SetObject) obj;
-        /* step 3 */
-        SetIterator iterator = ObjectCreate(cx, Intrinsics.SetIteratorPrototype,
-                SetIteratorAllocator.INSTANCE);
-        /* steps 4-6 */
-        iterator.set = set;
-        iterator.nextIndex = 0;
-        iterator.iterationKind = kind;
-        iterator.iterator = set.getSetData().iterator();
-        /* step 7 */
-        return iterator;
+        /* steps 3-7 */
+        return new SetIterator(cx.getRealm(), set, kind,
+                cx.getIntrinsic(Intrinsics.SetIteratorPrototype));
     }
 
     /**
@@ -146,20 +127,16 @@ public final class SetIteratorPrototype extends OrdinaryObject implements Initia
             }
             /* step 1 */
             SetIterator o = (SetIterator) thisValue;
-            /* step 4 */
-            SetObject s = o.set;
-            /* step 5 */
-            // int index = o.nextIndex;
+            /* steps 4-5 */
+            Iterator<Entry<Object, Void>> iter = o.iterator;
             /* step 6 */
             SetIterationKind itemKind = o.iterationKind;
             /* step 7 */
-            if (s == null) {
+            if (iter == null) {
                 return CreateIterResultObject(cx, UNDEFINED, true);
             }
             /* step 8 (implicit) */
-            /* step 9 */
-            Iterator<Entry<Object, Void>> iter = o.iterator;
-            /* step 10 */
+            /* steps 9-10 */
             if (iter.hasNext()) {
                 Entry<Object, Void> e = iter.next();
                 Object result;
@@ -171,7 +148,6 @@ public final class SetIteratorPrototype extends OrdinaryObject implements Initia
                 return CreateIterResultObject(cx, result, false);
             }
             /* step 11 */
-            o.set = null;
             o.iterator = null;
             /* step 12 */
             return CreateIterResultObject(cx, UNDEFINED, true);

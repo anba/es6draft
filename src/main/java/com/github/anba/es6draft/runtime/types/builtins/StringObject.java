@@ -166,7 +166,9 @@ public final class StringObject extends OrdinaryObject {
      * @return the new string object
      */
     public static StringObject StringCreate(ExecutionContext cx, CharSequence stringData) {
-        return StringCreate(cx, stringData, cx.getIntrinsic(Intrinsics.StringPrototype));
+        /* steps 1-15 */
+        return new StringObject(cx.getRealm(), stringData,
+                cx.getIntrinsic(Intrinsics.StringPrototype));
     }
 
     /**

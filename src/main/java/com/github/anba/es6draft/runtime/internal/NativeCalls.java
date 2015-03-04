@@ -499,9 +499,8 @@ public final class NativeCalls {
         if (code == null) {
             return false;
         }
-        int flags = code.functionFlags();
-        return RuntimeInfo.FunctionFlags.Expression.isSet(flags)
-                && !RuntimeInfo.FunctionFlags.Arrow.isSet(flags);
+        return code.is(RuntimeInfo.FunctionFlags.Expression)
+                && !code.is(RuntimeInfo.FunctionFlags.Arrow);
     }
 
     /**

@@ -9,7 +9,6 @@ package com.github.anba.es6draft.runtime.types.builtins;
 import static com.github.anba.es6draft.runtime.AbstractOperations.*;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.PrepareForTailCall;
-import static com.github.anba.es6draft.runtime.objects.internal.ListIterator.FromScriptIterator;
 import static com.github.anba.es6draft.runtime.types.Null.NULL;
 import static com.github.anba.es6draft.runtime.types.PropertyDescriptor.CompletePropertyDescriptor;
 import static com.github.anba.es6draft.runtime.types.PropertyDescriptor.FromPropertyDescriptor;
@@ -1021,7 +1020,24 @@ public class ProxyObject implements ScriptObject {
      */
     @Override
     public ScriptIterator<?> enumerateKeys(ExecutionContext cx) {
-        return FromScriptIterator(cx, enumerate(cx));
+        /* steps 1-3 */
+        ScriptObject handler = getProxyHandler(cx);
+        /* step 4 */
+        ScriptObject target = getProxyTarget();
+        /* steps 5-6 */
+        Callable trap = GetMethod(cx, handler, "enumerate");
+        /* step 7 */
+        if (trap == null) {
+            return target.enumerateKeys(cx);
+        }
+        /* steps 8-9 */
+        Object trapResult = trap.call(cx, handler, target);
+        /* step 10 */
+        if (!Type.isObject(trapResult)) {
+            throw newTypeError(cx, Messages.Key.ProxyNotObject);
+        }
+        /* step 11 */
+        return ToScriptIterator(cx, Type.objectValue(trapResult));
     }
 
     /**

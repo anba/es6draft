@@ -11,6 +11,7 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.ToInt32;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToInteger;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToNumber;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
+import static com.github.anba.es6draft.runtime.objects.number.NumberObject.NumberCreate;
 
 import org.mozilla.javascript.StringToNumber;
 
@@ -18,7 +19,6 @@ import com.github.anba.es6draft.parser.NumberParser;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initializable;
-import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
@@ -80,22 +80,9 @@ public final class NumberConstructor extends BuiltinConstructor implements Initi
         /* steps 1-3 */
         double n = args.length > 0 ? ToNumber(calleeContext, args[0]) : +0.0;
         /* step 4 (not applicable) */
-        /* steps 5-6 */
-        NumberObject obj = OrdinaryCreateFromConstructor(calleeContext, newTarget,
-                Intrinsics.NumberPrototype, NumberObjectAllocator.INSTANCE);
-        /* step 7 */
-        obj.setNumberData(n);
-        /* step 8 */
-        return obj;
-    }
-
-    private static final class NumberObjectAllocator implements ObjectAllocator<NumberObject> {
-        static final ObjectAllocator<NumberObject> INSTANCE = new NumberObjectAllocator();
-
-        @Override
-        public NumberObject newInstance(Realm realm) {
-            return new NumberObject(realm);
-        }
+        /* steps 5-8 */
+        return NumberCreate(calleeContext, n,
+                GetPrototypeFromConstructor(calleeContext, newTarget, Intrinsics.NumberPrototype));
     }
 
     /**

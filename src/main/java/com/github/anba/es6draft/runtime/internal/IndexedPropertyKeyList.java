@@ -11,11 +11,17 @@ import java.util.Iterator;
 import java.util.NoSuchElementException;
 
 /**
- *
+ * An unmodifiable list of string valued integer keys.
  */
 public final class IndexedPropertyKeyList extends AbstractList<String> {
     private final long length;
 
+    /**
+     * Constructs a new IndexedPropertyKeyList instance.
+     * 
+     * @param length
+     *            the end index
+     */
     public IndexedPropertyKeyList(long length) {
         assert length >= 0;
         this.length = length;
@@ -23,6 +29,9 @@ public final class IndexedPropertyKeyList extends AbstractList<String> {
 
     @Override
     public String get(int index) {
+        if (index < 0 || index >= length) {
+            throw new IndexOutOfBoundsException();
+        }
         return Integer.toString(index);
     }
 

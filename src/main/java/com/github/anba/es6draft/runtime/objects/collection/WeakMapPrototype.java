@@ -93,7 +93,7 @@ public final class WeakMapPrototype extends OrdinaryObject implements Initializa
                 return false;
             }
             /* steps 6-7 */
-            return entries.remove(key);
+            return entries.remove(key) != null;
         }
 
         /**

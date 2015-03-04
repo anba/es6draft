@@ -13,21 +13,6 @@ const {
   Object, WeakMap, WeakSet
 } = global;
 
-const {
-  has: WeakMap_prototype_has,
-  get: WeakMap_prototype_get,
-} = WeakMap.prototype;
-
-// Add modified WeakMap.prototype.get
-Object.defineProperty(Object.assign(WeakMap.prototype, {
-  get(key, defaultValue) {
-    if (%CallFunction(WeakMap_prototype_has, this, key)) {
-      return %CallFunction(WeakMap_prototype_get, this, key);
-    }
-    return defaultValue;
-  }
-}), "get", {enumerable: false});
-
 // Add WeakMap.prototype.clear
 Object.defineProperty(Object.assign(WeakMap.prototype, {
   clear() {

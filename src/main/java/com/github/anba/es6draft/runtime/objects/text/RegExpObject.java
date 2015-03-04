@@ -21,13 +21,13 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  */
 public final class RegExpObject extends OrdinaryObject {
     /** [[OriginalSource]] */
-    private String originalSource = null;
+    private String originalSource;
 
     /** [[OriginalFlags]] */
-    private String originalFlags = null;
+    private String originalFlags;
 
     /** [[RegExpMatcher]] */
-    private RegExpMatcher regExpMatcher = null;
+    private RegExpMatcher regExpMatcher;
 
     /**
      * Constructs a new RegExp object.
@@ -39,7 +39,7 @@ public final class RegExpObject extends OrdinaryObject {
         super(realm);
     }
 
-    protected void initialize(String originalSource, String originalFlags, RegExpMatcher matcher) {
+    void initialize(String originalSource, String originalFlags, RegExpMatcher matcher) {
         this.originalSource = originalSource;
         this.originalFlags = originalFlags;
         this.regExpMatcher = matcher;

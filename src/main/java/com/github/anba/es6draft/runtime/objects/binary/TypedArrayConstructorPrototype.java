@@ -11,7 +11,6 @@ import static com.github.anba.es6draft.runtime.internal.Errors.newRangeError;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.objects.binary.ArrayBufferConstructor.*;
-import static com.github.anba.es6draft.runtime.objects.internal.ListIterator.FromScriptIterator;
 
 import java.util.ArrayList;
 
@@ -154,8 +153,10 @@ public final class TypedArrayConstructorPrototype extends BuiltinConstructor imp
             TypedArrayObject typedArray) {
         /* step 1 (implicit) */
         /* step 2 (not applicable) */
-        /* steps 3-4 */
-        TypedArrayObject array = AllocateTypedArray(cx, newTarget, -1);
+        /* steps 3-4 (TypedArray allocation deferred) */
+        ElementType elementType = GetElementTypeFromConstructor(cx, newTarget);
+        ScriptObject proto = GetPrototypeFromConstructor(cx, newTarget,
+                Intrinsics.TypedArrayPrototype);
         /* step 5 */
         TypedArrayObject srcArray = typedArray;
         /* step 6 */
@@ -164,8 +165,7 @@ public final class TypedArrayConstructorPrototype extends BuiltinConstructor imp
         if (IsDetachedBuffer(srcData)) {
             throw newTypeError(cx, Messages.Key.BufferDetached);
         }
-        /* steps 8-9 */
-        ElementType elementType = array.getElementType();
+        /* steps 8-9 (not applicable) */
         /* step 10 */
         long elementLength = srcArray.getArrayLength();
         /* steps 11-12 */
@@ -206,10 +206,8 @@ public final class TypedArrayConstructorPrototype extends BuiltinConstructor imp
             }
         }
         /* steps 19-22 */
-        array.setBuffer(data);
-        array.setByteLength(byteLength);
-        array.setByteOffset(0);
-        array.setArrayLength(elementLength);
+        TypedArrayObject array = new TypedArrayObject(cx.getRealm(), elementType, data, byteLength,
+                0, elementLength, proto);
         /* step 23 */
         return array;
     }
@@ -253,10 +251,12 @@ public final class TypedArrayConstructorPrototype extends BuiltinConstructor imp
             ArrayBufferObject buffer, Object byteOffset, Object length) {
         /* step 1 (implicit) */
         /* step 2 (not applicable) */
-        /* steps 3-4 */
-        TypedArrayObject array = AllocateTypedArray(cx, newTarget, -1);
+        /* steps 3-4 (TypedArray allocation deferred) */
+        ElementType elementType = GetElementTypeFromConstructor(cx, newTarget);
+        ScriptObject proto = GetPrototypeFromConstructor(cx, newTarget,
+                Intrinsics.TypedArrayPrototype);
         /* steps 5-6 */
-        int elementSize = array.getElementType().size();
+        int elementSize = elementType.size();
         /* steps 7-8 */
         double offset = ToInteger(cx, byteOffset);
         /* steps 9-10 */
@@ -290,10 +290,8 @@ public final class TypedArrayConstructorPrototype extends BuiltinConstructor imp
             }
         }
         /* steps 15-18 */
-        array.setBuffer(buffer);
-        array.setByteLength(newByteLength);
-        array.setByteOffset(newByteOffset);
-        array.setArrayLength(newByteLength / elementSize);
+        TypedArrayObject array = new TypedArrayObject(cx.getRealm(), elementType, buffer,
+                newByteLength, newByteOffset, newByteLength / elementSize, proto);
         /* step 19 */
         return array;
     }
@@ -312,59 +310,54 @@ public final class TypedArrayConstructorPrototype extends BuiltinConstructor imp
     public static TypedArrayObject AllocateTypedArray(ExecutionContext cx, Constructor newTarget,
             long length) {
         /* step 1 (not applicable) */
-        /* step 2 */
+        /* steps 2-6 */
+        ElementType elementType = GetElementTypeFromConstructor(cx, newTarget);
+        /* steps 7-8 */
+        ScriptObject proto = GetPrototypeFromConstructor(cx, newTarget,
+                Intrinsics.TypedArrayPrototype);
+        /* steps 9-10 (moved) */
+        /* step 12 (not applicable) */
+        assert length >= 0;
+        /* step 13 */
+        /* step 13.a */
+        int elementSize = elementType.size();
+        /* step 13.b */
+        long byteLength = elementSize * length;
+        /* steps 13.c-d */
+        ArrayBufferObject data = AllocateArrayBuffer(cx,
+                (Constructor) cx.getIntrinsic(Intrinsics.ArrayBuffer), byteLength);
+        /* steps 9-10, 13.e-h */
+        TypedArrayObject obj = new TypedArrayObject(cx.getRealm(), elementType, data, byteLength,
+                0, length, proto);
+        /* step 14 */
+        return obj;
+    }
+
+    /**
+     * 22.2.1.1.1 Runtime Semantics: AllocateTypedArray (newTarget, length )
+     * 
+     * @param cx
+     *            the execution context
+     * @param newTarget
+     *            the NewTarget constructor object
+     * @return the element type
+     */
+    private static ElementType GetElementTypeFromConstructor(ExecutionContext cx,
+            Constructor newTarget) {
+        /* steps 2-6 */
         final OrdinaryObject typedArray = cx.getIntrinsic(Intrinsics.TypedArray);
-        if (typedArray == newTarget) {
-            throw newTypeError(cx, Messages.Key.InvalidTypedArrayConstructor);
-        }
-        /* step 3 (note) */
-        /* step 4 */
-        ElementType elementType;
-        /* steps 5-6 */
         for (ScriptObject subclass = newTarget;;) {
-            /* steps 6.a-b */
+            /* steps 2, 6.a-b */
             if (subclass == null || subclass == typedArray) {
                 throw newTypeError(cx, Messages.Key.InvalidTypedArrayConstructor);
             }
             /* step 6.c */
             if (subclass instanceof TypedArrayConstructor) {
-                elementType = ((TypedArrayConstructor) subclass).getElementType();
-                break;
+                return ((TypedArrayConstructor) subclass).getElementType();
             }
             /* steps 6.d-e */
             subclass = subclass.getPrototypeOf(cx);
         }
-        /* steps 7-8 */
-        ScriptObject proto = GetPrototypeFromConstructor(cx, newTarget,
-                Intrinsics.TypedArrayPrototype);
-        /* steps 9-11 */
-        TypedArrayObject obj = new TypedArrayObject(cx.getRealm());
-        obj.setPrototype(proto);
-        obj.setElementType(elementType);
-        /* steps 12-13 */
-        if (length < 0) {
-            /* step 12 */
-            /* steps 12.a-c */
-            obj.setByteLength(0);
-            obj.setByteOffset(0);
-            obj.setArrayLength(0);
-        } else {
-            /* step 13 */
-            /* step 13.a */
-            int elementSize = elementType.size();
-            /* step 13.b */
-            long byteLength = elementSize * length;
-            /* steps 13.c-d */
-            ArrayBufferObject data = AllocateArrayBuffer(cx,
-                    (Constructor) cx.getIntrinsic(Intrinsics.ArrayBuffer), byteLength);
-            /* steps 13.e-h */
-            obj.setBuffer(data);
-            obj.setByteLength(byteLength);
-            obj.setByteOffset(0);
-            obj.setArrayLength(length);
-        }
-        /* step 14 */
-        return obj;
     }
 
     /**
@@ -455,7 +448,7 @@ public final class TypedArrayConstructorPrototype extends BuiltinConstructor imp
             for (int k = 0; k < len; ++k) {
                 int pk = k;
                 Object value = items[k];
-                Set(cx, newObj, pk, value, true);
+                newObj.elementSetDirect(cx, pk, ToNumber(cx, value));
             }
             /* step 9 */
             return newObj;
@@ -504,8 +497,7 @@ public final class TypedArrayConstructorPrototype extends BuiltinConstructor imp
         /* step 8 */
         if (usingIterator != null) {
             /* steps 8.a-8.b */
-            ScriptIterator<?> iterator = FromScriptIterator(cx,
-                    GetIterator(cx, items, usingIterator));
+            ScriptIterator<?> iterator = GetScriptIterator(cx, items, usingIterator);
             /* step 8.c */
             ArrayList<Object> values = new ArrayList<>();
             /* steps 8.d-8.e */
@@ -527,7 +519,7 @@ public final class TypedArrayConstructorPrototype extends BuiltinConstructor imp
                 } else {
                     mappedValue = kValue;
                 }
-                Set(cx, targetObj, pk, mappedValue, true);
+                targetObj.elementSetDirect(cx, pk, ToNumber(cx, mappedValue));
             }
             /* step 8.l */
             return targetObj;
@@ -549,7 +541,7 @@ public final class TypedArrayConstructorPrototype extends BuiltinConstructor imp
             } else {
                 mappedValue = kValue;
             }
-            Set(cx, targetObj, pk, mappedValue, true);
+            targetObj.elementSetDirect(cx, pk, ToNumber(cx, mappedValue));
         }
         /* step 18 */
         return targetObj;

@@ -8,7 +8,7 @@ package com.github.anba.es6draft.runtime;
 
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
-import com.github.anba.es6draft.runtime.modules.SourceTextModuleRecord;
+import com.github.anba.es6draft.runtime.modules.ModuleRecord;
 
 /**
  * <h1>8 Executable Code and Execution Contexts</h1><br>
@@ -20,10 +20,10 @@ import com.github.anba.es6draft.runtime.modules.SourceTextModuleRecord;
  */
 public final class ModuleEnvironmentRecord extends DeclarativeEnvironmentRecord {
     private static final class IndirectBinding extends Binding {
-        private final SourceTextModuleRecord module;
+        private final ModuleRecord module;
         private final String otherName;
 
-        IndirectBinding(SourceTextModuleRecord module, String otherName) {
+        IndirectBinding(ModuleRecord module, String otherName) {
             super(false, false, false);
             this.module = module;
             this.otherName = otherName;
@@ -91,7 +91,7 @@ public final class ModuleEnvironmentRecord extends DeclarativeEnvironmentRecord 
      * @param otherName
      *            the binding name in the module
      */
-    public void createImportBinding(String name, SourceTextModuleRecord module, String otherName) {
+    public void createImportBinding(String name, ModuleRecord module, String otherName) {
         /* step 1 (omitted) */
         /* step 2 */
         assert !hasBinding(name);
@@ -103,7 +103,7 @@ public final class ModuleEnvironmentRecord extends DeclarativeEnvironmentRecord 
         /* step 6 (return) */
     }
 
-    private static boolean hasDirectBinding(SourceTextModuleRecord module, String name) {
+    private static boolean hasDirectBinding(ModuleRecord module, String name) {
         Binding binding = module.getEnvironment().getEnvRec().getBinding(name);
         return binding != null && !(binding instanceof IndirectBinding);
     }

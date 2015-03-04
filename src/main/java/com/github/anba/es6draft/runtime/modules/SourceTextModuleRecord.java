@@ -213,21 +213,11 @@ public final class SourceTextModuleRecord implements ModuleRecord, Cloneable {
         return starExportEntries;
     }
 
-    /**
-     * [[Environment]]
-     * 
-     * @return the lexical environment of this module or {@code null} if not instantiated
-     */
     @Override
     public LexicalEnvironment<ModuleEnvironmentRecord> getEnvironment() {
         return environment;
     }
 
-    /**
-     * [[Namespace]]
-     * 
-     * @return the module namespace object
-     */
     @Override
     public ModuleNamespaceObject getNamespace() {
         return namespace;
@@ -235,27 +225,18 @@ public final class SourceTextModuleRecord implements ModuleRecord, Cloneable {
 
     @Override
     public ModuleNamespaceObject createNamespace(ExecutionContext cx, Set<String> exports) {
-        assert this.namespace == null;
+        assert this.namespace == null : "namespace already created";
         ModuleNamespaceObject namespace = ModuleNamespaceCreate(cx, this, exports);
         this.namespace = namespace;
         return namespace;
     }
 
-    /**
-     * [[Evaluated]]
-     * 
-     * @return the evaluated flag
-     */
     @Override
     public boolean isEvaluated() {
         return evaluated;
     }
 
-    /**
-     * Returns {@code true} if the module is instantiated.
-     * 
-     * @return {@code true} if the module is instantiated
-     */
+    @Override
     public boolean isInstantiated() {
         return instantiated;
     }

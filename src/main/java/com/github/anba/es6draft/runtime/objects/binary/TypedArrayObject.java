@@ -16,6 +16,7 @@ import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Messages;
+import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.builtins.IntegerIndexedObject;
 
 /**
@@ -27,28 +28,55 @@ import com.github.anba.es6draft.runtime.types.builtins.IntegerIndexedObject;
  */
 public final class TypedArrayObject extends IntegerIndexedObject implements ArrayBufferView {
     /** [[ViewedArrayBuffer]] */
-    private ArrayBufferObject buffer;
+    private final ArrayBufferObject buffer;
 
     /** [[ElementType]] */
-    private ElementType elementType;
+    private final ElementType elementType;
+    private final int elementShift;
 
     /** [[ByteLength]] */
-    private long byteLength;
+    private final long byteLength;
 
     /** [[ByteOffset]] */
-    private long byteOffset;
+    private final long byteOffset;
 
     /** [[ArrayLength]] */
-    private long arrayLength;
+    private final long arrayLength;
 
     /**
      * Constructs a new TypedArray object.
      * 
      * @param realm
      *            the realm object
+     * @param elementType
+     *            the element type
+     * @param buffer
+     *            the array buffer
+     * @param byteLength
+     *            the byte length
+     * @param byteOffset
+     *            the byte offset
+     * @param arrayLength
+     *            the array length
+     * @param prototype
+     *            the prototype object
      */
-    public TypedArrayObject(Realm realm) {
+    public TypedArrayObject(Realm realm, ElementType elementType, ArrayBufferObject buffer,
+            long byteLength, long byteOffset, long arrayLength, ScriptObject prototype) {
         super(realm);
+        assert elementType != null && buffer != null : "cannot initialize TypedArrayObject with null";
+        assert byteLength >= 0 : "negative byte length: " + byteLength;
+        assert byteOffset >= 0 : "negative byte offset: " + byteOffset;
+        assert arrayLength >= 0 : "negative array length: " + arrayLength;
+        assert buffer.isDetached() || (byteOffset + byteLength <= buffer.getByteLength());
+        assert arrayLength * elementType.size() == byteLength : "invalid length: " + byteLength;
+        this.elementType = elementType;
+        this.elementShift = 31 - Integer.numberOfLeadingZeros(elementType.size());
+        this.buffer = buffer;
+        this.byteLength = byteLength;
+        this.byteOffset = byteOffset;
+        this.arrayLength = arrayLength;
+        setPrototype(prototype);
     }
 
     @Override
@@ -88,10 +116,28 @@ public final class TypedArrayObject extends IntegerIndexedObject implements Arra
         long offset = getByteOffset();
         /* steps 10, 13 */
         ElementType elementType = getElementType();
-        /* step 11 */
-        int elementSize = elementType.size();
-        /* step 12 */
-        long indexedPosition = (index * elementSize) + offset;
+        /* steps 11-12 */
+        long indexedPosition = (index << elementShift) + offset;
+        /* step 14 */
+        return GetValueFromBuffer(buffer, indexedPosition, elementType);
+    }
+
+    double elementGetDirect(ExecutionContext cx, long index) {
+        assert 0 <= index && index < getArrayLength();
+        /* steps 1-2 (not applicable) */
+        /* step 3 */
+        ArrayBufferObject buffer = getBuffer();
+        /* step 4 */
+        if (IsDetachedBuffer(buffer)) {
+            throw newTypeError(cx, Messages.Key.BufferDetached);
+        }
+        /* steps 5-8 (not applicable) */
+        /* step 9 */
+        long offset = getByteOffset();
+        /* steps 10, 13 */
+        ElementType elementType = getElementType();
+        /* steps 11-12 */
+        long indexedPosition = (index << elementShift) + offset;
         /* step 14 */
         return GetValueFromBuffer(buffer, indexedPosition, elementType);
     }
@@ -116,14 +162,33 @@ public final class TypedArrayObject extends IntegerIndexedObject implements Arra
         long offset = getByteOffset();
         /* steps 12, 15 */
         ElementType elementType = getElementType();
-        /* step 13 */
-        int elementSize = elementType.size();
-        /* step 14 */
-        long indexedPosition = (index * elementSize) + offset;
+        /* steps 13-14 */
+        long indexedPosition = (index << elementShift) + offset;
         /* steps 16-17 */
         SetValueInBuffer(buffer, indexedPosition, elementType, numValue);
         /* step 18 */
         return true;
+    }
+
+    void elementSetDirect(ExecutionContext cx, long index, double numValue) {
+        assert 0 <= index && index < getArrayLength();
+        /* steps 1-4 (not applicable) */
+        /* step 5 */
+        ArrayBufferObject buffer = getBuffer();
+        /* step 6 */
+        if (IsDetachedBuffer(buffer)) {
+            throw newTypeError(cx, Messages.Key.BufferDetached);
+        }
+        /* steps 7-10 (not applicable) */
+        /* step 11 */
+        long offset = getByteOffset();
+        /* steps 12, 15 */
+        ElementType elementType = getElementType();
+        /* steps 13-14 */
+        long indexedPosition = (index << elementShift) + offset;
+        /* steps 16-17 */
+        SetValueInBuffer(buffer, indexedPosition, elementType, numValue);
+        /* step 18 (return) */
     }
 
     /**
@@ -135,35 +200,12 @@ public final class TypedArrayObject extends IntegerIndexedObject implements Arra
     }
 
     /**
-     * [[ViewedArrayBuffer]]
-     * 
-     * @param buffer
-     *            the new array buffer object
-     */
-    public void setBuffer(ArrayBufferObject buffer) {
-        assert buffer != null : "ArrayBufferObject not initialized";
-        assert this.buffer == null : "TypedArrayObject already initialized";
-        this.buffer = buffer;
-    }
-
-    /**
      * [[ElementType]]
      * 
      * @return the element type
      */
     public ElementType getElementType() {
         return elementType;
-    }
-
-    /**
-     * [[ElementType]]
-     * 
-     * @param elementType
-     *            the new element type
-     */
-    public void setElementType(ElementType elementType) {
-        assert elementType != null;
-        this.elementType = elementType;
     }
 
     /**
@@ -184,33 +226,11 @@ public final class TypedArrayObject extends IntegerIndexedObject implements Arra
     }
 
     /**
-     * [[ByteLength]]
-     * 
-     * @param byteLength
-     *            the new byte length
-     */
-    public void setByteLength(long byteLength) {
-        assert byteLength >= 0 : "negative byte length: " + byteLength;
-        this.byteLength = byteLength;
-    }
-
-    /**
      * [[ByteOffset]]
      */
     @Override
     public long getByteOffset() {
         return byteOffset;
-    }
-
-    /**
-     * [[ByteOffset]]
-     * 
-     * @param byteOffset
-     *            the new byte offset
-     */
-    public void setByteOffset(long byteOffset) {
-        assert byteOffset >= 0 : "negative byte offset: " + byteOffset;
-        this.byteOffset = byteOffset;
     }
 
     /**
@@ -220,16 +240,5 @@ public final class TypedArrayObject extends IntegerIndexedObject implements Arra
      */
     public long getArrayLength() {
         return arrayLength;
-    }
-
-    /**
-     * [[ArrayLength]]
-     * 
-     * @param arrayLength
-     *            the new array length
-     */
-    public void setArrayLength(long arrayLength) {
-        assert arrayLength >= 0 : "negative array length: " + arrayLength;
-        this.arrayLength = arrayLength;
     }
 }

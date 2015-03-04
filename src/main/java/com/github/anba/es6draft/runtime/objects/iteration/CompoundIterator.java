@@ -4,7 +4,7 @@
  *
  * <https://github.com/anba/es6draft>
  */
-package com.github.anba.es6draft.runtime.objects.internal;
+package com.github.anba.es6draft.runtime.objects.iteration;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.CreateMethodProperty;
 
@@ -12,8 +12,8 @@ import java.util.Iterator;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
+import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
@@ -25,19 +25,24 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  */
 public final class CompoundIterator<T> extends OrdinaryObject {
     /** [[Iterator1]] */
-    private Iterator<T> iterator1;
+    private final Iterator<T> iterator1;
 
     /** [[Iterator2]] */
-    private Iterator<T> iterator2;
+    private final Iterator<T> iterator2;
 
     /** [[IteratorNext]] */
-    private CompoundIteratorNext iteratorNext;
+    private final CompoundIteratorNext iteratorNext;
 
     /** [[State]] */
     private State state = State.First;
 
-    public CompoundIterator(Realm realm) {
+    private CompoundIterator(Realm realm, Iterator<T> iterator1, Iterator<T> iterator2,
+            CompoundIteratorNext iteratorNext, ScriptObject prototype) {
         super(realm);
+        this.iterator1 = iterator1;
+        this.iterator2 = iterator2;
+        this.iteratorNext = iteratorNext;
+        setPrototype(prototype);
     }
 
     enum State {
@@ -66,16 +71,6 @@ public final class CompoundIterator<T> extends OrdinaryObject {
         this.state = state;
     }
 
-    private static final class CompoundIteratorAllocator implements
-            ObjectAllocator<CompoundIterator<?>> {
-        static final ObjectAllocator<CompoundIterator<?>> INSTANCE = new CompoundIteratorAllocator();
-
-        @Override
-        public CompoundIterator<?> newInstance(Realm realm) {
-            return new CompoundIterator<Object>(realm);
-        }
-    }
-
     /**
      * 7.4.9 CreateCompoundIterator ( iterator1, iterator2 )
      * <p>
@@ -93,19 +88,12 @@ public final class CompoundIterator<T> extends OrdinaryObject {
      */
     public static <T> CompoundIterator<T> CreateCompoundIterator(ExecutionContext cx,
             Iterator<T> iterator1, Iterator<T> iterator2) {
-        /* step 1 */
-        @SuppressWarnings("unchecked")
-        CompoundIterator<T> iterator = (CompoundIterator<T>) ObjectCreate(cx,
-                Intrinsics.IteratorPrototype, CompoundIteratorAllocator.INSTANCE);
-        /* steps 2-4 */
-        iterator.iterator1 = iterator1;
-        iterator.iterator2 = iterator2;
-        /* step 5 */
-        CompoundIteratorNext next = new CompoundIteratorNext(cx.getRealm());
-        /* step 6 */
-        iterator.iteratorNext = next;
+        /* steps 1-6 */
+        CompoundIterator<T> iterator = new CompoundIterator<>(cx.getRealm(), iterator1, iterator2,
+                new CompoundIteratorNext(cx.getRealm()),
+                cx.getIntrinsic(Intrinsics.IteratorPrototype));
         /* step 7 */
-        CreateMethodProperty(cx, iterator, "next", next);
+        CreateMethodProperty(cx, iterator, "next", iterator.iteratorNext);
         /* step 8 */
         return iterator;
     }

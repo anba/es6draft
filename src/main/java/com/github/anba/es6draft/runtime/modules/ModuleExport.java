@@ -16,10 +16,10 @@ public final class ModuleExport {
      */
     public static final ModuleExport AMBIGUOUS = new ModuleExport(null, null);
 
-    private final SourceTextModuleRecord module;
+    private final ModuleRecord module;
     private final String bindingName;
 
-    ModuleExport(SourceTextModuleRecord module, String bindingName) {
+    ModuleExport(ModuleRecord module, String bindingName) {
         this.module = module;
         this.bindingName = bindingName;
     }
@@ -29,7 +29,7 @@ public final class ModuleExport {
      * 
      * @return the module record
      */
-    public SourceTextModuleRecord getModule() {
+    public ModuleRecord getModule() {
         return module;
     }
 

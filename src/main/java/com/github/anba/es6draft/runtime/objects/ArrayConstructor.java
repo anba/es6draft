@@ -10,7 +10,6 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.*;
 import static com.github.anba.es6draft.runtime.internal.Errors.newRangeError;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
-import static com.github.anba.es6draft.runtime.objects.internal.ListIterator.FromScriptIterator;
 import static com.github.anba.es6draft.runtime.types.builtins.ArrayObject.ArrayCreate;
 import static com.github.anba.es6draft.runtime.types.builtins.ArrayObject.DenseArrayCreate;
 
@@ -235,8 +234,7 @@ public final class ArrayConstructor extends BuiltinConstructor implements Initia
                     a = ArrayCreate(cx, 0);
                 }
                 /* steps 6d-6e */
-                ScriptIterator<?> iterator = FromScriptIterator(cx,
-                        GetIterator(cx, items, usingIterator));
+                ScriptIterator<?> iterator = GetScriptIterator(cx, items, usingIterator);
                 /* steps 6f-6g */
                 int k = 0;
                 try {

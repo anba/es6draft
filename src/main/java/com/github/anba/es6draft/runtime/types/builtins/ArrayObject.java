@@ -17,6 +17,7 @@ import java.util.List;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Messages;
+import com.github.anba.es6draft.runtime.objects.binary.TypedArrayObject;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
@@ -552,6 +553,29 @@ public class ArrayObject extends OrdinaryObject {
         int len = (int) sourceLength;
         for (int i = 0, j = index; i < len; ++i, ++j) {
             setIndexed(j, source.getIndexed(i));
+        }
+        this.length = index + len;
+    }
+
+    /**
+     * Inserts the object into this array object.
+     * 
+     * @param cx
+     *            the execution context
+     * @param index
+     *            the destination start index
+     * @param source
+     *            the source object
+     */
+    public final void insertFrom(ExecutionContext cx, int index, TypedArrayObject source) {
+        assert isExtensible() && lengthWritable && index >= this.length;
+        assert !source.getBuffer().isDetached();
+        long sourceLength = source.getLength();
+        assert 0 <= sourceLength && sourceLength <= Integer.MAX_VALUE : "length=" + sourceLength;
+        assert index + sourceLength <= Integer.MAX_VALUE;
+        int len = (int) sourceLength;
+        for (int i = 0, j = index; i < len; ++i, ++j) {
+            setIndexed(j, source.get(cx, i, source));
         }
         this.length = index + len;
     }

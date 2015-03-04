@@ -35,8 +35,8 @@ import com.github.anba.es6draft.runtime.internal.ScriptIterator;
 import com.github.anba.es6draft.runtime.internal.ScriptRuntime;
 import com.github.anba.es6draft.runtime.internal.Strings;
 import com.github.anba.es6draft.runtime.objects.FunctionPrototype;
-import com.github.anba.es6draft.runtime.objects.internal.CompoundIterator;
-import com.github.anba.es6draft.runtime.objects.internal.ListIterator;
+import com.github.anba.es6draft.runtime.objects.iteration.CompoundIterator;
+import com.github.anba.es6draft.runtime.objects.iteration.ListIterator;
 import com.github.anba.es6draft.runtime.objects.text.RegExpObject;
 import com.github.anba.es6draft.runtime.types.*;
 import com.github.anba.es6draft.runtime.types.builtins.ArgumentsObject;
@@ -3104,6 +3104,89 @@ public final class AbstractOperations {
     public static <T> ScriptObject CreateCompoundIterator(ExecutionContext cx,
             Iterator<T> iterator1, Iterator<T> iterator2) {
         return CompoundIterator.CreateCompoundIterator(cx, iterator1, iterator2);
+    }
+
+    /**
+     * Returns a {@link ScriptIterator} for {@code iterable}.
+     * 
+     * @param cx
+     *            the execution context
+     * @param iterable
+     *            the iterable object
+     * @return the iterator object
+     */
+    public static ScriptIterator<?> GetScriptIterator(ExecutionContext cx, Object iterable) {
+        return new ScriptIteratorImpl(cx, GetIterator(cx, iterable));
+    }
+
+    /**
+     * Returns a {@link ScriptIterator} for {@code iterable}.
+     * 
+     * @param cx
+     *            the execution context
+     * @param iterable
+     *            the iterable object
+     * @param method
+     *            the iterator method
+     * @return the iterator object
+     */
+    public static ScriptIterator<?> GetScriptIterator(ExecutionContext cx, Object iterable,
+            Callable method) {
+        return new ScriptIteratorImpl(cx, GetIterator(cx, iterable, method));
+    }
+
+    /**
+     * Returns a {@link ScriptIterator} for {@code iterator}. {@code iterator} is expected to comply
+     * to the <code>"25.1.2 The Iterator Interface"</code>.
+     * 
+     * @param cx
+     *            the execution context
+     * @param iterator
+     *            the script iterator object
+     * @return the iterator object
+     */
+    public static ScriptIterator<?> ToScriptIterator(ExecutionContext cx, ScriptObject iterator) {
+        return new ScriptIteratorImpl(cx, iterator);
+    }
+
+    private static final class ScriptIteratorImpl extends
+            com.github.anba.es6draft.runtime.internal.SimpleIterator<Object> implements
+            com.github.anba.es6draft.runtime.internal.ScriptIterator<Object> {
+        private final ExecutionContext cx;
+        private final ScriptObject iterator;
+        private boolean done = false;
+
+        ScriptIteratorImpl(ExecutionContext cx, ScriptObject iterator) {
+            this.cx = cx;
+            this.iterator = iterator;
+        }
+
+        @Override
+        protected Object findNext() {
+            if (!done) {
+                try {
+                    ScriptObject next = IteratorStep(cx, iterator);
+                    if (next != null) {
+                        return IteratorValue(cx, next);
+                    }
+                } catch (ScriptException e) {
+                    done = true;
+                    throw e;
+                }
+                done = true;
+            }
+            return null;
+        }
+
+        @Override
+        public ScriptObject getScriptObject() {
+            return iterator;
+        }
+
+        @Override
+        public boolean isDone() {
+            return done;
+        }
     }
 
     /**

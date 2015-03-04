@@ -9,6 +9,7 @@ package com.github.anba.es6draft.runtime.objects.number;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
+import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
@@ -20,16 +21,22 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  */
 public final class NumberObject extends OrdinaryObject {
     /** [[NumberData]] */
-    private double numberData;
+    private final double numberData;
 
     /**
      * Constructs a new Number object.
      * 
      * @param realm
      *            the realm object
+     * @param numberData
+     *            the number data
+     * @param prototype
+     *            the prototype object
      */
-    public NumberObject(Realm realm) {
+    public NumberObject(Realm realm, double numberData, ScriptObject prototype) {
         super(realm);
+        this.numberData = numberData;
+        setPrototype(prototype);
     }
 
     /**
@@ -42,17 +49,7 @@ public final class NumberObject extends OrdinaryObject {
     }
 
     /**
-     * [[NumberData]]
-     * 
-     * @param numberData
-     *            the new number value
-     */
-    public void setNumberData(double numberData) {
-        this.numberData = numberData;
-    }
-
-    /**
-     * Custom helper function
+     * Creates a new Number object with the default %NumberPrototype% prototype object.
      * 
      * @param cx
      *            the execution context
@@ -61,9 +58,23 @@ public final class NumberObject extends OrdinaryObject {
      * @return the new number object
      */
     public static NumberObject NumberCreate(ExecutionContext cx, double numberData) {
-        NumberObject obj = new NumberObject(cx.getRealm());
-        obj.setPrototype(cx.getIntrinsic(Intrinsics.NumberPrototype));
-        obj.setNumberData(numberData);
-        return obj;
+        return new NumberObject(cx.getRealm(), numberData,
+                cx.getIntrinsic(Intrinsics.NumberPrototype));
+    }
+
+    /**
+     * Creates a new Number object.
+     * 
+     * @param cx
+     *            the execution context
+     * @param numberData
+     *            the number value
+     * @param prototype
+     *            the prototype object
+     * @return the new number object
+     */
+    public static NumberObject NumberCreate(ExecutionContext cx, double numberData,
+            ScriptObject prototype) {
+        return new NumberObject(cx.getRealm(), numberData, prototype);
     }
 }

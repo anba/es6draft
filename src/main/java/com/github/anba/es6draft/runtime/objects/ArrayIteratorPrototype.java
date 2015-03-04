@@ -18,7 +18,6 @@ import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initializable;
 import com.github.anba.es6draft.runtime.internal.Messages;
-import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
@@ -72,19 +71,14 @@ public final class ArrayIteratorPrototype extends OrdinaryObject implements Init
         long nextIndex;
 
         /** [[ArrayIterationKind]] */
-        ArrayIterationKind kind;
+        final ArrayIterationKind kind;
 
-        ArrayIterator(Realm realm) {
+        ArrayIterator(Realm realm, ScriptObject array, ArrayIterationKind kind,
+                ScriptObject prototype) {
             super(realm);
-        }
-    }
-
-    private static final class ArrayIteratorAllocator implements ObjectAllocator<ArrayIterator> {
-        static final ObjectAllocator<ArrayIterator> INSTANCE = new ArrayIteratorAllocator();
-
-        @Override
-        public ArrayIterator newInstance(Realm realm) {
-            return new ArrayIterator(realm);
+            this.iteratedObject = array;
+            this.kind = kind;
+            setPrototype(prototype);
         }
     }
 
@@ -102,14 +96,9 @@ public final class ArrayIteratorPrototype extends OrdinaryObject implements Init
     public static OrdinaryObject CreateArrayIterator(ExecutionContext cx, ScriptObject array,
             ArrayIterationKind kind) {
         /* step 1 (not applicable) */
-        /* steps 2-5 */
-        ArrayIterator iterator = ObjectCreate(cx, Intrinsics.ArrayIteratorPrototype,
-                ArrayIteratorAllocator.INSTANCE);
-        iterator.iteratedObject = array;
-        iterator.nextIndex = 0;
-        iterator.kind = kind;
-        /* step 6 */
-        return iterator;
+        /* steps 2-6 */
+        return new ArrayIterator(cx.getRealm(), array, kind,
+                cx.getIntrinsic(Intrinsics.ArrayIteratorPrototype));
     }
 
     /**

@@ -530,6 +530,55 @@ public final class RuntimeInfo {
     }
 
     /**
+     * Compiled function source information
+     */
+    public static final class FunctionSource {
+        private String source;
+        private final int bodyStart;
+        private boolean compressed = true;
+
+        private FunctionSource(String source, int bodyStart) {
+            this.source = source;
+            this.bodyStart = bodyStart;
+        }
+
+        /**
+         * Returns the function source string.
+         * 
+         * @return the function source string
+         */
+        public synchronized String sourceString() {
+            if (compressed) {
+                try {
+                    source = SourceCompressor.decompress(source).call();
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+                compressed = false;
+            }
+            return source;
+        }
+
+        /**
+         * Returns the function parameters source string.
+         * 
+         * @return the function parameters source string
+         */
+        public String parameters() {
+            return sourceString().substring(0, bodyStart);
+        }
+
+        /**
+         * Returns the function body source string.
+         * 
+         * @return the function body source string
+         */
+        public String body() {
+            return sourceString().substring(bodyStart);
+        }
+    }
+
+    /**
      * Compiled function information
      */
     public interface Function {
@@ -542,27 +591,17 @@ public final class RuntimeInfo {
 
         /**
          * Returns {@code true} for strict mode functions.
+         * <p>
+         * Convenience method for {@code is(FunctionFlags.Strict)}.
          * 
          * @return {@code true} if a strict mode function
          */
         boolean isStrict();
 
         /**
-         * Returns {@code true} for functions containing a <code>super</code> expression.
-         * 
-         * @return {@code true} if <code>super</code> expression is present
-         */
-        boolean hasSuperReference();
-
-        /**
-         * Returns {@code true} if the function name is scoped.
-         * 
-         * @return {@code true} if the function name is scoped
-         */
-        boolean hasScopedName();
-
-        /**
          * Returns {@code true} for generator function.
+         * <p>
+         * Convenience method for {@code is(FunctionFlags.Generator)}.
          * 
          * @return {@code true} if the function is a generator function
          */
@@ -570,31 +609,21 @@ public final class RuntimeInfo {
 
         /**
          * Returns {@code true} for async function.
+         * <p>
+         * Convenience method for {@code is(FunctionFlags.Async)}.
          * 
          * @return {@code true} if the function is an async function
          */
         boolean isAsync();
 
         /**
-         * Returns {@code true} for functions containing a tail-call.
+         * Returns {@code true} if the function flag is set for this function.
          * 
-         * @return {@code true} if tail-call is present
+         * @param flag
+         *            the function flag
+         * @return {@code true} if the function flag is set
          */
-        boolean hasTailCall();
-
-        /**
-         * Returns {@code true} for legacy mode function.
-         * 
-         * @return {@code true} if the function has legacy properties
-         */
-        boolean isLegacy();
-
-        /**
-         * Returns {@code true} if resume generators are requested for this function.
-         * 
-         * @return {@code true} if resume generators are requested
-         */
-        boolean isResumeGenerator();
+        boolean is(FunctionFlags flag);
 
         /**
          * Returns the function flags bitmask.
@@ -616,14 +645,7 @@ public final class RuntimeInfo {
          * 
          * @return the compressed source string
          */
-        String source();
-
-        /**
-         * Returns the start index of the function body in the decompressed source string.
-         * 
-         * @return the start index of the function body
-         */
-        int bodySourceStart();
+        FunctionSource source();
 
         /**
          * (? extends FunctionObject, ExecutionContext, Object, Object[]) {@literal ->} Object.
@@ -658,8 +680,7 @@ public final class RuntimeInfo {
         private final String functionName;
         private final int functionFlags;
         private final int expectedArgumentCount;
-        private final String source;
-        private final int bodySourceStart;
+        private final FunctionSource source;
         private final MethodHandle handle;
         private final MethodHandle callMethod;
         private final MethodHandle constructMethod;
@@ -671,8 +692,7 @@ public final class RuntimeInfo {
             this.functionName = functionName;
             this.functionFlags = functionFlags;
             this.expectedArgumentCount = expectedArgumentCount;
-            this.source = source;
-            this.bodySourceStart = bodySourceStart;
+            this.source = source != null ? new FunctionSource(source, bodySourceStart) : null;
             this.handle = handle;
             this.callMethod = callMethod;
             this.constructMethod = constructMethod;
@@ -690,16 +710,6 @@ public final class RuntimeInfo {
         }
 
         @Override
-        public boolean hasSuperReference() {
-            return FunctionFlags.Super.isSet(functionFlags);
-        }
-
-        @Override
-        public boolean hasScopedName() {
-            return FunctionFlags.ScopedName.isSet(functionFlags);
-        }
-
-        @Override
         public boolean isGenerator() {
             return FunctionFlags.Generator.isSet(functionFlags);
         }
@@ -710,18 +720,8 @@ public final class RuntimeInfo {
         }
 
         @Override
-        public boolean hasTailCall() {
-            return FunctionFlags.TailCall.isSet(functionFlags);
-        }
-
-        @Override
-        public boolean isLegacy() {
-            return FunctionFlags.Legacy.isSet(functionFlags);
-        }
-
-        @Override
-        public boolean isResumeGenerator() {
-            return FunctionFlags.ResumeGenerator.isSet(functionFlags);
+        public boolean is(FunctionFlags flag) {
+            return flag.isSet(functionFlags);
         }
 
         @Override
@@ -735,13 +735,8 @@ public final class RuntimeInfo {
         }
 
         @Override
-        public String source() {
+        public FunctionSource source() {
             return source;
-        }
-
-        @Override
-        public int bodySourceStart() {
-            return bodySourceStart;
         }
 
         @Override

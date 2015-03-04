@@ -125,6 +125,18 @@ ecma_6/Symbol/surfaces.js
 # TODO: investigate
 ecma_6/String/normalize-generateddata-part1-not-listed.js
 
+# ES6: Support for classes is incomplete in SM.
+ecma_6/Class/classPrototype.js
+ecma_6/Class/innerBinding.js
+ecma_6/Class/methodInstallation.js
+ecma_6/Class/outerBinding.js
+
+# ES6: Symbol.species not implemented in SM
+ecma_6/TypedArray/slice.js
+
+# Invalid test (https://bugzilla.mozilla.org/show_bug.cgi?id=1138906)
+ecma_6/TypedArray/map-and-filter.js
+
 
 ####################################
 # Intl only partially supported    #
@@ -662,6 +674,9 @@ js1_5/Regress/regress-98901.js
 js1_5/Regress/regress-89443.js
 js1_8_5/extensions/recursion.js
 
+# StackOverflowError during invokedynamic linking (intermittent)
+js1_5/GC/regress-348532.js
+
 # OutOfMemory: Java heap space
 ecma_5/String/string-object-length.js
 ecma_5/String/replace-math.js
@@ -674,7 +689,6 @@ js1_8/regress/regress-477234.js
 ecma/Date/15.9.5.10-2.js
 ecma/Date/15.9.5.11-2.js
 ecma/Date/15.9.5.12-2.js
-ecma_6/String/normalize-generateddata.js
 ecma_6/String/normalize-generateddata-input.js
 js1_5/extensions/regress-311161.js
 js1_5/extensions/regress-363988.js

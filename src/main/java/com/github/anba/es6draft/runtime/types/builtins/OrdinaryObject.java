@@ -24,7 +24,6 @@ import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.PropertyMap;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
 import com.github.anba.es6draft.runtime.internal.ScriptIterator;
-import com.github.anba.es6draft.runtime.internal.SimpleIterator;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
@@ -71,6 +70,19 @@ public class OrdinaryObject implements ScriptObject {
         this.properties = new PropertyMap<>(STRING_PROPERTIES_DEFAULT_INITIAL_CAPACITY);
         this.symbolProperties = new PropertyMap<>(SYMBOL_PROPERTIES_DEFAULT_INITIAL_CAPACITY);
         this.indexedProperties = new IndexedMap<>();
+    }
+
+    /**
+     * Constructs a new Ordinary Object instance.
+     * 
+     * @param realm
+     *            the realm object
+     * @param prototype
+     *            the prototype object
+     */
+    private OrdinaryObject(Realm realm, ScriptObject prototype) {
+        this(realm);
+        this.prototype = prototype;
     }
 
     /**
@@ -1771,8 +1783,9 @@ public class OrdinaryObject implements ScriptObject {
         }
     }
 
-    private static final class EnumKeysIterator extends SimpleIterator<Object> implements
-            ScriptIterator<Object> {
+    private static final class EnumKeysIterator extends
+            com.github.anba.es6draft.runtime.internal.SimpleIterator<Object> implements
+            com.github.anba.es6draft.runtime.internal.ScriptIterator<Object> {
         private final ExecutionContext cx;
         private OrdinaryObject obj;
         private final HashSet<Object> visitedKeys = new HashSet<>();
@@ -1916,15 +1929,6 @@ public class OrdinaryObject implements ScriptObject {
         return ownKeys;
     }
 
-    private static final class DefaultAllocator implements ObjectAllocator<OrdinaryObject> {
-        static final ObjectAllocator<OrdinaryObject> INSTANCE = new DefaultAllocator();
-
-        @Override
-        public OrdinaryObject newInstance(Realm realm) {
-            return new OrdinaryObject(realm);
-        }
-    }
-
     /**
      * 9.1.13 ObjectCreate(proto, internalSlotsList)
      *
@@ -1935,7 +1939,7 @@ public class OrdinaryObject implements ScriptObject {
      * @return the new object
      */
     public static final OrdinaryObject ObjectCreate(ExecutionContext cx, ScriptObject proto) {
-        return ObjectCreate(cx, proto, DefaultAllocator.INSTANCE);
+        return new OrdinaryObject(cx.getRealm(), proto);
     }
 
     /**
@@ -1948,7 +1952,7 @@ public class OrdinaryObject implements ScriptObject {
      * @return the new object
      */
     public static final OrdinaryObject ObjectCreate(ExecutionContext cx, Intrinsics proto) {
-        return ObjectCreate(cx, proto, DefaultAllocator.INSTANCE);
+        return new OrdinaryObject(cx.getRealm(), cx.getIntrinsic(proto));
     }
 
     /**
@@ -2001,7 +2005,7 @@ public class OrdinaryObject implements ScriptObject {
      * @return the new object
      */
     public static final OrdinaryObject ObjectCreate(Realm realm, ScriptObject proto) {
-        return ObjectCreate(realm, proto, DefaultAllocator.INSTANCE);
+        return new OrdinaryObject(realm, proto);
     }
 
     /**
@@ -2014,7 +2018,7 @@ public class OrdinaryObject implements ScriptObject {
      * @return the new object
      */
     public static final OrdinaryObject ObjectCreate(Realm realm, Intrinsics proto) {
-        return ObjectCreate(realm, proto, DefaultAllocator.INSTANCE);
+        return new OrdinaryObject(realm, realm.getIntrinsic(proto));
     }
 
     /**

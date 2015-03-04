@@ -206,14 +206,6 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
                 "getValue", Type.methodType(Types.Object));
 
         // class: ScriptRuntime
-        static final MethodName ScriptRuntime_CreateDefaultConstructor = MethodName.findStatic(
-                Types.ScriptRuntime, "CreateDefaultConstructor",
-                Type.methodType(Types.RuntimeInfo$Function));
-
-        static final MethodName ScriptRuntime_CreateDefaultEmptyConstructor = MethodName
-                .findStatic(Types.ScriptRuntime, "CreateDefaultEmptyConstructor",
-                        Type.methodType(Types.RuntimeInfo$Function));
-
         static final MethodName ScriptRuntime_delegatedYield = MethodName.findStatic(
                 Types.ScriptRuntime, "delegatedYield",
                 Type.methodType(Types.Object, Types.Object, Types.ExecutionContext));
@@ -1326,15 +1318,10 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
         // steps 8-9
         // stack: [constructorParent, proto] -> [constructorParent, proto, <rti>]
         MethodDefinition constructor = ConstructorMethod(def);
-        if (constructor != null) {
-            codegen.compile(constructor);
-            // Runtime Semantics: Evaluation -> MethodDefinition
-            mv.invoke(codegen.methodDesc(constructor, FunctionName.RTI));
-        } else if (classHeritage != null) {
-            mv.invoke(Methods.ScriptRuntime_CreateDefaultConstructor);
-        } else {
-            mv.invoke(Methods.ScriptRuntime_CreateDefaultEmptyConstructor);
-        }
+        assert constructor != null;
+        codegen.compile(constructor);
+        // Runtime Semantics: Evaluation -> MethodDefinition
+        mv.invoke(codegen.methodDesc(constructor, FunctionName.RTI));
 
         // step 10 (not applicable)
         // steps 11-17

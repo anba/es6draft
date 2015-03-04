@@ -15,13 +15,13 @@ import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initializable;
 import com.github.anba.es6draft.runtime.internal.Messages;
-import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
+import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
@@ -58,17 +58,10 @@ public final class StringIteratorPrototype extends OrdinaryObject implements Ini
         /** [[StringIteratorNextIndex]] */
         int nextIndex;
 
-        StringIterator(Realm realm) {
+        StringIterator(Realm realm, String string, ScriptObject prototype) {
             super(realm);
-        }
-    }
-
-    private static final class StringIteratorAllocator implements ObjectAllocator<StringIterator> {
-        static final ObjectAllocator<StringIterator> INSTANCE = new StringIteratorAllocator();
-
-        @Override
-        public StringIterator newInstance(Realm realm) {
-            return new StringIterator(realm);
+            this.iteratedString = string;
+            setPrototype(prototype);
         }
     }
 
@@ -83,13 +76,9 @@ public final class StringIteratorPrototype extends OrdinaryObject implements Ini
      */
     public static OrdinaryObject CreateStringIterator(ExecutionContext cx, String string) {
         /* step 1 (not applicable) */
-        /* steps 2-4 */
-        StringIterator iterator = ObjectCreate(cx, Intrinsics.StringIteratorPrototype,
-                StringIteratorAllocator.INSTANCE);
-        iterator.iteratedString = string;
-        iterator.nextIndex = 0;
-        /* step 5 */
-        return iterator;
+        /* steps 2-5 */
+        return new StringIterator(cx.getRealm(), string,
+                cx.getIntrinsic(Intrinsics.StringIteratorPrototype));
     }
 
     /**

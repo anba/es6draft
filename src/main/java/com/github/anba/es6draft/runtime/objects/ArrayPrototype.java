@@ -30,13 +30,11 @@ import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.objects.ArrayIteratorPrototype.ArrayIterationKind;
 import com.github.anba.es6draft.runtime.objects.binary.TypedArrayObject;
-import com.github.anba.es6draft.runtime.objects.binary.TypedArrayPrototypePrototype;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
-import com.github.anba.es6draft.runtime.types.Undefined;
 import com.github.anba.es6draft.runtime.types.builtins.ArrayObject;
 import com.github.anba.es6draft.runtime.types.builtins.NativeFunction;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
@@ -391,31 +389,6 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
             /* steps 3-4 */
             long len = ToLength(cx, Get(cx, array, "length"));
             /* steps 5-13 */
-            return toLocaleString(cx, array, len, locales, options);
-        }
-
-        /**
-         * 22.1.3.26 Array.prototype.toLocaleString ( [ reserved1 [ , reserved2 ] ] )<br>
-         * 13.4.1 Array.prototype.toLocaleString([locales [, options ]])
-         * 
-         * @param cx
-         *            the execution context
-         * @param array
-         *            the script object
-         * @param len
-         *            the length value
-         * @param locales
-         *            the optional locales array
-         * @param options
-         *            the optional options object
-         * @return the locale specific string representation
-         * @see #toLocaleString(ExecutionContext, Object, Object, Object)
-         * @see TypedArrayPrototypePrototype.Properties#toLocaleString(ExecutionContext, Object,
-         *      Object, Object)
-         */
-        public static String toLocaleString(ExecutionContext cx, ScriptObject array, long len,
-                Object locales, Object options) {
-            /* steps 1-4 (not applicable) */
             /* step 5 */
             String separator = cx.getRealm().getListSeparator();
             /* step 6 */
@@ -423,7 +396,7 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
                 return "";
             }
             /* steps 7-8 */
-            Object firstElement = Get(cx, array, "0");
+            Object firstElement = Get(cx, array, 0);
             /* steps 9-10 */
             StringBuilder r = new StringBuilder();
             if (!Type.isUndefinedOrNull(firstElement)) {
@@ -582,27 +555,6 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
             ScriptObject o = ToObject(cx, thisValue);
             /* steps 3-4 */
             long len = ToLength(cx, Get(cx, o, "length"));
-            /* steps 5-13 */
-            return join(cx, o, len, separator);
-        }
-
-        /**
-         * 22.1.3.12 Array.prototype.join (separator)
-         * 
-         * @param cx
-         *            the execution context
-         * @param o
-         *            the script object
-         * @param len
-         *            the length value
-         * @param separator
-         *            the separator string
-         * @return the result string
-         * @see ArrayPrototype.Properties#join(ExecutionContext, Object, Object)
-         * @see TypedArrayPrototypePrototype.Properties#join(ExecutionContext, Object, Object)
-         */
-        public static String join(ExecutionContext cx, ScriptObject o, long len, Object separator) {
-            /* steps 1-4 (not applicable) */
             /* step 5 */
             if (Type.isUndefined(separator)) {
                 separator = ",";
@@ -769,28 +721,6 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
             ScriptObject o = ToObject(cx, thisValue);
             /* steps 3-4 */
             long len = ToLength(cx, Get(cx, o, "length"));
-            /* steps 5-8 */
-            return reverse(cx, o, len);
-        }
-
-        /**
-         * 22.1.3.20 Array.prototype.reverse ( )
-         * 
-         * @param <OBJECT>
-         *            the script object type
-         * @param cx
-         *            the execution context
-         * @param o
-         *            the script object
-         * @param len
-         *            the length value
-         * @return this array object
-         * @see ArrayPrototype.Properties#reverse(ExecutionContext, Object)
-         * @see TypedArrayPrototypePrototype.Properties#reverse(ExecutionContext, Object)
-         */
-        public static <OBJECT extends ScriptObject> OBJECT reverse(ExecutionContext cx, OBJECT o,
-                long len) {
-            /* steps 1-4 (not applicable) */
             IterationKind iteration = iterationKind(o, len);
             if (iteration.isSparse()) {
                 /* steps 5-7 (Optimization: Sparse Array objects) */
@@ -1547,31 +1477,6 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
             ScriptObject o = ToObject(cx, thisValue);
             /* steps 3-4 */
             long len = ToLength(cx, Get(cx, o, "length"));
-            /* steps 5-12 */
-            return indexOf(cx, o, len, searchElement, fromIndex);
-        }
-
-        /**
-         * 22.1.3.11 Array.prototype.indexOf ( searchElement [ , fromIndex ] )
-         * 
-         * @param cx
-         *            the execution context
-         * @param o
-         *            the script object
-         * @param len
-         *            the length value
-         * @param searchElement
-         *            the search element
-         * @param fromIndex
-         *            the optional start index
-         * @return the result index
-         * @see ArrayPrototype.Properties#indexOf(ExecutionContext, Object, Object, Object)
-         * @see TypedArrayPrototypePrototype.Properties#indexOf(ExecutionContext, Object, Object,
-         *      Object)
-         */
-        public static long indexOf(ExecutionContext cx, ScriptObject o, long len,
-                Object searchElement, Object fromIndex) {
-            /* steps 1-4 (not applicable) */
             /* step 5 */
             if (len == 0) {
                 return -1;
@@ -1633,31 +1538,6 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
             ScriptObject o = ToObject(cx, thisValue);
             /* steps 3-4 */
             long len = ToLength(cx, Get(cx, o, "length"));
-            /* steps 5-11 */
-            return lastIndexOf(cx, o, len, searchElement, fromIndex);
-        }
-
-        /**
-         * 22.1.3.14 Array.prototype.lastIndexOf ( searchElement [ , fromIndex ] )
-         * 
-         * @param cx
-         *            the execution context
-         * @param o
-         *            the script object
-         * @param len
-         *            the length value
-         * @param searchElement
-         *            the search element
-         * @param fromIndex
-         *            the optional start index
-         * @return the result index
-         * @see ArrayPrototype.Properties#lastIndexOf(ExecutionContext, Object, Object, Object)
-         * @see TypedArrayPrototypePrototype.Properties#lastIndexOf(ExecutionContext, Object,
-         *      Object, Object)
-         */
-        public static long lastIndexOf(ExecutionContext cx, ScriptObject o, long len,
-                Object searchElement, Object fromIndex) {
-            /* steps 1-4 (not applicable) */
             /* step 5 */
             if (len == 0) {
                 return -1;
@@ -1712,31 +1592,6 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
             ScriptObject o = ToObject(cx, thisValue);
             /* steps 3-4 */
             long len = ToLength(cx, Get(cx, o, "length"));
-            /* steps 5-9 */
-            return every(cx, o, len, callbackfn, thisArg);
-        }
-
-        /**
-         * 22.1.3.5 Array.prototype.every ( callbackfn [ , thisArg] )
-         * 
-         * @param cx
-         *            the execution context
-         * @param o
-         *            the script object
-         * @param len
-         *            the length value
-         * @param callbackfn
-         *            the callback function
-         * @param thisArg
-         *            the optional this-argument for the callback function
-         * @return {@code true} if every element matches
-         * @see ArrayPrototype.Properties#every(ExecutionContext, Object, Object, Object)
-         * @see TypedArrayPrototypePrototype.Properties#every(ExecutionContext, Object, Object,
-         *      Object)
-         */
-        public static boolean every(ExecutionContext cx, ScriptObject o, long len,
-                Object callbackfn, Object thisArg) {
-            /* steps 1-4 (not applicable) */
             /* step 5 */
             if (!IsCallable(callbackfn)) {
                 throw newTypeError(cx, Messages.Key.NotCallable);
@@ -1779,31 +1634,6 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
             ScriptObject o = ToObject(cx, thisValue);
             /* steps 3-4 */
             long len = ToLength(cx, Get(cx, o, "length"));
-            /* steps 5-9 */
-            return some(cx, o, len, callbackfn, thisArg);
-        }
-
-        /**
-         * 22.1.3.23 Array.prototype.some ( callbackfn [ , thisArg ] )
-         * 
-         * @param cx
-         *            the execution context
-         * @param o
-         *            the script object
-         * @param len
-         *            the length value
-         * @param callbackfn
-         *            the callback function
-         * @param thisArg
-         *            the optional this-argument for the callback function
-         * @return {@code true} if some elements match
-         * @see ArrayPrototype.Properties#some(ExecutionContext, Object, Object, Object)
-         * @see TypedArrayPrototypePrototype.Properties#some(ExecutionContext, Object, Object,
-         *      Object)
-         */
-        public static boolean some(ExecutionContext cx, ScriptObject o, long len,
-                Object callbackfn, Object thisArg) {
-            /* steps 1-4 (not applicable) */
             /* step 5 */
             if (!IsCallable(callbackfn)) {
                 throw newTypeError(cx, Messages.Key.NotCallable);
@@ -1846,31 +1676,6 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
             ScriptObject o = ToObject(cx, thisValue);
             /* steps 3-4 */
             long len = ToLength(cx, Get(cx, o, "length"));
-            /* steps 5-9 */
-            return forEach(cx, o, len, callbackfn, thisArg);
-        }
-
-        /**
-         * 22.1.3.10 Array.prototype.forEach ( callbackfn [ , thisArg ] )
-         * 
-         * @param cx
-         *            the execution context
-         * @param o
-         *            the script object
-         * @param len
-         *            the length value
-         * @param callbackfn
-         *            the callback function
-         * @param thisArg
-         *            the optional this-argument for the callback function
-         * @return the undefined value
-         * @see ArrayPrototype.Properties#forEach(ExecutionContext, Object, Object, Object)
-         * @see TypedArrayPrototypePrototype.Properties#forEach(ExecutionContext, Object, Object,
-         *      Object)
-         */
-        public static Undefined forEach(ExecutionContext cx, ScriptObject o, long len,
-                Object callbackfn, Object thisArg) {
-            /* steps 1-4 (not applicable) */
             /* step 5 */
             if (!IsCallable(callbackfn)) {
                 throw newTypeError(cx, Messages.Key.NotCallable);
@@ -1997,31 +1802,6 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
             ScriptObject o = ToObject(cx, thisValue);
             /* steps 3-4 */
             long len = ToLength(cx, Get(cx, o, "length"));
-            /* steps 5-11 */
-            return reduce(cx, o, len, callbackfn, initialValue);
-        }
-
-        /**
-         * 22.1.3.18 Array.prototype.reduce ( callbackfn [ , initialValue ] )
-         * 
-         * @param cx
-         *            the execution context
-         * @param o
-         *            the script object
-         * @param len
-         *            the length value
-         * @param callbackfn
-         *            the callback function
-         * @param initialValue
-         *            the initial value
-         * @return the reduced value
-         * @see ArrayPrototype.Properties#reduce(ExecutionContext, Object, Object, Object)
-         * @see TypedArrayPrototypePrototype.Properties#reduce(ExecutionContext, Object, Object,
-         *      Object)
-         */
-        public static Object reduce(ExecutionContext cx, ScriptObject o, long len,
-                Object callbackfn, Object initialValue) {
-            /* steps 1-4 (not applicable) */
             /* step 5 */
             if (!IsCallable(callbackfn)) {
                 throw newTypeError(cx, Messages.Key.NotCallable);
@@ -2083,31 +1863,6 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
             ScriptObject o = ToObject(cx, thisValue);
             /* steps 3-4 */
             long len = ToLength(cx, Get(cx, o, "length"));
-            /* steps 5-11 */
-            return reduceRight(cx, o, len, callbackfn, initialValue);
-        }
-
-        /**
-         * 22.1.3.19 Array.prototype.reduceRight ( callbackfn [ , initialValue ] )
-         * 
-         * @param cx
-         *            the execution context
-         * @param o
-         *            the script object
-         * @param len
-         *            the length value
-         * @param callbackfn
-         *            the callback function
-         * @param initialValue
-         *            the initial value
-         * @return the reduced value
-         * @see ArrayPrototype.Properties#reduceRight(ExecutionContext, Object, Object, Object)
-         * @see TypedArrayPrototypePrototype.Properties#reduceRight(ExecutionContext, Object,
-         *      Object, Object)
-         */
-        public static Object reduceRight(ExecutionContext cx, ScriptObject o, long len,
-                Object callbackfn, Object initialValue) {
-            /* steps 1-4 (not applicable) */
             /* step 5 */
             if (!IsCallable(callbackfn)) {
                 throw newTypeError(cx, Messages.Key.NotCallable);
@@ -2169,31 +1924,6 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
             ScriptObject o = ToObject(cx, thisValue);
             /* steps 3-4 */
             long len = ToLength(cx, Get(cx, o, "length"));
-            /* steps 5-9 */
-            return find(cx, o, len, predicate, thisArg);
-        }
-
-        /**
-         * 22.1.3.8 Array.prototype.find ( predicate [ , thisArg ] )
-         * 
-         * @param cx
-         *            the execution context
-         * @param o
-         *            the script object
-         * @param len
-         *            the length value
-         * @param predicate
-         *            the predicate function
-         * @param thisArg
-         *            the optional this-argument for the predicate function
-         * @return the result value
-         * @see ArrayPrototype.Properties#find(ExecutionContext, Object, Object, Object)
-         * @see TypedArrayPrototypePrototype.Properties#find(ExecutionContext, Object, Object,
-         *      Object)
-         */
-        public static Object find(ExecutionContext cx, ScriptObject o, long len, Object predicate,
-                Object thisArg) {
-            /* steps 1-4 (not applicable) */
             /* step 5 */
             if (!IsCallable(predicate)) {
                 throw newTypeError(cx, Messages.Key.NotCallable);
@@ -2233,31 +1963,6 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
             ScriptObject o = ToObject(cx, thisValue);
             /* steps 3-4 */
             long len = ToLength(cx, Get(cx, o, "length"));
-            /* steps 5-9 */
-            return findIndex(cx, o, len, predicate, thisArg);
-        }
-
-        /**
-         * 22.1.3.9 Array.prototype.findIndex ( predicate [ , thisArg ] )
-         * 
-         * @param cx
-         *            the execution context
-         * @param o
-         *            the script object
-         * @param len
-         *            the length value
-         * @param predicate
-         *            the predicate function
-         * @param thisArg
-         *            the optional this-argument for the predicate function
-         * @return the result index
-         * @see ArrayPrototype.Properties#findIndex(ExecutionContext, Object, Object, Object)
-         * @see TypedArrayPrototypePrototype.Properties#findIndex(ExecutionContext, Object, Object,
-         *      Object)
-         */
-        public static long findIndex(ExecutionContext cx, ScriptObject o, long len,
-                Object predicate, Object thisArg) {
-            /* steps 1-4 (not applicable) */
             /* step 5 */
             if (!IsCallable(predicate)) {
                 throw newTypeError(cx, Messages.Key.NotCallable);
@@ -2379,35 +2084,6 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
             ScriptObject o = ToObject(cx, thisValue);
             /* steps 3-4 */
             long len = ToLength(cx, Get(cx, o, "length"));
-            /* steps 5-12 */
-            return fill(cx, o, len, value, start, end);
-        }
-
-        /**
-         * 22.1.3.6 Array.prototype.fill (value [ , start [ , end ] ] )
-         * 
-         * @param <OBJECT>
-         *            the script object type
-         * @param cx
-         *            the execution context
-         * @param o
-         *            the script object
-         * @param len
-         *            the length value
-         * @param value
-         *            the fill value
-         * @param start
-         *            the start index
-         * @param end
-         *            the end index
-         * @return this typed array object
-         * @see ArrayPrototype.Properties#fill(ExecutionContext, Object, Object, Object, Object)
-         * @see TypedArrayPrototypePrototype.Properties#fill(ExecutionContext, Object, Object,
-         *      Object, Object)
-         */
-        public static <OBJECT extends ScriptObject> OBJECT fill(ExecutionContext cx, OBJECT o,
-                long len, Object value, Object start, Object end) {
-            /* steps 1-4 (not applicable) */
             /* steps 5-7 */
             long k = ToArrayIndex(cx, start, len);
             /* steps 8-10 */
@@ -2443,36 +2119,6 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
             ScriptObject o = ToObject(cx, thisValue);
             /* steps 3-4 */
             long len = ToLength(cx, Get(cx, o, "length"));
-            /* steps 5-19 */
-            return copyWithin(cx, o, len, target, start, end);
-        }
-
-        /**
-         * 22.1.3.3 Array.prototype.copyWithin (target, start [ , end ] )
-         * 
-         * @param <OBJECT>
-         *            the script object type
-         * @param cx
-         *            the execution context
-         * @param o
-         *            the script object
-         * @param len
-         *            the length value
-         * @param target
-         *            the target index
-         * @param start
-         *            the start index
-         * @param end
-         *            the end index
-         * @return this typed array object
-         * @see ArrayPrototype.Properties#copyWithin(ExecutionContext, Object, Object, Object,
-         *      Object)
-         * @see TypedArrayPrototypePrototype.Properties#copyWithin(ExecutionContext, Object, Object,
-         *      Object, Object)
-         */
-        public static <OBJECT extends ScriptObject> OBJECT copyWithin(ExecutionContext cx,
-                OBJECT o, long len, Object target, Object start, Object end) {
-            /* steps 1-4 (not applicable) */
             /* steps 5-7 */
             long to = ToArrayIndex(cx, target, len);
             /* steps 8-10 */

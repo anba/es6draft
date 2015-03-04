@@ -80,8 +80,7 @@ public final class GeneratorObject extends OrdinaryObject {
      * @return {@code true} if legacy generator object
      */
     public boolean isLegacyGenerator() {
-        return code != null
-                && RuntimeInfo.FunctionFlags.LegacyGenerator.isSet(code.functionFlags());
+        return code != null && code.is(RuntimeInfo.FunctionFlags.LegacyGenerator);
     }
 
     /**
@@ -121,8 +120,8 @@ public final class GeneratorObject extends OrdinaryObject {
         this.code = code;
         this.state = GeneratorState.SuspendedStart;
         this.context.setCurrentGenerator(this);
-        this.generator = code.isResumeGenerator() ? new ResumeGenerator(this)
-                : new ThreadGenerator(this);
+        this.generator = code.is(RuntimeInfo.FunctionFlags.ResumeGenerator) ? new ResumeGenerator(
+                this) : new ThreadGenerator(this);
     }
 
     /**

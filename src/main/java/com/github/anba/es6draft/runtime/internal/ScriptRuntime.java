@@ -12,19 +12,15 @@ import static com.github.anba.es6draft.runtime.internal.Errors.*;
 import static com.github.anba.es6draft.runtime.internal.TailCallInvocation.newTailCallInvocation;
 import static com.github.anba.es6draft.runtime.modules.ModuleSemantics.GetModuleNamespace;
 import static com.github.anba.es6draft.runtime.modules.ModuleSemantics.HostResolveImportedModule;
-import static com.github.anba.es6draft.runtime.objects.internal.ListIterator.FromScriptIterator;
 import static com.github.anba.es6draft.runtime.objects.iteration.GeneratorAbstractOperations.GeneratorYield;
 import static com.github.anba.es6draft.runtime.types.PropertyDescriptor.AccessorPropertyDescriptor;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
-import static com.github.anba.es6draft.runtime.types.builtins.ArgumentsObject.CreateUnmappedArgumentsObject;
 import static com.github.anba.es6draft.runtime.types.builtins.ArrayObject.ArrayCreate;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryAsyncFunction.AsyncFunctionCreate;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryConstructorFunction.ConstructorFunctionCreate;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.*;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryGenerator.GeneratorFunctionCreate;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject.ObjectCreate;
-import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject.OrdinaryCreateFromConstructor;
-import static java.util.Arrays.asList;
 
 import java.io.IOException;
 import java.lang.invoke.CallSite;
@@ -57,6 +53,8 @@ import com.github.anba.es6draft.runtime.modules.SourceTextModuleRecord;
 import com.github.anba.es6draft.runtime.objects.ArrayIteratorPrototype;
 import com.github.anba.es6draft.runtime.objects.ArrayPrototype;
 import com.github.anba.es6draft.runtime.objects.FunctionPrototype;
+import com.github.anba.es6draft.runtime.objects.binary.TypedArrayObject;
+import com.github.anba.es6draft.runtime.objects.binary.TypedArrayPrototypePrototype;
 import com.github.anba.es6draft.runtime.objects.iteration.GeneratorObject;
 import com.github.anba.es6draft.runtime.types.*;
 import com.github.anba.es6draft.runtime.types.builtins.*;
@@ -217,8 +215,6 @@ public final class ScriptRuntime {
     /**
      * 15.2.1.16.4 ModuleDeclarationInstantiation( ) Concrete Method
      * 
-     * @param cx
-     *            the execution context
      * @param module
      *            the module record
      * @param moduleRequest
@@ -233,9 +229,9 @@ public final class ScriptRuntime {
      * @throws ResolutionException
      *             if the export cannot be resolved
      */
-    public static ModuleExport resolveImportOrThrow(ExecutionContext cx,
-            SourceTextModuleRecord module, String moduleRequest, String importName)
-            throws IOException, MalformedNameException, ResolutionException {
+    public static ModuleExport resolveImportOrThrow(SourceTextModuleRecord module,
+            String moduleRequest, String importName) throws IOException, MalformedNameException,
+            ResolutionException {
         /* steps 10.a-b */
         ModuleRecord importedModule = HostResolveImportedModule(module, moduleRequest);
         /* steps 10.d.i-ii */
@@ -343,9 +339,16 @@ public final class ScriptRuntime {
             OrdinaryObject object = (OrdinaryObject) spreadObj;
             long length = object.getLength();
             long newLength = nextIndex + length;
-            if (0 <= length && newLength <= Integer.MAX_VALUE && isSpreadable(cx, object, length)) {
-                array.insertFrom(nextIndex, object, length);
-                return (int) newLength;
+            if (0 <= length && newLength <= Integer.MAX_VALUE) {
+                if (!(object instanceof TypedArrayObject) && isSpreadable(cx, object, length)) {
+                    array.insertFrom(nextIndex, object, length);
+                    return (int) newLength;
+                }
+                if (object instanceof TypedArrayObject
+                        && isSpreadable(cx, (TypedArrayObject) object)) {
+                    array.insertFrom(cx, nextIndex, (TypedArrayObject) object);
+                    return (int) newLength;
+                }
             }
         }
         /* steps 1-2 (cf. generated code) */
@@ -380,6 +383,38 @@ public final class ScriptRuntime {
         }
         // Test 1: Is object[Symbol.iterator] == %ArrayPrototype%.values?
         if (iterProp == null || !ArrayPrototype.isBuiltinValues(iterProp.getValue())) {
+            return false;
+        }
+        // Test 2: Is %ArrayIteratorPrototype%.next the built-in next method?
+        OrdinaryObject arrayIterProto = ((NativeFunction) iterProp.getValue()).getRealm()
+                .getIntrinsic(Intrinsics.ArrayIteratorPrototype);
+        Property iterNextProp = arrayIterProto.getOwnProperty(cx, "next");
+        if (iterNextProp == null || !ArrayIteratorPrototype.isBuiltinNext(iterNextProp.getValue())) {
+            return false;
+        }
+        return true;
+    }
+
+    private static boolean isSpreadable(ExecutionContext cx, TypedArrayObject array) {
+        if (array.getBuffer().isDetached()) {
+            return false;
+        }
+        final int MAX_PROTO_CHAIN_LENGTH = 10;
+        Property iterProp = null;
+        OrdinaryObject object = array;
+        for (int i = 0; i < MAX_PROTO_CHAIN_LENGTH; ++i) {
+            iterProp = object.getOwnProperty(cx, BuiltinSymbol.iterator.get());
+            if (iterProp != null) {
+                break;
+            }
+            ScriptObject proto = object.getPrototype();
+            if (!(proto instanceof OrdinaryObject)) {
+                return false;
+            }
+            object = (OrdinaryObject) proto;
+        }
+        // Test 1: Is object[Symbol.iterator] == %ArrayPrototype%.values?
+        if (!TypedArrayPrototypePrototype.isBuiltinValues(iterProp.getValue())) {
             return false;
         }
         // Test 2: Is %ArrayIteratorPrototype%.next the built-in next method?
@@ -1090,7 +1125,6 @@ public final class ScriptRuntime {
         ScriptObject superConstructor = activeFunction.getPrototypeOf(cx);
         /* step 6 */
         if (!IsConstructor(superConstructor)) {
-            // TODO: Change error message?
             throw newTypeError(cx, Messages.Key.NotConstructor);
         }
         /* step 7 */
@@ -1592,7 +1626,7 @@ public final class ScriptRuntime {
      */
     public static ScriptIterator<?> iterate(Object value, ExecutionContext cx) {
         /* step 8 */
-        return FromScriptIterator(cx, GetIterator(cx, value));
+        return GetScriptIterator(cx, value);
     }
 
     /**
@@ -1740,7 +1774,7 @@ public final class ScriptRuntime {
     public static OrdinaryConstructorFunction EvaluateFunctionExpression(RuntimeInfo.Function fd,
             ExecutionContext cx) {
         OrdinaryConstructorFunction closure;
-        if (!fd.hasScopedName()) {
+        if (!fd.is(RuntimeInfo.FunctionFlags.ScopedName)) {
             /* step 1 (not applicable) */
             /* step 2 */
             LexicalEnvironment<?> scope = cx.getLexicalEnvironment();
@@ -1825,7 +1859,7 @@ public final class ScriptRuntime {
                 : ConstructorKind.Base;
         OrdinaryConstructorFunction constructor = ConstructorFunctionCreate(cx,
                 FunctionKind.ClassConstructor, constructorKind, fd, scope, constructorParent);
-        if (fd.hasSuperReference()) {
+        if (fd.is(RuntimeInfo.FunctionFlags.Super)) {
             MakeMethod(constructor, proto);
         }
 
@@ -1900,7 +1934,7 @@ public final class ScriptRuntime {
         /* DefineMethod: step 5 */
         OrdinaryFunction closure = FunctionCreate(cx, FunctionKind.Method, fd, scope);
         /* DefineMethod: step 6 */
-        if (fd.hasSuperReference()) {
+        if (fd.is(RuntimeInfo.FunctionFlags.Super)) {
             MakeMethod(closure, object);
         }
         /* step 3 */
@@ -1939,7 +1973,7 @@ public final class ScriptRuntime {
         /* DefineMethod: step 5 */
         OrdinaryFunction closure = FunctionCreate(cx, FunctionKind.Method, fd, scope);
         /* DefineMethod: step 6 */
-        if (fd.hasSuperReference()) {
+        if (fd.is(RuntimeInfo.FunctionFlags.Super)) {
             MakeMethod(closure, object);
         }
         /* step 3 */
@@ -2005,7 +2039,7 @@ public final class ScriptRuntime {
         /* steps 5-6 */
         OrdinaryFunction closure = FunctionCreate(cx, FunctionKind.Method, fd, scope);
         /* step 7 */
-        if (fd.hasSuperReference()) {
+        if (fd.is(RuntimeInfo.FunctionFlags.Super)) {
             MakeMethod(closure, object);
         }
         /* steps 8-9 */
@@ -2043,7 +2077,7 @@ public final class ScriptRuntime {
         /* steps 5-6 */
         OrdinaryFunction closure = FunctionCreate(cx, FunctionKind.Method, fd, scope);
         /* step 7 */
-        if (fd.hasSuperReference()) {
+        if (fd.is(RuntimeInfo.FunctionFlags.Super)) {
             MakeMethod(closure, object);
         }
         /* steps 8-9 */
@@ -2109,7 +2143,7 @@ public final class ScriptRuntime {
         /* step 5 */
         OrdinaryFunction closure = FunctionCreate(cx, FunctionKind.Method, fd, scope);
         /* step 6 */
-        if (fd.hasSuperReference()) {
+        if (fd.is(RuntimeInfo.FunctionFlags.Super)) {
             MakeMethod(closure, object);
         }
         /* steps 7-8 */
@@ -2147,7 +2181,7 @@ public final class ScriptRuntime {
         /* step 5 */
         OrdinaryFunction closure = FunctionCreate(cx, FunctionKind.Method, fd, scope);
         /* step 6 */
-        if (fd.hasSuperReference()) {
+        if (fd.is(RuntimeInfo.FunctionFlags.Super)) {
             MakeMethod(closure, object);
         }
         /* steps 7-8 */
@@ -2209,16 +2243,12 @@ public final class ScriptRuntime {
         /* step 3 */
         OrdinaryGenerator f = GeneratorFunctionCreate(cx, FunctionKind.Normal, fd, scope);
         /* step 4 */
-        if (fd.hasSuperReference()) {
-            MakeMethod(f, null);
-        }
-        /* step 5 */
         OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.LegacyGeneratorPrototype);
-        /* step 6 */
+        /* step 5 */
         MakeConstructor(f, true, prototype);
-        /* step 7 */
+        /* step 6 */
         SetFunctionName(f, name);
-        /* step 8 */
+        /* step 7 */
         return f;
     }
 
@@ -2278,7 +2308,7 @@ public final class ScriptRuntime {
         /* step 5 */
         OrdinaryGenerator closure = GeneratorFunctionCreate(cx, FunctionKind.Method, fd, scope);
         /* step 6 */
-        if (fd.hasSuperReference()) {
+        if (fd.is(RuntimeInfo.FunctionFlags.Super)) {
             MakeMethod(closure, object);
         }
         /* step 7 */
@@ -2321,7 +2351,7 @@ public final class ScriptRuntime {
         /* step 5 */
         OrdinaryGenerator closure = GeneratorFunctionCreate(cx, FunctionKind.Method, fd, scope);
         /* step 6 */
-        if (fd.hasSuperReference()) {
+        if (fd.is(RuntimeInfo.FunctionFlags.Super)) {
             MakeMethod(closure, object);
         }
         /* step 7 */
@@ -2354,7 +2384,7 @@ public final class ScriptRuntime {
     public static OrdinaryGenerator EvaluateGeneratorExpression(RuntimeInfo.Function fd,
             ExecutionContext cx) {
         OrdinaryGenerator closure;
-        if (!fd.hasScopedName()) {
+        if (!fd.is(RuntimeInfo.FunctionFlags.ScopedName)) {
             /* step 1 (not applicable) */
             /* step 2 */
             LexicalEnvironment<?> scope = cx.getLexicalEnvironment();
@@ -2409,7 +2439,7 @@ public final class ScriptRuntime {
     public static OrdinaryGenerator EvaluateLegacyGeneratorExpression(RuntimeInfo.Function fd,
             ExecutionContext cx) {
         OrdinaryGenerator closure;
-        if (!fd.hasScopedName()) {
+        if (!fd.is(RuntimeInfo.FunctionFlags.ScopedName)) {
             /* step 1 (not applicable) */
             /* step 2 */
             LexicalEnvironment<?> scope = cx.getLexicalEnvironment();
@@ -2727,158 +2757,6 @@ public final class ScriptRuntime {
     }
 
     /**
-     * 14.5 Class Definitions
-     * <p>
-     * 14.5.14 Runtime Semantics: ClassDefinitionEvaluation
-     * 
-     * @return the runtime info object for the default constructor
-     */
-    public static RuntimeInfo.Function CreateDefaultConstructor() {
-        String functionName = "constructor";
-        int functionFlags = RuntimeInfo.FunctionFlags.Strict.getValue()
-                | RuntimeInfo.FunctionFlags.ImplicitStrict.getValue()
-                | RuntimeInfo.FunctionFlags.Method.getValue();
-        int expectedArguments = 0;
-        RuntimeInfo.Function function = RuntimeInfo.newFunction(functionName, functionFlags,
-                expectedArguments, DefaultConstructorSource, DefaultConstructorSourceBody,
-                DefaultConstructorMH, DefaultConstructorCallMH, DefaultConstructorConstructMH);
-
-        return function;
-    }
-
-    /**
-     * 14.5 Class Definitions
-     * <p>
-     * 14.5.14 Runtime Semantics: ClassDefinitionEvaluation
-     * 
-     * @return the runtime info object for the default constructor
-     */
-    public static RuntimeInfo.Function CreateDefaultEmptyConstructor() {
-        String functionName = "constructor";
-        int functionFlags = RuntimeInfo.FunctionFlags.Strict.getValue()
-                | RuntimeInfo.FunctionFlags.ImplicitStrict.getValue()
-                | RuntimeInfo.FunctionFlags.Method.getValue();
-        int expectedArguments = 0;
-        RuntimeInfo.Function function = RuntimeInfo.newFunction(functionName, functionFlags,
-                expectedArguments, DefaultEmptyConstructorSource,
-                DefaultEmptyConstructorSourceBody, DefaultEmptyConstructorMH,
-                DefaultEmptyConstructorCallMH, DefaultEmptyConstructorConstructMH);
-
-        return function;
-    }
-
-    private static final MethodHandle DefaultConstructorMH, DefaultConstructorCallMH,
-            DefaultConstructorConstructMH;
-    private static final String DefaultConstructorSource;
-    private static final int DefaultConstructorSourceBody;
-    private static final boolean DefaultConstructorArguments = false;
-    static {
-        MethodLookup lookup = new MethodLookup(MethodHandles.publicLookup());
-        DefaultConstructorMH = lookup.findStatic(ScriptRuntime.class, "DefaultConstructor",
-                MethodType.methodType(Object.class, ExecutionContext.class));
-        DefaultConstructorCallMH = lookup.findStatic(ScriptRuntime.class, "DefaultConstructorCall",
-                MethodType.methodType(Object.class, OrdinaryFunction.class, ExecutionContext.class,
-                        Object.class, Object[].class));
-        DefaultConstructorConstructMH = lookup.findStatic(ScriptRuntime.class,
-                "DefaultConstructorConstruct", MethodType.methodType(ScriptObject.class,
-                        OrdinaryConstructorFunction.class, ExecutionContext.class,
-                        Constructor.class, Object[].class));
-        String parameters = "(...args)", body = "super(...args);", source = parameters + body;
-        DefaultConstructorSource = SourceCompressor.compressToString(source);
-        DefaultConstructorSourceBody = parameters.length();
-    }
-
-    private static void DefaultConstructorInit(ExecutionContext cx, FunctionObject f, Object[] args) {
-        LexicalEnvironment<?> env = cx.getLexicalEnvironment();
-        FunctionEnvironmentRecord envRec = (FunctionEnvironmentRecord) env.getEnvRec();
-        if (DefaultConstructorArguments) {
-            envRec.createImmutableBinding("arguments", false);
-            envRec.initializeBinding("arguments", CreateUnmappedArgumentsObject(cx, args));
-        }
-        envRec.createMutableBinding("args", false);
-        envRec.initializeBinding("args", createRestArray(asList(args).iterator(), cx));
-    }
-
-    public static Object DefaultConstructor(ExecutionContext cx) {
-        // EvaluateCall: super(...args)
-        Constructor newTarget = GetNewTarget(cx);
-        Constructor superConstructor = GetSuperConstructor(cx);
-        Object[] argList = SpreadArray(cx.resolveBindingValue("args", true), cx);
-        ScriptObject result = EvaluateSuperConstructorCall(newTarget, superConstructor, argList, cx);
-        BindThisValue(result, cx);
-        return UNDEFINED;
-    }
-
-    public static Object DefaultConstructorCall(OrdinaryFunction callee,
-            ExecutionContext callerContext, Object thisValue, Object[] args) {
-        throw newTypeError(callerContext, Messages.Key.InvalidCallClass);
-    }
-
-    public static ScriptObject DefaultConstructorConstruct(OrdinaryConstructorFunction callee,
-            ExecutionContext callerContext, Constructor newTarget, Object[] args) {
-        assert callee.getConstructorKind() == ConstructorKind.Derived;
-        ExecutionContext calleeContext = ExecutionContext.newFunctionExecutionContext(callee,
-                newTarget);
-        DefaultConstructorInit(calleeContext, callee, args);
-        DefaultConstructor(calleeContext);
-        return (ScriptObject) calleeContext.resolveThisBinding();
-    }
-
-    private static final MethodHandle DefaultEmptyConstructorMH, DefaultEmptyConstructorCallMH,
-            DefaultEmptyConstructorConstructMH;
-    private static final String DefaultEmptyConstructorSource;
-    private static final int DefaultEmptyConstructorSourceBody;
-    private static final boolean DefaultEmptyConstructorArguments = false;
-    static {
-        MethodLookup lookup = new MethodLookup(MethodHandles.publicLookup());
-        DefaultEmptyConstructorMH = lookup.findStatic(ScriptRuntime.class,
-                "DefaultEmptyConstructor",
-                MethodType.methodType(Object.class, ExecutionContext.class));
-        DefaultEmptyConstructorCallMH = lookup.findStatic(ScriptRuntime.class,
-                "DefaultEmptyConstructorCall", MethodType.methodType(Object.class,
-                        OrdinaryFunction.class, ExecutionContext.class, Object.class,
-                        Object[].class));
-        DefaultEmptyConstructorConstructMH = lookup.findStatic(ScriptRuntime.class,
-                "DefaultEmptyConstructorConstruct", MethodType.methodType(ScriptObject.class,
-                        OrdinaryConstructorFunction.class, ExecutionContext.class,
-                        Constructor.class, Object[].class));
-        String parameters = "()", body = "", source = parameters + body;
-        DefaultEmptyConstructorSource = SourceCompressor.compressToString(source);
-        DefaultEmptyConstructorSourceBody = parameters.length();
-    }
-
-    private static void DefaultEmptyConstructorInit(ExecutionContext cx, FunctionObject f,
-            Object[] args) {
-        LexicalEnvironment<?> env = cx.getLexicalEnvironment();
-        FunctionEnvironmentRecord envRec = (FunctionEnvironmentRecord) env.getEnvRec();
-        if (DefaultEmptyConstructorArguments) {
-            envRec.createImmutableBinding("arguments", false);
-            envRec.initializeBinding("arguments", CreateUnmappedArgumentsObject(cx, args));
-        }
-    }
-
-    public static Object DefaultEmptyConstructor(ExecutionContext cx) {
-        return UNDEFINED;
-    }
-
-    public static Object DefaultEmptyConstructorCall(OrdinaryFunction callee,
-            ExecutionContext callerContext, Object thisValue, Object[] args) {
-        throw newTypeError(callerContext, Messages.Key.InvalidCallClass);
-    }
-
-    public static ScriptObject DefaultEmptyConstructorConstruct(OrdinaryConstructorFunction callee,
-            ExecutionContext callerContext, Constructor newTarget, Object[] args) {
-        assert callee.getConstructorKind() == ConstructorKind.Base;
-        OrdinaryObject thisArgument = OrdinaryCreateFromConstructor(callerContext, newTarget,
-                Intrinsics.ObjectPrototype);
-        ExecutionContext calleeContext = ExecutionContext.newFunctionExecutionContext(callee,
-                newTarget, thisArgument);
-        DefaultEmptyConstructorInit(calleeContext, callee, args);
-        DefaultEmptyConstructor(calleeContext);
-        return thisArgument;
-    }
-
-    /**
      * Extension: Async Function Definitions
      * 
      * @param scope
@@ -2918,19 +2796,15 @@ public final class ScriptRuntime {
     public static OrdinaryAsyncFunction EvaluateAsyncFunctionExpression(RuntimeInfo.Function fd,
             ExecutionContext cx) {
         OrdinaryAsyncFunction closure;
-        if (!fd.hasScopedName()) {
+        if (!fd.is(RuntimeInfo.FunctionFlags.ScopedName)) {
             /* step 1 (not applicable) */
             /* step 2 */
             LexicalEnvironment<?> scope = cx.getLexicalEnvironment();
             /* step 3 */
             closure = AsyncFunctionCreate(cx, FunctionKind.Normal, fd, scope);
             /* step 4 */
-            if (fd.hasSuperReference()) {
-                MakeMethod(closure, null);
-            }
-            /* step 5 */
             OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.FunctionPrototype);
-            /* step 6 */
+            /* step 5 */
             MakeConstructor(closure, true, prototype);
         } else {
             /* step 1 (not applicable) */
@@ -2947,19 +2821,15 @@ public final class ScriptRuntime {
             /* step 7 */
             closure = AsyncFunctionCreate(cx, FunctionKind.Normal, fd, funcEnv);
             /* step 8 */
-            if (fd.hasSuperReference()) {
-                MakeMethod(closure, null);
-            }
-            /* step 9 */
             OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.FunctionPrototype);
-            /* step 10 */
+            /* step 9 */
             MakeConstructor(closure, true, prototype);
-            /* step 11 */
+            /* step 10 */
             SetFunctionName(closure, name);
-            /* step 12 */
+            /* step 11 */
             envRec.initializeBinding(name, closure);
         }
-        /* step 7/13 */
+        /* step 6/12 */
         return closure;
     }
 
@@ -3033,7 +2903,7 @@ public final class ScriptRuntime {
         /* step 5 */
         OrdinaryAsyncFunction closure = AsyncFunctionCreate(cx, FunctionKind.Method, fd, scope);
         /* step 6 */
-        if (fd.hasSuperReference()) {
+        if (fd.is(RuntimeInfo.FunctionFlags.Super)) {
             MakeMethod(closure, object);
         }
         /* step 7 */
@@ -3071,7 +2941,7 @@ public final class ScriptRuntime {
         /* step 5 */
         OrdinaryAsyncFunction closure = AsyncFunctionCreate(cx, FunctionKind.Method, fd, scope);
         /* step 6 */
-        if (fd.hasSuperReference()) {
+        if (fd.is(RuntimeInfo.FunctionFlags.Super)) {
             MakeMethod(closure, object);
         }
         /* step 7 */

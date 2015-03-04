@@ -47,11 +47,11 @@ final class ModuleDeclarationInstantiationGenerator extends
         // class: ModuleEnvironmentRecord
         static final MethodName ModuleEnvironmentRecord_createImportBinding = MethodName
                 .findVirtual(Types.ModuleEnvironmentRecord, "createImportBinding", Type.methodType(
-                        Type.VOID_TYPE, Types.String, Types.SourceTextModuleRecord, Types.String));
+                        Type.VOID_TYPE, Types.String, Types.ModuleRecord, Types.String));
 
         // class: ResolvedExport
         static final MethodName ModuleExport_getModule = MethodName.findVirtual(Types.ModuleExport,
-                "getModule", Type.methodType(Types.SourceTextModuleRecord));
+                "getModule", Type.methodType(Types.ModuleRecord));
 
         static final MethodName ModuleExport_getBindingName = MethodName.findVirtual(
                 Types.ModuleExport, "getBindingName", Type.methodType(Types.String));
@@ -68,8 +68,7 @@ final class ModuleDeclarationInstantiationGenerator extends
 
         static final MethodName ScriptRuntime_resolveImportOrThrow = MethodName.findStatic(
                 Types.ScriptRuntime, "resolveImportOrThrow", Type.methodType(Types.ModuleExport,
-                        Types.ExecutionContext, Types.SourceTextModuleRecord, Types.String,
-                        Types.String));
+                        Types.SourceTextModuleRecord, Types.String, Types.String));
     }
 
     private static final int EXECUTION_CONTEXT = 0;
@@ -147,7 +146,6 @@ final class ModuleDeclarationInstantiationGenerator extends
                 }
                 initializeBinding(mv);
             } else {
-                mv.load(context);
                 mv.load(moduleRec);
                 mv.aconst(importEntry.getModuleRequest());
                 mv.aconst(importEntry.getImportName());

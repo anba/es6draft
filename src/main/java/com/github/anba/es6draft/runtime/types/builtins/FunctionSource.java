@@ -10,14 +10,51 @@ import java.util.Objects;
 
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
-import com.github.anba.es6draft.runtime.internal.SourceCompressor;
 import com.github.anba.es6draft.runtime.types.Callable.SourceSelector;
 
 /**
  * Support class to retrieve source code of compiled function objects.
  */
 final class FunctionSource {
+    private static final String NATIVE_CODE = " [native code] ";
+    private static final String NO_SOURCE = " [no source] ";
+    private static final int DEFAULT_FLAGS = RuntimeInfo.FunctionFlags.Declaration.getValue();
+
     private FunctionSource() {
+    }
+
+    /**
+     * Returns the string:
+     * 
+     * <pre>
+     * function "functionName"() { [native code] }
+     * </pre>
+     * 
+     * @param selector
+     *            the source selector
+     * @param functionName
+     *            the function name
+     * @return the function source string
+     */
+    public static String nativeCode(SourceSelector selector, String functionName) {
+        return sourceString(selector, functionName, NATIVE_CODE, DEFAULT_FLAGS);
+    }
+
+    /**
+     * Returns the string:
+     * 
+     * <pre>
+     * function "functionName"() { [no source] }
+     * </pre>
+     * 
+     * @param selector
+     *            the source selector
+     * @param functionName
+     *            the function name
+     * @return the function source string
+     */
+    public static String noSource(SourceSelector selector, String functionName) {
+        return sourceString(selector, functionName, NO_SOURCE, DEFAULT_FLAGS);
     }
 
     /**
@@ -31,37 +68,35 @@ final class FunctionSource {
      */
     public static String toSourceString(SourceSelector selector, FunctionObject function) {
         RuntimeInfo.Function code = function.getCode();
-        if (RuntimeInfo.FunctionFlags.Native.isSet(code.functionFlags())) {
-            String functionName = Objects.toString(code.functionName(), "F");
-            return FunctionSource.nativeCode(selector, functionName);
-        }
-        String compressedSource = code.source();
-        if (compressedSource == null) {
-            return FunctionSource.noSource(selector);
-        }
-        String src = decompressSource(compressedSource);
-        if (selector == SourceSelector.Body) {
-            return src.substring(code.bodySourceStart());
-        }
-        return sourceString(function, src);
-    }
-
-    private static String decompressSource(String compressedSource) {
-        try {
-            return SourceCompressor.decompress(compressedSource).call();
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private static String sourceString(FunctionObject function, String src) {
-        RuntimeInfo.Function code = function.getCode();
-        String parameters = src.substring(0, code.bodySourceStart());
-        String body = src.substring(code.bodySourceStart());
-        boolean async = code.isAsync(), generator = code.isGenerator();
-        String name = code.functionName();
+        String name = Objects.toString(code.functionName(), "");
         int flags = code.functionFlags();
-        StringBuilder source = new StringBuilder();
+        if (RuntimeInfo.FunctionFlags.Native.isSet(flags)) {
+            return sourceString(selector, name, NATIVE_CODE, flags);
+        }
+        RuntimeInfo.FunctionSource source = code.source();
+        if (source == null) {
+            return sourceString(selector, name, NO_SOURCE, flags);
+        }
+        if (selector == SourceSelector.Body) {
+            return source.body();
+        }
+        return sourceString(name, source.parameters(), source.body(), flags, function.getRealm()
+                .isEnabled(CompatibilityOption.ImplicitStrictDirective));
+    }
+
+    private static String sourceString(SourceSelector selector, String name, String body, int flags) {
+        if (selector == SourceSelector.Body) {
+            return body;
+        }
+        return sourceString(name, "() ", body, flags, false);
+    }
+
+    private static String sourceString(String name, String parameters, String body, int flags,
+            boolean implicitStrict) {
+        boolean async = RuntimeInfo.FunctionFlags.Async.isSet(flags);
+        boolean generator = RuntimeInfo.FunctionFlags.Generator.isSet(flags);
+        StringBuilder source = new StringBuilder(18 + name.length() + parameters.length()
+                + body.length());
         if (RuntimeInfo.FunctionFlags.Arrow.isSet(flags)) {
             // ArrowFunction, GeneratorComprehension, AsyncArrowFunction
             if (generator) {
@@ -90,7 +125,7 @@ final class FunctionSource {
             } else {
                 source.append("function ");
             }
-            if (code.hasScopedName()) {
+            if (RuntimeInfo.FunctionFlags.ScopedName.isSet(flags)) {
                 source.append(name);
             }
             source.append(parameters);
@@ -111,53 +146,11 @@ final class FunctionSource {
             source.append(body);
         } else {
             source.append('{');
-            if (RuntimeInfo.FunctionFlags.ImplicitStrict.isSet(flags)
-                    && function.getRealm().isEnabled(CompatibilityOption.ImplicitStrictDirective)) {
+            if (RuntimeInfo.FunctionFlags.ImplicitStrict.isSet(flags) && implicitStrict) {
                 source.append("\n\"use strict\";\n");
             }
             source.append(body).append('}');
         }
         return source.toString();
-    }
-
-    /**
-     * Returns the string:
-     * 
-     * <pre>
-     * function "functionName"() { [native code] }
-     * </pre>
-     * 
-     * @param selector
-     *            the source selector
-     * @param functionName
-     *            the function name
-     * @return the function source string
-     */
-    public static String nativeCode(SourceSelector selector, String functionName) {
-        return sourceString(selector, functionName, " [native code] ");
-    }
-
-    /**
-     * Returns the string:
-     * 
-     * <pre>
-     * function F() { [no source] }
-     * </pre>
-     * 
-     * @param selector
-     *            the source selector
-     * @return the function source string
-     */
-    public static String noSource(SourceSelector selector) {
-        return sourceString(selector, "F", " [no source] ");
-    }
-
-    private static String sourceString(SourceSelector selector, String functionName, String body) {
-        if (selector == SourceSelector.Body) {
-            return body;
-        }
-        int length = functionName.length() + body.length() + 9 + 3 + 2;
-        return new StringBuilder(length).append("function ").append(functionName).append("() ")
-                .append('{').append(body).append('}').toString();
     }
 }

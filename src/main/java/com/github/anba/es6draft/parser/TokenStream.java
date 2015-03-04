@@ -201,11 +201,22 @@ final class TokenStream {
      * @return this token stream
      */
     public TokenStream initialize() {
+        return initialize(parser.getSourceLine());
+    }
+
+    /**
+     * Initializes this token stream, needs to be called before fetching any tokens.
+     * 
+     * @param line
+     *            the start line number
+     * @return this token stream
+     */
+    public TokenStream initialize(int line) {
         // set internal state to default values
         this.hasLineTerminator = true;
         this.hasCurrentLineTerminator = true;
         this.position = input.position();
-        this.line = parser.getSourceLine();
+        this.line = line;
         this.linestart = input.position();
         this.current = scanTokenNoComment();
         this.sourcePosition = nextSourcePosition;
@@ -999,6 +1010,7 @@ final class TokenStream {
             if (isIdentifierStart(c)) {
                 return readIdentifier(c, true);
             }
+            // TODO: Improve error message
             return Token.ERROR;
         default:
             if (isIdentifierStart(c)) {

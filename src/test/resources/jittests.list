@@ -65,6 +65,9 @@ tests/collections/Set-surfaces-1.js
 tests/collections/WeakMap-surfaces.js
 tests/collections/WeakSet-surface.js
 
+# ES6: Argument validation in DataView constructor
+tests/basic/bug-1133377.js
+
 
 ###################
 # Misc issues     #
@@ -446,6 +449,7 @@ tests/basic/bug951632.js
 # setJitCompilerOption
 tests/bug953337.js
 tests/basic/bug970643.js
+tests/basic/bug1135718.js
 tests/basic/testBug686274.js
 # enableTrackAllocations
 tests/basic/track-allocation-sites.js

@@ -8,11 +8,11 @@ package com.github.anba.es6draft.runtime.objects;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToBoolean;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
+import static com.github.anba.es6draft.runtime.objects.BooleanObject.BooleanCreate;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initializable;
-import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
@@ -68,22 +68,9 @@ public final class BooleanConstructor extends BuiltinConstructor implements Init
         /* step 1 */
         boolean b = args.length > 0 ? ToBoolean(args[0]) : false;
         /* step 2 (not applicable) */
-        /* steps 3-4 */
-        BooleanObject obj = OrdinaryCreateFromConstructor(calleeContext, newTarget,
-                Intrinsics.BooleanPrototype, BooleanObjectAllocator.INSTANCE);
-        /* step 5 */
-        obj.setBooleanData(b);
-        /* step 6 */
-        return obj;
-    }
-
-    private static final class BooleanObjectAllocator implements ObjectAllocator<BooleanObject> {
-        static final ObjectAllocator<BooleanObject> INSTANCE = new BooleanObjectAllocator();
-
-        @Override
-        public BooleanObject newInstance(Realm realm) {
-            return new BooleanObject(realm);
-        }
+        /* steps 3-6 */
+        return BooleanCreate(calleeContext, b,
+                GetPrototypeFromConstructor(calleeContext, newTarget, Intrinsics.BooleanPrototype));
     }
 
     /**

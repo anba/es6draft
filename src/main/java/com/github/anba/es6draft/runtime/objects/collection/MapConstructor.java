@@ -6,13 +6,9 @@
  */
 package com.github.anba.es6draft.runtime.objects.collection;
 
-import static com.github.anba.es6draft.runtime.AbstractOperations.Get;
-import static com.github.anba.es6draft.runtime.AbstractOperations.GetIterator;
-import static com.github.anba.es6draft.runtime.AbstractOperations.IsCallable;
-import static com.github.anba.es6draft.runtime.AbstractOperations.IteratorClose;
+import static com.github.anba.es6draft.runtime.AbstractOperations.*;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
-import static com.github.anba.es6draft.runtime.objects.internal.ListIterator.FromScriptIterator;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
@@ -97,7 +93,7 @@ public final class MapConstructor extends BuiltinConstructor implements Initiali
                 throw newTypeError(calleeContext, Messages.Key.PropertyNotCallable, "set");
             }
             adder = (Callable) _adder;
-            iter = FromScriptIterator(calleeContext, GetIterator(calleeContext, iterable));
+            iter = GetScriptIterator(calleeContext, iterable);
         }
         /* step 8 */
         if (iter == null) {

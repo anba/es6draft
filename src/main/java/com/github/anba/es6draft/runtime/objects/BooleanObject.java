@@ -9,6 +9,7 @@ package com.github.anba.es6draft.runtime.objects;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
+import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
@@ -20,16 +21,22 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  */
 public final class BooleanObject extends OrdinaryObject {
     /** [[BooleanData]] */
-    private boolean booleanData;
+    private final boolean booleanData;
 
     /**
      * Constructs a new Boolean object.
      * 
      * @param realm
      *            the realm object
+     * @param booleanData
+     *            the boolean data
+     * @param prototype
+     *            the prototype object
      */
-    public BooleanObject(Realm realm) {
+    public BooleanObject(Realm realm, boolean booleanData, ScriptObject prototype) {
         super(realm);
+        this.booleanData = booleanData;
+        setPrototype(prototype);
     }
 
     /**
@@ -42,17 +49,7 @@ public final class BooleanObject extends OrdinaryObject {
     }
 
     /**
-     * [[BooleanData]]
-     * 
-     * @param booleanData
-     *            the new boolean value
-     */
-    public void setBooleanData(boolean booleanData) {
-        this.booleanData = booleanData;
-    }
-
-    /**
-     * Custom helper function
+     * Creates a new Boolean object with the default %BooleanPrototype% prototype object.
      * 
      * @param cx
      *            the execution context
@@ -61,9 +58,23 @@ public final class BooleanObject extends OrdinaryObject {
      * @return the new boolean object
      */
     public static BooleanObject BooleanCreate(ExecutionContext cx, boolean booleanData) {
-        BooleanObject obj = new BooleanObject(cx.getRealm());
-        obj.setPrototype(cx.getIntrinsic(Intrinsics.BooleanPrototype));
-        obj.setBooleanData(booleanData);
-        return obj;
+        return new BooleanObject(cx.getRealm(), booleanData,
+                cx.getIntrinsic(Intrinsics.BooleanPrototype));
+    }
+
+    /**
+     * Creates a new Boolean object.
+     * 
+     * @param cx
+     *            the execution context
+     * @param booleanData
+     *            the boolean value
+     * @param prototype
+     *            the prototype object
+     * @return the new boolean object
+     */
+    public static BooleanObject BooleanCreate(ExecutionContext cx, boolean booleanData,
+            ScriptObject prototype) {
+        return new BooleanObject(cx.getRealm(), booleanData, prototype);
     }
 }

@@ -7,6 +7,7 @@
 package com.github.anba.es6draft.runtime.objects.binary;
 
 import com.github.anba.es6draft.runtime.Realm;
+import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
@@ -18,22 +19,39 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  */
 public final class DataViewObject extends OrdinaryObject implements ArrayBufferView {
     /** [[ViewedArrayBuffer]] */
-    private ArrayBufferObject buffer;
+    private final ArrayBufferObject buffer;
 
     /** [[ByteLength]] */
-    private long byteLength;
+    private final long byteLength;
 
     /** [[ByteOffset]] */
-    private long byteOffset;
+    private final long byteOffset;
 
     /**
      * Constructs a new DataView object.
      * 
      * @param realm
      *            the realm object
+     * @param buffer
+     *            the array buffer
+     * @param byteLength
+     *            the byte length
+     * @param byteOffset
+     *            the byte offset
+     * @param prototype
+     *            the prototype object
      */
-    public DataViewObject(Realm realm) {
+    public DataViewObject(Realm realm, ArrayBufferObject buffer, long byteLength, long byteOffset,
+            ScriptObject prototype) {
         super(realm);
+        assert buffer != null : "cannot initialize DataView with null";
+        assert byteLength >= 0 : "negative byte length: " + byteLength;
+        assert byteOffset >= 0 : "negative byte offset: " + byteOffset;
+        assert buffer.isDetached() || (byteOffset + byteLength <= buffer.getByteLength());
+        this.buffer = buffer;
+        this.byteLength = byteLength;
+        this.byteOffset = byteOffset;
+        setPrototype(prototype);
     }
 
     /**
@@ -45,18 +63,6 @@ public final class DataViewObject extends OrdinaryObject implements ArrayBufferV
     }
 
     /**
-     * [[ViewedArrayBuffer]]
-     * 
-     * @param buffer
-     *            the new array buffer object
-     */
-    public void setBuffer(ArrayBufferObject buffer) {
-        assert buffer != null : "ArrayBufferObject not initialized";
-        assert this.buffer == null : "DataViewObject already initialized";
-        this.buffer = buffer;
-    }
-
-    /**
      * [[ByteLength]]
      */
     @Override
@@ -65,32 +71,10 @@ public final class DataViewObject extends OrdinaryObject implements ArrayBufferV
     }
 
     /**
-     * [[ByteLength]]
-     * 
-     * @param byteLength
-     *            the new byte length
-     */
-    public void setByteLength(long byteLength) {
-        assert byteLength >= 0 : "negative byte length: " + byteLength;
-        this.byteLength = byteLength;
-    }
-
-    /**
      * [[ByteOffset]]
      */
     @Override
     public long getByteOffset() {
         return byteOffset;
-    }
-
-    /**
-     * [[ByteOffset]]
-     * 
-     * @param byteOffset
-     *            the new byte offset
-     */
-    public void setByteOffset(long byteOffset) {
-        assert byteOffset >= 0 : "negative byte offset: " + byteOffset;
-        this.byteOffset = byteOffset;
     }
 }

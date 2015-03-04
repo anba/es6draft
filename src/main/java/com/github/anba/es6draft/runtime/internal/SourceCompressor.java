@@ -105,19 +105,4 @@ public final class SourceCompressor {
     public static Callable<String> decompress(String source) {
         return new DecompressedSource(source);
     }
-
-    /**
-     * Compresses the source string
-     * 
-     * @param source
-     *            the source string
-     * @return the compressed source string
-     */
-    static String compressToString(String source) {
-        try {
-            return compressInternal(source);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
 }

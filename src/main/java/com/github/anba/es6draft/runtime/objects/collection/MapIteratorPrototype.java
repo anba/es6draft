@@ -19,13 +19,13 @@ import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initializable;
 import com.github.anba.es6draft.runtime.internal.Messages;
-import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
+import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
@@ -60,29 +60,17 @@ public final class MapIteratorPrototype extends OrdinaryObject implements Initia
      * 23.1.5.3 Properties of Map Iterator Instances
      */
     private static final class MapIterator extends OrdinaryObject {
-        /** [[Map]] */
-        MapObject map;
-
-        /** [[MapNextIndex]] */
-        @SuppressWarnings("unused")
-        int nextIndex;
-
-        /** [[MapIterationKind]] */
-        MapIterationKind iterationKind;
-
+        /** [[Map]] / [[MapNextIndex]] */
         Iterator<Entry<Object, Object>> iterator;
 
-        MapIterator(Realm realm) {
+        /** [[MapIterationKind]] */
+        final MapIterationKind iterationKind;
+
+        MapIterator(Realm realm, MapObject map, MapIterationKind kind, ScriptObject prototype) {
             super(realm);
-        }
-    }
-
-    private static final class MapIteratorAllocator implements ObjectAllocator<MapIterator> {
-        static final ObjectAllocator<MapIterator> INSTANCE = new MapIteratorAllocator();
-
-        @Override
-        public MapIterator newInstance(Realm realm) {
-            return new MapIterator(realm);
+            this.iterator = map.getMapData().iterator();
+            this.iterationKind = kind;
+            setPrototype(prototype);
         }
     }
 
@@ -104,16 +92,9 @@ public final class MapIteratorPrototype extends OrdinaryObject implements Initia
             throw newTypeError(cx, Messages.Key.IncompatibleObject);
         }
         MapObject map = (MapObject) obj;
-        /* step 3 */
-        MapIterator iterator = ObjectCreate(cx, Intrinsics.MapIteratorPrototype,
-                MapIteratorAllocator.INSTANCE);
-        /* steps 4-6 */
-        iterator.map = map;
-        iterator.nextIndex = 0;
-        iterator.iterationKind = kind;
-        iterator.iterator = map.getMapData().iterator();
-        /* step 7 */
-        return iterator;
+        /* steps 3-7 */
+        return new MapIterator(cx.getRealm(), map, kind,
+                cx.getIntrinsic(Intrinsics.MapIteratorPrototype));
     }
 
     /**
@@ -146,20 +127,16 @@ public final class MapIteratorPrototype extends OrdinaryObject implements Initia
             }
             /* step 1 */
             MapIterator o = (MapIterator) thisValue;
-            /* step 4 */
-            MapObject m = o.map;
-            /* step 5 */
-            // int index = o.nextIndex;
+            /* steps 4-5 */
+            Iterator<Entry<Object, Object>> iter = o.iterator;
             /* step 6 */
             MapIterationKind itemKind = o.iterationKind;
             /* step 7 */
-            if (m == null) {
+            if (iter == null) {
                 return CreateIterResultObject(cx, UNDEFINED, true);
             }
             /* step 8 (implicit) */
-            /* step 9 */
-            Iterator<Entry<Object, Object>> iter = o.iterator;
-            /* step 10 */
+            /* steps 9-10 */
             if (iter.hasNext()) {
                 Entry<Object, Object> e = iter.next();
                 Object result;
@@ -174,7 +151,6 @@ public final class MapIteratorPrototype extends OrdinaryObject implements Initia
                 return CreateIterResultObject(cx, result, false);
             }
             /* step 11 */
-            o.map = null;
             o.iterator = null;
             /* step 12 */
             return CreateIterResultObject(cx, UNDEFINED, true);

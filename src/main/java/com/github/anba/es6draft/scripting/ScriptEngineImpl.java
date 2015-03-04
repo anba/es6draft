@@ -18,7 +18,6 @@ import java.net.URISyntaxException;
 import java.nio.file.Paths;
 import java.util.EnumSet;
 import java.util.Objects;
-import java.util.Set;
 
 import javax.script.AbstractScriptEngine;
 import javax.script.Bindings;
@@ -61,23 +60,18 @@ final class ScriptEngineImpl extends AbstractScriptEngine implements ScriptEngin
     ScriptEngineImpl(ScriptEngineFactoryImpl factory) {
         this.factory = factory;
 
-        Set<CompatibilityOption> compatibilityOptions = CompatibilityOption.WebCompatibility();
         // Scripting sources have an extra scope object before the global environment record, the
         // ScriptContext object. To ensure this extra scope is properly handled, we compile
         // scripting sources with the EvalScript option and use eval-declaration instead of the
         // normal global declaration instantiation when evaluating the source code.
-        EnumSet<Parser.Option> parserOptions = EnumSet.of(Parser.Option.EvalScript,
-                Parser.Option.Scripting);
-        EnumSet<Compiler.Option> compilerOptions = EnumSet.noneOf(Compiler.Option.class);
-        ScriptLoader evalScriptLoader = new ScriptLoader(compatibilityOptions, parserOptions,
-                compilerOptions);
-
-        this.evalScriptLoader = evalScriptLoader;
+        this.evalScriptLoader = new ScriptLoader(CompatibilityOption.WebCompatibility(),
+                EnumSet.of(Parser.Option.EvalScript, Parser.Option.Scripting),
+                EnumSet.noneOf(Compiler.Option.class));
 
         ObjectAllocator<ScriptingGlobalObject> allocator = ScriptingGlobalObject
                 .newGlobalObjectAllocator();
-        ScriptLoader scriptLoader = new ScriptLoader(compatibilityOptions,
-                EnumSet.noneOf(Parser.Option.class), compilerOptions);
+        ScriptLoader scriptLoader = new ScriptLoader(CompatibilityOption.WebCompatibility(),
+                EnumSet.noneOf(Parser.Option.class), EnumSet.noneOf(Compiler.Option.class));
         ModuleLoader moduleLoader = new FileModuleLoader(scriptLoader, Paths.get("")
                 .toAbsolutePath());
         this.world = new World<>(allocator, moduleLoader, scriptLoader);

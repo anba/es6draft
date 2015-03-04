@@ -18,7 +18,6 @@ import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initializable;
 import com.github.anba.es6draft.runtime.internal.Messages;
-import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.Properties.Accessor;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
@@ -65,16 +64,6 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
     @Override
     public ArrayBufferConstructor clone() {
         return new ArrayBufferConstructor(getRealm());
-    }
-
-    private static final class ArrayBufferObjectAllocator implements
-            ObjectAllocator<ArrayBufferObject> {
-        static final ObjectAllocator<ArrayBufferObject> INSTANCE = new ArrayBufferObjectAllocator();
-
-        @Override
-        public ArrayBufferObject newInstance(Realm realm) {
-            return new ArrayBufferObject(realm);
-        }
     }
 
     /**
@@ -148,19 +137,14 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
      */
     public static ArrayBufferObject AllocateArrayBuffer(ExecutionContext cx,
             Constructor constructor, long byteLength) {
-        /* steps 1-2 */
-        ArrayBufferObject arrayBuffer = OrdinaryCreateFromConstructor(cx, constructor,
-                Intrinsics.ArrayBufferPrototype, ArrayBufferObjectAllocator.INSTANCE);
+        /* steps 1-2 (moved) */
         /* step 3 */
         assert byteLength >= 0;
         /* steps 4-5 */
         ByteBuffer block = CreateByteDataBlock(cx, byteLength);
-        /* step 6 */
-        arrayBuffer.setData(block);
-        /* step 7 */
-        arrayBuffer.setByteLength(byteLength);
-        /* step 8 */
-        return arrayBuffer;
+        /* steps 1-2, 6-8 */
+        return new ArrayBufferObject(cx.getRealm(), block, byteLength, GetPrototypeFromConstructor(
+                cx, constructor, Intrinsics.ArrayBufferPrototype));
     }
 
     /**
@@ -294,7 +278,7 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
         /* step 1 */
         assert !IsDetachedBuffer(arrayBuffer) : "ArrayBuffer is detached";
         /* steps 2-3 */
-        assert (byteIndex >= 0 && (byteIndex + type.size()) <= arrayBuffer.getByteLength());
+        assert byteIndex >= 0 && (byteIndex + type.size() <= arrayBuffer.getByteLength());
         /* step 4 */
         ByteBuffer block = arrayBuffer.getData();
         /* steps 7-8 */
@@ -373,7 +357,7 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
         /* step 1 */
         assert !IsDetachedBuffer(arrayBuffer) : "ArrayBuffer is detached";
         /* steps 2-3 */
-        assert (byteIndex >= 0 && (byteIndex + type.size()) <= arrayBuffer.getByteLength());
+        assert byteIndex >= 0 && (byteIndex + type.size() <= arrayBuffer.getByteLength());
         /* step 4 (not applicable) */
         /* step 5 */
         ByteBuffer block = arrayBuffer.getData();

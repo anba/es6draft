@@ -21,7 +21,6 @@ import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initializable;
 import com.github.anba.es6draft.runtime.internal.Messages;
-import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
@@ -226,24 +225,10 @@ public final class DataViewConstructor extends BuiltinConstructor implements Ini
                 throw newRangeError(calleeContext, Messages.Key.ArrayOffsetOutOfRange);
             }
         }
-        /* steps 13-15 */
-        DataViewObject dataView = OrdinaryCreateFromConstructor(calleeContext, newTarget,
-                Intrinsics.DataViewPrototype, DataViewObjectAllocator.INSTANCE);
-        /* steps 16-18 */
-        dataView.setBuffer(bufferObj);
-        dataView.setByteLength(viewByteLength);
-        dataView.setByteOffset(viewByteOffset);
-        /* step 19 */
-        return dataView;
-    }
-
-    private static final class DataViewObjectAllocator implements ObjectAllocator<DataViewObject> {
-        static final ObjectAllocator<DataViewObject> INSTANCE = new DataViewObjectAllocator();
-
-        @Override
-        public DataViewObject newInstance(Realm realm) {
-            return new DataViewObject(realm);
-        }
+        /* steps 13-19 */
+        return new DataViewObject(calleeContext.getRealm(), bufferObj, viewByteLength,
+                viewByteOffset, GetPrototypeFromConstructor(calleeContext, newTarget,
+                        Intrinsics.DataViewPrototype));
     }
 
     /**

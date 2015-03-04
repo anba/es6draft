@@ -9,6 +9,7 @@ package com.github.anba.es6draft.runtime.objects;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
+import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Symbol;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
@@ -30,10 +31,13 @@ public final class SymbolObject extends OrdinaryObject {
      *            the realm object
      * @param symbolData
      *            the symbol data
+     * @param prototype
+     *            the prototype object
      */
-    public SymbolObject(Realm realm, Symbol symbolData) {
+    public SymbolObject(Realm realm, Symbol symbolData, ScriptObject prototype) {
         super(realm);
         this.symbolData = symbolData;
+        setPrototype(prototype);
     }
 
     /**
@@ -46,7 +50,7 @@ public final class SymbolObject extends OrdinaryObject {
     }
 
     /**
-     * Custom helper function
+     * Creates a new Symbol object.
      * 
      * @param cx
      *            the execution context
@@ -55,8 +59,7 @@ public final class SymbolObject extends OrdinaryObject {
      * @return the new symbol object
      */
     public static SymbolObject SymbolCreate(ExecutionContext cx, Symbol symbolData) {
-        SymbolObject obj = new SymbolObject(cx.getRealm(), symbolData);
-        obj.setPrototype(cx.getIntrinsic(Intrinsics.SymbolPrototype));
-        return obj;
+        return new SymbolObject(cx.getRealm(), symbolData,
+                cx.getIntrinsic(Intrinsics.SymbolPrototype));
     }
 }

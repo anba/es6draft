@@ -14,7 +14,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.github.anba.es6draft.Executable;
-import com.github.anba.es6draft.compiler.CompiledObject;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.Realm;
@@ -59,8 +58,8 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
     private MethodHandle constructMethod;
     private MethodHandle tailConstructMethod;
 
-    private Property caller = new Property(NULL, true, false, false);
-    private Property arguments = new Property(NULL, true, false, false);
+    private final Property caller = new Property(NULL, true, false, false);
+    private final Property arguments = new Property(NULL, true, false, false);
 
     /**
      * Constructs a new Function object.
@@ -367,7 +366,6 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
             LexicalEnvironment<?> scope, Executable executable) {
         assert this.function == null && function != null : "function object already initialized";
         assert this.functionKind == kind : String.format("%s != %s", functionKind, kind);
-        assert executable instanceof CompiledObject : "Executable=" + executable;
         /* step 6 */
         boolean strict = this.strict;
         /* step 7 */
@@ -403,7 +401,7 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
 
     private static MethodHandle tailCallAdapter(RuntimeInfo.Function function) {
         MethodHandle mh = function.callMethod();
-        if (function.hasTailCall()) {
+        if (function.is(RuntimeInfo.FunctionFlags.TailCall)) {
             assert !function.isGenerator() && !function.isAsync() && function.isStrict();
             MethodHandle result = TailCallInvocation.getTailCallHandler();
             result = MethodHandles.dropArguments(result, 1, OrdinaryFunction.class);
@@ -416,7 +414,7 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
 
     private static MethodHandle tailConstructAdapter(RuntimeInfo.Function function) {
         MethodHandle mh = function.constructMethod();
-        if (mh != null && function.hasTailCall()) {
+        if (mh != null && function.is(RuntimeInfo.FunctionFlags.TailCall)) {
             assert !function.isGenerator() && !function.isAsync() && function.isStrict();
             MethodHandle result = TailCallInvocation.getTailConstructHandler();
             result = MethodHandles.dropArguments(result, 1, OrdinaryConstructorFunction.class);
@@ -429,7 +427,8 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
 
     private static MethodHandle dropConstructReturnType(RuntimeInfo.Function function) {
         MethodHandle mh = function.constructMethod();
-        if (mh != null && !function.isGenerator() && !function.isAsync() && !function.hasTailCall()) {
+        if (mh != null && !function.isGenerator() && !function.isAsync()
+                && !function.is(RuntimeInfo.FunctionFlags.TailCall)) {
             // Non-tail-call constructor functions return ScriptObject, but in order to use
             // invokeExact() the return-type needs to be changed from ScriptObject to Object.
             return mh.asType(mh.type().changeReturnType(Object.class));

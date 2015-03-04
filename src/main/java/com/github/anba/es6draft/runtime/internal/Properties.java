@@ -30,6 +30,8 @@ import java.util.LinkedHashMap;
 import java.util.Map.Entry;
 import java.util.Objects;
 
+import com.github.anba.es6draft.Script;
+import com.github.anba.es6draft.Scripts;
 import com.github.anba.es6draft.repl.global.StopExecutionException;
 import com.github.anba.es6draft.runtime.AbstractOperations;
 import com.github.anba.es6draft.runtime.ExecutionContext;
@@ -47,7 +49,7 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
 import com.github.anba.es6draft.runtime.types.builtins.NativeConstructor;
 import com.github.anba.es6draft.runtime.types.builtins.NativeFunction;
 import com.github.anba.es6draft.runtime.types.builtins.NativeTailCallFunction;
-import com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction;
+import com.github.anba.es6draft.runtime.types.builtins.OrdinaryConstructorFunction;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
@@ -577,7 +579,8 @@ public final class Properties {
                 MethodHandle test = IsInstanceMH.bindTo(c);
                 MethodHandle target = MethodHandles.identity(c);
                 target = target.asType(target.type().changeParameterType(0, Object.class));
-                MethodHandle fallback = MethodHandles.insertArguments(ThrowTypeErrorMH, 0, cx);
+                MethodHandle fallback = MethodHandles.insertArguments(ThrowTypeErrorIncompatibleMH,
+                        0, cx);
                 fallback = fallback.asType(fallback.type().changeReturnType(c));
                 return MethodHandles.guardWithTest(test, target, fallback);
             }
@@ -624,6 +627,17 @@ public final class Properties {
             throw new IllegalArgumentException(returnType.toString());
         }
 
+        MethodHandle constructReturnHandle(MethodHandle handle, Class<?> returnType) {
+            if (ScriptObject.class.isAssignableFrom(returnType)) {
+                return MethodHandles.filterReturnValue(
+                        handle.asType(handle.type().changeReturnType(ScriptObject.class)),
+                        nullObjectFilter());
+            } else if (returnType == Object.class) {
+                return MethodHandles.filterReturnValue(handle, objectFilter());
+            }
+            throw new IllegalArgumentException(returnType.toString());
+        }
+
         private MethodHandle nullFilter() {
             MethodHandle fallback = MethodHandles.dropArguments(
                     MethodHandles.constant(Object.class, NULL), 0, Object.class);
@@ -631,11 +645,29 @@ public final class Properties {
                     fallback);
         }
 
+        private MethodHandle nullObjectFilter() {
+            MethodHandle fallback = MethodHandles.insertArguments(ThrowTypeErrorNotObjectMH, 0, cx);
+            fallback = fallback.asType(fallback.type().changeParameterType(0, ScriptObject.class));
+            fallback = fallback.asType(fallback.type().changeReturnType(ScriptObject.class));
+            return MethodHandles.guardWithTest(isNotNullMH.asType(isNotNullMH.type()
+                    .changeParameterType(0, ScriptObject.class)), MethodHandles
+                    .identity(ScriptObject.class), fallback);
+        }
+
         private MethodHandle typeFilter() {
-            MethodHandle fallback = MethodHandles.insertArguments(ThrowTypeErrorMH, 0, cx);
+            MethodHandle fallback = MethodHandles.insertArguments(ThrowTypeErrorIncompatibleMH, 0,
+                    cx);
             fallback = fallback.asType(fallback.type().changeReturnType(Object.class));
             return MethodHandles.guardWithTest(isTypeMH, MethodHandles.identity(Object.class),
                     fallback);
+        }
+
+        private MethodHandle objectFilter() {
+            MethodHandle target = MethodHandles.identity(ScriptObject.class);
+            target = target.asType(target.type().changeParameterType(0, Object.class));
+            MethodHandle fallback = MethodHandles.insertArguments(ThrowTypeErrorNotObjectMH, 0, cx);
+            fallback = fallback.asType(fallback.type().changeReturnType(ScriptObject.class));
+            return MethodHandles.guardWithTest(isObjectMH, target, fallback);
         }
 
         private static final MethodHandle ToBooleanMH, ToNumberMH, ToInt32MH, ToStringMH,
@@ -669,7 +701,8 @@ public final class Properties {
 
         private static final MethodHandle ToBooleanArrayMH, ToStringArrayMH, ToFlatStringArrayMH,
                 ToNumberArrayMH, ToObjectArrayMH, ToCallableArrayMH, ToScriptExceptionMH,
-                ThrowTypeErrorMH, isNotNullMH, isTypeMH;
+                ThrowTypeErrorIncompatibleMH, ThrowTypeErrorNotObjectMH, isNotNullMH, isTypeMH,
+                isObjectMH;
         static {
             MethodLookup lookup = new MethodLookup(MethodHandles.lookup());
             ToStringArrayMH = lookup.findStatic("ToString", MethodType.methodType(
@@ -687,11 +720,15 @@ public final class Properties {
                             ExecutionContext.class, Object[].class));
             ToScriptExceptionMH = lookup.findStatic("ToScriptException", MethodType.methodType(
                     ScriptException.class, ExecutionContext.class, Exception.class));
-            ThrowTypeErrorMH = lookup.findStatic("throwTypeError",
+            ThrowTypeErrorIncompatibleMH = lookup.findStatic("throwTypeErrorIncompatible",
+                    MethodType.methodType(void.class, ExecutionContext.class, Object.class));
+            ThrowTypeErrorNotObjectMH = lookup.findStatic("throwTypeErrorNotObject",
                     MethodType.methodType(void.class, ExecutionContext.class, Object.class));
             isNotNullMH = lookup.findStatic("isNotNull",
                     MethodType.methodType(boolean.class, Object.class));
             isTypeMH = lookup.findStatic(Type.class, "isType",
+                    MethodType.methodType(boolean.class, Object.class));
+            isObjectMH = lookup.findStatic(Type.class, "isObject",
                     MethodType.methodType(boolean.class, Object.class));
         }
 
@@ -746,18 +783,20 @@ public final class Properties {
         private static ScriptException ToScriptException(ExecutionContext cx, Exception cause) {
             if (cause instanceof StopExecutionException)
                 throw (StopExecutionException) cause;
-            if (cause instanceof ScriptException)
-                return (ScriptException) cause;
-            if (cause instanceof InternalException)
-                return ((InternalException) cause).toScriptException(cx);
+            if (cause instanceof InternalThrowable)
+                return ((InternalThrowable) cause).toScriptException(cx);
             String info = Objects.toString(cause.getMessage(), cause.getClass().getSimpleName());
             ScriptException error = Errors.newInternalError(cx, Messages.Key.InternalError, info);
             error.addSuppressed(cause);
             return error;
         }
 
-        private static void throwTypeError(ExecutionContext cx, Object ignore) {
+        private static void throwTypeErrorIncompatible(ExecutionContext cx, Object ignore) {
             throw Errors.newTypeError(cx, Messages.Key.IncompatibleObject);
+        }
+
+        private static void throwTypeErrorNotObject(ExecutionContext cx, Object ignore) {
+            throw Errors.newTypeError(cx, Messages.Key.NotObjectType);
         }
 
         private static boolean isNotNull(Object o) {
@@ -816,8 +855,8 @@ public final class Properties {
         Converter converter = new Converter(cx);
 
         ScriptObject[] objects = ScriptRuntime.getDefaultClassProto(cx);
-        OrdinaryObject proto = (OrdinaryObject) objects[0];
-        ScriptObject constructorParent = objects[1];
+        ScriptObject constructorParent = objects[0];
+        OrdinaryObject proto = (OrdinaryObject) objects[1];
         assert constructorParent == cx.getIntrinsic(Intrinsics.FunctionPrototype);
 
         OrdinaryObject constructor = createConstructor(cx, className, proto, constructorParent,
@@ -859,11 +898,25 @@ public final class Properties {
             return constructor;
         }
         // Create default constructor
-        RuntimeInfo.Function fd = ScriptRuntime.CreateDefaultEmptyConstructor();
-        OrdinaryFunction constructor = ScriptRuntime.EvaluateConstructorMethod(constructorParent,
-                proto, fd, false, cx);
-        OrdinaryFunction.SetFunctionName(constructor, className);
-        return constructor;
+        String sourceText = String.format("(class %s { })", sanitizeName(className));
+        ScriptLoader scriptLoader = cx.getRealm().getScriptLoader();
+        Script script = scriptLoader.script(new Source("<Constructor>", 1), sourceText);
+        Object constructor = Scripts.ScriptEvaluation(script, cx.getRealm());
+        assert constructor instanceof OrdinaryConstructorFunction : constructor.getClass();
+        return (OrdinaryConstructorFunction) constructor;
+    }
+
+    private static String sanitizeName(String className) {
+        if (className.isEmpty()) {
+            return "";
+        }
+        StringBuilder sb = new StringBuilder(className.length());
+        for (int i = 0, codePoint; i < className.length(); i += Character.charCount(codePoint)) {
+            codePoint = className.codePointAt(i);
+            sb.appendCodePoint((i == 0 ? Character.isJavaIdentifierStart(codePoint) : Character
+                    .isJavaIdentifierPart(codePoint)) ? codePoint : '_');
+        }
+        return sb.toString();
     }
 
     private static Entry<Function, MethodHandle> findConstructor(ObjectLayout layout) {
@@ -1093,7 +1146,8 @@ public final class Properties {
         final int fixedArguments = callerContext ? 1 : 0;
 
         handle = bindContext(handle, cx);
-        handle = convertArgumentsAndReturn(handle, fixedArguments, varargs, converter);
+        handle = convertArguments(handle, fixedArguments, varargs, converter);
+        handle = convertReturn(handle, converter);
         handle = catchExceptions(handle, converter);
         handle = toCanonical(handle, fixedArguments, varargs, null);
         if (!callerContext) {
@@ -1132,18 +1186,24 @@ public final class Properties {
         MethodHandle handle = unreflect;
         boolean callerContext = isCallerSensitive(handle);
         final int fixedArguments = callerContext ? 2 : 1;
+        final int constructorArgument = callerContext ? 1 : 0;
 
         handle = bindContext(handle, cx);
         if (methodKind == MethodKind.Default) {
-            handle = convertThis(handle, converter);
+            handle = convertThis(handle, callerContext, converter);
         } else if (methodKind == MethodKind.Call) {
-            handle = MethodHandles.insertArguments(handle, fixedArguments, (Constructor) null);
-            handle = convertThis(handle, converter);
+            handle = MethodHandles.insertArguments(handle, constructorArgument, (Constructor) null);
+            handle = convertThis(handle, callerContext, converter);
         } else {
             assert methodKind == MethodKind.Construct;
-            handle = MethodHandles.insertArguments(handle, fixedArguments + 1, (Object) null);
+            handle = MethodHandles.insertArguments(handle, constructorArgument + 1, (Object) null);
         }
-        handle = convertArgumentsAndReturn(handle, fixedArguments, varargs, converter);
+        handle = convertArguments(handle, fixedArguments, varargs, converter);
+        if (methodKind != MethodKind.Construct) {
+            handle = convertReturn(handle, converter);
+        } else {
+            handle = convertConstructReturn(handle, converter);
+        }
         handle = catchExceptions(handle, converter);
         handle = toCanonical(handle, fixedArguments, varargs, null);
         if (!callerContext) {
@@ -1161,7 +1221,7 @@ public final class Properties {
             assert handle.type().parameterType(0) == ExecutionContext.class;
             assert handle.type().parameterType(1) == Constructor.class;
             assert handle.type().parameterType(2) == Object[].class;
-            assert handle.type().returnType() == Object.class;
+            assert handle.type().returnType() == ScriptObject.class;
         }
 
         return handle;
@@ -1180,17 +1240,19 @@ public final class Properties {
         return type.parameterCount() > 1 && ExecutionContext.class.equals(type.parameterType(1));
     }
 
-    private static MethodHandle convertThis(MethodHandle handle, Converter converter) {
-        if (handle.type().parameterCount() == 0) {
-            handle = MethodHandles.dropArguments(handle, 0, Object.class);
-        } else if (handle.type().parameterType(0) != Object.class) {
-            handle = MethodHandles.filterArguments(handle, 0,
-                    converter.filterFor(handle.type().parameterType(0)));
+    private static MethodHandle convertThis(MethodHandle handle, boolean callerContext,
+            Converter converter) {
+        int thisArgument = callerContext ? 1 : 0;
+        if (handle.type().parameterCount() == thisArgument) {
+            handle = MethodHandles.dropArguments(handle, thisArgument, Object.class);
+        } else if (handle.type().parameterType(thisArgument) != Object.class) {
+            handle = MethodHandles.filterArguments(handle, thisArgument,
+                    converter.filterFor(handle.type().parameterType(thisArgument)));
         }
         return handle;
     }
 
-    private static MethodHandle convertArgumentsAndReturn(MethodHandle handle, int fixedArguments,
+    private static MethodHandle convertArguments(MethodHandle handle, int fixedArguments,
             boolean varargs, Converter converter) {
         MethodType type = handle.type();
         int pcount = type.parameterCount();
@@ -1204,8 +1266,15 @@ public final class Properties {
             filters[pcount - 1] = converter.arrayFilterFor(params[pcount - 1]);
         }
         handle = MethodHandles.filterArguments(handle, 0, filters);
-        handle = converter.returnHandle(handle, type.returnType());
         return handle;
+    }
+
+    private static MethodHandle convertReturn(MethodHandle handle, Converter converter) {
+        return converter.returnHandle(handle, handle.type().returnType());
+    }
+
+    private static MethodHandle convertConstructReturn(MethodHandle handle, Converter converter) {
+        return converter.constructReturnHandle(handle, handle.type().returnType());
     }
 
     private static MethodHandle catchExceptions(MethodHandle handle, Converter converter) {
@@ -1468,7 +1537,7 @@ public final class Properties {
         } else {
             fun = target.lookupOwnProperty(((BuiltinSymbol) propertyKey).get());
         }
-        assert fun != null;
+        assert fun != null : "property not found: " + propertyKey;
         defineProperty(target, layout, valueProperty(layout, fun.getValue()));
     }
 

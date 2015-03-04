@@ -32,7 +32,6 @@ import com.github.anba.es6draft.runtime.modules.MalformedNameException;
 import com.github.anba.es6draft.runtime.modules.ModuleExport;
 import com.github.anba.es6draft.runtime.modules.ModuleRecord;
 import com.github.anba.es6draft.runtime.modules.ResolutionException;
-import com.github.anba.es6draft.runtime.modules.SourceTextModuleRecord;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Property;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
@@ -250,7 +249,7 @@ public final class ModuleNamespaceObject extends OrdinaryObject {
         /* step 8 */
         assert binding != null && !binding.isAmbiguous();
         /* step 9 */
-        SourceTextModuleRecord targetModule = binding.getModule();
+        ModuleRecord targetModule = binding.getModule();
         /* step 10 */
         assert targetModule != null;
         /* step 11 */

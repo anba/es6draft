@@ -20,7 +20,6 @@ import static com.github.anba.es6draft.runtime.objects.binary.TypedArrayConstruc
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 
@@ -36,13 +35,13 @@ import com.github.anba.es6draft.runtime.internal.Properties.Optional;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.objects.ArrayIteratorPrototype.ArrayIterationKind;
-import com.github.anba.es6draft.runtime.objects.ArrayPrototype;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
+import com.github.anba.es6draft.runtime.types.builtins.NativeFunction;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
@@ -66,6 +65,17 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
     @Override
     public void initialize(Realm realm) {
         createProperties(realm, this, Properties.class);
+    }
+
+    /**
+     * Marker class for {@code %TypedArray%.prototype.values}.
+     */
+    private static final class TypedArrayPrototypeValues {
+    }
+
+    public static boolean isBuiltinValues(Object next) {
+        return next instanceof NativeFunction
+                && ((NativeFunction) next).getId() == TypedArrayPrototypeValues.class;
     }
 
     /**
@@ -103,8 +113,7 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
          * @param thisValue
          * @return
          */
-        private static TypedArrayObject thisTypedArrayObjectChecked(ExecutionContext cx,
-                Object thisValue) {
+        private static TypedArrayObject ValidateTypedArray(ExecutionContext cx, Object thisValue) {
             /* steps 1-3 */
             if (!(thisValue instanceof TypedArrayObject)) {
                 throw newTypeError(cx, Messages.Key.IncompatibleObject);
@@ -446,9 +455,31 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
         @Function(name = "toLocaleString", arity = 0)
         public static Object toLocaleString(ExecutionContext cx, Object thisValue, Object locales,
                 Object options) {
-            TypedArrayObject array = thisTypedArrayObjectChecked(cx, thisValue);
+            // 22.1.3.26 Array.prototype.toLocaleString ( [ reserved1 [ , reserved2 ] ] )<br>
+            // 13.4.1 Array.prototype.toLocaleString([locales [, options ]])
+            /* steps 1-2 */
+            TypedArrayObject array = ValidateTypedArray(cx, thisValue);
+            /* steps 3-4 */
             long len = array.getArrayLength();
-            return ArrayPrototype.Properties.toLocaleString(cx, array, len, locales, options);
+            /* step 5 */
+            String separator = cx.getRealm().getListSeparator();
+            /* step 6 */
+            if (len == 0) {
+                return "";
+            }
+            /* steps 7-8 */
+            Double firstElement = array.elementGetDirect(cx, 0);
+            /* steps 9-10 */
+            StringBuilder r = new StringBuilder();
+            r.append(ToString(cx, Invoke(cx, firstElement, "toLocaleString", locales, options)));
+            /* steps 11-12 */
+            for (long k = 1; k < len; ++k) {
+                Double nextElement = array.elementGetDirect(cx, k);
+                r.append(separator).append(
+                        ToString(cx, Invoke(cx, nextElement, "toLocaleString", locales, options)));
+            }
+            /* step 13 */
+            return r.toString();
         }
 
         /**
@@ -464,9 +495,33 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
          */
         @Function(name = "join", arity = 1)
         public static Object join(ExecutionContext cx, Object thisValue, Object separator) {
-            TypedArrayObject array = thisTypedArrayObjectChecked(cx, thisValue);
-            long len = array.getArrayLength();
-            return ArrayPrototype.Properties.join(cx, array, len, separator);
+            // 22.1.3.12 Array.prototype.join (separator)
+            /* steps 1-2 */
+            TypedArrayObject o = ValidateTypedArray(cx, thisValue);
+            /* steps 3-4 */
+            long len = o.getArrayLength();
+            /* step 5 */
+            if (Type.isUndefined(separator)) {
+                separator = ",";
+            }
+            /* steps 6-7 */
+            String sep = ToFlatString(cx, separator);
+            /* step 8 */
+            if (len == 0) {
+                return "";
+            }
+            /* step 9 */
+            double element0 = o.elementGetDirect(cx, 0);
+            /* steps 10-11 */
+            StringBuilder r = new StringBuilder();
+            r.append(ToString(element0));
+            /* steps 12-13 */
+            for (long k = 1; k < len; ++k) {
+                double element = o.elementGetDirect(cx, k);
+                r.append(sep).append(ToString(element));
+            }
+            /* step 14 */
+            return r.toString();
         }
 
         /**
@@ -480,9 +535,26 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
          */
         @Function(name = "reverse", arity = 0)
         public static Object reverse(ExecutionContext cx, Object thisValue) {
-            TypedArrayObject array = thisTypedArrayObjectChecked(cx, thisValue);
-            long len = array.getArrayLength();
-            return ArrayPrototype.Properties.reverse(cx, array, len);
+            // 22.1.3.20 Array.prototype.reverse ( )
+            /* steps 1-2 */
+            TypedArrayObject o = ValidateTypedArray(cx, thisValue);
+            /* steps 3-4 */
+            long len = o.getArrayLength();
+            /* step 5 */
+            final long middle = len / 2L;
+            /* steps 6-7 */
+            for (long lower = 0; lower != middle; ++lower) {
+                long upper = len - lower - 1;
+                long upperP = upper;
+                long lowerP = lower;
+                double lowerValue = o.elementGetDirect(cx, lowerP);
+                double upperValue = o.elementGetDirect(cx, upperP);
+
+                o.elementSetDirect(cx, lowerP, upperValue);
+                o.elementSetDirect(cx, upperP, lowerValue);
+            }
+            /* step 8 */
+            return o;
         }
 
         /**
@@ -501,7 +573,7 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
         @Function(name = "slice", arity = 2)
         public static Object slice(ExecutionContext cx, Object thisValue, Object start, Object end) {
             /* steps 1-3 */
-            TypedArrayObject o = thisTypedArrayObjectChecked(cx, thisValue);
+            TypedArrayObject o = ValidateTypedArray(cx, thisValue);
             /* step 4 */
             long len = o.getArrayLength();
             /* steps 5-7 */
@@ -529,9 +601,9 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
                     /* step 20.b.i */
                     long pk = k;
                     /* step 20.b.ii-iii */
-                    Object kvalue = Get(cx, o, pk);
+                    double kvalue = o.elementGetDirect(cx, pk);
                     /* step 20.b.iv-v */
-                    Set(cx, a, n, kvalue, true);
+                    a.elementSetDirect(cx, n, kvalue);
                 }
             } else {
                 /* step 21 */
@@ -591,15 +663,6 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
             }
         }
 
-        private static Double[] toDoubleArray(double[] elements) {
-            int length = elements.length;
-            Double[] array = new Double[length];
-            for (int i = 0; i < length; ++i) {
-                array[i] = elements[i];
-            }
-            return array;
-        }
-
         /**
          * 22.2.3.26 %TypedArray%.prototype.sort ( comparefn )
          * 
@@ -614,7 +677,7 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
         @Function(name = "sort", arity = 1)
         public static Object sort(ExecutionContext cx, Object thisValue, Object comparefn) {
             /* steps 1-3 */
-            TypedArrayObject obj = thisTypedArrayObjectChecked(cx, thisValue);
+            TypedArrayObject obj = ValidateTypedArray(cx, thisValue);
             /* step 4 */
             long len = obj.getArrayLength();
 
@@ -626,41 +689,41 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
             if (len > Integer.MAX_VALUE) {
                 throw newInternalError(cx, Messages.Key.OutOfMemory);
             }
-
-            // collect elements
             int length = (int) len;
-            double[] elements = new double[length];
-            for (int i = 0; i < length; ++i) {
-                int index = i;
-                Object e = Get(cx, obj, index);
-                assert Type.isNumber(e);
-                elements[i] = Type.numberValue(e);
-            }
 
-            Double[] array;
             if (!Type.isUndefined(comparefn)) {
                 if (!IsCallable(comparefn)) {
                     throw newTypeError(cx, Messages.Key.NotCallable);
                 }
+                Double[] elements = new Double[length];
+                for (int i = 0; i < length; ++i) {
+                    elements[i] = obj.elementGetDirect(cx, i);
+                }
+
                 Comparator<Double> comparator = new FunctionComparator(cx, (Callable) comparefn,
                         obj.getBuffer());
-                array = toDoubleArray(elements);
                 try {
-                    Arrays.sort(array, comparator);
+                    Arrays.sort(elements, comparator);
                 } catch (IllegalArgumentException e) {
                     // `IllegalArgumentException: Comparison method violates its general contract!`
                     // just ignore this exception...
                 }
+
+                for (int i = 0; i < length; ++i) {
+                    obj.elementSetDirect(cx, i, (double) elements[i]);
+                }
             } else {
+                double[] elements = new double[length];
+                for (int i = 0; i < length; ++i) {
+                    elements[i] = obj.elementGetDirect(cx, i);
+                }
+
                 Arrays.sort(elements);
-                array = toDoubleArray(elements);
-            }
 
-            for (int i = 0; i < length; ++i) {
-                int p = i;
-                Set(cx, obj, p, array[i], true);
+                for (int i = 0; i < length; ++i) {
+                    obj.elementSetDirect(cx, i, elements[i]);
+                }
             }
-
             return obj;
         }
 
@@ -680,9 +743,52 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
         @Function(name = "indexOf", arity = 1)
         public static Object indexOf(ExecutionContext cx, Object thisValue, Object searchElement,
                 @Optional(Optional.Default.NONE) Object fromIndex) {
-            TypedArrayObject array = thisTypedArrayObjectChecked(cx, thisValue);
-            long len = array.getArrayLength();
-            return ArrayPrototype.Properties.indexOf(cx, array, len, searchElement, fromIndex);
+            // 22.1.3.11 Array.prototype.indexOf ( searchElement [ , fromIndex ] )
+            /* steps 1-2 */
+            TypedArrayObject o = ValidateTypedArray(cx, thisValue);
+            /* steps 3-4 */
+            long len = o.getArrayLength();
+            /* step 5 */
+            if (len == 0) {
+                return -1;
+            }
+            /* steps 6-7 */
+            long n;
+            if (fromIndex != null) {
+                n = (long) ToInteger(cx, fromIndex);
+            } else {
+                n = 0;
+            }
+            /* step 8 */
+            if (n >= len) {
+                return -1;
+            }
+            /* steps 9-10 */
+            long k;
+            if (n >= 0) {
+                k = n;
+            } else {
+                k = len - Math.abs(n);
+                if (k < 0) {
+                    k = 0;
+                }
+            }
+            /* step 11 */
+            if (Type.isNumber(searchElement) && !Double.isNaN(Type.numberValue(searchElement))) {
+                double needle = Type.numberValue(searchElement);
+                for (; k < len; ++k) {
+                    long pk = k;
+                    double elementk = o.elementGetDirect(cx, pk);
+                    boolean same = needle == elementk; // StrictEqualityComparison
+                    if (same) {
+                        return k;
+                    }
+                }
+            } else if (k < len && IsDetachedBuffer(o.getBuffer())) {
+                throw newTypeError(cx, Messages.Key.BufferDetached);
+            }
+            /* step 12 */
+            return -1;
         }
 
         /**
@@ -701,9 +807,45 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
         @Function(name = "lastIndexOf", arity = 1)
         public static Object lastIndexOf(ExecutionContext cx, Object thisValue,
                 Object searchElement, @Optional(Optional.Default.NONE) Object fromIndex) {
-            TypedArrayObject array = thisTypedArrayObjectChecked(cx, thisValue);
-            long len = array.getArrayLength();
-            return ArrayPrototype.Properties.lastIndexOf(cx, array, len, searchElement, fromIndex);
+            // 22.1.3.14 Array.prototype.lastIndexOf ( searchElement [ , fromIndex ] )
+            /* steps 1-2 */
+            TypedArrayObject o = ValidateTypedArray(cx, thisValue);
+            /* steps 3-4 */
+            long len = o.getArrayLength();
+            /* step 5 */
+            if (len == 0) {
+                return -1;
+            }
+            /* steps 6-7 */
+            long n;
+            if (fromIndex != null) {
+                n = (long) ToInteger(cx, fromIndex);
+            } else {
+                n = len - 1;
+            }
+            /* steps 8-9 */
+            long k;
+            if (n >= 0) {
+                k = Math.min(n, len - 1);
+            } else {
+                k = len - Math.abs(n);
+            }
+            /* step 10 */
+            if (Type.isNumber(searchElement) && !Double.isNaN(Type.numberValue(searchElement))) {
+                double needle = Type.numberValue(searchElement);
+                for (; k >= 0; --k) {
+                    long pk = k;
+                    double elementk = o.elementGetDirect(cx, pk);
+                    boolean same = needle == elementk; // StrictEqualityComparison
+                    if (same) {
+                        return k;
+                    }
+                }
+            } else if (k >= 0 && IsDetachedBuffer(o.getBuffer())) {
+                throw newTypeError(cx, Messages.Key.BufferDetached);
+            }
+            /* step 11 */
+            return -1;
         }
 
         /**
@@ -722,9 +864,28 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
         @Function(name = "every", arity = 1)
         public static Object every(ExecutionContext cx, Object thisValue, Object callbackfn,
                 Object thisArg) {
-            TypedArrayObject array = thisTypedArrayObjectChecked(cx, thisValue);
-            long len = array.getArrayLength();
-            return ArrayPrototype.Properties.every(cx, array, len, callbackfn, thisArg);
+            // 22.1.3.5 Array.prototype.every
+            /* steps 1-2 */
+            TypedArrayObject o = ValidateTypedArray(cx, thisValue);
+            /* steps 3-4 */
+            long len = o.getArrayLength();
+            /* step 5 */
+            if (!IsCallable(callbackfn)) {
+                throw newTypeError(cx, Messages.Key.NotCallable);
+            }
+            Callable callback = (Callable) callbackfn;
+            /* step 6 (omitted) */
+            /* steps 7-8 */
+            for (long k = 0; k < len; ++k) {
+                long pk = k;
+                Double kvalue = o.elementGetDirect(cx, pk);
+                boolean testResult = ToBoolean(callback.call(cx, thisArg, kvalue, k, o));
+                if (!testResult) {
+                    return false;
+                }
+            }
+            /* step 9 */
+            return true;
         }
 
         /**
@@ -743,9 +904,28 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
         @Function(name = "some", arity = 1)
         public static Object some(ExecutionContext cx, Object thisValue, Object callbackfn,
                 Object thisArg) {
-            TypedArrayObject array = thisTypedArrayObjectChecked(cx, thisValue);
-            long len = array.getArrayLength();
-            return ArrayPrototype.Properties.some(cx, array, len, callbackfn, thisArg);
+            // 22.1.3.23 Array.prototype.some ( callbackfn [ , thisArg ] )
+            /* steps 1-2 */
+            TypedArrayObject o = ValidateTypedArray(cx, thisValue);
+            /* steps 3-4 */
+            long len = o.getArrayLength();
+            /* step 5 */
+            if (!IsCallable(callbackfn)) {
+                throw newTypeError(cx, Messages.Key.NotCallable);
+            }
+            Callable callback = (Callable) callbackfn;
+            /* step 6 (omitted) */
+            /* steps 7-8 */
+            for (long k = 0; k < len; ++k) {
+                long pk = k;
+                Double kvalue = o.elementGetDirect(cx, pk);
+                boolean testResult = ToBoolean(callback.call(cx, thisArg, kvalue, k, o));
+                if (testResult) {
+                    return true;
+                }
+            }
+            /* step 9 */
+            return false;
         }
 
         /**
@@ -764,9 +944,25 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
         @Function(name = "forEach", arity = 1)
         public static Object forEach(ExecutionContext cx, Object thisValue, Object callbackfn,
                 Object thisArg) {
-            TypedArrayObject array = thisTypedArrayObjectChecked(cx, thisValue);
-            long len = array.getArrayLength();
-            return ArrayPrototype.Properties.forEach(cx, array, len, callbackfn, thisArg);
+            // 22.1.3.10 Array.prototype.forEach ( callbackfn [ , thisArg ] )
+            /* steps 1-2 */
+            TypedArrayObject o = ValidateTypedArray(cx, thisValue);
+            /* steps 3-4 */
+            long len = o.getArrayLength();
+            /* step 5 */
+            if (!IsCallable(callbackfn)) {
+                throw newTypeError(cx, Messages.Key.NotCallable);
+            }
+            Callable callback = (Callable) callbackfn;
+            /* step 6 (omitted) */
+            /* steps 7-8 */
+            for (long k = 0; k < len; ++k) {
+                long pk = k;
+                Double kvalue = o.elementGetDirect(cx, pk);
+                callback.call(cx, thisArg, kvalue, k, o);
+            }
+            /* step 9 */
+            return UNDEFINED;
         }
 
         /**
@@ -786,7 +982,7 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
         public static Object map(ExecutionContext cx, Object thisValue, Object callbackfn,
                 Object thisArg) {
             /* steps 1-3 */
-            TypedArrayObject o = thisTypedArrayObjectChecked(cx, thisValue);
+            TypedArrayObject o = ValidateTypedArray(cx, thisValue);
             /* step 4 */
             long len = o.getArrayLength();
             /* step 5 */
@@ -804,9 +1000,9 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
             /* steps 12-13 */
             for (long k = 0; k < len; ++k) {
                 long pk = k;
-                Object kvalue = Get(cx, o, pk);
+                Double kvalue = o.elementGetDirect(cx, pk);
                 Object mappedValue = callback.call(cx, thisArg, kvalue, k, o);
-                Set(cx, a, pk, mappedValue, true);
+                a.elementSetDirect(cx, pk, ToNumber(cx, mappedValue));
             }
             /* step 14 */
             return a;
@@ -829,7 +1025,7 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
         public static Object filter(ExecutionContext cx, Object thisValue, Object callbackfn,
                 Object thisArg) {
             /* steps 1-3 */
-            TypedArrayObject o = thisTypedArrayObjectChecked(cx, thisValue);
+            TypedArrayObject o = ValidateTypedArray(cx, thisValue);
             /* step 4 */
             long len = o.getArrayLength();
             /* step 5 */
@@ -843,22 +1039,26 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
             /* steps 8-9 */
             Constructor c = SpeciesConstructor(cx, o, defaultConstructor);
             /* steps 10, 12 */
-            ArrayList<Object> kept = new ArrayList<>();
+            int keptIndex = 0;
+            double[] kept = new double[(int) Math.min(len, 1024)];
             /* steps 11, 13 */
             for (long k = 0; k < len; ++k) {
                 long pk = k;
-                Object kvalue = Get(cx, o, pk);
+                double kvalue = o.elementGetDirect(cx, pk);
                 boolean selected = ToBoolean(callback.call(cx, thisArg, kvalue, k, o));
                 if (selected) {
-                    kept.add(kvalue);
+                    if (keptIndex == kept.length) {
+                        kept = Arrays.copyOf(kept, keptIndex + (keptIndex >> 1));
+                    }
+                    kept[keptIndex++] = kvalue;
                 }
             }
             /* steps 14-15 */
-            TypedArrayObject a = AllocateTypedArray(cx, c, kept.size());
+            TypedArrayObject a = AllocateTypedArray(cx, c, keptIndex);
             /* steps 16-17 */
-            for (int n = 0; n < kept.size(); ++n) {
-                Object e = kept.get(n);
-                Set(cx, a, n, e, true);
+            for (int n = 0; n < keptIndex; ++n) {
+                double e = kept[n];
+                a.elementSetDirect(cx, n, e);
             }
             /* step 18 */
             return a;
@@ -880,9 +1080,37 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
         @Function(name = "reduce", arity = 1)
         public static Object reduce(ExecutionContext cx, Object thisValue, Object callbackfn,
                 @Optional(Optional.Default.NONE) Object initialValue) {
-            TypedArrayObject array = thisTypedArrayObjectChecked(cx, thisValue);
-            long len = array.getArrayLength();
-            return ArrayPrototype.Properties.reduce(cx, array, len, callbackfn, initialValue);
+            // 22.1.3.18 Array.prototype.reduce ( callbackfn [ , initialValue ] )
+            /* steps 1-2 */
+            TypedArrayObject o = ValidateTypedArray(cx, thisValue);
+            /* steps 3-4 */
+            long len = o.getArrayLength();
+            /* step 5 */
+            if (!IsCallable(callbackfn)) {
+                throw newTypeError(cx, Messages.Key.NotCallable);
+            }
+            Callable callback = (Callable) callbackfn;
+            /* step 6 */
+            if (len == 0 && initialValue == null) {
+                throw newTypeError(cx, Messages.Key.ReduceInitialValue);
+            }
+            /* step 7 */
+            long k = 0;
+            /* steps 8-9 */
+            Object accumulator;
+            if (initialValue != null) {
+                accumulator = initialValue;
+            } else {
+                accumulator = o.elementGetDirect(cx, k++);
+            }
+            /* step 10 */
+            for (; k < len; ++k) {
+                long pk = k;
+                Double kvalue = o.elementGetDirect(cx, pk);
+                accumulator = callback.call(cx, UNDEFINED, accumulator, kvalue, k, o);
+            }
+            /* step 11 */
+            return accumulator;
         }
 
         /**
@@ -901,9 +1129,37 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
         @Function(name = "reduceRight", arity = 1)
         public static Object reduceRight(ExecutionContext cx, Object thisValue, Object callbackfn,
                 @Optional(Optional.Default.NONE) Object initialValue) {
-            TypedArrayObject array = thisTypedArrayObjectChecked(cx, thisValue);
-            long len = array.getArrayLength();
-            return ArrayPrototype.Properties.reduceRight(cx, array, len, callbackfn, initialValue);
+            // 22.1.3.19 Array.prototype.reduceRight ( callbackfn [ , initialValue ] )
+            /* steps 1-2 */
+            TypedArrayObject o = ValidateTypedArray(cx, thisValue);
+            /* steps 3-4 */
+            long len = o.getArrayLength();
+            /* step 5 */
+            if (!IsCallable(callbackfn)) {
+                throw newTypeError(cx, Messages.Key.NotCallable);
+            }
+            Callable callback = (Callable) callbackfn;
+            /* step 6 */
+            if (len == 0 && initialValue == null) {
+                throw newTypeError(cx, Messages.Key.ReduceInitialValue);
+            }
+            /* step 7 */
+            long k = len - 1;
+            /* steps 8-9 */
+            Object accumulator;
+            if (initialValue != null) {
+                accumulator = initialValue;
+            } else {
+                accumulator = o.elementGetDirect(cx, k--);
+            }
+            /* step 10 */
+            for (; k >= 0; --k) {
+                long pk = k;
+                Double kvalue = o.elementGetDirect(cx, pk);
+                accumulator = callback.call(cx, UNDEFINED, accumulator, kvalue, k, o);
+            }
+            /* step 11 */
+            return accumulator;
         }
 
         /**
@@ -922,9 +1178,28 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
         @Function(name = "find", arity = 1)
         public static Object find(ExecutionContext cx, Object thisValue, Object predicate,
                 Object thisArg) {
-            TypedArrayObject array = thisTypedArrayObjectChecked(cx, thisValue);
-            long len = array.getArrayLength();
-            return ArrayPrototype.Properties.find(cx, array, len, predicate, thisArg);
+            // 22.1.3.8 Array.prototype.find ( predicate [ , thisArg ] )
+            /* steps 1-2 */
+            TypedArrayObject o = ValidateTypedArray(cx, thisValue);
+            /* steps 3-4 */
+            long len = o.getArrayLength();
+            /* step 5 */
+            if (!IsCallable(predicate)) {
+                throw newTypeError(cx, Messages.Key.NotCallable);
+            }
+            Callable pred = (Callable) predicate;
+            /* step 6 (omitted) */
+            /* steps 7-8 */
+            for (long k = 0; k < len; ++k) {
+                long pk = k;
+                Double kvalue = o.elementGetDirect(cx, pk);
+                boolean testResult = ToBoolean(pred.call(cx, thisArg, kvalue, k, o));
+                if (testResult) {
+                    return kvalue;
+                }
+            }
+            /* step 9 */
+            return UNDEFINED;
         }
 
         /**
@@ -943,9 +1218,28 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
         @Function(name = "findIndex", arity = 1)
         public static Object findIndex(ExecutionContext cx, Object thisValue, Object predicate,
                 Object thisArg) {
-            TypedArrayObject array = thisTypedArrayObjectChecked(cx, thisValue);
-            long len = array.getArrayLength();
-            return ArrayPrototype.Properties.findIndex(cx, array, len, predicate, thisArg);
+            // 22.1.3.9 Array.prototype.findIndex ( predicate [ , thisArg ] )
+            /* steps 1-2 */
+            TypedArrayObject o = ValidateTypedArray(cx, thisValue);
+            /* steps 3-4 */
+            long len = o.getArrayLength();
+            /* step 5 */
+            if (!IsCallable(predicate)) {
+                throw newTypeError(cx, Messages.Key.NotCallable);
+            }
+            Callable pred = (Callable) predicate;
+            /* step 6 (omitted) */
+            /* steps 7-8 */
+            for (long k = 0; k < len; ++k) {
+                long pk = k;
+                Double kvalue = o.elementGetDirect(cx, pk);
+                boolean testResult = ToBoolean(pred.call(cx, thisArg, kvalue, k, o));
+                if (testResult) {
+                    return k;
+                }
+            }
+            /* step 9 */
+            return -1;
         }
 
         /**
@@ -966,9 +1260,22 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
         @Function(name = "fill", arity = 1)
         public static Object fill(ExecutionContext cx, Object thisValue, Object value,
                 Object start, Object end) {
-            TypedArrayObject array = thisTypedArrayObjectChecked(cx, thisValue);
-            long len = array.getArrayLength();
-            return ArrayPrototype.Properties.fill(cx, array, len, value, start, end);
+            // 22.1.3.6 Array.prototype.fill (value [ , start [ , end ] ] )
+            /* steps 1-2 */
+            TypedArrayObject o = ValidateTypedArray(cx, thisValue);
+            /* steps 3-4 */
+            long len = o.getArrayLength();
+            /* steps 5-7 */
+            long k = ToArrayIndex(cx, start, len);
+            /* steps 8-10 */
+            long finall = Type.isUndefined(end) ? len : ToArrayIndex(cx, end, len);
+            /* step 11 */
+            for (; k < finall; ++k) {
+                long pk = k;
+                o.elementSetDirect(cx, pk, ToNumber(cx, value));
+            }
+            /* step 12 */
+            return o;
         }
 
         /**
@@ -990,9 +1297,9 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
         public static Object copyWithin(ExecutionContext cx, Object thisValue, Object target,
                 Object start, Object end) {
             /* steps 1-2 */
-            TypedArrayObject array = thisTypedArrayObjectChecked(cx, thisValue);
+            TypedArrayObject o = ValidateTypedArray(cx, thisValue);
             /* steps 3-4 */
-            long len = array.getArrayLength();
+            long len = o.getArrayLength();
             /* steps 5-7 */
             long to = ToArrayIndex(cx, target, len);
             /* steps 8-10 */
@@ -1003,11 +1310,11 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
             long count = Math.min(finall - from, len - to);
             /* steps 15-17 */
             if (count > 0) {
-                ArrayBufferObject buffer = array.getBuffer();
+                ArrayBufferObject buffer = o.getBuffer();
                 if (IsDetachedBuffer(buffer)) {
                     throw newTypeError(cx, Messages.Key.BufferDetached);
                 }
-                int elementSize = array.getElementType().size();
+                int elementSize = o.getElementType().size();
                 long toByteIndex = to * elementSize;
                 long fromByteIndex = from * elementSize;
                 long countByteLength = count * elementSize;
@@ -1021,7 +1328,7 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
                 data.put(dup).clear();
             }
             /* step 18 */
-            return array;
+            return o;
         }
 
         /**
@@ -1036,9 +1343,9 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
         @Function(name = "entries", arity = 0)
         public static Object entries(ExecutionContext cx, Object thisValue) {
             /* steps 1-3 */
-            TypedArrayObject array = thisTypedArrayObjectChecked(cx, thisValue);
+            TypedArrayObject o = ValidateTypedArray(cx, thisValue);
             /* step 4 */
-            return CreateArrayIterator(cx, array, ArrayIterationKind.KeyValue);
+            return CreateArrayIterator(cx, o, ArrayIterationKind.KeyValue);
         }
 
         /**
@@ -1053,9 +1360,9 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
         @Function(name = "keys", arity = 0)
         public static Object keys(ExecutionContext cx, Object thisValue) {
             /* steps 1-3 */
-            TypedArrayObject array = thisTypedArrayObjectChecked(cx, thisValue);
+            TypedArrayObject o = ValidateTypedArray(cx, thisValue);
             /* step 4 */
-            return CreateArrayIterator(cx, array, ArrayIterationKind.Key);
+            return CreateArrayIterator(cx, o, ArrayIterationKind.Key);
         }
 
         /**
@@ -1068,13 +1375,13 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
          *            the function this-value
          * @return the values iterator
          */
-        @Function(name = "values", arity = 0)
+        @Function(name = "values", arity = 0, nativeId = TypedArrayPrototypeValues.class)
         @AliasFunction(name = "[Symbol.iterator]", symbol = BuiltinSymbol.iterator)
         public static Object values(ExecutionContext cx, Object thisValue) {
             /* steps 1-3 */
-            TypedArrayObject array = thisTypedArrayObjectChecked(cx, thisValue);
+            TypedArrayObject o = ValidateTypedArray(cx, thisValue);
             /* step 4 */
-            return CreateArrayIterator(cx, array, ArrayIterationKind.Value);
+            return CreateArrayIterator(cx, o, ArrayIterationKind.Value);
         }
 
         /**

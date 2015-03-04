@@ -37,7 +37,7 @@ public interface ModuleRecord {
     /**
      * [[Environment]]
      * 
-     * @return the lexical environment or {@code null}
+     * @return the lexical environment of this module or {@code null} if not instantiated
      */
     LexicalEnvironment<ModuleEnvironmentRecord> getEnvironment();
 
@@ -65,6 +65,13 @@ public interface ModuleRecord {
      * @return {@code true} if module evaluation has started
      */
     boolean isEvaluated();
+
+    /**
+     * Returns {@code true} if the module is instantiated.
+     * 
+     * @return {@code true} if the module is instantiated
+     */
+    boolean isInstantiated();
 
     /**
      * GetExportedNames(exportStarSet)

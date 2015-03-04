@@ -3722,6 +3722,7 @@ public final class Parser {
      * @return the class methods in source order
      */
     private List<MethodDefinition> classBody(BindingIdentifier className, boolean hasExtends) {
+        int beginLine = ts.getLine();
         InlineArrayList<MethodDefinition> methods = newList();
         InlineArrayList<MethodDefinition> staticMethods = newList();
         InlineArrayList<MethodDefinition> prototypeMethods = newList();
@@ -3748,7 +3749,32 @@ public final class Parser {
         classBody_EarlyErrors(staticMethods, true);
         classBody_EarlyErrors(prototypeMethods, false);
 
+        if (ConstructorMethod(prototypeMethods) == null) {
+            MethodDefinition constructor = createSyntheticClassConstructor(beginLine, hasExtends);
+            if (className != null) {
+                constructor.setClassName(className.getName().getIdentifier());
+            }
+            methods.add(constructor);
+        }
+
         return methods;
+    }
+
+    private MethodDefinition createSyntheticClassConstructor(int beginLine, boolean hasExtends) {
+        String sourceText;
+        if (hasExtends) {
+            sourceText = "constructor(...args){super(...args);}";
+        } else {
+            sourceText = "constructor(){}";
+        }
+        TokenStream tokenStream = ts;
+        TokenStream syntheticStream = new TokenStream(this, new TokenStreamInput(sourceText));
+        try {
+            ts = syntheticStream.initialize(beginLine);
+            return methodDefinition(MethodAllocation.Prototype, hasExtends);
+        } finally {
+            ts = tokenStream;
+        }
     }
 
     /**

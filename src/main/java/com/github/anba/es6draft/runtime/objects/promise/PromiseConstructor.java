@@ -9,7 +9,6 @@ package com.github.anba.es6draft.runtime.objects.promise;
 import static com.github.anba.es6draft.runtime.AbstractOperations.*;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
-import static com.github.anba.es6draft.runtime.objects.internal.ListIterator.FromScriptIterator;
 import static com.github.anba.es6draft.runtime.objects.promise.PromiseAbstractOperations.CreateResolvingFunctions;
 import static com.github.anba.es6draft.runtime.objects.promise.PromiseAbstractOperations.GetPromiseAllocator;
 import static com.github.anba.es6draft.runtime.objects.promise.PromiseAbstractOperations.IsPromise;
@@ -176,7 +175,7 @@ public final class PromiseConstructor extends BuiltinConstructor implements Init
             /* step 8 */
             ScriptIterator<?> iterator;
             try {
-                iterator = FromScriptIterator(cx, GetIterator(cx, iterable));
+                iterator = GetScriptIterator(cx, iterable);
             } catch (ScriptException e) {
                 /* step 9 */
                 return IfAbruptRejectPromise(cx, e, promiseCapability);
@@ -214,7 +213,7 @@ public final class PromiseConstructor extends BuiltinConstructor implements Init
             /* step 8 */
             ScriptIterator<?> iterator;
             try {
-                iterator = FromScriptIterator(cx, GetIterator(cx, iterable));
+                iterator = GetScriptIterator(cx, iterable);
             } catch (ScriptException e) {
                 /* step 9 */
                 return IfAbruptRejectPromise(cx, e, promiseCapability);
