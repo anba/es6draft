@@ -293,6 +293,34 @@
         </plugins>
       </build>
     </profile>
+    <!-- Profile for shippable -->
+    <profile>
+      <id>shippable</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>surefire-test</id>
+                <configuration>
+                  <excludes>
+                    <exclude>**/mozilla/*</exclude>
+                    <exclude>**/test262/*</exclude>
+                    <exclude>**/traceur/*</exclude>
+                    <exclude>**/v8/*</exclude>
+                    <exclude>**/webkit/*</exclude>
+                  </excludes>
+                  <redirectTestOutputToFile>true</redirectTestOutputToFile>
+                  <reportsDirectory>shippable/testresults</reportsDirectory>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
   </profiles>
 
   <build>
