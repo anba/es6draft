@@ -1286,6 +1286,7 @@ public final class Properties {
 
     private static MethodHandle toCanonical(MethodHandle handle, int fixedArguments,
             boolean varargs, Method method) {
+        assert !handle.isVarargsCollector();
         MethodType type = handle.type();
         int actual = type.parameterCount() - fixedArguments - (varargs ? 1 : 0);
         Object[] defaults = method != null ? methodDefaults(method, fixedArguments, actual) : null;
@@ -1321,24 +1322,36 @@ public final class Properties {
         }
         // Collect remaining arguments into Object[]
         if (!(p + 1 == pcount && Object[].class.equals(params[p]))) {
+            final int fixedArguments = callerContext ? 3 : 2;
+            final boolean varargs = handle.isVarargsCollector();
             // Otherwise all trailing arguments need to be of type Object or Object[]
             for (; p < pcount; ++p) {
                 if (Object.class.equals(params[p])) {
                     continue;
                 }
-                if (p + 1 == pcount && Object[].class.equals(params[p])) {
+                if (p + 1 == pcount && Object[].class.equals(params[p]) && varargs) {
                     continue;
                 }
                 throw new IllegalArgumentException(type.toString());
             }
+            // Trailing Object[] arguments are no longer spread in var-args methods (jdk8u40, jdk9).
+            if (varargs) {
+                handle = handle.asFixedArity();
+            }
             // Convert to (ExecutionContext, Object, ...) -> Object handle
-            final int fixedArguments = callerContext ? 3 : 2;
-            boolean varargs = handle.isVarargsCollector();
             handle = toCanonical(handle, fixedArguments, varargs, method);
         }
         if (!callerContext) {
             handle = MethodHandles.dropArguments(handle, 1, ExecutionContext.class);
         }
+
+        // assert handle.type().parameterCount() == 4;
+        // assert handle.type().parameterType(0) == ExecutionContext.class;
+        // assert handle.type().parameterType(1) == ExecutionContext.class;
+        // assert handle.type().parameterType(2) == Object.class;
+        // assert handle.type().parameterType(3) == Object[].class;
+        // assert handle.type().returnType() == Object.class;
+
         return handle;
     }
 
