@@ -293,6 +293,32 @@
         </plugins>
       </build>
     </profile>
+    <!-- Profile for BuildHive -->
+    <profile>
+      <id>buildhive</id>
+      <properties>
+        <jvm.home>/opt/jdk/jdk1.8.latest</jvm.home>
+      </properties>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-compiler-plugin</artifactId>
+            <configuration>
+              <executable>${jvm.home}/bin/javac</executable>
+              <fork>true</fork>
+            </configuration>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <configuration>
+              <jvm>${jvm.home}/bin/java</jvm>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
   </profiles>
 
   <build>
@@ -539,8 +565,8 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
         <configuration>
-          <source>1.7</source>
-          <target>1.7</target>
+          <source>1.8</source>
+          <target>1.8</target>
           <debug>true</debug>
         </configuration>
       </plugin>
