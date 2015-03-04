@@ -13,10 +13,13 @@ import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.Reader;
 import java.io.StringWriter;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -159,7 +162,17 @@ public final class Repl {
         }
         if (options.fileName != null) {
             // Execute as last script
-            options.evalScripts.add(new EvalPath(options.fileName));
+            if (options.fileName.toString().equals("-")) {
+                // "-" is a short-hand to request reading from System.in
+                if (System.console() == null) {
+                    // System.in is not interactive
+                    options.evalScripts.add(new EvalString(read(System.in)));
+                } else {
+                    options.interactive = true;
+                }
+            } else {
+                options.evalScripts.add(new EvalPath(options.fileName));
+            }
         }
         if (options.evalScripts.isEmpty()) {
             // Default to interactive mode when no files or expressions were set
@@ -314,7 +327,7 @@ public final class Repl {
         @Option(name = "-v", aliases = { "--version" }, usage = "options.version")
         boolean showVersion;
 
-        @Option(name = "-h", aliases = { "--help" }, usage = "options.help")
+        @Option(name = "-h", aliases = { "--help" }, help = true, usage = "options.help")
         boolean showHelp;
 
         @Option(name = "-e", aliases = { "--eval", "--execute" }, metaVar = "meta.string",
@@ -389,9 +402,10 @@ public final class Repl {
         @Option(name = "--promise-rejection", hidden = true, usage = "options.promise_rejection")
         boolean promiseRejection;
 
-        @Option(name = "--xhelp", hidden = true, usage = "options.extended_help")
+        @Option(name = "--xhelp", help = true, hidden = true, usage = "options.extended_help")
         boolean showExtendedHelp;
 
+        @Option(name = "-", handler = StopOptionAndRepeatHandler.class)
         @Argument(index = 0, multiValued = false, metaVar = "meta.file", usage = "options.filename")
         Path fileName = null;
 
@@ -421,6 +435,27 @@ public final class Repl {
         @Override
         public String getDefaultMetaVariable() {
             return "ARGUMENTS";
+        }
+    }
+
+    public static final class StopOptionAndRepeatHandler extends OptionHandler<String> {
+        private final StopOptionHandler stopOptionHandler;
+
+        public StopOptionAndRepeatHandler(CmdLineParser parser, OptionDef option,
+                Setter<String> setter) {
+            super(parser, option, setter);
+            this.stopOptionHandler = new StopOptionHandler(parser, option, setter);
+        }
+
+        @Override
+        public int parseArguments(Parameters params) throws CmdLineException {
+            stopOptionHandler.parseArguments(params);
+            return -1;
+        }
+
+        @Override
+        public String getDefaultMetaVariable() {
+            return "";
         }
     }
 
@@ -474,6 +509,20 @@ public final class Repl {
         @Override
         public Set<String> keySet() {
             return bundle.keySet();
+        }
+    }
+
+    private static String read(InputStream in) {
+        try (Reader reader = new BufferedReader(new InputStreamReader(in, Charset.defaultCharset()))) {
+            StringBuilder sb = new StringBuilder(4096);
+            char cbuf[] = new char[4096];
+            for (int len; (len = reader.read(cbuf)) != -1;) {
+                sb.append(cbuf, 0, len);
+            }
+            return sb.toString();
+        } catch (IOException e) {
+            System.err.println(e);
+            return "";
         }
     }
 

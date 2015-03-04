@@ -90,9 +90,16 @@ fi
 
 JLINE_ENABLED=true
 for opt in "$@" ; do
-  if [[ "$opt" == "--no-jline" ]] ; then
-    JLINE_ENABLED=false
-  fi
+  case "$opt" in
+    --no-jline)
+      echo "no-jline option enabled"
+      JLINE_ENABLED=false
+    ;;
+    -*) ;;
+    # Ignore arguments after double dash or first non-option argument
+    --) break ;;
+    *) break ;;
+  esac
 done
 
 # Configure JLine terminal settings
