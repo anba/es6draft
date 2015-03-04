@@ -8,6 +8,9 @@ package com.github.anba.es6draft.runtime.types.builtins;
 
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -38,6 +41,9 @@ public abstract class BuiltinFunction extends OrdinaryObject implements Callable
 
     // Store default "name" and "length" inline to avoid allocating properties table space.
     private boolean hasDefaultName, hasDefaultLength;
+
+    private MethodHandle callMethod;
+    private Object methodInfo;
 
     /**
      * Creates a new built-in function.
@@ -154,6 +160,41 @@ public abstract class BuiltinFunction extends OrdinaryObject implements Callable
     public final Realm getRealm(ExecutionContext cx) {
         /* 7.3.22 GetFunctionRealm ( obj ) */
         return realm;
+    }
+
+    protected MethodHandles.Lookup lookup() {
+        return MethodHandles.publicLookup();
+    }
+
+    /**
+     * Returns `(? extends BuiltinFunction, ExecutionContext, Object, Object[]) {@literal ->}
+     * Object` method-handle.
+     * 
+     * @return the call method handle
+     */
+    public MethodHandle getCallMethod() {
+        if (callMethod == null) {
+            try {
+                Method method = getClass().getDeclaredMethod("call", ExecutionContext.class,
+                        Object.class, Object[].class);
+                callMethod = lookup().unreflect(method);
+            } catch (ReflectiveOperationException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        return callMethod;
+    }
+
+    /**
+     * Returns the method info object.
+     * 
+     * @return the method info object
+     */
+    public final Object getMethodInfo() {
+        if (methodInfo == null) {
+            methodInfo = new Object();
+        }
+        return methodInfo;
     }
 
     /**

@@ -69,7 +69,7 @@ public final class AsyncAbstractOperations {
     /**
      * Spawn Executor Functions
      */
-    private static final class SpawnExecutor extends BuiltinFunction {
+    public static final class SpawnExecutor extends BuiltinFunction {
         private final GeneratorObject generator;
 
         public SpawnExecutor(Realm realm, GeneratorObject generator) {
@@ -177,7 +177,7 @@ public final class AsyncAbstractOperations {
     /**
      * Call Step Functions
      */
-    private static final class CallStep extends BuiltinFunction {
+    public static final class CallStep extends BuiltinFunction {
         private final AsyncState asyncState;
         private final StepAction action;
 

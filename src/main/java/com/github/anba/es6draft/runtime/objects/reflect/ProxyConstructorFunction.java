@@ -130,7 +130,7 @@ public final class ProxyConstructorFunction extends BuiltinConstructor implement
     /**
      * <h1>26.5.2.1.1 Proxy Revocation Functions</h1>
      */
-    private static final class ProxyRevocationFunction extends BuiltinFunction {
+    public static final class ProxyRevocationFunction extends BuiltinFunction {
         /** [[RevokableProxy]] */
         private Ref<ProxyObject> revokableProxy;
 

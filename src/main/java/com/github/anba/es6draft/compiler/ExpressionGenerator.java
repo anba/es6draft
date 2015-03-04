@@ -181,15 +181,6 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
                         .methodType(Types.OrdinaryAsyncFunction, Types.RuntimeInfo$Function,
                                 Types.ExecutionContext));
 
-        static final MethodName ScriptRuntime_EvaluateConstructorCall = MethodName.findStatic(
-                Types.ScriptRuntime, "EvaluateConstructorCall", Type.methodType(Types.ScriptObject,
-                        Types.Object, Types.Object_, Types.ExecutionContext));
-
-        static final MethodName ScriptRuntime_EvaluateSuperConstructorCall = MethodName.findStatic(
-                Types.ScriptRuntime, "EvaluateSuperConstructorCall", Type.methodType(
-                        Types.ScriptObject, Types.Constructor, Types.Constructor, Types.Object_,
-                        Types.ExecutionContext));
-
         static final MethodName ScriptRuntime_EvaluateFunctionExpression = MethodName.findStatic(
                 Types.ScriptRuntime, "EvaluateFunctionExpression", Type.methodType(
                         Types.OrdinaryConstructorFunction, Types.RuntimeInfo$Function,
@@ -337,6 +328,18 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
                 Bootstrap.getCallBootstrap());
     }
 
+    private void invokeDynamicConstruct(ExpressionVisitor mv) {
+        // stack: [constructor(Constructor), cx, args] -> [result]
+        mv.invokedynamic(Bootstrap.getConstructName(), Bootstrap.getConstructMethodDescriptor(),
+                Bootstrap.getConstructBootstrap());
+    }
+
+    private void invokeDynamicSuper(ExpressionVisitor mv) {
+        // stack: [constructor(Constructor), cx, newTarget, args] -> [result]
+        mv.invokedynamic(Bootstrap.getSuperName(), Bootstrap.getSuperMethodDescriptor(),
+                Bootstrap.getSuperBootstrap());
+    }
+
     private void invokeDynamicNativeCall(String name, ExpressionVisitor mv) {
         // stack: [args, cx] -> [result]
         mv.invokedynamic(NativeCalls.getNativeCallName(name),
@@ -431,12 +434,12 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
         /* steps 1-2 (not applicable) */
         /* steps 3-5 */
         evalAndGetBoxedValue(node.getExpression(), mv);
+        mv.loadExecutionContext();
         /* steps 6-7 */
         ArgumentListEvaluation(node, node.getArguments(), mv);
         /* steps 8-9 */
-        mv.loadExecutionContext();
         mv.lineInfo(node);
-        mv.invoke(Methods.ScriptRuntime_EvaluateConstructorCall);
+        invokeDynamicConstruct(mv);
         return ValType.Object;
     }
 
@@ -2845,20 +2848,24 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
         mv.invoke(Methods.ScriptRuntime_GetNewTarget);
 
         /* steps 3-4 */
-        // stack: [newTarget] -> [newTarget, constructor]
+        // stack: [newTarget] -> [constructor, newTarget]
         mv.loadExecutionContext();
         mv.lineInfo(node);
         mv.invoke(Methods.ScriptRuntime_GetSuperConstructor);
+        mv.swap();
+
+        // stack: [constructor, newTarget] -> [constructor, cx, newTarget]
+        mv.loadExecutionContext();
+        mv.swap();
 
         /* steps 5-6 */
-        // stack: [newTarget, constructor] -> [newTarget, constructor, argList]
+        // stack: [constructor, cx, newTarget] -> [constructor, cx, newTarget, argList]
         ArgumentListEvaluation(node, node.getArguments(), mv);
 
         /* steps 7-8 */
-        // stack: [newTarget, constructor, argList] -> [result]
-        mv.loadExecutionContext();
+        // stack: [constructor, cx, newTarget, argList] -> [result]
         mv.lineInfo(node);
-        mv.invoke(Methods.ScriptRuntime_EvaluateSuperConstructorCall);
+        invokeDynamicSuper(mv);
 
         /* steps 9-10 */
         // stack: [result] -> [result]
@@ -2908,22 +2915,30 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
     @Override
     public ValType visit(SuperNewExpression node, ExpressionVisitor mv) {
         /* steps 1-2 */
+        // stack: [] -> [newTarget]
         mv.loadExecutionContext();
         mv.lineInfo(node);
         mv.invoke(Methods.ScriptRuntime_GetNewTarget);
 
         /* steps 3-4 */
+        // stack: [newTarget] -> [constructor, newTarget]
         mv.loadExecutionContext();
         mv.lineInfo(node);
         mv.invoke(Methods.ScriptRuntime_GetSuperConstructor);
+        mv.swap();
+
+        // stack: [constructor, newTarget] -> [constructor, cx, newTarget]
+        mv.loadExecutionContext();
+        mv.swap();
 
         /* steps 5-6 */
+        // stack: [constructor, cx, newTarget] -> [constructor, cx, newTarget, argList]
         ArgumentListEvaluation(node, node.getArguments(), mv);
 
         /* steps 7-13 */
-        mv.loadExecutionContext();
+        // stack: [constructor, cx, newTarget, argList] -> [result]
         mv.lineInfo(node);
-        mv.invoke(Methods.ScriptRuntime_EvaluateSuperConstructorCall);
+        invokeDynamicSuper(mv);
         return ValType.Object;
     }
 

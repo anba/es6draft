@@ -8,6 +8,9 @@ package com.github.anba.es6draft.mozilla;
 
 import static com.github.anba.es6draft.runtime.objects.binary.ArrayBufferConstructor.DetachArrayBuffer;
 
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodHandles.Lookup;
+
 import com.github.anba.es6draft.repl.global.StopExecutionException;
 import com.github.anba.es6draft.runtime.AbstractOperations;
 import com.github.anba.es6draft.runtime.ExecutionContext;
@@ -128,6 +131,11 @@ public final class TestingFunctions {
                 protected BuiltinFunction clone() {
                     return this;
                 }
+
+                @Override
+                protected Lookup lookup() {
+                    return MethodHandles.lookup();
+                }
             };
         }
         if ("ToLength".equals(name)) {
@@ -140,6 +148,11 @@ public final class TestingFunctions {
                 @Override
                 protected BuiltinFunction clone() {
                     return this;
+                }
+
+                @Override
+                protected Lookup lookup() {
+                    return MethodHandles.lookup();
                 }
             };
         }

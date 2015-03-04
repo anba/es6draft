@@ -7,6 +7,7 @@
 package com.github.anba.es6draft.runtime.types.builtins;
 
 import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
@@ -71,13 +72,9 @@ public final class NativeFunction extends BuiltinFunction {
         return new NativeFunction(this);
     }
 
-    /**
-     * Returns `(Object, Object[]) {@literal ->} Object` method-handle.
-     * 
-     * @return the call method handle
-     */
+    @Override
     public MethodHandle getCallMethod() {
-        return mh;
+        return MethodHandles.dropArguments(mh, 0, NativeFunction.class);
     }
 
     /**

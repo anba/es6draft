@@ -8,6 +8,7 @@ package com.github.anba.es6draft.interpreter;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.*;
 import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.CheckCallable;
+import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.CheckConstructor;
 import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.IsBuiltinEval;
 import static com.github.anba.es6draft.runtime.types.Null.NULL;
 import static com.github.anba.es6draft.runtime.types.Reference.GetValue;
@@ -29,6 +30,7 @@ import com.github.anba.es6draft.runtime.objects.Eval;
 import com.github.anba.es6draft.runtime.objects.Eval.EvalFlags;
 import com.github.anba.es6draft.runtime.objects.text.RegExpConstructor;
 import com.github.anba.es6draft.runtime.types.Callable;
+import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Reference;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
@@ -955,7 +957,7 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
         Object constructor = node.getExpression().accept(this, cx);
         constructor = GetValue(constructor, cx);
         Object[] args = ArgumentListEvaluation(node.getArguments(), cx);
-        return ScriptRuntime.EvaluateConstructorCall(constructor, args, cx);
+        return CheckConstructor(constructor, cx).construct(cx, (Constructor) constructor, args);
     }
 
     @Override

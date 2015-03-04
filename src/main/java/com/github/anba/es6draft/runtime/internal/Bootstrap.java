@@ -10,6 +10,7 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.EqualityCompar
 import static com.github.anba.es6draft.runtime.AbstractOperations.RelationalComparison;
 import static com.github.anba.es6draft.runtime.AbstractOperations.StrictEqualityComparison;
 import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.CheckCallable;
+import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.CheckConstructor;
 
 import java.lang.invoke.CallSite;
 import java.lang.invoke.ConstantCallSite;
@@ -25,11 +26,12 @@ import com.github.anba.es6draft.compiler.assembler.Handle;
 import com.github.anba.es6draft.compiler.assembler.MethodName;
 import com.github.anba.es6draft.compiler.assembler.MethodTypeDescriptor;
 import com.github.anba.es6draft.runtime.ExecutionContext;
+import com.github.anba.es6draft.runtime.types.Constructor;
+import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
+import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
+import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
 import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
-import com.github.anba.es6draft.runtime.types.builtins.NativeConstructor;
-import com.github.anba.es6draft.runtime.types.builtins.NativeFunction;
-import com.github.anba.es6draft.runtime.types.builtins.NativeTailCallFunction;
 
 /**
  *
@@ -40,6 +42,8 @@ public final class Bootstrap {
 
     private static final class CallNames {
         static final String CALL = "expression::call";
+        static final String CONSTRUCT = "expression::construct";
+        static final String SUPER = "expression::super";
         static final String CONCAT = "expression::concat";
         static final String ADD = "expression::add";
         static final String EQ = "expression::equals";
@@ -61,6 +65,11 @@ public final class Bootstrap {
                 boolean.class, Object.class, Object.class);
         static final MethodTypeDescriptor CALL = MethodTypeDescriptor.methodType(Object.class,
                 Object.class, ExecutionContext.class, Object.class, Object[].class);
+        static final MethodTypeDescriptor CONSTRUCT = MethodTypeDescriptor.methodType(
+                ScriptObject.class, Object.class, ExecutionContext.class, Object[].class);
+        static final MethodTypeDescriptor SUPER = MethodTypeDescriptor.methodType(
+                ScriptObject.class, Constructor.class, ExecutionContext.class, Constructor.class,
+                Object[].class);
     }
 
     private static final Handle BOOTSTRAP;
@@ -99,18 +108,13 @@ public final class Bootstrap {
 
     private static final MethodHandle callSetupMH;
     private static final MethodHandle callGenericMH;
-    private static final MethodHandle testFunctionObjectMH, testNativeFunctionMH,
-            testNativeTailCallFunctionMH, testNativeConstructorMH;
+    private static final MethodHandle testFunctionObjectMH, testBuiltinFunctionMH;
     static {
         MethodLookup lookup = new MethodLookup(MethodHandles.lookup());
         testFunctionObjectMH = lookup.findStatic("testFunctionObject",
-                MethodType.methodType(boolean.class, Object.class, MethodHandle.class));
-        testNativeFunctionMH = lookup.findStatic("testNativeFunction",
-                MethodType.methodType(boolean.class, Object.class, MethodHandle.class));
-        testNativeTailCallFunctionMH = lookup.findStatic("testNativeTailCallFunction",
-                MethodType.methodType(boolean.class, Object.class, MethodHandle.class));
-        testNativeConstructorMH = lookup.findStatic("testNativeConstructor",
-                MethodType.methodType(boolean.class, Object.class, MethodHandle.class));
+                MethodType.methodType(boolean.class, Object.class, Object.class));
+        testBuiltinFunctionMH = lookup.findStatic("testBuiltinFunction",
+                MethodType.methodType(boolean.class, Object.class, Object.class));
         callGenericMH = lookup.findStatic("callGeneric", MethodType.methodType(Object.class,
                 Object.class, ExecutionContext.class, Object.class, Object[].class));
         callSetupMH = lookup.findStatic("callSetup", MethodType.methodType(MethodHandle.class,
@@ -123,21 +127,13 @@ public final class Bootstrap {
             ExecutionContext cx, Object thisValue, Object[] arguments) {
         MethodHandle target, test;
         if (function instanceof FunctionObject) {
-            MethodHandle mh = ((FunctionObject) function).getCallMethod();
-            test = MethodHandles.insertArguments(testFunctionObjectMH, 1, mh);
-            target = mh;
-        } else if (function instanceof NativeFunction) {
-            MethodHandle mh = ((NativeFunction) function).getCallMethod();
-            test = MethodHandles.insertArguments(testNativeFunctionMH, 1, mh);
-            target = MethodHandles.dropArguments(mh, 0, NativeFunction.class);
-        } else if (function instanceof NativeTailCallFunction) {
-            MethodHandle mh = ((NativeTailCallFunction) function).getCallMethod();
-            test = MethodHandles.insertArguments(testNativeTailCallFunctionMH, 1, mh);
-            target = MethodHandles.dropArguments(mh, 0, NativeTailCallFunction.class);
-        } else if (function instanceof NativeConstructor) {
-            MethodHandle mh = ((NativeConstructor) function).getCallMethod();
-            test = MethodHandles.insertArguments(testNativeConstructorMH, 1, mh);
-            target = MethodHandles.dropArguments(mh, 0, NativeConstructor.class);
+            FunctionObject fn = (FunctionObject) function;
+            test = MethodHandles.insertArguments(testFunctionObjectMH, 1, fn.getMethodInfo());
+            target = fn.getCallMethod();
+        } else if (function instanceof BuiltinFunction) {
+            BuiltinFunction fn = (BuiltinFunction) function;
+            test = MethodHandles.insertArguments(testBuiltinFunctionMH, 1, fn.getMethodInfo());
+            target = fn.getCallMethod();
         } else {
             target = test = null;
         }
@@ -145,33 +141,156 @@ public final class Bootstrap {
     }
 
     @SuppressWarnings("unused")
-    private static boolean testFunctionObject(Object function, MethodHandle callMethod) {
+    private static boolean testFunctionObject(Object function, Object methodInfo) {
         return function instanceof FunctionObject
-                && ((FunctionObject) function).getCallMethod() == callMethod;
+                && ((FunctionObject) function).getMethodInfo() == methodInfo;
     }
 
     @SuppressWarnings("unused")
-    private static boolean testNativeFunction(Object function, MethodHandle callMethod) {
-        return function instanceof NativeFunction
-                && ((NativeFunction) function).getCallMethod() == callMethod;
-    }
-
-    @SuppressWarnings("unused")
-    private static boolean testNativeTailCallFunction(Object function, MethodHandle callMethod) {
-        return function instanceof NativeTailCallFunction
-                && ((NativeTailCallFunction) function).getCallMethod() == callMethod;
-    }
-
-    @SuppressWarnings("unused")
-    private static boolean testNativeConstructor(Object function, MethodHandle callMethod) {
-        return function instanceof NativeConstructor
-                && ((NativeConstructor) function).getCallMethod() == callMethod;
+    private static boolean testBuiltinFunction(Object function, Object methodInfo) {
+        return function instanceof BuiltinFunction
+                && ((BuiltinFunction) function).getMethodInfo() == methodInfo;
     }
 
     @SuppressWarnings("unused")
     private static Object callGeneric(Object function, ExecutionContext callerContext,
             Object thisValue, Object[] arguments) {
         return CheckCallable(function, callerContext).call(callerContext, thisValue, arguments);
+    }
+
+    /**
+     * Returns the invokedynamic instruction name for construct expressions.
+     * 
+     * @return the invokedynamic instruction name
+     */
+    public static String getConstructName() {
+        return CallNames.CONSTRUCT;
+    }
+
+    /**
+     * Returns the method descriptor for construct expressions.
+     * 
+     * @return the method descriptor
+     */
+    public static MethodTypeDescriptor getConstructMethodDescriptor() {
+        return Descriptors.CONSTRUCT;
+    }
+
+    /**
+     * Returns the bootstrapping handle for construct expressions.
+     * 
+     * @return the bootstrapping handle
+     */
+    public static Handle getConstructBootstrap() {
+        return BOOTSTRAP;
+    }
+
+    private static final MethodHandle constructSetupMH;
+    private static final MethodHandle constructGenericMH;
+    static {
+        MethodLookup lookup = new MethodLookup(MethodHandles.lookup());
+        constructGenericMH = lookup.findStatic("constructGeneric", MethodType.methodType(
+                ScriptObject.class, Object.class, ExecutionContext.class, Object[].class));
+        constructSetupMH = lookup.findStatic("constructSetup", MethodType.methodType(
+                MethodHandle.class, MutableCallSite.class, Object.class, ExecutionContext.class,
+                Object[].class));
+    }
+
+    @SuppressWarnings("unused")
+    private static MethodHandle constructSetup(MutableCallSite callsite, Object constructor,
+            ExecutionContext cx, Object[] arguments) {
+        MethodHandle target, test;
+        if (constructor instanceof FunctionObject && constructor instanceof Constructor) {
+            FunctionObject fn = (FunctionObject) constructor;
+            test = MethodHandles.insertArguments(testFunctionObjectMH, 1, fn.getMethodInfo());
+            target = fn.getConstructMethod();
+        } else if (constructor instanceof BuiltinConstructor) {
+            BuiltinConstructor fn = (BuiltinConstructor) constructor;
+            test = MethodHandles.insertArguments(testBuiltinFunctionMH, 1, fn.getMethodInfo());
+            target = fn.getConstructMethod();
+        } else {
+            target = test = null;
+        }
+        if (target != null) {
+            // Insert constructor as newTarget argument.
+            target = target.asType(target.type().changeParameterType(2, constructor.getClass()));
+            target = MethodHandles.permuteArguments(target, target.type().dropParameterTypes(2, 3),
+                    0, 1, 0, 2);
+        }
+        return setCallSiteTarget(callsite, target, test, constructGenericMH);
+    }
+
+    @SuppressWarnings("unused")
+    private static ScriptObject constructGeneric(Object constructor,
+            ExecutionContext callerContext, Object[] arguments) {
+        return CheckConstructor(constructor, callerContext).construct(callerContext,
+                (Constructor) constructor, arguments);
+    }
+
+    /**
+     * Returns the invokedynamic instruction name for super() expressions.
+     * 
+     * @return the invokedynamic instruction name
+     */
+    public static String getSuperName() {
+        return CallNames.SUPER;
+    }
+
+    /**
+     * Returns the method descriptor for super() expressions.
+     * 
+     * @return the method descriptor
+     */
+    public static MethodTypeDescriptor getSuperMethodDescriptor() {
+        return Descriptors.SUPER;
+    }
+
+    /**
+     * Returns the bootstrapping handle for super() expressions.
+     * 
+     * @return the bootstrapping handle
+     */
+    public static Handle getSuperBootstrap() {
+        return BOOTSTRAP;
+    }
+
+    private static final MethodHandle superSetupMH;
+    private static final MethodHandle superGenericMH;
+    static {
+        MethodLookup lookup = new MethodLookup(MethodHandles.lookup());
+        superGenericMH = lookup.findStatic("superGeneric", MethodType.methodType(
+                ScriptObject.class, Constructor.class, ExecutionContext.class, Constructor.class,
+                Object[].class));
+        superSetupMH = lookup.findStatic("superSetup", MethodType.methodType(MethodHandle.class,
+                MutableCallSite.class, Constructor.class, ExecutionContext.class,
+                Constructor.class, Object[].class));
+    }
+
+    @SuppressWarnings("unused")
+    private static MethodHandle superSetup(MutableCallSite callsite, Constructor constructor,
+            ExecutionContext cx, Constructor newTarget, Object[] arguments) {
+        MethodHandle target, test;
+        if (constructor instanceof FunctionObject && constructor instanceof Constructor) {
+            FunctionObject fn = (FunctionObject) constructor;
+            test = MethodHandles.insertArguments(testFunctionObjectMH, 1, fn.getMethodInfo());
+            target = fn.getConstructMethod();
+        } else if (constructor instanceof BuiltinConstructor) {
+            BuiltinConstructor fn = (BuiltinConstructor) constructor;
+            test = MethodHandles.insertArguments(testBuiltinFunctionMH, 1, fn.getMethodInfo());
+            target = fn.getConstructMethod();
+        } else {
+            target = test = null;
+        }
+        if (test != null) {
+            test = test.asType(test.type().changeParameterType(0, Constructor.class));
+        }
+        return setCallSiteTarget(callsite, target, test, superGenericMH);
+    }
+
+    @SuppressWarnings("unused")
+    private static ScriptObject superGeneric(Constructor constructor,
+            ExecutionContext callerContext, Constructor newTarget, Object[] arguments) {
+        return constructor.construct(callerContext, newTarget, arguments);
     }
 
     /**
@@ -1118,6 +1237,8 @@ public final class Bootstrap {
     private static final ConstantCallSite stackOverFlow_Eq;
     private static final ConstantCallSite stackOverFlow_StrictEq;
     private static final ConstantCallSite stackOverFlow_Call;
+    private static final ConstantCallSite stackOverFlow_Construct;
+    private static final ConstantCallSite stackOverFlow_Super;
     private static final MethodHandle stackOverFlow_Concat;
     static {
         MethodLookup lookup = new MethodLookup(MethodHandles.lookup());
@@ -1132,6 +1253,12 @@ public final class Bootstrap {
         stackOverFlow_Call = new ConstantCallSite(lookup.findStatic("stackOverFlow_Call",
                 MethodType.methodType(Object.class, Object.class, ExecutionContext.class,
                         Object.class, Object[].class)));
+        stackOverFlow_Construct = new ConstantCallSite(lookup.findStatic("stackOverFlow_Construct",
+                MethodType.methodType(ScriptObject.class, Object.class, ExecutionContext.class,
+                        Object[].class)));
+        stackOverFlow_Super = new ConstantCallSite(lookup.findStatic("stackOverFlow_Super",
+                MethodType.methodType(ScriptObject.class, Constructor.class,
+                        ExecutionContext.class, Constructor.class, Object[].class)));
         stackOverFlow_Concat = lookup.findStatic("stackOverFlow_Concat",
                 MethodType.methodType(CharSequence.class));
     }
@@ -1163,6 +1290,18 @@ public final class Bootstrap {
     }
 
     @SuppressWarnings("unused")
+    private static ScriptObject stackOverFlow_Construct(Object constructor, ExecutionContext cx,
+            Object[] arguments) {
+        throw new StackOverflowError("bootstrap stack overflow");
+    }
+
+    @SuppressWarnings("unused")
+    private static ScriptObject stackOverFlow_Super(Constructor constructor, ExecutionContext cx,
+            Constructor newTarget, Object[] arguments) {
+        throw new StackOverflowError("bootstrap stack overflow");
+    }
+
+    @SuppressWarnings("unused")
     private static CharSequence stackOverFlow_Concat() {
         throw new StackOverflowError("bootstrap stack overflow");
     }
@@ -1190,6 +1329,12 @@ public final class Bootstrap {
             switch (name) {
             case CallNames.CALL:
                 setup = MethodHandles.insertArguments(callSetupMH, 0, callsite);
+                break;
+            case CallNames.CONSTRUCT:
+                setup = MethodHandles.insertArguments(constructSetupMH, 0, callsite);
+                break;
+            case CallNames.SUPER:
+                setup = MethodHandles.insertArguments(superSetupMH, 0, callsite);
                 break;
             case CallNames.ADD:
                 setup = MethodHandles.insertArguments(addSetupMH, 0, callsite);
@@ -1229,6 +1374,10 @@ public final class Bootstrap {
             switch (name) {
             case CallNames.CALL:
                 return stackOverFlow_Call;
+            case CallNames.CONSTRUCT:
+                return stackOverFlow_Construct;
+            case CallNames.SUPER:
+                return stackOverFlow_Super;
             case CallNames.CONCAT:
                 return new ConstantCallSite(MethodHandles.dropArguments(stackOverFlow_Concat, 0,
                         type.parameterArray()));

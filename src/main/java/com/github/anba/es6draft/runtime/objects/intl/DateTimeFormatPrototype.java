@@ -181,7 +181,7 @@ public final class DateTimeFormatPrototype extends DateTimeFormatObject implemen
         return dateTimeFormat.getDateFormat().format(new Date((long) x));
     }
 
-    private static final class FormatFunction extends BuiltinFunction {
+    public static final class FormatFunction extends BuiltinFunction {
         public FormatFunction(Realm realm) {
             super(realm, "format", 0);
             createDefaultFunctionProperties();

@@ -370,7 +370,7 @@ public final class ModuleNamespaceObject extends OrdinaryObject {
     /**
      * 26.3.2 [ @@iterator ] ( )
      */
-    private static final class ModuleIteratorFunction extends BuiltinFunction {
+    public static final class ModuleIteratorFunction extends BuiltinFunction {
         public ModuleIteratorFunction(Realm realm) {
             super(realm, "[Symbol.iterator]", 0);
             createDefaultFunctionProperties();

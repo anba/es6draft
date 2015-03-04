@@ -7,14 +7,12 @@
 package com.github.anba.es6draft.runtime.types.builtins;
 
 import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.internal.Errors;
-import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
-import com.github.anba.es6draft.runtime.types.Type;
 
 /**
  * <h1>9 Ordinary and Exotic Objects Behaviours</h1>
@@ -61,13 +59,14 @@ public final class NativeConstructor extends BuiltinConstructor {
         return new NativeConstructor(this);
     }
 
-    /**
-     * Returns `(Object, Object[]) {@literal ->} Object` method-handle.
-     * 
-     * @return the call method handle
-     */
+    @Override
     public MethodHandle getCallMethod() {
-        return callMethod;
+        return MethodHandles.dropArguments(callMethod, 0, NativeConstructor.class);
+    }
+
+    @Override
+    public MethodHandle getConstructMethod() {
+        return MethodHandles.dropArguments(callMethod, 0, NativeConstructor.class);
     }
 
     /**
@@ -90,17 +89,12 @@ public final class NativeConstructor extends BuiltinConstructor {
     @Override
     public ScriptObject construct(ExecutionContext callerContext, Constructor newTarget,
             Object... args) {
-        Object result;
         try {
-            result = constructMethod.invokeExact(callerContext, newTarget, args);
+            return (ScriptObject) constructMethod.invokeExact(callerContext, newTarget, args);
         } catch (RuntimeException | Error e) {
             throw e;
         } catch (Throwable e) {
             throw new RuntimeException(e);
         }
-        if (Type.isObject(result)) {
-            return Type.objectValue(result);
-        }
-        throw Errors.newTypeError(callerContext, Messages.Key.NotObjectType);
     }
 }

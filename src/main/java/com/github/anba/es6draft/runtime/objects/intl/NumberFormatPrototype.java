@@ -172,7 +172,7 @@ public final class NumberFormatPrototype extends NumberFormatObject implements I
         return numberFormat.getNumberFormat().format(x);
     }
 
-    private static final class FormatFunction extends BuiltinFunction {
+    public static final class FormatFunction extends BuiltinFunction {
         public FormatFunction(Realm realm) {
             super(realm, "format", 1);
             createDefaultFunctionProperties();

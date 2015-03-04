@@ -56,13 +56,9 @@ public final class NativeTailCallFunction extends BuiltinFunction {
         return new NativeTailCallFunction(this);
     }
 
-    /**
-     * Returns `(ExecutionContext, Object, Object[]) {@literal ->} Object` method-handle
-     * 
-     * @return the call method handle
-     */
+    @Override
     public MethodHandle getCallMethod() {
-        return mh;
+        return MethodHandles.dropArguments(mh, 0, NativeTailCallFunction.class);
     }
 
     /**

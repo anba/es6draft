@@ -6,6 +6,10 @@
  */
 package com.github.anba.es6draft.runtime.types.builtins;
 
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.reflect.Method;
+
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.types.Constructor;
@@ -18,6 +22,8 @@ import com.github.anba.es6draft.runtime.types.ScriptObject;
  * </ul>
  */
 public abstract class BuiltinConstructor extends BuiltinFunction implements Constructor {
+    private MethodHandle constructMethod;
+
     /**
      * Constructs a new built-in constructor function.
      * 
@@ -30,6 +36,25 @@ public abstract class BuiltinConstructor extends BuiltinFunction implements Cons
      */
     protected BuiltinConstructor(Realm realm, String name, int arity) {
         super(realm, name, arity);
+    }
+
+    /**
+     * Returns `(? extends BuiltinConstructor, ExecutionContext, Constructor, Object[])
+     * {@literal ->} ScriptObject` method-handle.
+     * 
+     * @return the call method handle
+     */
+    public MethodHandle getConstructMethod() {
+        if (constructMethod == null) {
+            try {
+                Method method = getClass().getDeclaredMethod("construct", ExecutionContext.class,
+                        Constructor.class, Object[].class);
+                constructMethod = MethodHandles.publicLookup().unreflect(method);
+            } catch (ReflectiveOperationException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        return constructMethod;
     }
 
     @Override

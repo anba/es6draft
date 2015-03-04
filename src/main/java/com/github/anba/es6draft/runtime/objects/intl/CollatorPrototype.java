@@ -153,7 +153,7 @@ public final class CollatorPrototype extends CollatorObject implements Initializ
         return collator.getCollator().compare(x, y);
     }
 
-    private static final class CompareFunction extends BuiltinFunction {
+    public static final class CompareFunction extends BuiltinFunction {
         public CompareFunction(Realm realm) {
             super(realm, "compare", 2);
             createDefaultFunctionProperties();

@@ -41,7 +41,33 @@ public final class SimpleTypeTextifier extends Textifier {
         buf.setLength(0);
         buf.append(tab2).append("INVOKEDYNAMIC").append(' ').append(name);
         appendDescriptor(METHOD_DESCRIPTOR, desc);
+        if (bsmArgs.length != 0) {
+            buf.append(" [");
+            for (int i = 0; i < bsmArgs.length; ++i) {
+                Object arg = bsmArgs[i];
+                if (arg instanceof String) {
+                    appendString(buf, (String) arg);
+                } else if (arg instanceof Type) {
+                    Type type = (Type) arg;
+                    if (type.getSort() == Type.METHOD) {
+                        appendDescriptor(METHOD_DESCRIPTOR, type.getDescriptor());
+                    } else {
+                        appendDescriptor(INTERNAL_NAME, type.getDescriptor());
+                    }
+                } else if (arg instanceof Handle) {
+                    Handle handle = (Handle) arg;
+                    appendDescriptor(HANDLE_DESCRIPTOR, getMethodDescriptor(handle.getDesc()));
+                } else {
+                    buf.append(arg);
+                }
+                if (i + 1 < bsmArgs.length) {
+                    buf.append(", ");
+                }
+            }
+            buf.append("]");
+        }
         buf.append("\n");
+
         text.add(buf.toString());
     }
 

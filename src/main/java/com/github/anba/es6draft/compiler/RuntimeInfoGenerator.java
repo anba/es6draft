@@ -9,6 +9,9 @@ package com.github.anba.es6draft.compiler;
 import static com.github.anba.es6draft.semantics.StaticSemantics.ExpectedArgumentCount;
 import static com.github.anba.es6draft.semantics.StaticSemantics.IsStrict;
 
+import java.lang.invoke.CallSite;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
@@ -17,11 +20,13 @@ import com.github.anba.es6draft.compiler.CodeGenerator.FunctionName;
 import com.github.anba.es6draft.compiler.CodeGenerator.ModuleName;
 import com.github.anba.es6draft.compiler.CodeGenerator.ScriptName;
 import com.github.anba.es6draft.compiler.assembler.Code.MethodCode;
+import com.github.anba.es6draft.compiler.assembler.Handle;
 import com.github.anba.es6draft.compiler.assembler.InstructionAssembler;
 import com.github.anba.es6draft.compiler.assembler.MethodName;
 import com.github.anba.es6draft.compiler.assembler.Type;
 import com.github.anba.es6draft.parser.Parser;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
+import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
 import com.github.anba.es6draft.runtime.internal.RuntimeInfo.FunctionFlags;
 
 /**
@@ -56,13 +61,13 @@ final class RuntimeInfoGenerator {
                         Types.String, Types.MethodHandle, Types.MethodHandle, Types.MethodHandle));
 
         static final MethodName RTI_newFunction = MethodName.findStatic(Types.RuntimeInfo,
-                "newFunction", Type.methodType(Types.RuntimeInfo$Function, Types.String,
-                        Type.INT_TYPE, Type.INT_TYPE, Types.String, Type.INT_TYPE,
+                "newFunction", Type.methodType(Types.RuntimeInfo$Function, Types.Object,
+                        Types.String, Type.INT_TYPE, Type.INT_TYPE, Types.String, Type.INT_TYPE,
                         Types.MethodHandle, Types.MethodHandle, Types.MethodHandle));
 
         static final MethodName RTI_newFunctionDebug = MethodName.findStatic(Types.RuntimeInfo,
-                "newFunction", Type.methodType(Types.RuntimeInfo$Function, Types.String,
-                        Type.INT_TYPE, Type.INT_TYPE, Types.String, Type.INT_TYPE,
+                "newFunction", Type.methodType(Types.RuntimeInfo$Function, Types.Object,
+                        Types.String, Type.INT_TYPE, Type.INT_TYPE, Types.String, Type.INT_TYPE,
                         Types.MethodHandle, Types.MethodHandle, Types.MethodHandle,
                         Types.MethodHandle));
     }
@@ -163,11 +168,18 @@ final class RuntimeInfoGenerator {
         }
     }
 
+    private static final Handle RUNTIME_INFO_BOOTSTRAP = MethodName.findStatic(
+            RuntimeInfo.class,
+            "bootstrap",
+            MethodType.methodType(CallSite.class, MethodHandles.Lookup.class, String.class,
+                    MethodType.class)).toHandle();
+
     void runtimeInfo(FunctionNode node, boolean tailCall, Future<String> source) {
         InstructionAssembler asm = new InstructionAssembler(codegen.newMethod(node,
                 FunctionName.RTI));
         asm.begin();
 
+        asm.invokedynamic("methodInfo", Type.methodType(Types.Object), RUNTIME_INFO_BOOTSTRAP);
         asm.aconst(node.getFunctionName());
         asm.iconst(functionFlags(node, tailCall));
         asm.iconst(ExpectedArgumentCount(node.getParameters()));
@@ -241,12 +253,14 @@ final class RuntimeInfoGenerator {
             FunctionName constructName = tailCall ? FunctionName.ConstructTailCall
                     : FunctionName.Construct;
             debugInfo(codegen.newMethod(node, FunctionName.DebugInfo),
+                    codegen.methodDesc(node, FunctionName.RTI),
                     codegen.methodDesc(node, FunctionName.Call),
                     codegen.methodDesc(node, constructName),
                     codegen.methodDesc(node, FunctionName.Init),
                     codegen.methodDesc(node, FunctionName.Code));
         } else {
             debugInfo(codegen.newMethod(node, FunctionName.DebugInfo),
+                    codegen.methodDesc(node, FunctionName.RTI),
                     codegen.methodDesc(node, FunctionName.Call),
                     codegen.methodDesc(node, FunctionName.Init),
                     codegen.methodDesc(node, FunctionName.Code));
@@ -255,6 +269,7 @@ final class RuntimeInfoGenerator {
 
     private void debugInfo(Script node) {
         debugInfo(codegen.newMethod(node, ScriptName.DebugInfo),
+                codegen.methodDesc(node, ScriptName.RTI),
                 codegen.methodDesc(node, ScriptName.Init),
                 codegen.methodDesc(node, ScriptName.EvalInit),
                 codegen.methodDesc(node, ScriptName.Code));
@@ -262,6 +277,7 @@ final class RuntimeInfoGenerator {
 
     private void debugInfo(Module node) {
         debugInfo(codegen.newMethod(node, ModuleName.DebugInfo),
+                codegen.methodDesc(node, ModuleName.RTI),
                 codegen.methodDesc(node, ModuleName.Init),
                 codegen.methodDesc(node, ModuleName.Code));
     }

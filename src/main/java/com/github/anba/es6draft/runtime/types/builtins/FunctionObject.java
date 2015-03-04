@@ -464,6 +464,15 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
     }
 
     /**
+     * Returns the method info object.
+     * 
+     * @return the method info object
+     */
+    public final Object getMethodInfo() {
+        return function.methodInfo();
+    }
+
+    /**
      * Returns the executable object.
      * 
      * @return the executable object

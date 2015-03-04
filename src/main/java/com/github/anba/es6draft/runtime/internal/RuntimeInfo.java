@@ -7,7 +7,11 @@
 package com.github.anba.es6draft.runtime.internal;
 
 import java.io.IOException;
+import java.lang.invoke.CallSite;
+import java.lang.invoke.ConstantCallSite;
 import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 
 import com.github.anba.es6draft.runtime.DeclarativeEnvironmentRecord;
 import com.github.anba.es6draft.runtime.ExecutionContext;
@@ -25,9 +29,17 @@ public final class RuntimeInfo {
     private RuntimeInfo() {
     }
 
+    public static CallSite bootstrap(MethodHandles.Lookup caller, String name, MethodType type) {
+        assert "methodInfo".equals(name);
+        // Empty object as a placeholder.
+        return new ConstantCallSite(MethodHandles.constant(Object.class, new Object()));
+    }
+
     /**
      * Returns a new {@link Function} object.
      * 
+     * @param methodInfo
+     *            the method info object
      * @param functionName
      *            the function name
      * @param functionFlags
@@ -46,16 +58,18 @@ public final class RuntimeInfo {
      *            the construct method handle
      * @return the new function object
      */
-    public static Function newFunction(String functionName, int functionFlags,
+    public static Function newFunction(Object methodInfo, String functionName, int functionFlags,
             int expectedArgumentCount, String source, int bodySourceStart, MethodHandle handle,
             MethodHandle callMethod, MethodHandle constructMethod) {
-        return new CompiledFunction(functionName, functionFlags, expectedArgumentCount, source,
-                bodySourceStart, handle, callMethod, constructMethod, null);
+        return new CompiledFunction(methodInfo, functionName, functionFlags, expectedArgumentCount,
+                source, bodySourceStart, handle, callMethod, constructMethod, null);
     }
 
     /**
      * Returns a new {@link Function} object.
      * 
+     * @param methodInfo
+     *            the method info object
      * @param functionName
      *            the function name
      * @param functionFlags
@@ -76,11 +90,11 @@ public final class RuntimeInfo {
      *            the debug info method handle
      * @return the new function object
      */
-    public static Function newFunction(String functionName, int functionFlags,
+    public static Function newFunction(Object methodInfo, String functionName, int functionFlags,
             int expectedArgumentCount, String source, int bodySourceStart, MethodHandle handle,
             MethodHandle callMethod, MethodHandle constructMethod, MethodHandle debugInfo) {
-        return new CompiledFunction(functionName, functionFlags, expectedArgumentCount, source,
-                bodySourceStart, handle, callMethod, constructMethod, debugInfo);
+        return new CompiledFunction(methodInfo, functionName, functionFlags, expectedArgumentCount,
+                source, bodySourceStart, handle, callMethod, constructMethod, debugInfo);
     }
 
     /**
@@ -583,6 +597,13 @@ public final class RuntimeInfo {
      */
     public interface Function {
         /**
+         * Returns the method info object.
+         * 
+         * @return the method info object
+         */
+        Object methodInfo();
+
+        /**
          * Returns the function's name.
          * 
          * @return the function name
@@ -677,6 +698,7 @@ public final class RuntimeInfo {
     }
 
     private static final class CompiledFunction implements Function {
+        private final Object methodInfo;
         private final String functionName;
         private final int functionFlags;
         private final int expectedArgumentCount;
@@ -686,9 +708,10 @@ public final class RuntimeInfo {
         private final MethodHandle constructMethod;
         private final MethodHandle debugInfo;
 
-        CompiledFunction(String functionName, int functionFlags, int expectedArgumentCount,
-                String source, int bodySourceStart, MethodHandle handle, MethodHandle callMethod,
-                MethodHandle constructMethod, MethodHandle debugInfo) {
+        CompiledFunction(Object methodInfo, String functionName, int functionFlags,
+                int expectedArgumentCount, String source, int bodySourceStart, MethodHandle handle,
+                MethodHandle callMethod, MethodHandle constructMethod, MethodHandle debugInfo) {
+            this.methodInfo = methodInfo;
             this.functionName = functionName;
             this.functionFlags = functionFlags;
             this.expectedArgumentCount = expectedArgumentCount;
@@ -697,6 +720,11 @@ public final class RuntimeInfo {
             this.callMethod = callMethod;
             this.constructMethod = constructMethod;
             this.debugInfo = debugInfo;
+        }
+
+        @Override
+        public Object methodInfo() {
+            return methodInfo;
         }
 
         @Override

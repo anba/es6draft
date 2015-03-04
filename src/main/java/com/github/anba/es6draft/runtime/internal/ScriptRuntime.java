@@ -932,22 +932,20 @@ public final class ScriptRuntime {
      * </ul>
      * 
      * @param constructor
-     *            the constructor object
-     * @param args
-     *            the arguments for the new-call
+     *            the constructor function object
      * @param cx
      *            the execution context
-     * @return the constructor call return value
+     * @return the constructor function object
+     * @throws ScriptException
+     *             if <var>constructor</var> is not a constructor function
      */
-    public static ScriptObject EvaluateConstructorCall(Object constructor, Object[] args,
-            ExecutionContext cx) {
-        /* steps 1-3/1-3/1-4 (generated code) */
+    public static Constructor CheckConstructor(Object constructor, ExecutionContext cx)
+            throws ScriptException {
         /* steps 4/6/5 */
         if (!IsConstructor(constructor)) {
             throw newTypeError(cx, Messages.Key.NotConstructor);
         }
-        /* steps 5/7/8 */
-        return ((Constructor) constructor).construct(cx, (Constructor) constructor, args);
+        return (Constructor) constructor;
     }
 
     /**
@@ -1129,32 +1127,6 @@ public final class ScriptRuntime {
         }
         /* step 7 */
         return (Constructor) superConstructor;
-    }
-
-    /**
-     * 12.3.5 The super Keyword
-     * <p>
-     * 12.3.5.1 Runtime Semantics: Evaluation
-     * <ul>
-     * <li>MemberExpression : NewSuper Arguments
-     * <li>NewExpression : NewSuper
-     * </ul>
-     * 
-     * @param newTarget
-     *            the NewTarget constructor object
-     * @param constructor
-     *            the constructor object
-     * @param args
-     *            the arguments for the new-call
-     * @param cx
-     *            the execution context
-     * @return the constructor call return value
-     */
-    public static ScriptObject EvaluateSuperConstructorCall(Constructor newTarget,
-            Constructor constructor, Object[] args, ExecutionContext cx) {
-        /* steps 1-6/1-5  (generated code) */
-        /* steps 7-13/6-12 */
-        return constructor.construct(cx, newTarget, args);
     }
 
     /**
