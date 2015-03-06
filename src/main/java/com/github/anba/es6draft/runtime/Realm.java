@@ -156,12 +156,8 @@ public final class Realm {
         // Create all built-in intrinsics
         CreateIntrinsics(this);
 
-        // Initialize global object
-        globalObject.initialize(this);
-
         // Store reference to built-in eval
-        builtinEval = (Callable) globalObject.lookupOwnProperty("eval").getValue();
-        intrinsics.put(Intrinsics.eval, (OrdinaryObject) builtinEval);
+        builtinEval = (Callable) intrinsics.get(Intrinsics.eval);
 
         // [[Prototype]] for default global is implementation-dependent
         globalThis.setPrototypeOf(defaultContext, getIntrinsic(Intrinsics.ObjectPrototype));
@@ -182,12 +178,8 @@ public final class Realm {
         // Create all built-in intrinsics
         CreateIntrinsics(this);
 
-        // Initialize global object
-        globalObject.initialize(this);
-
         // Store reference to built-in eval
-        builtinEval = (Callable) globalObject.lookupOwnProperty("eval").getValue();
-        intrinsics.put(Intrinsics.eval, (OrdinaryObject) builtinEval);
+        builtinEval = (Callable) intrinsics.get(Intrinsics.eval);
 
         // Set prototype to %ObjectPrototype%, cf. 8.2.3 SetRealmGlobalObject
         globalThis.setPrototypeOf(defaultContext, getIntrinsic(Intrinsics.ObjectPrototype));
@@ -205,12 +197,8 @@ public final class Realm {
         // Create all built-in intrinsics
         CreateIntrinsics(this);
 
-        // Initialize global object
-        globalObject.initialize(this);
-
         // Store reference to built-in eval
-        builtinEval = (Callable) globalObject.lookupOwnProperty("eval").getValue();
-        intrinsics.put(Intrinsics.eval, (OrdinaryObject) builtinEval);
+        builtinEval = (Callable) intrinsics.get(Intrinsics.eval);
     }
 
     /**
@@ -680,6 +668,9 @@ public final class Realm {
 
         // intrinsics: Internationalization API
         initializeInternationalisation(realm);
+
+        // Initialized last because it accesses other intrinsics.
+        initializeGlobalObject(realm);
     }
 
     /**
@@ -1177,5 +1168,37 @@ public final class Realm {
         numberFormatPrototype.initialize(realm);
         dateTimeFormatConstructor.initialize(realm);
         dateTimeFormatPrototype.initialize(realm);
+    }
+
+    /**
+     * <h1>18 The Global Object</h1>
+     * 
+     * @param realm
+     *            the realm instance
+     */
+    private static void initializeGlobalObject(Realm realm) {
+        EnumMap<Intrinsics, OrdinaryObject> intrinsics = realm.intrinsics;
+        GlobalObject global = realm.globalObject;
+
+        global.initialize(realm);
+
+        intrinsics.put(Intrinsics.decodeURI, getBuiltin(global, "decodeURI"));
+        intrinsics.put(Intrinsics.decodeURIComponent, getBuiltin(global, "decodeURIComponent"));
+        intrinsics.put(Intrinsics.encodeURI, getBuiltin(global, "encodeURI"));
+        intrinsics.put(Intrinsics.encodeURIComponent, getBuiltin(global, "encodeURIComponent"));
+        intrinsics.put(Intrinsics.eval, getBuiltin(global, "eval"));
+        intrinsics.put(Intrinsics.isFinite, getBuiltin(global, "isFinite"));
+        intrinsics.put(Intrinsics.isNaN, getBuiltin(global, "isNaN"));
+        intrinsics.put(Intrinsics.parseFloat, getBuiltin(global, "parseFloat"));
+        intrinsics.put(Intrinsics.parseInt, getBuiltin(global, "parseInt"));
+
+        if (realm.isEnabled(CompatibilityOption.GlobalObject)) {
+            intrinsics.put(Intrinsics.escape, getBuiltin(global, "escape"));
+            intrinsics.put(Intrinsics.unescape, getBuiltin(global, "unescape"));
+        }
+    }
+
+    private static OrdinaryObject getBuiltin(GlobalObject global, String name) {
+        return (OrdinaryObject) global.lookupOwnProperty(name).getValue();
     }
 }

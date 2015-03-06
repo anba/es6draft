@@ -12,6 +12,7 @@ import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -27,15 +28,7 @@ import java.nio.file.PathMatcher;
 import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.NoSuchElementException;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -220,11 +213,11 @@ public final class Resources {
     }
 
     /**
-     * Recursively searches for js-file test cases in {@code searchdir} and its sub-directories.
+     * Recursively searches for js-file test cases in {@code basedir} and its sub-directories.
      */
     private static <TEST extends TestInfo> List<TEST> loadTests(Configuration config,
             Function<Path, TEST> mapper, Path basedir) throws IOException {
-        FilterFileVisitor<Path> ffv = newFilterFileVisitor(basedir, config);
+        FilterFileVisitor<Path> ffv = new FilterFileVisitor<Path>(basedir, new FileMatcher(config));
         CollectorFileVisitor<Path, TEST> cfv = new CollectorFileVisitor<>(ffv, mapper);
         Files.walkFileTree(basedir, cfv);
         List<TEST> tests = cfv.getResult();
@@ -258,7 +251,7 @@ public final class Resources {
         if (config.containsKey("exclude.list")) {
             InputStream exclusionList = Resources.resource(config.getString("exclude.list"),
                     basedir);
-            filterTests(tests, exclusionList);
+            filterTests(tests, exclusionList, config);
         }
         if (config.containsKey("exclude.xml")) {
             Set<String> excludes = readExcludeXMLs(config.getList("exclude.xml", emptyList()),
@@ -270,8 +263,8 @@ public final class Resources {
     /**
      * Filter the initially collected test cases.
      */
-    private static void filterTests(List<? extends TestInfo> tests, InputStream resource)
-            throws IOException {
+    private static void filterTests(List<? extends TestInfo> tests, InputStream resource,
+            Configuration config) throws IOException {
         // list->map
         Map<Path, TestInfo> map = new LinkedHashMap<>();
         for (TestInfo test : tests) {
@@ -280,6 +273,7 @@ public final class Resources {
         // disable tests
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(resource,
                 StandardCharsets.UTF_8))) {
+            FileMatcher fileMatcher = null;
             String line;
             while ((line = reader.readLine()) != null) {
                 line = line.trim();
@@ -288,12 +282,27 @@ public final class Resources {
                 }
                 TestInfo test = map.get(Paths.get(line));
                 if (test == null) {
-                    System.err.printf("detected stale entry '%s'\n", line);
+                    if (fileMatcher == null) {
+                        fileMatcher = new FileMatcher(config);
+                    }
+                    if (matchesIncludesOrInvalidEntry(fileMatcher, line)) {
+                        System.err.printf("detected stale entry '%s'\n", line);
+                    }
                     continue;
                 }
                 test.setEnabled(RUN_DISABLED_TESTS);
             }
         }
+    }
+
+    private static boolean matchesIncludesOrInvalidEntry(FileMatcher fileMatcher, String entry) {
+        Path file;
+        try {
+            file = Paths.get(entry);
+        } catch (InvalidPathException e) {
+            return true;
+        }
+        return fileMatcher.matches(file);
     }
 
     /**
@@ -471,70 +480,97 @@ public final class Resources {
         }
     }
 
-    private static FilterFileVisitor<Path> newFilterFileVisitor(Path basedir, Configuration config) {
-        Iterable<Object> include = config.getList("include", asList("**/*.js", "*.js"));
-        Iterable<Object> includeDirs = config.getList("include.dirs", emptyList());
-        Iterable<Object> includeFiles = config.getList("include.files", emptyList());
-        Iterable<Object> exclude = config.getList("exclude", emptyList());
-        Iterable<Object> excludeDirs = config.getList("exclude.dirs", emptyList());
-        Iterable<Object> excludeFiles = config.getList("exclude.files", emptyList());
-
-        List<String> includeList = intoCollection(toStrings(include), new ArrayList<String>());
-        Set<String> includeDirSet = intoCollection(toStrings(includeDirs), new HashSet<String>());
-        Set<String> includeFilesSet = intoCollection(toStrings(includeFiles), new HashSet<String>());
-        List<String> excludeList = intoCollection(toStrings(exclude), new ArrayList<String>());
-        Set<String> excludeDirSet = intoCollection(toStrings(excludeDirs), new HashSet<String>());
-        Set<String> excludeFilesSet = intoCollection(toStrings(excludeFiles), new HashSet<String>());
-
-        return new FilterFileVisitor<Path>(basedir, includeList, includeDirSet, includeFilesSet,
-                excludeList, excludeDirSet, excludeFilesSet);
-    }
-
     private static final class FilterFileVisitor<PATH extends Path> extends SimpleFileVisitor<PATH> {
         private final Path basedir;
+        private final FileMatcher fileMatcher;
+
+        FilterFileVisitor(Path basedir, FileMatcher fileMatcher) {
+            this.basedir = basedir;
+            this.fileMatcher = fileMatcher;
+        }
+
+        @Override
+        public FileVisitResult preVisitDirectory(PATH path, BasicFileAttributes attrs)
+                throws IOException {
+            Path dir = basedir.relativize(path);
+            if (fileMatcher.matchesDirectory(dir)) {
+                return FileVisitResult.CONTINUE;
+            }
+            return FileVisitResult.SKIP_SUBTREE;
+        }
+
+        @Override
+        public FileVisitResult visitFile(PATH path, BasicFileAttributes attrs) throws IOException {
+            Path file = basedir.relativize(path);
+            if (attrs.isRegularFile() && attrs.size() != 0L && fileMatcher.matches(file)) {
+                return FileVisitResult.CONTINUE;
+            }
+            return FileVisitResult.TERMINATE;
+        }
+    }
+
+    private static final class FileMatcher {
         private final List<PathMatcher> includeMatchers;
         private final Set<String> includeDirs;
         private final Set<String> includeFiles;
         private final List<PathMatcher> excludeMatchers;
         private final Set<String> excludeDirs;
         private final Set<String> excludeFiles;
+        private final List<String> includePrefixList;
+        private final List<String> excludePrefixList;
 
-        FilterFileVisitor(Path basedir, List<String> includes, Set<String> includeDirs,
-                Set<String> includeFiles, List<String> excludes, Set<String> excludeDirs,
-                Set<String> excludeFiles) {
-            this.basedir = basedir;
-            this.includeMatchers = matchers(includes);
-            this.includeDirs = includeDirs;
-            this.includeFiles = includeFiles;
-            this.excludeMatchers = matchers(excludes);
-            this.excludeDirs = excludeDirs;
-            this.excludeFiles = excludeFiles;
+        FileMatcher(Configuration config) {
+            List<Object> include = config.getList("include", asList("**/*.js", "*.js"));
+            List<Object> includeDirs = config.getList("include.dirs", emptyList());
+            List<Object> includeFiles = config.getList("include.files", emptyList());
+            List<Object> exclude = config.getList("exclude", emptyList());
+            List<Object> excludeDirs = config.getList("exclude.dirs", emptyList());
+            List<Object> excludeFiles = config.getList("exclude.files", emptyList());
+
+            this.includeMatchers = matchers(toStrings(include));
+            this.includeDirs = intoCollection(toStrings(includeDirs), new HashSet<String>());
+            this.includeFiles = intoCollection(toStrings(includeFiles), new HashSet<String>());
+            this.excludeMatchers = matchers(toStrings(exclude));
+            this.excludeDirs = intoCollection(toStrings(excludeDirs), new HashSet<String>());
+            this.excludeFiles = intoCollection(toStrings(excludeFiles), new HashSet<String>());
+            this.includePrefixList = toPrefixList(toStrings(include));
+            this.excludePrefixList = toPrefixList(toStrings(exclude));
         }
 
-        @Override
-        public FileVisitResult preVisitDirectory(PATH dir, BasicFileAttributes attrs)
-                throws IOException {
-            if (matches(excludeDirs, dir.getFileName())) {
-                return FileVisitResult.SKIP_SUBTREE;
+        private static List<String> toPrefixList(Iterable<String> patterns) {
+            Pattern dirPattern = Pattern.compile("^(?:glob:)?((?:[^/*?,{}\\[\\]\\\\]+/)+).*$");
+            List<String> prefixList = new ArrayList<>();
+            for (String pattern : patterns) {
+                Matcher m = dirPattern.matcher(pattern);
+                if (!m.matches()) {
+                    return Collections.emptyList();
+                }
+                prefixList.add(m.group(1));
             }
-            return super.preVisitDirectory(dir, attrs);
+            return prefixList;
         }
 
-        @Override
-        public FileVisitResult visitFile(PATH path, BasicFileAttributes attrs) throws IOException {
-            Path file = basedir.relativize(path);
-            if (attrs.isRegularFile() && attrs.size() != 0L && !matches(excludeMatchers, file)
-                    && matches(includeMatchers, file)) {
+        public boolean matchesDirectory(Path directory) {
+            if (!matches(excludeDirs, directory.getFileName())
+                    && !prefixMatches(excludePrefixList, directory.toString())
+                    && matches(includePrefixList, directory.toString())) {
+                return true;
+            }
+            return false;
+        }
+
+        public boolean matches(Path file) {
+            if (!matches(excludeMatchers, file) && matches(includeMatchers, file)) {
                 if (!matches(excludeFiles, file.getFileName())
                         && (includeDirs.isEmpty() || matches(includeDirs, file.getParent()))
                         && (includeFiles.isEmpty() || matches(includeFiles, file.getFileName()))) {
-                    return FileVisitResult.CONTINUE;
+                    return true;
                 }
             }
-            return FileVisitResult.TERMINATE;
+            return false;
         }
 
-        private static List<PathMatcher> matchers(List<String> patterns) {
+        private static List<PathMatcher> matchers(Iterable<String> patterns) {
             List<PathMatcher> matchers = new ArrayList<>();
             for (String pattern : patterns) {
                 if (!(pattern.startsWith("glob:") || pattern.startsWith("regex:"))) {
@@ -557,6 +593,29 @@ public final class Resources {
         private static boolean matches(List<PathMatcher> matchers, Path path) {
             for (PathMatcher matcher : matchers) {
                 if (matcher.matches(path)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        private static boolean matches(List<String> list, String string) {
+            if (string.isEmpty() || list.isEmpty()) {
+                return true;
+            }
+            String search = string.replace(File.separatorChar, '/') + "/";
+            for (String item : list) {
+                if (item.regionMatches(0, search, 0, Math.min(item.length(), search.length()))) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        private static boolean prefixMatches(List<String> prefixList, String string) {
+            String search = string.replace(File.separatorChar, '/') + "/";
+            for (String prefix : prefixList) {
+                if (search.startsWith(prefix)) {
                     return true;
                 }
             }

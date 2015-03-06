@@ -177,9 +177,9 @@ public final class GlobalEnvironmentRecord implements EnvironmentRecord {
         }
         /* step 4 (omitted) */
         /* steps 5-7 */
-        Property existingProp = globalObject.getOwnProperty(cx, name);
+        boolean existingProp = HasOwnProperty(cx, globalObject, name);
         /* step 8 */
-        if (existingProp != null) {
+        if (existingProp) {
             /* steps 8.a-b */
             boolean status = objectRec.deleteBinding(name);
             /* step 8.c */
@@ -291,7 +291,7 @@ public final class GlobalEnvironmentRecord implements EnvironmentRecord {
         if (hasProperty) {
             return true;
         }
-        /* steps 7-9 */
+        /* step 7 */
         return IsExtensible(cx, globalObject);
     }
 

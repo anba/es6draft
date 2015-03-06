@@ -286,7 +286,7 @@ final class DateAbstractOperations {
     }
 
     /**
-     * 20.3.1.9 Local Time
+     * 20.3.1.9 LocalTime ( t )
      * 
      * @param realm
      *            the realm instance
@@ -304,7 +304,7 @@ final class DateAbstractOperations {
     }
 
     /**
-     * 20.3.1.9 Local Time
+     * 20.3.1.10 UTC ( t )
      * 
      * @param realm
      *            the realm instance
@@ -324,7 +324,7 @@ final class DateAbstractOperations {
     }
 
     /**
-     * 20.3.1.10 Hours, Minutes, Second, and Milliseconds
+     * 20.3.1.11 Hours, Minutes, Second, and Milliseconds
      */
     public static final double //
             HoursPerDay = 24, //
@@ -335,7 +335,7 @@ final class DateAbstractOperations {
             msPerHour = msPerMinute * MinutesPerHour;
 
     /**
-     * 20.3.1.10 Hours, Minutes, Second, and Milliseconds
+     * 20.3.1.11 Hours, Minutes, Second, and Milliseconds
      * 
      * @param t
      *            the date in milli-seconds since the epoch
@@ -346,7 +346,7 @@ final class DateAbstractOperations {
     }
 
     /**
-     * 20.3.1.10 Hours, Minutes, Second, and Milliseconds
+     * 20.3.1.11 Hours, Minutes, Second, and Milliseconds
      * 
      * @param t
      *            the date in milli-seconds since the epoch
@@ -357,7 +357,7 @@ final class DateAbstractOperations {
     }
 
     /**
-     * 20.3.1.10 Hours, Minutes, Second, and Milliseconds
+     * 20.3.1.11 Hours, Minutes, Second, and Milliseconds
      * 
      * @param t
      *            the date in milli-seconds since the epoch
@@ -368,7 +368,7 @@ final class DateAbstractOperations {
     }
 
     /**
-     * 20.3.1.10 Hours, Minutes, Second, and Milliseconds
+     * 20.3.1.11 Hours, Minutes, Second, and Milliseconds
      * 
      * @param t
      *            the date in milli-seconds since the epoch
@@ -383,7 +383,7 @@ final class DateAbstractOperations {
     }
 
     /**
-     * 20.3.1.11 MakeTime (hour, min, sec, ms)
+     * 20.3.1.12 MakeTime (hour, min, sec, ms)
      * 
      * @param hour
      *            the hour
@@ -408,7 +408,7 @@ final class DateAbstractOperations {
     }
 
     /**
-     * 20.3.1.12 MakeDay (year, month, date)
+     * 20.3.1.13 MakeDay (year, month, date)
      * 
      * @param year
      *            the year
@@ -438,7 +438,7 @@ final class DateAbstractOperations {
     }
 
     /**
-     * 20.3.1.13 MakeDate (day, time)
+     * 20.3.1.14 MakeDate (day, time)
      * 
      * @param day
      *            the days
@@ -454,7 +454,7 @@ final class DateAbstractOperations {
     }
 
     /**
-     * 20.3.1.14 TimeClip (time)
+     * 20.3.1.15 TimeClip (time)
      * 
      * @param time
      *            the time in milli-seconds
@@ -478,7 +478,7 @@ final class DateAbstractOperations {
     }
 
     /**
-     * 20.3.1.15 Date Time String Format<br>
+     * 20.3.1.16 Date Time String Format<br>
      * Parses the input string according to the simplified ISO-8601 Extended Format:
      * <ul>
      * <li><code>YYYY-MM-DD'T'HH:mm:ss.sss'Z'</code></li>

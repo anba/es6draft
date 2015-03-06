@@ -9,7 +9,7 @@ ECMAScript 2015 (ECMA-262 6th Edition) compiler and runtime written in Java.
 
 ## Implementation Status ##
 
-Full support of [ECMAScript 2015, Rev 34, February 12, 2015 Draft] [es6drafts].
+Full support of [ECMAScript 2015, RC2, Rev 35, February 12, 2015 Draft] [esdrafts].
 
 [ECMAScript Internationalization API 2.0, Rev 9, 2015-02-09 Draft] [intldrafts]:
 * Sub-classing intentionally restricted to ES6 classes
@@ -60,6 +60,19 @@ or:
 mvn test -P test262 -Dtest262.path=<test262 main directory>
 ```
 
+The `-Dtest262.include` parameter can be used to select specific test cases:
+```
+mvn test -P test262 -Dtest262.include="test/built-ins/Array/prototype/**/*.js"
+
+mvn test -P test262 -Dtest262.include="test/built-ins/{Boolean\,Number}/prototype/**/*.js"
+```
+
+The `-Dtest262.exclude` parameter allows to exclude test cases:
+```
+mvn test -P test262 -Dtest262.exclude="test/built-ins/**/*.js"
+```
+
+
 ### External Tests ###
 
 Additional test suites are available to run tests from [Mozilla] [mozilla], [Traceur] [traceur],
@@ -78,7 +91,7 @@ To skip an external test, use `-D<name>.skip=true`. For example to run only the 
 mvn test -P external -Dtraceur.path=<...> -Dmozilla.skip=true -Dv8.skip=true -Dwebkit.skip=true
 ```
 
-[es6drafts]: http://wiki.ecmascript.org/doku.php?id=harmony:specification_drafts "Draft Specification for ES.next"
+[esdrafts]: http://wiki.ecmascript.org/doku.php?id=harmony:specification_drafts "Draft Specification for ES.next"
 [intldrafts]: http://wiki.ecmascript.org/doku.php?id=globalization:specification_drafts "Specification Drafts for ECMAScript Internationalization API"
 [icu]: http://site.icu-project.org/
 [java]: http://java.sun.com/

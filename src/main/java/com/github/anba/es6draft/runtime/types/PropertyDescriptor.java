@@ -364,20 +364,20 @@ public final class PropertyDescriptor implements Cloneable {
         /* steps 3-9 */
         PropertyDescriptor desc = new PropertyDescriptor();
         if (HasProperty(cx, obj, "enumerable")) {
-            Object enumerable = Get(cx, obj, "enumerable");
-            desc.setEnumerable(ToBoolean(enumerable));
+            boolean enumerable = ToBoolean(Get(cx, obj, "enumerable"));
+            desc.setEnumerable(enumerable);
         }
         if (HasProperty(cx, obj, "configurable")) {
-            Object configurable = Get(cx, obj, "configurable");
-            desc.setConfigurable(ToBoolean(configurable));
+            boolean configurable = ToBoolean(Get(cx, obj, "configurable"));
+            desc.setConfigurable(configurable);
         }
         if (HasProperty(cx, obj, "value")) {
             Object value = Get(cx, obj, "value");
             desc.setValue(value);
         }
         if (HasProperty(cx, obj, "writable")) {
-            Object writable = Get(cx, obj, "writable");
-            desc.setWritable(ToBoolean(writable));
+            boolean writable = ToBoolean(Get(cx, obj, "writable"));
+            desc.setWritable(writable);
         }
         if (HasProperty(cx, obj, "get")) {
             Object getter = Get(cx, obj, "get");

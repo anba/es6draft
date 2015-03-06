@@ -5,7 +5,7 @@
  * <https://github.com/anba/es6draft>
  */
 const {
-  assertSame
+  assertThrows
 } = Assert;
 
 // 14.4.12 EvaluateBody: Allow "new function*" to reference `this`
@@ -16,5 +16,4 @@ function* g() {
 }
 
 var it = new g();
-var {value} = it.next();
-assertSame(it, value);
+assertThrows(ReferenceError, () => it.next());

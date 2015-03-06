@@ -413,10 +413,10 @@ public final class ExecutionContext {
         /* step 5 */
         Realm calleeRealm = f.getRealm();
         Object thisValue = bindThisValue(f, thisArgument);
-        /* steps 7-9 */
+        /* step 7 */
         LexicalEnvironment<FunctionEnvironmentRecord> localEnv = newFunctionEnvironment(f,
                 newTarget, thisValue);
-        /* steps 3-4, 6, 10-14 */
+        /* steps 3-4, 6, 10-13 */
         return new ExecutionContext(calleeRealm, localEnv, localEnv, localEnv, f.getExecutable(), f);
     }
 
@@ -451,7 +451,7 @@ public final class ExecutionContext {
                 thisValue = ToObject(calleeRealm.defaultContext(), thisArgument);
             }
         }
-        /* steps 7-8 (not applicable) */
+        /* steps 7-9 (not applicable) */
         return thisValue;
     }
 

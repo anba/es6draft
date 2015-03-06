@@ -72,6 +72,7 @@ var obj = class {
 `);
 
 // 14.3 Method Definitions [ConstructorMethod]
+assertSyntaxError(`
 var obj = class {
   constructor() {
 (() => {
@@ -79,9 +80,7 @@ var obj = class {
 })();
   }
 };
-Object.setPrototypeOf(obj, SuperConstructor);
-assertThrows(TypeError, () => obj());
-new obj();
+`);
 
 var obj = class extends class {} {
   constructor() {

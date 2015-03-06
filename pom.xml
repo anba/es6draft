@@ -19,7 +19,7 @@
   <name>es6draft</name>
 
   <url>https://github.com/anba/es6draft</url>
-  <description>ECMAScript 6 compiler and runtime</description>
+  <description>ECMAScript 2015 compiler and runtime</description>
   <inceptionYear>2012</inceptionYear>
 
   <organization>
@@ -59,10 +59,11 @@
     <mainClass>${project.groupId}.${project.artifactId}.repl.Repl</mainClass>
     <distribution.name>${project.artifactId}</distribution.name>
     <shaded.name>${project.artifactId}</shaded.name>
-    <spec.version>rev34</spec.version>
+    <spec.version>rev35</spec.version>
     <test.user.language>en</test.user.language>
     <test.user.country>US</test.user.country>
     <test.user.timezone>America/Los_Angeles</test.user.timezone>
+    <test.jvmArgs />
   </properties>
 
   <dependencies>
@@ -250,11 +251,6 @@
                   <includes>
                     <include>**/test262/*.java</include>
                   </includes>
-                  <argLine>
-                    -Duser.language=${test.user.language}
-                    -Duser.country=${test.user.country}
-                    -Duser.timezone=${test.user.timezone}
-                  </argLine>
                 </configuration>
               </execution>
             </executions>
@@ -263,9 +259,12 @@
       </build>
     </profile>
     <!-- Profile to run the test262 test suite on travis-ci -->
-    <!-- (Explicit fork+memory settings to avoid exceeding the 3GB limit.) -->
     <profile>
       <id>test262-travisci</id>
+      <properties>
+        <!-- Explicit fork+memory settings to avoid exceeding the 3GB limit. -->
+        <test.jvmArgs>-Xms256m -Xmx1536m</test.jvmArgs>
+      </properties>
       <build>
         <plugins>
           <plugin>
@@ -280,12 +279,6 @@
                   </includes>
                   <forkCount>1</forkCount>
                   <reuseForks>false</reuseForks>
-                  <argLine>
-                    -Xms256m -Xmx1536m
-                    -Duser.language=${test.user.language}
-                    -Duser.country=${test.user.country}
-                    -Duser.timezone=${test.user.timezone}
-                  </argLine>
                 </configuration>
               </execution>
             </executions>
@@ -399,6 +392,13 @@
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-surefire-plugin</artifactId>
           <version>2.18.1</version>
+          <dependencies>
+            <dependency>
+              <groupId>org.apache.maven.surefire</groupId>
+              <artifactId>surefire-junit47</artifactId>
+              <version>2.18.1</version>
+            </dependency>
+          </dependencies>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
@@ -825,6 +825,7 @@
                 <java.awt.headless>true</java.awt.headless>
               </systemPropertyVariables>
               <argLine>
+                ${test.jvmArgs}
                 -Duser.language=${test.user.language}
                 -Duser.country=${test.user.country}
                 -Duser.timezone=${test.user.timezone}

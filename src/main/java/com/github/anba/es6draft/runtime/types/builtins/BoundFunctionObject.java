@@ -251,20 +251,6 @@ public class BoundFunctionObject extends OrdinaryObject implements Callable {
         return obj;
     }
 
-    /**
-     * BoundFunctionClone ( function )
-     * 
-     * @param cx
-     *            the execution context
-     * @param function
-     *            the bound function object
-     * @return the new cloned bound function object
-     */
-    public static BoundFunctionObject BoundFunctionClone(ExecutionContext cx,
-            BoundFunctionObject function) {
-        return function.clone(cx);
-    }
-
     private static Object[] concatArguments(ExecutionContext callerContext, Object[] boundArgs,
             Object[] argumentsList) {
         int argsLen = boundArgs.length + argumentsList.length;

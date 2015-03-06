@@ -42,9 +42,9 @@ public final class StringObject extends OrdinaryObject {
         super(realm);
         // StringCreate - step 4
         this.stringData = stringData;
-        // StringCreate - step 10
+        // StringCreate - step 9
         setPrototype(prototype);
-        // StringCreate - steps 12-14
+        // StringCreate - steps 11-13
         infallibleDefineOwnProperty("length",
                 new Property(stringData.length(), false, false, false));
     }
@@ -68,7 +68,7 @@ public final class StringObject extends OrdinaryObject {
      */
     @Override
     protected boolean hasOwnProperty(ExecutionContext cx, long propertyKey) {
-        return super.hasOwnProperty(cx, propertyKey) || propertyKey < getStringData().length();
+        return propertyKey < getStringData().length() || super.hasOwnProperty(cx, propertyKey);
     }
 
     /**
@@ -120,31 +120,23 @@ public final class StringObject extends OrdinaryObject {
     @Override
     protected boolean has(ExecutionContext cx, long propertyKey) {
         // FIXME: spec bug - don't traverse proto chain for own indexed properties! (bug 3618)
-        boolean hasOrdinary = ordinaryHasOwnProperty(propertyKey);
-        if (hasOrdinary) {
-            return true;
-        }
-        return propertyKey < getStringData().length();
+        return propertyKey < getStringData().length() || super.has(cx, propertyKey);
     }
 
     /**
-     * 9.4.3.3 [[Enumerate]] ()
-     */
-    @Override
-    protected List<String> getEnumerableKeys(ExecutionContext cx) {
-        /* steps 1-7 */
-        return new CompoundList<>(new StringPropertyKeyList(getStringData().length()),
-                super.getEnumerableKeys(cx));
-    }
-
-    /**
-     * 9.4.3.4 [[OwnPropertyKeys]] ()
+     * 9.4.3.3 [[OwnPropertyKeys]] ()
      */
     @Override
     protected List<Object> getOwnPropertyKeys(ExecutionContext cx) {
         /* steps 1-8 */
         return new CompoundList<>(new StringPropertyKeyList(getStringData().length()),
                 super.getOwnPropertyKeys(cx));
+    }
+
+    @Override
+    protected List<String> getEnumerableKeys(ExecutionContext cx) {
+        return new CompoundList<>(new StringPropertyKeyList(getStringData().length()),
+                super.getEnumerableKeys(cx));
     }
 
     @Override
@@ -157,7 +149,7 @@ public final class StringObject extends OrdinaryObject {
     }
 
     /**
-     * 9.4.3.5 StringCreate(value, prototype)
+     * 9.4.3.4 StringCreate(value, prototype)
      * 
      * @param cx
      *            the execution context
@@ -166,13 +158,13 @@ public final class StringObject extends OrdinaryObject {
      * @return the new string object
      */
     public static StringObject StringCreate(ExecutionContext cx, CharSequence stringData) {
-        /* steps 1-15 */
+        /* steps 1-14 */
         return new StringObject(cx.getRealm(), stringData,
                 cx.getIntrinsic(Intrinsics.StringPrototype));
     }
 
     /**
-     * 9.4.3.5 StringCreate(value, prototype)
+     * 9.4.3.4 StringCreate(value, prototype)
      * 
      * @param cx
      *            the execution context
@@ -185,7 +177,7 @@ public final class StringObject extends OrdinaryObject {
     public static StringObject StringCreate(ExecutionContext cx, CharSequence stringData,
             ScriptObject prototype) {
         /* steps 1-2 (not applicable) */
-        /* steps 3-15 */
+        /* steps 3-14 */
         return new StringObject(cx.getRealm(), stringData, prototype);
     }
 }

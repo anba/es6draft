@@ -5,14 +5,8 @@
 # <https://github.com/anba/es6draft>
 #
 
-# super works in nested functions
-feature/Classes/NestedFunctionSuper.js
-
 # Object.mixin() removed in rev22
 feature/ObjectMixin.js
-
-# String.fromCodePoint length changed to 1
-feature/StringExtras/FromCodePoint.js
 
 # Default parameter allowed in set accessor
 feature/DefaultParameters/Error_SetAccessor.js
@@ -20,15 +14,11 @@ feature/DefaultParameters/Error_SetAccessor.js
 # Wrong Array subclass in test case (Traceur limitation)
 feature/ArrayExtras/From.js
 
-# Derived class without super() constructor call
-feature/Classes/ConstructorMember.js
-
 # Invalid super() constructor call when class derives from null
 feature/Classes/ExtendStrange.js
 
 # Access to 'this' before super() constructor call
 feature/Classes/NestedClassSuperAnimal.js
-feature/Classes/SimpleSuper.js
 
 # class methods are non-enumerable
 feature/Classes/Method.js
@@ -39,6 +29,9 @@ feature/Classes/DefaultConstructor.js
 
 # `new` no longer in tail-call position
 feature/ProperTailCalls/New.js
+
+# `super()` enforced in derived class constructors?
+feature/Classes/Error_NoSuperInDerivedClass.js
 
 
 ############################################

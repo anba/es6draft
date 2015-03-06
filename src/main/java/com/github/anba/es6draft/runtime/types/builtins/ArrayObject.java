@@ -277,9 +277,9 @@ public class ArrayObject extends OrdinaryObject {
         ArrayObject array = new ArrayObject(cx.getRealm());
         /* step 8 */
         array.setPrototype(proto);
-        /* step 10 */
+        /* steps 10-11 */
         array.length = length;
-        /* step 11 */
+        /* step 12 */
         return array;
     }
 

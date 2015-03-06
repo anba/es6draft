@@ -343,27 +343,4 @@ public abstract class BuiltinFunction extends OrdinaryObject implements Callable
         }
         return super.getOwnPropertyKeys(cx);
     }
-
-    // TODO: spec bug? [[GetOwnProperty]] override necessary, cf.
-    // AddRestrictedFunctionProperties (Bug 1223)
-
-    // /**
-    // * 9.2.3 [[GetOwnProperty]] (P)
-    // */
-    // @Override
-    // protected Property getProperty(ExecutionContext cx, String propertyKey) {
-    // /* steps 1-2 */
-    // Property v = super.getProperty(cx, propertyKey);
-    // /* step 3 */
-    // if (v != null && v.isDataDescriptor()) {
-    // if ("caller".equals(propertyKey) && isStrictFunction(v.getValue())
-    // && getRealm().isEnabled(CompatibilityOption.FunctionPrototype)) {
-    // PropertyDescriptor desc = v.toPropertyDescriptor();
-    // desc.setValue(NULL);
-    // v = desc.toProperty();
-    // }
-    // }
-    // /* step 4 */
-    // return v;
-    // }
 }

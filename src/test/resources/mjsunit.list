@@ -100,6 +100,12 @@ regress/regress-447561.js
 # super(expr) evaluates expr before checking this-initialization state
 harmony/classes-experimental.js
 
+# SetFunctionName not implemented in v8
+es6/function-name-configurable.js
+
+# Object environment records HasBinding/GetBindingValue not spec compliant in v8
+harmony/regress/regress-crbug-461520.js
+
 
 ###################
 # Misc issues     #

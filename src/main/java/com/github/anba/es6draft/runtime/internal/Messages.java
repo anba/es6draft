@@ -105,6 +105,7 @@ public final class Messages {
         UnterminatedTemplateLiteral("parser.unterminated_template_literal"),
         UnterminatedRegExpLiteral("parser.unterminated_regexp_literal"),
         InvalidRegExpLiteral("parser.invalid_regexp_literal"),
+        InvalidUnicodeEscapedIdentifierStart("parser.invalid_unicode_escaped_identifierstart"),
         InvalidUnicodeEscapedIdentifierPart("parser.invalid_unicode_escaped_identifierpart"),
         InvalidToken("parser.invalid_token"),
         IllegalCharacter("parser.illegal_character"),

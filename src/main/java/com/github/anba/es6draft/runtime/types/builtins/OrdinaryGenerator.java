@@ -43,7 +43,7 @@ public final class OrdinaryGenerator extends FunctionObject implements Construct
     }
 
     /**
-     * 9.2.2 [[Call]] (thisArgument, argumentsList)
+     * 9.2.1 [[Call]] (thisArgument, argumentsList)
      */
     @Override
     public GeneratorObject call(ExecutionContext callerContext, Object thisValue, Object... args) {
@@ -58,7 +58,7 @@ public final class OrdinaryGenerator extends FunctionObject implements Construct
     }
 
     /**
-     * 9.2.2 [[Call]] (thisArgument, argumentsList)
+     * 9.2.1 [[Call]] (thisArgument, argumentsList)
      */
     @Override
     public GeneratorObject tailCall(ExecutionContext callerContext, Object thisValue,
@@ -68,7 +68,7 @@ public final class OrdinaryGenerator extends FunctionObject implements Construct
     }
 
     /**
-     * 9.2.3 [[Construct]] ( argumentsList, newTarget)
+     * 9.2.2 [[Construct]] ( argumentsList, newTarget)
      */
     @Override
     public GeneratorObject construct(ExecutionContext callerContext, Constructor newTarget,
@@ -84,7 +84,7 @@ public final class OrdinaryGenerator extends FunctionObject implements Construct
     }
 
     /**
-     * 9.2.3 [[Construct]] ( argumentsList, newTarget)
+     * 9.2.2 [[Construct]] ( argumentsList, newTarget)
      */
     @Override
     public GeneratorObject tailConstruct(ExecutionContext callerContext, Constructor newTarget,
@@ -130,7 +130,7 @@ public final class OrdinaryGenerator extends FunctionObject implements Construct
     /* ***************************************************************************************** */
 
     /**
-     * 9.2.4 FunctionAllocate (functionPrototype, strict [,functionKind] )
+     * 9.2.3 FunctionAllocate (functionPrototype, strict [,functionKind] )
      * 
      * @param cx
      *            the execution context
@@ -146,17 +146,17 @@ public final class OrdinaryGenerator extends FunctionObject implements Construct
             ScriptObject functionPrototype, boolean strict, FunctionKind kind) {
         assert kind != FunctionKind.ClassConstructor;
         Realm realm = cx.getRealm();
-        /* steps 1-3 (implicit) */
-        /* steps 4-8 */
+        /* steps 1-5 (implicit) */
+        /* steps 6-9 */
         OrdinaryGenerator f = new OrdinaryGenerator(realm);
-        /* steps 9-13 */
+        /* steps 10-14 */
         f.allocate(realm, functionPrototype, strict, kind, ConstructorKind.Derived);
-        /* step 14 */
+        /* step 15 */
         return f;
     }
 
     /**
-     * 9.2.7 GeneratorFunctionCreate (kind, ParameterList, Body, Scope, Strict)
+     * 9.2.6 GeneratorFunctionCreate (kind, ParameterList, Body, Scope, Strict)
      * 
      * @param cx
      *            the execution context

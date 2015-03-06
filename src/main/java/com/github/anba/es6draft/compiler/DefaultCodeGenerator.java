@@ -1324,7 +1324,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
         mv.invoke(codegen.methodDesc(constructor, FunctionName.RTI));
 
         // step 10 (not applicable)
-        // steps 11-17
+        // steps 11-18
         // stack: [constructorParent, proto, <rti>] -> [F]
         mv.iconst(classHeritage != null);
         mv.loadExecutionContext();
@@ -1336,10 +1336,10 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
                 OrdinaryConstructorFunction.class);
         mv.store(F);
 
-        // steps 18-20
+        // steps 19-21
         ClassPropertyEvaluation(codegen, def.getProperties(), F, proto, mv);
 
-        // step 22 (moved)
+        // step 23 (moved)
         if (className != null) {
             // stack: [] -> [envRec, name, F]
             getEnvironmentRecord(mv);
@@ -1350,7 +1350,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
             mv.invoke(Methods.EnvironmentRecord_initializeBinding);
         }
 
-        // step 21
+        // step 22
         if (className != null) {
             mv.exitScope();
             // restore previous lexical environment
@@ -1362,7 +1362,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
 
         mv.exitVariableScope();
 
-        // step 23 (return F)
+        // step 24 (return F)
         mv.exitClassDefinition();
     }
 

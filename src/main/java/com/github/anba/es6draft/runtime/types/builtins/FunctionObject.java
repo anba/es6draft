@@ -226,9 +226,6 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
         return super.hasOwnProperty(cx, propertyKey);
     }
 
-    /**
-     * 9.2.1 [[GetOwnProperty]] (P)
-     */
     @Override
     protected final Property getProperty(ExecutionContext cx, String propertyKey) {
         if (isLegacy()) {
@@ -300,15 +297,26 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
 
     @Override
     public final FunctionObject clone(ExecutionContext cx) {
-        /* steps 1-3 (not applicable) */
-        /* steps 4-6 */
         FunctionObject clone = allocateNew();
         clone.isClone = true;
         clone.initialize(getFunctionKind(), getCode(), getEnvironment(), getExecutable());
-        /* step 7 */
-        assert clone.isExtensible() : "cloned function not extensible";
-        /* step 8 (not applicable) */
-        /* step 9 */
+        return clone;
+    }
+
+    /**
+     * Returns a copy of this function object with the same internal methods and internal slots.
+     * 
+     * @param cx
+     *            the execution context
+     * @param newHome
+     *            the new home object
+     * @return the cloned function object
+     */
+    public final FunctionObject clone(ExecutionContext cx, ScriptObject newHome) {
+        FunctionObject clone = clone(cx);
+        if (getHomeObject() != null) {
+            clone.toMethod(newHome);
+        }
         return clone;
     }
 
@@ -320,7 +328,7 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
     protected abstract FunctionObject allocateNew();
 
     /**
-     * 9.2.4 FunctionAllocate (functionPrototype, strict)
+     * 9.2.3 FunctionAllocate (functionPrototype, strict)
      * 
      * @param realm
      *            the realm instance
@@ -336,22 +344,22 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
     protected final void allocate(Realm realm, ScriptObject functionPrototype, boolean strict,
             FunctionKind functionKind, ConstructorKind constructorKind) {
         assert this.realm == null && realm != null : "function object already allocated";
-        /* step 11 */
+        /* step 9 */
         this.constructorKind = constructorKind;
-        /* step 12 */
+        /* step 10 */
         this.strict = strict;
-        /* step 13 */
+        /* step 11 */
         this.functionKind = functionKind;
-        /* step 14 */
+        /* step 12 */
         this.setPrototype(functionPrototype);
-        /* step 15 */
+        /* step 13 */
         // f.[[Extensible]] = true (implicit)
-        /* step 16 */
+        /* step 14 */
         this.realm = realm;
     }
 
     /**
-     * 9.2.5 FunctionInitialize (F, kind, ParameterList, Body, Scope)
+     * 9.2.4 FunctionInitialize (F, kind, ParameterList, Body, Scope)
      * 
      * @param kind
      *            the function kind
@@ -366,17 +374,17 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
             LexicalEnvironment<?> scope, Executable executable) {
         assert this.function == null && function != null : "function object already initialized";
         assert this.functionKind == kind : String.format("%s != %s", functionKind, kind);
-        /* step 6 */
+        /* step 5 */
         boolean strict = this.strict;
-        /* step 7 */
+        /* step 6 */
         this.environment = scope;
-        /* steps 8-9 */
+        /* steps 7-8 */
         this.function = function;
         this.callMethod = tailCallAdapter(function);
         this.tailCallMethod = function.callMethod();
         this.constructMethod = tailConstructAdapter(function);
         this.tailConstructMethod = dropConstructReturnType(function);
-        /* steps 10-12 */
+        /* steps 9-11 */
         if (kind == FunctionKind.Arrow) {
             this.thisMode = ThisMode.Lexical;
         } else if (strict) {
@@ -388,7 +396,7 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
     }
 
     /**
-     * 9.2.11 MakeMethod ( F, homeObject)
+     * 9.2.10 MakeMethod ( F, homeObject)
      * 
      * @param homeObject
      *            the new home object

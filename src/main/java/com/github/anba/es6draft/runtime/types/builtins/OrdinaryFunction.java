@@ -42,7 +42,7 @@ public class OrdinaryFunction extends FunctionObject {
     }
 
     /**
-     * 9.2.2 [[Call]] (thisArgument, argumentsList)
+     * 9.2.1 [[Call]] (thisArgument, argumentsList)
      */
     @Override
     public Object call(ExecutionContext callerContext, Object thisValue, Object... argumentsList) {
@@ -56,7 +56,7 @@ public class OrdinaryFunction extends FunctionObject {
     }
 
     /**
-     * 9.2.2 [[Call]] (thisArgument, argumentsList)
+     * 9.2.1 [[Call]] (thisArgument, argumentsList)
      */
     @Override
     public Object tailCall(ExecutionContext callerContext, Object thisValue,
@@ -67,7 +67,7 @@ public class OrdinaryFunction extends FunctionObject {
     /* ***************************************************************************************** */
 
     /**
-     * 9.2.4 FunctionAllocate (functionPrototype, strict)
+     * 9.2.3 FunctionAllocate (functionPrototype, strict)
      * 
      * @param cx
      *            the execution context
@@ -84,16 +84,16 @@ public class OrdinaryFunction extends FunctionObject {
         assert !(functionKind == FunctionKind.Normal || functionKind == FunctionKind.ClassConstructor);
         Realm realm = cx.getRealm();
         /* steps 1-5 (implicit) */
-        /* steps 6-11 */
+        /* steps 6-9 */
         OrdinaryFunction f = new OrdinaryFunction(realm);
-        /* steps 12-16 */
+        /* steps 10-14 */
         f.allocate(realm, functionPrototype, strict, functionKind, ConstructorKind.Base);
-        /* step 17 */
+        /* step 15 */
         return f;
     }
 
     /**
-     * 9.2.5 FunctionInitialize (F, kind, ParameterList, Body, Scope)
+     * 9.2.4 FunctionInitialize (F, kind, ParameterList, Body, Scope)
      * 
      * @param f
      *            the function object
@@ -112,16 +112,15 @@ public class OrdinaryFunction extends FunctionObject {
         assert f.isExtensible() && !f.ordinaryHasOwnProperty("length");
         /* step 2 */
         int len = function.expectedArgumentCount();
-        /* step 3 (not applicable) */
-        /* steps 4-5 */
+        /* steps 3-4 */
         f.infallibleDefineOwnProperty("length", new Property(len, false, false, true));
-        /* steps 6-12 */
+        /* steps 5-11 */
         f.initialize(kind, function, scope, executable);
-        /* step 13 (return) */
+        /* step 12 (return) */
     }
 
     /**
-     * 9.2.6 FunctionCreate (kind, ParameterList, Body, Scope, Strict, prototype)
+     * 9.2.5 FunctionCreate (kind, ParameterList, Body, Scope, Strict, prototype)
      * 
      * @param cx
      *            the execution context
@@ -147,7 +146,7 @@ public class OrdinaryFunction extends FunctionObject {
     }
 
     /**
-     * 9.2.8 AddRestrictedFunctionProperties ( F, realm )
+     * 9.2.7 AddRestrictedFunctionProperties ( F, realm )
      * 
      * @param <FUNCTION>
      *            the function type
@@ -167,7 +166,7 @@ public class OrdinaryFunction extends FunctionObject {
     }
 
     /**
-     * 9.2.9 MakeConstructor (F, writablePrototype, prototype)
+     * 9.2.8 MakeConstructor (F, writablePrototype, prototype)
      * 
      * @param <CONSTRUCTOR>
      *            the constructor function type
@@ -196,7 +195,7 @@ public class OrdinaryFunction extends FunctionObject {
     }
 
     /**
-     * 9.2.9 MakeConstructor (F, writablePrototype, prototype)
+     * 9.2.8 MakeConstructor (F, writablePrototype, prototype)
      * 
      * @param <CONSTRUCTOR>
      *            the constructor function type
@@ -220,7 +219,7 @@ public class OrdinaryFunction extends FunctionObject {
     }
 
     /**
-     * 9.2.10 MakeClassConstructor (F)
+     * 9.2.9 MakeClassConstructor (F)
      * 
      * @param f
      *            the function object
@@ -233,7 +232,7 @@ public class OrdinaryFunction extends FunctionObject {
     }
 
     /**
-     * 9.2.11 MakeMethod (F, homeObject)
+     * 9.2.10 MakeMethod (F, homeObject)
      * 
      * @param f
      *            the function object
@@ -248,7 +247,7 @@ public class OrdinaryFunction extends FunctionObject {
     }
 
     /**
-     * 9.2.12 SetFunctionName (F, name, prefix)
+     * 9.2.11 SetFunctionName (F, name, prefix)
      * 
      * @param <FUNCTION>
      *            the function type
@@ -263,7 +262,7 @@ public class OrdinaryFunction extends FunctionObject {
     }
 
     /**
-     * 9.2.12 SetFunctionName (F, name, prefix)
+     * 9.2.11 SetFunctionName (F, name, prefix)
      * 
      * @param <FUNCTION>
      *            the function type
@@ -288,7 +287,7 @@ public class OrdinaryFunction extends FunctionObject {
     }
 
     /**
-     * 9.2.12 SetFunctionName (F, name, prefix)
+     * 9.2.11 SetFunctionName (F, name, prefix)
      * 
      * @param <FUNCTION>
      *            the function type
@@ -303,7 +302,7 @@ public class OrdinaryFunction extends FunctionObject {
     }
 
     /**
-     * 9.2.12 SetFunctionName (F, name, prefix)
+     * 9.2.11 SetFunctionName (F, name, prefix)
      * 
      * @param <FUNCTION>
      *            the function type
@@ -328,48 +327,5 @@ public class OrdinaryFunction extends FunctionObject {
         }
         /* steps 6-7 */
         f.infallibleDefineOwnProperty("name", new Property(sname, false, false, true));
-    }
-
-    /**
-     * 9.2.? CloneMethod(function, newHome)
-     * 
-     * @param cx
-     *            the execution context
-     * @param function
-     *            the function object
-     * @param newHome
-     *            the new home object
-     * @return the cloned function object
-     */
-    public static FunctionObject CloneMethod(ExecutionContext cx, FunctionObject function,
-            ScriptObject newHome) {
-        /* steps 1-2 (not applicable) */
-        /* step 3 */
-        /* steps 4-7, 9 */
-        FunctionObject clone = function.clone(cx);
-        /* step 8 */
-        if (function.getHomeObject() != null) {
-            clone.toMethod(newHome);
-        }
-        /* step 9 */
-        return clone;
-    }
-
-    /**
-     * 9.2.? CloneMethod(function, newHome, newName)
-     * 
-     * @param cx
-     *            the execution context
-     * @param function
-     *            the function object
-     * @return the cloned function object
-     */
-    public static BuiltinFunction CloneMethod(ExecutionContext cx, BuiltinFunction function) {
-        /* steps 1-3 (not applicable) */
-        /* steps 4-7, 9 */
-        BuiltinFunction clone = function.clone(cx);
-        /* step 8 (not applicable) */
-        /* step 10 */
-        return clone;
     }
 }

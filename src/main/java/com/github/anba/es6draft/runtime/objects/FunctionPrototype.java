@@ -12,9 +12,7 @@ import static com.github.anba.es6draft.runtime.internal.Properties.createPropert
 import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.EMPTY_ARRAY;
 import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.PrepareForTailCall;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
-import static com.github.anba.es6draft.runtime.types.builtins.BoundFunctionObject.BoundFunctionClone;
 import static com.github.anba.es6draft.runtime.types.builtins.BoundFunctionObject.BoundFunctionCreate;
-import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.CloneMethod;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.SetFunctionName;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
@@ -32,7 +30,6 @@ import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Property;
-import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.Undefined;
 import com.github.anba.es6draft.runtime.types.builtins.BoundFunctionObject;
@@ -289,19 +286,11 @@ public final class FunctionPrototype extends BuiltinFunction implements Initiali
             if (!Type.isObject(newHome)) {
                 throw newTypeError(cx, Messages.Key.NotObjectType);
             }
-            ScriptObject newHomeObject = Type.objectValue(newHome);
             /* step 3 */
             if (func instanceof FunctionObject) {
-                return CloneMethod(cx, (FunctionObject) func, newHomeObject);
+                return ((FunctionObject) func).clone(cx, Type.objectValue(newHome));
             }
-            if (func instanceof BuiltinFunction) {
-                return CloneMethod(cx, (BuiltinFunction) func);
-            }
-            /* step 4 */
-            if (func instanceof BoundFunctionObject) {
-                return BoundFunctionClone(cx, (BoundFunctionObject) func);
-            }
-            /* steps 5-6 */
+            /* steps 3-6 */
             return func.clone(cx);
         }
     }

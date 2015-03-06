@@ -98,8 +98,8 @@ public final class ObjectEnvironmentRecord implements EnvironmentRecord {
         Object unscopables = Get(cx, bindings, BuiltinSymbol.unscopables.get());
         /* step 9 */
         if (Type.isObject(unscopables)) {
-            Object blocked = Get(cx, Type.objectValue(unscopables), name);
-            if (ToBoolean(blocked)) {
+            boolean blocked = ToBoolean(Get(cx, Type.objectValue(unscopables), name));
+            if (blocked) {
                 return false;
             }
         }
@@ -131,7 +131,6 @@ public final class ObjectEnvironmentRecord implements EnvironmentRecord {
      */
     @Override
     public void initializeBinding(String name, Object value) {
-        // FIXME: InitializeBinding for ObjectEnvironment unreachable
         assert value != null;
         /* step 1 (omitted) */
         /* steps 2-3 (not applicable) */

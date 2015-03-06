@@ -14,7 +14,7 @@ import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.Messages;
 
 /**
- * Lexer for ECMAScript 6 source code
+ * Lexer for ECMAScript source code
  * <ul>
  * <li>10 ECMAScript Language: Source Code
  * <li>11 ECMAScript Language: Lexical Grammar
@@ -1010,8 +1010,7 @@ final class TokenStream {
             if (isIdentifierStart(c)) {
                 return readIdentifier(c, true);
             }
-            // TODO: Improve error message
-            return Token.ERROR;
+            throw error(Messages.Key.InvalidUnicodeEscapedIdentifierStart);
         default:
             if (isIdentifierStart(c)) {
                 return readIdentifier(c, false);

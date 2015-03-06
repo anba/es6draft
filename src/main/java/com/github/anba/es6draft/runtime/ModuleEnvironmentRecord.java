@@ -36,7 +36,7 @@ public final class ModuleEnvironmentRecord extends DeclarativeEnvironmentRecord 
 
         @Override
         public boolean isInitialized() {
-            /* 8.1.1.5.1 GetBindingValue(N,S), step 3.b */
+            /* 8.1.1.5.1 GetBindingValue(N,S), steps 3.a-d */
             return module.getEnvironment() != null;
         }
 
@@ -52,7 +52,7 @@ public final class ModuleEnvironmentRecord extends DeclarativeEnvironmentRecord 
 
         @Override
         public Object getValue() {
-            /* 8.1.1.5.1 GetBindingValue(N,S), steps 3.c-d */
+            /* 8.1.1.5.1 GetBindingValue(N,S), steps 3.e-f */
             return module.getEnvironment().getEnvRec().getBindingValue(otherName, true);
         }
     }

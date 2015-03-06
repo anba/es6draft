@@ -211,20 +211,18 @@ public abstract class IntegerIndexedObject extends OrdinaryObject {
         return super.setValue(cx, propertyKey, value, receiver);
     }
 
-    /** 9.4.5.6 [[Enumerate]] () */
-    @Override
-    protected final List<String> getEnumerableKeys(ExecutionContext cx) {
-        /* steps 1-7 */
-        return new CompoundList<>(new IndexedPropertyKeyList(getLength()),
-                super.getEnumerableKeys(cx));
-    }
-
-    /** 9.4.5.7 [[OwnPropertyKeys]] () */
+    /** 9.4.5.6 [[OwnPropertyKeys]] () */
     @Override
     protected final List<Object> getOwnPropertyKeys(ExecutionContext cx) {
         /* steps 1-7 */
         return new CompoundList<>(new IndexedPropertyKeyList(getLength()),
                 super.getOwnPropertyKeys(cx));
+    }
+
+    @Override
+    protected final List<String> getEnumerableKeys(ExecutionContext cx) {
+        return new CompoundList<>(new IndexedPropertyKeyList(getLength()),
+                super.getEnumerableKeys(cx));
     }
 
     @Override
@@ -237,7 +235,7 @@ public abstract class IntegerIndexedObject extends OrdinaryObject {
     }
 
     /**
-     * 9.4.5.8 IntegerIndexedObjectCreate (prototype, internalSlotsList)
+     * 9.4.5.7 IntegerIndexedObjectCreate (prototype, internalSlotsList)
      * 
      * @param cx
      *            the execution context
@@ -271,7 +269,7 @@ public abstract class IntegerIndexedObject extends OrdinaryObject {
     protected abstract boolean elementHas(ExecutionContext cx, long index);
 
     /**
-     * 9.4.5.9 IntegerIndexedElementGet (O, index)
+     * 9.4.5.8 IntegerIndexedElementGet (O, index)
      * 
      * @param cx
      *            the execution context
@@ -282,7 +280,7 @@ public abstract class IntegerIndexedObject extends OrdinaryObject {
     protected abstract Object elementGet(ExecutionContext cx, long index);
 
     /**
-     * 9.4.5.10 IntegerIndexedElementSet (O, index, value)
+     * 9.4.5.9 IntegerIndexedElementSet (O, index, value)
      * 
      * @param cx
      *            the execution context

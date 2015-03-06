@@ -113,11 +113,6 @@ final class FunctionCodeGenerator {
         static final MethodName TailCallInvocation_toConstructTailCallWithEnvironment = MethodName
                 .findVirtual(Types.TailCallInvocation, "toConstructTailCall",
                         Type.methodType(Types.TailCallInvocation, Types.FunctionEnvironmentRecord));
-
-        // class: ScriptRuntime
-        static final MethodName ScriptRuntime_BindThisValue = MethodName.findStatic(
-                Types.ScriptRuntime, "BindThisValue",
-                Type.methodType(Type.VOID_TYPE, Types.ScriptObject, Types.ExecutionContext));
     }
 
     private static final int FUNCTION = 0;
@@ -409,7 +404,7 @@ final class FunctionCodeGenerator {
         ordinaryCallEvaluateBody(node, calleeContext, function, arguments, mv);
 
         // (3) Return result value
-        /* steps 9-10 */
+        /* steps 9-11 */
         mv._return();
     }
 
@@ -550,15 +545,15 @@ final class FunctionCodeGenerator {
         ordinaryCreateFromConstructor(callerContext, newTarget, thisArgument, mv);
 
         // (1) Create a new ExecutionContext
-        /* steps 6-11 */
+        /* steps 6-10 */
         prepareCallAndBindThis(calleeContext, function, newTarget, thisArgument, mv);
 
         // (2) Call OrdinaryCallEvaluateBody
-        /* steps 12-13 */
+        /* steps 11-12 */
         ordinaryCallEvaluateBody(node, calleeContext, function, arguments, mv);
 
         // (3) Return result value
-        /* steps 14-16 */
+        /* steps 13-15 */
         returnResultOrThis(thisArgument, tailCall, mv);
     }
 
@@ -590,17 +585,18 @@ final class FunctionCodeGenerator {
         Variable<ExecutionContext> calleeContext = mv.newVariable("calleeContext",
                 ExecutionContext.class);
 
+        // (1) Create a new ExecutionContext
         /* steps 1-5 (not applicable) */
-        /* steps 6-8 */
+        /* steps 6-7 */
         prepareCall(calleeContext, function, newTarget, mv);
-        /* steps 9-11 (not applicable) */
+        /* steps 8-10 (not applicable) */
 
         // (2) Call OrdinaryCallEvaluateBody
-        /* steps 12-13 */
+        /* steps 11-12 */
         ordinaryCallEvaluateBody(node, calleeContext, function, arguments, mv);
 
         // (3) Return result value
-        /* steps 14-16 */
+        /* steps 13-15 */
         returnResultOrThis(callerContext, calleeContext, tailCall, mv);
     }
 
@@ -680,11 +676,6 @@ final class FunctionCodeGenerator {
         mv.load(function);
         mv.invoke(Methods.OrdinaryAsyncFunction_EvaluateBody);
 
-        // FIXME: spec bug - missing bind this
-        mv.dup();
-        mv.load(calleeContext);
-        mv.invoke(Methods.ScriptRuntime_BindThisValue);
-
         // (4) Return result value
         mv._return();
     }
@@ -762,11 +753,6 @@ final class FunctionCodeGenerator {
         mv.load(calleeContext);
         mv.load(generator);
         mv.invoke(Methods.OrdinaryGenerator_EvaluateBody);
-
-        // FIXME: spec bug - missing bind this
-        mv.dup();
-        mv.load(calleeContext);
-        mv.invoke(Methods.ScriptRuntime_BindThisValue);
 
         // (4) Return result value
         mv._return();

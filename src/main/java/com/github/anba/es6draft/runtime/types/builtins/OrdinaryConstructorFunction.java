@@ -38,7 +38,7 @@ public final class OrdinaryConstructorFunction extends OrdinaryFunction implemen
     }
 
     /**
-     * 9.2.3 [[Construct]] (argumentsList)
+     * 9.2.2 [[Construct]] (argumentsList)
      */
     @Override
     public ScriptObject construct(ExecutionContext callerContext, Constructor newTarget,
@@ -54,7 +54,7 @@ public final class OrdinaryConstructorFunction extends OrdinaryFunction implemen
     }
 
     /**
-     * 9.2.3 [[Construct]] (argumentsList)
+     * 9.2.2 [[Construct]] (argumentsList)
      */
     @Override
     public Object tailConstruct(ExecutionContext callerContext, Constructor newTarget,
@@ -65,7 +65,7 @@ public final class OrdinaryConstructorFunction extends OrdinaryFunction implemen
     /* ***************************************************************************************** */
 
     /**
-     * 9.2.4 FunctionAllocate (functionPrototype, strict [,functionKind] )
+     * 9.2.3 FunctionAllocate (functionPrototype, strict [,functionKind] )
      * 
      * @param cx
      *            the execution context
@@ -85,16 +85,16 @@ public final class OrdinaryConstructorFunction extends OrdinaryFunction implemen
         assert (functionKind == FunctionKind.Normal || functionKind == FunctionKind.ClassConstructor);
         Realm realm = cx.getRealm();
         /* steps 1-5 (implicit) */
-        /* steps 6-11 */
+        /* steps 6-9 */
         OrdinaryConstructorFunction f = new OrdinaryConstructorFunction(realm);
-        /* steps 12-16 */
+        /* steps 10-14 */
         f.allocate(realm, functionPrototype, strict, functionKind, constructorKind);
-        /* step 17 */
+        /* step 15 */
         return f;
     }
 
     /**
-     * 9.2.6 FunctionCreate (kind, ParameterList, Body, Scope, Strict)
+     * 9.2.5 FunctionCreate (kind, ParameterList, Body, Scope, Strict)
      * 
      * @param cx
      *            the execution context
@@ -115,7 +115,7 @@ public final class OrdinaryConstructorFunction extends OrdinaryFunction implemen
     }
 
     /**
-     * 9.2.6 FunctionCreate (kind, ParameterList, Body, Scope, Strict, prototype)
+     * 9.2.5 FunctionCreate (kind, ParameterList, Body, Scope, Strict, prototype)
      * 
      * @param cx
      *            the execution context

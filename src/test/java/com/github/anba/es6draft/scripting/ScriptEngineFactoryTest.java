@@ -26,7 +26,7 @@ import org.junit.Test;
  */
 public class ScriptEngineFactoryTest {
     private static final String ENGINE_NAME = "es6draft";
-    private static final String LANGUAGE_VERSION = "ECMA-262 6th Edition";
+    private static final String LANGUAGE_VERSION = "ECMAScript 2015";
     private static final String LANGUAGE_NAME = "ECMAScript";
     private static final String COMMON_NAME = "JavaScript";
 

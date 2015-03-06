@@ -233,35 +233,28 @@ public final class StringConstructor extends BuiltinConstructor implements Initi
             long numberOfSubstitutions = substitutions.length;
             /* steps 3-4 */
             ScriptObject cooked = ToObject(cx, template);
-            /* steps 5-7 */
-            Object rawValue = Get(cx, cooked, "raw");
-            ScriptObject raw = ToObject(cx, rawValue);
-            /* step 8 */
-            Object len = Get(cx, raw, "length");
-            /* steps 9-10 */
-            long literalSegments = ToLength(cx, len);
-            /* step 11 */
+            /* steps 5-6 */
+            ScriptObject raw = ToObject(cx, Get(cx, cooked, "raw"));
+            /* steps 7-8 */
+            long literalSegments = ToLength(cx, Get(cx, raw, "length"));
+            /* step 9 */
             if (literalSegments <= 0) {
                 return "";
             }
-            /* step 12 */
+            /* step 10 */
             StringBuilder stringElements = new StringBuilder();
-            /* steps 13-14 */
+            /* steps 11-12 */
             for (long nextIndex = 0;; ++nextIndex) {
                 long nextKey = nextIndex;
-                Object next = Get(cx, raw, nextKey);
-                CharSequence nextSeg = ToString(cx, next);
+                CharSequence nextSeg = ToString(cx, Get(cx, raw, nextKey));
                 stringElements.append(nextSeg);
                 if (nextIndex + 1 == literalSegments) {
                     return stringElements.toString();
                 }
                 if (nextIndex < numberOfSubstitutions) {
-                    next = substitutions[(int) nextIndex];
-                } else {
-                    next = "";
+                    CharSequence nextSub = ToString(cx, substitutions[(int) nextIndex]);
+                    stringElements.append(nextSub);
                 }
-                CharSequence nextSub = ToString(cx, next);
-                stringElements.append(nextSub);
             }
         }
     }

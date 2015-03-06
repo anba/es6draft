@@ -11,13 +11,13 @@ const {
 // 12.3: Optional Arguments in "MemberExpression : new super Arguments" leads to Shift/Reduce conflicts
 // https://bugs.ecmascript.org/show_bug.cgi?id=2665
 
-(class {
+(class extends null {
   constructor() {
     new super();
   }
 });
 
-(class {
+(class extends null {
   constructor() {
     new super;
   }

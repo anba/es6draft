@@ -54,13 +54,13 @@ var obj = class {
 `);
 
 // 14.3 Method Definitions [ConstructorMethod]
+assertSyntaxError(`
 var obj = class {
   constructor() {
     super();
   }
 };
-assertThrows(TypeError, () => obj());
-assertThrows(TypeError, () => new obj());
+`);
 
 var obj = class extends class {} {
   constructor() {

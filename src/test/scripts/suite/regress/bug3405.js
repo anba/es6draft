@@ -5,7 +5,7 @@
  * <https://github.com/anba/es6draft>
  */
 const {
-  assertSame, assertFalse
+  assertSame, assertFalse, assertThrows
 } = Assert;
 
 // 25.2.4 GeneratorFunction: Add note about [[CreateAction]] after MakeConstructor
@@ -22,8 +22,4 @@ let g = new GClone("yield this");
 assertSame(Array, Object.getPrototypeOf(g));
 
 let gen = new g();
-let {value: result} = gen.next();
-assertSame(gen, result);
-assertFalse(Array.isArray(result));
-assertSame(g.prototype, Object.getPrototypeOf(result));
-assertSame(GeneratorFunction.prototype.prototype, Object.getPrototypeOf(Object.getPrototypeOf(result)));
+assertThrows(ReferenceError, () => gen.next());

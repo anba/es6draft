@@ -1831,9 +1831,7 @@ public final class ScriptRuntime {
                 : ConstructorKind.Base;
         OrdinaryConstructorFunction constructor = ConstructorFunctionCreate(cx,
                 FunctionKind.ClassConstructor, constructorKind, fd, scope, constructorParent);
-        if (fd.is(RuntimeInfo.FunctionFlags.Super)) {
-            MakeMethod(constructor, proto);
-        }
+        MakeMethod(constructor, proto);
 
         // ClassDefinitionEvaluation - step 14 (not applicable, cf. ConstructorFunctionCreate)
 
@@ -1903,12 +1901,10 @@ public final class ScriptRuntime {
         /* DefineMethod: steps 1-3 (generated code) */
         /* DefineMethod: step 4 */
         LexicalEnvironment<?> scope = cx.getLexicalEnvironment();
-        /* DefineMethod: step 5 */
+        /* DefineMethod: steps 5-6 */
         OrdinaryFunction closure = FunctionCreate(cx, FunctionKind.Method, fd, scope);
-        /* DefineMethod: step 6 */
-        if (fd.is(RuntimeInfo.FunctionFlags.Super)) {
-            MakeMethod(closure, object);
-        }
+        /* DefineMethod: step 7 */
+        MakeMethod(closure, object);
         /* step 3 */
         SetFunctionName(closure, propKey);
         /* step 4 */
@@ -1942,12 +1938,10 @@ public final class ScriptRuntime {
         /* DefineMethod: steps 1-3 (generated code) */
         /* DefineMethod: step 4 */
         LexicalEnvironment<?> scope = cx.getLexicalEnvironment();
-        /* DefineMethod: step 5 */
+        /* DefineMethod: steps 5-6 */
         OrdinaryFunction closure = FunctionCreate(cx, FunctionKind.Method, fd, scope);
-        /* DefineMethod: step 6 */
-        if (fd.is(RuntimeInfo.FunctionFlags.Super)) {
-            MakeMethod(closure, object);
-        }
+        /* DefineMethod: step 7 */
+        MakeMethod(closure, object);
         /* step 3 */
         SetFunctionName(closure, propKey);
         /* step 4 */
@@ -2011,9 +2005,7 @@ public final class ScriptRuntime {
         /* steps 5-6 */
         OrdinaryFunction closure = FunctionCreate(cx, FunctionKind.Method, fd, scope);
         /* step 7 */
-        if (fd.is(RuntimeInfo.FunctionFlags.Super)) {
-            MakeMethod(closure, object);
-        }
+        MakeMethod(closure, object);
         /* steps 8-9 */
         SetFunctionName(closure, propKey, "get");
         /* step 10 */
@@ -2049,9 +2041,7 @@ public final class ScriptRuntime {
         /* steps 5-6 */
         OrdinaryFunction closure = FunctionCreate(cx, FunctionKind.Method, fd, scope);
         /* step 7 */
-        if (fd.is(RuntimeInfo.FunctionFlags.Super)) {
-            MakeMethod(closure, object);
-        }
+        MakeMethod(closure, object);
         /* steps 8-9 */
         SetFunctionName(closure, propKey, "get");
         /* step 10 */
@@ -2115,9 +2105,7 @@ public final class ScriptRuntime {
         /* step 5 */
         OrdinaryFunction closure = FunctionCreate(cx, FunctionKind.Method, fd, scope);
         /* step 6 */
-        if (fd.is(RuntimeInfo.FunctionFlags.Super)) {
-            MakeMethod(closure, object);
-        }
+        MakeMethod(closure, object);
         /* steps 7-8 */
         SetFunctionName(closure, propKey, "set");
         /* step 9 */
@@ -2153,9 +2141,7 @@ public final class ScriptRuntime {
         /* step 5 */
         OrdinaryFunction closure = FunctionCreate(cx, FunctionKind.Method, fd, scope);
         /* step 6 */
-        if (fd.is(RuntimeInfo.FunctionFlags.Super)) {
-            MakeMethod(closure, object);
-        }
+        MakeMethod(closure, object);
         /* steps 7-8 */
         SetFunctionName(closure, propKey, "set");
         /* step 9 */
@@ -2280,9 +2266,7 @@ public final class ScriptRuntime {
         /* step 5 */
         OrdinaryGenerator closure = GeneratorFunctionCreate(cx, FunctionKind.Method, fd, scope);
         /* step 6 */
-        if (fd.is(RuntimeInfo.FunctionFlags.Super)) {
-            MakeMethod(closure, object);
-        }
+        MakeMethod(closure, object);
         /* step 7 */
         OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.GeneratorPrototype);
         /* step 8 */
@@ -2323,9 +2307,7 @@ public final class ScriptRuntime {
         /* step 5 */
         OrdinaryGenerator closure = GeneratorFunctionCreate(cx, FunctionKind.Method, fd, scope);
         /* step 6 */
-        if (fd.is(RuntimeInfo.FunctionFlags.Super)) {
-            MakeMethod(closure, object);
-        }
+        MakeMethod(closure, object);
         /* step 7 */
         OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.GeneratorPrototype);
         /* step 8 */
@@ -2875,9 +2857,7 @@ public final class ScriptRuntime {
         /* step 5 */
         OrdinaryAsyncFunction closure = AsyncFunctionCreate(cx, FunctionKind.Method, fd, scope);
         /* step 6 */
-        if (fd.is(RuntimeInfo.FunctionFlags.Super)) {
-            MakeMethod(closure, object);
-        }
+        MakeMethod(closure, object);
         /* step 7 */
         OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.FunctionPrototype);
         /* step 8 */
@@ -2913,9 +2893,7 @@ public final class ScriptRuntime {
         /* step 5 */
         OrdinaryAsyncFunction closure = AsyncFunctionCreate(cx, FunctionKind.Method, fd, scope);
         /* step 6 */
-        if (fd.is(RuntimeInfo.FunctionFlags.Super)) {
-            MakeMethod(closure, object);
-        }
+        MakeMethod(closure, object);
         /* step 7 */
         OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.FunctionPrototype);
         /* step 8 */

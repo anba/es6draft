@@ -750,8 +750,10 @@ public final class DatePrototype extends OrdinaryObject implements Initializable
         public static Object setTime(ExecutionContext cx, Object thisValue, Object time) {
             /* steps 1-2 */
             thisTimeValue(cx, thisValue);
-            /* steps 3-5 */
-            double v = TimeClip(ToNumber(cx, time));
+            /* steps 3-4 */
+            double t = ToNumber(cx, time);
+            /* step 5 */
+            double v = TimeClip(t);
             /* step 6 */
             ((DateObject) thisValue).setDateValue(v);
             /* step 7 */

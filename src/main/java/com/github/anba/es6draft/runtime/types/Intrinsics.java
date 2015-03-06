@@ -39,10 +39,20 @@ public enum Intrinsics {/* @formatter:off */
     Date,
     /** Intrinsic: <tt>%DatePrototype%</tt> */
     DatePrototype,
+    /** Intrinsic: <tt>%decodeURI%</tt> */
+    decodeURI,
+    /** Intrinsic: <tt>%decodeURIComponent%</tt> */
+    decodeURIComponent,
+    /** Intrinsic: <tt>%encodeURI%</tt> */
+    encodeURI,
+    /** Intrinsic: <tt>%encodeURIComponent%</tt> */
+    encodeURIComponent,
     /** Intrinsic: <tt>%Error%</tt> */
     Error,
     /** Intrinsic: <tt>%ErrorPrototype%</tt> */
     ErrorPrototype,
+    /** Intrinsic: <tt>%escape%</tt> */
+    escape,
     /** Intrinsic: <tt>%eval%</tt> */
     eval,
     /** Intrinsic: <tt>%EvalError%</tt> */
@@ -79,6 +89,10 @@ public enum Intrinsics {/* @formatter:off */
     Int32Array,
     /** Intrinsic: <tt>%Int32ArrayPrototype%</tt> */
     Int32ArrayPrototype,
+    /** Intrinsic: <tt>%isFinite%</tt> */
+    isFinite,
+    /** Intrinsic: <tt>%isNaN%</tt> */
+    isNaN,
     /** Intrinsic: <tt>%IteratorPrototype%</tt> */
     IteratorPrototype,
     /** Intrinsic: <tt>%JSON%</tt> */
@@ -101,6 +115,10 @@ public enum Intrinsics {/* @formatter:off */
     ObjectPrototype,
     /** Intrinsic: <tt>%ObjProto_toString%</tt> */
     ObjProto_toString,
+    /** Intrinsic: <tt>%parseFloat%</tt> */
+    parseFloat,
+    /** Intrinsic: <tt>%parseInt%</tt> */
+    parseInt,
     /** Intrinsic: <tt>%Promise%</tt> */
     Promise,
     /** Intrinsic: <tt>%PromisePrototype%</tt> */
@@ -167,6 +185,8 @@ public enum Intrinsics {/* @formatter:off */
     Uint32Array,
     /** Intrinsic: <tt>%Uint32ArrayPrototype%</tt> */
     Uint32ArrayPrototype,
+    /** Intrinsic: <tt>%unescape%</tt> */
+    unescape,
     /** Intrinsic: <tt>%URIError%</tt> */
     URIError,
     /** Intrinsic: <tt>%URIErrorPrototype%</tt> */

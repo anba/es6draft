@@ -137,6 +137,9 @@ ecma_6/TypedArray/slice.js
 # Invalid test (https://bugzilla.mozilla.org/show_bug.cgi?id=1138906)
 ecma_6/TypedArray/map-and-filter.js
 
+# ES6: access to `this` throws in new'ed generators (TODO: allow in legacy generators?)
+js1_7/geniter/yield-new.js
+
 
 ####################################
 # Intl only partially supported    #

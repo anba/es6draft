@@ -10,7 +10,6 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.*;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.objects.text.RegExpConstructor.EscapeRegExpPattern;
-import static com.github.anba.es6draft.runtime.objects.text.RegExpConstructor.RegExpCreate;
 import static com.github.anba.es6draft.runtime.objects.text.RegExpConstructor.RegExpInitialize;
 import static com.github.anba.es6draft.runtime.types.Null.NULL;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
@@ -108,18 +107,11 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
             if (!Type.isObject(thisValue)) {
                 throw newTypeError(cx, Messages.Key.NotObjectType);
             }
-            /* steps 3-4 */
-            RegExpObject r;
-            if (thisValue == cx.getIntrinsic(Intrinsics.RegExpPrototype)) {
-                /* step 3 */
-                r = RegExpCreate(cx, "", "");
-            } else {
-                /* step 4 */
-                r = thisRegExpObject(cx, thisValue);
-            }
-            /* steps 5-6 */
+            /* step 3 */
+            RegExpObject r = thisRegExpObject(cx, thisValue);
+            /* steps 4-5 */
             String s = ToFlatString(cx, string);
-            /* step 7 */
+            /* step 6 */
             ArrayObject result = RegExpBuiltinExec(cx, r, s);
             return result != null ? result : NULL;
         }
@@ -276,14 +268,9 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
             /* steps 3-4 */
             // TODO: ToFlatString for small strings, ToString for large strings?
             String s = ToFlatString(cx, string);
-            /* step 5 */
-            // FIXME: spec bug - special case not needed
-            if (r == cx.getIntrinsic(Intrinsics.RegExpPrototype)) {
-                return true;
-            }
-            /* steps 6-7 */
+            /* steps 5-6 */
             MatchResult match = getMatcherOrNull(cx, r, s, true);
-            /* step 8 */
+            /* step 7 */
             return match != null;
         }
 
@@ -729,13 +716,7 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
             return RegExpUserExec(cx, (Callable) exec, r, s);
         }
         /* step 6 */
-        RegExpObject rx;
-        if (r == cx.getIntrinsic(Intrinsics.RegExpPrototype)) {
-            // Handle RegExp.prototype intrinsic.
-            rx = RegExpCreate(cx, "", "");
-        } else {
-            rx = thisRegExpObject(cx, r);
-        }
+        RegExpObject rx = thisRegExpObject(cx, r);
         /* step 7 */
         return RegExpBuiltinExec(cx, rx, s);
     }
@@ -765,13 +746,7 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
             return o != null ? new ScriptObjectMatchResult(cx, o) : null;
         }
         /* step 6 */
-        RegExpObject rx;
-        if (r == cx.getIntrinsic(Intrinsics.RegExpPrototype)) {
-            // Handle RegExp.prototype intrinsic.
-            rx = RegExpCreate(cx, "", "");
-        } else {
-            rx = thisRegExpObject(cx, r);
-        }
+        RegExpObject rx = thisRegExpObject(cx, r);
         /* step 7 */
         MatchResult m = getMatcherOrNull(cx, rx, s);
         if (m == null) {

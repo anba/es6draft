@@ -10,6 +10,7 @@ const {
   assertTrue,
   assertFalse,
   assertUndefined,
+  assertThrows,
 } = Assert;
 
 const global = this;
@@ -27,11 +28,11 @@ const global = this;
 {
   function* nonStrictGenerator() { yield this; }
   let g1 = new nonStrictGenerator();
-  assertSame(g1, g1.next().value);
+  assertThrows(ReferenceError, () => g1.next());
 
   function* strictGenerator() { "use strict"; yield this; }
   let g2 = new strictGenerator();
-  assertSame(g2, g2.next().value);
+  assertThrows(ReferenceError, () => g2.next());
 }
 
 // GeneratorFunction subclass, generator called with `new`
@@ -42,10 +43,7 @@ const global = this;
 
   let g = new G("yield this");
   let gen = new g();
-  let {value: result} = gen.next();
-  assertSame(gen, result);
-  assertSame(g.prototype, Object.getPrototypeOf(result));
-  assertSame(GeneratorFunction.prototype.prototype, Object.getPrototypeOf(Object.getPrototypeOf(result)));
+  assertThrows(ReferenceError, () => gen.next());
 }
 
 // GeneratorFunction subclass+cloned, clone .prototype set to %Generator%, generator called with `new`
@@ -60,10 +58,7 @@ const global = this;
 
   let g = new G("yield this");
   let gen = new g();
-  let {value: result} = gen.next();
-  assertSame(gen, result);
-  assertSame(g.prototype, Object.getPrototypeOf(result));
-  assertSame(GeneratorFunction.prototype.prototype, Object.getPrototypeOf(Object.getPrototypeOf(result)));
+  assertThrows(ReferenceError, () => gen.next());
 }
 
 // GeneratorFunction subclass+cloned, clone .prototype set to %Array%, generator called with `new`
@@ -78,10 +73,7 @@ const global = this;
 
   let g = new G("yield this");
   let gen = new g();
-  let {value: result} = gen.next();
-  assertSame(gen, result);
-  assertSame(g.prototype, Object.getPrototypeOf(result));
-  assertSame(GeneratorFunction.prototype.prototype, Object.getPrototypeOf(Object.getPrototypeOf(result)));
+  assertThrows(ReferenceError, () => gen.next());
 }
 
 // GeneratorFunction subclass+cloned, clone .prototype set to %Generator%, generator called with `new`
@@ -97,10 +89,7 @@ const global = this;
 
   let g = new GClone("yield this");
   let gen = new g();
-  let {value: result} = gen.next();
-  assertSame(gen, result);
-  assertSame(g.prototype, Object.getPrototypeOf(result));
-  assertSame(GeneratorFunction.prototype.prototype, Object.getPrototypeOf(Object.getPrototypeOf(result)));
+  assertThrows(ReferenceError, () => gen.next());
 }
 
 // GeneratorFunction subclass+cloned, clone .prototype set to %Array%, generator called with `new`
@@ -119,10 +108,7 @@ const global = this;
 
   let g = new GClone("yield this");
   let gen = new g();
-  let {value: result} = gen.next();
-  assertSame(gen, result);
-  assertSame(g.prototype, Object.getPrototypeOf(result));
-  assertSame(GeneratorFunction.prototype.prototype, Object.getPrototypeOf(Object.getPrototypeOf(result)));
+  assertThrows(ReferenceError, () => gen.next());
 }
 
 // GeneratorFunction subclass+cloned, clone .prototype set to %Array%, generator called with `new`
@@ -138,11 +124,7 @@ const global = this;
 
   let g = new GClone("yield this");
   let gen = new g();
-  let {value: result} = gen.next();
-  assertSame(gen, result);
-  assertFalse(Array.isArray(result));
-  assertSame(g.prototype, Object.getPrototypeOf(result));
-  assertSame(GeneratorFunction.prototype.prototype, Object.getPrototypeOf(Object.getPrototypeOf(result)));
+  assertThrows(ReferenceError, () => gen.next());
 }
 
 {
@@ -156,11 +138,7 @@ const global = this;
 
   let g = new GClone("yield this");
   let gen = new g();
-  let {value: result} = gen.next();
-  assertSame(gen, result);
-  assertFalse(Array.isArray(result));
-  assertSame(g.prototype, Object.getPrototypeOf(result));
-  assertSame(GeneratorFunction.prototype.prototype, Object.getPrototypeOf(Object.getPrototypeOf(result)));
+  assertThrows(ReferenceError, () => gen.next());
 }
 
 {
@@ -175,9 +153,5 @@ const global = this;
 
   let g = new GClone("yield this");
   let gen = new g();
-  let {value: result} = gen.next();
-  assertSame(gen, result);
-  assertFalse(Array.isArray(result));
-  assertSame(g.prototype, Object.getPrototypeOf(result));
-  assertSame(GeneratorFunction.prototype.prototype, Object.getPrototypeOf(Object.getPrototypeOf(result)));
+  assertThrows(ReferenceError, () => gen.next());
 }

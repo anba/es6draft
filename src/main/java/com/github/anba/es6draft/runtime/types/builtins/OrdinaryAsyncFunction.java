@@ -39,7 +39,7 @@ public final class OrdinaryAsyncFunction extends FunctionObject implements Const
     }
 
     /**
-     * 9.2.2 [[Call]] ( thisArgument, argumentsList)
+     * 9.2.1 [[Call]] ( thisArgument, argumentsList)
      */
     @Override
     public PromiseObject call(ExecutionContext callerContext, Object thisValue, Object... args) {
@@ -54,7 +54,7 @@ public final class OrdinaryAsyncFunction extends FunctionObject implements Const
     }
 
     /**
-     * 9.2.2 [[Call]] ( thisArgument, argumentsList)
+     * 9.2.1 [[Call]] ( thisArgument, argumentsList)
      */
     @Override
     public PromiseObject tailCall(ExecutionContext callerContext, Object thisValue, Object... args)
@@ -64,7 +64,7 @@ public final class OrdinaryAsyncFunction extends FunctionObject implements Const
     }
 
     /**
-     * 9.2.3 [[Construct]] ( argumentsList, newTarget)
+     * 9.2.2 [[Construct]] ( argumentsList, newTarget)
      */
     @Override
     public PromiseObject construct(ExecutionContext callerContext, Constructor newTarget,
@@ -80,7 +80,7 @@ public final class OrdinaryAsyncFunction extends FunctionObject implements Const
     }
 
     /**
-     * 9.2.3 [[Construct]] ( argumentsList, newTarget)
+     * 9.2.2 [[Construct]] ( argumentsList, newTarget)
      */
     @Override
     public PromiseObject tailConstruct(ExecutionContext callerContext, Constructor newTarget,
@@ -106,7 +106,7 @@ public final class OrdinaryAsyncFunction extends FunctionObject implements Const
     /* ***************************************************************************************** */
 
     /**
-     * 9.2.4 FunctionAllocate (functionPrototype, strict [,functionKind] )
+     * 9.2.3 FunctionAllocate (functionPrototype, strict [,functionKind] )
      * 
      * @param cx
      *            the execution context
@@ -122,12 +122,12 @@ public final class OrdinaryAsyncFunction extends FunctionObject implements Const
             ScriptObject functionPrototype, boolean strict, FunctionKind kind) {
         assert kind != FunctionKind.ClassConstructor;
         Realm realm = cx.getRealm();
-        /* steps 1-3 (implicit) */
-        /* steps 4-8 */
+        /* steps 1-5 (implicit) */
+        /* steps 6-9 */
         OrdinaryAsyncFunction f = new OrdinaryAsyncFunction(realm);
-        /* steps 9-13 */
+        /* steps 10-14 */
         f.allocate(realm, functionPrototype, strict, kind, ConstructorKind.Derived);
-        /* step 14 */
+        /* step 15 */
         return f;
     }
 

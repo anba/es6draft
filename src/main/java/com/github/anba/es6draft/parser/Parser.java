@@ -148,7 +148,7 @@ public final class Parser {
         boolean inArrowParameters = false;
         boolean legacyGenerator = false;
         boolean explicitStrict = false;
-        boolean isClassConstructor = false;
+        boolean isDerivedClassConstructor = false;
 
         StrictMode strictMode = StrictMode.Unknown;
         ParserException strictError = null;
@@ -3024,7 +3024,7 @@ public final class Parser {
             MethodType type;
             if (allocation == MethodAllocation.Prototype
                     && "constructor".equals(propertyName.getName())) {
-                context.isClassConstructor = true;
+                context.isDerivedClassConstructor = hasExtends;
                 type = hasExtends ? MethodType.DerivedConstructor : MethodType.BaseConstructor;
             } else {
                 type = MethodType.Function;
@@ -7383,7 +7383,7 @@ public final class Parser {
                 || superContext.kind == ContextKind.Function
                 || superContext.kind == ContextKind.Generator
                 || superContext.kind == ContextKind.AsyncFunction
-                || (superContext.kind.isMethod() && !superContext.isClassConstructor)) {
+                || (superContext.kind.isMethod() && !superContext.isDerivedClassConstructor)) {
             reportSyntaxError(Messages.Key.InvalidSuperCallExpression);
         }
     }
@@ -7400,7 +7400,7 @@ public final class Parser {
                 || superContext.kind == ContextKind.Function
                 || superContext.kind == ContextKind.Generator
                 || superContext.kind == ContextKind.AsyncFunction
-                || (superContext.kind.isMethod() && !superContext.isClassConstructor)) {
+                || (superContext.kind.isMethod() && !superContext.isDerivedClassConstructor)) {
             reportSyntaxError(Messages.Key.InvalidNewSuperExpression);
         }
     }
