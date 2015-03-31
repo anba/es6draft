@@ -135,7 +135,7 @@ public abstract class IntegerIndexedObject extends OrdinaryObject {
         /* step 3.c.xi */
         if (desc.hasValue()) {
             Object value = desc.getValue();
-            elementSet(cx, propertyKey, value);
+            return elementSet(cx, propertyKey, value);
         }
         /* step 3.c.xii */
         return true;

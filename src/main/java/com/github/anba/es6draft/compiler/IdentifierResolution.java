@@ -13,7 +13,7 @@ import com.github.anba.es6draft.compiler.assembler.MethodName;
 import com.github.anba.es6draft.compiler.assembler.Type;
 
 /**
- * 8.3.1 ResolveBinding(name)
+ * 8.3.1 ResolveBinding ( name, [env] )
  */
 final class IdentifierResolution {
     private static final class Methods {

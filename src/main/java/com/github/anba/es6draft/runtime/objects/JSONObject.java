@@ -372,7 +372,7 @@ public final class JSONObject extends OrdinaryObject implements Initializable {
             'a', 'b', 'c', 'd', 'e', 'f' };
 
     /**
-     * 24.3.2.2 Runtime Semantics: QuoteJSONString Abstract Operation
+     * 24.3.2.2 Runtime Semantics: QuoteJSONString ( value )
      * 
      * @param value
      *            the string

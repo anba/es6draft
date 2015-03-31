@@ -119,7 +119,7 @@ public final class StringObject extends OrdinaryObject {
      */
     @Override
     protected boolean has(ExecutionContext cx, long propertyKey) {
-        // FIXME: spec bug - don't traverse proto chain for own indexed properties! (bug 3618)
+        /* steps 1-3 */
         return propertyKey < getStringData().length() || super.has(cx, propertyKey);
     }
 

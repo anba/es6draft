@@ -350,12 +350,13 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
                 ScriptObject result = RegExpExec(cx, rx, s);
                 return result != null ? result : NULL;
             } else {
-                boolean unicode = ToBoolean(Get(cx, rx, "unicode"));
-                /* steps 8.a-8.b */
+                /* steps 8.a-b */
+                boolean fullUnicode = ToBoolean(Get(cx, rx, "unicode"));
+                /* steps 8.c-d */
                 Set(cx, rx, "lastIndex", 0, true);
-                /* step 8.c */
+                /* step 8.e */
                 ArrayObject array = ArrayCreate(cx, 0);
-                /* steps 8.d-8.e */
+                /* steps 8.f-g */
                 for (int n = 0;; ++n) {
                     // ScriptObject result = RegExpExec(cx, rx, s);
                     MatchResult result = getMatcherOrNull(cx, rx, s, true);
@@ -367,9 +368,8 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
                     boolean status = CreateDataProperty(cx, array, n, matchStr);
                     assert status;
                     if (matchStr.isEmpty()) {
-                        // FIXME: spec bug (bug 4159)
                         long thisIndex = ToLength(cx, Get(cx, rx, "lastIndex"));
-                        long nextIndex = NextStringIndex(s, thisIndex, unicode);
+                        long nextIndex = AdvanceStringIndex(s, thisIndex, fullUnicode);
                         Set(cx, rx, "lastIndex", nextIndex, true);
                     }
                 }
@@ -415,9 +415,11 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
             /* steps 8-9 */
             boolean global = ToBoolean(Get(cx, rx, "global"));
             /* step 10 */
-            boolean unicode = false;
+            boolean fullUnicode = false;
             if (global) {
-                unicode = ToBoolean(Get(cx, rx, "unicode"));
+                /* steps 10.a-b */
+                fullUnicode = ToBoolean(Get(cx, rx, "unicode"));
+                /* steps 10.c-d */
                 Set(cx, rx, "lastIndex", 0, true);
             }
             /* step 11 */
@@ -426,9 +428,9 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
             boolean done = false;
             /* step 13 */
             while (!done) {
-                /* steps 13.a-13.b */
+                /* steps 13.a-b */
                 MatchResult result = getMatcherOrNull(cx, rx, s, false);
-                /* steps 13.c-13.d */
+                /* steps 13.c-d */
                 if (result == null) {
                     /* step 13.c */
                     done = true;
@@ -440,9 +442,8 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
                     } else {
                         String matchStr = result.group(0);
                         if (matchStr.isEmpty()) {
-                            // FIXME: spec bug (bug 4159)
                             long thisIndex = ToLength(cx, Get(cx, rx, "lastIndex"));
-                            long nextIndex = NextStringIndex(s, thisIndex, unicode);
+                            long nextIndex = AdvanceStringIndex(s, thisIndex, fullUnicode);
                             Set(cx, rx, "lastIndex", nextIndex, true);
                         }
                     }
@@ -461,15 +462,15 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
                 if (!(result instanceof ScriptObjectMatchResult)) {
                     RegExpConstructor.storeLastMatchResult(cx, s, result);
                 }
-                /* steps 16.a-16.c */
+                /* steps 16.a-c */
                 int nCaptures = result.groupCount();
-                /* steps 16.d-16.e */
+                /* steps 16.d-e */
                 String matched = result.group(0);
                 /* step 16.f */
                 int matchLength = matched.length();
-                /* steps 16.g-16.i */
+                /* steps 16.g-i */
                 int position = Math.max(Math.min(result.start(), lengthS), 0);
-                /* steps 16.j-16.o */
+                /* steps 16.j-o */
                 String replacement;
                 if (functionalReplace) {
                     Object[] replacerArgs = GetReplacerArguments(matched, s, position, result,
@@ -636,7 +637,7 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
                 MatchResult z = getMatcherOrNull(cx, splitter, s, true);
                 /* step 24.e */
                 if (z == null) {
-                    q += isSurrogatePair(s, q, unicodeMatching) ? 2 : 1;
+                    q = AdvanceStringIndex(s, q, unicodeMatching);
                     continue;
                 }
                 /* step 24.f */
@@ -644,7 +645,7 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
                 int e = (int) ToLength(cx, Get(cx, splitter, "lastIndex"));
                 /* step 24.f.iii */
                 if (e == p) {
-                    q += isSurrogatePair(s, q, unicodeMatching) ? 2 : 1;
+                    q = AdvanceStringIndex(s, q, unicodeMatching);
                     continue;
                 }
                 /* step 24.f.iv */
@@ -984,6 +985,66 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
         return array;
     }
 
+    /**
+     * 21.2.5.2.3 AdvanceStringIndex ( S, index, unicode )
+     * 
+     * @param s
+     *            the string
+     * @param index
+     *            the current string index
+     * @param unicode
+     *            the unicode flag
+     * @return the next string index
+     */
+    private static int AdvanceStringIndex(String s, int index, boolean unicode) {
+        /* steps 1-3 (not applicable) */
+        /* step 4 */
+        if (!unicode) {
+            return index + 1;
+        }
+        /* steps 5-6 */
+        if (index + 1 >= s.length()) {
+            return index + 1;
+        }
+        /* steps 7-10 */
+        int p = index;
+        if (!Character.isHighSurrogate(s.charAt(p)) || !Character.isLowSurrogate(s.charAt(p + 1))) {
+            return index + 1;
+        }
+        /* step 12 */
+        return index + 1;
+    }
+
+    /**
+     * 21.2.5.2.3 AdvanceStringIndex ( S, index, unicode )
+     * 
+     * @param s
+     *            the string
+     * @param index
+     *            the current string index
+     * @param unicode
+     *            the unicode flag
+     * @return the next string index
+     */
+    private static long AdvanceStringIndex(String s, long index, boolean unicode) {
+        /* steps 1-3 (not applicable) */
+        /* step 4 */
+        if (!unicode) {
+            return index + 1;
+        }
+        /* steps 5-6 */
+        if (index + 1 >= s.length()) {
+            return index + 1;
+        }
+        /* steps 7-10 */
+        int p = (int) index;
+        if (!Character.isHighSurrogate(s.charAt(p)) || !Character.isLowSurrogate(s.charAt(p + 1))) {
+            return index + 1;
+        }
+        /* step 12 */
+        return index + 1;
+    }
+
     private static boolean isBuiltinRegExpPrototypeForExec(ExecutionContext cx) {
         OrdinaryObject prototype = cx.getIntrinsic(Intrinsics.RegExpPrototype);
         Property execProp = prototype.getOwnProperty(cx, "exec");
@@ -1245,7 +1306,7 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
             /* step 24.f.iii-iv */
             if (e == p) {
                 /* step 24.f.iii */
-                q += isSurrogatePair(s, q, unicodeMatching) ? 2 : 1;
+                q = AdvanceStringIndex(s, q, unicodeMatching);
             } else {
                 /* step 24.f.iv */
                 String t = s.substring(p, lastStart = matcher.start());
@@ -1276,25 +1337,6 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
         CreateDataProperty(cx, a, lengthA, t);
         /* step 28 */
         return a;
-    }
-
-    private static long NextStringIndex(String s, long p, boolean unicodeMatching) {
-        if (unicodeMatching) {
-            if (p + 1 < s.length() && isSurrogatePair(s, (int) p, unicodeMatching)) {
-                return p + 2;
-            }
-        }
-        return p + 1;
-    }
-
-    private static boolean isSurrogatePair(String s, int p, boolean unicodeMatching) {
-        if (unicodeMatching) {
-            if (Character.isHighSurrogate(s.charAt(p)) && p + 1 < s.length()
-                    && Character.isLowSurrogate(s.charAt(p + 1))) {
-                return true;
-            }
-        }
-        return false;
     }
 
     /**

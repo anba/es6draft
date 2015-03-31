@@ -36,7 +36,7 @@ import com.github.anba.es6draft.runtime.types.Undefined;
 /**
  * <h1>15 ECMAScript Language: Scripts and Modules</h1><br>
  * <h2>15.2 Modules</h2><br>
- * <h3>15.2.1 Module Semantics</h3>
+ * <h3>15.2.1 Module Semantics</h3><br>
  * <h4>15.2.1.15 Source Text Module Records</h4>
  * <ul>
  * <li>15.2.1.15.4 ModuleDeclarationInstantiation( ) Concrete Method
