@@ -137,16 +137,15 @@ public class DeclarativeEnvironmentRecord implements EnvironmentRecord {
     }
 
     protected final void createBinding(String name, Binding binding) {
-        assert name != null && binding != null;
-        assert !bindings.containsKey(name) : "binding redeclaration: " + name;
         bindings.put(name, binding);
     }
 
-    public final Binding getBinding(String name) {
-        assert name != null : "null name for binding";
-        Binding b = bindings.get(name);
-        assert b != null : "binding not found: " + name;
-        return b;
+    protected final Binding getBinding(String name) {
+        return bindings.get(name);
+    }
+
+    protected void removeBinding(String name) {
+        bindings.remove(name);
     }
 
     @Override
@@ -179,12 +178,15 @@ public class DeclarativeEnvironmentRecord implements EnvironmentRecord {
 
     @Override
     public final Set<String> bindingNames() {
+        if (bindings.isEmpty()) {
+            return Collections.emptySet();
+        }
         return Collections.unmodifiableSet(bindings.keySet());
     }
 
     @Override
     public final Object getBindingValueOrNull(String name, boolean strict) {
-        Binding b = bindings.get(name);
+        Binding b = getBinding(name);
         if (b == null) {
             return null;
         }
@@ -197,7 +199,7 @@ public class DeclarativeEnvironmentRecord implements EnvironmentRecord {
     @Override
     public final Reference<DeclarativeEnvironmentRecord, String> getReferenceOrNull(String name,
             boolean strict) {
-        Binding b = bindings.get(name);
+        Binding b = getBinding(name);
         if (b == null) {
             return null;
         }
@@ -224,9 +226,9 @@ public class DeclarativeEnvironmentRecord implements EnvironmentRecord {
     public final void createMutableBinding(String name, boolean deletable) {
         /* step 1 (omitted) */
         /* step 2 */
-        assert !bindings.containsKey(name) : "binding redeclaration: " + name;
+        assert !hasBinding(name) : "binding redeclaration: " + name;
         /* steps 3-4 */
-        bindings.put(name, new DirectBinding(true, deletable, false));
+        createBinding(name, new DirectBinding(true, deletable, false));
     }
 
     /**
@@ -236,9 +238,9 @@ public class DeclarativeEnvironmentRecord implements EnvironmentRecord {
     public final void createImmutableBinding(String name, boolean strict) {
         /* step 1 (omitted) */
         /* step 2 */
-        assert !bindings.containsKey(name) : "binding redeclaration: " + name;
+        assert !hasBinding(name) : "binding redeclaration: " + name;
         /* step 3 */
-        bindings.put(name, new DirectBinding(false, false, strict));
+        createBinding(name, new DirectBinding(false, false, strict));
         /* step 4 (return) */
     }
 
@@ -248,7 +250,7 @@ public class DeclarativeEnvironmentRecord implements EnvironmentRecord {
     @Override
     public final void initializeBinding(String name, Object value) {
         assert value != null;
-        Binding b = bindings.get(name);
+        Binding b = getBinding(name);
         /* step 1 (omitted) */
         /* step 2 */
         assert b != null : "binding not found: " + name;
@@ -264,7 +266,7 @@ public class DeclarativeEnvironmentRecord implements EnvironmentRecord {
     @Override
     public final void setMutableBinding(String name, Object value, boolean strict) {
         assert value != null;
-        Binding b = bindings.get(name);
+        Binding b = getBinding(name);
         /* step 1 (omitted) */
         /* step 2 */
         if (b == null) {
@@ -290,7 +292,7 @@ public class DeclarativeEnvironmentRecord implements EnvironmentRecord {
      */
     @Override
     public final Object getBindingValue(String name, boolean strict) {
-        Binding b = bindings.get(name);
+        Binding b = getBinding(name);
         /* step 1 (omitted) */
         /* step 2 */
         assert b != null : "binding not found: " + name;
@@ -307,7 +309,7 @@ public class DeclarativeEnvironmentRecord implements EnvironmentRecord {
      */
     @Override
     public final boolean deleteBinding(String name) {
-        Binding b = bindings.get(name);
+        Binding b = getBinding(name);
         /* step 1 (omitted) */
         /* step 2 */
         assert b != null;
@@ -316,7 +318,7 @@ public class DeclarativeEnvironmentRecord implements EnvironmentRecord {
             return false;
         }
         /* step 4 */
-        bindings.remove(name);
+        removeBinding(name);
         /* step 5 */
         return true;
     }

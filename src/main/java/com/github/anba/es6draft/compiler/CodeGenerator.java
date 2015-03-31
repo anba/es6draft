@@ -157,6 +157,7 @@ final class CodeGenerator {
     private static final int MAX_FNAME_LENGTH = 0x400;
 
     private final Code code;
+    private final Program program;
     private final ExecutorService executor;
     private final EnumSet<CompatibilityOption> options;
     private final EnumSet<Parser.Option> parserOptions;
@@ -165,14 +166,21 @@ final class CodeGenerator {
     private final StatementGenerator stmtgen = new StatementGenerator(this);
     private final ExpressionGenerator exprgen = new ExpressionGenerator(this);
     private final PropertyGenerator propgen = new PropertyGenerator(this);
+    private final BlockDeclarationInstantiationGenerator blockgen = new BlockDeclarationInstantiationGenerator(
+            this);
 
-    CodeGenerator(Code code, ExecutorService executor, EnumSet<CompatibilityOption> options,
-            EnumSet<Parser.Option> parserOptions, EnumSet<Compiler.Option> compilerOptions) {
+    CodeGenerator(Code code, Program program, ExecutorService executor,
+            EnumSet<Compiler.Option> compilerOptions) {
         this.code = code;
+        this.program = program;
         this.executor = executor;
-        this.options = options;
-        this.parserOptions = parserOptions;
+        this.options = program.getOptions();
+        this.parserOptions = program.getParserOptions();
         this.compilerOptions = compilerOptions;
+    }
+
+    Program getProgram() {
+        return program;
     }
 
     boolean isEnabled(CompatibilityOption option) {
@@ -820,9 +828,9 @@ final class CodeGenerator {
         // call expression in concise function body is always in tail-call position
         body.enterTailCallPosition(expression);
 
-        body.enterScope(node);
+        body.enterFunction(node);
         expressionBoxedValue(expression, body);
-        body.exitScope();
+        body.exitFunction();
 
         body._return();
         body.end();
@@ -836,9 +844,9 @@ final class CodeGenerator {
         body.lineInfo(node);
         body.begin();
 
-        body.enterScope(node);
+        body.enterFunction(node);
         Completion result = statements(node.getStatements(), body);
-        body.exitScope();
+        body.exitFunction();
 
         if (!result.isAbrupt()) {
             // fall-thru, return undefined from function
@@ -861,9 +869,9 @@ final class CodeGenerator {
             state = body.prologue(resume);
         }
 
-        body.enterScope(node);
+        body.enterFunction(node);
         expressionBoxedValue(node.getExpression(), body);
-        body.exitScope();
+        body.exitFunction();
 
         body._return();
         if (state != null) {
@@ -890,9 +898,9 @@ final class CodeGenerator {
             state = body.prologue(resume);
         }
 
-        body.enterScope(node);
+        body.enterFunction(node);
         Completion result = statements(node.getStatements(), body);
-        body.exitScope();
+        body.exitFunction();
 
         if (!result.isAbrupt()) {
             // fall-thru, return undefined from function
@@ -918,9 +926,9 @@ final class CodeGenerator {
             state = body.prologue(resume);
         }
 
-        body.enterScope(node);
+        body.enterFunction(node);
         EvaluateGeneratorComprehension(this, node, body);
-        body.exitScope();
+        body.exitFunction();
 
         body.loadUndefined();
         body._return();
@@ -1073,6 +1081,14 @@ final class CodeGenerator {
         node.accept(propgen, mv);
     }
 
+    void blockInit(BlockStatement node, StatementVisitor mv) {
+        blockgen.generate(node, mv);
+    }
+
+    void blockInit(SwitchStatement node, StatementVisitor mv) {
+        blockgen.generate(node, mv);
+    }
+
     Completion statement(ModuleItem node, StatementVisitor mv) {
         return node.accept(stmtgen, mv);
     }
@@ -1094,8 +1110,7 @@ final class CodeGenerator {
 
     private static final class ScriptStatementVisitor extends StatementVisitor {
         ScriptStatementVisitor(MethodCode method, Script node) {
-            super(method, IsStrict(node), node, node.isGlobalCode() ? CodeType.GlobalScript
-                    : CodeType.NonGlobalScript);
+            super(method, node, IsStrict(node));
         }
 
         @Override
@@ -1107,7 +1122,7 @@ final class CodeGenerator {
 
     private static final class ModuleStatementVisitor extends StatementVisitor {
         ModuleStatementVisitor(MethodCode method, Module node) {
-            super(method, true, node, CodeType.GlobalScript);
+            super(method, node, true);
         }
 
         @Override
@@ -1119,7 +1134,7 @@ final class CodeGenerator {
 
     private static final class FunctionStatementVisitor extends StatementVisitor {
         FunctionStatementVisitor(MethodCode method, FunctionNode node) {
-            super(method, IsStrict(node), node, CodeType.Function);
+            super(method, node, IsStrict(node));
         }
 
         @Override
@@ -1131,7 +1146,7 @@ final class CodeGenerator {
 
     private static final class GeneratorStatementVisitor extends StatementVisitor {
         GeneratorStatementVisitor(MethodCode method, FunctionNode node) {
-            super(method, IsStrict(node), node, CodeType.Function);
+            super(method, node, IsStrict(node));
         }
 
         @Override
@@ -1166,7 +1181,7 @@ final class CodeGenerator {
 
     private static final class ArrowFunctionVisitor extends ExpressionVisitor {
         ArrowFunctionVisitor(MethodCode method, ArrowFunction node) {
-            super(method, IsStrict(node), false, node.hasSyntheticNodes());
+            super(method, node, IsStrict(node));
         }
 
         @Override

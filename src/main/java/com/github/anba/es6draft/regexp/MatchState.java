@@ -9,7 +9,7 @@ package com.github.anba.es6draft.regexp;
 import java.util.regex.MatchResult;
 
 /**
- * Common interface for regular expression match operations
+ * Common interface for regular expression match operations.
  */
 public interface MatchState extends MatchResult {
     /**

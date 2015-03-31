@@ -18,7 +18,11 @@ import java.util.List;
 import java.util.Set;
 
 import com.github.anba.es6draft.ast.Expression;
+import com.github.anba.es6draft.ast.FunctionNode;
+import com.github.anba.es6draft.ast.Module;
 import com.github.anba.es6draft.ast.ScopedNode;
+import com.github.anba.es6draft.ast.Script;
+import com.github.anba.es6draft.ast.TopLevelNode;
 import com.github.anba.es6draft.ast.scope.Scope;
 import com.github.anba.es6draft.compiler.Labels.ReturnLabel;
 import com.github.anba.es6draft.compiler.Labels.TempLabel;
@@ -57,6 +61,7 @@ abstract class ExpressionVisitor extends InstructionVisitor {
     private static final int CONTEXT_SLOT = 0;
 
     private final ExpressionVisitor parent;
+    private final TopLevelNode<?> topLevelNode;
     private final boolean strict;
     private final boolean globalCode;
     private final boolean syntheticMethod;
@@ -70,6 +75,7 @@ abstract class ExpressionVisitor extends InstructionVisitor {
     protected ExpressionVisitor(MethodCode method, ExpressionVisitor parent) {
         super(method);
         this.parent = parent;
+        this.topLevelNode = parent.topLevelNode;
         this.strict = parent.isStrict();
         this.globalCode = parent.isGlobalCode();
         this.syntheticMethod = true;
@@ -78,13 +84,24 @@ abstract class ExpressionVisitor extends InstructionVisitor {
         this.tailCallNodes = parent.tailCallNodes;
     }
 
-    protected ExpressionVisitor(MethodCode method, boolean strict, boolean globalCode,
-            boolean syntheticMethods) {
+    protected ExpressionVisitor(MethodCode method, TopLevelNode<?> topLevelNode, boolean strict) {
         super(method);
         this.parent = null;
+        this.topLevelNode = topLevelNode;
         this.strict = strict;
-        this.globalCode = globalCode;
-        this.syntheticMethod = syntheticMethods;
+        this.globalCode = isGlobalCode(topLevelNode);
+        this.syntheticMethod = topLevelNode.hasSyntheticNodes();
+    }
+
+    private static boolean isGlobalCode(TopLevelNode<?> node) {
+        if (node instanceof Script) {
+            return ((Script) node).isGlobalCode();
+        }
+        if (node instanceof Module) {
+            return true;
+        }
+        assert node instanceof FunctionNode;
+        return false;
     }
 
     @Override
@@ -99,6 +116,15 @@ abstract class ExpressionVisitor extends InstructionVisitor {
             parent.hasTailCalls |= hasTailCalls;
         }
         super.end();
+    }
+
+    /**
+     * Returns the {@link TopLevelNode} for this visitor.
+     * 
+     * @return the top level node for this visitor
+     */
+    final TopLevelNode<?> getTopLevelNode() {
+        return topLevelNode;
     }
 
     /**
@@ -155,8 +181,22 @@ abstract class ExpressionVisitor extends InstructionVisitor {
         this.scope = node.getScope();
     }
 
+    void enterScope(Scope scope) {
+        assert scope.getParent() == this.scope;
+        this.scope = scope;
+    }
+
     void exitScope() {
         scope = scope.getParent();
+    }
+
+    void enterFunction(FunctionNode node) {
+        assert this.scope == null;
+        this.scope = node.getScope().lexicalScope();
+    }
+
+    void exitFunction() {
+        scope = null;
     }
 
     void enterTailCallPosition(Expression expr) {

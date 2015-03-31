@@ -298,7 +298,7 @@ final class IntlDataTools {
 
         try (DirectoryStream<Path> stream = Files.newDirectoryStream(tzdataDir)) {
             for (Path path : stream) {
-                String filename = path.getFileName().toString();
+                String filename = Objects.requireNonNull(path.getFileName()).toString();
                 if (pFileName.matcher(filename).matches() && !ignoreFiles.contains(filename)) {
                     try (BufferedReader reader = Files.newBufferedReader(path,
                             StandardCharsets.UTF_8)) {
@@ -436,7 +436,7 @@ final class IntlDataTools {
                         tag += "-" + territory.getAttribute("type");
                     }
 
-                    String filename = path.getFileName().toString();
+                    String filename = Objects.requireNonNull(path.getFileName()).toString();
                     filename = filename.substring(0, filename.lastIndexOf('.'));
                     names.put(filename, tag);
 

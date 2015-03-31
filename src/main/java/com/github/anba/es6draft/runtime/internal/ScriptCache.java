@@ -16,6 +16,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Objects;
 
 import com.github.anba.es6draft.Script;
 import com.github.anba.es6draft.compiler.CompilationException;
@@ -139,7 +140,7 @@ public final class ScriptCache {
         if (cache.containsKey(cacheKey)) {
             return cache.get(cacheKey);
         }
-        Source source = new Source(file, file.getFileName().toString(), 1);
+        Source source = new Source(file, Objects.requireNonNull(file.getFileName()).toString(), 1);
         Script script = scriptLoader.script(source, file);
         cache.put(cacheKey, script);
         return script;

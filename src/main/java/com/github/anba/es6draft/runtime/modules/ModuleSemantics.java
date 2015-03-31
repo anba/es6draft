@@ -6,6 +6,8 @@
  */
 package com.github.anba.es6draft.runtime.modules;
 
+import static com.github.anba.es6draft.runtime.types.builtins.ModuleNamespaceObject.ModuleNamespaceCreate;
+
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -97,7 +99,7 @@ public final class ModuleSemantics {
                 }
             }
             /* step 3.e */
-            namespace = module.createNamespace(cx, unambiguousNames);
+            namespace = ModuleNamespaceCreate(cx, module, unambiguousNames);
         }
         /* step 4 */
         return namespace;

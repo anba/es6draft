@@ -52,6 +52,12 @@ feature/ArrowFunctions/Error_FreeVariableChecker.js
 # implicit __moduleName binding in modules
 feature/Modules/ModuleName.module.js
 
+# super() call required in derived class constructors
+feature/Classes/Error_SuperNestedClass.js
+
+# Custom syntax error check?
+feature/Syntax/NoNewLineHereEndOfFile.js
+
 
 #######################################
 # ES6 related syntax changes          #

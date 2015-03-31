@@ -178,11 +178,13 @@ public final class ScriptRuntime {
      *            the environment record
      * @param name
      *            the variable name
+     * @param catchVar
+     *            {@code true} if variable redeclarations are allowed in catch clauses
      */
     public static void canDeclareVarOrThrow(ExecutionContext cx,
-            DeclarativeEnvironmentRecord envRec, String name) {
+            DeclarativeEnvironmentRecord envRec, String name, boolean catchVar) {
         /* steps 6.b.ii.2 - 6.b.ii.3 */
-        if (envRec.hasBinding(name)) {
+        if (envRec.hasBinding(name) && !(catchVar && envRec.isCatchEnvironment())) {
             throw newSyntaxError(cx, Messages.Key.VariableRedeclaration, name);
         }
     }
@@ -414,7 +416,7 @@ public final class ScriptRuntime {
             object = (OrdinaryObject) proto;
         }
         // Test 1: Is object[Symbol.iterator] == %ArrayPrototype%.values?
-        if (!TypedArrayPrototypePrototype.isBuiltinValues(iterProp.getValue())) {
+        if (iterProp == null || !TypedArrayPrototypePrototype.isBuiltinValues(iterProp.getValue())) {
             return false;
         }
         // Test 2: Is %ArrayIteratorPrototype%.next the built-in next method?
@@ -2515,9 +2517,10 @@ public final class ScriptRuntime {
                         innerResult = innerThrowResultObj;
                         continue inner;
                     } else {
+                        // FIXME: spec bug (https://bugs.ecmascript.org/show_bug.cgi?id=4207)
                         /* step 6.b.iv */
                         /* steps 6.b.iv.1-2 */
-                        IteratorClose(cx, iterator, true);
+                        IteratorClose(cx, iterator, false);
                         /* steps 6.b.iv.3 */
                         throw newTypeError(cx, Messages.Key.PropertyNotCallable, "throw");
                     }
@@ -2585,9 +2588,10 @@ public final class ScriptRuntime {
             }
             return Type.objectValue(innerThrowResult);
         } else {
+            // FIXME: spec bug (https://bugs.ecmascript.org/show_bug.cgi?id=4207)
             /* step 6.b.iv */
             /* steps 6.b.iv.1-2 */
-            IteratorClose(cx, iterator, true);
+            IteratorClose(cx, iterator, false);
             /* steps 6.b.iv.3 */
             throw newTypeError(cx, Messages.Key.PropertyNotCallable, "throw");
         }

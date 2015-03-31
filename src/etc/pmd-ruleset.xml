@@ -12,6 +12,7 @@
   <description />
   <rule ref="rulesets/java/basic.xml">
     <exclude name="AvoidBranchingStatementAsLastInLoop" />
+    <exclude name="AvoidThreadGroup" />
     <exclude name="AvoidUsingOctalValues" />
     <exclude name="CollapsibleIfStatements" />
   </rule>
@@ -25,33 +26,46 @@
     <exclude name="AtLeastOneConstructor" />
     <exclude name="AvoidFinalLocalVariable" />
     <exclude name="AvoidLiteralsInIfCondition" />
+    <exclude name="AvoidPrefixingMethodParameters" />
     <exclude name="AvoidUsingShortType" />
     <exclude name="BooleanInversion" />
     <exclude name="CallSuperInConstructor" />
     <exclude name="DataflowAnomalyAnalysis" />
     <exclude name="DefaultPackage" />
+    <exclude name="DoNotCallGarbageCollectionExplicitly" />
     <exclude name="NullAssignment" />
     <exclude name="OneDeclarationPerLine" />
     <exclude name="OnlyOneReturn" />
     <exclude name="UseConcurrentHashMap" />
+    <exclude name="UseObjectForClearerAPI" />
   </rule>
   <rule ref="rulesets/java/design.xml">
+    <exclude name="AbstractClassWithoutAbstractMethod" />
+    <exclude name="AccessorClassGeneration" />
     <exclude name="AvoidDeeplyNestedIfStmts" />
     <exclude name="AvoidReassigningParameters" />
+    <exclude name="AvoidSynchronizedAtMethodLevel" />
     <exclude name="CloseResource" />
     <exclude name="CompareObjectsWithEquals" />
     <exclude name="ConfusingTernary" />
+    <exclude name="DefaultLabelNotLastInSwitchStmt" />
     <exclude name="EmptyMethodInAbstractClassShouldBeAbstract" />
     <exclude name="FieldDeclarationsShouldBeAtStartOfClass" />
     <exclude name="GodClass" />
     <exclude name="ImmutableField" />
+    <exclude name="LogicInversion" />
     <exclude name="MissingBreakInSwitch" />
+    <exclude name="MissingStaticMethodInNonInstantiatableClass" />
     <exclude name="PreserveStackTrace" />
     <exclude name="SwitchDensity" />
     <exclude name="SwitchStmtsShouldHaveDefault" />
     <exclude name="TooFewBranchesForASwitchStatement" />
     <exclude name="UncommentedEmptyConstructor" />
+    <exclude name="UncommentedEmptyMethod" />
     <exclude name="UnnecessaryLocalBeforeReturn" />
+    <exclude name="UseCollectionIsEmpty" />
+    <exclude name="UseUtilityClass" />
+    <exclude name="UseVarargs" />
   </rule>
   <rule ref="rulesets/java/empty.xml">
     <exclude name="EmptyCatchBlock" />
@@ -89,7 +103,10 @@
     <exclude name="AvoidThrowingRawExceptionTypes" />
     <exclude name="SignatureDeclareThrowsException" />
   </rule>
-  <rule ref="rulesets/java/sunsecure.xml" />
+  <rule ref="rulesets/java/sunsecure.xml">
+    <exclude name="MethodReturnsInternalArray" />
+    <exclude name="ArrayIsStoredDirectly" />
+  </rule>
   <rule ref="rulesets/java/unnecessary.xml">
     <exclude name="UnnecessaryFinalModifier" />
     <exclude name="UselessParentheses" />

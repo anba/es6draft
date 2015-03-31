@@ -20,29 +20,19 @@ import com.github.anba.es6draft.runtime.internal.Source;
  * <li>15.1 Script
  * </ul>
  */
-public final class Script extends AstNode implements TopLevelNode<StatementListItem>, ScopedNode {
-    private final Source source;
+public final class Script extends Program implements TopLevelNode<StatementListItem> {
     private final ScriptScope scope;
     private List<StatementListItem> statements;
-    private final EnumSet<CompatibilityOption> options;
-    private final EnumSet<Parser.Option> parserOptions;
     private final boolean strict;
     private boolean syntheticNodes;
 
     public Script(long beginPosition, long endPosition, Source source, ScriptScope scope,
             List<StatementListItem> statements, EnumSet<CompatibilityOption> options,
             EnumSet<Parser.Option> parserOptions, boolean strict) {
-        super(beginPosition, endPosition);
-        this.source = source;
+        super(beginPosition, endPosition, source, options, parserOptions);
         this.scope = scope;
         this.statements = statements;
-        this.options = options;
-        this.parserOptions = parserOptions;
         this.strict = strict;
-    }
-
-    public Source getSource() {
-        return source;
     }
 
     @Override
@@ -64,48 +54,32 @@ public final class Script extends AstNode implements TopLevelNode<StatementListI
         return strict;
     }
 
-    public EnumSet<CompatibilityOption> getOptions() {
-        return options;
-    }
-
-    public EnumSet<Parser.Option> getParserOptions() {
-        return parserOptions;
-    }
-
     public boolean isEvalScript() {
-        return parserOptions.contains(Parser.Option.EvalScript);
+        return getParserOptions().contains(Parser.Option.EvalScript);
     }
 
     public boolean isDirectEval() {
-        return parserOptions.contains(Parser.Option.DirectEval);
-    }
-
-    public boolean isGlobalScope() {
-        return !parserOptions.contains(Parser.Option.LocalScope);
-    }
-
-    public boolean isGlobalThis() {
-        return !parserOptions.contains(Parser.Option.FunctionThis);
+        return getParserOptions().contains(Parser.Option.DirectEval);
     }
 
     public boolean isGlobalCode() {
-        return !parserOptions.contains(Parser.Option.FunctionCode);
+        return !getParserOptions().contains(Parser.Option.FunctionCode);
     }
 
     public boolean isFunctionCode() {
-        return parserOptions.contains(Parser.Option.FunctionCode);
-    }
-
-    public boolean isEnclosedByWithStatement() {
-        return parserOptions.contains(Parser.Option.EnclosedByWithStatement);
-    }
-
-    public boolean isEnclosedByLexicalDeclaration() {
-        return parserOptions.contains(Parser.Option.EnclosedByLexicalDeclaration);
+        return getParserOptions().contains(Parser.Option.FunctionCode);
     }
 
     public boolean isScripting() {
-        return parserOptions.contains(Parser.Option.Scripting);
+        return getParserOptions().contains(Parser.Option.Scripting);
+    }
+
+    public boolean isGlobalScope() {
+        return !getParserOptions().contains(Parser.Option.LocalScope);
+    }
+
+    public boolean isGlobalThis() {
+        return !getParserOptions().contains(Parser.Option.FunctionThis);
     }
 
     @Override

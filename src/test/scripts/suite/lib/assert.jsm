@@ -205,6 +205,9 @@ export function assertThrows(expected, f, message = "") {
     if (e instanceof expected) {
       return;
     }
+    if (e instanceof AssertionError) {
+      throw e;
+    }
     fail `${label(message)}Expected error «${expected.name}», but got «${e}»`;
   }
   fail `${label(message)}Expected error «${expected.name}»`;

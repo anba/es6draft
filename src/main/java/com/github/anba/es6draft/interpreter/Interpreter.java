@@ -18,10 +18,12 @@ import static com.github.anba.es6draft.runtime.types.builtins.ArrayObject.ArrayC
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject.ObjectCreate;
 import static com.github.anba.es6draft.semantics.StaticSemantics.PropName;
 
+import java.util.EnumSet;
 import java.util.List;
 
 import com.github.anba.es6draft.ast.*;
 import com.github.anba.es6draft.ast.BinaryExpression.Operator;
+import com.github.anba.es6draft.parser.Parser;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.IndexedMap;
@@ -57,20 +59,12 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
         return new InterpretedScript(parsedScript);
     }
 
+    private final EnumSet<Parser.Option> parserOptions;
     private final boolean strict;
-    private final boolean globalCode;
-    private final boolean globalScope;
-    private final boolean globalThis;
-    private final boolean enclosedByWithStatement;
-    private final boolean enclosedByLexicalDeclaration;
 
     public Interpreter(Script parsedScript) {
+        this.parserOptions = EnumSet.copyOf(parsedScript.getParserOptions());
         this.strict = parsedScript.isStrict();
-        this.globalCode = parsedScript.isGlobalCode();
-        this.globalScope = parsedScript.isGlobalScope();
-        this.globalThis = parsedScript.isGlobalThis();
-        this.enclosedByWithStatement = parsedScript.isEnclosedByWithStatement();
-        this.enclosedByLexicalDeclaration = parsedScript.isEnclosedByLexicalDeclaration();
     }
 
     /* ----------------------------------------------------------------------------------------- */
@@ -906,21 +900,7 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
             if (strict) {
                 evalFlags |= EvalFlags.Strict.getValue();
             }
-            if (globalCode) {
-                evalFlags |= EvalFlags.GlobalCode.getValue();
-            }
-            if (globalScope) {
-                evalFlags |= EvalFlags.GlobalScope.getValue();
-            }
-            if (globalThis) {
-                evalFlags |= EvalFlags.GlobalThis.getValue();
-            }
-            if (enclosedByWithStatement) {
-                evalFlags |= EvalFlags.EnclosedByWithStatement.getValue();
-            }
-            if (enclosedByLexicalDeclaration) {
-                evalFlags |= EvalFlags.EnclosedByLexicalDeclaration.getValue();
-            }
+            evalFlags |= EvalFlags.toFlags(parserOptions);
             return Eval.directEval(argList, cx, evalFlags);
         }
         if (directEval && ScriptRuntime.directEvalFallbackHook(cx) != null) {

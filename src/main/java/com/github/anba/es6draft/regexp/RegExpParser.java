@@ -88,13 +88,18 @@ public final class RegExpParser {
                 sourceColumn, webRegExp);
         parser.pattern();
 
-        // System.out.printf("pattern = %s%n", parser.out.toString());
-
         if (parser.useJoniRegExp()) {
             return new JoniRegExpMatcher(parser.out.toString(), parser.flags,
                     parser.negativeLAGroups);
         }
         return new JDKRegExpMatcher(parser.out.toString(), parser.flags, parser.negativeLAGroups);
+    }
+
+    public static void syntaxParse(String pattern, String flags, String sourceFile, int sourceLine,
+            int sourceColumn, boolean webRegExp) throws ParserException {
+        RegExpParser parser = new RegExpParser(pattern, flags, sourceFile, sourceLine,
+                sourceColumn, webRegExp);
+        parser.pattern();
     }
 
     private ParserException error(Messages.Key messageKey, String... args) {

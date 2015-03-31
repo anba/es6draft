@@ -123,12 +123,13 @@ public abstract class ShellGlobalObject extends GlobalObject {
     }
 
     protected final Path relativePath(Path file) {
-        return baseDir.resolve(script.getParent().resolve(file));
+        return baseDir.resolve(Objects.requireNonNull(script.getParent()).resolve(file));
     }
 
     protected final Path relativePathToScript(ExecutionContext caller, Path file) {
-        Source source = getRealm().sourceInfo(caller);
-        return baseDir.resolve(source.getFile().getParent().resolve(file));
+        Source source = Objects.requireNonNull(getRealm().sourceInfo(caller));
+        Path sourceFile = Objects.requireNonNull(source.getFile());
+        return baseDir.resolve(Objects.requireNonNull(sourceFile.getParent()).resolve(file));
     }
 
     /**

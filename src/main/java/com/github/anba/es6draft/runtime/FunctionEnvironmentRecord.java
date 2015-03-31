@@ -57,7 +57,7 @@ public final class FunctionEnvironmentRecord extends DeclarativeEnvironmentRecor
     @Override
     public String toString() {
         return String
-                .format("%s:{%n\tfunctionObject=%s,%n\tnewTarget=%s,%n\thomeObject=%s,%n\tthisValue=%s,%n\tthisBindingStatus=%b,%n\tbindings=%s%n}",
+                .format("%s:{%n\tfunctionObject=%s,%n\tnewTarget=%s,%n\thomeObject=%s,%n\tthisValue=%s,%n\tthisBindingStatus=%s,%n\tbindings=%s%n}",
                         getClass().getSimpleName(), functionObject, newTarget, homeObject,
                         thisValue, thisBindingStatus, bindingsToString());
     }

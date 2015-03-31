@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Set;
 
 import com.github.anba.es6draft.ast.*;
+import com.github.anba.es6draft.ast.scope.FunctionScope;
 import com.github.anba.es6draft.ast.scope.Name;
 import com.github.anba.es6draft.compiler.CodeGenerator.FunctionName;
 import com.github.anba.es6draft.compiler.assembler.Code.MethodCode;
@@ -106,7 +107,7 @@ final class FunctionDeclarationInstantiationGenerator extends
 
     private static final class FunctionDeclInitMethodGenerator extends ExpressionVisitor {
         FunctionDeclInitMethodGenerator(MethodCode method, FunctionNode node) {
-            super(method, IsStrict(node), false, false);
+            super(method, node, IsStrict(node));
         }
 
         @Override
@@ -146,6 +147,7 @@ final class FunctionDeclarationInstantiationGenerator extends
         mv.loadUndefined();
         mv.store(undefined);
 
+        FunctionScope fscope = function.getScope();
         boolean hasParameters = !function.getParameters().getFormals().isEmpty();
         Variable<Iterator<?>> iterator = null;
         if (hasParameters) {
@@ -276,6 +278,7 @@ final class FunctionDeclarationInstantiationGenerator extends
         Variable<? extends LexicalEnvironment<? extends DeclarativeEnvironmentRecord>> varEnv;
         Variable<? extends DeclarativeEnvironmentRecord> varEnvRec;
         if (!hasParameterExpressions) {
+            assert fscope == fscope.variableScope();
             /* step 27.a (note) */
             /* step 27.b */
             instantiatedVarNames = new HashSet<>(parameterNames);
@@ -290,6 +293,8 @@ final class FunctionDeclarationInstantiationGenerator extends
             varEnv = env;
             varEnvRec = envRec;
         } else {
+            assert fscope != fscope.variableScope();
+            mv.enterScope(fscope.variableScope());
             /* step 28.a (note) */
             /* step 28.b */
             varEnv = mv.newVariable("varEnv", LexicalEnvironment.class).uncheckedCast();
@@ -329,14 +334,45 @@ final class FunctionDeclarationInstantiationGenerator extends
         Variable<? extends LexicalEnvironment<? extends DeclarativeEnvironmentRecord>> lexEnv;
         Variable<? extends DeclarativeEnvironmentRecord> lexEnvRec;
         if (!strict) {
-            /* step 30 */
-            lexEnv = mv.newVariable("lexEnv", LexicalEnvironment.class).uncheckedCast();
-            newDeclarativeEnvironment(varEnv, mv);
-            mv.store(lexEnv);
-            /* step 32 */
-            lexEnvRec = mv.newVariable("lexEnvRec", DeclarativeEnvironmentRecord.class);
-            storeEnvironmentRecord(lexEnvRec, lexEnv, mv);
+            assert fscope.variableScope() != fscope.lexicalScope();
+            mv.enterScope(fscope.lexicalScope());
+            if (!lexicalNames.isEmpty()) {
+                /* step 30 */
+                lexEnv = mv.newVariable("lexEnv", LexicalEnvironment.class).uncheckedCast();
+                newDeclarativeEnvironment(varEnv, mv);
+                mv.store(lexEnv);
+                /* step 32 */
+                lexEnvRec = mv.newVariable("lexEnvRec", DeclarativeEnvironmentRecord.class);
+                storeEnvironmentRecord(lexEnvRec, lexEnv, mv);
+            } else {
+                // Optimization: Skip environment allocation if no lexical names are defined.
+                /* step 30 */
+                lexEnv = varEnv;
+                /* step 32 */
+                lexEnvRec = varEnvRec;
+            }
+        } else if (fscope.variableScope() != fscope.lexicalScope()) {
+            // NB: Scopes are unmodifiable once constructed, that means we need to emit the extra
+            // scope for functions with deferred strict-ness, even if this scope is not present in
+            // the specification.
+            mv.enterScope(fscope.lexicalScope());
+            if (!lexicalNames.isEmpty()) {
+                /* step 30 */
+                lexEnv = mv.newVariable("lexEnv", LexicalEnvironment.class).uncheckedCast();
+                newDeclarativeEnvironment(varEnv, mv);
+                mv.store(lexEnv);
+                /* step 32 */
+                lexEnvRec = mv.newVariable("lexEnvRec", DeclarativeEnvironmentRecord.class);
+                storeEnvironmentRecord(lexEnvRec, lexEnv, mv);
+            } else {
+                // Optimization: Skip environment allocation if no lexical names are defined.
+                /* step 30 */
+                lexEnv = varEnv;
+                /* step 32 */
+                lexEnvRec = varEnvRec;
+            }
         } else {
+            assert fscope.variableScope() == fscope.lexicalScope();
             /* step 30 */
             lexEnv = varEnv;
             /* step 32 */

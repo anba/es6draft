@@ -851,7 +851,7 @@ public class GlobalObject extends OrdinaryObject implements Initializable {
                         int c1 = (c & 0b111111);
                         writeByte(sb, 0b11000000 | c0);
                         writeByte(sb, 0b10000000 | c1);
-                    } else if ((c >= 0x0800 && c <= 0xD7FF) || (c >= 0xE000 && c <= 0xFFFF)) {
+                    } else if (c <= 0xD7FF || c >= 0xE000) {
                         int c0 = ((c >> 12) & 0b1111);
                         int c1 = ((c >> 6) & 0b111111);
                         int c2 = (c & 0b111111);

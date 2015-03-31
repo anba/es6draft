@@ -422,9 +422,9 @@ final class TokenStream {
      * @param start
      *            the start token of the regular expression literal, either {@link Token#DIV} or
      *            {@link Token#ASSIGN_DIV}
-     * @return string tuple {pattern, flags} for the regular expression literal
+     * @return the regular expression pattern
      */
-    public String[] readRegularExpression(Token start) {
+    public String readRegularExpression(Token start) {
         assert start == Token.DIV || start == Token.ASSIGN_DIV;
         assert next == null : "regular expression in lookahead";
 
@@ -451,16 +451,29 @@ final class TokenStream {
             } else if (c == ']') {
                 inClass = false;
             } else if (c == '/' && !inClass) {
-                break;
+                return buffer.toString();
             }
             if (c == EOF || isLineTerminator(c)) {
                 throw error(Messages.Key.UnterminatedRegExpLiteral);
             }
             buffer.append(c);
         }
-        String regexp = buffer.toString();
+    }
 
-        buffer.clear();
+    /**
+     * <strong>[11.8.5] Regular Expression Literals</strong>
+     * 
+     * <pre>
+     * RegularExpressionFlags ::
+     *     [empty]
+     *     RegularExpressionFlags IdentifierPart
+     * </pre>
+     * 
+     * @return the regular expression literal flags
+     */
+    public String readRegularExpressionFlags() {
+        TokenStreamInput input = this.input;
+        StrBuffer buffer = buffer();
         for (;;) {
             int c = input.get();
             if (!isIdentifierPart(c)) {
@@ -469,13 +482,10 @@ final class TokenStream {
                     throw error(Messages.Key.UnicodeEscapeInRegExpFlags);
                 }
                 input.unget(c);
-                break;
+                return buffer.toString();
             }
             buffer.appendCodePoint(c);
         }
-
-        String flags = buffer.toString();
-        return new String[] { regexp, flags };
     }
 
     //

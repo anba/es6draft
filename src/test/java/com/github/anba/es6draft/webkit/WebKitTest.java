@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.configuration.Configuration;
@@ -34,6 +35,7 @@ import org.junit.runners.Parameterized.UseParametersRunnerFactory;
 import org.junit.runners.model.MultipleFailureException;
 
 import com.github.anba.es6draft.repl.console.ShellConsole;
+import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
 import com.github.anba.es6draft.util.Functional.BiFunction;
@@ -71,6 +73,13 @@ public final class WebKitTest {
         protected ObjectAllocator<WebKitTestGlobalObject> newAllocator(ShellConsole console,
                 TestInfo test, ScriptCache scriptCache) {
             return newGlobalObjectAllocator(console, test, scriptCache);
+        }
+
+        @Override
+        protected Set<CompatibilityOption> getOptions() {
+            Set<CompatibilityOption> options = super.getOptions();
+            options.add(CompatibilityOption.ArrayIncludes);
+            return options;
         }
     };
 

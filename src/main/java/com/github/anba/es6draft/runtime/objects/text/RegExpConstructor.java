@@ -87,7 +87,7 @@ public final class RegExpConstructor extends BuiltinConstructor implements Initi
             }
         }
         /* steps 5-10 */
-        return createRegExp(calleeContext, this, pattern, flags, patternIsRegExp);
+        return RegExpCreate(calleeContext, this, pattern, flags, patternIsRegExp);
     }
 
     /**
@@ -105,11 +105,11 @@ public final class RegExpConstructor extends BuiltinConstructor implements Initi
         /* step 3 (omitted) */
         /* step 4 (not applicable) */
         /* steps 5-10 */
-        return createRegExp(calleeContext, newTarget, pattern, flags, patternIsRegExp);
+        return RegExpCreate(calleeContext, newTarget, pattern, flags, patternIsRegExp);
     }
 
-    private RegExpObject createRegExp(ExecutionContext cx, Constructor newTarget, Object pattern,
-            Object flags, boolean patternIsRegExp) {
+    private static RegExpObject RegExpCreate(ExecutionContext cx, Constructor newTarget,
+            Object pattern, Object flags, boolean patternIsRegExp) {
         /* steps 5-7 */
         Object p, f;
         if (pattern instanceof RegExpObject) {
@@ -137,6 +137,15 @@ public final class RegExpConstructor extends BuiltinConstructor implements Initi
         return RegExpInitialize(cx, obj, p, f);
     }
 
+    static RegExpObject RegExpCreate(ExecutionContext cx, RegExpConstructor newTarget,
+            String pattern, String flags, boolean defaultMultiline) {
+        /* steps 5-7 (not applicable) */
+        /* steps 8-9 */
+        RegExpObject obj = RegExpAlloc(cx, newTarget);
+        /* step 10 */
+        return RegExpInitialize(cx, obj, pattern, flags, defaultMultiline);
+    }
+
     private static final class RegExpObjectAllocator implements ObjectAllocator<RegExpObject> {
         static final ObjectAllocator<RegExpObject> INSTANCE = new RegExpObjectAllocator();
 
@@ -152,14 +161,14 @@ public final class RegExpConstructor extends BuiltinConstructor implements Initi
      * 
      * @param cx
      *            the execution context
-     * @param constructor
+     * @param newTarget
      *            the constructor function
      * @return the new regular expression object
      */
-    public static RegExpObject RegExpAlloc(ExecutionContext cx, Constructor constructor) {
+    public static RegExpObject RegExpAlloc(ExecutionContext cx, Constructor newTarget) {
         /* steps 1-2 */
-        RegExpObject obj = OrdinaryCreateFromConstructor(cx, constructor,
-                Intrinsics.RegExpPrototype, RegExpObjectAllocator.INSTANCE);
+        RegExpObject obj = OrdinaryCreateFromConstructor(cx, newTarget, Intrinsics.RegExpPrototype,
+                RegExpObjectAllocator.INSTANCE);
         /* steps 3-4 */
         obj.infallibleDefineOwnProperty("lastIndex", new Property(0, true, false, false));
         /* step 5 */
@@ -188,10 +197,48 @@ public final class RegExpConstructor extends BuiltinConstructor implements Initi
         String f = Type.isUndefined(flags) ? "" : ToFlatString(cx, flags);
 
         /* RegExp statics extension */
-        if (getRegExpStatics(cx).isDefaultMultiline() && f.indexOf('m') == -1) {
+        if (isDefaultMultiline(cx) && f.indexOf('m') == -1) {
             f = f + 'm';
         }
 
+        /* steps 7-16 */
+        return RegExpInitialize(cx, obj, p, f);
+    }
+
+    /**
+     * 21.2.3.2 Abstract Operations for the RegExp Constructor<br>
+     * 21.2.3.2.2 Runtime Semantics: RegExpInitialize ( obj, pattern, flags )
+     * 
+     * @param cx
+     *            the execution context
+     * @param obj
+     *            the RegExp object
+     * @param pattern
+     *            the regular expression pattern
+     * @param flags
+     *            the regular expression flags
+     * @param defaultMultiline
+     *            {@code true} to create multiline-mode pattern
+     * @return the RegExp object
+     */
+    private static RegExpObject RegExpInitialize(ExecutionContext cx, RegExpObject obj,
+            String pattern, String flags, boolean defaultMultiline) {
+        /* steps 1-3 */
+        String p = pattern;
+        /* steps 4-6 */
+        String f = flags;
+
+        /* RegExp statics extension */
+        if (defaultMultiline && f.indexOf('m') == -1) {
+            f = f + 'm';
+        }
+
+        /* steps 7-16 */
+        return RegExpInitialize(cx, obj, p, f);
+    }
+
+    private static RegExpObject RegExpInitialize(ExecutionContext cx, RegExpObject obj, String p,
+            String f) {
         /* steps 7-10 */
         RegExpMatcher matcher;
         try {
@@ -394,6 +441,10 @@ public final class RegExpConstructor extends BuiltinConstructor implements Initi
     static void storeLastMatchResult(ExecutionContext cx, CharSequence input,
             MatchResult matchResult) {
         getRegExpStatics(cx).storeLastMatchResult(input, matchResult);
+    }
+
+    static boolean isDefaultMultiline(ExecutionContext cx) {
+        return getRegExpStatics(cx).isDefaultMultiline();
     }
 
     @CompatibilityExtension(CompatibilityOption.RegExpStatics)

@@ -6,6 +6,8 @@
  */
 package com.github.anba.es6draft.ast.scope;
 
+import java.util.Set;
+
 import com.github.anba.es6draft.ast.Script;
 
 /**
@@ -14,4 +16,12 @@ import com.github.anba.es6draft.ast.Script;
 public interface ScriptScope extends TopLevelScope {
     @Override
     Script getNode();
+
+    /**
+     * Returns the set of variable declared names in function and for-of statements. This
+     * information is only tracked for eval scripts.
+     * 
+     * @return the variable declared names
+     */
+    Set<Name> varFunctionAndForOfDeclaredNames();
 }

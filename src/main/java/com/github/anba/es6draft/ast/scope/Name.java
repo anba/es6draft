@@ -9,10 +9,12 @@ package com.github.anba.es6draft.ast.scope;
 /**
  * 
  */
-public final class Name {
+public final class Name implements Cloneable {
     public static final String DEFAULT_EXPORT = "*default*";
     private final String identifier;
     private Scope scope;
+    private boolean globalName;
+    private boolean lookupByName;
 
     /**
      * Constructs a new Name object.
@@ -33,13 +35,71 @@ public final class Name {
         return identifier;
     }
 
-    public void resolve(Scope scope) {
-        assert this.scope == null;
-        this.scope = scope;
+    /**
+     * Returns the declaring scope or {@code null}.
+     * 
+     * @return the declaring scope or {@code null}
+     */
+    public Scope getScope() {
+        return scope;
     }
 
+    /**
+     * Returns {@code true} if this name requires named lookup.
+     * 
+     * @return {@code true} if named lookup required
+     */
+    public boolean isLookupByName() {
+        return lookupByName;
+    }
+
+    /**
+     * Returns {@code true} if this name is references a global identifier.
+     * 
+     * @return {@code true} if global name
+     */
+    public boolean isGlobal() {
+        return globalName;
+    }
+
+    /**
+     * Returns {@code true} if this name is resolved.
+     * 
+     * @return {@code true} if resolved
+     */
     public boolean isResolved() {
-        return scope != null;
+        return scope != null || globalName;
+    }
+
+    /**
+     * Resolves this name.
+     * 
+     * @param scope
+     *            the declaring scope
+     * @param lookupByName
+     *            {@code true} if named lookup required
+     * @return {@code true} on success
+     */
+    public boolean resolve(Scope scope, boolean lookupByName) {
+        assert scope != null && !globalName;
+        this.lookupByName |= lookupByName;
+        if (this.scope == null) {
+            this.scope = scope;
+            return true;
+        }
+        assert this.scope == scope : String.format("%s != %s", this.scope, scope);
+        return false;
+    }
+
+    /**
+     * Marks this name as global.
+     * 
+     * @return this name
+     */
+    public Name asGlobalName() {
+        assert this.scope == null;
+        this.globalName = true;
+        return this;
     }
 
     @Override
@@ -61,5 +121,10 @@ public final class Name {
     @Override
     public String toString() {
         return identifier;
+    }
+
+    @Override
+    public Name clone() {
+        return new Name(identifier);
     }
 }

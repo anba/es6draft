@@ -8,10 +8,15 @@ package com.github.anba.es6draft.ast;
 
 import java.util.List;
 
+import com.github.anba.es6draft.ast.scope.TopLevelScope;
+
 /**
  * Super-interface for {@link Script}, {@link Module} and {@link FunctionNode}.
  */
 public interface TopLevelNode<STATEMENT extends ModuleItem> extends ScopedNode {
+    @Override
+    TopLevelScope getScope();
+
     /**
      * Returns this node's statement list, or <code>null</code> if this node does not contain any
      * statements.

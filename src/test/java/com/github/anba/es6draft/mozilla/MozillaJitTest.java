@@ -239,6 +239,7 @@ public final class MozillaJitTest {
                     case "--fuzzing-safe":
                     case "--no-threads":
                     case "--no-ion":
+                    case "--no-baseline":
                         // Ignore for now...
                         break;
                     case "":

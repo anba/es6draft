@@ -25,7 +25,6 @@ import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.ModuleEnvironmentRecord;
 import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.internal.CompoundList;
 import com.github.anba.es6draft.runtime.internal.Errors;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.modules.MalformedNameException;
@@ -332,8 +331,14 @@ public final class ModuleNamespaceObject extends OrdinaryObject {
     /** 9.4.6.12 [[OwnPropertyKeys]] ( ) */
     @Override
     protected List<Object> getOwnPropertyKeys(ExecutionContext cx) {
-        /* steps 1-4 */
-        return new CompoundList<>(getSortedExports(), super.getOwnPropertyKeys(cx));
+        int totalSize = countProperties(true) + exports.size();
+        /* step 1 */
+        ArrayList<Object> exports = new ArrayList<>(totalSize);
+        exports.addAll(getSortedExports());
+        /* steps 2-3 */
+        appendSymbolProperties(exports);
+        /* step 4 */
+        return exports;
     }
 
     /**
@@ -362,7 +367,8 @@ public final class ModuleNamespaceObject extends OrdinaryObject {
         // 26.3.2 [ @@iterator ] ( )
         m.infallibleDefineOwnProperty(BuiltinSymbol.iterator.get(), new Property(
                 new ModuleIteratorFunction(cx.getRealm()), true, false, true));
-        /* step 9 (not applicable) */
+        /* step 9 */
+        module.setNamespace(m);
         /* step 10 */
         return m;
     }

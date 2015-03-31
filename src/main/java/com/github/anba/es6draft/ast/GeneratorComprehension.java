@@ -35,6 +35,11 @@ public final class GeneratorComprehension extends Expression implements Function
     }
 
     @Override
+    public BindingIdentifier getIdentifier() {
+        return null;
+    }
+
+    @Override
     public String getMethodName() {
         if (methodName != null) {
             return methodName;

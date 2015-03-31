@@ -987,7 +987,7 @@ public final class Repl {
         }
     }
 
-    private final class ModuleEvaluationTask implements Task {
+    private static final class ModuleEvaluationTask implements Task {
         private final Realm realm;
         private final EvalScript evalScript;
 
@@ -999,12 +999,20 @@ public final class Repl {
         @Override
         public void execute() {
             try {
-                ModuleSource source = evalScript.getModuleSource();
+                ModuleSource moduleSource = evalScript.getModuleSource();
                 SourceIdentifier moduleName = evalScript.getModuleName();
                 try {
-                    ModuleEvaluationJob(realm, moduleName, source);
+                    ModuleEvaluationJob(realm, moduleName, moduleSource);
                 } catch (ParserException e) {
-                    throw new ParserExceptionWithSource(e, source.toSource(), source.sourceCode());
+                    Source source = moduleSource.toSource();
+                    String file = e.getFile();
+                    if (file.equals(source.getFileString())) {
+                        throw new ParserExceptionWithSource(e, source, moduleSource.sourceCode());
+                    }
+                    Path filePath = Paths.get(file).toAbsolutePath();
+                    Source errorSource = new Source(filePath, file, 1);
+                    String code = new String(Files.readAllBytes(filePath), StandardCharsets.UTF_8);
+                    throw new ParserExceptionWithSource(e, errorSource, code);
                 }
             } catch (MalformedNameException | ResolutionException e) {
                 throw e.toScriptException(realm.defaultContext());

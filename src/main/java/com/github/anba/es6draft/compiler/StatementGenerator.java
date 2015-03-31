@@ -12,7 +12,6 @@ import static com.github.anba.es6draft.compiler.BindingInitializationGenerator.R
 import static com.github.anba.es6draft.semantics.StaticSemantics.BoundNames;
 import static com.github.anba.es6draft.semantics.StaticSemantics.IsAnonymousFunctionDefinition;
 import static com.github.anba.es6draft.semantics.StaticSemantics.IsConstantDeclaration;
-import static com.github.anba.es6draft.semantics.StaticSemantics.LexicallyScopedDeclarations;
 
 import java.util.List;
 
@@ -285,10 +284,9 @@ final class StatementGenerator extends
         }
 
         /* steps 1-4 */
-        boolean hasDeclarations = !LexicallyScopedDeclarations(node).isEmpty();
-        if (hasDeclarations) {
+        if (node.getScope().isPresent()) {
             newDeclarativeEnvironment(mv);
-            new BlockDeclarationInstantiationGenerator(codegen).generate(node, mv);
+            codegen.blockInit(node, mv);
             pushLexicalEnvironment(mv);
         }
 
@@ -308,7 +306,7 @@ final class StatementGenerator extends
         mv.exitScope();
 
         /* step 6 */
-        if (hasDeclarations && !result.isAbrupt()) {
+        if (node.getScope().isPresent() && !result.isAbrupt()) {
             popLexicalEnvironment(mv);
         }
 
@@ -406,7 +404,7 @@ final class StatementGenerator extends
         /* step 2 (repeat loop) */
         mv.mark(lblNext);
 
-        /* steps 2a-2c */
+        /* steps 2.a-c */
         Completion result;
         {
             mv.enterIteration(node, lblBreak, lblContinue);
@@ -414,27 +412,27 @@ final class StatementGenerator extends
             mv.exitIteration(node);
         }
 
-        /* step 2c (abrupt completion - continue) */
+        /* step 2.c (abrupt completion - continue) */
         if (lblContinue.isTarget()) {
             mv.mark(lblContinue);
             restoreEnvironment(node, Abrupt.Continue, savedEnv, mv);
         }
 
-        /* steps 2d-2g */
+        /* steps 2.d-g */
         if (!result.isAbrupt() || lblContinue.isTarget()) {
             ValType type = expressionValue(node.getTest(), mv);
             ToBoolean(type, mv);
             mv.ifne(lblNext);
         }
 
-        /* step 2c (abrupt completion - break) */
+        /* step 2.c (abrupt completion - break) */
         if (lblBreak.isTarget()) {
             mv.mark(lblBreak);
             restoreEnvironment(node, Abrupt.Break, savedEnv, mv);
         }
         mv.exitVariableScope();
 
-        /* steps 2c, 2f, 2g */
+        /* steps 2.c, 2.f, 2.g */
         return result.normal(lblContinue.isTarget() || lblBreak.isTarget());
     }
 
@@ -620,20 +618,19 @@ final class StatementGenerator extends
             assert lexDecl.getElements().size() == 1;
             LexicalBinding lexicalBinding = lexDecl.getElements().get(0);
             tdzNames = BoundNames(lexicalBinding.getBinding());
-            if (!tdzNames.isEmpty()) {
+            assert node.getScope().isPresent() == !tdzNames.isEmpty();
+            if (node.getScope().isPresent()) {
                 // stack: [] -> [TDZ]
                 newDeclarativeEnvironment(mv);
-                {
-                    // stack: [TDZ] -> [TDZ, TDZRec]
-                    getEnvRec(mv);
+                // stack: [TDZ] -> [TDZ, TDZRec]
+                getEnvRec(mv);
 
-                    // stack: [TDZ, TDZRec] -> [TDZ]
-                    for (Name name : tdzNames) {
-                        // FIXME: spec bug (CreateMutableBinding concrete method of `TDZ`)
-                        createMutableBinding(name, false, mv);
-                    }
-                    mv.pop();
+                // stack: [TDZ, TDZRec] -> [TDZ]
+                for (Name name : tdzNames) {
+                    // FIXME: spec bug (CreateMutableBinding concrete method of `TDZ`)
+                    createMutableBinding(name, false, mv);
                 }
+                mv.pop();
                 // stack: [TDZ] -> []
                 pushLexicalEnvironment(mv);
             }
@@ -647,8 +644,7 @@ final class StatementGenerator extends
         /* step 4 */
         if (tdzNames != null) {
             mv.exitScope();
-            if (!tdzNames.isEmpty()) {
-                // restore previous lexical environment
+            if (node.getScope().isPresent()) {
                 popLexicalEnvironment(mv);
             }
         }
@@ -666,7 +662,7 @@ final class StatementGenerator extends
                 mv.goTo(lblFail);
                 mv.mark(loopstart);
             }
-            /* steps 7.b-7.c, 9-10 */
+            /* steps 7.b-c, 9-10 */
             if (codegen.isEnabled(CompatibilityOption.LegacyGenerator)) {
                 // legacy generator mode, both, for-in and for-each, perform Iterate on generators
                 Jump l0 = new Jump(), l1 = new Jump();
@@ -751,9 +747,9 @@ final class StatementGenerator extends
         /* steps 1-4 (not applicable) */
         /* step 5 (repeat loop) */
         mv.nonDestructiveGoTo(loopstart);
-        mv.mark(loopbody);
 
-        /* steps 5g-5h */
+        /* steps 5.f-g */
+        mv.mark(loopbody);
         mv.load(iterator);
         mv.lineInfo(node);
         mv.invoke(Methods.Iterator_next);
@@ -762,7 +758,7 @@ final class StatementGenerator extends
             mv.enterScope(node);
         }
 
-        /* steps 5i-5k */
+        /* steps 5.h-m */
         Completion result;
         {
             mv.enterIteration(node, lblBreak, lblContinue);
@@ -792,15 +788,16 @@ final class StatementGenerator extends
             mv.exitScope();
         }
 
-        /* steps 5l-5m */
+        /* steps 5.m-n */
         if (lblContinue.isTarget()) {
             mv.mark(lblContinue);
             restoreEnvironment(node, Abrupt.Continue, savedEnv, mv);
         }
 
-        /* steps 5a-5b */
+        /* steps 5.a-b */
         mv.mark(loopstart);
         if (lhs instanceof Expression) {
+            /* step 5.a (1) */
             assert lhs instanceof LeftHandSideExpression;
             if (!destructuring) {
                 ValType lhsType = expression((LeftHandSideExpression) lhs, mv);
@@ -808,6 +805,7 @@ final class StatementGenerator extends
                 mv.store(lhsRef);
             }
         } else if (lhs instanceof VariableStatement) {
+            /* step 5.a (2) */
             assert ((VariableStatement) lhs).getElements().size() == 1;
             VariableDeclaration varDecl = ((VariableStatement) lhs).getElements().get(0);
             if (!destructuring) {
@@ -816,6 +814,7 @@ final class StatementGenerator extends
                 mv.store(lhsRef);
             }
         } else {
+            /* step 5.b */
             assert lhs instanceof LexicalDeclaration;
             LexicalDeclaration lexDecl = (LexicalDeclaration) lhs;
             assert lexDecl.getElements().size() == 1;
@@ -823,9 +822,11 @@ final class StatementGenerator extends
             boolean isConst = IsConstantDeclaration(lexDecl);
 
             // stack: [] -> []
-            newDeclarativeEnvironment(mv);
-            BindingInstantiation(lexicalBinding, isConst, mv);
-            pushLexicalEnvironment(mv);
+            if (node.getScope().isPresent()) {
+                newDeclarativeEnvironment(mv);
+                BindingInstantiation(lexicalBinding, isConst, mv);
+                pushLexicalEnvironment(mv);
+            }
             mv.enterScope(node);
 
             if (!destructuring) {
@@ -835,20 +836,21 @@ final class StatementGenerator extends
             }
         }
 
-        /* steps 5c-5e */
+        /* steps 5.c-d */
         mv.load(iterator);
         mv.lineInfo(node);
         mv.invoke(Methods.Iterator_hasNext);
         mv.ifne(loopbody);
 
-        /* step 5f */
+        /* step 5.e */
         if (lhs instanceof LexicalDeclaration) {
             mv.exitScope();
-            // restore previous lexical environment
-            popLexicalEnvironment(mv);
+            if (node.getScope().isPresent()) {
+                popLexicalEnvironment(mv);
+            }
         }
 
-        /* steps 5l-5m */
+        /* steps 5.m-n */
         if (lblBreak.isTarget()) {
             mv.mark(lblBreak);
             restoreEnvironment(node, Abrupt.Break, savedEnv, mv);
@@ -863,18 +865,18 @@ final class StatementGenerator extends
             FORSTATEMENT node, Variable<Reference<?, ?>> lhsRef, StatementVisitor mv) {
         Node lhs = node.getHead();
         assert (lhsRef != null) == !IsDestructuring(lhs);
-        /* steps 3i-3k */
+        /* steps 5.h-j */
         if (lhsRef != null) {
-            /* steps 3i, 3k */
+            /* steps 5.h, 5.j */
             if (lhs instanceof LexicalDeclaration) {
-                /* step 3i.i */
+                /* step 5.h.i */
                 // stack: [nextValue] -> [lhsRef, nextValue]
                 mv.load(lhsRef);
                 mv.swap();
                 // stack: [lhsRef, nextValue] -> []
                 InitializeReferencedBinding(ValType.Reference, mv);
             } else {
-                /* step 3i.ii */
+                /* step 5.h.ii */
                 // stack: [nextValue] -> [lhsRef, nextValue]
                 mv.load(lhsRef);
                 mv.swap();
@@ -882,14 +884,14 @@ final class StatementGenerator extends
                 PutValue(lhs, ValType.Reference, mv);
             }
         } else {
-            /* step 3j, 3k */
+            /* step 5.i, 5.j */
             if (lhs instanceof Expression) {
-                /* step 3j.i */
+                /* step 5.i.i */
                 assert lhs instanceof AssignmentPattern;
                 // stack: [nextValue] -> []
                 DestructuringAssignment((AssignmentPattern) lhs, mv);
             } else if (lhs instanceof VariableStatement) {
-                /* step 3j.ii */
+                /* step 5.i.ii */
                 assert ((VariableStatement) lhs).getElements().size() == 1;
                 VariableDeclaration varDecl = ((VariableStatement) lhs).getElements().get(0);
                 Binding binding = varDecl.getBinding();
@@ -897,7 +899,7 @@ final class StatementGenerator extends
                 // stack: [nextValue] -> []
                 BindingInitialization(binding, mv);
             } else {
-                /* step 3j.iii */
+                /* step 5.i.iii */
                 assert lhs instanceof LexicalDeclaration;
                 LexicalDeclaration lexDecl = (LexicalDeclaration) lhs;
                 assert lexDecl.getElements().size() == 1;
@@ -912,13 +914,12 @@ final class StatementGenerator extends
             }
         }
 
-        /* steps 3l-3m */
+        /* steps 5.k-l */
         Completion result = node.getStatement().accept(this, mv);
 
-        /* step 3n */
+        /* step 5.m */
         if (lhs instanceof LexicalDeclaration) {
-            // restore previous lexical environment
-            if (!result.isAbrupt()) {
+            if (node.getScope().isPresent() && !result.isAbrupt()) {
                 popLexicalEnvironment(mv);
             }
         }
@@ -987,11 +988,13 @@ final class StatementGenerator extends
             boolean isConst = IsConstantDeclaration(lexDecl);
             perIterationsLets = !isConst && !boundNames.isEmpty();
 
-            newDeclarativeEnvironment(mv);
-            {
+            if (node.getScope().isPresent()) {
+                // stack: [] -> [loopEnv]
+                newDeclarativeEnvironment(mv);
                 // stack: [loopEnv] -> [loopEnv, envRec]
                 getEnvRec(mv);
 
+                // stack: [loopEnv, envRec] -> [loopEnv]
                 for (Name dn : boundNames) {
                     if (isConst) {
                         // FIXME: spec bug (CreateImmutableBinding concrete method of `loopEnv`)
@@ -1002,8 +1005,9 @@ final class StatementGenerator extends
                     }
                 }
                 mv.pop();
+                // stack: [loopEnv] -> []
+                pushLexicalEnvironment(mv);
             }
-            pushLexicalEnvironment(mv);
             mv.enterScope(node);
 
             lexDecl.accept(this, mv);
@@ -1013,7 +1017,7 @@ final class StatementGenerator extends
 
         if (head instanceof LexicalDeclaration) {
             mv.exitScope();
-            if (!result.isAbrupt()) {
+            if (node.getScope().isPresent() && !result.isAbrupt()) {
                 popLexicalEnvironment(mv);
             }
         }
@@ -1027,6 +1031,8 @@ final class StatementGenerator extends
     private Completion ForBodyEvaluation(ForStatement node, boolean perIterationsLets,
             StatementVisitor mv) {
         mv.enterVariableScope();
+        /* step 1 (not applicable) */
+        /* steps 2-3 */
         Variable<LexicalEnvironment<?>> savedEnv;
         if (perIterationsLets) {
             savedEnv = mv.newVariable("savedEnv", LexicalEnvironment.class).uncheckedCast();
@@ -1039,6 +1045,7 @@ final class StatementGenerator extends
         ContinueLabel lblContinue = new ContinueLabel();
         BreakLabel lblBreak = new BreakLabel();
 
+        /* steps 4.b-d */
         Completion result;
         mv.nonDestructiveGoTo(lblTest);
         mv.mark(lblStmt);
@@ -1048,20 +1055,24 @@ final class StatementGenerator extends
             mv.exitIteration(node);
         }
 
+        /* step 4.c (abrupt completion - continue) */
         if (lblContinue.isTarget()) {
             mv.mark(lblContinue);
             restoreEnvironment(node, Abrupt.Continue, savedEnv, mv);
         }
 
+        /* steps 4.e-f */
         if (perIterationsLets && (!result.isAbrupt() || lblContinue.isTarget())) {
             CreatePerIterationEnvironment(savedEnv, mv);
         }
 
+        /* step 4.g */
         if (node.getStep() != null && (!result.isAbrupt() || lblContinue.isTarget())) {
             ValType type = expressionValue(node.getStep().emptyCompletion(), mv);
             mv.pop(type);
         }
 
+        /* step 4.a */
         mv.mark(lblTest);
         if (node.getTest() != null) {
             ValType type = expressionValue(node.getTest(), mv);
@@ -1071,6 +1082,7 @@ final class StatementGenerator extends
             mv.goTo(lblStmt);
         }
 
+        /* step 4.c (abrupt completion - break) */
         if (lblBreak.isTarget()) {
             mv.mark(lblBreak);
             restoreEnvironment(node, Abrupt.Break, savedEnv, mv);
@@ -1097,7 +1109,7 @@ final class StatementGenerator extends
      */
     private void CreatePerIterationEnvironment(Variable<LexicalEnvironment<?>> savedEnv,
             StatementVisitor mv) {
-        /* steps 1.a-1.e */
+        /* steps 1.a-e */
         cloneDeclarativeEnvironment(mv);
         mv.store(savedEnv);
         /* step 1.f */
@@ -1113,7 +1125,7 @@ final class StatementGenerator extends
 
         /* B.3.3 Block-Level Function Declarations Web Legacy Compatibility Semantics */
         if (node.isLegacyBlockScoped()) {
-            mv.aconst(node.getIdentifier().getName().toString());
+            mv.aconst(node.getIdentifier().getName().getIdentifier());
             mv.loadExecutionContext();
             mv.lineInfo(node);
             mv.invoke(Methods.ScriptRuntime_setFunctionBlockBinding);
@@ -1238,9 +1250,9 @@ final class StatementGenerator extends
      */
     @Override
     public Completion visit(LetStatement node, StatementVisitor mv) {
-        // stack: [] -> [env]
-        newDeclarativeEnvironment(mv);
-        {
+        if (node.getScope().isPresent()) {
+            // stack: [] -> [env]
+            newDeclarativeEnvironment(mv);
             // stack: [env] -> [env, envRec]
             getEnvRec(mv);
 
@@ -1266,16 +1278,15 @@ final class StatementGenerator extends
                 BindingInitializationWithEnvironment(binding.getBinding(), mv);
             }
             mv.pop();
+            // stack: [env] -> []
+            pushLexicalEnvironment(mv);
         }
-        // stack: [env] -> []
-        pushLexicalEnvironment(mv);
 
         mv.enterScope(node);
         Completion result = node.getStatement().accept(this, mv);
         mv.exitScope();
 
-        // restore previous lexical environment
-        if (!result.isAbrupt()) {
+        if (node.getScope().isPresent() && !result.isAbrupt()) {
             popLexicalEnvironment(mv);
         }
 
@@ -1366,7 +1377,7 @@ final class StatementGenerator extends
 
         mv.invoke(codegen.methodDesc(node));
 
-        if (mv.getCodeType() == StatementVisitor.CodeType.Function) {
+        if (mv.isFunction()) {
             // TODO: only emit when `return` used in StatementListMethod
             Jump noReturn = new Jump();
             mv.dup();
@@ -1756,7 +1767,6 @@ final class StatementGenerator extends
         Completion result = catchBlock.accept(this, mv);
 
         /* step 8 */
-        // restore previous lexical environment
         mv.exitScope();
         if (!result.isAbrupt()) {
             popLexicalEnvironment(mv);
@@ -1812,8 +1822,6 @@ final class StatementGenerator extends
         mv.ifeq(l0);
         {
             result = catchBlock.accept(this, mv);
-
-            // restore previous lexical environment and go to end of catch block
             if (!result.isAbrupt()) {
                 popLexicalEnvironment(mv);
                 mv.goTo(mv.catchWithGuardedLabel());
@@ -1822,7 +1830,6 @@ final class StatementGenerator extends
         mv.mark(l0);
 
         /* step 8 */
-        // restore previous lexical environment
         mv.exitScope();
         popLexicalEnvironment(mv);
 
@@ -1898,7 +1905,7 @@ final class StatementGenerator extends
         mv.nonDestructiveGoTo(lblTest);
         mv.mark(lblNext);
 
-        /* steps 2e-2g */
+        /* steps 2.e-g */
         Completion result;
         {
             mv.enterIteration(node, lblBreak, lblContinue);
@@ -1906,26 +1913,26 @@ final class StatementGenerator extends
             mv.exitIteration(node);
         }
 
-        /* step 2f (abrupt completion - continue) */
+        /* step 2.f (abrupt completion - continue) */
         if (lblContinue.isTarget()) {
             mv.mark(lblContinue);
             restoreEnvironment(node, Abrupt.Continue, savedEnv, mv);
         }
 
-        /* steps 2a-2d */
+        /* steps 2.a-d */
         mv.mark(lblTest);
         ValType type = expressionValue(node.getTest(), mv);
         ToBoolean(type, mv);
         mv.ifne(lblNext);
 
-        /* step 2f (abrupt completion - break) */
+        /* step 2.f (abrupt completion - break) */
         if (lblBreak.isTarget()) {
             mv.mark(lblBreak);
             restoreEnvironment(node, Abrupt.Break, savedEnv, mv);
         }
         mv.exitVariableScope();
 
-        /* steps 2c, 2d, 2f */
+        /* steps 2.c, 2.d, 2.f */
         return result.normal(lblContinue.isTarget() || lblBreak.isTarget()).select(
                 Completion.Normal);
     }
@@ -1951,7 +1958,6 @@ final class StatementGenerator extends
         mv.exitScope();
 
         /* step 9 */
-        // restore previous lexical environment
         if (!result.isAbrupt()) {
             popLexicalEnvironment(mv);
         }

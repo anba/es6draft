@@ -15,15 +15,6 @@ harmony/typedarrays.js
 # V8 does not implement %TypedArray% prototype object
 es6/typed-array-iterator.js
 
-# invalid test `function f(x){function x(){}}` is valid syntax
-harmony/block-conflicts.js
-harmony/regress/regress-2243.js
-
-# invalid test, assignment on const not early errors
-harmony/block-const-assign.js
-harmony/block-early-errors.js
-harmony/block-let-declaration.js
-
 # V8 generators: missing type checks in v8-implementation
 es6/generators-iteration.js
 
@@ -69,17 +60,9 @@ harmony/super.js
 # v8 does not add inferred name to classes
 harmony/classes.js
 
-# Rename String.prototype.contains -> String.prototype.includes (rev 29?)
-harmony/string-includes.js
-
 # let, etc. restricted to strict-mode in v8
-harmony/block-non-strict-errors.js
-
-# @@species not supported in v8
-harmony/array-from.js
-
-# RegExp.prototype.flags is non-configurable in v8
-harmony/regexp-flags.js
+es6/block-early-errors.js
+es6/block-non-strict-errors.js
 
 # ES6: evaluation order changed in for-in/of
 compiler/complex-for-in.js
@@ -91,20 +74,17 @@ compiler/regress-447567.js
 # v8 issue - .prototype on classes not set to non-configurable
 harmony/computed-property-names-classes.js
 
-# ES6: duplicate __proto__ not allowed in non-strict mode
-object-literal-multiple-proto-fields.js
-
 # invalid test, RegExp.prototype.source can only be applied on RegExp objects
 regress/regress-447561.js
-
-# super(expr) evaluates expr before checking this-initialization state
-harmony/classes-experimental.js
 
 # SetFunctionName not implemented in v8
 es6/function-name-configurable.js
 
 # Object environment records HasBinding/GetBindingValue not spec compliant in v8
 harmony/regress/regress-crbug-461520.js
+
+# v8 bug - \8 and \9 is not allowed in template literals
+es6/templates.js
 
 
 ###################
@@ -157,13 +137,13 @@ object-freeze.js
 object-get-own-property-names.js
 object-prevent-extensions.js
 object-seal.js
+es6/block-conflicts.js
 regress/regress-1591.js
 regress/regress-1980.js
 regress/regress-3159.js
 regress/regress-crbug-109362.js
 
 # forward-slash not escaped in RegExp
-compiler/literals.js
 regress/regress-3229.js
 
 # \n\r are two separate line terminators
@@ -214,9 +194,6 @@ stack-traces-overflow.js
 # v8 restriction test
 regexp-not-sticky-yet.js
 
-# flag "--noharmony-strings" not implemented
-harmony/disable-harmony-string.js
-
 
 ############################################
 # Unsupported built-in object functions    #
@@ -229,7 +206,6 @@ regress/regress-conditional-position.js
 regress/regress-function-constructor-receiver.js
 stack-traces.js
 stack-traces-2.js
-stack-traces-custom-lazy.js
 eval-stack-trace.js
 
 # V8 Realm API
@@ -264,9 +240,6 @@ harmony/module-resolution.js
 # ES6 (rev14) <Object>.prototype no longer instance of <Type> #
 ###############################################################
 
-# Array.prototype no longer instanceof Array
-length.js
-
 # String.prototype no longer instanceof String
 regress/regress-1062422.js
 
@@ -294,9 +267,6 @@ harmony/set-prototype-of.js
 regress/regress-function-length-strict.js
 regress/regress-1419.js
 regress/regress-1530.js
-
-# Function.name is configurable
-regress/regress-270142.js
 
 # ToLength() moved array length restriction to 2^53-1
 array-indexing.js
@@ -344,11 +314,11 @@ regress/regress-91120.js
 
 # different scope for const
 declare-locally.js
+es6/regress/regress-2506.js
 regress/regress-1170.js
 regress/regress-1178598.js
 regress/regress-1182832.js
 regress/regress-186.js
-regress/regress-2506.js
 regress/regress-3138.js
 regress/regress-641.js
 regress/regress-88591.js
@@ -381,9 +351,6 @@ regress/regress-1119.js
 # MethodDefinition syntax not supported
 regress/regress-parse-object-literal.js
 
-# HexEscapeSequence not available in v8?
-harmony/templates.js
-
 
 #######################################
 # Compilation or runtime issues       #
@@ -400,6 +367,8 @@ regress/regress-353551.js
 regress/regress-1132.js
 regress/regress-148378.js
 regress/regress-458987.js
+harmony/regress/regress-crbug-465671.js
+harmony/regress/regress-crbug-465671-null.js
 
 # StackOverflowError in Joni (intermittent)
 regress/regress-crbug-178790.js
@@ -411,6 +380,9 @@ compiler/regress-445907.js
 json-parser-recursive.js
 unicodelctest.js
 unicodelctest-no-optimization.js
+
+# TODO: slow - investigate
+es6/block-const-assign.js
 
 # Timeout
 ascii-regexp-subject.js

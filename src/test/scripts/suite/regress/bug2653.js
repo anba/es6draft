@@ -17,7 +17,7 @@ Function(`let [a] = []`);
 Function(`[a] = []`);
 Function(`var {a} = []`);
 Function(`let {a} = []`);
-Function(`({a}) = []`);
+Function(`({a} = [])`);
 
 // Trailing comma after non-rest element
 Function(`var [a,] = []`);
@@ -25,7 +25,7 @@ Function(`let [a,] = []`);
 Function(`[a,] = []`);
 Function(`var {a,} = []`);
 Function(`let {a,} = []`);
-Function(`({a,}) = []`);
+Function(`({a,} = [])`);
 
 // No trailing comma after rest element
 Function(`var [...a] = []`);

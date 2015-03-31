@@ -407,6 +407,8 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
     }
 
     /**
+     * Creates a new object environment.
+     * <p>
      * stack: [obj] {@literal ->} [lexEnv]
      * 
      * @param mv
@@ -422,6 +424,8 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
     }
 
     /**
+     * Creates a new declarative environment.
+     * <p>
      * stack: [] {@literal ->} [lexEnv]
      * 
      * @param mv
@@ -434,6 +438,8 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
     }
 
     /**
+     * Creates a new declarative environment for a {@code Catch} clause.
+     * <p>
      * stack: [] {@literal ->} [lexEnv]
      * 
      * @param mv
@@ -470,6 +476,8 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
     }
 
     /**
+     * Restores the previous lexical environment.
+     * <p>
      * stack: [] {@literal ->} []
      * 
      * @param mv
@@ -1272,6 +1280,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
 
         // step 1 (not applicable)
         // steps 2-4
+        assert (def.getScope() != null && def.getScope().isPresent()) == (className != null);
         if (className != null) {
             // stack: [] -> [classScope]
             newDeclarativeEnvironment(mv);
@@ -1353,7 +1362,6 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
         // step 22
         if (className != null) {
             mv.exitScope();
-            // restore previous lexical environment
             popLexicalEnvironment(mv);
         }
 

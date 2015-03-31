@@ -25,7 +25,7 @@ public @interface Concurrency {
     int threads() default -1;
 
     /**
-     * Maximum number of threads, defaults to {@code 16}.
+     * Maximum number of threads, defaults to {@code 12}.
      * 
      * @return maximum number of threads
      */

@@ -37,6 +37,7 @@ import com.github.anba.es6draft.compiler.assembler.Jump;
 import com.github.anba.es6draft.compiler.assembler.MethodName;
 import com.github.anba.es6draft.compiler.assembler.Type;
 import com.github.anba.es6draft.compiler.assembler.Variable;
+import com.github.anba.es6draft.parser.Parser;
 import com.github.anba.es6draft.runtime.internal.Bootstrap;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.NativeCalls;
@@ -347,7 +348,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
     }
 
     private void invokeDynamicOperator(BinaryExpression.Operator operator, ExpressionVisitor mv) {
-        // stack: [lval, rval, cx] -> [result]
+        // stack: [lval, rval, cx?] -> [result]
         mv.invokedynamic(Bootstrap.getName(operator), Bootstrap.getMethodDescriptor(operator),
                 Bootstrap.getBootstrap(operator));
     }
@@ -443,78 +444,49 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
         return ValType.Object;
     }
 
-    private static boolean isEnclosedByWithStatement(Name name, Scope currentScope) {
-        for (Scope scope = currentScope;;) {
+    private boolean isEnclosedByWithStatement(Name name, Scope currentScope) {
+        for (Scope scope : currentScope) {
             if (scope instanceof WithScope) {
                 return true;
             }
             if (scope.isDeclared(name)) {
                 return false;
             }
-            Scope nextScope = scope.getParent();
-            if (nextScope == null) {
-                assert scope instanceof TopLevelScope;
-                nextScope = ((TopLevelScope) scope).getEnclosingScope();
-            }
-            if (nextScope == null) {
-                ScopedNode node = scope.getNode();
-                if (node instanceof Script) {
-                    return ((Script) node).isEnclosedByWithStatement();
-                }
-                return false;
-            }
-            scope = nextScope;
         }
+        return codegen.isEnabled(Parser.Option.EnclosedByWithStatement);
     }
 
-    private static boolean isEnclosedByWithStatement(Scope currentScope) {
-        for (Scope scope = currentScope;;) {
+    private boolean isEnclosedByWithStatement(Scope currentScope) {
+        for (Scope scope : currentScope) {
             if (scope instanceof WithScope) {
                 return true;
             }
-            Scope nextScope = scope.getParent();
-            if (nextScope == null) {
-                assert scope instanceof TopLevelScope;
-                nextScope = ((TopLevelScope) scope).getEnclosingScope();
-            }
-            if (nextScope == null) {
-                ScopedNode node = scope.getNode();
-                if (node instanceof Script) {
-                    return ((Script) node).isEnclosedByWithStatement();
-                }
-                return false;
-            }
-            scope = nextScope;
         }
+        return codegen.isEnabled(Parser.Option.EnclosedByWithStatement);
     }
 
-    private static boolean isEnclosedByLexicalDeclaration(Scope currentScope, boolean catchVar) {
-        for (Scope scope = currentScope;;) {
-            BLOCK: if (scope instanceof BlockScope) {
+    private boolean isEnclosedByLexicalDeclaration(Scope currentScope) {
+        final boolean catchVar = codegen.isEnabled(CompatibilityOption.CatchVarStatement);
+        TopLevelScope top = currentScope.getTop();
+        for (Scope scope : currentScope) {
+            if (scope instanceof BlockScope) {
                 if (catchVar) {
                     ScopedNode node = scope.getNode();
                     if (node instanceof CatchNode || node instanceof GuardedCatchNode) {
-                        break BLOCK;
+                        continue;
                     }
                 }
                 if (!((BlockScope) scope).lexicallyDeclaredNames().isEmpty()) {
                     return true;
                 }
+            } else if (scope == top) {
+                break;
             }
-            Scope nextScope = scope.getParent();
-            if (nextScope == null) {
-                assert scope instanceof TopLevelScope;
-                if (!((TopLevelScope) scope).lexicallyDeclaredNames().isEmpty()) {
-                    return true;
-                }
-                ScopedNode node = scope.getNode();
-                if (node instanceof Script) {
-                    return ((Script) node).isEnclosedByLexicalDeclaration();
-                }
-                return false;
-            }
-            scope = nextScope;
         }
+        if (!top.lexicallyDeclaredNames().isEmpty()) {
+            return true;
+        }
+        return codegen.isEnabled(Parser.Option.EnclosedByLexicalDeclaration);
     }
 
     private static boolean isGlobalScope(Scope currentScope) {
@@ -527,48 +499,43 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
 
     private static boolean isGlobalThis(Scope currentScope) {
         for (Scope scope = currentScope;;) {
-            Scope nextScope = scope.getParent();
-            if (nextScope == null) {
-                assert scope instanceof TopLevelScope;
-                ScopedNode node = scope.getNode();
-                if (node instanceof Script) {
-                    return ((Script) node).isGlobalThis();
-                }
-                if (node instanceof Module) {
-                    return true;
-                }
-                assert node instanceof FunctionNode : "class=" + node.getClass();
-                if (((FunctionNode) node).getThisMode() != FunctionNode.ThisMode.Lexical) {
-                    return false;
-                }
-                nextScope = ((TopLevelScope) scope).getEnclosingScope();
+            TopLevelScope top = scope.getTop();
+            TopLevelNode<?> node = top.getNode();
+            if (node instanceof Script) {
+                return ((Script) node).isGlobalThis();
             }
-            scope = nextScope;
+            if (node instanceof Module) {
+                return true;
+            }
+            assert node instanceof FunctionNode : "class=" + node.getClass();
+            if (((FunctionNode) node).getThisMode() != FunctionNode.ThisMode.Lexical) {
+                return false;
+            }
+            scope = top.getEnclosingScope();
         }
     }
 
     private enum CallType {
-        Property, SuperProperty, Identifier, IdentifierWith, Eval, EvalWith, Value;
+        Property, SuperProperty, Identifier, IdentifierWith, Eval, EvalWith, Value
+    }
 
-        static CallType of(Expression call, Expression base, Scope scope) {
-            if (base instanceof ElementAccessor || base instanceof PropertyAccessor) {
-                return Property;
-            }
-            if (base instanceof SuperElementAccessor || base instanceof SuperPropertyAccessor) {
-                return SuperProperty;
-            }
-            if (base instanceof IdentifierReference) {
-                IdentifierReference ident = (IdentifierReference) base;
-                boolean directEval = call instanceof CallExpression
-                        && "eval".equals(ident.getName());
-                Name name = ident.toName();
-                if (isEnclosedByWithStatement(name, scope)) {
-                    return directEval ? EvalWith : IdentifierWith;
-                }
-                return directEval ? Eval : Identifier;
-            }
-            return Value;
+    private CallType callTypeOf(Expression call, Expression base, Scope scope) {
+        if (base instanceof ElementAccessor || base instanceof PropertyAccessor) {
+            return CallType.Property;
         }
+        if (base instanceof SuperElementAccessor || base instanceof SuperPropertyAccessor) {
+            return CallType.SuperProperty;
+        }
+        if (base instanceof IdentifierReference) {
+            IdentifierReference ident = (IdentifierReference) base;
+            boolean directEval = call instanceof CallExpression && "eval".equals(ident.getName());
+            Name name = ident.toName();
+            if (isEnclosedByWithStatement(name, scope)) {
+                return directEval ? CallType.EvalWith : CallType.IdentifierWith;
+            }
+            return directEval ? CallType.Eval : CallType.Identifier;
+        }
+        return CallType.Value;
     }
 
     /**
@@ -585,7 +552,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
      */
     private ValType EvaluateCall(Expression call, Expression base, List<Expression> arguments,
             ExpressionVisitor mv) {
-        switch (CallType.of(call, base, mv.getScope())) {
+        switch (callTypeOf(call, base, mv.getScope())) {
         case Property:
             return EvaluateCallProperty(call, (LeftHandSideExpression) base, arguments, mv);
         case SuperProperty:
@@ -868,8 +835,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
             if (hasThisValue) {
                 // stack: [thisValue, func(Callable)] -> [...]
                 mv.loadExecutionContext();
-                mv.dup2X1();
-                mv.pop2();
+                mv.swap1_2();
                 ArgumentListEvaluation(call, arguments, mv);
             } else {
                 // stack: [func(Callable)] -> [...]
@@ -881,15 +847,13 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
             if (hasThisValue) {
                 // stack: [thisValue, args, func(Callable)] -> [...]
                 mv.loadExecutionContext();
-                mv.dup2X2();
-                mv.pop2();
+                mv.swap2();
             } else {
                 // stack: [args, func(Callable)] -> [...]
                 mv.swap();
                 mv.loadExecutionContext();
                 mv.loadUndefined();
-                mv.dup2X1();
-                mv.pop2();
+                mv.swap1_2();
             }
         }
 
@@ -965,8 +929,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
         if (isEnclosedByWithStatement(mv.getScope())) {
             evalFlags |= EvalFlags.EnclosedByWithStatement.getValue();
         }
-        if (isEnclosedByLexicalDeclaration(mv.getScope(),
-                codegen.isEnabled(CompatibilityOption.CatchVarStatement))) {
+        if (isEnclosedByLexicalDeclaration(mv.getScope())) {
             evalFlags |= EvalFlags.EnclosedByLexicalDeclaration.getValue();
         }
 
@@ -2658,10 +2621,9 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
      */
     @Override
     public ValType visit(LetExpression node, ExpressionVisitor mv) {
-        // create new declarative lexical environment
-        // stack: [] -> [env]
-        newDeclarativeEnvironment(mv);
-        {
+        if (node.getScope().isPresent()) {
+            // stack: [] -> [env]
+            newDeclarativeEnvironment(mv);
             // stack: [env] -> [env, envRec]
             mv.dup();
             mv.invoke(Methods.LexicalEnvironment_getEnvRec);
@@ -2688,16 +2650,17 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
                 BindingInitializationWithEnvironment(binding.getBinding(), mv);
             }
             mv.pop();
+            // stack: [env] -> []
+            pushLexicalEnvironment(mv);
         }
-        // stack: [env] -> []
-        pushLexicalEnvironment(mv);
 
         mv.enterScope(node);
         ValType type = evalAndGetValue(node.getExpression(), mv);
         mv.exitScope();
 
-        // restore previous lexical environment
-        popLexicalEnvironment(mv);
+        if (node.getScope().isPresent()) {
+            popLexicalEnvironment(mv);
+        }
 
         return type;
     }

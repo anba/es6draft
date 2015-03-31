@@ -151,12 +151,13 @@ public final class Parser {
         boolean isDerivedClassConstructor = false;
 
         StrictMode strictMode = StrictMode.Unknown;
-        ParserException strictError = null;
-        InlineArrayList<FunctionNode> deferred = null;
-        ArrayDeque<ObjectLiteral> objectLiterals = null;
+        ParserException strictError;
+        InlineArrayList<FunctionNode> deferred;
+        ArrayDeque<ObjectLiteral> objectLiterals;
+        ScopeWithNames illegalLexNames = new ScopeWithNames(null, null);
 
-        HashMap<String, LabelContext> labelSet = null;
-        LabelContext labels = null;
+        HashMap<String, LabelContext> labelSet;
+        LabelContext labels;
 
         ScopeContext scopeContext;
         final TopContext topContext;
@@ -217,6 +218,7 @@ public final class Parser {
             if (funContext != null) {
                 funContext.directEval = true;
             }
+            scopeContext.forceNamedSlots();
         }
 
         void setNeedsSuperBinding() {
@@ -246,6 +248,30 @@ public final class Parser {
                     "%d unchecked object literals, but expected %d", count, expected);
             return count == expected;
         }
+
+        ScopeWithNames setIllegalNames(NameSet names) {
+            ScopeWithNames previous = illegalLexNames;
+            illegalLexNames = new ScopeWithNames(scopeContext, names);
+            return previous;
+        }
+
+        void restoreIllegalNames(ScopeWithNames illegalLexNames) {
+            this.illegalLexNames = illegalLexNames;
+        }
+
+        boolean isIllegalName(Name name) {
+            return illegalLexNames.scope == scopeContext && illegalLexNames.names.contains(name);
+        }
+    }
+
+    private static final class ScopeWithNames {
+        final ScopeContext scope;
+        final NameSet names;
+
+        ScopeWithNames(ScopeContext scope, NameSet names) {
+            this.scope = scope;
+            this.names = names;
+        }
     }
 
     private static final class NameSet extends AbstractSet<Name> implements Set<Name> {
@@ -255,9 +281,17 @@ public final class Parser {
             map = new HashMap<>();
         }
 
+        public NameSet(NameSet set) {
+            map = new HashMap<>(set.map);
+        }
+
         public NameSet(Collection<Name> c) {
             map = new HashMap<>(Math.max((int) (c.size() / 0.75f) + 1, 16));
             addAll(c);
+        }
+
+        public void addAll(NameSet set) {
+            map.putAll(set.map);
         }
 
         @Override
@@ -301,14 +335,18 @@ public final class Parser {
     }
 
     private static final class FunctionContext extends TopContext implements FunctionScope {
-        FunctionNode node = null;
-        NameSet parameterNames = null;
-        InlineArrayList<FunctionDeclaration> blockFunctions = null;
-        boolean needsArguments = false;
-        boolean directEval = false;
-        boolean directEvalInFormals = false;
-        boolean superReference = false;
+        FunctionNode node;
+        ScopeContext variableScope = this;
+        ScopeContext lexicalScope = this;
         final Name arguments;
+        NameSet parameterNames;
+        InlineArrayList<FunctionDeclaration> blockFunctions;
+        NameSet blockFunctionNames;
+        // TODO: Move to FunctionNode?
+        boolean needsArguments;
+        boolean directEval;
+        boolean directEvalInFormals;
+        boolean superReference;
 
         FunctionContext(ScopeContext enclosing, boolean hasArguments) {
             super(enclosing);
@@ -322,14 +360,86 @@ public final class Parser {
             blockFunctions.add(function);
         }
 
+        void setBlockFunctions(InlineArrayList<FunctionDeclaration> blockFunctions) {
+            this.blockFunctions = blockFunctions;
+            this.blockFunctionNames = new NameSet();
+            for (FunctionDeclaration f : blockFunctions) {
+                // Need to use clone() because the block function uses a different binding.
+                blockFunctionNames.add(f.getIdentifier().getName().clone());
+            }
+        }
+
         void setParameterNames(List<Name> names) {
             this.directEvalInFormals = directEval;
             this.parameterNames = new NameSet(names);
         }
 
+        void needsArguments(boolean lookupByName) {
+            this.needsArguments = true;
+            if (arguments != null) {
+                resolveNameInternal(arguments, lookupByName);
+            }
+        }
+
+        void setNode(FunctionNode node) {
+            this.node = node;
+            ScopeContext varScope = variableScope, lexScope = lexicalScope;
+            assert (varScope != this) == node.getParameters().containsExpression();
+            if (lexScope != this) {
+                // Copy all lexically declared names into the function scope.
+                assert lexDeclaredNames == null && lexScopedDeclarations == null;
+                if (lexScope.lexDeclaredNames != null) {
+                    lexDeclaredNames = new NameSet(lexScope.lexDeclaredNames);
+                }
+                lexScopedDeclarations = lexScope.lexScopedDeclarations;
+                lexScope.lexScopedDeclarations = null;
+                ((FunctionBodyContext) lexScope).node = node;
+            }
+            if (varScope != this) {
+                // Copy all variable declared names into varScope.
+                assert lexScope != this;
+                if (varDeclaredNames != null) {
+                    if (varScope.lexDeclaredNames == null) {
+                        varScope.lexDeclaredNames = new NameSet(varDeclaredNames);
+                    } else {
+                        assert varScope == lexScope;
+                        varScope.lexDeclaredNames.addAll(varDeclaredNames);
+                    }
+                }
+                ((FunctionBodyContext) varScope).node = node;
+            }
+            assert varScope == this || varScope.lexScopedDeclarations == null;
+            assert lexScope == this || lexScope.lexScopedDeclarations == null;
+        }
+
+        Name blockFunctionName(Name name) {
+            if (blockFunctionNames != null) {
+                return blockFunctionNames.get(name);
+            }
+            return null;
+        }
+
+        @Override
+        public String toString() {
+            StringBuilder sb = new StringBuilder();
+            sb.append(super.toString());
+            sb.append("\tparams: ").append(parameterNames != null ? parameterNames : "<null>");
+            return sb.toString();
+        }
+
         @Override
         public FunctionNode getNode() {
             return node;
+        }
+
+        @Override
+        public Scope variableScope() {
+            return variableScope;
+        }
+
+        @Override
+        public Scope lexicalScope() {
+            return lexicalScope;
         }
 
         @Override
@@ -363,25 +473,33 @@ public final class Parser {
         }
 
         @Override
-        public boolean isDeclared(Name name) {
-            if (arguments != null && arguments.equals(name)) {
-                return true;
-            }
-            if (parameterNames.contains(name)) {
-                return true;
-            }
-            return super.isDeclared(name);
-        }
-
-        @Override
-        public Name getDeclaredName(Name name) {
+        protected Name getDeclaredName(Name name) {
             if (arguments != null && arguments.equals(name)) {
                 return arguments;
             }
-            if (parameterNames.contains(name)) {
-                return parameterNames.get(name);
+            Name parameter = parameterNames.get(name);
+            if (parameter != null) {
+                return parameter;
             }
-            return super.getDeclaredName(name);
+            if (variableScope == this && varDeclaredNames != null) {
+                Name varName = varDeclaredNames.get(name);
+                if (varName != null) {
+                    return varName;
+                }
+            }
+            if (variableScope == this) {
+                Name varName = blockFunctionName(name);
+                if (varName != null) {
+                    return varName;
+                }
+            }
+            if (lexicalScope == this && lexDeclaredNames != null) {
+                Name lexName = lexDeclaredNames.get(name);
+                if (lexName != null) {
+                    return lexName;
+                }
+            }
+            return null;
         }
 
         @Override
@@ -390,16 +508,84 @@ public final class Parser {
         }
     }
 
+    private static final class FunctionBodyContext extends ScopeContext {
+        FunctionNode node;
+
+        FunctionBodyContext(ScopeContext parent) {
+            super(parent);
+        }
+
+        private FunctionContext functionContext() {
+            return (FunctionContext) node.getScope();
+        }
+
+        private boolean isVarScope() {
+            return functionContext().variableScope == this;
+        }
+
+        @Override
+        public FunctionNode getNode() {
+            return node;
+        }
+
+        @Override
+        public boolean isDynamic() {
+            return isVarScope() && functionContext().isDynamic();
+        }
+
+        @Override
+        public boolean isPresent() {
+            return super.isPresent() || isVarScope();
+        }
+
+        @Override
+        protected Name getDeclaredName(Name name) {
+            Name declaredName = super.getDeclaredName(name);
+            if (declaredName == null && isVarScope()) {
+                return functionContext().blockFunctionName(name);
+            }
+            return declaredName;
+        }
+    }
+
     private static final class ScriptContext extends TopContext implements ScriptScope {
-        Script node = null;
+        NameSet varFunctionAndForOfDeclaredNames;
+        Script node;
 
         ScriptContext(ScopeContext enclosing) {
             super(enclosing);
         }
 
+        private boolean isStaticVar() {
+            return node.isEvalScript() && node.isStrict() && !node.isScripting();
+        }
+
+        @Override
+        protected Name getDeclaredName(Name name) {
+            if (isStaticVar() && varDeclaredNames != null) {
+                Name varName = varDeclaredNames.get(name);
+                if (varName != null) {
+                    return varName;
+                }
+            }
+            return super.getDeclaredName(name);
+        }
+
         @Override
         public Script getNode() {
             return node;
+        }
+
+        @Override
+        public Set<Name> varFunctionAndForOfDeclaredNames() {
+            return emptyIfNull(varFunctionAndForOfDeclaredNames);
+        }
+
+        void addVarFunctionAndForOfDeclaredName(Name name) {
+            if (varFunctionAndForOfDeclaredNames == null) {
+                varFunctionAndForOfDeclaredNames = new NameSet();
+            }
+            varFunctionAndForOfDeclaredNames.add(name);
         }
     }
 
@@ -407,10 +593,21 @@ public final class Parser {
         HashSet<String> exportNames = new HashSet<>();
         HashSet<Name> importBindings = new HashSet<>();
         LinkedHashMap<Name, Long> undeclaredExportBindings = new LinkedHashMap<>();
-        Module node = null;
+        Module node;
 
         ModuleContext(ScopeContext enclosing) {
             super(enclosing);
+        }
+
+        @Override
+        protected Name getDeclaredName(Name name) {
+            if (varDeclaredNames != null) {
+                Name varName = varDeclaredNames.get(name);
+                if (varName != null) {
+                    return varName;
+                }
+            }
+            return super.getDeclaredName(name);
         }
 
         @Override
@@ -435,14 +632,14 @@ public final class Parser {
 
     private static abstract class TopContext extends ScopeContext implements TopLevelScope {
         final ScopeContext enclosing;
-        InlineArrayList<StatementListItem> varScopedDeclarations = null;
+        InlineArrayList<StatementListItem> varScopedDeclarations;
 
         TopContext(ScopeContext enclosing) {
-            super(null);
+            super();
             this.enclosing = enclosing;
         }
 
-        void addVarScopedDeclaration(StatementListItem decl) {
+        final void addVarScopedDeclaration(StatementListItem decl) {
             if (varScopedDeclarations == null) {
                 varScopedDeclarations = newList();
             }
@@ -450,55 +647,38 @@ public final class Parser {
         }
 
         @Override
-        public ScopeContext getEnclosingScope() {
+        public final ScopeContext getEnclosingScope() {
             return enclosing;
         }
 
         @Override
-        public Set<Name> lexicallyDeclaredNames() {
+        public final Set<Name> lexicallyDeclaredNames() {
             return emptyIfNull(lexDeclaredNames);
         }
 
         @Override
-        public List<Declaration> lexicallyScopedDeclarations() {
+        public final List<Declaration> lexicallyScopedDeclarations() {
             return emptyIfNull(lexScopedDeclarations);
         }
 
         @Override
-        public Set<Name> varDeclaredNames() {
+        public final Set<Name> varDeclaredNames() {
             return emptyIfNull(varDeclaredNames);
         }
 
         @Override
-        public List<StatementListItem> varScopedDeclarations() {
+        public final List<StatementListItem> varScopedDeclarations() {
             return emptyIfNull(varScopedDeclarations);
         }
 
         @Override
-        public boolean isDeclared(Name name) {
-            if (varDeclaredNames != null && varDeclaredNames.contains(name)) {
-                return true;
-            }
-            if (lexDeclaredNames != null && lexDeclaredNames.contains(name)) {
-                return true;
-            }
-            return false;
-        }
-
-        @Override
-        public Name getDeclaredName(Name name) {
-            if (varDeclaredNames != null && varDeclaredNames.contains(name)) {
-                return varDeclaredNames.get(name);
-            }
-            if (lexDeclaredNames != null && lexDeclaredNames.contains(name)) {
-                return lexDeclaredNames.get(name);
-            }
-            return null;
+        public final boolean isPresent() {
+            return true;
         }
     }
 
     private static final class BlockContext extends ScopeContext implements BlockScope {
-        ScopedNode node = null;
+        ScopedNode node;
 
         BlockContext(ScopeContext parent) {
             super(parent);
@@ -518,20 +698,10 @@ public final class Parser {
         public List<Declaration> lexicallyScopedDeclarations() {
             return emptyIfNull(lexScopedDeclarations);
         }
-
-        @Override
-        public boolean isDeclared(Name name) {
-            return lexDeclaredNames != null && lexDeclaredNames.contains(name);
-        }
-
-        @Override
-        public Name getDeclaredName(Name name) {
-            return lexDeclaredNames != null ? lexDeclaredNames.get(name) : null;
-        }
     }
 
     private static final class CatchContext extends ScopeContext implements BlockScope {
-        ScopedNode node = null;
+        ScopedNode node;
 
         CatchContext(ScopeContext parent) {
             super(parent);
@@ -543,6 +713,11 @@ public final class Parser {
         }
 
         @Override
+        public boolean isPresent() {
+            return true;
+        }
+
+        @Override
         public Set<Name> lexicallyDeclaredNames() {
             return emptyIfNull(lexDeclaredNames);
         }
@@ -551,20 +726,10 @@ public final class Parser {
         public List<Declaration> lexicallyScopedDeclarations() {
             return emptyIfNull(lexScopedDeclarations);
         }
-
-        @Override
-        public boolean isDeclared(Name name) {
-            return lexDeclaredNames != null && lexDeclaredNames.contains(name);
-        }
-
-        @Override
-        public Name getDeclaredName(Name name) {
-            return lexDeclaredNames != null ? lexDeclaredNames.get(name) : null;
-        }
     }
 
     private static final class WithContext extends ScopeContext implements WithScope {
-        WithStatement node = null;
+        WithStatement node;
 
         WithContext(ScopeContext parent) {
             super(parent);
@@ -576,47 +741,113 @@ public final class Parser {
         }
 
         @Override
-        public boolean isDeclared(Name name) {
-            return false;
+        public boolean isPresent() {
+            return true;
         }
 
         @Override
-        public Name getDeclaredName(Name name) {
-            return null;
+        public boolean isDynamic() {
+            return true;
         }
     }
 
     private static abstract class ScopeContext implements Scope {
         final ScopeContext parent;
+        final TopContext top;
+        private boolean forceNamedSlots;
 
-        NameSet varDeclaredNames = null;
-        NameSet lexDeclaredNames = null;
-        InlineArrayList<Declaration> lexScopedDeclarations = null;
-        NameSet forbiddenLexNames = null;
+        NameSet varDeclaredNames;
+        NameSet lexDeclaredNames;
+        InlineArrayList<Declaration> lexScopedDeclarations;
+
+        ScopeContext() {
+            this.parent = null;
+            this.top = (TopContext) this;
+        }
 
         ScopeContext(ScopeContext parent) {
             this.parent = parent;
+            this.top = parent.top;
+        }
+
+        protected final void resolveNameInternal(Name name, boolean lookupByName) {
+            name.resolve(this, lookupByName);
+        }
+
+        protected Name getDeclaredName(Name name) {
+            return lexDeclaredNames != null ? lexDeclaredNames.get(name) : null;
         }
 
         @Override
-        public Scope getParent() {
+        public final Scope getParent() {
             return parent;
+        }
+
+        @Override
+        public final TopLevelScope getTop() {
+            return top;
+        }
+
+        @Override
+        public final boolean isDeclared(Name name) {
+            return getDeclaredName(name) != null;
+        }
+
+        @Override
+        public final Name resolveName(Name name, boolean lookupByName) {
+            Name declaredName = getDeclaredName(name);
+            resolveNameInternal(declaredName, lookupByName);
+            return declaredName;
+        }
+
+        @Override
+        public boolean isPresent() {
+            return lexDeclaredNames != null;
+        }
+
+        @Override
+        public boolean isDynamic() {
+            return false;
+        }
+
+        @Override
+        public final Iterator<Scope> iterator() {
+            return new ScopeIterator(this);
         }
 
         @Override
         public String toString() {
             StringBuilder sb = new StringBuilder();
-            sb.append("var: ").append(varDeclaredNames != null ? varDeclaredNames : "<null>");
-            sb.append("\t");
-            sb.append("lex: ").append(lexDeclaredNames != null ? lexDeclaredNames : "<null>");
+            sb.append(getClass().getSimpleName()).append('@').append(depth());
+            sb.append("\tvar: ").append(varDeclaredNames != null ? varDeclaredNames : "<null>");
+            sb.append("\tlex: ").append(lexDeclaredNames != null ? lexDeclaredNames : "<null>");
             return sb.toString();
         }
 
-        boolean allowVarDeclaredName(Name name) {
+        private int depth() {
+            int depth = 0;
+            for (ScopeContext p = this.parent; p != null; p = p.parent) {
+                depth += 1;
+            }
+            return depth;
+        }
+
+        final void forceNamedSlots() {
+            for (ScopeContext scope = this; scope != null && !scope.forceNamedSlots;) {
+                scope.forceNamedSlots = true;
+                ScopeContext parent = scope.parent;
+                if (parent == null) {
+                    parent = ((TopContext) scope).enclosing;
+                }
+                scope = parent;
+            }
+        }
+
+        final boolean allowVarDeclaredName(Name name) {
             return lexDeclaredNames == null || !lexDeclaredNames.contains(name);
         }
 
-        void addVarDeclaredNames(NameSet names) {
+        final void addVarDeclaredNames(NameSet names) {
             if (varDeclaredNames == null) {
                 varDeclaredNames = names;
             } else {
@@ -624,7 +855,7 @@ public final class Parser {
             }
         }
 
-        boolean addVarDeclaredName(Name name) {
+        final boolean addVarDeclaredName(Name name) {
             if (varDeclaredNames == null) {
                 varDeclaredNames = new NameSet();
             }
@@ -632,16 +863,15 @@ public final class Parser {
             return lexDeclaredNames == null || !lexDeclaredNames.contains(name);
         }
 
-        boolean addLexDeclaredName(Name name) {
+        final boolean addLexDeclaredName(Name name) {
             if (lexDeclaredNames == null) {
                 lexDeclaredNames = new NameSet();
             }
             return lexDeclaredNames.add(name)
-                    && (varDeclaredNames == null || !varDeclaredNames.contains(name))
-                    && (forbiddenLexNames == null || !forbiddenLexNames.contains(name));
+                    && (varDeclaredNames == null || !varDeclaredNames.contains(name));
         }
 
-        void addLexScopedDeclaration(Declaration decl) {
+        final void addLexScopedDeclaration(Declaration decl) {
             if (lexScopedDeclarations == null) {
                 lexScopedDeclarations = newList();
             }
@@ -654,6 +884,38 @@ public final class Parser {
 
         protected static final <T> List<T> emptyIfNull(List<T> list) {
             return list != null ? list : Collections.<T> emptyList();
+        }
+    }
+
+    private static final class ScopeIterator implements Iterator<Scope> {
+        private ScopeContext scope;
+
+        ScopeIterator(ScopeContext scope) {
+            this.scope = scope;
+        }
+
+        @Override
+        public boolean hasNext() {
+            return scope != null;
+        }
+
+        @Override
+        public Scope next() {
+            ScopeContext s = scope;
+            if (s == null) {
+                throw new NoSuchElementException();
+            }
+            ScopeContext p = s.parent;
+            if (p == null) {
+                p = ((TopContext) s).enclosing;
+            }
+            scope = p;
+            return s;
+        }
+
+        @Override
+        public void remove() {
+            throw new UnsupportedOperationException();
         }
     }
 
@@ -789,9 +1051,7 @@ public final class Parser {
     }
 
     private WithContext enterWithContext() {
-        WithContext cx = new WithContext(context.scopeContext);
-        context.scopeContext = cx;
-        return cx;
+        return enterScopeContext(new WithContext(context.scopeContext));
     }
 
     private ScopeContext exitWithContext() {
@@ -799,9 +1059,7 @@ public final class Parser {
     }
 
     private BlockContext enterBlockContext() {
-        BlockContext cx = new BlockContext(context.scopeContext);
-        context.scopeContext = cx;
-        return cx;
+        return enterScopeContext(new BlockContext(context.scopeContext));
     }
 
     private BlockContext enterBlockContext(Binding binding) {
@@ -821,13 +1079,24 @@ public final class Parser {
     }
 
     private CatchContext enterCatchContext() {
-        CatchContext cx = new CatchContext(context.scopeContext);
-        context.scopeContext = cx;
-        return cx;
+        return enterScopeContext(new CatchContext(context.scopeContext));
     }
 
     private ScopeContext exitCatchContext() {
         return exitScopeContext();
+    }
+
+    private FunctionBodyContext enterFunctionBodyContext() {
+        return enterScopeContext(new FunctionBodyContext(context.scopeContext));
+    }
+
+    private ScopeContext exitFunctionBodyContext() {
+        return exitScopeContext();
+    }
+
+    private <SCOPE extends ScopeContext> SCOPE enterScopeContext(SCOPE scope) {
+        context.scopeContext = scope;
+        return scope;
     }
 
     private ScopeContext exitScopeContext() {
@@ -852,16 +1121,23 @@ public final class Parser {
     private void addDeclaration(HoistableDeclaration decl, boolean isNamedDefault) {
         ParseContext parentContext = context.parent;
         ScopeContext parentScope = parentContext.scopeContext;
-        TopContext topScope = parentContext.topContext;
-        if (parentScope == topScope && !parentContext.kind.isModule()) {
-            // top-level function declaration in scripts/functions context
-            addVarDeclaredName(decl, topScope, BoundName(decl));
-            topScope.addVarScopedDeclaration(decl);
+        if (parentContext.kind.isScript() && parentScope == parentContext.scriptContext) {
+            // top-level function declaration in script context
+            addVarDeclaredName(decl, parentContext, BoundName(decl));
+            parentContext.scriptContext.addVarScopedDeclaration(decl);
+            if (isEnabled(Option.EvalScript)) {
+                parentContext.scriptContext.addVarFunctionAndForOfDeclaredName(BoundName(decl));
+            }
+        } else if (parentContext.kind.isFunction()
+                && parentScope == parentContext.funContext.lexicalScope) {
+            // top-level function declaration in function context
+            addVarDeclaredName(decl, parentContext, BoundName(decl));
+            parentContext.funContext.addVarScopedDeclaration(decl);
         } else {
             // lexical-scoped function declaration in module/block context
-            addLexDeclaredName(decl, parentScope, BoundName(decl));
+            addLexDeclaredName(decl, parentContext, BoundName(decl));
             if (isNamedDefault) {
-                addLexDeclaredName(decl, parentScope, new Name(DEFAULT_EXPORT_BINDING_NAME));
+                addLexDeclaredName(decl, parentContext, new Name(DEFAULT_EXPORT_BINDING_NAME));
             }
             parentScope.addLexScopedDeclaration(decl);
         }
@@ -870,23 +1146,22 @@ public final class Parser {
     private boolean isBlockScopedFunction() {
         ParseContext parentContext = context.parent;
         return parentContext.kind.isFunction()
-                && (parentContext.topContext != parentContext.scopeContext)
+                && (parentContext.funContext.lexicalScope != parentContext.scopeContext)
                 && parentContext.strictMode != StrictMode.Strict
                 && isEnabled(CompatibilityOption.BlockFunctionDeclaration);
     }
 
     private void addDeclaration(ClassDeclaration decl, boolean isNamedDefault) {
-        addLexDeclaredName(decl, context.scopeContext, BoundName(decl));
+        addLexDeclaredName(decl, context, BoundName(decl));
         if (isNamedDefault) {
-            addLexDeclaredName(decl, context.scopeContext, new Name(DEFAULT_EXPORT_BINDING_NAME));
+            addLexDeclaredName(decl, context, new Name(DEFAULT_EXPORT_BINDING_NAME));
         }
         context.scopeContext.addLexScopedDeclaration(decl);
     }
 
     private void addDeclaration(ExportDefaultExpression defaultExpression) {
         assert context.scopeContext == context.modContext : "not in module scope";
-        addLexDeclaredName(defaultExpression, context.scopeContext,
-                BoundName(defaultExpression.getBinding()));
+        addLexDeclaredName(defaultExpression, context, BoundName(defaultExpression.getBinding()));
         context.scopeContext.addLexScopedDeclaration(defaultExpression);
     }
 
@@ -931,7 +1206,7 @@ public final class Parser {
     }
 
     private void addVarDeclaredName(Binding binding, Name name) {
-        addVarDeclaredName(binding, context.scopeContext, name);
+        addVarDeclaredName(binding, context, name);
         for (ScopeContext next = context.scopeContext.parent; next != null; next = next.parent) {
             if (!next.allowVarDeclaredName(name)) {
                 if (isEnabled(CompatibilityOption.CatchVarStatement)
@@ -943,8 +1218,8 @@ public final class Parser {
         }
     }
 
-    private void addVarDeclaredName(Node node, ScopeContext scope, Name name) {
-        if (!scope.addVarDeclaredName(name)) {
+    private void addVarDeclaredName(Node node, ParseContext context, Name name) {
+        if (!context.scopeContext.addVarDeclaredName(name)) {
             reportSyntaxError(node, Messages.Key.VariableRedeclaration, name);
         }
     }
@@ -976,6 +1251,9 @@ public final class Parser {
                 reportSyntaxError(binding, Messages.Key.VariableRedeclaration, name);
             }
         }
+        if (context.kind.isScript() && isEnabled(Option.EvalScript)) {
+            context.scriptContext.addVarFunctionAndForOfDeclaredName(name);
+        }
     }
 
     /**
@@ -1003,17 +1281,17 @@ public final class Parser {
 
     private void addLexDeclaredName(BindingIdentifier bindingIdentifier) {
         Name name = BoundName(bindingIdentifier);
-        addLexDeclaredName(bindingIdentifier, context.scopeContext, name);
+        addLexDeclaredName(bindingIdentifier, context, name);
     }
 
     private void addLexDeclaredName(BindingPattern bindingPattern) {
         for (Name name : BoundNames(bindingPattern)) {
-            addLexDeclaredName(bindingPattern, context.scopeContext, name);
+            addLexDeclaredName(bindingPattern, context, name);
         }
     }
 
-    private void addLexDeclaredName(Node node, ScopeContext scope, Name name) {
-        if (!scope.addLexDeclaredName(name)) {
+    private void addLexDeclaredName(Node node, ParseContext context, Name name) {
+        if (context.isIllegalName(name) || !context.scopeContext.addLexDeclaredName(name)) {
             reportSyntaxError(node, Messages.Key.VariableRedeclaration, name);
         }
     }
@@ -1139,41 +1417,24 @@ public final class Parser {
         return null;
     }
 
-    private static boolean isAnonymousFunctionDefinition(Expression expr) {
-        if (expr instanceof ClassExpression) {
-            return !HasName((ClassExpression) expr);
-        }
-        if (expr instanceof FunctionExpression) {
-            return !HasName((FunctionExpression) expr);
-        }
-        if (expr instanceof GeneratorExpression) {
-            return !HasName((GeneratorExpression) expr);
-        }
-        if (expr instanceof AsyncFunctionExpression) {
-            return !HasName((AsyncFunctionExpression) expr);
-        }
-        return expr instanceof ArrowFunction || expr instanceof GeneratorComprehension
-                || expr instanceof AsyncArrowFunction;
+    private static void setFunctionName(Expression expr, BindingIdentifier identifier) {
+        setFunctionName(expr, identifier.getName().getIdentifier());
     }
 
-    private static void setFunctionName(BindingIdentifier identifier, Expression expr) {
-        setFunctionName(identifier.getName().getIdentifier(), expr);
+    private static void setFunctionName(Expression expr, IdentifierReference identifier) {
+        setFunctionName(expr, identifier.getName());
     }
 
-    private static void setFunctionName(IdentifierReference identifier, Expression expr) {
-        setFunctionName(identifier.getName(), expr);
-    }
-
-    private static void setFunctionName(PropertyName propertyName, Expression expr) {
+    private static void setFunctionName(Expression expr, PropertyName propertyName) {
         assert !(propertyName instanceof ComputedPropertyName);
-        setFunctionName(propertyName.getName(), expr);
+        setFunctionName(expr, propertyName.getName());
     }
 
-    private static void setFunctionName(ComputedPropertyName propertyName, Expression expr) {
-        setFunctionName(propertyName.toString(), expr);
+    private static void setFunctionName(Expression expr, ComputedPropertyName propertyName) {
+        setFunctionName(expr, propertyName.toString());
     }
 
-    private static void setFunctionName(String name, Expression expr) {
+    private static void setFunctionName(Expression expr, String name) {
         if (expr instanceof ClassExpression) {
             for (MethodDefinition def : ((ClassExpression) expr).getMethods()) {
                 def.setClassName(name);
@@ -1184,11 +1445,8 @@ public final class Parser {
         }
     }
 
-    private static void setMethodName(LeftHandSideExpression lhs, Expression expr) {
-        setMethodName(MethodNameVisitor.toMethodName(lhs), expr);
-    }
-
-    private static void setMethodName(String name, Expression expr) {
+    private static void setMethodName(Expression expr, LeftHandSideExpression lhs) {
+        String name = MethodNameVisitor.toMethodName(lhs);
         if (name != null && expr instanceof FunctionNode) {
             ((FunctionNode) expr).setMethodName(name);
         }
@@ -1196,10 +1454,10 @@ public final class Parser {
 
     private void propagateNeedsArguments() {
         assert context.kind.isLexical();
-        if (context.funContext.directEval || context.funContext.needsArguments) {
+        if (context.funContext.needsArguments()) {
             ParseContext cx = context.findSuperContext();
             if (cx.kind.isFunction()) {
-                cx.funContext.needsArguments = true;
+                cx.funContext.needsArguments(context.funContext.directEval);
             }
         }
     }
@@ -1386,7 +1644,7 @@ public final class Parser {
      * @return the parser exception
      */
     private ParserException reportSyntaxError(Node node, Messages.Key messageKey, Name name) {
-        throw reportSyntaxError(node.getBeginPosition(), messageKey, name.toString());
+        throw reportSyntaxError(node.getBeginPosition(), messageKey, name.getIdentifier());
     }
 
     /**
@@ -1467,7 +1725,7 @@ public final class Parser {
      */
     private void reportStrictModeSyntaxError(Node node, Messages.Key messageKey, Name name) {
         reportStrictModeError(ExceptionType.SyntaxError, node.getBeginPosition(), messageKey,
-                name.toString());
+                name.getIdentifier());
     }
 
     /**
@@ -1614,7 +1872,7 @@ public final class Parser {
                 }
 
                 ts = new TokenStream(this, new TokenStreamInput(bodyText)).initialize();
-                List<StatementListItem> statements = functionBody(Token.EOF);
+                List<StatementListItem> statements = functionBody(parameters, Token.EOF);
                 if (token() != Token.EOF) {
                     reportSyntaxError(Messages.Key.InvalidFunctionBody);
                 }
@@ -1628,7 +1886,7 @@ public final class Parser {
                 FunctionContext scope = context.funContext;
                 function = new FunctionDeclaration(beginSource(), ts.endPosition(), scope,
                         identifier, parameters, statements, functionName, header, body);
-                scope.node = function;
+                scope.setNode(function);
 
                 function_EarlyErrors(function);
 
@@ -1683,7 +1941,7 @@ public final class Parser {
                 }
 
                 ts = new TokenStream(this, new TokenStreamInput(bodyText)).initialize();
-                List<StatementListItem> statements = functionBody(Token.EOF);
+                List<StatementListItem> statements = functionBody(parameters, Token.EOF);
                 if (token() != Token.EOF) {
                     reportSyntaxError(Messages.Key.InvalidFunctionBody);
                 }
@@ -1697,7 +1955,7 @@ public final class Parser {
                 FunctionContext scope = context.funContext;
                 generator = new GeneratorDeclaration(beginSource(), ts.endPosition(), scope,
                         identifier, parameters, statements, functionName, header, body);
-                scope.node = generator;
+                scope.setNode(generator);
 
                 generator_EarlyErrors(generator);
 
@@ -1892,12 +2150,10 @@ public final class Parser {
             ImportClause importClause = importClause();
             String moduleSpecifier = fromClause();
             semicolon();
-
             decl = new ImportDeclaration(begin, ts.endPosition(), importClause, moduleSpecifier);
         } else {
             String moduleSpecifier = moduleSpecifier();
             semicolon();
-
             decl = new ImportDeclaration(begin, ts.endPosition(), moduleSpecifier);
         }
         return decl;
@@ -2114,7 +2370,6 @@ public final class Parser {
             consume(Token.MUL);
             String moduleSpecifier = fromClause();
             semicolon();
-
             return new ExportDeclaration(begin, ts.endPosition(), moduleSpecifier);
         }
 
@@ -2146,7 +2401,6 @@ public final class Parser {
                 }
             }
             semicolon();
-
             return new ExportDeclaration(begin, ts.endPosition(), exportsClause, moduleSpecifier);
         }
 
@@ -2432,6 +2686,7 @@ public final class Parser {
                         blockFunction.setLegacyBlockScoped(false);
                     }
                     fc.blockFunctions = null;
+                    fc.blockFunctionNames = null;
                 }
             }
         }
@@ -2489,7 +2744,7 @@ public final class Parser {
             List<StatementListItem> statements;
             if (token() != Token.LC && isEnabled(CompatibilityOption.ExpressionClosure)) {
                 int startBody = ts.position();
-                statements = expressionClosureBody();
+                statements = expressionClosureBody(parameters);
                 int endFunction = ts.position();
 
                 header = ts.range(startFunction, startBody);
@@ -2497,7 +2752,7 @@ public final class Parser {
             } else {
                 consume(Token.LC);
                 int startBody = ts.position();
-                statements = functionBody(Token.RC);
+                statements = functionBody(parameters, Token.RC);
                 consume(Token.RC);
                 int endFunction = ts.position() - 1;
 
@@ -2508,7 +2763,7 @@ public final class Parser {
             FunctionContext scope = context.funContext;
             FunctionDeclaration function = new FunctionDeclaration(begin, ts.endPosition(), scope,
                     identifier, parameters, statements, functionName, header, body);
-            scope.node = function;
+            scope.setNode(function);
 
             function_EarlyErrors(function);
             addFunctionDeclaration(function, hasName && isDefault);
@@ -2530,13 +2785,19 @@ public final class Parser {
      * @return the parsed function expression
      */
     private FunctionExpression functionExpression() {
+        long begin = ts.beginPosition();
+        consume(Token.FUNCTION);
+        boolean hasName = token() != Token.LP;
+        if (hasName) {
+            enterBlockContext();
+        }
+
         newContext(ContextKind.Function);
         try {
-            long begin = ts.beginPosition();
-            consume(Token.FUNCTION);
             BindingIdentifier identifier = null;
-            if (token() != Token.LP) {
+            if (hasName) {
                 identifier = bindingIdentifierFunctionName(false);
+                addLexDeclaredName(identifier, context.parent, BoundName(identifier));
             }
             consume(Token.LP);
             int startFunction = ts.position() - 1;
@@ -2547,7 +2808,7 @@ public final class Parser {
             List<StatementListItem> statements;
             if (token() != Token.LC && isEnabled(CompatibilityOption.ExpressionClosure)) {
                 int startBody = ts.position();
-                statements = expressionClosureBody();
+                statements = expressionClosureBody(parameters);
                 int endFunction = ts.position();
 
                 header = ts.range(startFunction, startBody);
@@ -2555,7 +2816,7 @@ public final class Parser {
             } else {
                 consume(Token.LC);
                 int startBody = ts.position();
-                statements = functionBody(Token.RC);
+                statements = functionBody(parameters, Token.RC);
                 consume(Token.RC);
                 int endFunction = ts.position() - 1;
 
@@ -2566,13 +2827,16 @@ public final class Parser {
             FunctionContext scope = context.funContext;
             FunctionExpression function = new FunctionExpression(begin, ts.endPosition(), scope,
                     identifier, parameters, statements, header, body);
-            scope.node = function;
+            scope.setNode(function);
 
             function_EarlyErrors(function);
 
             return inheritStrictness(function);
         } finally {
             restoreContext();
+            if (hasName) {
+                exitBlockContext();
+            }
         }
     }
 
@@ -2613,7 +2877,7 @@ public final class Parser {
     }
 
     private FormalParameterList emptyFormalParameterList() {
-        context.funContext.parameterNames = new NameSet();
+        context.funContext.setParameterNames(Collections.<Name> emptyList());
         return new FormalParameterList(ts.beginPosition(), ts.endPosition(),
                 Collections.<FormalParameter> emptyList());
     }
@@ -2621,7 +2885,7 @@ public final class Parser {
     private FormalParameterList arrowFormalParameterList(BindingIdentifier identifier) {
         long begin = identifier.getBeginPosition();
         FormalParameter parameter = new BindingElement(begin, ts.endPosition(), identifier, null);
-        context.funContext.parameterNames = new NameSet(BoundNames(identifier));
+        context.funContext.setParameterNames(BoundNames(identifier));
         return new FormalParameterList(begin, ts.endPosition(), singletonList(parameter));
     }
 
@@ -2751,7 +3015,6 @@ public final class Parser {
         FunctionContext scope = context.funContext;
         FormalParameterList parameters = function.getParameters();
         List<Name> boundNames = BoundNames(parameters);
-
         if (!IsSimpleParameterList(parameters)) {
             checkFormalParameterDuplication(function, boundNames, scope.parameterNames);
         } else if (context.strictMode != StrictMode.NonStrict) {
@@ -2770,17 +3033,32 @@ public final class Parser {
      *     StatementList<span><sub>[?Yield, Return]opt</sub></span>
      * </pre>
      * 
+     * @param parameters
+     *            the function parameters
      * @param end
      *            the end token
      * @return the list of parsed statement list items
      */
-    private List<StatementListItem> functionBody(Token end) {
+    private List<StatementListItem> functionBody(FormalParameterList parameters, Token end) {
         // enable 'yield' if in generator
         context.yieldAllowed = context.kind.isGenerator();
         // enable 'await' if in async function
         context.awaitAllowed = context.kind.isAsync();
         List<StatementListItem> prologue = directivePrologue();
+        if (parameters.containsExpression()) {
+            context.funContext.variableScope = enterFunctionBodyContext();
+            context.funContext.lexicalScope = context.funContext.variableScope;
+        }
+        if (context.strictMode != StrictMode.Strict) {
+            context.funContext.lexicalScope = enterFunctionBodyContext();
+        }
         List<StatementListItem> body = statementList(end);
+        if (context.strictMode != StrictMode.Strict) {
+            exitFunctionBodyContext();
+        }
+        if (parameters.containsExpression()) {
+            exitFunctionBodyContext();
+        }
         assert context.assertLiteralsUnchecked(0);
         computeBlockFunctions();
         return merge(prologue, body);
@@ -2791,8 +3069,9 @@ public final class Parser {
         if (!isEnabled(CompatibilityOption.BlockFunctionDeclaration)) {
             return;
         }
-        FunctionContext topScope = context.funContext;
-        List<FunctionDeclaration> functions = topScope.blockFunctions;
+        FunctionContext funScope = context.funContext;
+        ScopeContext topScope = funScope.lexicalScope;
+        InlineArrayList<FunctionDeclaration> functions = funScope.blockFunctions;
         if (functions == null) {
             return;
         }
@@ -2818,7 +3097,7 @@ public final class Parser {
                 }
             }
             // See 14.1.2 Static Semantics: Early Errors
-            if (topScope.allowVarDeclaredName(name) && !topScope.parameterNames.contains(name)) {
+            if (topScope.allowVarDeclaredName(name) && !funScope.parameterNames.contains(name)) {
                 // Function declaration is applicable for legacy semantics, iff
                 // (1) Adding a VariableStatement with the same name would not produce an error.
                 // (2) The name is not an element of BoundNames of FormalParameters.
@@ -2826,7 +3105,7 @@ public final class Parser {
                 blockFunctions.add(function);
             }
         }
-        topScope.blockFunctions = blockFunctions;
+        funScope.setBlockFunctions(blockFunctions);
     }
 
     /**
@@ -2839,10 +3118,25 @@ public final class Parser {
      * 
      * @return the list of parsed statement list items
      */
-    private List<StatementListItem> expressionClosureBody() {
+    private List<StatementListItem> expressionClosureBody(FormalParameterList parameters) {
+        assert !(context.kind.isGenerator() || context.kind.isAsync());
+
         // Necessary to call applyStrictMode() manually b/c directivePrologue() is not used.
         applyStrictMode(false);
+        if (parameters.containsExpression()) {
+            context.funContext.variableScope = enterFunctionBodyContext();
+            context.funContext.lexicalScope = context.funContext.variableScope;
+        }
+        if (context.strictMode != StrictMode.Strict) {
+            context.funContext.lexicalScope = enterFunctionBodyContext();
+        }
         Expression expr = assignmentExpression(true);
+        if (context.strictMode != StrictMode.Strict) {
+            exitFunctionBodyContext();
+        }
+        if (parameters.containsExpression()) {
+            exitFunctionBodyContext();
+        }
         assert context.assertLiteralsUnchecked(0);
         return Collections.<StatementListItem> singletonList(new ReturnStatement(
                 ts.beginPosition(), ts.endPosition(), expr));
@@ -2896,7 +3190,7 @@ public final class Parser {
                 parameters = arrowFormalParameterList(identifier);
 
                 startFunction = ts.position();
-                source.append(identifier.getName());
+                source.append(identifier.getName().getIdentifier());
             }
             if (!noLineTerminator()) {
                 reportSyntaxError(Messages.Key.UnexpectedEndOfLine);
@@ -2905,7 +3199,7 @@ public final class Parser {
             if (token() == Token.LC) {
                 consume(Token.LC);
                 int startBody = ts.position();
-                List<StatementListItem> statements = functionBody(Token.RC);
+                List<StatementListItem> statements = functionBody(parameters, Token.RC);
                 consume(Token.RC);
                 int endFunction = ts.position() - 1;
 
@@ -2915,7 +3209,7 @@ public final class Parser {
                 FunctionContext scope = context.funContext;
                 ArrowFunction function = new ArrowFunction(begin, ts.endPosition(), scope,
                         parameters, statements, header, body);
-                scope.node = function;
+                scope.setNode(function);
 
                 propagateNeedsArguments();
 
@@ -2923,12 +3217,8 @@ public final class Parser {
 
                 return inheritStrictness(function);
             } else {
-                // Necessary to call applyStrictMode() manually b/c directivePrologue() is not used.
-                applyStrictMode(false);
-
                 int startBody = ts.position();
-                Expression expression = assignmentExpression(allowIn);
-                assert context.assertLiteralsUnchecked(0);
+                Expression expression = arrowFunctionExpressionBody(parameters, allowIn);
                 int endFunction = ts.position();
 
                 String header = source.append(ts.range(startFunction, startBody)).toString();
@@ -2937,7 +3227,7 @@ public final class Parser {
                 FunctionContext scope = context.funContext;
                 ArrowFunction function = new ArrowFunction(begin, ts.endPosition(), scope,
                         parameters, expression, header, body);
-                scope.node = function;
+                scope.setNode(function);
 
                 propagateNeedsArguments();
 
@@ -2950,6 +3240,32 @@ public final class Parser {
         }
     }
 
+    private Expression arrowFunctionExpressionBody(FormalParameterList parameters, boolean allowIn) {
+        // enable 'yield' if in generator
+        context.yieldAllowed = context.kind.isGenerator();
+        // enable 'await' if in async function
+        context.awaitAllowed = context.kind.isAsync();
+
+        // Necessary to call applyStrictMode() manually b/c directivePrologue() is not used.
+        applyStrictMode(false);
+        if (parameters.containsExpression()) {
+            context.funContext.variableScope = enterFunctionBodyContext();
+            context.funContext.lexicalScope = context.funContext.variableScope;
+        }
+        if (context.strictMode != StrictMode.Strict) {
+            context.funContext.lexicalScope = enterFunctionBodyContext();
+        }
+        Expression expression = assignmentExpression(allowIn);
+        if (context.strictMode != StrictMode.Strict) {
+            exitFunctionBodyContext();
+        }
+        if (parameters.containsExpression()) {
+            exitFunctionBodyContext();
+        }
+        assert context.assertLiteralsUnchecked(0);
+        return expression;
+    }
+
     /**
      * 14.2.1 Static Semantics: Early Errors
      * 
@@ -2960,7 +3276,6 @@ public final class Parser {
         assert context.scopeContext == context.funContext;
         FunctionContext scope = context.funContext;
         List<Name> boundNames = BoundNames(function.getParameters());
-
         checkFormalParameterDuplication(function, boundNames, scope.parameterNames);
         checkFormalParameterRedeclaration(function, boundNames, scope.lexDeclaredNames);
     }
@@ -3035,7 +3350,7 @@ public final class Parser {
             consume(Token.RP);
             consume(Token.LC);
             int startBody = ts.position();
-            List<StatementListItem> statements = functionBody(Token.RC);
+            List<StatementListItem> statements = functionBody(parameters, Token.RC);
             consume(Token.RC);
             int endFunction = ts.position() - 1;
 
@@ -3045,7 +3360,7 @@ public final class Parser {
             FunctionContext scope = context.funContext;
             MethodDefinition method = new MethodDefinition(begin, ts.endPosition(), scope, type,
                     allocation, propertyName, parameters, statements, header, body);
-            scope.node = method;
+            scope.setNode(method);
 
             methodDefinition_EarlyErrors(method);
 
@@ -3084,7 +3399,7 @@ public final class Parser {
             String header, body;
             if (token() != Token.LC && isEnabled(CompatibilityOption.ExpressionClosure)) {
                 int startBody = ts.position();
-                statements = expressionClosureBody();
+                statements = expressionClosureBody(parameters);
                 int endFunction = ts.position();
 
                 header = ts.range(startFunction, startBody);
@@ -3092,7 +3407,7 @@ public final class Parser {
             } else {
                 consume(Token.LC);
                 int startBody = ts.position();
-                statements = functionBody(Token.RC);
+                statements = functionBody(parameters, Token.RC);
                 consume(Token.RC);
                 int endFunction = ts.position() - 1;
 
@@ -3104,7 +3419,7 @@ public final class Parser {
             MethodType type = MethodType.Getter;
             MethodDefinition method = new MethodDefinition(begin, ts.endPosition(), scope, type,
                     allocation, propertyName, parameters, statements, header, body);
-            scope.node = method;
+            scope.setNode(method);
 
             methodDefinition_EarlyErrors(method);
 
@@ -3143,7 +3458,7 @@ public final class Parser {
             String header, body;
             if (token() != Token.LC && isEnabled(CompatibilityOption.ExpressionClosure)) {
                 int startBody = ts.position();
-                statements = expressionClosureBody();
+                statements = expressionClosureBody(parameters);
                 int endFunction = ts.position();
 
                 header = ts.range(startFunction, startBody);
@@ -3151,7 +3466,7 @@ public final class Parser {
             } else {
                 consume(Token.LC);
                 int startBody = ts.position();
-                statements = functionBody(Token.RC);
+                statements = functionBody(parameters, Token.RC);
                 consume(Token.RC);
                 int endFunction = ts.position() - 1;
 
@@ -3163,7 +3478,7 @@ public final class Parser {
             MethodType type = MethodType.Setter;
             MethodDefinition method = new MethodDefinition(begin, ts.endPosition(), scope, type,
                     allocation, propertyName, parameters, statements, header, body);
-            scope.node = method;
+            scope.setNode(method);
 
             methodDefinition_EarlyErrors(method);
 
@@ -3229,7 +3544,6 @@ public final class Parser {
         assert context.scopeContext == context.funContext;
         FunctionContext scope = context.funContext;
         List<Name> boundNames = BoundNames(method.getParameters());
-
         switch (method.getType()) {
         case AsyncFunction:
         case BaseConstructor:
@@ -3265,7 +3579,6 @@ public final class Parser {
      */
     private MethodDefinition generatorMethod(MethodAllocation allocation) {
         long begin = ts.beginPosition();
-
         consume(Token.MUL);
         PropertyName propertyName = propertyName();
 
@@ -3277,7 +3590,7 @@ public final class Parser {
             consume(Token.RP);
             consume(Token.LC);
             int startBody = ts.position();
-            List<StatementListItem> statements = functionBody(Token.RC);
+            List<StatementListItem> statements = functionBody(parameters, Token.RC);
             consume(Token.RC);
             int endFunction = ts.position() - 1;
 
@@ -3288,7 +3601,7 @@ public final class Parser {
             MethodType type = MethodType.Generator;
             MethodDefinition method = new MethodDefinition(begin, ts.endPosition(), scope, type,
                     allocation, propertyName, parameters, statements, header, body);
-            scope.node = method;
+            scope.setNode(method);
 
             methodDefinition_EarlyErrors(method);
 
@@ -3341,7 +3654,7 @@ public final class Parser {
             consume(Token.RP);
             consume(Token.LC);
             int startBody = ts.position();
-            List<StatementListItem> statements = functionBody(Token.RC);
+            List<StatementListItem> statements = functionBody(parameters, Token.RC);
             consume(Token.RC);
             int endFunction = ts.position() - 1;
 
@@ -3357,7 +3670,7 @@ public final class Parser {
                 generator = new LegacyGeneratorDeclaration(begin, ts.endPosition(), scope,
                         identifier, parameters, statements, functionName, header, body);
             }
-            scope.node = generator;
+            scope.setNode(generator);
 
             generator_EarlyErrors(generator);
             addDeclaration(generator, hasName && isDefault);
@@ -3381,18 +3694,24 @@ public final class Parser {
      * @return the parsed generator expression declaration
      */
     private GeneratorExpression generatorExpression(boolean isLegacy) {
+        long begin = ts.beginPosition();
+        consume(Token.FUNCTION);
+        if (!isLegacy) {
+            consume(Token.MUL);
+        }
+        boolean hasName = token() != Token.LP;
+        if (hasName) {
+            enterBlockContext();
+        }
+
         newContext(ContextKind.Generator);
         try {
             context.legacyGenerator = isLegacy;
 
-            long begin = ts.beginPosition();
-            consume(Token.FUNCTION);
-            if (!isLegacy) {
-                consume(Token.MUL);
-            }
             BindingIdentifier identifier = null;
-            if (token() != Token.LP) {
+            if (hasName) {
                 identifier = bindingIdentifierFunctionName(false);
+                addLexDeclaredName(identifier, context.parent, BoundName(identifier));
             }
             consume(Token.LP);
             int startFunction = ts.position() - 1;
@@ -3400,7 +3719,7 @@ public final class Parser {
             consume(Token.RP);
             consume(Token.LC);
             int startBody = ts.position();
-            List<StatementListItem> statements = functionBody(Token.RC);
+            List<StatementListItem> statements = functionBody(parameters, Token.RC);
             consume(Token.RC);
             int endFunction = ts.position() - 1;
 
@@ -3416,13 +3735,16 @@ public final class Parser {
                 generator = new LegacyGeneratorExpression(begin, ts.endPosition(), scope,
                         identifier, parameters, statements, header, body);
             }
-            scope.node = generator;
+            scope.setNode(generator);
 
             generator_EarlyErrors(generator);
 
             return inheritStrictness(generator);
         } finally {
             restoreContext();
+            if (hasName) {
+                exitBlockContext();
+            }
         }
     }
 
@@ -3437,7 +3759,6 @@ public final class Parser {
         FunctionContext scope = context.funContext;
         FormalParameterList parameters = generator.getParameters();
         List<Name> boundNames = BoundNames(parameters);
-
         if (!IsSimpleParameterList(parameters)) {
             checkFormalParameterDuplication(generator, boundNames, scope.parameterNames);
         } else if (context.strictMode != StrictMode.NonStrict) {
@@ -3608,7 +3929,9 @@ public final class Parser {
             }
             BlockContext scope = null;
             if (hasName) {
-                scope = enterBlockContext(identifier);
+                scope = enterBlockContext();
+                // Create a second inner class binding (NB: distinct Name instance required).
+                addLexDeclaredName(identifier, context, BoundName(identifier).clone());
             }
             Expression heritage = null;
             if (token() == Token.EXTENDS) {
@@ -3879,7 +4202,7 @@ public final class Parser {
 
             consume(Token.LC);
             int startBody = ts.position();
-            List<StatementListItem> statements = functionBody(Token.RC);
+            List<StatementListItem> statements = functionBody(parameters, Token.RC);
             consume(Token.RC);
             int endFunction = ts.position() - 1;
 
@@ -3890,7 +4213,7 @@ public final class Parser {
             AsyncFunctionDeclaration function = new AsyncFunctionDeclaration(begin,
                     ts.endPosition(), scope, identifier, parameters, statements, functionName,
                     header, body);
-            scope.node = function;
+            scope.setNode(function);
 
             asyncFunction_EarlyErrors(function);
             addDeclaration(function, hasName && isDefault);
@@ -3912,17 +4235,23 @@ public final class Parser {
      * @return the parsed async function expression
      */
     private AsyncFunctionExpression asyncFunctionExpression() {
+        long begin = ts.beginPosition();
+        consume(Token.ASYNC);
+        if (!noLineTerminator()) {
+            reportSyntaxError(Messages.Key.UnexpectedEndOfLine);
+        }
+        consume(Token.FUNCTION);
+        boolean hasName = token() != Token.LP;
+        if (hasName) {
+            enterBlockContext();
+        }
+
         newContext(ContextKind.AsyncFunction);
         try {
-            long begin = ts.beginPosition();
-            consume(Token.ASYNC);
-            if (!noLineTerminator()) {
-                reportSyntaxError(Messages.Key.UnexpectedEndOfLine);
-            }
-            consume(Token.FUNCTION);
             BindingIdentifier identifier = null;
-            if (token() != Token.LP) {
+            if (hasName) {
                 identifier = bindingIdentifierFunctionName(false);
+                addLexDeclaredName(identifier, context.parent, BoundName(identifier));
             }
             consume(Token.LP);
             int startFunction = ts.position() - 1;
@@ -3931,7 +4260,7 @@ public final class Parser {
 
             consume(Token.LC);
             int startBody = ts.position();
-            List<StatementListItem> statements = functionBody(Token.RC);
+            List<StatementListItem> statements = functionBody(parameters, Token.RC);
             consume(Token.RC);
             int endFunction = ts.position() - 1;
 
@@ -3941,13 +4270,16 @@ public final class Parser {
             FunctionContext scope = context.funContext;
             AsyncFunctionExpression function = new AsyncFunctionExpression(begin, ts.endPosition(),
                     scope, identifier, parameters, statements, header, body);
-            scope.node = function;
+            scope.setNode(function);
 
             asyncFunction_EarlyErrors(function);
 
             return inheritStrictness(function);
         } finally {
             restoreContext();
+            if (hasName) {
+                exitBlockContext();
+            }
         }
     }
 
@@ -3956,7 +4288,6 @@ public final class Parser {
         FunctionContext scope = context.funContext;
         FormalParameterList parameters = function.getParameters();
         List<Name> boundNames = BoundNames(parameters);
-
         if (!IsSimpleParameterList(parameters)) {
             checkFormalParameterDuplication(function, boundNames, scope.parameterNames);
         } else if (context.strictMode != StrictMode.NonStrict) {
@@ -4007,7 +4338,7 @@ public final class Parser {
                 parameters = arrowFormalParameterList(identifier);
 
                 startFunction = ts.position();
-                source.append(identifier.getName());
+                source.append(identifier.getName().getIdentifier());
             }
             if (!noLineTerminator()) {
                 reportSyntaxError(Messages.Key.UnexpectedEndOfLine);
@@ -4016,7 +4347,7 @@ public final class Parser {
             if (token() == Token.LC) {
                 consume(Token.LC);
                 int startBody = ts.position();
-                List<StatementListItem> statements = functionBody(Token.RC);
+                List<StatementListItem> statements = functionBody(parameters, Token.RC);
                 consume(Token.RC);
                 int endFunction = ts.position() - 1;
 
@@ -4026,7 +4357,7 @@ public final class Parser {
                 FunctionContext scope = context.funContext;
                 AsyncArrowFunction function = new AsyncArrowFunction(begin, ts.endPosition(),
                         scope, parameters, statements, header, body);
-                scope.node = function;
+                scope.setNode(function);
 
                 propagateNeedsArguments();
 
@@ -4034,12 +4365,8 @@ public final class Parser {
 
                 return inheritStrictness(function);
             } else {
-                // Necessary to call applyStrictMode() manually b/c directivePrologue() is not used.
-                applyStrictMode(false);
-
                 int startBody = ts.position();
-                Expression expression = assignmentExpression(allowIn);
-                assert context.assertLiteralsUnchecked(0);
+                Expression expression = arrowFunctionExpressionBody(parameters, allowIn);
                 int endFunction = ts.position();
 
                 String header = source.append(ts.range(startFunction, startBody - 1)).toString();
@@ -4048,7 +4375,7 @@ public final class Parser {
                 FunctionContext scope = context.funContext;
                 AsyncArrowFunction function = new AsyncArrowFunction(begin, ts.endPosition(),
                         scope, parameters, expression, header, body);
-                scope.node = function;
+                scope.setNode(function);
 
                 propagateNeedsArguments();
 
@@ -4071,7 +4398,6 @@ public final class Parser {
         assert context.scopeContext == context.funContext;
         FunctionContext scope = context.funContext;
         List<Name> boundNames = BoundNames(function.getParameters());
-
         checkFormalParameterDuplication(function, boundNames, scope.parameterNames);
         checkFormalParameterRedeclaration(function, boundNames, scope.lexDeclaredNames);
     }
@@ -4102,7 +4428,7 @@ public final class Parser {
             consume(Token.RP);
             consume(Token.LC);
             int startBody = ts.position();
-            List<StatementListItem> statements = functionBody(Token.RC);
+            List<StatementListItem> statements = functionBody(parameters, Token.RC);
             consume(Token.RC);
             int endFunction = ts.position() - 1;
 
@@ -4113,7 +4439,7 @@ public final class Parser {
             MethodType type = MethodType.AsyncFunction;
             MethodDefinition method = new MethodDefinition(begin, ts.endPosition(), scope, type,
                     allocation, propertyName, parameters, statements, header, body);
-            scope.node = method;
+            scope.setNode(method);
 
             methodDefinition_EarlyErrors(method);
 
@@ -4254,12 +4580,13 @@ public final class Parser {
         long begin = ts.beginPosition();
         consume(Token.LC);
         BlockContext scope = enterBlockContext();
+        ScopeWithNames previous = null;
         if (!inherited.isEmpty()) {
-            scope.forbiddenLexNames = lexicalNames(inherited);
+            previous = context.setIllegalNames(lexicalNames(inherited));
         }
         List<StatementListItem> list = statementList(Token.RC);
         if (!inherited.isEmpty()) {
-            scope.forbiddenLexNames = null;
+            context.restoreIllegalNames(previous);
         }
         exitBlockContext();
         consume(Token.RC);
@@ -4414,7 +4741,6 @@ public final class Parser {
             // semicolon() not called if "in" not allowed, cf. forStatement()
             semicolon();
         }
-
         LexicalDeclaration decl = new LexicalDeclaration(begin, ts.endPosition(), type, list);
         addLexScopedDeclaration(decl);
         return decl;
@@ -4442,7 +4768,6 @@ public final class Parser {
             consume(Token.COMMA);
             list.add(lexicalBinding(isConst, allowIn));
         }
-
         return list;
     }
 
@@ -4478,8 +4803,8 @@ public final class Parser {
             addLexDeclaredName(bindingIdentifier);
             if (token() == Token.ASSIGN) {
                 initializer = initializer(allowIn);
-                if (isAnonymousFunctionDefinition(initializer)) {
-                    setFunctionName(bindingIdentifier, initializer);
+                if (IsAnonymousFunctionDefinition(initializer)) {
+                    setFunctionName(initializer, bindingIdentifier);
                 }
             } else if (isConst && allowIn) {
                 // `allowIn == false` indicates for-loop, cf. forStatement()
@@ -4487,7 +4812,6 @@ public final class Parser {
             }
             binding = bindingIdentifier;
         }
-
         return new LexicalBinding(begin, ts.endPosition(), binding, initializer);
     }
 
@@ -4544,7 +4868,6 @@ public final class Parser {
         consume(Token.VAR);
         List<VariableDeclaration> decls = variableDeclarationList(true);
         semicolon();
-
         VariableStatement varStmt = new VariableStatement(begin, ts.endPosition(), decls);
         addVarScopedDeclaration(varStmt);
         return varStmt;
@@ -4570,7 +4893,6 @@ public final class Parser {
             consume(Token.COMMA);
             list.add(variableDeclaration(allowIn));
         }
-
         return list;
     }
 
@@ -4605,13 +4927,12 @@ public final class Parser {
             addVarDeclaredName(bindingIdentifier);
             if (token() == Token.ASSIGN) {
                 initializer = initializer(allowIn);
-                if (isAnonymousFunctionDefinition(initializer)) {
-                    setFunctionName(bindingIdentifier, initializer);
+                if (IsAnonymousFunctionDefinition(initializer)) {
+                    setFunctionName(initializer, bindingIdentifier);
                 }
             }
             binding = bindingIdentifier;
         }
-
         return new VariableDeclaration(binding, initializer);
     }
 
@@ -4681,7 +5002,6 @@ public final class Parser {
             }
         }
         consume(Token.RC);
-
         return new ObjectBindingPattern(begin, ts.endPosition(), list);
     }
 
@@ -4717,8 +5037,8 @@ public final class Parser {
             if (token() == Token.ASSIGN) {
                 initializer = initializer(true);
                 if (binding instanceof BindingIdentifier
-                        && isAnonymousFunctionDefinition(initializer)) {
-                    setFunctionName((BindingIdentifier) binding, initializer);
+                        && IsAnonymousFunctionDefinition(initializer)) {
+                    setFunctionName(initializer, (BindingIdentifier) binding);
                 }
             }
             return new BindingProperty(propertyName, binding, initializer);
@@ -4727,8 +5047,8 @@ public final class Parser {
             Expression initializer = null;
             if (token() == Token.ASSIGN) {
                 initializer = initializer(true);
-                if (isAnonymousFunctionDefinition(initializer)) {
-                    setFunctionName((BindingIdentifier) binding, initializer);
+                if (IsAnonymousFunctionDefinition(initializer)) {
+                    setFunctionName(initializer, (BindingIdentifier) binding);
                 }
             }
             return new BindingProperty(binding, initializer);
@@ -4776,7 +5096,6 @@ public final class Parser {
             }
         }
         consume(Token.RB);
-
         return new ArrayBindingPattern(begin, ts.endPosition(), list);
     }
 
@@ -4851,11 +5170,10 @@ public final class Parser {
         Expression initializer = null;
         if (token() == Token.ASSIGN) {
             initializer = initializer(true);
-            if (binding instanceof BindingIdentifier && isAnonymousFunctionDefinition(initializer)) {
-                setFunctionName((BindingIdentifier) binding, initializer);
+            if (binding instanceof BindingIdentifier && IsAnonymousFunctionDefinition(initializer)) {
+                setFunctionName(initializer, (BindingIdentifier) binding);
             }
         }
-
         return new BindingElement(begin, ts.endPosition(), binding, initializer);
     }
 
@@ -4891,7 +5209,6 @@ public final class Parser {
         long begin = ts.beginPosition();
         consume(Token.TRIPLE_DOT);
         BindingIdentifier identifier = bindingIdentifier(allowLet);
-
         return new BindingRestElement(begin, ts.endPosition(), identifier);
     }
 
@@ -4908,7 +5225,6 @@ public final class Parser {
     private EmptyStatement emptyStatement() {
         long begin = ts.beginPosition();
         consume(Token.SEMI);
-
         return new EmptyStatement(begin, ts.endPosition());
     }
 
@@ -4975,7 +5291,6 @@ public final class Parser {
             consume(Token.ELSE);
             otherwise = statementOrFunctionDeclaration();
         }
-
         return new IfStatement(begin, ts.endPosition(), test, then, otherwise);
     }
 
@@ -5492,7 +5807,6 @@ public final class Parser {
         if (!context.returnAllowed) {
             reportSyntaxError(Messages.Key.InvalidReturnStatement);
         }
-
         long begin = ts.beginPosition();
         Expression expr = null;
         consume(Token.RETURN);
@@ -5501,7 +5815,6 @@ public final class Parser {
             expr = expression(true);
         }
         semicolon();
-
         return new ReturnStatement(begin, ts.endPosition(), expr);
     }
 
@@ -5727,7 +6040,6 @@ public final class Parser {
         }
         Expression expr = expression(true);
         semicolon();
-
         return new ThrowStatement(begin, ts.endPosition(), expr);
     }
 
@@ -5826,7 +6138,6 @@ public final class Parser {
             consume(Token.FINALLY);
             finallyBlock = block(NO_INHERITED_BINDING);
         }
-
         return new TryStatement(begin, ts.endPosition(), tryBlock, catchNode, guardedCatchNodes,
                 finallyBlock);
     }
@@ -5845,7 +6156,6 @@ public final class Parser {
         long begin = ts.beginPosition();
         consume(Token.DEBUGGER);
         semicolon();
-
         return new DebuggerStatement(begin, ts.endPosition());
     }
 
@@ -5943,7 +6253,7 @@ public final class Parser {
         long begin = ts.beginPosition();
         String identifier = identifier(true);
         if ("arguments".equals(identifier) && context.kind.isFunction()) {
-            context.funContext.needsArguments = true;
+            context.funContext.needsArguments(false);
         }
         return new IdentifierReference(begin, ts.endPosition(), identifier);
     }
@@ -6335,14 +6645,13 @@ public final class Parser {
     private Expression functionOrGeneratorExpression() {
         if (LOOKAHEAD(Token.MUL)) {
             return generatorExpression(false);
-        } else {
-            long position = ts.position(), lineinfo = ts.lineinfo();
-            try {
-                return functionExpression();
-            } catch (RetryGenerator e) {
-                ts.reset(position, lineinfo);
-                return generatorExpression(true);
-            }
+        }
+        long position = ts.position(), lineinfo = ts.lineinfo();
+        try {
+            return functionExpression();
+        } catch (RetryGenerator e) {
+            ts.reset(position, lineinfo);
+            return generatorExpression(true);
         }
     }
 
@@ -6433,32 +6742,31 @@ public final class Parser {
     private ArrayInitializer arrayInitializer() {
         if (LOOKAHEAD(Token.FOR) && isEnabled(CompatibilityOption.Comprehension)) {
             return arrayComprehension();
-        } else {
-            long begin = ts.beginPosition();
-            if (isEnabled(CompatibilityOption.LegacyComprehension)) {
-                switch (peek()) {
-                case RB:
-                case COMMA:
-                case TRIPLE_DOT:
-                    break;
-                default:
-                    // TODO: report eclipse formatter bug
-                    long position = ts.position(),
-                    lineinfo = ts.lineinfo();
-                    consume(Token.LB);
-                    Expression expression = assignmentExpressionNoValidation(true);
-                    if (token() == Token.FOR) {
-                        // NB: It is not necessary to remove unchecked object literals from
-                        // assignmentExpressionNoValidation(), because any early errors will
-                        // reappear in legacyArrayComprehension()
-                        ts.reset(position, lineinfo);
-                        return legacyArrayComprehension();
-                    }
-                    return arrayLiteral(begin, expression);
-                }
-            }
-            return arrayLiteral(begin, null);
         }
+        long begin = ts.beginPosition();
+        if (isEnabled(CompatibilityOption.LegacyComprehension)) {
+            switch (peek()) {
+            case RB:
+            case COMMA:
+            case TRIPLE_DOT:
+                break;
+            default:
+                // TODO: report eclipse formatter bug
+                long position = ts.position(),
+                lineinfo = ts.lineinfo();
+                consume(Token.LB);
+                Expression expression = assignmentExpressionNoValidation(true);
+                if (token() == Token.FOR) {
+                    // NB: It is not necessary to remove unchecked object literals from
+                    // assignmentExpressionNoValidation(), because any early errors will
+                    // reappear in legacyArrayComprehension()
+                    ts.reset(position, lineinfo);
+                    return legacyArrayComprehension();
+                }
+                return arrayLiteral(begin, expression);
+            }
+        }
+        return arrayLiteral(begin, null);
     }
 
     /**
@@ -6515,7 +6823,6 @@ public final class Parser {
             }
         }
         consume(Token.RB);
-
         return new ArrayLiteral(begin, ts.endPosition(), list, !needComma && !list.isEmpty());
     }
 
@@ -6534,7 +6841,6 @@ public final class Parser {
         consume(Token.LB);
         Comprehension comprehension = comprehension();
         consume(Token.RB);
-
         return new ArrayComprehension(begin, ts.endPosition(), comprehension);
     }
 
@@ -6899,8 +7205,8 @@ public final class Parser {
             if (token() == Token.COLON) {
                 consume(Token.COLON);
                 Expression propertyValue = assignmentExpressionNoValidation(true);
-                if (isAnonymousFunctionDefinition(propertyValue)) {
-                    setFunctionName(propertyName, propertyValue);
+                if (IsAnonymousFunctionDefinition(propertyValue)) {
+                    setFunctionName(propertyValue, propertyName);
                 }
                 return new PropertyValueDefinition(begin, ts.endPosition(), propertyName,
                         propertyValue);
@@ -6911,8 +7217,8 @@ public final class Parser {
             PropertyName propertyName = literalPropertyName();
             consume(Token.COLON);
             Expression propertyValue = assignmentExpressionNoValidation(true);
-            if (isAnonymousFunctionDefinition(propertyValue)) {
-                setFunctionName(propertyName, propertyValue);
+            if (IsAnonymousFunctionDefinition(propertyValue)) {
+                setFunctionName(propertyValue, propertyName);
             }
             return new PropertyValueDefinition(begin, ts.endPosition(), propertyName, propertyValue);
         }
@@ -6924,8 +7230,8 @@ public final class Parser {
             IdentifierReference identifier = identifierReference();
             consume(Token.ASSIGN);
             Expression initializer = assignmentExpression(true);
-            if (isAnonymousFunctionDefinition(initializer)) {
-                setFunctionName(identifier, initializer);
+            if (IsAnonymousFunctionDefinition(initializer)) {
+                setFunctionName(initializer, identifier);
             }
             return new CoverInitializedName(begin, ts.endPosition(), identifier, initializer);
         }
@@ -6994,7 +7300,6 @@ public final class Parser {
         consume(Token.LB);
         Expression expression = assignmentExpression(true);
         consume(Token.RB);
-
         return new ComputedPropertyName(begin, ts.endPosition(), expression);
     }
 
@@ -7009,30 +7314,17 @@ public final class Parser {
      * @return the parsed generator comprehension
      */
     private GeneratorComprehension generatorComprehension() {
-        boolean yieldAllowed = context.yieldAllowed;
-        boolean awaitAllowed = context.awaitAllowed;
         newContext(ContextKind.GeneratorComprehension);
         try {
-            // Necessary to call applyStrictMode() manually b/c directivePrologue() is not used.
-            applyStrictMode(false);
-
-            // propagate the outer context's 'yield' state
-            context.yieldAllowed = yieldAllowed;
-            // propagate the outer context's 'await' state
-            context.awaitAllowed = awaitAllowed;
-
             long begin = ts.beginPosition();
-            consume(Token.LP);
             // generator comprehensions have no named parameters
             FormalParameterList parameters = emptyFormalParameterList();
-            Comprehension comprehension = comprehension();
-            consume(Token.RP);
-            assert context.assertLiteralsUnchecked(0);
+            Comprehension comprehension = generatorComprehensionBody();
 
             FunctionContext scope = context.funContext;
             GeneratorComprehension generator = new GeneratorComprehension(begin, ts.endPosition(),
                     scope, parameters, comprehension);
-            scope.node = generator;
+            scope.setNode(generator);
 
             propagateNeedsArguments();
 
@@ -7040,6 +7332,27 @@ public final class Parser {
         } finally {
             restoreContext();
         }
+    }
+
+    private Comprehension generatorComprehensionBody() {
+        // propagate the outer context's 'yield' state
+        context.yieldAllowed = context.parent.yieldAllowed;
+        // propagate the outer context's 'await' state
+        context.awaitAllowed = context.parent.awaitAllowed;
+
+        // Necessary to call applyStrictMode() manually b/c directivePrologue() is not used.
+        applyStrictMode(false);
+        if (context.strictMode != StrictMode.Strict) {
+            context.funContext.lexicalScope = enterFunctionBodyContext();
+        }
+        consume(Token.LP);
+        Comprehension comprehension = comprehension();
+        consume(Token.RP);
+        if (context.strictMode != StrictMode.Strict) {
+            exitFunctionBodyContext();
+        }
+        assert context.assertLiteralsUnchecked(0);
+        return comprehension;
     }
 
     /**
@@ -7053,30 +7366,17 @@ public final class Parser {
      * @return the parsed legacy generator comprehension
      */
     private GeneratorComprehension legacyGeneratorComprehension() {
-        boolean yieldAllowed = context.yieldAllowed;
-        boolean awaitAllowed = context.awaitAllowed;
         newContext(ContextKind.GeneratorComprehension);
         try {
-            // Necessary to call applyStrictMode() manually b/c directivePrologue() is not used.
-            applyStrictMode(false);
-
-            // propagate the outer context's 'yield' state
-            context.yieldAllowed = yieldAllowed;
-            // propagate the outer context's 'await' state
-            context.awaitAllowed = awaitAllowed;
-
             long begin = ts.beginPosition();
-            consume(Token.LP);
             // generator comprehensions have no named parameters
             FormalParameterList parameters = emptyFormalParameterList();
-            LegacyComprehension comprehension = legacyComprehension();
-            consume(Token.RP);
-            assert context.assertLiteralsUnchecked(0);
+            LegacyComprehension comprehension = legacyGeneratorComprehensionBody();
 
             FunctionContext scope = context.funContext;
             GeneratorComprehension generator = new GeneratorComprehension(begin, ts.endPosition(),
                     scope, parameters, comprehension);
-            scope.node = generator;
+            scope.setNode(generator);
 
             propagateNeedsArguments();
 
@@ -7084,6 +7384,27 @@ public final class Parser {
         } finally {
             restoreContext();
         }
+    }
+
+    private LegacyComprehension legacyGeneratorComprehensionBody() {
+        // propagate the outer context's 'yield' state
+        context.yieldAllowed = context.parent.yieldAllowed;
+        // propagate the outer context's 'await' state
+        context.awaitAllowed = context.parent.awaitAllowed;
+
+        // Necessary to call applyStrictMode() manually b/c directivePrologue() is not used.
+        applyStrictMode(false);
+        if (context.strictMode != StrictMode.Strict) {
+            context.funContext.lexicalScope = enterFunctionBodyContext();
+        }
+        consume(Token.LP);
+        LegacyComprehension comprehension = legacyComprehension();
+        consume(Token.RP);
+        if (context.strictMode != StrictMode.Strict) {
+            exitFunctionBodyContext();
+        }
+        assert context.assertLiteralsUnchecked(0);
+        return comprehension;
     }
 
     /**
@@ -7101,10 +7422,11 @@ public final class Parser {
      */
     private RegularExpressionLiteral regularExpressionLiteral(Token tok) {
         long begin = ts.beginPosition();
-        String[] re = ts.readRegularExpression(tok);
-        regularExpressionLiteral_EarlyErrors(begin, re[0], re[1]);
+        String pattern = ts.readRegularExpression(tok);
+        String flags = ts.readRegularExpressionFlags();
+        regularExpressionLiteral_EarlyErrors(begin, pattern, flags);
         consume(tok);
-        return new RegularExpressionLiteral(begin, ts.endPosition(), re[0], re[1]);
+        return new RegularExpressionLiteral(begin, ts.endPosition(), pattern, flags);
     }
 
     /**
@@ -7118,9 +7440,9 @@ public final class Parser {
      *            the regular expression literal's flags part
      */
     private void regularExpressionLiteral_EarlyErrors(long sourcePos, String pattern, String flags) {
-        // parse to validate regular expression, but ignore actual result
-        RegExpParser.parse(pattern, flags, getSourceName(), toLine(sourcePos), toColumn(sourcePos),
-                isEnabled(CompatibilityOption.WebRegularExpressions));
+        // parse to validate regular expression
+        RegExpParser.syntaxParse(pattern, flags, getSourceName(), toLine(sourcePos),
+                toColumn(sourcePos), isEnabled(CompatibilityOption.WebRegularExpressions));
     }
 
     /**
@@ -7143,9 +7465,8 @@ public final class Parser {
      * @return the parsed template literal
      */
     private TemplateLiteral templateLiteral(boolean tagged) {
-        InlineArrayList<Expression> elements = newList();
-
         long begin = ts.beginPosition();
+        InlineArrayList<Expression> elements = newList();
         elements.add(templateCharacters(Token.TEMPLATE));
         while (token() == Token.LC) {
             consume(Token.LC);
@@ -7160,7 +7481,6 @@ public final class Parser {
         if (tagged && (elements.size() / 2) + 1 > MAX_ARGUMENTS) {
             reportSyntaxError(Messages.Key.FunctionTooManyArguments);
         }
-
         return new TemplateLiteral(begin, ts.endPosition(), tagged, elements);
     }
 
@@ -7489,7 +7809,6 @@ public final class Parser {
             }
         }
         consume(Token.RP);
-
         return args;
     }
 
@@ -7798,7 +8117,7 @@ public final class Parser {
                 // `yield` in default parameters expressions is parsed as identifier.
                 return yieldExpression(allowIn);
             } else if (context.kind == ContextKind.GeneratorComprehension && context.yieldAllowed) {
-                // 12.2.7.1 Static Semantics: Early Errors for GeneratorComprehension
+                // Static Semantics: Early Errors for GeneratorComprehension
                 // `yield` nested in generator comprehension, nested in generator.
                 reportSyntaxError(Messages.Key.InvalidYieldExpression);
             } else if (context.kind == ContextKind.Function
@@ -7851,11 +8170,11 @@ public final class Parser {
                     Messages.Key.InvalidAssignmentTarget);
             consume(Token.ASSIGN);
             Expression right = assignmentExpression(allowIn);
-            if (IsIdentifierRef(lhs) && isAnonymousFunctionDefinition(right)) {
-                setFunctionName((IdentifierReference) lhs, right);
+            if (IsIdentifierRef(lhs) && IsAnonymousFunctionDefinition(right)) {
+                setFunctionName(right, (IdentifierReference) lhs);
             } else if ((lhs instanceof ElementAccessor || lhs instanceof PropertyAccessor)
-                    && isAnonymousFunctionDefinition(right)) {
-                setMethodName(lhs, right);
+                    && IsAnonymousFunctionDefinition(right)) {
+                setMethodName(right, lhs);
             }
             return new AssignmentExpression(assignmentOp(tok), lhs, right);
         } else if (isAssignmentOperator(tok)) {
@@ -8018,9 +8337,13 @@ public final class Parser {
             Messages.Key messageKey) {
         // rewrite object/array literal to destructuring form
         if (lhs instanceof ObjectLiteral) {
-            return toDestructuring((ObjectLiteral) lhs);
+            if (!lhs.isParenthesized() || isEnabled(CompatibilityOption.ParenthesizedDestructuring)) {
+                return toDestructuring((ObjectLiteral) lhs);
+            }
         } else if (lhs instanceof ArrayLiteral) {
-            return toDestructuring((ArrayLiteral) lhs);
+            if (!lhs.isParenthesized() || isEnabled(CompatibilityOption.ParenthesizedDestructuring)) {
+                return toDestructuring((ArrayLiteral) lhs);
+            }
         }
         return validateSimpleAssignment(lhs, type, messageKey);
     }
@@ -8039,8 +8362,6 @@ public final class Parser {
      * AssignmentProperty<span><sub>[Yield]</sub></span> :
      *     IdentifierReference<span><sub>[?Yield]</sub></span> Initializer<span><sub>[In, ?Yield]opt</sub></span>
      *     PropertyName : AssignmentElement<span><sub>[?Yield]</sub></span>
-     * AssignmentElement<span><sub>[Yield]</sub></span> :
-     *     DestructuringAssignmentTarget<span><sub>[?Yield]</sub></span> Initializer<span><sub>[In, ?Yield]opt</sub></span>
      * AssignmentElement<span><sub>[Yield]</sub></span> :
      *     DestructuringAssignmentTarget<span><sub>[?Yield]</sub></span> Initializer<span><sub>[In, ?Yield]opt</sub></span>
      * DestructuringAssignmentTarget<span><sub>[Yield]</sub></span> :

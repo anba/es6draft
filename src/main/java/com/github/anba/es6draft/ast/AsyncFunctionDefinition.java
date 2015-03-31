@@ -10,5 +10,4 @@ package com.github.anba.es6draft.ast;
  * Extension: Async Functions
  */
 public interface AsyncFunctionDefinition extends FunctionNode {
-    BindingIdentifier getIdentifier();
 }

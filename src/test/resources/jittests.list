@@ -43,9 +43,6 @@ tests/collections/constructor-errors.js
 tests/basic/bug1091757.js
 tests/basic/string-contains.js
 
-# ES6: String.prototype.search throws if called with undefined regexp parameter
-tests/basic/testCallApply.js
-
 # ES6: evaluation order changed in for-in/of
 tests/for-of/semantics-09.js
 tests/for-of/semantics-10.js
@@ -68,6 +65,12 @@ tests/collections/WeakSet-surface.js
 # ES6: Argument validation in DataView constructor
 tests/basic/bug-1133377.js
 
+# ES6: Detached typed arrays have no indexed properties in SM
+tests/basic/typed-array-copyWithin.js
+
+# ES6: SpiderMonkey bug (https://bugzilla.mozilla.org/show_bug.cgi?id=895223)
+tests/proxy/testDirectProxySetFailure.js
+
 
 ###################
 # Misc issues     #
@@ -75,6 +78,7 @@ tests/basic/bug-1133377.js
 
 # lib/asserts.js: assertDeepEq() considers `{a: 1, b: 2}` and `{b: 2, a: 1}` as different objects...
 tests/arrays/sort-getter-only.js
+tests/proxy/testDirectProxyGetOwnPropertyDescriptor11.js
 
 # invalid test, Array.of() creates properties with DefinePropertyOrThrow(), but Proxy defined in
 # the test case does not return a positive success value from [[DefineOwnProperty]]
@@ -169,14 +173,12 @@ tests/basic/display-url-in-stack-trace.js
 # Spidermonkey: Proxy vs. __proto__ on global
 tests/auto-regress/bug589103.js
 
-# SpiderMonkey __proto__ not own property on Object.prototype
-tests/basic/__proto__-not-prototype-mutation.js
-
 # missing [object Function] for proxied functions
 tests/basic/bug807623.js
 
 # Old Proxy API not completely emulated
 tests/auto-regress/bug578015.js
+tests/proxy/testIndirectProxyGetOwnPropertyDescriptor.js
 
 # missing return value in defineProperty trap
 tests/proxy/testDirectProxyDefineProperty2.js
@@ -184,9 +186,6 @@ tests/proxy/testDirectProxyDefineProperty2.js
 # SpiderMonkey does not allow duplicate property keys in "ownKeys" trap
 tests/proxy/testDirectProxyGetOwnPropertyNames4.js
 tests/proxy/testDirectProxyKeys4.js
-
-# Proxy gets [[ClassName]] from target object in SM
-tests/basic/array-copyWithin.js
 
 
 ###############################################################
@@ -226,9 +225,6 @@ tests/basic/spread-call-length.js
 
 # ES6-change: AddRestrictedFunctionProperties for built-ins (Function.prototype)
 tests/basic/bug675889.js
-
-# RegExp.prototype.{source,ignoreCase,global,multiline} now accessor
-tests/basic/bug750307.js
 
 # ES6-change: <this> within generator is always a generator object
 tests/auto-regress/bug678090.js
@@ -364,6 +360,7 @@ tests/auto-regress/bug677587.js
 tests/auto-regress/bug677977.js
 tests/auto-regress/bug720396.js
 tests/auto-regress/bug765483.js
+tests/auto-regress/bug1147907.js
 tests/basic/bug646968-7.js
 tests/basic/bug646968-8.js
 tests/basic/bug713226.js
@@ -412,7 +409,9 @@ tests/basic/bug754242.js
 tests/basic/testBug616454.js
 # clone
 tests/basic/bug751139.js
+tests/basic/bug1106982-2.js
 tests/basic/testScriptCloning.js
+tests/basic/weird-scopechains.js
 # decompileThis
 tests/basic/decompile-script.js
 # neuter
@@ -450,6 +449,7 @@ tests/basic/bug951632.js
 tests/bug953337.js
 tests/basic/bug970643.js
 tests/basic/bug1135718.js
+tests/basic/bug1141154.js
 tests/basic/testBug686274.js
 # enableTrackAllocations
 tests/basic/track-allocation-sites.js
@@ -465,6 +465,15 @@ tests/parser/columnNumber.js
 tests/basic/bug1015339.js
 # relazifyFunctions
 tests/basic/relazify.js
+# inJit
+tests/self-test/notInJit.js
+tests/self-test/inJit.js
+# inIon
+tests/self-test/notInIon.js
+tests/self-test/inIon.js
+# setLazyParsingEnabled
+tests/basic/eval-scopes.js
+tests/basic/function-gname.js
 
 
 #######################################

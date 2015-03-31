@@ -534,8 +534,8 @@ public final class NativeCalls {
             throw newInternalError(cx, Messages.Key.InternalError,
                     "No source: " + Objects.toString(base));
         }
-        Path path = base.getFile().getParent().resolve(file);
-        Source source = new Source(path, path.getFileName().toString(), 1);
+        Path path = Objects.requireNonNull(base.getFile().getParent()).resolve(file);
+        Source source = new Source(path, Objects.requireNonNull(path.getFileName()).toString(), 1);
         Script script;
         try {
             script = realm.getScriptLoader().script(source, path);

@@ -26,6 +26,7 @@ import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
+import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
 
@@ -137,14 +138,15 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
      */
     public static ArrayBufferObject AllocateArrayBuffer(ExecutionContext cx,
             Constructor constructor, long byteLength) {
-        /* steps 1-2 (moved) */
+        /* steps 1-2 */
+        ScriptObject proto = GetPrototypeFromConstructor(cx, constructor,
+                Intrinsics.ArrayBufferPrototype);
         /* step 3 */
         assert byteLength >= 0;
         /* steps 4-5 */
         ByteBuffer block = CreateByteDataBlock(cx, byteLength);
         /* steps 1-2, 6-8 */
-        return new ArrayBufferObject(cx.getRealm(), block, byteLength, GetPrototypeFromConstructor(
-                cx, constructor, Intrinsics.ArrayBufferPrototype));
+        return new ArrayBufferObject(cx.getRealm(), block, byteLength, proto);
     }
 
     /**

@@ -10,6 +10,7 @@ import com.github.anba.es6draft.ast.IdentifierReference;
 import com.github.anba.es6draft.ast.IntNodeVisitor;
 import com.github.anba.es6draft.ast.NodeVisitor;
 import com.github.anba.es6draft.ast.VoidNodeVisitor;
+import com.github.anba.es6draft.ast.scope.Name;
 
 /**
  * <h1>12 ECMAScript Language: Expressions</h1>
@@ -20,6 +21,11 @@ import com.github.anba.es6draft.ast.VoidNodeVisitor;
 public final class IdentifierReferenceValue extends IdentifierReference {
     public IdentifierReferenceValue(long beginPosition, long endPosition, String name) {
         super(beginPosition, endPosition, name);
+    }
+
+    public IdentifierReferenceValue(long beginPosition, long endPosition, String name,
+            Name resolvedName) {
+        super(beginPosition, endPosition, name, resolvedName);
     }
 
     @Override

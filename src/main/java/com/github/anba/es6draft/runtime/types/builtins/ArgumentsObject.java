@@ -72,13 +72,6 @@ public final class ArgumentsObject extends OrdinaryObject {
         return super.getIndexed(propertyKey);
     }
 
-    @Override
-    protected boolean setPropertyValue(ExecutionContext cx, long propertyKey, Object value,
-            Property current) {
-        assert !isMapped(propertyKey);
-        return super.setPropertyValue(cx, propertyKey, value, current);
-    }
-
     /**
      * 9.4.4.1 [[GetOwnProperty]] (P)
      */
@@ -202,15 +195,35 @@ public final class ArgumentsObject extends OrdinaryObject {
             /* step 3 */
             isMapped = map != null ? map.hasOwnProperty(propertyKey, false) : false;
         }
-        /* steps 4-5 */
-        if (!isMapped) {
-            /* step 4 */
-            return super.setValue(cx, propertyKey, value, receiver);
-        } else {
-            /* step 5 */
+        // FIXME: spec bug (https://bugs.ecmascript.org/show_bug.cgi?id=4211)
+        // /* steps 4-5 */
+        // if (!isMapped) {
+        // /* step 4 */
+        // return super.setValue(cx, propertyKey, value, receiver);
+        // } else {
+        // /* step 5 */
+        // map.put(propertyKey, value);
+        // return true;
+        // }
+        boolean allowed = super.setValue(cx, propertyKey, value, receiver);
+        if (allowed && isMapped) {
             map.put(propertyKey, value);
+        }
+        return allowed;
+    }
+
+    @Override
+    protected boolean setPropertyValue(ExecutionContext cx, long propertyKey, Object value,
+            Property current) {
+        // FIXME: spec bug (https://bugs.ecmascript.org/show_bug.cgi?id=4211)
+        // assert !isMapped(propertyKey);
+        if (isMapped(propertyKey)) {
+            // NB: `current` is the temporary Property object created in `getProperty()`, but we
+            // need the actual Property instance to update its value.
+            ordinaryGetOwnProperty(propertyKey).setValue(value);
             return true;
         }
+        return super.setPropertyValue(cx, propertyKey, value, current);
     }
 
     /**

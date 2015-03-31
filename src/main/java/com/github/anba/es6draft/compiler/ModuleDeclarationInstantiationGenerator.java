@@ -37,8 +37,9 @@ import com.github.anba.es6draft.runtime.types.Undefined;
  * <h1>15 ECMAScript Language: Scripts and Modules</h1><br>
  * <h2>15.2 Modules</h2><br>
  * <h3>15.2.1 Module Semantics</h3>
+ * <h4>15.2.1.15 Source Text Module Records</h4>
  * <ul>
- * <li>15.2.1.21 Runtime Semantics: ModuleDeclarationInstantiation( module, realm, moduleSet )
+ * <li>15.2.1.15.4 ModuleDeclarationInstantiation( ) Concrete Method
  * </ul>
  */
 final class ModuleDeclarationInstantiationGenerator extends
@@ -121,16 +122,16 @@ final class ModuleDeclarationInstantiationGenerator extends
         mv.loadUndefined();
         mv.store(undef);
 
-        /* steps 1-5 (not applicable) */
-        /* step 6 */
+        /* steps 1-8 (not applicable) */
+        /* step 9 */
         for (ExportEntry exportEntry : moduleRecord.getIndirectExportEntries()) {
             mv.lineInfo(exportEntry.getLine());
             mv.load(moduleRec);
             mv.aconst(exportEntry.getExportName());
             mv.invoke(Methods.ScriptRuntime_resolveExportOrThrow);
         }
-        /* steps 7-9 (not applicable) */
-        /* step 10 */
+        /* steps 10-11 (not applicable) */
+        /* step 12 */
         for (ImportEntry importEntry : moduleRecord.getImportEntries()) {
             mv.lineInfo(importEntry.getLine());
             if (importEntry.isStarImport()) {
@@ -155,9 +156,9 @@ final class ModuleDeclarationInstantiationGenerator extends
                 createImportBinding(envRec, importEntry.getLocalName(), resolved, mv);
             }
         }
-        /* step 11 */
+        /* step 13 */
         List<StatementListItem> varDeclarations = VarScopedDeclarations(module);
-        /* step 12 */
+        /* step 14 */
         for (StatementListItem d : varDeclarations) {
             assert d instanceof VariableStatement;
             for (Name dn : BoundNames((VariableStatement) d)) {
@@ -165,9 +166,9 @@ final class ModuleDeclarationInstantiationGenerator extends
                 initializeBinding(envRec, dn, undef, mv);
             }
         }
-        /* step 13 */
+        /* step 15 */
         List<Declaration> lexDeclarations = LexicallyScopedDeclarations(module);
-        /* step 14 */
+        /* step 16 */
         for (Declaration d : lexDeclarations) {
             for (Name dn : BoundNames(d)) {
                 if (d.isConstDeclaration()) {
@@ -189,8 +190,7 @@ final class ModuleDeclarationInstantiationGenerator extends
                 }
             }
         }
-        /* step 15 (not applicable) */
-        /* step 16 */
+        /* step 17 */
         mv._return();
     }
 

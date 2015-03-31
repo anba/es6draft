@@ -25,8 +25,6 @@ import com.github.anba.es6draft.compiler.assembler.ClassSignature;
 import com.github.anba.es6draft.compiler.assembler.Code;
 import com.github.anba.es6draft.compiler.assembler.Code.ClassCode;
 import com.github.anba.es6draft.compiler.assembler.Type;
-import com.github.anba.es6draft.parser.Parser;
-import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.modules.SourceTextModuleRecord;
 
 /**
@@ -68,8 +66,7 @@ public final class Compiler {
         Code code = new Code(Modifier.PUBLIC | Modifier.FINAL, className, ClassSignature.NONE,
                 Types.CompiledScript, Collections.<Type> emptyList(), NodeSourceInfo.create(script,
                         compilerOptions));
-        CodeGenerator codegen = new CodeGenerator(code, executor, script.getOptions(),
-                script.getParserOptions(), compilerOptions);
+        CodeGenerator codegen = new CodeGenerator(code, script, executor, compilerOptions);
         codegen.compile(script);
 
         return defineAndLoad(code, className);
@@ -100,8 +97,7 @@ public final class Compiler {
         Code code = new Code(Modifier.PUBLIC | Modifier.FINAL, className, ClassSignature.NONE,
                 Types.CompiledModule, Collections.<Type> emptyList(), NodeSourceInfo.create(module,
                         compilerOptions));
-        CodeGenerator codegen = new CodeGenerator(code, executor, module.getOptions(),
-                module.getParserOptions(), compilerOptions);
+        CodeGenerator codegen = new CodeGenerator(code, module, executor, compilerOptions);
         codegen.compile(module, moduleRecord);
 
         return defineAndLoad(code, className);
@@ -140,6 +136,7 @@ public final class Compiler {
     }
 
     private CompiledFunction compile(FunctionNode function, String className) {
+        Script script = functionScript(function);
         try {
             CodeSizeAnalysis analysis = new CodeSizeAnalysis(executor);
             analysis.submit(function);
@@ -150,33 +147,26 @@ public final class Compiler {
         Code code = new Code(Modifier.PUBLIC | Modifier.FINAL, className, ClassSignature.NONE,
                 Types.CompiledFunction, Collections.<Type> emptyList(), NodeSourceInfo.create(
                         function, compilerOptions));
-        CodeGenerator codegen = new CodeGenerator(code, executor, compatibilityOptions(function),
-                parserOptions(function), compilerOptions);
+        CodeGenerator codegen = new CodeGenerator(code, script, executor, compilerOptions);
         codegen.compileFunction(function);
 
         return defineAndLoad(code, className);
     }
 
-    private static EnumSet<CompatibilityOption> compatibilityOptions(FunctionNode function) {
+    private static Script functionScript(FunctionNode function) {
         Scope enclosingScope = function.getScope().getEnclosingScope();
-        if (enclosingScope instanceof ScriptScope) {
-            return ((ScriptScope) enclosingScope).getNode().getOptions();
-        }
-        return EnumSet.noneOf(CompatibilityOption.class);
+        assert enclosingScope instanceof ScriptScope;
+        return ((ScriptScope) enclosingScope).getNode();
     }
 
-    private static EnumSet<Parser.Option> parserOptions(FunctionNode function) {
-        Scope enclosingScope = function.getScope().getEnclosingScope();
-        if (enclosingScope instanceof ScriptScope) {
-            return ((ScriptScope) enclosingScope).getNode().getParserOptions();
-        }
-        return EnumSet.noneOf(Parser.Option.class);
+    private boolean isEnabled(Compiler.Option option) {
+        return compilerOptions.contains(option);
     }
 
     private <T> T defineAndLoad(Code code, String clazzName) {
-        boolean printCode = compilerOptions.contains(Option.PrintCode);
-        boolean printSimple = printCode && !compilerOptions.contains(Option.PrintFullCode);
-        boolean debugInfo = compilerOptions.contains(Option.DebugInfo);
+        boolean printCode = isEnabled(Option.PrintCode);
+        boolean printSimple = printCode && !isEnabled(Option.PrintFullCode);
+        boolean debugInfo = isEnabled(Option.DebugInfo);
         CodeLoader loader = new CodeLoader();
         for (ClassCode classCode : code.getClasses()) {
             String className = Type.className(classCode.className);

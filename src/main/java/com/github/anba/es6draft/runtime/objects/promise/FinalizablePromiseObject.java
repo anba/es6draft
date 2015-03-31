@@ -60,19 +60,19 @@ public final class FinalizablePromiseObject extends PromiseObject {
             this.realm = realm;
         }
 
-        private void setInternal(Object value) {
+        private void setValue(Object value) {
             this.value = value;
             this.valueSet = true;
         }
 
         void set(Object reason) {
             if (!valueSet) {
-                setInternal(reason);
+                setValue(reason);
             }
         }
 
         void clear() {
-            setInternal(null);
+            setValue(null);
         }
 
         @Override

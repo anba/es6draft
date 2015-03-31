@@ -17,12 +17,14 @@ import com.github.anba.es6draft.ast.Script;
 import com.github.anba.es6draft.ast.StatementListItem;
 import com.github.anba.es6draft.ast.VariableStatement;
 import com.github.anba.es6draft.ast.scope.Name;
+import com.github.anba.es6draft.parser.Parser;
 import com.github.anba.es6draft.runtime.DeclarativeEnvironmentRecord;
 import com.github.anba.es6draft.runtime.EnvironmentRecord;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.GlobalEnvironmentRecord;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.ObjectEnvironmentRecord;
+import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.ScriptRuntime;
 
 /**
@@ -48,25 +50,23 @@ final class DeclarationBindingInstantiation {
      */
     public static void GlobalDeclarationInstantiation(ExecutionContext cx, Script script,
             LexicalEnvironment<GlobalEnvironmentRecord> env) {
-        /* step 1 */
-        @SuppressWarnings("unused")
-        boolean strict = script.isStrict();
-        /* steps 2-3 */
+        /* steps 1-2 */
         GlobalEnvironmentRecord envRec = env.getEnvRec();
-        /* step 4 (not applicable) */
-        /* step 5 */
+        /* step 3 */
+        assert LexicallyDeclaredNames(script).isEmpty();
+        /* step 4 */
         Set<Name> varNames = VarDeclaredNames(script);
-        /* step 6 (not applicable) */
-        /* step 7 */
+        /* step 5 (not applicable) */
+        /* step 6 */
         for (Name name : varNames) {
             ScriptRuntime.canDeclareVarScopedOrThrow(cx, envRec, name.getIdentifier());
         }
-        /* step 8 */
+        /* step 7 */
         List<StatementListItem> varDeclarations = VarScopedDeclarations(script);
-        /* steps 9-11 (not applicable) */
-        /* step 12 */
+        /* steps 8-10 (not applicable) */
+        /* step 11 */
         LinkedHashSet<Name> declaredVarNames = new LinkedHashSet<>();
-        /* step 13 */
+        /* step 12 */
         for (StatementListItem d : varDeclarations) {
             assert d instanceof VariableStatement;
             for (Name vn : BoundNames((VariableStatement) d)) {
@@ -74,13 +74,13 @@ final class DeclarationBindingInstantiation {
                 declaredVarNames.add(vn);
             }
         }
-        /* step 14 (NOTE) */
-        /* step 15-17 (not applicable) */
-        /* step 18 */
+        /* step 13 (NOTE) */
+        /* step 14-16 (not applicable) */
+        /* step 17 */
         for (Name vn : declaredVarNames) {
             envRec.createGlobalVarBinding(vn.getIdentifier(), false);
         }
-        /* step 19 (return) */
+        /* step 18 (return) */
     }
 
     /**
@@ -88,7 +88,7 @@ final class DeclarationBindingInstantiation {
      * 
      * @param cx
      *            the execution context
-     * @param script
+     * @param evalScript
      *            the global script to instantiate
      * @param varEnv
      *            the current variable environment
@@ -97,17 +97,17 @@ final class DeclarationBindingInstantiation {
      * @param deletableBindings
      *            the deletable flag for bindings
      */
-    public static void EvalDeclarationInstantiation(ExecutionContext cx, Script script,
+    public static void EvalDeclarationInstantiation(ExecutionContext cx, Script evalScript,
             LexicalEnvironment<?> varEnv, LexicalEnvironment<DeclarativeEnvironmentRecord> lexEnv) {
-        boolean strict = script.isStrict();
-        boolean nonStrictGlobal = !strict && script.isGlobalCode() && !script.isScripting();
+        boolean strict = evalScript.isStrict();
+        boolean nonStrictGlobal = !strict && evalScript.isGlobalCode() && !evalScript.isScripting();
 
         /* step 1 */
-        assert LexicallyDeclaredNames(script).isEmpty();
+        assert LexicallyDeclaredNames(evalScript).isEmpty();
         /* step 2 */
-        Set<Name> varNames = VarDeclaredNames(script);
+        Set<Name> varNames = VarDeclaredNames(evalScript);
         /* step 3 */
-        List<StatementListItem> varDeclarations = VarScopedDeclarations(script);
+        List<StatementListItem> varDeclarations = VarScopedDeclarations(evalScript);
         /* step 4 (not applicable) */
         /* step 5 */
         EnvironmentRecord varEnvRec = varEnv.getEnvRec();
@@ -123,16 +123,8 @@ final class DeclarationBindingInstantiation {
                 }
             }
             /* steps 6.b-d */
-            // NB: Skip the initial lexEnv which is empty by construction. (TODO: Add assertion)
-            for (LexicalEnvironment<?> thisLex = lexEnv; (thisLex = thisLex.getOuter()) != varEnv;) {
-                EnvironmentRecord thisEnvRec = thisLex.getEnvRec();
-                if (!(thisEnvRec instanceof ObjectEnvironmentRecord)) {
-                    assert thisEnvRec instanceof DeclarativeEnvironmentRecord;
-                    DeclarativeEnvironmentRecord envRec = (DeclarativeEnvironmentRecord) thisEnvRec;
-                    for (Name name : varNames) {
-                        ScriptRuntime.canDeclareVarOrThrow(cx, envRec, name.getIdentifier());
-                    }
-                }
+            if (!varNames.isEmpty() && isEnclosedByLexicalOrHasFunctionOrForOf(evalScript)) {
+                checkLexicalRedeclaration(evalScript, cx, varEnv, lexEnv, varNames);
             }
         }
         /* steps 7-9 (not applicable) */
@@ -151,7 +143,7 @@ final class DeclarationBindingInstantiation {
         }
         /* step 12 (note) */
         /* step 13 */
-        assert LexicallyScopedDeclarations(script).isEmpty();
+        assert LexicallyScopedDeclarations(evalScript).isEmpty();
         /* steps 14-15 (not applicable) */
         /* step 16 */
         for (Name vn : declaredNames) {
@@ -167,5 +159,28 @@ final class DeclarationBindingInstantiation {
             }
         }
         /* step 17 (return) */
+    }
+
+    private static boolean isEnclosedByLexicalOrHasFunctionOrForOf(Script evalScript) {
+        assert evalScript.getScope().varFunctionAndForOfDeclaredNames().isEmpty();
+        return evalScript.getParserOptions().contains(Parser.Option.EnclosedByLexicalDeclaration);
+    }
+
+    private static void checkLexicalRedeclaration(Script evalScript, ExecutionContext cx,
+            LexicalEnvironment<?> varEnv, LexicalEnvironment<DeclarativeEnvironmentRecord> lexEnv,
+            Set<Name> varNames) {
+        // NB: Skip the initial lexEnv which is empty by construction.
+        assert lexEnv.getEnvRec().bindingNames().isEmpty();
+        final boolean catchVar = cx.getRealm().isEnabled(CompatibilityOption.CatchVarStatement);
+        for (LexicalEnvironment<?> thisLex = lexEnv; (thisLex = thisLex.getOuter()) != varEnv;) {
+            EnvironmentRecord thisEnvRec = thisLex.getEnvRec();
+            if (!(thisEnvRec instanceof ObjectEnvironmentRecord)) {
+                assert thisEnvRec instanceof DeclarativeEnvironmentRecord;
+                DeclarativeEnvironmentRecord envRec = (DeclarativeEnvironmentRecord) thisEnvRec;
+                for (Name name : varNames) {
+                    ScriptRuntime.canDeclareVarOrThrow(cx, envRec, name.getIdentifier(), catchVar);
+                }
+            }
+        }
     }
 }

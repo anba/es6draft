@@ -397,58 +397,28 @@ public final class StaticSemantics {
      * @return {@code true} if the node is an anonymous function definition
      */
     public static boolean IsAnonymousFunctionDefinition(Expression node) {
-        if (node instanceof ArrowFunction) {
-            return !HasName((ArrowFunction) node);
-        }
-        if (node instanceof FunctionExpression) {
-            return !HasName((FunctionExpression) node);
-        }
-        if (node instanceof GeneratorExpression) {
-            return !HasName((GeneratorExpression) node);
+        if (node instanceof FunctionNode) {
+            return ((FunctionNode) node).getIdentifier() == null;
         }
         if (node instanceof ClassExpression) {
-            return !HasName((ClassExpression) node);
+            return ((ClassExpression) node).getIdentifier() == null;
         }
-        if (node instanceof AsyncArrowFunction) {
-            return !HasName((AsyncArrowFunction) node);
-        }
-        if (node instanceof AsyncFunctionExpression) {
-            return !HasName((AsyncFunctionExpression) node);
-        }
-        assert !IsFunctionDefinition(node);
         return false;
     }
 
     /**
-     * 14.1.8 Static Semantics: HasName
+     * Static Semantics: HasName
+     * <ul>
+     * <li>14.1.8 Static Semantics: HasName
+     * <li>14.2.9 Static Semantics: HasName
+     * <li>14.4.6 Static Semantics: HasName
+     * </ul>
      * 
      * @param node
      *            the function node
      * @return {@code true} if the function has a binding name
      */
-    public static boolean HasName(FunctionExpression node) {
-        return node.getIdentifier() != null;
-    }
-
-    /**
-     * 14.2.9 Static Semantics: HasName
-     * 
-     * @param node
-     *            the function node
-     * @return {@code true} if the function has a binding name
-     */
-    public static boolean HasName(ArrowFunction node) {
-        return false;
-    }
-
-    /**
-     * 14.4.6 Static Semantics: HasName
-     * 
-     * @param node
-     *            the function node
-     * @return {@code true} if the function has a binding name
-     */
-    public static boolean HasName(GeneratorExpression node) {
+    public static <FUNCTION extends Expression & FunctionNode> boolean HasName(FUNCTION node) {
         return node.getIdentifier() != null;
     }
 
@@ -460,28 +430,6 @@ public final class StaticSemantics {
      * @return {@code true} if the function has a binding name
      */
     public static boolean HasName(ClassExpression node) {
-        return node.getIdentifier() != null;
-    }
-
-    /**
-     * Static Semantics: HasName
-     * 
-     * @param node
-     *            the function node
-     * @return {@code true} if the function has a binding name
-     */
-    public static boolean HasName(AsyncArrowFunction node) {
-        return false;
-    }
-
-    /**
-     * Static Semantics: HasName
-     * 
-     * @param node
-     *            the function node
-     * @return {@code true} if the function has a binding name
-     */
-    public static boolean HasName(AsyncFunctionExpression node) {
         return node.getIdentifier() != null;
     }
 
@@ -530,25 +478,7 @@ public final class StaticSemantics {
      * @return {@code true} if the node is a function definition
      */
     public static boolean IsFunctionDefinition(Expression node) {
-        if (node instanceof ArrowFunction) {
-            return true;
-        }
-        if (node instanceof FunctionExpression) {
-            return true;
-        }
-        if (node instanceof GeneratorExpression) {
-            return true;
-        }
-        if (node instanceof ClassExpression) {
-            return true;
-        }
-        if (node instanceof AsyncArrowFunction) {
-            return true;
-        }
-        if (node instanceof AsyncFunctionExpression) {
-            return true;
-        }
-        return false;
+        return node instanceof FunctionNode || node instanceof ClassExpression;
     }
 
     /**

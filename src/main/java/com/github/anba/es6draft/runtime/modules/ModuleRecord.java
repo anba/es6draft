@@ -10,7 +10,6 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.Set;
 
-import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.ModuleEnvironmentRecord;
 import com.github.anba.es6draft.runtime.Realm;
@@ -49,15 +48,12 @@ public interface ModuleRecord {
     ModuleNamespaceObject getNamespace();
 
     /**
-     * Creates the module namespace object of this module record.
+     * [[Namespace]]
      * 
-     * @param cx
-     *            the current execution context
-     * @param exports
-     *            the list of exported names
-     * @return the new module namespace object
+     * @param namespace
+     *            the module namespace object
      */
-    ModuleNamespaceObject createNamespace(ExecutionContext cx, Set<String> exports);
+    void setNamespace(ModuleNamespaceObject namespace);
 
     /**
      * [[Evaluated]]

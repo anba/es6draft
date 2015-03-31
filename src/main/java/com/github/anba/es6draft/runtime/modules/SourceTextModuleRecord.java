@@ -11,7 +11,6 @@ import static com.github.anba.es6draft.runtime.ExecutionContext.newModuleExecuti
 import static com.github.anba.es6draft.runtime.LexicalEnvironment.newModuleEnvironment;
 import static com.github.anba.es6draft.runtime.modules.ModuleSemantics.HostResolveImportedModule;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
-import static com.github.anba.es6draft.runtime.types.builtins.ModuleNamespaceObject.ModuleNamespaceCreate;
 import static com.github.anba.es6draft.semantics.StaticSemantics.ExportEntries;
 import static com.github.anba.es6draft.semantics.StaticSemantics.ImportEntries;
 import static com.github.anba.es6draft.semantics.StaticSemantics.ModuleRequests;
@@ -224,11 +223,9 @@ public final class SourceTextModuleRecord implements ModuleRecord, Cloneable {
     }
 
     @Override
-    public ModuleNamespaceObject createNamespace(ExecutionContext cx, Set<String> exports) {
+    public void setNamespace(ModuleNamespaceObject namespace) {
         assert this.namespace == null : "namespace already created";
-        ModuleNamespaceObject namespace = ModuleNamespaceCreate(cx, this, exports);
-        this.namespace = namespace;
-        return namespace;
+        this.namespace = Objects.requireNonNull(namespace);
     }
 
     @Override
@@ -431,7 +428,7 @@ public final class SourceTextModuleRecord implements ModuleRecord, Cloneable {
         /* step 1 */
         SourceTextModuleRecord module = this;
         /* step 2 */
-        Realm realm = module.getRealm();
+        Realm realm = module.realm;
         /* step 3 */
         assert realm != null : "module is not linked";
         /* step 4 */
@@ -445,8 +442,7 @@ public final class SourceTextModuleRecord implements ModuleRecord, Cloneable {
         /* step 7 */
         module.environment = env;
         /* step 8 */
-        // TODO: Move to generated code...
-        for (String required : module.getRequestedModules()) {
+        for (String required : module.requestedModules) {
             /* step 8.a (note) */
             /* steps 8.b-c */
             ModuleRecord requiredModule = HostResolveImportedModule(module, required);
@@ -469,7 +465,7 @@ public final class SourceTextModuleRecord implements ModuleRecord, Cloneable {
         /* step 2 */
         assert module.instantiated;
         /* step 3 */
-        Realm realm = module.getRealm();
+        Realm realm = module.realm;
         assert realm != null : "module is not linked";
         /* step 4 */
         if (module.evaluated) {
@@ -479,7 +475,9 @@ public final class SourceTextModuleRecord implements ModuleRecord, Cloneable {
         module.evaluated = true;
         /* step 6 */
         for (String required : module.requestedModules) {
+            /* steps 6.a-b */
             ModuleRecord requiredModule = HostResolveImportedModule(module, required);
+            /* steps 6.c-d */
             requiredModule.evaluate();
         }
         /* steps 7-12 */

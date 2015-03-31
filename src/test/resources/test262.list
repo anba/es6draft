@@ -10,3 +10,9 @@ test/intl402/11.1.1_20_c.js
 
 # Stale Array.prototype.find tests (https://github.com/tc39/test262/issues/103)
 test/built-ins/Array/prototype/find/Array.prototype.find_remove-after-start.js
+
+# Invalid block scope tests (https://github.com/tc39/test262/issues/201)
+test/language/block-scope/syntax/for-in/missing-identifier-let-disallowed-as-bound-name.js
+test/language/block-scope/syntax/let-declarations/without-initialisers-in-statement-positions-case-expression-statement-list.js
+test/language/block-scope/syntax/let-declarations/without-initialisers-in-statement-positions-default-statement-list.js
+test/language/block-scope/syntax/function-declarations/in-statement-position-label-statement.js

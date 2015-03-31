@@ -15,22 +15,27 @@ class Iter {
   next() {
     return {value: 0, done: false};
   }
-  return() {
-    fail `called Iter::return`;
-  }
-  throw() {
-    fail `called Iter::throw`;
-  }
   [Symbol.iterator]() {
     return this;
   }
 }
 class NullReturn extends Iter {
-  get return() { return null; }
+  get return() {
+    return null;
+  }
+  throw() {
+    fail `called Iter::throw`;
+  }
 }
 class NullThrow extends Iter {
-  get throw() { return null; }
+  get throw() {
+    return null;
+  }
+  return() {
+    throw new NullThrowError();
+  }
 }
+class NullThrowError extends Error { }
 
 function* g(iter) {
   yield* iter;
@@ -42,4 +47,4 @@ assertEquals({value: -1, done: true}, it.return(-1));
 
 var it = g(new NullThrow);
 assertEquals({value: 0, done: false}, it.next());
-assertThrows(TypeError, () => it.throw(new Error));
+assertThrows(NullThrowError, () => it.throw(new Error));

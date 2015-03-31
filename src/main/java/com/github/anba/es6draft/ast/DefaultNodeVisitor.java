@@ -83,6 +83,10 @@ public abstract class DefaultNodeVisitor<R, V> implements NodeVisitor<R, V> {
         return visit((StatementListItem) node, value);
     }
 
+    protected R visit(Program node, V value) {
+        return visit((Node) node, value);
+    }
+
     /* NodeVisitor interface */
 
     @Override
@@ -487,7 +491,7 @@ public abstract class DefaultNodeVisitor<R, V> implements NodeVisitor<R, V> {
 
     @Override
     public R visit(Module node, V value) {
-        return visit((Node) node, value);
+        return visit((Program) node, value);
     }
 
     @Override
@@ -562,7 +566,7 @@ public abstract class DefaultNodeVisitor<R, V> implements NodeVisitor<R, V> {
 
     @Override
     public R visit(Script node, V value) {
-        return visit((Node) node, value);
+        return visit((Program) node, value);
     }
 
     @Override

@@ -69,7 +69,7 @@ final class LanguageSubtagRegistryData {
      */
     static final String extlang(String prefix, String extlang) {
         String v = extlangData.get(extlang);
-        if (v != null && prefix.equals(v)) {
+        if (v != null && v.equals(prefix)) {
             return extlang;
         }
         return null;

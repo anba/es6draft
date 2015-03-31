@@ -7,9 +7,9 @@
 package com.github.anba.es6draft.regexp;
 
 /**
- * Common interface for regular expression matcher objects
+ * Common interface for regular expression matcher objects.
  */
-public interface RegExpMatcher {
+public interface RegExpMatcher extends Cloneable {
     /**
      * Returns a {@link MatchState} object for {@code input}.
      * 
@@ -27,4 +27,11 @@ public interface RegExpMatcher {
      * @return the match state
      */
     MatchState matcher(CharSequence input);
+
+    /**
+     * Returns a clone of this {@link RegExpMatcher} object.
+     * 
+     * @return the new matcher
+     */
+    RegExpMatcher clone();
 }

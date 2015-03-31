@@ -241,160 +241,110 @@ final class CaseFoldData {
     public static final void appendCaseInsensitiveUnicodeRange(RegExpParser parser, int startChar,
             int endChar) {
         // Type 1
-        if (startChar <= 0x00b5
-                && 0x00b5 <= endChar
-                && !((startChar <= 0x039c && 0x039c <= endChar) || (startChar <= 0x03bc && 0x03bc <= endChar))) {
+        if (startChar <= 0x00b5 && 0x00b5 <= endChar && !(0x039c <= endChar)) {
             parser.appendCharacter(0x039c);
             parser.appendCharacter(0x03bc);
         }
-        if (startChar <= 0x017f
-                && 0x017f <= endChar
-                && !((startChar <= 0x0053 && 0x0053 <= endChar) || (startChar <= 0x0073 && 0x0073 <= endChar))) {
+        if (startChar <= 0x017f && 0x017f <= endChar && !(startChar <= 0x0073)) {
             parser.appendCharacter(0x0053);
             parser.appendCharacter(0x0073);
         }
-        if (startChar <= 0x01c5
-                && 0x01c5 <= endChar
-                && !((startChar <= 0x01c4 && 0x01c4 <= endChar) || (startChar <= 0x01c6 && 0x01c6 <= endChar))) {
+        if (startChar <= 0x01c5 && 0x01c5 <= endChar && !(startChar <= 0x01c4 || 0x01c6 <= endChar)) {
             parser.appendCharacter(0x01c4);
             parser.appendCharacter(0x01c6);
         }
-        if (startChar <= 0x01c8
-                && 0x01c8 <= endChar
-                && !((startChar <= 0x01c7 && 0x01c7 <= endChar) || (startChar <= 0x01c9 && 0x01c9 <= endChar))) {
+        if (startChar <= 0x01c8 && 0x01c8 <= endChar && !(startChar <= 0x01c7 || 0x01c9 <= endChar)) {
             parser.appendCharacter(0x01c7);
             parser.appendCharacter(0x01c9);
         }
-        if (startChar <= 0x01cb
-                && 0x01cb <= endChar
-                && !((startChar <= 0x01ca && 0x01ca <= endChar) || (startChar <= 0x01cc && 0x01cc <= endChar))) {
+        if (startChar <= 0x01cb && 0x01cb <= endChar && !(startChar <= 0x01ca || 0x01cc <= endChar)) {
             parser.appendCharacter(0x01ca);
             parser.appendCharacter(0x01cc);
         }
-        if (startChar <= 0x01f2
-                && 0x01f2 <= endChar
-                && !((startChar <= 0x01f1 && 0x01f1 <= endChar) || (startChar <= 0x01f3 && 0x01f3 <= endChar))) {
+        if (startChar <= 0x01f2 && 0x01f2 <= endChar && !(startChar <= 0x01f1 || 0x01f3 <= endChar)) {
             parser.appendCharacter(0x01f1);
             parser.appendCharacter(0x01f3);
         }
-        if (startChar <= 0x0345
-                && 0x0345 <= endChar
-                && !((startChar <= 0x0399 && 0x0399 <= endChar) || (startChar <= 0x03b9 && 0x03b9 <= endChar))) {
+        if (startChar <= 0x0345 && 0x0345 <= endChar && !(0x0399 <= endChar)) {
             parser.appendCharacter(0x0399);
             parser.appendCharacter(0x03b9);
         }
-        if (startChar <= 0x03c2
-                && 0x03c2 <= endChar
-                && !((startChar <= 0x03a3 && 0x03a3 <= endChar) || (startChar <= 0x03c3 && 0x03c3 <= endChar))) {
+        if (startChar <= 0x03c2 && 0x03c2 <= endChar && !(startChar <= 0x03a3 || 0x03c3 <= endChar)) {
             parser.appendCharacter(0x03a3);
             parser.appendCharacter(0x03c3);
         }
-        if (startChar <= 0x03d0
-                && 0x03d0 <= endChar
-                && !((startChar <= 0x0392 && 0x0392 <= endChar) || (startChar <= 0x03b2 && 0x03b2 <= endChar))) {
+        if (startChar <= 0x03d0 && 0x03d0 <= endChar && !(startChar <= 0x03b2)) {
             parser.appendCharacter(0x0392);
             parser.appendCharacter(0x03b2);
         }
-        if (startChar <= 0x03d1
-                && 0x03d1 <= endChar
-                && !((startChar <= 0x0398 && 0x0398 <= endChar) || (startChar <= 0x03b8 && 0x03b8 <= endChar))) {
+        if (startChar <= 0x03d1 && 0x03d1 <= endChar && !(startChar <= 0x03b8)) {
             parser.appendCharacter(0x0398);
             parser.appendCharacter(0x03b8);
         }
-        if (startChar <= 0x03d5
-                && 0x03d5 <= endChar
-                && !((startChar <= 0x03a6 && 0x03a6 <= endChar) || (startChar <= 0x03c6 && 0x03c6 <= endChar))) {
+        if (startChar <= 0x03d5 && 0x03d5 <= endChar && !(startChar <= 0x03c6)) {
             parser.appendCharacter(0x03a6);
             parser.appendCharacter(0x03c6);
         }
-        if (startChar <= 0x03d6
-                && 0x03d6 <= endChar
-                && !((startChar <= 0x03a0 && 0x03a0 <= endChar) || (startChar <= 0x03c0 && 0x03c0 <= endChar))) {
+        if (startChar <= 0x03d6 && 0x03d6 <= endChar && !(startChar <= 0x03c0)) {
             parser.appendCharacter(0x03a0);
             parser.appendCharacter(0x03c0);
         }
-        if (startChar <= 0x03f0
-                && 0x03f0 <= endChar
-                && !((startChar <= 0x039a && 0x039a <= endChar) || (startChar <= 0x03ba && 0x03ba <= endChar))) {
+        if (startChar <= 0x03f0 && 0x03f0 <= endChar && !(startChar <= 0x03ba)) {
             parser.appendCharacter(0x039a);
             parser.appendCharacter(0x03ba);
         }
-        if (startChar <= 0x03f1
-                && 0x03f1 <= endChar
-                && !((startChar <= 0x03a1 && 0x03a1 <= endChar) || (startChar <= 0x03c1 && 0x03c1 <= endChar))) {
+        if (startChar <= 0x03f1 && 0x03f1 <= endChar && !(startChar <= 0x03c1)) {
             parser.appendCharacter(0x03a1);
             parser.appendCharacter(0x03c1);
         }
-        if (startChar <= 0x03f5
-                && 0x03f5 <= endChar
-                && !((startChar <= 0x0395 && 0x0395 <= endChar) || (startChar <= 0x03b5 && 0x03b5 <= endChar))) {
+        if (startChar <= 0x03f5 && 0x03f5 <= endChar && !(startChar <= 0x03b5)) {
             parser.appendCharacter(0x0395);
             parser.appendCharacter(0x03b5);
         }
-        if (startChar <= 0x1e9b
-                && 0x1e9b <= endChar
-                && !((startChar <= 0x1e60 && 0x1e60 <= endChar) || (startChar <= 0x1e61 && 0x1e61 <= endChar))) {
+        if (startChar <= 0x1e9b && 0x1e9b <= endChar && !(startChar <= 0x1e61)) {
             parser.appendCharacter(0x1e60);
             parser.appendCharacter(0x1e61);
         }
-        if (startChar <= 0x1fbe
-                && 0x1fbe <= endChar
-                && !((startChar <= 0x0399 && 0x0399 <= endChar) || (startChar <= 0x03b9 && 0x03b9 <= endChar))) {
+        if (startChar <= 0x1fbe && 0x1fbe <= endChar && !(startChar <= 0x03b9)) {
             parser.appendCharacter(0x0399);
             parser.appendCharacter(0x03b9);
         }
 
         // Type 2
-        if (startChar <= 0x03f4
-                && 0x03f4 <= endChar
-                && !((startChar <= 0x0398 && 0x0398 <= endChar) || (startChar <= 0x03b8 && 0x03b8 <= endChar))) {
+        if (startChar <= 0x03f4 && 0x03f4 <= endChar && !(startChar <= 0x03b8)) {
             parser.appendCharacter(0x0398);
             parser.appendCharacter(0x03b8);
         }
-        if (startChar <= 0x0398
-                && 0x0398 <= endChar
-                && !((startChar <= 0x03f4 && 0x03f4 <= endChar) || (startChar <= 0x03b8 && 0x03b8 <= endChar))) {
+        if (startChar <= 0x0398 && 0x0398 <= endChar && !(0x03b8 <= endChar)) {
             parser.appendCharacter(0x03f4);
         }
-        if (startChar <= 0x2126
-                && 0x2126 <= endChar
-                && !((startChar <= 0x03a9 && 0x03a9 <= endChar) || (startChar <= 0x03c9 && 0x03c9 <= endChar))) {
+        if (startChar <= 0x2126 && 0x2126 <= endChar && !(startChar <= 0x03c9)) {
             parser.appendCharacter(0x03a9);
             parser.appendCharacter(0x03c9);
         }
-        if (startChar <= 0x03a9
-                && 0x03a9 <= endChar
-                && !((startChar <= 0x2126 && 0x2126 <= endChar) || (startChar <= 0x03c9 && 0x03c9 <= endChar))) {
+        if (startChar <= 0x03a9 && 0x03a9 <= endChar && !(0x03c9 <= endChar)) {
             parser.appendCharacter(0x2126);
         }
-        if (startChar <= 0x212a
-                && 0x212a <= endChar
-                && !((startChar <= 0x004b && 0x004b <= endChar) || (startChar <= 0x006b && 0x006b <= endChar))) {
+        if (startChar <= 0x212a && 0x212a <= endChar && !(startChar <= 0x006b)) {
             parser.appendCharacter(0x004b);
             parser.appendCharacter(0x006b);
         }
-        if (startChar <= 0x004b
-                && 0x004b <= endChar
-                && !((startChar <= 0x212a && 0x212a <= endChar) || (startChar <= 0x006b && 0x006b <= endChar))) {
+        if (startChar <= 0x004b && 0x004b <= endChar && !(0x006b <= endChar)) {
             parser.appendCharacter(0x212a);
         }
-        if (startChar <= 0x212b
-                && 0x212b <= endChar
-                && !((startChar <= 0x00c5 && 0x00c5 <= endChar) || (startChar <= 0x00e5 && 0x00e5 <= endChar))) {
+        if (startChar <= 0x212b && 0x212b <= endChar && !(startChar <= 0x00e5)) {
             parser.appendCharacter(0x00c5);
             parser.appendCharacter(0x00e5);
         }
-        if (startChar <= 0x00c5
-                && 0x00c5 <= endChar
-                && !((startChar <= 0x212b && 0x212b <= endChar) || (startChar <= 0x00e5 && 0x00e5 <= endChar))) {
+        if (startChar <= 0x00c5 && 0x00c5 <= endChar && !(0x00e5 <= endChar)) {
             parser.appendCharacter(0x212b);
         }
 
         // Type 3
-        if (startChar <= 0x1e9e && 0x1e9e <= endChar && !(startChar <= 0x00df && 0x00df <= endChar)) {
+        if (startChar <= 0x1e9e && 0x1e9e <= endChar && !(startChar <= 0x00df)) {
             parser.appendCharacter(0x00df);
         }
-        if (startChar <= 0x00df && 0x00df <= endChar && !(startChar <= 0x1e9e && 0x1e9e <= endChar)) {
+        if (startChar <= 0x00df && 0x00df <= endChar && !(0x1e9e <= endChar)) {
             parser.appendCharacter(0x1e9e);
         }
     }

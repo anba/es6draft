@@ -442,10 +442,10 @@ public final class PromiseAbstractOperations {
             /* step 1 (not applicable) */
             /* step 2 */
             PromiseCapability<?> promiseCapability = reaction.getCapabilities();
-            /* steps 3-8 */
+            /* steps 3-7 */
             Object handlerResult;
             if (reaction.getType() == PromiseReaction.Type.Identity) {
-                /* steps 4, 8 */
+                /* step 4 */
                 handlerResult = argument;
             } else if (reaction.getType() == PromiseReaction.Type.Thrower) {
                 /* steps 5, 7 */
@@ -454,7 +454,7 @@ public final class PromiseAbstractOperations {
             } else {
                 /* step 3 */
                 Callable handler = reaction.getHandler();
-                /* steps 6-8 */
+                /* steps 6-7 */
                 try {
                     handlerResult = handler.call(cx, UNDEFINED, argument);
                 } catch (ScriptException e) {
@@ -463,7 +463,7 @@ public final class PromiseAbstractOperations {
                     return;
                 }
             }
-            /* steps 9-10 */
+            /* steps 8-9 */
             promiseCapability.getResolve().call(cx, UNDEFINED, handlerResult);
         }
     }

@@ -91,8 +91,8 @@ for (let t of transformer) {
     w = t(w);
     if (!(isPrimaryExpression(w) && w === t(w))) assertSyntaxError(`function f() { (${w}); }`);
     assertSyntaxError(`function f() { ({${w}}); }`);
-    assertSyntaxError(`function f() { ({${w}}) = {}; }`);
-    assertSyntaxError(`function f() { ({x: ${w}}) = {}; }`);
+    assertSyntaxError(`function f() { ({${w}} = {}); }`);
+    assertSyntaxError(`function f() { ({x: ${w}} = {}); }`);
     assertSyntaxError(`function f() { [${w}] = {}; }`);
     assertSyntaxError(`function f() { [...${w}] = {}; }`);
   }
@@ -103,8 +103,8 @@ for (let t of transformer) {
     Function(`
       function f1() { (${w}); }
       function f2() { ({${w}}); }
-      function f3() { ({${w}}) = {}; }
-      function f4() { ({x: ${w}}) = {}; }
+      function f3() { ({${w}} = {}); }
+      function f4() { ({x: ${w}} = {}); }
       function f5() { [${w}] = {}; }
       function f6() { [...${w}] = {}; }
     `);
@@ -118,8 +118,8 @@ for (let t of transformer) {
     w = t(w);
     if (!(isPrimaryExpression(w) && w === t(w))) assertSyntaxError(`function f() {"use strict"; (${w}); }`);
     assertSyntaxError(`function f() {"use strict"; ({${w}}); }`);
-    assertSyntaxError(`function f() {"use strict"; ({${w}}) = {}; }`);
-    assertSyntaxError(`function f() {"use strict"; ({x: ${w}}) = {}; }`);
+    assertSyntaxError(`function f() {"use strict"; ({${w}} = {}); }`);
+    assertSyntaxError(`function f() {"use strict"; ({x: ${w}} = {}); }`);
     assertSyntaxError(`function f() {"use strict"; [${w}] = {}; }`);
     assertSyntaxError(`function f() {"use strict"; [...${w}] = {}; }`);
   }
@@ -132,8 +132,8 @@ for (let t of transformer) {
     w = t(w);
     if (!(isPrimaryExpressionOrYield(w) && w === t(w))) assertSyntaxError(`function* f() { (${w}); }`);
     assertSyntaxError(`function* f() { ({${w}}); }`);
-    assertSyntaxError(`function* f() { ({${w}}) = {}; }`);
-    assertSyntaxError(`function* f() { ({x: ${w}}) = {}; }`);
+    assertSyntaxError(`function* f() { ({${w}} = {}); }`);
+    assertSyntaxError(`function* f() { ({x: ${w}} = {}); }`);
     assertSyntaxError(`function* f() { [${w}] = {}; }`);
     assertSyntaxError(`function* f() { [...${w}] = {}; }`);
   }
@@ -144,8 +144,8 @@ for (let t of transformer) {
     Function(`
       function* f1() { (${w}); }
       function* f2() { ({${w}}); }
-      function* f3() { ({${w}}) = {}; }
-      function* f4() { ({x: ${w}}) = {}; }
+      function* f3() { ({${w}} = {}); }
+      function* f4() { ({x: ${w}} = {}); }
       function* f5() { [${w}] = {}; }
       function* f6() { [...${w}] = {}; }
     `);
@@ -159,8 +159,8 @@ for (let t of transformer) {
     w = t(w);
     if (!(isPrimaryExpressionOrYield(w) && w === t(w))) assertSyntaxError(`function* f() {"use strict"; (${w}); }`);
     assertSyntaxError(`function* f() {"use strict"; ({${w}}); }`);
-    assertSyntaxError(`function* f() {"use strict"; ({${w}}) = {}; }`);
-    assertSyntaxError(`function* f() {"use strict"; ({x: ${w}}) = {}; }`);
+    assertSyntaxError(`function* f() {"use strict"; ({${w}} = {}); }`);
+    assertSyntaxError(`function* f() {"use strict"; ({x: ${w}} = {}); }`);
     assertSyntaxError(`function* f() {"use strict"; [${w}] = {}; }`);
     assertSyntaxError(`function* f() {"use strict"; [...${w}] = {}; }`);
   }

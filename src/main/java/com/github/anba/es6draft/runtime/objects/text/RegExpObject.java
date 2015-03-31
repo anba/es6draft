@@ -25,6 +25,7 @@ public final class RegExpObject extends OrdinaryObject {
 
     /** [[OriginalFlags]] */
     private String originalFlags;
+    private int flags;
 
     /** [[RegExpMatcher]] */
     private RegExpMatcher regExpMatcher;
@@ -42,7 +43,49 @@ public final class RegExpObject extends OrdinaryObject {
     void initialize(String originalSource, String originalFlags, RegExpMatcher matcher) {
         this.originalSource = originalSource;
         this.originalFlags = originalFlags;
+        this.flags = Flags.from(originalFlags);
         this.regExpMatcher = matcher;
+    }
+
+    enum Flags {
+        Global, IgnoreCase, Multiline, Sticky, Unicode;
+
+        int mask() {
+            return 1 << ordinal();
+        }
+
+        boolean isSet(int flags) {
+            return (flags & mask()) != 0;
+        }
+
+        static Flags of(char c) {
+            switch (c) {
+            case 'g':
+                return Global;
+            case 'i':
+                return IgnoreCase;
+            case 'm':
+                return Multiline;
+            case 'u':
+                return Unicode;
+            case 'y':
+                return Sticky;
+            default:
+                return null;
+            }
+        }
+
+        static int from(String flags) {
+            int f = 0;
+            for (int i = 0; i < flags.length(); ++i) {
+                f |= of(flags.charAt(i)).mask();
+            }
+            return f;
+        }
+    }
+
+    boolean isSet(Flags flag) {
+        return flag.isSet(flags);
     }
 
     /**

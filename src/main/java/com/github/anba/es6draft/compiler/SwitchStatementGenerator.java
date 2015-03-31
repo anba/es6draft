@@ -6,19 +6,19 @@
  */
 package com.github.anba.es6draft.compiler;
 
-import static com.github.anba.es6draft.semantics.StaticSemantics.LexicallyScopedDeclarations;
-
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
 import com.github.anba.es6draft.ast.AbruptNode.Abrupt;
+import com.github.anba.es6draft.ast.BinaryExpression;
 import com.github.anba.es6draft.ast.Expression;
 import com.github.anba.es6draft.ast.Node;
 import com.github.anba.es6draft.ast.NumericLiteral;
 import com.github.anba.es6draft.ast.StringLiteral;
 import com.github.anba.es6draft.ast.SwitchClause;
 import com.github.anba.es6draft.ast.SwitchStatement;
+import com.github.anba.es6draft.ast.UnaryExpression;
 import com.github.anba.es6draft.compiler.Labels.BreakLabel;
 import com.github.anba.es6draft.compiler.StatementGenerator.Completion;
 import com.github.anba.es6draft.compiler.assembler.Jump;
@@ -26,6 +26,7 @@ import com.github.anba.es6draft.compiler.assembler.MethodName;
 import com.github.anba.es6draft.compiler.assembler.Type;
 import com.github.anba.es6draft.compiler.assembler.Variable;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
+import com.github.anba.es6draft.runtime.internal.Bootstrap;
 
 /**
  * <h1>13 ECMAScript Language: Statements and Declarations</h1>
@@ -36,11 +37,6 @@ import com.github.anba.es6draft.runtime.LexicalEnvironment;
 final class SwitchStatementGenerator extends
         DefaultCodeGenerator<StatementGenerator.Completion, StatementVisitor> {
     private static final class Methods {
-        // class: AbstractOperations
-        static final MethodName AbstractOperations_StrictEqualityComparison = MethodName
-                .findStatic(Types.AbstractOperations, "StrictEqualityComparison",
-                        Type.methodType(Type.BOOLEAN_TYPE, Types.Object, Types.Object));
-
         // class: CharSequence
         static final MethodName CharSequence_charAt = MethodName.findInterface(Types.CharSequence,
                 "charAt", Type.methodType(Type.CHAR_TYPE, Type.INT_TYPE));
@@ -67,10 +63,17 @@ final class SwitchStatementGenerator extends
             for (SwitchClause switchClause : node.getClauses()) {
                 Expression expr = switchClause.getExpression();
                 if (expr != null) {
-                    // TODO: does not handle negative numbers (UnaryExpression -> (NumericLiteral))
-                    if (!(expr instanceof NumericLiteral && ((NumericLiteral) expr).isInt())) {
-                        return false;
+                    if (expr instanceof NumericLiteral && ((NumericLiteral) expr).isInt()) {
+                        continue;
                     }
+                    if (expr instanceof UnaryExpression
+                            && ((UnaryExpression) expr).getOperator() == UnaryExpression.Operator.NEG
+                            && ((UnaryExpression) expr).getOperand() instanceof NumericLiteral
+                            && ((NumericLiteral) ((UnaryExpression) expr).getOperand()).isInt()
+                            && ((NumericLiteral) ((UnaryExpression) expr).getOperand()).intValue() != 0) {
+                        continue;
+                    }
+                    return false;
                 }
             }
             return true;
@@ -80,12 +83,11 @@ final class SwitchStatementGenerator extends
             for (SwitchClause switchClause : node.getClauses()) {
                 Expression expr = switchClause.getExpression();
                 if (expr != null) {
-                    if (!(expr instanceof StringLiteral)) {
-                        return false;
+                    if (expr instanceof StringLiteral
+                            && ((StringLiteral) expr).getValue().length() == 1) {
+                        continue;
                     }
-                    if (((StringLiteral) expr).getValue().length() != 1) {
-                        return false;
-                    }
+                    return false;
                 }
             }
             return true;
@@ -187,10 +189,9 @@ final class SwitchStatementGenerator extends
             mv.store(switchValue);
         }
 
-        boolean hasDeclarations = !LexicallyScopedDeclarations(node).isEmpty();
-        if (hasDeclarations) {
+        if (node.getScope().isPresent()) {
             newDeclarativeEnvironment(mv);
-            new BlockDeclarationInstantiationGenerator(codegen).generate(node, mv);
+            codegen.blockInit(node, mv);
             pushLexicalEnvironment(mv);
         }
 
@@ -205,7 +206,7 @@ final class SwitchStatementGenerator extends
         if (!defaultClausePresent) {
             mv.mark(lblExit);
         }
-        if (hasDeclarations && !result.isAbrupt()) {
+        if (node.getScope().isPresent() && !result.isAbrupt()) {
             popLexicalEnvironment(mv);
         }
         if (lblBreak.isTarget()) {
@@ -305,6 +306,12 @@ final class SwitchStatementGenerator extends
         return false;
     }
 
+    private void invokeDynamicOperator(BinaryExpression.Operator operator, ExpressionVisitor mv) {
+        // stack: [lval, rval, cx?] -> [result]
+        mv.invokedynamic(Bootstrap.getName(operator), Bootstrap.getMethodDescriptor(operator),
+                Bootstrap.getBootstrap(operator));
+    }
+
     /**
      * <h3>default-switch</h3>
      * 
@@ -382,7 +389,7 @@ final class SwitchStatementGenerator extends
                 mv.load(switchValue);
                 // 13.11.10 Runtime Semantics: CaseSelectorEvaluation
                 expressionBoxedValue(expr, mv);
-                mv.invoke(Methods.AbstractOperations_StrictEqualityComparison);
+                invokeDynamicOperator(BinaryExpression.Operator.SHEQ, mv);
                 mv.ifne(caseLabel);
             }
         }
@@ -746,7 +753,13 @@ final class SwitchStatementGenerator extends
         for (int i = 0, j = 0, size = clauses.size(); i < size; ++i) {
             Expression expr = clauses.get(i).getExpression();
             if (expr != null) {
-                entries[j++] = Entry(((NumericLiteral) expr).intValue(), i);
+                int value;
+                if (expr instanceof NumericLiteral) {
+                    value = ((NumericLiteral) expr).intValue();
+                } else {
+                    value = -((NumericLiteral) ((UnaryExpression) expr).getOperand()).intValue();
+                }
+                entries[j++] = Entry(value, i);
             }
         }
         // sort values in ascending order

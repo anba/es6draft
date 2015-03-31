@@ -12,21 +12,12 @@ const {
 assertSyntaxError(`try {} catch (e) { function e(){} }`);
 assertSyntaxError(`try {} catch (e) { function* e(){} }`);
 
-assertSyntaxError(`try {} catch (e) { function e(){} }`);
-assertSyntaxError(`try {} catch (e) { function* e(){} }`);
-
 
 // Catch variable is ArrayBindingPattern
 assertSyntaxError(`try {} catch ([e]) { function e(){} }`);
 assertSyntaxError(`try {} catch ([e]) { function* e(){} }`);
 
-assertSyntaxError(`try {} catch ([e]) { function e(){} }`);
-assertSyntaxError(`try {} catch ([e]) { function* e(){} }`);
-
 
 // Catch variable is ObjectBindingPattern
-assertSyntaxError(`try {} catch ({e}) { function e(){} }`);
-assertSyntaxError(`try {} catch ({e}) { function* e(){} }`);
-
 assertSyntaxError(`try {} catch ({e}) { function e(){} }`);
 assertSyntaxError(`try {} catch ({e}) { function* e(){} }`);

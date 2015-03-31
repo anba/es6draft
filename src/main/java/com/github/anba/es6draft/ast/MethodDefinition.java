@@ -56,6 +56,11 @@ public final class MethodDefinition extends PropertyDefinition implements Functi
         return scope;
     }
 
+    @Override
+    public BindingIdentifier getIdentifier() {
+        return null;
+    }
+
     /**
      * Returns the method's type.
      * 

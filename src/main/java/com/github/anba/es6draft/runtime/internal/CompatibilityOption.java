@@ -164,6 +164,11 @@ public enum CompatibilityOption {
     ProxyProtoSkipEnumerate,
 
     /**
+     * Moz-Extension: Allow parenthesized array- and object-literals in destructuring contexts
+     */
+    ParenthesizedDestructuring,
+
+    /**
      * Moz-Extension: RegExp.prototype.source returns the empty string instead of {@code (?:)}
      */
     RegExpEmptySource,
@@ -244,7 +249,8 @@ public enum CompatibilityOption {
      * @return the options set for mozilla-compatibility
      */
     public static final Set<CompatibilityOption> MozCompatibility() {
-        return addAll(WebCompatibility(), EnumSet.range(ForEachStatement, ProxyProtoSkipEnumerate),
+        return addAll(WebCompatibility(),
+                EnumSet.range(ForEachStatement, ParenthesizedDestructuring),
                 EnumSet.of(Comprehension));
     }
 

@@ -149,15 +149,7 @@ final class RuntimeInfoGenerator {
     }
 
     private static boolean hasScopedName(FunctionNode node) {
-        if (node instanceof FunctionExpression) {
-            return ((FunctionExpression) node).getIdentifier() != null;
-        } else if (node instanceof GeneratorExpression) {
-            return ((GeneratorExpression) node).getIdentifier() != null;
-        } else if (node instanceof AsyncFunctionExpression) {
-            return ((AsyncFunctionExpression) node).getIdentifier() != null;
-        } else {
-            return false;
-        }
+        return node instanceof Expression && node.getIdentifier() != null;
     }
 
     private static <T> T get(Future<T> future) {

@@ -94,7 +94,7 @@ public final class ModuleEnvironmentRecord extends DeclarativeEnvironmentRecord 
     public void createImportBinding(String name, ModuleRecord module, String otherName) {
         /* step 1 (omitted) */
         /* step 2 */
-        assert !hasBinding(name);
+        assert !hasBinding(name) : "binding redeclaration: " + name;
         /* step 3 (not applicable) */
         /* step 4 */
         assert !module.isInstantiated() || hasDirectBinding(module, otherName);

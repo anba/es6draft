@@ -5,8 +5,6 @@
 # <https://github.com/anba/es6draft>
 #
 
-# for-of over undefined/null throws in JSC
-js/script-tests/arguments-iterator.js
 
 # array destructuring uses Symbol.iterator
 js/script-tests/destructuring-assignment.js
@@ -32,11 +30,20 @@ js/script-tests/typedarray-set-overlapping-elements-of-same-size.js
 # invalid test, `(new Array(1)).findIndex(function(){return true})` is -1
 js/script-tests/array-findIndex.js
 
-# invalid test, ToString(searchString) appears before ToInteger(position)
-js/script-tests/string-includes.js
+# ES6: SetFunctionName not implemented in WebKit
+js/script-tests/object-literal-computed-methods.js
 
-# ES6: lexical redeclaration checks in eval
-js/script-tests/eval-and-with.js
+# Test framework bug: Missing definition of evalAndLog in standalone-pre.js
+js/script-tests/class-syntax-extends.js
+
+# ES6: lexical declarations in eval are scoped to a new lexical env
+js/script-tests/class-syntax-default-constructor.js
+
+# invalid test (wrong expected value for 7*8^55)
+js/script-tests/octal-literals.js
+
+# invalid test, const declaration cannot appear directly in with statement
+js/script-tests/const.js
 
 
 ###################
@@ -77,6 +84,7 @@ js/script-tests/numeric-escapes-in-string-literals.js
 
 # different error message
 js/script-tests/caller-property.js
+js/script-tests/class-syntax-call.js
 js/script-tests/class-syntax-declaration.js
 js/script-tests/class-syntax-expression.js
 js/script-tests/date-proto-generic-invocation.js
@@ -99,7 +107,8 @@ js/script-tests/date-toisostring.js
 
 # different function source representation
 js/kde/script-tests/function.js
-js/script-tests/function-toString-semicolon-insertion.js
+js/script-tests/object-literal-methods.js
+js/script-tests/class-syntax-name.js
 
 # Date.prototype.toUTCString and Date.prototype.toGMTString distinct objects in JSC
 js/kde/script-tests/inbuilt_function_tostring.js
@@ -107,9 +116,6 @@ js/kde/script-tests/inbuilt_function_tostring.js
 # error objects have non-standard 'line' and 'sourceURL' properties in JSC
 js/script-tests/exception-properties.js
 js/script-tests/exception-linenums.js
-
-# property key enumeration order
-js/script-tests/array-functions-non-arrays.js
 
 # WebKit bug test?
 js/kde/script-tests/evil-n.js
@@ -166,6 +172,7 @@ js/script-tests/modify-non-references.js
 js/script-tests/dfg-activation-register-overwritten-in-throw.js
 
 # setter in object literal requires exactly one argument
+js/script-tests/class-syntax-super.js
 js/script-tests/for-in-cached.js
 js/script-tests/object-literal-direct-put.js
 js/script-tests/object-literal-syntax.js

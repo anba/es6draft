@@ -8,7 +8,7 @@ package com.github.anba.es6draft.ast;
 
 import java.util.List;
 
-import com.github.anba.es6draft.ast.scope.Scope;
+import com.github.anba.es6draft.ast.scope.BlockScope;
 
 /**
  * <h1>14 ECMAScript Language: Functions and Classes</h1>
@@ -24,7 +24,7 @@ public interface ClassDefinition extends ScopedNode {
      * @return the scope object or {@code null}
      */
     @Override
-    Scope getScope();
+    BlockScope getScope();
 
     /**
      * Returns the class name

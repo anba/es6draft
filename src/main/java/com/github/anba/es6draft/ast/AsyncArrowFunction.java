@@ -53,6 +53,11 @@ public final class AsyncArrowFunction extends Expression implements FunctionNode
     }
 
     @Override
+    public BindingIdentifier getIdentifier() {
+        return null;
+    }
+
+    @Override
     public String getMethodName() {
         if (methodName != null) {
             return methodName;

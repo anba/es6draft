@@ -17,6 +17,8 @@ assertSyntaxError(`try {} catch (e) { const e = [] }`);
 assertSyntaxError(`try {} catch (e) { const [e] = [] }`);
 assertSyntaxError(`try {} catch (e) { const {e} = [] }`);
 
+assertSyntaxError(`try {} catch (e) { class e {} }`);
+
 
 // Catch variable is ArrayBindingPattern
 assertSyntaxError(`try {} catch ([e]) { let e = [] }`);
@@ -27,6 +29,8 @@ assertSyntaxError(`try {} catch ([e]) { const e = [] }`);
 assertSyntaxError(`try {} catch ([e]) { const [e] = [] }`);
 assertSyntaxError(`try {} catch ([e]) { const {e} = [] }`);
 
+assertSyntaxError(`try {} catch (e) { class e {} }`);
+
 
 // Catch variable is ObjectBindingPattern
 assertSyntaxError(`try {} catch ({e}) { let e = [] }`);
@@ -36,3 +40,5 @@ assertSyntaxError(`try {} catch ({e}) { let {e} = [] }`);
 assertSyntaxError(`try {} catch ({e}) { const e = [] }`);
 assertSyntaxError(`try {} catch ({e}) { const [e] = [] }`);
 assertSyntaxError(`try {} catch ({e}) { const {e} = [] }`);
+
+assertSyntaxError(`try {} catch (e) { class e {} }`);

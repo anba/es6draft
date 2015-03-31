@@ -20,7 +20,7 @@ import com.github.anba.es6draft.ast.TopLevelNode;
  */
 public interface TopLevelScope extends Scope {
     /**
-     * Always returns <code>null</code> for function scopes.
+     * Always returns <code>null</code> for top-level scopes.
      */
     @Override
     Scope getParent();
@@ -52,7 +52,7 @@ public interface TopLevelScope extends Scope {
     /**
      * Returns the set of variable declared names.
      * 
-     * @return the variables declared names
+     * @return the variable declared names
      */
     Set<Name> varDeclaredNames();
 

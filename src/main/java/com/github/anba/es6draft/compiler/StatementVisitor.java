@@ -118,15 +118,9 @@ abstract class StatementVisitor extends ExpressionVisitor {
         }
     }
 
-    enum CodeType {
-        GlobalScript, NonGlobalScript, Function,
-    }
-
     private static final int COMPLETION_SLOT = 1;
 
-    private final TopLevelNode<?> topLevelNode;
-    private final CodeType codeType;
-    private final boolean isScriptCode;
+    private final boolean isFunction;
     private final boolean isGeneratorOrAsync;
     private Variable<Object> completionValue;
     private Labels labels = new Labels(null, null);
@@ -137,25 +131,21 @@ abstract class StatementVisitor extends ExpressionVisitor {
 
     protected StatementVisitor(MethodCode method, StatementVisitor parent) {
         super(method, parent);
-        this.topLevelNode = parent.getTopLevelNode();
-        this.codeType = parent.getCodeType();
-        this.isScriptCode = codeType != CodeType.Function;
-        this.isGeneratorOrAsync = codeType == CodeType.Function && isGeneratorOrAsync(topLevelNode);
-        // no return in script code
-        this.labels.returnLabel = codeType == CodeType.Function ? new ReturnLabel() : null;
+        this.isFunction = parent.isFunction;
+        this.isGeneratorOrAsync = parent.isGeneratorOrAsync;
+        // no return in script/module code
+        this.labels.returnLabel = isFunction ? new ReturnLabel() : null;
         this.finallyDepth = parent.finallyDepth;
         this.wrapped = parent.wrapped;
     }
 
-    protected StatementVisitor(MethodCode method, boolean strict, TopLevelNode<?> topLevelNode,
-            CodeType codeType) {
-        super(method, strict, codeType == CodeType.GlobalScript, topLevelNode.hasSyntheticNodes());
-        this.topLevelNode = topLevelNode;
-        this.codeType = codeType;
-        this.isScriptCode = codeType != CodeType.Function;
-        this.isGeneratorOrAsync = codeType == CodeType.Function && isGeneratorOrAsync(topLevelNode);
-        // no return in script code
-        this.labels.returnLabel = codeType == CodeType.Function ? new ReturnLabel() : null;
+    protected StatementVisitor(MethodCode method, TopLevelNode<?> topLevelNode, boolean strict) {
+        super(method, topLevelNode, strict);
+        boolean isFunction = topLevelNode instanceof FunctionNode;
+        this.isFunction = isFunction;
+        this.isGeneratorOrAsync = isFunction && isGeneratorOrAsync(topLevelNode);
+        // no return in script/module code
+        this.labels.returnLabel = isFunction ? new ReturnLabel() : null;
     }
 
     private static boolean isGeneratorOrAsync(TopLevelNode<?> node) {
@@ -166,28 +156,14 @@ abstract class StatementVisitor extends ExpressionVisitor {
     @Override
     public void begin() {
         super.begin();
-        if (isScriptCode) {
+        if (!isFunction) {
             completionValue = hasParameter(COMPLETION_SLOT, Object.class) ? getParameter(
                     COMPLETION_SLOT, Object.class) : newVariable("completion", Object.class);
         }
     }
 
-    /**
-     * Returns the {@link TopLevelNode} for this statement visitor.
-     * 
-     * @return the top level node for this statement visitor
-     */
-    final TopLevelNode<?> getTopLevelNode() {
-        return topLevelNode;
-    }
-
-    /**
-     * Returns the {@link CodeType} for this statement visitor.
-     * 
-     * @return the code type for this statement visitor
-     */
-    final CodeType getCodeType() {
-        return codeType;
+    final boolean isFunction() {
+        return isFunction;
     }
 
     @Override
@@ -199,7 +175,7 @@ abstract class StatementVisitor extends ExpressionVisitor {
      * Pushes the completion value onto the stack.
      */
     void loadCompletionValue() {
-        if (isScriptCode) {
+        if (!isFunction) {
             load(completionValue);
         } else {
             aconst(null);
@@ -222,13 +198,13 @@ abstract class StatementVisitor extends ExpressionVisitor {
     }
 
     boolean hasCompletion() {
-        return isScriptCode && finallyDepth == 0;
+        return !isFunction && finallyDepth == 0;
     }
 
     @Override
     void enterTailCallPosition(Expression expr) {
-        if (!isWrapped() && !isGeneratorOrAsync) {
-            assert !isScriptCode;
+        if (!isWrapped() && !isGeneratorOrAsync()) {
+            assert isFunction;
             super.enterTailCallPosition(expr);
         }
     }

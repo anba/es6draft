@@ -31,6 +31,7 @@ public final class Code {
     private static final int JAVA_VERSION = Opcodes.V1_7;
 
     private final ArrayList<ClassCode> classes = new ArrayList<>();
+    private final SourceInfo sourceInfo;
     private final ClassCode mainClass;
     private ExternConstantPool sharedConstantPool = null;
     private ClassCode currentClass;
@@ -53,8 +54,8 @@ public final class Code {
      */
     public Code(int access, String className, ClassSignature signature, Type superClass,
             List<Type> interfaces, SourceInfo sourceInfo) {
-        mainClass = newMainClass(this, access, className, signature, superClass, interfaces,
-                sourceInfo);
+        this.sourceInfo = sourceInfo;
+        this.mainClass = newMainClass(this, access, className, signature, superClass, interfaces);
         classes.add(mainClass);
         setCurrentClass(mainClass);
     }
@@ -70,16 +71,16 @@ public final class Code {
         return currentClass;
     }
 
-    private static ClassCode newMainClass(Code code, int access, String className,
-            ClassSignature signature, Type superClass, List<Type> interfaces, SourceInfo sourceInfo) {
+    private ClassCode newMainClass(Code code, int access, String className,
+            ClassSignature signature, Type superClass, List<Type> interfaces) {
         ConstantPool constantPool = new InlineConstantPool(code);
         return newClass(constantPool, access, className, signature, superClass, interfaces,
                 sourceInfo);
     }
 
-    private static ClassCode newClass(ConstantPool constantPool, int access, String className) {
+    private ClassCode newClass(ConstantPool constantPool, int access, String className) {
         return newClass(constantPool, access, className, ClassSignature.NONE, Types.Object,
-                Collections.<Type> emptyList(), EMPTY_SOURCE_INFO);
+                Collections.<Type> emptyList(), sourceInfo);
     }
 
     private static ClassCode newClass(ConstantPool constantPool, int access, String className,
@@ -106,18 +107,6 @@ public final class Code {
         }
         return names;
     }
-
-    private static final SourceInfo EMPTY_SOURCE_INFO = new SourceInfo() {
-        @Override
-        public String getSourceMap() {
-            return null;
-        }
-
-        @Override
-        public String getFileName() {
-            return null;
-        }
-    };
 
     /**
      * Returns the list of generated {@link ClassCode} objects.

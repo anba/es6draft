@@ -2989,7 +2989,7 @@ public final class AbstractOperations {
      * @param iterator
      *            the script iterator object
      * @param isThrowCompletion
-     *            {@code true} if the completion is Throw
+     *            {@code true} if the completion type is Throw
      */
     public static void IteratorClose(ExecutionContext cx, ScriptIterator<?> iterator,
             boolean isThrowCompletion) {
@@ -3006,7 +3006,7 @@ public final class AbstractOperations {
      * @param iterator
      *            the script iterator object
      * @param isThrowCompletion
-     *            {@code true} if the completion is Throw
+     *            {@code true} if the completion type is Throw
      */
     public static void IteratorClose(ExecutionContext cx, ScriptObject iterator,
             boolean isThrowCompletion) {

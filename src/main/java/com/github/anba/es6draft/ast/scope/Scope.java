@@ -11,13 +11,20 @@ import com.github.anba.es6draft.ast.ScopedNode;
 /**
  * Base interface for scope information.
  */
-public interface Scope {
+public interface Scope extends Iterable<Scope> {
     /**
      * Returns the parent scope.
      * 
      * @return the parent scope
      */
     Scope getParent();
+
+    /**
+     * Returns the enclosing top-level scope.
+     * 
+     * @return the top-level scope
+     */
+    TopLevelScope getTop();
 
     /**
      * Returns the {@link ScopedNode} for this scope object.
@@ -27,7 +34,7 @@ public interface Scope {
     ScopedNode getNode();
 
     /**
-     * Returns <code>true</code> if {@code name} is declared in this scope.
+     * Returns <code>true</code> if {@code name} is statically declared in this scope.
      * 
      * @param name
      *            the variable name
@@ -36,11 +43,28 @@ public interface Scope {
     boolean isDeclared(Name name);
 
     /**
-     * Returns the declared name for {@code name}.
+     * Returns the resolved name for {@code name}. {@code name} must be statically declared in this
+     * scope.
      * 
      * @param name
      *            the variable name
-     * @return the declared name
+     * @param lookupByName
+     *            named lookup
+     * @return the resolved name
      */
-    Name getDeclaredName(Name name);
+    Name resolveName(Name name, boolean lookupByName);
+
+    /**
+     * Returns <code>true</code> if the scope is emitted at runtime.
+     * 
+     * @return <code>true</code> if the scope is emitted
+     */
+    boolean isPresent();
+
+    /**
+     * Returns <code>true</code> for dynamically scoped objects, <code>false</code> otherwise.
+     * 
+     * @return <code>true</code> if a dynamic scope
+     */
+    boolean isDynamic();
 }

@@ -25,6 +25,7 @@ public abstract class HoistableDeclaration extends Declaration implements Functi
      * 
      * @return the binding identifier or {@code null}
      */
+    @Override
     public abstract BindingIdentifier getIdentifier();
 
     /**

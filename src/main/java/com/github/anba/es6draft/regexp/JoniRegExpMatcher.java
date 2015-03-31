@@ -65,7 +65,7 @@ final class JoniRegExpMatcher implements RegExpMatcher {
     }
 
     @Override
-    public MatchState matcher(CharSequence s) {
+    public JoniMatchState matcher(CharSequence s) {
         if (s != lastInput) {
             lastInput = s;
             lastInputBytes = UCS2Encoding.toBytes(s);
@@ -73,6 +73,13 @@ final class JoniRegExpMatcher implements RegExpMatcher {
         // -2 to account for null-terminating bytes in c-string
         Matcher matcher = getPattern().matcher(lastInputBytes, 0, lastInputBytes.length - 2);
         return new JoniMatchState(matcher, s, negativeLAGroups);
+    }
+
+    @Override
+    public JoniRegExpMatcher clone() {
+        JoniRegExpMatcher clone = new JoniRegExpMatcher(regex, flags, negativeLAGroups);
+        clone.pattern = pattern;
+        return clone;
     }
 
     @Override

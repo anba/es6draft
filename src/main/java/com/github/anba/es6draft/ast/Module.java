@@ -16,29 +16,19 @@ import com.github.anba.es6draft.runtime.internal.Source;
 
 /**
  * <h1>15 ECMAScript Language: Scripts and Modules</h1><br>
- * <h2>15.3 Modules</h2>
+ * <h2>15.2 Modules</h2>
  */
-public final class Module extends AstNode implements TopLevelNode<ModuleItem>, ScopedNode {
-    private final Source source;
+public final class Module extends Program implements TopLevelNode<ModuleItem> {
     private final ModuleScope scope;
     private List<ModuleItem> statements;
-    private final EnumSet<CompatibilityOption> options;
-    private final EnumSet<Parser.Option> parserOptions;
     private boolean syntheticNodes;
 
     public Module(long beginPosition, long endPosition, Source source, ModuleScope scope,
             List<ModuleItem> statements, EnumSet<CompatibilityOption> options,
             EnumSet<Parser.Option> parserOptions) {
-        super(beginPosition, endPosition);
-        this.source = source;
+        super(beginPosition, endPosition, source, options, parserOptions);
         this.scope = scope;
         this.statements = statements;
-        this.options = options;
-        this.parserOptions = parserOptions;
-    }
-
-    public Source getSource() {
-        return source;
     }
 
     @Override
@@ -54,14 +44,6 @@ public final class Module extends AstNode implements TopLevelNode<ModuleItem>, S
     @Override
     public void setStatements(List<ModuleItem> statements) {
         this.statements = statements;
-    }
-
-    public EnumSet<CompatibilityOption> getOptions() {
-        return options;
-    }
-
-    public EnumSet<Parser.Option> getParserOptions() {
-        return parserOptions;
     }
 
     @Override

@@ -111,6 +111,32 @@ public final class Eval {
             }
             return options;
         }
+
+        public static int toFlags(EnumSet<Parser.Option> options) {
+            int flags = 0;
+            if (options.contains(Parser.Option.DirectEval)) {
+                flags |= EvalFlags.Direct.getValue();
+            }
+            if (options.contains(Parser.Option.Strict)) {
+                flags |= EvalFlags.Strict.getValue();
+            }
+            if (!options.contains(Parser.Option.FunctionCode)) {
+                flags |= EvalFlags.GlobalCode.getValue();
+            }
+            if (!options.contains(Parser.Option.LocalScope)) {
+                flags |= EvalFlags.GlobalScope.getValue();
+            }
+            if (!options.contains(Parser.Option.FunctionThis)) {
+                flags |= EvalFlags.GlobalThis.getValue();
+            }
+            if (options.contains(Parser.Option.EnclosedByWithStatement)) {
+                flags |= EvalFlags.EnclosedByWithStatement.getValue();
+            }
+            if (options.contains(Parser.Option.EnclosedByLexicalDeclaration)) {
+                flags |= EvalFlags.EnclosedByLexicalDeclaration.getValue();
+            }
+            return flags;
+        }
     }
 
     /**

@@ -82,6 +82,10 @@ public abstract class DefaultVoidNodeVisitor<V> implements VoidNodeVisitor<V> {
         visit((StatementListItem) node, value);
     }
 
+    protected void visit(Program node, V value) {
+        visit((Node) node, value);
+    }
+
     /* NodeVisitor interface */
 
     @Override
@@ -486,7 +490,7 @@ public abstract class DefaultVoidNodeVisitor<V> implements VoidNodeVisitor<V> {
 
     @Override
     public void visit(Module node, V value) {
-        visit((Node) node, value);
+        visit((Program) node, value);
     }
 
     @Override
@@ -561,7 +565,7 @@ public abstract class DefaultVoidNodeVisitor<V> implements VoidNodeVisitor<V> {
 
     @Override
     public void visit(Script node, V value) {
-        visit((Node) node, value);
+        visit((Program) node, value);
     }
 
     @Override

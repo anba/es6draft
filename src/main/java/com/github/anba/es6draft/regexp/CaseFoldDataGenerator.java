@@ -126,20 +126,29 @@ final class CaseFoldDataGenerator {
         return String.format("startChar <= 0x%04x && 0x%04x <= endChar", v, v);
     }
 
-    private static String block(int... args) {
-        String block = "";
-        for (int i : args) {
-            block += String.format("parser.appendCharacter(0x%04x);", i);
+    private static String rangeCheck(int t, int v) {
+        if (t < v) {
+            return String.format("0x%04x <= endChar", v);
         }
-        return block;
+        if (t > v) {
+            return String.format("startChar <= 0x%04x", v);
+        }
+        throw new AssertionError();
+    }
+
+    private static String block(int... args) {
+        StringBuilder block = new StringBuilder();
+        for (int i : args) {
+            block.append(String.format("parser.appendCharacter(0x%04x);", i));
+        }
+        return block.toString();
     }
 
     private static void addIfStatement1(StringBuilder code, int test, int range1) {
         assert test != range1;
 
-        String cond = String.format("%s && !(%s)", rangeCheck(test), rangeCheck(range1));
+        String cond = String.format("%s && !(%s)", rangeCheck(test), rangeCheck(test, range1));
         String block = block(range1);
-
         String ifStatement = String.format("if (%s) { %s }%n", cond, block);
         code.append(ifStatement);
     }
@@ -148,10 +157,18 @@ final class CaseFoldDataGenerator {
             int... args) {
         assert test != range1 && test != range2 && range1 != range2;
 
-        String cond = String.format("%s && !((%s) || (%s))", rangeCheck(test), rangeCheck(range1),
-                rangeCheck(range2));
+        String cond;
+        if (test < range1 && test < range2) {
+            cond = String.format("%s && !(%s)", rangeCheck(test),
+                    rangeCheck(test, Math.min(range1, range2)));
+        } else if (test > range1 && test > range2) {
+            cond = String.format("%s && !(%s)", rangeCheck(test),
+                    rangeCheck(test, Math.max(range1, range2)));
+        } else {
+            cond = String.format("%s && !(%s || %s)", rangeCheck(test), rangeCheck(test, range1),
+                    rangeCheck(test, range2));
+        }
         String block = block(args);
-
         String ifStatement = String.format("if (%s) { %s }%n", cond, block);
         code.append(ifStatement);
     }
@@ -325,7 +342,7 @@ final class CaseFoldDataGenerator {
                 for (int codePoint : clause.getValue()) {
                     code.append(String.format("case 0x%04x: %n", codePoint));
                 }
-                code.append(String.format(" return 0x%04x;%n", clause.getKey().intValue()));
+                code.append(String.format(" return 0x%04x;%n", clause.getKey()));
             }
             code.append("default: return -1;\n");
             code.append("}\n");

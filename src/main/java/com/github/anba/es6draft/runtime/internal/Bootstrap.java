@@ -1196,7 +1196,7 @@ public final class Bootstrap {
         if (target != null) {
             target = target.asType(callsite.type());
             if (test != null) {
-                MethodHandle fallback = getFallback(callsite, generic);
+                MethodHandle fallback = createFallback(callsite, generic);
                 callSiteTarget = MethodHandles.guardWithTest(test, target, fallback);
             } else {
                 callSiteTarget = target;
@@ -1208,14 +1208,14 @@ public final class Bootstrap {
         return target;
     }
 
-    private static MethodHandle getFallback(MutableCallSite callsite, MethodHandle generic) {
+    private static MethodHandle createFallback(MutableCallSite callsite, MethodHandle generic) {
         // only perform fallback to generic for now
         MethodHandle fallback = MethodHandles.insertArguments(switchToGenericMH, 0, callsite,
                 generic);
-        return getSetupCallSiteTarget(callsite.type(), fallback);
+        return setupCallSiteTarget(callsite.type(), fallback);
     }
 
-    private static MethodHandle getSetupCallSiteTarget(MethodType type, MethodHandle target) {
+    private static MethodHandle setupCallSiteTarget(MethodType type, MethodHandle target) {
         return MethodHandles.foldArguments(MethodHandles.exactInvoker(type), target);
     }
 
@@ -1368,7 +1368,7 @@ public final class Bootstrap {
                 throw new IllegalArgumentException(name);
             }
 
-            callsite.setTarget(getSetupCallSiteTarget(type, setup));
+            callsite.setTarget(setupCallSiteTarget(type, setup));
             return callsite;
         } catch (StackOverflowError e) {
             switch (name) {

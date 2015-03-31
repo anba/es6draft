@@ -28,23 +28,26 @@ public final class Characters {
      * </pre>
      * 
      * @param c
-     *            the character to inspect
+     *            the character
      * @return {@code true} if the character is a whitespace
      */
     public static boolean isWhitespace(int c) {
-        return (c == 0x09 || c == 0x0B || c == 0x0C || c == 0x20 || c == 0xA0 || c == 0xFEFF || isSpaceSeparator(c));
+        if (c <= 127) {
+            return c == 0x09 || c == 0x0B || c == 0x0C || c == 0x20;
+        }
+        return c == 0xA0 || c == 0xFEFF || isSpaceSeparator(c);
     }
 
     /**
      * Unicode category "Zs" (space separator)
      * 
      * @param c
-     *            the character to inspect
+     *            the character
      * @return {@code true} if the character is space separator
      */
     public static boolean isSpaceSeparator(int c) {
-        return (c == 0x20 || c == 0xA0 || c == 0x1680 || c == 0x180E
-                || (c >= 0x2000 && c <= 0x200A) || c == 0x202F || c == 0x205F || c == 0x3000);
+        return c == 0x20 || c == 0xA0 || c == 0x1680 || c == 0x180E || (c >= 0x2000 && c <= 0x200A)
+                || c == 0x202F || c == 0x205F || c == 0x3000;
     }
 
     /**
@@ -59,14 +62,14 @@ public final class Characters {
      * </pre>
      * 
      * @param c
-     *            the character to inspect
+     *            the character
      * @return {@code true} if the character is a line terminator
      */
     public static boolean isLineTerminator(int c) {
         if ((c & ~0b0010_0000_0010_1111) != 0) {
             return false;
         }
-        return (c == 0x0A || c == 0x0D || c == 0x2028 || c == 0x2029);
+        return c == 0x0A || c == 0x0D || c == 0x2028 || c == 0x2029;
     }
 
     /**
@@ -74,7 +77,7 @@ public final class Characters {
      * <strong>[11.3] Line Terminators</strong>
      * 
      * @param c
-     *            the character to inspect
+     *            the character
      * @return {@code true} if the character is whitespace or a line terminator
      */
     public static boolean isWhitespaceOrLineTerminator(int c) {
@@ -98,7 +101,7 @@ public final class Characters {
      * </pre>
      * 
      * @param c
-     *            the character to inspect
+     *            the character
      * @return {@code true} if the character is an identifier start character
      */
     public static boolean isIdentifierStart(int c) {
@@ -123,8 +126,7 @@ public final class Characters {
         case Character.LETTER_NUMBER:
             return true;
         }
-        // Additional characters for ID_Start based on Unicode 5.1.
-        // Also applies to Unicode 6.0 (Java 7), Unicode 6.2 (Java 8) and Unicode 7.0 (Current).
+        // Grandfathered characters (Other_ID_Start) [Unicode 7.0].
         switch (c) {
         case '\u2118':
         case '\u212E':
@@ -151,7 +153,7 @@ public final class Characters {
      * </pre>
      * 
      * @param c
-     *            the character to inspect
+     *            the character
      * @return {@code true} if the character is an identifier part character
      */
     public static boolean isIdentifierPart(int c) {
@@ -183,7 +185,7 @@ public final class Characters {
         case Character.CONNECTOR_PUNCTUATION:
             return true;
         }
-        // Additional characters for ID_Continue based on Unicode 5.1.
+        // Grandfathered characters (Other_ID_Start + Other_ID_Continue) [Unicode 7.0].
         switch (c) {
         case '\u00B7':
         case '\u0387':
@@ -196,16 +198,56 @@ public final class Characters {
         case '\u136F':
         case '\u1370':
         case '\u1371':
+        case '\u19DA':
         case '\u2118':
         case '\u212E':
         case '\u309B':
         case '\u309C':
             return true;
         }
-        // Additional characters for ID_Continue based on Unicode 6.0 (Java 7).
-        // Also applies to Unicode 6.2 (Java 8) and Unicode 7.0 (Current).
+        return false;
+    }
+
+    /**
+     * <strong>[11.6] Names and Keywords</strong>
+     * 
+     * <pre>
+     * UnicodeIDStart ::
+     *     any Unicode character with the Unicode property "ID_Start".
+     * </pre>
+     * 
+     * @param c
+     *            the character
+     * @return {@code true} if the character is an identifier start character
+     */
+    public static boolean isUnicodeIDStart(int c) {
+        if (c <= 127) {
+            return ('a' <= (c | 0x20) && (c | 0x20) <= 'z') || c == '_';
+        }
+        return isUnicodeIDStartUnlikely(c);
+    }
+
+    private static boolean isUnicodeIDStartUnlikely(int c) {
+        // cf. http://www.unicode.org/reports/tr31/ for definition of "ID_Start"
+        if (c == '\u2E2F') {
+            // VERTICAL TILDE is in 'Lm' and [:Pattern_Syntax:]
+            return false;
+        }
+        switch (Character.getType(c)) {
+        case Character.UPPERCASE_LETTER:
+        case Character.LOWERCASE_LETTER:
+        case Character.TITLECASE_LETTER:
+        case Character.MODIFIER_LETTER:
+        case Character.OTHER_LETTER:
+        case Character.LETTER_NUMBER:
+            return true;
+        }
+        // Grandfathered characters (Other_ID_Start) [Unicode 7.0].
         switch (c) {
-        case '\u19DA':
+        case '\u2118':
+        case '\u212E':
+        case '\u309B':
+        case '\u309C':
             return true;
         }
         return false;
@@ -216,11 +258,11 @@ public final class Characters {
      * 
      * <pre>
      * UnicodeIDContinue ::
-     *     any Unicode character with the Unicode property "ID_Continue", "Other_ID_Continue", or "Other_ID_Start"
+     *     any Unicode character with the Unicode property "ID_Continue"
      * </pre>
      * 
      * @param c
-     *            the character to inspect
+     *            the character
      * @return {@code true} if the character is an identifier part character
      */
     public static boolean isUnicodeIDContinue(int c) {
@@ -249,7 +291,7 @@ public final class Characters {
         case Character.CONNECTOR_PUNCTUATION:
             return true;
         }
-        // Additional characters for ID_Continue based on Unicode 5.1.
+        // Grandfathered characters (Other_ID_Start + Other_ID_Continue) [Unicode 7.0].
         switch (c) {
         case '\u00B7':
         case '\u0387':
@@ -262,16 +304,11 @@ public final class Characters {
         case '\u136F':
         case '\u1370':
         case '\u1371':
+        case '\u19DA':
         case '\u2118':
         case '\u212E':
         case '\u309B':
         case '\u309C':
-            return true;
-        }
-        // Additional characters for ID_Continue based on Unicode 6.0 (Java 7).
-        // Also applies to Unicode 6.2 (Java 8) and Unicode 7.0 (Current).
-        switch (c) {
-        case '\u19DA':
             return true;
         }
         return false;

@@ -18,9 +18,6 @@ fast/js/toString-overrides.js
 # invalid test, `JSON.stringify(Object.assign(new Boolean(true), {valueOf(){ return 2 }}))` is "true"
 run-json-stringify.js
 
-# ES6: lexical redeclaration checks in eval
-eval-and-with.js
-
 
 ###################
 # Misc issues     #
@@ -146,9 +143,6 @@ fast/js/parser-syntax-check.js
 # Static Semantics: Early errors invalid LHS
 fast/js/function-toString-parentheses.js
 fast/js/modify-non-references.js
-
-# duplicate property keys are allowed
-object-literal-syntax.js
 
 # block-scoped function declaration activated at definition
 fast/js/kde/func-decl.js

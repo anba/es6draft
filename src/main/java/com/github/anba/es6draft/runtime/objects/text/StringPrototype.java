@@ -1056,7 +1056,7 @@ public final class StringPrototype extends OrdinaryObject implements Initializab
             case "NFKD":
                 return Normalizer.normalize(s, Normalizer.NFKD);
             default:
-                throw newRangeError(cx, Messages.Key.InvalidNormalizationForm);
+                throw newRangeError(cx, Messages.Key.InvalidNormalizationForm, f);
             }
         }
 

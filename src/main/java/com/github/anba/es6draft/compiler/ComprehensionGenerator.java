@@ -158,10 +158,9 @@ abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void, Express
      */
     @Override
     public Void visit(LegacyComprehension node, ExpressionVisitor mv) {
-        // Create a new declarative lexical environment.
-        // stack: [] -> [env]
-        newDeclarativeEnvironment(mv);
-        {
+        if (node.getScope().isPresent()) {
+            // stack: [] -> [env]
+            newDeclarativeEnvironment(mv);
             // stack: [env] -> [env, envRec]
             getEnvRec(mv);
 
@@ -175,16 +174,17 @@ abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void, Express
                 mv.invoke(Methods.EnvironmentRecord_initializeBinding);
             }
             mv.pop();
+            // stack: [env] -> []
+            pushLexicalEnvironment(mv);
         }
-        // stack: [env] -> []
-        pushLexicalEnvironment(mv);
 
         mv.enterScope(node);
         visit((Comprehension) node, mv);
         mv.exitScope();
 
-        // Restore the previous lexical environment.
-        popLexicalEnvironment(mv);
+        if (node.getScope().isPresent()) {
+            popLexicalEnvironment(mv);
+        }
 
         return null;
     }
@@ -243,10 +243,9 @@ abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void, Express
         mv.invoke(Methods.Iterator_next);
 
         /* steps 6f-6j */
-        // Create a new declarative lexical environment.
-        // stack: [nextValue] -> [nextValue, forEnv]
-        newDeclarativeEnvironment(mv);
-        {
+        if (node.getScope().isPresent()) {
+            // stack: [nextValue] -> [nextValue, forEnv]
+            newDeclarativeEnvironment(mv);
             // stack: [nextValue, forEnv] -> [forEnv, nextValue, envRec]
             mv.dupX1();
             mv.invoke(Methods.LexicalEnvironment_getEnvRec);
@@ -259,9 +258,9 @@ abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void, Express
 
             // stack: [forEnv, envRec, nextValue] -> [forEnv]
             BindingInitializationWithEnvironment(node.getBinding(), mv);
+            // stack: [forEnv] -> []
+            pushLexicalEnvironment(mv);
         }
-        // stack: [forEnv] -> []
-        pushLexicalEnvironment(mv);
 
         /* steps 6k-6m */
         mv.enterScope(node);
@@ -277,8 +276,9 @@ abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void, Express
             protected void epilogue(ComprehensionFor node, Variable<ScriptIterator<?>> iterator,
                     ExpressionVisitor mv) {
                 /* step 6l */
-                // Restore the previous lexical environment.
-                popLexicalEnvironment(mv);
+                if (node.getScope().isPresent()) {
+                    popLexicalEnvironment(mv);
+                }
             }
 
             @Override

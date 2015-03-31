@@ -5,7 +5,6 @@
  * <https://github.com/anba/es6draft>
  */
 const {
-  assertSyntaxError
 } = Assert;
 
 // Catch variable is BindingIdentifier

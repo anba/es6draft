@@ -26,48 +26,48 @@ function assertClassName(c, name) {
   var f10, g10, a10, c10, d10;
   var f13, g13, a13, c13, d13;
 
-  ({f7 = function (){}}) = [];
+  ({f7 = function (){}} = []);
   assertFunctionName(f7, "f7");
 
-  ({g7 = function* (){}}) = [];
+  ({g7 = function* (){}} = []);
   assertFunctionName(g7, "g7");
 
-  ({a7 = () => {}}) = [];
+  ({a7 = () => {}} = []);
   assertFunctionName(a7, "a7");
 
-  ({c7 = class {}}) = [];
+  ({c7 = class {}} = []);
   assertFunctionName(c7, "c7");
 
-  ({d7 = class { static get name() { return "<class-name>" } }}) = [];
+  ({d7 = class { static get name() { return "<class-name>" } }} = []);
   assertClassName(d7, "<class-name>");
 
-  ({key: f10 = function (){}}) = [];
+  ({key: f10 = function (){}} = []);
   assertFunctionName(f10, "f10");
 
-  ({key: g10 = function* (){}}) = [];
+  ({key: g10 = function* (){}} = []);
   assertFunctionName(g10, "g10");
 
-  ({key: a10 = () => {}}) = [];
+  ({key: a10 = () => {}} = []);
   assertFunctionName(a10, "a10");
 
-  ({key: c10 = class {}}) = [];
+  ({key: c10 = class {}} = []);
   assertFunctionName(c10, "c10");
 
-  ({key: d10 = class { static get name() { return "<class-name>" } }}) = [];
+  ({key: d10 = class { static get name() { return "<class-name>" } }} = []);
   assertClassName(d10, "<class-name>");
 
-  ({["key"]: f13 = function (){}}) = [];
+  ({["key"]: f13 = function (){}} = []);
   assertFunctionName(f13, "f13");
 
-  ({["key"]: g13 = function* (){}}) = [];
+  ({["key"]: g13 = function* (){}} = []);
   assertFunctionName(g13, "g13");
 
-  ({["key"]: a13 = () => {}}) = [];
+  ({["key"]: a13 = () => {}} = []);
   assertFunctionName(a13, "a13");
 
-  ({["key"]: c13 = class {}}) = [];
+  ({["key"]: c13 = class {}} = []);
   assertFunctionName(c13, "c13");
 
-  ({["key"]: d13 = class { static get name() { return "<class-name>" } }}) = [];
+  ({["key"]: d13 = class { static get name() { return "<class-name>" } }} = []);
   assertClassName(d13, "<class-name>");
 })();

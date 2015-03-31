@@ -499,17 +499,9 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
         private static void concatSpread(ExecutionContext cx, OrdinaryObject a, long offset,
                 TypedArrayObject e, long length) {
             assert length > 0;
-            long actualLength = Math.min(length, e.getArrayLength());
-            for (long k = 0; k < actualLength; ++k) {
+            for (long k = 0; k < length; ++k) {
                 Object subElement = Get(cx, e, k);
                 CreateDataPropertyOrThrow(cx, a, offset + k, subElement);
-            }
-            // FIXME: spec bug - (bug 3619)
-            // Fill remaining entries with undefined
-            if (length > actualLength) {
-                for (long k = actualLength; k < length; ++k) {
-                    CreateDataPropertyOrThrow(cx, a, offset + k, UNDEFINED);
-                }
             }
         }
 
@@ -555,12 +547,8 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
             ScriptObject o = ToObject(cx, thisValue);
             /* steps 3-4 */
             long len = ToLength(cx, Get(cx, o, "length"));
-            /* step 5 */
-            if (Type.isUndefined(separator)) {
-                separator = ",";
-            }
-            /* steps 6-7 */
-            String sep = ToFlatString(cx, separator);
+            /* steps 5-7 */
+            String sep = Type.isUndefined(separator) ? "," : ToFlatString(cx, separator);
             /* step 8 */
             if (len == 0) {
                 return "";
@@ -569,9 +557,7 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
             Object element0 = Get(cx, o, 0);
             /* steps 10-11 */
             StringBuilder r = new StringBuilder();
-            if (Type.isUndefinedOrNull(element0)) {
-                r.append("");
-            } else {
+            if (!Type.isUndefinedOrNull(element0)) {
                 r.append(ToString(cx, element0));
             }
             IterationKind iteration = iterationKind(o, len);
@@ -581,11 +567,10 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
             } else {
                 /* steps 12-13 */
                 for (long k = 1; k < len; ++k) {
+                    r.append(sep);
                     Object element = Get(cx, o, k);
-                    if (Type.isUndefinedOrNull(element)) {
-                        r.append(sep).append("");
-                    } else {
-                        r.append(sep).append(ToString(cx, element));
+                    if (!Type.isUndefinedOrNull(element)) {
+                        r.append(ToString(cx, element));
                     }
                 }
             }
@@ -633,8 +618,8 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
             }
             // Trailing elements after object type element.
             for (long k = lastKey + 1; k < length; ++k) {
-                Object element = Get(cx, o, k);
                 r.append(sep);
+                Object element = Get(cx, o, k);
                 if (!Type.isUndefinedOrNull(element)) {
                     r.append(ToString(cx, element));
                 }

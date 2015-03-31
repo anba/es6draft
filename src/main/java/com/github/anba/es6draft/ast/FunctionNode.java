@@ -23,6 +23,13 @@ public interface FunctionNode extends TopLevelNode<StatementListItem>, ScopedNod
     }
 
     /**
+     * Returns the binding identifier of this function or {@code null} if not present.
+     * 
+     * @return the binding identifier or {@code null}
+     */
+    BindingIdentifier getIdentifier();
+
+    /**
      * Returns the method name for compilation.
      * 
      * @return the method name

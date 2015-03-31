@@ -20,6 +20,20 @@ public interface FunctionScope extends TopLevelScope {
     FunctionNode getNode();
 
     /**
+     * Returns the variable scope.
+     * 
+     * @return the variable scope
+     */
+    Scope variableScope();
+
+    /**
+     * Returns the lexical scope.
+     * 
+     * @return the lexical scope
+     */
+    Scope lexicalScope();
+
+    /**
      * Returns the set of parameter names.
      * 
      * @return the parameter names
@@ -34,13 +48,11 @@ public interface FunctionScope extends TopLevelScope {
     Name arguments();
 
     /**
-     * Returns <code>true</code> for dynamically scoped objects, <code>false</code> otherwise.
+     * {@inheritDoc}
      * <p>
-     * A scope is considered dynamic if it can change during runtime, in other words that means it
-     * contains a non-strict, direct-eval call.
-     * 
-     * @return <code>true</code> if a dynamic scope
+     * A function scope is dynamic if it contains a non-strict, direct-eval call.
      */
+    @Override
     boolean isDynamic();
 
     /**

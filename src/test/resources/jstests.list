@@ -12,11 +12,6 @@ ecma_6/Generators/delegating-yield-3.js
 ecma_6/Generators/delegating-yield-5.js
 ecma_6/Generators/delegating-yield-7.js
 
-# ES6 spec bug? bug 78, bug 152: `var toString; toString` -> own property on global or not?
-ecma_5/extensions/destructuring-__proto__-shorthand-assignment.js
-ecma_5/extensions/destructuring-__proto__-shorthand-assignment-before-var.js
-ecma_5/misc/regress-bug632003.js
-
 # Invalid test: Number.NaN.to{Exponential,Precision}(-3) should _not_ throw a RangeError
 ecma_3/Number/15.7.4.6-1.js
 ecma_3/Number/15.7.4.7-1.js
@@ -50,9 +45,6 @@ ecma_6/Symbol/conversions.js
 ecma_6/Symbol/property-basics.js
 ecma_6/Symbol/property-reflection.js
 
-# yield* no longer performs complete error recovery
-ecma_6/Generators/iteration.js
-
 # Detached ArrayBuffer object issues, maybe request spec changes?
 ecma_6/extensions/DataView-construct-arguments-neutering.js
 ecma_6/extensions/DataView-set-arguments-neutering.js
@@ -67,20 +59,12 @@ ecma_6/Object/assign.js
 ecma_6/Reflect/set.js
 
 # SM bug (https://bugzilla.mozilla.org/show_bug.cgi?id=1115361)
-ecma_6/TypedArray/fill.js
-ecma_6/TypedArray/every-and-some.js
-ecma_6/TypedArray/indexOf-and-lastIndexOf.js
-ecma_6/TypedArray/join.js
 ecma_6/TypedArray/keys.js
-ecma_6/TypedArray/reduce-and-reduceRight.js
-ecma_6/TypedArray/reverse.js
 ecma_6/TypedArray/values.js
 
 # ES6: spec bug undefined/null in String.prototype methods
 ecma/String/15.5.4.8-2.js
 ecma_3/String/regress-83293.js
-ecma_5/misc/regexp-functions-with-undefined.js
-js1_5/extensions/regress-452329.js
 
 # ES6: Negative RegExp.prototype.lastIndex coerced to 0
 ecma_3/RegExp/15.10.6.2-2.js
@@ -126,6 +110,7 @@ ecma_6/Symbol/surfaces.js
 ecma_6/String/normalize-generateddata-part1-not-listed.js
 
 # ES6: Support for classes is incomplete in SM.
+ecma_6/Class/classHeritage.js
 ecma_6/Class/classPrototype.js
 ecma_6/Class/innerBinding.js
 ecma_6/Class/methodInstallation.js
@@ -139,6 +124,9 @@ ecma_6/TypedArray/map-and-filter.js
 
 # ES6: access to `this` throws in new'ed generators (TODO: allow in legacy generators?)
 js1_7/geniter/yield-new.js
+
+# SM: https://bugzilla.mozilla.org/show_bug.cgi?id=1141865
+ecma_6/Proxy/revoke-as-side-effect.js
 
 
 ####################################
@@ -172,10 +160,6 @@ ecma/String/15.5.4.3-1.js
 ecma/String/15.5.4.js
 ecma/Expressions/11.2.1-1.js
 
-# Array.prototype
-ecma/Array/15.4.4.js
-js1_8_5/regress/regress-583429.js
-
 # Date.prototype
 ecma/Date/15.9.5.js
 
@@ -184,6 +168,7 @@ ecma_5/RegExp/instance-property-storage-introspection.js
 ecma_6/RegExp/flags.js
 ecma_6/RegExp/flag-accessors.js
 ecma_6/RegExp/source.js
+ecma_6/RegExp/toString.js
 
 
 ###################
@@ -252,13 +237,9 @@ js1_8/extensions/regress-385729.js
 
 # SpiderMonkey __proto__ not own property on Object.prototype
 ecma_5/extensions/getOwnPropertyNames-__proto__.js
-ecma_6/Expressions/object-literal-__proto__.js
 
 # old 'Proxy' not completely emulated
 js1_8_5/extensions/proxy-enumerateOwn-duplicates.js
-
-# old 'Proxy' not completely emulated, Function.prototype.bind calls [[GetOwnProperty]]
-js1_8_5/extensions/scripted-proxies.js
 
 # Date parser
 ecma_3/Date/15.9.3.2-1.js
@@ -355,9 +336,6 @@ js1_7/geniter/regress-366941.js
 # Iterator + for-each returns [key,value] pairs
 js1_7/iterable/regress-568056.js
 
-# Proxy implementation in SpiderMonkey is incomplete
-js1_8_5/extensions/mutable-proto-special-form.js
-
 # Various issues, see modified reflect-parse.js file
 js1_8_5/extensions/reflect-parse.js
 
@@ -383,34 +361,8 @@ js1_8_5/extensions/typedarray-set-neutering.js
 # built-in functions are poisoned
 js1_8_5/regress/regress-591846.js
 
-# RegExp.prototype.{source,ignoreCase,global,multiline} now accessor
-ecma_5/Object/15.2.3.3-01.js
-ecma_5/Object/15.2.3.4-04.js
-ecma_5/strict/15.10.7.js
-
 # strict 'caller' no longer throws TypeError, returns null instead
 js1_8_5/extensions/censor-strict-caller.js
-
-# Function.length is configurable
-ecma/Array/15.4.4.3-1.js
-ecma/Array/15.4.4.4-1.js
-ecma/Array/15.4.4.4-2.js
-ecma/extensions/15.1.2.1-1.js
-ecma/GlobalObject/15.1.2.2-1.js
-ecma/GlobalObject/15.1.2.3-1.js
-ecma/GlobalObject/15.1.2.4.js
-ecma/GlobalObject/15.1.2.5-1.js
-ecma/GlobalObject/15.1.2.6.js
-ecma/GlobalObject/15.1.2.7.js
-ecma/String/15.5.4.6-2.js
-ecma/String/15.5.4.7-2.js
-ecma/String/15.5.4.8-1.js
-ecma/String/15.5.4.9-1.js
-ecma/String/15.5.4.10-1.js
-ecma/String/15.5.4.11-1.js
-ecma_5/Function/function-bind.js
-ecma_5/Object/15.2.3.6-function-length.js
-ecma_5/strict/15.3.5.1.js
 
 # String.prototype.split changed to use ToLength instead of ToUint32
 ecma_2/String/split-002.js
@@ -554,9 +506,6 @@ js1_8_5/regress/regress-636394.js
 # Error.prototype.columnNumber
 ecma/extensions/errorcolumnblame.js
 
-# SharedArrayBuffer object
-js1_8_5/extensions/sharedtypedarray.js
-
 # Debugger API
 js1_8_5/regress/regress-698028-2.js
 
@@ -573,6 +522,7 @@ js1_5/Exceptions/regress-315147.js
 js1_5/extensions/regress-367923.js
 js1_5/extensions/regress-365869.js
 js1_5/Regress/regress-323314-1.js
+js1_5/String/replace-flags.js
 js1_8_1/extensions/strict-warning.js
 js1_8_5/regress/regress-736792.js
 
@@ -594,9 +544,6 @@ js1_8_5/extensions/sps-generators.js
 
 # objectEmulatingUndefined() not supported
 Intl/extensions/options-value-emulates-undefined.js
-
-# createMappedArrayBuffer()
-js1_8_5/extensions/file-mapped-arraybuffers.js
 
 
 #######################################

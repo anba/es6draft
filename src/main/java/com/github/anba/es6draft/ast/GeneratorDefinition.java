@@ -13,5 +13,4 @@ package com.github.anba.es6draft.ast;
  * </ul>
  */
 public interface GeneratorDefinition extends FunctionNode {
-    BindingIdentifier getIdentifier();
 }
