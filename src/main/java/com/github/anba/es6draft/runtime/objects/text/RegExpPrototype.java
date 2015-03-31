@@ -1012,7 +1012,7 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
             return index + 1;
         }
         /* step 12 */
-        return index + 1;
+        return index + 2;
     }
 
     /**
@@ -1042,7 +1042,7 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
             return index + 1;
         }
         /* step 12 */
-        return index + 1;
+        return index + 2;
     }
 
     private static boolean isBuiltinRegExpPrototypeForExec(ExecutionContext cx) {
