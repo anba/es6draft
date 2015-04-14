@@ -27,6 +27,13 @@ public interface ClassDefinition extends ScopedNode {
     BlockScope getScope();
 
     /**
+     * Returns the list of class decorators.
+     * 
+     * @return the list of decorators
+     */
+    List<Expression> getDecorators();
+
+    /**
      * Returns the class name
      * 
      * @return the class name

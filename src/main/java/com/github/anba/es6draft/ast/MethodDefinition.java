@@ -20,6 +20,7 @@ public final class MethodDefinition extends PropertyDefinition implements Functi
     private final FunctionScope scope;
     private final MethodType type;
     private final MethodAllocation allocation;
+    private final List<Expression> decorators;
     private final PropertyName propertyName;
     private final FormalParameterList parameters;
     private List<StatementListItem> statements;
@@ -37,13 +38,14 @@ public final class MethodDefinition extends PropertyDefinition implements Functi
     }
 
     public MethodDefinition(long beginPosition, long endPosition, FunctionScope scope,
-            MethodType type, MethodAllocation allocation, PropertyName propertyName,
-            FormalParameterList parameters, List<StatementListItem> statements,
-            String headerSource, String bodySource) {
+            MethodType type, MethodAllocation allocation, List<Expression> decorators,
+            PropertyName propertyName, FormalParameterList parameters,
+            List<StatementListItem> statements, String headerSource, String bodySource) {
         super(beginPosition, endPosition);
         this.scope = scope;
         this.type = type;
         this.allocation = allocation;
+        this.decorators = decorators;
         this.propertyName = propertyName;
         this.parameters = parameters;
         this.statements = statements;
@@ -101,6 +103,15 @@ public final class MethodDefinition extends PropertyDefinition implements Functi
         default:
             return false;
         }
+    }
+
+    /**
+     * Returns the list of method decorators.
+     * 
+     * @return the list of decorators
+     */
+    public List<Expression> getDecorators() {
+        return decorators;
     }
 
     @Override

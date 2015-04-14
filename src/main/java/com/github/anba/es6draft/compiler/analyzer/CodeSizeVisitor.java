@@ -124,10 +124,26 @@ final class CodeSizeVisitor implements IntNodeVisitor<CodeSizeHandler> {
         return reportSize(node, size, handler);
     }
 
-    private int analyze(MethodDefinition node, PropertyName child, int nodeSize,
+    private int analyze(Node node, List<? extends Node> children,
+            List<? extends Node> moreChildren, Node extra, int nodeSize, int childFactor,
             CodeSizeHandler handler) {
+        int size = nodeSize + childFactor * children.size() + childFactor * moreChildren.size();
+        for (Node child : children) {
+            size += child.accept(this, handler);
+        }
+        for (Node child : moreChildren) {
+            size += child.accept(this, handler);
+        }
+        if (extra != null) {
+            size += extra.accept(this, handler);
+        }
+        return reportSize(node, size, handler);
+    }
+
+    private int analyze(MethodDefinition node, int nodeSize, CodeSizeHandler handler) {
         int size = nodeSize;
-        if (child != null) {
+        size += node.getPropertyName().accept(this, handler);
+        for (Node child : node.getDecorators()) {
             size += child.accept(this, handler);
         }
         // TODO: reportSize() problematic
@@ -285,12 +301,14 @@ final class CodeSizeVisitor implements IntNodeVisitor<CodeSizeHandler> {
 
     @Override
     public int visit(ClassDeclaration node, CodeSizeHandler handler) {
-        return analyze(node, node.getProperties(), node.getHeritage(), 50, 10, handler);
+        return analyze(node, node.getDecorators(), node.getProperties(), node.getHeritage(), 50,
+                10, handler);
     }
 
     @Override
     public int visit(ClassExpression node, CodeSizeHandler handler) {
-        return analyze(node, node.getProperties(), node.getHeritage(), 50, 10, handler);
+        return analyze(node, node.getDecorators(), node.getProperties(), node.getHeritage(), 50,
+                10, handler);
     }
 
     @Override
@@ -563,7 +581,7 @@ final class CodeSizeVisitor implements IntNodeVisitor<CodeSizeHandler> {
     @Override
     public int visit(MethodDefinition node, CodeSizeHandler handler) {
         submit(node, node.getStatements(), handler);
-        return analyze(node, node.getPropertyName(), 10, handler);
+        return analyze(node, 10, handler);
     }
 
     @Override
@@ -723,6 +741,7 @@ final class CodeSizeVisitor implements IntNodeVisitor<CodeSizeHandler> {
 
     @Override
     public int visit(SwitchStatement node, CodeSizeHandler handler) {
+        // TODO: Doesn't take optimized switches (int,char,string) into account.
         return analyze(node, node.getClauses(), node.getExpression(), 100, 0, handler);
     }
 

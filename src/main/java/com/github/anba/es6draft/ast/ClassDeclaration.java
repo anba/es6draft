@@ -21,6 +21,7 @@ import com.github.anba.es6draft.ast.scope.Name;
  */
 public final class ClassDeclaration extends Declaration implements ClassDefinition {
     private final BlockScope scope;
+    private final List<Expression> decorators;
     private final BindingIdentifier identifier;
     private final Name name;
     private final Expression heritage;
@@ -30,10 +31,11 @@ public final class ClassDeclaration extends Declaration implements ClassDefiniti
     private List<PropertyDefinition> properties;
 
     public ClassDeclaration(long beginPosition, long endPosition, BlockScope scope,
-            BindingIdentifier identifier, Expression heritage, List<MethodDefinition> methods,
-            String className) {
+            List<Expression> decorators, BindingIdentifier identifier, Expression heritage,
+            List<MethodDefinition> methods, String className) {
         super(beginPosition, endPosition);
         this.scope = scope;
+        this.decorators = decorators;
         this.identifier = identifier;
         this.name = identifier != null ? identifier.getName() : new Name(Name.DEFAULT_EXPORT);
         this.heritage = heritage;
@@ -45,6 +47,11 @@ public final class ClassDeclaration extends Declaration implements ClassDefiniti
     @Override
     public BlockScope getScope() {
         return scope;
+    }
+
+    @Override
+    public List<Expression> getDecorators() {
+        return decorators;
     }
 
     @Override

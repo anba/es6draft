@@ -9,6 +9,8 @@ package com.github.anba.es6draft.compiler;
 import static com.github.anba.es6draft.semantics.StaticSemantics.IsAnonymousFunctionDefinition;
 import static com.github.anba.es6draft.semantics.StaticSemantics.PropName;
 
+import java.util.ArrayList;
+
 import com.github.anba.es6draft.ast.ComputedPropertyName;
 import com.github.anba.es6draft.ast.Expression;
 import com.github.anba.es6draft.ast.IdentifierReference;
@@ -21,6 +23,7 @@ import com.github.anba.es6draft.ast.synthetic.PropertyDefinitionsMethod;
 import com.github.anba.es6draft.compiler.CodeGenerator.FunctionName;
 import com.github.anba.es6draft.compiler.assembler.MethodName;
 import com.github.anba.es6draft.compiler.assembler.Type;
+import com.github.anba.es6draft.compiler.assembler.Variable;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.IndexedMap;
 
@@ -108,8 +111,16 @@ final class PropertyGenerator extends
                         Types.OrdinaryObject, Types.Object, Types.ExecutionContext));
     }
 
+    private final Variable<ArrayList<Object>> decorators;
+
     public PropertyGenerator(CodeGenerator codegen) {
         super(codegen);
+        this.decorators = null;
+    }
+
+    public PropertyGenerator(CodeGenerator codegen, Variable<ArrayList<Object>> decorators) {
+        super(codegen);
+        this.decorators = decorators;
     }
 
     @Override
@@ -132,11 +143,16 @@ final class PropertyGenerator extends
 
     @Override
     public ValType visit(PropertyDefinitionsMethod node, ExpressionVisitor mv) {
-        codegen.compile(node, mv);
+        codegen.compile(node, decorators != null, mv);
 
         // stack: [<object>] -> []
         mv.loadExecutionContext();
         mv.swap();
+        if (decorators != null) {
+            mv.load(decorators);
+        } else {
+            mv.anull();
+        }
         mv.invoke(codegen.methodDesc(node));
 
         return null;
@@ -150,12 +166,19 @@ final class PropertyGenerator extends
     public ValType visit(MethodDefinition node, ExpressionVisitor mv) {
         codegen.compile(node);
 
+        boolean hasDecorators = !node.getDecorators().isEmpty();
+        if (hasDecorators) {
+            evaluateDecorators(decorators, node.getDecorators(), mv);
+        }
+
         // stack: [<object>] -> []
         String propName = PropName(node);
         if (propName == null) {
             assert node.getPropertyName() instanceof ComputedPropertyName;
             node.getPropertyName().accept(this, mv);
-
+            if (hasDecorators) {
+                addDecoratorThingFromStack(decorators, Types.Object, mv);
+            }
             mv.iconst(node.getAllocation() == MethodDefinition.MethodAllocation.Object);
             mv.invoke(codegen.methodDesc(node, FunctionName.RTI));
             mv.loadExecutionContext();
@@ -183,6 +206,9 @@ final class PropertyGenerator extends
                 throw new AssertionError("invalid method type");
             }
         } else {
+            if (hasDecorators) {
+                addDecoratorKey(decorators, propName, mv);
+            }
             mv.aconst(propName);
             mv.iconst(node.getAllocation() == MethodDefinition.MethodAllocation.Object);
             mv.invoke(codegen.methodDesc(node, FunctionName.RTI));

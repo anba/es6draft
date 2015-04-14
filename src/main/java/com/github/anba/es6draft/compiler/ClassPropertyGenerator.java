@@ -6,6 +6,7 @@
  */
 package com.github.anba.es6draft.compiler;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import com.github.anba.es6draft.ast.MethodDefinition;
@@ -25,19 +26,24 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 final class ClassPropertyGenerator extends DefaultCodeGenerator<Void, ExpressionVisitor> {
     private final Variable<OrdinaryConstructorFunction> F;
     private final Variable<OrdinaryObject> proto;
+    private final Variable<ArrayList<Object>> decorators;
+    private final PropertyGenerator propgen;
 
     private ClassPropertyGenerator(CodeGenerator codegen, Variable<OrdinaryConstructorFunction> F,
-            Variable<OrdinaryObject> proto) {
+            Variable<OrdinaryObject> proto, Variable<ArrayList<Object>> decorators) {
         super(codegen);
         this.F = F;
         this.proto = proto;
+        this.decorators = decorators;
+        this.propgen = codegen.propertyGenerator(decorators);
     }
 
     static void ClassPropertyEvaluation(CodeGenerator codegen,
             List<? extends PropertyDefinition> properties,
             Variable<OrdinaryConstructorFunction> function, Variable<OrdinaryObject> proto,
-            ExpressionVisitor mv) {
-        ClassPropertyGenerator classgen = new ClassPropertyGenerator(codegen, function, proto);
+            Variable<ArrayList<Object>> decorators, ExpressionVisitor mv) {
+        ClassPropertyGenerator classgen = new ClassPropertyGenerator(codegen, function, proto,
+                decorators);
         for (PropertyDefinition property : properties) {
             property.accept(classgen, mv);
         }
@@ -51,25 +57,30 @@ final class ClassPropertyGenerator extends DefaultCodeGenerator<Void, Expression
     @Override
     public Void visit(MethodDefinition node, ExpressionVisitor mv) {
         if (!node.isClassConstructor()) {
-            // stack: [] -> []
-            if (node.isStatic()) {
-                mv.load(F);
-            } else {
-                mv.load(proto);
+            Variable<? extends OrdinaryObject> obj = node.isStatic() ? F : proto;
+            if (!node.getDecorators().isEmpty()) {
+                addDecoratorObject(decorators, obj, mv);
             }
-            codegen.propertyDefinition(node, mv);
+            // stack: [] -> []
+            mv.load(obj);
+            node.accept(propgen, mv);
         }
         return null;
     }
 
     @Override
     public Void visit(MethodDefinitionsMethod node, ExpressionVisitor mv) {
-        codegen.compile(node, mv);
+        codegen.compile(node, decorators != null, mv);
 
         // stack: [] -> []
         mv.loadExecutionContext();
         mv.load(F);
         mv.load(proto);
+        if (decorators != null) {
+            mv.load(decorators);
+        } else {
+            mv.anull();
+        }
         mv.invoke(codegen.methodDesc(node));
 
         return null;

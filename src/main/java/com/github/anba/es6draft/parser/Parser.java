@@ -47,6 +47,7 @@ public final class Parser {
     private static final String DEFAULT_EXPORT_BINDING_NAME = "*default*";
     private static final String DEFAULT_EXPORT_NAME = "default";
     private static final List<Binding> NO_INHERITED_BINDING = Collections.emptyList();
+    private static final List<Expression> NO_DECORATORS = Collections.emptyList();
     private static final Set<String> EMPTY_LABEL_SET = Collections.emptySet();
 
     private final Source source;
@@ -2451,7 +2452,8 @@ public final class Parser {
         case FUNCTION:
         case CLASS:
         case CONST:
-        case LET: {
+        case LET:
+        case AT: {
             // export Declaration
             Declaration declaration = declaration();
 
@@ -2484,8 +2486,22 @@ public final class Parser {
 
                 return new ExportDeclaration(begin, ts.endPosition(), declaration);
             }
+            case AT: {
+                ClassDeclaration declaration = classDeclaration(true, decorators());
+
+                // 15.2.3.2 Static Semantics: BoundNames
+                // 15.2.3.3 Static Semantics: ExportedBindings
+                // 15.2.3.4 Static Semantics: ExportedNames
+                addExportBinding(begin, declaration.getName());
+                if (declaration.getIdentifier() != null) {
+                    addExportBinding(begin, DEFAULT_EXPORT_BINDING_NAME);
+                }
+                addExportName(begin, DEFAULT_EXPORT_NAME);
+
+                return new ExportDeclaration(begin, ts.endPosition(), declaration);
+            }
             case CLASS: {
-                ClassDeclaration declaration = classDeclaration(true);
+                ClassDeclaration declaration = classDeclaration(true, NO_DECORATORS);
 
                 // 15.2.3.2 Static Semantics: BoundNames
                 // 15.2.3.3 Static Semantics: ExportedBindings
@@ -3450,21 +3466,39 @@ public final class Parser {
      *            the method allocation kind
      * @param hasExtends
      *            {@code true} if the ClassHeritage expression is present
+     * @param decorators
+     *            the list of method decorators
      * @return the parsed method definition
      */
-    private MethodDefinition methodDefinition(MethodAllocation allocation, boolean hasExtends) {
+    private MethodDefinition methodDefinition(MethodAllocation allocation, boolean hasExtends,
+            List<Expression> decorators) {
         switch (methodType()) {
         case AsyncFunction:
-            return asyncMethod(allocation);
+            return asyncMethod(allocation, decorators);
         case Generator:
-            return generatorMethod(allocation);
+            return generatorMethod(allocation, decorators);
         case Getter:
-            return getterMethod(allocation);
+            return getterMethod(allocation, decorators);
         case Setter:
-            return setterMethod(allocation);
+            return setterMethod(allocation, decorators);
         default:
-            return normalMethod(allocation, hasExtends);
+            return normalMethod(allocation, hasExtends, decorators);
         }
+    }
+
+    /**
+     * <strong>[Extension] Decorators</strong>
+     */
+    private List<Expression> decorators() {
+        InlineArrayList<Expression> decorators = newList();
+        do {
+            // FIXME: bug in spec proposal, AssignmentExpression not valid, cf. `{ @ F * G () {} }`.
+            // And: `{ @ D ["m"] () {} }`.
+            // https://github.com/wycats/javascript-decorators/issues/10
+            consume(Token.AT);
+            decorators.add(leftHandSideExpressionWithValidation(false));
+        } while (token() == Token.AT);
+        return decorators;
     }
 
     /**
@@ -3479,16 +3513,19 @@ public final class Parser {
      *            the method allocation kind
      * @param hasExtends
      *            {@code true} if the ClassHeritage expression is present
+     * @param decorators
+     *            the list of method decorators
      * @return the parsed method definition
      */
-    private MethodDefinition normalMethod(MethodAllocation allocation, boolean hasExtends) {
+    private MethodDefinition normalMethod(MethodAllocation allocation, boolean hasExtends,
+            List<Expression> decorators) {
         long begin = ts.beginPosition();
         PropertyName propertyName = propertyName();
-        return normalMethod(allocation, hasExtends, begin, propertyName);
+        return normalMethod(allocation, hasExtends, decorators, begin, propertyName);
     }
 
     private MethodDefinition normalMethod(MethodAllocation allocation, boolean hasExtends,
-            long begin, PropertyName propertyName) {
+            List<Expression> decorators, long begin, PropertyName propertyName) {
         newContext(ContextKind.Method);
         try {
             MethodType type;
@@ -3514,7 +3551,7 @@ public final class Parser {
 
             FunctionContext scope = context.funContext;
             MethodDefinition method = new MethodDefinition(begin, ts.endPosition(), scope, type,
-                    allocation, propertyName, parameters, statements, header, body);
+                    allocation, decorators, propertyName, parameters, statements, header, body);
             scope.setNode(method);
 
             methodDefinition_EarlyErrors(method);
@@ -3535,9 +3572,11 @@ public final class Parser {
      * 
      * @param allocation
      *            the method allocation kind
+     * @param decorators
+     *            the list of method decorators
      * @return the parsed getter method definition
      */
-    private MethodDefinition getterMethod(MethodAllocation allocation) {
+    private MethodDefinition getterMethod(MethodAllocation allocation, List<Expression> decorators) {
         long begin = ts.beginPosition();
 
         consume(Token.NAME); // "get"
@@ -3573,7 +3612,7 @@ public final class Parser {
             FunctionContext scope = context.funContext;
             MethodType type = MethodType.Getter;
             MethodDefinition method = new MethodDefinition(begin, ts.endPosition(), scope, type,
-                    allocation, propertyName, parameters, statements, header, body);
+                    allocation, decorators, propertyName, parameters, statements, header, body);
             scope.setNode(method);
 
             methodDefinition_EarlyErrors(method);
@@ -3594,9 +3633,11 @@ public final class Parser {
      * 
      * @param allocation
      *            the method allocation kind
+     * @param decorators
+     *            the list of method decorators
      * @return the parsed setter method definition
      */
-    private MethodDefinition setterMethod(MethodAllocation allocation) {
+    private MethodDefinition setterMethod(MethodAllocation allocation, List<Expression> decorators) {
         long begin = ts.beginPosition();
 
         consume(Token.NAME); // "set"
@@ -3632,7 +3673,7 @@ public final class Parser {
             FunctionContext scope = context.funContext;
             MethodType type = MethodType.Setter;
             MethodDefinition method = new MethodDefinition(begin, ts.endPosition(), scope, type,
-                    allocation, propertyName, parameters, statements, header, body);
+                    allocation, decorators, propertyName, parameters, statements, header, body);
             scope.setNode(method);
 
             methodDefinition_EarlyErrors(method);
@@ -3730,9 +3771,12 @@ public final class Parser {
      * 
      * @param allocation
      *            the method allocation kind
+     * @param decorators
+     *            the list of method decorators
      * @return the parsed generator method definition
      */
-    private MethodDefinition generatorMethod(MethodAllocation allocation) {
+    private MethodDefinition generatorMethod(MethodAllocation allocation,
+            List<Expression> decorators) {
         long begin = ts.beginPosition();
         consume(Token.MUL);
         PropertyName propertyName = propertyName();
@@ -3755,7 +3799,7 @@ public final class Parser {
             FunctionContext scope = context.funContext;
             MethodType type = MethodType.Generator;
             MethodDefinition method = new MethodDefinition(begin, ts.endPosition(), scope, type,
-                    allocation, propertyName, parameters, statements, header, body);
+                    allocation, decorators, propertyName, parameters, statements, header, body);
             scope.setNode(method);
 
             methodDefinition_EarlyErrors(method);
@@ -4000,6 +4044,7 @@ public final class Parser {
         case LP:
         case FUNCTION:
         case CLASS:
+        case AT:
         case TEMPLATE:
             // FIRST(PrimaryExpression)
             return true;
@@ -4063,9 +4108,11 @@ public final class Parser {
      * 
      * @param isDefault
      *            the flag to select whether or not the declaration is part of a default export
+     * @param decorators
+     *            the list of class decorators
      * @return the parsed class declaration
      */
-    private ClassDeclaration classDeclaration(boolean isDefault) {
+    private ClassDeclaration classDeclaration(boolean isDefault, List<Expression> decorators) {
         StrictMode strictMode = context.strictMode;
         try {
             // 10.2.1 - ClassDeclaration and ClassExpression is always strict code
@@ -4100,7 +4147,7 @@ public final class Parser {
             consume(Token.RC);
 
             ClassDeclaration decl = new ClassDeclaration(begin, ts.endPosition(), scope,
-                    identifier, heritage, methods, className);
+                    decorators, identifier, heritage, methods, className);
             if (hasName) {
                 scope.node = decl;
             }
@@ -4124,9 +4171,11 @@ public final class Parser {
      *     [+GeneratorParameter] ClassHeritage<span><sub>opt</sub></span> { ClassBody<span><sub>opt</sub></span> }
      * </pre>
      * 
+     * @param decorators
+     *            the list of class decorators
      * @return the parsed class expression
      */
-    private ClassExpression classExpression() {
+    private ClassExpression classExpression(List<Expression> decorators) {
         StrictMode strictMode = context.strictMode;
         try {
             // 10.2.1 - ClassDeclaration and ClassExpression is always strict code
@@ -4152,8 +4201,8 @@ public final class Parser {
             }
             consume(Token.RC);
 
-            ClassExpression expr = new ClassExpression(begin, ts.endPosition(), scope, name,
-                    heritage, methods);
+            ClassExpression expr = new ClassExpression(begin, ts.endPosition(), scope, decorators,
+                    name, heritage, methods);
             if (name != null) {
                 scope.node = expr;
             }
@@ -4175,7 +4224,7 @@ public final class Parser {
      */
     private Expression classHeritage() {
         consume(Token.EXTENDS);
-        return leftHandSideExpressionWithValidation();
+        return leftHandSideExpressionWithValidation(true);
     }
 
     /**
@@ -4209,13 +4258,14 @@ public final class Parser {
                 consume(Token.SEMI);
                 continue;
             }
+            List<Expression> decorators = token() == Token.AT ? decorators() : NO_DECORATORS;
             MethodDefinition method;
             if (token() == Token.STATIC && !LOOKAHEAD(Token.LP)) {
                 consume(Token.STATIC);
-                method = methodDefinition(MethodAllocation.Class, hasExtends);
+                method = methodDefinition(MethodAllocation.Class, hasExtends, decorators);
                 staticMethods.add(method);
             } else {
-                method = methodDefinition(MethodAllocation.Prototype, hasExtends);
+                method = methodDefinition(MethodAllocation.Prototype, hasExtends, decorators);
                 prototypeMethods.add(method);
             }
             if (className != null) {
@@ -4249,7 +4299,7 @@ public final class Parser {
         TokenStream syntheticStream = new TokenStream(this, new TokenStreamInput(sourceText));
         try {
             ts = syntheticStream.initialize(beginLine);
-            return methodDefinition(MethodAllocation.Prototype, hasExtends);
+            return methodDefinition(MethodAllocation.Prototype, hasExtends, NO_DECORATORS);
         } finally {
             ts = tokenStream;
         }
@@ -4567,9 +4617,11 @@ public final class Parser {
      * 
      * @param allocation
      *            the method allocation kind
+     * @param decorators
+     *            the list of method decorators
      * @return the parsed async method
      */
-    private MethodDefinition asyncMethod(MethodAllocation allocation) {
+    private MethodDefinition asyncMethod(MethodAllocation allocation, List<Expression> decorators) {
         long begin = ts.beginPosition();
 
         consume(Token.ASYNC);
@@ -4593,7 +4645,7 @@ public final class Parser {
             FunctionContext scope = context.funContext;
             MethodType type = MethodType.AsyncFunction;
             MethodDefinition method = new MethodDefinition(begin, ts.endPosition(), scope, type,
-                    allocation, propertyName, parameters, statements, header, body);
+                    allocation, decorators, propertyName, parameters, statements, header, body);
             scope.setNode(method);
 
             methodDefinition_EarlyErrors(method);
@@ -4791,6 +4843,7 @@ public final class Parser {
         case FUNCTION:
         case CLASS:
         case CONST:
+        case AT:
             return declaration();
         case ASYNC:
             if (isEnabled(CompatibilityOption.AsyncFunction) && LOOKAHEAD(Token.FUNCTION)
@@ -4825,8 +4878,10 @@ public final class Parser {
         switch (token()) {
         case FUNCTION:
             return hoistableDeclaration(false);
+        case AT:
+            return classDeclaration(false, decorators());
         case CLASS:
-            return classDeclaration(false);
+            return classDeclaration(false, NO_DECORATORS);
         case LET:
         case CONST:
             return lexicalDeclaration(true);
@@ -5401,6 +5456,7 @@ public final class Parser {
         case LC:
         case FUNCTION:
         case CLASS:
+        case AT:
             break;
         case LET:
             if (LOOKAHEAD(Token.LB)) {
@@ -5753,7 +5809,7 @@ public final class Parser {
             // fall-through
         default:
             int count = context.countLiterals();
-            Expression lhs = leftHandSideExpression(true);
+            Expression lhs = leftHandSideExpression(true, true);
             head = validateAssignment(lhs, ExceptionType.SyntaxError,
                     Messages.Key.InvalidAssignmentTarget);
             // Number of unchecked object literals should not have changed
@@ -6763,8 +6819,10 @@ public final class Parser {
             return objectLiteral();
         case FUNCTION:
             return functionOrGeneratorExpression();
+        case AT:
+            return classExpression(decorators());
         case CLASS:
-            return classExpression();
+            return classExpression(NO_DECORATORS);
         case LP:
             if (LOOKAHEAD(Token.FOR) && isEnabled(CompatibilityOption.Comprehension)) {
                 return generatorComprehension();
@@ -7373,7 +7431,7 @@ public final class Parser {
                 return new PropertyValueDefinition(begin, ts.endPosition(), propertyName,
                         propertyValue);
             }
-            return normalMethod(MethodAllocation.Object, false, begin, propertyName);
+            return normalMethod(MethodAllocation.Object, false, NO_DECORATORS, begin, propertyName);
         }
         if (SAFE_LOOKAHEAD(Token.COLON)) {
             PropertyName propertyName = literalPropertyName();
@@ -7397,7 +7455,8 @@ public final class Parser {
             }
             return new CoverInitializedName(begin, ts.endPosition(), identifier, initializer);
         }
-        return methodDefinition(MethodAllocation.Object, false);
+        List<Expression> decorators = token() == Token.AT ? decorators() : NO_DECORATORS;
+        return methodDefinition(MethodAllocation.Object, false, decorators);
     }
 
     /**
@@ -7739,9 +7798,11 @@ public final class Parser {
      * 
      * @param allowCall
      *            the flag to select whether or not call expressions are allowed
+     * @param allowElement
+     *            the flag to select whether or not element member expressions are allowed
      * @return the parsed left-hand side expression
      */
-    private Expression leftHandSideExpression(boolean allowCall) {
+    private Expression leftHandSideExpression(boolean allowCall, boolean allowElement) {
         long begin = ts.beginPosition();
         Expression lhs;
         if (token() == Token.NEW) {
@@ -7764,7 +7825,7 @@ public final class Parser {
                             Collections.<Expression> emptyList());
                 }
             } else {
-                Expression expr = leftHandSideExpression(false);
+                Expression expr = leftHandSideExpression(false, allowElement);
                 if (token() == Token.LP) {
                     lhs = new NewExpression(begin, ts.endPosition(), expr, arguments());
                 } else {
@@ -7811,6 +7872,9 @@ public final class Parser {
                 lhs = new PropertyAccessor(begin, ts.endPosition(), lhs, name);
                 break;
             case LB:
+                if (!allowElement) {
+                    return lhs;
+                }
                 consume(Token.LB);
                 Expression expr = expression(true);
                 consume(Token.RB);
@@ -7899,14 +7963,16 @@ public final class Parser {
     }
 
     /**
-     * Entry point for {@link #leftHandSideExpression(boolean)} which additionally performs object
-     * literal early error checks.
+     * Entry point for {@link #leftHandSideExpression(boolean, boolean)} which additionally performs
+     * object literal early error checks.
      * 
+     * @param allowElement
+     *            the flag to select whether or not element member expressions are allowed
      * @return the parsed left-hand side expression
      */
-    private Expression leftHandSideExpressionWithValidation() {
+    private Expression leftHandSideExpressionWithValidation(boolean allowElement) {
         int count = context.countLiterals();
-        Expression lhs = leftHandSideExpression(true);
+        Expression lhs = leftHandSideExpression(true, allowElement);
         objectLiteral_EarlyErrors(count);
         return lhs;
     }
@@ -8045,7 +8111,7 @@ public final class Parser {
             }
             // fall-through
         default: {
-            Expression lhs = leftHandSideExpression(true);
+            Expression lhs = leftHandSideExpression(true, true);
             if (noLineTerminator()) {
                 tok = token();
                 if (tok == Token.INC || tok == Token.DEC) {

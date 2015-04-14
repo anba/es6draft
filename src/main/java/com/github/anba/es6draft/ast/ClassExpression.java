@@ -20,6 +20,7 @@ import com.github.anba.es6draft.ast.scope.BlockScope;
  */
 public final class ClassExpression extends Expression implements ClassDefinition {
     private final BlockScope scope;
+    private final List<Expression> decorators;
     private final BindingIdentifier identifier;
     private final Expression heritage;
     private final List<MethodDefinition> methods;
@@ -27,9 +28,11 @@ public final class ClassExpression extends Expression implements ClassDefinition
     private List<PropertyDefinition> properties;
 
     public ClassExpression(long beginPosition, long endPosition, BlockScope scope,
-            BindingIdentifier identifier, Expression heritage, List<MethodDefinition> methods) {
+            List<Expression> decorators, BindingIdentifier identifier, Expression heritage,
+            List<MethodDefinition> methods) {
         super(beginPosition, endPosition);
         this.scope = scope;
+        this.decorators = decorators;
         this.identifier = identifier;
         this.heritage = heritage;
         this.methods = methods;
@@ -39,6 +42,11 @@ public final class ClassExpression extends Expression implements ClassDefinition
     @Override
     public BlockScope getScope() {
         return scope;
+    }
+
+    @Override
+    public List<Expression> getDecorators() {
+        return decorators;
     }
 
     @Override

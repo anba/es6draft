@@ -7,10 +7,7 @@
 package com.github.anba.es6draft.compiler;
 
 import static com.github.anba.es6draft.compiler.ArrayComprehensionGenerator.EvaluateArrayComprehension;
-import static com.github.anba.es6draft.semantics.StaticSemantics.BoundNames;
-import static com.github.anba.es6draft.semantics.StaticSemantics.IsAnonymousFunctionDefinition;
-import static com.github.anba.es6draft.semantics.StaticSemantics.IsIdentifierRef;
-import static com.github.anba.es6draft.semantics.StaticSemantics.Substitutions;
+import static com.github.anba.es6draft.semantics.StaticSemantics.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -205,6 +202,10 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
                 .findStatic(Types.ScriptRuntime, "EvaluateLegacyGeneratorExpression", Type
                         .methodType(Types.OrdinaryGenerator, Types.RuntimeInfo$Function,
                                 Types.ExecutionContext));
+
+        static final MethodName ScriptRuntime_EvaluateMethodDecorators = MethodName.findStatic(
+                Types.ScriptRuntime, "EvaluateMethodDecorators", Type.methodType(Type.VOID_TYPE,
+                        Types.OrdinaryObject, Types.ArrayList, Types.ExecutionContext));
 
         static final MethodName ScriptRuntime_getElement = MethodName.findStatic(
                 Types.ScriptRuntime, "getElement", Type.methodType(Types.Reference, Types.Object,
@@ -2725,6 +2726,13 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
      */
     @Override
     public ValType visit(ObjectLiteral node, ExpressionVisitor mv) {
+        Variable<ArrayList<Object>> decorators = null;
+        boolean hasDecorators = HasDecorators(node);
+        if (hasDecorators) {
+            mv.enterVariableScope();
+            decorators = newDecoratorVariable("decorators", mv);
+        }
+        PropertyGenerator propgen = codegen.propertyGenerator(decorators);
         /* step 1 */
         mv.loadExecutionContext();
         mv.get(Fields.Intrinsics_ObjectPrototype);
@@ -2732,7 +2740,14 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
         /* steps 2-3 */
         for (PropertyDefinition property : node.getProperties()) {
             mv.dup();
-            codegen.propertyDefinition(property, mv);
+            property.accept(propgen, mv);
+        }
+        if (hasDecorators) {
+            mv.dup();
+            mv.load(decorators);
+            mv.loadExecutionContext();
+            mv.invoke(Methods.ScriptRuntime_EvaluateMethodDecorators);
+            mv.exitVariableScope();
         }
         /* step 4 */
         return ValType.Object;

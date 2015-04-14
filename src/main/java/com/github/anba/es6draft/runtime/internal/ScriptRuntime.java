@@ -14,6 +14,8 @@ import static com.github.anba.es6draft.runtime.modules.ModuleSemantics.GetModule
 import static com.github.anba.es6draft.runtime.modules.ModuleSemantics.HostResolveImportedModule;
 import static com.github.anba.es6draft.runtime.objects.iteration.GeneratorAbstractOperations.GeneratorYield;
 import static com.github.anba.es6draft.runtime.types.PropertyDescriptor.AccessorPropertyDescriptor;
+import static com.github.anba.es6draft.runtime.types.PropertyDescriptor.FromPropertyDescriptor;
+import static com.github.anba.es6draft.runtime.types.PropertyDescriptor.ToPropertyDescriptor;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.ArrayObject.ArrayCreate;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryAsyncFunction.AsyncFunctionCreate;
@@ -30,6 +32,7 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -2940,6 +2943,70 @@ public final class ScriptRuntime {
         /* step 11 */
         DefinePropertyOrThrow(cx, object, propKey, desc);
     }
+
+    public static void EvaluateClassDecorators(OrdinaryConstructorFunction F,
+            ArrayList<Callable> decorators, ExecutionContext cx) {
+        for (Callable decorator : decorators) {
+            decorator.call(cx, UNDEFINED, F);
+        }
+    }
+
+    public static void EvaluateMethodDecorators(OrdinaryObject object,
+            ArrayList<Object> decorators, ExecutionContext cx) {
+        // TODO: Deserves clean-up when proper evaluation semantics are specified.
+        // decorators = object, list of <1..n callable, property key>
+        for (int i = 0, size = decorators.size(); i < size;) {
+            int count = evaluateMethodDecorators(object, decorators, i, cx);
+            i += count + 1;
+        }
+    }
+
+    public static void EvaluateClassMethodDecorators(ArrayList<Object> decorators,
+            ExecutionContext cx) {
+        // TODO: Deserves clean-up when proper evaluation semantics are specified.
+        // decorators = list of <object, 1..n callable, property key>
+        for (int i = 0, size = decorators.size(); i < size;) {
+            OrdinaryObject object = (OrdinaryObject) decorators.get(i);
+            int count = evaluateMethodDecorators(object, decorators, i + 1, cx);
+            i += count + 2;
+        }
+    }
+
+    private static int evaluateMethodDecorators(OrdinaryObject object,
+            ArrayList<Object> decorators, int start, ExecutionContext cx) {
+        int count = 0;
+        for (int i = start, size = decorators.size(); i < size; ++i, ++count) {
+            if (!(decorators.get(i) instanceof Callable))
+                break;
+        }
+        assert count > 0;
+        Object propKey = decorators.get(start + count);
+        Property property;
+        if (propKey instanceof String) {
+            property = object.getOwnProperty(cx, (String) propKey);
+        } else {
+            property = object.getOwnProperty(cx, (Symbol) propKey);
+        }
+        // Current proposal uses `undefined` instead of the initial property descriptor in, and only
+        // in, object literals. We don't support this distinction between decorators for object and
+        // decorators for class methods.
+        Object desc = FromPropertyDescriptor(cx, property);
+        for (int i = start; i < start + count; ++i) {
+            Callable decorator = (Callable) decorators.get(i);
+            Object result = decorator.call(cx, UNDEFINED, object, propKey, desc);
+            if (Type.isObject(result)) {
+                // So, this means a bad decorator can mess up all following decorators?
+                // Example: `({ @(()=>({})) @((o,p,d)=>{ print(JSON.stringify(d)) }) m() {} })`
+                desc = result;
+            }
+        }
+        if (Type.isObject(desc)) {
+            PropertyDescriptor pdesc = ToPropertyDescriptor(cx, desc);
+            DefinePropertyOrThrow(cx, object, propKey, pdesc);
+        }
+        return count;
+    }
+
 
     /**
      * 14.6 Tail Position Calls

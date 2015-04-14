@@ -1024,6 +1024,11 @@ final class TokenStream {
             }
         case '`':
             return Token.TEMPLATE;
+        case '@':
+            if (isEnabled(CompatibilityOption.Decorator)) {
+                return Token.AT;
+            }
+            return Token.ERROR;
         case '\\':
             mustMatch('u');
             c = readUnicodeEscape();

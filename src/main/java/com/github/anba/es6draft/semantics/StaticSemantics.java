@@ -1031,6 +1031,41 @@ public final class StaticSemantics {
     }
 
     /**
+     * Returns {@code true} if any method definition of {@code node} has a decorator.
+     * 
+     * @param node
+     *            the object literal
+     * @return {@code true} if a decorator was found
+     */
+    public static boolean HasDecorators(ObjectLiteral node) {
+        for (PropertyDefinition property : node.getProperties()) {
+            if (!(property instanceof MethodDefinition)) {
+                continue;
+            }
+            if (!((MethodDefinition) property).getDecorators().isEmpty()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Returns {@code true} if any method definition of {@code node} has a decorator.
+     * 
+     * @param node
+     *            the class definition
+     * @return {@code true} if a decorator was found
+     */
+    public static boolean HasDecorators(ClassDefinition node) {
+        for (MethodDefinition method : node.getMethods()) {
+            if (!method.getDecorators().isEmpty()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
      * 12.2.8.1 Static Semantics: TemplateStrings
      * 
      * @param node

@@ -93,6 +93,8 @@ enum Token {/* @formatter:off */
     ARROW("=>"),
     // Exponentiation Operator
     EXP("**"), ASSIGN_EXP("**"),
+    // Decorators
+    AT("@"),
     // Comment
     COMMENT("<comment>"),
     // EOF, Error

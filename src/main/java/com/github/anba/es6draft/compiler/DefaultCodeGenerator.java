@@ -8,8 +8,11 @@ package com.github.anba.es6draft.compiler;
 
 import static com.github.anba.es6draft.compiler.ClassPropertyGenerator.ClassPropertyEvaluation;
 import static com.github.anba.es6draft.semantics.StaticSemantics.ConstructorMethod;
+import static com.github.anba.es6draft.semantics.StaticSemantics.HasDecorators;
 
+import java.util.ArrayList;
 import java.util.EnumSet;
+import java.util.List;
 
 import com.github.anba.es6draft.ast.*;
 import com.github.anba.es6draft.ast.AbruptNode.Abrupt;
@@ -21,6 +24,7 @@ import com.github.anba.es6draft.compiler.assembler.MethodName;
 import com.github.anba.es6draft.compiler.assembler.Type;
 import com.github.anba.es6draft.compiler.assembler.Variable;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
+import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Null;
 import com.github.anba.es6draft.runtime.types.Reference;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
@@ -206,6 +210,10 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
                 "getValue", Type.methodType(Types.Object));
 
         // class: ScriptRuntime
+        static final MethodName ScriptRuntime_CheckCallable = MethodName.findStatic(
+                Types.ScriptRuntime, "CheckCallable",
+                Type.methodType(Types.Callable, Types.Object, Types.ExecutionContext));
+
         static final MethodName ScriptRuntime_delegatedYield = MethodName.findStatic(
                 Types.ScriptRuntime, "delegatedYield",
                 Type.methodType(Types.Object, Types.Object, Types.ExecutionContext));
@@ -215,6 +223,15 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
                         Types.OrdinaryConstructorFunction, Types.ScriptObject,
                         Types.OrdinaryObject, Types.RuntimeInfo$Function, Type.BOOLEAN_TYPE,
                         Types.ExecutionContext));
+
+        static final MethodName ScriptRuntime_EvaluateClassDecorators = MethodName
+                .findStatic(Types.ScriptRuntime, "EvaluateClassDecorators", Type.methodType(
+                        Type.VOID_TYPE, Types.OrdinaryConstructorFunction, Types.ArrayList,
+                        Types.ExecutionContext));
+
+        static final MethodName ScriptRuntime_EvaluateClassMethodDecorators = MethodName
+                .findStatic(Types.ScriptRuntime, "EvaluateClassMethodDecorators",
+                        Type.methodType(Type.VOID_TYPE, Types.ArrayList, Types.ExecutionContext));
 
         static final MethodName ScriptRuntime_getClassProto = MethodName.findStatic(
                 Types.ScriptRuntime, "getClassProto",
@@ -242,6 +259,13 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
         // class: Type
         static final MethodName Type_isUndefinedOrNull = MethodName.findStatic(Types._Type,
                 "isUndefinedOrNull", Type.methodType(Type.BOOLEAN_TYPE, Types.Object));
+
+        // class: ArrayList
+        static final MethodName ArrayList_init = MethodName.findConstructor(Types.ArrayList,
+                Type.methodType(Type.VOID_TYPE));
+
+        static final MethodName ArrayList_add = MethodName.findVirtual(Types.ArrayList, "add",
+                Type.methodType(Type.BOOLEAN_TYPE, Types.Object));
     }
 
     protected final CodeGenerator codegen;
@@ -1211,6 +1235,10 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
                     return true;
                 }
             }
+            if (!methodDefinition.getDecorators().isEmpty()) {
+                // user-defined decorator expression
+                return true;
+            }
         }
         return false;
     }
@@ -1275,8 +1303,15 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
      */
     protected final void ClassDefinitionEvaluation(ClassDefinition def, String className,
             ExpressionVisitor mv) {
-        mv.enterClassDefinition();
         mv.enterVariableScope();
+        Variable<ArrayList<Callable>> classDecorators = null;
+        boolean hasClassDecorators = !def.getDecorators().isEmpty();
+        if (hasClassDecorators) {
+            classDecorators = newDecoratorVariable("classDecorators", mv);
+            evaluateDecorators(classDecorators, def.getDecorators(), mv);
+        }
+
+        mv.enterClassDefinition();
 
         // step 1 (not applicable)
         // steps 2-4
@@ -1345,8 +1380,33 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
                 OrdinaryConstructorFunction.class);
         mv.store(F);
 
+        Variable<ArrayList<Object>> methodDecorators = null;
+        boolean hasMethodDecorators = HasDecorators(def);
+        if (hasMethodDecorators) {
+            methodDecorators = newDecoratorVariable("methodDecorators", mv);
+        }
+
+        if (!constructor.getDecorators().isEmpty()) {
+            addDecoratorObject(methodDecorators, proto, mv);
+            evaluateDecorators(methodDecorators, constructor.getDecorators(), mv);
+            addDecoratorKey(methodDecorators, "constructor", mv);
+        }
+
         // steps 19-21
-        ClassPropertyEvaluation(codegen, def.getProperties(), F, proto, mv);
+        ClassPropertyEvaluation(codegen, def.getProperties(), F, proto, methodDecorators, mv);
+
+        if (hasClassDecorators) {
+            mv.load(F);
+            mv.load(classDecorators);
+            mv.loadExecutionContext();
+            mv.invoke(Methods.ScriptRuntime_EvaluateClassDecorators);
+        }
+
+        if (hasMethodDecorators) {
+            mv.load(methodDecorators);
+            mv.loadExecutionContext();
+            mv.invoke(Methods.ScriptRuntime_EvaluateClassMethodDecorators);
+        }
 
         // step 23 (moved)
         if (className != null) {
@@ -1372,6 +1432,51 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
 
         // step 24 (return F)
         mv.exitClassDefinition();
+    }
+
+    protected final <T> Variable<ArrayList<T>> newDecoratorVariable(String name,
+            ExpressionVisitor mv) {
+        Variable<ArrayList<T>> var = mv.newVariable(name, ArrayList.class).uncheckedCast();
+        mv.anew(Types.ArrayList, Methods.ArrayList_init);
+        mv.store(var);
+        return var;
+    }
+
+    protected final <T> void addDecoratorThingFromStack(Variable<ArrayList<T>> var, Type type,
+            ExpressionVisitor mv) {
+        mv.dup(type);
+        mv.load(var);
+        mv.swap(type, Types.ArrayList);
+        mv.invoke(Methods.ArrayList_add);
+        mv.pop();
+    }
+
+    protected final <T> void addDecoratorObject(Variable<ArrayList<T>> var,
+            Variable<? extends ScriptObject> object, ExpressionVisitor mv) {
+        mv.load(var);
+        mv.load(object);
+        mv.invoke(Methods.ArrayList_add);
+        mv.pop();
+    }
+
+    protected final <T> void addDecoratorKey(Variable<ArrayList<T>> var, String propertyKey,
+            ExpressionVisitor mv) {
+        mv.load(var);
+        mv.aconst(propertyKey);
+        mv.invoke(Methods.ArrayList_add);
+        mv.pop();
+    }
+
+    protected final <T> void evaluateDecorators(Variable<ArrayList<T>> var,
+            List<Expression> decorators, ExpressionVisitor mv) {
+        for (Expression decorator : decorators) {
+            mv.load(var);
+            expressionBoxedValue(decorator, mv);
+            mv.loadExecutionContext();
+            mv.invoke(Methods.ScriptRuntime_CheckCallable);
+            mv.invoke(Methods.ArrayList_add);
+            mv.pop();
+        }
     }
 
     /**

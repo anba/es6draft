@@ -229,6 +229,11 @@ public enum CompatibilityOption {
     ArrayBufferTransfer,
 
     /**
+     * ES7-Extension: Decorators
+     */
+    Decorator,
+
+    /**
      * Track unhandled rejected promise objects
      */
     PromiseRejection,

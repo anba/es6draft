@@ -12,6 +12,7 @@ import static com.github.anba.es6draft.semantics.StaticSemantics.IsStrict;
 import static com.github.anba.es6draft.semantics.StaticSemantics.TemplateStrings;
 
 import java.lang.reflect.Modifier;
+import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
@@ -89,10 +90,11 @@ final class CodeGenerator {
                 Types.ExecutionContext, Types.ArrayObject, Type.INT_TYPE);
 
         static final MethodTypeDescriptor PropertyDefinitionsMethod = Type.methodType(
-                Type.VOID_TYPE, Types.ExecutionContext, Types.OrdinaryObject);
+                Type.VOID_TYPE, Types.ExecutionContext, Types.OrdinaryObject, Types.ArrayList);
 
         static final MethodTypeDescriptor MethodDefinitionsMethod = Type.methodType(Type.VOID_TYPE,
-                Types.ExecutionContext, Types.OrdinaryConstructorFunction, Types.OrdinaryObject);
+                Types.ExecutionContext, Types.OrdinaryConstructorFunction, Types.OrdinaryObject,
+                Types.ArrayList);
 
         static final MethodTypeDescriptor ExpressionMethod = Type.methodType(Types.Object,
                 Types.ExecutionContext);
@@ -975,7 +977,7 @@ final class CodeGenerator {
         }
     }
 
-    void compile(PropertyDefinitionsMethod node, ExpressionVisitor mv) {
+    void compile(PropertyDefinitionsMethod node, boolean hasDecorators, ExpressionVisitor mv) {
         if (!isCompiled(node)) {
             MethodCode method = newMethod(node);
             PropertyDefinitionsMethodVisitor body = new PropertyDefinitionsMethodVisitor(method, mv);
@@ -983,9 +985,12 @@ final class CodeGenerator {
             body.begin();
 
             Variable<OrdinaryObject> object = body.getObjectParameter();
+            Variable<ArrayList<Object>> decorators = hasDecorators ? body.getDecoratorsParameter()
+                    : null;
+            PropertyGenerator propgen = propertyGenerator(decorators);
             for (PropertyDefinition property : node.getProperties()) {
                 body.load(object);
-                propertyDefinition(property, body);
+                property.accept(propgen, body);
             }
 
             body._return();
@@ -993,7 +998,7 @@ final class CodeGenerator {
         }
     }
 
-    void compile(MethodDefinitionsMethod node, ExpressionVisitor mv) {
+    void compile(MethodDefinitionsMethod node, boolean hasDecorators, ExpressionVisitor mv) {
         if (!isCompiled(node)) {
             MethodCode method = newMethod(node);
             MethodDefinitionsMethodVisitor body = new MethodDefinitionsMethodVisitor(method, mv);
@@ -1002,7 +1007,9 @@ final class CodeGenerator {
 
             Variable<OrdinaryConstructorFunction> function = body.getFunctionParameter();
             Variable<OrdinaryObject> proto = body.getPrototypeParameter();
-            ClassPropertyEvaluation(this, node.getProperties(), function, proto, body);
+            Variable<ArrayList<Object>> decorators = hasDecorators ? body.getDecoratorsParameter()
+                    : null;
+            ClassPropertyEvaluation(this, node.getProperties(), function, proto, decorators, body);
 
             body._return();
             body.end();
@@ -1075,6 +1082,13 @@ final class CodeGenerator {
             return ValType.Any;
         }
         return type;
+    }
+
+    PropertyGenerator propertyGenerator(Variable<ArrayList<Object>> decorators) {
+        if (decorators != null) {
+            return new PropertyGenerator(this, decorators);
+        }
+        return propgen;
     }
 
     void propertyDefinition(PropertyDefinition node, ExpressionVisitor mv) {
@@ -1235,10 +1249,15 @@ final class CodeGenerator {
             super.begin();
             setParameterName("cx", 0, Types.ExecutionContext);
             setParameterName("object", 1, Types.OrdinaryObject);
+            setParameterName("decorators", 2, Types.ArrayList);
         }
 
         Variable<OrdinaryObject> getObjectParameter() {
             return getParameter(1, OrdinaryObject.class);
+        }
+
+        Variable<ArrayList<Object>> getDecoratorsParameter() {
+            return getParameter(2, ArrayList.class).uncheckedCast();
         }
     }
 
@@ -1253,6 +1272,7 @@ final class CodeGenerator {
             setParameterName("cx", 0, Types.ExecutionContext);
             setParameterName("F", 1, Types.OrdinaryConstructorFunction);
             setParameterName("proto", 2, Types.OrdinaryObject);
+            setParameterName("decorators", 3, Types.ArrayList);
         }
 
         Variable<OrdinaryConstructorFunction> getFunctionParameter() {
@@ -1261,6 +1281,10 @@ final class CodeGenerator {
 
         Variable<OrdinaryObject> getPrototypeParameter() {
             return getParameter(2, OrdinaryObject.class);
+        }
+
+        Variable<ArrayList<Object>> getDecoratorsParameter() {
+            return getParameter(3, ArrayList.class).uncheckedCast();
         }
     }
 
