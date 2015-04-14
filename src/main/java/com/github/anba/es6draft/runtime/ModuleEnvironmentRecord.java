@@ -105,6 +105,7 @@ public final class ModuleEnvironmentRecord extends DeclarativeEnvironmentRecord 
 
     private static boolean hasDirectBinding(ModuleRecord module, String name) {
         Binding binding = module.getEnvironment().getEnvRec().getBinding(name);
-        return binding != null && !(binding instanceof IndirectBinding);
+        // return binding != null && !(binding instanceof IndirectBinding);
+        return binding != null;
     }
 }

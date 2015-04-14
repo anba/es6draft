@@ -9,7 +9,6 @@ package com.github.anba.es6draft.regexp;
 import java.util.BitSet;
 import java.util.regex.Pattern;
 
-import org.jcodings.Encoding;
 import org.joni.Matcher;
 import org.joni.Option;
 import org.joni.Regex;
@@ -34,6 +33,13 @@ final class JoniRegExpMatcher implements RegExpMatcher {
         this.negativeLAGroups = negativeLAGroups;
     }
 
+    private UnicodeEncoding getEncoding() {
+        if ((this.flags & Pattern.UNICODE_CASE) != 0) {
+            return UTF32Encoding.INSTANCE;
+        }
+        return UCS2Encoding.INSTANCE;
+    }
+
     private Regex getPattern() {
         if (pattern == null) {
             int flags = 0;
@@ -45,34 +51,36 @@ final class JoniRegExpMatcher implements RegExpMatcher {
             if ((this.flags & Pattern.CASE_INSENSITIVE) != 0) {
                 flags |= Option.IGNORECASE;
             }
-            Encoding enc = UCS2Encoding.INSTANCE;
-            byte[] bytes = UCS2Encoding.toBytes(regex);
-            // -2 to account for null-terminating bytes in c-string
-            pattern = new Regex(bytes, 0, bytes.length - 2, flags, enc, JoniSyntax.ECMAScript);
+            UnicodeEncoding enc = getEncoding();
+            byte[] bytes = enc.toBytes(regex);
+            int length = bytes.length - enc.minLength();
+            pattern = new Regex(bytes, 0, length, flags, enc, JoniSyntax.ECMAScript);
         }
         return pattern;
     }
 
     @Override
     public JoniMatchState matcher(String s) {
+        UnicodeEncoding enc = getEncoding();
         if (s != lastInput) {
             lastInput = s;
-            lastInputBytes = UCS2Encoding.toBytes(s);
+            lastInputBytes = enc.toBytes(s);
         }
-        // -2 to account for null-terminating bytes in c-string
-        Matcher matcher = getPattern().matcher(lastInputBytes, 0, lastInputBytes.length - 2);
-        return new JoniMatchState(matcher, s, negativeLAGroups);
+        int length = lastInputBytes.length - enc.minLength();
+        Matcher matcher = getPattern().matcher(lastInputBytes, 0, length);
+        return new JoniMatchState(enc, matcher, s, negativeLAGroups);
     }
 
     @Override
     public JoniMatchState matcher(CharSequence s) {
+        UnicodeEncoding enc = getEncoding();
         if (s != lastInput) {
             lastInput = s;
-            lastInputBytes = UCS2Encoding.toBytes(s);
+            lastInputBytes = enc.toBytes(s);
         }
-        // -2 to account for null-terminating bytes in c-string
-        Matcher matcher = getPattern().matcher(lastInputBytes, 0, lastInputBytes.length - 2);
-        return new JoniMatchState(matcher, s, negativeLAGroups);
+        int length = lastInputBytes.length - enc.minLength();
+        Matcher matcher = getPattern().matcher(lastInputBytes, 0, length);
+        return new JoniMatchState(enc, matcher, s, negativeLAGroups);
     }
 
     @Override

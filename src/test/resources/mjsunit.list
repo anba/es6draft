@@ -86,6 +86,9 @@ harmony/regress/regress-crbug-461520.js
 # v8 bug - \8 and \9 is not allowed in template literals
 es6/templates.js
 
+# ES6: toStringTag not implemented in v8
+es6/prototype-ordinary-objects.js
+
 
 ###################
 # Misc issues     #

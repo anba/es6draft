@@ -1137,6 +1137,7 @@ public final class Parser {
             // lexical-scoped function declaration in module/block context
             addLexDeclaredName(decl, parentContext, BoundName(decl));
             if (isNamedDefault) {
+                // TODO: Better error message
                 addLexDeclaredName(decl, parentContext, new Name(DEFAULT_EXPORT_BINDING_NAME));
             }
             parentScope.addLexScopedDeclaration(decl);
@@ -1154,6 +1155,7 @@ public final class Parser {
     private void addDeclaration(ClassDeclaration decl, boolean isNamedDefault) {
         addLexDeclaredName(decl, context, BoundName(decl));
         if (isNamedDefault) {
+            // TODO: Better error message
             addLexDeclaredName(decl, context, new Name(DEFAULT_EXPORT_BINDING_NAME));
         }
         context.scopeContext.addLexScopedDeclaration(decl);
@@ -1161,6 +1163,7 @@ public final class Parser {
 
     private void addDeclaration(ExportDefaultExpression defaultExpression) {
         assert context.scopeContext == context.modContext : "not in module scope";
+        // TODO: Better error message
         addLexDeclaredName(defaultExpression, context, BoundName(defaultExpression.getBinding()));
         context.scopeContext.addLexScopedDeclaration(defaultExpression);
     }
@@ -2230,7 +2233,7 @@ public final class Parser {
      * 
      * @return the parsed namespace import binding
      */
-    public BindingIdentifier nameSpaceImport() {
+    private BindingIdentifier nameSpaceImport() {
         // TODO: Add new ast node?
         consume(Token.MUL);
         consume("as");
@@ -4610,10 +4613,13 @@ public final class Parser {
      * @return the list of parsed statement list items
      */
     private List<StatementListItem> statementList(Token end) {
-        InlineArrayList<StatementListItem> list = newList();
-        while (token() != end) {
-            list.add(statementListItem());
+        if (token() == end) {
+            return Collections.emptyList();
         }
+        InlineArrayList<StatementListItem> list = newList();
+        do {
+            list.add(statementListItem());
+        } while (token() != end);
         return list;
     }
 
@@ -4676,6 +4682,7 @@ public final class Parser {
             if (isEnabled(CompatibilityOption.AsyncFunction)) {
                 return asyncFunctionDeclaration(false);
             }
+            // fall-through
         default:
             throw reportSyntaxError(Messages.Key.InvalidToken, token().toString());
         }
@@ -5079,8 +5086,7 @@ public final class Parser {
         InlineArrayList<BindingElementItem> list = newList();
         consume(Token.LB);
         boolean needComma = false;
-        Token tok;
-        while ((tok = token()) != Token.RB) {
+        for (Token tok; (tok = token()) != Token.RB;) {
             if (needComma) {
                 consume(Token.COMMA);
                 needComma = false;
@@ -6691,7 +6697,7 @@ public final class Parser {
             if (token() == Token.COMMA) {
                 InlineArrayList<Expression> list = newList();
                 list.add(expr);
-                while (token() == Token.COMMA) {
+                do {
                     consume(Token.COMMA);
                     if (token() == Token.TRIPLE_DOT) {
                         list.add(arrowFunctionRestParameter());
@@ -6699,7 +6705,7 @@ public final class Parser {
                     }
                     expr = assignmentExpressionNoValidation(true);
                     list.add(expr);
-                }
+                } while (token() == Token.COMMA);
                 expr = new CommaExpression(list);
             }
         }
@@ -6984,10 +6990,8 @@ public final class Parser {
         BlockContext scope = enterBlockContext();
         Expression expr = assignmentExpression(true);
 
-        assert token() == Token.FOR : "empty legacy comprehension";
-
         InlineArrayList<ComprehensionQualifier> list = newList();
-        while (token() == Token.FOR) {
+        do {
             long begin = ts.beginPosition();
             consume(Token.FOR);
             boolean each = false;
@@ -7015,7 +7019,7 @@ public final class Parser {
 
             list.add(new LegacyComprehensionFor(begin, ts.endPosition(), iterationKind, b,
                     expression));
-        }
+        } while (token() == Token.FOR);
 
         if (token() == Token.IF) {
             long begin = ts.beginPosition();
@@ -7050,15 +7054,21 @@ public final class Parser {
      */
     private ObjectLiteral objectLiteral() {
         long begin = ts.beginPosition();
-        InlineArrayList<PropertyDefinition> defs = newList();
         consume(Token.LC);
-        while (token() != Token.RC) {
-            defs.add(propertyDefinition());
-            if (token() == Token.COMMA) {
-                consume(Token.COMMA);
-            } else {
-                break;
-            }
+        List<PropertyDefinition> defs;
+        if (token() == Token.RC) {
+            defs = Collections.emptyList();
+        } else {
+            InlineArrayList<PropertyDefinition> list = newList();
+            do {
+                list.add(propertyDefinition());
+                if (token() == Token.COMMA) {
+                    consume(Token.COMMA);
+                } else {
+                    break;
+                }
+            } while (token() != Token.RC);
+            defs = list;
         }
         consume(Token.RC);
         ObjectLiteral object = new ObjectLiteral(begin, ts.endPosition(), defs);
@@ -7487,7 +7497,7 @@ public final class Parser {
     private TemplateCharacters templateCharacters(Token start) {
         long begin = ts.beginPosition();
         String[] values = ts.readTemplateLiteral(start);
-        return new TemplateCharacters(begin, ts.endPosition(), values[0], values[1]);
+        return new TemplateCharacters(begin, ts.rawEndPosition(), values[0], values[1]);
     }
 
     /**
@@ -8569,11 +8579,11 @@ public final class Parser {
     private CommaExpression commaExpression(Expression expr, boolean allowIn) {
         InlineArrayList<Expression> list = newList();
         list.add(expr);
-        while (token() == Token.COMMA) {
+        do {
             consume(Token.COMMA);
             expr = assignmentExpression(allowIn);
             list.add(expr);
-        }
+        } while (token() == Token.COMMA);
         return new CommaExpression(list);
     }
 

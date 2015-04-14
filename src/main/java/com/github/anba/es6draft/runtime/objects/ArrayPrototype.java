@@ -100,9 +100,6 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
         if (NO_ARRAY_OPTIMIZATION) {
             return IterationKind.Slow;
         }
-        if (length == 0) {
-            return IterationKind.Slow;
-        }
         if (length < MIN_SPARSE_LENGTH) {
             return IterationKind.Slow;
         }

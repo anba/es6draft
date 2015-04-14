@@ -14,7 +14,7 @@ package com.github.anba.es6draft.runtime.objects.intl;
  * <li>Date Field Symbol Table
  * </ul>
  * <p>
- * Version: 26
+ * Version: 27
  * 
  * @see <a
  *      href="http://unicode.org/reports/tr35/tr35-dates.html#Date_Format_Patterns">Date&nbsp;Format&nbsp;Patterns</a>

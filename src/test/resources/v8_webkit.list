@@ -71,7 +71,6 @@ fast/js/numeric-escapes-in-string-literals.js
 fast/regex/invalid-range-in-class.js
 
 # different error message
-fast/js/caller-property.js
 fast/js/deep-recursion-test.js
 fast/js/function-constructor-error.js
 fast/js/Promise-init.js
@@ -124,9 +123,6 @@ fast/js/kde/RegExp.js
 
 # various new built-in properties
 fast/js/Object-getOwnPropertyNames.js
-
-# restricted properties only present on Function.prototype
-strict-throw-type-error.js
 
 # `RegExp(/a/, "g")` no longer throws
 fast/regex/constructor.js

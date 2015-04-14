@@ -817,23 +817,6 @@ public class InstructionAssembler {
      * @param index
      *            the array index
      * @param element
-     *            the element to store
-     * @param type
-     *            the array type
-     */
-    public final void astore(int index, String element, Type type) {
-        dup();
-        iconst(index);
-        aconst(element);
-        astore(type);
-    }
-
-    /**
-     * array → array
-     * 
-     * @param index
-     *            the array index
-     * @param element
      *            the string element to store
      */
     public final void astore(int index, String element) {

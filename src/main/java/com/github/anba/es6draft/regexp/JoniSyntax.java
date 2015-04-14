@@ -27,7 +27,7 @@ final class JoniSyntax implements SyntaxProperties {
             | OP_QMARK_ZERO_ONE | OP_BRACE_INTERVAL | OP_VBAR_ALT | OP_LPAREN_SUBEXP
             | OP_ESC_AZ_BUF_ANCHOR | OP_DECIMAL_BACKREF | OP_BRACKET_CC | OP_ESC_B_WORD_BOUND
             | OP_LINE_ANCHOR | OP_QMARK_NON_GREEDY | OP_ESC_CONTROL_CHARS | OP_ESC_C_CONTROL
-            | OP_ESC_X_HEX2;
+            | OP_ESC_X_HEX2 | OP_ESC_X_BRACE_HEX8;
 
     // - OP2_OPTION_ECMASCRIPT is not enabled, because it breaks nested repeats
     private static final int op2 = OP2_QMARK_GROUP_EFFECT | OP2_OPTION_PERL | OP2_ESC_V_VTAB

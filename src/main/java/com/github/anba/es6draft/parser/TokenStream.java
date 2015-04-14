@@ -196,6 +196,16 @@ final class TokenStream {
     }
 
     /**
+     * Returns the encoded end line/column information for current position.
+     * 
+     * @return the end line/column information
+     */
+    public long rawEndPosition() {
+        // add one to make columns 1-indexed
+        return ((long) (1 + input.position() - linestart) << 32) | line;
+    }
+
+    /**
      * Initializes this token stream, needs to be called before fetching any tokens.
      * 
      * @return this token stream

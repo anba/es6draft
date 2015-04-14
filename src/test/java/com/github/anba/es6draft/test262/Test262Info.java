@@ -24,6 +24,9 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.io.LineIterator;
 import org.yaml.snakeyaml.Yaml;
+import org.yaml.snakeyaml.constructor.Constructor;
+import org.yaml.snakeyaml.error.YAMLException;
+import org.yaml.snakeyaml.introspector.PropertyUtils;
 
 import com.github.anba.es6draft.util.TestInfo;
 
@@ -145,35 +148,70 @@ final class Test262Info extends TestInfo {
      */
     public String readFile() throws IOException {
         String fileContent = new String(Files.readAllBytes(toFile()), StandardCharsets.UTF_8);
-        readFileInformation(fileContent);
+        try {
+            readFileInformation(fileContent, true);
+        } catch (MalformedDataException e) {
+            throw new RuntimeException(e);
+        }
         return fileContent;
     }
 
     /**
      * Parses the test file information for this test case.
      */
-    public void readFileInformation(String content) {
+    public void readFileInformation(String content) throws MalformedDataException {
+        readFileInformation(content, false);
+    }
+
+    @SuppressWarnings("serial")
+    static final class MalformedDataException extends Exception {
+        MalformedDataException(String message) {
+            super(message);
+        }
+
+        MalformedDataException(String message, Throwable cause) {
+            super(message, cause);
+        }
+    }
+
+    private void readFileInformation(String content, boolean lenient) throws MalformedDataException {
         Matcher m;
         if ((m = yamlContentPattern.matcher(content)).matches()) {
-            readYaml(m.group(1));
+            readYaml(m.group(1), lenient);
         } else if ((m = contentPattern.matcher(content)).matches()) {
-            readTagged(m.group(1));
+            readTagged(m.group(1), lenient);
         } else {
-            throw new AssertionError("Invalid test file: " + this);
+            throw new MalformedDataException("Invalid test file: " + this);
         }
         this.async = content.contains("$DONE");
     }
 
     private static final ConcurrentLinkedQueue<Yaml> yamlQueue = new ConcurrentLinkedQueue<>();
 
-    private void readYaml(String descriptor) {
+    private void readYaml(String descriptor, boolean lenient) throws MalformedDataException {
         assert descriptor != null && !descriptor.isEmpty();
-        Yaml yaml = yamlQueue.poll();
-        if (yaml == null) {
-            yaml = new Yaml();
+        Yaml yaml = null;
+        if (lenient) {
+            yaml = yamlQueue.poll();
         }
-        TestDescriptor desc = yaml.loadAs(descriptor, TestDescriptor.class);
-        yamlQueue.offer(yaml);
+        if (yaml == null) {
+            Constructor constructor = new Constructor(TestDescriptor.class);
+            if (lenient) {
+                PropertyUtils utils = new PropertyUtils();
+                utils.setSkipMissingProperties(true);
+                constructor.setPropertyUtils(utils);
+            }
+            yaml = new Yaml(constructor);
+        }
+        TestDescriptor desc;
+        try {
+            desc = yaml.loadAs(descriptor, TestDescriptor.class);
+        } catch (YAMLException e) {
+            throw new MalformedDataException(e.getMessage(), e);
+        }
+        if (lenient) {
+            yamlQueue.offer(yaml);
+        }
         this.description = desc.getDescription();
         this.includes = desc.getIncludes();
         this.errorType = desc.getNegative();
@@ -284,7 +322,7 @@ final class Test262Info extends TestInfo {
         }
     }
 
-    private void readTagged(String descriptor) {
+    private void readTagged(String descriptor, boolean lenient) throws MalformedDataException {
         assert descriptor != null && !descriptor.isEmpty();
         for (LineIterator lines = new LineIterator(new StringReader(descriptor)); lines.hasNext();) {
             String line = lines.next();
@@ -340,7 +378,11 @@ final class Test262Info extends TestInfo {
                     break;
                 default:
                     // error
-                    System.err.printf("unhandled type '%s' (%s)\n", type, this);
+                    if (lenient) {
+                        break;
+                    }
+                    throw new MalformedDataException(String.format("unhandled type '%s' (%s)\n",
+                            type, this));
                 }
             }
         }

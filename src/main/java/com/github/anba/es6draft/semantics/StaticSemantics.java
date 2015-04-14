@@ -414,6 +414,8 @@ public final class StaticSemantics {
      * <li>14.4.6 Static Semantics: HasName
      * </ul>
      * 
+     * @param <FUNCTION>
+     *            the function type
      * @param node
      *            the function node
      * @return {@code true} if the function has a binding name

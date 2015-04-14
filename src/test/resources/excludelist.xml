@@ -28,30 +28,8 @@
   <!-- Intl.v2 changes -->
   <test id="12.3.3">'timeZone' defaults to host environment timezone, if not specified</test>
 
-  <!-- rev17 changes -->
-  <test id="10.1_L15">ES6-change: 'length' property of Functions is configurable=true</test>
-  <test id="10.2.2_L15">ES6-change: 'length' property of Functions is configurable=true</test>
-  <test id="10.3.2_L15">ES6-change: 'length' property of Functions is configurable=true</test>
-  <test id="10.3.3_L15">ES6-change: 'length' property of Functions is configurable=true</test>
-  <test id="11.1_L15">ES6-change: 'length' property of Functions is configurable=true</test>
-  <test id="11.2.2_L15">ES6-change: 'length' property of Functions is configurable=true</test>
-  <test id="11.3.2_L15">ES6-change: 'length' property of Functions is configurable=true</test>
-  <test id="11.3.3_L15">ES6-change: 'length' property of Functions is configurable=true</test>
-  <test id="12.1_L15">ES6-change: 'length' property of Functions is configurable=true</test>
-  <test id="12.2.2_L15">ES6-change: 'length' property of Functions is configurable=true</test>
-  <test id="12.3.2_L15">ES6-change: 'length' property of Functions is configurable=true</test>
-  <test id="12.3.3_L15">ES6-change: 'length' property of Functions is configurable=true</test>
-  <test id="13.1.1_L15">ES6-change: 'length' property of Functions is configurable=true</test>
-  <test id="13.2.1_L15">ES6-change: 'length' property of Functions is configurable=true</test>
-  <test id="13.3.1_L15">ES6-change: 'length' property of Functions is configurable=true</test>
-  <test id="13.3.2_L15">ES6-change: 'length' property of Functions is configurable=true</test>
-  <test id="13.3.3_L15">ES6-change: 'length' property of Functions is configurable=true</test>
-
   <!-- rev21 changes -->
   <test id="15.3.4.5-15-2">ES6-change: 'length' property of bound functions is configurable=true</test>
-  <test id="10.3.2_1_a_L15">ES6-change: 'length' property of bound functions is configurable=true</test>
-  <test id="11.3.2_1_a_L15">ES6-change: 'length' property of bound functions is configurable=true</test>
-  <test id="12.3.2_1_a_L15">ES6-change: 'length' property of bound functions is configurable=true</test>
 
   <!-- rev26 changes -->
   <test id="11.1.5-2gs">ES6-change: Duplicate property keys allowed in object literal (strict mode)</test>

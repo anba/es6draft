@@ -28,6 +28,7 @@ import com.github.anba.es6draft.runtime.internal.Messages;
  * </ul>
  */
 public final class RegExpParser {
+    private static final boolean USE_JONI = true;
     private static final int BACKREF_LIMIT = 0xFFFF;
     private static final int DEPTH_LIMIT = 0xFFFF;
     private static final char[] HEXDIGITS = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
@@ -77,8 +78,7 @@ public final class RegExpParser {
         // Call after source information was set
         this.flags = toFlags(flags);
         this.webRegExp = webRegExp;
-        // Unicode mode currently not available for joni matcher
-        this.joni = !isUnicode();
+        this.joni = USE_JONI;
         this.out = new StringBuilder(length);
     }
 
@@ -207,6 +207,15 @@ public final class RegExpParser {
     }
 
     /**
+     * Whether or not empty \S and \s character classes are supported.
+     * 
+     * @return {@code true} if \S and \s character classes are supported
+     */
+    private boolean spaceCharacterClass() {
+        return joni;
+    }
+
+    /**
      * Whether or not character property classes are used to represent character class escapes.
      * 
      * @return {@code true} if character property classes are supported
@@ -239,6 +248,24 @@ public final class RegExpParser {
      * @return {@code true} if the case folding for I is enabled
      */
     private boolean caseFoldedI() {
+        return !joni;
+    }
+
+    /**
+     * Returns {@code true} if unicode characters are natively supported.
+     * 
+     * @return {@code true} if unicode characters are natively supported
+     */
+    private boolean unicodeCharacters() {
+        return joni;
+    }
+
+    /**
+     * Returns {@code true} if unicode mode is disabled for \b and \B assertions.
+     * 
+     * @return {@code true} if unicode mode is disabled for \b and \B assertions
+     */
+    private boolean disableUnicodeInAssertion() {
         return !joni;
     }
 
@@ -482,8 +509,8 @@ public final class RegExpParser {
         final boolean unicode = isUnicode();
         final boolean web = isWebRegularExpression();
 
-        StringBuilder out = this.out;
-        int startLength = out.length();
+        final StringBuilder out = this.out;
+        final int startLength = out.length();
         int rangeStartCV = 0, rangeStartPos = 0;
         boolean inrange = false;
         boolean asciiI = false, iWithDot = false, dotlessI = false;
@@ -494,7 +521,7 @@ public final class RegExpParser {
                 throw error(Messages.Key.RegExpUnmatchedCharacter, "[");
             }
 
-            int cv, c = get(unicode), outStart = out.length();
+            final int cv, c = get(unicode), outStart = out.length();
             classatom: switch (c) {
             case ']':
                 if (additionalClasses != null) {
@@ -765,17 +792,9 @@ public final class RegExpParser {
                     appendCaseInsensitiveRange(rangeStartCV, cv);
                 }
                 if (ignoreCase && unicode) {
-                    // `RegExp("[\u00b5]", "ui").test("\u03bc")` works in Java, but
-                    // `RegExp("[\u00b5-\u00b5]", "ui").test("\u03bc")` doesn't. If we hit the
-                    // latter case, rewrite the pattern to include the additional code-points.
-                    if (CaseFoldData.hasAdditionalUnicodeCaseFold(rangeStartCV)
-                            || CaseFoldData.hasAdditionalUnicodeCaseFold(cv)) {
-                        // remove sharp-s pattern and use standard range expression
-                        out.setLength(rangeStartPos);
-                        appendCharacter(rangeStartCV);
-                        out.append('-');
-                        appendCharacter(cv);
-                    }
+                    // replace content in output with case insensitive range
+                    out.setLength(rangeStartPos);
+                    appendCaseInsensitiveUnicodeRange(rangeStartCV, cv);
                     if ((rangeStartCV <= 'i' && 'i' <= cv) || (rangeStartCV <= 'I' && 'I' <= cv)) {
                         asciiI = true;
                     }
@@ -785,7 +804,6 @@ public final class RegExpParser {
                     if (rangeStartCV <= '\u0131' && '\u0131' <= cv) {
                         dotlessI = true;
                     }
-                    appendCaseInsensitiveUnicodeRange(rangeStartCV, cv);
                 }
             } else if (peek(0) == '-' && peek(1) != ']') {
                 // start range
@@ -943,7 +961,7 @@ public final class RegExpParser {
         final boolean ignoreCase = isIgnoreCase();
         final boolean unicode = isUnicode();
         final boolean web = isWebRegularExpression();
-        StringBuilder out = this.out;
+        final StringBuilder out = this.out;
 
         // map of valid groups
         BitSet validGroups = new BitSet();
@@ -1029,7 +1047,7 @@ public final class RegExpParser {
                 case 'b':
                 case 'B':
                     // Assertion
-                    if (unicode) {
+                    if (unicode && disableUnicodeInAssertion()) {
                         // Disable unicode - does not fix all spec violations, but it's better than
                         // nothing.
                         out.append("(?-u:").append('\\').append(get()).append(")");
@@ -1443,17 +1461,11 @@ public final class RegExpParser {
     }
 
     private String appendCharacterClassEscape(char c, boolean cclass, boolean negCharacterClass) {
-        if (characterProperty()) {
-            char mod = (char) ('P' | (c & 0x20));
-            String propertyName = getCharacterClassPropertyName(c);
-            out.append('\\').append(mod).append('{').append(propertyName).append('}');
-            return null;
-        }
         switch (c) {
         case 'd':
         case 'D':
-            out.append('\\').append(c);
-            break;
+            appendCharacterClassEscape(c);
+            return null;
         case 'w':
             if (isIgnoreCase() && isUnicode()) {
                 if (!cclass) {
@@ -1470,9 +1482,9 @@ public final class RegExpParser {
                     out.append(characterClass_wu);
                 }
             } else {
-                out.append('\\').append(c);
+                appendCharacterClassEscape(c);
             }
-            break;
+            return null;
         case 'W':
             if (isIgnoreCase() && isUnicode()) {
                 if (!cclass) {
@@ -1489,25 +1501,43 @@ public final class RegExpParser {
                     out.append(characterClass_Wu);
                 }
             } else {
-                out.append('\\').append(c);
+                appendCharacterClassEscape(c);
             }
-            break;
+            return null;
         case 's':
-            if (negCharacterClass) {
-                return characterClass_S;
+            if (spaceCharacterClass()) {
+                appendCharacterClassEscape(c);
+            } else {
+                if (negCharacterClass) {
+                    return characterClass_S;
+                }
+                out.append(characterClass_s);
             }
-            out.append(characterClass_s);
-            break;
+            return null;
         case 'S':
-            if (negCharacterClass) {
-                return characterClass_s;
+            if (spaceCharacterClass()) {
+                appendCharacterClassEscape(c);
+            } else {
+                if (negCharacterClass) {
+                    return characterClass_s;
+                }
+                out.append(characterClass_S);
             }
-            out.append(characterClass_S);
-            break;
+            return null;
         default:
             assert false : "unreachable";
+            return null;
         }
-        return null;
+    }
+
+    private void appendCharacterClassEscape(char c) {
+        if (characterProperty()) {
+            char mod = (char) ('P' | (c & 0x20));
+            String propertyName = getCharacterClassPropertyName(c);
+            out.append('\\').append(mod).append('{').append(propertyName).append('}');
+        } else {
+            out.append('\\').append(c);
+        }
     }
 
     private void appendIdentityEscape(int ch, boolean characterClass) {
@@ -1565,8 +1595,8 @@ public final class RegExpParser {
     }
 
     private void appendExtendedUnicodeEscapeSequence(int u, boolean characterClass) {
+        assert isUnicode();
         if (isIgnoreCase()) {
-            assert isUnicode();
             appendCaseInsensitiveExtendedUnicode(u, characterClass);
         } else {
             appendCodePoint(u);
@@ -1588,7 +1618,11 @@ public final class RegExpParser {
     // package private for CaseFoldData
     void appendCharacter(int ch) {
         if (ch < 0x100) {
-            appendByteCodeUnit(ch);
+            if (isASCIIAlphaNumericUnderscore(ch)) {
+                appendASCIICodeUnit(ch);
+            } else {
+                appendByteCodeUnit(ch);
+            }
         } else if (ch < Character.MIN_SUPPLEMENTARY_CODE_POINT) {
             appendCodeUnit(ch);
         } else {
@@ -1596,9 +1630,18 @@ public final class RegExpParser {
         }
     }
 
+    private void appendASCIICodeUnit(int codeUnit) {
+        assert codeUnit >>> 8 == 0;
+        out.append((char) codeUnit);
+    }
+
     private void appendByteCodeUnit(int codeUnit) {
         assert codeUnit >>> 8 == 0;
         if (alignBytes()) {
+            if (isUnicode()) {
+                out.append("\\u00").append(toHexDigit(codeUnit, 4)).append(toHexDigit(codeUnit, 0));
+                return;
+            }
             out.append("\\x00");
         }
         out.append("\\x").append(toHexDigit(codeUnit, 4)).append(toHexDigit(codeUnit, 0));
@@ -1772,6 +1815,10 @@ public final class RegExpParser {
     }
 
     private void appendCaseInsensitiveUnicode(int codePoint, boolean characterClass) {
+        if (unicodeCharacters()) {
+            appendCharacter(codePoint);
+            return;
+        }
         if (CaseFoldData.hasAdditionalUnicodeCaseFold(codePoint)) {
             if (!characterClass) {
                 out.append('[');
@@ -1780,7 +1827,7 @@ public final class RegExpParser {
             if (!characterClass) {
                 out.append(']');
             }
-        } else if (CaseFoldData.hasRestrictedUnicodeCaseFold(codePoint)) {
+        } else if (CaseFoldData.hasRestrictedUnicodeCaseFold(codePoint) && caseFoldedI()) {
             if (!characterClass) {
                 out.append("(?-u:");
                 appendCharacter(codePoint);
@@ -1795,17 +1842,32 @@ public final class RegExpParser {
 
     private void appendCaseInsensitiveExtendedUnicode(int codePoint, boolean characterClass) {
         if (Character.isBmpCodePoint(codePoint) && Character.isSurrogate((char) codePoint)) {
-            assert !CaseFoldData.hasAdditionalUnicodeCaseFold(codePoint);
-            assert !CaseFoldData.hasRestrictedUnicodeCaseFold(codePoint);
-            // output unpaired surrogate in extended form
-            appendCodePoint(codePoint);
+            appendUnpairedSurrogate(codePoint);
         } else {
             appendCaseInsensitiveUnicode(codePoint, characterClass);
         }
     }
 
     private void appendCaseInsensitiveUnicodeRange(int startChar, int endChar) {
-        CaseFoldData.appendCaseInsensitiveUnicodeRange(this, startChar, endChar);
+        appendCharacterAsSingle(startChar);
+        out.append('-');
+        appendCharacterAsSingle(endChar);
+        if (!unicodeCharacters()) {
+            CaseFoldData.appendCaseInsensitiveUnicodeRange(this, startChar, endChar);
+        }
+    }
+
+    private void appendCharacterAsSingle(int codePoint) {
+        if (Character.isBmpCodePoint(codePoint) && Character.isSurrogate((char) codePoint)) {
+            appendUnpairedSurrogate(codePoint);
+        } else {
+            appendCharacter(codePoint);
+        }
+    }
+
+    private void appendUnpairedSurrogate(int codePoint) {
+        // output unpaired surrogate in extended form
+        appendCodePoint(codePoint);
     }
 
     private static final char toControlLetter(int c) {

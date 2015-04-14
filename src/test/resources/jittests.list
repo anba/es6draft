@@ -126,6 +126,7 @@ tests/basic/bug827104.js
 tests/basic/bug839420.js
 tests/basic/bug934997.js
 tests/basic/bug1100623.js
+tests/basic/bug1147216.js
 tests/basic/expression-autopsy.js
 tests/basic/spread-call-maxarg.js
 tests/basic/syntax-error-illegal-character.js
@@ -164,6 +165,9 @@ tests/basic/testBug773108.js
 
 # sourceURL annotations
 tests/basic/display-url-in-stack-trace.js
+
+# different Error.prototype.stack accessors
+tests/basic/error-stack-accessors.js
 
 
 ############################################
@@ -382,6 +386,7 @@ tests/tracelogger/setupTraceLogger.js
 
 # Spidermonkey strict/werror options
 tests/basic/bug629858.js
+tests/basic/semicolon-less-return.js
 tests/collections/Map-constructor-1.js
 tests/collections/Set-constructor-1.js
 tests/collections/WeakMap-constructor-1.js
@@ -410,6 +415,7 @@ tests/basic/testBug616454.js
 # clone
 tests/basic/bug751139.js
 tests/basic/bug1106982-2.js
+tests/basic/function-cloning-1.js
 tests/basic/testScriptCloning.js
 tests/basic/weird-scopechains.js
 # decompileThis
@@ -474,6 +480,8 @@ tests/self-test/inIon.js
 # setLazyParsingEnabled
 tests/basic/eval-scopes.js
 tests/basic/function-gname.js
+# getJitCompilerOptions
+tests/arguments/arguments-on-proto.js
 
 
 #######################################
@@ -485,6 +493,9 @@ tests/basic/testErrorInFinalizerCalledWhileUnwinding.js
 
 # finally-blocks are executed when generator is closed
 tests/generators/closing-osr.js
+
+# yield during close() throws error in SM
+tests/generators/bug1151326.js
 
 # Function() with legacy generator source code
 tests/auto-regress/bug491806.js
@@ -498,6 +509,9 @@ tests/parser/yield-without-operand.js
 
 # Method code too large - too many variables
 tests/basic/testManyVars.js
+
+# Method code too large - too many switch cases
+tests/basic/bug1146836.js
 
 # Timeout (slow)
 tests/auto-regress/bug583680.js

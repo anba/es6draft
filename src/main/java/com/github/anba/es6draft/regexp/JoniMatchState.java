@@ -19,32 +19,87 @@ import org.joni.Region;
  * {@link MatchState} implementation for Joni {@link Regex} regular expressions
  */
 final class JoniMatchState implements MatchState, IterableMatchResult {
+    private final UnicodeEncoding encoding;
     private final Matcher matcher;
     private final CharSequence string;
     private final BitSet negativeLAGroups;
+    private final StringPosition position;
     private int begin = -1, end = 0;
     private Region region;
 
-    public JoniMatchState(Matcher matcher, CharSequence string, BitSet negativeLAGroups) {
+    public JoniMatchState(UnicodeEncoding encoding, Matcher matcher, CharSequence string,
+            BitSet negativeLAGroups) {
+        this.encoding = encoding;
         this.matcher = matcher;
         this.string = string;
         this.negativeLAGroups = negativeLAGroups;
+        this.position = new StringPosition(encoding.length(string));
     }
 
-    private JoniMatchState(CharSequence string, BitSet negativeLAGroups, int begin, int end,
-            Region region) {
+    private JoniMatchState(UnicodeEncoding encoding, CharSequence string, BitSet negativeLAGroups,
+            StringPosition position, int begin, int end, Region region) {
+        this.encoding = encoding;
         this.matcher = null;
         this.string = string;
         this.negativeLAGroups = negativeLAGroups;
+        this.position = position;
         this.begin = begin;
         this.end = end;
         this.region = region;
+    }
+
+    private final class StringPosition implements Cloneable {
+        final int length;
+        int begin, end, stringBegin, stringEnd;
+
+        StringPosition(int length) {
+            this.length = length;
+        }
+
+        @Override
+        public StringPosition clone() {
+            StringPosition clone = new StringPosition(length);
+            clone.begin = begin;
+            clone.end = end;
+            clone.stringBegin = stringBegin;
+            clone.stringEnd = stringEnd;
+            return clone;
+        }
+
+        void update(int begin, int end) {
+            assert begin >= 0 && end >= 0 && begin <= end;
+            this.stringBegin = stringIndex(begin);
+            this.stringEnd = stringIndex(end);
+            this.begin = begin;
+            this.end = end;
+        }
+
+        int stringIndex(int byteIndex) {
+            if (byteIndex >= end) {
+                return encoding.stringIndex(string, stringEnd, byteIndex);
+            }
+            if (byteIndex >= begin) {
+                return encoding.stringIndex(string, stringBegin, byteIndex);
+            }
+            return encoding.stringIndex(string, 0, byteIndex);
+        }
+
+        int byteIndex(int stringIndex) {
+            if (stringIndex >= stringEnd) {
+                return end + encoding.byteIndex(string, stringEnd, stringIndex);
+            }
+            if (stringIndex >= stringBegin) {
+                return begin + encoding.byteIndex(string, stringBegin, stringIndex);
+            }
+            return encoding.byteIndex(string, 0, stringIndex);
+        }
     }
 
     private boolean update(int r) {
         begin = matcher.getBegin();
         end = matcher.getEnd();
         region = matcher.getRegion();
+        position.update(begin, end);
         return r > Matcher.FAILED;
     }
 
@@ -53,15 +108,18 @@ final class JoniMatchState implements MatchState, IterableMatchResult {
     }
 
     private int byteLength() {
-        return string.length() << 1;
+        return position.length;
     }
 
     private int toStringIndex(int byteIndex) {
-        return byteIndex >> 1;
+        if (byteIndex < 0) {
+            return -1;
+        }
+        return position.stringIndex(byteIndex);
     }
 
     private int toByteIndex(int stringIndex) {
-        return stringIndex << 1;
+        return position.byteIndex(stringIndex);
     }
 
     private void ensureResult() {
@@ -92,13 +150,13 @@ final class JoniMatchState implements MatchState, IterableMatchResult {
 
     @Override
     public MatchResult toMatchResult() {
-        return new JoniMatchState(string, negativeLAGroups, begin, end,
+        return new JoniMatchState(encoding, string, negativeLAGroups, position.clone(), begin, end,
                 region != null ? region.clone() : null);
     }
 
     @Override
     public boolean find() {
-        int start = end != begin ? end : end + 2;
+        int start = end != begin ? end : end + encoding.length(string, end);
         return update(matcher.search(start, byteLength(), Option.NONE));
     }
 
@@ -117,27 +175,33 @@ final class JoniMatchState implements MatchState, IterableMatchResult {
     @Override
     public int start() {
         ensureResult();
-        return toStringIndex(begin);
+        return position.stringBegin;
     }
 
     @Override
     public int start(int group) {
         ensureResult();
         ensureValidGroup(group);
-        return toStringIndex(group == 0 ? begin : region.beg[group]);
+        if (group == 0) {
+            return position.stringBegin;
+        }
+        return toStringIndex(region.beg[group]);
     }
 
     @Override
     public int end() {
         ensureResult();
-        return toStringIndex(end);
+        return position.stringEnd;
     }
 
     @Override
     public int end(int group) {
         ensureResult();
         ensureValidGroup(group);
-        return toStringIndex(group == 0 ? end : region.end[group]);
+        if (group == 0) {
+            return position.stringEnd;
+        }
+        return toStringIndex(region.end[group]);
     }
 
     @Override

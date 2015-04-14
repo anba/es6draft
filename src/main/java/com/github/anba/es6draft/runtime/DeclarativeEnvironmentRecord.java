@@ -144,7 +144,7 @@ public class DeclarativeEnvironmentRecord implements EnvironmentRecord {
         return bindings.get(name);
     }
 
-    protected void removeBinding(String name) {
+    protected final void removeBinding(String name) {
         bindings.remove(name);
     }
 
@@ -155,17 +155,13 @@ public class DeclarativeEnvironmentRecord implements EnvironmentRecord {
     }
 
     /*package*/String bindingsToString() {
-        return toString(bindings);
-    }
-
-    private static <KEY, VALUE> String toString(Map<KEY, VALUE> map) {
-        if (map.isEmpty()) {
+        if (bindings.isEmpty()) {
             return "{}";
         }
         try (Formatter f = new Formatter(new StringBuilder(), null)) {
             f.format("{");
-            for (Iterator<Map.Entry<KEY, VALUE>> iter = map.entrySet().iterator();;) {
-                Map.Entry<KEY, VALUE> entry = iter.next();
+            for (Iterator<Map.Entry<String, Binding>> iter = bindings.entrySet().iterator();;) {
+                Map.Entry<String, Binding> entry = iter.next();
                 f.format("%n\t\t%s=%s", entry.getKey(), entry.getValue());
                 if (!iter.hasNext())
                     break;

@@ -14,6 +14,7 @@ const {
 } = global;
 
 const {
+  includes: String_prototype_includes,
   match: String_prototype_match,
   replace: String_prototype_replace,
   search: String_prototype_search,
@@ -51,6 +52,17 @@ Object.defineProperties(Object.assign(String.prototype, {
   match: {enumerable: false},
   search: {enumerable: false},
   replace: {enumerable: false},
+});
+
+/*
+ * Make String.prototype.contains an alias for String.prototype.contains
+ */
+Object.defineProperties(Object.assign(String.prototype, {
+  contains(searchString, position = 0) {
+    return %CallFunction(String_prototype_includes, this, searchString, position);
+  }
+}), {
+  contains: {enumerable: false}
 });
 
 })();

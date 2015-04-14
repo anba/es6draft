@@ -146,6 +146,22 @@ public final class Eval {
      *            the execution context
      * @param caller
      *            the caller context
+     * @param source
+     *            the source string
+     * @return the evaluation result
+     */
+    public static Object globalEval(ExecutionContext cx, ExecutionContext caller, Object source) {
+        return PerformEval(cx, caller, source, EvalFlags.GlobalCode.getValue()
+                | EvalFlags.GlobalScope.getValue() | EvalFlags.GlobalThis.getValue());
+    }
+
+    /**
+     * 18.2.1 eval (x)
+     * 
+     * @param cx
+     *            the execution context
+     * @param caller
+     *            the caller context
      * @param arguments
      *            the arguments
      * @return the evaluation result
@@ -159,24 +175,7 @@ public final class Eval {
         } else {
             source = arguments.length > 0 ? arguments[0] : UNDEFINED;
         }
-        return indirectEval(cx, caller, source);
-    }
-
-    /**
-     * 18.2.1 eval (x)
-     * 
-     * @param cx
-     *            the execution context
-     * @param caller
-     *            the caller context
-     * @param source
-     *            the source string
-     * @return the evaluation result
-     */
-    public static Object indirectEval(ExecutionContext cx, ExecutionContext caller, Object source) {
-        // TODO: let's assume for now that this is the no-hook entry point (probably rename method)
-        return PerformEval(cx, caller, source, EvalFlags.GlobalCode.getValue()
-                | EvalFlags.GlobalScope.getValue() | EvalFlags.GlobalThis.getValue());
+        return globalEval(cx, caller, source);
     }
 
     /**

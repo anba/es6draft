@@ -53,7 +53,7 @@ public final class ArrayBufferObject extends OrdinaryObject {
     /**
      * [[ArrayBufferData]]
      * 
-     * @return the underlying byte buffer
+     * @return the underlying byte buffer or {@code null} if detached
      */
     public ByteBuffer getData() {
         return data;
@@ -62,7 +62,7 @@ public final class ArrayBufferObject extends OrdinaryObject {
     /**
      * [[ArrayBufferByteLength]]
      * 
-     * @return the array buffer length in bytes
+     * @return the array buffer length in bytes or {@code 0} if detached
      */
     public long getByteLength() {
         return byteLength;

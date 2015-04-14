@@ -115,6 +115,16 @@ ecma_6/Class/classPrototype.js
 ecma_6/Class/innerBinding.js
 ecma_6/Class/methodInstallation.js
 ecma_6/Class/outerBinding.js
+ecma_6/Class/superPropBasicNew.js
+ecma_6/Class/superPropChains.js
+ecma_6/Class/superPropDelete.js
+ecma_6/Class/superPropDerivedCalls.js
+ecma_6/Class/superPropDestructuring.js
+ecma_6/Class/superPropHomeObject.js
+ecma_6/Class/superPropOrdering.js
+ecma_6/Class/superPropProtoChanges.js
+ecma_6/Class/superPropProxies.js
+ecma_6/Class/superPropSkips.js
 
 # ES6: Symbol.species not implemented in SM
 ecma_6/TypedArray/slice.js
@@ -127,6 +137,32 @@ js1_7/geniter/yield-new.js
 
 # SM: https://bugzilla.mozilla.org/show_bug.cgi?id=1141865
 ecma_6/Proxy/revoke-as-side-effect.js
+
+# ES6: duplicate lexical declarations check not implemented in SM
+ecma_6/LexicalEnvironment/for-loop.js
+
+# ES6: const for-in/of not implemented in SM
+ecma_6/LexicalEnvironment/const-declaration-in-for-loop.js
+js1_8_5/reflect-parse/for-loop-destructuring.js
+
+# SM: Duplicate class declaration are reported as TypeError...
+js1_8_5/reflect-parse/classes.js
+
+# SM: `function f() { function g(){} function g() {} }` -> first function is replaced with emptystmt
+js1_8_5/reflect-parse/declarations.js
+
+# SM: expression closure body
+js1_8_5/reflect-parse/destructuring-function-parameters.js
+js1_8_5/reflect-parse/expressionClosures.js
+
+# SM: for-loop with let
+js1_8_5/reflect-parse/destructuring-variable-declarations.js
+
+# SM: global let
+js1_8_5/reflect-parse/lexicals.js
+
+# ES6: RegExp.prototype[Symbol.match] not implemented in SM
+ecma_6/RegExp/constructor-constructor.js
 
 
 ####################################
@@ -274,6 +310,7 @@ ecma_3/Unicode/regress-352044-01.js
 ecma_3_1/Object/regress-444787.js
 ecma_5/Function/builtin-no-construct.js
 ecma_5/misc/new-with-non-constructor.js
+ecma_6/Class/superPropDVG.js
 js1_5/extensions/regress-352372.js
 js1_5/LexicalConventions/regress-469940.js
 js1_5/Regress/regress-328664.js
@@ -335,9 +372,6 @@ js1_7/geniter/regress-366941.js
 
 # Iterator + for-each returns [key,value] pairs
 js1_7/iterable/regress-568056.js
-
-# Various issues, see modified reflect-parse.js file
-js1_8_5/extensions/reflect-parse.js
 
 # SpiderMonkey does not yet support correct scoping in comprehension
 ecma_6/Comprehensions/scope.js
@@ -423,6 +457,7 @@ js1_8_5/regress/regress-609617.js
 # FunctionDeclaration directly nested in Statement not allowed
 ecma_3/FunExpr/fe-001.js
 ecma_5/extensions/function-definition-with.js
+ecma_6/extensions/for-loop-with-lexical-declaration-and-nested-function-statement.js
 js1_5/Regress/regress-326453.js
 js1_8/regress/regress-384758.js
 

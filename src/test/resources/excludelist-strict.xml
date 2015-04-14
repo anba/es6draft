@@ -13,11 +13,8 @@
   <!ATTLIST test id CDATA #REQUIRED>
 ]>
 <excludeList>
-  <!-- octal integer literal (https://bugs.ecmascript.org/show_bug.cgi?id=1532) -->
-  <test id="15.2.3.6-2-17-1" />
-
-  <!-- octal escape sequence (https://bugs.ecmascript.org/show_bug.cgi?id=1531) -->
-  <test id="S15.5.4.11_A5_T1" />
+  <!-- AnnexB extension: Labelled function declaration -->
+  <test id="in-statement-position-label-statement" />
 
   <!-- Invalid regular expression pattern in web-mode -->
   <test id="S7.8.5_A1.4_T1" />

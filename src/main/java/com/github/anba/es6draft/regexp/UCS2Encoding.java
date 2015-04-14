@@ -9,8 +9,6 @@ package com.github.anba.es6draft.regexp;
 import org.jcodings.ApplyAllCaseFoldFunction;
 import org.jcodings.CaseFoldCodeItem;
 import org.jcodings.IntHolder;
-import org.jcodings.constants.CharacterType;
-import org.jcodings.unicode.UnicodeEncoding;
 import org.mozilla.javascript.ConsString;
 
 import com.github.anba.es6draft.parser.Characters;
@@ -22,17 +20,19 @@ final class UCS2Encoding extends UnicodeEncoding {
     public static final UCS2Encoding INSTANCE = new UCS2Encoding();
 
     protected UCS2Encoding() {
-        super("UCS-2", 2, 2, null);
+        super("UCS-2", 2, 2);
     }
 
-    public static byte[] toBytes(CharSequence cs) {
+    @Override
+    public byte[] toBytes(CharSequence cs) {
         if (cs instanceof ConsString) {
             return ((ConsString) cs).toByteArray(new byte[cs.length() * 2 + 2]);
         }
         return toBytes(cs.toString());
     }
 
-    public static byte[] toBytes(String s) {
+    @Override
+    public byte[] toBytes(String s) {
         char[] chars = s.toCharArray();
         byte[] bytes = new byte[chars.length * 2 + 2]; // null-terminated c-string
         for (int i = 0, j = 0, len = chars.length; i < len; ++i) {
@@ -44,6 +44,26 @@ final class UCS2Encoding extends UnicodeEncoding {
     }
 
     @Override
+    public int stringIndex(CharSequence cs, int startIndex, int byteIndex) {
+        return byteIndex >> 1;
+    }
+
+    @Override
+    public int byteIndex(CharSequence cs, int startIndex, int stringIndex) {
+        return (stringIndex - startIndex) << 1;
+    }
+
+    @Override
+    public int length(CharSequence cs, int byteIndex) {
+        return 2;
+    }
+
+    @Override
+    public int length(CharSequence cs) {
+        return cs.length() * 2;
+    }
+
+    @Override
     public int length(byte c) {
         return 2;
     }
@@ -51,20 +71,6 @@ final class UCS2Encoding extends UnicodeEncoding {
     @Override
     public int length(byte[] bytes, int p, int end) {
         return p + 1 < end ? 2 : missing(1);
-    }
-
-    @Override
-    public boolean isNewLine(byte[] bytes, int p, int end) {
-        int codePoint = mbcToCode(bytes, p, end);
-        switch (codePoint) {
-        case 0x000A:
-        case 0x000D:
-        case 0x2028:
-        case 0x2029:
-            return true;
-        default:
-            return false;
-        }
     }
 
     @Override
@@ -163,66 +169,8 @@ final class UCS2Encoding extends UnicodeEncoding {
     }
 
     @Override
-    public int propertyNameToCType(byte[] bytes, int p, int end) {
-        return super.propertyNameToCType(bytes, p, end);
-    }
-
-    @Override
-    public boolean isCodeCType(int code, int ctype) {
-        switch (ctype) {
-        case CharacterType.DIGIT:
-            return Characters.isDecimalDigit(code);
-        case CharacterType.SPACE:
-            return Characters.isWhitespaceOrLineTerminator(code);
-        case CharacterType.UPPER:
-            // needs to be implemented to parse hexadecimal digits
-            return Character.isUpperCase(code);
-        case CharacterType.XDIGIT:
-            // needs to be implemented to parse hexadecimal digits
-            return Characters.isHexDigit(code);
-        case CharacterType.WORD:
-            return Characters.isASCIIAlphaNumericUnderscore(code);
-        default:
-            assert false : "unreachable: " + ctype;
-            return super.isCodeCType(code, ctype);
-        }
-    }
-
-    private static final int[] codeRangeDigit, codeRangeWord, codeRangeSpace;
-    static {
-        codeRangeDigit = new int[] { 1, '0', '9' };
-        codeRangeWord = new int[] { 4, '0', '9', 'A', 'Z', '_', '_', 'a', 'z' };
-        codeRangeSpace = new int[] { 11, 0x0009, 0x000d, 0x0020, 0x0020, 0x00a0, 0x00a0, 0x1680,
-                0x1680, 0x180e, 0x180e, 0x2000, 0x200a, 0x2028, 0x2029, 0x202f, 0x202f, 0x205f,
-                0x205f, 0x3000, 0x3000, 0xfeff, 0xfeff };
-    }
-
-    @Override
-    public int[] ctypeCodeRange(int ctype, IntHolder sbOut) {
-        sbOut.value = 0x00; // ?
-        switch (ctype) {
-        case CharacterType.DIGIT:
-            return codeRangeDigit;
-        case CharacterType.WORD:
-            return codeRangeWord;
-        case CharacterType.SPACE:
-            return codeRangeSpace;
-        default:
-            assert false : "unreachable";
-            return super.ctypeCodeRange(ctype);
-        }
-    }
-
-    @Override
     public int leftAdjustCharHead(byte[] bytes, int p, int s, int end) {
-        if (s > p && ((s - p) & 1) == 1)
-            return s - 1;
-        return s;
-    }
-
-    @Override
-    public boolean isReverseMatchAllowed(byte[] bytes, int p, int end) {
-        return false;
+        return s > p ? s - ((s - p) & 1) : s;
     }
 
     @Override

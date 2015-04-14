@@ -191,7 +191,6 @@ public final class RealmPrototype extends OrdinaryObject implements Initializabl
             /* step 5 */
             OrdinaryObject props = ObjectCreate(cx, Intrinsics.ObjectPrototype);
             /* step 6 */
-            // FIXME: spec bug - props not applicable for Object.defineProperties
             GlobalObject globalObject = realm.getGlobalObject();
             for (Object key : globalObject.ownPropertyKeys(cx)) {
                 if (key instanceof String) {
@@ -256,10 +255,8 @@ public final class RealmPrototype extends OrdinaryObject implements Initializabl
         @Function(name = "indirectEval", arity = 1)
         public static Object indirectEval(ExecutionContext cx, ExecutionContext caller,
                 Object thisValue, Object source) {
-            /* steps 1-4 */
-            Realm realm = thisRealmValue(cx, thisValue);
-            /* step 5 */
-            return IndirectEval(caller, realm, source);
+            /* step 1 */
+            return source;
         }
 
         /**

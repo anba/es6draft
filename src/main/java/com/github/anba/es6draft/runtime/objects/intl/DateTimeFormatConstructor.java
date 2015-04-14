@@ -88,7 +88,7 @@ public final class DateTimeFormatConstructor extends BuiltinConstructor implemen
             ExtensionKey.nu);
 
     /**
-     * Calendar algorithm keys (BCP 47; CLDR, version 26)
+     * Calendar algorithm keys (BCP 47; CLDR, version 27)
      */
     private enum CalendarAlgorithm {/* @formatter:off */
         buddhist("buddhist"),

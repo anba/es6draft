@@ -77,7 +77,7 @@ public final class RealmConstructor extends BuiltinConstructor implements Initia
      */
     public static Object IndirectEval(ExecutionContext caller, Realm realm, Object source) {
         // TODO: not yet specified
-        return Eval.indirectEval(realm.defaultContext(), caller, source);
+        return Eval.globalEval(realm.defaultContext(), caller, source);
     }
 
     /**

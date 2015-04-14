@@ -35,7 +35,6 @@ import com.github.anba.es6draft.runtime.internal.ScriptIterator;
 import com.github.anba.es6draft.runtime.internal.ScriptRuntime;
 import com.github.anba.es6draft.runtime.internal.Strings;
 import com.github.anba.es6draft.runtime.objects.FunctionPrototype;
-import com.github.anba.es6draft.runtime.objects.iteration.CompoundIterator;
 import com.github.anba.es6draft.runtime.objects.iteration.ListIterator;
 import com.github.anba.es6draft.runtime.objects.text.RegExpObject;
 import com.github.anba.es6draft.runtime.types.*;
@@ -3086,24 +3085,6 @@ public final class AbstractOperations {
      */
     public static <T> ScriptObject CreateListIterator(ExecutionContext cx, Iterator<T> iterator) {
         return ListIterator.CreateListIterator(cx, iterator);
-    }
-
-    /**
-     * 7.4.9 CreateCompoundIterator ( iterator1, iterator2 )
-     * 
-     * @param <T>
-     *            the element type
-     * @param cx
-     *            the execution context
-     * @param iterator1
-     *            the first source iterator
-     * @param iterator2
-     *            the second source iterator
-     * @return a new script object iterator
-     */
-    public static <T> ScriptObject CreateCompoundIterator(ExecutionContext cx,
-            Iterator<T> iterator1, Iterator<T> iterator2) {
-        return CompoundIterator.CreateCompoundIterator(cx, iterator1, iterator2);
     }
 
     /**

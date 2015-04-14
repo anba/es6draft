@@ -6,13 +6,13 @@
  */
 package com.github.anba.es6draft.regexp;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Utility class to generate the case folding data used in {@link CaseFoldData}
@@ -21,14 +21,117 @@ final class CaseFoldDataGenerator {
     private CaseFoldDataGenerator() {
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
         // generateSpaceRange();
         // generateInvalidToLowerCases();
+        // generateCaseFoldData();
         // generateCaseFoldMethods();
         // generateUnicodeCaseFoldRange();
 
         // findSpecialUnicodeCaseFold();
         // findEntries();
+    }
+
+    public static void generateCaseFoldData() throws IOException {
+        List<Integer> caseFold_From = new ArrayList<>();
+        List<Integer> caseFold_To = new ArrayList<>();
+        List<Integer> caseUnfold_From = new ArrayList<>();
+        Map<Integer, List<Integer>> caseUnfold_To = new LinkedHashMap<>();
+
+        Pattern p = Pattern
+                .compile("([0-9A-F]{4,5}); ([CFST]); ([0-9A-F]{4,5})(?: ([0-9A-F]{4,5}))?(?: ([0-9A-F]{4,5}))?; # .*");
+        Path caseFolding = Paths.get("/tmp/Unicode6.3/CaseFolding.txt");
+        List<String> lines = Files.readAllLines(caseFolding);
+        for (String line : lines) {
+            line = line.trim();
+            if (line.isEmpty() || line.charAt(0) == '#') {
+                continue;
+            }
+            Matcher m = p.matcher(line);
+            if (!m.matches()) {
+                System.err.println("Invalid line: " + line);
+            }
+            char kind = m.group(2).charAt(0);
+            if (kind == 'T' || kind == 'F') {
+                continue;
+            }
+            if (m.group(3 + 1) != null || m.group(3 + 2) != null) {
+                System.err.println("Invalid line: " + line);
+            }
+            int from = Integer.parseInt(m.group(1), 16);
+            int to = Integer.parseInt(m.group(3), 16);
+
+            caseFold_From.add(from);
+            caseFold_To.add(to);
+            if (!caseUnfold_To.containsKey(to)) {
+                caseUnfold_From.add(to);
+                caseUnfold_To.put(to, new ArrayList<Integer>());
+            }
+            caseUnfold_To.get(to).add(from);
+        }
+
+        System.out.println(array("CaseFold_From", caseFold_From));
+        System.out.println(array("CaseFold_To", caseFold_To));
+        System.out.println(array("CaseUnfold_From", caseUnfold_From));
+        System.out.println(array("CaseUnfold_To", caseUnfold_To.values()));
+    }
+
+    private static String array(String name, List<Integer> codePoints) {
+        try (Formatter fmt = new Formatter(new StringBuilder(), Locale.ROOT)) {
+            fmt.format("static final int[] %s = {%n/* @formatter:off */%n", name);
+            boolean isNewLine = true;
+            int index = 0;
+            for (int codePoint : codePoints) {
+                if (isNewLine) {
+                    isNewLine = false;
+                    // fmt.format("    ");
+                }
+                fmt.format("0x%x,", codePoint);
+                if (++index % 8 == 0) {
+                    isNewLine = true;
+                    fmt.format("%n");
+                } else {
+                    fmt.format(" ");
+                }
+            }
+            if (!isNewLine) {
+                fmt.format("%n");
+            }
+            fmt.format("/* @formatter:on */%n};%n", name);
+            return fmt.toString();
+        }
+    }
+
+    private static String array(String name, Collection<List<Integer>> codePoints) {
+        try (Formatter fmt = new Formatter(new StringBuilder(), Locale.ROOT)) {
+            fmt.format("static final int[][] %s = {%n/* @formatter:off */%n", name);
+            boolean isNewLine = true;
+            int index = 0;
+            for (List<Integer> codePoint : codePoints) {
+                if (isNewLine) {
+                    isNewLine = false;
+                    // fmt.format("    ");
+                }
+                fmt.format("{");
+                String prefix = "";
+                for (int cp : codePoint) {
+                    fmt.format("%s0x%x", prefix, cp);
+                    prefix = ", ";
+                }
+                fmt.format("},");
+                if (++index % 6 == 0) {
+                    isNewLine = true;
+                    fmt.format("%n");
+                } else {
+                    fmt.format(" ");
+                }
+            }
+            if (!isNewLine) {
+                fmt.format("%n");
+            }
+            fmt.format("/* @formatter:on */%n};%n", name);
+            return fmt.toString();
+        }
     }
 
     /**

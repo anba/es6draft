@@ -79,7 +79,7 @@ public final class CollatorConstructor extends BuiltinConstructor implements Ini
             ExtensionKey.kn, ExtensionKey.kf);
 
     /**
-     * Collation type keys (BCP 47; CLDR, version 26)
+     * Collation type keys (BCP 47; CLDR, version 27)
      */
     private enum CollationType {/* @formatter:off */
         big5han("big5han"),
@@ -88,6 +88,7 @@ public final class CollatorConstructor extends BuiltinConstructor implements Ini
         direct("direct"), // deprecated, not supported in ICU
         ducet("ducet"),
         eor("eor"),
+        emoji("emoji"),
         gb2312("gb2312", "gb2312han"),
         phonebk("phonebk", "phonebook"),
         phonetic("phonetic"),
