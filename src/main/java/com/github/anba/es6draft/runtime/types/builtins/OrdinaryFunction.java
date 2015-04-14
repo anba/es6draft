@@ -180,18 +180,17 @@ public class OrdinaryFunction extends FunctionObject {
         /* steps 1-2 (not applicable) */
         /* step 3 */
         assert f.isExtensible() && !f.ordinaryHasOwnProperty("prototype");
-        /* step 4 (not applicable) */
-        /* step 5 */
-        OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.ObjectPrototype);
-        /* step 6 */
+        /* step 4 */
         boolean writablePrototype = true;
-        /* step 7 */
+        /* step 5.a */
+        OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.ObjectPrototype);
+        /* step 5.b-c */
         prototype.infallibleDefineOwnProperty("constructor", new Property(f, writablePrototype,
-                false, writablePrototype));
-        /* steps 8-9 */
+                false, true));
+        /* steps 6-7 */
         f.infallibleDefineOwnProperty("prototype", new Property(prototype, writablePrototype,
                 false, false));
-        /* step 10 (return) */
+        /* step 8 (return) */
     }
 
     /**
@@ -211,11 +210,11 @@ public class OrdinaryFunction extends FunctionObject {
         /* steps 1-2 (not applicable) */
         /* step 3 */
         assert f.isExtensible() && !f.ordinaryHasOwnProperty("prototype");
-        /* steps 4-7 (not applicable) */
-        /* steps 8-9 */
+        /* steps 4-5 (not applicable) */
+        /* steps 6-7 */
         f.infallibleDefineOwnProperty("prototype", new Property(prototype, writablePrototype,
                 false, false));
-        /* step 10 (return) */
+        /* step 8 (return) */
     }
 
     /**

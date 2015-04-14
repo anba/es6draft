@@ -9,7 +9,7 @@ package com.github.anba.es6draft.regexp;
 /**
  * UTF-32 encoding with modified case-folding
  */
-final class UTF32Encoding extends UnicodeEncoding {
+final class UTF32Encoding extends UEncoding {
     public static final UTF32Encoding INSTANCE = new UTF32Encoding();
 
     protected UTF32Encoding() {

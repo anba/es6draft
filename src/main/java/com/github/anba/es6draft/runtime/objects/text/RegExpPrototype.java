@@ -479,7 +479,7 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
                     replacement = ToFlatString(cx, replValue);
                 } else {
                     String[] captures = groups(result, nCaptures);
-                    replacement = GetReplaceSubstitution(matched, s, position, captures,
+                    replacement = GetSubstitution(matched, s, position, captures,
                             replaceValueString);
                 }
                 /* step 16.p */
@@ -1079,7 +1079,7 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
     }
 
     /**
-     * 21.1.3.14.1 Runtime Semantics: GetReplaceSubstitution Abstract Operation
+     * 21.1.3.14.1 Runtime Semantics: GetSubstitution(matched, str, position, captures, replacement)
      * 
      * @param matched
      *            the matched substring
@@ -1093,7 +1093,7 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
      *            the replace string
      * @return the replacement string
      */
-    private static String GetReplaceSubstitution(String matched, String string, int position,
+    private static String GetSubstitution(String matched, String string, int position,
             String[] captures, String replacement) {
         /* step 1 (not applicable) */
         /* step 2 */
@@ -1237,8 +1237,7 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
             assert 0 <= position && position < lengthS;
             assert position >= nextSrcPosition;
             String[] captures = groups(result);
-            String replacement = GetReplaceSubstitution(matched, string, position, captures,
-                    replaceValue);
+            String replacement = GetSubstitution(matched, string, position, captures, replaceValue);
             accumulatedResult.append(string, nextSrcPosition, position).append(replacement);
             nextSrcPosition = position + matchLength;
         } while (global);

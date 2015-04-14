@@ -16,7 +16,7 @@ import com.github.anba.es6draft.parser.Characters;
 /**
  * UCS-2 encoding with modified case-folding
  */
-final class UCS2Encoding extends UnicodeEncoding {
+final class UCS2Encoding extends UEncoding {
     public static final UCS2Encoding INSTANCE = new UCS2Encoding();
 
     protected UCS2Encoding() {

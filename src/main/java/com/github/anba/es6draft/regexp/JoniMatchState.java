@@ -19,7 +19,7 @@ import org.joni.Region;
  * {@link MatchState} implementation for Joni {@link Regex} regular expressions
  */
 final class JoniMatchState implements MatchState, IterableMatchResult {
-    private final UnicodeEncoding encoding;
+    private final UEncoding encoding;
     private final Matcher matcher;
     private final CharSequence string;
     private final BitSet negativeLAGroups;
@@ -27,7 +27,7 @@ final class JoniMatchState implements MatchState, IterableMatchResult {
     private int begin = -1, end = 0;
     private Region region;
 
-    public JoniMatchState(UnicodeEncoding encoding, Matcher matcher, CharSequence string,
+    public JoniMatchState(UEncoding encoding, Matcher matcher, CharSequence string,
             BitSet negativeLAGroups) {
         this.encoding = encoding;
         this.matcher = matcher;
@@ -36,7 +36,7 @@ final class JoniMatchState implements MatchState, IterableMatchResult {
         this.position = new StringPosition(encoding.length(string));
     }
 
-    private JoniMatchState(UnicodeEncoding encoding, CharSequence string, BitSet negativeLAGroups,
+    private JoniMatchState(UEncoding encoding, CharSequence string, BitSet negativeLAGroups,
             StringPosition position, int begin, int end, Region region) {
         this.encoding = encoding;
         this.matcher = null;

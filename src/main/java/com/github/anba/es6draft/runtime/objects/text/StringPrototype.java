@@ -415,7 +415,7 @@ public final class StringPrototype extends OrdinaryObject implements Initializab
                 Object replValue = replaceValueCallable.call(cx, UNDEFINED, matched, pos, string);
                 replStr = ToFlatString(cx, replValue);
             } else {
-                replStr = GetReplaceSubstitution(matched, string, pos, replaceValueString);
+                replStr = GetSubstitution(matched, string, pos, replaceValueString);
             }
             /* step 13 */
             int tailPos = pos + searchString.length();
@@ -424,7 +424,8 @@ public final class StringPrototype extends OrdinaryObject implements Initializab
         }
 
         /**
-         * 21.1.3.14.1 Runtime Semantics: GetReplaceSubstitution Abstract Operation
+         * 21.1.3.14.1 Runtime Semantics: GetSubstitution(matched, str, position, captures,
+         * replacement)
          * 
          * @param matched
          *            the matched substring
@@ -436,7 +437,7 @@ public final class StringPrototype extends OrdinaryObject implements Initializab
          *            the replacement value
          * @return the replacement string
          */
-        private static String GetReplaceSubstitution(String matched, String string, int position,
+        private static String GetSubstitution(String matched, String string, int position,
                 String replacement) {
             /* step 1 (not applicable) */
             /* step 2 */
@@ -641,7 +642,7 @@ public final class StringPrototype extends OrdinaryObject implements Initializab
         }
 
         /**
-         * 21.1.3.17.1 Runtime Semantics: SplitMatch Abstract Operation
+         * 21.1.3.17.1 Runtime Semantics: SplitMatch ( S, q, R )
          * 
          * @param s
          *            the string
@@ -651,7 +652,7 @@ public final class StringPrototype extends OrdinaryObject implements Initializab
          *            the search string
          * @return the index of the first match
          */
-        public static int SplitMatch(String s, int q, String r) {
+        private static int SplitMatch(String s, int q, String r) {
             // returns start instead of end position
             return s.indexOf(r, q);
         }

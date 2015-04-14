@@ -817,7 +817,7 @@ public class GlobalObject extends OrdinaryObject implements Initializable {
         }
 
         /**
-         * 18.2.6.1.1 Runtime Semantics: Encode Abstract Operation
+         * 18.2.6.1.1 Runtime Semantics: Encode ( string, unescapedSet )
          * <p>
          * Returns the encoded string or {@code null} on error.
          * 
@@ -882,7 +882,7 @@ public class GlobalObject extends OrdinaryObject implements Initializable {
         }
 
         /**
-         * 18.2.6.1.2 Runtime Semantics: Decode Abstract Operation
+         * 18.2.6.1.2 Runtime Semantics: Decode ( string, reservedSet )
          * <p>
          * Returns the decoded string or {@code null} on error.
          * 

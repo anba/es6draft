@@ -11,7 +11,7 @@ import org.mozilla.javascript.ConsString;
 /**
  * UTF-16 encoding with modified case-folding
  */
-final class UTF16Encoding extends UnicodeEncoding {
+final class UTF16Encoding extends UEncoding {
     public static final UTF16Encoding INSTANCE = new UTF16Encoding();
 
     protected UTF16Encoding() {

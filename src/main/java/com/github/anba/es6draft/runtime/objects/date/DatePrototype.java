@@ -866,17 +866,17 @@ public final class DatePrototype extends OrdinaryObject implements Initializable
                 @Optional(Optional.Default.NONE) Object ms) {
             /* steps 1-2 */
             double t = thisTimeValue(cx, thisValue);
-            /* step 3 */
+            /* steps 3-4 */
             double s = ToNumber(cx, sec);
-            /* step 4 */
+            /* steps 5-6 */
             double milli = (ms == null ? msFromTime(t) : ToNumber(cx, ms));
-            /* step 5 */
-            double date = MakeDate(Day(t), MakeTime(HourFromTime(t), MinFromTime(t), s, milli));
-            /* step 6 */
-            double v = TimeClip(date);
             /* step 7 */
-            ((DateObject) thisValue).setDateValue(v);
+            double date = MakeDate(Day(t), MakeTime(HourFromTime(t), MinFromTime(t), s, milli));
             /* step 8 */
+            double v = TimeClip(date);
+            /* step 9 */
+            ((DateObject) thisValue).setDateValue(v);
+            /* step 10 */
             return v;
         }
 
@@ -939,19 +939,19 @@ public final class DatePrototype extends OrdinaryObject implements Initializable
                 @Optional(Optional.Default.NONE) Object ms) {
             /* steps 1-2 */
             double t = thisTimeValue(cx, thisValue);
-            /* step 3 */
+            /* steps 3-4 */
             double m = ToNumber(cx, min);
-            /* step 4 */
+            /* steps 5-6 */
             double s = (sec == null ? SecFromTime(t) : ToNumber(cx, sec));
-            /* step 5 */
+            /* steps 7-8 */
             double milli = (ms == null ? msFromTime(t) : ToNumber(cx, ms));
-            /* step 6 */
-            double date = MakeDate(Day(t), MakeTime(HourFromTime(t), m, s, milli));
-            /* step 7 */
-            double v = TimeClip(date);
-            /* step 8 */
-            ((DateObject) thisValue).setDateValue(v);
             /* step 9 */
+            double date = MakeDate(Day(t), MakeTime(HourFromTime(t), m, s, milli));
+            /* step 10 */
+            double v = TimeClip(date);
+            /* step 11 */
+            ((DateObject) thisValue).setDateValue(v);
+            /* step 12 */
             return v;
         }
 
@@ -1148,17 +1148,17 @@ public final class DatePrototype extends OrdinaryObject implements Initializable
                 @Optional(Optional.Default.NONE) Object date) {
             /* steps 1-2 */
             double t = thisTimeValue(cx, thisValue);
-            /* step 3 */
+            /* steps 3-4 */
             double m = ToNumber(cx, month);
-            /* step 4 */
+            /* steps 5-6 */
             double dt = (date == null ? DateFromTime(t) : ToNumber(cx, date));
-            /* step 5 */
-            double newDate = MakeDate(MakeDay(YearFromTime(t), m, dt), TimeWithinDay(t));
-            /* step 6 */
-            double v = TimeClip(newDate);
             /* step 7 */
-            ((DateObject) thisValue).setDateValue(v);
+            double newDate = MakeDate(MakeDay(YearFromTime(t), m, dt), TimeWithinDay(t));
             /* step 8 */
+            double v = TimeClip(newDate);
+            /* step 9 */
+            ((DateObject) thisValue).setDateValue(v);
+            /* step 10 */
             return v;
         }
 

@@ -8,7 +8,6 @@ package com.github.anba.es6draft.runtime.types.builtins;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToString;
 import static com.github.anba.es6draft.runtime.internal.Errors.newReferenceError;
-import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.modules.ModuleSemantics.GetModuleNamespace;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
@@ -129,12 +128,16 @@ public final class ModuleNamespaceObject extends OrdinaryObject {
 
     @Override
     protected boolean hasOwnProperty(ExecutionContext cx, long propertyKey) {
-        throw newTypeError(cx, Messages.Key.ModulesOwnProperty);
+        return hasOwnProperty(cx, ToString(propertyKey));
     }
 
     @Override
     protected boolean hasOwnProperty(ExecutionContext cx, String propertyKey) {
-        throw newTypeError(cx, Messages.Key.ModulesOwnProperty);
+        if (!exports.contains(propertyKey)) {
+            return false;
+        }
+        getValue(cx, propertyKey, this);
+        return true;
     }
 
     @Override
@@ -146,16 +149,22 @@ public final class ModuleNamespaceObject extends OrdinaryObject {
     @Override
     protected Property getProperty(ExecutionContext cx, long propertyKey) {
         /* step 1 (not applicable) */
-        /* step 2 */
-        throw newTypeError(cx, Messages.Key.ModulesOwnProperty);
+        /* steps 2-6 */
+        return getProperty(cx, ToString(propertyKey));
     }
 
     /** 9.4.6.5 [[GetOwnProperty]] (P) */
     @Override
     protected Property getProperty(ExecutionContext cx, String propertyKey) {
         /* step 1 (not applicable) */
-        /* step 2 */
-        throw newTypeError(cx, Messages.Key.ModulesOwnProperty);
+        /* steps 2-3 */
+        if (!exports.contains(propertyKey)) {
+            return null;
+        }
+        /* steps 4-5 */
+        Object value = getValue(cx, propertyKey, this);
+        /* step 6 */
+        return new Property(value, true, true, false);
     }
 
     /** 9.4.6.5 [[GetOwnProperty]] (P) */

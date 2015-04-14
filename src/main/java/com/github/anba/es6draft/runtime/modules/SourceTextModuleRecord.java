@@ -13,6 +13,7 @@ import static com.github.anba.es6draft.runtime.modules.ModuleSemantics.HostResol
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.semantics.StaticSemantics.ExportEntries;
 import static com.github.anba.es6draft.semantics.StaticSemantics.ImportEntries;
+import static com.github.anba.es6draft.semantics.StaticSemantics.ImportedLocalNames;
 import static com.github.anba.es6draft.semantics.StaticSemantics.ModuleRequests;
 
 import java.io.IOException;
@@ -300,19 +301,32 @@ public final class SourceTextModuleRecord implements ModuleRecord, Cloneable {
         /* step 5 */
         List<ImportEntry> importEntries = ImportEntries(parsedBody);
         /* step 6 */
-        ArrayList<ExportEntry> indirectExportEntries = new ArrayList<>();
+        Map<String, ImportEntry> importedBoundNames = ImportedLocalNames(importEntries);
         /* step 7 */
-        ArrayList<ExportEntry> localExportEntries = new ArrayList<>();
+        ArrayList<ExportEntry> indirectExportEntries = new ArrayList<>();
         /* step 8 */
+        ArrayList<ExportEntry> localExportEntries = new ArrayList<>();
+        /* step 9 */
         ArrayList<ExportEntry> starExportEntries = new ArrayList<>();
         /* step ? (Extension: Export From) */
         ArrayList<ExportEntry> nameSpaceExportEntries = new ArrayList<>();
-        /* step 9 */
-        List<ExportEntry> exportEntries = ExportEntries(parsedBody);
         /* step 10 */
+        List<ExportEntry> exportEntries = ExportEntries(parsedBody);
+        /* step 11 */
         for (ExportEntry exportEntry : exportEntries) {
             if (exportEntry.getModuleRequest() == null) {
-                localExportEntries.add(exportEntry);
+                ImportEntry importEntry = importedBoundNames.get(exportEntry.getLocalName());
+                if (importEntry == null) {
+                    localExportEntries.add(exportEntry);
+                } else {
+                    if (importEntry.isStarImport()) {
+                        localExportEntries.add(exportEntry);
+                    } else {
+                        indirectExportEntries.add(new ExportEntry(exportEntry.getSourcePosition(),
+                                importEntry.getModuleRequest(), importEntry.getImportName(), null,
+                                exportEntry.getExportName()));
+                    }
+                }
             } else if (exportEntry.isStarExport()) {
                 starExportEntries.add(exportEntry);
             } else if (exportEntry.isNameSpaceExport()) {
@@ -321,7 +335,7 @@ public final class SourceTextModuleRecord implements ModuleRecord, Cloneable {
                 indirectExportEntries.add(exportEntry);
             }
         }
-        /* step 11 */
+        /* step 12 */
         SourceTextModuleRecord m = new SourceTextModuleRecord(sourceCodeId, requestedModules,
                 importEntries, localExportEntries, indirectExportEntries, starExportEntries,
                 nameSpaceExportEntries);

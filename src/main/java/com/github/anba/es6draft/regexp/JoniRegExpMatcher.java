@@ -33,7 +33,7 @@ final class JoniRegExpMatcher implements RegExpMatcher {
         this.negativeLAGroups = negativeLAGroups;
     }
 
-    private UnicodeEncoding getEncoding() {
+    private UEncoding getEncoding() {
         if ((this.flags & Pattern.UNICODE_CASE) != 0) {
             return UTF32Encoding.INSTANCE;
         }
@@ -51,7 +51,7 @@ final class JoniRegExpMatcher implements RegExpMatcher {
             if ((this.flags & Pattern.CASE_INSENSITIVE) != 0) {
                 flags |= Option.IGNORECASE;
             }
-            UnicodeEncoding enc = getEncoding();
+            UEncoding enc = getEncoding();
             byte[] bytes = enc.toBytes(regex);
             int length = bytes.length - enc.minLength();
             pattern = new Regex(bytes, 0, length, flags, enc, JoniSyntax.ECMAScript);
@@ -61,7 +61,7 @@ final class JoniRegExpMatcher implements RegExpMatcher {
 
     @Override
     public JoniMatchState matcher(String s) {
-        UnicodeEncoding enc = getEncoding();
+        UEncoding enc = getEncoding();
         if (s != lastInput) {
             lastInput = s;
             lastInputBytes = enc.toBytes(s);
@@ -73,7 +73,7 @@ final class JoniRegExpMatcher implements RegExpMatcher {
 
     @Override
     public JoniMatchState matcher(CharSequence s) {
-        UnicodeEncoding enc = getEncoding();
+        UEncoding enc = getEncoding();
         if (s != lastInput) {
             lastInput = s;
             lastInputBytes = enc.toBytes(s);

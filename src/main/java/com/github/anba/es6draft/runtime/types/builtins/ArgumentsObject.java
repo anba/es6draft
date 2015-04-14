@@ -165,18 +165,12 @@ public final class ArgumentsObject extends OrdinaryObject {
         ParameterMap map = this.parameterMap;
         /* steps 3-4 */
         boolean isMapped = map != null ? map.hasOwnProperty(propertyKey, false) : false;
-        /* steps 5-7 */
-        Object v;
+        /* step 5 */
         if (!isMapped) {
-            /* step 5 */
-            v = super.getValue(cx, propertyKey, receiver);
-        } else {
-            /* step 6 */
-            v = map.get(propertyKey);
+            return super.getValue(cx, propertyKey, receiver);
         }
-        /* step 8 (not applicable) */
-        /* step 9 */
-        return v;
+        /* step 6 */
+        return map.get(propertyKey);
     }
 
     /**
@@ -195,28 +189,17 @@ public final class ArgumentsObject extends OrdinaryObject {
             /* step 3 */
             isMapped = map != null ? map.hasOwnProperty(propertyKey, false) : false;
         }
-        // FIXME: spec bug (https://bugs.ecmascript.org/show_bug.cgi?id=4211)
-        // /* steps 4-5 */
-        // if (!isMapped) {
-        // /* step 4 */
-        // return super.setValue(cx, propertyKey, value, receiver);
-        // } else {
-        // /* step 5 */
-        // map.put(propertyKey, value);
-        // return true;
-        // }
-        boolean allowed = super.setValue(cx, propertyKey, value, receiver);
-        if (allowed && isMapped) {
+        /* step 4 */
+        if (isMapped) {
             map.put(propertyKey, value);
         }
-        return allowed;
+        /* step 5 */
+        return super.setValue(cx, propertyKey, value, receiver);
     }
 
     @Override
     protected boolean setPropertyValue(ExecutionContext cx, long propertyKey, Object value,
             Property current) {
-        // FIXME: spec bug (https://bugs.ecmascript.org/show_bug.cgi?id=4211)
-        // assert !isMapped(propertyKey);
         if (isMapped(propertyKey)) {
             // NB: `current` is the temporary Property object created in `getProperty()`, but we
             // need the actual Property instance to update its value.

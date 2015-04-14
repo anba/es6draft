@@ -577,7 +577,7 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
     }
 
     /**
-     * 19.1.2.3.1 Runtime Semantics: ObjectDefineProperties Abstract Operation
+     * 19.1.2.3.1 Runtime Semantics: ObjectDefineProperties ( O, Properties )
      * 
      * @param cx
      *            the execution context

@@ -5,7 +5,7 @@
  * <https://github.com/anba/es6draft>
  */
 const {
-  assertSame, assertTrue, assertEquals, assertThrows
+  assertSame, assertTrue, assertEquals
 } = Assert;
 
 // 9.4.6: Missing/Incomplete object internal methods
@@ -30,7 +30,7 @@ assertEquals(
 );
 
 // [[OwnPropertyKeys]]
-assertThrows(TypeError, () => Object.keys(self));
+assertEquals(["a"], Object.keys(self));
 assertEquals(["a"], Object.getOwnPropertyNames(self));
 assertEquals([Symbol.toStringTag, Symbol.iterator], Object.getOwnPropertySymbols(self));
 assertEquals(["a", Symbol.toStringTag, Symbol.iterator], Reflect.ownKeys(self));

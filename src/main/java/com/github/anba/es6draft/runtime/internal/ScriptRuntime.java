@@ -2551,7 +2551,6 @@ public final class ScriptRuntime {
                         innerResult = innerThrowResultObj;
                         continue inner;
                     } else {
-                        // FIXME: spec bug (https://bugs.ecmascript.org/show_bug.cgi?id=4207)
                         /* step 6.b.iv */
                         /* steps 6.b.iv.1-2 */
                         IteratorClose(cx, iterator, false);
@@ -2622,7 +2621,6 @@ public final class ScriptRuntime {
             }
             return Type.objectValue(innerThrowResult);
         } else {
-            // FIXME: spec bug (https://bugs.ecmascript.org/show_bug.cgi?id=4207)
             /* step 6.b.iv */
             /* steps 6.b.iv.1-2 */
             IteratorClose(cx, iterator, false);

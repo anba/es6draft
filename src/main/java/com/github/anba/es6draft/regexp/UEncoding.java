@@ -10,14 +10,15 @@ import org.jcodings.ApplyAllCaseFoldFunction;
 import org.jcodings.CaseFoldCodeItem;
 import org.jcodings.IntHolder;
 import org.jcodings.constants.CharacterType;
+import org.jcodings.unicode.UnicodeEncoding;
 
 import com.github.anba.es6draft.parser.Characters;
 
 /**
  *
  */
-abstract class UnicodeEncoding extends org.jcodings.unicode.UnicodeEncoding {
-    protected UnicodeEncoding(String name, int minLength, int maxLength) {
+abstract class UEncoding extends UnicodeEncoding {
+    protected UEncoding(String name, int minLength, int maxLength) {
         super(name, minLength, maxLength, null);
     }
 

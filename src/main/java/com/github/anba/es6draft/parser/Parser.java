@@ -4106,9 +4106,8 @@ public final class Parser {
      * ClassDeclaration<span><sub>[Yield, Default]</sub></span> :
      *     class BindingIdentifier<span><sub>[?Yield]</sub></span> ClassTail<span><sub>[?Yield]</sub></span>
      *     [+Default] class ClassTail[?Yield]
-     * ClassTail<span><sub>[Yield, GeneratorParameter]</sub></span> :
-     *     [~GeneratorParameter] ClassHeritage<span><sub>[?Yield]opt</sub></span> { ClassBody<span><sub>[?Yield]opt</sub></span> }
-     *     [+GeneratorParameter] ClassHeritage<span><sub>opt</sub></span> { ClassBody<span><sub>opt</sub></span> }
+     * ClassTail<span><sub>[Yield]</sub></span> :
+     *     ClassHeritage<span><sub>[?Yield]opt</sub></span> { ClassBody<span><sub>[?Yield]opt</sub></span> }
      * </pre>
      * 
      * @param isDefault
@@ -4169,11 +4168,10 @@ public final class Parser {
      * <strong>[14.5] Class Definitions</strong>
      * 
      * <pre>
-     * ClassExpression<span><sub>[Yield, GeneratorParameter]</sub></span> :
-     *     class BindingIdentifier<span><sub>[?Yield]opt</sub></span> ClassTail<span><sub>[?Yield, ?GeneratorParameter]</sub></span>
-     * ClassTail<span><sub>[Yield, GeneratorParameter]</sub></span> :
-     *     [~GeneratorParameter] ClassHeritage<span><sub>[?Yield]opt</sub></span> { ClassBody<span><sub>[?Yield]opt</sub></span> }
-     *     [+GeneratorParameter] ClassHeritage<span><sub>opt</sub></span> { ClassBody<span><sub>opt</sub></span> }
+     * ClassExpression<span><sub>[Yield]</sub></span> :
+     *     class BindingIdentifier<span><sub>[?Yield]opt</sub></span> ClassTail<span><sub>[?Yield]</sub></span>
+     * ClassTail<span><sub>[Yield]</sub></span> :
+     *     ClassHeritage<span><sub>[?Yield]opt</sub></span> { ClassBody<span><sub>[?Yield]opt</sub></span> }
      * </pre>
      * 
      * @param decorators

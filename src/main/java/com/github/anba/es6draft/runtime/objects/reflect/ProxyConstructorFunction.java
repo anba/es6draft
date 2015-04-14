@@ -7,7 +7,6 @@
 package com.github.anba.es6draft.runtime.objects.reflect;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.CreateDataProperty;
-import static com.github.anba.es6draft.runtime.AbstractOperations.CreateMethodProperty;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
@@ -121,7 +120,7 @@ public final class ProxyConstructorFunction extends BuiltinConstructor implement
             /* step 6 */
             CreateDataProperty(cx, result, "proxy", p);
             /* step 7 */
-            CreateMethodProperty(cx, result, "revoke", revoker);
+            CreateDataProperty(cx, result, "revoke", revoker);
             /* step 8 */
             return result;
         }
@@ -131,34 +130,34 @@ public final class ProxyConstructorFunction extends BuiltinConstructor implement
      * <h1>26.5.2.1.1 Proxy Revocation Functions</h1>
      */
     public static final class ProxyRevocationFunction extends BuiltinFunction {
-        /** [[RevokableProxy]] */
-        private Ref<ProxyObject> revokableProxy;
+        /** [[RevocableProxy]] */
+        private Ref<ProxyObject> revocableProxy;
 
         public ProxyRevocationFunction(Realm realm, ProxyObject revokableProxy) {
             this(realm, new Ref<>(revokableProxy));
             createDefaultFunctionProperties();
         }
 
-        private ProxyRevocationFunction(Realm realm, Ref<ProxyObject> revokableProxy) {
+        private ProxyRevocationFunction(Realm realm, Ref<ProxyObject> revocableProxy) {
             super(realm, ANONYMOUS, 0);
-            this.revokableProxy = revokableProxy;
+            this.revocableProxy = revocableProxy;
         }
 
         @Override
         public ProxyRevocationFunction clone() {
-            return new ProxyRevocationFunction(getRealm(), revokableProxy);
+            return new ProxyRevocationFunction(getRealm(), revocableProxy);
         }
 
         @Override
         public Undefined call(ExecutionContext callerContext, Object thisValue, Object... args) {
             /* step 1 */
-            Ref<ProxyObject> p = revokableProxy;
+            Ref<ProxyObject> p = revocableProxy;
             /* step 2 */
             if (p == null || p.get() == null) {
                 return UNDEFINED;
             }
             /* step 3 */
-            revokableProxy = null;
+            revocableProxy = null;
             /* step 4 (implicit) */
             /* steps 5-6 */
             p.getAndClear().revoke();

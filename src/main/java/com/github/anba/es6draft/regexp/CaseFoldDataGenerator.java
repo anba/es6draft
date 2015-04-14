@@ -97,7 +97,7 @@ final class CaseFoldDataGenerator {
             if (!isNewLine) {
                 fmt.format("%n");
             }
-            fmt.format("/* @formatter:on */%n};%n", name);
+            fmt.format("/* @formatter:on */%n};%n");
             return fmt.toString();
         }
     }
@@ -129,7 +129,7 @@ final class CaseFoldDataGenerator {
             if (!isNewLine) {
                 fmt.format("%n");
             }
-            fmt.format("/* @formatter:on */%n};%n", name);
+            fmt.format("/* @formatter:on */%n};%n");
             return fmt.toString();
         }
     }

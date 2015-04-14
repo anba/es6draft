@@ -12,9 +12,11 @@ import static java.util.Collections.singletonList;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import com.github.anba.es6draft.ast.*;
@@ -899,6 +901,21 @@ public final class StaticSemantics {
             String localName = specifier.getLocalName().getName().getIdentifier();
             entries.add(new ImportEntry(specifier, module, importName, localName));
         }
+    }
+
+    /**
+     * 15.2.1.9 Static Semantics: ImportedLocalNames ( importEntries )
+     * 
+     * @param importEntries
+     *            the list of import entry records
+     * @return the list of local names
+     */
+    public static Map<String, ImportEntry> ImportedLocalNames(List<ImportEntry> importEntries) {
+        HashMap<String, ImportEntry> localNames = new HashMap<>();
+        for (ImportEntry importEntry : importEntries) {
+            localNames.put(importEntry.getLocalName(), importEntry);
+        }
+        return localNames;
     }
 
     /**

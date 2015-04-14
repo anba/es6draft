@@ -37,6 +37,15 @@ public final class ExportEntry {
         this.sourcePosition = node.getBeginPosition();
     }
 
+    public ExportEntry(long sourcePosition, String moduleRequest, String importName,
+            String localName, String exportName) {
+        this.moduleRequest = moduleRequest;
+        this.importName = importName;
+        this.localName = localName;
+        this.exportName = exportName;
+        this.sourcePosition = sourcePosition;
+    }
+
     @Override
     public String toString() {
         return String
@@ -86,6 +95,15 @@ public final class ExportEntry {
      */
     public String getExportName() {
         return exportName;
+    }
+
+    /**
+     * Returns the source position.
+     * 
+     * @return the source
+     */
+    public long getSourcePosition() {
+        return sourcePosition;
     }
 
     /**

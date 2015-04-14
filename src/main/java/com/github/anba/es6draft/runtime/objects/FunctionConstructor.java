@@ -143,19 +143,19 @@ public final class FunctionConstructor extends BuiltinConstructor implements Ini
         boolean strict = function.isStrict();
         /* steps 20-21 */
         ScriptObject proto = GetPrototypeFromConstructor(cx, newTarget, fallbackProto);
-        /* steps 22-23 */
+        /* step 22 */
         OrdinaryConstructorFunction f = FunctionAllocate(cx, proto, strict, FunctionKind.Normal,
                 ConstructorKind.Base);
-        /* steps 24-25 */
+        /* steps 23-24 */
         LexicalEnvironment<GlobalEnvironmentRecord> scope = f.getRealm().getGlobalEnv();
-        /* step 26 */
+        /* step 25 */
         FunctionInitialize(f, FunctionKind.Normal, function, scope, exec);
-        /* step 27 (not applicable) */
-        /* steps 28 */
+        /* step 26 (not applicable) */
+        /* steps 27 */
         MakeConstructor(cx, f);
-        /* step 29 */
+        /* step 28 */
         SetFunctionName(f, "anonymous");
-        /* step 30 */
+        /* step 29 */
         return f;
     }
 

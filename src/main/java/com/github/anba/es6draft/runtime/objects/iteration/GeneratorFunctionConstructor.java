@@ -142,19 +142,19 @@ public final class GeneratorFunctionConstructor extends BuiltinConstructor imple
         boolean strict = function.isStrict();
         /* steps 20-21 */
         ScriptObject proto = GetPrototypeFromConstructor(cx, newTarget, fallbackProto);
-        /* steps 22-23 */
+        /* step 22 */
         OrdinaryGenerator f = FunctionAllocate(cx, proto, strict, FunctionKind.Normal);
-        /* steps 24-25 */
+        /* steps 23-24 */
         LexicalEnvironment<GlobalEnvironmentRecord> scope = f.getRealm().getGlobalEnv();
-        /* step 26 */
+        /* step 25 */
         FunctionInitialize(f, FunctionKind.Normal, function, scope, exec);
-        /* step 27 */
+        /* step 26 */
         OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.GeneratorPrototype);
         MakeConstructor(f, true, prototype);
-        /* step 28 (not applicable) */
-        /* step 29 */
+        /* step 27 (not applicable) */
+        /* step 28 */
         SetFunctionName(f, "anonymous");
-        /* step 30 */
+        /* step 29 */
         return f;
     }
 

@@ -2291,133 +2291,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.13 Invoke(O, P, [argumentsList])
-     * 
-     * @param cx
-     *            the execution context
-     * @param object
-     *            the script object
-     * @param propertyKey
-     *            the property key
-     * @param argumentsList
-     *            the method call arguments
-     * @return the method return value
-     */
-    public static Object Invoke(ExecutionContext cx, Object object, Object propertyKey,
-            Object... argumentsList) {
-        if (propertyKey instanceof String) {
-            return Invoke(cx, object, (String) propertyKey, argumentsList);
-        } else {
-            return Invoke(cx, object, (Symbol) propertyKey, argumentsList);
-        }
-    }
-
-    /**
-     * 7.3.13 Invoke(O, P, [argumentsList])
-     * 
-     * @param cx
-     *            the execution context
-     * @param object
-     *            the script object
-     * @param propertyKey
-     *            the property key
-     * @param argumentsList
-     *            the method call arguments
-     * @return the method return value
-     */
-    public static Object Invoke(ExecutionContext cx, Object object, String propertyKey,
-            Object... argumentsList) {
-        /* steps 1-2 (not applicable) */
-        /* step 3 */
-        Object func = GetV(cx, object, propertyKey);
-        /* Call - steps 1-3 */
-        if (!IsCallable(func)) {
-            throw newTypeError(cx, Messages.Key.PropertyNotCallable, propertyKey);
-        }
-        /* Call - step 4 */
-        return ((Callable) func).call(cx, object, argumentsList);
-    }
-
-    /**
-     * 7.3.13 Invoke(O, P, [argumentsList])
-     * 
-     * @param cx
-     *            the execution context
-     * @param object
-     *            the script object
-     * @param propertyKey
-     *            the property key
-     * @param argumentsList
-     *            the method call arguments
-     * @return the method return value
-     */
-    public static Object Invoke(ExecutionContext cx, ScriptObject object, String propertyKey,
-            Object... argumentsList) {
-        /* steps 1-2 (not applicable) */
-        /* step 3 */
-        Object func = object.get(cx, propertyKey, object);
-        /* Call - steps 1-3 */
-        if (!IsCallable(func)) {
-            throw newTypeError(cx, Messages.Key.PropertyNotCallable, propertyKey);
-        }
-        /* Call - step 4 */
-        return ((Callable) func).call(cx, object, argumentsList);
-    }
-
-    /**
-     * 7.3.13 Invoke(O, P, [argumentsList])
-     * 
-     * @param cx
-     *            the execution context
-     * @param object
-     *            the script object
-     * @param propertyKey
-     *            the property key
-     * @param argumentsList
-     *            the method call arguments
-     * @return the method return value
-     */
-    public static Object Invoke(ExecutionContext cx, Object object, Symbol propertyKey,
-            Object... argumentsList) {
-        /* steps 1-2 (not applicable) */
-        /* step 3 */
-        Object func = GetV(cx, object, propertyKey);
-        /* Call - steps 1-3 */
-        if (!IsCallable(func)) {
-            throw newTypeError(cx, Messages.Key.PropertyNotCallable, propertyKey.toString());
-        }
-        /* Call - step 4 */
-        return ((Callable) func).call(cx, object, argumentsList);
-    }
-
-    /**
-     * 7.3.13 Invoke(O, P, [argumentsList])
-     * 
-     * @param cx
-     *            the execution context
-     * @param object
-     *            the script object
-     * @param propertyKey
-     *            the property key
-     * @param argumentsList
-     *            the method call arguments
-     * @return the method return value
-     */
-    public static Object Invoke(ExecutionContext cx, ScriptObject object, Symbol propertyKey,
-            Object... argumentsList) {
-        /* steps 1-2 (not applicable) */
-        /* step 3 */
-        Object func = object.get(cx, propertyKey, object);
-        /* Call - steps 1-3 */
-        if (!IsCallable(func)) {
-            throw newTypeError(cx, Messages.Key.PropertyNotCallable, propertyKey.toString());
-        }
-        /* Call - step 4 */
-        return ((Callable) func).call(cx, object, argumentsList);
-    }
-
-    /**
-     * 7.3.14 Construct (F, [argumentsList], [newTarget])
+     * 7.3.13 Construct (F, [argumentsList], [newTarget])
      * 
      * @param cx
      *            the execution context
@@ -2435,7 +2309,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.14 Construct (F, [argumentsList], [newTarget])
+     * 7.3.13 Construct (F, [argumentsList], [newTarget])
      * 
      * @param cx
      *            the execution context
@@ -2455,7 +2329,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.15 SetIntegrityLevel (O, level)
+     * 7.3.14 SetIntegrityLevel (O, level)
      * 
      * @param cx
      *            the execution context
@@ -2523,7 +2397,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.16 TestIntegrityLevel (O, level)
+     * 7.3.15 TestIntegrityLevel (O, level)
      * 
      * @param cx
      *            the execution context
@@ -2571,7 +2445,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.17 CreateArrayFromList (elements)
+     * 7.3.16 CreateArrayFromList (elements)
      * 
      * @param cx
      *            the execution context
@@ -2585,7 +2459,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.17 CreateArrayFromList (elements)
+     * 7.3.16 CreateArrayFromList (elements)
      * 
      * @param cx
      *            the execution context
@@ -2599,7 +2473,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.18 CreateListFromArrayLike (obj [, elementTypes] )
+     * 7.3.17 CreateListFromArrayLike (obj [, elementTypes] )
      * 
      * @param cx
      *            the execution context
@@ -2649,7 +2523,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.18 CreateListFromArrayLike (obj [, elementTypes] )
+     * 7.3.17 CreateListFromArrayLike (obj [, elementTypes] )
      * 
      * @param cx
      *            the execution context
@@ -2716,6 +2590,132 @@ public final class AbstractOperations {
         }
         /* step 9 */
         return Arrays.asList(list);
+    }
+
+    /**
+     * 7.3.18 Invoke(O, P, [argumentsList])
+     * 
+     * @param cx
+     *            the execution context
+     * @param object
+     *            the script object
+     * @param propertyKey
+     *            the property key
+     * @param argumentsList
+     *            the method call arguments
+     * @return the method return value
+     */
+    public static Object Invoke(ExecutionContext cx, Object object, Object propertyKey,
+            Object... argumentsList) {
+        if (propertyKey instanceof String) {
+            return Invoke(cx, object, (String) propertyKey, argumentsList);
+        } else {
+            return Invoke(cx, object, (Symbol) propertyKey, argumentsList);
+        }
+    }
+
+    /**
+     * 7.3.18 Invoke(O, P, [argumentsList])
+     * 
+     * @param cx
+     *            the execution context
+     * @param object
+     *            the script object
+     * @param propertyKey
+     *            the property key
+     * @param argumentsList
+     *            the method call arguments
+     * @return the method return value
+     */
+    public static Object Invoke(ExecutionContext cx, Object object, String propertyKey,
+            Object... argumentsList) {
+        /* steps 1-2 (not applicable) */
+        /* step 3 */
+        Object func = GetV(cx, object, propertyKey);
+        /* Call - steps 1-3 */
+        if (!IsCallable(func)) {
+            throw newTypeError(cx, Messages.Key.PropertyNotCallable, propertyKey);
+        }
+        /* Call - step 4 */
+        return ((Callable) func).call(cx, object, argumentsList);
+    }
+
+    /**
+     * 7.3.18 Invoke(O, P, [argumentsList])
+     * 
+     * @param cx
+     *            the execution context
+     * @param object
+     *            the script object
+     * @param propertyKey
+     *            the property key
+     * @param argumentsList
+     *            the method call arguments
+     * @return the method return value
+     */
+    public static Object Invoke(ExecutionContext cx, ScriptObject object, String propertyKey,
+            Object... argumentsList) {
+        /* steps 1-2 (not applicable) */
+        /* step 3 */
+        Object func = object.get(cx, propertyKey, object);
+        /* Call - steps 1-3 */
+        if (!IsCallable(func)) {
+            throw newTypeError(cx, Messages.Key.PropertyNotCallable, propertyKey);
+        }
+        /* Call - step 4 */
+        return ((Callable) func).call(cx, object, argumentsList);
+    }
+
+    /**
+     * 7.3.18 Invoke(O, P, [argumentsList])
+     * 
+     * @param cx
+     *            the execution context
+     * @param object
+     *            the script object
+     * @param propertyKey
+     *            the property key
+     * @param argumentsList
+     *            the method call arguments
+     * @return the method return value
+     */
+    public static Object Invoke(ExecutionContext cx, Object object, Symbol propertyKey,
+            Object... argumentsList) {
+        /* steps 1-2 (not applicable) */
+        /* step 3 */
+        Object func = GetV(cx, object, propertyKey);
+        /* Call - steps 1-3 */
+        if (!IsCallable(func)) {
+            throw newTypeError(cx, Messages.Key.PropertyNotCallable, propertyKey.toString());
+        }
+        /* Call - step 4 */
+        return ((Callable) func).call(cx, object, argumentsList);
+    }
+
+    /**
+     * 7.3.18 Invoke(O, P, [argumentsList])
+     * 
+     * @param cx
+     *            the execution context
+     * @param object
+     *            the script object
+     * @param propertyKey
+     *            the property key
+     * @param argumentsList
+     *            the method call arguments
+     * @return the method return value
+     */
+    public static Object Invoke(ExecutionContext cx, ScriptObject object, Symbol propertyKey,
+            Object... argumentsList) {
+        /* steps 1-2 (not applicable) */
+        /* step 3 */
+        Object func = object.get(cx, propertyKey, object);
+        /* Call - steps 1-3 */
+        if (!IsCallable(func)) {
+            throw newTypeError(cx, Messages.Key.PropertyNotCallable, propertyKey.toString());
+        }
+        /* Call - step 4 */
+        return ((Callable) func).call(cx, object, argumentsList);
     }
 
     /**

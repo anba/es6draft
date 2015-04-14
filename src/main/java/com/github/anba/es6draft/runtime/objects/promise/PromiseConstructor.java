@@ -220,7 +220,7 @@ public final class PromiseConstructor extends BuiltinConstructor implements Init
             }
             /* steps 10-13 */
             try {
-                return PerformPromiseRaceLoop(cx, iterator, c, promiseCapability);
+                return PerformPromiseRace(cx, iterator, c, promiseCapability);
             } catch (ScriptException e) {
                 try {
                     IteratorClose(cx, iterator, true);
@@ -429,7 +429,7 @@ public final class PromiseConstructor extends BuiltinConstructor implements Init
     }
 
     /**
-     * 25.4.4.3.1 PerformPromiseRaceLoop( iterator, promiseCapability, C )
+     * 25.4.4.3.1 Runtime Semantics: PerformPromiseRace ( iteratorRecord, promiseCapability, C )
      * 
      * @param <PROMISE>
      *            the promise type
@@ -443,8 +443,8 @@ public final class PromiseConstructor extends BuiltinConstructor implements Init
      *            the new promise capability record
      * @return the new promise object
      */
-    public static <PROMISE extends ScriptObject> PROMISE PerformPromiseRaceLoop(
-            ExecutionContext cx, ScriptIterator<?> iterator, Constructor constructor,
+    public static <PROMISE extends ScriptObject> PROMISE PerformPromiseRace(ExecutionContext cx,
+            ScriptIterator<?> iterator, Constructor constructor,
             PromiseCapability<PROMISE> promiseCapability) {
         /* step 1 */
         while (iterator.hasNext()) {

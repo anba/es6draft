@@ -64,11 +64,11 @@ public final class TypedArrayConstructorPrototype extends BuiltinConstructor imp
     }
 
     /**
-     * 22.2.1.1 %TypedArray% ( length )<br>
-     * 22.2.1.2 %TypedArray% ( typedArray )<br>
-     * 22.2.1.3 %TypedArray% ( array )<br>
-     * 22.2.1.4 %TypedArray% ( buffer [ , byteOffset [ , length ] ] )<br>
-     * 22.2.1.5 %TypedArray% ( all other argument combinations )<br>
+     * 22.2.1.1 %TypedArray% ( )<br>
+     * 22.2.1.2 %TypedArray% ( length )<br>
+     * 22.2.1.3 %TypedArray% ( typedArray )<br>
+     * 22.2.1.4 %TypedArray% ( array )<br>
+     * 22.2.1.5 %TypedArray% ( buffer [ , byteOffset [ , length ] ] )
      */
     @Override
     public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
@@ -90,7 +90,10 @@ public final class TypedArrayConstructorPrototype extends BuiltinConstructor imp
     public TypedArrayObject construct(ExecutionContext callerContext, Constructor newTarget,
             Object... args) {
         ExecutionContext calleeContext = calleeContext();
-        Object arg0 = argument(args, 0);
+        if (args.length == 0) {
+            return callWithLength(calleeContext, newTarget, 0);
+        }
+        Object arg0 = args[0];
         if (!Type.isObject(arg0)) {
             return callWithLength(calleeContext, newTarget, arg0);
         }
@@ -122,19 +125,20 @@ public final class TypedArrayConstructorPrototype extends BuiltinConstructor imp
         /* step 1 */
         assert !Type.isObject(length);
         /* step 2 (not applicable) */
-        // FIXME: spec issue? - undefined length is same as 0 for bwcompat?
-        if (Type.isUndefined(length)) {
-            length = 0;
-        }
         /* step 3 */
+        if (Type.isUndefined(length)) {
+            // FIXME: spec issue - why TypeError?
+            throw newTypeError(cx, Messages.Key.InvalidBufferSize);
+        }
+        /* step 4 */
         double numberLength = ToNumber(cx, length);
-        /* steps 4-5 */
+        /* steps 5-6 */
         long elementLength = ToLength(numberLength);
-        /* step 6 */
+        /* step 7 */
         if (!SameValueZero(numberLength, elementLength)) {
             throw newRangeError(cx, Messages.Key.InvalidBufferSize);
         }
-        /* step 7 */
+        /* step 8 */
         return AllocateTypedArray(cx, newTarget, elementLength);
     }
 
@@ -185,19 +189,19 @@ public final class TypedArrayConstructorPrototype extends BuiltinConstructor imp
             data = CloneArrayBuffer(cx, srcData, srcByteOffset);
         } else {
             /* step 18 */
-            /* steps 18.a-18.b */
+            /* steps 18.a-b */
             Constructor bufferConstructor = SpeciesConstructor(cx, srcData, Intrinsics.ArrayBuffer);
-            /* step 18.c */
+            /* steps 18.c-d */
             data = AllocateArrayBuffer(cx, bufferConstructor, byteLength);
-            /* step 18.d */
+            /* step 18.e */
             if (IsDetachedBuffer(srcData)) {
                 throw newTypeError(cx, Messages.Key.BufferDetached);
             }
-            /* step 18.e */
-            long srcByteIndex = srcByteOffset;
             /* step 18.f */
+            long srcByteIndex = srcByteOffset;
+            /* step 18.g */
             long targetByteIndex = 0;
-            /* steps 18.g-18.h */
+            /* steps 18.h-i */
             for (long count = elementLength; count > 0; --count) {
                 double value = GetValueFromBuffer(srcData, srcByteIndex, srcType);
                 SetValueInBuffer(data, targetByteIndex, elementType, value);

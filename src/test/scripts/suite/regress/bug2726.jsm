@@ -5,7 +5,7 @@
  * <https://github.com/anba/es6draft>
  */
 const {
-  assertSame, assertThrows
+  assertSame, assertThrows, assertDataProperty
 } = Assert;
 
 // 9.4.6.5 [[GetOwnProperty]] (P): Implementation does not match module object description
@@ -17,4 +17,4 @@ export var a = 123;
 let keys = [...Reflect.enumerate(self)];
 assertSame(1, keys.length);
 assertSame("a", keys[0]);
-assertThrows(TypeError, () => Object.getOwnPropertyDescriptor(self, "a"));
+assertDataProperty(self, "a", {value: 123, writable: true, enumerable: true, configurable: false});

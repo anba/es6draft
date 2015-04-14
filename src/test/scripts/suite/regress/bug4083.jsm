@@ -5,7 +5,7 @@
  * <https://github.com/anba/es6draft>
  */
 const {
-  assertUndefined, assertNotUndefined, assertThrows
+  assertUndefined, assertNotUndefined, assertDataProperty
 } = Assert;
 
 // Module exotic object and GetOwnProperty?
@@ -15,12 +15,12 @@ import* as self from "./bug4083.jsm";
 export default 123;
 export let foo = 456;
 
-assertThrows(TypeError, () => Object.getOwnPropertyDescriptor(self, "default"));
-assertThrows(TypeError, () => Object.getOwnPropertyDescriptor(self, "foo"));
-assertThrows(TypeError, () => Object.getOwnPropertyDescriptor(self, "bar"));
-assertThrows(TypeError, () => Object.getOwnPropertyDescriptor(self, ""));
-assertThrows(TypeError, () => Object.getOwnPropertyDescriptor(self, 0));
-assertThrows(TypeError, () => Object.getOwnPropertyDescriptor(self, 1));
+assertDataProperty(self, "default", {value: 123, writable: true, enumerable: true, configurable: false});
+assertDataProperty(self, "foo", {value: 456, writable: true, enumerable: true, configurable: false});
+assertUndefined(Object.getOwnPropertyDescriptor(self, "bar"));
+assertUndefined(Object.getOwnPropertyDescriptor(self, ""));
+assertUndefined(Object.getOwnPropertyDescriptor(self, 0));
+assertUndefined(Object.getOwnPropertyDescriptor(self, 1));
 
 assertNotUndefined(Object.getOwnPropertyDescriptor(self, Symbol.iterator));
 assertNotUndefined(Object.getOwnPropertyDescriptor(self, Symbol.toStringTag));
