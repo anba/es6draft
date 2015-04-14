@@ -7,6 +7,7 @@
 package com.github.anba.es6draft.regexp;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -41,7 +42,7 @@ final class CaseFoldDataGenerator {
         Pattern p = Pattern
                 .compile("([0-9A-F]{4,5}); ([CFST]); ([0-9A-F]{4,5})(?: ([0-9A-F]{4,5}))?(?: ([0-9A-F]{4,5}))?; # .*");
         Path caseFolding = Paths.get("/tmp/Unicode6.3/CaseFolding.txt");
-        List<String> lines = Files.readAllLines(caseFolding);
+        List<String> lines = Files.readAllLines(caseFolding, StandardCharsets.UTF_8);
         for (String line : lines) {
             line = line.trim();
             if (line.isEmpty() || line.charAt(0) == '#') {
