@@ -212,6 +212,11 @@ final class CodeSizeVisitor implements IntNodeVisitor<CodeSizeHandler> {
     }
 
     @Override
+    public int visit(AssignmentRestProperty node, CodeSizeHandler handler) {
+        return analyze(node, node.getTarget(), 25, handler);
+    }
+
+    @Override
     public int visit(AsyncArrowFunction node, CodeSizeHandler handler) {
         if (node.getExpression() != null) {
             submit(node, singletonList(node.getExpression()), handler);
@@ -266,6 +271,11 @@ final class CodeSizeVisitor implements IntNodeVisitor<CodeSizeHandler> {
 
     @Override
     public int visit(BindingRestElement node, CodeSizeHandler handler) {
+        return analyze(node, node.getBindingIdentifier(), 25, handler);
+    }
+
+    @Override
+    public int visit(BindingRestProperty node, CodeSizeHandler handler) {
         return analyze(node, node.getBindingIdentifier(), 25, handler);
     }
 
@@ -622,12 +632,12 @@ final class CodeSizeVisitor implements IntNodeVisitor<CodeSizeHandler> {
 
     @Override
     public int visit(ObjectAssignmentPattern node, CodeSizeHandler handler) {
-        return analyze(node, node.getProperties(), 20, 5, handler);
+        return analyze(node, node.getProperties(), node.getRest(), 20, 5, handler);
     }
 
     @Override
     public int visit(ObjectBindingPattern node, CodeSizeHandler handler) {
-        return analyze(node, node.getProperties(), 20, 5, handler);
+        return analyze(node, node.getProperties(), node.getRest(), 20, 5, handler);
     }
 
     @Override
@@ -684,6 +694,11 @@ final class CodeSizeVisitor implements IntNodeVisitor<CodeSizeHandler> {
 
     @Override
     public int visit(SpreadElement node, CodeSizeHandler handler) {
+        return analyze(node, node.getExpression(), 10, handler);
+    }
+
+    @Override
+    public int visit(SpreadProperty node, CodeSizeHandler handler) {
         return analyze(node, node.getExpression(), 10, handler);
     }
 

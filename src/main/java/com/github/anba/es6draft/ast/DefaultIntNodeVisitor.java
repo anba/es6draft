@@ -135,6 +135,11 @@ public abstract class DefaultIntNodeVisitor<V> implements IntNodeVisitor<V> {
     }
 
     @Override
+    public int visit(AssignmentRestProperty node, V value) {
+        return visit((Node) node, value);
+    }
+
+    @Override
     public int visit(AsyncArrowFunction node, V value) {
         return visit((Expression) node, value);
     }
@@ -182,6 +187,11 @@ public abstract class DefaultIntNodeVisitor<V> implements IntNodeVisitor<V> {
     @Override
     public int visit(BindingRestElement node, V value) {
         return visit((FormalParameter) node, value);
+    }
+
+    @Override
+    public int visit(BindingRestProperty node, V value) {
+        return visit((Node) node, value);
     }
 
     @Override
@@ -572,6 +582,11 @@ public abstract class DefaultIntNodeVisitor<V> implements IntNodeVisitor<V> {
     @Override
     public int visit(SpreadElement node, V value) {
         return visit((Expression) node, value);
+    }
+
+    @Override
+    public int visit(SpreadProperty node, V value) {
+        return visit((PropertyDefinition) node, value);
     }
 
     @Override

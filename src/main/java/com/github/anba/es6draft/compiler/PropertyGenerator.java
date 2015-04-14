@@ -19,6 +19,7 @@ import com.github.anba.es6draft.ast.Node;
 import com.github.anba.es6draft.ast.PropertyName;
 import com.github.anba.es6draft.ast.PropertyNameDefinition;
 import com.github.anba.es6draft.ast.PropertyValueDefinition;
+import com.github.anba.es6draft.ast.SpreadProperty;
 import com.github.anba.es6draft.ast.synthetic.PropertyDefinitionsMethod;
 import com.github.anba.es6draft.compiler.CodeGenerator.FunctionName;
 import com.github.anba.es6draft.compiler.assembler.MethodName;
@@ -108,6 +109,10 @@ final class PropertyGenerator extends
 
         static final MethodName ScriptRuntime_defineProtoProperty = MethodName.findStatic(
                 Types.ScriptRuntime, "defineProtoProperty", Type.methodType(Type.VOID_TYPE,
+                        Types.OrdinaryObject, Types.Object, Types.ExecutionContext));
+
+        static final MethodName ScriptRuntime_defineSpreadProperty = MethodName.findStatic(
+                Types.ScriptRuntime, "defineSpreadProperty", Type.methodType(Type.VOID_TYPE,
                         Types.OrdinaryObject, Types.Object, Types.ExecutionContext));
     }
 
@@ -312,6 +317,19 @@ final class PropertyGenerator extends
             mv.lineInfo(node);
             mv.invoke(Methods.ScriptRuntime_defineProperty_String);
         }
+
+        return null;
+    }
+
+    @Override
+    public ValType visit(SpreadProperty node, ExpressionVisitor mv) {
+        // stack: [<object>] -> [<object>, value]
+        expressionBoxedValue(node.getExpression(), mv);
+
+        // stack: [<object>, value] -> []
+        mv.loadExecutionContext();
+        mv.lineInfo(node);
+        mv.invoke(Methods.ScriptRuntime_defineSpreadProperty);
 
         return null;
     }

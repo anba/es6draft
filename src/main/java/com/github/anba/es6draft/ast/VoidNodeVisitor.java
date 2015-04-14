@@ -30,6 +30,8 @@ public interface VoidNodeVisitor<V> {
 
     void visit(AssignmentRestElement node, V value);
 
+    void visit(AssignmentRestProperty node, V value);
+
     void visit(AsyncArrowFunction node, V value);
 
     void visit(AsyncFunctionDeclaration node, V value);
@@ -49,6 +51,8 @@ public interface VoidNodeVisitor<V> {
     void visit(BindingProperty node, V value);
 
     void visit(BindingRestElement node, V value);
+
+    void visit(BindingRestProperty node, V value);
 
     void visit(BlockStatement node, V value);
 
@@ -205,6 +209,8 @@ public interface VoidNodeVisitor<V> {
     void visit(Script node, V value);
 
     void visit(SpreadElement node, V value);
+
+    void visit(SpreadProperty node, V value);
 
     void visit(StatementListMethod node, V value);
 

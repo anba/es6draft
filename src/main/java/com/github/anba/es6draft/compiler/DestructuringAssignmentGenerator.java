@@ -8,11 +8,13 @@ package com.github.anba.es6draft.compiler;
 
 import static com.github.anba.es6draft.compiler.DefaultCodeGenerator.SetFunctionName;
 import static com.github.anba.es6draft.compiler.DefaultCodeGenerator.ToPropertyKey;
+import static com.github.anba.es6draft.semantics.StaticSemantics.AssignmentPropertyNames;
 import static com.github.anba.es6draft.semantics.StaticSemantics.IsAnonymousFunctionDefinition;
 import static com.github.anba.es6draft.semantics.StaticSemantics.IsIdentifierRef;
 import static com.github.anba.es6draft.semantics.StaticSemantics.PropName;
 
 import java.util.List;
+import java.util.Set;
 
 import com.github.anba.es6draft.ast.*;
 import com.github.anba.es6draft.compiler.DefaultCodeGenerator.ValType;
@@ -54,6 +56,10 @@ final class DestructuringAssignmentGenerator {
         static final MethodName ScriptRuntime_createRestArray = MethodName.findStatic(
                 Types.ScriptRuntime, "createRestArray",
                 Type.methodType(Types.ArrayObject, Types.Iterator, Types.ExecutionContext));
+
+        static final MethodName ScriptRuntime_createRestObject = MethodName.findStatic(
+                Types.ScriptRuntime, "createRestObject", Type.methodType(Types.OrdinaryObject,
+                        Types.Object, Types.String_, Types.ExecutionContext));
 
         static final MethodName ScriptRuntime_iterate = MethodName.findStatic(Types.ScriptRuntime,
                 "iterate",
@@ -198,7 +204,7 @@ final class DestructuringAssignmentGenerator {
         @Override
         public void visit(ObjectAssignmentPattern node, Void value) {
             // ObjectAssignmentPattern : { }
-            if (node.getProperties().isEmpty()) {
+            if (node.getProperties().isEmpty() && node.getRest() == null) {
                 // stack: [value] -> []
                 mv.lineInfo(node);
                 mv.loadExecutionContext();
@@ -234,7 +240,33 @@ final class DestructuringAssignmentGenerator {
                 }
             }
 
+            // ObjectAssignmentPattern : { ... IdentifierReference }
+            // ObjectAssignmentPattern: { AssignmentPropertyList , ... IdentifierReference }
+            AssignmentRestProperty rest = node.getRest();
+            if (rest != null) {
+                // stack: [] -> [lref]
+                ValType refType = expression(rest.getTarget(), mv);
+
+                // stack: [] -> [lref, restObj]
+                mv.lineInfo(rest);
+                mv.load(val);
+                newStringArray(mv, AssignmentPropertyNames(node));
+                mv.loadExecutionContext();
+                mv.invoke(Methods.ScriptRuntime_createRestObject);
+
+                // stack: [lref, restObj] -> []
+                PutValue(rest.getTarget(), refType, mv);
+            }
+
             mv.exitVariableScope();
+        }
+
+        private static void newStringArray(InstructionVisitor mv, Set<String> strings) {
+            mv.anewarray(strings.size(), Types.String);
+            int index = 0;
+            for (String string : strings) {
+                mv.astore(index++, string);
+            }
         }
     }
 

@@ -134,6 +134,11 @@ public abstract class DefaultVoidNodeVisitor<V> implements VoidNodeVisitor<V> {
     }
 
     @Override
+    public void visit(AssignmentRestProperty node, V value) {
+        visit((Node) node, value);
+    }
+
+    @Override
     public void visit(AsyncArrowFunction node, V value) {
         visit((Expression) node, value);
     }
@@ -181,6 +186,11 @@ public abstract class DefaultVoidNodeVisitor<V> implements VoidNodeVisitor<V> {
     @Override
     public void visit(BindingRestElement node, V value) {
         visit((FormalParameter) node, value);
+    }
+
+    @Override
+    public void visit(BindingRestProperty node, V value) {
+        visit((Node) node, value);
     }
 
     @Override
@@ -571,6 +581,11 @@ public abstract class DefaultVoidNodeVisitor<V> implements VoidNodeVisitor<V> {
     @Override
     public void visit(SpreadElement node, V value) {
         visit((Expression) node, value);
+    }
+
+    @Override
+    public void visit(SpreadProperty node, V value) {
+        visit((PropertyDefinition) node, value);
     }
 
     @Override

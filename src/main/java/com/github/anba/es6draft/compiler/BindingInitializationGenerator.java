@@ -8,12 +8,14 @@ package com.github.anba.es6draft.compiler;
 
 import static com.github.anba.es6draft.compiler.DefaultCodeGenerator.SetFunctionName;
 import static com.github.anba.es6draft.compiler.DefaultCodeGenerator.ToPropertyKey;
+import static com.github.anba.es6draft.semantics.StaticSemantics.BindingPropertyNames;
 import static com.github.anba.es6draft.semantics.StaticSemantics.BoundNames;
 import static com.github.anba.es6draft.semantics.StaticSemantics.IsAnonymousFunctionDefinition;
 import static com.github.anba.es6draft.semantics.StaticSemantics.PropName;
 
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 import com.github.anba.es6draft.ast.*;
 import com.github.anba.es6draft.ast.scope.Name;
@@ -91,6 +93,10 @@ final class BindingInitializationGenerator {
         static final MethodName ScriptRuntime_createRestArray = MethodName.findStatic(
                 Types.ScriptRuntime, "createRestArray",
                 Type.methodType(Types.ArrayObject, Types.Iterator, Types.ExecutionContext));
+
+        static final MethodName ScriptRuntime_createRestObject = MethodName.findStatic(
+                Types.ScriptRuntime, "createRestObject", Type.methodType(Types.OrdinaryObject,
+                        Types.Object, Types.String_, Types.ExecutionContext));
 
         static final MethodName ScriptRuntime_iterate = MethodName.findStatic(Types.ScriptRuntime,
                 "iterate",
@@ -454,7 +460,7 @@ final class BindingInitializationGenerator {
 
         @Override
         public void visit(ObjectBindingPattern node, Void value) {
-            if (node.getProperties().isEmpty()) {
+            if (node.getProperties().isEmpty() && node.getRest() == null) {
                 // stack: [(env), value] -> [(env)]
                 mv.lineInfo(node);
                 mv.loadExecutionContext();
@@ -493,10 +499,35 @@ final class BindingInitializationGenerator {
                 }
             }
 
+            BindingRestProperty rest = node.getRest();
+            if (rest != null) {
+                // stack: [(env)] -> [(env), <env, id>|ref]
+                dupEnvIfPresent();
+                prepareInitializeReferencedBindingOrPut(rest.getBindingIdentifier());
+
+                // stack: [(env), <env, id>|ref] -> [(env), <env, id>|ref, object]
+                mv.lineInfo(rest);
+                mv.load(val);
+                newStringArray(mv, BindingPropertyNames(node));
+                mv.loadExecutionContext();
+                mv.invoke(Methods.ScriptRuntime_createRestObject);
+
+                // stack: [(env), <env, id>|ref, object] -> [(env)]
+                initializeReferencedBindingOrPut(rest.getBindingIdentifier());
+            }
+
             mv.exitVariableScope();
 
             // stack: [(env)] -> []
             popEnvIfPresent();
+        }
+
+        private static void newStringArray(InstructionVisitor mv, Set<String> strings) {
+            mv.anewarray(strings.size(), Types.String);
+            int index = 0;
+            for (String string : strings) {
+                mv.astore(index++, string);
+            }
         }
     }
 

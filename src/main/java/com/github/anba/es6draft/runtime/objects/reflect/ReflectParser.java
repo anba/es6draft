@@ -736,6 +736,17 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
     }
 
     @Override
+    public Object visit(AssignmentRestProperty node, Void value) {
+        Object expr = node.getTarget().accept(this, value);
+        if (hasBuilder(Type.SpreadExpression)) {
+            return call(Type.SpreadExpression, node, expr);
+        }
+        OrdinaryObject expression = createNode(node, Type.SpreadExpression);
+        addProperty(expression, "expression", expr);
+        return expression;
+    }
+
+    @Override
     public Object visit(AsyncArrowFunction node, Void value) {
         Object id = NULL;
         ArrayObject params = createList(getParameterBindings(node.getParameters()), value);
@@ -901,6 +912,17 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
 
     @Override
     public Object visit(BindingRestElement node, Void value) {
+        Object expr = node.getBindingIdentifier().accept(this, value);
+        if (hasBuilder(Type.SpreadExpression)) {
+            return call(Type.SpreadExpression, node, expr);
+        }
+        OrdinaryObject expression = createNode(node, Type.SpreadExpression);
+        addProperty(expression, "expression", expr);
+        return expression;
+    }
+
+    @Override
+    public Object visit(BindingRestProperty node, Void value) {
         Object expr = node.getBindingIdentifier().accept(this, value);
         if (hasBuilder(Type.SpreadExpression)) {
             return call(Type.SpreadExpression, node, expr);
@@ -1736,6 +1758,7 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
     @Override
     public Object visit(ObjectAssignmentPattern node, Void value) {
         ArrayObject properties = createList(node.getProperties(), value);
+        // TODO: rest property
         if (hasBuilder(Type.ObjectPattern)) {
             return call(Type.ObjectPattern, node, properties);
         }
@@ -1747,6 +1770,7 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
     @Override
     public Object visit(ObjectBindingPattern node, Void value) {
         ArrayObject properties = createList(node.getProperties(), value);
+        // TODO: rest property
         if (hasBuilder(Type.ObjectPattern)) {
             return call(Type.ObjectPattern, node, properties);
         }
@@ -1874,6 +1898,17 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
             return call(Type.SpreadExpression, node, expr);
         }
         OrdinaryObject expression = createExpression(node, Type.SpreadExpression);
+        addProperty(expression, "expression", expr);
+        return expression;
+    }
+
+    @Override
+    public Object visit(SpreadProperty node, Void value) {
+        Object expr = node.getExpression().accept(this, value);
+        if (hasBuilder(Type.SpreadExpression)) {
+            return call(Type.SpreadExpression, node, expr);
+        }
+        OrdinaryObject expression = createNode(node, Type.SpreadExpression);
         addProperty(expression, "expression", expr);
         return expression;
     }

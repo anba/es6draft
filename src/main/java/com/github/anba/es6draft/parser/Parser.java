@@ -5206,17 +5206,23 @@ public final class Parser {
     private ObjectBindingPattern objectBindingPattern(boolean allowLet) {
         long begin = ts.beginPosition();
         InlineArrayList<BindingProperty> list = newList();
+        BindingRestProperty rest = null;
         consume(Token.LC);
-        while (token() != Token.RC) {
-            list.add(bindingProperty(allowLet));
-            if (token() == Token.COMMA) {
-                consume(Token.COMMA);
-            } else {
+        for (Token tok; (tok = token()) != Token.RC;) {
+            if (tok == Token.TRIPLE_DOT && isEnabled(CompatibilityOption.ObjectRestDestructuring)) {
+                rest = bindingRestProperty(allowLet);
                 break;
+            } else {
+                list.add(bindingProperty(allowLet));
+                if (token() == Token.COMMA) {
+                    consume(Token.COMMA);
+                } else {
+                    break;
+                }
             }
         }
         consume(Token.RC);
-        return new ObjectBindingPattern(begin, ts.endPosition(), list);
+        return new ObjectBindingPattern(begin, ts.endPosition(), list, rest);
     }
 
     /**
@@ -5267,6 +5273,13 @@ public final class Parser {
             }
             return new BindingProperty(binding, initializer);
         }
+    }
+
+    private BindingRestProperty bindingRestProperty(boolean allowLet) {
+        long begin = ts.beginPosition();
+        consume(Token.TRIPLE_DOT);
+        BindingIdentifier bindingIdentifier = bindingIdentifier(allowLet);
+        return new BindingRestProperty(begin, ts.endPosition(), bindingIdentifier);
     }
 
     /**
@@ -7328,6 +7341,10 @@ public final class Parser {
                 String key = def.getPropertyName().getName();
                 throw reportSyntaxError(def, Messages.Key.MissingColonAfterPropertyId, key);
             }
+            if (def instanceof SpreadProperty
+                    && !isEnabled(CompatibilityOption.ObjectSpreadInitializer)) {
+                reportSyntaxError(def, Messages.Key.InvalidDestructuring);
+            }
             if (checkProto) {
                 hasProto = checkDuplicateProtoInitializer(def, hasProto);
             }
@@ -7432,6 +7449,12 @@ public final class Parser {
                         propertyValue);
             }
             return normalMethod(MethodAllocation.Object, false, NO_DECORATORS, begin, propertyName);
+        }
+        if (token() == Token.TRIPLE_DOT
+                && (isEnabled(CompatibilityOption.ObjectSpreadInitializer) || isEnabled(CompatibilityOption.ObjectRestDestructuring))) {
+            consume(Token.TRIPLE_DOT);
+            Expression expression = assignmentExpression(true);
+            return new SpreadProperty(begin, ts.endPosition(), expression);
         }
         if (SAFE_LOOKAHEAD(Token.COLON)) {
             PropertyName propertyName = literalPropertyName();
@@ -8602,7 +8625,10 @@ public final class Parser {
      */
     private ObjectAssignmentPattern toDestructuring(ObjectLiteral object) {
         InlineArrayList<AssignmentProperty> list = newList();
-        for (PropertyDefinition p : object.getProperties()) {
+        AssignmentRestProperty rest = null;
+        for (Iterator<PropertyDefinition> iterator = object.getProperties().iterator(); iterator
+                .hasNext();) {
+            PropertyDefinition p = iterator.next();
             AssignmentProperty property;
             if (p instanceof PropertyValueDefinition) {
                 // AssignmentProperty : PropertyName ':' AssignmentElement
@@ -8639,6 +8665,23 @@ public final class Parser {
                 assignmentProperty_EarlyErrors(def.getPropertyName());
                 property = new AssignmentProperty(p.getBeginPosition(), p.getEndPosition(),
                         def.getPropertyName(), def.getInitializer());
+            } else if (p instanceof SpreadProperty) {
+                // ... IdentifierReference
+                if (!isEnabled(CompatibilityOption.ObjectRestDestructuring)) {
+                    throw reportSyntaxError(p, Messages.Key.InvalidDestructuring);
+                }
+                SpreadProperty spread = (SpreadProperty) p;
+                Expression expression = spread.getExpression();
+                if (!(expression instanceof IdentifierReference) || expression.isParenthesized()) {
+                    throw reportSyntaxError(p, Messages.Key.InvalidDestructuring);
+                }
+                // no further elements after AssignmentRestElement allowed
+                if (iterator.hasNext()) {
+                    throw reportSyntaxError(p, Messages.Key.InvalidDestructuring);
+                }
+                rest = new AssignmentRestProperty(p.getBeginPosition(), p.getEndPosition(),
+                        (IdentifierReference) expression);
+                continue;
             } else {
                 assert p instanceof MethodDefinition;
                 throw reportSyntaxError(p, Messages.Key.InvalidDestructuring);
@@ -8647,7 +8690,7 @@ public final class Parser {
         }
         context.removeLiteral(object);
         ObjectAssignmentPattern pattern = new ObjectAssignmentPattern(object.getBeginPosition(),
-                object.getEndPosition(), list);
+                object.getEndPosition(), list, rest);
         if (object.isParenthesized()) {
             pattern.addParentheses();
         }

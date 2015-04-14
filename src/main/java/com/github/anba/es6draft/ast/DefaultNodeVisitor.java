@@ -135,6 +135,11 @@ public abstract class DefaultNodeVisitor<R, V> implements NodeVisitor<R, V> {
     }
 
     @Override
+    public R visit(AssignmentRestProperty node, V value) {
+        return visit((Node) node, value);
+    }
+
+    @Override
     public R visit(AsyncArrowFunction node, V value) {
         return visit((Expression) node, value);
     }
@@ -182,6 +187,11 @@ public abstract class DefaultNodeVisitor<R, V> implements NodeVisitor<R, V> {
     @Override
     public R visit(BindingRestElement node, V value) {
         return visit((FormalParameter) node, value);
+    }
+
+    @Override
+    public R visit(BindingRestProperty node, V value) {
+        return visit((Node) node, value);
     }
 
     @Override
@@ -572,6 +582,11 @@ public abstract class DefaultNodeVisitor<R, V> implements NodeVisitor<R, V> {
     @Override
     public R visit(SpreadElement node, V value) {
         return visit((Expression) node, value);
+    }
+
+    @Override
+    public R visit(SpreadProperty node, V value) {
+        return visit((PropertyDefinition) node, value);
     }
 
     @Override

@@ -17,15 +17,21 @@ import java.util.List;
  */
 public final class ObjectBindingPattern extends BindingPattern {
     private final List<BindingProperty> properties;
+    private final BindingRestProperty rest;
 
     public ObjectBindingPattern(long beginPosition, long endPosition,
-            List<BindingProperty> properties) {
+            List<BindingProperty> properties, BindingRestProperty rest) {
         super(beginPosition, endPosition);
         this.properties = properties;
+        this.rest = rest;
     }
 
     public List<BindingProperty> getProperties() {
         return properties;
+    }
+
+    public BindingRestProperty getRest() {
+        return rest;
     }
 
     @Override

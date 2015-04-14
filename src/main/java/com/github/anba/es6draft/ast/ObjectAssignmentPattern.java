@@ -17,15 +17,21 @@ import java.util.List;
  */
 public final class ObjectAssignmentPattern extends AssignmentPattern {
     private final List<AssignmentProperty> properties;
+    private final AssignmentRestProperty rest;
 
     public ObjectAssignmentPattern(long beginPosition, long endPosition,
-            List<AssignmentProperty> properties) {
+            List<AssignmentProperty> properties, AssignmentRestProperty rest) {
         super(beginPosition, endPosition);
         this.properties = properties;
+        this.rest = rest;
     }
 
     public List<AssignmentProperty> getProperties() {
         return properties;
+    }
+
+    public AssignmentRestProperty getRest() {
+        return rest;
     }
 
     @Override

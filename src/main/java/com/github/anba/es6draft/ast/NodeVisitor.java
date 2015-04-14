@@ -30,6 +30,8 @@ public interface NodeVisitor<R, V> {
 
     R visit(AssignmentRestElement node, V value);
 
+    R visit(AssignmentRestProperty node, V value);
+
     R visit(AsyncArrowFunction node, V value);
 
     R visit(AsyncFunctionDeclaration node, V value);
@@ -49,6 +51,8 @@ public interface NodeVisitor<R, V> {
     R visit(BindingProperty node, V value);
 
     R visit(BindingRestElement node, V value);
+
+    R visit(BindingRestProperty node, V value);
 
     R visit(BlockStatement node, V value);
 
@@ -205,6 +209,8 @@ public interface NodeVisitor<R, V> {
     R visit(Script node, V value);
 
     R visit(SpreadElement node, V value);
+
+    R visit(SpreadProperty node, V value);
 
     R visit(StatementListMethod node, V value);
 

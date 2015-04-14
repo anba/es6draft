@@ -234,6 +234,16 @@ public enum CompatibilityOption {
     Decorator,
 
     /**
+     * ES7-Extension: Object Rest Destructuring
+     */
+    ObjectRestDestructuring,
+
+    /**
+     * ES7-Extension: Object Spread Initializer
+     */
+    ObjectSpreadInitializer,
+
+    /**
      * Track unhandled rejected promise objects
      */
     PromiseRejection,

@@ -3007,6 +3007,46 @@ public final class ScriptRuntime {
         return count;
     }
 
+    /**
+     * Extension: Object Spread Initializer
+     * <p>
+     * Runtime Semantics: PropertyDefinitionEvaluation
+     * <ul>
+     * <li>PropertyDefinition : ... AssignmentExpression
+     * </ul>
+     * 
+     * @param object
+     *            the script object
+     * @param value
+     *            the spread value
+     * @param cx
+     *            the execution context
+     */
+    public static void defineSpreadProperty(OrdinaryObject object, Object value, ExecutionContext cx) {
+        Assign(cx, object, value, Collections.<String> emptySet());
+    }
+
+    /**
+     * Extension: Object Rest Destructuring
+     * <ul>
+     * <li>Runtime Semantics: DestructuringAssignmentEvaluation
+     * <li>Runtime Semantics: BindingInitialization
+     * </ul>
+     * 
+     * @param value
+     *            the rest property
+     * @param names
+     *            the excluded property names
+     * @param cx
+     *            the execution context
+     * @return the rest object
+     */
+    public static OrdinaryObject createRestObject(Object value, String[] names, ExecutionContext cx) {
+        HashSet<String> excludedNames = new HashSet<>(Arrays.asList(names));
+        OrdinaryObject restObj = ObjectCreate(cx, Intrinsics.ObjectPrototype);
+        Assign(cx, restObj, value, excludedNames);
+        return restObj;
+    }
 
     /**
      * 14.6 Tail Position Calls

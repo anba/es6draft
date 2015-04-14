@@ -23,6 +23,7 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 import org.mozilla.javascript.ConsString;
 import org.mozilla.javascript.DToA;
@@ -3168,6 +3169,59 @@ public final class AbstractOperations {
         public boolean isDone() {
             return done;
         }
+    }
+
+    /**
+     * Assign (T, S, E)
+     * 
+     * @param cx
+     *            the execution context
+     * @param target
+     *            the target script object
+     * @param source
+     *            the source object
+     * @param exclude
+     *            the excluded property names
+     * @return {@code true} on success
+     */
+    public static boolean Assign(ExecutionContext cx, ScriptObject target, Object source,
+            Set<String> exclude) {
+        /* step 1 (not applicable) */
+        /* step 2, 7 */
+        if (Type.isUndefinedOrNull(source)) {
+            return true;
+        }
+        /* steps 3.a-b */
+        ScriptObject from = ToObject(cx, source);
+        /* steps 3.c-d */
+        List<?> keys = from.ownPropertyKeys(cx);
+        /* step 4 */
+        ScriptException pendingException = null;
+        /* step 5 */
+        for (Object nextKey : keys) {
+            try {
+                Property desc;
+                if (nextKey instanceof String) {
+                    desc = from.getOwnProperty(cx, (String) nextKey);
+                } else {
+                    desc = from.getOwnProperty(cx, (Symbol) nextKey);
+                }
+                if (desc != null && desc.isEnumerable() && !exclude.contains(nextKey)) {
+                    Object propValue = Get(cx, from, nextKey);
+                    CreateDataPropertyOrThrow(cx, target, nextKey, propValue);
+                }
+            } catch (ScriptException e) {
+                if (pendingException == null) {
+                    pendingException = e;
+                }
+            }
+        }
+        /* step 6 */
+        if (pendingException != null) {
+            throw pendingException;
+        }
+        /* step 7 */
+        return true;
     }
 
     /**
