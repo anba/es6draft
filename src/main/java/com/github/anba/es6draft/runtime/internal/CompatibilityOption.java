@@ -224,6 +224,11 @@ public enum CompatibilityOption {
     ExportFrom,
 
     /**
+     * ES7-Extension: ArrayBuffer.transfer
+     */
+    ArrayBufferTransfer,
+
+    /**
      * Track unhandled rejected promise objects
      */
     PromiseRejection,

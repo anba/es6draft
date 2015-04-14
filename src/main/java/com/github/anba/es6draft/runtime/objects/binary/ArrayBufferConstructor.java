@@ -16,10 +16,12 @@ import java.nio.ByteOrder;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
+import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.Initializable;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.Properties.Accessor;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
+import com.github.anba.es6draft.runtime.internal.Properties.CompatibilityExtension;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
@@ -60,6 +62,7 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
     @Override
     public void initialize(Realm realm) {
         createProperties(realm, this, Properties.class);
+        createProperties(realm, this, AdditionalProperties.class);
     }
 
     @Override
@@ -502,6 +505,80 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
         public static Object species(ExecutionContext cx, Object thisValue) {
             /* step 1 */
             return thisValue;
+        }
+    }
+
+    /**
+     * Proposed ECMAScript 7 additions
+     */
+    @CompatibilityExtension(CompatibilityOption.ArrayBufferTransfer)
+    public enum AdditionalProperties {
+        ;
+
+        private static ArrayBufferObject thisArrayBufferObjectChecked(ExecutionContext cx, Object m) {
+            if (m instanceof ArrayBufferObject) {
+                ArrayBufferObject buffer = (ArrayBufferObject) m;
+                if (IsDetachedBuffer(buffer)) {
+                    throw newTypeError(cx, Messages.Key.BufferDetached);
+                }
+                return buffer;
+            }
+            throw newTypeError(cx, Messages.Key.IncompatibleObject);
+        }
+
+        /**
+         * ArrayBuffer.transfer(oldBuffer [, newByteLength])
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param oldBuffer
+         *            the old array buffer
+         * @param newByteLength
+         *            the optional new byte length
+         * @return the result index
+         */
+        @Function(name = "transfer", arity = 1)
+        public static Object transfer(ExecutionContext cx, Object thisValue, Object oldBuffer,
+                Object newByteLength) {
+            ArrayBufferObject oldArrayBuffer = thisArrayBufferObjectChecked(cx, oldBuffer);
+            // newByteLength defaults to oldBuffer.byteLength
+            if (Type.isUndefined(newByteLength)) {
+                newByteLength = oldArrayBuffer.getByteLength();
+            }
+            // Perform length same validation as in new ArrayBuffer(length).
+            double numberLength = ToNumber(cx, newByteLength);
+            long byteLength = ToLength(numberLength);
+            if (!SameValueZero(numberLength, byteLength)) {
+                throw newRangeError(cx, Messages.Key.InvalidBufferSize);
+            }
+            // Create new array buffer from @@species like in CloneArrayBuffer().
+            Constructor ctor = SpeciesConstructor(cx, oldArrayBuffer, Intrinsics.ArrayBuffer);
+            ScriptObject proto = GetPrototypeFromConstructor(cx, ctor,
+                    Intrinsics.ArrayBufferPrototype);
+            if (IsDetachedBuffer(oldArrayBuffer)) {
+                throw newTypeError(cx, Messages.Key.BufferDetached);
+            }
+            // Grab old array buffer data and call detach.
+            ByteBuffer oldData = oldArrayBuffer.getData();
+            long oldByteLength = oldArrayBuffer.getByteLength();
+            DetachArrayBuffer(cx, oldArrayBuffer);
+            // Extend byte buffer.
+            if (byteLength > oldByteLength) {
+                ByteBuffer newData = CreateByteDataBlock(cx, byteLength);
+                CopyDataBlockBytes(newData, 0, oldData, 0, oldByteLength);
+                return new ArrayBufferObject(cx.getRealm(), newData, byteLength, proto);
+            }
+            // Truncate byte buffer.
+            if (byteLength < oldByteLength) {
+                // Possible improvement: Use limit() or slice() to reduce buffer allocations.
+                ByteBuffer newData = CreateByteDataBlock(cx, byteLength);
+                CopyDataBlockBytes(newData, 0, oldData, 0, byteLength);
+                return new ArrayBufferObject(cx.getRealm(), newData, byteLength, proto);
+            }
+            // Create new array buffer with the same byte buffer if length did not change.
+            return new ArrayBufferObject(cx.getRealm(), oldData, byteLength, proto);
         }
     }
 }
