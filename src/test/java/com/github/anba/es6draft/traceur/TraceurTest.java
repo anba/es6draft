@@ -86,6 +86,7 @@ public final class TraceurTest {
             options.add(CompatibilityOption.AsyncFunction);
             options.add(CompatibilityOption.Exponentiation);
             options.add(CompatibilityOption.Comprehension);
+            options.add(CompatibilityOption.ExportFrom);
             return options;
         }
 

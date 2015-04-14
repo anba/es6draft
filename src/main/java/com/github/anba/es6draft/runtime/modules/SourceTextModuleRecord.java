@@ -94,18 +94,26 @@ public final class SourceTextModuleRecord implements ModuleRecord, Cloneable {
      */
     private final List<ExportEntry> starExportEntries;
 
+    /**
+     * Extension:<br>
+     * [[NameSpaceExportEntries]]
+     */
+    private final List<ExportEntry> nameSpaceExportEntries;
+
     private boolean instantiated;
 
     private SourceTextModuleRecord(SourceIdentifier sourceCodeId, Set<String> requestedModules,
             List<ImportEntry> importEntries, List<ExportEntry> localExportEntries,
-            List<ExportEntry> indirectExportEntries, List<ExportEntry> starExportEntries) {
+            List<ExportEntry> indirectExportEntries, List<ExportEntry> starExportEntries,
+            List<ExportEntry> nameSpaceExportEntries) {
         assert sourceCodeId != null;
         this.sourceCodeId = sourceCodeId;
-        this.requestedModules = Collections.unmodifiableSet(requestedModules);
-        this.importEntries = Collections.unmodifiableList(importEntries);
-        this.localExportEntries = Collections.unmodifiableList(localExportEntries);
-        this.indirectExportEntries = Collections.unmodifiableList(indirectExportEntries);
-        this.starExportEntries = Collections.unmodifiableList(starExportEntries);
+        this.requestedModules = unmodifiableOrEmpty(requestedModules);
+        this.importEntries = unmodifiableOrEmpty(importEntries);
+        this.localExportEntries = unmodifiableOrEmpty(localExportEntries);
+        this.indirectExportEntries = unmodifiableOrEmpty(indirectExportEntries);
+        this.starExportEntries = unmodifiableOrEmpty(starExportEntries);
+        this.nameSpaceExportEntries = unmodifiableOrEmpty(nameSpaceExportEntries);
     }
 
     private SourceTextModuleRecord(SourceTextModuleRecord module) {
@@ -116,6 +124,21 @@ public final class SourceTextModuleRecord implements ModuleRecord, Cloneable {
         this.localExportEntries = module.localExportEntries;
         this.indirectExportEntries = module.indirectExportEntries;
         this.starExportEntries = module.starExportEntries;
+        this.nameSpaceExportEntries = module.nameSpaceExportEntries;
+    }
+
+    private static <T> Set<T> unmodifiableOrEmpty(Set<T> set) {
+        if (set.isEmpty()) {
+            return Collections.emptySet();
+        }
+        return Collections.unmodifiableSet(set);
+    }
+
+    private static <T> List<T> unmodifiableOrEmpty(List<T> list) {
+        if (list.isEmpty()) {
+            return Collections.emptyList();
+        }
+        return Collections.unmodifiableList(list);
     }
 
     @Override
@@ -212,6 +235,16 @@ public final class SourceTextModuleRecord implements ModuleRecord, Cloneable {
         return starExportEntries;
     }
 
+    /**
+     * Extension:<br>
+     * [[NameSpaceExportEntries]]
+     * 
+     * @return the list of {@code export* as} entries
+     */
+    public List<ExportEntry> getNameSpaceExportEntries() {
+        return nameSpaceExportEntries;
+    }
+
     @Override
     public LexicalEnvironment<ModuleEnvironmentRecord> getEnvironment() {
         return environment;
@@ -272,6 +305,8 @@ public final class SourceTextModuleRecord implements ModuleRecord, Cloneable {
         ArrayList<ExportEntry> localExportEntries = new ArrayList<>();
         /* step 8 */
         ArrayList<ExportEntry> starExportEntries = new ArrayList<>();
+        /* step ? (Extension: Export From) */
+        ArrayList<ExportEntry> nameSpaceExportEntries = new ArrayList<>();
         /* step 9 */
         List<ExportEntry> exportEntries = ExportEntries(parsedBody);
         /* step 10 */
@@ -280,13 +315,16 @@ public final class SourceTextModuleRecord implements ModuleRecord, Cloneable {
                 localExportEntries.add(exportEntry);
             } else if (exportEntry.isStarExport()) {
                 starExportEntries.add(exportEntry);
+            } else if (exportEntry.isNameSpaceExport()) {
+                nameSpaceExportEntries.add(exportEntry);
             } else {
                 indirectExportEntries.add(exportEntry);
             }
         }
         /* step 11 */
         SourceTextModuleRecord m = new SourceTextModuleRecord(sourceCodeId, requestedModules,
-                importEntries, localExportEntries, indirectExportEntries, starExportEntries);
+                importEntries, localExportEntries, indirectExportEntries, starExportEntries,
+                nameSpaceExportEntries);
         m.scriptCode = scriptLoader.load(parsedBody, m);
         return m;
     }
@@ -330,6 +368,10 @@ public final class SourceTextModuleRecord implements ModuleRecord, Cloneable {
                     exportedNames.add(n);
                 }
             }
+        }
+        /* step ? (Extension: Export From) */
+        for (ExportEntry exportEntry : module.nameSpaceExportEntries) {
+            exportedNames.add(exportEntry.getExportName());
         }
         /* step 8 */
         return exportedNames;
@@ -377,6 +419,14 @@ public final class SourceTextModuleRecord implements ModuleRecord, Cloneable {
                 }
             }
         }
+        /* step ? (Extension: Export From) */
+        for (ExportEntry exportEntry : module.nameSpaceExportEntries) {
+            if (exportName.equals(exportEntry.getExportName())) {
+                ModuleRecord importedModule = HostResolveImportedModule(module,
+                        exportEntry.getModuleRequest());
+                return new ModuleExport(importedModule);
+            }
+        }
         /* step 6 */
         if ("default".equals(exportName)) {
             /* step 6.a (not applicable) */
@@ -410,7 +460,8 @@ public final class SourceTextModuleRecord implements ModuleRecord, Cloneable {
                     if (resolution.getModule() != starResolution.getModule()) {
                         return ModuleExport.AMBIGUOUS;
                     }
-                    if (!resolution.getBindingName().equals(starResolution.getBindingName())) {
+                    if (!Objects.equals(resolution.getBindingName(),
+                            starResolution.getBindingName())) {
                         return ModuleExport.AMBIGUOUS;
                     }
                 }

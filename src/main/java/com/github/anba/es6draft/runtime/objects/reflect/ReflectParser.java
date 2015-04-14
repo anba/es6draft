@@ -1165,11 +1165,12 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
             source = createLiteral(node.getModuleSpecifier());
             break;
         case External:
-            specifiers = node.getExportsClause().accept(this, value);
+            // TODO: default entry and namespace export
+            specifiers = node.getExportClause().accept(this, value);
             source = createLiteral(node.getModuleSpecifier());
             break;
         case Local:
-            specifiers = node.getExportsClause().accept(this, value);
+            specifiers = node.getExportClause().accept(this, value);
             break;
         case Variable:
             declaration = node.getVariableStatement().accept(this, value);

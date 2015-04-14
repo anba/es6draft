@@ -6,6 +6,8 @@
  */
 package com.github.anba.es6draft.runtime.modules;
 
+import com.github.anba.es6draft.ast.Node;
+
 /**
  * 15.2.1.8 Static Semantics: ImportEntries<br>
  * 15.2.2.3 Static Semantics: ImportEntries<br>
@@ -23,12 +25,11 @@ public final class ImportEntry {
 
     private final long sourcePosition;
 
-    public ImportEntry(String moduleRequest, String importName, String localName,
-            long sourcePosition) {
+    public ImportEntry(Node node, String moduleRequest, String importName, String localName) {
         this.moduleRequest = moduleRequest;
         this.importName = importName;
         this.localName = localName;
-        this.sourcePosition = sourcePosition;
+        this.sourcePosition = node.getBeginPosition();
     }
 
     public boolean isStarImport() {

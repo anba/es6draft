@@ -24,6 +24,11 @@ public final class ModuleExport {
         this.bindingName = bindingName;
     }
 
+    ModuleExport(ModuleRecord module) {
+        this.module = module;
+        this.bindingName = null;
+    }
+
     /**
      * Returns the resolved module record.
      * 
@@ -36,10 +41,19 @@ public final class ModuleExport {
     /**
      * Returns the resolved binding name.
      * 
-     * @return the binding name
+     * @return the binding name or {@code null} for namespace exports
      */
     public String getBindingName() {
         return bindingName;
+    }
+
+    /**
+     * Returns {@code true} if the module export exports a namespace object
+     * 
+     * @return {@code true} for namespace exports
+     */
+    public boolean isNameSpaceExport() {
+        return bindingName == null;
     }
 
     /**

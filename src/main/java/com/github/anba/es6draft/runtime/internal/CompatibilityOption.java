@@ -219,6 +219,11 @@ public enum CompatibilityOption {
     NewSuper,
 
     /**
+     * ES7-Extension: <tt>export from</tt> additions
+     */
+    ExportFrom,
+
+    /**
      * Track unhandled rejected promise objects
      */
     PromiseRejection,

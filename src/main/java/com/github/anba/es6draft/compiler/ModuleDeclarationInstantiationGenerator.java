@@ -23,7 +23,6 @@ import com.github.anba.es6draft.compiler.assembler.Code.MethodCode;
 import com.github.anba.es6draft.compiler.assembler.MethodName;
 import com.github.anba.es6draft.compiler.assembler.Type;
 import com.github.anba.es6draft.compiler.assembler.Variable;
-import com.github.anba.es6draft.runtime.EnvironmentRecord;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.ModuleEnvironmentRecord;
@@ -45,19 +44,12 @@ import com.github.anba.es6draft.runtime.types.Undefined;
 final class ModuleDeclarationInstantiationGenerator extends
         DeclarationBindingInstantiationGenerator {
     private static final class Methods {
-        // class: ModuleEnvironmentRecord
-        static final MethodName ModuleEnvironmentRecord_createImportBinding = MethodName
-                .findVirtual(Types.ModuleEnvironmentRecord, "createImportBinding", Type.methodType(
-                        Type.VOID_TYPE, Types.String, Types.ModuleRecord, Types.String));
-
-        // class: ResolvedExport
-        static final MethodName ModuleExport_getModule = MethodName.findVirtual(Types.ModuleExport,
-                "getModule", Type.methodType(Types.ModuleRecord));
-
-        static final MethodName ModuleExport_getBindingName = MethodName.findVirtual(
-                Types.ModuleExport, "getBindingName", Type.methodType(Types.String));
-
         // class: ScriptRuntime
+        static final MethodName ScriptRuntime_createImportBinding = MethodName.findStatic(
+                Types.ScriptRuntime, "createImportBinding", Type.methodType(Type.VOID_TYPE,
+                        Types.ExecutionContext, Types.ModuleEnvironmentRecord, Types.String,
+                        Types.ModuleExport));
+
         static final MethodName ScriptRuntime_getModuleNamespace = MethodName.findStatic(
                 Types.ScriptRuntime, "getModuleNamespace", Type.methodType(
                         Types.ModuleNamespaceObject, Types.ExecutionContext,
@@ -153,7 +145,7 @@ final class ModuleDeclarationInstantiationGenerator extends
                 mv.invoke(Methods.ScriptRuntime_resolveImportOrThrow);
                 mv.store(resolved);
 
-                createImportBinding(envRec, importEntry.getLocalName(), resolved, mv);
+                createImportBinding(context, envRec, importEntry.getLocalName(), resolved, mv);
             }
         }
         /* step 13 */
@@ -194,22 +186,18 @@ final class ModuleDeclarationInstantiationGenerator extends
         mv._return();
     }
 
-    private void createImmutableBinding(Variable<? extends EnvironmentRecord> envRec, String name,
+    private void createImmutableBinding(Variable<ModuleEnvironmentRecord> envRec, String name,
             boolean strict, InstructionVisitor mv) {
         createImmutableBinding(envRec, new Name(name), strict, mv);
     }
 
-    private void createImportBinding(Variable<? extends EnvironmentRecord> envRec, String name,
-            Variable<ModuleExport> resolved, InstructionVisitor mv) {
+    private void createImportBinding(Variable<ExecutionContext> context,
+            Variable<ModuleEnvironmentRecord> envRec, String name, Variable<ModuleExport> resolved,
+            InstructionVisitor mv) {
+        mv.load(context);
         mv.load(envRec);
         mv.aconst(name);
-
         mv.load(resolved);
-        mv.invoke(Methods.ModuleExport_getModule);
-
-        mv.load(resolved);
-        mv.invoke(Methods.ModuleExport_getBindingName);
-
-        mv.invoke(Methods.ModuleEnvironmentRecord_createImportBinding);
+        mv.invoke(Methods.ScriptRuntime_createImportBinding);
     }
 }

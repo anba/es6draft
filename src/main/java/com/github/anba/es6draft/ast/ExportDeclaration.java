@@ -13,7 +13,7 @@ package com.github.anba.es6draft.ast;
 public final class ExportDeclaration extends ModuleItem {
     private final Type type;
     private final String moduleSpecifier;
-    private final ExportClause exportsClause;
+    private final ExportClause exportClause;
     private final ExportDefaultExpression expression;
     private final VariableStatement variableStatement;
     private final Declaration declaration;
@@ -40,7 +40,7 @@ public final class ExportDeclaration extends ModuleItem {
         super(beginPosition, endPosition);
         this.type = Type.All;
         this.moduleSpecifier = moduleSpecifier;
-        this.exportsClause = null;
+        this.exportClause = null;
         this.expression = null;
         this.variableStatement = null;
         this.declaration = null;
@@ -57,17 +57,17 @@ public final class ExportDeclaration extends ModuleItem {
      *            the source begin position
      * @param endPosition
      *            the source end position
-     * @param exportsClause
-     *            the exports clause
+     * @param exportClause
+     *            the export clause
      * @param moduleSpecifier
      *            the requested module name or {@code null}
      */
-    public ExportDeclaration(long beginPosition, long endPosition, ExportClause exportsClause,
+    public ExportDeclaration(long beginPosition, long endPosition, ExportClause exportClause,
             String moduleSpecifier) {
         super(beginPosition, endPosition);
         this.type = moduleSpecifier != null ? Type.External : Type.Local;
         this.moduleSpecifier = moduleSpecifier;
-        this.exportsClause = exportsClause;
+        this.exportClause = exportClause;
         this.expression = null;
         this.variableStatement = null;
         this.declaration = null;
@@ -91,7 +91,7 @@ public final class ExportDeclaration extends ModuleItem {
         super(beginPosition, endPosition);
         this.type = Type.Variable;
         this.moduleSpecifier = null;
-        this.exportsClause = null;
+        this.exportClause = null;
         this.expression = null;
         this.variableStatement = variableStatement;
         this.declaration = null;
@@ -114,7 +114,7 @@ public final class ExportDeclaration extends ModuleItem {
         super(beginPosition, endPosition);
         this.type = Type.Declaration;
         this.moduleSpecifier = null;
-        this.exportsClause = null;
+        this.exportClause = null;
         this.expression = null;
         this.variableStatement = null;
         this.declaration = declaration;
@@ -137,7 +137,7 @@ public final class ExportDeclaration extends ModuleItem {
         super(beginPosition, endPosition);
         this.type = Type.DefaultHoistableDeclaration;
         this.moduleSpecifier = null;
-        this.exportsClause = null;
+        this.exportClause = null;
         this.expression = null;
         this.variableStatement = null;
         this.declaration = declaration;
@@ -160,7 +160,7 @@ public final class ExportDeclaration extends ModuleItem {
         super(beginPosition, endPosition);
         this.type = Type.DefaultClassDeclaration;
         this.moduleSpecifier = null;
-        this.exportsClause = null;
+        this.exportClause = null;
         this.expression = null;
         this.variableStatement = null;
         this.declaration = declaration;
@@ -184,7 +184,7 @@ public final class ExportDeclaration extends ModuleItem {
         super(beginPosition, endPosition);
         this.type = Type.DefaultExpression;
         this.moduleSpecifier = null;
-        this.exportsClause = null;
+        this.exportClause = null;
         this.expression = expression;
         this.variableStatement = null;
         this.declaration = null;
@@ -199,9 +199,9 @@ public final class ExportDeclaration extends ModuleItem {
         return moduleSpecifier;
     }
 
-    public ExportClause getExportsClause() {
+    public ExportClause getExportClause() {
         assert type == Type.Local || type == Type.External : "Type=" + type;
-        return exportsClause;
+        return exportClause;
     }
 
     public ExportDefaultExpression getExpression() {

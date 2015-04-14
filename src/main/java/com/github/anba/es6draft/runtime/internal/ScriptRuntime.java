@@ -45,6 +45,7 @@ import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.FunctionEnvironmentRecord;
 import com.github.anba.es6draft.runtime.GlobalEnvironmentRecord;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
+import com.github.anba.es6draft.runtime.ModuleEnvironmentRecord;
 import com.github.anba.es6draft.runtime.modules.MalformedNameException;
 import com.github.anba.es6draft.runtime.modules.ModuleExport;
 import com.github.anba.es6draft.runtime.modules.ModuleRecord;
@@ -270,6 +271,36 @@ public final class ScriptRuntime {
         ModuleRecord importedModule = HostResolveImportedModule(module, moduleRequest);
         /* steps 10.c.i-ii */
         return GetModuleNamespace(cx, importedModule);
+    }
+
+    /**
+     * 15.2.1.16.4 ModuleDeclarationInstantiation( ) Concrete Method
+     * 
+     * @param cx
+     *            the execution context
+     * @param envRec
+     *            the module environment record
+     * @param name
+     *            the import name
+     * @param resolved
+     *            the resolved module export
+     * @throws IOException
+     *             if there was any I/O error
+     * @throws MalformedNameException
+     *             if the module specifier cannot be normalized
+     * @throws ResolutionException
+     *             if the export cannot be resolved
+     */
+    public static void createImportBinding(ExecutionContext cx, ModuleEnvironmentRecord envRec,
+            String name, ModuleExport resolved) throws IOException, MalformedNameException,
+            ResolutionException {
+        assert !resolved.isAmbiguous();
+        if (resolved.isNameSpaceExport()) {
+            envRec.createImmutableBinding(name, true);
+            envRec.initializeBinding(name, GetModuleNamespace(cx, resolved.getModule()));
+        } else {
+            envRec.createImportBinding(name, resolved.getModule(), resolved.getBindingName());
+        }
     }
 
     /* ***************************************************************************************** */

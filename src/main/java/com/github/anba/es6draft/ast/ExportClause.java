@@ -13,15 +13,35 @@ import java.util.List;
  * <h2>15.2 Modules</h2>
  */
 public final class ExportClause extends AstNode {
+    private final IdentifierName defaultEntry;
     private final List<ExportSpecifier> exports;
+    private final IdentifierName nameSpace;
 
     public ExportClause(long beginPosition, long endPosition, List<ExportSpecifier> exports) {
         super(beginPosition, endPosition);
+        this.defaultEntry = null;
         this.exports = exports;
+        this.nameSpace = null;
+    }
+
+    public ExportClause(long beginPosition, long endPosition, IdentifierName defaultEntry,
+            List<ExportSpecifier> namedExports, IdentifierName nameSpace) {
+        super(beginPosition, endPosition);
+        this.defaultEntry = defaultEntry;
+        this.exports = namedExports;
+        this.nameSpace = nameSpace;
+    }
+
+    public IdentifierName getDefaultEntry() {
+        return defaultEntry;
     }
 
     public List<ExportSpecifier> getExports() {
         return exports;
+    }
+
+    public IdentifierName getNameSpace() {
+        return nameSpace;
     }
 
     @Override

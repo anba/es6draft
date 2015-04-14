@@ -1335,6 +1335,20 @@ public final class Parser {
         addExportBinding(sourcePosition, new Name(name));
     }
 
+    private void addExportNames(ExportClause exportClause) {
+        IdentifierName defaultEntry = exportClause.getDefaultEntry();
+        if (defaultEntry != null) {
+            addExportName(defaultEntry.getBeginPosition(), defaultEntry.getName());
+        }
+        IdentifierName nameSpace = exportClause.getNameSpace();
+        if (nameSpace != null) {
+            addExportName(nameSpace.getBeginPosition(), nameSpace.getName());
+        }
+        for (ExportSpecifier export : exportClause.getExports()) {
+            addExportName(export.getBeginPosition(), export.getExportName());
+        }
+    }
+
     private void addExportNames(long sourcePosition, List<Name> names) {
         for (Name name : names) {
             addExportName(sourcePosition, name);
@@ -2370,7 +2384,19 @@ public final class Parser {
         switch (token()) {
         case MUL: {
             // export * FromClause ;
+            // Extension: export ExportFromClause FromClause ;
+            long beginExportAll = ts.beginPosition();
             consume(Token.MUL);
+            if (isEnabled(CompatibilityOption.ExportFrom) && isName("as")) {
+                ExportClause exportClause = exportNameSpaceFromClause(beginExportAll);
+                String moduleSpecifier = fromClause();
+                semicolon();
+
+                // 15.2.3.4 Static Semantics: ExportedNames
+                addExportNames(exportClause);
+
+                return new ExportDeclaration(begin, ts.endPosition(), exportClause, moduleSpecifier);
+            }
             String moduleSpecifier = fromClause();
             semicolon();
             return new ExportDeclaration(begin, ts.endPosition(), moduleSpecifier);
@@ -2379,32 +2405,30 @@ public final class Parser {
         case LC: {
             // export ExportClause FromClause ;
             // export ExportClause ;
-            ExportClause exportsClause = exportClause();
+            ExportClause exportClause = exportClause();
             String moduleSpecifier;
             if (isName("from")) {
                 moduleSpecifier = fromClause();
-
-                // 15.2.3.4 Static Semantics: ExportedNames
-                for (ExportSpecifier export : exportsClause.getExports()) {
-                    addExportName(export.getBeginPosition(), export.getExportName());
-                }
             } else {
                 moduleSpecifier = null;
 
                 // 15.2.3.1 Static Semantics: Early Errors
                 // 15.2.3.3 Static Semantics: ExportedBindings
                 // 15.2.3.4 Static Semantics: ExportedNames
-                for (ExportSpecifier export : exportsClause.getExports()) {
+                for (ExportSpecifier export : exportClause.getExports()) {
                     String sourceName = export.getSourceName();
                     if (isModuleReservedName(sourceName)) {
                         throw reportSyntaxError(Messages.Key.InvalidIdentifier, sourceName);
                     }
                     addExportBinding(export.getBeginPosition(), export.getSourceName());
-                    addExportName(export.getBeginPosition(), export.getExportName());
                 }
             }
             semicolon();
-            return new ExportDeclaration(begin, ts.endPosition(), exportsClause, moduleSpecifier);
+
+            // 15.2.3.4 Static Semantics: ExportedNames
+            addExportNames(exportClause);
+
+            return new ExportDeclaration(begin, ts.endPosition(), exportClause, moduleSpecifier);
         }
 
         case VAR: {
@@ -2419,11 +2443,15 @@ public final class Parser {
             return new ExportDeclaration(begin, ts.endPosition(), variableStatement);
         }
 
+        case ASYNC:
+            if (!(isEnabled(CompatibilityOption.AsyncFunction) && LOOKAHEAD(Token.FUNCTION) && noNextLineTerminator())) {
+                break;
+            }
+            // fall-through
         case FUNCTION:
         case CLASS:
         case CONST:
-        case LET:
-        case ASYNC: {
+        case LET: {
             // export Declaration
             Declaration declaration = declaration();
 
@@ -2435,11 +2463,11 @@ public final class Parser {
             return new ExportDeclaration(begin, ts.endPosition(), declaration);
         }
 
-        case DEFAULT:
-        default: {
+        case DEFAULT: {
             // export default HoistableDeclaration[Default]
             // export default ClassDeclaration[Default]
             // export default [LA != {function, class}] AssignmentExpression[In] ;
+            long beginDefault = ts.beginPosition();
             consume(Token.DEFAULT);
             switch (token()) {
             case FUNCTION: {
@@ -2487,6 +2515,19 @@ public final class Parser {
                 }
                 // fall-through
             default: {
+                if (isEnabled(CompatibilityOption.ExportFrom) && isName("from")
+                        && LOOKAHEAD(Token.STRING) && noNextLineTerminator()) {
+                    // Handle: `export default from "module-specifier" ;`
+                    ExportClause exportClause = exportFromClause(beginDefault, true);
+                    String moduleSpecifier = fromClause();
+                    semicolon();
+
+                    // 15.2.3.4 Static Semantics: ExportedNames
+                    addExportNames(exportClause);
+
+                    return new ExportDeclaration(begin, ts.endPosition(), exportClause,
+                            moduleSpecifier);
+                }
                 ExportDefaultExpression defaultExpression = defaultExpression();
 
                 addExportBinding(begin, DEFAULT_EXPORT_BINDING_NAME);
@@ -2496,7 +2537,19 @@ public final class Parser {
             }
             }
         }
+        default:
         }
+        if (isEnabled(CompatibilityOption.ExportFrom)) {
+            ExportClause exportClause = exportFromClause(ts.beginPosition(), false);
+            String moduleSpecifier = fromClause();
+            semicolon();
+
+            // 15.2.3.4 Static Semantics: ExportedNames
+            addExportNames(exportClause);
+
+            return new ExportDeclaration(begin, ts.endPosition(), exportClause, moduleSpecifier);
+        }
+        throw reportTokenMismatch(Token.DEFAULT, token());
     }
 
     private ExportDefaultExpression defaultExpression() {
@@ -2535,17 +2588,7 @@ public final class Parser {
      */
     private ExportClause exportClause() {
         long begin = ts.beginPosition();
-        InlineArrayList<ExportSpecifier> exports = newList();
-        consume(Token.LC);
-        while (token() != Token.RC) {
-            exports.add(exportSpecifier());
-            if (token() == Token.COMMA) {
-                consume(Token.COMMA);
-            } else {
-                break;
-            }
-        }
-        consume(Token.RC);
+        List<ExportSpecifier> exports = namedExports();
         return new ExportClause(begin, ts.endPosition(), exports);
     }
 
@@ -2571,6 +2614,115 @@ public final class Parser {
             exportName = sourceName;
         }
         return new ExportSpecifier(begin, ts.endPosition(), sourceName, exportName);
+    }
+
+    /**
+     * <strong>[Extension] Exports</strong>
+     * 
+     * <pre>
+     * ExportFromClause :
+     *     *
+     *     ExportedDefaultBinding
+     *     NameSpaceExport
+     *     NamedExports
+     *     ExportedDefaultBinding , NameSpaceExport
+     *     ExportedDefaultBinding , NamedExports
+     * </pre>
+     *
+     * @param begin
+     *            the begin position
+     * @param isDefault
+     *            {@code true} if the exported default binding is "default"
+     * @return the parsed export from clause
+     */
+    private ExportClause exportFromClause(long begin, boolean isDefault) {
+        assert token() != Token.MUL && token() != Token.LC;
+        IdentifierName defaultEntry;
+        if (isDefault) {
+            defaultEntry = new IdentifierName(begin, ts.endPosition(), "default");
+        } else {
+            defaultEntry = exportedDefaultBinding();
+        }
+        IdentifierName nameSpace = null;
+        List<ExportSpecifier> namedExports = emptyList();
+        if (token() == Token.COMMA) {
+            consume(Token.COMMA);
+            if (token() == Token.MUL) {
+                consume(Token.MUL);
+                nameSpace = nameSpaceExport();
+            } else {
+                namedExports = namedExports();
+            }
+        }
+        return new ExportClause(begin, ts.endPosition(), defaultEntry, namedExports, nameSpace);
+    }
+
+    private ExportClause exportNameSpaceFromClause(long begin) {
+        IdentifierName defaultEntry = null;
+        IdentifierName nameSpace = nameSpaceExport();
+        List<ExportSpecifier> namedExports = emptyList();
+        return new ExportClause(begin, ts.endPosition(), defaultEntry, namedExports, nameSpace);
+    }
+
+    /**
+     * <strong>[Extension] Exports</strong>
+     * 
+     * <pre>
+     * NameSpaceExport :
+     *     * as IdentifierName
+     * </pre>
+     *
+     * @return the parsed namespace export
+     */
+    private IdentifierName nameSpaceExport() {
+        // Token.MUL already consumed in caller.
+        consume("as");
+        long begin = ts.beginPosition();
+        String name = identifierName();
+        return new IdentifierName(begin, ts.endPosition(), name);
+    }
+
+    /**
+     * <strong>[Extension] Exports</strong>
+     * 
+     * <pre>
+     * NamedExports :
+     *     { } 
+     *     { ExportsList }
+     *     { ExportsList , }
+     * </pre>
+     *
+     * @return the parsed export from clause
+     */
+    private List<ExportSpecifier> namedExports() {
+        InlineArrayList<ExportSpecifier> namedExports = newList();
+        consume(Token.LC);
+        while (token() != Token.RC) {
+            namedExports.add(exportSpecifier());
+            if (token() == Token.COMMA) {
+                consume(Token.COMMA);
+            } else {
+                break;
+            }
+        }
+        consume(Token.RC);
+        return namedExports;
+    }
+
+    /**
+     * <strong>[Extension] Exports</strong>
+     * 
+     * <pre>
+     * ExportedDefaultBinding :
+     *     IdentifierName
+     * </pre>
+     *
+     * @return the parsed exported default binding
+     */
+    private IdentifierName exportedDefaultBinding() {
+        long begin = ts.beginPosition();
+        String name = identifierName();
+        return new IdentifierName(begin, ts.endPosition(), name);
     }
 
     /**

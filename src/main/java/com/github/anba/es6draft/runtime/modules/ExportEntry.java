@@ -6,6 +6,8 @@
  */
 package com.github.anba.es6draft.runtime.modules;
 
+import com.github.anba.es6draft.ast.Node;
+
 /**
  * 15.2.1.7 Static Semantics: ExportEntries<br>
  * 15.2.3.5 Static Semantics: ExportEntries<br>
@@ -26,13 +28,13 @@ public final class ExportEntry {
 
     private final long sourcePosition;
 
-    public ExportEntry(String moduleRequest, String importName, String localName,
-            String exportName, long sourcePosition) {
+    public ExportEntry(Node node, String moduleRequest, String importName, String localName,
+            String exportName) {
         this.moduleRequest = moduleRequest;
         this.importName = importName;
         this.localName = localName;
         this.exportName = exportName;
-        this.sourcePosition = sourcePosition;
+        this.sourcePosition = node.getBeginPosition();
     }
 
     @Override
@@ -52,7 +54,11 @@ public final class ExportEntry {
     }
 
     public boolean isStarExport() {
-        return "*".equals(importName);
+        return "*".equals(importName) && exportName == null;
+    }
+
+    public boolean isNameSpaceExport() {
+        return "*".equals(importName) && exportName != null;
     }
 
     /**

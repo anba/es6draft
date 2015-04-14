@@ -9,6 +9,7 @@ package com.github.anba.es6draft.runtime.types.builtins;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToString;
 import static com.github.anba.es6draft.runtime.internal.Errors.newReferenceError;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
+import static com.github.anba.es6draft.runtime.modules.ModuleSemantics.GetModuleNamespace;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import java.io.IOException;
@@ -251,6 +252,16 @@ public final class ModuleNamespaceObject extends OrdinaryObject {
         ModuleRecord targetModule = binding.getModule();
         /* step 10 */
         assert targetModule != null;
+        /* step ? (Extension: Export From) */
+        if (binding.isNameSpaceExport()) {
+            try {
+                return GetModuleNamespace(cx, targetModule);
+            } catch (IOException e) {
+                throw Errors.newInternalError(cx, Messages.Key.ModulesIOException, e.getMessage());
+            } catch (MalformedNameException | ResolutionException e) {
+                throw e.toScriptException(cx);
+            }
+        }
         /* step 11 */
         LexicalEnvironment<ModuleEnvironmentRecord> targetEnv = targetModule.getEnvironment();
         /* step 12 */
