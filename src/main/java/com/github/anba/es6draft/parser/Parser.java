@@ -3044,7 +3044,7 @@ public final class Parser {
         if (token() == end) {
             return emptyFormalParameterList();
         }
-        return formalParameterList();
+        return formalParameterList(end);
     }
 
     private FormalParameterList emptyFormalParameterList() {
@@ -3073,9 +3073,11 @@ public final class Parser {
      *     FormalsList<span><sub>[?Yield, ?GeneratorParameter]</sub></span>, FormalParameter<span><sub>[?Yield, ?GeneratorParameter]</sub></span>
      * </pre>
      * 
+     * @param end
+     *            the end token
      * @return the parsed formal parameters list
      */
-    private FormalParameterList formalParameterList() {
+    private FormalParameterList formalParameterList(Token end) {
         long begin = ts.beginPosition();
         InlineArrayList<FormalParameter> formals = newList();
         for (;;) {
@@ -3086,6 +3088,9 @@ public final class Parser {
                 formals.add(formalParameter());
                 if (token() == Token.COMMA) {
                     consume(Token.COMMA);
+                    if (token() == end && isEnabled(CompatibilityOption.FunctionCallTrailingComma)) {
+                        break;
+                    }
                 } else {
                     break;
                 }
@@ -6926,6 +6931,10 @@ public final class Parser {
                         list.add(arrowFunctionRestParameter());
                         break;
                     }
+                    if (token() == Token.RP && LOOKAHEAD(Token.ARROW)
+                            && isEnabled(CompatibilityOption.FunctionCallTrailingComma)) {
+                        break;
+                    }
                     expr = assignmentExpressionNoValidation(true);
                     list.add(expr);
                 } while (token() == Token.COMMA);
@@ -8017,47 +8026,57 @@ public final class Parser {
      * @return the list of parsed function call arguments
      */
     private List<Expression> arguments() {
-        InlineArrayList<Expression> args = newList();
         long position = ts.position(), lineinfo = ts.lineinfo();
         consume(Token.LP);
-        if (token() != Token.RP) {
-            if (token() != Token.TRIPLE_DOT && isEnabled(CompatibilityOption.LegacyComprehension)) {
-                Expression expr = assignmentExpression(true);
-                if (token() == Token.FOR) {
-                    ts.reset(position, lineinfo);
-                    args.add(legacyGeneratorComprehension());
-                    return args;
-                }
-                args.add(expr);
-                if (token() == Token.COMMA) {
-                    consume(Token.COMMA);
-                } else {
+        if (token() == Token.RP) {
+            consume(Token.RP);
+            return Collections.emptyList();
+        }
+        InlineArrayList<Expression> args = newList();
+        if (token() != Token.TRIPLE_DOT && isEnabled(CompatibilityOption.LegacyComprehension)) {
+            Expression expr = assignmentExpression(true);
+            if (token() == Token.FOR) {
+                ts.reset(position, lineinfo);
+                args.add(legacyGeneratorComprehension());
+                return args;
+            }
+            args.add(expr);
+            if (token() == Token.COMMA) {
+                consume(Token.COMMA);
+                if (token() == Token.RP && isEnabled(CompatibilityOption.FunctionCallTrailingComma)) {
                     consume(Token.RP);
                     return args;
                 }
+            } else {
+                consume(Token.RP);
+                return args;
             }
+        }
 
-            for (;;) {
-                Expression expr;
-                if (token() == Token.TRIPLE_DOT) {
-                    long begin = ts.beginPosition();
-                    consume(Token.TRIPLE_DOT);
-                    Expression e = assignmentExpression(true);
-                    expr = new CallSpreadElement(begin, ts.endPosition(), e);
-                } else {
-                    expr = assignmentExpression(true);
-                }
-                args.add(expr);
-                if (token() == Token.COMMA) {
-                    consume(Token.COMMA);
-                } else {
+        for (;;) {
+            Expression expr;
+            if (token() == Token.TRIPLE_DOT) {
+                long begin = ts.beginPosition();
+                consume(Token.TRIPLE_DOT);
+                Expression e = assignmentExpression(true);
+                expr = new CallSpreadElement(begin, ts.endPosition(), e);
+            } else {
+                expr = assignmentExpression(true);
+            }
+            args.add(expr);
+            if (token() == Token.COMMA) {
+                consume(Token.COMMA);
+                if (token() == Token.RP && isEnabled(CompatibilityOption.FunctionCallTrailingComma)) {
+                    consume(Token.RP);
                     break;
                 }
+            } else {
+                break;
             }
+        }
 
-            if (args.size() > MAX_ARGUMENTS) {
-                reportSyntaxError(Messages.Key.FunctionTooManyArguments);
-            }
+        if (args.size() > MAX_ARGUMENTS) {
+            reportSyntaxError(Messages.Key.FunctionTooManyArguments);
         }
         consume(Token.RP);
         return args;

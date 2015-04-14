@@ -244,6 +244,11 @@ public enum CompatibilityOption {
     ObjectSpreadInitializer,
 
     /**
+     * ES7-Extension: Trailing comma in function calls
+     */
+    FunctionCallTrailingComma,
+
+    /**
      * Track unhandled rejected promise objects
      */
     PromiseRejection,
@@ -294,7 +299,7 @@ public enum CompatibilityOption {
      * @return the options set for proposed ES7 extensions
      */
     public static final Set<CompatibilityOption> ECMAScript7() {
-        return EnumSet.range(AsyncFunction, NewSuper);
+        return EnumSet.range(AsyncFunction, FunctionCallTrailingComma);
     }
 
     @SafeVarargs
