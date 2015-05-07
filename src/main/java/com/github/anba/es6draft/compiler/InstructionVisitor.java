@@ -125,7 +125,9 @@ class InstructionVisitor extends InstructionAssembler {
      */
     public void swap(ValType ltype, ValType rtype) {
         int lsize = ltype.size(), rsize = rtype.size();
-        if (lsize == 1 && rsize == 1) {
+        if (lsize == 0 || rsize == 0) {
+            return;
+        } else if (lsize == 1 && rsize == 1) {
             swap();
         } else if (lsize == 1 && rsize == 2) {
             swap1_2();

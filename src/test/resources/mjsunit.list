@@ -14,6 +14,7 @@ harmony/typedarrays.js
 
 # V8 does not implement %TypedArray% prototype object
 es6/typed-array-iterator.js
+es6/built-in-accessor-names.js
 
 # V8 generators: missing type checks in v8-implementation
 es6/generators-iteration.js
@@ -35,14 +36,10 @@ regress/regress-builtinbust-7.js
 
 # TODO: Add new v8-compat mode?
 # .caller and .arguments in sloppy generator functions are poison-pilled in V8
-es6/generators-poisoned-properties.js
 es6/generators-runtime.js
 
 # direct eval() and lexical declarations
 regress/regress-1213575.js
-
-# unscopables as accessor not valid in V8
-es6/unscopables.js
 
 # GetBindingValue invokes HasBinding for Object Environment Records, not supported in V8
 harmony/proxies-with-unscopables.js
@@ -77,17 +74,11 @@ harmony/computed-property-names-classes.js
 # invalid test, RegExp.prototype.source can only be applied on RegExp objects
 regress/regress-447561.js
 
-# SetFunctionName not implemented in v8
-es6/function-name-configurable.js
-
 # Object environment records HasBinding/GetBindingValue not spec compliant in v8
 harmony/regress/regress-crbug-461520.js
 
 # v8 bug - \8 and \9 is not allowed in template literals
 es6/templates.js
-
-# ES6: toStringTag not implemented in v8
-es6/prototype-ordinary-objects.js
 
 
 ###################
@@ -134,6 +125,7 @@ big-object-literal.js
 error-accessors.js
 function-call.js
 instanceof-2.js
+messages.js
 object-create.js
 object-define-properties.js
 object-freeze.js
@@ -144,6 +136,7 @@ es6/block-conflicts.js
 regress/regress-1591.js
 regress/regress-1980.js
 regress/regress-3159.js
+regress/regress-475705.js
 regress/regress-crbug-109362.js
 
 # forward-slash not escaped in RegExp
@@ -255,7 +248,6 @@ regress/regress-1217.js
 #######################################
 
 # built-in function poisoned
-function-arguments-null.js
 fuzz-accessors.js
 
 # built-in functions not exposed in caller
@@ -264,10 +256,8 @@ regress/regress-105.js
 
 # Object.getPrototypeOf() wraps/ignores primitives
 get-prototype-of.js
-harmony/set-prototype-of.js
 
 # Function.length is configurable
-regress/regress-function-length-strict.js
 regress/regress-1419.js
 regress/regress-1530.js
 
@@ -283,9 +273,6 @@ regress/regress-349870.js
 
 # RegExp.prototype.test fetches "exec" dynamically
 regexp-string-methods.js
-
-# Function.prototype.{arguments,caller} now configurable=true for bound functions
-function-bind.js
 
 # "get " prefix for getter accessor function names
 object-literal.js

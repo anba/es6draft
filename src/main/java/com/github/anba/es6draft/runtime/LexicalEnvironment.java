@@ -100,8 +100,8 @@ public final class LexicalEnvironment<RECORD extends EnvironmentRecord> {
      *            the strict mode flag
      * @return the resolved identifier reference
      */
-    public static Reference<? extends EnvironmentRecord, String> getIdentifierReference(
-            LexicalEnvironment<?> lex, String name, boolean strict) {
+    public static Reference<?, String> getIdentifierReference(LexicalEnvironment<?> lex,
+            String name, boolean strict) {
         /* steps 2-6 */
         for (LexicalEnvironment<?> env = lex; env != null; env = env.outer) {
             Reference<? extends EnvironmentRecord, String> ref = env.envRec.getReferenceOrNull(
@@ -111,7 +111,7 @@ public final class LexicalEnvironment<RECORD extends EnvironmentRecord> {
             }
         }
         /* step 1 */
-        return new Reference.IdentifierReference<>(null, name, strict);
+        return new Reference.UnresolvableReference(name, strict);
     }
 
     /**

@@ -42,7 +42,7 @@ final class StatementGenerator extends
      * 6.2.2 The Completion Record Specification Type
      */
     enum Completion {
-        Normal, Return, Throw, Break, Continue, Abrupt;
+        Empty, Normal, Return, Throw, Break, Continue, Abrupt;
 
         /**
          * Returns {@code true} if this completion type is not {@link #Normal}.
@@ -50,7 +50,7 @@ final class StatementGenerator extends
          * @return {@code true} if not the normal completion type
          */
         boolean isAbrupt() {
-            return this != Normal;
+            return !(this == Normal || this == Empty);
         }
 
         /**
@@ -58,7 +58,9 @@ final class StatementGenerator extends
          * {@code
          * then :: Completion -> Completion -> Completion
          * then a b = case (a, b) of
+         *              (Normal, Empty) -> a
          *              (Normal, _) -> b
+         *              (Empty, _) -> b
          *              _ -> a
          * }
          * </pre>
@@ -68,7 +70,10 @@ final class StatementGenerator extends
          * @return the statically computed completion type
          */
         Completion then(Completion next) {
-            return this != Normal ? this : next;
+            if (!(this == Normal || this == Empty) || (this == Normal && next == Empty)) {
+                return this;
+            }
+            return next;
         }
 
         /**
@@ -76,6 +81,8 @@ final class StatementGenerator extends
          * {@code
          * select :: Completion -> Completion -> Completion
          * select a b = case (a, b) of
+         *                (Empty, _) -> Normal
+         *                (_, Empty) -> Normal
          *                (Normal, _) -> Normal
          *                (_, Normal) -> Normal
          *                _ | a == b -> a
@@ -88,7 +95,29 @@ final class StatementGenerator extends
          * @return the statically computed completion type
          */
         Completion select(Completion other) {
-            return this == Normal || other == Normal ? Normal : this == other ? this : Abrupt;
+            if (this == Normal || this == Empty || other == Normal || other == Empty) {
+                return Normal;
+            }
+            return this == other ? this : Abrupt;
+        }
+
+        /**
+         * <pre>
+         * {@code
+         * normal :: Completion -> Bool -> Completion
+         * normal a b = case (a, b) of
+         *                (_, True) -> Normal
+         *                (Empty, _) -> Normal
+         *                _ -> a
+         * }
+         * </pre>
+         * 
+         * @param useNormal
+         *            the flag to select the normal completion type
+         * @return the statically computed completion type
+         */
+        Completion normal(boolean useNormal) {
+            return (useNormal || this == Empty) ? Normal : this;
         }
 
         /**
@@ -105,8 +134,24 @@ final class StatementGenerator extends
          *            the flag to select the normal completion type
          * @return the statically computed completion type
          */
-        Completion normal(boolean useNormal) {
+        Completion normalOrEmpty(boolean useNormal) {
             return useNormal ? Normal : this;
+        }
+
+        /**
+         * <pre>
+         * {@code
+         * nonEmpty :: Completion -> Completion
+         * nonEmpty a = case (a) of
+         *                (Empty) -> Normal
+         *                _ -> a
+         * }
+         * </pre>
+         * 
+         * @return the statically computed completion type
+         */
+        Completion nonEmpty() {
+            return this == Empty ? Normal : this;
         }
     }
 
@@ -207,7 +252,7 @@ final class StatementGenerator extends
      * @param mv
      *            the statement visitor
      */
-    private void PutValue(Node node, ValType type, StatementVisitor mv) {
+    private static void PutValue(Node node, ValType type, StatementVisitor mv) {
         assert type == ValType.Reference : "lhs is not reference: " + type;
         mv.loadExecutionContext();
         mv.lineInfo(node);
@@ -269,7 +314,7 @@ final class StatementGenerator extends
     public Completion visit(AsyncFunctionDeclaration node, StatementVisitor mv) {
         codegen.compile(node);
         /* step 1 */
-        return Completion.Normal;
+        return Completion.Empty;
     }
 
     /**
@@ -280,7 +325,7 @@ final class StatementGenerator extends
         if (node.getStatements().isEmpty()) {
             // Block : { }
             // -> Return NormalCompletion(empty)
-            return Completion.Normal;
+            return Completion.Empty;
         }
 
         /* steps 1-4 */
@@ -292,7 +337,7 @@ final class StatementGenerator extends
 
         /* step 5 */
         mv.enterScope(node);
-        Completion result = Completion.Normal;
+        Completion result = Completion.Empty;
         {
             // 13.1.10 Runtime Semantics: Evaluation
             // StatementList : StatementList StatementListItem
@@ -320,6 +365,9 @@ final class StatementGenerator extends
     @Override
     public Completion visit(BreakStatement node, StatementVisitor mv) {
         /* steps 1-2 */
+        if (node.isUndefinedCompletion()) {
+            mv.storeUndefinedAsCompletionValue();
+        }
         mv.goTo(mv.breakLabel(node));
         return Completion.Break;
     }
@@ -332,7 +380,7 @@ final class StatementGenerator extends
         /* steps 1-2 */
         BindingClassDeclarationEvaluation(node, mv);
         /* step 3 */
-        return Completion.Normal;
+        return Completion.Empty;
     }
 
     /**
@@ -383,7 +431,7 @@ final class StatementGenerator extends
         /* steps 1-3 */
         mv.lineInfo(node);
         mv.invoke(Methods.ScriptRuntime_debugger);
-        return Completion.Normal;
+        return Completion.Empty;
     }
 
     /**
@@ -400,7 +448,10 @@ final class StatementGenerator extends
         mv.enterVariableScope();
         Variable<LexicalEnvironment<?>> savedEnv = saveEnvironment(node, mv);
 
-        /* step 1 (not applicable) */
+        /* step 1 */
+        if (node.hasCompletionValue()) {
+            mv.storeUndefinedAsCompletionValue();
+        }
         /* step 2 (repeat loop) */
         mv.mark(lblNext);
 
@@ -442,12 +493,11 @@ final class StatementGenerator extends
     @Override
     public Completion visit(EmptyStatement node, StatementVisitor mv) {
         /* step 1 */
-        return Completion.Normal;
+        return Completion.Empty;
     }
 
     /**
-     * 15.2.1.23 Runtime Semantics: Evaluation<br>
-     * 15.2.3.10 Runtime Semantics: Evaluation
+     * 15.2.3.11 Runtime Semantics: Evaluation
      */
     @Override
     public Completion visit(ExportDeclaration node, StatementVisitor mv) {
@@ -455,7 +505,7 @@ final class StatementGenerator extends
         case All:
         case External:
         case Local:
-            return Completion.Normal;
+            return Completion.Empty;
         case Variable:
             return node.getVariableStatement().accept(this, mv);
         case Declaration:
@@ -478,7 +528,7 @@ final class StatementGenerator extends
                 BindingInitializationWithEnvironment(decl.getName(), mv);
             }
             /* step 5 */
-            return Completion.Normal;
+            return Completion.Empty;
         }
         case DefaultExpression:
             return node.getExpression().accept(this, mv);
@@ -488,7 +538,7 @@ final class StatementGenerator extends
     }
 
     /**
-     * 15.2.3.10 Runtime Semantics: Evaluation
+     * 15.2.3.11 Runtime Semantics: Evaluation
      */
     @Override
     public Completion visit(ExportDefaultExpression node, StatementVisitor mv) {
@@ -505,7 +555,7 @@ final class StatementGenerator extends
         /* step 6 */
         InitializeBoundNameWithEnvironment(node.getBinding(), mv);
         /* step 7 */
-        return Completion.Normal;
+        return Completion.Empty;
     }
 
     /**
@@ -513,14 +563,19 @@ final class StatementGenerator extends
      */
     @Override
     public Completion visit(ExpressionStatement node, StatementVisitor mv) {
-        Expression expr = mv.hasCompletion() ? node.getExpression() : node.getExpression()
+        boolean hasCompletion = mv.hasCompletion() && node.hasCompletionValue();
+        Expression expr = hasCompletion ? node.getExpression() : node.getExpression()
                 .emptyCompletion();
 
         /* steps 1-3 */
         ValType type = expressionValue(expr, mv);
 
         /* step 4 */
-        mv.storeCompletionValue(type);
+        if (hasCompletion) {
+            mv.storeCompletionValue(type);
+        } else {
+            mv.pop(type);
+        }
         return Completion.Normal;
     }
 
@@ -744,7 +799,12 @@ final class StatementGenerator extends
             lhsRef = null;
         }
 
-        /* steps 1-4 (not applicable) */
+        /* step 1 (not applicable) */
+        /* step 2 */
+        if (node.hasCompletionValue()) {
+            mv.storeUndefinedAsCompletionValue();
+        }
+        /* steps 3-4 (not applicable) */
         /* step 5 (repeat loop) */
         mv.nonDestructiveGoTo(loopstart);
 
@@ -759,11 +819,10 @@ final class StatementGenerator extends
         }
 
         /* steps 5.h-m */
-        Completion result;
         {
             mv.enterIteration(node, lblBreak, lblContinue);
             mv.enterWrapped();
-            result = new IterationGenerator<FORSTATEMENT, StatementVisitor>(codegen) {
+            new IterationGenerator<FORSTATEMENT, StatementVisitor>(codegen) {
                 @Override
                 protected Completion iterationBody(FORSTATEMENT node,
                         Variable<ScriptIterator<?>> iterator, StatementVisitor mv) {
@@ -857,8 +916,7 @@ final class StatementGenerator extends
         }
         mv.exitVariableScope();
 
-        return result.normal(lblContinue.isTarget() || lblBreak.isTarget()).select(
-                Completion.Normal);
+        return Completion.Normal;
     }
 
     private <FORSTATEMENT extends IterationStatement & ForIterationNode> Completion ForInOfBodyEvaluationInner(
@@ -904,6 +962,7 @@ final class StatementGenerator extends
                 LexicalDeclaration lexDecl = (LexicalDeclaration) lhs;
                 assert lexDecl.getElements().size() == 1;
                 LexicalBinding lexicalBinding = lexDecl.getElements().get(0);
+                assert lexicalBinding.getBinding() instanceof BindingPattern;
 
                 // 13.6.4.10 Runtime Semantics: BindingInitialization
                 // stack: [nextValue] -> [envRec, nextValue]
@@ -1031,7 +1090,10 @@ final class StatementGenerator extends
     private Completion ForBodyEvaluation(ForStatement node, boolean perIterationsLets,
             StatementVisitor mv) {
         mv.enterVariableScope();
-        /* step 1 (not applicable) */
+        /* step 1 */
+        if (node.hasCompletionValue()) {
+            mv.storeUndefinedAsCompletionValue();
+        }
         /* steps 2-3 */
         Variable<LexicalEnvironment<?>> savedEnv;
         if (perIterationsLets) {
@@ -1095,8 +1157,7 @@ final class StatementGenerator extends
             }
             return result.normal(lblBreak.isTarget());
         }
-        return result.normal(lblContinue.isTarget() || lblBreak.isTarget()).select(
-                Completion.Normal);
+        return Completion.Normal;
     }
 
     /**
@@ -1132,7 +1193,7 @@ final class StatementGenerator extends
         }
 
         /* step 1 */
-        return Completion.Normal;
+        return Completion.Empty;
     }
 
     /**
@@ -1142,7 +1203,7 @@ final class StatementGenerator extends
     public Completion visit(GeneratorDeclaration node, StatementVisitor mv) {
         codegen.compile(node);
         /* step 1 */
-        return Completion.Normal;
+        return Completion.Empty;
     }
 
     /**
@@ -1160,6 +1221,9 @@ final class StatementGenerator extends
             /* step 4 */
             mv.ifeq(l0);
             Completion resultThen = node.getThen().accept(this, mv);
+            if (node.hasCompletionValue() && resultThen == Completion.Empty) {
+                mv.storeUndefinedAsCompletionValue();
+            }
             if (!resultThen.isAbrupt()) {
                 mv.goTo(l1);
             }
@@ -1167,6 +1231,9 @@ final class StatementGenerator extends
             /* step 5 */
             mv.mark(l0);
             Completion resultOtherwise = node.getOtherwise().accept(this, mv);
+            if (node.hasCompletionValue() && resultOtherwise == Completion.Empty) {
+                mv.storeUndefinedAsCompletionValue();
+            }
             if (!resultThen.isAbrupt()) {
                 mv.mark(l1);
             }
@@ -1180,7 +1247,20 @@ final class StatementGenerator extends
             /* step 5 */
             mv.ifeq(l0);
             Completion resultThen = node.getThen().accept(this, mv);
-            mv.mark(l0);
+            if (node.hasCompletionValue() && mv.hasCompletion()) {
+                if (resultThen == Completion.Normal) {
+                    Jump l1 = new Jump();
+                    mv.goTo(l1);
+                    mv.mark(l0);
+                    mv.storeUndefinedAsCompletionValue();
+                    mv.mark(l1);
+                } else {
+                    mv.mark(l0);
+                    mv.storeUndefinedAsCompletionValue();
+                }
+            } else {
+                mv.mark(l0);
+            }
 
             /* steps 4, 6-7 */
             return resultThen.select(Completion.Normal);
@@ -1193,7 +1273,7 @@ final class StatementGenerator extends
      */
     @Override
     public Completion visit(ImportDeclaration node, StatementVisitor mv) {
-        return Completion.Normal;
+        return Completion.Empty;
     }
 
     /**
@@ -1219,7 +1299,7 @@ final class StatementGenerator extends
         mv.exitVariableScope();
 
         /* steps 4-5 */
-        return result.normal(label.isTarget());
+        return result.normalOrEmpty(label.isTarget());
     }
 
     /**
@@ -1242,7 +1322,7 @@ final class StatementGenerator extends
             binding.accept(this, mv);
         }
         /* step 3 */
-        return Completion.Normal;
+        return Completion.Empty;
     }
 
     /**
@@ -1340,7 +1420,7 @@ final class StatementGenerator extends
             /* step 5 */
             BindingInitializationWithEnvironment(binding, mv);
         }
-        return Completion.Normal;
+        return Completion.Empty;
     }
 
     /**
@@ -1369,12 +1449,12 @@ final class StatementGenerator extends
 
     @Override
     public Completion visit(StatementListMethod node, StatementVisitor mv) {
-        codegen.compile(node, mv);
+        Completion result = codegen.compile(node, mv);
+        assert !(result == Completion.Break || result == Completion.Continue);
 
         mv.lineInfo(0); // 0 = hint for stacktraces to omit this frame
         mv.loadExecutionContext();
         mv.loadCompletionValue();
-
         mv.invoke(codegen.methodDesc(node));
 
         if (mv.isFunction()) {
@@ -1385,11 +1465,13 @@ final class StatementGenerator extends
             mv.returnCompletion();
             mv.mark(noReturn);
             mv.pop();
-        } else {
-            mv.storeCompletionValue(ValType.Any);
+
+            return Completion.Empty;
         }
 
-        return Completion.Normal; // TODO: return correct result
+        mv.storeCompletionValue(ValType.Any);
+        assert result != Completion.Return;
+        return result;
     }
 
     /**
@@ -1397,6 +1479,9 @@ final class StatementGenerator extends
      */
     @Override
     public Completion visit(SwitchStatement node, StatementVisitor mv) {
+        if (node.hasCompletionValue()) {
+            mv.storeUndefinedAsCompletionValue();
+        }
         return node.accept(new SwitchStatementGenerator(codegen), mv);
     }
 
@@ -1421,6 +1506,9 @@ final class StatementGenerator extends
     @Override
     public Completion visit(TryStatement node, StatementVisitor mv) {
         boolean hasCatch = node.getCatchNode() != null || !node.getGuardedCatchNodes().isEmpty();
+        if (node.hasCompletionValue()) {
+            mv.storeUndefinedAsCompletionValue();
+        }
         if (hasCatch && node.getFinallyBlock() != null) {
             return visitTryCatchFinally(node, mv);
         } else if (hasCatch) {
@@ -1456,7 +1544,7 @@ final class StatementGenerator extends
 
         mv.enterVariableScope();
         Variable<LexicalEnvironment<?>> savedEnv = saveEnvironment(mv);
-        Variable<Object> completion = mv.enterFinallyScoped();
+        Variable<Object> completion = mv.enterFinallyScoped(node);
 
         /* step 1 */
         // Emit try-block
@@ -1563,7 +1651,7 @@ final class StatementGenerator extends
 
         mv.enterVariableScope();
         Variable<LexicalEnvironment<?>> savedEnv = saveEnvironment(mv);
-        Variable<Object> completion = mv.enterFinallyScoped();
+        Variable<Object> completion = mv.enterFinallyScoped(node);
 
         /* step 1 */
         // Emit try-block
@@ -1598,7 +1686,7 @@ final class StatementGenerator extends
         if (!tryResult.isAbrupt()) {
             mv.goTo(noException);
         }
-        return tryResult;
+        return tryResult.nonEmpty();
     }
 
     private Completion emitCatchBlock(TryStatement node, Variable<LexicalEnvironment<?>> savedEnv,
@@ -1656,7 +1744,7 @@ final class StatementGenerator extends
         if (isWrapped) {
             mv.exitWrapped();
         }
-        return catchResult;
+        return catchResult.nonEmpty();
     }
 
     private Completion emitFinallyBlock(TryStatement node,
@@ -1668,7 +1756,7 @@ final class StatementGenerator extends
         assert finallyBlock != null;
 
         // various finally blocks (1 - 4)
-        // (1) finally block for abrupt completions within 'try-catch'
+        // (1) finally block for abrupt throw completions within 'try-catch'
         mv.enterVariableScope();
         Variable<Throwable> throwable = mv.newVariable("throwable", Throwable.class);
         mv.catchHandler(handlerFinallyStackOverflow, Types.Error);
@@ -1692,9 +1780,14 @@ final class StatementGenerator extends
         if (!tryResult.isAbrupt() || !catchResult.isAbrupt()) {
             mv.mark(noException);
             emitFinallyBlock(finallyBlock, mv);
-            if (!finallyResult.isAbrupt() && !tempLabels.isEmpty()) {
-                exceptionHandled = new Jump();
-                mv.goTo(exceptionHandled);
+            if (!finallyResult.isAbrupt()) {
+                if (node.hasCompletionValue()) {
+                    mv.storeCompletionValue(completion);
+                }
+                if (!tempLabels.isEmpty()) {
+                    exceptionHandled = new Jump();
+                    mv.goTo(exceptionHandled);
+                }
             }
         }
 
@@ -1705,6 +1798,9 @@ final class StatementGenerator extends
                 restoreEnvironment(savedEnv, mv);
                 emitFinallyBlock(finallyBlock, mv);
                 if (!finallyResult.isAbrupt()) {
+                    if (node.hasCompletionValue()) {
+                        mv.storeCompletionValue(completion);
+                    }
                     mv.goTo(temp, completion);
                 }
             }
@@ -1714,7 +1810,7 @@ final class StatementGenerator extends
             mv.mark(exceptionHandled);
         }
 
-        return finallyResult;
+        return finallyResult.nonEmpty();
     }
 
     private Completion emitFinallyBlock(BlockStatement finallyBlock, StatementVisitor mv) {
@@ -1870,7 +1966,7 @@ final class StatementGenerator extends
             /* step 4 */
             BindingInitialization(binding, mv);
         }
-        return Completion.Normal;
+        return Completion.Empty;
     }
 
     /**
@@ -1883,7 +1979,7 @@ final class StatementGenerator extends
             decl.accept(this, mv);
         }
         /* step 3 */
-        return Completion.Normal;
+        return Completion.Empty;
     }
 
     /**
@@ -1900,7 +1996,10 @@ final class StatementGenerator extends
         mv.enterVariableScope();
         Variable<LexicalEnvironment<?>> savedEnv = saveEnvironment(node, mv);
 
-        /* step 1 (not applicable) */
+        /* step 1 */
+        if (node.hasCompletionValue()) {
+            mv.storeUndefinedAsCompletionValue();
+        }
         /* step 2 (repeat loop) */
         mv.nonDestructiveGoTo(lblTest);
         mv.mark(lblNext);
@@ -1933,8 +2032,7 @@ final class StatementGenerator extends
         mv.exitVariableScope();
 
         /* steps 2.c, 2.d, 2.f */
-        return result.normal(lblContinue.isTarget() || lblBreak.isTarget()).select(
-                Completion.Normal);
+        return Completion.Normal;
     }
 
     /**
@@ -1960,9 +2058,12 @@ final class StatementGenerator extends
         /* step 9 */
         if (!result.isAbrupt()) {
             popLexicalEnvironment(mv);
+            if (node.hasCompletionValue() && result == Completion.Empty) {
+                mv.storeUndefinedAsCompletionValue();
+            }
         }
 
         /* step 10 */
-        return result;
+        return result.nonEmpty();
     }
 }

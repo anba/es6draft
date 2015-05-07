@@ -34,7 +34,7 @@ public abstract class DefaultVoidNodeVisitor<V> implements VoidNodeVisitor<V> {
         visit((Node) node, value);
     }
 
-    protected void visit(FormalParameter node, V value) {
+    protected void visit(BindingElementItem node, V value) {
         visit((Node) node, value);
     }
 
@@ -80,6 +80,10 @@ public abstract class DefaultVoidNodeVisitor<V> implements VoidNodeVisitor<V> {
 
     protected void visit(Statement node, V value) {
         visit((StatementListItem) node, value);
+    }
+
+    protected void visit(IterationStatement node, V value) {
+        visit((Statement) node, value);
     }
 
     protected void visit(Program node, V value) {
@@ -165,12 +169,12 @@ public abstract class DefaultVoidNodeVisitor<V> implements VoidNodeVisitor<V> {
 
     @Override
     public void visit(BindingElement node, V value) {
-        visit((FormalParameter) node, value);
+        visit((BindingElementItem) node, value);
     }
 
     @Override
     public void visit(BindingElision node, V value) {
-        visit((Node) node, value);
+        visit((BindingElementItem) node, value);
     }
 
     @Override
@@ -185,7 +189,7 @@ public abstract class DefaultVoidNodeVisitor<V> implements VoidNodeVisitor<V> {
 
     @Override
     public void visit(BindingRestElement node, V value) {
-        visit((FormalParameter) node, value);
+        visit((BindingElementItem) node, value);
     }
 
     @Override
@@ -275,7 +279,7 @@ public abstract class DefaultVoidNodeVisitor<V> implements VoidNodeVisitor<V> {
 
     @Override
     public void visit(DoWhileStatement node, V value) {
-        visit((Statement) node, value);
+        visit((IterationStatement) node, value);
     }
 
     @Override
@@ -335,17 +339,22 @@ public abstract class DefaultVoidNodeVisitor<V> implements VoidNodeVisitor<V> {
 
     @Override
     public void visit(ForEachStatement node, V value) {
-        visit((Statement) node, value);
+        visit((IterationStatement) node, value);
     }
 
     @Override
     public void visit(ForInStatement node, V value) {
-        visit((Statement) node, value);
+        visit((IterationStatement) node, value);
     }
 
     @Override
     public void visit(ForOfStatement node, V value) {
-        visit((Statement) node, value);
+        visit((IterationStatement) node, value);
+    }
+
+    @Override
+    public void visit(FormalParameter node, V value) {
+        visit((Node) node, value);
     }
 
     @Override
@@ -355,7 +364,7 @@ public abstract class DefaultVoidNodeVisitor<V> implements VoidNodeVisitor<V> {
 
     @Override
     public void visit(ForStatement node, V value) {
-        visit((Statement) node, value);
+        visit((IterationStatement) node, value);
     }
 
     @Override
@@ -685,7 +694,7 @@ public abstract class DefaultVoidNodeVisitor<V> implements VoidNodeVisitor<V> {
 
     @Override
     public void visit(WhileStatement node, V value) {
-        visit((Statement) node, value);
+        visit((IterationStatement) node, value);
     }
 
     @Override

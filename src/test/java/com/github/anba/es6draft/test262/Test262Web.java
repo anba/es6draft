@@ -21,6 +21,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -68,6 +69,7 @@ public final class Test262Web {
     private static final Configuration configuration = loadConfiguration(Test262Web.class);
     private static final DefaultMode unmarkedDefault = DefaultMode.forName(configuration
             .getString("unmarked_default"));
+    private static final Path selfTestDirectory = Paths.get(configuration.getString("self_test"));
 
     @Parameters(name = "{0}")
     public static List<Test262Info> suiteValues() throws IOException {
@@ -176,12 +178,13 @@ public final class Test262Web {
 
         if (test.isAsync()) {
             // "doneprintHandle.js" is replaced with AsyncHelper
-            global.include("timer.js");
             async = global.install(new AsyncHelper(), AsyncHelper.class);
         }
 
         // Install test hooks
-        global.install(global, Test262GlobalObject.class);
+        if (!test.getScript().startsWith(selfTestDirectory)) {
+            global.install(global, Test262GlobalObject.class);
+        }
     }
 
     @After

@@ -90,7 +90,7 @@ public final class Test262GlobalObject extends ShellGlobalObject {
     }
 
     /**
-     * {@code $ERROR} function for canonical test262 tests
+     * {@code $ERROR} function for test262 tests
      */
     @Function(name = "$ERROR", arity = 1, attributes = @Attributes(writable = true,
             enumerable = true, configurable = false))
@@ -99,7 +99,7 @@ public final class Test262GlobalObject extends ShellGlobalObject {
     }
 
     /**
-     * {@code $FAIL} function for canonical test262 tests
+     * {@code $FAIL} function for test262 tests
      */
     @Function(name = "$FAIL", arity = 1, attributes = @Attributes(writable = true,
             enumerable = true, configurable = false))
@@ -108,7 +108,7 @@ public final class Test262GlobalObject extends ShellGlobalObject {
     }
 
     /**
-     * {@code $PRINT} function for canonical test262 tests
+     * {@code $PRINT} function for test262 tests
      */
     @Function(name = "$PRINT", arity = 1, attributes = @Attributes(writable = true,
             enumerable = true, configurable = false))
@@ -117,7 +117,7 @@ public final class Test262GlobalObject extends ShellGlobalObject {
     }
 
     /**
-     * {@code $INCLUDE} function for canonical test262 tests
+     * {@code $INCLUDE} function for test262 tests
      */
     @Function(name = "$INCLUDE", arity = 1, attributes = @Attributes(writable = true,
             enumerable = true, configurable = false))
@@ -127,7 +127,7 @@ public final class Test262GlobalObject extends ShellGlobalObject {
     }
 
     /**
-     * {@code runTestCase} function for canonical test262 tests
+     * {@code runTestCase} function for test262 tests
      */
     @Function(name = "runTestCase", arity = 1, attributes = @Attributes(writable = true,
             enumerable = true, configurable = false))

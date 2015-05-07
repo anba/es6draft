@@ -35,7 +35,7 @@ public abstract class DefaultIntNodeVisitor<V> implements IntNodeVisitor<V> {
         return visit((Node) node, value);
     }
 
-    protected int visit(FormalParameter node, V value) {
+    protected int visit(BindingElementItem node, V value) {
         return visit((Node) node, value);
     }
 
@@ -81,6 +81,10 @@ public abstract class DefaultIntNodeVisitor<V> implements IntNodeVisitor<V> {
 
     protected int visit(Statement node, V value) {
         return visit((StatementListItem) node, value);
+    }
+
+    protected int visit(IterationStatement node, V value) {
+        return visit((Statement) node, value);
     }
 
     protected int visit(Program node, V value) {
@@ -166,12 +170,12 @@ public abstract class DefaultIntNodeVisitor<V> implements IntNodeVisitor<V> {
 
     @Override
     public int visit(BindingElement node, V value) {
-        return visit((FormalParameter) node, value);
+        return visit((BindingElementItem) node, value);
     }
 
     @Override
     public int visit(BindingElision node, V value) {
-        return visit((Node) node, value);
+        return visit((BindingElementItem) node, value);
     }
 
     @Override
@@ -186,7 +190,7 @@ public abstract class DefaultIntNodeVisitor<V> implements IntNodeVisitor<V> {
 
     @Override
     public int visit(BindingRestElement node, V value) {
-        return visit((FormalParameter) node, value);
+        return visit((BindingElementItem) node, value);
     }
 
     @Override
@@ -276,7 +280,7 @@ public abstract class DefaultIntNodeVisitor<V> implements IntNodeVisitor<V> {
 
     @Override
     public int visit(DoWhileStatement node, V value) {
-        return visit((Statement) node, value);
+        return visit((IterationStatement) node, value);
     }
 
     @Override
@@ -336,17 +340,22 @@ public abstract class DefaultIntNodeVisitor<V> implements IntNodeVisitor<V> {
 
     @Override
     public int visit(ForEachStatement node, V value) {
-        return visit((Statement) node, value);
+        return visit((IterationStatement) node, value);
     }
 
     @Override
     public int visit(ForInStatement node, V value) {
-        return visit((Statement) node, value);
+        return visit((IterationStatement) node, value);
     }
 
     @Override
     public int visit(ForOfStatement node, V value) {
-        return visit((Statement) node, value);
+        return visit((IterationStatement) node, value);
+    }
+
+    @Override
+    public int visit(FormalParameter node, V value) {
+        return visit((Node) node, value);
     }
 
     @Override
@@ -356,7 +365,7 @@ public abstract class DefaultIntNodeVisitor<V> implements IntNodeVisitor<V> {
 
     @Override
     public int visit(ForStatement node, V value) {
-        return visit((Statement) node, value);
+        return visit((IterationStatement) node, value);
     }
 
     @Override
@@ -686,7 +695,7 @@ public abstract class DefaultIntNodeVisitor<V> implements IntNodeVisitor<V> {
 
     @Override
     public int visit(WhileStatement node, V value) {
-        return visit((Statement) node, value);
+        return visit((IterationStatement) node, value);
     }
 
     @Override

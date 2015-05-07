@@ -309,7 +309,91 @@ public abstract class Reference<BASE, NAME> {
 
         @Override
         public boolean isUnresolvableReference() {
-            return base == null;
+            return false;
+        }
+
+        @Override
+        public boolean isSuperReference() {
+            return false;
+        }
+
+        @Override
+        public Object getValue(ExecutionContext cx) {
+            /* steps 4-5 (not applicable) */
+            /* steps 3, 6 */
+            return getBase().getBindingValue(getReferencedName(), isStrictReference());
+        }
+
+        @Override
+        public void putValue(Object w, ExecutionContext cx) {
+            assert Type.isType(w) : "invalid value type";
+
+            /* steps 5-6 (not applicable) */
+            /* steps 4, 7 */
+            getBase().setMutableBinding(getReferencedName(), w, isStrictReference());
+        }
+
+        @Override
+        public boolean delete(ExecutionContext cx) {
+            /* steps 1-3 (generated code) */
+            /* steps 4-5 (not applicable) */
+            /* step 6 */
+            return getBase().deleteBinding(getReferencedName());
+        }
+
+        @Override
+        public EnvironmentRecord getThisValue() {
+            throw new AssertionError();
+        }
+
+        @Override
+        public void initializeReferencedBinding(Object w) {
+            /* steps 1-4 (not applicable) */
+            /* steps 5-7 */
+            getBase().initializeBinding(getReferencedName(), w);
+        }
+    }
+
+    /**
+     * Reference specialization for unresolvable references.
+     */
+    public static final class UnresolvableReference extends Reference<Void, String> {
+        private final String referencedName;
+        private final boolean strictReference;
+
+        public UnresolvableReference(String referencedName, boolean strictReference) {
+            this.referencedName = referencedName;
+            this.strictReference = strictReference;
+        }
+
+        @Override
+        public Void getBase() {
+            return null;
+        }
+
+        @Override
+        public String getReferencedName() {
+            return referencedName;
+        }
+
+        @Override
+        public boolean isStrictReference() {
+            return strictReference;
+        }
+
+        @Override
+        public boolean hasPrimitiveBase() {
+            return false;
+        }
+
+        @Override
+        public boolean isPropertyReference() {
+            return false;
+        }
+
+        @Override
+        public boolean isUnresolvableReference() {
+            return true;
         }
 
         @Override
@@ -320,46 +404,27 @@ public abstract class Reference<BASE, NAME> {
         @Override
         public Object getValue(ExecutionContext cx) {
             /* step 4 */
-            if (isUnresolvableReference()) {
-                throw newReferenceError(cx, Messages.Key.UnresolvableReference, getReferencedName());
-            }
-            /* step 5 (not applicable) */
-            /* steps 3, 6 */
-            return getBase().getBindingValue(getReferencedName(), isStrictReference());
+            throw newReferenceError(cx, Messages.Key.UnresolvableReference, getReferencedName());
         }
 
         @Override
         public void putValue(Object w, ExecutionContext cx) {
-            assert Type.of(w) != null : "invalid value type";
+            assert Type.isType(w) : "invalid value type";
 
-            /* step 6 (not applicable) */
-            /* step 4-5, 7 */
-            if (isUnresolvableReference()) {
-                /* steps 5, 8 */
-                if (isStrictReference()) {
-                    throw newReferenceError(cx, Messages.Key.UnresolvableReference,
-                            getReferencedName());
-                }
-                ScriptObject globalObj = cx.getGlobalObject();
-                Set(cx, globalObj, getReferencedName(), w, false);
-            } else {
-                /* steps 4, 7 */
-                getBase().setMutableBinding(getReferencedName(), w, isStrictReference());
+            /* step 5 */
+            if (isStrictReference()) {
+                throw newReferenceError(cx, Messages.Key.UnresolvableReference, getReferencedName());
             }
+            Set(cx, cx.getGlobalObject(), getReferencedName(), w, false);
         }
 
         @Override
         public boolean delete(ExecutionContext cx) {
             /* steps 1-3 (generated code) */
+            /* steps 5-6 (not applicable) */
             /* step 4 */
-            if (isUnresolvableReference()) {
-                assert !isStrictReference();
-                return true;
-            }
-            /* step 5 (not applicable) */
-            /* step 6 */
-            EnvironmentRecord bindings = getBase();
-            return bindings.deleteBinding(getReferencedName());
+            assert !isStrictReference();
+            return true;
         }
 
         @Override
@@ -369,13 +434,7 @@ public abstract class Reference<BASE, NAME> {
 
         @Override
         public void initializeReferencedBinding(Object w) {
-            /* steps 1-3 (not applicable) */
-            /* step 4 */
-            assert !isUnresolvableReference();
-            /* steps 5-6 */
-            RECORD base = getBase();
-            /* step 7 */
-            base.initializeBinding(getReferencedName(), w);
+            throw new AssertionError();
         }
     }
 
@@ -518,7 +577,7 @@ public abstract class Reference<BASE, NAME> {
 
         @Override
         public void putValue(Object w, ExecutionContext cx) {
-            assert Type.of(w) != null : "invalid value type";
+            assert Type.isType(w) : "invalid value type";
 
             ScriptObject base = hasPrimitiveBase() ? ToObject(cx, getBase())
                     : (ScriptObject) getBase();
@@ -615,7 +674,7 @@ public abstract class Reference<BASE, NAME> {
 
         @Override
         public void putValue(Object w, ExecutionContext cx) {
-            assert Type.of(w) != null : "invalid value type";
+            assert Type.isType(w) : "invalid value type";
 
             ScriptObject base = hasPrimitiveBase() ? ToObject(cx, getBase())
                     : (ScriptObject) getBase();
@@ -723,7 +782,7 @@ public abstract class Reference<BASE, NAME> {
 
         @Override
         public void putValue(Object w, ExecutionContext cx) {
-            assert Type.of(w) != null : "invalid value type";
+            assert Type.isType(w) : "invalid value type";
 
             ScriptObject base = hasPrimitiveBase() ? ToObject(cx, getBase())
                     : (ScriptObject) getBase();
@@ -878,7 +937,7 @@ public abstract class Reference<BASE, NAME> {
 
         @Override
         public void putValue(Object w, ExecutionContext cx) {
-            assert Type.of(w) != null : "invalid value type";
+            assert Type.isType(w) : "invalid value type";
 
             boolean succeeded = getBase().set(cx, getReferencedName(), w, getThisValue());
             if (!succeeded && isStrictReference()) {
@@ -923,7 +982,7 @@ public abstract class Reference<BASE, NAME> {
 
         @Override
         public void putValue(Object w, ExecutionContext cx) {
-            assert Type.of(w) != null : "invalid value type";
+            assert Type.isType(w) : "invalid value type";
 
             boolean succeeded = getBase().set(cx, getReferencedName(), w, getThisValue());
             if (!succeeded && isStrictReference()) {

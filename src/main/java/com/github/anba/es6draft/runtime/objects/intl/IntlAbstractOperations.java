@@ -205,6 +205,58 @@ public final class IntlAbstractOperations {
         return locale.canonicalize();
     }
 
+    @SuppressWarnings("serial")
+    private static final class ValidLanguageTags extends LinkedHashMap<String, String> {
+        private static final int MAX_SIZE = 12;
+
+        ValidLanguageTags() {
+            super(16, 0.75f, true);
+        }
+
+        @Override
+        protected boolean removeEldestEntry(java.util.Map.Entry<String, String> eldest) {
+            return size() > MAX_SIZE;
+        }
+    }
+
+    private static final Map<String, String> validLanguageTags = new ValidLanguageTags();
+    static {
+        validLanguageTags.put("en", "en");
+        validLanguageTags.put("en-GB", "en-GB");
+        validLanguageTags.put("en-US", "en-US");
+    }
+    private static final String DEFAULT_LOCALE = "en";
+
+    private static String sanitizeLanguageTag(String languageTag) {
+        LanguageTag tag = IsStructurallyValidLanguageTag(languageTag);
+        if (tag == null) {
+            return DEFAULT_LOCALE;
+        }
+        String locale = StripUnicodeLocaleExtension(tag.canonicalize());
+        locale = BestLocale(GetAvailableLocales(LanguageData.getAvailableCollatorLocales()), locale);
+        if (locale == null) {
+            return DEFAULT_LOCALE;
+        }
+        locale = BestLocale(GetAvailableLocales(LanguageData.getAvailableDateFormatLocales()),
+                locale);
+        if (locale == null) {
+            return DEFAULT_LOCALE;
+        }
+        locale = BestLocale(GetAvailableLocales(LanguageData.getAvailableNumberFormatLocales()),
+                locale);
+        if (locale == null) {
+            return DEFAULT_LOCALE;
+        }
+        return locale;
+    }
+
+    private static String BestLocale(Set<String> availableLocales, String locale) {
+        if (BEST_FIT_SUPPORTED) {
+            return BestFitAvailableLocale(availableLocales, locale);
+        }
+        return BestAvailableLocale(availableLocales, locale);
+    }
+
     /**
      * 6.2.4 DefaultLocale ()
      * 
@@ -213,10 +265,14 @@ public final class IntlAbstractOperations {
      * @return the default locale
      */
     public static String DefaultLocale(Realm realm) {
-        // FIXME: Handle the case when realm.getLocale() is not an available locale for collator,
-        // numberformat, datetimeformat
-        // FIXME: Handle the case when realm.getLocale() contains unicode extension sequences
-        return realm.getLocale().toLanguageTag();
+        String languageTag = realm.getLocale().toLanguageTag();
+        synchronized (validLanguageTags) {
+            String valid = validLanguageTags.get(languageTag);
+            if (valid == null) {
+                validLanguageTags.put(languageTag, valid = sanitizeLanguageTag(languageTag));
+            }
+            return valid;
+        }
     }
 
     /**
@@ -839,6 +895,26 @@ public final class IntlAbstractOperations {
         return result;
     }
 
+    private static String BestFitAvailableLocale(Set<String> availableLocales,
+            String requestedLocale) {
+        if (availableLocales.contains(requestedLocale)) {
+            return requestedLocale;
+        }
+        LocaleMatcher matcher = CreateDefaultMatcher();
+        BestFitMatch availableLocaleMatch = BestFitAvailableLocale(matcher, availableLocales,
+                requestedLocale);
+        if (availableLocaleMatch.score >= BEST_FIT_MIN_MATCH) {
+            return availableLocaleMatch.locale;
+        } else {
+            // If no best fit match was found, fall back to lookup matcher algorithm
+            String availableLocale = BestAvailableLocale(availableLocales, requestedLocale);
+            if (availableLocale != null) {
+                return availableLocale;
+            }
+        }
+        return null;
+    }
+
     /**
      * Requests for "en-US" give two results with a perfect score:
      * <ul>
@@ -1164,20 +1240,8 @@ public final class IntlAbstractOperations {
         if (numberOfRequestedLocales == 1) {
             String locale = requestedLocales.iterator().next();
             String noExtensionsLocale = StripUnicodeLocaleExtension(locale);
-            if (availableLocales.contains(noExtensionsLocale)) {
+            if (BestFitAvailableLocale(availableLocales, noExtensionsLocale) != null) {
                 return singletonList(locale);
-            }
-            LocaleMatcher matcher = CreateDefaultMatcher();
-            BestFitMatch availableLocaleMatch = BestFitAvailableLocale(matcher, availableLocales,
-                    noExtensionsLocale);
-            if (availableLocaleMatch.score >= BEST_FIT_MIN_MATCH) {
-                return singletonList(locale);
-            } else {
-                // If no best fit match was found, fall back to lookup matcher algorithm
-                String availableLocale = BestAvailableLocale(availableLocales, noExtensionsLocale);
-                if (availableLocale != null) {
-                    return singletonList(locale);
-                }
             }
             return emptyList();
         }

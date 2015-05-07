@@ -124,29 +124,35 @@ public final class DatePrototype extends OrdinaryObject implements Initializable
         if (Double.isNaN(tv)) {
             return "Invalid Date";
         }
-        Realm realm = cx.getRealm();
-        StringBuilder result = new StringBuilder();
-        if (dateString == DateString.DateTime || dateString == DateString.Date) {
-            double t = LocalTime(realm, tv);
+        switch (dateString) {
+        case Date:
+            return ToDateString(cx, tv);
+        case Time:
+            return ToTimeString(cx, tv);
+        case DateTime:
+            return ToDateString(cx, tv) + ' ' + ToTimeString(cx, tv);
+        default:
+            throw new AssertionError();
+        }
+    }
 
-            result.append(String.format("%s %s %02d %04d", WeekDayName(t), MonthNameFromTime(t),
-                    (int) DateFromTime(t), (int) YearFromTime(t)));
-        }
-        if (dateString == DateString.DateTime) {
-            result.append(' ');
-        }
-        if (dateString == DateString.DateTime || dateString == DateString.Time) {
-            long date = (long) tv;
-            TimeZone tz = realm.getTimeZone();
-            int tzOffset = TimeZoneInfo.getDefault().getOffset(tz, date) / 60000;
-            tzOffset = (tzOffset / 60) * 100 + tzOffset % 60;
-            double t = LocalTime(realm, tv);
-            String timeZoneDisplayName = TimeZoneInfo.getDefault().getDisplayName(tz, date);
+    private static String ToDateString(ExecutionContext cx, double tv) {
+        assert !Double.isNaN(tv);
+        double t = LocalTime(cx.getRealm(), tv);
+        return String.format("%s %s %02d %04d", WeekDayName(t), MonthNameFromTime(t),
+                (int) DateFromTime(t), (int) YearFromTime(t));
+    }
 
-            result.append(String.format("%02d:%02d:%02d GMT%+05d (%s)", (int) HourFromTime(t),
-                    (int) MinFromTime(t), (int) SecFromTime(t), tzOffset, timeZoneDisplayName));
-        }
-        return result.toString();
+    private static String ToTimeString(ExecutionContext cx, double tv) {
+        assert !Double.isNaN(tv);
+        long date = (long) tv;
+        TimeZone tz = cx.getRealm().getTimeZone();
+        int tzOffset = TimeZoneInfo.getDefault().getOffset(tz, date) / 60000;
+        tzOffset = (tzOffset / 60) * 100 + tzOffset % 60;
+        double t = LocalTime(cx.getRealm(), tv);
+        String timeZoneDisplayName = TimeZoneInfo.getDefault().getDisplayName(tz, date);
+        return String.format("%02d:%02d:%02d GMT%+05d (%s)", (int) HourFromTime(t),
+                (int) MinFromTime(t), (int) SecFromTime(t), tzOffset, timeZoneDisplayName);
     }
 
     /**

@@ -129,7 +129,7 @@ public final class ScriptRuntime {
      */
     public static void canDeclareVarScopedOrThrow(ExecutionContext cx,
             GlobalEnvironmentRecord envRec, String name) {
-        /* step 5.a */
+        /* step 6.a */
         if (envRec.hasLexicalDeclaration(name)) {
             throw newSyntaxError(cx, Messages.Key.VariableRedeclaration, name);
         }
@@ -147,7 +147,7 @@ public final class ScriptRuntime {
      */
     public static void canDeclareGlobalFunctionOrThrow(ExecutionContext cx,
             GlobalEnvironmentRecord envRec, String fn) {
-        /* steps 9.a.iii.1 - 9.a.iii.2 */
+        /* steps 10.a.iv.1-2 */
         boolean fnDefinable = envRec.canDeclareGlobalFunction(fn);
         if (!fnDefinable) {
             throw newTypeError(cx, Messages.Key.InvalidDeclaration, fn);
@@ -166,7 +166,7 @@ public final class ScriptRuntime {
      */
     public static void canDeclareGlobalVarOrThrow(ExecutionContext cx,
             GlobalEnvironmentRecord envRec, String vn) {
-        /* steps 11.a.iii.1.a - 11.a.iii.1.b */
+        /* steps 12.a.i.1.a-c */
         boolean vnDefinable = envRec.canDeclareGlobalVar(vn);
         if (!vnDefinable) {
             throw newTypeError(cx, Messages.Key.InvalidDeclaration, vn);

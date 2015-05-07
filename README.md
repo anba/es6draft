@@ -9,10 +9,9 @@ ECMAScript 2015 (ECMA-262 6th Edition) compiler and runtime written in Java.
 
 ## Implementation Status ##
 
-Full support of [ECMAScript 2015, RC4, Rev 37, April 3, 2015 Draft] [esdrafts].
+Full support of [ECMAScript 2015, Final Draft, Rev 38, April 14, 2015] [esdrafts].
 
-[ECMAScript Internationalization API 2.0, Rev 9, 2015-02-09 Draft] [intldrafts]:
-* Sub-classing intentionally restricted to ES6 classes
+Full support of [ECMAScript Internationalization API 2.0, RC1, Rev 11, 2015-03-24 Draft] [intldrafts].
 
 
 ## Build Instructions and Shell ##

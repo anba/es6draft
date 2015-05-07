@@ -5,10 +5,3 @@
 # <https://github.com/anba/es6draft>
 #
 
-# Invalid test: Expected early SyntaxError
-test/language/block-scope/syntax/for-in/identifier-let-allowed-as-lefthandside-expression-strict.js
-
-# Invalid test: Missing array.sort()
-test/language/computed-property-names/class/static/method-number.js
-test/language/computed-property-names/class/static/method-string.js
-test/language/computed-property-names/class/static/method-symbol.js

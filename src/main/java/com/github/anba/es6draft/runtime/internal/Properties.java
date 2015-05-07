@@ -1511,23 +1511,20 @@ public final class Properties {
     }
 
     private static void createFunction(Realm realm, OrdinaryObject target, FunctionLayout layout) {
-        MethodHandle mh = MethodHandles.insertArguments(layout.methodHandle, 0,
-                realm.defaultContext());
         BuiltinFunction fun;
         if (layout.isTailCall()) {
-            fun = new NativeTailCallFunction(realm, layout.name, layout.arity, mh);
+            fun = new NativeTailCallFunction(realm, layout.name, layout.arity, layout.methodHandle);
         } else {
-            fun = new NativeFunction(realm, layout.name, layout.arity, layout.nativeId, mh);
+            fun = new NativeFunction(realm, layout.name, layout.arity, layout.nativeId,
+                    layout.methodHandle);
         }
         defineProperty(target, layout, valueProperty(layout, fun));
     }
 
     private static void createAccessor(Realm realm, OrdinaryObject target, AccessorLayout layout) {
-        MethodHandle mh = MethodHandles.insertArguments(layout.methodHandle, 0,
-                realm.defaultContext());
         int arity = accessorArity(layout.type);
         NativeFunction fun = new NativeFunction(realm, layout.accessorName, arity, layout.nativeId,
-                mh);
+                layout.methodHandle);
         Property accessorProperty = lookupOwnProperty(target, layout);
         if (accessorProperty == null) {
             defineProperty(target, layout, accessorProperty(layout, fun));

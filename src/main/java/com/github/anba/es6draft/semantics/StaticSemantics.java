@@ -277,7 +277,8 @@ public final class StaticSemantics {
      */
     public static boolean ContainsExpression(List<FormalParameter> formals) {
         for (FormalParameter formal : formals) {
-            if (formal instanceof BindingElement && ContainsExpression((BindingElement) formal)) {
+            BindingElementItem element = formal.getElement();
+            if (element instanceof BindingElement && ContainsExpression((BindingElement) element)) {
                 return true;
             }
         }
@@ -369,10 +370,11 @@ public final class StaticSemantics {
     public static int ExpectedArgumentCount(FormalParameterList formals) {
         int count = 0;
         for (FormalParameter formal : formals) {
-            if (formal instanceof BindingRestElement) {
+            BindingElementItem element = formal.getElement();
+            if (element instanceof BindingRestElement) {
                 break;
             }
-            if (HasInitializer((BindingElement) formal)) {
+            if (HasInitializer((BindingElement) element)) {
                 break;
             }
             count += 1;
@@ -528,13 +530,14 @@ public final class StaticSemantics {
      */
     public static boolean IsSimpleParameterList(List<FormalParameter> formals) {
         for (FormalParameter formal : formals) {
-            if (formal instanceof BindingRestElement) {
+            BindingElementItem element = formal.getElement();
+            if (element instanceof BindingRestElement) {
                 return false;
             }
-            if (HasInitializer((BindingElement) formal)) {
+            if (HasInitializer((BindingElement) element)) {
                 return false;
             }
-            if (((BindingElement) formal).getBinding() instanceof BindingPattern) {
+            if (((BindingElement) element).getBinding() instanceof BindingPattern) {
                 return false;
             }
         }

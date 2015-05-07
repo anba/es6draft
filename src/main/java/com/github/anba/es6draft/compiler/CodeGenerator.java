@@ -208,6 +208,8 @@ final class CodeGenerator {
         return key;
     }
 
+    private final HashMap<StatementListMethod, Completion> statementCompletions = new HashMap<>();
+
     /* ----------------------------------------------------------------------------------------- */
 
     enum ScriptName {
@@ -942,7 +944,7 @@ final class CodeGenerator {
         return body.hasTailCalls();
     }
 
-    void compile(StatementListMethod node, StatementVisitor mv) {
+    Completion compile(StatementListMethod node, StatementVisitor mv) {
         if (!isCompiled(node)) {
             MethodCode method = newMethod(mv.getTopLevelNode(), node);
             StatementVisitor body = new StatementListMethodStatementVisitor(method, mv);
@@ -951,6 +953,7 @@ final class CodeGenerator {
             body.begin();
 
             Completion result = statements(node.getStatements(), body);
+            statementCompletions.put(node, result);
 
             if (!result.isAbrupt()) {
                 // fall-thru, return `null` sentinel or completion value
@@ -959,6 +962,7 @@ final class CodeGenerator {
             }
             body.end();
         }
+        return statementCompletions.get(node);
     }
 
     void compile(SpreadElementMethod node, ExpressionVisitor mv) {
@@ -1111,7 +1115,7 @@ final class CodeGenerator {
         // 13.1.13 Runtime Semantics: Evaluation<br>
         // StatementList : StatementList StatementListItem
         /* steps 1-6 */
-        Completion result = Completion.Normal;
+        Completion result = Completion.Empty;
         for (ModuleItem item : statements) {
             if ((result = result.then(statement(item, mv))).isAbrupt()) {
                 break;

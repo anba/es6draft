@@ -164,9 +164,9 @@ public final class TypedArrayObject extends IntegerIndexedObject implements Arra
         ElementType elementType = getElementType();
         /* steps 13-14 */
         long indexedPosition = (index << elementShift) + offset;
-        /* steps 16-17 */
+        /* step 16 */
         SetValueInBuffer(buffer, indexedPosition, elementType, numValue);
-        /* step 18 */
+        /* step 17 */
         return true;
     }
 

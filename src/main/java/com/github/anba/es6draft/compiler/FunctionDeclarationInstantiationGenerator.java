@@ -508,9 +508,9 @@ final class FunctionDeclarationInstantiationGenerator extends
         HashSet<String> mappedNames = new HashSet<>();
         String[] names = new String[numberOfParameters];
         for (int index = numberOfParameters - 1; index >= 0; --index) {
-            FormalParameter formal = list.get(index);
-            assert formal instanceof BindingElement : formal.getClass().toString();
-            Binding binding = ((BindingElement) formal).getBinding();
+            BindingElementItem element = list.get(index).getElement();
+            assert element instanceof BindingElement : element.getClass().toString();
+            Binding binding = ((BindingElement) element).getBinding();
             assert binding instanceof BindingIdentifier : binding.getClass().toString();
             String name = ((BindingIdentifier) binding).getName().getIdentifier();
             if (mappedNames.add(name)) {

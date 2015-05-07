@@ -39,10 +39,6 @@ tests/arguments/alias-function-not-closed.js
 # ES6: arguments object is iterable; new Map(null) and new Set(null) throws in SM
 tests/collections/constructor-errors.js
 
-# ES6: String.prototype.contains renamed to String.prototype.includes
-tests/basic/bug1091757.js
-tests/basic/string-contains.js
-
 # ES6: evaluation order changed in for-in/of
 tests/for-of/semantics-09.js
 tests/for-of/semantics-10.js
@@ -56,33 +52,16 @@ tests/proxy/operations-on-revoked.js
 # ES6: array destructuring tracks completed iterators
 tests/basic/destructuring-iterator.js
 
-# ES6: {Map, Set, WeakMap, WeakSet}.length changed to 0
-tests/collections/Map-surfaces-1.js
-tests/collections/Set-surfaces-1.js
-tests/collections/WeakMap-surfaces.js
-tests/collections/WeakSet-surface.js
-
 # ES6: Argument validation in DataView constructor
 tests/basic/bug-1133377.js
 
 # ES6: Detached typed arrays have no indexed properties in SM
 tests/basic/typed-array-copyWithin.js
 
-# ES6: SpiderMonkey bug (https://bugzilla.mozilla.org/show_bug.cgi?id=895223)
-tests/proxy/testDirectProxySetFailure.js
-
 
 ###################
 # Misc issues     #
 ###################
-
-# lib/asserts.js: assertDeepEq() considers `{a: 1, b: 2}` and `{b: 2, a: 1}` as different objects...
-tests/arrays/sort-getter-only.js
-tests/proxy/testDirectProxyGetOwnPropertyDescriptor11.js
-
-# invalid test, Array.of() creates properties with DefinePropertyOrThrow(), but Proxy defined in
-# the test case does not return a positive success value from [[DefineOwnProperty]]
-tests/collections/Array-of-ordering.js
 
 # invalid test case (relies on order in which elements are visited in Array.prototype.sort)
 # and its strcmp function is broken as well
@@ -183,9 +162,6 @@ tests/basic/bug807623.js
 # Old Proxy API not completely emulated
 tests/auto-regress/bug578015.js
 tests/proxy/testIndirectProxyGetOwnPropertyDescriptor.js
-
-# missing return value in defineProperty trap
-tests/proxy/testDirectProxyDefineProperty2.js
 
 # SpiderMonkey does not allow duplicate property keys in "ownKeys" trap
 tests/proxy/testDirectProxyGetOwnPropertyNames4.js
@@ -295,20 +271,11 @@ tests/basic/testDynamicLookup.js
 tests/auto-regress/bug701248.js
 tests/basic/bug738841.js
 
-# Initializer in for-in
-tests/auto-regress/bug590772.js
-tests/auto-regress/bug596817.js
-tests/closures/bug540136.js
-tests/closures/bug540348.js
-
 # non-default parameters allowed after defaults
 tests/arguments/defaults-invalid-syntax.js
 
 # re-assignement to 'const' is not an early error
 tests/basic/bug821470.js
-
-# let is per iteration bound in for-loop
-tests/basic/testBug763950.js
 
 # let/const + function redeclaration in block/global scope
 tests/basic/functionRedeclConst.js
@@ -386,7 +353,7 @@ tests/tracelogger/setupTraceLogger.js
 
 # Spidermonkey strict/werror options
 tests/basic/bug629858.js
-tests/basic/semicolon-less-return.js
+tests/basic/statement-after-return.js
 tests/collections/Map-constructor-1.js
 tests/collections/Set-constructor-1.js
 tests/collections/WeakMap-constructor-1.js
@@ -482,6 +449,8 @@ tests/basic/eval-scopes.js
 tests/basic/function-gname.js
 # getJitCompilerOptions
 tests/arguments/arguments-on-proto.js
+# getConstructorName
+tests/basic/constructor-name.js
 
 
 #######################################

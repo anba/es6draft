@@ -171,12 +171,19 @@ abstract class StatementVisitor extends ExpressionVisitor {
         return isGeneratorOrAsync;
     }
 
+    final Variable<Object> completionVariable() {
+        if (isAbruptRegion()) {
+            return labels.completion;
+        }
+        return completionValue;
+    }
+
     /**
      * Pushes the completion value onto the stack.
      */
-    void loadCompletionValue() {
+    final void loadCompletionValue() {
         if (!isFunction) {
-            load(completionValue);
+            load(completionVariable());
         } else {
             aconst(null);
         }
@@ -188,17 +195,31 @@ abstract class StatementVisitor extends ExpressionVisitor {
      * @param type
      *            the value type of top stack value
      */
-    void storeCompletionValue(ValType type) {
+    final void storeCompletionValue(ValType type) {
         if (hasCompletion()) {
             toBoxed(type);
-            store(completionValue);
+            store(completionVariable());
         } else {
             pop(type);
         }
     }
 
-    boolean hasCompletion() {
-        return !isFunction && finallyDepth == 0;
+    final void storeCompletionValue(Variable<Object> completionValue) {
+        if (hasCompletion()) {
+            load(completionValue);
+            store(completionVariable());
+        }
+    }
+
+    final void storeUndefinedAsCompletionValue() {
+        if (hasCompletion()) {
+            loadUndefined();
+            store(completionVariable());
+        }
+    }
+
+    final boolean hasCompletion() {
+        return !isFunction;
     }
 
     @Override
@@ -218,14 +239,21 @@ abstract class StatementVisitor extends ExpressionVisitor {
         return labels.parent != null;
     }
 
-    private Variable<Object> enterAbruptRegion() {
+    private Variable<Object> enterAbruptRegion(boolean statementCompletion) {
         assert labels != null;
         Variable<Object> completion = labels.completion;
         if (completion == null) {
-            completion = newVariable("completion", Object.class);
-            // TODO: correct live variable analysis, initialized with null for now
-            aconst(null);
-            store(completion);
+            if (hasCompletion() && !statementCompletion) {
+                completion = completionVariable();
+            } else {
+                completion = newVariable("completion", Object.class);
+                if (hasCompletion()) {
+                    loadCompletionValue();
+                } else {
+                    aconst(null);
+                }
+                store(completion);
+            }
         }
         labels = new Labels(labels, completion);
         return completion;
@@ -241,7 +269,7 @@ abstract class StatementVisitor extends ExpressionVisitor {
     @Override
     Variable<Object> enterIteration() {
         if (isGeneratorOrAsync()) {
-            return enterAbruptRegion();
+            return enterAbruptRegion(false);
         }
         return super.enterIteration();
     }
@@ -265,7 +293,7 @@ abstract class StatementVisitor extends ExpressionVisitor {
      */
     <FORSTATEMENT extends IterationStatement & ForIterationNode> Variable<Object> enterIterationBody(
             FORSTATEMENT node) {
-        Variable<Object> completion = enterAbruptRegion();
+        Variable<Object> completion = enterAbruptRegion(false);
         if (node.hasContinue()) {
             // Copy current continue labels from parent to new labelset, so we won't create
             // temp-labels for own continue labels.
@@ -298,10 +326,12 @@ abstract class StatementVisitor extends ExpressionVisitor {
     /**
      * Enter a finally scoped block.
      * 
+     * @param node
+     *            the try-statement
      * @return the temporary completion object variable
      */
-    Variable<Object> enterFinallyScoped() {
-        return enterAbruptRegion();
+    Variable<Object> enterFinallyScoped(TryStatement node) {
+        return enterAbruptRegion(node.hasCompletionValue());
     }
 
     /**

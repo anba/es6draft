@@ -442,8 +442,9 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
     private List<Binding> getParameterBindings(FormalParameterList formals) {
         ArrayList<Binding> bindings = new ArrayList<>();
         for (FormalParameter formalParameter : formals) {
-            if (formalParameter instanceof BindingElement) {
-                bindings.add(((BindingElement) formalParameter).getBinding());
+            BindingElementItem element = formalParameter.getElement();
+            if (element instanceof BindingElement) {
+                bindings.add(((BindingElement) element).getBinding());
             }
         }
         return bindings;
@@ -453,8 +454,9 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
         boolean hasDefault = false;
         ArrayList<Expression> defaults = new ArrayList<>();
         for (FormalParameter formalParameter : formals) {
-            if (formalParameter instanceof BindingElement) {
-                Expression initializer = ((BindingElement) formalParameter).getInitializer();
+            BindingElementItem element = formalParameter.getElement();
+            if (element instanceof BindingElement) {
+                Expression initializer = ((BindingElement) element).getInitializer();
                 hasDefault |= initializer != null;
                 defaults.add(initializer != null ? initializer : null);
             } else {
@@ -466,8 +468,8 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
 
     private BindingIdentifier getRestParameter(FormalParameterList formals) {
         FormalParameter last = lastElement(formals.getFormals());
-        if (last instanceof BindingRestElement) {
-            return ((BindingRestElement) last).getBindingIdentifier();
+        if (last != null && last.getElement() instanceof BindingRestElement) {
+            return ((BindingRestElement) last.getElement()).getBindingIdentifier();
         }
         return null;
     }
@@ -1295,6 +1297,11 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
             forInStatement = statement;
         }
         return createLabelledStatement(node, forInStatement);
+    }
+
+    @Override
+    public Object visit(FormalParameter node, Void value) {
+        throw new IllegalStateException(node.getClass().toString());
     }
 
     @Override

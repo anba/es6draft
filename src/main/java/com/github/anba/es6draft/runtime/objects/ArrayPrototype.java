@@ -130,9 +130,7 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
     }
 
     private static IterationKind iterationKind(OrdinaryObject arrayLike, long length) {
-        if (arrayLike.hasSpecialIndexedProperties()) {
-            return IterationKind.Slow;
-        }
+        assert !arrayLike.hasSpecialIndexedProperties();
         if (arrayLike.isDenseArray(length)) {
             return IterationKind.DenseOwnKeys;
         }

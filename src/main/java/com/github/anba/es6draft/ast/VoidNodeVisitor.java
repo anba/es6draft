@@ -114,6 +114,8 @@ public interface VoidNodeVisitor<V> {
 
     void visit(ForInStatement node, V value);
 
+    void visit(FormalParameter node, V value);
+
     void visit(FormalParameterList node, V value);
 
     void visit(ForOfStatement node, V value);

@@ -293,7 +293,6 @@ final class SwitchStatementGenerator extends
                 lastResult = innerResult;
             }
         }
-
         return result.normal(lblDefault == null || !lastResult.isAbrupt());
     }
 

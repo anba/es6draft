@@ -1165,8 +1165,8 @@ public final class RegExpParser {
                         if (num <= groups && validGroups.get(num)) {
                             appendBackReference(num);
                         } else {
-                            // omit forward reference (TODO: check this!) or backward reference into
-                            // capturing group from negative lookahead
+                            // omit forward reference or backward reference into capturing group
+                            // from negative lookahead
                             out.append("(?:)");
                         }
                     }

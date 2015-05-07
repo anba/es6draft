@@ -17,13 +17,6 @@ feature/ArrayExtras/From.js
 # Invalid super() constructor call when class derives from null
 feature/Classes/ExtendStrange.js
 
-# Access to 'this' before super() constructor call
-feature/Classes/NestedClassSuperAnimal.js
-
-# class methods are non-enumerable
-feature/Classes/Method.js
-feature/NumericLiteral/Simple.js
-
 # `extends null` now marked as derived constructor
 feature/Classes/DefaultConstructor.js
 
@@ -32,6 +25,9 @@ feature/ProperTailCalls/New.js
 
 # `super()` enforced in derived class constructors?
 feature/Classes/Error_NoSuperInDerivedClass.js
+
+# invalid test, `function*g(){ return {yield} }` is not allowed
+feature/ObjectInitializerShorthand/StrictKeyword.js
 
 
 ############################################

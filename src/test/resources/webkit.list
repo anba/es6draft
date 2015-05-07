@@ -9,9 +9,6 @@
 # array destructuring uses Symbol.iterator
 js/script-tests/destructuring-assignment.js
 
-# `'values' in []` returns false in JSC
-js/script-tests/array-iterators.js
-
 # computed property names are defined after literal property names in WebKit?
 js/script-tests/basic-computed-property-name.js
 
@@ -24,7 +21,6 @@ js/script-tests/basic-spread.js
 
 # invalid tests
 js/script-tests/JSON-parse-reviver.js
-js/script-tests/number-clz.js
 js/script-tests/typedarray-set-overlapping-elements-of-same-size.js
 
 # invalid test, `(new Array(1)).findIndex(function(){return true})` is -1
@@ -58,11 +54,6 @@ js/script-tests/regexp-zero-length-alternatives.js
 # Implementation specific differences      #
 ############################################
 
-# array-holes and sort
-# - Array.prototype[0] = "hole"; [,1].sort()
-# - SpiderMonkey returns [1, "hole"], JSC/V8 return [1,]
-js/script-tests/array-holes.js
-
 # RegExp.prototype.compile
 # - .compile(undefined) vs. .compile()
 # - SpiderMonkey treats both the same, JSC/V8 treat .compile(undefined) as .compile('undefined')
@@ -87,12 +78,16 @@ js/script-tests/caller-property.js
 js/script-tests/class-syntax-call.js
 js/script-tests/class-syntax-declaration.js
 js/script-tests/class-syntax-expression.js
+js/script-tests/class-syntax-prototype.js
+js/script-tests/class-syntax-semicolon.js
+js/script-tests/class-syntax-string-and-numeric-names.js
 js/script-tests/date-proto-generic-invocation.js
 js/script-tests/exception-expression-offset.js
 js/script-tests/function-constructor-error.js
 js/script-tests/reserved-words-strict.js
 js/script-tests/array-find.js
 js/script-tests/parser-error-messages.js
+js/script-tests/sloppy-getter-setter-global-object.js
 js/script-tests/string-repeat.js
 js/script-tests/symbol-abstract-relational-comparison.js
 js/script-tests/symbol-object.js
@@ -132,6 +127,9 @@ js/script-tests/dfg-min-max.js
 # Invalid octal escape sequences in regular expressions
 js/script-tests/regexp-no-extensions.js
 
+# Multiple invalid tests
+js/script-tests/unicode-escape-sequences.js
+
 
 ###############################################################
 # ES6 <Object>.prototype no longer instance of <Type>         #
@@ -151,11 +149,11 @@ js/kde/script-tests/RegExp.js
 # various new built-in properties
 js/script-tests/Object-getOwnPropertyNames.js
 
-# Object.getPrototypeOf() works with primitives
-js/script-tests/prototypes.js
-
 # restricted properties only present on Function.prototype
 js/script-tests/strict-throw-type-error.js
+
+# completion reform
+js/kde/script-tests/completion.js
 
 
 #######################################
@@ -173,8 +171,6 @@ js/script-tests/dfg-activation-register-overwritten-in-throw.js
 
 # setter in object literal requires exactly one argument
 js/script-tests/class-syntax-super.js
-js/script-tests/for-in-cached.js
-js/script-tests/object-literal-direct-put.js
 js/script-tests/object-literal-syntax.js
 
 # block-scoped function declaration activated at definition
@@ -216,6 +212,7 @@ js/script-tests/dfg-double-vote-fuzz.js
 js/script-tests/dfg-int-overflow-in-loop.js
 js/script-tests/function-apply-aliased.js
 js/script-tests/sort-with-side-effecting-comparisons.js
+js/script-tests/regress-142625.js
 js/script-tests/typedarray-zero-size.js
 
 # StackOverflowError during compilation

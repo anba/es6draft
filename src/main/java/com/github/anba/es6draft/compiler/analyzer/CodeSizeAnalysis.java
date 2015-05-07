@@ -30,7 +30,7 @@ public final class CodeSizeAnalysis {
     private final ReentrantLock submitLock = new ReentrantLock();
     private boolean cancelled = false;
 
-    public CodeSizeAnalysis(ExecutorService executor) {
+    private CodeSizeAnalysis(ExecutorService executor) {
         this.executor = executor;
     }
 
@@ -39,10 +39,11 @@ public final class CodeSizeAnalysis {
      * 
      * @param script
      *            the script to be analyzed
+     * @param executor
+     *            the executor service
      */
-    public void submit(Script script) throws CodeSizeException {
-        submitAndExec(script, script.getStatements());
-        drainQueue();
+    public static void analyze(Script script, ExecutorService executor) throws CodeSizeException {
+        new CodeSizeAnalysis(executor).startAnalyze(script, script.getStatements());
     }
 
     /**
@@ -50,10 +51,11 @@ public final class CodeSizeAnalysis {
      * 
      * @param module
      *            the module to be analyzed
+     * @param executor
+     *            the executor service
      */
-    public void submit(Module module) throws CodeSizeException {
-        submitAndExec(module, module.getStatements());
-        drainQueue();
+    public static void analyze(Module module, ExecutorService executor) throws CodeSizeException {
+        new CodeSizeAnalysis(executor).startAnalyze(module, module.getStatements());
     }
 
     /**
@@ -61,15 +63,18 @@ public final class CodeSizeAnalysis {
      * 
      * @param function
      *            the function node to be analyzed
+     * @param executor
+     *            the executor service
      */
-    public void submit(FunctionNode function) throws CodeSizeException {
-        submitAndExec(function, function.getStatements());
-        drainQueue();
+    public static void analyze(FunctionNode function, ExecutorService executor)
+            throws CodeSizeException {
+        new CodeSizeAnalysis(executor).startAnalyze(function, function.getStatements());
     }
 
-    private void submitAndExec(TopLevelNode<?> node, List<? extends Node> children) {
+    private void startAnalyze(TopLevelNode<?> node, List<? extends Node> children) {
         // Execute the initial node on the main thread to avoid unnecessary thread creation
         new Entry(node, children).call();
+        drainQueue();
     }
 
     private void submit(TopLevelNode<?> node, List<? extends Node> children) {

@@ -203,13 +203,15 @@ final class DestructuringAssignmentGenerator {
 
         @Override
         public void visit(ObjectAssignmentPattern node, Void value) {
+            // stack: [value] -> [value]
+            mv.lineInfo(node);
+            mv.loadExecutionContext();
+            mv.swap();
+            mv.invoke(Methods.AbstractOperations_RequireObjectCoercible);
+
             // ObjectAssignmentPattern : { }
             if (node.getProperties().isEmpty() && node.getRest() == null) {
                 // stack: [value] -> []
-                mv.lineInfo(node);
-                mv.loadExecutionContext();
-                mv.swap();
-                mv.invoke(Methods.AbstractOperations_RequireObjectCoercible);
                 mv.pop();
                 return;
             }

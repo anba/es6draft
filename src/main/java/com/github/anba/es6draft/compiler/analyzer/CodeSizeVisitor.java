@@ -451,6 +451,11 @@ final class CodeSizeVisitor implements IntNodeVisitor<CodeSizeHandler> {
     }
 
     @Override
+    public int visit(FormalParameter node, CodeSizeHandler handler) {
+        return 0;
+    }
+
+    @Override
     public int visit(FormalParameterList node, CodeSizeHandler handler) {
         return 0;
     }

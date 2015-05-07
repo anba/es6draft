@@ -316,16 +316,12 @@ public final class SourceTextModuleRecord implements ModuleRecord, Cloneable {
         for (ExportEntry exportEntry : exportEntries) {
             if (exportEntry.getModuleRequest() == null) {
                 ImportEntry importEntry = importedBoundNames.get(exportEntry.getLocalName());
-                if (importEntry == null) {
+                if (importEntry == null || importEntry.isStarImport()) {
                     localExportEntries.add(exportEntry);
                 } else {
-                    if (importEntry.isStarImport()) {
-                        localExportEntries.add(exportEntry);
-                    } else {
-                        indirectExportEntries.add(new ExportEntry(exportEntry.getSourcePosition(),
-                                importEntry.getModuleRequest(), importEntry.getImportName(), null,
-                                exportEntry.getExportName()));
-                    }
+                    indirectExportEntries.add(new ExportEntry(exportEntry.getSourcePosition(),
+                            importEntry.getModuleRequest(), importEntry.getImportName(), null,
+                            exportEntry.getExportName()));
                 }
             } else if (exportEntry.isStarExport()) {
                 starExportEntries.add(exportEntry);

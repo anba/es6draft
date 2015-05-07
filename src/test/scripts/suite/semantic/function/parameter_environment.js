@@ -202,6 +202,7 @@ const {
 // eval tests
 {
   let a = 99; // outer binding
+  let b = 999; // outer binding
 
   function evalInBody(a = 0) {
     assertSame(0, a);
@@ -273,4 +274,34 @@ const {
     assertSame(99, f());
   }
   noAccessToDynamic();
+
+  function scopeResolutionNoArgument(a, b = a, c = eval("a")) {
+    assertSame(void 0, a);
+    assertSame(void 0, b);
+    assertSame(void 0, c);
+  }
+  scopeResolutionNoArgument();
+
+  function scopeResolutionWithArgument(a, b = a, c = eval("a")) {
+    assertSame(0, a);
+    assertSame(0, b);
+    assertSame(0, c);
+  }
+  scopeResolutionWithArgument(0);
+
+  function evalUninitialized(a = eval("a")) {
+    fail `unreachable`;
+  }
+  assertThrows(ReferenceError, evalUninitialized);
+
+  function evalVarScope(a = (eval("var a = 0, b = 1"), eval("a + b")), b = eval("a")) {
+    assertSame(1, a);
+    assertSame(1, b);
+  }
+  evalVarScope();
+
+  function evalLetScope(a = (eval("let a = 0"), eval("a"))) {
+    fail `unreachable`;
+  }
+  assertThrows(ReferenceError, evalLetScope);
 }

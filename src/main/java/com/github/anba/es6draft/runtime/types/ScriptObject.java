@@ -82,19 +82,6 @@ public interface ScriptObject {
     Property getOwnProperty(ExecutionContext cx, String propertyKey);
 
     /**
-     * [[Get]] (P, Receiver)
-     *
-     * @param cx
-     *            the execution context
-     * @param propertyKey
-     *            the property key
-     * @param receiver
-     *            the receiver object
-     * @return the property value
-     */
-    Object get(ExecutionContext cx, long propertyKey, Object receiver);
-
-    /**
      * [[GetOwnProperty]] (P)
      * 
      * @param cx
@@ -137,6 +124,19 @@ public interface ScriptObject {
      * @return {@code true} if the property was found
      */
     boolean hasProperty(ExecutionContext cx, Symbol propertyKey);
+
+    /**
+     * [[Get]] (P, Receiver)
+     *
+     * @param cx
+     *            the execution context
+     * @param propertyKey
+     *            the property key
+     * @param receiver
+     *            the receiver object
+     * @return the property value
+     */
+    Object get(ExecutionContext cx, long propertyKey, Object receiver);
 
     /**
      * [[Get]] (P, Receiver)

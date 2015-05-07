@@ -6,9 +6,12 @@
  */
 package com.github.anba.es6draft.repl.global;
 
+import static com.github.anba.es6draft.runtime.AbstractOperations.Get;
+import static com.github.anba.es6draft.runtime.AbstractOperations.ToBoolean;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToFlatString;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToInt32;
 import static com.github.anba.es6draft.runtime.modules.ModuleSemantics.GetModuleNamespace;
+import static com.github.anba.es6draft.runtime.modules.SourceTextModuleRecord.ParseModule;
 import static com.github.anba.es6draft.runtime.objects.binary.ArrayBufferConstructor.DetachArrayBuffer;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
@@ -34,8 +37,12 @@ import com.github.anba.es6draft.runtime.internal.ScriptCache;
 import com.github.anba.es6draft.runtime.internal.Source;
 import com.github.anba.es6draft.runtime.modules.MalformedNameException;
 import com.github.anba.es6draft.runtime.modules.ModuleRecord;
+import com.github.anba.es6draft.runtime.modules.ModuleSource;
 import com.github.anba.es6draft.runtime.modules.ResolutionException;
+import com.github.anba.es6draft.runtime.modules.SourceIdentifier;
+import com.github.anba.es6draft.runtime.modules.SourceTextModuleRecord;
 import com.github.anba.es6draft.runtime.objects.ErrorObject;
+import com.github.anba.es6draft.runtime.objects.GlobalObject;
 import com.github.anba.es6draft.runtime.objects.binary.ArrayBufferObject;
 import com.github.anba.es6draft.runtime.objects.collection.WeakMapObject;
 import com.github.anba.es6draft.runtime.objects.reflect.RealmObject;
@@ -82,6 +89,26 @@ public class SimpleShellGlobalObject extends ShellGlobalObject {
                 return new SimpleShellGlobalObject(realm, console, baseDir, script, scriptCache);
             }
         };
+    }
+
+    private static final class StringModuleSource implements ModuleSource {
+        private final SourceIdentifier sourceId;
+        private final String sourceCode;
+
+        StringModuleSource(SourceIdentifier sourceId, String sourceCode) {
+            this.sourceId = sourceId;
+            this.sourceCode = sourceCode;
+        }
+
+        @Override
+        public String sourceCode() {
+            return sourceCode;
+        }
+
+        @Override
+        public Source toSource() {
+            return new Source(sourceId.toString(), 1);
+        }
     }
 
     /**
@@ -375,9 +402,14 @@ public class SimpleShellGlobalObject extends ShellGlobalObject {
      *            the caller context
      * @param args
      *            the arguments
+     * @throws IOException
+     *             if there was any I/O error
+     * @throws MalformedNameException
+     *             if the module name cannot be normalized
      */
     @Function(name = "disassemble", arity = 1)
-    public void disassemble(ExecutionContext cx, ExecutionContext caller, Object... args) {
+    public void disassemble(ExecutionContext cx, ExecutionContext caller, Object... args)
+            throws IOException, MalformedNameException {
         DebugInfo debugInfo = null;
         if (args.length == 0) {
             FunctionObject currentFunction = caller.getCurrentFunction();
@@ -389,6 +421,24 @@ public class SimpleShellGlobalObject extends ShellGlobalObject {
             }
         } else if (args[0] instanceof FunctionObject) {
             debugInfo = ((FunctionObject) args[0]).getCode().debugInfo();
+        } else {
+            String sourceCode = ToFlatString(cx, args[0]);
+            boolean isModule = false;
+            if (args.length > 1 && Type.isObject(args[1])) {
+                isModule = ToBoolean(Get(cx, Type.objectValue(args[1]), "module"));
+            }
+            if (isModule) {
+                SourceIdentifier identifier = getRealm().getModuleLoader().normalizeName(
+                        "disassemble", null);
+                ModuleSource src = new StringModuleSource(identifier, sourceCode);
+                SourceTextModuleRecord module = ParseModule(getScriptLoader(), identifier, src);
+                debugInfo = module.getScriptCode().getSourceObject().debugInfo();
+            } else {
+                Source source = new Source("<disassemble>", 1);
+                Script script = getScriptLoader().compile(
+                        getScriptLoader().parseScript(source, sourceCode), "#disassemble");
+                debugInfo = script.getSourceObject().debugInfo();
+            }
         }
         if (debugInfo != null) {
             for (DebugInfo.Method method : debugInfo.getMethods()) {
@@ -398,25 +448,48 @@ public class SimpleShellGlobalObject extends ShellGlobalObject {
     }
 
     /**
-     * shell-function: {@code evalScript(sourceString, [sourceName, sourceLine])}
+     * shell-function: {@code evalScript(sourceString, [options])}
      * 
      * @param cx
      *            the execution context
      * @param sourceString
      *            the source string
-     * @param sourceName
-     *            the optional source name
-     * @param sourceLine
-     *            the optional source line number
+     * @param options
+     *            the options object (optional)
      * @return the evaluation result
      */
     @Function(name = "evalScript", arity = 1)
-    public Object evalScript(ExecutionContext cx, String sourceString, Object sourceName,
-            Object sourceLine) {
-        String name = Type.isUndefined(sourceName) ? "" : ToFlatString(cx, sourceName);
-        int line = Type.isUndefined(sourceLine) ? 1 : ToInt32(cx, sourceLine);
+    public Object evalScript(ExecutionContext cx, String sourceString, Object options) {
+        String name = "";
+        int line = 1;
+        Realm realm = getRealm();
+        if (Type.isObject(options)) {
+            ScriptObject opts = Type.objectValue(options);
+            Object fileName = Get(cx, opts, "fileName");
+            if (!Type.isUndefined(fileName)) {
+                name = ToFlatString(cx, fileName);
+            }
+            Object lineNumber = Get(cx, opts, "lineNumber");
+            if (!Type.isUndefined(lineNumber)) {
+                line = ToInt32(cx, lineNumber);
+            }
+            Object g = Get(cx, opts, "global");
+            if (!Type.isUndefined(g)) {
+                if (!(g instanceof GlobalObject)) {
+                    throw newError(cx, "invalid global argument");
+                }
+                realm = ((GlobalObject) g).getRealm();
+            }
+            Object r = Get(cx, opts, "realm");
+            if (!Type.isUndefined(r)) {
+                if (!(r instanceof RealmObject)) {
+                    throw newError(cx, "invalid realm argument");
+                }
+                realm = ((RealmObject) r).getRealm();
+            }
+        }
         Source source = new Source(name, line);
         Script script = getScriptLoader().script(source, sourceString);
-        return eval(script);
+        return eval(script, realm);
     }
 }

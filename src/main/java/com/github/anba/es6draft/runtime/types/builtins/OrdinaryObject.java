@@ -1445,6 +1445,9 @@ public class OrdinaryObject implements ScriptObject {
             ScriptObject _receiver = Type.objectValue(receiver);
             Property existingDescriptor = _receiver.getOwnProperty(cx, propertyKey);
             if (existingDescriptor != null) {
+                if (existingDescriptor.isAccessorDescriptor() || !existingDescriptor.isWritable()) {
+                    return false;
+                }
                 PropertyDescriptor valueDesc = new PropertyDescriptor(value);
                 return _receiver.defineOwnProperty(cx, propertyKey, valueDesc);
             } else {
@@ -1511,6 +1514,9 @@ public class OrdinaryObject implements ScriptObject {
             ScriptObject _receiver = Type.objectValue(receiver);
             Property existingDescriptor = _receiver.getOwnProperty(cx, propertyKey);
             if (existingDescriptor != null) {
+                if (existingDescriptor.isAccessorDescriptor() || !existingDescriptor.isWritable()) {
+                    return false;
+                }
                 PropertyDescriptor valueDesc = new PropertyDescriptor(value);
                 return _receiver.defineOwnProperty(cx, propertyKey, valueDesc);
             } else {
@@ -1577,6 +1583,9 @@ public class OrdinaryObject implements ScriptObject {
             ScriptObject _receiver = Type.objectValue(receiver);
             Property existingDescriptor = _receiver.getOwnProperty(cx, propertyKey);
             if (existingDescriptor != null) {
+                if (existingDescriptor.isAccessorDescriptor() || !existingDescriptor.isWritable()) {
+                    return false;
+                }
                 PropertyDescriptor valueDesc = new PropertyDescriptor(value);
                 return _receiver.defineOwnProperty(cx, propertyKey, valueDesc);
             } else {

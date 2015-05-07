@@ -697,7 +697,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
      *            the expression visitor
      * @return the returned value type
      */
-    protected final ValType ToPrimitive(ValType from, ExpressionVisitor mv) {
+    protected static final ValType ToPrimitive(ValType from, ExpressionVisitor mv) {
         switch (from) {
         case Number:
         case Number_int:
@@ -728,7 +728,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
      * @param mv
      *            the expression visitor
      */
-    protected final void ToBoolean(ValType from, ExpressionVisitor mv) {
+    protected static final void ToBoolean(ValType from, ExpressionVisitor mv) {
         switch (from) {
         case Number:
             mv.invoke(Methods.AbstractOperations_ToBoolean_double);
@@ -781,7 +781,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
      * @param mv
      *            the expression visitor
      */
-    protected final void ToNumber(ValType from, ExpressionVisitor mv) {
+    protected static final void ToNumber(ValType from, ExpressionVisitor mv) {
         switch (from) {
         case Number:
             return;
@@ -826,7 +826,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
      * @param mv
      *            the expression visitor
      */
-    protected final void ToInt32(ValType from, ExpressionVisitor mv) {
+    protected static final void ToInt32(ValType from, ExpressionVisitor mv) {
         switch (from) {
         case Number:
             mv.invoke(Methods.AbstractOperations_ToInt32_double);
@@ -868,7 +868,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
      * @param mv
      *            the expression visitor
      */
-    protected final void ToUint32(ValType from, ExpressionVisitor mv) {
+    protected static final void ToUint32(ValType from, ExpressionVisitor mv) {
         switch (from) {
         case Number:
             mv.invoke(Methods.AbstractOperations_ToUint32_double);
@@ -913,7 +913,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
      * @param mv
      *            the expression visitor
      */
-    protected final void ToString(ValType from, ExpressionVisitor mv) {
+    protected static final void ToString(ValType from, ExpressionVisitor mv) {
         switch (from) {
         case Number:
             mv.invoke(Methods.AbstractOperations_ToString_double);
@@ -958,7 +958,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
      * @param mv
      *            the expression visitor
      */
-    protected final void ToFlatString(ValType from, ExpressionVisitor mv) {
+    protected static final void ToFlatString(ValType from, ExpressionVisitor mv) {
         switch (from) {
         case Number:
             mv.invoke(Methods.AbstractOperations_ToString_double);
@@ -1004,7 +1004,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
      * @param mv
      *            the expression visitor
      */
-    protected final void ToObject(ValType from, ExpressionVisitor mv) {
+    protected static final void ToObject(ValType from, ExpressionVisitor mv) {
         switch (from) {
         case Number:
         case Number_int:
@@ -1040,7 +1040,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
      * @param mv
      *            the expression visitor
      */
-    protected final void ToObject(Node node, ValType from, ExpressionVisitor mv) {
+    protected static final void ToObject(Node node, ValType from, ExpressionVisitor mv) {
         switch (from) {
         case Number:
         case Number_int:

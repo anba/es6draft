@@ -346,7 +346,7 @@ public final class StringPrototype extends OrdinaryObject implements Initializab
             /* steps 1-2 */
             Object obj = RequireObjectCoercible(cx, thisValue);
             /* step 3 */
-            if (!Type.isUndefined(regexp)) {
+            if (!Type.isUndefinedOrNull(regexp)) {
                 /* steps 3.a-b */
                 Callable matcher = GetMethod(cx, regexp, BuiltinSymbol.match.get());
                 /* step 3.c */
@@ -381,7 +381,7 @@ public final class StringPrototype extends OrdinaryObject implements Initializab
             /* steps 1-2 */
             Object obj = RequireObjectCoercible(cx, thisValue);
             /* step 3 */
-            if (!Type.isUndefined(searchValue)) {
+            if (!Type.isUndefinedOrNull(searchValue)) {
                 /* steps 3.a-b */
                 Callable replacer = GetMethod(cx, searchValue, BuiltinSymbol.replace.get());
                 /* step 3.c */
@@ -501,7 +501,7 @@ public final class StringPrototype extends OrdinaryObject implements Initializab
             /* steps 1-2 */
             Object obj = RequireObjectCoercible(cx, thisValue);
             /* step 3 */
-            if (!Type.isUndefined(regexp)) {
+            if (!Type.isUndefinedOrNull(regexp)) {
                 /* steps 3.a-b */
                 Callable searcher = GetMethod(cx, regexp, BuiltinSymbol.search.get());
                 /* step 3.c */
@@ -571,7 +571,7 @@ public final class StringPrototype extends OrdinaryObject implements Initializab
             /* steps 1-2 */
             Object obj = RequireObjectCoercible(cx, thisValue);
             /* step 3 */
-            if (!Type.isUndefined(separator)) {
+            if (!Type.isUndefinedOrNull(separator)) {
                 /* steps 3.a-b */
                 Callable splitter = GetMethod(cx, separator, BuiltinSymbol.split.get());
                 /* step 3.c */

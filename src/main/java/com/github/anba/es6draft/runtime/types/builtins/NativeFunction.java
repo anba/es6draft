@@ -19,7 +19,7 @@ import com.github.anba.es6draft.runtime.Realm;
  * </ul>
  */
 public final class NativeFunction extends BuiltinFunction {
-    // (ExecutionContext, Object, Object[]) -> Object
+    // (ExecutionContext, ExecutionContext, Object, Object[]) -> Object
     private final MethodHandle mh;
 
     private final Class<?> id;
@@ -37,7 +37,8 @@ public final class NativeFunction extends BuiltinFunction {
      *            the method handle to the function code
      */
     public NativeFunction(Realm realm, String name, int arity, MethodHandle mh) {
-        this(realm, name, arity, null, mh);
+        // TODO: clean up callers
+        this(realm, name, arity, null, MethodHandles.dropArguments(mh, 0, ExecutionContext.class));
     }
 
     /**
@@ -74,6 +75,7 @@ public final class NativeFunction extends BuiltinFunction {
 
     @Override
     public MethodHandle getCallMethod() {
+        MethodHandle mh = MethodHandles.insertArguments(this.mh, 0, getRealm().defaultContext());
         return MethodHandles.dropArguments(mh, 0, NativeFunction.class);
     }
 
@@ -92,7 +94,7 @@ public final class NativeFunction extends BuiltinFunction {
     @Override
     public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
         try {
-            return mh.invokeExact(callerContext, thisValue, args);
+            return mh.invokeExact(getRealm().defaultContext(), callerContext, thisValue, args);
         } catch (RuntimeException | Error e) {
             throw e;
         } catch (Throwable e) {

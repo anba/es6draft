@@ -129,7 +129,7 @@ abstract class DeclarationBindingInstantiationGenerator {
      * @param mv
      *            the instruction visitor
      */
-    protected void generateExceptionThrower(InstructionVisitor mv) {
+    protected final void generateExceptionThrower(InstructionVisitor mv) {
         mv.anew(Types.IllegalStateException, Methods.IllegalStateException_init);
         mv.athrow();
     }
@@ -146,23 +146,9 @@ abstract class DeclarationBindingInstantiationGenerator {
      * @param mv
      *            the instruction visitor
      */
-    protected void hasBinding(Variable<? extends EnvironmentRecord> envRec, Name name,
+    protected final void hasBinding(Variable<? extends EnvironmentRecord> envRec, Name name,
             InstructionVisitor mv) {
         mv.load(envRec);
-        hasBinding(name, mv);
-    }
-
-    /**
-     * Emit function call for: {@link EnvironmentRecord#hasBinding(String)}
-     * <p>
-     * stack: [envRec] {@literal ->} [boolean]
-     * 
-     * @param name
-     *            the binding name
-     * @param mv
-     *            the instruction visitor
-     */
-    protected void hasBinding(Name name, InstructionVisitor mv) {
         mv.aconst(name.getIdentifier());
         mv.invoke(Methods.EnvironmentRecord_hasBinding);
     }
@@ -181,25 +167,9 @@ abstract class DeclarationBindingInstantiationGenerator {
      * @param mv
      *            the instruction visitor
      */
-    protected void createMutableBinding(Variable<? extends EnvironmentRecord> envRec, Name name,
-            boolean deletable, InstructionVisitor mv) {
+    protected final void createMutableBinding(Variable<? extends EnvironmentRecord> envRec,
+            Name name, boolean deletable, InstructionVisitor mv) {
         mv.load(envRec);
-        createMutableBinding(name, deletable, mv);
-    }
-
-    /**
-     * Emit function call for: {@link EnvironmentRecord#createMutableBinding(String, boolean)}
-     * <p>
-     * stack: [envRec] {@literal ->} []
-     * 
-     * @param name
-     *            the binding name
-     * @param deletable
-     *            the deletable flag
-     * @param mv
-     *            the instruction visitor
-     */
-    protected void createMutableBinding(Name name, boolean deletable, InstructionVisitor mv) {
         mv.aconst(name.getIdentifier());
         mv.iconst(deletable);
         mv.invoke(Methods.EnvironmentRecord_createMutableBinding);
@@ -219,8 +189,8 @@ abstract class DeclarationBindingInstantiationGenerator {
      * @param mv
      *            the instruction visitor
      */
-    protected void createMutableBinding(Variable<? extends EnvironmentRecord> envRec, Name name,
-            Variable<Boolean> deletable, InstructionVisitor mv) {
+    protected final void createMutableBinding(Variable<? extends EnvironmentRecord> envRec,
+            Name name, Variable<Boolean> deletable, InstructionVisitor mv) {
         mv.load(envRec);
         mv.aconst(name.getIdentifier());
         mv.load(deletable);
@@ -239,8 +209,8 @@ abstract class DeclarationBindingInstantiationGenerator {
      * @param mv
      *            the instruction visitor
      */
-    protected void createImmutableBinding(Variable<? extends EnvironmentRecord> envRec, Name name,
-            boolean strict, InstructionVisitor mv) {
+    protected final void createImmutableBinding(Variable<? extends EnvironmentRecord> envRec,
+            Name name, boolean strict, InstructionVisitor mv) {
         mv.load(envRec);
         mv.aconst(name.getIdentifier());
         mv.iconst(strict);
@@ -261,7 +231,7 @@ abstract class DeclarationBindingInstantiationGenerator {
      * @param mv
      *            the instruction visitor
      */
-    protected void initializeBinding(Variable<? extends EnvironmentRecord> envRec, Name name,
+    protected final void initializeBinding(Variable<? extends EnvironmentRecord> envRec, Name name,
             Variable<?> value, InstructionVisitor mv) {
         mv.load(envRec);
         mv.aconst(name.getIdentifier());
@@ -277,7 +247,7 @@ abstract class DeclarationBindingInstantiationGenerator {
      * @param mv
      *            the instruction visitor
      */
-    protected void initializeBinding(InstructionVisitor mv) {
+    protected final void initializeBinding(InstructionVisitor mv) {
         mv.invoke(Methods.EnvironmentRecord_initializeBinding);
     }
 
@@ -298,7 +268,7 @@ abstract class DeclarationBindingInstantiationGenerator {
      * @param mv
      *            the instruction visitor
      */
-    protected void initializeBindingFrom(Variable<? extends EnvironmentRecord> targetEnvRec,
+    protected final void initializeBindingFrom(Variable<? extends EnvironmentRecord> targetEnvRec,
             Variable<? extends EnvironmentRecord> sourceEnvRec, Name name, boolean strict,
             InstructionVisitor mv) {
         mv.load(targetEnvRec);
@@ -326,7 +296,7 @@ abstract class DeclarationBindingInstantiationGenerator {
      * @param mv
      *            the instruction visitor
      */
-    protected void setMutableBinding(Variable<? extends EnvironmentRecord> envRec, Name name,
+    protected final void setMutableBinding(Variable<? extends EnvironmentRecord> envRec, Name name,
             Variable<?> value, boolean strict, InstructionVisitor mv) {
         mv.load(envRec);
         mv.aconst(name.getIdentifier());
@@ -345,7 +315,7 @@ abstract class DeclarationBindingInstantiationGenerator {
      * @param mv
      *            the instruction visitor
      */
-    protected void getEnvironmentRecord(Variable<? extends LexicalEnvironment<?>> env,
+    protected final void getEnvironmentRecord(Variable<? extends LexicalEnvironment<?>> env,
             InstructionVisitor mv) {
         mv.load(env);
         mv.invoke(Methods.LexicalEnvironment_getEnvRec);
@@ -361,7 +331,7 @@ abstract class DeclarationBindingInstantiationGenerator {
      * @param mv
      *            the instruction visitor
      */
-    protected <R extends EnvironmentRecord, R2 extends R> void storeEnvironmentRecord(
+    protected final <R extends EnvironmentRecord, R2 extends R> void storeEnvironmentRecord(
             Variable<? extends R> envRec, Variable<? extends LexicalEnvironment<? extends R2>> env,
             InstructionVisitor mv) {
         mv.load(env);
@@ -386,7 +356,7 @@ abstract class DeclarationBindingInstantiationGenerator {
      * @param mv
      *            the instruction visitor
      */
-    protected void canDeclareLexicalScopedOrThrow(Variable<ExecutionContext> context,
+    protected final void canDeclareLexicalScopedOrThrow(Variable<ExecutionContext> context,
             Variable<GlobalEnvironmentRecord> envRec, Name name, InstructionVisitor mv) {
         mv.load(context);
         mv.load(envRec);
@@ -408,7 +378,7 @@ abstract class DeclarationBindingInstantiationGenerator {
      * @param mv
      *            the instruction visitor
      */
-    protected void canDeclareVarScopedOrThrow(Variable<ExecutionContext> context,
+    protected final void canDeclareVarScopedOrThrow(Variable<ExecutionContext> context,
             Variable<GlobalEnvironmentRecord> envRec, Name name, InstructionVisitor mv) {
         mv.load(context);
         mv.load(envRec);
@@ -430,7 +400,7 @@ abstract class DeclarationBindingInstantiationGenerator {
      * @param mv
      *            the instruction visitor
      */
-    protected void canDeclareGlobalFunctionOrThrow(Variable<ExecutionContext> context,
+    protected final void canDeclareGlobalFunctionOrThrow(Variable<ExecutionContext> context,
             Variable<GlobalEnvironmentRecord> envRec, Name name, InstructionVisitor mv) {
         mv.load(context);
         mv.load(envRec);
@@ -452,7 +422,7 @@ abstract class DeclarationBindingInstantiationGenerator {
      * @param mv
      *            the instruction visitor
      */
-    protected void canDeclareGlobalVarOrThrow(Variable<ExecutionContext> context,
+    protected final void canDeclareGlobalVarOrThrow(Variable<ExecutionContext> context,
             Variable<GlobalEnvironmentRecord> envRec, Name name, InstructionVisitor mv) {
         mv.load(context);
         mv.load(envRec);
@@ -474,8 +444,8 @@ abstract class DeclarationBindingInstantiationGenerator {
      * @param mv
      *            the instruction visitor
      */
-    protected void createGlobalVarBinding(Variable<GlobalEnvironmentRecord> envRec, Name name,
-            boolean deletableBindings, InstructionVisitor mv) {
+    protected final void createGlobalVarBinding(Variable<GlobalEnvironmentRecord> envRec,
+            Name name, boolean deletableBindings, InstructionVisitor mv) {
         mv.load(envRec);
         mv.aconst(name.getIdentifier());
         mv.iconst(deletableBindings);
@@ -486,6 +456,8 @@ abstract class DeclarationBindingInstantiationGenerator {
      * <code>
      * envRec.createGlobalFunctionBinding(name, functionObject, deletableBindings)
      * </code>
+     * <p>
+     * stack: [fo] {@literal ->} []
      * 
      * @param envRec
      *            the variable which holds the environment record
@@ -496,8 +468,8 @@ abstract class DeclarationBindingInstantiationGenerator {
      * @param mv
      *            the instruction visitor
      */
-    protected void createGlobalFunctionBinding(Variable<GlobalEnvironmentRecord> envRec, Name name,
-            boolean deletableBindings, InstructionVisitor mv) {
+    protected final void createGlobalFunctionBinding(Variable<GlobalEnvironmentRecord> envRec,
+            Name name, boolean deletableBindings, InstructionVisitor mv) {
         // stack: [fo] -> []
         mv.load(envRec);
         mv.swap();
@@ -521,7 +493,7 @@ abstract class DeclarationBindingInstantiationGenerator {
      * @param mv
      *            the instruction visitor
      */
-    protected void InstantiateFunctionObject(Variable<ExecutionContext> context,
+    protected final void InstantiateFunctionObject(Variable<ExecutionContext> context,
             Variable<? extends LexicalEnvironment<?>> env, Declaration f, InstructionVisitor mv) {
         if (f instanceof FunctionDeclaration) {
             InstantiateFunctionObject(context, env, (FunctionDeclaration) f, mv);
@@ -529,26 +501,6 @@ abstract class DeclarationBindingInstantiationGenerator {
             InstantiateGeneratorObject(context, env, (GeneratorDeclaration) f, mv);
         } else {
             InstantiateAsyncFunctionObject(context, env, (AsyncFunctionDeclaration) f, mv);
-        }
-    }
-
-    /**
-     * Emit runtime call to initialize the function object.
-     * <p>
-     * stack: [env, cx] {@literal ->} [fo]
-     * 
-     * @param f
-     *            the function declaration to instantiate
-     * @param mv
-     *            the instruction visitor
-     */
-    protected void InstantiateFunctionObject(Declaration f, InstructionVisitor mv) {
-        if (f instanceof FunctionDeclaration) {
-            InstantiateFunctionObject((FunctionDeclaration) f, mv);
-        } else if (f instanceof GeneratorDeclaration) {
-            InstantiateGeneratorObject((GeneratorDeclaration) f, mv);
-        } else {
-            InstantiateAsyncFunctionObject((AsyncFunctionDeclaration) f, mv);
         }
     }
 
@@ -570,26 +522,10 @@ abstract class DeclarationBindingInstantiationGenerator {
     private void InstantiateAsyncFunctionObject(Variable<ExecutionContext> context,
             Variable<? extends LexicalEnvironment<?>> env, AsyncFunctionDeclaration f,
             InstructionVisitor mv) {
-        mv.load(env);
-        mv.load(context);
-
-        InstantiateAsyncFunctionObject(f, mv);
-    }
-
-    /**
-     * Emit function call for:
-     * {@link ScriptRuntime#InstantiateAsyncFunctionObject(LexicalEnvironment, ExecutionContext, RuntimeInfo.Function)}
-     * <p>
-     * stack: [env, cx] {@literal ->} [fo]
-     * 
-     * @param f
-     *            the function declaration to instantiate
-     * @param mv
-     *            the instruction visitor
-     */
-    private void InstantiateAsyncFunctionObject(AsyncFunctionDeclaration f, InstructionVisitor mv) {
         codegen.compile(f);
 
+        mv.load(env);
+        mv.load(context);
         mv.invoke(codegen.methodDesc(f, FunctionName.RTI));
         mv.invoke(Methods.ScriptRuntime_InstantiateAsyncFunctionObject);
     }
@@ -612,26 +548,10 @@ abstract class DeclarationBindingInstantiationGenerator {
     private void InstantiateFunctionObject(Variable<ExecutionContext> context,
             Variable<? extends LexicalEnvironment<?>> env, FunctionDeclaration f,
             InstructionVisitor mv) {
-        mv.load(env);
-        mv.load(context);
-
-        InstantiateFunctionObject(f, mv);
-    }
-
-    /**
-     * Emit function call for:
-     * {@link ScriptRuntime#InstantiateFunctionObject(LexicalEnvironment, ExecutionContext, RuntimeInfo.Function)}
-     * <p>
-     * stack: [env, cx] {@literal ->} [fo]
-     * 
-     * @param f
-     *            the function declaration to instantiate
-     * @param mv
-     *            the instruction visitor
-     */
-    private void InstantiateFunctionObject(FunctionDeclaration f, InstructionVisitor mv) {
         codegen.compile(f);
 
+        mv.load(env);
+        mv.load(context);
         mv.invoke(codegen.methodDesc(f, FunctionName.RTI));
         mv.invoke(Methods.ScriptRuntime_InstantiateFunctionObject);
     }
@@ -654,26 +574,10 @@ abstract class DeclarationBindingInstantiationGenerator {
     private void InstantiateGeneratorObject(Variable<ExecutionContext> context,
             Variable<? extends LexicalEnvironment<?>> env, GeneratorDeclaration f,
             InstructionVisitor mv) {
-        mv.load(env);
-        mv.load(context);
-
-        InstantiateGeneratorObject(f, mv);
-    }
-
-    /**
-     * Emit function call for:
-     * {@link ScriptRuntime#InstantiateGeneratorObject(LexicalEnvironment, ExecutionContext, RuntimeInfo.Function)}
-     * <p>
-     * stack: [env, cx] {@literal ->} [fo]
-     * 
-     * @param f
-     *            the generator declaration to instantiate
-     * @param mv
-     *            the instruction visitor
-     */
-    private void InstantiateGeneratorObject(GeneratorDeclaration f, InstructionVisitor mv) {
         codegen.compile(f);
 
+        mv.load(env);
+        mv.load(context);
         mv.invoke(codegen.methodDesc(f, FunctionName.RTI));
         if (!(f instanceof LegacyGeneratorDeclaration)) {
             mv.invoke(Methods.ScriptRuntime_InstantiateGeneratorObject);
@@ -682,7 +586,7 @@ abstract class DeclarationBindingInstantiationGenerator {
         }
     }
 
-    protected static <T> Iterable<T> reverse(final List<T> list) {
+    protected static final <T> Iterable<T> reverse(final List<T> list) {
         return new Iterable<T>() {
             @Override
             public Iterator<T> iterator() {

@@ -399,7 +399,6 @@ public final class DateTimeFormatConstructor extends BuiltinConstructor implemen
             String defaults) {
         /* steps 1-4 */
         ScriptObject options = ObjectCreate(cx, Type.isUndefined(opts) ? null : ToObject(cx, opts));
-        // FIXME: spec bug - steps 5-7 are incorrect in the current spec draft (rev9)
         /* step 4 */
         boolean needDefaults = true;
         /* step 5 */

@@ -35,7 +35,7 @@ public abstract class DefaultNodeVisitor<R, V> implements NodeVisitor<R, V> {
         return visit((Node) node, value);
     }
 
-    protected R visit(FormalParameter node, V value) {
+    protected R visit(BindingElementItem node, V value) {
         return visit((Node) node, value);
     }
 
@@ -81,6 +81,10 @@ public abstract class DefaultNodeVisitor<R, V> implements NodeVisitor<R, V> {
 
     protected R visit(Statement node, V value) {
         return visit((StatementListItem) node, value);
+    }
+
+    protected R visit(IterationStatement node, V value) {
+        return visit((Statement) node, value);
     }
 
     protected R visit(Program node, V value) {
@@ -166,12 +170,12 @@ public abstract class DefaultNodeVisitor<R, V> implements NodeVisitor<R, V> {
 
     @Override
     public R visit(BindingElement node, V value) {
-        return visit((FormalParameter) node, value);
+        return visit((BindingElementItem) node, value);
     }
 
     @Override
     public R visit(BindingElision node, V value) {
-        return visit((Node) node, value);
+        return visit((BindingElementItem) node, value);
     }
 
     @Override
@@ -186,7 +190,7 @@ public abstract class DefaultNodeVisitor<R, V> implements NodeVisitor<R, V> {
 
     @Override
     public R visit(BindingRestElement node, V value) {
-        return visit((FormalParameter) node, value);
+        return visit((BindingElementItem) node, value);
     }
 
     @Override
@@ -276,7 +280,7 @@ public abstract class DefaultNodeVisitor<R, V> implements NodeVisitor<R, V> {
 
     @Override
     public R visit(DoWhileStatement node, V value) {
-        return visit((Statement) node, value);
+        return visit((IterationStatement) node, value);
     }
 
     @Override
@@ -336,17 +340,22 @@ public abstract class DefaultNodeVisitor<R, V> implements NodeVisitor<R, V> {
 
     @Override
     public R visit(ForEachStatement node, V value) {
-        return visit((Statement) node, value);
+        return visit((IterationStatement) node, value);
     }
 
     @Override
     public R visit(ForInStatement node, V value) {
-        return visit((Statement) node, value);
+        return visit((IterationStatement) node, value);
     }
 
     @Override
     public R visit(ForOfStatement node, V value) {
-        return visit((Statement) node, value);
+        return visit((IterationStatement) node, value);
+    }
+
+    @Override
+    public R visit(FormalParameter node, V value) {
+        return visit((Node) node, value);
     }
 
     @Override
@@ -356,7 +365,7 @@ public abstract class DefaultNodeVisitor<R, V> implements NodeVisitor<R, V> {
 
     @Override
     public R visit(ForStatement node, V value) {
-        return visit((Statement) node, value);
+        return visit((IterationStatement) node, value);
     }
 
     @Override
@@ -686,7 +695,7 @@ public abstract class DefaultNodeVisitor<R, V> implements NodeVisitor<R, V> {
 
     @Override
     public R visit(WhileStatement node, V value) {
-        return visit((Statement) node, value);
+        return visit((IterationStatement) node, value);
     }
 
     @Override

@@ -133,8 +133,8 @@ public final class ProxyConstructorFunction extends BuiltinConstructor implement
         /** [[RevocableProxy]] */
         private Ref<ProxyObject> revocableProxy;
 
-        public ProxyRevocationFunction(Realm realm, ProxyObject revokableProxy) {
-            this(realm, new Ref<>(revokableProxy));
+        public ProxyRevocationFunction(Realm realm, ProxyObject revocableProxy) {
+            this(realm, new Ref<>(revocableProxy));
             createDefaultFunctionProperties();
         }
 
@@ -153,14 +153,18 @@ public final class ProxyConstructorFunction extends BuiltinConstructor implement
             /* step 1 */
             Ref<ProxyObject> p = revocableProxy;
             /* step 2 */
-            if (p == null || p.get() == null) {
+            if (p == null) {
                 return UNDEFINED;
             }
             /* step 3 */
             revocableProxy = null;
             /* step 4 (implicit) */
+            ProxyObject proxy = p.get();
             /* steps 5-6 */
-            p.getAndClear().revoke();
+            if (proxy != null) {
+                p.clear();
+                proxy.revoke();
+            }
             /* step 7 */
             return UNDEFINED;
         }

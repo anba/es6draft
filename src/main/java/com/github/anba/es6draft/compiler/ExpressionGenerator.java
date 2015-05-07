@@ -317,44 +317,44 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
                 Types.StringBuilder, "toString", Type.methodType(Types.String));
     }
 
-    private final IdentifierResolution identifierResolution;
+    private static final IdentifierResolution identifierResolution = new IdentifierResolution();
 
     public ExpressionGenerator(CodeGenerator codegen) {
         super(codegen);
-        this.identifierResolution = new IdentifierResolution();
     }
 
-    private void invokeDynamicCall(ExpressionVisitor mv) {
+    private static void invokeDynamicCall(ExpressionVisitor mv) {
         // stack: [func(Callable), cx, thisValue, args] -> [result]
         mv.invokedynamic(Bootstrap.getCallName(), Bootstrap.getCallMethodDescriptor(),
                 Bootstrap.getCallBootstrap());
     }
 
-    private void invokeDynamicConstruct(ExpressionVisitor mv) {
+    private static void invokeDynamicConstruct(ExpressionVisitor mv) {
         // stack: [constructor(Constructor), cx, args] -> [result]
         mv.invokedynamic(Bootstrap.getConstructName(), Bootstrap.getConstructMethodDescriptor(),
                 Bootstrap.getConstructBootstrap());
     }
 
-    private void invokeDynamicSuper(ExpressionVisitor mv) {
+    private static void invokeDynamicSuper(ExpressionVisitor mv) {
         // stack: [constructor(Constructor), cx, newTarget, args] -> [result]
         mv.invokedynamic(Bootstrap.getSuperName(), Bootstrap.getSuperMethodDescriptor(),
                 Bootstrap.getSuperBootstrap());
     }
 
-    private void invokeDynamicNativeCall(String name, ExpressionVisitor mv) {
+    private static void invokeDynamicNativeCall(String name, ExpressionVisitor mv) {
         // stack: [args, cx] -> [result]
         mv.invokedynamic(NativeCalls.getNativeCallName(name),
                 NativeCalls.getNativeCallMethodDescriptor(), NativeCalls.getNativeCallBootstrap());
     }
 
-    private void invokeDynamicOperator(BinaryExpression.Operator operator, ExpressionVisitor mv) {
+    private static void invokeDynamicOperator(BinaryExpression.Operator operator,
+            ExpressionVisitor mv) {
         // stack: [lval, rval, cx?] -> [result]
         mv.invokedynamic(Bootstrap.getName(operator), Bootstrap.getMethodDescriptor(operator),
                 Bootstrap.getBootstrap(operator));
     }
 
-    private void invokeDynamicConcat(int numberOfStrings, ExpressionVisitor mv) {
+    private static void invokeDynamicConcat(int numberOfStrings, ExpressionVisitor mv) {
         mv.invokedynamic(Bootstrap.getConcatName(),
                 Bootstrap.getConcatMethodDescriptor(numberOfStrings),
                 Bootstrap.getConcatBootstrap());
@@ -391,7 +391,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
         return type;
     }
 
-    private ValType GetValue(LeftHandSideExpression node, ValType type, ExpressionVisitor mv) {
+    private static ValType GetValue(LeftHandSideExpression node, ValType type, ExpressionVisitor mv) {
         assert type == ValType.Reference : "type is not reference: " + type;
         mv.loadExecutionContext();
         mv.lineInfo(node);
@@ -399,7 +399,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
         return ValType.Any;
     }
 
-    private void PutValue(LeftHandSideExpression node, ValType type, ExpressionVisitor mv) {
+    private static void PutValue(LeftHandSideExpression node, ValType type, ExpressionVisitor mv) {
         assert type == ValType.Reference : "type is not reference: " + type;
         mv.loadExecutionContext();
         mv.lineInfo(node);

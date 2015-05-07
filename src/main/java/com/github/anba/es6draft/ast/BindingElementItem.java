@@ -13,5 +13,8 @@ package com.github.anba.es6draft.ast;
  * <li>13.2.4 Destructuring Binding Patterns
  * </ul>
  */
-public interface BindingElementItem extends Node {
+public abstract class BindingElementItem extends AstNode {
+    protected BindingElementItem(long beginPosition, long endPosition) {
+        super(beginPosition, endPosition);
+    }
 }

@@ -41,10 +41,6 @@ ecma_6/Symbol/as-base-value.js
 # @@toPrimitive not supported in SM
 ecma_6/Symbol/conversions.js
 
-# lib/asserts.js: assertDeepEq() considers `{a: 1, b: 2}` and `{b: 2, a: 1}` as different objects...
-ecma_6/Symbol/property-basics.js
-ecma_6/Symbol/property-reflection.js
-
 # Detached ArrayBuffer object issues, maybe request spec changes?
 ecma_6/extensions/DataView-construct-arguments-neutering.js
 ecma_6/extensions/DataView-set-arguments-neutering.js
@@ -52,19 +48,12 @@ ecma_6/extensions/DataView-set-arguments-neutering.js
 # Template string realm registry
 ecma_6/TemplateStrings/tagTempl.js
 
-# Object.assign reports first exception
-ecma_6/Object/assign.js
-
 # Reflect.set not supported in SM
 ecma_6/Reflect/set.js
 
 # SM bug (https://bugzilla.mozilla.org/show_bug.cgi?id=1115361)
 ecma_6/TypedArray/keys.js
 ecma_6/TypedArray/values.js
-
-# ES6: spec bug undefined/null in String.prototype methods
-ecma/String/15.5.4.8-2.js
-ecma_3/String/regress-83293.js
 
 # ES6: Negative RegExp.prototype.lastIndex coerced to 0
 ecma_3/RegExp/15.10.6.2-2.js
@@ -111,7 +100,6 @@ ecma_6/String/normalize-generateddata-part1-not-listed.js
 
 # ES6: Support for classes is incomplete in SM.
 ecma_6/Class/classHeritage.js
-ecma_6/Class/classPrototype.js
 ecma_6/Class/innerBinding.js
 ecma_6/Class/methodInstallation.js
 ecma_6/Class/outerBinding.js
@@ -164,6 +152,9 @@ js1_8_5/reflect-parse/lexicals.js
 # ES6: RegExp.prototype[Symbol.match] not implemented in SM
 ecma_6/RegExp/constructor-constructor.js
 
+# ES6: completion reform
+ecma/Statements/12.6.3-2.js
+
 
 ####################################
 # Intl only partially supported    #
@@ -211,15 +202,9 @@ ecma_6/RegExp/toString.js
 # Misc issues     #
 ###################
 
-# lib/asserts.js: assertDeepEq() considers `{a: 1, b: 2}` and `{b: 2, a: 1}` as different objects...
-ecma_6/Object/getOwnPropertyDescriptor.js
-
 # BlockScope and WithStatement issue
 js1_5/Scope/regress-184107.js
 js1_5/Scope/regress-185485.js
-
-# destructuring difference
-js1_7/expressions/destructuring-scope.js
 
 # Java-Pattern vs ECMAScript-RegExp issues
 ecma_3/RegExp/15.10.2-1.js
@@ -246,14 +231,6 @@ js1_7/extensions/regress-354945-01.js
 js1_7/extensions/regress-354945-02.js
 js1_8/genexps/regress-380237-01.js
 
-# invalid test, Array.prototype.fill() sets properties with Put(, throw=True), but Proxy defined in
-# the test case does not return a positive success value from [[Set]]
-ecma_6/Array/fill.js
-
-# invalid test, Array.from() creates properties with DefinePropertyOrThrow(), but Proxy defined in
-# the test case does not return a positive success value from [[DefineOwnProperty]]
-ecma_6/Array/from_proxy.js
-
 
 ############################################
 # Implementation specific differences      #
@@ -270,9 +247,6 @@ ecma_5/String/string-upper-lower-mapping.js
 # different function source representation
 ecma_5/extensions/strict-function-toSource.js
 js1_8/extensions/regress-385729.js
-
-# SpiderMonkey __proto__ not own property on Object.prototype
-ecma_5/extensions/getOwnPropertyNames-__proto__.js
 
 # old 'Proxy' not completely emulated
 js1_8_5/extensions/proxy-enumerateOwn-duplicates.js
@@ -309,7 +283,6 @@ ecma_3/RegExp/15.10.4.1-6.js
 ecma_3/Unicode/regress-352044-01.js
 ecma_3_1/Object/regress-444787.js
 ecma_5/Function/builtin-no-construct.js
-ecma_5/misc/new-with-non-constructor.js
 ecma_6/Class/superPropDVG.js
 js1_5/extensions/regress-352372.js
 js1_5/LexicalConventions/regress-469940.js
@@ -437,17 +410,6 @@ ecma_5/extensions/strict-function-statements.js
 # ES6-change: block-scoped function declaration
 ecma_3/Function/scope-001.js
 
-# ES6-change: for-in no longer accepts initializer in VarDeclaration
-js1_5/extensions/regress-226078.js
-js1_5/Regress/regress-252892.js
-js1_8/regress/regress-459185.js
-js1_8/regress/regress-459186.js
-js1_8_1/regress/regress-452498-052.js
-js1_8_1/regress/regress-452498-053.js
-js1_8_1/regress/regress-452498-123.js
-js1_8_5/regress/regress-600137.js
-js1_8_5/regress/regress-672892.js
-
 # ES6-change: CallExpression no longer valid LHS
 js1_5/Regress/regress-319391.js
 js1_5/Regress/regress-350253.js
@@ -460,9 +422,6 @@ ecma_5/extensions/function-definition-with.js
 ecma_6/extensions/for-loop-with-lexical-declaration-and-nested-function-statement.js
 js1_5/Regress/regress-326453.js
 js1_8/regress/regress-384758.js
-
-# destructuring with undefined/null
-js1_8_5/regress/regress-592202-1.js
 
 # re-assignement to 'const' is not an early error
 js1_6/extensions/regress-465443.js
@@ -615,14 +574,10 @@ js1_8/genexps/regress-349326.js
 ecma_3/extensions/regress-368516.js
 
 # keywords and reserved words allowed as Identifier in Spidermonkey
-js1_8_1/regress/regress-452498-117.js
 js1_7/lexical/regress-351515.js
 
 # any parenthesized expression can degenerate into a generator comprehension
 js1_8_1/regress/regress-452498-099-a.js
-
-# SpiderMonkey `for (destructuring in ...)` extension
-js1_7/geniter/regress-347593.js
 
 
 #######################################

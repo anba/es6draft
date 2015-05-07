@@ -13,7 +13,28 @@ package com.github.anba.es6draft.ast;
  * </ul>
  */
 public abstract class ModuleItem extends AstNode {
+    private boolean completionValue = true;
+
     protected ModuleItem(long beginPosition, long endPosition) {
         super(beginPosition, endPosition);
+    }
+
+    /**
+     * Returns {@code true} if this module item has a completion value.
+     * 
+     * @return {@code true} if this module item has a completion value
+     */
+    public boolean hasCompletionValue() {
+        return completionValue;
+    }
+
+    /**
+     * Sets the completion value marker.
+     * 
+     * @param completionValue
+     *            the new value
+     */
+    public void setCompletionValue(boolean completionValue) {
+        this.completionValue = completionValue;
     }
 }

@@ -13,7 +13,7 @@
   <!ATTLIST test id CDATA #REQUIRED>
 ]>
 <excludeList>
-  <!-- Intl only partially supported -->
+  <!-- Intl.v2 changes (sub-classing) -->
   <test id="10.1.1_1"></test>
   <test id="10.1.2.1_4"></test>
   <test id="10.1.2_a"></test>
@@ -27,73 +27,4 @@
 
   <!-- Intl.v2 changes -->
   <test id="12.3.3">'timeZone' defaults to host environment timezone, if not specified</test>
-
-  <!-- rev21 changes -->
-  <test id="15.3.4.5-15-2">ES6-change: 'length' property of bound functions is configurable=true</test>
-
-  <!-- rev26 changes -->
-  <test id="11.1.5-2gs">ES6-change: Duplicate property keys allowed in object literal (strict mode)</test>
-  <test id="11.1.5-4-4-a-1-s">ES6-change: Duplicate property keys allowed in object literal (strict mode)</test>
-  <test id="11.1.5_4-4-b-1">ES6-change: Duplicate property keys allowed in object literal (strict mode)</test>
-  <test id="11.1.5_4-4-b-2">ES6-change: Duplicate property keys allowed in object literal (strict mode)</test>
-  <test id="11.1.5_4-4-c-1">ES6-change: Duplicate property keys allowed in object literal (strict mode)</test>
-  <test id="11.1.5_4-4-c-2">ES6-change: Duplicate property keys allowed in object literal (strict mode)</test>
-  <test id="11.1.5_4-4-d-1">ES6-change: Duplicate property keys allowed in object literal (strict mode)</test>
-  <test id="11.1.5_4-4-d-2">ES6-change: Duplicate property keys allowed in object literal (strict mode)</test>
-  <test id="11.1.5_4-4-d-3">ES6-change: Duplicate property keys allowed in object literal (strict mode)</test>
-  <test id="11.1.5_4-4-d-4">ES6-change: Duplicate property keys allowed in object literal (strict mode)</test>
-
-  <!-- rev27 changes -->
-  <test id="S13.2.3_A1">ES6-change: 'caller' and 'argument' properties not added to strict mode Functions</test>
-  <test id="13.2-29-s">ES6-change: 'caller' property not added to strict mode Functions</test>
-  <test id="13.2-30-s">ES6-change: 'caller' property not added to strict mode Functions</test>
-  <test id="13.2-31-s">ES6-change: 'caller' property not added to strict mode Functions</test>
-  <test id="13.2-32-s">ES6-change: 'caller' property not added to strict mode Functions</test>
-  <test id="13.2-33-s">ES6-change: 'arguments' property not added to strict mode Functions</test>
-  <test id="13.2-34-s">ES6-change: 'arguments' property not added to strict mode Functions</test>
-  <test id="13.2-35-s">ES6-change: 'arguments' property not added to strict mode Functions</test>
-  <test id="13.2-36-s">ES6-change: 'arguments' property not added to strict mode Functions</test>
-  <test id="15.3.4.5-20-1">ES6-change: 'caller' property not added to bound function</test>
-  <test id="15.3.4.5-20-4">ES6-change: 'caller' property not added to bound function</test>
-  <test id="15.3.4.5-20-5">ES6-change: 'caller' property not added to bound function</test>
-  <test id="15.3.4.5-21-1">ES6-change: 'arguments' property not added to bound function</test>
-  <test id="15.3.4.5-21-4">ES6-change: 'arguments' property not added to bound function</test>
-  <test id="15.3.4.5-21-5">ES6-change: 'arguments' property not added to bound function</test>
-
-  <!-- rev29 changes -->
-  <test id="15.10.4.1-1">ES6-change: RegExp constructor no longer throws when pattern is RegExp and flags not undefined</test>
-  <test id="S15.10.3.1_A2_T1">ES6-change: RegExp constructor no longer throws when pattern is RegExp and flags not undefined</test>
-  <test id="S15.10.3.1_A2_T2">ES6-change: RegExp constructor no longer throws when pattern is RegExp and flags not undefined</test>
-  <test id="S15.10.4.1_A2_T1">ES6-change: RegExp constructor no longer throws when pattern is RegExp and flags not undefined</test>
-  <test id="S15.10.4.1_A2_T2">ES6-change: RegExp constructor no longer throws when pattern is RegExp and flags not undefined</test>
-
-  <!-- rev30 changes -->
-  <test id="S15.4.4.7_A2_T2">ES6-change: Array.prototype methods throw TypeError if index exceeds MAX_SAFE_INTEGER</test>
-  <test id="S15.10.6.2_A5_T3">ES6-change: Negative lastIndex coerced to 0</test>
-  <test id="S15.5.4.10_A1_T4">ES6-change: String.prototype methods throw TypeError if called with undefined/null</test>
-  <test id="S15.5.4.10_A1_T5">ES6-change: String.prototype methods throw TypeError if called with undefined/null</test>
-  <test id="S15.5.4.10_A1_T6">ES6-change: String.prototype methods throw TypeError if called with undefined/null</test>
-  <test id="S15.5.4.10_A1_T7">ES6-change: String.prototype methods throw TypeError if called with undefined/null</test>
-  <test id="S15.5.4.10_A1_T8">ES6-change: String.prototype methods throw TypeError if called with undefined/null</test>
-  <test id="S15.5.4.10_A1_T9">ES6-change: String.prototype methods throw TypeError if called with undefined/null</test>
-  <test id="S15.5.4.11_A1_T4">ES6-change: String.prototype methods throw TypeError if called with undefined/null</test>
-  <test id="S15.5.4.11_A1_T5">ES6-change: String.prototype methods throw TypeError if called with undefined/null</test>
-  <test id="S15.5.4.11_A1_T6">ES6-change: String.prototype methods throw TypeError if called with undefined/null</test>
-  <test id="S15.5.4.11_A1_T9">ES6-change: String.prototype methods throw TypeError if called with undefined/null</test>
-  <test id="S15.5.4.12_A1.1_T1">ES6-change: String.prototype methods throw TypeError if called with undefined/null</test>
-  <test id="S15.5.4.12_A1_T4">ES6-change: String.prototype methods throw TypeError if called with undefined/null</test>
-  <test id="S15.5.4.12_A1_T5">ES6-change: String.prototype methods throw TypeError if called with undefined/null</test>
-  <test id="S15.5.4.12_A1_T6">ES6-change: String.prototype methods throw TypeError if called with undefined/null</test>
-  <test id="S15.5.4.12_A1_T7">ES6-change: String.prototype methods throw TypeError if called with undefined/null</test>
-  <test id="S15.5.4.12_A1_T8">ES6-change: String.prototype methods throw TypeError if called with undefined/null</test>
-  <test id="S15.5.4.12_A1_T9">ES6-change: String.prototype methods throw TypeError if called with undefined/null</test>
-  <test id="S15.5.4.14_A1_T5">ES6-change: String.prototype methods throw TypeError if called with undefined/null</test>
-  <test id="S15.5.4.14_A2_T8">ES6-change: String.prototype methods throw TypeError if called with undefined/null</test>
-
-  <!-- rev34 changes -->
-  <test id="15.4.3.2-0-5">Array.prototype changed back to Array instance</test>
-  <test id="S15.4.3.1_A5">Array.prototype changed back to Array instance</test>
-  <test id="S15.4.4_A1.1_T2">Array.prototype changed back to Array instance</test>
-  <test id="S15.4.4_A1.2_T1">Array.prototype changed back to Array instance</test>
-  <test id="S15.4.4_A1.3_T1">Array.prototype changed back to Array instance</test>
 </excludeList>

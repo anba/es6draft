@@ -19,7 +19,6 @@ import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
 
 import com.github.anba.es6draft.Script;
-import com.github.anba.es6draft.Scripts;
 import com.github.anba.es6draft.compiler.CompilationException;
 import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.repl.console.ShellConsole;
@@ -91,7 +90,7 @@ public class MozShellGlobalObject extends ShellGlobalObject {
     private Object evaluate(Realm realm, Source source, String sourceCode) {
         try {
             Script script = getScriptLoader().script(source, sourceCode);
-            return Scripts.ScriptEvaluation(script, realm);
+            return eval(script, realm);
         } catch (ParserException | CompilationException e) {
             // Create a script exception from the requested code realm, not from the caller's realm!
             throw e.toScriptException(realm.defaultContext());
@@ -139,19 +138,18 @@ public class MozShellGlobalObject extends ShellGlobalObject {
         int sourceLine = 1;
         boolean noScriptRval = false;
         boolean catchTermination = false;
-        GlobalObject global = cx.getRealm().getGlobalObject();
+        GlobalObject global = this;
         if (Type.isObject(options)) {
             ScriptObject opts = Type.objectValue(options);
-
-            Object fileName = opts.get(cx, "fileName", opts);
+            Object fileName = Get(cx, opts, "fileName");
             if (!Type.isUndefined(fileName)) {
                 sourceName = Type.isNull(fileName) ? "" : ToFlatString(cx, fileName);
             }
-            Object lineNumber = opts.get(cx, "lineNumber", opts);
+            Object lineNumber = Get(cx, opts, "lineNumber");
             if (!Type.isUndefined(lineNumber)) {
                 sourceLine = ToInt32(cx, lineNumber);
             }
-            Object g = opts.get(cx, "global", opts);
+            Object g = Get(cx, opts, "global");
             if (!Type.isUndefined(g)) {
                 ScriptObject obj = ToObject(cx, g);
                 if (!(obj instanceof GlobalObject)) {
@@ -159,8 +157,8 @@ public class MozShellGlobalObject extends ShellGlobalObject {
                 }
                 global = (GlobalObject) obj;
             }
-            noScriptRval = ToBoolean(opts.get(cx, "noScriptRval", opts));
-            catchTermination = ToBoolean(opts.get(cx, "catchTermination", opts));
+            noScriptRval = ToBoolean(Get(cx, opts, "noScriptRval"));
+            catchTermination = ToBoolean(Get(cx, opts, "catchTermination"));
         }
 
         try {

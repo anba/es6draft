@@ -20,10 +20,10 @@ import com.github.anba.es6draft.runtime.internal.TailCallInvocation;
  * </ul>
  */
 public final class NativeTailCallFunction extends BuiltinFunction {
-    // (ExecutionContext, Object, Object[]) -> Object
+    // (ExecutionContext, ExecutionContext, Object, Object[]) -> Object
     private final MethodHandle mh;
 
-    // (ExecutionContext, Object, Object[]) -> Object
+    // (ExecutionContext, ExecutionContext, Object, Object[]) -> Object
     private final MethodHandle tmh;
 
     /**
@@ -58,6 +58,7 @@ public final class NativeTailCallFunction extends BuiltinFunction {
 
     @Override
     public MethodHandle getCallMethod() {
+        MethodHandle mh = MethodHandles.insertArguments(this.mh, 0, getRealm().defaultContext());
         return MethodHandles.dropArguments(mh, 0, NativeTailCallFunction.class);
     }
 
@@ -67,7 +68,7 @@ public final class NativeTailCallFunction extends BuiltinFunction {
     @Override
     public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
         try {
-            return mh.invokeExact(callerContext, thisValue, args);
+            return mh.invokeExact(getRealm().defaultContext(), callerContext, thisValue, args);
         } catch (RuntimeException | Error e) {
             throw e;
         } catch (Throwable e) {
@@ -81,12 +82,13 @@ public final class NativeTailCallFunction extends BuiltinFunction {
     @Override
     public Object tailCall(ExecutionContext callerContext, Object thisValue, Object... args)
             throws Throwable {
-        return tmh.invokeExact(callerContext, thisValue, args);
+        return tmh.invokeExact(getRealm().defaultContext(), callerContext, thisValue, args);
     }
 
     private static MethodHandle tailCallAdapter(MethodHandle mh) {
         MethodHandle result = TailCallInvocation.getTailCallHandler();
         result = MethodHandles.dropArguments(result, 2, Object.class, Object[].class);
+        result = MethodHandles.dropArguments(result, 1, ExecutionContext.class);
         result = MethodHandles.foldArguments(result, mh);
         return result;
     }

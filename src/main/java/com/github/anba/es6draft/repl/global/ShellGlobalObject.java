@@ -211,7 +211,20 @@ public abstract class ShellGlobalObject extends GlobalObject {
      * @return the evaluation result
      */
     public Object eval(Script script) {
-        return Scripts.ScriptEvaluation(script, getRealm());
+        return eval(script, getRealm());
+    }
+
+    /**
+     * Executes the given script.
+     * 
+     * @param script
+     *            the script to evaluate
+     * @param realm
+     *            the realm object
+     * @return the evaluation result
+     */
+    protected Object eval(Script script, Realm realm) {
+        return Scripts.ScriptEvaluation(script, realm);
     }
 
     /**

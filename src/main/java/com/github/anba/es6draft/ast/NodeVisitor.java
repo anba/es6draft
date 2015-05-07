@@ -114,6 +114,8 @@ public interface NodeVisitor<R, V> {
 
     R visit(ForInStatement node, V value);
 
+    R visit(FormalParameter node, V value);
+
     R visit(FormalParameterList node, V value);
 
     R visit(ForOfStatement node, V value);

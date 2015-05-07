@@ -14,6 +14,7 @@ package com.github.anba.es6draft.ast;
  */
 public final class BreakStatement extends Statement {
     private final String label;
+    private boolean undefinedCompletion;
 
     public BreakStatement(long beginPosition, long endPosition, String label) {
         super(beginPosition, endPosition);
@@ -22,6 +23,14 @@ public final class BreakStatement extends Statement {
 
     public String getLabel() {
         return label;
+    }
+
+    public boolean isUndefinedCompletion() {
+        return undefinedCompletion;
+    }
+
+    public void setUndefinedCompletion(boolean undefinedCompletion) {
+        this.undefinedCompletion = undefinedCompletion;
     }
 
     @Override

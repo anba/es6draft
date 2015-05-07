@@ -81,7 +81,7 @@ public abstract class TailCallInvocation {
         private final TailCallInvocation invocation;
         private final ScriptObject object;
 
-        private ConstructBaseTailCallInvocation(TailCallInvocation invocation, ScriptObject object) {
+        ConstructBaseTailCallInvocation(TailCallInvocation invocation, ScriptObject object) {
             this.invocation = invocation;
             this.object = object;
         }
@@ -113,7 +113,7 @@ public abstract class TailCallInvocation {
         private final TailCallInvocation invocation;
         private final FunctionEnvironmentRecord envRec;
 
-        private ConstructDerivedTailCallInvocation(TailCallInvocation invocation,
+        ConstructDerivedTailCallInvocation(TailCallInvocation invocation,
                 FunctionEnvironmentRecord envRec) {
             this.invocation = invocation;
             this.envRec = envRec;

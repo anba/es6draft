@@ -25,6 +25,7 @@ import com.github.anba.es6draft.compiler.assembler.ClassSignature;
 import com.github.anba.es6draft.compiler.assembler.Code;
 import com.github.anba.es6draft.compiler.assembler.Code.ClassCode;
 import com.github.anba.es6draft.compiler.assembler.Type;
+import com.github.anba.es6draft.compiler.completion.CompletionValueVisitor;
 import com.github.anba.es6draft.runtime.modules.SourceTextModuleRecord;
 
 /**
@@ -32,8 +33,8 @@ import com.github.anba.es6draft.runtime.modules.SourceTextModuleRecord;
  */
 public final class Compiler {
     public enum Option {
-        PrintCode, PrintFullCode, DebugInfo, NoResume, NoTailCall, SourceMap,
-        IterationCatchStackOverflow
+        DebugInfo, PrintCode, PrintFullCode, IterationCatchStackOverflow, NoResume, NoCompletion,
+        NoByteCodeSizeValidation, NoTailCall, SourceMap
     }
 
     private final ExecutorService executor;
@@ -56,11 +57,15 @@ public final class Compiler {
      *             if the script node could not be compiled
      */
     public CompiledScript compile(Script script, String className) throws CompilationException {
-        try {
-            CodeSizeAnalysis analysis = new CodeSizeAnalysis(executor);
-            analysis.submit(script);
-        } catch (CodeSizeException e) {
-            throw new CompilationException(e.getMessage());
+        if (!isEnabled(Compiler.Option.NoCompletion)) {
+            CompletionValueVisitor.performCompletion(script);
+        }
+        if (!isEnabled(Compiler.Option.NoByteCodeSizeValidation)) {
+            try {
+                CodeSizeAnalysis.analyze(script, executor);
+            } catch (CodeSizeException e) {
+                throw new CompilationException(e.getMessage());
+            }
         }
 
         Code code = new Code(Modifier.PUBLIC | Modifier.FINAL, className, ClassSignature.NONE,
@@ -87,11 +92,15 @@ public final class Compiler {
      */
     public CompiledModule compile(Module module, SourceTextModuleRecord moduleRecord,
             String className) throws CompilationException {
-        try {
-            CodeSizeAnalysis analysis = new CodeSizeAnalysis(executor);
-            analysis.submit(module);
-        } catch (CodeSizeException e) {
-            throw new CompilationException(e.getMessage());
+        if (!isEnabled(Compiler.Option.NoCompletion)) {
+            CompletionValueVisitor.performCompletion(module);
+        }
+        if (!isEnabled(Compiler.Option.NoByteCodeSizeValidation)) {
+            try {
+                CodeSizeAnalysis.analyze(module, executor);
+            } catch (CodeSizeException e) {
+                throw new CompilationException(e.getMessage());
+            }
         }
 
         Code code = new Code(Modifier.PUBLIC | Modifier.FINAL, className, ClassSignature.NONE,
@@ -137,11 +146,12 @@ public final class Compiler {
 
     private CompiledFunction compile(FunctionNode function, String className) {
         Script script = functionScript(function);
-        try {
-            CodeSizeAnalysis analysis = new CodeSizeAnalysis(executor);
-            analysis.submit(function);
-        } catch (CodeSizeException e) {
-            throw new CompilationException(e.getMessage());
+        if (!isEnabled(Compiler.Option.NoByteCodeSizeValidation)) {
+            try {
+                CodeSizeAnalysis.analyze(function, executor);
+            } catch (CodeSizeException e) {
+                throw new CompilationException(e.getMessage());
+            }
         }
 
         Code code = new Code(Modifier.PUBLIC | Modifier.FINAL, className, ClassSignature.NONE,

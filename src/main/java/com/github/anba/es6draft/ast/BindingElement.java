@@ -13,7 +13,7 @@ package com.github.anba.es6draft.ast;
  * <li>13.2.4 Destructuring Binding Patterns
  * </ul>
  */
-public final class BindingElement extends FormalParameter implements BindingElementItem {
+public final class BindingElement extends BindingElementItem {
     private final Binding binding;
     private final Expression initializer;
 

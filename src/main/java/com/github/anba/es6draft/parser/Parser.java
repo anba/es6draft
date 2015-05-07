@@ -752,6 +752,24 @@ public final class Parser {
         }
     }
 
+    private static final class FormalParameterContext extends ScopeContext {
+        FormalParameter node;
+
+        FormalParameterContext(ScopeContext parent) {
+            super(parent);
+        }
+
+        @Override
+        public FormalParameter getNode() {
+            return node;
+        }
+
+        @Override
+        public boolean isPresent() {
+            return hasForceNamedSlots();
+        }
+    }
+
     private static abstract class ScopeContext implements Scope {
         final ScopeContext parent;
         final TopContext top;
@@ -842,6 +860,10 @@ public final class Parser {
                 }
                 scope = parent;
             }
+        }
+
+        final boolean hasForceNamedSlots() {
+            return forceNamedSlots;
         }
 
         final boolean allowVarDeclaredName(Name name) {
@@ -1092,6 +1114,14 @@ public final class Parser {
     }
 
     private ScopeContext exitFunctionBodyContext() {
+        return exitScopeContext();
+    }
+
+    private FormalParameterContext enterFormalParameterContext() {
+        return enterScopeContext(new FormalParameterContext(context.scopeContext));
+    }
+
+    private ScopeContext exitFormalParameterContext() {
         return exitScopeContext();
     }
 
@@ -3055,8 +3085,9 @@ public final class Parser {
 
     private FormalParameterList arrowFormalParameterList(BindingIdentifier identifier) {
         long begin = identifier.getBeginPosition();
-        FormalParameter parameter = new BindingElement(begin, ts.endPosition(), identifier, null);
+        BindingElement element = new BindingElement(begin, ts.endPosition(), identifier, null);
         context.funContext.setParameterNames(BoundNames(identifier));
+        FormalParameter parameter = new FormalParameter(begin, ts.endPosition(), element, null);
         return new FormalParameterList(begin, ts.endPosition(), singletonList(parameter));
     }
 
@@ -3111,7 +3142,9 @@ public final class Parser {
      * @return the parsed formal parameter
      */
     private FormalParameter functionRestParameter() {
-        return bindingRestElement();
+        long begin = ts.beginPosition();
+        BindingRestElement restElement = bindingRestElement();
+        return new FormalParameter(begin, ts.endPosition(), restElement);
     }
 
     /**
@@ -3125,7 +3158,19 @@ public final class Parser {
      * @return the parsed formal parameter
      */
     private FormalParameter formalParameter() {
-        return bindingElement();
+        boolean nonSimple = token() == Token.LB || token() == Token.LC || LOOKAHEAD(Token.ASSIGN);
+        FormalParameterContext scope = null;
+        if (nonSimple) {
+            scope = enterFormalParameterContext();
+        }
+        long begin = ts.beginPosition();
+        BindingElement element = bindingElement();
+        FormalParameter parameter = new FormalParameter(begin, ts.endPosition(), element, scope);
+        if (nonSimple) {
+            scope.node = parameter;
+            exitFormalParameterContext();
+        }
+        return parameter;
     }
 
     private static Name containsAny(List<Name> list, NameSet set) {
@@ -7839,17 +7884,16 @@ public final class Parser {
             consume(Token.NEW);
             if (token() == Token.DOT) {
                 newTarget();
-
                 consume(Token.DOT);
                 consume("target");
                 lhs = new NewTarget(begin, ts.endPosition());
             } else if (token() == Token.SUPER && !(LOOKAHEAD(Token.DOT) || LOOKAHEAD(Token.LB))
                     && isEnabled(CompatibilityOption.NewSuper)) {
                 newSuper();
-
                 consume(Token.SUPER);
                 if (token() == Token.LP) {
-                    lhs = new SuperNewExpression(begin, ts.endPosition(), arguments());
+                    List<Expression> args = arguments();
+                    lhs = new SuperNewExpression(begin, ts.endPosition(), args);
                 } else {
                     return new SuperNewExpression(begin, ts.endPosition(),
                             Collections.<Expression> emptyList());
@@ -7857,7 +7901,8 @@ public final class Parser {
             } else {
                 Expression expr = leftHandSideExpression(false, allowElement);
                 if (token() == Token.LP) {
-                    lhs = new NewExpression(begin, ts.endPosition(), expr, arguments());
+                    List<Expression> args = arguments();
+                    lhs = new NewExpression(begin, ts.endPosition(), expr, args);
                 } else {
                     return new NewExpression(begin, ts.endPosition(), expr,
                             Collections.<Expression> emptyList());
@@ -7989,7 +8034,6 @@ public final class Parser {
                 || superContext.kind == ContextKind.Module) {
             reportSyntaxError(Messages.Key.InvalidNewTarget);
         }
-        // FIXME: spec bug? - add early error for `new.target` outside of constructor functions?
     }
 
     /**
@@ -8050,7 +8094,6 @@ public final class Parser {
                 return args;
             }
         }
-
         for (;;) {
             Expression expr;
             if (token() == Token.TRIPLE_DOT) {
@@ -8065,14 +8108,12 @@ public final class Parser {
             if (token() == Token.COMMA) {
                 consume(Token.COMMA);
                 if (token() == Token.RP && isEnabled(CompatibilityOption.FunctionCallTrailingComma)) {
-                    consume(Token.RP);
                     break;
                 }
             } else {
                 break;
             }
         }
-
         if (args.size() > MAX_ARGUMENTS) {
             reportSyntaxError(Messages.Key.FunctionTooManyArguments);
         }
@@ -8257,9 +8298,8 @@ public final class Parser {
     }
 
     private Expression binaryExpression(boolean allowIn, Expression lhs, int minpred) {
-        // Recursive-descent parsers require multiple levels of recursion to
-        // parse binary expressions, to avoid this we're using precedence
-        // climbing here
+        // Recursive-descent parsers require multiple levels of recursion to parse binary
+        // expressions, to avoid this we're using precedence climbing.
         for (;;) {
             Token tok = token();
             if (tok == Token.IN && !allowIn) {

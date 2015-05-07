@@ -41,12 +41,11 @@ final class Test262Info extends TestInfo {
     private static final Pattern tags = Pattern.compile("\\s*\\*\\s*@(\\w+)\\s*(.+)?\\s*");
     private static final Pattern contentPattern, yamlContentPattern;
     static {
-        String fileHeader = "(?:(?:\\s*(?://.*)?)*)";
-        String descriptor = "(?:/\\*\\*?((?s:.*?))\\*/\\s*\n)?";
-        String yamlDescriptor = "(?:/\\*---((?s:.*?))---\\*/\\s*\n)";
-        String testCode = "(?s:.*)";
-        contentPattern = Pattern.compile(fileHeader + descriptor + testCode);
-        yamlContentPattern = Pattern.compile(fileHeader + yamlDescriptor + testCode);
+        String fileHeader = "(?:\\s*(?://.*)?\\R)*+";
+        String descriptor = "/\\*\\*?((?s:.*?))\\*/";
+        String yamlDescriptor = "/\\*---((?s:.*?))---\\*/";
+        contentPattern = Pattern.compile(fileHeader + descriptor);
+        yamlContentPattern = Pattern.compile(fileHeader + yamlDescriptor);
     }
 
     private String testName, description, errorType;
@@ -176,9 +175,9 @@ final class Test262Info extends TestInfo {
 
     private void readFileInformation(String content, boolean lenient) throws MalformedDataException {
         Matcher m;
-        if ((m = yamlContentPattern.matcher(content)).matches()) {
+        if ((m = yamlContentPattern.matcher(content)).lookingAt()) {
             readYaml(m.group(1), lenient);
-        } else if ((m = contentPattern.matcher(content)).matches()) {
+        } else if ((m = contentPattern.matcher(content)).lookingAt()) {
             readTagged(m.group(1), lenient);
         } else {
             throw new MalformedDataException("Invalid test file: " + this);

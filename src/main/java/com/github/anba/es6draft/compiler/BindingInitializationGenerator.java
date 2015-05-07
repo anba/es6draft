@@ -19,6 +19,7 @@ import java.util.Set;
 
 import com.github.anba.es6draft.ast.*;
 import com.github.anba.es6draft.ast.scope.Name;
+import com.github.anba.es6draft.ast.scope.Scope;
 import com.github.anba.es6draft.compiler.DefaultCodeGenerator.ValType;
 import com.github.anba.es6draft.compiler.Labels.TempLabel;
 import com.github.anba.es6draft.compiler.StatementGenerator.Completion;
@@ -26,7 +27,6 @@ import com.github.anba.es6draft.compiler.assembler.Jump;
 import com.github.anba.es6draft.compiler.assembler.MethodName;
 import com.github.anba.es6draft.compiler.assembler.Type;
 import com.github.anba.es6draft.compiler.assembler.Variable;
-import com.github.anba.es6draft.runtime.DeclarativeEnvironmentRecord;
 import com.github.anba.es6draft.runtime.EnvironmentRecord;
 import com.github.anba.es6draft.runtime.FunctionEnvironmentRecord;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
@@ -199,7 +199,7 @@ final class BindingInitializationGenerator {
             Variable<LexicalEnvironment<FunctionEnvironmentRecord>> env,
             Variable<Iterator<?>> iterator, ExpressionVisitor mv) {
         FormalsIteratorBindingInitialization init = new FormalsIteratorBindingInitialization(
-                codegen, node, mv, EnvironmentType.NoEnvironment, env, null);
+                codegen, mv, EnvironmentType.NoEnvironment, env, null);
         node.getParameters().accept(init, iterator);
     }
 
@@ -224,7 +224,7 @@ final class BindingInitializationGenerator {
             Variable<? extends EnvironmentRecord> envRec, Variable<Iterator<?>> iterator,
             ExpressionVisitor mv) {
         FormalsIteratorBindingInitialization init = new FormalsIteratorBindingInitialization(
-                codegen, node, mv, EnvironmentType.EnvironmentFromLocal, env, envRec);
+                codegen, mv, EnvironmentType.EnvironmentFromLocal, env, envRec);
         node.getParameters().accept(init, iterator);
     }
 
@@ -460,17 +460,16 @@ final class BindingInitializationGenerator {
 
         @Override
         public void visit(ObjectBindingPattern node, Void value) {
+            // stack: [(env), value] -> [(env), value]
+            mv.lineInfo(node);
+            mv.loadExecutionContext();
+            mv.swap();
+            mv.invoke(Methods.AbstractOperations_RequireObjectCoercible);
+
             if (node.getProperties().isEmpty() && node.getRest() == null) {
-                // stack: [(env), value] -> [(env)]
-                mv.lineInfo(node);
-                mv.loadExecutionContext();
-                mv.swap();
-                mv.invoke(Methods.AbstractOperations_RequireObjectCoercible);
+                // stack: [(env), value] -> []
                 mv.pop();
-
-                // stack: [(env)] -> []
                 popEnvIfPresent();
-
                 return;
             }
 
@@ -541,16 +540,14 @@ final class BindingInitializationGenerator {
      */
     private static final class FormalsIteratorBindingInitialization extends
             RuntimeSemantics<Variable<? extends Iterator<?>>> {
-        private final FunctionNode function;
         private final Variable<LexicalEnvironment<FunctionEnvironmentRecord>> env;
         private final IteratorBindingInitialization iteratorBindingInit;
 
-        FormalsIteratorBindingInitialization(CodeGenerator codegen, FunctionNode function,
-                ExpressionVisitor mv, EnvironmentType environment,
+        FormalsIteratorBindingInitialization(CodeGenerator codegen, ExpressionVisitor mv,
+                EnvironmentType environment,
                 Variable<LexicalEnvironment<FunctionEnvironmentRecord>> env,
                 Variable<? extends EnvironmentRecord> envRec) {
             super(codegen, mv, environment, envRec);
-            this.function = function;
             this.env = env;
             this.iteratorBindingInit = new IteratorBindingInitialization(codegen, mv, environment,
                     envRec);
@@ -558,46 +555,41 @@ final class BindingInitializationGenerator {
 
         @Override
         public void visit(FormalParameterList node, Variable<? extends Iterator<?>> iterator) {
-            // stack: [(env)] -> [(env)]
             for (FormalParameter formal : node) {
                 formal.accept(this, iterator);
             }
         }
 
         @Override
-        public void visit(BindingElement node, Variable<? extends Iterator<?>> iterator) {
-            if (node.getInitializer() == null || !function.getScope().hasFormalInitializerEval()) {
-                /* step 1 (+ optimization if no direct eval present in formals) */
-                iteratorBindingInit.visit(node, iterator);
+        public void visit(FormalParameter node, Variable<? extends Iterator<?>> iterator) {
+            Scope scope = node.getScope();
+            boolean simpleParam = scope == null || !scope.isPresent();
+            if (scope != null) {
+                mv.enterScope(node);
+            }
+            if (simpleParam) {
+                /* step 1 (+ optimization if no direct eval present in formal parameter) */
+                node.getElement().accept(iteratorBindingInit, iterator);
             } else {
-                mv.enterVariableScope();
-                Variable<LexicalEnvironment<DeclarativeEnvironmentRecord>> paramVarEnv = mv
-                        .newVariable("paramVarEnv", LexicalEnvironment.class).uncheckedCast();
-
-                /* steps 2-4 (not applicable) */
-                /* step 5 */
-                newDeclarativeEnvironment(env);
-                mv.store(paramVarEnv);
-                /* steps 6-7 */
-                setVariableAndLexicalEnvironment(paramVarEnv);
-                /* step 8 */
-                iteratorBindingInit.visit(node, iterator);
-                /* steps 9-10 */
+                /* steps 2-5 (not applicable) */
+                /* steps 6-8 */
+                newParameterEnvironment(env);
+                /* step 9 */
+                node.getElement().accept(iteratorBindingInit, iterator);
+                /* steps 10-11 */
                 setVariableAndLexicalEnvironment(env);
-
-                mv.exitVariableScope();
+            }
+            if (scope != null) {
+                mv.exitScope();
             }
         }
 
-        @Override
-        public void visit(BindingRestElement node, Variable<? extends Iterator<?>> iterator) {
-            iteratorBindingInit.visit(node, iterator);
-        }
-
-        private void newDeclarativeEnvironment(Variable<? extends LexicalEnvironment<?>> env) {
-            // stack: [] -> [env]
+        private void newParameterEnvironment(Variable<? extends LexicalEnvironment<?>> env) {
+            // stack: [] -> []
+            mv.loadExecutionContext();
             mv.load(env);
             mv.invoke(Methods.LexicalEnvironment_newDeclarativeEnvironment);
+            mv.invoke(Methods.ExecutionContext_setVariableAndLexicalEnvironment);
         }
 
         private void setVariableAndLexicalEnvironment(Variable<? extends LexicalEnvironment<?>> env) {

@@ -37,15 +37,4 @@ public final class Ref<T> {
     public void clear() {
         value = null;
     }
-
-    /**
-     * Returns the referenced value and clears this reference.
-     * 
-     * @return the referenced value
-     */
-    public T getAndClear() {
-        T v = value;
-        value = null;
-        return v;
-    }
 }

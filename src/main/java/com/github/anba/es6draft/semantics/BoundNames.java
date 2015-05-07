@@ -254,6 +254,11 @@ final class BoundNames extends DefaultNodeVisitor<List<Name>, List<Name>> {
         return names;
     }
 
+    @Override
+    public List<Name> visit(FormalParameter node, List<Name> names) {
+        return node.getElement().accept(this, names);
+    }
+
     /**
      * <pre>
      * StrictFormalParameters :

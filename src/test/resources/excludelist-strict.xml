@@ -13,9 +13,6 @@
   <!ATTLIST test id CDATA #REQUIRED>
 ]>
 <excludeList>
-  <!-- AnnexB extension: Labelled function declaration -->
-  <test id="in-statement-position-label-statement" />
-
   <!-- Invalid regular expression pattern in web-mode -->
   <test id="S7.8.5_A1.4_T1" />
   <test id="S7.8.5_A1.4_T2" />

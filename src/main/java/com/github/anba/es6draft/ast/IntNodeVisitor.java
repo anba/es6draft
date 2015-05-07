@@ -114,6 +114,8 @@ public interface IntNodeVisitor<V> {
 
     int visit(ForInStatement node, V value);
 
+    int visit(FormalParameter node, V value);
+
     int visit(FormalParameterList node, V value);
 
     int visit(ForOfStatement node, V value);

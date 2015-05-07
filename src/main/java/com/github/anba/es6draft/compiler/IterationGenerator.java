@@ -102,7 +102,7 @@ abstract class IterationGenerator<NODE extends Node, VISITOR extends ExpressionV
      *            the expression visitor
      * @return the completion value
      */
-    public Completion generate(NODE node, Variable<ScriptIterator<?>> iterator, VISITOR mv) {
+    public final Completion generate(NODE node, Variable<ScriptIterator<?>> iterator, VISITOR mv) {
         return generate(node, iterator, null, mv);
     }
 
@@ -119,7 +119,7 @@ abstract class IterationGenerator<NODE extends Node, VISITOR extends ExpressionV
      *            the expression visitor
      * @return the completion value
      */
-    public Completion generate(NODE node, Variable<ScriptIterator<?>> iterator, Jump target,
+    public final Completion generate(NODE node, Variable<ScriptIterator<?>> iterator, Jump target,
             VISITOR mv) {
         TryCatchLabel startIteration = new TryCatchLabel(), endIteration = new TryCatchLabel();
         TryCatchLabel handlerCatch = new TryCatchLabel();
