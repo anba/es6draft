@@ -5896,22 +5896,6 @@ public final class Parser {
             checkVarDeclaredName(varStmt.getElements().get(0).getBinding());
         }
 
-        if (head instanceof VariableStatement) {
-            VariableStatement varStmt = (VariableStatement) head;
-            assert varStmt.getElements().size() == 1;
-            assert varStmt.getElements().get(0).getInitializer() == null;
-            Binding binding = varStmt.getElements().get(0).getBinding();
-            if (binding instanceof BindingPattern) {
-                List<Name> boundNames = BoundNames((Binding) binding);
-                NameSet names = new NameSet(boundNames);
-                boolean hasDuplicates = (boundNames.size() != names.size());
-                if (hasDuplicates) {
-                    Name duplicate = findDuplicate(names, boundNames);
-                    reportSyntaxError(binding, Messages.Key.VariableRedeclaration, duplicate);
-                }
-            }
-        }
-
         if (lexBlockContext != null) {
             LexicalDeclaration lexDecl = (LexicalDeclaration) head;
             assert lexDecl.getElements().size() == 1;
