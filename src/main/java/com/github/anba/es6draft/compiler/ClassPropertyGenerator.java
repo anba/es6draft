@@ -12,6 +12,7 @@ import java.util.List;
 import com.github.anba.es6draft.ast.MethodDefinition;
 import com.github.anba.es6draft.ast.Node;
 import com.github.anba.es6draft.ast.PropertyDefinition;
+import com.github.anba.es6draft.ast.PropertyValueDefinition;
 import com.github.anba.es6draft.ast.synthetic.MethodDefinitionsMethod;
 import com.github.anba.es6draft.compiler.assembler.Variable;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryConstructorFunction;
@@ -65,6 +66,14 @@ final class ClassPropertyGenerator extends DefaultCodeGenerator<Void, Expression
             mv.load(obj);
             node.accept(propgen, mv);
         }
+        return null;
+    }
+
+    @Override
+    public Void visit(PropertyValueDefinition node, ExpressionVisitor mv) {
+        // stack: [] -> []
+        mv.load(F);
+        node.accept(propgen, mv);
         return null;
     }
 

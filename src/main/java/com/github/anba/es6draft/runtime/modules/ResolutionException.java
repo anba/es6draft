@@ -20,23 +20,23 @@ import com.github.anba.es6draft.runtime.internal.ScriptException;
 @SuppressWarnings("serial")
 public final class ResolutionException extends Exception implements InternalThrowable {
     private final Messages.Key messageKey;
-    private final String messageArgument;
+    private final String[] messageArguments;
 
     /**
      * Constructs a new module resolution exception.
      * 
      * @param messageKey
      *            the message key
-     * @param messageArgument
-     *            the message argument
+     * @param messageArguments
+     *            the message arguments
      */
-    public ResolutionException(Messages.Key messageKey, String messageArgument) {
+    public ResolutionException(Messages.Key messageKey, String... messageArguments) {
         this.messageKey = messageKey;
-        this.messageArgument = messageArgument;
+        this.messageArguments = messageArguments;
     }
 
     private String getFormattedMessage(Locale locale) {
-        return Messages.create(locale).getMessage(messageKey, messageArgument);
+        return Messages.create(locale).getMessage(messageKey, messageArguments);
     }
 
     @Override
@@ -51,6 +51,6 @@ public final class ResolutionException extends Exception implements InternalThro
 
     @Override
     public ScriptException toScriptException(ExecutionContext cx) {
-        throw Errors.newSyntaxError(cx, messageKey, messageArgument);
+        throw Errors.newSyntaxError(cx, this, messageKey, messageArguments);
     }
 }

@@ -41,6 +41,7 @@ import com.github.anba.es6draft.runtime.modules.ModuleSource;
 import com.github.anba.es6draft.runtime.modules.ResolutionException;
 import com.github.anba.es6draft.runtime.modules.SourceIdentifier;
 import com.github.anba.es6draft.runtime.modules.SourceTextModuleRecord;
+import com.github.anba.es6draft.runtime.modules.loader.StringModuleSource;
 import com.github.anba.es6draft.runtime.objects.ErrorObject;
 import com.github.anba.es6draft.runtime.objects.GlobalObject;
 import com.github.anba.es6draft.runtime.objects.binary.ArrayBufferObject;
@@ -50,7 +51,6 @@ import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
-import com.github.anba.es6draft.runtime.types.builtins.ModuleNamespaceObject;
 
 /**
  *
@@ -89,26 +89,6 @@ public class SimpleShellGlobalObject extends ShellGlobalObject {
                 return new SimpleShellGlobalObject(realm, console, baseDir, script, scriptCache);
             }
         };
-    }
-
-    private static final class StringModuleSource implements ModuleSource {
-        private final SourceIdentifier sourceId;
-        private final String sourceCode;
-
-        StringModuleSource(SourceIdentifier sourceId, String sourceCode) {
-            this.sourceId = sourceId;
-            this.sourceCode = sourceCode;
-        }
-
-        @Override
-        public String sourceCode() {
-            return sourceCode;
-        }
-
-        @Override
-        public Source toSource() {
-            return new Source(sourceId.toString(), 1);
-        }
     }
 
     /**
@@ -213,8 +193,7 @@ public class SimpleShellGlobalObject extends ShellGlobalObject {
      * @return the result value
      */
     @Function(name = "loadModule", arity = 1)
-    public ModuleNamespaceObject loadModule(ExecutionContext cx, String moduleName,
-            Object realmObject) {
+    public ScriptObject loadModule(ExecutionContext cx, String moduleName, Object realmObject) {
         Realm realm;
         if (!Type.isUndefined(realmObject)) {
             if (!(realmObject instanceof RealmObject)) {
@@ -235,7 +214,7 @@ public class SimpleShellGlobalObject extends ShellGlobalObject {
         } catch (ParserException | CompilationException e) {
             throw e.toScriptException(cx);
         } catch (IOException e) {
-            throw Errors.newInternalError(cx, Messages.Key.ModulesIOException, e.getMessage());
+            throw Errors.newInternalError(cx, e, Messages.Key.ModulesIOException, e.getMessage());
         }
     }
 
@@ -297,6 +276,17 @@ public class SimpleShellGlobalObject extends ShellGlobalObject {
     @Function(name = "dumpSymbolRegistry", arity = 0)
     public void dumpSymbolRegistry(ExecutionContext cx) {
         console.print(cx.getRealm().getSymbolRegistry().toString());
+    }
+
+    /**
+     * shell-function: {@code dumpTemplateMap()}
+     * 
+     * @param cx
+     *            the execution context
+     */
+    @Function(name = "dumpTemplateMap", arity = 0)
+    public void dumpTemplateMap(ExecutionContext cx) {
+        console.print(cx.getRealm().getTemplateMap().toString());
     }
 
     /**

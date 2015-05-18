@@ -22,7 +22,7 @@ import com.github.anba.es6draft.runtime.internal.LinkedMap;
 /**
  * 
  */
-public class LinkedMapTest {
+public final class LinkedMapTest {
 
     @Test
     public void test() {

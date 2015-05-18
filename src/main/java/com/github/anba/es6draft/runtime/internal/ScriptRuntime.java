@@ -213,8 +213,11 @@ public final class ScriptRuntime {
         ModuleExport resolution = module.resolveExport(exportName,
                 new HashMap<ModuleRecord, Set<String>>(), new HashSet<ModuleRecord>());
         /* step 6.c */
-        if (resolution == null || resolution.isAmbiguous()) {
+        if (resolution == null) {
             throw new ResolutionException(Messages.Key.ModulesUnresolvedExport, exportName);
+        }
+        if (resolution.isAmbiguous()) {
+            throw new ResolutionException(Messages.Key.ModulesAmbiguousExport, exportName);
         }
     }
 
@@ -244,8 +247,13 @@ public final class ScriptRuntime {
         ModuleExport resolution = importedModule.resolveExport(importName,
                 new HashMap<ModuleRecord, Set<String>>(), new HashSet<ModuleRecord>());
         /* step 10.d.iii */
-        if (resolution == null || resolution.isAmbiguous()) {
-            throw new ResolutionException(Messages.Key.ModulesUnresolvedImport, importName);
+        if (resolution == null) {
+            throw new ResolutionException(Messages.Key.ModulesUnresolvedImport, importName,
+                    importedModule.getSourceCodeId().toString());
+        }
+        if (resolution.isAmbiguous()) {
+            throw new ResolutionException(Messages.Key.ModulesAmbiguousImport, importName,
+                    importedModule.getSourceCodeId().toString());
         }
         return resolution;
     }
@@ -267,7 +275,7 @@ public final class ScriptRuntime {
      * @throws ResolutionException
      *             if the export cannot be resolved
      */
-    public static ModuleNamespaceObject getModuleNamespace(ExecutionContext cx,
+    public static ScriptObject getModuleNamespace(ExecutionContext cx,
             SourceTextModuleRecord module, String moduleRequest) throws IOException,
             MalformedNameException, ResolutionException {
         /* steps 10.a-b */
@@ -403,20 +411,10 @@ public final class ScriptRuntime {
     }
 
     private static boolean isSpreadable(ExecutionContext cx, OrdinaryObject object, long length) {
-        if (object.hasSpecialIndexedProperties()) {
+        if (object.hasSpecialIndexedProperties() || !object.isDenseArray(length)) {
             return false;
         }
-        if (!object.isDenseArray(length)) {
-            return false;
-        }
-        Property iterProp = object.getOwnProperty(cx, BuiltinSymbol.iterator.get());
-        if (iterProp == null) {
-            ScriptObject proto = object.getPrototype();
-            if (!(proto instanceof OrdinaryObject)) {
-                return false;
-            }
-            iterProp = ((OrdinaryObject) proto).getOwnProperty(cx, BuiltinSymbol.iterator.get());
-        }
+        Property iterProp = findIterator(cx, object);
         // Test 1: Is object[Symbol.iterator] == %ArrayPrototype%.values?
         if (iterProp == null || !ArrayPrototype.isBuiltinValues(iterProp.getValue())) {
             return false;
@@ -435,20 +433,7 @@ public final class ScriptRuntime {
         if (array.getBuffer().isDetached()) {
             return false;
         }
-        final int MAX_PROTO_CHAIN_LENGTH = 10;
-        Property iterProp = null;
-        OrdinaryObject object = array;
-        for (int i = 0; i < MAX_PROTO_CHAIN_LENGTH; ++i) {
-            iterProp = object.getOwnProperty(cx, BuiltinSymbol.iterator.get());
-            if (iterProp != null) {
-                break;
-            }
-            ScriptObject proto = object.getPrototype();
-            if (!(proto instanceof OrdinaryObject)) {
-                return false;
-            }
-            object = (OrdinaryObject) proto;
-        }
+        Property iterProp = findIterator(cx, array);
         // Test 1: Is object[Symbol.iterator] == %ArrayPrototype%.values?
         if (iterProp == null || !TypedArrayPrototypePrototype.isBuiltinValues(iterProp.getValue())) {
             return false;
@@ -461,6 +446,22 @@ public final class ScriptRuntime {
             return false;
         }
         return true;
+    }
+
+    private static Property findIterator(ExecutionContext cx, OrdinaryObject object) {
+        final int MAX_PROTO_CHAIN_LENGTH = 5;
+        for (int i = 0; i < MAX_PROTO_CHAIN_LENGTH; ++i) {
+            Property iterProp = object.getOwnProperty(cx, BuiltinSymbol.iterator.get());
+            if (iterProp != null) {
+                return iterProp;
+            }
+            ScriptObject proto = object.getPrototype();
+            if (!(proto instanceof OrdinaryObject)) {
+                break;
+            }
+            object = (OrdinaryObject) proto;
+        }
+        return null;
     }
 
     /**
@@ -603,9 +604,9 @@ public final class ScriptRuntime {
     }
 
     /**
-     * 12.2.8 Template Literals
+     * 12.2.9 Template Literals
      * <p>
-     * 12.2.8.2.2 Runtime Semantics: GetTemplateObject
+     * 12.2.9.3 Runtime Semantics: GetTemplateObject ( templateLiteral )
      * 
      * @param handle
      *            the method handle for the template literal data

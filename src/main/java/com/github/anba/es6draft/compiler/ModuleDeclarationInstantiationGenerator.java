@@ -51,9 +51,8 @@ final class ModuleDeclarationInstantiationGenerator extends
                         Types.ModuleExport));
 
         static final MethodName ScriptRuntime_getModuleNamespace = MethodName.findStatic(
-                Types.ScriptRuntime, "getModuleNamespace", Type.methodType(
-                        Types.ModuleNamespaceObject, Types.ExecutionContext,
-                        Types.SourceTextModuleRecord, Types.String));
+                Types.ScriptRuntime, "getModuleNamespace", Type.methodType(Types.ScriptObject,
+                        Types.ExecutionContext, Types.SourceTextModuleRecord, Types.String));
 
         static final MethodName ScriptRuntime_resolveExportOrThrow = MethodName.findStatic(
                 Types.ScriptRuntime, "resolveExportOrThrow",

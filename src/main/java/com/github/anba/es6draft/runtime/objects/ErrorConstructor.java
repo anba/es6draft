@@ -19,7 +19,6 @@ import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
-import com.github.anba.es6draft.runtime.types.Property;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
 
@@ -80,21 +79,21 @@ public final class ErrorConstructor extends BuiltinConstructor implements Initia
         /* step 4 */
         if (!Type.isUndefined(message)) {
             CharSequence msg = ToString(calleeContext, message);
-            obj.infallibleDefineOwnProperty("message", new Property(msg, true, false, true));
+            obj.defineErrorProperty("message", msg, false);
         }
 
         /* extension: fileName, lineNumber and columnNumber arguments */
         if (args.length > 1) {
             CharSequence fileName = ToString(calleeContext, args[1]);
-            obj.infallibleDefineOwnProperty("fileName", new Property(fileName, true, true, true));
+            obj.defineErrorProperty("fileName", fileName, true);
         }
         if (args.length > 2) {
             int line = ToInt32(calleeContext, args[2]);
-            obj.infallibleDefineOwnProperty("lineNumber", new Property(line, true, true, true));
+            obj.defineErrorProperty("lineNumber", line, true);
         }
         if (args.length > 3) {
             int column = ToInt32(calleeContext, args[3]);
-            obj.infallibleDefineOwnProperty("columnNumber", new Property(column, true, true, true));
+            obj.defineErrorProperty("columnNumber", column, true);
         }
 
         /* step 5 */

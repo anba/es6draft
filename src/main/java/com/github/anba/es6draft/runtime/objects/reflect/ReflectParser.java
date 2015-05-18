@@ -507,8 +507,12 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
 
     private OrdinaryObject createClassBody(ClassDefinition node, Void value) {
         ArrayList<OrdinaryObject> methods = new ArrayList<>();
-        for (MethodDefinition method : node.getMethods()) {
-            methods.add(createClassMethod(method, value));
+        for (PropertyDefinition property : node.getProperties()) {
+            if (property instanceof MethodDefinition) {
+                methods.add(createClassMethod((MethodDefinition) property, value));
+            } else {
+                // TODO: Implement
+            }
         }
         return createListFromValues(methods);
     }

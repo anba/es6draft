@@ -70,7 +70,7 @@
     <dependency>
       <groupId>org.ow2.asm</groupId>
       <artifactId>asm-debug-all</artifactId>
-      <version>5.0.3</version>
+      <version>5.0.4</version>
     </dependency>
     <dependency>
       <groupId>com.ibm.icu</groupId>
@@ -217,6 +217,7 @@
               <execution>
                 <id>surefire-test</id>
                 <configuration>
+                  <testFailureIgnore>true</testFailureIgnore>
                   <includes>
                     <include>**/mozilla/*.java</include>
                     <include>**/traceur/*.java</include>
@@ -242,6 +243,7 @@
               <execution>
                 <id>surefire-test</id>
                 <configuration>
+                  <testFailureIgnore>true</testFailureIgnore>
                   <includes>
                     <include>**/test262/*.java</include>
                   </includes>
@@ -268,6 +270,7 @@
               <execution>
                 <id>surefire-test</id>
                 <configuration>
+                  <testFailureIgnore>true</testFailureIgnore>
                   <includes>
                     <include>**/test262/*.java</include>
                   </includes>
@@ -812,7 +815,6 @@
             </goals>
             <configuration>
               <enableAssertions>true</enableAssertions>
-              <testFailureIgnore>true</testFailureIgnore>
               <forkCount>1</forkCount>
               <reuseForks>true</reuseForks>
               <systemPropertyVariables>

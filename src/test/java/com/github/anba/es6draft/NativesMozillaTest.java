@@ -133,15 +133,15 @@ public final class NativesMozillaTest {
         public void initializeScripted() throws IOException, URISyntaxException, ParserException,
                 CompilationException {
             // super.initializeScripted();
-            includeNative(getScriptURL("arraybuffer.js"));
-            includeNative(getScriptURL("collection.js"));
-            includeNative(getScriptURL("compat.js"));
-            includeNative(getScriptURL("iterator.js"));
-            includeNative(getScriptURL("legacy-generator.js"));
-            includeNative(getScriptURL("proxy.js"));
-            includeNative(getScriptURL("source.js"));
-            includeNative(getScriptURL("statics.js"));
-            includeNative(getScriptURL("string.js"));
+            includeNative("arraybuffer.js");
+            includeNative("collection.js");
+            includeNative("compat.js");
+            includeNative("iterator.js");
+            includeNative("legacy-generator.js");
+            includeNative("proxy.js");
+            includeNative("source.js");
+            includeNative("statics.js");
+            includeNative("string.js");
         }
 
         public static ObjectAllocator<MozNativeTestGlobalObject> newGlobalObjectAllocator(

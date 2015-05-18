@@ -14,4 +14,6 @@ import com.github.anba.es6draft.ast.Module;
 public interface ModuleScope extends TopLevelScope {
     @Override
     Module getNode();
+
+    void addImplicitBinding(Name name);
 }

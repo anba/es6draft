@@ -73,7 +73,7 @@ public final class FunctionConstructor extends BuiltinConstructor implements Ini
     public OrdinaryFunction call(ExecutionContext callerContext, Object thisValue, Object... args) {
         ExecutionContext calleeContext = calleeContext();
         /* steps 1-3 */
-        return CreateDynamicFunction(calleeContext, this, args);
+        return CreateDynamicFunction(callerContext, calleeContext, this, args);
     }
 
     /**
@@ -84,12 +84,14 @@ public final class FunctionConstructor extends BuiltinConstructor implements Ini
             Object... args) {
         ExecutionContext calleeContext = calleeContext();
         /* steps 1-3 */
-        return CreateDynamicFunction(calleeContext, newTarget, args);
+        return CreateDynamicFunction(callerContext, calleeContext, newTarget, args);
     }
 
     /**
      * 19.2.1.1.1 RuntimeSemantics: CreateDynamicFunction(constructor, newTarget, kind, args)
      * 
+     * @param callerContext
+     *            the caller execution context
      * @param cx
      *            the execution context
      * @param newTarget
@@ -98,8 +100,9 @@ public final class FunctionConstructor extends BuiltinConstructor implements Ini
      *            the function arguments
      * @return the new function object
      */
-    private OrdinaryConstructorFunction CreateDynamicFunction(ExecutionContext cx,
-            Constructor newTarget, Object[] args) {
+    private static OrdinaryConstructorFunction CreateDynamicFunction(
+            ExecutionContext callerContext, ExecutionContext cx, Constructor newTarget,
+            Object... args) {
         /* step 1 (not applicable) */
         /* step 2 */
         Intrinsics fallbackProto = Intrinsics.FunctionPrototype;
@@ -129,8 +132,7 @@ public final class FunctionConstructor extends BuiltinConstructor implements Ini
         }
 
         /* steps 11, 13-19 */
-        Source source = functionSource(cx);
-        CompiledFunction exec = new CompiledFunction(source);
+        Source source = functionSource(cx.getRealm(), callerContext);
         RuntimeInfo.Function function;
         try {
             ScriptLoader scriptLoader = cx.getRealm().getScriptLoader();
@@ -139,6 +141,46 @@ public final class FunctionConstructor extends BuiltinConstructor implements Ini
             throw e.toScriptException(cx);
         }
 
+        /* steps 12, 20-21 */
+        return CreateDynamicFunction(cx, source, function, newTarget, fallbackProto);
+    }
+
+    /**
+     * 19.2.1.1.1 RuntimeSemantics: CreateDynamicFunction(constructor, newTarget, kind, args)
+     * 
+     * @param cx
+     *            the execution context
+     * @param source
+     *            the source object
+     * @param function
+     *            the compiled function
+     * @return the new function object
+     */
+    public static OrdinaryConstructorFunction CreateDynamicFunction(ExecutionContext cx,
+            Source source, RuntimeInfo.Function function) {
+        return CreateDynamicFunction(cx, source, function,
+                (Constructor) cx.getIntrinsic(Intrinsics.Function), Intrinsics.FunctionPrototype);
+    }
+
+    /**
+     * 19.2.1.1.1 RuntimeSemantics: CreateDynamicFunction(constructor, newTarget, kind, args)
+     * 
+     * @param cx
+     *            the execution context
+     * @param source
+     *            the source object
+     * @param function
+     *            the compiled function
+     * @param newTarget
+     *            the newTarget constructor function
+     * @param fallbackProto
+     *            the fallback prototype
+     * @return the new function object
+     */
+    private static OrdinaryConstructorFunction CreateDynamicFunction(ExecutionContext cx,
+            Source source, RuntimeInfo.Function function, Constructor newTarget,
+            Intrinsics fallbackProto) {
+        /* steps 1-11, 13-19 (not applicable) */
         /* step 12 */
         boolean strict = function.isStrict();
         /* steps 20-21 */
@@ -149,7 +191,7 @@ public final class FunctionConstructor extends BuiltinConstructor implements Ini
         /* steps 23-24 */
         LexicalEnvironment<GlobalEnvironmentRecord> scope = f.getRealm().getGlobalEnv();
         /* step 25 */
-        FunctionInitialize(f, FunctionKind.Normal, function, scope, exec);
+        FunctionInitialize(f, FunctionKind.Normal, function, scope, new CompiledFunction(source));
         /* step 26 (not applicable) */
         /* steps 27 */
         MakeConstructor(cx, f);
@@ -187,8 +229,8 @@ public final class FunctionConstructor extends BuiltinConstructor implements Ini
         public static final String name = "Function";
     }
 
-    private Source functionSource(ExecutionContext caller) {
-        Source baseSource = getRealm().sourceInfo(caller);
+    private static Source functionSource(Realm realm, ExecutionContext caller) {
+        Source baseSource = realm.sourceInfo(caller);
         String sourceName;
         if (baseSource != null) {
             sourceName = String.format("<Function> (%s)", baseSource.getName());

@@ -10,15 +10,16 @@ import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import com.github.anba.es6draft.runtime.internal.FileModuleLoader;
 import com.github.anba.es6draft.runtime.internal.ScriptLoader;
 import com.github.anba.es6draft.runtime.modules.MalformedNameException;
 import com.github.anba.es6draft.runtime.modules.SourceIdentifier;
+import com.github.anba.es6draft.runtime.modules.loader.FileSourceIdentifier;
+import com.github.anba.es6draft.util.TestFileModuleLoader;
 
 /**
  * 
  */
-final class TraceurFileModuleLoader extends FileModuleLoader {
+final class TraceurFileModuleLoader extends TestFileModuleLoader {
     TraceurFileModuleLoader(ScriptLoader scriptLoader, Path baseDirectory) {
         super(scriptLoader, baseDirectory);
     }
@@ -31,7 +32,7 @@ final class TraceurFileModuleLoader extends FileModuleLoader {
             Path fileName = normalizedName.getPath().getFileName();
             if (!fileName.toString().endsWith(".js")) {
                 Path path = Paths.get(normalizedName.getPath() + ".js");
-                normalizedName = new FileSourceIdentifier(path);
+                normalizedName = new FileSourceIdentifier(getBaseDirectory(), path);
             }
             return normalizedName;
         } catch (InvalidPathException e) {

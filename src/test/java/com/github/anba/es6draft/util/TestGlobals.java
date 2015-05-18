@@ -35,15 +35,14 @@ import com.github.anba.es6draft.repl.console.ShellConsole;
 import com.github.anba.es6draft.repl.global.ShellGlobalObject;
 import com.github.anba.es6draft.runtime.World;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
-import com.github.anba.es6draft.runtime.internal.FileModuleLoader;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
 import com.github.anba.es6draft.runtime.internal.ScriptLoader;
 import com.github.anba.es6draft.runtime.internal.Source;
 import com.github.anba.es6draft.runtime.modules.MalformedNameException;
+import com.github.anba.es6draft.runtime.modules.ModuleRecord;
 import com.github.anba.es6draft.runtime.modules.ResolutionException;
 import com.github.anba.es6draft.runtime.modules.SourceIdentifier;
-import com.github.anba.es6draft.runtime.modules.SourceTextModuleRecord;
 import com.github.anba.es6draft.runtime.objects.GlobalObject;
 
 /**
@@ -86,8 +85,8 @@ public abstract class TestGlobals<GLOBAL extends ShellGlobalObject, TEST extends
                 getCompilerOptions());
     }
 
-    protected FileModuleLoader createModuleLoader(ScriptLoader scriptLoader) {
-        return new FileModuleLoader(scriptLoader, getBaseDirectory());
+    protected TestModuleLoader<?> createModuleLoader(ScriptLoader scriptLoader) {
+        return new TestFileModuleLoader(scriptLoader, getBaseDirectory());
     }
 
     protected Locale getLocale(TEST test) {
@@ -128,18 +127,17 @@ public abstract class TestGlobals<GLOBAL extends ShellGlobalObject, TEST extends
             ResolutionException, IOException, URISyntaxException {
         ObjectAllocator<GLOBAL> allocator = newAllocator(console, test, scriptCache);
         ScriptLoader scriptLoader = createScriptLoader();
-        FileModuleLoader moduleLoader = createModuleLoader(scriptLoader);
+        TestModuleLoader<?> moduleLoader = createModuleLoader(scriptLoader);
         Locale locale = getLocale(test);
         TimeZone timeZone = getTimeZone(test);
         World<GLOBAL> world = new World<>(allocator, moduleLoader, scriptLoader, locale, timeZone);
         GLOBAL global = world.newInitializedGlobal();
         // Evaluate additional initialization scripts and modules
-        for (SourceTextModuleRecord module : modules.allModules) {
-            moduleLoader.define(module.clone(), global.getRealm());
+        for (ModuleRecord module : modules.allModules) {
+            moduleLoader.defineFromTemplate(module, global.getRealm());
         }
-        for (SourceTextModuleRecord module : modules.mainModules) {
-            SourceTextModuleRecord testModule = moduleLoader.get(module.getSourceCodeId(),
-                    global.getRealm());
+        for (ModuleRecord module : modules.mainModules) {
+            ModuleRecord testModule = moduleLoader.get(module.getSourceCodeId(), global.getRealm());
             testModule.instantiate();
             testModule.evaluate();
         }
@@ -184,12 +182,12 @@ public abstract class TestGlobals<GLOBAL extends ShellGlobalObject, TEST extends
     private PreloadModules compileModules() throws IOException, MalformedNameException {
         List<?> moduleNames = configuration.getList("modules", emptyList());
         if (moduleNames.isEmpty()) {
-            return new PreloadModules(Collections.<SourceTextModuleRecord> emptyList(),
-                    Collections.<SourceTextModuleRecord> emptyList());
+            return new PreloadModules(Collections.<ModuleRecord> emptyList(),
+                    Collections.<ModuleRecord> emptyList());
         }
         ScriptLoader scriptLoader = createScriptLoader();
-        FileModuleLoader moduleLoader = createModuleLoader(scriptLoader);
-        ArrayList<SourceTextModuleRecord> modules = new ArrayList<>();
+        TestModuleLoader<?> moduleLoader = createModuleLoader(scriptLoader);
+        ArrayList<ModuleRecord> modules = new ArrayList<>();
         for (String moduleName : toStrings(moduleNames)) {
             SourceIdentifier moduleId = moduleLoader.normalizeName(moduleName, null);
             modules.add(moduleLoader.load(moduleId));
@@ -198,11 +196,11 @@ public abstract class TestGlobals<GLOBAL extends ShellGlobalObject, TEST extends
     }
 
     private static final class PreloadModules {
-        private final List<SourceTextModuleRecord> mainModules;
-        private final Collection<SourceTextModuleRecord> allModules;
+        private final List<ModuleRecord> mainModules;
+        private final Collection<ModuleRecord> allModules;
 
-        PreloadModules(List<SourceTextModuleRecord> modules,
-                Collection<SourceTextModuleRecord> requires) {
+        PreloadModules(List<ModuleRecord> modules, Collection<? extends ModuleRecord> requires) {
+            assert modules.size() <= requires.size();
             this.mainModules = Collections.unmodifiableList(modules);
             this.allModules = Collections.unmodifiableCollection(requires);
         }

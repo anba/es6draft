@@ -48,7 +48,7 @@ import com.github.anba.es6draft.util.rules.ExceptionHandlers.StandardErrorHandle
 @RunWith(Parallelized.class)
 @UseParametersRunnerFactory(ParameterizedRunnerFactory.class)
 @TestConfiguration(name = "script.timezone", file = "resource:/test-configuration.properties")
-public class TimeZoneTest {
+public final class TimeZoneTest {
     private static final Configuration configuration = loadConfiguration(TimeZoneTest.class);
 
     @Parameters(name = "{0}")

@@ -112,6 +112,16 @@ final class JSONTokenStream {
         return number;
     }
 
+    /**
+     * Returns the raw input data of the current token.
+     * 
+     * @return the raw input data
+     */
+    public String getRaw() {
+        int start = (int) ((sourcePosition >>> 32) + linestart - 1);
+        return input.range(start, input.position());
+    }
+
     /* token operations */
 
     /**

@@ -47,6 +47,8 @@ tests/for-of/semantics-10.js
 tests/basic/destructuring-default.js
 
 # SM: toStringTag not implemented
+tests/collections/WeakMap-surfaces.js
+tests/collections/WeakSet-surface.js
 tests/proxy/operations-on-revoked.js
 
 # ES6: array destructuring tracks completed iterators
@@ -436,6 +438,7 @@ tests/basic/bug1061534.js
 tests/parser/columnNumber.js
 # getBacktrace
 tests/basic/bug1015339.js
+tests/self-test/getBacktrace-bug1138195.js
 # relazifyFunctions
 tests/basic/relazify.js
 # inJit

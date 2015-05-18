@@ -28,6 +28,12 @@ public final class Errors {
                 .getException();
     }
 
+    private static ScriptException newError(ExecutionContext cx, Throwable cause,
+            Intrinsics prototype, String message, String file, int line, int column) {
+        return new ErrorObject(cx.getRealm(), cause, prototype, message, file, line, column)
+                .getException();
+    }
+
     private static ScriptException newError(ExecutionContext cx, Intrinsics prototype,
             Messages.Key key) {
         String message = cx.getRealm().message(key);
@@ -38,6 +44,12 @@ public final class Errors {
             Messages.Key key, String... args) {
         String message = cx.getRealm().message(key, args);
         return new ErrorObject(cx.getRealm(), prototype, message).getException();
+    }
+
+    private static ScriptException newError(ExecutionContext cx, Throwable cause,
+            Intrinsics prototype, Messages.Key key, String... args) {
+        String message = cx.getRealm().message(key, args);
+        return new ErrorObject(cx.getRealm(), cause, prototype, message).getException();
     }
 
     /**
@@ -80,6 +92,24 @@ public final class Errors {
     public static ScriptException newInternalError(ExecutionContext cx, Messages.Key key,
             String... args) {
         return newError(cx, Intrinsics.InternalErrorPrototype, key, args);
+    }
+
+    /**
+     * Returns a new {@code InternalError} instance.
+     * 
+     * @param cx
+     *            the execution context
+     * @param cause
+     *            the cause of the new error
+     * @param key
+     *            the error message key
+     * @param args
+     *            the error message arguments
+     * @return the new script exception object
+     */
+    public static ScriptException newInternalError(ExecutionContext cx, Throwable cause,
+            Messages.Key key, String... args) {
+        return newError(cx, cause, Intrinsics.InternalErrorPrototype, key, args);
     }
 
     /**
@@ -161,6 +191,28 @@ public final class Errors {
     }
 
     /**
+     * Returns a new {@code ReferenceError} instance.
+     * 
+     * @param cx
+     *            the execution context
+     * @param cause
+     *            the cause of the new error
+     * @param message
+     *            the error message
+     * @param file
+     *            the file name
+     * @param line
+     *            the line number
+     * @param column
+     *            the column number
+     * @return the new script exception object
+     */
+    public static ScriptException newReferenceError(ExecutionContext cx, Throwable cause,
+            String message, String file, int line, int column) {
+        return newError(cx, cause, Intrinsics.ReferenceErrorPrototype, message, file, line, column);
+    }
+
+    /**
      * Returns a new {@code SyntaxError} instance.
      * 
      * @param cx
@@ -194,6 +246,24 @@ public final class Errors {
      * 
      * @param cx
      *            the execution context
+     * @param cause
+     *            the cause of the new error
+     * @param key
+     *            the error message key
+     * @param args
+     *            the error message arguments
+     * @return the new script exception object
+     */
+    public static ScriptException newSyntaxError(ExecutionContext cx, Throwable cause,
+            Messages.Key key, String... args) {
+        return newError(cx, cause, Intrinsics.SyntaxErrorPrototype, key, args);
+    }
+
+    /**
+     * Returns a new {@code SyntaxError} instance.
+     * 
+     * @param cx
+     *            the execution context
      * @param message
      *            the error message
      * @param file
@@ -207,6 +277,28 @@ public final class Errors {
     public static ScriptException newSyntaxError(ExecutionContext cx, String message, String file,
             int line, int column) {
         return newError(cx, Intrinsics.SyntaxErrorPrototype, message, file, line, column);
+    }
+
+    /**
+     * Returns a new {@code SyntaxError} instance.
+     * 
+     * @param cx
+     *            the execution context
+     * @param cause
+     *            the cause of the new error
+     * @param message
+     *            the error message
+     * @param file
+     *            the file name
+     * @param line
+     *            the line number
+     * @param column
+     *            the column number
+     * @return the new script exception object
+     */
+    public static ScriptException newSyntaxError(ExecutionContext cx, Throwable cause,
+            String message, String file, int line, int column) {
+        return newError(cx, cause, Intrinsics.SyntaxErrorPrototype, message, file, line, column);
     }
 
     /**

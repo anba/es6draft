@@ -21,9 +21,9 @@ import java.util.Set;
 
 import com.github.anba.es6draft.compiler.CompilationException;
 import com.github.anba.es6draft.parser.ParserException;
+import com.github.anba.es6draft.runtime.EnvironmentRecord;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
-import com.github.anba.es6draft.runtime.ModuleEnvironmentRecord;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Errors;
 import com.github.anba.es6draft.runtime.internal.Messages;
@@ -95,6 +95,11 @@ public final class ModuleNamespaceObject extends OrdinaryObject {
             sortedExports = Collections.unmodifiableList(sorted);
         }
         return sortedExports;
+    }
+
+    @Override
+    public String toString() {
+        return String.format("%s, module=%s", super.toString(), module.getSourceCodeId());
     }
 
     @Override
@@ -247,7 +252,7 @@ public final class ModuleNamespaceObject extends OrdinaryObject {
                     new HashSet<ModuleRecord>());
         } catch (IOException e) {
             /* step 7 */
-            throw Errors.newInternalError(cx, Messages.Key.ModulesIOException, e.getMessage());
+            throw Errors.newInternalError(cx, e, Messages.Key.ModulesIOException, e.getMessage());
         } catch (ResolutionException | MalformedNameException e) {
             /* step 7 */
             throw e.toScriptException(cx);
@@ -261,6 +266,12 @@ public final class ModuleNamespaceObject extends OrdinaryObject {
         ModuleRecord targetModule = binding.getModule();
         /* step 10 */
         assert targetModule != null;
+        /* step 11 */
+        LexicalEnvironment<?> targetEnv = targetModule.getEnvironment();
+        /* step 12 */
+        if (targetEnv == null) {
+            throw newReferenceError(cx, Messages.Key.UninitializedBinding, binding.getBindingName());
+        }
         /* step ? (Extension: Export From) */
         if (binding.isNameSpaceExport()) {
             try {
@@ -271,14 +282,8 @@ public final class ModuleNamespaceObject extends OrdinaryObject {
                 throw e.toScriptException(cx);
             }
         }
-        /* step 11 */
-        LexicalEnvironment<ModuleEnvironmentRecord> targetEnv = targetModule.getEnvironment();
-        /* step 12 */
-        if (targetEnv == null) {
-            throw newReferenceError(cx, Messages.Key.UninitializedBinding, binding.getBindingName());
-        }
         /* step 13 */
-        ModuleEnvironmentRecord targetEnvRec = targetEnv.getEnvRec();
+        EnvironmentRecord targetEnvRec = targetEnv.getEnvRec();
         /* step 14 */
         return targetEnvRec.getBindingValue(binding.getBindingName(), true);
     }

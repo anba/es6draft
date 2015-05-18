@@ -47,7 +47,7 @@ import com.github.anba.es6draft.util.rules.ExceptionHandlers.StandardErrorHandle
 @RunWith(Parallelized.class)
 @UseParametersRunnerFactory(ParameterizedRunnerFactory.class)
 @TestConfiguration(name = "script.test", file = "resource:/test-configuration.properties")
-public class ScriptTest {
+public final class ScriptTest {
     private static final Configuration configuration = loadConfiguration(ScriptTest.class);
 
     @Parameters(name = "{0}")

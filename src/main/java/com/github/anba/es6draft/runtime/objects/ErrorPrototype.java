@@ -15,19 +15,17 @@ import static com.github.anba.es6draft.runtime.internal.Properties.createPropert
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initializable;
-import com.github.anba.es6draft.runtime.internal.JVMNames;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.Properties.Accessor;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
-import com.github.anba.es6draft.runtime.internal.SimpleIterator;
+import com.github.anba.es6draft.runtime.internal.StackTraces;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
@@ -136,7 +134,7 @@ public final class ErrorPrototype extends OrdinaryObject implements Initializabl
             if (!(thisValue instanceof ErrorObject)) {
                 return UNDEFINED;
             }
-            return getTopStackTraceElement((ErrorObject) thisValue).getFileName();
+            return StackTraces.getTopStackTraceElement((ErrorObject) thisValue).getFileName();
         }
 
         /**
@@ -175,7 +173,7 @@ public final class ErrorPrototype extends OrdinaryObject implements Initializabl
             if (!(thisValue instanceof ErrorObject)) {
                 return UNDEFINED;
             }
-            return getTopStackTraceElement((ErrorObject) thisValue).getLineNumber();
+            return StackTraces.getTopStackTraceElement((ErrorObject) thisValue).getLineNumber();
         }
 
         /**
@@ -297,17 +295,10 @@ public final class ErrorPrototype extends OrdinaryObject implements Initializabl
         }
     }
 
-    private static StackTraceElement getTopStackTraceElement(ErrorObject e) {
-        for (StackTraceElement element : new StackTraceElementIterable(e)) {
-            return element;
-        }
-        return new StackTraceElement("", "", "", -1);
-    }
-
     private static String getStack(ErrorObject e) {
         StringBuilder sb = new StringBuilder();
-        for (StackTraceElement element : new StackTraceElementIterable(e)) {
-            String methodName = getMethodName(element);
+        for (StackTraceElement element : StackTraces.getStackTrace(e)) {
+            String methodName = StackTraces.getMethodName(element);
             String fileName = element.getFileName();
             int lineNumber = element.getLineNumber();
             sb.append(methodName).append('@').append(fileName).append(':').append(lineNumber)
@@ -318,70 +309,13 @@ public final class ErrorPrototype extends OrdinaryObject implements Initializabl
 
     private static ArrayObject getStackTrace(ExecutionContext cx, ErrorObject e) {
         ArrayList<OrdinaryObject> list = new ArrayList<>();
-        for (StackTraceElement element : new StackTraceElementIterable(e)) {
+        for (StackTraceElement element : StackTraces.getStackTrace(e)) {
             OrdinaryObject elem = ObjectCreate(cx, Intrinsics.ObjectPrototype);
-            CreateDataProperty(cx, elem, "methodName", getMethodName(element));
+            CreateDataProperty(cx, elem, "methodName", StackTraces.getMethodName(element));
             CreateDataProperty(cx, elem, "fileName", element.getFileName());
             CreateDataProperty(cx, elem, "lineNumber", element.getLineNumber());
             list.add(elem);
         }
         return CreateArrayFromList(cx, list);
-    }
-
-    private static String getMethodName(StackTraceElement element) {
-        String methodName = JVMNames.fromBytecodeName(element.getMethodName());
-        assert methodName.charAt(0) != '!';
-        int i = methodName.lastIndexOf('~');
-        return methodName.substring(0, (i != -1 ? i : methodName.length()));
-    }
-
-    private static final class StackTraceElementIterable implements Iterable<StackTraceElement> {
-        private final ErrorObject error;
-
-        StackTraceElementIterable(ErrorObject error) {
-            this.error = error;
-        }
-
-        @Override
-        public Iterator<StackTraceElement> iterator() {
-            return new StackTraceElementIterator(error);
-        }
-    }
-
-    private static final class StackTraceElementIterator extends SimpleIterator<StackTraceElement> {
-        private StackTraceElement[] elements;
-        private int cursor = 0;
-        private Iterator<StackTraceElement[]> stackTraces;
-
-        StackTraceElementIterator(ErrorObject error) {
-            this.elements = error.getException().getStackTrace();
-            this.stackTraces = error.getStackTraces().iterator();
-        }
-
-        private static boolean isScriptStackFrame(StackTraceElement element) {
-            // filter stacktrace elements based on the encoding in Compiler/CodeGenerator
-            return element.getClassName().charAt(0) == '#'
-                    && JVMNames.fromBytecodeName(element.getMethodName()).charAt(0) != '!'
-                    && element.getLineNumber() > 0;
-        }
-
-        @Override
-        protected StackTraceElement findNext() {
-            while (elements != null) {
-                while (cursor < elements.length) {
-                    StackTraceElement element = elements[cursor++];
-                    if (isScriptStackFrame(element)) {
-                        return element;
-                    }
-                }
-                if (stackTraces.hasNext()) {
-                    cursor = 0;
-                    elements = stackTraces.next();
-                } else {
-                    elements = null;
-                }
-            }
-            return null;
-        }
     }
 }

@@ -131,7 +131,7 @@ public final class JSONParser {
      * Parses the input source string as a JSON text and returns its value. Throws a
      * {@link ParserException} if the source string is not a valid JSON text.
      * 
-     * @return the value of parsed JSON text
+     * @return the value of the parsed JSON text
      * @throws ParserException
      *             if the input source is not a valid JSON text
      */
@@ -142,6 +142,14 @@ public final class JSONParser {
         return jsonText();
     }
 
+    private <DOCUMENT, OBJECT, ARRAY, VALUE> DOCUMENT parse(
+            JSONBuilder<DOCUMENT, OBJECT, ARRAY, VALUE> builder) throws ParserException {
+        if (parseCalled)
+            throw new IllegalStateException();
+        parseCalled = true;
+        return jsonText(builder);
+    }
+
     /**
      * Parses the input source string as a JSON text and returns its value. Throws a
      * {@link ParserException} if the source string is not a valid JSON text.
@@ -150,12 +158,37 @@ public final class JSONParser {
      *            the execution context
      * @param source
      *            the source string
-     * @return the value of parsed JSON text
+     * @return the value of the parsed JSON text
      * @throws ParserException
      *             if the input source is not a valid JSON text
      */
     public static Object parse(ExecutionContext cx, String source) throws ParserException {
         return new JSONParser(cx, source).parse();
+    }
+
+    /**
+     * Parses the input source string as a JSON text. Throws a {@link ParserException} if the source
+     * string is not a valid JSON text.
+     * 
+     * @param <DOCUMENT>
+     *            the document type
+     * @param <OBJECT>
+     *            the object type
+     * @param <ARRAY>
+     *            the array type
+     * @param <VALUE>
+     *            the value type
+     * @param source
+     *            the source string
+     * @param builder
+     *            the builder object
+     * @return the value of the parsed JSON text
+     * @throws ParserException
+     *             if the input source is not a valid JSON text
+     */
+    public static <DOCUMENT, OBJECT, ARRAY, VALUE> DOCUMENT parse(String source,
+            JSONBuilder<DOCUMENT, OBJECT, ARRAY, VALUE> builder) throws ParserException {
+        return new JSONParser(null, source).parse(builder);
     }
 
     /* ***************************************************************************************** */
@@ -172,6 +205,13 @@ public final class JSONParser {
         Object value = jsonValue();
         consume(Token.EOF);
         return value;
+    }
+
+    private <DOCUMENT, OBJECT, ARRAY, VALUE> DOCUMENT jsonText(
+            JSONBuilder<DOCUMENT, OBJECT, ARRAY, VALUE> builder) {
+        VALUE value = jsonValue(builder);
+        consume(Token.EOF);
+        return builder.createDocument(value);
     }
 
     /**
@@ -215,6 +255,40 @@ public final class JSONParser {
         }
     }
 
+    private <DOCUMENT, OBJECT, ARRAY, VALUE> VALUE jsonValue(
+            JSONBuilder<DOCUMENT, OBJECT, ARRAY, VALUE> builder) {
+        Token tok = token();
+        switch (tok) {
+        case NULL:
+            consume(tok);
+            return builder.newNull();
+        case FALSE:
+            consume(tok);
+            return builder.newBoolean(false);
+        case TRUE:
+            consume(tok);
+            return builder.newBoolean(true);
+        case STRING: {
+            String string = ts.getString();
+            String rawValue = ts.getRaw();
+            consume(tok);
+            return builder.newString(string, rawValue);
+        }
+        case NUMBER: {
+            double number = ts.getNumber();
+            String rawValue = ts.getRaw();
+            consume(tok);
+            return builder.newNumber(number, rawValue);
+        }
+        case LC:
+            return jsonObject(builder);
+        case LB:
+            return jsonArray(builder);
+        default:
+            throw reportSyntaxError(Messages.Key.InvalidToken, tok.toString());
+        }
+    }
+
     /**
      * <pre>
      * JSONObject :
@@ -223,6 +297,8 @@ public final class JSONParser {
      * JSONMemberList :
      *      JSONMember 
      *      JSONMemberList , JSONMember
+     * JSONMember :
+     *      JSONString : JSONValue
      * </pre>
      * 
      * @return the script object represented by the JSON object
@@ -231,31 +307,43 @@ public final class JSONParser {
         OrdinaryObject object = ObjectCreate(cx, Intrinsics.ObjectPrototype);
         consume(Token.LC);
         if (token() != Token.RC) {
-            jsonMember(object);
-            while (token() != Token.RC) {
+            for (;;) {
+                consume(Token.STRING);
+                String name = ts.getString();
+                consume(Token.COLON);
+                Object value = jsonValue();
+                object.defineOwnProperty(cx, name, new PropertyDescriptor(value, true, true, true));
+                if (token() == Token.RC) {
+                    break;
+                }
                 consume(Token.COMMA);
-                jsonMember(object);
             }
         }
         consume(Token.RC);
         return object;
     }
 
-    /**
-     * <pre>
-     * JSONMember :
-     *      JSONString : JSONValue
-     * </pre>
-     * 
-     * @param object
-     *            the script object to hold the JSON member value
-     */
-    private void jsonMember(OrdinaryObject object) {
-        consume(Token.STRING);
-        String name = ts.getString();
-        consume(Token.COLON);
-        Object value = jsonValue();
-        object.defineOwnProperty(cx, name, new PropertyDescriptor(value, true, true, true));
+    private <DOCUMENT, OBJECT, ARRAY, VALUE> VALUE jsonObject(
+            JSONBuilder<DOCUMENT, OBJECT, ARRAY, VALUE> builder) {
+        consume(Token.LC);
+        OBJECT object = builder.newObject();
+        if (token() != Token.RC) {
+            for (long index = 0;; ++index) {
+                String name = ts.getString();
+                String rawName = ts.getRaw();
+                consume(Token.STRING);
+                builder.newProperty(object, name, rawName, index);
+                consume(Token.COLON);
+                VALUE value = jsonValue(builder);
+                builder.finishProperty(object, name, rawName, index, value);
+                if (token() == Token.RC) {
+                    break;
+                }
+                consume(Token.COMMA);
+            }
+        }
+        consume(Token.RC);
+        return builder.finishObject(object);
     }
 
     /**
@@ -274,17 +362,36 @@ public final class JSONParser {
         ArrayObject array = ArrayCreate(cx, 0);
         consume(Token.LB);
         if (token() != Token.RB) {
-            long index = 0;
-            Object value = jsonValue();
-            array.defineOwnProperty(cx, index++, new PropertyDescriptor(value, true, true, true));
-            while (token() != Token.RB) {
-                consume(Token.COMMA);
-                value = jsonValue();
+            for (long index = 0;;) {
+                Object value = jsonValue();
                 array.defineOwnProperty(cx, index++,
                         new PropertyDescriptor(value, true, true, true));
+                if (token() == Token.RB) {
+                    break;
+                }
+                consume(Token.COMMA);
             }
         }
         consume(Token.RB);
         return array;
+    }
+
+    private <DOCUMENT, OBJECT, ARRAY, VALUE> VALUE jsonArray(
+            JSONBuilder<DOCUMENT, OBJECT, ARRAY, VALUE> builder) {
+        consume(Token.LB);
+        ARRAY array = builder.newArray();
+        if (token() != Token.RB) {
+            for (long index = 0;; ++index) {
+                builder.newElement(array, index);
+                VALUE value = jsonValue(builder);
+                builder.finishElement(array, index, value);
+                if (token() == Token.RB) {
+                    break;
+                }
+                consume(Token.COMMA);
+            }
+        }
+        consume(Token.RB);
+        return builder.finishArray(array);
     }
 }

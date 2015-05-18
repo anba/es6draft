@@ -63,7 +63,7 @@ final class ClassDefinitionSubMethod extends ListSubMethod<ClassDefinition> {
 
     @Override
     int processNode(ClassDefinition node, int oldSize) {
-        List<PropertyDefinition> newProperties = newNodes(oldSize, node.getMethods(),
+        List<PropertyDefinition> newProperties = newNodes(oldSize, node.getProperties(),
                 new ClassElementMapper(), new ClassConflater(), MAX_CLASS_SIZE, MAX_SPREAD_SIZE);
         node.setProperties(newProperties);
         return validateSize(node);

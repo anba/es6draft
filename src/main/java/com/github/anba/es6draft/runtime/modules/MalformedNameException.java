@@ -6,6 +6,8 @@
  */
 package com.github.anba.es6draft.runtime.modules;
 
+import java.util.Locale;
+
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.internal.Errors;
 import com.github.anba.es6draft.runtime.internal.InternalThrowable;
@@ -26,12 +28,26 @@ public final class MalformedNameException extends Exception implements InternalT
      *            the unnormalized module name
      */
     public MalformedNameException(String unnormalizedName) {
-        super("cannot normalize name: " + unnormalizedName);
         this.unnormalizedName = unnormalizedName;
+    }
+
+    private String getFormattedMessage(Locale locale) {
+        return Messages.create(locale)
+                .getMessage(Messages.Key.ModulesInvalidName, unnormalizedName);
+    }
+
+    @Override
+    public String getMessage() {
+        return getFormattedMessage(Locale.ROOT);
+    }
+
+    @Override
+    public String getLocalizedMessage() {
+        return getFormattedMessage(Locale.getDefault());
     }
 
     @Override
     public ScriptException toScriptException(ExecutionContext cx) {
-        return Errors.newSyntaxError(cx, Messages.Key.ModulesInvalidName, unnormalizedName);
+        return Errors.newSyntaxError(cx, this, Messages.Key.ModulesInvalidName, unnormalizedName);
     }
 }

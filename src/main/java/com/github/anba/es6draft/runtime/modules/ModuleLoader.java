@@ -31,26 +31,6 @@ public interface ModuleLoader {
             throws MalformedNameException;
 
     /**
-     * Resolves and links the requested module record.
-     * 
-     * @param identifier
-     *            the module source identifier
-     * @param realm
-     *            the realm instance
-     * @return the module record
-     * @throws IOException
-     *             if there was any I/O error
-     * @throws IllegalArgumentException
-     *             if the source identifier cannot be processed by this loader
-     * @throws ParserException
-     *             if the module source contains any syntax errors
-     * @throws CompilationException
-     *             if the parsed module source cannot be compiled
-     */
-    ModuleRecord resolve(SourceIdentifier identifier, Realm realm) throws IOException,
-            IllegalArgumentException, ParserException, CompilationException;
-
-    /**
      * Retrieves the requested module record.
      * 
      * @param identifier
@@ -82,6 +62,26 @@ public interface ModuleLoader {
      */
     ModuleRecord define(SourceIdentifier identifier, ModuleSource source, Realm realm)
             throws IOException, IllegalArgumentException, ParserException, CompilationException;
+
+    /**
+     * Resolves and links the requested module record.
+     * 
+     * @param identifier
+     *            the module source identifier
+     * @param realm
+     *            the realm instance
+     * @return the module record
+     * @throws IOException
+     *             if there was any I/O error
+     * @throws IllegalArgumentException
+     *             if the source identifier cannot be processed by this loader
+     * @throws ParserException
+     *             if the module source contains any syntax errors
+     * @throws CompilationException
+     *             if the parsed module source cannot be compiled
+     */
+    ModuleRecord resolve(SourceIdentifier identifier, Realm realm) throws IOException,
+            IllegalArgumentException, ParserException, CompilationException;
 
     /**
      * Loads a module and all of its dependencies.

@@ -63,7 +63,7 @@ public class V8ShellGlobalObject extends ShellGlobalObject {
     @Override
     public void initializeScripted() throws IOException, URISyntaxException, ParserException,
             CompilationException {
-        includeNative(getScriptURL(LEGACY_SCRIPT));
+        includeNative(LEGACY_SCRIPT);
     }
 
     /**

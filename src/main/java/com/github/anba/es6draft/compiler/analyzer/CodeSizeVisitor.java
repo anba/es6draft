@@ -33,6 +33,10 @@ final class CodeSizeVisitor implements IntNodeVisitor<CodeSizeHandler> {
         return handler.reportSize(node, size);
     }
 
+    private int analyze(Node node, int nodeSize, CodeSizeHandler handler) {
+        return reportSize(node, nodeSize, handler);
+    }
+
     private int analyze(Node node, Node child, int nodeSize, CodeSizeHandler handler) {
         int size = nodeSize;
         if (child != null) {
@@ -358,7 +362,7 @@ final class CodeSizeVisitor implements IntNodeVisitor<CodeSizeHandler> {
 
     @Override
     public int visit(DebuggerStatement node, CodeSizeHandler handler) {
-        return 0;
+        return analyze(node, 0, handler);
     }
 
     @Override

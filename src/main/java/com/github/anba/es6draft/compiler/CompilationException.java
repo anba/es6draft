@@ -29,6 +29,6 @@ public final class CompilationException extends InternalException {
 
     @Override
     public ScriptException toScriptException(ExecutionContext cx) {
-        return Errors.newInternalError(cx, Messages.Key.InternalError, getMessage());
+        return Errors.newInternalError(cx, this, Messages.Key.InternalError, getMessage());
     }
 }

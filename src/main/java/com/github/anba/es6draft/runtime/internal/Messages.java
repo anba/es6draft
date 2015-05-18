@@ -167,6 +167,7 @@ public final class Messages {
         MissingSuperBinding("reference.missing_super_binding"),
         SuperDelete("reference.super_delete"),
         UninitializedBinding("reference.uninitialized_binding"),
+        UninitializedModuleBinding("reference.uninitialized_module_binding"),
         UnresolvableReference("reference.unresolvable_reference"),
         InvalidReference("reference.invalid_reference"),
         UninitializedThis("reference.uninitialized_this"),
@@ -216,22 +217,14 @@ public final class Messages {
         NoPrimitiveRepresentation("abstractops.no_primitive_representation"),
 
         // 15.2 Modules
-        ModulesUnresolvedImport("modules.unresolved_import"),
-        ModulesUnresolvedExport("modules.unresolved_export"),
-        ModulesCyclicExport("modules.cyclic_export"),
-        ModulesMissingDefaultExport("modules.missing_default_export"),
-        ModulesDuplicateStarExport("modules.duplicate_star_export"),
-        ModulesAmbiguousExport("modules.ambiguous_export"),
         ModulesIOException("modules.io_exception"),
         ModulesInvalidName("modules.invalid_name"),
-
-        // 15.2 Modules (TODO: unused)
-        ModulesOwnProperty("modules.own_property"),
+        ModulesAmbiguousExport("modules.ambiguous_export"),
+        ModulesAmbiguousImport("modules.ambiguous_import"),
+        ModulesMissingDefaultExport("modules.missing_default_export"),
+        ModulesUnresolvedExport("modules.unresolved_export"),
+        ModulesUnresolvedImport("modules.unresolved_import"),
         ModulesUnresolvedModule("modules.unresolved_module"),
-        ModulesDuplicateExport("modules.duplicate_export"),
-        ModulesDuplicateImport("modules.duplicate_import"),
-        ModulesDuplicateModule("modules.duplicate_module"),
-        ModulesAlreadyLoading("modules.already_loading"),
 
         // 18 The Global Object
         MalformedURI("globalobject.malformed_uri"),

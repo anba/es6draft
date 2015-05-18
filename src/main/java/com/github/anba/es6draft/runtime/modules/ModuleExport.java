@@ -19,12 +19,12 @@ public final class ModuleExport {
     private final ModuleRecord module;
     private final String bindingName;
 
-    ModuleExport(ModuleRecord module, String bindingName) {
+    public ModuleExport(ModuleRecord module, String bindingName) {
         this.module = module;
         this.bindingName = bindingName;
     }
 
-    ModuleExport(ModuleRecord module) {
+    public ModuleExport(ModuleRecord module) {
         this.module = module;
         this.bindingName = null;
     }

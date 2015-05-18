@@ -212,7 +212,7 @@ public class DeclarativeEnvironmentRecord implements EnvironmentRecord {
     public final boolean hasBinding(String name) {
         /* step 1 (omitted) */
         /* steps 2-3 */
-        return bindings.containsKey(name);
+        return !bindings.isEmpty() && bindings.containsKey(name);
     }
 
     /**

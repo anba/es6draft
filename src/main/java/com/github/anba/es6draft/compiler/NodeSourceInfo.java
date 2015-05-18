@@ -16,6 +16,8 @@ import com.github.anba.es6draft.ast.FunctionNode;
 import com.github.anba.es6draft.ast.Module;
 import com.github.anba.es6draft.ast.Node;
 import com.github.anba.es6draft.ast.Script;
+import com.github.anba.es6draft.ast.scope.Scope;
+import com.github.anba.es6draft.ast.scope.ScriptScope;
 import com.github.anba.es6draft.compiler.assembler.SourceInfo;
 import com.github.anba.es6draft.runtime.internal.Source;
 
@@ -35,7 +37,7 @@ final class NodeSourceInfo {
     }
 
     static SourceInfo create(FunctionNode function, EnumSet<Compiler.Option> compilerOptions) {
-        return new FunctionSourceInfo();
+        return new FunctionSourceInfo(function, compilerOptions.contains(Compiler.Option.SourceMap));
     }
 
     private static final class ScriptSourceInfo implements SourceInfo {
@@ -79,14 +81,30 @@ final class NodeSourceInfo {
     }
 
     private static final class FunctionSourceInfo implements SourceInfo {
+        private final FunctionNode function;
+        private final boolean includeSourceMap;
+
+        FunctionSourceInfo(FunctionNode function, boolean includeSourceMap) {
+            this.function = function;
+            this.includeSourceMap = includeSourceMap;
+        }
+
         @Override
         public String getFileName() {
-            return "<Function>";
+            // return "<Function>";
+            return functionScript(function).getSource().getName();
         }
 
         @Override
         public String getSourceMap() {
-            return null;
+            Script script = functionScript(function);
+            return sourceMap(script, script.getSource(), includeSourceMap);
+        }
+
+        private static Script functionScript(FunctionNode function) {
+            Scope enclosingScope = function.getScope().getEnclosingScope();
+            assert enclosingScope instanceof ScriptScope;
+            return ((ScriptScope) enclosingScope).getNode();
         }
     }
 

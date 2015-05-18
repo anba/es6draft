@@ -523,6 +523,25 @@ public final class Properties {
     }
 
     /**
+     * Creates a new native function.
+     * 
+     * @param <OWNER>
+     *            the owner class type
+     * @param cx
+     *            the execution context
+     * @param owner
+     *            the owner object instance
+     * @param holder
+     *            the class which holds the properties
+     * @return the new function object
+     */
+    public static <OWNER> Callable createFunction(ExecutionContext cx, OWNER owner,
+            Class<OWNER> holder) {
+        assert !holder.getName().startsWith(INTERNAL_PACKAGE);
+        return createExternalFunction(cx, owner, holder);
+    }
+
+    /**
      * Creates a new native script class.
      * 
      * @param cx
@@ -817,6 +836,19 @@ public final class Properties {
         if (layout.accessors != null) {
             createExternalAccessors(cx, target, owner, layout, converter);
         }
+    }
+
+    private static <OWNER> NativeFunction createExternalFunction(ExecutionContext cx, OWNER owner,
+            Class<OWNER> holder) {
+        ObjectLayout layout = externalLayouts.get(holder);
+        if (layout.functions == null || layout.functions.size() != 1) {
+            throw new IllegalArgumentException();
+        }
+        Converter converter = new Converter(cx);
+        Entry<Function, MethodHandle> entry = layout.functions.entrySet().iterator().next();
+        Function function = entry.getKey();
+        MethodHandle handle = getInstanceMethodHandle(cx, converter, entry.getValue(), owner);
+        return new NativeFunction(cx.getRealm(), function.name(), function.arity(), handle);
     }
 
     private static <OWNER> void createExternalValues(ExecutionContext cx, ScriptObject target,

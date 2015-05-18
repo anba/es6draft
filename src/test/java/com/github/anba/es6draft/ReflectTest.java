@@ -45,7 +45,7 @@ import com.github.anba.es6draft.util.rules.ExceptionHandlers.StandardErrorHandle
 @RunWith(Parallelized.class)
 @UseParametersRunnerFactory(ParameterizedRunnerFactory.class)
 @TestConfiguration(name = "reflect.test", file = "resource:/test-configuration.properties")
-public class ReflectTest {
+public final class ReflectTest {
     private static final Configuration configuration = loadConfiguration(ReflectTest.class);
 
     @Parameters(name = "{0}")

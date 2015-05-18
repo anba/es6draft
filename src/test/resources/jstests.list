@@ -155,6 +155,9 @@ ecma_6/RegExp/constructor-constructor.js
 # ES6: completion reform
 ecma/Statements/12.6.3-2.js
 
+# ES6: invalid test - Date.prototype.toString.call(null) throws TypeError
+ecma_6/Date/toString-generic.js
+
 
 ####################################
 # Intl only partially supported    #
@@ -374,11 +377,6 @@ js1_8_5/extensions/censor-strict-caller.js
 # String.prototype.split changed to use ToLength instead of ToUint32
 ecma_2/String/split-002.js
 ecma_5/String/split-undefined-separator.js
-
-# Date.prototype.toString returns "Invalid Date" on non-Date objects
-ecma/Date/15.9.5.2-2-n.js
-ecma_2/Exceptions/date-001.js
-js1_4/Regress/date-001-n.js
 
 # Generator.prototype.return
 ecma_6/Generators/runtime.js

@@ -42,7 +42,7 @@ public abstract class IntegerIndexedObject extends OrdinaryObject {
     }
 
     @Override
-    public boolean hasSpecialIndexedProperties() {
+    public final boolean hasSpecialIndexedProperties() {
         return true;
     }
 

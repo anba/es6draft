@@ -32,7 +32,7 @@ public final class ClassDeclaration extends Declaration implements ClassDefiniti
 
     public ClassDeclaration(long beginPosition, long endPosition, BlockScope scope,
             List<Expression> decorators, BindingIdentifier identifier, Expression heritage,
-            List<MethodDefinition> methods, String className) {
+            List<MethodDefinition> methods, List<PropertyDefinition> properties, String className) {
         super(beginPosition, endPosition);
         this.scope = scope;
         this.decorators = decorators;
@@ -40,6 +40,7 @@ public final class ClassDeclaration extends Declaration implements ClassDefiniti
         this.name = identifier != null ? identifier.getName() : new Name(Name.DEFAULT_EXPORT);
         this.heritage = heritage;
         this.methods = methods;
+        this.properties = properties;
         this.constructor = ConstructorMethod(methods);
         this.className = className;
     }

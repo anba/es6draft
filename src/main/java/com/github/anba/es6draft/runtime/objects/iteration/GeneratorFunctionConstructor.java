@@ -72,7 +72,7 @@ public final class GeneratorFunctionConstructor extends BuiltinConstructor imple
     public OrdinaryGenerator call(ExecutionContext callerContext, Object thisValue, Object... args) {
         ExecutionContext calleeContext = calleeContext();
         /* steps 1-3 */
-        return CreateDynamicFunction(calleeContext, this, args);
+        return CreateDynamicFunction(callerContext, calleeContext, this, args);
     }
 
     /**
@@ -83,12 +83,14 @@ public final class GeneratorFunctionConstructor extends BuiltinConstructor imple
             Object... args) {
         ExecutionContext calleeContext = calleeContext();
         /* steps 1-3 */
-        return CreateDynamicFunction(calleeContext, newTarget, args);
+        return CreateDynamicFunction(callerContext, calleeContext, newTarget, args);
     }
 
     /**
      * 19.2.1.1.1 RuntimeSemantics: CreateDynamicFunction(constructor, newTarget, kind, args)
      * 
+     * @param callerContext
+     *            the caller execution context
      * @param cx
      *            the execution context
      * @param newTarget
@@ -97,8 +99,8 @@ public final class GeneratorFunctionConstructor extends BuiltinConstructor imple
      *            the function arguments
      * @return the new generator function object
      */
-    private OrdinaryGenerator CreateDynamicFunction(ExecutionContext cx, Constructor newTarget,
-            Object[] args) {
+    private static OrdinaryGenerator CreateDynamicFunction(ExecutionContext callerContext,
+            ExecutionContext cx, Constructor newTarget, Object... args) {
         /* step 1 (not applicable) */
         /* step 2 (not applicable) */
         /* step 3 */
@@ -128,7 +130,7 @@ public final class GeneratorFunctionConstructor extends BuiltinConstructor imple
         }
 
         /* steps 11, 13-19 */
-        Source source = generatorSource(cx);
+        Source source = generatorSource(cx.getRealm(), callerContext);
         CompiledGenerator exec = new CompiledGenerator(source);
         RuntimeInfo.Function function;
         try {
@@ -186,8 +188,8 @@ public final class GeneratorFunctionConstructor extends BuiltinConstructor imple
         public static final String name = "GeneratorFunction";
     }
 
-    private Source generatorSource(ExecutionContext caller) {
-        Source baseSource = getRealm().sourceInfo(caller);
+    private static Source generatorSource(Realm realm, ExecutionContext caller) {
+        Source baseSource = realm.sourceInfo(caller);
         String sourceName;
         if (baseSource != null) {
             sourceName = String.format("<GeneratorFunction> (%s)", baseSource.getName());

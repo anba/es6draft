@@ -9,6 +9,7 @@ package com.github.anba.es6draft.runtime.modules;
 import static com.github.anba.es6draft.runtime.types.builtins.ModuleNamespaceObject.ModuleNamespaceCreate;
 
 import java.io.IOException;
+import java.nio.file.NoSuchFileException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
@@ -18,7 +19,7 @@ import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Messages;
-import com.github.anba.es6draft.runtime.types.builtins.ModuleNamespaceObject;
+import com.github.anba.es6draft.runtime.types.ScriptObject;
 
 /**
  * <ul>
@@ -42,9 +43,9 @@ public final class ModuleSemantics {
      * @throws IOException
      *             if there was any I/O error
      * @throws MalformedNameException
-     *             if any imported module request cannot be normalized
+     *             if the module specifier cannot be normalized
      * @throws ResolutionException
-     *             if any export binding cannot be resolved
+     *             if the module cannot be resolved
      * @throws ParserException
      *             if the module source contains any syntax errors
      * @throws CompilationException
@@ -58,7 +59,12 @@ public final class ModuleSemantics {
         ModuleLoader moduleLoader = realm.getModuleLoader();
         SourceIdentifier moduleId = moduleLoader.normalizeName(specifier,
                 referencingModule.getSourceCodeId());
-        return moduleLoader.resolve(moduleId, realm);
+        try {
+            return moduleLoader.resolve(moduleId, realm);
+        } catch (NoSuchFileException e) {
+            throw new ResolutionException(Messages.Key.ModulesUnresolvedModule,
+                    moduleId.toString(), referencingModule.getSourceCodeId().toString());
+        }
     }
 
     /**
@@ -76,11 +82,11 @@ public final class ModuleSemantics {
      * @throws ResolutionException
      *             if any export binding cannot be resolved
      */
-    public static ModuleNamespaceObject GetModuleNamespace(ExecutionContext cx, ModuleRecord module)
+    public static ScriptObject GetModuleNamespace(ExecutionContext cx, ModuleRecord module)
             throws IOException, MalformedNameException, ResolutionException {
         /* step 1 (not applicable) */
         /* step 2 */
-        ModuleNamespaceObject namespace = module.getNamespace();
+        ScriptObject namespace = module.getNamespace();
         /* step 3 */
         if (namespace == null) {
             /* steps 3.a-b */

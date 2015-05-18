@@ -29,13 +29,14 @@ public final class ClassExpression extends Expression implements ClassDefinition
 
     public ClassExpression(long beginPosition, long endPosition, BlockScope scope,
             List<Expression> decorators, BindingIdentifier identifier, Expression heritage,
-            List<MethodDefinition> methods) {
+            List<MethodDefinition> methods, List<PropertyDefinition> properties) {
         super(beginPosition, endPosition);
         this.scope = scope;
         this.decorators = decorators;
         this.identifier = identifier;
         this.heritage = heritage;
         this.methods = methods;
+        this.properties = properties;
         this.constructor = ConstructorMethod(methods);
     }
 

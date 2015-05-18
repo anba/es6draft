@@ -139,8 +139,8 @@ public class ParserException extends InternalException {
     public ScriptException toScriptException(ExecutionContext cx) {
         String message = getFormattedMessage(cx.getRealm());
         if (type == ExceptionType.ReferenceError) {
-            return Errors.newReferenceError(cx, message, getFile(), getLine(), getColumn());
+            return Errors.newReferenceError(cx, this, message, getFile(), getLine(), getColumn());
         }
-        return Errors.newSyntaxError(cx, message, getFile(), getLine(), getColumn());
+        return Errors.newSyntaxError(cx, this, message, getFile(), getLine(), getColumn());
     }
 }

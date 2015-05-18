@@ -133,13 +133,13 @@ public final class NativesV8Test {
         public void initializeScripted() throws IOException, URISyntaxException, ParserException,
                 CompilationException {
             // super.initializeScripted();
-            includeNative(getScriptURL("compat.js"));
-            includeNative(getScriptURL("cyclic.js"));
-            includeNative(getScriptURL("generator.js"));
-            includeNative(getScriptURL("internal-error.js"));
-            includeNative(getScriptURL("proxy.js"));
-            includeNative(getScriptURL("stacktrace.js"));
-            includeNative(getScriptURL("typed-array.js"));
+            includeNative("compat.js");
+            includeNative("cyclic.js");
+            includeNative("generator.js");
+            includeNative("internal-error.js");
+            includeNative("proxy.js");
+            includeNative("stacktrace.js");
+            includeNative("typed-array.js");
         }
 
         public static ObjectAllocator<V8NativeTestGlobalObject> newGlobalObjectAllocator(

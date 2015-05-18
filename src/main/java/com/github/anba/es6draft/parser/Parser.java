@@ -616,6 +616,11 @@ public final class Parser {
             return node;
         }
 
+        @Override
+        public void addImplicitBinding(Name name) {
+            addLexDeclaredName(name);
+        }
+
         void addUndeclaredExportBinding(long position, Name name) {
             if (!undeclaredExportBindings.containsKey(name)) {
                 undeclaredExportBindings.put(name, position);
@@ -2941,6 +2946,10 @@ public final class Parser {
             FormalParameterList parameters = formalParameters(Token.RP);
             consume(Token.RP);
 
+            if (token() == Token.COLON && isEnabled(CompatibilityOption.TypeAnnotation)) {
+                returnTypeAnnotation();
+            }
+
             String header, body;
             List<StatementListItem> statements;
             if (token() != Token.LC && isEnabled(CompatibilityOption.ExpressionClosure)) {
@@ -3004,6 +3013,10 @@ public final class Parser {
             int startFunction = ts.position() - 1;
             FormalParameterList parameters = formalParameters(Token.RP);
             consume(Token.RP);
+
+            if (token() == Token.COLON && isEnabled(CompatibilityOption.TypeAnnotation)) {
+                returnTypeAnnotation();
+            }
 
             String header, body;
             List<StatementListItem> statements;
@@ -3143,7 +3156,7 @@ public final class Parser {
      */
     private FormalParameter functionRestParameter() {
         long begin = ts.beginPosition();
-        BindingRestElement restElement = bindingRestElement();
+        BindingRestElement restElement = bindingRestElement(true);
         return new FormalParameter(begin, ts.endPosition(), restElement);
     }
 
@@ -3164,7 +3177,7 @@ public final class Parser {
             scope = enterFormalParameterContext();
         }
         long begin = ts.beginPosition();
-        BindingElement element = bindingElement();
+        BindingElement element = bindingElement(true, true);
         FormalParameter parameter = new FormalParameter(begin, ts.endPosition(), element, scope);
         if (nonSimple) {
             scope.node = parameter;
@@ -3520,7 +3533,7 @@ public final class Parser {
      *            the list of method decorators
      * @return the parsed method definition
      */
-    private MethodDefinition methodDefinition(MethodAllocation allocation, boolean hasExtends,
+    private PropertyDefinition methodDefinition(MethodAllocation allocation, boolean hasExtends,
             List<Expression> decorators) {
         switch (methodType()) {
         case AsyncFunction:
@@ -3534,21 +3547,6 @@ public final class Parser {
         default:
             return normalMethod(allocation, hasExtends, decorators);
         }
-    }
-
-    /**
-     * <strong>[Extension] Decorators</strong>
-     */
-    private List<Expression> decorators() {
-        InlineArrayList<Expression> decorators = newList();
-        do {
-            // FIXME: bug in spec proposal, AssignmentExpression not valid, cf. `{ @ F * G () {} }`.
-            // And: `{ @ D ["m"] () {} }`.
-            // https://github.com/wycats/javascript-decorators/issues/10
-            consume(Token.AT);
-            decorators.add(leftHandSideExpressionWithValidation(false));
-        } while (token() == Token.AT);
-        return decorators;
     }
 
     /**
@@ -3567,10 +3565,16 @@ public final class Parser {
      *            the list of method decorators
      * @return the parsed method definition
      */
-    private MethodDefinition normalMethod(MethodAllocation allocation, boolean hasExtends,
+    private PropertyDefinition normalMethod(MethodAllocation allocation, boolean hasExtends,
             List<Expression> decorators) {
         long begin = ts.beginPosition();
         PropertyName propertyName = propertyName();
+        if (token() == Token.ASSIGN && allocation == MethodAllocation.Class && decorators.isEmpty()
+                && isEnabled(CompatibilityOption.StaticClassProperties)) {
+            consume(Token.ASSIGN);
+            Expression propertyValue = assignmentExpression(true);
+            return new PropertyValueDefinition(begin, ts.endPosition(), propertyName, propertyValue);
+        }
         return normalMethod(allocation, hasExtends, decorators, begin, propertyName);
     }
 
@@ -3590,6 +3594,11 @@ public final class Parser {
             int startFunction = ts.position() - 1;
             FormalParameterList parameters = strictFormalParameters(Token.RP);
             consume(Token.RP);
+
+            if (token() == Token.COLON && isEnabled(CompatibilityOption.TypeAnnotation)) {
+                returnTypeAnnotation();
+            }
+
             consume(Token.LC);
             int startBody = ts.position();
             List<StatementListItem> statements = functionBody(parameters, Token.RC);
@@ -3766,7 +3775,7 @@ public final class Parser {
                 return MethodType.AsyncFunction;
             }
         }
-        return MethodType.Function; // or Constructor
+        return MethodType.Function; // or Constructor, or Property
     }
 
     private static boolean isPropertyName(Token token) {
@@ -3837,6 +3846,11 @@ public final class Parser {
             int startFunction = ts.position() - 1;
             FormalParameterList parameters = strictFormalParameters(Token.RP);
             consume(Token.RP);
+
+            if (token() == Token.COLON && isEnabled(CompatibilityOption.TypeAnnotation)) {
+                returnTypeAnnotation();
+            }
+
             consume(Token.LC);
             int startBody = ts.position();
             List<StatementListItem> statements = functionBody(parameters, Token.RC);
@@ -3901,6 +3915,11 @@ public final class Parser {
             int startFunction = ts.position() - 1;
             FormalParameterList parameters = formalParameters(Token.RP);
             consume(Token.RP);
+
+            if (token() == Token.COLON && isEnabled(CompatibilityOption.TypeAnnotation)) {
+                returnTypeAnnotation();
+            }
+
             consume(Token.LC);
             int startBody = ts.position();
             List<StatementListItem> statements = functionBody(parameters, Token.RC);
@@ -3966,6 +3985,11 @@ public final class Parser {
             int startFunction = ts.position() - 1;
             FormalParameterList parameters = formalParameters(Token.RP);
             consume(Token.RP);
+
+            if (token() == Token.COLON && isEnabled(CompatibilityOption.TypeAnnotation)) {
+                returnTypeAnnotation();
+            }
+
             consume(Token.LC);
             int startBody = ts.position();
             List<StatementListItem> statements = functionBody(parameters, Token.RC);
@@ -4189,14 +4213,15 @@ public final class Parser {
                 heritage = classHeritage();
             }
             consume(Token.LC);
-            List<MethodDefinition> methods = classBody(identifier, heritage != null);
+            InlineArrayList<MethodDefinition> methods = newList();
+            List<PropertyDefinition> properties = classBody(identifier, heritage != null, methods);
             if (hasName) {
                 exitBlockContext();
             }
             consume(Token.RC);
 
             ClassDeclaration decl = new ClassDeclaration(begin, ts.endPosition(), scope,
-                    decorators, identifier, heritage, methods, className);
+                    decorators, identifier, heritage, methods, properties, className);
             if (hasName) {
                 scope.node = decl;
             }
@@ -4243,14 +4268,15 @@ public final class Parser {
                 heritage = classHeritage();
             }
             consume(Token.LC);
-            List<MethodDefinition> methods = classBody(name, heritage != null);
+            InlineArrayList<MethodDefinition> methods = newList();
+            List<PropertyDefinition> properties = classBody(name, heritage != null, methods);
             if (name != null) {
                 exitBlockContext();
             }
             consume(Token.RC);
 
             ClassExpression expr = new ClassExpression(begin, ts.endPosition(), scope, decorators,
-                    name, heritage, methods);
+                    name, heritage, methods, properties);
             if (name != null) {
                 scope.node = expr;
             }
@@ -4296,9 +4322,10 @@ public final class Parser {
      *            {@code true} if the ClassHeritage expression is present
      * @return the class methods in source order
      */
-    private List<MethodDefinition> classBody(BindingIdentifier className, boolean hasExtends) {
+    private List<PropertyDefinition> classBody(BindingIdentifier className, boolean hasExtends,
+            InlineArrayList<MethodDefinition> methods) {
         int beginLine = ts.getLine();
-        InlineArrayList<MethodDefinition> methods = newList();
+        InlineArrayList<PropertyDefinition> properties = newList();
         InlineArrayList<MethodDefinition> staticMethods = newList();
         InlineArrayList<MethodDefinition> prototypeMethods = newList();
         while (token() != Token.RC) {
@@ -4307,19 +4334,27 @@ public final class Parser {
                 continue;
             }
             List<Expression> decorators = token() == Token.AT ? decorators() : NO_DECORATORS;
-            MethodDefinition method;
+            PropertyDefinition property;
+            MethodDefinition method = null;
             if (token() == Token.STATIC && !LOOKAHEAD(Token.LP)) {
+                // TODO: Add "static" start position to node?
                 consume(Token.STATIC);
-                method = methodDefinition(MethodAllocation.Class, hasExtends, decorators);
-                staticMethods.add(method);
+                property = methodDefinition(MethodAllocation.Class, hasExtends, decorators);
+                if (property instanceof MethodDefinition) {
+                    method = (MethodDefinition) property;
+                    staticMethods.add(method);
+                    methods.add(method);
+                }
             } else {
-                method = methodDefinition(MethodAllocation.Prototype, hasExtends, decorators);
+                property = methodDefinition(MethodAllocation.Prototype, hasExtends, decorators);
+                method = (MethodDefinition) property;
                 prototypeMethods.add(method);
+                methods.add(method);
             }
-            if (className != null) {
+            if (className != null && method != null) {
                 method.setClassName(className.getName().getIdentifier());
             }
-            methods.add(method);
+            properties.add(property);
         }
 
         classBody_EarlyErrors(staticMethods, true);
@@ -4333,7 +4368,7 @@ public final class Parser {
             methods.add(constructor);
         }
 
-        return methods;
+        return properties;
     }
 
     private MethodDefinition createSyntheticClassConstructor(int beginLine, boolean hasExtends) {
@@ -4347,7 +4382,8 @@ public final class Parser {
         TokenStream syntheticStream = new TokenStream(this, new TokenStreamInput(sourceText));
         try {
             ts = syntheticStream.initialize(beginLine);
-            return methodDefinition(MethodAllocation.Prototype, hasExtends, NO_DECORATORS);
+            return (MethodDefinition) methodDefinition(MethodAllocation.Prototype, hasExtends,
+                    NO_DECORATORS);
         } finally {
             ts = tokenStream;
         }
@@ -4453,6 +4489,10 @@ public final class Parser {
             FormalParameterList parameters = formalParameters(Token.RP);
             consume(Token.RP);
 
+            if (token() == Token.COLON && isEnabled(CompatibilityOption.TypeAnnotation)) {
+                returnTypeAnnotation();
+            }
+
             consume(Token.LC);
             int startBody = ts.position();
             List<StatementListItem> statements = functionBody(parameters, Token.RC);
@@ -4510,6 +4550,10 @@ public final class Parser {
             int startFunction = ts.position() - 1;
             FormalParameterList parameters = formalParameters(Token.RP);
             consume(Token.RP);
+
+            if (token() == Token.COLON && isEnabled(CompatibilityOption.TypeAnnotation)) {
+                returnTypeAnnotation();
+            }
 
             consume(Token.LC);
             int startBody = ts.position();
@@ -4681,6 +4725,11 @@ public final class Parser {
             int startFunction = ts.position() - 1;
             FormalParameterList parameters = strictFormalParameters(Token.RP);
             consume(Token.RP);
+
+            if (token() == Token.COLON && isEnabled(CompatibilityOption.TypeAnnotation)) {
+                returnTypeAnnotation();
+            }
+
             consume(Token.LC);
             int startBody = ts.position();
             List<StatementListItem> statements = functionBody(parameters, Token.RC);
@@ -4720,6 +4769,73 @@ public final class Parser {
         consume(Token.AWAIT);
         Expression expr = unaryExpression();
         return new AwaitExpression(begin, ts.endPosition(), expr);
+    }
+
+    /**
+     * <strong>[Extension] Decorators</strong>
+     */
+    private List<Expression> decorators() {
+        InlineArrayList<Expression> decorators = newList();
+        do {
+            // FIXME: bug in spec proposal, AssignmentExpression not valid, cf. `{ @ F * G () {} }`.
+            // And: `{ @ D ["m"] () {} }`.
+            // https://github.com/wycats/javascript-decorators/issues/10
+            consume(Token.AT);
+            decorators.add(leftHandSideExpressionWithValidation(false));
+        } while (token() == Token.AT);
+        return decorators;
+    }
+
+    private void parameterTypeAnnotation() {
+        // NB: Parse and ignore type annotations.
+        if (token() == Token.HOOK) {
+            consume(Token.HOOK);
+        }
+        if (token() == Token.COLON) {
+            typeAnnotation();
+        }
+    }
+
+    private void returnTypeAnnotation() {
+        // NB: Parse and ignore type annotations.
+        typeAnnotation();
+    }
+
+    private void typeAnnotation() {
+        // NB: Parse and ignore type annotations.
+        consume(Token.COLON);
+        if (token() == Token.HOOK) {
+            consume(Token.HOOK);
+        }
+        if (token() == Token.LC) {
+            objectTypeAnnotation();
+        } else if (token() == Token.STRING) {
+            stringLiteral();
+        } else {
+            identifier(true);
+            if (token() == Token.LT) {
+                consume(Token.LT);
+                identifier(true);
+                consume(Token.GT);
+            }
+        }
+    }
+
+    private void objectTypeAnnotation() {
+        consume(Token.LC);
+        while (token() != Token.RC) {
+            identifier(true);
+            if (token() == Token.HOOK) {
+                consume(Token.HOOK);
+            }
+            typeAnnotation();
+            if (token() == Token.SEMI) {
+                consume(Token.SEMI);
+            } else {
+                break;
+            }
+        }
+        consume(Token.RC);
     }
 
     /* ***************************************************************************************** */
@@ -5175,7 +5291,7 @@ public final class Parser {
         Binding binding;
         Expression initializer = null;
         if (token() == Token.LC || token() == Token.LB) {
-            BindingPattern bindingPattern = bindingPattern();
+            BindingPattern bindingPattern = bindingPattern(true);
             addVarDeclaredName(bindingPattern);
             if (allowIn) {
                 initializer = initializer(allowIn);
@@ -5196,21 +5312,6 @@ public final class Parser {
             binding = bindingIdentifier;
         }
         return new VariableDeclaration(binding, initializer);
-    }
-
-    /**
-     * <strong>[13.2.3] Destructuring Binding Patterns</strong>
-     * 
-     * <pre>
-     * BindingPattern<span><sub>[Yield, GeneratorParameter]</sub></span> :
-     *     ObjectBindingPattern<span><sub>[?Yield, ?GeneratorParameter]</sub></span>
-     *     ArrayBindingPattern<span><sub>[?Yield, ?GeneratorParameter]</sub></span>
-     * </pre>
-     * 
-     * @return the parsed binding pattern
-     */
-    private BindingPattern bindingPattern() {
-        return bindingPattern(true);
     }
 
     /**
@@ -5293,14 +5394,7 @@ public final class Parser {
         if (token() == Token.LB || SAFE_LOOKAHEAD(Token.COLON)) {
             PropertyName propertyName = propertyName();
             consume(Token.COLON);
-            Binding binding;
-            if (token() == Token.LC) {
-                binding = objectBindingPattern(allowLet);
-            } else if (token() == Token.LB) {
-                binding = arrayBindingPattern(allowLet);
-            } else {
-                binding = bindingIdentifier(allowLet);
-            }
+            Binding binding = binding(allowLet);
             Expression initializer = null;
             if (token() == Token.ASSIGN) {
                 initializer = initializer(true);
@@ -5365,25 +5459,12 @@ public final class Parser {
                 list.add(bindingRestElement(allowLet));
                 break;
             } else {
-                list.add(bindingElement(allowLet));
+                list.add(bindingElement(allowLet, false));
                 needComma = true;
             }
         }
         consume(Token.RB);
         return new ArrayBindingPattern(begin, ts.endPosition(), list);
-    }
-
-    /**
-     * <pre>
-     * Binding<span><sub>[Yield, GeneratorParameter]</sub></span> :
-     *     BindingIdentifier<span><sub>[?Yield, ?GeneratorParameter]</sub></span>
-     *     BindingPattern<span><sub>[?Yield, ?GeneratorParameter]</sub></span>
-     * </pre>
-     * 
-     * @return the parsed binding node
-     */
-    private Binding binding() {
-        return binding(true);
     }
 
     /**
@@ -5418,29 +5499,20 @@ public final class Parser {
      *     <span><sub>[~GeneratorParameter]</sub></span>BindingPattern<span><sub>[?Yield]</sub></span> Initializer<span><sub>[In, ?Yield]opt</sub></span>
      * </pre>
      * 
-     * @return the parsed binding element
-     */
-    private BindingElement bindingElement() {
-        return bindingElement(true);
-    }
-
-    /**
-     * <strong>[13.2.3] Destructuring Binding Patterns</strong>
-     * 
-     * <pre>
-     * BindingElement<span><sub>[Yield, GeneratorParameter]</sub></span> :
-     *     SingleNameBinding<span><sub>[?Yield, ?GeneratorParameter]</sub></span>
-     *     <span><sub>[+GeneratorParameter]</sub></span>BindingPattern<span><sub>[?Yield, GeneratorParameter]</sub></span> Initializer<span><sub>[In]opt</sub></span>
-     *     <span><sub>[~GeneratorParameter]</sub></span>BindingPattern<span><sub>[?Yield]</sub></span> Initializer<span><sub>[In, ?Yield]opt</sub></span>
-     * </pre>
-     * 
      * @param allowLet
      *            the flag to select if 'let' is allowed as a binding name
+     * @param allowType
+     *            the flag to select if type annotations are allowed
      * @return the parsed binding element
      */
-    private BindingElement bindingElement(boolean allowLet) {
+    private BindingElement bindingElement(boolean allowLet, boolean allowType) {
         long begin = ts.beginPosition();
         Binding binding = binding(allowLet);
+        if (allowType && binding instanceof BindingIdentifier
+                && (token() == Token.COLON || token() == Token.HOOK)
+                && isEnabled(CompatibilityOption.TypeAnnotation)) {
+            parameterTypeAnnotation();
+        }
         Expression initializer = null;
         if (token() == Token.ASSIGN) {
             initializer = initializer(true);
@@ -5449,21 +5521,6 @@ public final class Parser {
             }
         }
         return new BindingElement(begin, ts.endPosition(), binding, initializer);
-    }
-
-    /**
-     * <strong>[13.2.3] Destructuring Binding Patterns</strong>
-     * 
-     * <pre>
-     * BindingRestElement<span><sub>[Yield, GeneratorParameter]</sub></span> :
-     *     <span><sub>[+GeneratorParameter]</sub></span>... BindingIdentifier<span><sub>[Yield]</sub></span>
-     *     <span><sub>[~GeneratorParameter]</sub></span>... BindingIdentifier<span><sub>[?Yield]</sub></span>
-     * </pre>
-     * 
-     * @return the parsed binding rest element
-     */
-    private BindingRestElement bindingRestElement() {
-        return bindingRestElement(true);
     }
 
     /**
@@ -6337,7 +6394,7 @@ public final class Parser {
                     consume(Token.CATCH);
                     consume(Token.LP);
                     CatchContext catchScope = enterCatchContext();
-                    Binding catchParameter = binding();
+                    Binding catchParameter = binding(true);
                     addLexDeclaredName(catchParameter);
 
                     Expression guard;
@@ -6373,7 +6430,7 @@ public final class Parser {
                 consume(Token.CATCH);
                 consume(Token.LP);
                 CatchContext catchScope = enterCatchContext();
-                Binding catchParameter = binding();
+                Binding catchParameter = binding(true);
                 addLexDeclaredName(catchParameter);
                 consume(Token.RP);
 
@@ -6949,6 +7006,9 @@ public final class Parser {
                 ts.reset(position, lineinfo);
                 return legacyGeneratorComprehension();
             }
+            if (token() == Token.COLON && isEnabled(CompatibilityOption.TypeAnnotation)) {
+                typeAnnotation();
+            }
             if (token() == Token.COMMA) {
                 InlineArrayList<Expression> list = newList();
                 list.add(expr);
@@ -6963,6 +7023,9 @@ public final class Parser {
                         break;
                     }
                     expr = assignmentExpressionNoValidation(true);
+                    if (token() == Token.COLON && isEnabled(CompatibilityOption.TypeAnnotation)) {
+                        typeAnnotation();
+                    }
                     list.add(expr);
                 } while (token() == Token.COMMA);
                 expr = new CommaExpression(list);
@@ -7079,7 +7142,7 @@ public final class Parser {
             } else if (tok == Token.TRIPLE_DOT) {
                 long beginSpread = ts.beginPosition();
                 consume(Token.TRIPLE_DOT);
-                Expression expression = assignmentExpression(true);
+                Expression expression = assignmentExpressionNoValidation(true);
                 list.add(new SpreadElement(beginSpread, ts.endPosition(), expression));
                 needComma = true;
             } else {

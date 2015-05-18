@@ -253,6 +253,16 @@ public enum CompatibilityOption {
      */
     PromiseRejection,
 
+    /**
+     * StaticClassProperties.
+     */
+    StaticClassProperties,
+
+    /**
+     * Type annotations.
+     */
+    TypeAnnotation,
+
     ;
 
     /**
@@ -299,7 +309,7 @@ public enum CompatibilityOption {
      * @return the options set for proposed ES7 extensions
      */
     public static final Set<CompatibilityOption> ECMAScript7() {
-        return EnumSet.range(AsyncFunction, FunctionCallTrailingComma);
+        return EnumSet.range(AsyncFunction, TypeAnnotation);
     }
 
     @SafeVarargs

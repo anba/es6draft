@@ -1227,17 +1227,28 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
     }
 
     private static boolean hasOwnNameProperty(ClassDefinition node) {
-        for (MethodDefinition methodDefinition : node.getMethods()) {
-            if (methodDefinition.isStatic()) {
-                String methodName = methodDefinition.getPropertyName().getName();
-                if (methodName == null || "name".equals(methodName)) {
-                    // Computed property name or method name is "name"
+        for (PropertyDefinition property : node.getProperties()) {
+            if (property instanceof MethodDefinition) {
+                MethodDefinition methodDefinition = (MethodDefinition) property;
+                if (methodDefinition.isStatic()) {
+                    String methodName = methodDefinition.getPropertyName().getName();
+                    if (methodName == null || "name".equals(methodName)) {
+                        // Computed property name or method name is "name"
+                        return true;
+                    }
+                }
+                if (!methodDefinition.getDecorators().isEmpty()) {
+                    // user-defined decorator expression
                     return true;
                 }
-            }
-            if (!methodDefinition.getDecorators().isEmpty()) {
-                // user-defined decorator expression
-                return true;
+            } else if (property instanceof PropertyValueDefinition) {
+                // NB: Only static class properties are supported.
+                PropertyValueDefinition valueDefinition = (PropertyValueDefinition) property;
+                String methodName = valueDefinition.getPropertyName().getName();
+                if (methodName == null || "name".equals(methodName)) {
+                    // Computed property name or property name is "name"
+                    return true;
+                }
             }
         }
         return false;

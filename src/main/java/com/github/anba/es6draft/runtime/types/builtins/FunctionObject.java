@@ -19,6 +19,7 @@ import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
+import com.github.anba.es6draft.runtime.internal.Source;
 import com.github.anba.es6draft.runtime.internal.TailCallInvocation;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Constructor;
@@ -542,7 +543,9 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
 
     @Override
     public String toString() {
-        return String.format("%s, functionKind=%s, constructorKind=%s, thisMode=%s, cloned=%b",
-                super.toString(), functionKind, constructorKind, thisMode, isClone);
+        Source source = executable.getSourceObject().toSource();
+        return String.format(
+                "%s, functionKind=%s, constructorKind=%s, thisMode=%s, cloned=%b, source=%s",
+                super.toString(), functionKind, constructorKind, thisMode, isClone, source);
     }
 }

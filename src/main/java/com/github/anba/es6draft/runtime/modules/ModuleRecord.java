@@ -10,10 +10,10 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.Set;
 
+import com.github.anba.es6draft.runtime.EnvironmentRecord;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
-import com.github.anba.es6draft.runtime.ModuleEnvironmentRecord;
 import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.types.builtins.ModuleNamespaceObject;
+import com.github.anba.es6draft.runtime.types.ScriptObject;
 
 /**
  * 15.2.1.15 Abstract Module Records
@@ -38,14 +38,14 @@ public interface ModuleRecord {
      * 
      * @return the lexical environment of this module or {@code null} if not instantiated
      */
-    LexicalEnvironment<ModuleEnvironmentRecord> getEnvironment();
+    LexicalEnvironment<? extends EnvironmentRecord> getEnvironment();
 
     /**
      * [[Namespace]]
      * 
      * @return the module namespace object or {@code null}
      */
-    ModuleNamespaceObject getNamespace();
+    ScriptObject getNamespace();
 
     /**
      * [[Namespace]]
@@ -53,7 +53,7 @@ public interface ModuleRecord {
      * @param namespace
      *            the module namespace object
      */
-    void setNamespace(ModuleNamespaceObject namespace);
+    void setNamespace(ScriptObject namespace);
 
     /**
      * [[Evaluated]]

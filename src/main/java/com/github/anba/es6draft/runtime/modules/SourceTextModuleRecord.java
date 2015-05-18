@@ -34,7 +34,7 @@ import com.github.anba.es6draft.runtime.ModuleEnvironmentRecord;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.ScriptLoader;
-import com.github.anba.es6draft.runtime.types.builtins.ModuleNamespaceObject;
+import com.github.anba.es6draft.runtime.types.ScriptObject;
 
 /**
  * 15.2.1.16 Source Text Module Records
@@ -58,7 +58,7 @@ public final class SourceTextModuleRecord implements ModuleRecord, Cloneable {
     /**
      * [[Namespace]]
      */
-    private ModuleNamespaceObject namespace;
+    private ScriptObject namespace;
 
     /**
      * [[Evaluated]]
@@ -252,12 +252,12 @@ public final class SourceTextModuleRecord implements ModuleRecord, Cloneable {
     }
 
     @Override
-    public ModuleNamespaceObject getNamespace() {
+    public ScriptObject getNamespace() {
         return namespace;
     }
 
     @Override
-    public void setNamespace(ModuleNamespaceObject namespace) {
+    public void setNamespace(ScriptObject namespace) {
         assert this.namespace == null : "namespace already created";
         this.namespace = Objects.requireNonNull(namespace);
     }
@@ -296,6 +296,27 @@ public final class SourceTextModuleRecord implements ModuleRecord, Cloneable {
         /* steps 2-3 */
         com.github.anba.es6draft.ast.Module parsedBody = scriptLoader.parseModule(
                 source.toSource(), source.sourceCode());
+        /* steps 4-12 */
+        return ParseModule(scriptLoader, sourceCodeId, parsedBody);
+    }
+
+    /**
+     * 15.2.1.16.1 Runtime Semantics: ParseModule ( sourceText )
+     * 
+     * @param scriptLoader
+     *            the script loader
+     * @param sourceCodeId
+     *            the source code identifier
+     * @param parsedBody
+     *            the parsed module source code
+     * @return the parsed module record
+     * @throws CompilationException
+     *             if the parsed module source cannot be compiled
+     */
+    public static SourceTextModuleRecord ParseModule(ScriptLoader scriptLoader,
+            SourceIdentifier sourceCodeId, com.github.anba.es6draft.ast.Module parsedBody)
+            throws CompilationException {
+        /* steps 1-3 (not applicable) */
         /* step 4 */
         Set<String> requestedModules = ModuleRequests(parsedBody);
         /* step 5 */
@@ -524,7 +545,9 @@ public final class SourceTextModuleRecord implements ModuleRecord, Cloneable {
         /* step 1 */
         SourceTextModuleRecord module = this;
         /* step 2 */
-        assert module.instantiated;
+        // FIXME: spec issue - successful completion of ModuleDeclarationInstantiation incorrect?
+        // assert module.instantiated;
+        assert module.environment != null : "module is not instantiated";
         /* step 3 */
         Realm realm = module.realm;
         assert realm != null : "module is not linked";
@@ -534,6 +557,10 @@ public final class SourceTextModuleRecord implements ModuleRecord, Cloneable {
         }
         /* step 5 */
         module.evaluated = true;
+        // ModuleDeclarationInstantiation did not complete successfully - stop evaluation.
+        if (!this.instantiated) {
+            return UNDEFINED;
+        }
         /* step 6 */
         for (String required : module.requestedModules) {
             /* steps 6.a-b */

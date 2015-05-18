@@ -41,6 +41,9 @@ js/script-tests/octal-literals.js
 # invalid test, const declaration cannot appear directly in with statement
 js/script-tests/const.js
 
+# invalid test, https://webkit.org/b/142934
+js/script-tests/object-literal-duplicate-properties.js
+
 
 ###################
 # Misc issues     #

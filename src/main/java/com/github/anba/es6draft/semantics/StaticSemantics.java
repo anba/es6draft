@@ -1077,8 +1077,9 @@ public final class StaticSemantics {
      * @return {@code true} if a decorator was found
      */
     public static boolean HasDecorators(ClassDefinition node) {
-        for (MethodDefinition method : node.getMethods()) {
-            if (!method.getDecorators().isEmpty()) {
+        for (PropertyDefinition property : node.getProperties()) {
+            if (property instanceof MethodDefinition
+                    && !((MethodDefinition) property).getDecorators().isEmpty()) {
                 return true;
             }
         }

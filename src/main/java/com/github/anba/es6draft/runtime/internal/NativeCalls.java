@@ -542,7 +542,7 @@ public final class NativeCalls {
         } catch (ParserException | CompilationException e) {
             throw e.toScriptException(cx);
         } catch (IOException e) {
-            throw newInternalError(cx, Messages.Key.InternalError, e.toString());
+            throw newInternalError(cx, e, Messages.Key.InternalError, e.toString());
         }
         return Scripts.ScriptEvaluation(script, realm);
     }

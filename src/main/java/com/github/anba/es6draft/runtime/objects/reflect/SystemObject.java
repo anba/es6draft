@@ -27,7 +27,6 @@ import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
-import com.github.anba.es6draft.runtime.internal.Source;
 import com.github.anba.es6draft.runtime.modules.Loader;
 import com.github.anba.es6draft.runtime.modules.MalformedNameException;
 import com.github.anba.es6draft.runtime.modules.ModuleLoader;
@@ -35,6 +34,7 @@ import com.github.anba.es6draft.runtime.modules.ModuleRecord;
 import com.github.anba.es6draft.runtime.modules.ModuleSource;
 import com.github.anba.es6draft.runtime.modules.ResolutionException;
 import com.github.anba.es6draft.runtime.modules.SourceIdentifier;
+import com.github.anba.es6draft.runtime.modules.loader.StringModuleSource;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 
@@ -64,26 +64,6 @@ public final class SystemObject extends LoaderObject implements Initializable {
         }
     }
 
-    private static final class StringModuleSource implements ModuleSource {
-        private final SourceIdentifier sourceId;
-        private final String sourceCode;
-
-        StringModuleSource(SourceIdentifier sourceId, String sourceCode) {
-            this.sourceId = sourceId;
-            this.sourceCode = sourceCode;
-        }
-
-        @Override
-        public String sourceCode() {
-            return sourceCode;
-        }
-
-        @Override
-        public Source toSource() {
-            return new Source(sourceId.toString(), 1);
-        }
-    }
-
     /**
      * Properties of the System Object
      */
@@ -110,17 +90,19 @@ public final class SystemObject extends LoaderObject implements Initializable {
             throw newTypeError(cx, Messages.Key.IncompatibleObject);
         }
 
-        private static SourceIdentifier normalize(ExecutionContext cx, ModuleLoader moduleLoader,
-                String unnormalizedName) {
+        private static SourceIdentifier normalize(ExecutionContext cx,
+                ExecutionContext callerContext, ModuleLoader moduleLoader, String unnormalizedName) {
+            // TODO: Compute referrerId from caller context?
+            SourceIdentifier referrerId = null;
             try {
-                return moduleLoader.normalizeName(unnormalizedName, null);
+                return moduleLoader.normalizeName(unnormalizedName, referrerId);
             } catch (MalformedNameException e) {
                 throw e.toScriptException(cx);
             }
         }
 
         private static ScriptException toScriptException(ExecutionContext cx, IOException e) {
-            return newInternalError(cx, Messages.Key.ModulesIOException, e.getMessage());
+            return newInternalError(cx, e, Messages.Key.ModulesIOException, e.getMessage());
         }
 
         @Prototype
@@ -131,6 +113,8 @@ public final class SystemObject extends LoaderObject implements Initializable {
          * 
          * @param cx
          *            the execution context
+         * @param callerContext
+         *            the caller execution context
          * @param thisValue
          *            the function this-value
          * @param moduleName
@@ -140,15 +124,16 @@ public final class SystemObject extends LoaderObject implements Initializable {
          * @return a promise object or undefined
          */
         @Function(name = "define", arity = 2)
-        public static Object define(ExecutionContext cx, Object thisValue, Object moduleName,
-                Object source) {
+        public static Object define(ExecutionContext cx, ExecutionContext callerContext,
+                Object thisValue, Object moduleName, Object source) {
             LoaderObject loader = thisLoader(cx, thisValue);
             Realm realm = loader.getLoader().getRealm();
             ModuleLoader moduleLoader = realm.getModuleLoader();
 
             String unnormalizedName = ToFlatString(cx, moduleName);
             String sourceCode = ToFlatString(cx, source);
-            SourceIdentifier identifier = normalize(cx, moduleLoader, unnormalizedName);
+            SourceIdentifier identifier = normalize(cx, callerContext, moduleLoader,
+                    unnormalizedName);
             ModuleSource src = new StringModuleSource(identifier, sourceCode);
             try {
                 ModuleRecord module = moduleLoader.define(identifier, src, realm);
@@ -169,6 +154,8 @@ public final class SystemObject extends LoaderObject implements Initializable {
          * 
          * @param cx
          *            the execution context
+         * @param callerContext
+         *            the caller execution context
          * @param thisValue
          *            the function this-value
          * @param moduleName
@@ -176,13 +163,15 @@ public final class SystemObject extends LoaderObject implements Initializable {
          * @return a promise object or undefined
          */
         @Function(name = "import", arity = 1)
-        public static Object _import(ExecutionContext cx, Object thisValue, Object moduleName) {
+        public static Object _import(ExecutionContext cx, ExecutionContext callerContext,
+                Object thisValue, Object moduleName) {
             LoaderObject loader = thisLoader(cx, thisValue);
             Realm realm = loader.getLoader().getRealm();
             ModuleLoader moduleLoader = realm.getModuleLoader();
 
             String unnormalizedName = ToFlatString(cx, moduleName);
-            SourceIdentifier normalizedModuleName = normalize(cx, moduleLoader, unnormalizedName);
+            SourceIdentifier normalizedModuleName = normalize(cx, callerContext, moduleLoader,
+                    unnormalizedName);
             try {
                 ModuleRecord module = moduleLoader.resolve(normalizedModuleName, realm);
                 module.instantiate();
@@ -201,6 +190,8 @@ public final class SystemObject extends LoaderObject implements Initializable {
          * 
          * @param cx
          *            the execution context
+         * @param callerContext
+         *            the caller execution context
          * @param thisValue
          *            the function this-value
          * @param moduleName
@@ -208,13 +199,15 @@ public final class SystemObject extends LoaderObject implements Initializable {
          * @return undefined
          */
         @Function(name = "load", arity = 1)
-        public static Object load(ExecutionContext cx, Object thisValue, Object moduleName) {
+        public static Object load(ExecutionContext cx, ExecutionContext callerContext,
+                Object thisValue, Object moduleName) {
             LoaderObject loader = thisLoader(cx, thisValue);
             Realm realm = loader.getLoader().getRealm();
             ModuleLoader moduleLoader = realm.getModuleLoader();
 
             String unnormalizedName = ToFlatString(cx, moduleName);
-            SourceIdentifier normalizedModuleName = normalize(cx, moduleLoader, unnormalizedName);
+            SourceIdentifier normalizedModuleName = normalize(cx, callerContext, moduleLoader,
+                    unnormalizedName);
             try {
                 moduleLoader.load(normalizedModuleName);
             } catch (IOException e) {
@@ -232,6 +225,8 @@ public final class SystemObject extends LoaderObject implements Initializable {
          * 
          * @param cx
          *            the execution context
+         * @param callerContext
+         *            the caller execution context
          * @param thisValue
          *            the function this-value
          * @param moduleName
@@ -239,13 +234,15 @@ public final class SystemObject extends LoaderObject implements Initializable {
          * @return the module or undefined
          */
         @Function(name = "get", arity = 1)
-        public static Object get(ExecutionContext cx, Object thisValue, Object moduleName) {
+        public static Object get(ExecutionContext cx, ExecutionContext callerContext,
+                Object thisValue, Object moduleName) {
             LoaderObject loader = thisLoader(cx, thisValue);
             Realm realm = loader.getLoader().getRealm();
             ModuleLoader moduleLoader = realm.getModuleLoader();
 
             String unnormalizedName = ToFlatString(cx, moduleName);
-            SourceIdentifier normalizedModuleName = normalize(cx, moduleLoader, unnormalizedName);
+            SourceIdentifier normalizedModuleName = normalize(cx, callerContext, moduleLoader,
+                    unnormalizedName);
             ModuleRecord module = moduleLoader.get(normalizedModuleName, realm);
             if (module == null) {
                 return UNDEFINED;
@@ -268,6 +265,8 @@ public final class SystemObject extends LoaderObject implements Initializable {
          * 
          * @param cx
          *            the execution context
+         * @param callerContext
+         *            the caller execution context
          * @param thisValue
          *            the function this-value
          * @param moduleName
@@ -275,13 +274,14 @@ public final class SystemObject extends LoaderObject implements Initializable {
          * @return the normalized module name
          */
         @Function(name = "normalize", arity = 1)
-        public static Object normalize(ExecutionContext cx, Object thisValue, Object moduleName) {
+        public static Object normalize(ExecutionContext cx, ExecutionContext callerContext,
+                Object thisValue, Object moduleName) {
             LoaderObject loader = thisLoader(cx, thisValue);
             Realm realm = loader.getLoader().getRealm();
             ModuleLoader moduleLoader = realm.getModuleLoader();
 
             String unnormalizedName = ToFlatString(cx, moduleName);
-            return normalize(cx, moduleLoader, unnormalizedName).toString();
+            return normalize(cx, callerContext, moduleLoader, unnormalizedName).toString();
         }
     }
 }

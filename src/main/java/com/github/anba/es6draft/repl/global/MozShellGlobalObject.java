@@ -84,7 +84,7 @@ public class MozShellGlobalObject extends ShellGlobalObject {
     @Override
     public void initializeScripted() throws IOException, URISyntaxException, ParserException,
             CompilationException {
-        includeNative(getScriptURL(LEGACY_SCRIPT));
+        includeNative(LEGACY_SCRIPT);
     }
 
     private Object evaluate(Realm realm, Source source, String sourceCode) {

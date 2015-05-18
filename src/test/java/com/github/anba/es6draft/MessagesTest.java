@@ -18,7 +18,7 @@ import com.github.anba.es6draft.runtime.internal.Messages;
 /**
  *
  */
-public class MessagesTest {
+public final class MessagesTest {
     @Test
     public void runTest() {
         Messages messages = Messages.create(Locale.ROOT);

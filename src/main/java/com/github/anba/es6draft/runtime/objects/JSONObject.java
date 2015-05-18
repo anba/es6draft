@@ -90,7 +90,7 @@ public final class JSONObject extends OrdinaryObject implements Initializable {
             try {
                 unfiltered = JSONParser.parse(cx, jtext);
             } catch (ParserException e) {
-                throw newSyntaxError(cx, Messages.Key.JSONInvalidLiteral,
+                throw newSyntaxError(cx, e, Messages.Key.JSONInvalidLiteral,
                         e.getFormattedMessage(cx.getRealm()), Integer.toString(e.getLine()),
                         Integer.toString(e.getColumn()));
             }

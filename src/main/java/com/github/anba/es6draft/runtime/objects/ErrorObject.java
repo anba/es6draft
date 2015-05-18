@@ -6,14 +6,12 @@
  */
 package com.github.anba.es6draft.runtime.objects;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
 import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.internal.GeneratorThread;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
+import com.github.anba.es6draft.runtime.internal.StackTraces;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Property;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
@@ -44,7 +42,21 @@ public final class ErrorObject extends OrdinaryObject {
     public ErrorObject(Realm realm) {
         super(realm);
         this.exception = new ScriptException(this);
-        this.stackTraces = collectStackTraces();
+        this.stackTraces = StackTraces.collectGeneratorStackTraces();
+    }
+
+    /**
+     * Constructs a new Error object.
+     * 
+     * @param realm
+     *            the realm object
+     * @param cause
+     *            the exception's cause
+     */
+    public ErrorObject(Realm realm, Throwable cause) {
+        super(realm);
+        this.exception = new ScriptException(this, cause);
+        this.stackTraces = StackTraces.collectGeneratorStackTraces();
     }
 
     /**
@@ -60,7 +72,25 @@ public final class ErrorObject extends OrdinaryObject {
     public ErrorObject(Realm realm, Intrinsics prototype, String message) {
         this(realm);
         setPrototype(realm.getIntrinsic(prototype));
-        infallibleDefineOwnProperty("message", new Property(message, true, false, true));
+        defineErrorProperty("message", message, false);
+    }
+
+    /**
+     * Constructs a new Error object.
+     * 
+     * @param realm
+     *            the realm object
+     * @param cause
+     *            the exception's cause
+     * @param prototype
+     *            the error prototype
+     * @param message
+     *            the error message
+     */
+    public ErrorObject(Realm realm, Throwable cause, Intrinsics prototype, String message) {
+        this(realm, cause);
+        setPrototype(realm.getIntrinsic(prototype));
+        defineErrorProperty("message", message, false);
     }
 
     /**
@@ -83,23 +113,42 @@ public final class ErrorObject extends OrdinaryObject {
             int lineNumber, int columnNumber) {
         this(realm);
         setPrototype(realm.getIntrinsic(prototype));
-        infallibleDefineOwnProperty("message", new Property(message, true, false, true));
-        infallibleDefineOwnProperty("fileName", new Property(fileName, true, true, true));
-        infallibleDefineOwnProperty("lineNumber", new Property(lineNumber, true, true, true));
-        infallibleDefineOwnProperty("columnNumber", new Property(columnNumber, true, true, true));
+        defineErrorProperty("message", message, false);
+        defineErrorProperty("fileName", fileName, true);
+        defineErrorProperty("lineNumber", lineNumber, true);
+        defineErrorProperty("columnNumber", columnNumber, true);
     }
 
-    private List<StackTraceElement[]> collectStackTraces() {
-        Thread thread = Thread.currentThread();
-        if (!(thread instanceof GeneratorThread)) {
-            return Collections.emptyList();
-        }
-        ArrayList<StackTraceElement[]> stackTraces = new ArrayList<>();
-        do {
-            thread = ((GeneratorThread) thread).getParent();
-            stackTraces.add(thread.getStackTrace());
-        } while (thread instanceof GeneratorThread);
-        return stackTraces;
+    /**
+     * Constructs a new Error object.
+     * 
+     * @param realm
+     *            the realm object
+     * @param cause
+     *            the exception's cause
+     * @param prototype
+     *            the error prototype
+     * @param message
+     *            the error message
+     * @param fileName
+     *            the file name
+     * @param lineNumber
+     *            the line number
+     * @param columnNumber
+     *            the column number
+     */
+    public ErrorObject(Realm realm, Throwable cause, Intrinsics prototype, String message,
+            String fileName, int lineNumber, int columnNumber) {
+        this(realm, cause);
+        setPrototype(realm.getIntrinsic(prototype));
+        defineErrorProperty("message", message, false);
+        defineErrorProperty("fileName", fileName, true);
+        defineErrorProperty("lineNumber", lineNumber, true);
+        defineErrorProperty("columnNumber", columnNumber, true);
+    }
+
+    /*package*/void defineErrorProperty(String name, Object value, boolean enumerable) {
+        infallibleDefineOwnProperty(name, new Property(value, true, enumerable, true));
     }
 
     /**

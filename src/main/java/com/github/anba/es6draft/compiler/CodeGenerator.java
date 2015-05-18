@@ -256,7 +256,7 @@ final class CodeGenerator {
         case Code:
             return "~module";
         case Init:
-            return "!module_init";
+            return "~module_init";
         case RTI:
             return "!module_rti";
         case DebugInfo:

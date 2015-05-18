@@ -36,6 +36,7 @@ public final class ModuleEnvironmentRecord extends DeclarativeEnvironmentRecord 
 
         @Override
         public boolean isInitialized() {
+            // FIXME: Change to module.isInstantiated() ?!
             /* 8.1.1.5.1 GetBindingValue(N,S), steps 3.a-c */
             return module.getEnvironment() != null;
         }
@@ -104,8 +105,8 @@ public final class ModuleEnvironmentRecord extends DeclarativeEnvironmentRecord 
     }
 
     private static boolean hasDirectBinding(ModuleRecord module, String name) {
-        Binding binding = module.getEnvironment().getEnvRec().getBinding(name);
+        // Binding binding = module.getEnvironment().getEnvRec().getBinding(name);
         // return binding != null && !(binding instanceof IndirectBinding);
-        return binding != null;
+        return module.getEnvironment().getEnvRec().hasBinding(name);
     }
 }
