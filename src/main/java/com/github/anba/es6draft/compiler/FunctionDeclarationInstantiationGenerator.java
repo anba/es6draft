@@ -48,10 +48,6 @@ final class FunctionDeclarationInstantiationGenerator extends
                 Type.methodType(Types.List, Types.Object_));
 
         // class: ExecutionContext
-        static final MethodName ExecutionContext_getLexicalEnvironment = MethodName.findVirtual(
-                Types.ExecutionContext, "getLexicalEnvironment",
-                Type.methodType(Types.LexicalEnvironment));
-
         static final MethodName ExecutionContext_setLexicalEnvironment = MethodName.findVirtual(
                 Types.ExecutionContext, "setLexicalEnvironment",
                 Type.methodType(Type.VOID_TYPE, Types.LexicalEnvironment));
@@ -61,6 +57,11 @@ final class FunctionDeclarationInstantiationGenerator extends
                 Type.methodType(Type.VOID_TYPE, Types.LexicalEnvironment));
 
         // class: ArgumentsObject
+        static final MethodName ArgumentsObject_CreateMappedArgumentsObject_Empty = MethodName
+                .findStatic(Types.ArgumentsObject, "CreateMappedArgumentsObject", Type.methodType(
+                        Types.ArgumentsObject, Types.ExecutionContext, Types.FunctionObject,
+                        Types.Object_));
+
         static final MethodName ArgumentsObject_CreateMappedArgumentsObject = MethodName
                 .findStatic(Types.ArgumentsObject, "CreateMappedArgumentsObject", Type.methodType(
                         Types.ArgumentsObject, Types.ExecutionContext, Types.FunctionObject,
@@ -160,9 +161,9 @@ final class FunctionDeclarationInstantiationGenerator extends
 
         /* step 1 (omitted) */
         /* step 2 */
-        getLexicalEnvironment(env, mv);
+        getLexicalEnvironment(context, env, mv);
         /* step 3 */
-        storeEnvironmentRecord(envRec, env, mv);
+        getEnvironmentRecord(env, envRec, mv);
         /* step 4 */
         // RuntimeInfo.Function code = func.getCode();
         /* step 5 */
@@ -240,6 +241,8 @@ final class FunctionDeclarationInstantiationGenerator extends
                     ArgumentsObject.class);
             if (strict || !simpleParameterList) {
                 CreateUnmappedArgumentsObject(mv);
+            } else if (formals.getFormals().isEmpty()) {
+                CreateMappedArgumentsObject(env, mv);
             } else {
                 CreateMappedArgumentsObject(env, formals, mv);
             }
@@ -256,7 +259,7 @@ final class FunctionDeclarationInstantiationGenerator extends
             parameterNames.add(arguments);
             parameterNamesSet.add(arguments);
         } else if (legacy) {
-            if (!simpleParameterList) {
+            if (!simpleParameterList || formals.getFormals().isEmpty()) {
                 CreateLegacyArguments(mv);
             } else {
                 CreateLegacyArguments(env, formals, mv);
@@ -302,7 +305,7 @@ final class FunctionDeclarationInstantiationGenerator extends
             mv.store(varEnv);
             /* step 28.c */
             varEnvRec = mv.newVariable("varEnvRec", DeclarativeEnvironmentRecord.class);
-            storeEnvironmentRecord(varEnvRec, varEnv, mv);
+            getEnvironmentRecord(varEnv, varEnvRec, mv);
             /* step 28.d */
             setVariableEnvironment(varEnv, mv);
             /* step 28.e */
@@ -343,7 +346,7 @@ final class FunctionDeclarationInstantiationGenerator extends
                 mv.store(lexEnv);
                 /* step 32 */
                 lexEnvRec = mv.newVariable("lexEnvRec", DeclarativeEnvironmentRecord.class);
-                storeEnvironmentRecord(lexEnvRec, lexEnv, mv);
+                getEnvironmentRecord(lexEnv, lexEnvRec, mv);
             } else {
                 // Optimization: Skip environment allocation if no lexical names are defined.
                 /* step 30 */
@@ -363,7 +366,7 @@ final class FunctionDeclarationInstantiationGenerator extends
                 mv.store(lexEnv);
                 /* step 32 */
                 lexEnvRec = mv.newVariable("lexEnvRec", DeclarativeEnvironmentRecord.class);
-                storeEnvironmentRecord(lexEnvRec, lexEnv, mv);
+                getEnvironmentRecord(lexEnv, lexEnvRec, mv);
             } else {
                 // Optimization: Skip environment allocation if no lexical names are defined.
                 /* step 30 */
@@ -431,12 +434,13 @@ final class FunctionDeclarationInstantiationGenerator extends
         mv.invoke(Methods.ExecutionContext_setLexicalEnvironment);
     }
 
-    private void getLexicalEnvironment(Variable<? extends LexicalEnvironment<?>> env,
-            ExpressionVisitor mv) {
-        // stack: [] -> []
+    private void CreateMappedArgumentsObject(
+            Variable<LexicalEnvironment<FunctionEnvironmentRecord>> env, ExpressionVisitor mv) {
+        // stack: [] -> [argsObj]
         mv.loadExecutionContext();
-        mv.invoke(Methods.ExecutionContext_getLexicalEnvironment);
-        mv.store(env);
+        mv.loadParameter(FUNCTION, FunctionObject.class);
+        mv.loadParameter(ARGUMENTS, Object[].class);
+        mv.invoke(Methods.ArgumentsObject_CreateMappedArgumentsObject_Empty);
     }
 
     private void CreateMappedArgumentsObject(

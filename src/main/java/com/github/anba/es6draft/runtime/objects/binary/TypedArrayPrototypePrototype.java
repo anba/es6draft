@@ -25,11 +25,11 @@ import java.util.Comparator;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.internal.Initializable;
-import com.github.anba.es6draft.runtime.internal.Messages;
+import com.github.anba.es6draft.runtime.internal.*;
 import com.github.anba.es6draft.runtime.internal.Properties.Accessor;
 import com.github.anba.es6draft.runtime.internal.Properties.AliasFunction;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
+import com.github.anba.es6draft.runtime.internal.Properties.CompatibilityExtension;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Optional;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
@@ -65,6 +65,7 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
     @Override
     public void initialize(Realm realm) {
         createProperties(realm, this, Properties.class);
+        createProperties(realm, this, AdditionalProperties.class);
     }
 
     /**
@@ -76,6 +77,29 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
     public static boolean isBuiltinValues(Object next) {
         return next instanceof NativeFunction
                 && ((NativeFunction) next).getId() == TypedArrayPrototypeValues.class;
+    }
+
+    /**
+     * 22.2.3.5.1 Runtime Semantics: ValidateTypedArray ( O )
+     * 
+     * @param cx
+     * @param thisValue
+     * @return
+     */
+    private static TypedArrayObject ValidateTypedArray(ExecutionContext cx, Object thisValue) {
+        /* steps 1-3 */
+        if (!(thisValue instanceof TypedArrayObject)) {
+            throw newTypeError(cx, Messages.Key.IncompatibleObject);
+        }
+        TypedArrayObject typedArray = (TypedArrayObject) thisValue;
+        /* step 4 */
+        ArrayBufferObject buffer = typedArray.getBuffer();
+        /* step 5 */
+        if (IsDetachedBuffer(buffer)) {
+            throw newTypeError(cx, Messages.Key.BufferDetached);
+        }
+        /* step 6 (not applicable) */
+        return typedArray;
     }
 
     /**
@@ -104,29 +128,6 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
                 return (long) Math.max(length + relativeIndex, 0);
             }
             return (long) Math.min(relativeIndex, length);
-        }
-
-        /**
-         * 22.2.3.5.1 Runtime Semantics: ValidateTypedArray ( O )
-         * 
-         * @param cx
-         * @param thisValue
-         * @return
-         */
-        private static TypedArrayObject ValidateTypedArray(ExecutionContext cx, Object thisValue) {
-            /* steps 1-3 */
-            if (!(thisValue instanceof TypedArrayObject)) {
-                throw newTypeError(cx, Messages.Key.IncompatibleObject);
-            }
-            TypedArrayObject typedArray = (TypedArrayObject) thisValue;
-            /* step 4 */
-            ArrayBufferObject buffer = typedArray.getBuffer();
-            /* step 5 */
-            if (IsDetachedBuffer(buffer)) {
-                throw newTypeError(cx, Messages.Key.BufferDetached);
-            }
-            /* step 6 (not applicable) */
-            return typedArray;
         }
 
         @Prototype
@@ -1394,6 +1395,63 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
             TypedArrayObject array = (TypedArrayObject) thisValue;
             /* steps 4-6 */
             return array.getTypedArrayName();
+        }
+    }
+
+    /**
+     * Proposed ECMAScript 7 additions
+     */
+    @CompatibilityExtension(CompatibilityOption.ArrayIncludes)
+    public enum AdditionalProperties {
+        ;
+
+        /**
+         * %TypedArray%.prototype.includes ( searchElement [ , fromIndex ] )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param searchElement
+         *            the search element
+         * @param fromIndex
+         *            the optional start index
+         * @return the result index
+         */
+        @Function(name = "includes", arity = 1)
+        public static Object includes(ExecutionContext cx, Object thisValue, Object searchElement,
+                Object fromIndex) {
+            /* steps 1-3 */
+            TypedArrayObject o = ValidateTypedArray(cx, thisValue);
+            /* step 4 */
+            long len = o.getArrayLength();
+            /* step 5 */
+            if (len == 0) {
+                return false;
+            }
+            /* steps 6-7 */
+            long n = (long) ToInteger(cx, fromIndex);
+            /* steps 8-9 */
+            long k;
+            if (n >= 0) {
+                k = n;
+            } else {
+                k = len + n;
+                if (k < 0) {
+                    k = 0;
+                }
+            }
+            /* step 10 */
+            for (; k < len; ++k) {
+                /* steps 10.a-b */
+                Object element = o.elementGetDirect(cx, k);
+                /* step 10.c */
+                if (SameValueZero(searchElement, element)) {
+                    return true;
+                }
+            }
+            /* step 11 */
+            return false;
         }
     }
 }

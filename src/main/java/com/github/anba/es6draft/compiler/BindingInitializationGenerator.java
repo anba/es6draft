@@ -258,6 +258,8 @@ final class BindingInitializationGenerator {
      */
     static void InitializeBoundNameWithEnvironment(BindingIdentifier identifier,
             ExpressionVisitor mv) {
+        /* steps 1+3 (not applicable) */
+        /* step 2 */
         // stack: [envRec, value] -> [envRec, id, value]
         mv.aconst(identifier.getName().getIdentifier());
         mv.swap();
@@ -276,6 +278,8 @@ final class BindingInitializationGenerator {
      *            the expression visitor
      */
     static void InitializeBoundNameWithValue(ExpressionVisitor mv) {
+        /* steps 1+3 (not applicable) */
+        /* step 2 */
         // stack: [envRec, name, value] -> []
         mv.invoke(Methods.EnvironmentRecord_initializeBinding);
     }
@@ -625,6 +629,7 @@ final class BindingInitializationGenerator {
         public void visit(BindingElision node, Variable<? extends Iterator<?>> iterator) {
             // stack: [(env)] -> [(env)]
             mv.load(iterator);
+            mv.lineInfo(node);
             mv.invoke(Methods.ScriptRuntime_iteratorNextAndIgnore);
         }
 
@@ -646,6 +651,7 @@ final class BindingInitializationGenerator {
 
                 /* steps 4-5 */
                 mv.load(iterator);
+                mv.lineInfo(node);
                 mv.invoke(Methods.ScriptRuntime_iteratorNextOrUndefined);
 
                 /* step 6 */
@@ -677,6 +683,7 @@ final class BindingInitializationGenerator {
 
                 /* steps 1-2 */
                 mv.load(iterator);
+                mv.lineInfo(node);
                 mv.invoke(Methods.ScriptRuntime_iteratorNextOrUndefined);
 
                 /* step 3 */
@@ -709,6 +716,7 @@ final class BindingInitializationGenerator {
             /* steps 3-5 */
             mv.load(iterator);
             mv.loadExecutionContext();
+            mv.lineInfo(node);
             // stack: [(env), <env, id>|ref, iterator, cx] -> [(env), <env, id>|ref, array]
             mv.invoke(Methods.ScriptRuntime_createRestArray);
 
@@ -756,6 +764,7 @@ final class BindingInitializationGenerator {
 
                 /* steps 1-2 */
                 // stack: [(env), (env), cx, value, propertyName] -> [(env), (env), v]
+                mv.lineInfo(node);
                 if (type == ValType.String) {
                     mv.invoke(Methods.AbstractOperations_GetV_String);
                 } else {
@@ -830,6 +839,7 @@ final class BindingInitializationGenerator {
 
             /* steps 3-4 */
             // stack: [(env), <env, id>|ref, cx, value, propertyName] -> [(env), <env, id>|ref, v]
+            mv.lineInfo(node);
             if (type == ValType.String) {
                 mv.invoke(Methods.AbstractOperations_GetV_String);
             } else {

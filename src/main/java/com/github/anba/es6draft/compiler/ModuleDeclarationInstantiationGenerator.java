@@ -105,7 +105,7 @@ final class ModuleDeclarationInstantiationGenerator extends
 
         Variable<ModuleEnvironmentRecord> envRec = mv.newVariable("envRec",
                 ModuleEnvironmentRecord.class);
-        storeEnvironmentRecord(envRec, env, mv);
+        getEnvironmentRecord(env, envRec, mv);
 
         Variable<ModuleExport> resolved = mv.newVariable("resolved", ModuleExport.class);
 

@@ -5,7 +5,7 @@
  * <https://github.com/anba/es6draft>
  */
 const {
-  assertSame, assertThrows
+  assertSame, assertTrue, assertThrows
 } = Assert;
 
 // B.3.5 VariableStatements in Catch blocks: Missing "not" in step ii
@@ -13,19 +13,19 @@ const {
 
 var e = "global";
 
-function testVarCheck(code, blockValue, functionValue) {
+function testVarCheck(code, blockValue, functionValueTest) {
   try { throw null } catch (e) {
     assertSame(null, e);
     eval(code);
     assertSame(blockValue, e);
   }
-  assertSame(functionValue, e);
+  assertTrue(functionValueTest(e));
 }
-function testNonStrict(code, value) {
-  return testVarCheck(code, value, void 0);
+function testNonStrict(code, value, functionValueTest = v => v === void 0) {
+  return testVarCheck(code, value, functionValueTest);
 }
 function testStrict(code) {
-  return testVarCheck(`"use strict"; ${code}`, null, "global");
+  return testVarCheck(`"use strict"; ${code}`, null, v => v === "global");
 }
 
 testNonStrict("var e", null);
@@ -44,10 +44,10 @@ testNonStrict("for (var e in {}) ;", null);
 testStrict("'use strict'; for (var e in {}) ;");
 
 testNonStrict("for (var e in {key: 1}) ;", "key");
-testStrict("'use strict'; for (var e in {}) ;");
+testStrict("'use strict'; for (var e in {key: 1}) ;");
 
 assertThrows(SyntaxError, () => testNonStrict("for (var e of []) ;"));
 testStrict("'use strict'; for (var e of []) ;");
 
-assertThrows(SyntaxError, () => testNonStrict("function e() {}"));
-testStrict("'use strict'; for (var e in {}) ;");
+testNonStrict("function e() {}", null, v => typeof v === "function");
+testStrict("'use strict'; function e() {}");

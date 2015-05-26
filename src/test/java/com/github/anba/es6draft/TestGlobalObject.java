@@ -17,21 +17,9 @@ import com.github.anba.es6draft.util.TestInfo;
  *
  */
 public final class TestGlobalObject extends SimpleShellGlobalObject {
-    private final TestInfo test;
-
     public TestGlobalObject(Realm realm, ShellConsole console, TestInfo test,
             ScriptCache scriptCache) {
         super(realm, console, test.getBaseDir(), test.getScript(), scriptCache);
-        this.test = test;
-    }
-
-    /**
-     * Returns the test descriptor.
-     * 
-     * @return the test descriptor
-     */
-    public TestInfo getTest() {
-        return test;
     }
 
     /**

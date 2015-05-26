@@ -318,9 +318,7 @@ final class DestructuringAssignmentGenerator {
                     mv.pop();
                     expressionBoxedValue(initializer, mv);
                     /* step 7 (moved) */
-                    if (!(target instanceof AssignmentPattern)
-                            && IsAnonymousFunctionDefinition(initializer)
-                            && IsIdentifierRef(target)) {
+                    if (IsAnonymousFunctionDefinition(initializer) && IsIdentifierRef(target)) {
                         SetFunctionName(initializer, ((IdentifierReference) target).getName(), mv);
                     }
                 }
@@ -446,9 +444,7 @@ final class DestructuringAssignmentGenerator {
                     mv.pop();
                     expressionBoxedValue(initializer, mv);
                     /* step 7 (moved) */
-                    if (!(target instanceof AssignmentPattern)
-                            && IsAnonymousFunctionDefinition(initializer)
-                            && IsIdentifierRef(target)) {
+                    if (IsAnonymousFunctionDefinition(initializer) && IsIdentifierRef(target)) {
                         SetFunctionName(initializer, ((IdentifierReference) target).getName(), mv);
                     }
                 }

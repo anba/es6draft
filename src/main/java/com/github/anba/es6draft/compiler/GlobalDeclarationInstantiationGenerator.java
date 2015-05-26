@@ -10,14 +10,15 @@ import static com.github.anba.es6draft.semantics.StaticSemantics.*;
 
 import java.util.ArrayDeque;
 import java.util.HashSet;
-import java.util.LinkedHashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
 
 import com.github.anba.es6draft.ast.Declaration;
 import com.github.anba.es6draft.ast.HoistableDeclaration;
 import com.github.anba.es6draft.ast.Script;
 import com.github.anba.es6draft.ast.StatementListItem;
+import com.github.anba.es6draft.ast.VariableDeclaration;
 import com.github.anba.es6draft.ast.VariableStatement;
 import com.github.anba.es6draft.ast.scope.Name;
 import com.github.anba.es6draft.compiler.CodeGenerator.ScriptName;
@@ -37,7 +38,6 @@ import com.github.anba.es6draft.runtime.LexicalEnvironment;
 final class GlobalDeclarationInstantiationGenerator extends
         DeclarationBindingInstantiationGenerator {
     private static final int EXECUTION_CONTEXT = 0;
-    private static final int GLOBAL_ENV = 1;
 
     private static final class GlobalDeclInitMethodGenerator extends InstructionVisitor {
         GlobalDeclInitMethodGenerator(MethodCode method) {
@@ -48,7 +48,6 @@ final class GlobalDeclarationInstantiationGenerator extends
         public void begin() {
             super.begin();
             setParameterName("cx", EXECUTION_CONTEXT, Types.ExecutionContext);
-            setParameterName("globalEnv", GLOBAL_ENV, Types.LexicalEnvironment);
         }
     }
 
@@ -62,11 +61,10 @@ final class GlobalDeclarationInstantiationGenerator extends
 
         mv.lineInfo(script);
         mv.begin();
-        // Only generate global-script-init when needed.
-        if (!script.isEvalScript()) {
-            generate(script, mv);
+        if (VarDeclaredNames(script).isEmpty() && LexicallyDeclaredNames(script).isEmpty()) {
+            mv._return();
         } else {
-            generateExceptionThrower(mv);
+            generate(script, mv);
         }
         mv.end();
     }
@@ -74,25 +72,46 @@ final class GlobalDeclarationInstantiationGenerator extends
     private void generate(Script script, InstructionVisitor mv) {
         Variable<ExecutionContext> context = mv.getParameter(EXECUTION_CONTEXT,
                 ExecutionContext.class);
-        Variable<LexicalEnvironment<GlobalEnvironmentRecord>> env = mv.getParameter(GLOBAL_ENV,
+        Variable<LexicalEnvironment<GlobalEnvironmentRecord>> env = mv.newVariable("globalEnv",
                 LexicalEnvironment.class).uncheckedCast();
-
         Variable<GlobalEnvironmentRecord> envRec = mv.newVariable("envRec",
                 GlobalEnvironmentRecord.class);
-        storeEnvironmentRecord(envRec, env, mv);
 
-        /* steps 1-2 (omitted) */
+        /* steps 1-2 */
+        getLexicalEnvironment(context, env, mv);
+        getEnvironmentRecord(env, envRec, mv);
         /* step 3 */
-        Set<Name> lexNames = LexicallyDeclaredNames(script); // note: unordered set!
+        HashSet<Name> lexNames = new HashSet<>();
         /* step 4 */
-        Set<Name> varNames = VarDeclaredNames(script); // note: unordered set!
+        HashSet<Name> varNames = new HashSet<>();
         /* step 5 */
-        for (Name name : lexNames) {
-            canDeclareLexicalScopedOrThrow(context, envRec, name, mv);
+        // NB: Iterate over declarations to ensure proper iteration order.
+        for (Declaration d : LexicallyScopedDeclarations(script)) {
+            assert !(d instanceof HoistableDeclaration);
+            for (Name name : BoundNames(d)) {
+                if (lexNames.add(name)) {
+                    canDeclareLexicalScopedOrThrow(context, envRec, d, name, mv);
+                }
+            }
         }
         /* step 6 */
-        for (Name name : varNames) {
-            canDeclareVarScopedOrThrow(context, envRec, name, mv);
+        // NB: Iterate over declarations to ensure proper iteration order.
+        for (StatementListItem item : VarScopedDeclarations(script)) {
+            if (item instanceof VariableStatement) {
+                for (VariableDeclaration vd : ((VariableStatement) item).getElements()) {
+                    for (Name name : BoundNames(vd)) {
+                        if (varNames.add(name)) {
+                            canDeclareVarScopedOrThrow(context, envRec, vd, name, mv);
+                        }
+                    }
+                }
+            } else {
+                HoistableDeclaration d = (HoistableDeclaration) item;
+                Name name = BoundName(d);
+                if (varNames.add(name)) {
+                    canDeclareVarScopedOrThrow(context, envRec, d, name, mv);
+                }
+            }
         }
         /* step 7 */
         List<StatementListItem> varDeclarations = VarScopedDeclarations(script);
@@ -106,20 +125,22 @@ final class GlobalDeclarationInstantiationGenerator extends
                 HoistableDeclaration d = (HoistableDeclaration) item;
                 Name fn = BoundName(d);
                 if (declaredFunctionNames.add(fn)) {
-                    canDeclareGlobalFunctionOrThrow(context, envRec, fn, mv);
+                    canDeclareGlobalFunctionOrThrow(context, envRec, d, fn, mv);
                     functionsToInitialize.addFirst(d);
                 }
             }
         }
         /* step 11 */
-        LinkedHashSet<Name> declaredVarNames = new LinkedHashSet<>();
+        LinkedHashMap<Name, VariableDeclaration> declaredVarNames = new LinkedHashMap<>();
         /* step 12 */
         for (StatementListItem d : varDeclarations) {
             if (d instanceof VariableStatement) {
-                for (Name vn : BoundNames((VariableStatement) d)) {
-                    if (!declaredFunctionNames.contains(vn)) {
-                        canDeclareGlobalVarOrThrow(context, envRec, vn, mv);
-                        declaredVarNames.add(vn);
+                for (VariableDeclaration vd : ((VariableStatement) d).getElements()) {
+                    for (Name vn : BoundNames(vd)) {
+                        if (!declaredFunctionNames.contains(vn)) {
+                            canDeclareGlobalVarOrThrow(context, envRec, vd, vn, mv);
+                            declaredVarNames.put(vn, vd);
+                        }
                     }
                 }
             }
@@ -132,9 +153,9 @@ final class GlobalDeclarationInstantiationGenerator extends
             assert !(d instanceof HoistableDeclaration);
             for (Name dn : BoundNames(d)) {
                 if (d.isConstDeclaration()) {
-                    createImmutableBinding(envRec, dn, true, mv);
+                    createImmutableBinding(envRec, d, dn, true, mv);
                 } else {
-                    createMutableBinding(envRec, dn, false, mv);
+                    createMutableBinding(envRec, d, dn, false, mv);
                 }
             }
         }
@@ -143,11 +164,11 @@ final class GlobalDeclarationInstantiationGenerator extends
             Name fn = BoundName(f);
             // stack: [] -> [fo]
             InstantiateFunctionObject(context, env, f, mv);
-            createGlobalFunctionBinding(envRec, fn, false, mv);
+            createGlobalFunctionBinding(envRec, f, fn, false, mv);
         }
         /* step 17 */
-        for (Name vn : declaredVarNames) {
-            createGlobalVarBinding(envRec, vn, false, mv);
+        for (Map.Entry<Name, VariableDeclaration> e : declaredVarNames.entrySet()) {
+            createGlobalVarBinding(envRec, e.getValue(), e.getKey(), false, mv);
         }
         /* step 18 */
         mv._return();

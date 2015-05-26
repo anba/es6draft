@@ -743,21 +743,24 @@ public final class Repl {
      *            the current line
      * @return the parsed script node or {@coden null} if the end of stream has been reached
      */
-    private com.github.anba.es6draft.ast.Script read(Realm realm, int line) {
-        StringBuilder sourceCode = new StringBuilder();
+    private com.github.anba.es6draft.ast.Script read(Realm realm, int[] line) {
+        StringBuilder sourceBuffer = new StringBuilder();
         for (String prompt = PROMPT;; prompt = "") {
             String s = console.readLine(prompt);
             if (s == null) {
                 return null;
             }
-            sourceCode.append(s).append('\n');
-            Source source = new Source(Paths.get(".").toAbsolutePath(), "typein", line);
+            sourceBuffer.append(s).append('\n');
+            String sourceCode = sourceBuffer.toString();
+            Source source = new Source(Paths.get(".").toAbsolutePath(), "typein", line[0]);
             try {
-                return parse(realm, source, sourceCode.toString());
+                com.github.anba.es6draft.ast.Script script = parse(realm, source, sourceCode);
+                line[0] += script.getEndLine() - script.getBeginLine();
+                return script;
             } catch (ParserEOFException e) {
                 continue;
             } catch (ParserException e) {
-                throw new ParserExceptionWithSource(e, source, sourceCode.toString());
+                throw new ParserExceptionWithSource(e, source, sourceCode);
             }
         }
     }
@@ -866,7 +869,7 @@ public final class Repl {
 
     private final class InteractiveTaskSource implements TaskSource {
         private final Realm realm;
-        private int line = 0;
+        private int[] line = { 1 };
 
         InteractiveTaskSource(Realm realm) {
             this.realm = realm;
@@ -881,7 +884,7 @@ public final class Repl {
         public Task awaitTask() throws InterruptedException {
             for (;;) {
                 try {
-                    com.github.anba.es6draft.ast.Script parsedScript = read(realm, ++line);
+                    com.github.anba.es6draft.ast.Script parsedScript = read(realm, line);
                     if (parsedScript == null) {
                         return null;
                     }

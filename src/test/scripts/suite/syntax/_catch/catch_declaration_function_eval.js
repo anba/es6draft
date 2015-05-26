@@ -9,15 +9,15 @@ const {
 } = Assert;
 
 // Catch variable is BindingIdentifier
-assertThrows(SyntaxError, () => { try { throw []; } catch (e) { eval(`function e(){}`); } });
-assertThrows(SyntaxError, () => { try { throw []; } catch (e) { eval(`function* e(){}`); } });
+try { throw []; } catch (e) { eval(`function e(){}`); }
+try { throw []; } catch (e) { eval(`function* e(){}`); }
 
 
 // Catch variable is ArrayBindingPattern
-assertThrows(SyntaxError, () => { try { throw []; } catch ([e]) { eval(`function e(){}`); } });
-assertThrows(SyntaxError, () => { try { throw []; } catch ([e]) { eval(`function* e(){}`); } });
+try { throw []; } catch ([e]) { eval(`function e(){}`); }
+try { throw []; } catch ([e]) { eval(`function* e(){}`); }
 
 
 // Catch variable is ObjectBindingPattern
-assertThrows(SyntaxError, () => { try { throw []; } catch ({e}) { eval(`function e(){}`); } });
-assertThrows(SyntaxError, () => { try { throw []; } catch ({e}) { eval(`function* e(){}`); } });
+try { throw []; } catch ({e}) { eval(`function e(){}`); }
+try { throw []; } catch ({e}) { eval(`function* e(){}`); }

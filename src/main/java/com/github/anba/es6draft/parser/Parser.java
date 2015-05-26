@@ -550,20 +550,16 @@ public final class Parser {
     }
 
     private static final class ScriptContext extends TopContext implements ScriptScope {
-        NameSet varFunctionAndForOfDeclaredNames;
+        NameSet varForOfDeclaredNames;
         Script node;
 
         ScriptContext(ScopeContext enclosing) {
             super(enclosing);
         }
 
-        private boolean isStaticVar() {
-            return node.isEvalScript() && node.isStrict() && !node.isScripting();
-        }
-
         @Override
         protected Name getDeclaredName(Name name) {
-            if (isStaticVar() && varDeclaredNames != null) {
+            if (node.isEvalScript() && node.isStrict() && varDeclaredNames != null) {
                 Name varName = varDeclaredNames.get(name);
                 if (varName != null) {
                     return varName;
@@ -578,15 +574,15 @@ public final class Parser {
         }
 
         @Override
-        public Set<Name> varFunctionAndForOfDeclaredNames() {
-            return emptyIfNull(varFunctionAndForOfDeclaredNames);
+        public Set<Name> varForOfDeclaredNames() {
+            return emptyIfNull(varForOfDeclaredNames);
         }
 
-        void addVarFunctionAndForOfDeclaredName(Name name) {
-            if (varFunctionAndForOfDeclaredNames == null) {
-                varFunctionAndForOfDeclaredNames = new NameSet();
+        void addVarForOfDeclaredName(Name name) {
+            if (varForOfDeclaredNames == null) {
+                varForOfDeclaredNames = new NameSet();
             }
-            varFunctionAndForOfDeclaredNames.add(name);
+            varForOfDeclaredNames.add(name);
         }
     }
 
@@ -1028,7 +1024,7 @@ public final class Parser {
         NativeFunction,
     }
 
-    public Parser(Source source, Set<CompatibilityOption> options, EnumSet<Option> parserOptions) {
+    public Parser(Source source, EnumSet<CompatibilityOption> options, EnumSet<Option> parserOptions) {
         this.source = source;
         this.options = EnumSet.copyOf(options);
         this.parserOptions = EnumSet.copyOf(parserOptions);
@@ -1041,10 +1037,13 @@ public final class Parser {
                 || parserOptions.contains(Option.FunctionThis)
                 || parserOptions.contains(Option.LocalScope)
                 || parserOptions.contains(Option.DirectEval)
-                || parserOptions.contains(Option.EnclosedByWithStatement)
-                || parserOptions.contains(Option.EnclosedByLexicalDeclaration) || parserOptions
-                    .contains(Option.Scripting)) || parserOptions.contains(Option.EvalScript) : "Illegal option: "
-                + parserOptions;
+                || parserOptions.contains(Option.EnclosedByWithStatement) || parserOptions
+                    .contains(Option.EnclosedByLexicalDeclaration))
+                || (parserOptions.contains(Option.EvalScript)) : "Illegal option: " + parserOptions;
+
+        // eval-script and scripting are mutually exclusive
+        assert !(parserOptions.contains(Option.Scripting) && parserOptions
+                .contains(Option.EvalScript)) : "Illegal option: " + parserOptions;
     }
 
     String getSourceName() {
@@ -1161,9 +1160,6 @@ public final class Parser {
             // top-level function declaration in script context
             addVarDeclaredName(decl, parentContext, BoundName(decl));
             parentContext.scriptContext.addVarScopedDeclaration(decl);
-            if (isEnabled(Option.EvalScript)) {
-                parentContext.scriptContext.addVarFunctionAndForOfDeclaredName(BoundName(decl));
-            }
         } else if (parentContext.kind.isFunction()
                 && parentScope == parentContext.funContext.lexicalScope) {
             // top-level function declaration in function context
@@ -1291,7 +1287,7 @@ public final class Parser {
             }
         }
         if (context.kind.isScript() && isEnabled(Option.EvalScript)) {
-            context.scriptContext.addVarFunctionAndForOfDeclaredName(name);
+            context.scriptContext.addVarForOfDeclaredName(name);
         }
     }
 
@@ -5911,6 +5907,15 @@ public final class Parser {
             addVarDeclaredName(varStmt.getElements().get(0).getBinding());
             addVarScopedDeclaration(varStmt);
             head = varStmt;
+            if (token() == Token.ASSIGN && isEnabled(CompatibilityOption.ForInVarInitializer)) {
+                Binding binding = varStmt.getElements().get(0).getBinding();
+                if (binding instanceof BindingIdentifier) {
+                    initializer(false);
+                    if (token() != Token.IN) {
+                        reportTokenMismatch(Token.IN, token());
+                    }
+                }
+            }
             break;
         case CONST:
             lexBlockContext = enterBlockContext();
@@ -8653,6 +8658,7 @@ public final class Parser {
             if (context.strictMode != StrictMode.NonStrict) {
                 String name = ident.getName();
                 if ("eval".equals(name) || "arguments".equals(name)) {
+                    // FIXME: spec issue - early SyntaxError in ES5, but ReferenceError in rev38.
                     reportStrictModeSyntaxError(ident,
                             Messages.Key.StrictModeInvalidAssignmentTarget);
                 }

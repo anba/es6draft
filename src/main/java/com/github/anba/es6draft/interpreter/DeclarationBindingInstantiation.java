@@ -45,13 +45,12 @@ final class DeclarationBindingInstantiation {
      *            the execution context
      * @param script
      *            the global script to instantiate
-     * @param globalEnv
-     *            the global environment
      */
-    public static void GlobalDeclarationInstantiation(ExecutionContext cx, Script script,
-            LexicalEnvironment<GlobalEnvironmentRecord> env) {
+    public static void GlobalDeclarationInstantiation(ExecutionContext cx, Script script) {
+        LexicalEnvironment<?> env = cx.getLexicalEnvironment();
         /* steps 1-2 */
-        GlobalEnvironmentRecord envRec = env.getEnvRec();
+        assert env.getEnvRec() instanceof GlobalEnvironmentRecord;
+        GlobalEnvironmentRecord envRec = (GlobalEnvironmentRecord) env.getEnvRec();
         /* step 3 */
         assert LexicallyDeclaredNames(script).isEmpty();
         /* step 4 */
@@ -90,15 +89,12 @@ final class DeclarationBindingInstantiation {
      *            the execution context
      * @param evalScript
      *            the global script to instantiate
-     * @param varEnv
-     *            the current variable environment
-     * @param lexEnv
-     *            the current lexical environment
      * @param deletableBindings
      *            the deletable flag for bindings
      */
-    public static void EvalDeclarationInstantiation(ExecutionContext cx, Script evalScript,
-            LexicalEnvironment<?> varEnv, LexicalEnvironment<DeclarativeEnvironmentRecord> lexEnv) {
+    public static void EvalDeclarationInstantiation(ExecutionContext cx, Script evalScript) {
+        LexicalEnvironment<?> varEnv = cx.getVariableEnvironment();
+        LexicalEnvironment<?> lexEnv = cx.getLexicalEnvironment();
         boolean strict = evalScript.isStrict();
         boolean nonStrictGlobal = !strict && evalScript.isGlobalCode() && !evalScript.isScripting();
 
@@ -123,7 +119,8 @@ final class DeclarationBindingInstantiation {
                 }
             }
             /* steps 6.b-d */
-            if (!varNames.isEmpty() && isEnclosedByLexicalOrHasFunctionOrForOf(evalScript)) {
+            if (!evalScript.isScripting() && !varNames.isEmpty()
+                    && isEnclosedByLexicalOrHasVarForOf(evalScript)) {
                 checkLexicalRedeclaration(evalScript, cx, varEnv, lexEnv, varNames);
             }
         }
@@ -161,14 +158,13 @@ final class DeclarationBindingInstantiation {
         /* step 17 (return) */
     }
 
-    private static boolean isEnclosedByLexicalOrHasFunctionOrForOf(Script evalScript) {
-        assert evalScript.getScope().varFunctionAndForOfDeclaredNames().isEmpty();
+    private static boolean isEnclosedByLexicalOrHasVarForOf(Script evalScript) {
+        assert evalScript.getScope().varForOfDeclaredNames().isEmpty();
         return evalScript.getParserOptions().contains(Parser.Option.EnclosedByLexicalDeclaration);
     }
 
     private static void checkLexicalRedeclaration(Script evalScript, ExecutionContext cx,
-            LexicalEnvironment<?> varEnv, LexicalEnvironment<DeclarativeEnvironmentRecord> lexEnv,
-            Set<Name> varNames) {
+            LexicalEnvironment<?> varEnv, LexicalEnvironment<?> lexEnv, Set<Name> varNames) {
         // NB: Skip the initial lexEnv which is empty by construction.
         assert lexEnv.getEnvRec().bindingNames().isEmpty();
         final boolean catchVar = cx.getRealm().isEnabled(CompatibilityOption.CatchVarStatement);

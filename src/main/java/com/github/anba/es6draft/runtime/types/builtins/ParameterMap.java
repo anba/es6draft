@@ -21,14 +21,15 @@ import com.github.anba.es6draft.runtime.LexicalEnvironment;
 final class ParameterMap {
     private static final long MAX_LENGTH = 0x7FFF_FFFF;
     private final LexicalEnvironment<? extends DeclarativeEnvironmentRecord> env;
-    private final int length;
     private final String[] parameters;
+    private final int length;
     private BitSet legacyUnmapped;
 
-    private ParameterMap(LexicalEnvironment<? extends DeclarativeEnvironmentRecord> env, int length) {
+    private ParameterMap(LexicalEnvironment<? extends DeclarativeEnvironmentRecord> env,
+            String[] parameterNames, int length) {
         this.env = env;
+        this.parameters = parameterNames;
         this.length = length;
-        this.parameters = new String[length];
         this.legacyUnmapped = null; // lazily instantiated
     }
 
@@ -71,36 +72,15 @@ final class ParameterMap {
      */
     static ParameterMap create(int len, String[] parameterNames,
             LexicalEnvironment<? extends DeclarativeEnvironmentRecord> env) {
-        /* step 13 */
-        int numberOfParameters = parameterNames.length;
-        // Return early if no named parameters or arguments are present.
-        if (numberOfParameters == 0 || len == 0) {
-            return null;
-        }
-        /* step 17 */
-        boolean hasMapped = false;
-        ParameterMap map = new ParameterMap(env, len);
-        /* steps 18-20 */
-        for (int index = numberOfParameters - 1; index >= 0; --index) {
-            String name = parameterNames[index];
-            if (name != null && index < len) {
-                hasMapped = true;
-                map.defineOwnProperty(index, name);
+        /* steps 17-20 */
+        for (int index = Math.min(len, parameterNames.length) - 1; index >= 0; --index) {
+            if (parameterNames[index] != null) {
+                // Found a mapped argument.
+                return new ParameterMap(env, parameterNames, index + 1);
             }
         }
-        return hasMapped ? map : null;
-    }
-
-    /**
-     * Makes {@code arguments[propertyKey]} a mapped argument.
-     * 
-     * @param propertyKey
-     *            the property key
-     * @param name
-     *            the formal parameter name
-     */
-    private void defineOwnProperty(int propertyKey, String name) {
-        parameters[propertyKey] = name;
+        // No mapped arguments found.
+        return null;
     }
 
     /**

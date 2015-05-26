@@ -44,13 +44,12 @@ final class RuntimeInfoGenerator {
         // class: RuntimeInfo
         static final MethodName RTI_newScriptBody = MethodName.findStatic(Types.RuntimeInfo,
                 "newScriptBody", Type.methodType(Types.RuntimeInfo$ScriptBody, Types.String,
-                        Types.String, Type.BOOLEAN_TYPE, Types.MethodHandle, Types.MethodHandle,
-                        Types.MethodHandle));
+                        Types.String, Type.BOOLEAN_TYPE, Types.MethodHandle, Types.MethodHandle));
 
         static final MethodName RTI_newScriptBodyDebug = MethodName.findStatic(Types.RuntimeInfo,
                 "newScriptBody", Type.methodType(Types.RuntimeInfo$ScriptBody, Types.String,
                         Types.String, Type.BOOLEAN_TYPE, Types.MethodHandle, Types.MethodHandle,
-                        Types.MethodHandle, Types.MethodHandle));
+                        Types.MethodHandle));
 
         static final MethodName RTI_newModuleBody = MethodName.findStatic(Types.RuntimeInfo,
                 "newModuleBody", Type.methodType(Types.RuntimeInfo$ModuleBody, Types.String,
@@ -206,7 +205,6 @@ final class RuntimeInfoGenerator {
         asm.aconst(node.getSource().getFileString());
         asm.iconst(IsStrict(node));
         asm.handle(codegen.methodDesc(node, ScriptName.Init));
-        asm.handle(codegen.methodDesc(node, ScriptName.EvalInit));
         asm.handle(codegen.methodDesc(node, ScriptName.Code));
         if (codegen.isEnabled(Compiler.Option.DebugInfo)) {
             debugInfo(node);
@@ -263,7 +261,6 @@ final class RuntimeInfoGenerator {
         debugInfo(codegen.newMethod(node, ScriptName.DebugInfo),
                 codegen.methodDesc(node, ScriptName.RTI),
                 codegen.methodDesc(node, ScriptName.Init),
-                codegen.methodDesc(node, ScriptName.EvalInit),
                 codegen.methodDesc(node, ScriptName.Code));
     }
 

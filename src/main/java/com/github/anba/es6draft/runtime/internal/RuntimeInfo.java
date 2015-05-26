@@ -13,9 +13,7 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 
-import com.github.anba.es6draft.runtime.DeclarativeEnvironmentRecord;
 import com.github.anba.es6draft.runtime.ExecutionContext;
-import com.github.anba.es6draft.runtime.GlobalEnvironmentRecord;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.ModuleEnvironmentRecord;
 import com.github.anba.es6draft.runtime.modules.MalformedNameException;
@@ -146,16 +144,14 @@ public final class RuntimeInfo {
      *            the strict mode flag
      * @param initialization
      *            the initialization method handle
-     * @param evalinitialization
-     *            the eval-initialization method handle
      * @param handle
      *            the code method handle
      * @return the new script object
      */
     public static ScriptBody newScriptBody(String sourceName, String sourcePath, boolean isStrict,
-            MethodHandle initialization, MethodHandle evalinitialization, MethodHandle handle) {
-        return new CompiledScriptBody(sourceName, sourcePath, isStrict, initialization,
-                evalinitialization, handle, null);
+            MethodHandle initialization, MethodHandle handle) {
+        return new CompiledScriptBody(sourceName, sourcePath, isStrict, initialization, handle,
+                null);
     }
 
     /**
@@ -169,8 +165,6 @@ public final class RuntimeInfo {
      *            the strict mode flag
      * @param initialization
      *            the initialization method handle
-     * @param evalinitialization
-     *            the eval-initialization method handle
      * @param handle
      *            the code method handle
      * @param debugInfo
@@ -178,10 +172,9 @@ public final class RuntimeInfo {
      * @return the new script object
      */
     public static ScriptBody newScriptBody(String sourceName, String sourcePath, boolean isStrict,
-            MethodHandle initialization, MethodHandle evalinitialization, MethodHandle handle,
-            MethodHandle debugInfo) {
-        return new CompiledScriptBody(sourceName, sourcePath, isStrict, initialization,
-                evalinitialization, handle, debugInfo);
+            MethodHandle initialization, MethodHandle handle, MethodHandle debugInfo) {
+        return new CompiledScriptBody(sourceName, sourcePath, isStrict, initialization, handle,
+                debugInfo);
     }
 
     /**
@@ -219,24 +212,16 @@ public final class RuntimeInfo {
          * 
          * @param cx
          *            the execution context
-         * @param globalEnv
-         *            the global environment
          */
-        void globalDeclarationInstantiation(ExecutionContext cx,
-                LexicalEnvironment<GlobalEnvironmentRecord> globalEnv);
+        void globalDeclarationInstantiation(ExecutionContext cx);
 
         /**
          * Performs 18.2.1.2 Eval Declaration Instantiation.
          * 
          * @param cx
          *            the execution context
-         * @param variableEnv
-         *            the current variable environment
-         * @param lexicalEnv
-         *            the current lexical environment
          */
-        void evalDeclarationInstantiation(ExecutionContext cx, LexicalEnvironment<?> variableEnv,
-                LexicalEnvironment<DeclarativeEnvironmentRecord> lexicalEnv);
+        void evalDeclarationInstantiation(ExecutionContext cx);
 
         /**
          * Performs 15.1.7 Runtime Semantics: Script Evaluation.
@@ -253,18 +238,15 @@ public final class RuntimeInfo {
         private final String sourceFile;
         private final boolean isStrict;
         private final MethodHandle initialization;
-        private final MethodHandle evalinitialization;
         private final MethodHandle handle;
         private final MethodHandle debugInfo;
 
         CompiledScriptBody(String sourceName, String sourceFile, boolean isStrict,
-                MethodHandle initialization, MethodHandle evalinitialization, MethodHandle handle,
-                MethodHandle debugInfo) {
+                MethodHandle initialization, MethodHandle handle, MethodHandle debugInfo) {
             this.sourceName = sourceName;
             this.sourceFile = sourceFile;
             this.isStrict = isStrict;
             this.initialization = initialization;
-            this.evalinitialization = evalinitialization;
             this.handle = handle;
             this.debugInfo = debugInfo;
         }
@@ -280,10 +262,9 @@ public final class RuntimeInfo {
         }
 
         @Override
-        public void globalDeclarationInstantiation(ExecutionContext cx,
-                LexicalEnvironment<GlobalEnvironmentRecord> globalEnv) {
+        public void globalDeclarationInstantiation(ExecutionContext cx) {
             try {
-                initialization.invokeExact(cx, globalEnv);
+                initialization.invokeExact(cx);
             } catch (RuntimeException | Error e) {
                 throw e;
             } catch (Throwable e) {
@@ -292,11 +273,9 @@ public final class RuntimeInfo {
         }
 
         @Override
-        public void evalDeclarationInstantiation(ExecutionContext cx,
-                LexicalEnvironment<?> variableEnv,
-                LexicalEnvironment<DeclarativeEnvironmentRecord> lexicalEnv) {
+        public void evalDeclarationInstantiation(ExecutionContext cx) {
             try {
-                evalinitialization.invokeExact(cx, variableEnv, lexicalEnv);
+                initialization.invokeExact(cx);
             } catch (RuntimeException | Error e) {
                 throw e;
             } catch (Throwable e) {

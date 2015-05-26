@@ -129,11 +129,6 @@ public enum CompatibilityOption {
     LetStatement,
 
     /**
-     * Moz-Extension: let expression
-     */
-    LetExpression,
-
-    /**
      * Moz-Extension: legacy (star-less) generators
      */
     LegacyGenerator,
@@ -169,9 +164,19 @@ public enum CompatibilityOption {
     ParenthesizedDestructuring,
 
     /**
+     * Moz-Extension: Allow initializer expression in for-in variable declarations.
+     */
+    ForInVarInitializer,
+
+    /**
      * Moz-Extension: RegExp.prototype.source returns the empty string instead of {@code (?:)}
      */
     RegExpEmptySource,
+
+    /**
+     * Moz-Extension: let expression
+     */
+    LetExpression,
 
     /**
      * ES7-Extension: Async Function Definitions
@@ -249,12 +254,7 @@ public enum CompatibilityOption {
     FunctionCallTrailingComma,
 
     /**
-     * Track unhandled rejected promise objects
-     */
-    PromiseRejection,
-
-    /**
-     * StaticClassProperties.
+     * ES7-Extension: StaticClassProperties.
      */
     StaticClassProperties,
 
@@ -262,6 +262,11 @@ public enum CompatibilityOption {
      * Type annotations.
      */
     TypeAnnotation,
+
+    /**
+     * Track unhandled rejected promise objects
+     */
+    PromiseRejection,
 
     ;
 
@@ -289,9 +294,16 @@ public enum CompatibilityOption {
      * @return the options set for mozilla-compatibility
      */
     public static final Set<CompatibilityOption> MozCompatibility() {
-        return addAll(WebCompatibility(),
-                EnumSet.range(ForEachStatement, ParenthesizedDestructuring),
-                EnumSet.of(Comprehension));
+        return addAll(WebCompatibility(), MozExtensions(), EnumSet.of(Comprehension));
+    }
+
+    /**
+     * Returns a set of all mozilla extensions.
+     * 
+     * @return the options set for mozilla extensions
+     */
+    public static final Set<CompatibilityOption> MozExtensions() {
+        return EnumSet.range(ForEachStatement, ForInVarInitializer);
     }
 
     /**

@@ -118,7 +118,7 @@ final class BlockDeclarationInstantiationGenerator extends DeclarationBindingIns
 
         // stack: [env] -> []
         mv.store(env);
-        storeEnvironmentRecord(envRec, env, mv);
+        getEnvironmentRecord(env, envRec, mv);
 
         /* steps 1-3 */
         for (Declaration d : declarations) {

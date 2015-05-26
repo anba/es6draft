@@ -2943,13 +2943,33 @@ public final class ScriptRuntime {
         DefinePropertyOrThrow(cx, object, propKey, desc);
     }
 
-    public static void EvaluateClassDecorators(OrdinaryConstructorFunction F,
+    /**
+     * Extension: Class Decorators
+     * 
+     * @param f
+     *            the function object
+     * @param decorators
+     *            the list of decorator functions
+     * @param cx
+     *            the execution context
+     */
+    public static void EvaluateClassDecorators(OrdinaryConstructorFunction f,
             ArrayList<Callable> decorators, ExecutionContext cx) {
         for (Callable decorator : decorators) {
-            decorator.call(cx, UNDEFINED, F);
+            decorator.call(cx, UNDEFINED, f);
         }
     }
 
+    /**
+     * Extension: Method Decorators
+     * 
+     * @param object
+     *            the script object
+     * @param decorators
+     *            the list of method decorators
+     * @param cx
+     *            the execution context
+     */
     public static void EvaluateMethodDecorators(OrdinaryObject object,
             ArrayList<Object> decorators, ExecutionContext cx) {
         // TODO: Deserves clean-up when proper evaluation semantics are specified.
@@ -2960,6 +2980,14 @@ public final class ScriptRuntime {
         }
     }
 
+    /**
+     * Extension: Class Method Decorators
+     * 
+     * @param decorators
+     *            the list of method decorators
+     * @param cx
+     *            the execution context
+     */
     public static void EvaluateClassMethodDecorators(ArrayList<Object> decorators,
             ExecutionContext cx) {
         // TODO: Deserves clean-up when proper evaluation semantics are specified.
@@ -3089,7 +3117,6 @@ public final class ScriptRuntime {
      *            the execution context
      */
     public static void defineProtoProperty(OrdinaryObject object, Object value, ExecutionContext cx) {
-        // FIXME: function .name and __proto__ interaction unclear
         if (Type.isObjectOrNull(value)) {
             object.setPrototypeOf(cx, Type.objectValueOrNull(value));
         }

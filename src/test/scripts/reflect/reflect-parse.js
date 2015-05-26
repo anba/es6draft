@@ -105,7 +105,6 @@ cooked}, ...args])
 function compExpr(body, blocks, filter) Pattern({ type: "ComprehensionExpression", body: body, blocks: blocks, filter: filter })
 function genExpr(body, blocks, filter) Pattern({ type: "GeneratorExpression", body: body, blocks: blocks, filter: filter })
 function graphExpr(idx, body) Pattern({ type: "GraphExpression", index: idx, expression: body })
-function letExpr(head, body) Pattern({ type: "LetExpression", head: head, body: body })
 function idxExpr(idx) Pattern({ type: "GraphIndexExpression", index: idx })
 
 function compBlock(left, right) Pattern({ type: "ComprehensionBlock", left: left, right: right, each: false, of: false })
@@ -941,30 +940,6 @@ assertExpr("( [x,y,z] for (x of foo) for (y of bar) for (z of baz) if (p) )",
 // NOTE: it would be good to test generator expressions both with and without upvars, just like functions above.
 
 
-// let expressions
-
-assertExpr("(let (x=1) x)", letExpr([{ id: ident("x"), init: lit(1) }], ident("x")));
-assertExpr("(let (x=1,y=2) y)", letExpr([{ id: ident("x"), init: lit(1) },
-                                         { id: ident("y"), init: lit(2) }],
-                                        ident("y")));
-assertExpr("(let (x=1,y=2,z=3) z)", letExpr([{ id: ident("x"), init: lit(1) },
-                                             { id: ident("y"), init: lit(2) },
-                                             { id: ident("z"), init: lit(3) }],
-                                            ident("z")));
-assertExpr("(let (x) x)", letExpr([{ id: ident("x"), init: null }], ident("x")));
-assertExpr("(let (x,y) y)", letExpr([{ id: ident("x"), init: null },
-                                     { id: ident("y"), init: null }],
-                                    ident("y")));
-assertExpr("(let (x,y,z) z)", letExpr([{ id: ident("x"), init: null },
-                                       { id: ident("y"), init: null },
-                                       { id: ident("z"), init: null }],
-                                      ident("z")));
-assertExpr("(let (x = 1, y = x) y)", letExpr([{ id: ident("x"), init: lit(1) },
-                                              { id: ident("y"), init: ident("x") }],
-                                             ident("y")));
-// #disable: SyntaxError instead of TypeError
-// assertError("(let (x = 1, x = 2) x)", TypeError);
-
 // let statements
 
 assertStmt("let (x=1) { }", letStmt([{ id: ident("x"), init: lit(1) }], blockStmt([])));
@@ -1070,7 +1045,6 @@ assertGlobalExpr("this", 14, { thisExpression: function() 14 });
 assertGlobalExpr("[x for (x in y)]", 17, { comprehensionExpression: function() 17 });
 assertGlobalExpr("(x for (x in y))", 18, { generatorExpression: function() 18 });
 assertGlobalExpr("(function() { yield 42 })", genFunExpr(null, [], blockStmt([exprStmt(19)])), { yieldExpression: function() 19 });
-assertGlobalExpr("(let (x) x)", 20, { letExpression: function() 20 });
 
 assertGlobalStmt("switch (x) { case y: }", switchStmt(ident("x"), [1]), { switchCase: function() 1 });
 assertGlobalStmt("try { } catch (e) { }", 2, { tryStatement: (function(b, g, u, f) u), catchClause: function() 2 });
@@ -1232,7 +1206,6 @@ return {
     comprehensionExpression: reject,
     generatorExpression: reject,
     yieldExpression: reject,
-    letExpression: reject,
 
     emptyStatement: function() ["EmptyStmt", {}],
     blockStatement: function(stmts) {

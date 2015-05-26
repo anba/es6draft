@@ -180,9 +180,9 @@ final class PropertyGenerator extends
         String propName = PropName(node);
         if (propName == null) {
             assert node.getPropertyName() instanceof ComputedPropertyName;
-            node.getPropertyName().accept(this, mv);
+            ValType propKey = node.getPropertyName().accept(this, mv);
             if (hasDecorators) {
-                addDecoratorThingFromStack(decorators, Types.Object, mv);
+                addDecoratorKey(decorators, propKey, mv);
             }
             mv.iconst(node.getAllocation() == MethodDefinition.MethodAllocation.Object);
             mv.invoke(codegen.methodDesc(node, FunctionName.RTI));
@@ -294,7 +294,6 @@ final class PropertyGenerator extends
         } else if ("__proto__".equals(propName)
                 && codegen.isEnabled(CompatibilityOption.ProtoInitializer)) {
             expressionBoxedValue(propertyValue, mv);
-            // TODO: SetFunctionName() ?
             mv.loadExecutionContext();
             mv.lineInfo(node);
             mv.invoke(Methods.ScriptRuntime_defineProtoProperty);

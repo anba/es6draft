@@ -197,6 +197,7 @@ regexp-not-sticky-yet.js
 
 # V8 StackTrace API
 regress/regress-crbug-393988.js
+regress/regress-crbug-489597.js
 regress/regress-2564.js
 regress/regress-conditional-position.js
 regress/regress-function-constructor-receiver.js
@@ -221,6 +222,9 @@ regress/regress-417709a.js
 regress/regress-417709b.js
 harmony/regress/regress-3750.js
 harmony/regress/regress-405844.js
+
+# SharedArrayBuffer
+harmony/sharedarraybuffer.js
 
 
 #######################################

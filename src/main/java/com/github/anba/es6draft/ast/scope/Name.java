@@ -54,12 +54,21 @@ public final class Name implements Cloneable {
     }
 
     /**
-     * Returns {@code true} if this name is references a global identifier.
+     * Returns {@code true} if this name references a global identifier.
      * 
      * @return {@code true} if global name
      */
     public boolean isGlobal() {
         return globalName;
+    }
+
+    /**
+     * Returns {@code true} if this name references a local identifier.
+     * 
+     * @return {@code true} if local name
+     */
+    public boolean isLocal() {
+        return scope != null && !globalName && !lookupByName;
     }
 
     /**

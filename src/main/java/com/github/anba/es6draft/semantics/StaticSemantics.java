@@ -199,6 +199,17 @@ public final class StaticSemantics {
     }
 
     /**
+     * 13.2.2.1 Static Semantics: BoundNames
+     * 
+     * @param node
+     *            the variable statement
+     * @return the bound names
+     */
+    public static List<Name> BoundNames(VariableDeclaration node) {
+        return BoundNames(node.getBinding());
+    }
+
+    /**
      * 15.2.1.2 Static Semantics: BoundNames
      * 
      * @param node

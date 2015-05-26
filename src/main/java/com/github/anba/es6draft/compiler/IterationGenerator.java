@@ -234,7 +234,7 @@ abstract class IterationGenerator<NODE extends Node, VISITOR extends ExpressionV
         return Completion.Abrupt; // Return or Break
     }
 
-    protected void IteratorClose(Node node, Variable<ScriptIterator<?>> iterator,
+    protected final void IteratorClose(Node node, Variable<ScriptIterator<?>> iterator,
             boolean throwCompletion, ExpressionVisitor mv) {
         mv.loadExecutionContext();
         mv.load(iterator);

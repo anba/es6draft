@@ -138,9 +138,7 @@ final class CodeGenerator {
         static final MethodTypeDescriptor Script_Code = Type.methodType(Types.Object,
                 Types.ExecutionContext);
         static final MethodTypeDescriptor Script_Init = Type.methodType(Type.VOID_TYPE,
-                Types.ExecutionContext, Types.LexicalEnvironment);
-        static final MethodTypeDescriptor Script_EvalInit = Type.methodType(Type.VOID_TYPE,
-                Types.ExecutionContext, Types.LexicalEnvironment, Types.LexicalEnvironment);
+                Types.ExecutionContext);
         static final MethodTypeDescriptor Script_RTI = Type
                 .methodType(Types.RuntimeInfo$ScriptBody);
         static final MethodTypeDescriptor Script_DebugInfo = Type.methodType(Types.DebugInfo);
@@ -213,7 +211,7 @@ final class CodeGenerator {
     /* ----------------------------------------------------------------------------------------- */
 
     enum ScriptName {
-        Code, Init, EvalInit, RTI, DebugInfo
+        Code, Init, RTI, DebugInfo
     }
 
     enum ModuleName {
@@ -239,9 +237,7 @@ final class CodeGenerator {
         case Code:
             return "~script";
         case Init:
-            return "!script_init";
-        case EvalInit:
-            return "!script_evalinit";
+            return "~script_init";
         case RTI:
             return "!script_rti";
         case DebugInfo:
@@ -447,8 +443,6 @@ final class CodeGenerator {
             return MethodDescriptors.Script_Code;
         case Init:
             return MethodDescriptors.Script_Init;
-        case EvalInit:
-            return MethodDescriptors.Script_EvalInit;
         case RTI:
             return MethodDescriptors.Script_RTI;
         case DebugInfo:
@@ -640,8 +634,11 @@ final class CodeGenerator {
 
     void compile(Script node) {
         // initialization methods
-        new GlobalDeclarationInstantiationGenerator(this).generate(node);
-        new EvalDeclarationInstantiationGenerator(this).generate(node);
+        if (!(node.isEvalScript() || node.isScripting())) {
+            new GlobalDeclarationInstantiationGenerator(this).generate(node);
+        } else {
+            new EvalDeclarationInstantiationGenerator(this).generate(node);
+        }
 
         // runtime method
         scriptBody(node);

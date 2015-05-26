@@ -14,7 +14,10 @@ import com.github.anba.es6draft.ast.AsyncFunctionDeclaration;
 import com.github.anba.es6draft.ast.Declaration;
 import com.github.anba.es6draft.ast.FunctionDeclaration;
 import com.github.anba.es6draft.ast.GeneratorDeclaration;
+import com.github.anba.es6draft.ast.HoistableDeclaration;
 import com.github.anba.es6draft.ast.LegacyGeneratorDeclaration;
+import com.github.anba.es6draft.ast.Node;
+import com.github.anba.es6draft.ast.VariableDeclaration;
 import com.github.anba.es6draft.ast.scope.Name;
 import com.github.anba.es6draft.compiler.CodeGenerator.FunctionName;
 import com.github.anba.es6draft.compiler.assembler.MethodName;
@@ -32,9 +35,14 @@ import com.github.anba.es6draft.runtime.internal.ScriptRuntime;
  */
 abstract class DeclarationBindingInstantiationGenerator {
     private static final class Methods {
-        // class: IllegalStateException
-        static final MethodName IllegalStateException_init = MethodName.findConstructor(
-                Types.IllegalStateException, Type.methodType(Type.VOID_TYPE));
+        // class: ExecutionContext
+        static final MethodName ExecutionContext_getLexicalEnvironment = MethodName.findVirtual(
+                Types.ExecutionContext, "getLexicalEnvironment",
+                Type.methodType(Types.LexicalEnvironment));
+
+        static final MethodName ExecutionContext_getVariableEnvironment = MethodName.findVirtual(
+                Types.ExecutionContext, "getVariableEnvironment",
+                Type.methodType(Types.LexicalEnvironment));
 
         // class: EnvironmentRecord
         static final MethodName EnvironmentRecord_hasBinding = MethodName.findInterface(
@@ -121,20 +129,6 @@ abstract class DeclarationBindingInstantiationGenerator {
     }
 
     /**
-     * Emit throw expression for: {@code throw new}
-     * {@link IllegalStateException#IllegalStateException() IllegalStateException}
-     * <p>
-     * stack: [] {@literal ->} []
-     * 
-     * @param mv
-     *            the instruction visitor
-     */
-    protected final void generateExceptionThrower(InstructionVisitor mv) {
-        mv.anew(Types.IllegalStateException, Methods.IllegalStateException_init);
-        mv.athrow();
-    }
-
-    /**
      * Emit function call for: {@link EnvironmentRecord#hasBinding(String)}
      * <p>
      * stack: [] {@literal ->} [boolean]
@@ -160,6 +154,31 @@ abstract class DeclarationBindingInstantiationGenerator {
      * 
      * @param envRec
      *            the variable which holds the environment record
+     * @param node
+     *            the declaration node
+     * @param name
+     *            the binding name
+     * @param deletable
+     *            the deletable flag
+     * @param mv
+     *            the instruction visitor
+     */
+    protected final void createMutableBinding(Variable<? extends EnvironmentRecord> envRec,
+            Node node, Name name, boolean deletable, InstructionVisitor mv) {
+        mv.load(envRec);
+        mv.aconst(name.getIdentifier());
+        mv.iconst(deletable);
+        mv.lineInfo(node);
+        mv.invoke(Methods.EnvironmentRecord_createMutableBinding);
+    }
+
+    /**
+     * Emit function call for: {@link EnvironmentRecord#createMutableBinding(String, boolean)}
+     * <p>
+     * stack: [] {@literal ->} []
+     * 
+     * @param envRec
+     *            the variable which holds the environment record
      * @param name
      *            the binding name
      * @param deletable
@@ -176,25 +195,26 @@ abstract class DeclarationBindingInstantiationGenerator {
     }
 
     /**
-     * Emit function call for: {@link EnvironmentRecord#createMutableBinding(String, boolean)}
+     * Emit function call for: {@link EnvironmentRecord#createImmutableBinding(String, boolean)}
      * <p>
      * stack: [] {@literal ->} []
      * 
      * @param envRec
      *            the variable which holds the environment record
+     * @param node
+     *            the declaration node
      * @param name
      *            the binding name
-     * @param deletable
-     *            the variable which holds the deletable flag
      * @param mv
      *            the instruction visitor
      */
-    protected final void createMutableBinding(Variable<? extends EnvironmentRecord> envRec,
-            Name name, Variable<Boolean> deletable, InstructionVisitor mv) {
+    protected final void createImmutableBinding(Variable<? extends EnvironmentRecord> envRec,
+            Node node, Name name, boolean strict, InstructionVisitor mv) {
         mv.load(envRec);
         mv.aconst(name.getIdentifier());
-        mv.load(deletable);
-        mv.invoke(Methods.EnvironmentRecord_createMutableBinding);
+        mv.iconst(strict);
+        mv.lineInfo(node);
+        mv.invoke(Methods.EnvironmentRecord_createImmutableBinding);
     }
 
     /**
@@ -291,6 +311,8 @@ abstract class DeclarationBindingInstantiationGenerator {
      *            the variable which holds the environment record
      * @param name
      *            the binding name
+     * @param value
+     *            the value
      * @param strict
      *            the strict-mode flag
      * @param mv
@@ -306,19 +328,43 @@ abstract class DeclarationBindingInstantiationGenerator {
     }
 
     /**
-     * Emit function call for: {@link LexicalEnvironment#getEnvRec()}
+     * Emit function call for: {@link ExecutionContext#getLexicalEnvironment()}
      * <p>
-     * stack: [] {@literal ->} [envRec]
+     * stack: [] {@literal ->} [env]
      * 
+     * @param context
+     *            the variable which holds the execution context
      * @param env
      *            the variable which holds the lexical environment
      * @param mv
      *            the instruction visitor
      */
-    protected final void getEnvironmentRecord(Variable<? extends LexicalEnvironment<?>> env,
-            InstructionVisitor mv) {
-        mv.load(env);
-        mv.invoke(Methods.LexicalEnvironment_getEnvRec);
+    protected final void getLexicalEnvironment(Variable<ExecutionContext> context,
+            Variable<? extends LexicalEnvironment<?>> env, InstructionVisitor mv) {
+        // stack: [] -> []
+        mv.load(context);
+        mv.invoke(Methods.ExecutionContext_getLexicalEnvironment);
+        mv.store(env);
+    }
+
+    /**
+     * Emit function call for: {@link ExecutionContext#getVariableEnvironment()}
+     * <p>
+     * stack: [] {@literal ->} [env]
+     * 
+     * @param context
+     *            the variable which holds the execution context
+     * @param env
+     *            the variable which holds the lexical environment
+     * @param mv
+     *            the instruction visitor
+     */
+    protected final void getVariableEnvironment(Variable<ExecutionContext> context,
+            Variable<? extends LexicalEnvironment<?>> env, InstructionVisitor mv) {
+        // stack: [] -> []
+        mv.load(context);
+        mv.invoke(Methods.ExecutionContext_getVariableEnvironment);
+        mv.store(env);
     }
 
     /**
@@ -328,11 +374,13 @@ abstract class DeclarationBindingInstantiationGenerator {
      * 
      * @param env
      *            the variable which holds the lexical environment
+     * @param envRec
+     *            the variable which holds the environment record
      * @param mv
      *            the instruction visitor
      */
-    protected final <R extends EnvironmentRecord, R2 extends R> void storeEnvironmentRecord(
-            Variable<? extends R> envRec, Variable<? extends LexicalEnvironment<? extends R2>> env,
+    protected final <R extends EnvironmentRecord, R2 extends R> void getEnvironmentRecord(
+            Variable<? extends LexicalEnvironment<? extends R2>> env, Variable<? extends R> envRec,
             InstructionVisitor mv) {
         mv.load(env);
         mv.invoke(Methods.LexicalEnvironment_getEnvRec);
@@ -351,16 +399,19 @@ abstract class DeclarationBindingInstantiationGenerator {
      *            the variable which holds the execution context
      * @param envRec
      *            the variable which holds the environment record
+     * @param node
+     *            the declaration node
      * @param name
      *            the binding name
      * @param mv
      *            the instruction visitor
      */
     protected final void canDeclareLexicalScopedOrThrow(Variable<ExecutionContext> context,
-            Variable<GlobalEnvironmentRecord> envRec, Name name, InstructionVisitor mv) {
+            Variable<GlobalEnvironmentRecord> envRec, Node node, Name name, InstructionVisitor mv) {
         mv.load(context);
         mv.load(envRec);
         mv.aconst(name.getIdentifier());
+        mv.lineInfo(node);
         mv.invoke(Methods.ScriptRuntime_canDeclareLexicalScopedOrThrow);
     }
 
@@ -373,16 +424,19 @@ abstract class DeclarationBindingInstantiationGenerator {
      *            the variable which holds the execution context
      * @param envRec
      *            the variable which holds the environment record
+     * @param node
+     *            the declaration node
      * @param name
      *            the binding name
      * @param mv
      *            the instruction visitor
      */
     protected final void canDeclareVarScopedOrThrow(Variable<ExecutionContext> context,
-            Variable<GlobalEnvironmentRecord> envRec, Name name, InstructionVisitor mv) {
+            Variable<GlobalEnvironmentRecord> envRec, Node node, Name name, InstructionVisitor mv) {
         mv.load(context);
         mv.load(envRec);
         mv.aconst(name.getIdentifier());
+        mv.lineInfo(node);
         mv.invoke(Methods.ScriptRuntime_canDeclareVarScopedOrThrow);
     }
 
@@ -395,16 +449,20 @@ abstract class DeclarationBindingInstantiationGenerator {
      *            the variable which holds the execution context
      * @param envRec
      *            the variable which holds the environment record
+     * @param node
+     *            the function node
      * @param name
      *            the binding name
      * @param mv
      *            the instruction visitor
      */
     protected final void canDeclareGlobalFunctionOrThrow(Variable<ExecutionContext> context,
-            Variable<GlobalEnvironmentRecord> envRec, Name name, InstructionVisitor mv) {
+            Variable<GlobalEnvironmentRecord> envRec, HoistableDeclaration node, Name name,
+            InstructionVisitor mv) {
         mv.load(context);
         mv.load(envRec);
         mv.aconst(name.getIdentifier());
+        mv.lineInfo(node);
         mv.invoke(Methods.ScriptRuntime_canDeclareGlobalFunctionOrThrow);
     }
 
@@ -417,16 +475,20 @@ abstract class DeclarationBindingInstantiationGenerator {
      *            the variable which holds the execution context
      * @param envRec
      *            the variable which holds the environment record
+     * @param node
+     *            the variable declaration node
      * @param name
      *            the binding name
      * @param mv
      *            the instruction visitor
      */
     protected final void canDeclareGlobalVarOrThrow(Variable<ExecutionContext> context,
-            Variable<GlobalEnvironmentRecord> envRec, Name name, InstructionVisitor mv) {
+            Variable<GlobalEnvironmentRecord> envRec, VariableDeclaration node, Name name,
+            InstructionVisitor mv) {
         mv.load(context);
         mv.load(envRec);
         mv.aconst(name.getIdentifier());
+        mv.lineInfo(node);
         mv.invoke(Methods.ScriptRuntime_canDeclareGlobalVarOrThrow);
     }
 
@@ -437,6 +499,8 @@ abstract class DeclarationBindingInstantiationGenerator {
      * 
      * @param envRec
      *            the variable which holds the environment record
+     * @param node
+     *            the variable declaration node
      * @param name
      *            the binding name
      * @param deletableBindings
@@ -445,10 +509,11 @@ abstract class DeclarationBindingInstantiationGenerator {
      *            the instruction visitor
      */
     protected final void createGlobalVarBinding(Variable<GlobalEnvironmentRecord> envRec,
-            Name name, boolean deletableBindings, InstructionVisitor mv) {
+            VariableDeclaration node, Name name, boolean deletableBindings, InstructionVisitor mv) {
         mv.load(envRec);
         mv.aconst(name.getIdentifier());
         mv.iconst(deletableBindings);
+        mv.lineInfo(node);
         mv.invoke(Methods.GlobalEnvironmentRecord_createGlobalVarBinding);
     }
 
@@ -461,6 +526,8 @@ abstract class DeclarationBindingInstantiationGenerator {
      * 
      * @param envRec
      *            the variable which holds the environment record
+     * @param node
+     *            the function node
      * @param name
      *            the binding name
      * @param deletableBindings
@@ -469,13 +536,14 @@ abstract class DeclarationBindingInstantiationGenerator {
      *            the instruction visitor
      */
     protected final void createGlobalFunctionBinding(Variable<GlobalEnvironmentRecord> envRec,
-            Name name, boolean deletableBindings, InstructionVisitor mv) {
+            HoistableDeclaration node, Name name, boolean deletableBindings, InstructionVisitor mv) {
         // stack: [fo] -> []
         mv.load(envRec);
         mv.swap();
         mv.aconst(name.getIdentifier());
         mv.swap();
         mv.iconst(deletableBindings);
+        mv.lineInfo(node);
         mv.invoke(Methods.GlobalEnvironmentRecord_createGlobalFunctionBinding);
     }
 

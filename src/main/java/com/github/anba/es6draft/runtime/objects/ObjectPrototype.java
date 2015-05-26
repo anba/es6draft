@@ -118,6 +118,7 @@ public final class ObjectPrototype extends OrdinaryObject implements Initializab
             } else if (o instanceof RegExpObject) {
                 builtinTag = "RegExp";
             } else {
+                // TODO: Use "global" if o instanceof GlobalObject?
                 builtinTag = "Object";
             }
             /* steps 16-17 */

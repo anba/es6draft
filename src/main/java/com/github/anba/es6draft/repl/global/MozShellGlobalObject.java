@@ -18,24 +18,28 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
 
+import com.github.anba.es6draft.Executable;
 import com.github.anba.es6draft.Script;
 import com.github.anba.es6draft.compiler.CompilationException;
 import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.repl.console.ShellConsole;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
+import com.github.anba.es6draft.runtime.internal.DebugInfo;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
 import com.github.anba.es6draft.runtime.internal.Source;
+import com.github.anba.es6draft.runtime.modules.MalformedNameException;
 import com.github.anba.es6draft.runtime.objects.FunctionPrototype;
 import com.github.anba.es6draft.runtime.objects.GlobalObject;
 import com.github.anba.es6draft.runtime.objects.collection.WeakMapObject;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
+import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
 import com.github.anba.es6draft.runtime.types.builtins.ProxyObject;
 
 /**
@@ -546,5 +550,74 @@ public class MozShellGlobalObject extends ShellGlobalObject {
     @Function(name = "nondeterministicGetWeakMapKeys", arity = 1)
     public ScriptObject nondeterministicGetWeakMapKeys(ExecutionContext cx, WeakMapObject weakMap) {
         return CreateArrayFromList(cx, new ArrayList<>(weakMap.getWeakMapData().keySet()));
+    }
+
+    private static DebugInfo debugInfo(ExecutionContext caller, Object... args) {
+        if (args.length == 0) {
+            FunctionObject currentFunction = caller.getCurrentFunction();
+            Executable currentExec = caller.getCurrentExecutable();
+            if (currentFunction != null && currentFunction.getExecutable() == currentExec) {
+                return currentFunction.getCode().debugInfo();
+            } else if (currentExec != null && currentExec.getSourceObject() != null) {
+                return currentExec.getSourceObject().debugInfo();
+            }
+        } else if (args[0] instanceof FunctionObject) {
+            return ((FunctionObject) args[0]).getCode().debugInfo();
+        }
+        return null;
+    }
+
+    /**
+     * shell-function: {@code dis([function])}
+     * 
+     * @param cx
+     *            the execution context
+     * @param caller
+     *            the caller context
+     * @param args
+     *            the arguments
+     * @throws IOException
+     *             if there was any I/O error
+     * @throws MalformedNameException
+     *             if the module name cannot be normalized
+     */
+    @Function(name = "dis", arity = 1)
+    public void dis(ExecutionContext cx, ExecutionContext caller, Object... args)
+            throws IOException, MalformedNameException {
+        DebugInfo debugInfo = debugInfo(caller, args);
+        if (debugInfo != null) {
+            for (DebugInfo.Method method : debugInfo.getMethods()) {
+                console.print(method.disassemble());
+            }
+        }
+    }
+
+    /**
+     * shell-function: {@code disassemble([function])}
+     * 
+     * @param cx
+     *            the execution context
+     * @param caller
+     *            the caller context
+     * @param args
+     *            the arguments
+     * @return the disassembled byte code
+     * @throws IOException
+     *             if there was any I/O error
+     * @throws MalformedNameException
+     *             if the module name cannot be normalized
+     */
+    @Function(name = "disassemble", arity = 1)
+    public String disassemble(ExecutionContext cx, ExecutionContext caller, Object... args)
+            throws IOException, MalformedNameException {
+        DebugInfo debugInfo = debugInfo(caller, args);
+        if (debugInfo != null) {
+            StringBuilder sb = new StringBuilder();
+            for (DebugInfo.Method method : debugInfo.getMethods()) {
+                sb.append(method.disassemble()).append('\n');
+            }
+            return sb.toString();
+        }
+        return "";
     }
 }

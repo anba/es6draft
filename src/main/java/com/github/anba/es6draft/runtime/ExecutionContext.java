@@ -7,6 +7,7 @@
 package com.github.anba.es6draft.runtime;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToObject;
+import static com.github.anba.es6draft.runtime.LexicalEnvironment.newDeclarativeEnvironment;
 import static com.github.anba.es6draft.runtime.LexicalEnvironment.newFunctionEnvironment;
 
 import com.github.anba.es6draft.Executable;
@@ -418,6 +419,23 @@ public final class ExecutionContext {
                 newTarget, thisValue);
         /* steps 3-4, 6, 10-13 */
         return new ExecutionContext(calleeRealm, localEnv, localEnv, localEnv, f.getExecutable(), f);
+    }
+
+    /**
+     * Returns a new execution context for JSR-223 scripting.
+     * 
+     * @param realm
+     *            the realm instance
+     * @param script
+     *            the script object
+     * @param varEnv
+     *            the variable environment
+     * @return the new scripting execution context
+     */
+    public static ExecutionContext newScriptingExecutionContext(Realm realm, Script script,
+            LexicalEnvironment<?> varEnv) {
+        LexicalEnvironment<DeclarativeEnvironmentRecord> lexEnv = newDeclarativeEnvironment(varEnv);
+        return new ExecutionContext(realm, varEnv, lexEnv, null, script, null);
     }
 
     /**

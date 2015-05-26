@@ -36,7 +36,6 @@ public final class BindingIdentifier extends Binding {
         assert resolvedName != null && resolvedName.isResolved();
         assert this.resolvedName == null : String.format("%s: <%s> != <%s>", name,
                 this.resolvedName.getScope(), resolvedName.getScope());
-        assert resolvedName.isResolved();
         this.resolvedName = resolvedName;
     }
 

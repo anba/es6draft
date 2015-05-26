@@ -9,10 +9,7 @@ package com.github.anba.es6draft;
 import static com.github.anba.es6draft.runtime.ExecutionContext.newScriptExecutionContext;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
-import com.github.anba.es6draft.runtime.GlobalEnvironmentRecord;
-import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
 
 /**
  * <h1>15 ECMAScript Language: Scripts and Modules</h1>
@@ -34,24 +31,21 @@ public final class Scripts {
      * @return the script evaluation result
      */
     public static Object ScriptEvaluation(Script script, Realm realm) {
-        /* steps 1-2 */
-        RuntimeInfo.ScriptBody scriptBody = script.getScriptBody();
-        /* step 3 */
-        LexicalEnvironment<GlobalEnvironmentRecord> globalEnv = realm.getGlobalEnv();
-        /* steps 4-8 */
+        /* steps 1-2 (not applicable) */
+        /* steps 3-7 */
         ExecutionContext scriptCxt = newScriptExecutionContext(realm, script);
-        /* steps 9-10 */
+        /* steps 8-9 */
         ExecutionContext oldScriptContext = realm.getScriptContext();
         try {
             realm.setScriptContext(scriptCxt);
-            /* step 11 */
-            scriptBody.globalDeclarationInstantiation(scriptCxt, globalEnv);
-            /* steps 12-13 */
+            /* step 10 */
+            script.getScriptBody().globalDeclarationInstantiation(scriptCxt);
+            /* steps 11-12 */
             Object result = script.evaluate(scriptCxt);
-            /* step 17 */
+            /* step 16 */
             return result;
         } finally {
-            /* steps 14-16  */
+            /* steps 13-15  */
             realm.setScriptContext(oldScriptContext);
         }
     }

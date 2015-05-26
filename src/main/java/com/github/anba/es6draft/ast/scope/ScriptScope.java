@@ -18,10 +18,10 @@ public interface ScriptScope extends TopLevelScope {
     Script getNode();
 
     /**
-     * Returns the set of variable declared names in function and for-of statements. This
-     * information is only tracked for eval scripts.
+     * Returns the set of variable declared names in for-of statements. This information is only
+     * tracked for eval scripts.
      * 
      * @return the variable declared names
      */
-    Set<Name> varFunctionAndForOfDeclaredNames();
+    Set<Name> varForOfDeclaredNames();
 }

@@ -1410,12 +1410,14 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
             mv.load(F);
             mv.load(classDecorators);
             mv.loadExecutionContext();
+            mv.lineInfo(def);
             mv.invoke(Methods.ScriptRuntime_EvaluateClassDecorators);
         }
 
         if (hasMethodDecorators) {
             mv.load(methodDecorators);
             mv.loadExecutionContext();
+            mv.lineInfo(def);
             mv.invoke(Methods.ScriptRuntime_EvaluateClassMethodDecorators);
         }
 
@@ -1453,15 +1455,6 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
         return var;
     }
 
-    protected final <T> void addDecoratorThingFromStack(Variable<ArrayList<T>> var, Type type,
-            ExpressionVisitor mv) {
-        mv.dup(type);
-        mv.load(var);
-        mv.swap(type, Types.ArrayList);
-        mv.invoke(Methods.ArrayList_add);
-        mv.pop();
-    }
-
     protected final <T> void addDecoratorObject(Variable<ArrayList<T>> var,
             Variable<? extends ScriptObject> object, ExpressionVisitor mv) {
         mv.load(var);
@@ -1478,12 +1471,22 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
         mv.pop();
     }
 
+    protected final <T> void addDecoratorKey(Variable<ArrayList<T>> var, ValType type,
+            ExpressionVisitor mv) {
+        mv.dup(type);
+        mv.load(var);
+        mv.swap(type.toType(), Types.ArrayList);
+        mv.invoke(Methods.ArrayList_add);
+        mv.pop();
+    }
+
     protected final <T> void evaluateDecorators(Variable<ArrayList<T>> var,
             List<Expression> decorators, ExpressionVisitor mv) {
         for (Expression decorator : decorators) {
             mv.load(var);
             expressionBoxedValue(decorator, mv);
             mv.loadExecutionContext();
+            mv.lineInfo(decorator);
             mv.invoke(Methods.ScriptRuntime_CheckCallable);
             mv.invoke(Methods.ArrayList_add);
             mv.pop();

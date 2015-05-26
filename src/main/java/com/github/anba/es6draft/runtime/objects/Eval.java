@@ -279,7 +279,7 @@ public final class Eval {
         /* steps 12-17 */
         ExecutionContext evalCxt = newEvalExecutionContext(cx, script, varEnv, lexEnv);
         /* step 18 */
-        body.evalDeclarationInstantiation(evalCxt, varEnv, lexEnv);
+        body.evalDeclarationInstantiation(evalCxt);
         /* steps 19-23 */
         return script.evaluate(evalCxt);
     }

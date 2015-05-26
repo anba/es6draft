@@ -84,6 +84,8 @@ public final class Test262Web {
     @ClassRule
     public static TestGlobals<Test262GlobalObject, Test262Info> globals = new TestGlobals<Test262GlobalObject, Test262Info>(
             configuration) {
+        final ExecutorService shared = USE_SHARED_EXECUTOR ? createDefaultSharedExecutor() : null;
+
         @Override
         protected ObjectAllocator<Test262GlobalObject> newAllocator(ShellConsole console,
                 Test262Info test, ScriptCache scriptCache) {
@@ -92,10 +94,7 @@ public final class Test262Web {
 
         @Override
         protected ExecutorService getExecutor() {
-            if (USE_SHARED_EXECUTOR) {
-                return createDefaultSharedExecutor();
-            }
-            return null;
+            return shared;
         }
     };
 

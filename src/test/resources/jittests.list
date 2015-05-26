@@ -60,6 +60,9 @@ tests/basic/bug-1133377.js
 # ES6: Detached typed arrays have no indexed properties in SM
 tests/basic/typed-array-copyWithin.js
 
+# SM issue: bug 1032150
+tests/basic/destructuring-rest-identifiers.js
+
 
 ###################
 # Misc issues     #
@@ -112,7 +115,6 @@ tests/basic/expression-autopsy.js
 tests/basic/spread-call-maxarg.js
 tests/basic/syntax-error-illegal-character.js
 tests/basic/testBug566556.js
-tests/basic/testBug579647.js
 tests/basic/testBug593559.js
 tests/basic/testBug604210.js
 tests/basic/testDontClobberScannerError.js
@@ -140,9 +142,6 @@ tests/arguments/bug844048.js
 
 # no dynamic access to arguments in generator comprehensions
 tests/basic/bug852016.js
-
-# SpiderMonkey restriction test
-tests/basic/testBug773108.js
 
 # sourceURL annotations
 tests/basic/display-url-in-stack-trace.js
@@ -470,7 +469,6 @@ tests/generators/closing-osr.js
 tests/generators/bug1151326.js
 
 # Function() with legacy generator source code
-tests/auto-regress/bug491806.js
 tests/basic/testBug603193.js
 tests/parser/yield-without-operand.js
 

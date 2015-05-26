@@ -132,8 +132,17 @@ public final class ArgumentsObject extends OrdinaryObject {
         ParameterMap map = this.parameterMap;
         /* step 3 */
         boolean isMapped = map != null ? map.hasOwnProperty(propertyKey, false) : false;
+        // FIXME: spec bug - https://bugs.ecmascript.org/show_bug.cgi?id=4371
+        // Proposed change: https://github.com/tc39/test262/pull/274#issuecomment-103415105
+        PropertyDescriptor newArgDesc = desc;
+        if (isMapped && desc.isDataDescriptor()) {
+            if (!desc.hasValue() && desc.hasWritable() && !desc.isWritable()) {
+                newArgDesc = desc.clone();
+                newArgDesc.setValue(map.get(propertyKey));
+            }
+        }
         /* steps 4-5 */
-        boolean allowed = ordinaryDefineOwnProperty(cx, propertyKey, desc);
+        boolean allowed = ordinaryDefineOwnProperty(cx, propertyKey, newArgDesc);
         /* step 6 */
         if (!allowed) {
             return false;
@@ -285,6 +294,45 @@ public final class ArgumentsObject extends OrdinaryObject {
     public static ArgumentsObject CreateMappedArgumentsObject(ExecutionContext cx,
             FunctionObject func, String[] formals, Object[] argumentsList,
             LexicalEnvironment<? extends DeclarativeEnvironmentRecord> env) {
+        ParameterMap map = ParameterMap.create(argumentsList.length, formals, env);
+        return CreateMappedArgumentsObject(cx, func, argumentsList, map);
+    }
+
+    /**
+     * 9.4.4.7 CreateMappedArgumentsObject ( func, formals, argumentsList, env )
+     * <p>
+     * [Called from generated code]
+     * 
+     * @param cx
+     *            the execution context
+     * @param func
+     *            the function callee
+     * @param argumentsList
+     *            the function arguments
+     * @return the mapped arguments object
+     */
+    public static ArgumentsObject CreateMappedArgumentsObject(ExecutionContext cx,
+            FunctionObject func, Object[] argumentsList) {
+        return CreateMappedArgumentsObject(cx, func, argumentsList, null);
+    }
+
+    /**
+     * 9.4.4.7 CreateMappedArgumentsObject ( func, formals, argumentsList, env )
+     * <p>
+     * [Called from generated code]
+     * 
+     * @param cx
+     *            the execution context
+     * @param func
+     *            the function callee
+     * @param argumentsList
+     *            the function arguments
+     * @param map
+     *            the parameter map
+     * @return the mapped arguments object
+     */
+    private static ArgumentsObject CreateMappedArgumentsObject(ExecutionContext cx,
+            FunctionObject func, Object[] argumentsList, ParameterMap map) {
         /* step 1 (not applicable) */
         /* step 2 */
         int len = argumentsList.length;
@@ -299,7 +347,7 @@ public final class ArgumentsObject extends OrdinaryObject {
         /* step 16 */
         obj.infallibleDefineOwnProperty("length", new Property(len, true, false, true));
         /* steps 17-21 */
-        obj.parameterMap = ParameterMap.create(len, formals, env);
+        obj.parameterMap = map;
         /* step 22 */
         obj.infallibleDefineOwnProperty(BuiltinSymbol.iterator.get(),
                 new Property(cx.getIntrinsic(Intrinsics.ArrayProto_values), true, false, true));

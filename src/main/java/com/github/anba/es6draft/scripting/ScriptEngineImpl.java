@@ -7,7 +7,7 @@
 package com.github.anba.es6draft.scripting;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.IsCallable;
-import static com.github.anba.es6draft.runtime.ExecutionContext.newEvalExecutionContext;
+import static com.github.anba.es6draft.runtime.ExecutionContext.newScriptingExecutionContext;
 
 import java.io.IOException;
 import java.io.Reader;
@@ -33,7 +33,6 @@ import com.github.anba.es6draft.compiler.CompilationException;
 import com.github.anba.es6draft.compiler.Compiler;
 import com.github.anba.es6draft.parser.Parser;
 import com.github.anba.es6draft.parser.ParserException;
-import com.github.anba.es6draft.runtime.DeclarativeEnvironmentRecord;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.Realm;
@@ -61,12 +60,11 @@ final class ScriptEngineImpl extends AbstractScriptEngine implements ScriptEngin
         this.factory = factory;
 
         // Scripting sources have an extra scope object before the global environment record, the
-        // ScriptContext object. To ensure this extra scope is properly handled, we compile
-        // scripting sources with the EvalScript option and use eval-declaration instead of the
-        // normal global declaration instantiation when evaluating the source code.
+        // ScriptContext object. To ensure this extra scope is properly handled, we use
+        // eval-declaration instead of the normal global declaration instantiation when evaluating
+        // the source code.
         this.evalScriptLoader = new ScriptLoader(CompatibilityOption.WebCompatibility(),
-                EnumSet.of(Parser.Option.EvalScript, Parser.Option.Scripting),
-                EnumSet.noneOf(Compiler.Option.class));
+                EnumSet.of(Parser.Option.Scripting), EnumSet.noneOf(Compiler.Option.class));
 
         ObjectAllocator<ScriptingGlobalObject> allocator = ScriptingGlobalObject
                 .newGlobalObjectAllocator();
@@ -178,10 +176,8 @@ final class ScriptEngineImpl extends AbstractScriptEngine implements ScriptEngin
             ExecutionContext cx = realm.defaultContext();
             LexicalEnvironment<ScriptContextEnvironmentRecord> varEnv = new LexicalEnvironment<>(
                     realm.getGlobalEnv(), new ScriptContextEnvironmentRecord(cx, context));
-            LexicalEnvironment<DeclarativeEnvironmentRecord> lexEnv = new LexicalEnvironment<>(
-                    varEnv, new DeclarativeEnvironmentRecord(cx, false));
-            ExecutionContext evalCxt = newEvalExecutionContext(cx, script, varEnv, lexEnv);
-            script.getScriptBody().evalDeclarationInstantiation(evalCxt, varEnv, lexEnv);
+            ExecutionContext evalCxt = newScriptingExecutionContext(realm, script, varEnv);
+            script.getScriptBody().evalDeclarationInstantiation(evalCxt);
             Object result = script.evaluate(evalCxt);
             realm.getWorld().runEventLoop();
             return TypeConverter.toJava(result);
