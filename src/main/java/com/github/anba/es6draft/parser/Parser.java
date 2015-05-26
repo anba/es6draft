@@ -5935,8 +5935,7 @@ public final class Parser {
             Expression lhs = leftHandSideExpression(true, true);
             head = validateAssignment(lhs, ExceptionType.SyntaxError,
                     Messages.Key.InvalidAssignmentTarget);
-            // Number of unchecked object literals should not have changed
-            assert context.assertLiteralsUnchecked(count);
+            objectLiteral_EarlyErrors(count);
             break;
         }
 
