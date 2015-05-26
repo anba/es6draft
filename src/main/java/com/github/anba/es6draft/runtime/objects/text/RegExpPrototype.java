@@ -1441,7 +1441,7 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
         @Override
         public String group(int group) {
             Object captured = Get(cx, object, group);
-            if (Type.isUndefined(captured)) {
+            if (group > 0 && Type.isUndefined(captured)) {
                 return null;
             }
             return ToFlatString(cx, captured);
