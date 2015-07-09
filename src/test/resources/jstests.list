@@ -58,10 +58,6 @@ ecma_6/TypedArray/values.js
 # ES6: Negative RegExp.prototype.lastIndex coerced to 0
 ecma_3/RegExp/15.10.6.2-2.js
 
-# ES6: evaluation order changed in for-in/of
-js1_5/Regress/regress-299641.js
-js1_7/regress/regress-372331.js
-
 # SM issue: __proto__ not listed in Object.getOwnPropertyNames
 ecma_6/TypedArray/entries.js
 
@@ -100,6 +96,7 @@ ecma_6/String/normalize-generateddata-part1-not-listed.js
 
 # ES6: Support for classes is incomplete in SM.
 ecma_6/Class/classHeritage.js
+ecma_6/Class/derivedConstructorDisabled.js
 ecma_6/Class/innerBinding.js
 ecma_6/Class/methodInstallation.js
 ecma_6/Class/outerBinding.js
@@ -109,6 +106,7 @@ ecma_6/Class/superPropChains.js
 ecma_6/Class/superPropDelete.js
 ecma_6/Class/superPropDerivedCalls.js
 ecma_6/Class/superPropDestructuring.js
+ecma_6/Class/superPropEvalInsideNested.js
 ecma_6/Class/superPropHomeObject.js
 ecma_6/Class/superPropOrdering.js
 ecma_6/Class/superPropProtoChanges.js
@@ -190,9 +188,6 @@ ecma/String/15.5.4.2.js
 ecma/String/15.5.4.3-1.js
 ecma/String/15.5.4.js
 ecma/Expressions/11.2.1-1.js
-
-# Date.prototype
-ecma/Date/15.9.5.js
 
 # RegExp.prototype
 ecma_5/RegExp/instance-property-storage-introspection.js
@@ -286,6 +281,7 @@ ecma_3/RegExp/15.10.4.1-6.js
 ecma_3/Unicode/regress-352044-01.js
 ecma_3_1/Object/regress-444787.js
 ecma_5/Function/builtin-no-construct.js
+ecma_6/Class/newTargetDVG.js
 ecma_6/Class/superPropDVG.js
 js1_5/extensions/regress-352291.js
 js1_5/extensions/regress-352372.js
@@ -341,7 +337,6 @@ js1_8_5/regress/regress-665355.js
 # specific js-version related tests
 js1_5/Regress/regress-351515.js
 js1_6/extensions/regress-352392.js
-js1_7/geniter/regress-366941.js
 
 # Iterator + for-each returns [key,value] pairs
 js1_7/iterable/regress-568056.js
@@ -410,6 +405,7 @@ js1_5/Regress/regress-319391.js
 js1_5/Regress/regress-350253.js
 js1_5/Regress/regress-462292.js
 js1_8_5/regress/regress-609617.js
+ecma_6/Expressions/destructuring-pattern-parenthesized.js
 
 # FunctionDeclaration directly nested in Statement not allowed
 ecma_3/FunExpr/fe-001.js

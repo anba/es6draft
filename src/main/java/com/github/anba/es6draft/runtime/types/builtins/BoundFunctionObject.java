@@ -54,7 +54,7 @@ public class BoundFunctionObject extends OrdinaryObject implements Callable {
          */
         @Override
         public ScriptObject construct(ExecutionContext callerContext, Constructor newTarget,
-                Object... extraArgs) {
+                Object... argumentsList) {
             /* step 1 */
             Callable target = getFlattenedTargetFunction();
             /* step 2 */
@@ -62,7 +62,7 @@ public class BoundFunctionObject extends OrdinaryObject implements Callable {
             /* step 3 */
             Object[] boundArgs = getBoundArguments();
             /* step 4 */
-            Object[] args = concatArguments(callerContext, boundArgs, extraArgs);
+            Object[] args = concatArguments(callerContext, boundArgs, argumentsList);
             /* step 5 */
             if (this == newTarget) {
                 newTarget = (Constructor) target;
@@ -76,7 +76,7 @@ public class BoundFunctionObject extends OrdinaryObject implements Callable {
          */
         @Override
         public Object tailConstruct(ExecutionContext callerContext, Constructor newTarget,
-                Object... extraArgs) throws Throwable {
+                Object... argumentsList) throws Throwable {
             /* step 1 */
             Callable target = getFlattenedTargetFunction();
             /* step 2 */
@@ -84,7 +84,7 @@ public class BoundFunctionObject extends OrdinaryObject implements Callable {
             /* step 3 */
             Object[] boundArgs = getBoundArguments();
             /* step 4 */
-            Object[] args = concatArguments(callerContext, boundArgs, extraArgs);
+            Object[] args = concatArguments(callerContext, boundArgs, argumentsList);
             /* step 5 */
             if (this == newTarget) {
                 newTarget = (Constructor) target;
@@ -215,7 +215,7 @@ public class BoundFunctionObject extends OrdinaryObject implements Callable {
      * @return the new bound function object
      */
     public static BoundFunctionObject BoundFunctionCreate(ExecutionContext cx,
-            Callable targetFunction, Object boundThis, Object[] boundArgs) {
+            Callable targetFunction, Object boundThis, Object... boundArgs) {
         /* step 1 (not applicable) */
         /* steps 2-3 */
         ScriptObject proto = targetFunction.getPrototypeOf(cx);
@@ -229,6 +229,7 @@ public class BoundFunctionObject extends OrdinaryObject implements Callable {
         /* step 8 */
         obj.setPrototype(proto);
         /* step 9 (implicit) */
+        // Flatten chain of bound function objects.
         if (targetFunction instanceof BoundFunctionObject) {
             BoundFunctionObject target = (BoundFunctionObject) targetFunction;
             /* step 10 */
@@ -259,6 +260,9 @@ public class BoundFunctionObject extends OrdinaryObject implements Callable {
         }
         if (boundArgs.length == 0) {
             return argumentsList;
+        }
+        if (argumentsList.length == 0) {
+            return boundArgs;
         }
         Object[] args = new Object[argsLen];
         System.arraycopy(boundArgs, 0, args, 0, boundArgs.length);

@@ -812,16 +812,13 @@ public class ProxyObject implements ScriptObject {
 
     private Object validateGet(ExecutionContext cx, Object trapResult, Property targetDesc) {
         /* step 13 */
-        if (targetDesc != null) {
-            if (targetDesc.isDataDescriptor() && !targetDesc.isConfigurable()
-                    && !targetDesc.isWritable()) {
-                if (!SameValue(trapResult, targetDesc.getValue())) {
+        if (targetDesc != null && !targetDesc.isConfigurable()) {
+            if (targetDesc.isDataDescriptor()) {
+                if (!targetDesc.isWritable() && !SameValue(trapResult, targetDesc.getValue())) {
                     throw newTypeError(cx, Messages.Key.ProxySameValue);
                 }
-            }
-            if (targetDesc.isAccessorDescriptor() && !targetDesc.isConfigurable()
-                    && targetDesc.getGetter() == null) {
-                if (trapResult != UNDEFINED) {
+            } else {
+                if (targetDesc.getGetter() == null && trapResult != UNDEFINED) {
                     throw newTypeError(cx, Messages.Key.ProxyNoGetter);
                 }
             }
@@ -896,14 +893,12 @@ public class ProxyObject implements ScriptObject {
 
     private boolean validateSet(ExecutionContext cx, Object value, Property targetDesc) {
         /* step 14 */
-        if (targetDesc != null) {
-            if (targetDesc.isDataDescriptor() && !targetDesc.isConfigurable()
-                    && !targetDesc.isWritable()) {
-                if (!SameValue(value, targetDesc.getValue())) {
+        if (targetDesc != null && !targetDesc.isConfigurable()) {
+            if (targetDesc.isDataDescriptor()) {
+                if (!targetDesc.isWritable() && !SameValue(value, targetDesc.getValue())) {
                     throw newTypeError(cx, Messages.Key.ProxySameValue);
                 }
-            }
-            if (targetDesc.isAccessorDescriptor() && !targetDesc.isConfigurable()) {
+            } else {
                 if (targetDesc.getSetter() == null) {
                     throw newTypeError(cx, Messages.Key.ProxyNoSetter);
                 }

@@ -13,7 +13,7 @@ import com.github.anba.es6draft.runtime.types.ScriptObject;
 /**
  * {@link Iterator} providing access to an underlying {@link ScriptObject}.
  */
-public interface ScriptIterator<E> extends Iterator<E> {
+public interface ScriptIterator<E> extends Iterator<E>, AutoCloseable {
     /**
      * Returns the script iterator object.
      * 
@@ -22,11 +22,13 @@ public interface ScriptIterator<E> extends Iterator<E> {
     ScriptObject getScriptObject();
 
     /**
-     * Returns {@code true} if the iterator has finished its iteration.
+     * {@inheritDoc}
      * 
-     * @return {@code true} if the iterator is drained
+     * @throws ScriptException
+     *             if an execution error occurs in the scripted iterator
      */
-    boolean isDone();
+    @Override
+    boolean hasNext() throws ScriptException;
 
     /**
      * {@inheritDoc}
@@ -35,14 +37,24 @@ public interface ScriptIterator<E> extends Iterator<E> {
      *             if an execution error occurs in the scripted iterator
      */
     @Override
-    public boolean hasNext() throws ScriptException;
+    E next() throws ScriptException;
 
     /**
-     * {@inheritDoc}
+     * Closes the iterator.
      * 
      * @throws ScriptException
      *             if an execution error occurs in the scripted iterator
      */
     @Override
-    public E next() throws ScriptException;
+    void close() throws ScriptException;
+
+    /**
+     * Closes the iterator.
+     * 
+     * @param cause
+     *            the exception cause
+     * @throws ScriptException
+     *             if an execution error occurs in the scripted iterator
+     */
+    void close(Throwable cause) throws ScriptException;
 }

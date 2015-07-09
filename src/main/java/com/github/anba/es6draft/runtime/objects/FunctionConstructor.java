@@ -13,6 +13,7 @@ import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.F
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.MakeConstructor;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.SetFunctionName;
 
+import com.github.anba.es6draft.Executable;
 import com.github.anba.es6draft.compiler.CompilationException;
 import com.github.anba.es6draft.compiler.CompiledObject;
 import com.github.anba.es6draft.parser.ParserException;
@@ -109,39 +110,20 @@ public final class FunctionConstructor extends BuiltinConstructor implements Ini
         /* step 3 (not applicable) */
 
         /* steps 4-10 */
-        int argCount = args.length;
-        String p, bodyText;
-        if (argCount == 0) {
-            p = "";
-            bodyText = "";
-        } else if (argCount == 1) {
-            p = "";
-            bodyText = ToFlatString(cx, args[0]);
-        } else {
-            StringBuilder sb = new StringBuilder();
-            Object firstArg = args[0];
-            sb.append(ToFlatString(cx, firstArg));
-            int k = 2;
-            for (; k < argCount; ++k) {
-                Object nextArg = args[k - 1];
-                String nextArgString = ToFlatString(cx, nextArg);
-                sb.append(',').append(nextArgString);
-            }
-            p = sb.toString();
-            bodyText = ToFlatString(cx, args[k - 1]);
-        }
+        String[] sourceText = functionSourceText(cx, args);
+        String parameters = sourceText[0], bodyText = sourceText[1];
 
-        /* steps 11, 13-19 */
-        Source source = functionSource(cx.getRealm(), callerContext);
+        /* steps 11, 13-20 */
+        Source source = functionSource(SourceKind.Function, cx.getRealm(), callerContext);
         RuntimeInfo.Function function;
         try {
             ScriptLoader scriptLoader = cx.getRealm().getScriptLoader();
-            function = scriptLoader.function(source, p, bodyText).getFunction();
+            function = scriptLoader.function(source, parameters, bodyText).getFunction();
         } catch (ParserException | CompilationException e) {
             throw e.toScriptException(cx);
         }
 
-        /* steps 12, 20-21 */
+        /* steps 12, 21-30 */
         return CreateDynamicFunction(cx, source, function, newTarget, fallbackProto);
     }
 
@@ -180,25 +162,121 @@ public final class FunctionConstructor extends BuiltinConstructor implements Ini
     private static OrdinaryConstructorFunction CreateDynamicFunction(ExecutionContext cx,
             Source source, RuntimeInfo.Function function, Constructor newTarget,
             Intrinsics fallbackProto) {
-        /* steps 1-11, 13-19 (not applicable) */
+        /* steps 1-11, 13-20 (not applicable) */
         /* step 12 */
         boolean strict = function.isStrict();
-        /* steps 20-21 */
+        /* steps 21-22 */
         ScriptObject proto = GetPrototypeFromConstructor(cx, newTarget, fallbackProto);
-        /* step 22 */
+        /* step 23 */
         OrdinaryConstructorFunction f = FunctionAllocate(cx, proto, strict, FunctionKind.Normal,
                 ConstructorKind.Base);
-        /* steps 23-24 */
+        /* steps 24-25 */
         LexicalEnvironment<GlobalEnvironmentRecord> scope = f.getRealm().getGlobalEnv();
-        /* step 25 */
-        FunctionInitialize(f, FunctionKind.Normal, function, scope, new CompiledFunction(source));
-        /* step 26 (not applicable) */
-        /* steps 27 */
+        /* step 26 */
+        FunctionInitialize(f, FunctionKind.Normal, function, scope, newFunctionExecutable(source));
+        /* step 27 (not applicable) */
+        /* steps 28 */
         MakeConstructor(cx, f);
-        /* step 28 */
-        SetFunctionName(f, "anonymous");
         /* step 29 */
+        SetFunctionName(f, "anonymous");
+        /* step 30 */
         return f;
+    }
+
+    /**
+     * 19.2.1.1.1 RuntimeSemantics: CreateDynamicFunction(constructor, newTarget, kind, args)
+     * 
+     * @param cx
+     *            the execution context
+     * @param args
+     *            the function arguments
+     * @return the function source text as a tuple {@code <parameters, body>}
+     */
+    public static String[] functionSourceText(ExecutionContext cx, Object... args) {
+        /* steps 4-10 */
+        int argCount = args.length;
+        String p, bodyText;
+        if (argCount == 0) {
+            p = "";
+            bodyText = "";
+        } else if (argCount == 1) {
+            p = "";
+            bodyText = ToFlatString(cx, args[0]);
+        } else {
+            StringBuilder sb = new StringBuilder();
+            Object firstArg = args[0];
+            sb.append(ToFlatString(cx, firstArg));
+            int k = 2;
+            for (; k < argCount; ++k) {
+                Object nextArg = args[k - 1];
+                String nextArgString = ToFlatString(cx, nextArg);
+                sb.append(',').append(nextArgString);
+            }
+            p = sb.toString();
+            bodyText = ToFlatString(cx, args[k - 1]);
+        }
+        return new String[] { p, bodyText };
+    }
+
+    public enum SourceKind {
+        Function, Generator, AsyncFunction
+    }
+
+    /**
+     * Creates a {@link Source} object for a dynamic function.
+     * 
+     * @param kind
+     *            the function kind
+     * @param realm
+     *            the realm
+     * @param caller
+     *            the caller execution context
+     * @return the function source object
+     */
+    public static Source functionSource(SourceKind kind, Realm realm, ExecutionContext caller) {
+        Source baseSource = realm.sourceInfo(caller);
+        String sourceName;
+        if (baseSource != null) {
+            sourceName = String.format("<%s> (%s)", kind.name(), baseSource.getName());
+        } else {
+            sourceName = "<%s>";
+        }
+        return new Source(baseSource, sourceName, 1);
+    }
+
+    /**
+     * Creates a new executable object for a dynamic function.
+     * 
+     * @param source
+     *            the function source object
+     * @return a new executable object
+     */
+    public static Executable newFunctionExecutable(Source source) {
+        return new CompiledFunction(source);
+    }
+
+    private static final class CompiledFunction extends CompiledObject {
+        CompiledFunction(Source source) {
+            super(new FunctionSourceObject(source));
+        }
+    }
+
+    private static final class FunctionSourceObject implements RuntimeInfo.SourceObject {
+        private final Source source;
+
+        FunctionSourceObject(Source source) {
+            this.source = source;
+        }
+
+        @Override
+        public Source toSource() {
+            return source;
+        }
+
+        @Override
+        public DebugInfo debugInfo() {
+            return null;
+        }
     }
 
     /**
@@ -227,40 +305,5 @@ public final class FunctionConstructor extends BuiltinConstructor implements Ini
         @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = true))
         public static final String name = "Function";
-    }
-
-    private static Source functionSource(Realm realm, ExecutionContext caller) {
-        Source baseSource = realm.sourceInfo(caller);
-        String sourceName;
-        if (baseSource != null) {
-            sourceName = String.format("<Function> (%s)", baseSource.getName());
-        } else {
-            sourceName = "<Function>";
-        }
-        return new Source(baseSource, sourceName, 1);
-    }
-
-    private static final class CompiledFunction extends CompiledObject {
-        CompiledFunction(Source source) {
-            super(new FunctionSourceObject(source));
-        }
-    }
-
-    private static final class FunctionSourceObject implements RuntimeInfo.SourceObject {
-        private final Source source;
-
-        FunctionSourceObject(Source source) {
-            this.source = source;
-        }
-
-        @Override
-        public Source toSource() {
-            return source;
-        }
-
-        @Override
-        public DebugInfo debugInfo() {
-            return null;
-        }
     }
 }

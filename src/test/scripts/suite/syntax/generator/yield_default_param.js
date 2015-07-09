@@ -22,8 +22,8 @@ const {
 
 // Non-strict mode, 'yield' in default parameter expression in GeneratorDeclaration
 {
-  function* f1(a = yield) { }
-  function* f2(a = yield(0)) { }
+  assertSyntaxError(`function* f1(a = yield) { }`);
+  assertSyntaxError(`function* f2(a = yield(0)) { }`);
 }
 
 // Strict mode, 'yield' in default parameter expression in GeneratorDeclaration

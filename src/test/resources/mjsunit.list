@@ -10,7 +10,7 @@
 # - no simple ToNumber() conversion for offsets/lengths values
 # - invalid offsets throw RangeError instead of TypeError
 # - DataView is callable without `new`
-harmony/typedarrays.js
+es6/typedarray.js
 
 # V8 does not implement %TypedArray% prototype object
 es6/typed-array-iterator.js
@@ -19,7 +19,7 @@ es6/built-in-accessor-names.js
 # V8 generators: missing type checks in v8-implementation
 es6/generators-iteration.js
 
-# AssignmentExpression optional in YieldStatement
+# v8 rejects `function* g() { (function yield() {}); }`
 es6/generators-parsing.js
 
 # non-strict equality fails when comparing symbols and primitive values against each other
@@ -44,10 +44,6 @@ regress/regress-1213575.js
 # GetBindingValue invokes HasBinding for Object Environment Records, not supported in V8
 harmony/proxies-with-unscopables.js
 
-# Array.prototype.{find, findIndex} don't skip holes in v8
-harmony/array-find.js
-harmony/array-findIndex.js
-
 # v8 does not follow spec
 harmony/regexp-sticky.js
 
@@ -55,20 +51,16 @@ harmony/regexp-sticky.js
 harmony/super.js
 
 # v8 does not add inferred name to classes
-harmony/classes.js
+es6/classes.js
 
 # let, etc. restricted to strict-mode in v8
 es6/block-early-errors.js
 es6/block-non-strict-errors.js
 
-# ES6: evaluation order changed in for-in/of
-compiler/complex-for-in.js
-regress/regress-815.js
-
-# v8 issue - Object.seal does not work on typed arrays
+# v8 issue - Object.seal does not work on typed arrays (https://code.google.com/p/v8/issues/detail?id=4083)
 compiler/regress-447567.js
 
-# v8 issue - .prototype on classes not set to non-configurable
+# v8 issue - https://code.google.com/p/v8/issues/detail?id=4199
 harmony/computed-property-names-classes.js
 
 # invalid test, RegExp.prototype.source can only be applied on RegExp objects
@@ -79,6 +71,9 @@ harmony/regress/regress-crbug-461520.js
 
 # v8 bug - \8 and \9 is not allowed in template literals
 es6/templates.js
+
+# invalid test, `function f({x}) { var x; }` is allowed
+harmony/destructuring.js
 
 
 ###################
@@ -91,7 +86,7 @@ regexp-lookahead.js
 regexp-loop-capture.js
 regexp-UC16.js
 regress/regress-176.js
-third_party/regexp-pcre.js
+third_party/regexp-pcre/regexp-pcre.js
 
 # repeat in qualifier too large
 regexp.js
@@ -103,6 +98,7 @@ regress/regress-126412.js
 ############################################
 
 # old Proxy API not completly emulated
+es6/regress/regress-cr493566.js
 harmony/proxies-for.js
 harmony/proxies-hash.js
 harmony/proxies-json.js
@@ -133,6 +129,7 @@ object-get-own-property-names.js
 object-prevent-extensions.js
 object-seal.js
 es6/block-conflicts.js
+es6/typedarray-reduce.js
 regress/regress-1591.js
 regress/regress-1980.js
 regress/regress-3159.js
@@ -190,6 +187,12 @@ stack-traces-overflow.js
 # v8 restriction test
 regexp-not-sticky-yet.js
 
+# different function source string
+function-bind-name.js
+
+# Function.arguments and Function.caller non-writable in V8
+regress/regress-1530.js
+
 
 ############################################
 # Unsupported built-in object functions    #
@@ -198,7 +201,9 @@ regexp-not-sticky-yet.js
 # V8 StackTrace API
 regress/regress-crbug-393988.js
 regress/regress-crbug-489597.js
+regress/regress-crbug-505370.js
 regress/regress-2564.js
+regress/regress-3718.js
 regress/regress-conditional-position.js
 regress/regress-function-constructor-receiver.js
 stack-traces.js
@@ -210,6 +215,8 @@ eval-stack-trace.js
 contextual-calls.js
 cross-realm-filtering.js
 regress/regress-280531.js
+regress/regress-crbug-501711.js
+regress/regress-crbug-501808.js
 
 # readbuffer function
 regress/d8-readbuffer.js
@@ -220,11 +227,16 @@ regress/regress-3315.js
 regress/regress-356589.js
 regress/regress-417709a.js
 regress/regress-417709b.js
-harmony/regress/regress-3750.js
+es6/regress/regress-3750.js
 harmony/regress/regress-405844.js
 
 # SharedArrayBuffer
 harmony/sharedarraybuffer.js
+harmony/atomics.js
+regress/regress-crbug-501809.js
+
+# Promise.defer
+es6/promise-internal-setter.js
 
 
 #######################################
@@ -262,10 +274,6 @@ regress/regress-105.js
 # Object.getPrototypeOf() wraps/ignores primitives
 get-prototype-of.js
 
-# Function.length is configurable
-regress/regress-1419.js
-regress/regress-1530.js
-
 # ToLength() moved array length restriction to 2^53-1
 array-indexing.js
 array-length.js
@@ -283,7 +291,7 @@ regexp-string-methods.js
 object-literal.js
 
 # %TypedArray% intrinsic not available in V8
-harmony/typedarrays-of.js
+es6/typedarray-of.js
 
 # assignment to const binding is always a runtime error, regardless of strict mode
 const.js
@@ -321,7 +329,6 @@ regress/regress-88591.js
 # const without initializer
 global-const-var-conflicts.js
 property-load-across-eval.js
-regress/regress-1130.js
 regress/regress-1201933.js
 regress/regress-1207276.js
 regress/regress-799761.js
@@ -342,9 +349,6 @@ for-in.js
 
 # var-declaration on global only calls setter when executed
 regress/regress-1119.js
-
-# MethodDefinition syntax not supported
-regress/regress-parse-object-literal.js
 
 
 #######################################
@@ -395,6 +399,7 @@ regexp-capture-3.js
 regress/regress-1200351.js
 regress/regress-581.js
 regress/regress-685.js
+regress/regress-crbug-482998.js
 regress/regress-deep-proto.js
 regress/regress-splice-large-index.js
 compiler/expression-trees.js

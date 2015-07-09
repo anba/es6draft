@@ -26,15 +26,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.MessageFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.EnumSet;
-import java.util.Enumeration;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Locale;
-import java.util.ResourceBundle;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Semaphore;
@@ -80,6 +72,7 @@ import com.github.anba.es6draft.runtime.World;
 import com.github.anba.es6draft.runtime.extensions.timer.Timers;
 import com.github.anba.es6draft.runtime.internal.*;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
+import com.github.anba.es6draft.runtime.internal.Properties;
 import com.github.anba.es6draft.runtime.modules.MalformedNameException;
 import com.github.anba.es6draft.runtime.modules.ModuleLoader;
 import com.github.anba.es6draft.runtime.modules.ModuleRecord;
@@ -124,7 +117,7 @@ public final class Repl {
         return console;
     }
 
-    private static void printStackTrace(Throwable e, Options options) {
+    private void printStackTrace(Throwable e) {
         if (options.stacktrace) {
             printStackTrace(e, options.stacktraceDepth);
         }
@@ -145,6 +138,9 @@ public final class Repl {
             setStackTrace(truncate(throwable, depth));
             if (throwable.getCause() != null) {
                 initCause(new TruncatedThrowable(throwable.getCause(), depth));
+            }
+            for (Throwable suppressed : throwable.getSuppressed()) {
+                addSuppressed(new TruncatedThrowable(suppressed, depth));
             }
         }
 
@@ -170,32 +166,48 @@ public final class Repl {
         }
     }
 
-    private static void printScriptStackTrace(Throwable e, Options options) {
+    private void printScriptStackTrace(Realm realm, ScriptException e) {
         if (options.scriptStacktrace) {
-            final int maxDepth = options.stacktraceDepth;
-            int depth = 0;
             StringBuilder sb = new StringBuilder();
-            Iterator<StackTraceElement> iterator = StackTraces.getStackTrace(e).iterator();
-            for (; iterator.hasNext() && depth < maxDepth; ++depth) {
-                StackTraceElement element = iterator.next();
-                String methodName = StackTraces.getMethodName(element);
-                String fileName = element.getFileName();
-                int lineNumber = element.getLineNumber();
-                sb.append("\tat ").append(methodName).append(" (").append(fileName).append(':')
-                        .append(lineNumber).append(")\n");
-            }
-            if (depth == 0 && e.getCause() != null) {
-                printScriptStackTrace(e.getCause(), options);
-                return;
-            }
-            if (depth == maxDepth && iterator.hasNext()) {
-                int skipped = 0;
-                for (; iterator.hasNext(); ++skipped) {
-                    iterator.next();
-                }
-                sb.append("\t.. ").append(skipped).append(" frames omitted\n");
+            printScriptFrames(sb, realm, e, 1);
+            if (sb.length() == 0 && e.getCause() != null) {
+                printScriptFrames(sb, realm, e.getCause(), 1);
             }
             System.err.print(sb.toString());
+        }
+    }
+
+    private void printScriptFrames(StringBuilder sb, Realm realm, Throwable e, int level) {
+        final String indent = Strings.repeat('\t', level);
+        final int maxDepth = options.stacktraceDepth;
+        int depth = 0;
+        Iterator<StackTraceElement> iterator = StackTraces.getStackTrace(e).iterator();
+        for (; iterator.hasNext() && depth < maxDepth; ++depth) {
+            StackTraceElement element = iterator.next();
+            String methodName = StackTraces.getMethodName(element);
+            String fileName = element.getFileName();
+            int lineNumber = element.getLineNumber();
+            sb.append(indent).append("at ").append(methodName).append(" (").append(fileName)
+                    .append(':').append(lineNumber).append(")\n");
+        }
+        if (depth == maxDepth && iterator.hasNext()) {
+            int skipped = 0;
+            for (; iterator.hasNext(); ++skipped) {
+                iterator.next();
+            }
+            sb.append("\t.. ").append(skipped).append(" frames omitted\n");
+        }
+        if (e.getSuppressed().length > 0 && level == 1) {
+            Throwable suppressed = e.getSuppressed()[0];
+            String message;
+            if (suppressed instanceof ScriptException) {
+                message = ((ScriptException) suppressed).getMessage(realm.defaultContext());
+            } else {
+                message = Objects.toString(suppressed.getMessage(), suppressed.getClass()
+                        .getSimpleName());
+            }
+            sb.append(indent).append(formatMessage("suppressed_exception", message)).append('\n');
+            printScriptFrames(sb, realm, suppressed, level + 1);
         }
     }
 
@@ -668,28 +680,28 @@ public final class Repl {
     }
 
     private void handleException(Throwable e) {
-        String message = e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName();
+        String message = Objects.toString(e.getMessage(), e.getClass().getSimpleName());
         console.printf("%s%n", message);
-        printStackTrace(e, options);
+        printStackTrace(e);
     }
 
     private void handleException(IOException e) {
-        String message = e.getMessage() != null ? e.getMessage() : "";
+        String message = Objects.toString(e.getMessage(), "");
         console.printf("%s: %s%n", e.getClass().getSimpleName(), message);
-        printStackTrace(e, options);
+        printStackTrace(e);
     }
 
     private void handleException(Realm realm, ScriptException e) {
         String message = formatMessage("uncaught_exception", e.getMessage(realm.defaultContext()));
         console.printf("%s%n", message);
-        printScriptStackTrace(e, options);
-        printStackTrace(e, options);
+        printScriptStackTrace(realm, e);
+        printStackTrace(e);
     }
 
     private void handleException(Realm realm, UnhandledRejectionException e) {
         String message = formatMessage("unhandled_rejection", e.getMessage(realm.defaultContext()));
         console.printf("%s%n", message);
-        printStackTrace(e.getCauseIfPresent(), options);
+        printStackTrace(e.getCauseIfPresent());
     }
 
     private void handleException(ParserExceptionWithSource exception) {
@@ -706,7 +718,7 @@ public final class Repl {
         console.printf("%s %s: %s%n", sourceInfo, e.getType(), e.getFormattedMessage());
         console.printf("%s %s%n", sourceInfo, offendingLine);
         console.printf("%s %s%n", sourceInfo, marker);
-        printStackTrace(e, options);
+        printStackTrace(e);
     }
 
     private static int skipLines(String s, int n) {

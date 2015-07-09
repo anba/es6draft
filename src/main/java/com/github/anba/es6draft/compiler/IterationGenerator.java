@@ -17,6 +17,7 @@ import com.github.anba.es6draft.compiler.assembler.TryCatchLabel;
 import com.github.anba.es6draft.compiler.assembler.Type;
 import com.github.anba.es6draft.compiler.assembler.Variable;
 import com.github.anba.es6draft.runtime.internal.ReturnValue;
+import com.github.anba.es6draft.runtime.internal.ScriptException;
 import com.github.anba.es6draft.runtime.internal.ScriptIterator;
 
 /** 
@@ -24,10 +25,12 @@ import com.github.anba.es6draft.runtime.internal.ScriptIterator;
  */
 abstract class IterationGenerator<NODE extends Node, VISITOR extends ExpressionVisitor> {
     private static final class Methods {
-        // class: AbstractOperations
-        static final MethodName AbstractOperations_IteratorClose = MethodName.findStatic(
-                Types.AbstractOperations, "IteratorClose", Type.methodType(Type.VOID_TYPE,
-                        Types.ExecutionContext, Types.ScriptIterator, Type.BOOLEAN_TYPE));
+        // class: ScriptIterator
+        static final MethodName ScriptIterator_close = MethodName.findInterface(
+                Types.ScriptIterator, "close", Type.methodType(Type.VOID_TYPE));
+
+        static final MethodName ScriptIterator_close_exception = MethodName.findInterface(
+                Types.ScriptIterator, "close", Type.methodType(Type.VOID_TYPE, Types.Throwable));
 
         // class: ScriptRuntime
         static final MethodName ScriptRuntime_getStackOverflowError = MethodName.findStatic(
@@ -170,8 +173,8 @@ abstract class IterationGenerator<NODE extends Node, VISITOR extends ExpressionV
 
         if (!hasTarget) {
             mv.mark(target);
+            epilogue(node, iterator, mv);
         }
-        epilogue(node, iterator, mv);
 
         if (handlerReturn == null && tempLabels.isEmpty()) {
             // No Return handler installed
@@ -184,7 +187,12 @@ abstract class IterationGenerator<NODE extends Node, VISITOR extends ExpressionV
             TryCatchLabel handlerCatch, TryCatchLabel handlerCatchStackOverflow,
             ExpressionVisitor mv) {
         mv.enterVariableScope();
-        Variable<Throwable> throwable = mv.newVariable("throwable", Throwable.class);
+        Variable<? extends Throwable> throwable;
+        if (handlerCatchStackOverflow == null) {
+            throwable = mv.newVariable("throwable", ScriptException.class);
+        } else {
+            throwable = mv.newVariable("throwable", Throwable.class);
+        }
 
         if (handlerCatchStackOverflow != null) {
             mv.catchHandler(handlerCatchStackOverflow, Types.Error);
@@ -193,7 +201,7 @@ abstract class IterationGenerator<NODE extends Node, VISITOR extends ExpressionV
         mv.catchHandler(handlerCatch, Types.ScriptException);
         mv.store(throwable);
 
-        IteratorClose(node, iterator, true, mv);
+        IteratorClose(node, iterator, throwable, mv);
 
         mv.load(throwable);
         mv.athrow();
@@ -212,7 +220,7 @@ abstract class IterationGenerator<NODE extends Node, VISITOR extends ExpressionV
             mv.catchHandler(handlerReturn, Types.ReturnValue);
             mv.store(returnValue);
 
-            IteratorClose(node, iterator, false, mv);
+            IteratorClose(node, iterator, mv);
 
             mv.load(returnValue);
             mv.athrow();
@@ -225,7 +233,7 @@ abstract class IterationGenerator<NODE extends Node, VISITOR extends ExpressionV
             if (temp.isTarget()) {
                 mv.mark(temp);
 
-                IteratorClose(node, iterator, false, mv);
+                IteratorClose(node, iterator, mv);
 
                 mv.goTo(temp, completion);
             }
@@ -235,11 +243,17 @@ abstract class IterationGenerator<NODE extends Node, VISITOR extends ExpressionV
     }
 
     protected final void IteratorClose(Node node, Variable<ScriptIterator<?>> iterator,
-            boolean throwCompletion, ExpressionVisitor mv) {
-        mv.loadExecutionContext();
+            Variable<? extends Throwable> throwable, ExpressionVisitor mv) {
         mv.load(iterator);
-        mv.iconst(throwCompletion);
+        mv.load(throwable);
         mv.lineInfo(node);
-        mv.invoke(Methods.AbstractOperations_IteratorClose);
+        mv.invoke(Methods.ScriptIterator_close_exception);
+    }
+
+    protected final void IteratorClose(Node node, Variable<ScriptIterator<?>> iterator,
+            ExpressionVisitor mv) {
+        mv.load(iterator);
+        mv.lineInfo(node);
+        mv.invoke(Methods.ScriptIterator_close);
     }
 }

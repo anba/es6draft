@@ -20,7 +20,7 @@ function fdecl() {
   eval("super()");
 })();
 }
-assertThrows(TypeError, () => fdecl());
+assertThrows(ReferenceError, () => fdecl());
 assertThrows(TypeError, () => new fdecl());
 
 // 14.1 FunctionExpression
@@ -29,7 +29,7 @@ var fexpr = function() {
   eval("super()");
 })();
 };
-assertThrows(TypeError, () => fexpr());
+assertThrows(ReferenceError, () => fexpr());
 assertThrows(TypeError, () => new fexpr());
 
 // 14.3 Method Definitions [Method]
@@ -40,7 +40,7 @@ var obj = {
 })();
   }
 };
-assertThrows(TypeError, () => obj.m());
+assertThrows(ReferenceError, () => obj.m());
 assertThrows(TypeError, () => new obj.m());
 
 var obj = class {
@@ -50,7 +50,7 @@ var obj = class {
 })();
   }
 };
-assertThrows(TypeError, () => obj.prototype.m());
+assertThrows(ReferenceError, () => obj.prototype.m());
 assertThrows(TypeError, () => new obj.prototype.m());
 
 var obj = class {
@@ -60,7 +60,7 @@ var obj = class {
 })();
   }
 };
-assertThrows(TypeError, () => obj.m());
+assertThrows(ReferenceError, () => obj.m());
 assertThrows(TypeError, () => new obj.m());
 
 // 14.3 Method Definitions [ConstructorMethod]
@@ -92,7 +92,7 @@ var obj = {
 })();
   }
 };
-assertThrows(TypeError, () => Object.getOwnPropertyDescriptor(obj, "x").get());
+assertThrows(ReferenceError, () => Object.getOwnPropertyDescriptor(obj, "x").get());
 assertThrows(TypeError, () => new (Object.getOwnPropertyDescriptor(obj, "x").get)());
 
 var obj = class {
@@ -102,7 +102,7 @@ var obj = class {
 })();
   }
 };
-assertThrows(TypeError, () => Object.getOwnPropertyDescriptor(obj.prototype, "x").get());
+assertThrows(ReferenceError, () => Object.getOwnPropertyDescriptor(obj.prototype, "x").get());
 assertThrows(TypeError, () => new (Object.getOwnPropertyDescriptor(obj.prototype, "x").get)());
 
 var obj = class {
@@ -112,7 +112,7 @@ var obj = class {
 })();
   }
 };
-assertThrows(TypeError, () => Object.getOwnPropertyDescriptor(obj, "x").get());
+assertThrows(ReferenceError, () => Object.getOwnPropertyDescriptor(obj, "x").get());
 assertThrows(TypeError, () => new (Object.getOwnPropertyDescriptor(obj, "x").get)());
 
 // 14.3 Method Definitions [Setter]
@@ -123,7 +123,7 @@ var obj = {
 })();
   }
 };
-assertThrows(TypeError, () => Object.getOwnPropertyDescriptor(obj, "x").set());
+assertThrows(ReferenceError, () => Object.getOwnPropertyDescriptor(obj, "x").set());
 assertThrows(TypeError, () => new (Object.getOwnPropertyDescriptor(obj, "x").set)());
 
 var obj = class {
@@ -133,7 +133,7 @@ var obj = class {
 })();
   }
 };
-assertThrows(TypeError, () => Object.getOwnPropertyDescriptor(obj.prototype, "x").set());
+assertThrows(ReferenceError, () => Object.getOwnPropertyDescriptor(obj.prototype, "x").set());
 assertThrows(TypeError, () => new (Object.getOwnPropertyDescriptor(obj.prototype, "x").set)());
 
 var obj = class {
@@ -143,7 +143,7 @@ var obj = class {
 })();
   }
 };
-assertThrows(TypeError, () => Object.getOwnPropertyDescriptor(obj, "x").set());
+assertThrows(ReferenceError, () => Object.getOwnPropertyDescriptor(obj, "x").set());
 assertThrows(TypeError, () => new (Object.getOwnPropertyDescriptor(obj, "x").set)());
 
 // 14.4 GeneratorDeclaration
@@ -152,7 +152,7 @@ function* gdecl() {
   eval("super()");
 })();
 }
-assertThrows(TypeError, () => gdecl().next());
+assertThrows(ReferenceError, () => gdecl().next());
 assertThrows(TypeError, () => new gdecl().next());
 
 // 14.4 GeneratorExpression
@@ -161,7 +161,7 @@ var gexpr = function*() {
   eval("super()");
 })();
 };
-assertThrows(TypeError, () => gexpr().next());
+assertThrows(ReferenceError, () => gexpr().next());
 assertThrows(TypeError, () => new gexpr().next());
 
 // 14.4 GeneratorMethod
@@ -172,7 +172,7 @@ var obj = {
 })();
   }
 };
-assertThrows(TypeError, () => obj.m().next());
+assertThrows(ReferenceError, () => obj.m().next());
 assertThrows(TypeError, () => new obj.m().next());
 
 var obj = class {
@@ -182,7 +182,7 @@ var obj = class {
 })();
   }
 };
-assertThrows(TypeError, () => obj.prototype.m().next());
+assertThrows(ReferenceError, () => obj.prototype.m().next());
 assertThrows(TypeError, () => new obj.prototype.m().next());
 
 var obj = class {
@@ -192,7 +192,7 @@ var obj = class {
 })();
   }
 };
-assertThrows(TypeError, () => obj.m().next());
+assertThrows(ReferenceError, () => obj.m().next());
 assertThrows(TypeError, () => new obj.m().next());
 
 // 15.1 Scripts

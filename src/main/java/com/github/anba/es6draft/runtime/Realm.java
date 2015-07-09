@@ -30,6 +30,8 @@ import com.github.anba.es6draft.runtime.internal.Source;
 import com.github.anba.es6draft.runtime.modules.ModuleLoader;
 import com.github.anba.es6draft.runtime.objects.*;
 import com.github.anba.es6draft.runtime.objects.NativeErrorConstructor.ErrorType;
+import com.github.anba.es6draft.runtime.objects.async.AsyncFunctionConstructor;
+import com.github.anba.es6draft.runtime.objects.async.AsyncFunctionPrototype;
 import com.github.anba.es6draft.runtime.objects.binary.ArrayBufferConstructor;
 import com.github.anba.es6draft.runtime.objects.binary.ArrayBufferPrototype;
 import com.github.anba.es6draft.runtime.objects.binary.DataViewConstructor;
@@ -669,6 +671,11 @@ public final class Realm {
         // intrinsics: Internationalization API
         initializeInternationalisation(realm);
 
+        // intrinsics: Async functions
+        if (realm.isEnabled(CompatibilityOption.AsyncFunction)) {
+            initializeAsyncModule(realm);
+        }
+
         // Initialized last because it accesses other intrinsics.
         initializeGlobalObject(realm);
     }
@@ -1168,6 +1175,28 @@ public final class Realm {
         numberFormatPrototype.initialize(realm);
         dateTimeFormatConstructor.initialize(realm);
         dateTimeFormatPrototype.initialize(realm);
+    }
+
+    /**
+     * <h1>Extension: Async Function Declaration</h1>
+     * 
+     * @param realm
+     *            the realm instance
+     */
+    private static void initializeAsyncModule(Realm realm) {
+        EnumMap<Intrinsics, OrdinaryObject> intrinsics = realm.intrinsics;
+
+        // allocation phase
+        AsyncFunctionConstructor asyncFunctionConstructor = new AsyncFunctionConstructor(realm);
+        AsyncFunctionPrototype asyncFunctionPrototype = new AsyncFunctionPrototype(realm);
+
+        // registration phase
+        intrinsics.put(Intrinsics.AsyncFunction, asyncFunctionConstructor);
+        intrinsics.put(Intrinsics.AsyncFunctionPrototype, asyncFunctionPrototype);
+
+        // initialization phase
+        asyncFunctionConstructor.initialize(realm);
+        asyncFunctionPrototype.initialize(realm);
     }
 
     /**

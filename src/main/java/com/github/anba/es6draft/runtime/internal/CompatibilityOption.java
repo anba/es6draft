@@ -159,14 +159,14 @@ public enum CompatibilityOption {
     ProxyProtoSkipEnumerate,
 
     /**
-     * Moz-Extension: Allow parenthesized array- and object-literals in destructuring contexts
-     */
-    ParenthesizedDestructuring,
-
-    /**
      * Moz-Extension: Allow initializer expression in for-in variable declarations.
      */
     ForInVarInitializer,
+
+    /**
+     * Moz-Extension: Allow parenthesized array- and object-literals in destructuring contexts
+     */
+    ParenthesizedDestructuring,
 
     /**
      * Moz-Extension: RegExp.prototype.source returns the empty string instead of {@code (?:)}

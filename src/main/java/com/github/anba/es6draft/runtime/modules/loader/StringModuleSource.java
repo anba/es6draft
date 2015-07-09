@@ -16,10 +16,16 @@ import com.github.anba.es6draft.runtime.modules.SourceIdentifier;
 public final class StringModuleSource implements ModuleSource {
     private final SourceIdentifier sourceId;
     private final String sourceCode;
+    private final int sourceLine;
 
     public StringModuleSource(SourceIdentifier sourceId, String sourceCode) {
+        this(sourceId, sourceCode, 1);
+    }
+
+    public StringModuleSource(SourceIdentifier sourceId, String sourceCode, int sourceLine) {
         this.sourceId = sourceId;
         this.sourceCode = sourceCode;
+        this.sourceLine = sourceLine;
     }
 
     @Override
@@ -29,6 +35,6 @@ public final class StringModuleSource implements ModuleSource {
 
     @Override
     public Source toSource() {
-        return new Source(sourceId.toString(), 1);
+        return new Source(sourceId.toString(), sourceLine);
     }
 }

@@ -107,9 +107,8 @@ public final class StringObject extends OrdinaryObject {
         if (len <= propertyKey) {
             return null;
         }
-        int index = (int) propertyKey;
         /* step 10 */
-        String resultStr = String.valueOf(str.charAt(index));
+        String resultStr = String.valueOf(str.charAt((int) propertyKey));
         /* step 11 */
         return new Property(resultStr, false, true, false);
     }
@@ -128,15 +127,19 @@ public final class StringObject extends OrdinaryObject {
      */
     @Override
     protected List<Object> getOwnPropertyKeys(ExecutionContext cx) {
-        /* steps 1-8 */
-        return new CompoundList<>(new StringPropertyKeyList(getStringData().length()),
-                super.getOwnPropertyKeys(cx));
+        /* step 1 (moved) */
+        /* steps 2-4 */
+        StringPropertyKeyList stringIndices = new StringPropertyKeyList(getStringData().length());
+        /* steps 5-7 */
+        List<Object> ownPropertyKeys = super.getOwnPropertyKeys(cx);
+        /* steps 1, 8 */
+        return new CompoundList<>(stringIndices, ownPropertyKeys);
     }
 
     @Override
     protected List<String> getEnumerableKeys(ExecutionContext cx) {
-        return new CompoundList<>(new StringPropertyKeyList(getStringData().length()),
-                super.getEnumerableKeys(cx));
+        StringPropertyKeyList stringIndices = new StringPropertyKeyList(getStringData().length());
+        return new CompoundList<>(stringIndices, super.getEnumerableKeys(cx));
     }
 
     @Override

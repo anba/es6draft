@@ -9,7 +9,6 @@ package com.github.anba.es6draft.runtime.objects.collection;
 import static com.github.anba.es6draft.runtime.AbstractOperations.Get;
 import static com.github.anba.es6draft.runtime.AbstractOperations.GetScriptIterator;
 import static com.github.anba.es6draft.runtime.AbstractOperations.IsCallable;
-import static com.github.anba.es6draft.runtime.AbstractOperations.IteratorClose;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 
@@ -116,7 +115,7 @@ public final class MapConstructor extends BuiltinConstructor implements Initiali
             }
             return map;
         } catch (ScriptException e) {
-            IteratorClose(calleeContext, iter, true);
+            iter.close(e);
             throw e;
         }
     }

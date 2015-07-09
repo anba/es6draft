@@ -10,8 +10,6 @@ import static com.github.anba.es6draft.util.Resources.loadConfiguration;
 import static org.junit.Assert.fail;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
@@ -51,7 +49,7 @@ public class DescriptorTest {
     @Test
     public void test() throws IOException {
         // Test readFileInformation() does not throw any exceptions
-        String sourceCode = new String(Files.readAllBytes(test.toFile()), StandardCharsets.UTF_8);
+        String sourceCode = test.readFileContent();
         try {
             test.readFileInformation(sourceCode);
         } catch (Test262Info.MalformedDataException e) {

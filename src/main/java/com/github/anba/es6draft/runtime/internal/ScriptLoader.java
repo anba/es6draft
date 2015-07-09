@@ -25,6 +25,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import com.github.anba.es6draft.Module;
 import com.github.anba.es6draft.Script;
+import com.github.anba.es6draft.ast.AsyncFunctionDefinition;
 import com.github.anba.es6draft.ast.FunctionDefinition;
 import com.github.anba.es6draft.ast.GeneratorDefinition;
 import com.github.anba.es6draft.compiler.CompilationException;
@@ -254,6 +255,28 @@ public final class ScriptLoader {
     }
 
     /**
+     * Parses and compiles the javascript async function.
+     * 
+     * @param source
+     *            the script source descriptor
+     * @param formals
+     *            the formal parameters
+     * @param bodyText
+     *            the async function body
+     * @return the compiled async function
+     * @throws ParserException
+     *             if the source contains any syntax errors
+     * @throws CompilationException
+     *             if the parsed source could not be compiled
+     */
+    public CompiledFunction asyncFunction(Source source, String formals, String bodyText)
+            throws ParserException, CompilationException {
+        Parser parser = new Parser(source, options, parserOptions);
+        AsyncFunctionDefinition asyncDef = parser.parseAsyncFunction(formals, bodyText);
+        return compile(asyncDef, nextFunctionName());
+    }
+
+    /**
      * Parses and compiles the javascript file.
      * 
      * @param source
@@ -466,6 +489,20 @@ public final class ScriptLoader {
         return tryCompile(generator, className, executor, compilerOptions);
     }
 
+    /**
+     * Compiles the {@link AsyncFunctionDefinition} AST-node to a {@link CompiledFunction} object.
+     * 
+     * @param asyncFunction
+     *            the async function node
+     * @param className
+     *            the class name
+     * @return the compiled async function
+     */
+    public CompiledFunction compile(AsyncFunctionDefinition asyncFunction, String className)
+            throws CompilationException {
+        return tryCompile(asyncFunction, className, executor, compilerOptions);
+    }
+
     private static CompiledScript tryCompile(com.github.anba.es6draft.ast.Script parsedScript,
             String className, ExecutorService executor, EnumSet<Compiler.Option> options) {
         if (executor.isShutdown()) {
@@ -497,6 +534,14 @@ public final class ScriptLoader {
             return compileWithNew(generator, className, options);
         }
         return compileWith(generator, className, executor, options);
+    }
+
+    private static CompiledFunction tryCompile(AsyncFunctionDefinition asyncFunction,
+            String className, ExecutorService executor, EnumSet<Compiler.Option> options) {
+        if (executor.isShutdown()) {
+            return compileWithNew(asyncFunction, className, options);
+        }
+        return compileWith(asyncFunction, className, executor, options);
     }
 
     private static CompiledScript compileWithNew(com.github.anba.es6draft.ast.Script parsedScript,
@@ -540,6 +585,16 @@ public final class ScriptLoader {
         }
     }
 
+    private static CompiledFunction compileWithNew(AsyncFunctionDefinition asyncFunction,
+            String className, EnumSet<Compiler.Option> options) throws CompilationException {
+        ExecutorService executor = Executors.newFixedThreadPool(2);
+        try {
+            return compileWith(asyncFunction, className, executor, options);
+        } finally {
+            executor.shutdown();
+        }
+    }
+
     private static CompiledScript compileWith(com.github.anba.es6draft.ast.Script parsedScript,
             String className, ExecutorService executor, EnumSet<Compiler.Option> options) {
         Compiler compiler = new Compiler(executor, options);
@@ -563,6 +618,12 @@ public final class ScriptLoader {
             ExecutorService executor, EnumSet<Compiler.Option> options) {
         Compiler compiler = new Compiler(executor, options);
         return compiler.compile(generator, className);
+    }
+
+    private static CompiledFunction compileWith(AsyncFunctionDefinition asyncFunction,
+            String className, ExecutorService executor, EnumSet<Compiler.Option> options) {
+        Compiler compiler = new Compiler(executor, options);
+        return compiler.compile(asyncFunction, className);
     }
 
     private static Reader newReader(InputStream stream) {

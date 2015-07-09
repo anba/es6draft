@@ -13,12 +13,13 @@ function assertNoSyntaxError(source) {
 }
 
 // Similar to "yield_regexp.js", except arrow function is in default parameter initializer of generator:
-// - "yield/b/g" is always parsed as YIELD DIV IDENT DIV IDENT, so no SyntaxErrors (except when in strict mode)
+// - "yield" is accepted if parent context allows "yield"
+// - YieldExpression is disallowed in arrow function parameters
 
-// Parse "yield/b/g" as the token sequence YIELD DIV IDENT DIV IDENT, and assert that token sequence
-// rematched as ArrowParameters is not a SyntaxError
-assertNoSyntaxError(`function*g(p = (a = yield/b/g) => { }){ }`);
-assertNoSyntaxError(`function*g(p = (a = yield/b/g) => { yield/b/g }){ }`);
+// Parse "yield/b/g" as the token sequence YIELD REGEXP, and assert that YieldExpression
+// is disallowed in arrow function parameters
+assertSyntaxError(`function*g(p = (a = yield/b/g) => { }){ }`);
+assertSyntaxError(`function*g(p = (a = yield/b/g) => { yield/b/g }){ }`);
 
 // No SyntaxError if in ConciseBody, here it's matched as YIELD DIV IDENT DIV IDENT
 assertNoSyntaxError(`function*g(p = () => yield/b/g){ }`);
@@ -26,13 +27,13 @@ assertNoSyntaxError(`function*g(p = () => { yield/b/g }){ }`);
 
 // Same tests for other generator function contexts:
 // (1) GeneratorExpression
-assertNoSyntaxError(`(function*g(p = (a = yield/b/g) => { }){ });`);
-assertNoSyntaxError(`(function*g(p = (a = yield/b/g) => { yield/b/g }){ });`);
+assertSyntaxError(`(function*g(p = (a = yield/b/g) => { }){ });`);
+assertSyntaxError(`(function*g(p = (a = yield/b/g) => { yield/b/g }){ });`);
 assertNoSyntaxError(`(function*g(p = () => yield/b/g){ });`);
 assertNoSyntaxError(`(function*g(p = () => { yield/b/g }){ });`);
 // (2) GeneratorMethod in ObjectLiteral
-assertNoSyntaxError(`({ *g(p = (a = yield/b/g) => { }){ } });`);
-assertNoSyntaxError(`({ *g(p = (a = yield/b/g) => { yield/b/g }){ } });`);
+assertSyntaxError(`({ *g(p = (a = yield/b/g) => { }){ } });`);
+assertSyntaxError(`({ *g(p = (a = yield/b/g) => { yield/b/g }){ } });`);
 assertNoSyntaxError(`({ *g(p = () => yield/b/g){ } });`);
 assertNoSyntaxError(`({ *g(p = () => { yield/b/g }){ } });`);
 // (3) GeneratorMethod in Class, here yield is never an IdentifierReference due to strict mode restrictions
@@ -50,7 +51,7 @@ assertNoSyntaxError(`function f(p = () => yield/b/g){ }`);
 assertNoSyntaxError(`function f(p = () => { yield/b/g }){ }`);
 
 // Default parameters in ArrowFunctions are first parsed in the generator context, though
-assertNoSyntaxError(`function*g(p = (a = (a = yield/b/g) => { }) => { }){ }`);
-assertNoSyntaxError(`function*g(p = (a = (a = yield/b/g) => { yield/b/g }) => { }){ }`);
+assertSyntaxError(`function*g(p = (a = (a = yield/b/g) => { }) => { }){ }`);
+assertSyntaxError(`function*g(p = (a = (a = yield/b/g) => { yield/b/g }) => { }){ }`);
 assertNoSyntaxError(`function*g(p = (a = () => yield/b/g) => {}){ }`);
 assertNoSyntaxError(`function*g(p = (a = () => { yield/b/g }) => {}){ }`);

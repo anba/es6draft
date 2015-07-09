@@ -579,4 +579,20 @@ public class ArrayObject extends OrdinaryObject {
         }
         this.length = index + len;
     }
+
+    /**
+     * Inserts the value into this array object.
+     * 
+     * @param index
+     *            the array index
+     * @param value
+     *            the value
+     */
+    public final void insert(int index, Object value) {
+        assert isExtensible() && lengthWritable && index >= getIndexedLength();
+        setIndexed(index, value);
+        if (index >= length) {
+            this.length = index + 1;
+        }
+    }
 }

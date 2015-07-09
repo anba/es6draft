@@ -726,12 +726,13 @@ final class CodeGenerator {
     }
 
     void compileFunction(FunctionNode function) {
-        // TODO: async functions
         if (function instanceof FunctionDefinition) {
             compile((FunctionDefinition) function);
-        } else {
-            assert function instanceof GeneratorDefinition;
+        } else if (function instanceof GeneratorDefinition) {
             compile((GeneratorDefinition) function);
+        } else {
+            assert function instanceof AsyncFunctionDefinition;
+            compile((AsyncFunctionDefinition) function);
         }
 
         // add default constructor

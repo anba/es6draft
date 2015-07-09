@@ -13,7 +13,10 @@
   <!ATTLIST test id CDATA #REQUIRED>
 ]>
 <excludeList>
-  <!-- Intl.v2 changes (sub-classing) -->
+  <!-- ICU4J issue (http://bugs.icu-project.org/trac/ticket/10171 ?) -->
+  <test id="11.3.2_TRP"></test>
+
+  <!-- Intl.v2 changes -->
   <test id="10.1.1_1"></test>
   <test id="10.1.2.1_4"></test>
   <test id="10.1.2_a"></test>
@@ -24,7 +27,5 @@
   <test id="12.1.1_1"></test>
   <test id="12.1.2.1_4"></test>
   <test id="12.1.2"></test>
-
-  <!-- Intl.v2 changes -->
   <test id="12.3.3">'timeZone' defaults to host environment timezone, if not specified</test>
 </excludeList>

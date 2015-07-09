@@ -48,17 +48,17 @@ const {
 {
   // 'yield' as IdentifierReference, BindingIdentifier
   function* f1(p = () => yield) { }
-  function* f2(p = yield => 0) { }
-  function* f3(p = (yield) => 0) { }
-  function* f4(p = (yield = yield * 2) => 0) { }
-  function* f5(p = (a = yield * 2) => 0) { }
-  function* f6(p = (...yield) => 0) { }
-  function* f7(p = (a, ...yield) => 0) { }
-  function* f8(p = ([yield]) => 0) { }
-  function* f9(p = ([...yield]) => 0) { }
-  function* f10(p = ({yield}) => 0) { }
-  function* f11(p = ({a: yield}) => 0) { }
-  function* f12(p = ({yield: yield}) => 0) { }
+  assertSyntaxError(`function* f2(p = yield => 0) { }`);
+  assertSyntaxError(`function* f3(p = (yield) => 0) { }`);
+  assertSyntaxError(`function* f4(p = (yield = yield * 2) => 0) { }`);
+  assertSyntaxError(`function* f5(p = (a = yield * 2) => 0) { }`);
+  assertSyntaxError(`function* f6(p = (...yield) => 0) { }`);
+  assertSyntaxError(`function* f7(p = (a, ...yield) => 0) { }`);
+  assertSyntaxError(`function* f8(p = ([yield]) => 0) { }`);
+  assertSyntaxError(`function* f9(p = ([...yield]) => 0) { }`);
+  assertSyntaxError(`function* f10(p = ({yield}) => 0) { }`);
+  assertSyntaxError(`function* f11(p = ({a: yield}) => 0) { }`);
+  assertSyntaxError(`function* f12(p = ({yield: yield}) => 0) { }`);
 }
 
 // Strict mode, 'yield' and ArrowFunction in GeneratorDeclaration

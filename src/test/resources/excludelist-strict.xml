@@ -18,6 +18,8 @@
   <test id="S7.8.5_A1.4_T2" />
   <test id="S7.8.5_A2.4_T1" />
   <test id="S7.8.5_A2.4_T2" />
+  <test id="S15.10.2_A1_T1" />
+  <test id="S15.10.2.6_A4_T7" />
   <test id="S15.10.2.9_A1_T4" />
   <test id="S15.10.2.10_A2.1_T3" />
   <test id="S15.10.2.10_A5.1_T1" />

@@ -74,24 +74,38 @@ final class JoniMatchState implements MatchState, IterableMatchResult {
             this.end = end;
         }
 
+        /**
+         * Returns the string index for a given byte index.
+         * 
+         * @param byteIndex
+         *            the byte index
+         * @return the string index
+         */
         int stringIndex(int byteIndex) {
             if (byteIndex >= end) {
-                return encoding.stringIndex(string, stringEnd, byteIndex);
+                return stringEnd + encoding.strLength(string, stringEnd, byteIndex - end);
             }
             if (byteIndex >= begin) {
-                return encoding.stringIndex(string, stringBegin, byteIndex);
+                return stringBegin + encoding.strLength(string, stringBegin, byteIndex - begin);
             }
-            return encoding.stringIndex(string, 0, byteIndex);
+            return encoding.strLength(string, 0, byteIndex);
         }
 
+        /**
+         * Returns the byte index for a given string index.
+         * 
+         * @param stringIndex
+         *            the string index
+         * @return the byte index
+         */
         int byteIndex(int stringIndex) {
             if (stringIndex >= stringEnd) {
-                return end + encoding.byteIndex(string, stringEnd, stringIndex);
+                return end + encoding.length(string, stringEnd, stringIndex);
             }
             if (stringIndex >= stringBegin) {
-                return begin + encoding.byteIndex(string, stringBegin, stringIndex);
+                return begin + encoding.length(string, stringBegin, stringIndex);
             }
-            return encoding.byteIndex(string, 0, stringIndex);
+            return encoding.length(string, 0, stringIndex);
         }
     }
 

@@ -18,9 +18,6 @@ tests/basic/typed-array-sealed-frozen.js
 # ES6: invalid destructuring is SyntaxError
 tests/basic/spread-call-setcall.js
 
-# ES6: 'yield' allowed as identifier reference in generator default parameters
-tests/generators/es6-syntax.js
-
 # ES6: SpiderMonkey bug (https://bugzilla.mozilla.org/show_bug.cgi?id=1022967)
 tests/arguments/defaults-call-function.js
 
@@ -38,10 +35,6 @@ tests/arguments/alias-function-not-closed.js
 
 # ES6: arguments object is iterable; new Map(null) and new Set(null) throws in SM
 tests/collections/constructor-errors.js
-
-# ES6: evaluation order changed in for-in/of
-tests/for-of/semantics-09.js
-tests/for-of/semantics-10.js
 
 # SM issue: destructuring and default parameters not supported in Function
 tests/basic/destructuring-default.js
@@ -62,6 +55,10 @@ tests/basic/typed-array-copyWithin.js
 
 # SM issue: bug 1032150
 tests/basic/destructuring-rest-identifiers.js
+
+# ES6: Access to uninitialized argument in default parameter expression
+tests/arguments/defaults-destructuring-with-rest.js
+tests/arguments/destructuring-after-defaults.js
 
 
 ###################
@@ -149,6 +146,9 @@ tests/basic/display-url-in-stack-trace.js
 # different Error.prototype.stack accessors
 tests/basic/error-stack-accessors.js
 
+# columnNumber in error stack trace
+tests/basic/exception-column-number.js
+
 
 ############################################
 # Misc proxy implementation isssues        #
@@ -175,9 +175,6 @@ tests/proxy/testDirectProxyKeys4.js
 
 # Number.prototype no longer Number instance
 tests/auto-regress/bug698074.js
-
-# Date.prototype no longer Date instance
-tests/auto-regress/bug771946.js
 
 # String.prototype no longer String instance
 tests/basic/bug699166.js
@@ -272,9 +269,6 @@ tests/basic/testDynamicLookup.js
 tests/auto-regress/bug701248.js
 tests/basic/bug738841.js
 
-# non-default parameters allowed after defaults
-tests/arguments/defaults-invalid-syntax.js
-
 # re-assignement to 'const' is not an early error
 tests/basic/bug821470.js
 
@@ -336,7 +330,6 @@ tests/auto-regress/bug1147907.js
 tests/basic/bug646968-7.js
 tests/basic/bug646968-8.js
 tests/basic/bug713226.js
-tests/basic/bug821340.js
 tests/basic/eif-generator.js
 tests/basic/testBug552248.js
 tests/basic/testBug663789-2.js
@@ -344,6 +337,7 @@ tests/basic/testBug895774.js
 tests/basic/testEvalInFrameEdgeCase.js
 tests/basic/testGCNewbornGenerator.js
 tests/basic/testGeneratorDieButScopeAlive.js
+tests/tracelogger/bug1174542.js
 tests/tracelogger/drainTraceLogger.js
 tests/tracelogger/setupTraceLogger.js
 
@@ -402,9 +396,6 @@ tests/basic/bug858097.js
 tests/basic/bug1118996.js
 tests/basic/testBug756919.js
 tests/basic/testBug840012.js
-# countHeap
-tests/basic/bug734196.js
-tests/basic/bug747926.js
 # makeFinalizeObserver
 tests/basic/testBug637014.js
 tests/basic/testStringBufferMallocAccounting.js
@@ -453,6 +444,8 @@ tests/basic/function-gname.js
 tests/arguments/arguments-on-proto.js
 # getConstructorName
 tests/basic/constructor-name.js
+# bailout
+tests/basic/newTargetRectifier.js
 
 
 #######################################

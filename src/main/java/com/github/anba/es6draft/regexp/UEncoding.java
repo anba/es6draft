@@ -22,17 +22,70 @@ abstract class UEncoding extends UnicodeEncoding {
         super(name, minLength, maxLength, null);
     }
 
+    /**
+     * Encodes the charsequence into a byte array using this encoding.
+     * 
+     * @param cs
+     *            the charsequence
+     * @return the encoded byte array
+     */
     public abstract byte[] toBytes(CharSequence cs);
 
+    /**
+     * Encodes the string into a byte array using this encoding.
+     * 
+     * @param s
+     *            the string
+     * @return the encoded byte array
+     */
     public abstract byte[] toBytes(String s);
 
+    /**
+     * Returns the string length when reading {@code count} bytes from the substring
+     * {@code cs.subSequence(start, cs.length)}.
+     * 
+     * @param cs
+     *            the charsequence
+     * @param start
+     *            the string start index
+     * @param count
+     *            the number of bytes to read
+     * @return the string length
+     */
+    public abstract int strLength(CharSequence cs, int start, int count);
+
+    /**
+     * Returns the number of bytes required to represent the charsequence in this encoding.
+     * 
+     * @param cs
+     *            the charsequence
+     * @return the byte length
+     */
     public abstract int length(CharSequence cs);
 
+    /**
+     * Returns {@code length(cs.subSequence(start, end))}.
+     * 
+     * @param cs
+     *            the charsequence
+     * @param start
+     *            the string start index
+     * @param end
+     *            the string end index
+     * @return the byte length
+     */
+    public abstract int length(CharSequence cs, int start, int end);
+
+    /**
+     * Returns the length in bytes of the character at the byte index {@code byteIndex}.
+     * 
+     * @param cs
+     *            the charsequence
+     * @param byteIndex
+     *            the byte index
+     * @return the character byte length
+     */
     public abstract int length(CharSequence cs, int byteIndex);
-
-    public abstract int stringIndex(CharSequence cs, int startIndex, int byteIndex);
-
-    public abstract int byteIndex(CharSequence cs, int startIndex, int stringIndex);
 
     @Override
     public int mbcCaseFold(int flag, byte[] bytes, IntHolder pp, int end, byte[] to) {

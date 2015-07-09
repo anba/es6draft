@@ -12,6 +12,7 @@ const {
 assertThrows(TypeError, () => Reflect.ownKeys(new Proxy({}, {ownKeys: () => [0]})));
 
 // Non-Array result is allowed
+// FIXME: Correct test case.
 assertThrows(TypeError, () => Reflect.ownKeys(new Proxy({}, {ownKeys: () => [0]})));
 
 // Duplicate property keys and non-extensible target, duplicate key is configurable

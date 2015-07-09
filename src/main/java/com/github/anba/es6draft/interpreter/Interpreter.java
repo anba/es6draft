@@ -843,7 +843,7 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
             } else {
                 Object value = element.accept(this, cx);
                 value = GetValue(value, cx);
-                ScriptRuntime.defineProperty(array, nextIndex, value, cx);
+                ScriptRuntime.defineProperty(array, nextIndex, value);
             }
             nextIndex += 1;
         }

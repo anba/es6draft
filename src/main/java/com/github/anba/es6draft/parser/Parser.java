@@ -145,7 +145,6 @@ public final class Parser {
         boolean yieldAllowed = false;
         boolean awaitAllowed = false;
         boolean returnAllowed = false;
-        boolean noDivAfterYield = false;
         boolean inArrowParameters = false;
         boolean legacyGenerator = false;
         boolean explicitStrict = false;
@@ -346,7 +345,6 @@ public final class Parser {
         // TODO: Move to FunctionNode?
         boolean needsArguments;
         boolean directEval;
-        boolean directEvalInFormals;
         boolean superReference;
 
         FunctionContext(ScopeContext enclosing, boolean hasArguments) {
@@ -371,7 +369,6 @@ public final class Parser {
         }
 
         void setParameterNames(List<Name> names) {
-            this.directEvalInFormals = directEval;
             this.parameterNames = new NameSet(names);
         }
 
@@ -459,8 +456,8 @@ public final class Parser {
         }
 
         @Override
-        public boolean hasFormalInitializerEval() {
-            return directEvalInFormals;
+        public boolean hasEval() {
+            return directEval;
         }
 
         @Override
@@ -1782,28 +1779,8 @@ public final class Parser {
      * 
      * @return the next token
      */
-    private Token peekOrError() {
-        return token() != Token.ERROR ? ts.peekToken() : Token.ERROR;
-    }
-
-    /**
-     * Peeks the next token in the token-stream.
-     * 
-     * @return the next token
-     */
     private Token peek() {
         return ts.peekToken();
-    }
-
-    /**
-     * Checks whether the next token in the token-stream is equal to the input token.
-     *
-     * @param token
-     *            the token to test
-     * @return {@code true} if the next token matches
-     */
-    private boolean SAFE_LOOKAHEAD(Token token) {
-        return token() != Token.ERROR ? ts.peekToken() == token : false;
     }
 
     /**
@@ -1914,23 +1891,18 @@ public final class Parser {
                 if (token() != Token.EOF) {
                     reportSyntaxError(Messages.Key.InvalidFormalParameterList);
                 }
-                if (hasUnsafeTrailingCharacters(formals, ts.position())) {
-                    // more input after last token (whitespace, comments), add newlines to handle
-                    // last token is single-line comment case
-                    formals = "\n" + formals + "\n";
-                }
+                String header = formatParameters(formals, ts.position());
 
                 ts = new TokenStream(this, new TokenStreamInput(bodyText)).initialize();
                 List<StatementListItem> statements = functionBody(parameters, Token.EOF);
                 if (token() != Token.EOF) {
                     reportSyntaxError(Messages.Key.InvalidFunctionBody);
                 }
+                String body = formatBody(bodyText);
 
                 String functionName = "anonymous";
                 BindingIdentifier identifier = new BindingIdentifier(beginSource(), beginSource(),
                         functionName);
-                String header = formatParameters(formals);
-                String body = formatBody(bodyText);
 
                 FunctionContext scope = context.funContext;
                 function = new FunctionDeclaration(beginSource(), ts.endPosition(), scope,
@@ -1962,7 +1934,7 @@ public final class Parser {
      *            the function formal parameters source
      * @param bodyText
      *            the function body source text
-     * @return the parsed function
+     * @return the parsed generator function
      * @throws ParserException
      *             if the input source could not be parsed successfully
      */
@@ -1983,23 +1955,18 @@ public final class Parser {
                 if (token() != Token.EOF) {
                     reportSyntaxError(Messages.Key.InvalidFormalParameterList);
                 }
-                if (hasUnsafeTrailingCharacters(formals, ts.position())) {
-                    // more input after last token (whitespace, comments), add newlines to handle
-                    // last token is single-line comment case
-                    formals = "\n" + formals + "\n";
-                }
+                String header = formatParameters(formals, ts.position());
 
                 ts = new TokenStream(this, new TokenStreamInput(bodyText)).initialize();
                 List<StatementListItem> statements = functionBody(parameters, Token.EOF);
                 if (token() != Token.EOF) {
                     reportSyntaxError(Messages.Key.InvalidFunctionBody);
                 }
+                String body = formatBody(bodyText);
 
                 String functionName = "anonymous";
                 BindingIdentifier identifier = new BindingIdentifier(beginSource(), beginSource(),
                         functionName);
-                String header = formatParameters(formals);
-                String body = formatBody(bodyText);
 
                 FunctionContext scope = context.funContext;
                 generator = new GeneratorDeclaration(beginSource(), ts.endPosition(), scope,
@@ -2021,6 +1988,67 @@ public final class Parser {
         }
     }
 
+    /**
+     * Parses the input source as async function code.
+     * 
+     * @param formals
+     *            the function formal parameters source
+     * @param bodyText
+     *            the function body source text
+     * @return the parsed async function
+     * @throws ParserException
+     *             if the input source could not be parsed successfully
+     */
+    public AsyncFunctionDefinition parseAsyncFunction(String formals, String bodyText)
+            throws ParserException {
+        if (ts != null)
+            throw new IllegalStateException();
+
+        newContext(ContextKind.Script);
+        try {
+            applyStrictMode(false);
+
+            AsyncFunctionDeclaration asyncFunction;
+            newContext(ContextKind.AsyncFunction);
+            try {
+                ts = new TokenStream(this, new TokenStreamInput(formals)).initialize();
+                FormalParameterList parameters = formalParameters(Token.EOF);
+                if (token() != Token.EOF) {
+                    reportSyntaxError(Messages.Key.InvalidFormalParameterList);
+                }
+                String header = formatParameters(formals, ts.position());
+
+                ts = new TokenStream(this, new TokenStreamInput(bodyText)).initialize();
+                List<StatementListItem> statements = functionBody(parameters, Token.EOF);
+                if (token() != Token.EOF) {
+                    reportSyntaxError(Messages.Key.InvalidFunctionBody);
+                }
+                String body = formatBody(bodyText);
+
+                String functionName = "anonymous";
+                BindingIdentifier identifier = new BindingIdentifier(beginSource(), beginSource(),
+                        functionName);
+
+                FunctionContext scope = context.funContext;
+                asyncFunction = new AsyncFunctionDeclaration(beginSource(), ts.endPosition(), scope,
+                        identifier, parameters, statements, functionName, header, body);
+                scope.setNode(asyncFunction);
+
+                asyncFunction_EarlyErrors(asyncFunction);
+
+                asyncFunction = inheritStrictness(asyncFunction);
+            } finally {
+                restoreContext();
+            }
+
+            createScript(asyncFunction);
+
+            return asyncFunction;
+        } finally {
+            restoreContext();
+        }
+    }
+
     private <FUNDECL extends Declaration & FunctionNode> Script createScript(FUNDECL funDeclaration) {
         List<StatementListItem> statements = singletonList((StatementListItem) funDeclaration);
         boolean strict = (context.strictMode == StrictMode.Strict);
@@ -2033,9 +2061,18 @@ public final class Parser {
         return script;
     }
 
-    private static String formatParameters(String formals) {
-        return new StringBuilder(formals.length() + 3).append('(').append(formals).append(')')
-                .append(' ').toString();
+    private static String formatParameters(String formals, int lastParametersTokenPosition) {
+        boolean unsafeChars = hasUnsafeTrailingCharacters(formals, lastParametersTokenPosition);
+        StringBuilder sb = new StringBuilder(formals.length() + 3 + (unsafeChars ? 2 : 0));
+        sb.append('(');
+        if (unsafeChars) {
+            // More input after last token (whitespace, comments), add newlines to handle
+            // last token is single-line comment case.
+            sb.append('\n').append(formals).append('\n');
+        } else {
+            sb.append(formals);
+        }
+        return sb.append(')').append(' ').toString();
     }
 
     private static String formatBody(String body) {
@@ -2331,7 +2368,7 @@ public final class Parser {
         long begin = ts.beginPosition();
         String importName;
         BindingIdentifier localName;
-        if (importSpecifierFollowSet(peekOrError())) {
+        if (Token.isIdentifierName(token()) && importSpecifierFollowSet(peek())) {
             BindingIdentifier binding = importedBinding();
             importName = binding.getName().getIdentifier();
             localName = binding;
@@ -3167,7 +3204,8 @@ public final class Parser {
      * @return the parsed formal parameter
      */
     private FormalParameter formalParameter() {
-        boolean nonSimple = token() == Token.LB || token() == Token.LC || LOOKAHEAD(Token.ASSIGN);
+        boolean nonSimple = token() == Token.LB || token() == Token.LC
+                || !(isBindingIdentifier(token()) && !LOOKAHEAD(Token.ASSIGN));
         FormalParameterContext scope = null;
         if (nonSimple) {
             scope = enterFormalParameterContext();
@@ -3408,11 +3446,8 @@ public final class Parser {
             if (token() == Token.LP) {
                 consume(Token.LP);
                 startFunction = ts.position() - 1;
-                // handle `YieldExpression = yield RegExp` in ArrowParameters
-                context.noDivAfterYield = context.parent.yieldAllowed;
                 context.inArrowParameters = true;
                 parameters = strictFormalParameters(Token.RP);
-                context.noDivAfterYield = false;
                 context.inArrowParameters = false;
                 consume(Token.RP);
             } else {
@@ -3795,25 +3830,8 @@ public final class Parser {
         assert context.scopeContext == context.funContext;
         FunctionContext scope = context.funContext;
         List<Name> boundNames = BoundNames(method.getParameters());
-        switch (method.getType()) {
-        case AsyncFunction:
-        case BaseConstructor:
-        case DerivedConstructor:
-        case Function:
-        case Generator: {
-            checkFormalParameterDuplication(method, boundNames, scope.parameterNames);
-            checkFormalParameterRedeclaration(method, boundNames, scope.lexDeclaredNames);
-            return;
-        }
-        case Setter: {
-            checkFormalParameterDuplication(method, boundNames, scope.parameterNames);
-            checkFormalParameterRedeclaration(method, boundNames, scope.lexDeclaredNames);
-            return;
-        }
-        case Getter:
-        default:
-            return;
-        }
+        checkFormalParameterDuplication(method, boundNames, scope.parameterNames);
+        checkFormalParameterRedeclaration(method, boundNames, scope.lexDeclaredNames);
     }
 
     /**
@@ -4362,6 +4380,7 @@ public final class Parser {
                 constructor.setClassName(className.getName().getIdentifier());
             }
             methods.add(constructor);
+            properties.add(constructor);
         }
 
         return properties;
@@ -4452,9 +4471,11 @@ public final class Parser {
      * <strong>[Extension] <code>async</code> Function Definitions</strong>
      * 
      * <pre>
-     * AsyncFunctionDeclaration<span><sub>[Default]</sub></span> :
-     *     async [no <i>LineTerminator</i> here] function BindingIdentifier ( FormalParameters ) { FunctionBody }
-     *     <span><sub>[+Default]</sub></span> async [no <i>LineTerminator</i> here] function ( FormalParameters ) { FunctionBody }
+     * AsyncFunctionDeclaration<span><sub>[Yield, Await, Default]</sub></span> :
+     *     async [no <i>LineTerminator</i> here] function BindingIdentifier<span><sub>[?Yield, ?Await]</sub></span> ( FormalParameters<span><sub>[Await]</sub></span> ) { AsyncFunctionBody }
+     *     <span><sub>[+Default]</sub></span> async [no <i>LineTerminator</i> here] function ( FormalParameters<span><sub>[Await]</sub></span> ) { AsyncFunctionBody }
+     * AsyncFunctionBody :
+     *     FunctionBody<span><sub>[Await]</sub></span>
      * </pre>
      * 
      * @param isDefault
@@ -4518,7 +4539,7 @@ public final class Parser {
      * 
      * <pre>
      * AsyncFunctionExpression :
-     *     async [no <i>LineTerminator</i> here] function BindingIdentifier<span><sub>opt</sub></span> ( FormalParameters ) { FunctionBody }
+     *     async [no <i>LineTerminator</i> here] function BindingIdentifier<span><sub>opt</sub></span> ( FormalParameters<span><sub>[Await]</sub></span> ) { AsyncFunctionBody }
      * </pre>
      * 
      * @return the parsed async function expression
@@ -4594,10 +4615,17 @@ public final class Parser {
      * 
      * <pre>
      * AsyncArrowFunction<span><sub>[In, Yield]</sub></span> :
-     *     async [no <i>LineTerminator</i> here] AsyncArrowParameters<span><sub>[?Yield]</sub></span> [no <i>LineTerminator</i> here] {@literal =>} ConciseBody<span><sub>[?In]</sub></span>
-     * AsyncArrowParameters<span><sub>[Yield]</sub></span> :
-     *     BindingIdentifier<span><sub>[?Yield]</sub></span>
-     *     CoverArgumentsAndArrowParameterList<span><sub>[?Yield]</sub></span>
+     *     async [no <i>LineTerminator</i> here] AsyncArrowBindingIdentifier<span><sub>[?Yield]</sub></span> [no <i>LineTerminator</i> here] {@literal =>} AsyncConciseBody<span><sub>[?In]</sub></span>
+     *     CoverCallExpressionAndAsyncArrowHead<span><sub>[?Yield, ?Await]</sub></span> [no <i>LineTerminator</i> here] {@literal =>} AsyncConciseBody<span><sub>[?In]</sub></span>
+     * AsyncConciseBody<span><sub>[In]</sub></span> :
+     *     [lookahead &#x2260; <b>{</b>] AssignmentExpression<span><sub>[?In]</sub></span>
+     *     { AsyncFunctionBody }
+     * AsyncArrowBindingIdentifier<span><sub>[Yield]</sub></span> :
+     *     BindingIdentifier<span><sub>[?Yield, Await]</sub></span>
+     * CoverCallExpressionAndAsyncArrowHead<span><sub>[Yield, Await]</sub></span> :
+     *     MemberExpression<span><sub>[?Yield, ?Await]</sub></span> Arguments<span><sub>[?Yield, ?Await]</sub></span>
+     * AsyncArrowHead<span><sub>[Yield]</sub></span> :
+     *     async [no <i>LineTerminator</i> here] ArrowFormalParameters<span><sub>[?Yield, Await]</sub></span>
      * </pre>
      * 
      * @param allowIn
@@ -4619,11 +4647,8 @@ public final class Parser {
             if (token() == Token.LP) {
                 consume(Token.LP);
                 startFunction = ts.position() - 1;
-                // handle `YieldExpression = yield RegExp` in ArrowParameters
-                context.noDivAfterYield = context.parent.yieldAllowed;
                 context.inArrowParameters = true;
                 parameters = strictFormalParameters(Token.RP);
-                context.noDivAfterYield = false;
                 context.inArrowParameters = false;
                 consume(Token.RP);
             } else {
@@ -4700,7 +4725,7 @@ public final class Parser {
      * 
      * <pre>
      * AsyncMethod<span><sub>[Yield]</sub></span> :
-     *     async PropertyName ( StrictFormalParameters ) { FunctionBody }
+     *     async [no <i>LineTerminator</i> here] PropertyName<span><sub>[?Yield]</sub></span> ( StrictFormalParameters<span><sub>[Await]</sub></span> ) { AsyncFunctionBody }
      * </pre>
      * 
      * @param allocation
@@ -4713,6 +4738,9 @@ public final class Parser {
         long begin = ts.beginPosition();
 
         consume(Token.ASYNC);
+        if (!noLineTerminator()) {
+            reportSyntaxError(Messages.Key.UnexpectedEndOfLine);
+        }
         PropertyName propertyName = propertyName();
 
         newContext(ContextKind.AsyncMethod);
@@ -4753,8 +4781,8 @@ public final class Parser {
      * <strong>[Extension] <code>async</code> Function Definitions</strong>
      * 
      * <pre>
-     * AwaitExpression :
-     *     await UnaryExpression
+     * AwaitExpression<span><sub>[Yield]</sub></span> :
+     *     await UnaryExpression<span><sub>[?Yield, Await]</sub></span>
      * </pre>
      * 
      * @return the parsed await expression
@@ -4808,10 +4836,10 @@ public final class Parser {
         } else if (token() == Token.STRING) {
             stringLiteral();
         } else {
-            identifier(true);
+            identifier();
             if (token() == Token.LT) {
                 consume(Token.LT);
-                identifier(true);
+                identifier();
                 consume(Token.GT);
             }
         }
@@ -4820,7 +4848,7 @@ public final class Parser {
     private void objectTypeAnnotation() {
         consume(Token.LC);
         while (token() != Token.RC) {
-            identifier(true);
+            identifier();
             if (token() == Token.HOOK) {
                 consume(Token.HOOK);
             }
@@ -5387,7 +5415,7 @@ public final class Parser {
      * @return the parsed binding property
      */
     private BindingProperty bindingProperty(boolean allowLet) {
-        if (token() == Token.LB || SAFE_LOOKAHEAD(Token.COLON)) {
+        if (token() == Token.LB || (isPropertyName(token()) && LOOKAHEAD(Token.COLON))) {
             PropertyName propertyName = propertyName();
             consume(Token.COLON);
             Binding binding = binding(allowLet);
@@ -5571,19 +5599,25 @@ public final class Parser {
         case FUNCTION:
         case CLASS:
         case AT:
-            break;
+            throw reportSyntaxError(Messages.Key.InvalidToken, token().toString());
         case LET:
             if (LOOKAHEAD(Token.LB)) {
-                break;
+                throw reportSyntaxError(Messages.Key.InvalidToken, token().toString());
             }
+            break;
+        case ASYNC:
+            // FIXME: spec issue - check for line-terminator
+            if (isEnabled(CompatibilityOption.AsyncFunction) && LOOKAHEAD(Token.FUNCTION) && noNextLineTerminator()) {
+                throw reportSyntaxError(Messages.Key.InvalidToken, token().toString());
+            }
+            break;
         default:
-            long begin = ts.beginPosition();
-            Expression expr = expression(true);
-            semicolon();
-
-            return new ExpressionStatement(begin, ts.endPosition(), expr);
+            break;
         }
-        throw reportSyntaxError(Messages.Key.InvalidToken, token().toString());
+        long begin = ts.beginPosition();
+        Expression expr = expression(true);
+        semicolon();
+        return new ExpressionStatement(begin, ts.endPosition(), expr);
     }
 
     /**
@@ -6543,6 +6577,9 @@ public final class Parser {
             binding = bindingIdentifier(false);
             if (token() == Token.ASSIGN) {
                 initializer = initializer(true);
+                if (IsAnonymousFunctionDefinition(initializer)) {
+                    setFunctionName(initializer, (BindingIdentifier) binding);
+                }
             }
         }
         return new LexicalBinding(begin, ts.endPosition(), binding, initializer);
@@ -6571,7 +6608,7 @@ public final class Parser {
      */
     private IdentifierReference identifierReference() {
         long begin = ts.beginPosition();
-        String identifier = identifier(true);
+        String identifier = identifier();
         if ("arguments".equals(identifier) && context.kind.isFunction()) {
             context.funContext.needsArguments(false);
         }
@@ -6614,7 +6651,7 @@ public final class Parser {
                 reportTokenNotIdentifier(Token.LET);
             }
         }
-        String identifier = identifier(false);
+        String identifier = identifier();
         if (context.strictMode != StrictMode.NonStrict) {
             if ("arguments".equals(identifier) || "eval".equals(identifier)) {
                 reportStrictModeSyntaxError(begin, Messages.Key.StrictModeRestrictedIdentifier);
@@ -6662,7 +6699,7 @@ public final class Parser {
         if (tok == Token.YIELD || tok == Token.ESCAPED_YIELD) {
             // function declarations inherit the yield mode from the parent context
             long begin = ts.beginPosition();
-            if (!isYieldName(isDeclaration ? context.parent : context, false)) {
+            if (!isYieldName(isDeclaration ? context.parent : context)) {
                 reportTokenNotIdentifier(Token.YIELD);
             }
             consume(tok);
@@ -6688,8 +6725,7 @@ public final class Parser {
         Token tok = token();
         if (tok == Token.YIELD || tok == Token.ESCAPED_YIELD) {
             long begin = ts.beginPosition();
-            // Treat as reference context for error reporting
-            if (!isYieldName(context, true)) {
+            if (!isYieldName(context)) {
                 reportTokenNotIdentifier(Token.YIELD);
             }
             consume(tok);
@@ -6710,7 +6746,7 @@ public final class Parser {
      * @return the parsed label identifier
      */
     private String labelIdentifier() {
-        return identifier(false);
+        return identifier();
     }
 
     /**
@@ -6721,13 +6757,11 @@ public final class Parser {
      *     IdentifierName <strong>but not</strong> ReservedWord
      * </pre>
      * 
-     * @param isReference
-     *            {@code true} if in identifier reference context
      * @return the parsed identifier
      */
-    private String identifier(boolean isReference) {
+    private String identifier() {
         Token tok = token();
-        if (!isIdentifier(tok, isReference)) {
+        if (!isIdentifier(tok)) {
             reportTokenNotIdentifier(tok);
         }
         String name = getName(tok);
@@ -6745,7 +6779,7 @@ public final class Parser {
      * @return {@code true} if the token is valid binding identifier
      */
     private boolean isBindingIdentifier(Token tok) {
-        return isIdentifier(tok, false);
+        return isIdentifier(tok);
     }
 
     /**
@@ -6758,7 +6792,7 @@ public final class Parser {
      * @return {@code true} if the token is valid label identifier
      */
     private boolean isLabelIdentifier(Token tok) {
-        return isIdentifier(tok, false);
+        return isIdentifier(tok);
     }
 
     /**
@@ -6771,7 +6805,7 @@ public final class Parser {
      * @return {@code true} if the token is valid identifier reference
      */
     private boolean isIdentifierReference(Token tok) {
-        return isIdentifier(tok, true);
+        return isIdentifier(tok);
     }
 
     /**
@@ -6781,28 +6815,23 @@ public final class Parser {
      * 
      * @param tok
      *            the token to inspect
-     * @param isReference
-     *            {@code true} if in identifier reference context
      * @return {@code true} if the token is valid identifier
      */
-    private boolean isIdentifier(Token tok, boolean isReference) {
+    private boolean isIdentifier(Token tok) {
         switch (tok) {
         case NAME:
         case ASYNC:
         case ESCAPED_NAME:
         case ESCAPED_ASYNC:
             return true;
-        case AWAIT:
-        case ESCAPED_AWAIT:
-            if (!moduleCode) {
-                return true;
-            }
-            // fall-through
         case ESCAPED_RESERVED_WORD:
             throw reportSyntaxError(Messages.Key.InvalidIdentifier, getName(tok));
+        case AWAIT:
+        case ESCAPED_AWAIT:
+            return isAwaitName(context);
         case YIELD:
         case ESCAPED_YIELD:
-            return isYieldName(context, isReference);
+            return isYieldName(context);
         case LET:
         case ESCAPED_LET:
         case IMPLEMENTS:
@@ -6829,18 +6858,14 @@ public final class Parser {
      * 
      * @param yieldContext
      *            the context to use
-     * @param isReference
-     *            {@code true} if in identifier reference context
      * @return {@code true} if 'yield' is a valid name in the parse context
      */
-    private boolean isYieldName(ParseContext yieldContext, boolean isReference) {
+    private boolean isYieldName(ParseContext yieldContext) {
         switch (yieldContext.kind) {
         case Generator:
         case GeneratorMethod:
-            if (yieldContext.yieldAllowed || !isReference) {
-                // 'yield' in generator, but not in default parameter initializer expression
-                reportSyntaxError(Messages.Key.InvalidIdentifier, getName(Token.YIELD));
-            }
+            // 'yield' is always a keyword in generator functions
+            reportSyntaxError(Messages.Key.InvalidIdentifier, getName(Token.YIELD));
             break;
         case GeneratorComprehension:
             if (yieldContext.yieldAllowed) {
@@ -6850,7 +6875,7 @@ public final class Parser {
             break;
         case ArrowFunction:
         case AsyncArrowFunction:
-            if (yieldContext.inArrowParameters && yieldContext.parent.yieldAllowed && !isReference) {
+            if (yieldContext.inArrowParameters && yieldContext.parent.yieldAllowed) {
                 // 'yield' in arrow function parameters embedded in generator or generator compr.
                 reportSyntaxError(Messages.Key.InvalidIdentifier, getName(Token.YIELD));
             }
@@ -6861,7 +6886,7 @@ public final class Parser {
 
         assert !yieldContext.yieldAllowed : String.format(
                 "unexpected context kind '%s' with yield allowed", yieldContext.kind);
-        // 'yield' is always a keyword in strict-mode (independent of `yieldContext`!)
+        // 'yield' is always a keyword in strict-mode (independent of `yieldContext`)
         if (context.strictMode != StrictMode.NonStrict) {
             reportStrictModeSyntaxError(Messages.Key.StrictModeInvalidIdentifier,
                     getName(Token.YIELD));
@@ -6947,12 +6972,6 @@ public final class Parser {
                 return letExpression();
             }
             break;
-        case YIELD:
-            if (context.noDivAfterYield && (LOOKAHEAD(Token.DIV) || LOOKAHEAD(Token.ASSIGN_DIV))) {
-                consume(Token.YIELD);
-                reportTokenMismatch(Token.DIV, Token.REGEXP);
-            }
-            break;
         case ASYNC:
             if (isEnabled(CompatibilityOption.AsyncFunction) && LOOKAHEAD(Token.FUNCTION)
                     && noNextLineTerminator()) {
@@ -6975,6 +6994,21 @@ public final class Parser {
             ts.reset(position, lineinfo);
             return generatorExpression(true);
         }
+    }
+
+    /**
+     * Returns <code>true</code> if {@link Token#AWAIT} should be treated as {@link Token#NAME} in
+     * the supplied context.
+     * 
+     * @param awaitContext
+     *            the context to use
+     * @return {@code true} if 'await' is a valid name in the parse context
+     */
+    private boolean isAwaitName(ParseContext awaitContext) {
+        if (moduleCode) {
+            reportSyntaxError(Messages.Key.InvalidIdentifier, getName(Token.AWAIT));
+        }
+        return true;
     }
 
     /**
@@ -7559,7 +7593,7 @@ public final class Parser {
             Expression expression = assignmentExpression(true);
             return new SpreadProperty(begin, ts.endPosition(), expression);
         }
-        if (SAFE_LOOKAHEAD(Token.COLON)) {
+        if (isPropertyName(token()) && LOOKAHEAD(Token.COLON)) {
             PropertyName propertyName = literalPropertyName();
             consume(Token.COLON);
             Expression propertyValue = assignmentExpressionNoValidation(true);
@@ -7568,11 +7602,11 @@ public final class Parser {
             }
             return new PropertyValueDefinition(begin, ts.endPosition(), propertyName, propertyValue);
         }
-        if (SAFE_LOOKAHEAD(Token.COMMA) || SAFE_LOOKAHEAD(Token.RC)) {
+        if (Token.isIdentifierName(token()) && (LOOKAHEAD(Token.COMMA) || LOOKAHEAD(Token.RC))) {
             IdentifierReference identifier = identifierReference();
             return new PropertyNameDefinition(begin, ts.endPosition(), identifier);
         }
-        if (SAFE_LOOKAHEAD(Token.ASSIGN)) {
+        if (Token.isIdentifierName(token()) && LOOKAHEAD(Token.ASSIGN)) {
             IdentifierReference identifier = identifierReference();
             consume(Token.ASSIGN);
             Expression initializer = assignmentExpression(true);
@@ -8625,9 +8659,9 @@ public final class Parser {
      * Static Semantics: IsValidSimpleAssignmentTarget
      * <ul>
      * <li>12.1.3 Static Semantics: IsValidSimpleAssignmentTarget
-     * <li>12.2.0.4 Static Semantics: IsValidSimpleAssignmentTarget
+     * <li>12.2.1.5 Static Semantics: IsValidSimpleAssignmentTarget
      * <li>12.2.10.3 Static Semantics: IsValidSimpleAssignmentTarget
-     * <li>12.3.1.4 Static Semantics: IsValidSimpleAssignmentTarget
+     * <li>12.3.1.5 Static Semantics: IsValidSimpleAssignmentTarget
      * <li>12.4.3 Static Semantics: IsValidSimpleAssignmentTarget
      * <li>12.5.3 Static Semantics: IsValidSimpleAssignmentTarget
      * <li>12.6.2 Static Semantics: IsValidSimpleAssignmentTarget
@@ -8663,14 +8697,9 @@ public final class Parser {
                 }
             }
             return ident;
-        } else if (lhs instanceof ElementAccessor) {
-            return (ElementAccessor) lhs;
-        } else if (lhs instanceof PropertyAccessor) {
-            return (PropertyAccessor) lhs;
-        } else if (lhs instanceof SuperElementAccessor) {
-            return (SuperElementAccessor) lhs;
-        } else if (lhs instanceof SuperPropertyAccessor) {
-            return (SuperPropertyAccessor) lhs;
+        } else if (lhs instanceof ElementAccessor || lhs instanceof PropertyAccessor
+                || lhs instanceof SuperElementAccessor || lhs instanceof SuperPropertyAccessor) {
+            return (LeftHandSideExpression) lhs;
         }
         // everything else => invalid lhs
         throw reportError(type, lhs.getBeginPosition(), messageKey);

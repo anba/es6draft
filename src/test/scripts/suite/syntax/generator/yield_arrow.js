@@ -49,7 +49,7 @@ const {
   assertSyntaxError(`function* f2() { yield => 0; }`);
   assertSyntaxError(`function* f3() { (yield) => 0; }`);
   assertSyntaxError(`function* f4() { (yield = yield * 2) => 0; }`);
-  function* f5() { (a = yield * 2) => 0; }
+  assertSyntaxError(`function* f5() { (a = yield * 2) => 0; }`);
   assertSyntaxError(`function* f6() { (...yield) => 0; }`);
   assertSyntaxError(`function* f7() { (a, ...yield) => 0; }`);
   assertSyntaxError(`function* f8() { ([yield]) => 0; }`);

@@ -9,7 +9,6 @@ package com.github.anba.es6draft.ast;
 import java.util.List;
 
 import com.github.anba.es6draft.ast.scope.BlockScope;
-import com.github.anba.es6draft.ast.scope.Scope;
 
 /**
  * <h1>13 ECMAScript Language: Statements and Declarations</h1><br>
@@ -31,7 +30,7 @@ public final class LetStatement extends Statement implements ScopedNode {
     }
 
     @Override
-    public Scope getScope() {
+    public BlockScope getScope() {
         return scope;
     }
 

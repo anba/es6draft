@@ -13,6 +13,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import com.github.anba.es6draft.Script;
 import com.github.anba.es6draft.compiler.assembler.Type;
 import com.github.anba.es6draft.runtime.*;
 import com.github.anba.es6draft.runtime.internal.*;
@@ -75,6 +76,9 @@ final class Types {
     static final Type Iterator = Type.of(Iterator.class);
     static final Type List = Type.of(List.class);
     static final Type Map = Type.of(Map.class);
+
+    // toplevel
+    static final Type Script = Type.of(Script.class);
 
     // compiler
     static final Type CompiledFunction = Type.of(CompiledFunction.class);

@@ -83,6 +83,7 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
         YieldExpression("yieldExpression"),
         LetExpression("letExpression"),
         ClassExpression("classExpression"),
+        NewTargetExpression("newTargetExpression"),
 
         // Statements
         EmptyStatement("emptyStatement"),
@@ -138,7 +139,6 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
         // New node types
         SuperExpression(),
         AwaitExpression(),
-        NewTarget(),
 
         ;
         /* @formatter:on */
@@ -1753,7 +1753,7 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
 
     @Override
     public Object visit(NewTarget node, Void value) {
-        return createExpression(node, Type.NewTarget);
+        return createExpression(node, Type.NewTargetExpression);
     }
 
     @Override

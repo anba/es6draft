@@ -39,24 +39,25 @@ final class UTF16Encoding extends UEncoding {
     }
 
     @Override
-    public int stringIndex(CharSequence cs, int startIndex, int byteIndex) {
-        return byteIndex >> 1;
-    }
-
-    @Override
-    public int byteIndex(CharSequence cs, int startIndex, int stringIndex) {
-        return (stringIndex - startIndex) << 1;
-    }
-
-    @Override
-    public int length(CharSequence cs, int byteIndex) {
-        int count = Character.charCount(Character.codePointAt(cs, stringIndex(cs, 0, byteIndex)));
-        return count * 2;
+    public int strLength(CharSequence cs, int start, int count) {
+        return count >> 1;
     }
 
     @Override
     public int length(CharSequence cs) {
         return cs.length() * 2;
+    }
+
+    @Override
+    public int length(CharSequence cs, int start, int end) {
+        assert 0 <= start && start <= end && end <= cs.length();
+        return (end - start) * 2;
+    }
+
+    @Override
+    public int length(CharSequence cs, int byteIndex) {
+        int index = strLength(cs, 0, byteIndex);
+        return Character.charCount(Character.codePointAt(cs, index)) * 2;
     }
 
     @Override

@@ -25,6 +25,13 @@ import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
 import com.github.anba.es6draft.runtime.internal.Source;
+import com.github.anba.es6draft.runtime.modules.MalformedNameException;
+import com.github.anba.es6draft.runtime.modules.ModuleLoader;
+import com.github.anba.es6draft.runtime.modules.ModuleRecord;
+import com.github.anba.es6draft.runtime.modules.ModuleSource;
+import com.github.anba.es6draft.runtime.modules.ResolutionException;
+import com.github.anba.es6draft.runtime.modules.SourceIdentifier;
+import com.github.anba.es6draft.runtime.modules.loader.StringModuleSource;
 import com.github.anba.es6draft.runtime.types.Callable;
 
 /**
@@ -79,6 +86,36 @@ public final class Test262GlobalObject extends ShellGlobalObject {
         Source source = new Source(file, file.getFileName().toString(), sourceLine);
         Script script = getScriptLoader().script(source, sourceCode);
         eval(script);
+    }
+
+    /**
+     * Parses, compiles and executes the javascript module file.
+     * 
+     * @param moduleName
+     *            the module name
+     * @param sourceCode
+     *            the source code
+     * @param sourceLine
+     *            the source line offset
+     * @throws ParserException
+     *             if the source contains any syntax errors
+     * @throws CompilationException
+     *             if the parsed source could not be compiled
+     * @throws MalformedNameException
+     *             if the module name cannot be normalized
+     * @throws ResolutionException
+     *             if the module exports cannot be resolved
+     * @throws IOException
+     *             if there was any I/O error
+     */
+    void evalModule(String moduleName, String sourceCode, int sourceLine) throws ParserException,
+            CompilationException, MalformedNameException, ResolutionException, IOException {
+        ModuleLoader moduleLoader = getRealm().getModuleLoader();
+        SourceIdentifier moduleId = moduleLoader.normalizeName(moduleName, null);
+        ModuleSource source = new StringModuleSource(moduleId, sourceCode, sourceLine);
+        ModuleRecord module = moduleLoader.define(moduleId, source, getRealm());
+        module.instantiate();
+        module.evaluate();
     }
 
     /**

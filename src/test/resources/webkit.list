@@ -5,10 +5,6 @@
 # <https://github.com/anba/es6draft>
 #
 
-
-# array destructuring uses Symbol.iterator
-js/script-tests/destructuring-assignment.js
-
 # computed property names are defined after literal property names in WebKit?
 js/script-tests/basic-computed-property-name.js
 
@@ -43,6 +39,15 @@ js/script-tests/const.js
 
 # invalid test, https://webkit.org/b/142934
 js/script-tests/object-literal-duplicate-properties.js
+
+# default values in function parameters not supported in WebKit
+js/script-tests/destructuring-assignment-default-values.js
+
+# invalid test
+js/script-tests/regexp-toString.js
+
+# invalid test, `(class { super(){} })` is valid syntax
+js/script-tests/class-syntax-super.js
 
 
 ###################
@@ -90,6 +95,7 @@ js/script-tests/function-constructor-error.js
 js/script-tests/reserved-words-strict.js
 js/script-tests/array-find.js
 js/script-tests/parser-error-messages.js
+js/script-tests/regexp-flags.js
 js/script-tests/sloppy-getter-setter-global-object.js
 js/script-tests/string-repeat.js
 js/script-tests/symbol-abstract-relational-comparison.js
@@ -171,10 +177,6 @@ js/script-tests/toString-prefix-postfix-preserve-parens.js
 js/script-tests/function-toString-parentheses.js
 js/script-tests/modify-non-references.js
 js/script-tests/dfg-activation-register-overwritten-in-throw.js
-
-# setter in object literal requires exactly one argument
-js/script-tests/class-syntax-super.js
-js/script-tests/object-literal-syntax.js
 
 # block-scoped function declaration activated at definition
 js/kde/script-tests/func-decl.js

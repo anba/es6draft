@@ -50,7 +50,7 @@ final class Test262Info extends TestInfo {
 
     private String testName, description, errorType;
     private List<String> includes = Collections.emptyList();
-    private boolean onlyStrict, noStrict, negative, async;
+    private boolean onlyStrict, noStrict, negative, async, module, raw;
 
     public Test262Info(Path basedir, Path script) {
         super(basedir, script);
@@ -116,7 +116,7 @@ final class Test262Info extends TestInfo {
     }
 
     /**
-     * Returns {@code true} iff the test case is expected to fail.
+     * Returns {@code true} if the test case is expected to fail.
      */
     public boolean isNegative() {
         return negative;
@@ -130,36 +130,35 @@ final class Test262Info extends TestInfo {
     }
 
     /**
-     * Counterpart to {@link Objects#requireNonNull(Object, String)}.
+     * Returns {@code true} for module test cases.
      */
-    private static final <T> T requireNull(T t) {
-        if (t != null)
-            throw new IllegalStateException("object is not null");
-        return t;
+    @Override
+    public boolean isModule() {
+        return module;
     }
 
     /**
-     * Parses the test file information for this test case.
+     * Returns {@code true} if the test case should be run without preamble code.
+     */
+    public boolean isRaw() {
+        return raw;
+    }
+
+    /**
+     * Returns {@code true} if the test should be executed.
      * 
-     * @return the file content
-     * @throws IOException
-     *             if there was any I/O error
+     * @param strictTest
+     *            {@code true} if strict-mode test
+     * @param unmarkedDefault
+     *            the default test mode
+     * @return {@code true} if the test should be executed
      */
-    public String readFile() throws IOException {
-        String fileContent = new String(Files.readAllBytes(toFile()), StandardCharsets.UTF_8);
-        try {
-            readFileInformation(fileContent, true);
-        } catch (MalformedDataException e) {
-            throw new RuntimeException(e);
+    public boolean isValidTest(boolean strictTest, DefaultMode unmarkedDefault) {
+        if (strictTest) {
+            return !isNoStrict() && (isOnlyStrict() || unmarkedDefault != DefaultMode.NonStrict);
+        } else {
+            return !isOnlyStrict() && (isNoStrict() || unmarkedDefault != DefaultMode.Strict);
         }
-        return fileContent;
-    }
-
-    /**
-     * Parses the test file information for this test case.
-     */
-    public void readFileInformation(String content) throws MalformedDataException {
-        readFileInformation(content, false);
     }
 
     @SuppressWarnings("serial")
@@ -173,6 +172,54 @@ final class Test262Info extends TestInfo {
         }
     }
 
+    /**
+     * Parses the test file information for this test case.
+     * 
+     * @return the file content
+     * @throws IOException
+     *             if there was any I/O error
+     */
+    public String readFile() throws IOException {
+        String fileContent = readFileContent();
+        try {
+            readFileInformation(fileContent, true);
+        } catch (MalformedDataException e) {
+            throw new RuntimeException(e);
+        }
+        return fileContent;
+    }
+
+    /**
+     * Reads the file content.
+     * 
+     * @return the file content
+     * @throws IOException
+     *             if there was any I/O error
+     */
+    public String readFileContent() throws IOException {
+        return new String(Files.readAllBytes(toFile()), StandardCharsets.UTF_8);
+    }
+
+    /**
+     * Parses the test file information for this test case.
+     * 
+     * @param content
+     *            the file content
+     */
+    public void readFileInformation(String content) throws MalformedDataException {
+        readFileInformation(content, false);
+    }
+
+    /**
+     * Parses the test file information for this test case.
+     * 
+     * @param content
+     *            the file content
+     * @param lenient
+     *            if {@code true} ignore unknown test configurations
+     * @throws MalformedDataException
+     *             if the test file information cannot be parsed
+     */
     private void readFileInformation(String content, boolean lenient) throws MalformedDataException {
         Matcher m;
         if ((m = yamlContentPattern.matcher(content)).lookingAt()) {
@@ -216,17 +263,23 @@ final class Test262Info extends TestInfo {
         this.errorType = desc.getNegative();
         this.negative = desc.getNegative() != null;
         if (!desc.getFlags().isEmpty()) {
-            for (String flag : desc.getFlags()) {
-                assert allowedFlags.contains(flag);
+            if (!lenient) {
+                for (String flag : desc.getFlags()) {
+                    if (!allowedFlags.contains(flag)) {
+                        throw new MalformedDataException(String.format("Unknown flag '%s'", flag));
+                    }
+                }
             }
             this.negative |= desc.getFlags().contains("negative");
             this.noStrict = desc.getFlags().contains("noStrict");
             this.onlyStrict = desc.getFlags().contains("onlyStrict");
+            this.module = desc.getFlags().contains("module");
+            this.raw = desc.getFlags().contains("raw");
         }
     }
 
     private static final HashSet<String> allowedFlags = new HashSet<>(Arrays.asList("negative",
-            "onlyStrict", "noStrict"));
+            "onlyStrict", "noStrict", "module", "raw"));
 
     public static final class TestDescriptor {
         private String description;
@@ -385,5 +438,14 @@ final class Test262Info extends TestInfo {
                 }
             }
         }
+    }
+
+    /**
+     * Counterpart to {@link Objects#requireNonNull(Object, String)}.
+     */
+    private static final <T> T requireNull(T t) {
+        if (t != null)
+            throw new IllegalStateException("object is not null");
+        return t;
     }
 }

@@ -164,8 +164,8 @@ final class DestructuringAssignmentGenerator {
             mv.enterVariableScope();
             Variable<ScriptIterator<?>> iterator = mv.newVariable("iterator", ScriptIterator.class)
                     .uncheckedCast();
-            mv.lineInfo(node);
             mv.loadExecutionContext();
+            mv.lineInfo(node);
             mv.invoke(Methods.ScriptRuntime_iterate);
             mv.store(iterator);
 
@@ -182,7 +182,7 @@ final class DestructuringAssignmentGenerator {
                 @Override
                 protected void epilogue(ArrayAssignmentPattern node,
                         Variable<ScriptIterator<?>> iterator, ExpressionVisitor mv) {
-                    IteratorClose(node, iterator, false, mv);
+                    IteratorClose(node, iterator, mv);
                 }
 
                 @Override
@@ -204,9 +204,9 @@ final class DestructuringAssignmentGenerator {
         @Override
         public void visit(ObjectAssignmentPattern node, Void value) {
             // stack: [value] -> [value]
-            mv.lineInfo(node);
             mv.loadExecutionContext();
             mv.swap();
+            mv.lineInfo(node);
             mv.invoke(Methods.AbstractOperations_RequireObjectCoercible);
 
             // ObjectAssignmentPattern : { }
@@ -250,10 +250,10 @@ final class DestructuringAssignmentGenerator {
                 ValType refType = expression(rest.getTarget(), mv);
 
                 // stack: [] -> [lref, restObj]
-                mv.lineInfo(rest);
                 mv.load(val);
                 newStringArray(mv, AssignmentPropertyNames(node));
                 mv.loadExecutionContext();
+                mv.lineInfo(rest);
                 mv.invoke(Methods.ScriptRuntime_createRestObject);
 
                 // stack: [lref, restObj] -> []
@@ -284,8 +284,8 @@ final class DestructuringAssignmentGenerator {
         @Override
         public void visit(Elision node, Variable<ScriptIterator<?>> iterator) {
             // stack: [] -> []
-            mv.lineInfo(node);
             mv.load(iterator);
+            mv.lineInfo(node);
             mv.invoke(Methods.ScriptRuntime_iteratorNextAndIgnore);
         }
 
@@ -303,8 +303,8 @@ final class DestructuringAssignmentGenerator {
 
             /* steps 2-3 */
             // stack: [(lref)] -> [(lref), v]
-            mv.lineInfo(node);
             mv.load(iterator);
+            mv.lineInfo(node);
             mv.invoke(Methods.ScriptRuntime_iteratorNextOrUndefined);
 
             /* steps 4-5 */
@@ -348,9 +348,9 @@ final class DestructuringAssignmentGenerator {
 
             /* steps 2-4 */
             // stack: [(lref)] -> [(lref), rest]
-            mv.lineInfo(node);
             mv.load(iterator);
             mv.loadExecutionContext();
+            mv.lineInfo(node);
             mv.invoke(Methods.ScriptRuntime_createRestArray);
 
             /* steps 5-7 */

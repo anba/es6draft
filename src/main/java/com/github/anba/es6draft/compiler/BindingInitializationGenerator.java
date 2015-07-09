@@ -440,7 +440,7 @@ final class BindingInitializationGenerator {
                 protected void epilogue(ArrayBindingPattern node,
                         Variable<ScriptIterator<?>> iterator, ExpressionVisitor mv) {
                     // step 5
-                    IteratorClose(node, iterator, false, mv);
+                    IteratorClose(node, iterator, mv);
                 }
 
                 @Override

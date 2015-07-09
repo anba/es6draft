@@ -17,7 +17,6 @@ import com.github.anba.es6draft.Executable;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
 import com.github.anba.es6draft.runtime.internal.Source;
 import com.github.anba.es6draft.runtime.internal.TailCallInvocation;
@@ -95,10 +94,7 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
      * @return {@code true} if legacy properties are supported
      */
     private final boolean isLegacy() {
-        // non-strict functions have legacy support
-        return !strict && !isClone && functionKind == FunctionKind.Normal
-                && this instanceof OrdinaryConstructorFunction
-                && realm.isEnabled(CompatibilityOption.FunctionPrototype);
+        return !isClone && function.is(RuntimeInfo.FunctionFlags.Legacy);
     }
 
     /**

@@ -251,7 +251,7 @@ public final class ArrayConstructor extends BuiltinConstructor implements Initia
                         k += 1;
                     }
                 } catch (ScriptException e) {
-                    IteratorClose(cx, iterator, true);
+                    iterator.close(e);
                     throw e;
                 }
                 /* step 6.g.iv */

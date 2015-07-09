@@ -148,7 +148,7 @@ public final class OrdinaryAsyncFunction extends FunctionObject implements Const
             RuntimeInfo.Function function, LexicalEnvironment<?> scope) {
         assert function.isAsync() && kind != FunctionKind.ClassConstructor;
         /* step 1 */
-        ScriptObject functionPrototype = cx.getIntrinsic(Intrinsics.FunctionPrototype);
+        ScriptObject functionPrototype = cx.getIntrinsic(Intrinsics.AsyncFunctionPrototype);
         /* step 2 */
         OrdinaryAsyncFunction f = FunctionAllocate(cx, functionPrototype, function.isStrict(), kind);
         /* step 3 */

@@ -124,7 +124,7 @@ public class OrdinaryObject implements ScriptObject {
     }
 
     /**
-     * Returns the number of properties.
+     * Returns the total number of properties.
      * 
      * @param withSymbols
      *            {@code true} to include symbol properties
@@ -198,6 +198,15 @@ public class OrdinaryObject implements ScriptObject {
 
     public final Property lookupOwnProperty(Symbol propertyKey) {
         return symbolProperties.get(propertyKey);
+    }
+
+    /**
+     * Returns the indexed properties length.
+     * 
+     * @return the indexed properties length
+     */
+    long getIndexedLength() {
+        return indexedProperties.getLength();
     }
 
     /**
@@ -1888,6 +1897,30 @@ public class OrdinaryObject implements ScriptObject {
             }
         }
 
+        private boolean isDone() {
+            return obj == null && keys == null && protoKeys == null;
+        }
+
+        private boolean hasReturn() {
+            if (scriptIter != null) {
+                return true;
+            }
+            OrdinaryObject iterProto = cx.getIntrinsic(Intrinsics.IteratorPrototype);
+            for (;;) {
+                if (iterProto.ordinaryHasOwnProperty("return")) {
+                    return true;
+                }
+                ScriptObject proto = iterProto.getPrototype();
+                if (proto == null) {
+                    return false;
+                }
+                if (!(proto instanceof OrdinaryObject)) {
+                    return true;
+                }
+                iterProto = (OrdinaryObject) proto;
+            }
+        }
+
         @Override
         public ScriptObject getScriptObject() {
             if (scriptIter == null) {
@@ -1897,8 +1930,17 @@ public class OrdinaryObject implements ScriptObject {
         }
 
         @Override
-        public boolean isDone() {
-            return obj == null && keys == null && protoKeys == null;
+        public void close() throws ScriptException {
+            if (!isDone() && hasReturn()) {
+                IteratorClose(cx, getScriptObject());
+            }
+        }
+
+        @Override
+        public void close(Throwable cause) throws ScriptException {
+            if (!isDone() && hasReturn()) {
+                IteratorClose(cx, getScriptObject(), cause);
+            }
         }
     }
 

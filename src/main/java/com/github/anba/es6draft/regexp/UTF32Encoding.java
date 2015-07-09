@@ -40,31 +40,28 @@ final class UTF32Encoding extends UEncoding {
     }
 
     @Override
-    public int stringIndex(CharSequence cs, int startIndex, int byteIndex) {
-        int index = startIndex;
-        for (int j = 0; j < byteIndex; j += 4) {
+    public int strLength(CharSequence cs, int start, int count) {
+        int index = start;
+        for (int j = 0; j < count; j += 4) {
             index += Character.charCount(Character.codePointAt(cs, index));
         }
-        return index;
-    }
-
-    @Override
-    public int byteIndex(CharSequence cs, int startIndex, int stringIndex) {
-        int index = 0;
-        for (int j = startIndex; j < stringIndex; index += 4) {
-            j += Character.charCount(Character.codePointAt(cs, j));
-        }
-        return index;
-    }
-
-    @Override
-    public int length(CharSequence cs, int byteIndex) {
-        return 4;
+        return index - start;
     }
 
     @Override
     public int length(CharSequence cs) {
         return Character.codePointCount(cs, 0, cs.length()) * 4;
+    }
+
+    @Override
+    public int length(CharSequence cs, int start, int end) {
+        assert 0 <= start && start <= end && end <= cs.length();
+        return Character.codePointCount(cs, start, end) * 4;
+    }
+
+    @Override
+    public int length(CharSequence cs, int byteIndex) {
+        return 4;
     }
 
     @Override

@@ -9,7 +9,6 @@ package com.github.anba.es6draft.ast;
 import java.util.List;
 
 import com.github.anba.es6draft.ast.scope.BlockScope;
-import com.github.anba.es6draft.ast.scope.Scope;
 
 /**
  * <h1>12 ECMAScript Language: Expressions</h1><br>
@@ -32,7 +31,7 @@ public final class LetExpression extends Expression implements ScopedNode {
     }
 
     @Override
-    public Scope getScope() {
+    public BlockScope getScope() {
         return scope;
     }
 

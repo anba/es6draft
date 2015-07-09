@@ -12,6 +12,7 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.concurrent.ExecutorService;
 
+import com.github.anba.es6draft.ast.AsyncFunctionDefinition;
 import com.github.anba.es6draft.ast.FunctionDefinition;
 import com.github.anba.es6draft.ast.FunctionNode;
 import com.github.anba.es6draft.ast.GeneratorDefinition;
@@ -142,6 +143,22 @@ public final class Compiler {
     public CompiledFunction compile(GeneratorDefinition generator, String className)
             throws CompilationException {
         return compile((FunctionNode) generator, className);
+    }
+
+    /**
+     * Compiles a async function node to a Java bytecode.
+     * 
+     * @param asyncFunction
+     *            the async function node
+     * @param className
+     *            the class name
+     * @return the compiled async function
+     * @throws CompilationException
+     *             if the async function node could not be compiled
+     */
+    public CompiledFunction compile(AsyncFunctionDefinition asyncFunction, String className)
+            throws CompilationException {
+        return compile((FunctionNode) asyncFunction, className);
     }
 
     private CompiledFunction compile(FunctionNode function, String className) {

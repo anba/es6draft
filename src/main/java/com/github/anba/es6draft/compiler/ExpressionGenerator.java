@@ -151,7 +151,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
 
         static final MethodName ScriptRuntime_defineProperty__int = MethodName.findStatic(
                 Types.ScriptRuntime, "defineProperty", Type.methodType(Type.VOID_TYPE,
-                        Types.ArrayObject, Type.INT_TYPE, Types.Object, Types.ExecutionContext));
+                        Types.ArrayObject, Type.INT_TYPE, Types.Object));
 
         static final MethodName ScriptRuntime_directEvalFallbackArguments = MethodName.findStatic(
                 Types.ScriptRuntime, "directEvalFallbackArguments", Type.methodType(Types.Object_,
@@ -1128,7 +1128,6 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
                     mv.dup();
                     mv.iconst(nextIndex);
                     evalAndGetBoxedValue(element, mv);
-                    mv.loadExecutionContext();
                     mv.invoke(Methods.ScriptRuntime_defineProperty__int);
                 }
                 nextIndex += 1;
@@ -1198,8 +1197,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
                 // stack: [array, nextIndex] -> [array, nextIndex, array, nextIndex]
                 mv.dup2();
                 evalAndGetBoxedValue(element, mv);
-                mv.loadExecutionContext();
-                // stack: [array, nextIndex, array, nextIndex, value, cx] -> [array, nextIndex]
+                // stack: [array, nextIndex, array, nextIndex, value] -> [array, nextIndex]
                 mv.invoke(Methods.ScriptRuntime_defineProperty__int);
                 elisionWidth += 1;
             }
@@ -2746,6 +2744,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
             mv.dup();
             mv.load(decorators);
             mv.loadExecutionContext();
+            mv.lineInfo(node);
             mv.invoke(Methods.ScriptRuntime_EvaluateMethodDecorators);
             mv.exitVariableScope();
         }
@@ -2988,7 +2987,6 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
         } else {
             // TODO: change to expression::concat?
             mv.anew(Types.StringBuilder, Methods.StringBuilder_init);
-
             for (Expression expr : elements) {
                 if (expr instanceof TemplateCharacters) {
                     String value = ((TemplateCharacters) expr).getValue();
@@ -3002,10 +3000,8 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
                     mv.invoke(Methods.StringBuilder_append_Charsequence);
                 }
             }
-
             mv.invoke(Methods.StringBuilder_toString);
         }
-
         return ValType.String;
     }
 

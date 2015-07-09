@@ -226,6 +226,12 @@ public enum Intrinsics {/* @formatter:off */
     /** Intrinsic: <tt>%LegacyGeneratorPrototype%</tt> */
     LegacyGeneratorPrototype,
 
+    // ES7 extension: Async Function Definitions
+    /** Intrinsic: <tt>%AsyncFunction%</tt> */
+    AsyncFunction,
+    /** Intrinsic: <tt>%AsyncFunctionPrototype%</tt> */
+    AsyncFunctionPrototype,
+
     // ES7 extension: Realm Objects
     /** Intrinsic: <tt>%Realm%</tt> */
     Realm,

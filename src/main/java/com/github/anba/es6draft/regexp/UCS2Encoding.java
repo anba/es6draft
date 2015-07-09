@@ -44,23 +44,24 @@ final class UCS2Encoding extends UEncoding {
     }
 
     @Override
-    public int stringIndex(CharSequence cs, int startIndex, int byteIndex) {
-        return byteIndex >> 1;
-    }
-
-    @Override
-    public int byteIndex(CharSequence cs, int startIndex, int stringIndex) {
-        return (stringIndex - startIndex) << 1;
-    }
-
-    @Override
-    public int length(CharSequence cs, int byteIndex) {
-        return 2;
+    public int strLength(CharSequence cs, int startIndex, int count) {
+        return count >> 1;
     }
 
     @Override
     public int length(CharSequence cs) {
         return cs.length() * 2;
+    }
+
+    @Override
+    public int length(CharSequence cs, int start, int end) {
+        assert 0 <= start && start <= end && end <= cs.length();
+        return (end - start) * 2;
+    }
+
+    @Override
+    public int length(CharSequence cs, int byteIndex) {
+        return 2;
     }
 
     @Override

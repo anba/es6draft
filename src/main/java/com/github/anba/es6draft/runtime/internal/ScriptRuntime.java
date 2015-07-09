@@ -331,17 +331,10 @@ public final class ScriptRuntime {
      *            the array index
      * @param value
      *            the array element value
-     * @param cx
-     *            the execution context
      */
-    public static void defineProperty(ArrayObject array, int nextIndex, Object value,
-            ExecutionContext cx) {
-        // String propertyName = ToString(ToUint32(nextIndex));
-        int propertyName = nextIndex;
-        // Inlined: CreateDataProperty(cx, array, propertyName, value);
-        boolean created = array.defineOwnProperty(cx, propertyName, new PropertyDescriptor(value,
-                true, true, true));
-        assert created;
+    public static void defineProperty(ArrayObject array, int nextIndex, Object value) {
+        // Inlined: CreateDataProperty(array, ToString(ToUint32(nextIndex)), value);
+        array.insert(nextIndex, value);
     }
 
     /**
@@ -405,7 +398,7 @@ public final class ScriptRuntime {
                 return nextIndex;
             }
             Object nextValue = IteratorValue(cx, next);
-            defineProperty(array, nextIndex, nextValue, cx);
+            defineProperty(array, nextIndex, nextValue);
             nextIndex += 1;
         }
     }
@@ -1120,7 +1113,7 @@ public final class ScriptRuntime {
     public static Constructor GetNewTarget(ExecutionContext cx) {
         Constructor newTarget = cx.getNewTarget();
         if (newTarget == null) {
-            throw newTypeError(cx, Messages.Key.MissingNewTarget);
+            throw newReferenceError(cx, Messages.Key.MissingNewTarget);
         }
         return newTarget;
     }
@@ -1671,7 +1664,7 @@ public final class ScriptRuntime {
         }
 
         @Override
-        protected Object findNext() {
+        protected Object findNext() throws ScriptException {
             if (keysIterator.hasNext()) {
                 Object pk = ToPropertyKey(cx, keysIterator.next());
                 return Get(cx, object, pk);
@@ -1685,8 +1678,13 @@ public final class ScriptRuntime {
         }
 
         @Override
-        public boolean isDone() {
-            return keysIterator.isDone();
+        public void close() throws ScriptException {
+            keysIterator.close();
+        }
+
+        @Override
+        public void close(Throwable cause) throws ScriptException {
+            keysIterator.close(cause);
         }
     }
 
@@ -2512,9 +2510,9 @@ public final class ScriptRuntime {
         Object received = UNDEFINED;
         /* step 6 */
         outer: for (;;) {
-            /* steps 6.a.i-6.a.ii */
+            /* steps 6.a.i-ii */
             ScriptObject innerResult = IteratorNext(cx, iterator, received);
-            /* steps 6.a.iii-6.a.iv */
+            /* steps 6.a.iii-iv */
             boolean done = IteratorComplete(cx, innerResult);
             /* step 6.a.v */
             if (done) {
@@ -2553,20 +2551,20 @@ public final class ScriptRuntime {
                         continue inner;
                     } else {
                         /* step 6.b.iv */
-                        /* steps 6.b.iv.1-2 */
-                        IteratorClose(cx, iterator, false);
-                        /* steps 6.b.iv.3 */
+                        /* steps 6.b.iv.1-3 */
+                        IteratorClose(cx, iterator);
+                        /* steps 6.b.iv.4-5 */
                         throw newTypeError(cx, Messages.Key.PropertyNotCallable, "throw");
                     }
                 } catch (ReturnValue e) {
                     /* step 6.c */
-                    /* steps 6.c.i-6.c.iii */
+                    /* steps 6.c.i-iii */
                     Callable returnMethod = GetMethod(cx, iterator, "return");
                     /* step 6.c.iv */
                     if (returnMethod == null) {
                         throw e;
                     }
-                    /* steps 6.c.v-6.c.vi */
+                    /* steps 6.c.v-vi */
                     Object innerReturnResult = returnMethod.call(cx, iterator, e.getValue());
                     /* step 6.c.vii */
                     if (!Type.isObject(innerReturnResult)) {
@@ -2623,9 +2621,9 @@ public final class ScriptRuntime {
             return Type.objectValue(innerThrowResult);
         } else {
             /* step 6.b.iv */
-            /* steps 6.b.iv.1-2 */
-            IteratorClose(cx, iterator, false);
-            /* steps 6.b.iv.3 */
+            /* steps 6.b.iv.1-3 */
+            IteratorClose(cx, iterator);
+            /* steps 6.b.iv.4-5 */
             throw newTypeError(cx, Messages.Key.PropertyNotCallable, "throw");
         }
     }
@@ -2649,13 +2647,13 @@ public final class ScriptRuntime {
     public static ScriptObject yieldReturnCompletion(ExecutionContext cx, ScriptObject iterator,
             ReturnValue e) {
         /* step 6.c */
-        /* steps 6.c.i-6.c.iii */
+        /* steps 6.c.i-iii */
         Callable returnMethod = GetMethod(cx, iterator, "return");
         /* step 6.c.iv */
         if (returnMethod == null) {
             return null;
         }
-        /* steps 6.c.v-6.c.vi */
+        /* steps 6.c.v-vi */
         Object innerReturnResult = returnMethod.call(cx, iterator, e.getValue());
         /* step 6.c.vii */
         if (!Type.isObject(innerReturnResult)) {

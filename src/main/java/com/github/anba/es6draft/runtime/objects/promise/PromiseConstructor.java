@@ -185,7 +185,7 @@ public final class PromiseConstructor extends BuiltinConstructor implements Init
                 return PerformPromiseAll(cx, iterator, c, promiseCapability);
             } catch (ScriptException e) {
                 try {
-                    IteratorClose(cx, iterator, true);
+                    iterator.close(e);
                 } catch (ScriptException inner) {
                     return IfAbruptRejectPromise(cx, inner, promiseCapability);
                 }
@@ -223,7 +223,7 @@ public final class PromiseConstructor extends BuiltinConstructor implements Init
                 return PerformPromiseRace(cx, iterator, c, promiseCapability);
             } catch (ScriptException e) {
                 try {
-                    IteratorClose(cx, iterator, true);
+                    iterator.close(e);
                 } catch (ScriptException inner) {
                     return IfAbruptRejectPromise(cx, inner, promiseCapability);
                 }
@@ -244,13 +244,15 @@ public final class PromiseConstructor extends BuiltinConstructor implements Init
          */
         @Function(name = "reject", arity = 1)
         public static Object reject(ExecutionContext cx, Object thisValue, Object r) {
-            /* steps 1-5 */
-            Constructor c = promiseConstructorFromSpecies(cx, thisValue);
-            /* steps 6-7 */
-            PromiseCapability<?> promiseCapability = NewPromiseCapability(cx, c);
-            /* steps 8-9 */
+            /* steps 1-2 */
+            if (!Type.isObject(thisValue)) {
+                throw newTypeError(cx, Messages.Key.NotObjectType);
+            }
+            /* steps 3-4 */
+            PromiseCapability<?> promiseCapability = NewPromiseCapability(cx, thisValue);
+            /* steps 5-6 */
             promiseCapability.getReject().call(cx, UNDEFINED, r);
-            /* step 10 */
+            /* step 7 */
             return promiseCapability.getPromise();
         }
 
@@ -267,20 +269,22 @@ public final class PromiseConstructor extends BuiltinConstructor implements Init
          */
         @Function(name = "resolve", arity = 1)
         public static Object resolve(ExecutionContext cx, Object thisValue, Object x) {
-            /* step 2 */
+            /* steps 1-2 */
+            if (!Type.isObject(thisValue)) {
+                throw newTypeError(cx, Messages.Key.NotObjectType);
+            }
+            /* step 3 */
             if (IsPromise(x)) {
-                Constructor constructor = ((PromiseObject) x).getConstructor();
+                Object constructor = Get(cx, (PromiseObject) x, "constructor");
                 if (constructor == thisValue) { // SameValue
                     return x;
                 }
             }
-            /* steps 1, 3-6 */
-            Constructor c = promiseConstructorFromSpecies(cx, thisValue);
-            /* steps 7-8 */
-            PromiseCapability<?> promiseCapability = NewPromiseCapability(cx, c);
-            /* steps 9-10 */
+            /* steps 4-5 */
+            PromiseCapability<?> promiseCapability = NewPromiseCapability(cx, thisValue);
+            /* steps 6-7 */
             promiseCapability.getResolve().call(cx, UNDEFINED, x);
-            /* step 11 */
+            /* step 8 */
             return promiseCapability.getPromise();
         }
 

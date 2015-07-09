@@ -258,6 +258,22 @@ public final class AbstractOperations {
      * @return the number result
      */
     public static double ToNumber(ExecutionContext cx, Object value) {
+        if (Type.isNumber(value)) {
+            return Type.numberValue(value);
+        }
+        return ToNumberSlow(cx, value);
+    }
+
+    /**
+     * 7.1.3 ToNumber ( argument )
+     * 
+     * @param cx
+     *            the execution context
+     * @param value
+     *            the argument value
+     * @return the number result
+     */
+    public static double ToNumberSlow(ExecutionContext cx, Object value) {
         switch (Type.of(value)) {
         case Undefined:
             return Double.NaN;
@@ -556,6 +572,22 @@ public final class AbstractOperations {
      * @return the string result
      */
     public static CharSequence ToString(ExecutionContext cx, Object value) {
+        if (Type.isString(value)) {
+            return Type.stringValue(value);
+        }
+        return ToStringSlow(cx, value);
+    }
+
+    /**
+     * 7.1.12 ToString ( argument )
+     * 
+     * @param cx
+     *            the execution context
+     * @param value
+     *            the argument value
+     * @return the string result
+     */
+    public static CharSequence ToStringSlow(ExecutionContext cx, Object value) {
         switch (Type.of(value)) {
         case Undefined:
             return "undefined";
@@ -2988,14 +3020,22 @@ public final class AbstractOperations {
      *            the execution context
      * @param iterator
      *            the script iterator object
-     * @param isThrowCompletion
-     *            {@code true} if the completion type is Throw
      */
-    public static void IteratorClose(ExecutionContext cx, ScriptIterator<?> iterator,
-            boolean isThrowCompletion) {
-        if (!iterator.isDone()) {
-            IteratorClose(cx, iterator.getScriptObject(), isThrowCompletion);
+    public static void IteratorClose(ExecutionContext cx, ScriptObject iterator) {
+        /* steps 1-2 (not applicable) */
+        /* steps 3-4 */
+        Callable returnMethod = GetMethod(cx, iterator, "return");
+        /* step 5 */
+        if (returnMethod != null) {
+            /* steps 6, 8 */
+            Object innerResult = returnMethod.call(cx, iterator);
+            /* step 7 (not applicable) */
+            /* step 9 */
+            if (!Type.isObject(innerResult)) {
+                throw newTypeError(cx, Messages.Key.NotObjectType);
+            }
         }
+        /* step 10 (not applicable) */
     }
 
     /**
@@ -3005,33 +3045,26 @@ public final class AbstractOperations {
      *            the execution context
      * @param iterator
      *            the script iterator object
-     * @param isThrowCompletion
-     *            {@code true} if the completion type is Throw
+     * @param cause
+     *            the exception cause
      */
-    public static void IteratorClose(ExecutionContext cx, ScriptObject iterator,
-            boolean isThrowCompletion) {
+    public static void IteratorClose(ExecutionContext cx, ScriptObject iterator, Throwable cause) {
         /* steps 1-2 (not applicable) */
         /* steps 3-4 */
         Callable returnMethod = GetMethod(cx, iterator, "return");
-        /* steps 5-8 */
+        /* step 5 */
         if (returnMethod != null) {
-            if (isThrowCompletion) {
-                /* steps 6-7 */
-                try {
-                    returnMethod.call(cx, iterator);
-                } catch (ScriptException e) {
-                    // Ignore exceptions from "return" method.
-                }
-            } else {
-                /* steps 6, 8 */
-                Object innerResult = returnMethod.call(cx, iterator);
-                /* step 9 */
-                if (!Type.isObject(innerResult)) {
-                    throw newTypeError(cx, Messages.Key.NotObjectType);
+            /* steps 6-7 */
+            try {
+                returnMethod.call(cx, iterator);
+            } catch (ScriptException e) {
+                // Ignore exceptions from "return" method.
+                if (cause != e) {
+                    cause.addSuppressed(e);
                 }
             }
         }
-        /* step 10 (not applicable) */
+        /* steps 8-10 (not applicable) */
     }
 
     /**
@@ -3144,7 +3177,7 @@ public final class AbstractOperations {
         }
 
         @Override
-        protected Object findNext() {
+        protected Object findNext() throws ScriptException {
             if (!done) {
                 try {
                     ScriptObject next = IteratorStep(cx, iterator);
@@ -3166,8 +3199,17 @@ public final class AbstractOperations {
         }
 
         @Override
-        public boolean isDone() {
-            return done;
+        public void close() throws ScriptException {
+            if (!done) {
+                IteratorClose(cx, iterator);
+            }
+        }
+
+        @Override
+        public void close(Throwable cause) throws ScriptException {
+            if (!done) {
+                IteratorClose(cx, iterator, cause);
+            }
         }
     }
 

@@ -123,22 +123,22 @@ public final class Test262Strict {
         assumeTrue(test.isEnabled());
 
         String fileContent = test.readFile();
-        if (isStrictTest) {
-            assumeTrue(!test.isNoStrict()
-                    && (test.isOnlyStrict() || unmarkedDefault != DefaultMode.NonStrict));
-        } else {
-            assumeTrue(!test.isOnlyStrict()
-                    && (test.isNoStrict() || unmarkedDefault != DefaultMode.Strict));
+        if (!test.isValidTest(isStrictTest, unmarkedDefault)) {
+            return;
         }
 
         final String preamble;
-        if (isStrictTest) {
+        if (test.isRaw()) {
+            preamble = "";
+            preambleLines = 0;
+        } else if (isStrictTest) {
             preamble = "\"use strict\";\nvar strict_mode = true;\n";
+            preambleLines = 2;
         } else {
             preamble = "//\"use strict\";\nvar strict_mode = false;\n";
+            preambleLines = 2;
         }
         sourceCode = Strings.concat(preamble, fileContent);
-        preambleLines = 2;
 
         global = globals.newGlobal(new Test262Console(), test);
         exceptionHandler.setExecutionContext(global.getRealm().defaultContext());
@@ -182,8 +182,15 @@ public final class Test262Strict {
 
     @Test
     public void runTest() throws Throwable {
+        if (!test.isValidTest(isStrictTest, unmarkedDefault)) {
+            return;
+        }
         // Evaluate actual test-script
-        global.eval(test.toFile(), sourceCode, 1 - preambleLines);
+        if (test.isModule()) {
+            global.evalModule(test.toModuleName(), sourceCode, 1 - preambleLines);
+        } else {
+            global.eval(test.toFile(), sourceCode, 1 - preambleLines);
+        }
 
         // Wait for pending tasks to finish
         if (test.isAsync()) {
@@ -198,8 +205,15 @@ public final class Test262Strict {
     @Test
     @Strict
     public void runTestStrict() throws Throwable {
+        if (!test.isValidTest(isStrictTest, unmarkedDefault)) {
+            return;
+        }
         // Evaluate actual test-script
-        global.eval(test.toFile(), sourceCode, 1 - preambleLines);
+        if (test.isModule()) {
+            global.evalModule(test.toModuleName(), sourceCode, 1 - preambleLines);
+        } else {
+            global.eval(test.toFile(), sourceCode, 1 - preambleLines);
+        }
 
         // Wait for pending tasks to finish
         if (test.isAsync()) {

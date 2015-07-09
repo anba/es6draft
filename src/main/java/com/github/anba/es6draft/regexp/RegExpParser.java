@@ -28,6 +28,7 @@ import com.github.anba.es6draft.runtime.internal.Messages;
  * </ul>
  */
 public final class RegExpParser {
+    // TODO: Remove JDK mode.
     private static final boolean USE_JONI = true;
     private static final int BACKREF_LIMIT = 0xFFFF;
     private static final int DEPTH_LIMIT = 0xFFFF;
@@ -118,35 +119,36 @@ public final class RegExpParser {
         int mask = 0b00000;
         for (int i = 0, len = flags.length(); i < len; ++i) {
             char c = flags.charAt(i);
-            int flag = (c == 'g' ? global : c == 'i' ? ignoreCase : c == 'm' ? multiline
-                    : c == 'u' ? unicode : c == 'y' ? sticky : -1);
-            if (flag == -1) {
+            int flag;
+            String name;
+            switch (c) {
+            case 'g':
+                flag = global;
+                name = "global";
+                break;
+            case 'i':
+                flag = ignoreCase;
+                name = "ignoreCase";
+                break;
+            case 'm':
+                flag = multiline;
+                name = "multiline";
+                break;
+            case 'u':
+                flag = unicode;
+                name = "unicode";
+                break;
+            case 'y':
+                flag = sticky;
+                name = "sticky";
+                break;
+            default:
                 throw error(Messages.Key.RegExpInvalidFlag, String.valueOf(c));
             }
             if ((mask & flag) == 0) {
                 mask |= flag;
             } else {
-                String detail;
-                switch (flag) {
-                case global:
-                    detail = "global";
-                    break;
-                case ignoreCase:
-                    detail = "ignoreCase";
-                    break;
-                case multiline:
-                    detail = "multiline";
-                    break;
-                case unicode:
-                    detail = "unicode";
-                    break;
-                case sticky:
-                    detail = "sticky";
-                    break;
-                default:
-                    throw new AssertionError("unreachable");
-                }
-                throw error(Messages.Key.RegExpDuplicateFlag, detail);
+                throw error(Messages.Key.RegExpDuplicateFlag, name);
             }
         }
 
@@ -340,14 +342,12 @@ public final class RegExpParser {
      * @return the parsed decimal integer value
      */
     private long decimal() {
-        char c = peek(0);
-        if (!(c >= '0' && c <= '9')) {
+        if (!isDecimalDigit(peek(0))) {
             return -1;
         }
         long num = get() - '0';
         for (;;) {
-            c = peek(0);
-            if (!(c >= '0' && c <= '9')) {
+            if (!isDecimalDigit(peek(0))) {
                 return num;
             }
             num = num * 10 + (get() - '0');
@@ -359,12 +359,10 @@ public final class RegExpParser {
 
     private int readOctalEscapeSequence() {
         int num = get() - '0';
-        char d = peek(0);
-        if (d >= '0' && d <= '7') {
+        if (isOctalDigit(peek(0))) {
             num = num * 8 + (get() - '0');
             if (num <= 037) {
-                d = peek(0);
-                if (d >= '0' && d <= '7') {
+                if (isOctalDigit(peek(0))) {
                     num = num * 8 + (get() - '0');
                 }
             }
@@ -376,8 +374,7 @@ public final class RegExpParser {
     private int readDecimalEscape() {
         int num = get() - '0';
         for (;;) {
-            char d = peek(0);
-            if (!(d >= '0' && d <= '9')) {
+            if (!isDecimalDigit(peek(0))) {
                 break;
             }
             num = num * 10 + (get() - '0');
@@ -576,6 +573,9 @@ public final class RegExpParser {
                         inrange = false;
                     }
                     char classEscape = get();
+                    if ((!web || unicode) && peek(0) == '-' && peek(1) != ']') {
+                        throw error(Messages.Key.RegExpInvalidCharacterRange);
+                    }
                     if (unicode && ignoreCase) {
                         if (classEscape == 'w') {
                             asciiI = true;
@@ -592,9 +592,6 @@ public final class RegExpParser {
                             additionalClasses.append("&&");
                         }
                         additionalClasses.append(escape);
-                    }
-                    if ((!web || unicode) && peek(0) == '-' && peek(1) != ']') {
-                        throw error(Messages.Key.RegExpInvalidCharacterRange);
                     }
                     continue charclass;
                 }
@@ -639,14 +636,15 @@ public final class RegExpParser {
                     break classatom;
                 case 'c': {
                     // CharacterEscape :: c ControlLetter
-                    if (isASCIIAlphaNumericUnderscore(peek(1))) {
-                        // extended control letters with 0-9 and _
+                    char cc = peek(1);
+                    if ((!web || unicode) ? isASCIIAlpha(cc) : isASCIIAlphaNumericUnderscore(cc)) {
+                        // extended control letters with 0-9 and _ in web-compat mode
                         out.append('\\').append(get());
                         int d = get() & 0x1F;
                         out.append(toControlLetter(d));
                         cv = d;
                     } else if (!web || unicode) {
-                        throw error(Messages.Key.RegExpInvalidEscape, +2, peek(1));
+                        throw error(Messages.Key.RegExpInvalidEscape, +2, cc);
                     } else {
                         // convert invalid ControlLetter to \\
                         out.append("\\\\");
@@ -1187,14 +1185,16 @@ public final class RegExpParser {
                     break atom;
                 }
                 }
-                // assert false : "not reached";
             }
 
             case '(': {
                 boolean negative = false, positive = false, capturing = false;
                 if (match('?')) {
                     // (?=X) or (?!X) or (?:X)
-                    char d = eof() ? '\0' : get();
+                    if (eof()) {
+                        throw error(Messages.Key.RegExpUnexpectedCharacter, "?");
+                    }
+                    char d = get();
                     switch (d) {
                     case '!':
                         negative = true;
@@ -1206,7 +1206,7 @@ public final class RegExpParser {
                         // non-capturing
                         break;
                     default:
-                        throw error(Messages.Key.RegExpInvalidQuantifier);
+                        throw error(Messages.Key.RegExpUnexpectedCharacter, String.valueOf(d));
                     }
                     out.append("(?").append(d);
                 } else {
@@ -1289,19 +1289,21 @@ public final class RegExpParser {
             case '*':
             case '+':
             case '?':
-                // quantifier without applicable atom -> error!
+                // quantifier without applicable atom
                 throw error(Messages.Key.RegExpInvalidQuantifier);
 
             case '{': {
                 if (quantifier((char) c)) {
-                    // parsed quantifier, but there was no applicable atom -> error!
+                    // quantifier without applicable atom
                     throw error(Messages.Key.RegExpInvalidQuantifier);
                 }
                 // fall-through
             }
             case ']':
             case '}':
-                // web-reality
+                if (unicode || !web) {
+                    throw error(Messages.Key.RegExpUnexpectedCharacter, String.valueOf((char) c));
+                }
                 out.append('\\').append((char) c);
                 break atom;
 
@@ -1331,6 +1333,9 @@ public final class RegExpParser {
             case '?':
             case '{':
                 if (!quantifier(get())) {
+                    if (unicode || !web) {
+                        throw error(Messages.Key.RegExpUnexpectedCharacter, "{");
+                    }
                     reset(pos - 1);
                 }
             }
@@ -1368,7 +1373,6 @@ public final class RegExpParser {
             out.append(c);
             break quantifier;
         case '{': {
-            // make web-reality aware
             int start = pos;
             long min = decimal();
             if (min < 0) {
@@ -1405,7 +1409,7 @@ public final class RegExpParser {
             break quantifier;
         }
         default:
-            assert false : "unreachable";
+            throw new AssertionError("unreachable");
         }
 
         // Reluctant quantifiers
@@ -1441,23 +1445,6 @@ public final class RegExpParser {
             characterClass = !negation ? emptyCharacterClass : emptyNegCharacterClass;
         }
         out.append(characterClass);
-    }
-
-    private static String getCharacterClassPropertyName(char c) {
-        switch (c) {
-        case 'd':
-        case 'D':
-            return "Digit";
-        case 'w':
-        case 'W':
-            return "Word";
-        case 's':
-        case 'S':
-            return "Space";
-        default:
-            assert false : "unreachable";
-            return null;
-        }
     }
 
     private String appendCharacterClassEscape(char c, boolean cclass, boolean negCharacterClass) {
@@ -1525,8 +1512,7 @@ public final class RegExpParser {
             }
             return null;
         default:
-            assert false : "unreachable";
-            return null;
+            throw new AssertionError("unreachable");
         }
     }
 
@@ -1537,6 +1523,22 @@ public final class RegExpParser {
             out.append('\\').append(mod).append('{').append(propertyName).append('}');
         } else {
             out.append('\\').append(c);
+        }
+    }
+
+    private static String getCharacterClassPropertyName(char c) {
+        switch (c) {
+        case 'd':
+        case 'D':
+            return "Digit";
+        case 'w':
+        case 'W':
+            return "Word";
+        case 's':
+        case 'S':
+            return "Space";
+        default:
+            throw new AssertionError("unreachable");
         }
     }
 

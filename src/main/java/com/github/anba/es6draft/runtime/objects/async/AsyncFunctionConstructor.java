@@ -4,16 +4,16 @@
  *
  * <https://github.com/anba/es6draft>
  */
-package com.github.anba.es6draft.runtime.objects.iteration;
+package com.github.anba.es6draft.runtime.objects.async;
 
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.objects.FunctionConstructor.functionSource;
 import static com.github.anba.es6draft.runtime.objects.FunctionConstructor.functionSourceText;
 import static com.github.anba.es6draft.runtime.objects.FunctionConstructor.newFunctionExecutable;
+import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryAsyncFunction.FunctionAllocate;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.FunctionInitialize;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.MakeConstructor;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.SetFunctionName;
-import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryGenerator.FunctionAllocate;
 
 import com.github.anba.es6draft.compiler.CompilationException;
 import com.github.anba.es6draft.parser.ParserException;
@@ -34,26 +34,25 @@ import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
 import com.github.anba.es6draft.runtime.types.builtins.FunctionObject.FunctionKind;
-import com.github.anba.es6draft.runtime.types.builtins.OrdinaryGenerator;
-import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
+import com.github.anba.es6draft.runtime.types.builtins.OrdinaryAsyncFunction;
 
 /**
- * <h1>25 Control Abstraction Objects</h1><br>
- * <h2>25.2 GeneratorFunction Objects</h2>
+ * <h1>Extension: Async Function Definitions</h1><br>
+ * <h2>Async Function Objects</h2>
  * <ul>
- * <li>25.2.1 The GeneratorFunction Constructor
- * <li>25.2.2 Properties of the GeneratorFunction Constructor
+ * <li>The Async Function Constructor
+ * <li>Properties of the AsyncFunction constructor
  * </ul>
  */
-public final class GeneratorFunctionConstructor extends BuiltinConstructor implements Initializable {
+public final class AsyncFunctionConstructor extends BuiltinConstructor implements Initializable {
     /**
-     * Constructs a new Generator Function constructor function.
+     * Constructs a new AsyncFunction constructor function.
      * 
      * @param realm
      *            the realm object
      */
-    public GeneratorFunctionConstructor(Realm realm) {
-        super(realm, "GeneratorFunction", 1);
+    public AsyncFunctionConstructor(Realm realm) {
+        super(realm, "AsyncFunction", 1);
     }
 
     @Override
@@ -62,25 +61,26 @@ public final class GeneratorFunctionConstructor extends BuiltinConstructor imple
     }
 
     @Override
-    public GeneratorFunctionConstructor clone() {
-        return new GeneratorFunctionConstructor(getRealm());
+    public AsyncFunctionConstructor clone() {
+        return new AsyncFunctionConstructor(getRealm());
     }
 
     /**
-     * 25.2.1.1 GeneratorFunction (p1, p2, ... , pn, body)
+     * AsyncFunction(p1, p2, ..., pn, body)
      */
     @Override
-    public OrdinaryGenerator call(ExecutionContext callerContext, Object thisValue, Object... args) {
+    public OrdinaryAsyncFunction call(ExecutionContext callerContext, Object thisValue,
+            Object... args) {
         ExecutionContext calleeContext = calleeContext();
         /* steps 1-3 */
         return CreateDynamicFunction(callerContext, calleeContext, this, args);
     }
 
     /**
-     * 25.2.1.1 GeneratorFunction (p1, p2, ... , pn, body)
+     * AsyncFunction(p1, p2, ..., pn, body)
      */
     @Override
-    public OrdinaryGenerator construct(ExecutionContext callerContext, Constructor newTarget,
+    public OrdinaryAsyncFunction construct(ExecutionContext callerContext, Constructor newTarget,
             Object... args) {
         ExecutionContext calleeContext = calleeContext();
         /* steps 1-3 */
@@ -100,23 +100,23 @@ public final class GeneratorFunctionConstructor extends BuiltinConstructor imple
      *            the function arguments
      * @return the new generator function object
      */
-    private static OrdinaryGenerator CreateDynamicFunction(ExecutionContext callerContext,
+    private static OrdinaryAsyncFunction CreateDynamicFunction(ExecutionContext callerContext,
             ExecutionContext cx, Constructor newTarget, Object... args) {
         /* step 1 (not applicable) */
         /* step 2 (not applicable) */
         /* step 3 */
-        Intrinsics fallbackProto = Intrinsics.Generator;
+        Intrinsics fallbackProto = Intrinsics.AsyncFunction;
 
         /* steps 4-10 */
         String[] sourceText = functionSourceText(cx, args);
         String parameters = sourceText[0], bodyText = sourceText[1];
 
         /* steps 11, 13-20 */
-        Source source = functionSource(SourceKind.Generator, cx.getRealm(), callerContext);
+        Source source = functionSource(SourceKind.AsyncFunction, cx.getRealm(), callerContext);
         RuntimeInfo.Function function;
         try {
             ScriptLoader scriptLoader = cx.getRealm().getScriptLoader();
-            function = scriptLoader.generator(source, parameters, bodyText).getFunction();
+            function = scriptLoader.asyncFunction(source, parameters, bodyText).getFunction();
         } catch (ParserException | CompilationException e) {
             throw e.toScriptException(cx);
         }
@@ -126,14 +126,13 @@ public final class GeneratorFunctionConstructor extends BuiltinConstructor imple
         /* steps 21-22 */
         ScriptObject proto = GetPrototypeFromConstructor(cx, newTarget, fallbackProto);
         /* step 23 */
-        OrdinaryGenerator f = FunctionAllocate(cx, proto, strict, FunctionKind.Normal);
+        OrdinaryAsyncFunction f = FunctionAllocate(cx, proto, strict, FunctionKind.Normal);
         /* steps 24-25 */
         LexicalEnvironment<GlobalEnvironmentRecord> scope = f.getRealm().getGlobalEnv();
         /* step 26 */
         FunctionInitialize(f, FunctionKind.Normal, function, scope, newFunctionExecutable(source));
         /* step 27 */
-        OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.GeneratorPrototype);
-        MakeConstructor(f, true, prototype);
+        MakeConstructor(cx, f);
         /* step 28 (not applicable) */
         /* step 29 */
         SetFunctionName(f, "anonymous");
@@ -142,7 +141,7 @@ public final class GeneratorFunctionConstructor extends BuiltinConstructor imple
     }
 
     /**
-     * 25.2.2 Properties of the GeneratorFunction Constructor
+     * Properties of the AsyncFunction constructor
      */
     public enum Properties {
         ;
@@ -151,21 +150,21 @@ public final class GeneratorFunctionConstructor extends BuiltinConstructor imple
         public static final Intrinsics __proto__ = Intrinsics.Function;
 
         /**
-         * 25.2.2.2 GeneratorFunction.prototype
+         * AsyncFunction.prototype
          */
         @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
-        public static final Intrinsics prototype = Intrinsics.Generator;
+        public static final Intrinsics prototype = Intrinsics.AsyncFunctionPrototype;
 
         /**
-         * 25.2.2.1 GeneratorFunction.length
+         * AsyncFunction.length
          */
-        @Value(name = "length", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = true))
+        @Value(name = "length",
+                attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static final int length = 1;
 
-        @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = true))
-        public static final String name = "GeneratorFunction";
+        @Value(name = "name",
+                attributes = @Attributes(writable = false, enumerable = false, configurable = true))
+        public static final String name = "AsyncFunction";
     }
 }
