@@ -42,6 +42,7 @@ import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
+import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 import com.ibm.icu.text.DateFormat;
 import com.ibm.icu.text.DateTimePatternGenerator;
 import com.ibm.icu.text.MessageFormat;
@@ -166,11 +167,9 @@ public final class DateTimeFormatConstructor extends BuiltinConstructor implemen
             switch (extensionKey) {
             case ca:
                 String[] values = Calendar.getKeywordValuesForLocale("calendar", locale, false);
-                CalendarAlgorithm algorithm = CalendarAlgorithm.forName(values[0]);
-                return algorithm.getName();
+                return CalendarAlgorithm.forName(values[0]).getName();
             case nu:
-                String localeNumberingSystem = NumberingSystem.getInstance(locale).getName();
-                return localeNumberingSystem;
+                return NumberingSystem.getInstance(locale).getName();
             default:
                 throw new IllegalArgumentException(extensionKey.name());
             }
@@ -247,54 +246,50 @@ public final class DateTimeFormatConstructor extends BuiltinConstructor implemen
     }
 
     /**
-     * 12.1.1.1 InitializeDateTimeFormat (dateTimeFormat, locales, options)
+     * 12.1.1 InitializeDateTimeFormat (dateTimeFormat, locales, options)
      * 
      * @param cx
      *            the execution context
-     * @param obj
+     * @param dateTimeFormat
      *            the date format object
      * @param locales
      *            the locales array
      * @param opts
      *            the options object
      */
-    public static void InitializeDateTimeFormat(ExecutionContext cx, ScriptObject obj,
-            Object locales, Object opts) {
-        // Deliberate spec violation: Restrict initialization to proper DateTimeFormat objects.
-        if (!(obj instanceof DateTimeFormatObject)) {
-            throw newTypeError(cx, Messages.Key.IncompatibleObject);
-        }
+    public static void InitializeDateTimeFormat(ExecutionContext cx,
+            DateTimeFormatObject dateTimeFormat, Object locales, Object opts) {
         /* steps 1-2 */
-        DateTimeFormatObject dateTimeFormat = (DateTimeFormatObject) obj;
         if (dateTimeFormat.isInitializedIntlObject()) {
             throw newTypeError(cx, Messages.Key.InitializedObject);
         }
         dateTimeFormat.setInitializedIntlObject(true);
-        /* step 3 */
+        /* steps 3-4 */
         Set<String> requestedLocales = CanonicalizeLocaleList(cx, locales);
-        /* step 4 */
+        /* steps 5-6 */
         ScriptObject options = ToDateTimeOptions(cx, opts, "any", "date");
-        /* step 6 */
+        /* steps 8-9 */
         String matcher = GetStringOption(cx, options, "localeMatcher", set("lookup", "best fit"),
                 "best fit");
-        /* step 5, 7 */
+        /* step 7, 10 */
         OptionsRecord opt = new OptionsRecord(OptionsRecord.MatcherType.forName(matcher));
-        /* steps 8-9 */
+        /* step 11 */
         DateTimeFormatLocaleData localeData = new DateTimeFormatLocaleData();
-        /* step 10 */
+        /* step 12 */
         ResolvedLocale r = ResolveLocale(cx.getRealm(), getAvailableLocalesLazy(cx),
                 requestedLocales, opt, relevantExtensionKeys, localeData);
-        /* step 11 */
-        dateTimeFormat.setLocale(r.getLocale());
-        /* step 12 */
-        dateTimeFormat.setCalendar(r.getValue(ExtensionKey.ca));
         /* step 13 */
-        dateTimeFormat.setNumberingSystem(r.getValue(ExtensionKey.nu));
+        dateTimeFormat.setLocale(r.getLocale());
         /* step 14 */
+        dateTimeFormat.setCalendar(r.getValue(ExtensionKey.ca));
+        /* step 15 */
+        dateTimeFormat.setNumberingSystem(r.getValue(ExtensionKey.nu));
+        /* step 16 */
         String dataLocale = r.getDataLocale();
-        /* steps 15-17 */
-        String timeZone;
+        /* steps 17-18 */
         Object tz = Get(cx, options, "timeZone");
+        /* steps 19-20 */
+        String timeZone;
         if (!Type.isUndefined(tz)) {
             timeZone = ToFlatString(cx, tz);
             if (!IsValidTimeZoneName(timeZone)) {
@@ -304,9 +299,10 @@ public final class DateTimeFormatConstructor extends BuiltinConstructor implemen
         } else {
             timeZone = DefaultTimeZone(cx.getRealm());
         }
-        /* step 18 */
+        /* step 21 */
         dateTimeFormat.setTimeZone(timeZone);
-        /* step 20 */
+        /* step 22 (moved) */
+        /* step 23 */
         // FIXME: spec should propably define exact iteration order here
         String weekday = GetStringOption(cx, options, "weekday", set("narrow", "short", "long"),
                 null);
@@ -320,12 +316,12 @@ public final class DateTimeFormatConstructor extends BuiltinConstructor implemen
         String second = GetStringOption(cx, options, "second", set("2-digit", "numeric"), null);
         String timeZoneName = GetStringOption(cx, options, "timeZoneName", set("short", "long"),
                 null);
-        /* step 23 */
+        /* step 26-27 */
         String formatMatcher = GetStringOption(cx, options, "formatMatcher",
                 set("basic", "best fit"), "best fit");
-        /* step 27 */
+        /* step 32-33 */
         Boolean hour12 = GetBooleanOption(cx, options, "hour12", null);
-        /* steps 19, 21-22, 24-26, 28-29 */
+        /* steps 22, 24-25, 28-31, 34-35 */
         FormatMatcherRecord formatRecord = new FormatMatcherRecord(weekday, era, year, month, day,
                 hour, minute, second, timeZoneName, hour12);
         Lazy<String> pattern;
@@ -334,16 +330,17 @@ public final class DateTimeFormatConstructor extends BuiltinConstructor implemen
         } else {
             pattern = new BestFitFormatPattern(formatRecord, dataLocale);
         }
-        /* step 30 */
+        /* step 36 */
         dateTimeFormat.setPattern(pattern);
-        /* step 31 */
+        /* step 37 */
         dateTimeFormat.setBoundFormat(null);
-        /* step 32 */
+        /* step 38 */
         dateTimeFormat.setInitializedDateTimeFormat(true);
+        /* step 39 (omitted) */
     }
 
     /**
-     * 12.1.1.1 InitializeDateTimeFormat (dateTimeFormat, locales, options)
+     * 12.1.1 InitializeDateTimeFormat (dateTimeFormat, locales, options)
      * 
      * @param realm
      *            the realm instance
@@ -355,31 +352,32 @@ public final class DateTimeFormatConstructor extends BuiltinConstructor implemen
         /* steps 1-2 */
         assert !dateTimeFormat.isInitializedIntlObject();
         dateTimeFormat.setInitializedIntlObject(true);
-        /* steps 3-7 (not applicable) */
-        /* steps 8-9 */
-        DateTimeFormatLocaleData localeData = new DateTimeFormatLocaleData();
-        /* step 10 */
-        ResolvedLocale r = ResolveDefaultLocale(realm, relevantExtensionKeys, localeData);
+        /* steps 3-10 (not applicable) */
         /* step 11 */
-        dateTimeFormat.setLocale(r.getLocale());
+        DateTimeFormatLocaleData localeData = new DateTimeFormatLocaleData();
         /* step 12 */
-        dateTimeFormat.setCalendar(r.getValue(ExtensionKey.ca));
+        ResolvedLocale r = ResolveDefaultLocale(realm, relevantExtensionKeys, localeData);
         /* step 13 */
-        dateTimeFormat.setNumberingSystem(r.getValue(ExtensionKey.nu));
+        dateTimeFormat.setLocale(r.getLocale());
         /* step 14 */
+        dateTimeFormat.setCalendar(r.getValue(ExtensionKey.ca));
+        /* step 15 */
+        dateTimeFormat.setNumberingSystem(r.getValue(ExtensionKey.nu));
+        /* step 16 */
         String dataLocale = r.getDataLocale();
-        /* steps 15-18 */
+        /* steps 17-21 */
         dateTimeFormat.setTimeZone(DefaultTimeZone(realm));
-        /* steps 20-29 */
+        /* steps 22-35 */
         FormatMatcherRecord formatRecord = new FormatMatcherRecord(null, null, "numeric",
                 "numeric", "numeric", null, null, null, null, null);
         Lazy<String> pattern = new BestFitFormatPattern(formatRecord, dataLocale);
-        /* step 30 */
+        /* step 36 */
         dateTimeFormat.setPattern(pattern);
-        /* step 31 */
+        /* step 37 */
         dateTimeFormat.setBoundFormat(null);
-        /* step 32 */
+        /* step 38 */
         dateTimeFormat.setInitializedDateTimeFormat(true);
+        /* step 39 (omitted) */
     }
 
     /**
@@ -397,8 +395,8 @@ public final class DateTimeFormatConstructor extends BuiltinConstructor implemen
      */
     public static ScriptObject ToDateTimeOptions(ExecutionContext cx, Object opts, String required,
             String defaults) {
-        /* steps 1-4 */
-        ScriptObject options = ObjectCreate(cx, Type.isUndefined(opts) ? null : ToObject(cx, opts));
+        /* steps 1-3 */
+        OrdinaryObject options = ObjectCreate(cx, Type.isUndefined(opts) ? null : ToObject(cx, opts));
         /* step 4 */
         boolean needDefaults = true;
         /* step 5 */
@@ -727,9 +725,9 @@ public final class DateTimeFormatConstructor extends BuiltinConstructor implemen
      * @return the computed score
      */
     private static int computeScore(FormatMatcherRecord formatRecord, Skeleton skeleton) {
-        /* step 11.b */
+        /* step 12.b */
         int score = 0;
-        /* steps 11.c.i - 11.c.iv */
+        /* step 12.c */
         score -= computePenalty(formatRecord, skeleton, DateField.Weekday).value();
         score -= computePenalty(formatRecord, skeleton, DateField.Era).value();
         score -= computePenalty(formatRecord, skeleton, DateField.Year).value();
@@ -771,15 +769,15 @@ public final class DateTimeFormatConstructor extends BuiltinConstructor implemen
             DateField field) {
         FieldWeight optionsProp = formatRecord.getWeight(field);
         FieldWeight formatProp = skeleton.getWeight(field);
-        /* step 11.c.v */
+        /* step 12.c.iii */
         if (optionsProp == null && formatProp != null) {
             return Penalty.Addition;
         }
-        /* step 11.c.vi */
+        /* step 12.c.iv */
         if (optionsProp != null && formatProp == null) {
             return Penalty.Removal;
         }
-        /* step 11.c.vii */
+        /* step 12.c.v */
         if (optionsProp != formatProp) {
             int optionsPropIndex = optionsProp.index();
             int formatPropIndex = formatProp.index();
@@ -814,7 +812,7 @@ public final class DateTimeFormatConstructor extends BuiltinConstructor implemen
     }
 
     /**
-     * 12.1.2.1 Intl.DateTimeFormat (this [, locales [, options ]])
+     * 12.1.2 Intl.DateTimeFormat([ locales [, options ]])
      */
     @Override
     public ScriptObject call(ExecutionContext callerContext, Object thisValue, Object... args) {
@@ -823,23 +821,17 @@ public final class DateTimeFormatConstructor extends BuiltinConstructor implemen
         Object options = argument(args, 1);
 
         /* step 1 */
-        if (Type.isUndefined(thisValue) || thisValue == calleeContext.getIntrinsic(Intrinsics.Intl)) {
-            return construct(calleeContext, this, args);
-        }
-        /* step 2 */
-        ScriptObject obj = ToObject(calleeContext, thisValue);
-        /* step 3 */
-        if (!IsExtensible(calleeContext, obj)) {
-            throw newTypeError(calleeContext, Messages.Key.NotExtensible);
-        }
+        Constructor newTarget = this;
+        /* steps 2-3 */
+        DateTimeFormatObject obj = OrdinaryCreateFromConstructor(calleeContext, newTarget,
+                Intrinsics.Intl_DateTimeFormatPrototype, DateTimeFormatObjectAllocator.INSTANCE);
         /* step 4 */
         InitializeDateTimeFormat(calleeContext, obj, locales, options);
-        /* step 5 */
         return obj;
     }
 
     /**
-     * 12.1.3.1 new Intl.DateTimeFormat ([locales [, options ]])
+     * 12.1.2 Intl.DateTimeFormat([ locales [, options ]])
      */
     @Override
     public DateTimeFormatObject construct(ExecutionContext callerContext, Constructor newTarget,
@@ -848,10 +840,11 @@ public final class DateTimeFormatConstructor extends BuiltinConstructor implemen
         Object locales = argument(args, 0);
         Object options = argument(args, 1);
 
-        /* step 1 */
+        /* step 1 (not applicable) */
+        /* steps 2-3 */
         DateTimeFormatObject obj = OrdinaryCreateFromConstructor(calleeContext, newTarget,
                 Intrinsics.Intl_DateTimeFormatPrototype, DateTimeFormatObjectAllocator.INSTANCE);
-        /* step 2 */
+        /* step 4 */
         InitializeDateTimeFormat(calleeContext, obj, locales, options);
         return obj;
     }
@@ -910,7 +903,7 @@ public final class DateTimeFormatConstructor extends BuiltinConstructor implemen
             Set<String> availableLocales = getAvailableLocales(cx);
             /* steps 2-3 */
             Set<String> requestedLocales = CanonicalizeLocaleList(cx, locales);
-            /* steps 4-6 */
+            /* step 4 */
             return SupportedLocales(cx, availableLocales, requestedLocales, options);
         }
     }

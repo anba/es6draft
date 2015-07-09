@@ -63,12 +63,11 @@ final class LanguageData {
     private static List<String> toLanguageTags(ULocale[] locales) {
         ArrayList<String> list = new ArrayList<>(locales.length);
         for (ULocale locale : locales) {
-            String languageTag = locale.toLanguageTag();
-            if ("en-US-u-va-posix".equals(languageTag)) {
-                // Language tags with unicode locale extension sequences are not allowed.
+            if (!(locale.getVariant().isEmpty() && locale.getUnicodeLocaleKeys().isEmpty())) {
+                // Ignore locales with variants or unicode extension sequences.
                 continue;
             }
-            list.add(languageTag);
+            list.add(locale.toLanguageTag());
         }
         return list;
     }
@@ -78,35 +77,33 @@ final class LanguageData {
         HashSet<String> derivedSet = new HashSet<>(available);
         for (ULocale locale : ULocale.getAvailableLocales()) {
             String languageTag = locale.toLanguageTag();
-            if ("en-US-u-va-posix".equals(languageTag)) {
-                // Language tags with unicode locale extension sequences are not allowed.
-                continue;
-            }
             if (derivedSet.contains(languageTag)) {
                 continue;
             }
-            int languageSep = languageTag.indexOf('-');
-            if (languageSep == -1) {
+            if (!(locale.getVariant().isEmpty() && locale.getUnicodeLocaleKeys().isEmpty())) {
+                // Ignore locales with variants or unicode extension sequences.
                 continue;
             }
-            String language = languageTag.substring(0, languageSep);
+            String language = locale.getLanguage();
             if (availableSet.contains(language)) {
                 derivedSet.add(languageTag);
                 continue;
             }
-            int scriptSep = languageTag.indexOf('-', languageSep + 1);
-            if (scriptSep == -1) {
-                continue;
+            String script = locale.getScript();
+            if (!script.isEmpty()) {
+                String languageScript = language + "-" + script;
+                if (availableSet.contains(languageScript)) {
+                    derivedSet.add(languageTag);
+                    continue;
+                }
             }
-            String languageScript = languageTag.substring(0, scriptSep);
-            if (availableSet.contains(languageScript)) {
-                derivedSet.add(languageTag);
-                continue;
-            }
-            String languageCountry = language + languageTag.substring(scriptSep);
-            if (availableSet.contains(languageCountry)) {
-                derivedSet.add(languageTag);
-                continue;
+            String country = locale.getCountry();
+            if (!country.isEmpty()) {
+                String languageCountry = language + "-" + country;
+                if (availableSet.contains(languageCountry)) {
+                    derivedSet.add(languageTag);
+                    continue;
+                }
             }
         }
         return derivedSet;

@@ -10,6 +10,7 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.CreateDataProp
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToFlatString;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
+import static com.github.anba.es6draft.runtime.types.builtins.BoundFunctionObject.BoundFunctionCreate;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
@@ -20,10 +21,10 @@ import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
-import com.github.anba.es6draft.runtime.objects.FunctionPrototype;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
-import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
+import com.github.anba.es6draft.runtime.types.Property;
+import com.github.anba.es6draft.runtime.types.builtins.BoundFunctionObject;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
@@ -102,9 +103,13 @@ public final class CollatorPrototype extends CollatorObject implements Initializ
             if (collator.getBoundCompare() == null) {
                 /* step 2.a */
                 CompareFunction f = new CompareFunction(cx.getRealm());
-                /* steps 2.b */
-                Callable bf = (Callable) FunctionPrototype.Properties.bind(cx, f, thisValue);
+                /* step 2.b (not applicable) */
                 /* step 2.c */
+                BoundFunctionObject bf = BoundFunctionCreate(cx, f, thisValue);
+                // FIXME: spec bug - missing define for .length
+                bf.infallibleDefineOwnProperty("length", new Property(2, false, false, true));
+                // FIXME: spec issue - set .name property?
+                /* step 2.d */
                 collator.setBoundCompare(bf);
             }
             /* step 3 */
@@ -112,7 +117,7 @@ public final class CollatorPrototype extends CollatorObject implements Initializ
         }
 
         /**
-         * 10.3.4 Intl.Collator.prototype.resolvedOptions ()
+         * 10.3.5 Intl.Collator.prototype.resolvedOptions ()
          * 
          * @param cx
          *            the execution context
@@ -153,6 +158,9 @@ public final class CollatorPrototype extends CollatorObject implements Initializ
         return collator.getCollator().compare(x, y);
     }
 
+    /**
+     * 10.3.4 Collator Compare Functions
+     */
     public static final class CompareFunction extends BuiltinFunction {
         public CompareFunction(Realm realm) {
             super(realm, "compare", 2);
@@ -170,18 +178,20 @@ public final class CollatorPrototype extends CollatorObject implements Initializ
 
         @Override
         public Integer call(ExecutionContext callerContext, Object thisValue, Object... args) {
-            assert thisValue instanceof CollatorObject;
             ExecutionContext calleeContext = calleeContext();
-            /* step 2.a.i (10.3.3) */
-            Object arg0 = argument(args, 0);
-            /* step 2.a.ii (10.3.3) */
-            Object arg1 = argument(args, 1);
-            /* step 2.a.iii (10.3.3) */
-            String x = ToFlatString(calleeContext, arg0);
-            /* step 2.a.iv (10.3.3) */
-            String y = ToFlatString(calleeContext, arg1);
-            /* step 2.a.v (10.3.3) */
-            return CompareStrings(calleeContext, (CollatorObject) thisValue, x, y);
+            /* steps 1-2 */
+            assert thisValue instanceof CollatorObject;
+            CollatorObject collator = (CollatorObject) thisValue;
+            /* step 3 */
+            Object x = argument(args, 0);
+            /* step 4 */
+            Object y = argument(args, 1);
+            /* steps 5-6 */
+            String sx = ToFlatString(calleeContext, x);
+            /* steps 7-8 */
+            String sy = ToFlatString(calleeContext, y);
+            /* step 9 */
+            return CompareStrings(calleeContext, collator, sx, sy);
         }
     }
 }

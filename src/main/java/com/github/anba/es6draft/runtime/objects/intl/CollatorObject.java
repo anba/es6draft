@@ -62,6 +62,11 @@ public class CollatorObject extends OrdinaryObject {
         super(realm);
     }
 
+    /**
+     * Returns the ICU {@link Collator} instance.
+     * 
+     * @return the NumberFormat instance
+     */
     public Collator getCollator() {
         if (collator == null) {
             collator = createCollator();
@@ -75,12 +80,7 @@ public class CollatorObject extends OrdinaryObject {
             // "search" usage cannot be set through unicode extensions (u-co-search), handle here:
             locale = locale.setKeywordValue("collation", "search");
         }
-        RuleBasedCollator collator;
-        try {
-            collator = (RuleBasedCollator) Collator.getInstance(locale);
-        } catch (IllegalMonitorStateException e) {
-            throw new StackOverflowError();
-        }
+        RuleBasedCollator collator = (RuleBasedCollator) Collator.getInstance(locale);
         collator.setDecomposition(Collator.CANONICAL_DECOMPOSITION);
         collator.setNumericCollation(numeric);
         switch (caseFirst) {

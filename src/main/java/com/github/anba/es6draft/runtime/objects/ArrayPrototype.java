@@ -383,8 +383,8 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
             ScriptObject array = ToObject(cx, thisValue);
             /* steps 3-4 */
             long len = ToLength(cx, Get(cx, array, "length"));
-            /* steps 5-13 */
             /* step 5 */
+            // FIXME: spec issue - retrieve list separator from locale?
             String separator = cx.getRealm().getListSeparator();
             /* step 6 */
             if (len == 0) {

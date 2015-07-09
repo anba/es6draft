@@ -259,21 +259,19 @@ public final class DatePrototype extends OrdinaryObject implements Initializable
         @Function(name = "toLocaleString", arity = 0)
         public static Object toLocaleString(ExecutionContext cx, Object thisValue, Object locales,
                 Object options) {
-            /* step 1 */
+            /* steps 1-2 */
             double t = thisTimeValue(cx, thisValue);
-            /* step 2 */
+            /* step 3 */
             if (Double.isNaN(t)) {
                 return "Invalid Date";
             }
-
-            // ECMA-402
-            /* step 3 */
+            /* steps 4-5 */
             options = ToDateTimeOptions(cx, options, "any", "all");
-            /* step 4 */
+            /* steps 6-7 */
             DateTimeFormatConstructor ctor = (DateTimeFormatConstructor) cx
                     .getIntrinsic(Intrinsics.Intl_DateTimeFormat);
             DateTimeFormatObject dateTimeFormat = ctor.construct(cx, ctor, locales, options);
-            /* step 5 */
+            /* step 8 */
             return FormatDateTime(cx, dateTimeFormat, t);
         }
 
@@ -294,21 +292,19 @@ public final class DatePrototype extends OrdinaryObject implements Initializable
         @Function(name = "toLocaleDateString", arity = 0)
         public static Object toLocaleDateString(ExecutionContext cx, Object thisValue,
                 Object locales, Object options) {
-            /* step 1 */
+            /* steps 1-2 */
             double t = thisTimeValue(cx, thisValue);
-            /* step 2 */
+            /* step 3 */
             if (Double.isNaN(t)) {
                 return "Invalid Date";
             }
-
-            // ECMA-402
-            /* step 3 */
+            /* steps 4-5 */
             options = ToDateTimeOptions(cx, options, "date", "date");
-            /* step 4 */
+            /* steps 6-7 */
             DateTimeFormatConstructor ctor = (DateTimeFormatConstructor) cx
                     .getIntrinsic(Intrinsics.Intl_DateTimeFormat);
             DateTimeFormatObject dateTimeFormat = ctor.construct(cx, ctor, locales, options);
-            /* step 5 */
+            /* step 8 */
             return FormatDateTime(cx, dateTimeFormat, t);
         }
 
@@ -329,21 +325,19 @@ public final class DatePrototype extends OrdinaryObject implements Initializable
         @Function(name = "toLocaleTimeString", arity = 0)
         public static Object toLocaleTimeString(ExecutionContext cx, Object thisValue,
                 Object locales, Object options) {
-            /* step 1 */
+            /* steps 1-2 */
             double t = thisTimeValue(cx, thisValue);
             /* step 2 */
             if (Double.isNaN(t)) {
                 return "Invalid Date";
             }
-
-            // ECMA-402
-            /* step 3 */
+            /* steps 4-5 */
             options = ToDateTimeOptions(cx, options, "time", "time");
-            /* step 4 */
+            /* steps 6-7 */
             DateTimeFormatConstructor ctor = (DateTimeFormatConstructor) cx
                     .getIntrinsic(Intrinsics.Intl_DateTimeFormat);
             DateTimeFormatObject dateTimeFormat = ctor.construct(cx, ctor, locales, options);
-            /* step 5 */
+            /* step 8 */
             return FormatDateTime(cx, dateTimeFormat, t);
         }
 

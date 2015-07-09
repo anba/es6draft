@@ -154,11 +154,11 @@ public final class NumberPrototype extends OrdinaryObject implements Initializab
             // ECMA-402
             /* steps 1-2 */
             double x = thisNumberValue(cx, thisValue);
-            /* step 3 */
+            /* steps 3-4 */
             NumberFormatConstructor ctor = (NumberFormatConstructor) cx
                     .getIntrinsic(Intrinsics.Intl_NumberFormat);
             NumberFormatObject numberFormat = ctor.construct(cx, ctor, locales, options);
-            /* step 4 */
+            /* step 5 */
             return FormatNumber(cx, numberFormat, x);
         }
 

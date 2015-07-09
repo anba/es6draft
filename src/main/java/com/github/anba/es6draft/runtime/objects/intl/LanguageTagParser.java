@@ -8,6 +8,7 @@ package com.github.anba.es6draft.runtime.objects.intl;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.TreeMap;
@@ -161,30 +162,31 @@ final class LanguageTagParser {
          * @see <a href="http://tools.ietf.org/html/rfc6067#section-2.1.1">RFC 6067</a>
          */
         private String canonicalizeUnicodeExtension(String ext) {
+            final int KEYWORD_LENGTH = 2;
             StringBuilder sb = new StringBuilder(ext.length() + 1);
             int start = 0, index = indexOf(ext, '-', start);
-            if ((index - start) > 2) {
+            if ((index - start) > KEYWORD_LENGTH) {
                 // attributes
                 ArrayList<String> attributes = new ArrayList<>(5);
                 for (;;) {
                     attributes.add(ext.substring(start, index));
                     start = index + 1;
                     index = indexOf(ext, '-', start);
-                    if ((index - start) <= 2) {
+                    if ((index - start) <= KEYWORD_LENGTH) {
                         break;
                     }
                 }
                 appendSorted(sb, attributes);
             }
-            if ((index - start) == 2) {
+            if ((index - start) == KEYWORD_LENGTH) {
                 // keywords
                 ArrayList<String> keywords = new ArrayList<>(5);
                 for (int keystart = start;;) {
                     start = index + 1;
                     index = indexOf(ext, '-', start);
-                    if ((index - start) <= 2) {
+                    if ((index - start) <= KEYWORD_LENGTH) {
                         keywords.add(ext.substring(keystart, start - 1));
-                        if ((index - start) == 2) {
+                        if ((index - start) == KEYWORD_LENGTH) {
                             keystart = start;
                         } else {
                             break;
@@ -193,7 +195,7 @@ final class LanguageTagParser {
                 }
                 appendSorted(sb, keywords);
             }
-            assert sb.length() == ext.length() + 1;
+            assert sb.length() == ext.length() + 1 : String.format("%s != %s", sb, ext);
             sb.setLength(ext.length());
             return sb.toString();
         }
@@ -203,13 +205,11 @@ final class LanguageTagParser {
             return (index < 0 ? s.length() : index);
         }
 
-        private StringBuilder appendSorted(StringBuilder sb, ArrayList<String> list) {
-            String[] ks = list.toArray(new String[list.size()]);
-            Arrays.sort(ks);
-            for (String s : ks) {
+        private static void appendSorted(StringBuilder sb, ArrayList<String> list) {
+            Collections.sort(list);
+            for (String s : list) {
                 sb.append(s).append('-');
             }
-            return sb;
         }
     }
 

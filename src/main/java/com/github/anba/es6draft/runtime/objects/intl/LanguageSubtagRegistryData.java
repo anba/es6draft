@@ -11,7 +11,7 @@ import java.util.HashMap;
 /**
  * Supplemental data for canonicalization of language tags.
  * <p>
- * Data generated from: language-subtag-registry, 2014-12-17
+ * Data generated from: language-subtag-registry, 2015-06-08
  * 
  * @see <a
  *      href="http://www.iana.org/assignments/language-subtag-registry">language-subtag-registry</a>
@@ -114,7 +114,7 @@ final class LanguageSubtagRegistryData {
         HashMap<String, String> map = new HashMap<>();
         map.put("art-lojban", "jbo");
         map.put("cel-gaulish", "cel-gaulish");
-        map.put("en-gb-oed", "en-GB-oed");
+        map.put("en-gb-oed", "en-GB-oxendict");
         map.put("i-ami", "ami");
         map.put("i-bnn", "bnn");
         map.put("i-default", "i-default");
@@ -182,6 +182,9 @@ final class LanguageSubtagRegistryData {
         map.put("ji", "yi");
         map.put("jw", "jv");
         map.put("mo", "ro");
+        map.put("aam", "aas");
+        map.put("adp", "dz");
+        map.put("aue", "ktz");
         map.put("ayx", "nun");
         map.put("bjd", "drl");
         map.put("ccq", "rki");
@@ -191,25 +194,40 @@ final class LanguageSubtagRegistryData {
         map.put("drh", "khk");
         map.put("drw", "prs");
         map.put("gav", "dev");
+        map.put("gfx", "vaj");
+        map.put("gti", "nyc");
         map.put("hrr", "jal");
         map.put("ibi", "opa");
         map.put("ilw", "gal");
         map.put("kgh", "kml");
+        map.put("koj", "kwv");
+        map.put("kwq", "yam");
+        map.put("kxe", "tvd");
+        map.put("lii", "raq");
         map.put("lmm", "rmx");
         map.put("meg", "cir");
         map.put("mst", "mry");
+        map.put("mwj", "vaj");
         map.put("myt", "mry");
+        map.put("nnx", "ngv");
+        map.put("oun", "vaj");
         map.put("pcr", "adx");
+        map.put("pmu", "phr");
         map.put("ppr", "lcq");
         map.put("puz", "pub");
         map.put("sca", "hle");
+        map.put("thx", "oyb");
         map.put("tie", "ras");
         map.put("tkk", "twm");
         map.put("tlw", "weo");
         map.put("tnf", "prs");
+        map.put("tsf", "taj");
+        map.put("uok", "ema");
         map.put("xia", "acn");
+        map.put("xsj", "suj");
         map.put("ybd", "rki");
         map.put("yma", "lrr");
+        map.put("ymt", "mtm");
         map.put("yos", "zom");
         map.put("yuu", "yug");
         languageData = map;
@@ -330,6 +348,7 @@ final class LanguageSubtagRegistryData {
         map.put("hsl", "sgn");
         map.put("hsn", "zh");
         map.put("icl", "sgn");
+        map.put("iks", "sgn");
         map.put("ils", "sgn");
         map.put("inl", "sgn");
         map.put("ins", "sgn");
@@ -452,8 +471,8 @@ final class LanguageSubtagRegistryData {
         map.put("xml", "sgn");
         map.put("xmm", "ms");
         map.put("xms", "sgn");
-        map.put("yds", "sgn");
         map.put("ygs", "sgn");
+        map.put("yhs", "sgn");
         map.put("ysl", "sgn");
         map.put("yue", "zh");
         map.put("zib", "sgn");

@@ -76,6 +76,11 @@ public class NumberFormatObject extends OrdinaryObject {
         super(realm);
     }
 
+    /**
+     * Returns the ICU {@link NumberFormat} instance.
+     * 
+     * @return the NumberFormat instance
+     */
     public NumberFormat getNumberFormat() {
         if (numberFormat == null) {
             numberFormat = createNumberFormat();
@@ -99,12 +104,7 @@ public class NumberFormatObject extends OrdinaryObject {
                 choice = NumberFormat.PLURALCURRENCYSTYLE;
             }
         }
-        DecimalFormat numberFormat;
-        try {
-            numberFormat = (DecimalFormat) NumberFormat.getInstance(locale, choice);
-        } catch (IllegalMonitorStateException e) {
-            throw new StackOverflowError();
-        }
+        DecimalFormat numberFormat = (DecimalFormat) NumberFormat.getInstance(locale, choice);
         if ("currency".equals(style)) {
             numberFormat.setCurrency(Currency.getInstance(currency));
         }
@@ -113,8 +113,9 @@ public class NumberFormatObject extends OrdinaryObject {
         if (minimumSignificantDigits != 0 && maximumSignificantDigits != 0) {
             numberFormat.setSignificantDigitsUsed(true);
             numberFormat.setMinimumSignificantDigits(minimumSignificantDigits);
-            numberFormat.setMaximumFractionDigits(maximumSignificantDigits);
+            numberFormat.setMaximumSignificantDigits(maximumSignificantDigits);
         } else {
+            numberFormat.setSignificantDigitsUsed(false);
             numberFormat.setMinimumIntegerDigits(minimumIntegerDigits);
             numberFormat.setMinimumFractionDigits(minimumFractionDigits);
             numberFormat.setMaximumFractionDigits(maximumFractionDigits);

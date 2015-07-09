@@ -61,6 +61,11 @@ public class DateTimeFormatObject extends OrdinaryObject {
         super(realm);
     }
 
+    /**
+     * Returns the ICU {@link DateFormat} instance.
+     * 
+     * @return the NumberFormat instance
+     */
     public DateFormat getDateFormat() {
         if (dateFormat == null) {
             dateFormat = createDateFormat();
@@ -73,12 +78,7 @@ public class DateTimeFormatObject extends OrdinaryObject {
         // calendar and numberingSystem are already handled in language-tag
         // assert locale.getKeywordValue("calendar").equals(calendar);
         // assert locale.getKeywordValue("numbers").equals(numberingSystem);
-        SimpleDateFormat dateFormat;
-        try {
-            dateFormat = new SimpleDateFormat(pattern.get(), locale);
-        } catch (IllegalMonitorStateException e) {
-            throw new StackOverflowError();
-        }
+        SimpleDateFormat dateFormat = new SimpleDateFormat(pattern.get(), locale);
         if (timeZone != null) {
             dateFormat.setTimeZone(TimeZone.getTimeZone(timeZone));
         }

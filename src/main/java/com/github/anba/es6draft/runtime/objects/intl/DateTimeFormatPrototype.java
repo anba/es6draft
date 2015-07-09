@@ -11,6 +11,7 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.ToNumber;
 import static com.github.anba.es6draft.runtime.internal.Errors.newRangeError;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
+import static com.github.anba.es6draft.runtime.types.builtins.BoundFunctionObject.BoundFunctionCreate;
 
 import java.util.Date;
 
@@ -23,15 +24,15 @@ import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
-import com.github.anba.es6draft.runtime.objects.FunctionPrototype;
 import com.github.anba.es6draft.runtime.objects.date.DateConstructor;
 import com.github.anba.es6draft.runtime.objects.intl.DateFieldSymbolTable.DateField;
 import com.github.anba.es6draft.runtime.objects.intl.DateFieldSymbolTable.FieldWeight;
 import com.github.anba.es6draft.runtime.objects.intl.DateFieldSymbolTable.Skeleton;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
-import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
+import com.github.anba.es6draft.runtime.types.Property;
 import com.github.anba.es6draft.runtime.types.Type;
+import com.github.anba.es6draft.runtime.types.builtins.BoundFunctionObject;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 import com.ibm.icu.text.DateTimePatternGenerator;
@@ -112,9 +113,13 @@ public final class DateTimeFormatPrototype extends DateTimeFormatObject implemen
             if (dateTimeFormat.getBoundFormat() == null) {
                 /* step 2.a */
                 FormatFunction f = new FormatFunction(cx.getRealm());
-                /* step 2.b */
-                Callable bf = (Callable) FunctionPrototype.Properties.bind(cx, f, thisValue);
+                /* step 2.b (not applicable) */
                 /* step 2.c */
+                BoundFunctionObject bf = BoundFunctionCreate(cx, f, thisValue);
+                // FIXME: spec bug - missing define for .length
+                bf.infallibleDefineOwnProperty("length", new Property(0, false, false, true));
+                // FIXME: spec issue - set .name property?
+                /* step 2.d */
                 dateTimeFormat.setBoundFormat(bf);
             }
             /* step 3 */
@@ -122,7 +127,7 @@ public final class DateTimeFormatPrototype extends DateTimeFormatObject implemen
         }
 
         /**
-         * 12.3.4 Intl.DateTimeFormat.prototype.resolvedOptions ()
+         * 12.3.5 Intl.DateTimeFormat.prototype.resolvedOptions ()
          * 
          * @param cx
          *            the execution context
@@ -177,10 +182,13 @@ public final class DateTimeFormatPrototype extends DateTimeFormatObject implemen
         if (Double.isInfinite(x) || Double.isNaN(x)) {
             throw newRangeError(cx, Messages.Key.InvalidDateValue);
         }
-        /* steps 2-9 */
+        /* steps 2-11 */
         return dateTimeFormat.getDateFormat().format(new Date((long) x));
     }
 
+    /**
+     * 12.3.4 DateTime Format Functions
+     */
     public static final class FormatFunction extends BuiltinFunction {
         public FormatFunction(Realm realm) {
             super(realm, "format", 0);
@@ -198,17 +206,19 @@ public final class DateTimeFormatPrototype extends DateTimeFormatObject implemen
 
         @Override
         public String call(ExecutionContext callerContext, Object thisValue, Object... args) {
-            assert thisValue instanceof DateTimeFormatObject;
             ExecutionContext calleeContext = calleeContext();
+            /* steps 1-2 */
+            assert thisValue instanceof DateTimeFormatObject;
+            DateTimeFormatObject dtf = (DateTimeFormatObject) thisValue;
+            /* step 3 */
             Object date = argument(args, 0);
-            /* step 2.a.i (12.3.3) */
             if (Type.isUndefined(date)) {
                 date = DateConstructor.Properties.now(calleeContext, null);
             }
-            /* step 2.a.ii (12.3.3) */
+            /* step 4 */
             double x = ToNumber(calleeContext, date);
-            /* step 2.a.iii (12.3.3) */
-            return FormatDateTime(calleeContext, (DateTimeFormatObject) thisValue, x);
+            /* step 5 */
+            return FormatDateTime(calleeContext, dtf, x);
         }
     }
 }

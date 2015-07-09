@@ -14,7 +14,7 @@ import static com.github.anba.es6draft.runtime.objects.intl.CollatorPrototype.Co
 import static com.github.anba.es6draft.runtime.objects.intl.IntlAbstractOperations.BestAvailableLocale;
 import static com.github.anba.es6draft.runtime.objects.intl.IntlAbstractOperations.CanonicalizeLocaleList;
 import static com.github.anba.es6draft.runtime.objects.intl.IntlAbstractOperations.DefaultLocale;
-import static com.github.anba.es6draft.runtime.objects.intl.IntlAbstractOperations.StripUnicodeLocaleExtension;
+import static com.github.anba.es6draft.runtime.objects.intl.IntlAbstractOperations.RemoveUnicodeLocaleExtension;
 import static com.github.anba.es6draft.runtime.objects.text.RegExpConstructor.RegExpCreate;
 import static com.github.anba.es6draft.runtime.objects.text.StringIteratorPrototype.CreateStringIterator;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
@@ -322,11 +322,11 @@ public final class StringPrototype extends OrdinaryObject implements Initializab
             // return cx.getRealm().getCollator().compare(s, t);
 
             // ECMA-402
-            /* step 7 */
+            /* steps 6-7 */
             CollatorConstructor ctor = (CollatorConstructor) cx
                     .getIntrinsic(Intrinsics.Intl_Collator);
             CollatorObject collator = ctor.construct(cx, ctor, locales, options);
-            /* steps 8-9 */
+            /* step 8 */
             return CompareStrings(cx, collator, s, t);
         }
 
@@ -736,20 +736,20 @@ public final class StringPrototype extends OrdinaryObject implements Initializab
             // ES5/6
             // return s.toLowerCase(cx.getRealm().getLocale());
 
-            /* step 4 */
+            /* steps 4-5 */
             Set<String> requestedLocales = CanonicalizeLocaleList(cx, locales);
-            /* steps 5-7 */
+            /* steps 6-8 */
             String requestedLocale = !requestedLocales.isEmpty() ? requestedLocales.iterator()
                     .next() : DefaultLocale(cx.getRealm());
-            /* step 8 */
-            String noExtensionsLocale = StripUnicodeLocaleExtension(requestedLocale);
             /* step 9 */
-            HashSet<String> availableLocales = new HashSet<>(Arrays.asList("az", "lt", "tr"));
+            String noExtensionsLocale = RemoveUnicodeLocaleExtension(requestedLocale);
             /* step 10 */
-            String locale = BestAvailableLocale(availableLocales, noExtensionsLocale);
+            HashSet<String> availableLocales = new HashSet<>(Arrays.asList("az", "lt", "tr"));
             /* step 11 */
+            String locale = BestAvailableLocale(availableLocales, noExtensionsLocale);
+            /* step 12 */
             String supportedLocale = locale == null ? "und" : locale;
-            /* steps 12-17 */
+            /* steps 13-18 */
             return UCharacter.toLowerCase(ULocale.forLanguageTag(supportedLocale), s);
         }
 
@@ -794,20 +794,20 @@ public final class StringPrototype extends OrdinaryObject implements Initializab
             // ES5/6
             // return s.toUpperCase(cx.getRealm().getLocale());
 
-            /* step 4 */
+            /* steps 4-5 */
             Set<String> requestedLocales = CanonicalizeLocaleList(cx, locales);
-            /* steps 5-7 */
+            /* steps 6-8 */
             String requestedLocale = !requestedLocales.isEmpty() ? requestedLocales.iterator()
                     .next() : DefaultLocale(cx.getRealm());
-            /* step 8 */
-            String noExtensionsLocale = StripUnicodeLocaleExtension(requestedLocale);
             /* step 9 */
-            HashSet<String> availableLocales = new HashSet<>(Arrays.asList("az", "lt", "tr"));
+            String noExtensionsLocale = RemoveUnicodeLocaleExtension(requestedLocale);
             /* step 10 */
-            String locale = BestAvailableLocale(availableLocales, noExtensionsLocale);
+            HashSet<String> availableLocales = new HashSet<>(Arrays.asList("az", "lt", "tr"));
             /* step 11 */
+            String locale = BestAvailableLocale(availableLocales, noExtensionsLocale);
+            /* step 12 */
             String supportedLocale = locale == null ? "und" : locale;
-            /* steps 12-17 */
+            /* steps 13-18 */
             return UCharacter.toUpperCase(ULocale.forLanguageTag(supportedLocale), s);
         }
 

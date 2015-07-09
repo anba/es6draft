@@ -63,6 +63,12 @@ public final class LocaleTest {
         return (String) eval(realm, sourceCode);
     }
 
+    private static String resolvedLocaleLookup(Realm realm, Intl constructor) {
+        String sourceCode = String.format(
+                "new Intl.%s({localeMatcher: 'lookup'}).resolvedOptions().locale", constructor);
+        return (String) eval(realm, sourceCode);
+    }
+
     @Test
     public void testLocaleWithScript() throws Exception {
         String languageTag = "de-Latn";
@@ -171,5 +177,49 @@ public final class LocaleTest {
         assertEquals("en", resolvedLocale(realm, Intl.Collator));
         assertEquals("en", resolvedLocale(realm, Intl.DateTimeFormat));
         assertEquals("en", resolvedLocale(realm, Intl.NumberFormat));
+    }
+
+    @Test
+    public void test_en_GB() throws Exception {
+        String languageTag = "en-GB";
+        Realm realm = newRealm(languageTag);
+
+        assertEquals(languageTag, realm.getLocale().toLanguageTag());
+        assertEquals("en-GB", resolvedLocale(realm, Intl.Collator));
+        assertEquals("en-GB", resolvedLocale(realm, Intl.DateTimeFormat));
+        assertEquals("en-GB", resolvedLocale(realm, Intl.NumberFormat));
+    }
+
+    @Test
+    public void testLookup_en_GB() throws Exception {
+        String languageTag = "en-GB";
+        Realm realm = newRealm(languageTag);
+
+        assertEquals(languageTag, realm.getLocale().toLanguageTag());
+        assertEquals("en-GB", resolvedLocaleLookup(realm, Intl.Collator));
+        assertEquals("en-GB", resolvedLocaleLookup(realm, Intl.DateTimeFormat));
+        assertEquals("en-GB", resolvedLocaleLookup(realm, Intl.NumberFormat));
+    }
+
+    @Test
+    public void test_de_CH() throws Exception {
+        String languageTag = "de-CH";
+        Realm realm = newRealm(languageTag);
+
+        assertEquals(languageTag, realm.getLocale().toLanguageTag());
+        assertEquals("de-CH", resolvedLocale(realm, Intl.Collator));
+        assertEquals("de-CH", resolvedLocale(realm, Intl.DateTimeFormat));
+        assertEquals("de-CH", resolvedLocale(realm, Intl.NumberFormat));
+    }
+
+    @Test
+    public void testLookup_de_CH() throws Exception {
+        String languageTag = "de-CH";
+        Realm realm = newRealm(languageTag);
+
+        assertEquals(languageTag, realm.getLocale().toLanguageTag());
+        assertEquals("de-CH", resolvedLocaleLookup(realm, Intl.Collator));
+        assertEquals("de-CH", resolvedLocaleLookup(realm, Intl.DateTimeFormat));
+        assertEquals("de-CH", resolvedLocaleLookup(realm, Intl.NumberFormat));
     }
 }

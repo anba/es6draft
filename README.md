@@ -11,7 +11,7 @@ ECMAScript 2015 (ECMA-262 6th Edition) compiler and runtime written in Java.
 
 Full support of [ECMAScript 2015, Final Draft, Rev 38, April 14, 2015] [esdrafts].
 
-Full support of [ECMAScript Internationalization API 2.0, RC1, Rev 11, 2015-03-24 Draft] [intldrafts].
+Full support of [ECMAScript® 2015 Internationalization API, ECMA-402 2nd edition] [intl].
 
 
 ## Build Instructions and Shell ##
@@ -91,7 +91,7 @@ mvn test -P external -Dtraceur.path=<...> -Dmozilla.skip=true -Dv8.skip=true -Dw
 ```
 
 [esdrafts]: http://wiki.ecmascript.org/doku.php?id=harmony:specification_drafts "Draft Specification for ES.next"
-[intldrafts]: http://wiki.ecmascript.org/doku.php?id=globalization:specification_drafts "Specification Drafts for ECMAScript Internationalization API"
+[intl]: http://ecma-international.org/publications/standards/Ecma-402.htm "ECMAScript® 2015 Internationalization API Specification"
 [icu]: http://site.icu-project.org/
 [java]: http://java.sun.com/
 [maven]: https://maven.apache.org/download.cgi

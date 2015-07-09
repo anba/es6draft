@@ -10,6 +10,7 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.CreateDataProp
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToNumber;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
+import static com.github.anba.es6draft.runtime.types.builtins.BoundFunctionObject.BoundFunctionCreate;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
@@ -20,10 +21,10 @@ import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
-import com.github.anba.es6draft.runtime.objects.FunctionPrototype;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
-import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
+import com.github.anba.es6draft.runtime.types.Property;
+import com.github.anba.es6draft.runtime.types.builtins.BoundFunctionObject;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
@@ -102,9 +103,13 @@ public final class NumberFormatPrototype extends NumberFormatObject implements I
             if (numberFormat.getBoundFormat() == null) {
                 /* step 2.a */
                 FormatFunction f = new FormatFunction(cx.getRealm());
-                /* steps 2.b */
-                Callable bf = (Callable) FunctionPrototype.Properties.bind(cx, f, thisValue);
+                /* step 2.b (not applicable) */
                 /* step 2.c */
+                BoundFunctionObject bf = BoundFunctionCreate(cx, f, thisValue);
+                // FIXME: spec bug - missing define for .length
+                bf.infallibleDefineOwnProperty("length", new Property(1, false, false, true));
+                // FIXME: spec issue - set .name property?
+                /* step 2.d */
                 numberFormat.setBoundFormat(bf);
             }
             /* step 3 */
@@ -112,7 +117,7 @@ public final class NumberFormatPrototype extends NumberFormatObject implements I
         }
 
         /**
-         * 11.3.4 Intl.NumberFormat.prototype.resolvedOptions ()
+         * 11.3.5 Intl.NumberFormat.prototype.resolvedOptions ()
          * 
          * @param cx
          *            the execution context
@@ -168,10 +173,13 @@ public final class NumberFormatPrototype extends NumberFormatObject implements I
             // -0 is not considered to be negative, cf. step 3a
             x = +0.0;
         }
-        /* steps 1-7 */
+        /* steps 1-8 */
         return numberFormat.getNumberFormat().format(x);
     }
 
+    /**
+     * 11.3.4 Number Format Functions
+     */
     public static final class FormatFunction extends BuiltinFunction {
         public FormatFunction(Realm realm) {
             super(realm, "format", 1);
@@ -189,14 +197,16 @@ public final class NumberFormatPrototype extends NumberFormatObject implements I
 
         @Override
         public String call(ExecutionContext callerContext, Object thisValue, Object... args) {
-            assert thisValue instanceof NumberFormatObject;
             ExecutionContext calleeContext = calleeContext();
-            /* step 2.a.i (11.3.3) */
+            /* steps 1-2 */
+            assert thisValue instanceof NumberFormatObject;
+            NumberFormatObject nf = (NumberFormatObject) thisValue;
+            /* step 3 */
             Object value = argument(args, 0);
-            /* steps 2.a.ii-iii (11.3.3) */
+            /* steps 4-5 */
             double x = ToNumber(calleeContext, value);
-            /* step 2.a.iv (11.3.3) */
-            return FormatNumber(calleeContext, (NumberFormatObject) thisValue, x);
+            /* step 6 */
+            return FormatNumber(calleeContext, nf, x);
         }
     }
 }
