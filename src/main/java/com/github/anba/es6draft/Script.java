@@ -7,6 +7,7 @@
 package com.github.anba.es6draft;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
+import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
 
 /**
@@ -23,6 +24,15 @@ public interface Script extends Program {
      * @return the script body object
      */
     RuntimeInfo.ScriptBody getScriptBody();
+
+    /**
+     * Evaluates this script in the given {@link ExecutionContext}.
+     * 
+     * @param realm
+     *            the realm instance
+     * @return the return value after evaluating this script
+     */
+    Object evaluate(Realm realm);
 
     /**
      * Evaluates this script in the given {@link ExecutionContext}.

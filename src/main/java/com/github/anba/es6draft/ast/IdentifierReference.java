@@ -7,7 +7,6 @@
 package com.github.anba.es6draft.ast;
 
 import com.github.anba.es6draft.ast.scope.Name;
-import com.github.anba.es6draft.ast.synthetic.IdentifierReferenceValue;
 
 /**
  * <h1>12 ECMAScript Language: Expressions</h1>
@@ -15,20 +14,13 @@ import com.github.anba.es6draft.ast.synthetic.IdentifierReferenceValue;
  * <li>12.1 Identifiers
  * </ul>
  */
-public class IdentifierReference extends LeftHandSideExpression implements PropertyName {
+public final class IdentifierReference extends LeftHandSideExpression implements PropertyName {
     private final String name;
     private Name resolvedName;
 
     public IdentifierReference(long beginPosition, long endPosition, String name) {
         super(beginPosition, endPosition);
         this.name = name;
-    }
-
-    protected IdentifierReference(long beginPosition, long endPosition, String name,
-            Name resolvedName) {
-        super(beginPosition, endPosition);
-        this.name = name;
-        this.resolvedName = resolvedName;
     }
 
     @Override
@@ -49,12 +41,6 @@ public class IdentifierReference extends LeftHandSideExpression implements Prope
         assert this.resolvedName == null : String.format("%s: <%s> != <%s>", name,
                 this.resolvedName.getScope(), resolvedName.getScope());
         this.resolvedName = resolvedName;
-    }
-
-    @Override
-    public IdentifierReferenceValue asValue() {
-        return new IdentifierReferenceValue(getBeginPosition(), getEndPosition(), name,
-                resolvedName);
     }
 
     @Override

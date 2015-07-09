@@ -191,7 +191,7 @@ public final class Parser {
                 assert kind.isFunction();
                 this.scriptContext = null;
                 this.modContext = null;
-                this.funContext = new FunctionContext(parent.scopeContext, !kind.isLexical());
+                this.funContext = new FunctionContext(parent.scopeContext, kind.isLexical());
                 this.topContext = funContext;
             }
             this.scopeContext = topContext;
@@ -218,7 +218,7 @@ public final class Parser {
             if (funContext != null) {
                 funContext.directEval = true;
             }
-            scopeContext.forceNamedSlots();
+            scopeContext.setHasEval();
         }
 
         void setNeedsSuperBinding() {
@@ -275,28 +275,40 @@ public final class Parser {
     }
 
     private static final class NameSet extends AbstractSet<Name> implements Set<Name> {
-        private final HashMap<Name, Name> map;
+        private final LinkedHashMap<String, Name> map;
 
-        public NameSet() {
-            map = new HashMap<>();
+        NameSet() {
+            map = new LinkedHashMap<>();
         }
 
-        public NameSet(NameSet set) {
-            map = new HashMap<>(set.map);
+        NameSet(NameSet set) {
+            map = new LinkedHashMap<>(set.map);
         }
 
-        public NameSet(Collection<Name> c) {
-            map = new HashMap<>(Math.max((int) (c.size() / 0.75f) + 1, 16));
+        NameSet(Collection<Name> c) {
+            map = new LinkedHashMap<>(Math.max((int) (c.size() / 0.75f) + 1, 16));
             addAll(c);
         }
 
-        public void addAll(NameSet set) {
+        void addAll(NameSet set) {
             map.putAll(set.map);
+        }
+
+        boolean remove(Name o) {
+            return map.remove(o.getIdentifier()) != null;
+        }
+
+        boolean contains(Name o) {
+            return map.containsKey(o.getIdentifier());
+        }
+
+        Name get(Name o) {
+            return map.get(o.getIdentifier());
         }
 
         @Override
         public Iterator<Name> iterator() {
-            return map.keySet().iterator();
+            return map.values().iterator();
         }
 
         @Override
@@ -311,7 +323,7 @@ public final class Parser {
 
         @Override
         public boolean add(Name e) {
-            return map.put(e, e) == null;
+            return map.put(e.getIdentifier(), e) == null;
         }
 
         @Override
@@ -321,16 +333,25 @@ public final class Parser {
 
         @Override
         public boolean contains(Object o) {
-            return map.containsKey(o);
+            if (o == null || o.getClass() != Name.class) {
+                return false;
+            }
+            return map.containsKey(((Name) o).getIdentifier());
         }
 
         @Override
         public boolean remove(Object o) {
-            return map.remove(o) != null;
+            throw new UnsupportedOperationException();
         }
 
-        public Name get(Object o) {
-            return map.get(o);
+        @Override
+        public boolean removeAll(Collection<?> c) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public boolean retainAll(Collection<?> c) {
+            throw new UnsupportedOperationException();
         }
     }
 
@@ -338,18 +359,18 @@ public final class Parser {
         FunctionNode node;
         ScopeContext variableScope = this;
         ScopeContext lexicalScope = this;
-        final Name arguments;
+        Name arguments;
         NameSet parameterNames;
         InlineArrayList<FunctionDeclaration> blockFunctions;
         NameSet blockFunctionNames;
-        // TODO: Move to FunctionNode?
+        final boolean isLexical;
         boolean needsArguments;
         boolean directEval;
         boolean superReference;
 
-        FunctionContext(ScopeContext enclosing, boolean hasArguments) {
+        FunctionContext(ScopeContext enclosing, boolean isLexical) {
             super(enclosing);
-            arguments = hasArguments ? new Name("arguments") : null;
+            this.isLexical = isLexical;
         }
 
         void addBlockFunction(FunctionDeclaration function) {
@@ -363,8 +384,13 @@ public final class Parser {
             this.blockFunctions = blockFunctions;
             this.blockFunctionNames = new NameSet();
             for (FunctionDeclaration f : blockFunctions) {
-                // Need to use clone() because the block function uses a different binding.
-                blockFunctionNames.add(f.getIdentifier().getName().clone());
+                Name fname = f.getIdentifier().getName();
+                Name name = variableScope.getDeclaredName(fname);
+                if (name == null) {
+                    // Create a new name binding, need to use clone() to create a distinct binding.
+                    name = fname.clone();
+                }
+                blockFunctionNames.add(name);
             }
         }
 
@@ -374,9 +400,6 @@ public final class Parser {
 
         void needsArguments(boolean lookupByName) {
             this.needsArguments = true;
-            if (arguments != null) {
-                resolveNameInternal(arguments, lookupByName);
-            }
         }
 
         void setNode(FunctionNode node) {
@@ -408,6 +431,46 @@ public final class Parser {
             }
             assert varScope == this || varScope.lexScopedDeclarations == null;
             assert lexScope == this || lexScope.lexScopedDeclarations == null;
+            if (needsArguments()) {
+                if (isLexical) {
+                    propagateNeedsArguments();
+                } else {
+                    setImplicitArguments();
+                }
+            }
+        }
+
+        private void setImplicitArguments() {
+            assert node.getThisMode() != FunctionNode.ThisMode.Lexical;
+            Name arguments = new Name("arguments");
+            if (parameterNames().contains(arguments)) {
+                return;
+            }
+            if (!node.getParameters().containsExpression()) {
+                if (lexicallyDeclaredNames().contains(arguments)) {
+                    return;
+                }
+                if (varDeclaredNames().contains(arguments)) {
+                    for (StatementListItem item : node.getStatements()) {
+                        if (item instanceof HoistableDeclaration) {
+                            if (((HoistableDeclaration) item).getName().equals(arguments)) {
+                                return;
+                            }
+                        }
+                    }
+                }
+            }
+            this.arguments = arguments;
+        }
+
+        private void propagateNeedsArguments() {
+            for (TopContext t = this; t instanceof FunctionContext; t = t.enclosing.top) {
+                FunctionContext fc = (FunctionContext) t;
+                if (!fc.isLexical) {
+                    fc.needsArguments(directEval);
+                    break;
+                }
+            }
         }
 
         Name blockFunctionName(Name name) {
@@ -448,6 +511,11 @@ public final class Parser {
         @Override
         public Name arguments() {
             return arguments;
+        }
+
+        @Override
+        public Set<Name> blockFunctionNames() {
+            return emptyIfNull(blockFunctionNames);
         }
 
         @Override
@@ -764,14 +832,14 @@ public final class Parser {
 
         @Override
         public boolean isPresent() {
-            return hasForceNamedSlots();
+            return hasDirectEval();
         }
     }
 
     private static abstract class ScopeContext implements Scope {
         final ScopeContext parent;
         final TopContext top;
-        private boolean forceNamedSlots;
+        private boolean directEval;
 
         NameSet varDeclaredNames;
         NameSet lexDeclaredNames;
@@ -785,10 +853,6 @@ public final class Parser {
         ScopeContext(ScopeContext parent) {
             this.parent = parent;
             this.top = parent.top;
-        }
-
-        protected final void resolveNameInternal(Name name, boolean lookupByName) {
-            name.resolve(this, lookupByName);
         }
 
         protected Name getDeclaredName(Name name) {
@@ -813,7 +877,7 @@ public final class Parser {
         @Override
         public final Name resolveName(Name name, boolean lookupByName) {
             Name declaredName = getDeclaredName(name);
-            resolveNameInternal(declaredName, lookupByName);
+            declaredName.resolve(this, lookupByName);
             return declaredName;
         }
 
@@ -849,9 +913,9 @@ public final class Parser {
             return depth;
         }
 
-        final void forceNamedSlots() {
-            for (ScopeContext scope = this; scope != null && !scope.forceNamedSlots;) {
-                scope.forceNamedSlots = true;
+        final void setHasEval() {
+            for (ScopeContext scope = this; scope != null && !scope.directEval;) {
+                scope.directEval = true;
                 ScopeContext parent = scope.parent;
                 if (parent == null) {
                     parent = ((TopContext) scope).enclosing;
@@ -860,8 +924,8 @@ public final class Parser {
             }
         }
 
-        final boolean hasForceNamedSlots() {
-            return forceNamedSlots;
+        final boolean hasDirectEval() {
+            return directEval;
         }
 
         final boolean allowVarDeclaredName(Name name) {
@@ -1495,16 +1559,6 @@ public final class Parser {
         String name = MethodNameVisitor.toMethodName(lhs);
         if (name != null && expr instanceof FunctionNode) {
             ((FunctionNode) expr).setMethodName(name);
-        }
-    }
-
-    private void propagateNeedsArguments() {
-        assert context.kind.isLexical();
-        if (context.funContext.needsArguments()) {
-            ParseContext cx = context.findSuperContext();
-            if (cx.kind.isFunction()) {
-                cx.funContext.needsArguments(context.funContext.directEval);
-            }
         }
     }
 
@@ -3476,8 +3530,6 @@ public final class Parser {
                         parameters, statements, header, body);
                 scope.setNode(function);
 
-                propagateNeedsArguments();
-
                 arrowFunction_EarlyErrors(function);
 
                 return inheritStrictness(function);
@@ -3493,8 +3545,6 @@ public final class Parser {
                 ArrowFunction function = new ArrowFunction(begin, ts.endPosition(), scope,
                         parameters, expression, header, body);
                 scope.setNode(function);
-
-                propagateNeedsArguments();
 
                 arrowFunction_EarlyErrors(function);
 
@@ -4677,8 +4727,6 @@ public final class Parser {
                         scope, parameters, statements, header, body);
                 scope.setNode(function);
 
-                propagateNeedsArguments();
-
                 asyncArrowFunction_EarlyErrors(function);
 
                 return inheritStrictness(function);
@@ -4694,8 +4742,6 @@ public final class Parser {
                 AsyncArrowFunction function = new AsyncArrowFunction(begin, ts.endPosition(),
                         scope, parameters, expression, header, body);
                 scope.setNode(function);
-
-                propagateNeedsArguments();
 
                 asyncArrowFunction_EarlyErrors(function);
 
@@ -6895,6 +6941,21 @@ public final class Parser {
     }
 
     /**
+     * Returns <code>true</code> if {@link Token#AWAIT} should be treated as {@link Token#NAME} in
+     * the supplied context.
+     * 
+     * @param awaitContext
+     *            the context to use
+     * @return {@code true} if 'await' is a valid name in the parse context
+     */
+    private boolean isAwaitName(ParseContext awaitContext) {
+        if (moduleCode) {
+            reportSyntaxError(Messages.Key.InvalidIdentifier, getName(Token.AWAIT));
+        }
+        return true;
+    }
+
+    /**
      * <strong>[12.2] Primary Expression</strong>
      * 
      * <pre>
@@ -6994,21 +7055,6 @@ public final class Parser {
             ts.reset(position, lineinfo);
             return generatorExpression(true);
         }
-    }
-
-    /**
-     * Returns <code>true</code> if {@link Token#AWAIT} should be treated as {@link Token#NAME} in
-     * the supplied context.
-     * 
-     * @param awaitContext
-     *            the context to use
-     * @return {@code true} if 'await' is a valid name in the parse context
-     */
-    private boolean isAwaitName(ParseContext awaitContext) {
-        if (moduleCode) {
-            reportSyntaxError(Messages.Key.InvalidIdentifier, getName(Token.AWAIT));
-        }
-        return true;
     }
 
     /**
@@ -7707,8 +7753,6 @@ public final class Parser {
                     scope, parameters, comprehension);
             scope.setNode(generator);
 
-            propagateNeedsArguments();
-
             return inheritStrictness(generator);
         } finally {
             restoreContext();
@@ -7758,8 +7802,6 @@ public final class Parser {
             GeneratorComprehension generator = new GeneratorComprehension(begin, ts.endPosition(),
                     scope, parameters, comprehension);
             scope.setNode(generator);
-
-            propagateNeedsArguments();
 
             return inheritStrictness(generator);
         } finally {

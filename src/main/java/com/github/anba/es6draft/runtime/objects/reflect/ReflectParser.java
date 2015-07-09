@@ -1158,11 +1158,6 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
     }
 
     @Override
-    public Object visit(ElementAccessorValue node, Void value) {
-        throw new IllegalStateException(node.getClass().toString());
-    }
-
-    @Override
     public Object visit(Elision node, Void value) {
         return NULL;
     }
@@ -1495,11 +1490,6 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
     }
 
     @Override
-    public Object visit(IdentifierReferenceValue node, Void value) {
-        throw new IllegalStateException(node.getClass().toString());
-    }
-
-    @Override
     public Object visit(IfStatement node, Void value) {
         Object test = node.getTest().accept(this, value);
         Object consequent = node.getThen().accept(this, value);
@@ -1817,11 +1807,6 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
     }
 
     @Override
-    public Object visit(PropertyAccessorValue node, Void value) {
-        throw new IllegalStateException(node.getClass().toString());
-    }
-
-    @Override
     public Object visit(PropertyNameDefinition node, Void value) {
         Object key = node.getPropertyName().accept(this, value);
         Object _value = key;
@@ -1965,11 +1950,6 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
     }
 
     @Override
-    public Object visit(SuperElementAccessorValue node, Void value) {
-        throw new IllegalStateException(node.getClass().toString());
-    }
-
-    @Override
     public Object visit(SuperNewExpression node, Void value) {
         Object property = NULL;
         boolean computed = false;
@@ -1997,11 +1977,6 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
         addProperty(expression, "arguments", arguments);
         addProperty(expression, "kind", kind);
         return expression;
-    }
-
-    @Override
-    public Object visit(SuperPropertyAccessorValue node, Void value) {
-        throw new IllegalStateException(node.getClass().toString());
     }
 
     @Override

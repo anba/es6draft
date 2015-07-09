@@ -12,7 +12,7 @@ package com.github.anba.es6draft.compiler.assembler;
  * @param <T>
  *            the variable type
  */
-public final class Variable<T> {
+public final class Variable<T> extends Value<T> {
     private final String name;
     private final Type type;
     private final int slot;
@@ -84,7 +84,12 @@ public final class Variable<T> {
      * @return this variable
      */
     @SuppressWarnings("unchecked")
-    public <U> Variable<U> uncheckedCast() {
+    public <U extends T> Variable<U> uncheckedCast() {
         return (Variable<U>) this;
+    }
+
+    @Override
+    protected void load(InstructionAssembler assembler) {
+        assembler.load(this);
     }
 }

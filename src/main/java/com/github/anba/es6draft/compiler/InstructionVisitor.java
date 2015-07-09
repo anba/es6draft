@@ -6,11 +6,15 @@
  */
 package com.github.anba.es6draft.compiler;
 
+import java.io.PrintStream;
+
 import com.github.anba.es6draft.ast.Node;
 import com.github.anba.es6draft.compiler.DefaultCodeGenerator.ValType;
 import com.github.anba.es6draft.compiler.assembler.Code.MethodCode;
 import com.github.anba.es6draft.compiler.assembler.FieldName;
 import com.github.anba.es6draft.compiler.assembler.InstructionAssembler;
+import com.github.anba.es6draft.compiler.assembler.MethodName;
+import com.github.anba.es6draft.compiler.assembler.Type;
 
 /**
  *
@@ -21,6 +25,15 @@ class InstructionVisitor extends InstructionAssembler {
 
         static final FieldName Undefined_UNDEFINED = FieldName.findStatic(Types.Undefined,
                 "UNDEFINED", Types.Undefined);
+
+        static final FieldName System_out = FieldName.findStatic(Type.of(System.class), "out",
+                Type.of(PrintStream.class));
+    }
+
+    private static final class Methods {
+        static final MethodName PrintStream_println = MethodName.findVirtual(
+                Type.of(PrintStream.class), "println",
+                Type.methodType(Type.VOID_TYPE, Types.String));
     }
 
     protected InstructionVisitor(MethodCode method) {
@@ -49,6 +62,18 @@ class InstructionVisitor extends InstructionAssembler {
      */
     final void lineInfo(Node node) {
         lineInfo(node.getBeginLine());
+    }
+
+    /**
+     * Prints a message to {@code System.out}.
+     * 
+     * @param message
+     *            the message string
+     */
+    final void println(String message) {
+        get(Fields.System_out);
+        aconst(message);
+        invoke(Methods.PrintStream_println);
     }
 
     /**

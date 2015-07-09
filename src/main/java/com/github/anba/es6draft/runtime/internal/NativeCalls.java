@@ -19,7 +19,6 @@ import java.nio.file.Path;
 import java.util.Objects;
 
 import com.github.anba.es6draft.Script;
-import com.github.anba.es6draft.Scripts;
 import com.github.anba.es6draft.compiler.CompilationException;
 import com.github.anba.es6draft.compiler.assembler.Handle;
 import com.github.anba.es6draft.compiler.assembler.MethodName;
@@ -544,7 +543,7 @@ public final class NativeCalls {
         } catch (IOException e) {
             throw newInternalError(cx, e, Messages.Key.InternalError, e.toString());
         }
-        return Scripts.ScriptEvaluation(script, realm);
+        return script.evaluate(cx);
     }
 
     /**

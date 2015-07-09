@@ -393,7 +393,7 @@ public class InstructionAssembler {
 
     public void mark(TryCatchLabel label) {
         methodVisitor.visitLabel(label.label());
-        // NB: Stack object does not need to be updated.
+        // Stack object does not need to be updated.
     }
 
     public void mark(Jump jump) {
@@ -613,6 +613,10 @@ public class InstructionAssembler {
         load(0, Types.Object);
     }
 
+    public final void load(Value<?> value) {
+        value.load(this);
+    }
+
     public final void load(Variable<?> variable) {
         assert variable.isAlive() : "variable out of scope";
         load(variable.getSlot(), variable.getType());
@@ -824,6 +828,21 @@ public class InstructionAssembler {
         iconst(index);
         aconst(element);
         astore(Types.String);
+    }
+
+    /**
+     * array → array
+     * 
+     * @param index
+     *            the array index
+     * @param element
+     *            the int element to store
+     */
+    public final void astore(int index, int element) {
+        dup();
+        iconst(index);
+        iconst(element);
+        astore(Type.INT_TYPE);
     }
 
     public final void astore(Type type) {
@@ -2047,6 +2066,20 @@ public class InstructionAssembler {
         }
     }
 
+    /**
+     * &#x2205; → array
+     * 
+     * @param length
+     *            the array length
+     * @param type
+     *            the array component type
+     */
+    public final void newarray(int length, Type type) {
+        assert length >= 0;
+        iconst(length);
+        newarray(type);
+    }
+
     public void newarray(Type type) {
         methodVisitor.visitIntInsn(Opcodes.NEWARRAY, arrayType(type));
         stack.newarray(type);
@@ -2115,6 +2148,7 @@ public class InstructionAssembler {
 
     private static final MethodName[] boxMethods;
     private static final MethodName[] unboxMethods;
+
     static {
         MethodName[] bm = new MethodName[12];
         bm[Type.Sort.BOOLEAN] = Methods.Boolean_valueOf;

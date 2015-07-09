@@ -25,7 +25,6 @@ import java.util.Objects;
 import java.util.Set;
 
 import com.github.anba.es6draft.Script;
-import com.github.anba.es6draft.Scripts;
 import com.github.anba.es6draft.compiler.CompilationException;
 import com.github.anba.es6draft.parser.Parser;
 import com.github.anba.es6draft.parser.ParserException;
@@ -235,7 +234,7 @@ public abstract class ShellGlobalObject extends GlobalObject {
      * @return the evaluation result
      */
     protected Object eval(Script script, Realm realm) {
-        return Scripts.ScriptEvaluation(script, realm);
+        return script.evaluate(realm);
     }
 
     /**

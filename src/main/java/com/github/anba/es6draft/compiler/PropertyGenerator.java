@@ -141,7 +141,7 @@ final class PropertyGenerator extends
     @Override
     public ValType visit(ComputedPropertyName node, ExpressionVisitor mv) {
         /* steps 1-3 */
-        ValType type = expressionValue(node.getExpression(), mv);
+        ValType type = expression(node.getExpression(), mv);
         /* step 4 */
         return ToPropertyKey(type, mv);
     }
@@ -259,7 +259,7 @@ final class PropertyGenerator extends
 
         // stack: [<object>] -> []
         mv.aconst(propName);
-        expressionBoxedValue(propertyName, mv);
+        expressionBoxed(propertyName, mv);
         mv.loadExecutionContext();
         mv.lineInfo(node);
         mv.invoke(Methods.ScriptRuntime_defineProperty_String);
@@ -275,7 +275,6 @@ final class PropertyGenerator extends
     @Override
     public ValType visit(PropertyValueDefinition node, ExpressionVisitor mv) {
         Expression propertyValue = node.getPropertyValue();
-        boolean isAnonymousFunctionDefinition = IsAnonymousFunctionDefinition(propertyValue);
         PropertyName propertyName = node.getPropertyName();
         String propName = PropName(propertyName);
         long propIndex = propName != null ? IndexedMap.toIndex(propName) : -1;
@@ -284,8 +283,8 @@ final class PropertyGenerator extends
         if (propName == null) {
             assert propertyName instanceof ComputedPropertyName;
             ValType type = propertyName.accept(this, mv);
-            expressionBoxedValue(propertyValue, mv);
-            if (isAnonymousFunctionDefinition) {
+            expressionBoxed(propertyValue, mv);
+            if (IsAnonymousFunctionDefinition(propertyValue)) {
                 SetFunctionName(propertyValue, type, mv);
             }
             mv.loadExecutionContext();
@@ -293,14 +292,14 @@ final class PropertyGenerator extends
             mv.invoke(Methods.ScriptRuntime_defineProperty);
         } else if ("__proto__".equals(propName)
                 && codegen.isEnabled(CompatibilityOption.ProtoInitializer)) {
-            expressionBoxedValue(propertyValue, mv);
+            expressionBoxed(propertyValue, mv);
             mv.loadExecutionContext();
             mv.lineInfo(node);
             mv.invoke(Methods.ScriptRuntime_defineProtoProperty);
         } else if (IndexedMap.isIndex(propIndex)) {
             mv.lconst(propIndex);
-            expressionBoxedValue(propertyValue, mv);
-            if (isAnonymousFunctionDefinition) {
+            expressionBoxed(propertyValue, mv);
+            if (IsAnonymousFunctionDefinition(propertyValue)) {
                 SetFunctionName(propertyValue, propName, mv);
             }
             mv.loadExecutionContext();
@@ -308,8 +307,8 @@ final class PropertyGenerator extends
             mv.invoke(Methods.ScriptRuntime_defineProperty_long);
         } else {
             mv.aconst(propName);
-            expressionBoxedValue(propertyValue, mv);
-            if (isAnonymousFunctionDefinition) {
+            expressionBoxed(propertyValue, mv);
+            if (IsAnonymousFunctionDefinition(propertyValue)) {
                 SetFunctionName(propertyValue, propName, mv);
             }
             mv.loadExecutionContext();
@@ -323,7 +322,7 @@ final class PropertyGenerator extends
     @Override
     public ValType visit(SpreadProperty node, ExpressionVisitor mv) {
         // stack: [<object>] -> [<object>, value]
-        expressionBoxedValue(node.getExpression(), mv);
+        expressionBoxed(node.getExpression(), mv);
 
         // stack: [<object>, value] -> []
         mv.loadExecutionContext();

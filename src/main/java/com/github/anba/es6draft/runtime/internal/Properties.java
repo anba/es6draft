@@ -31,7 +31,6 @@ import java.util.Map.Entry;
 import java.util.Objects;
 
 import com.github.anba.es6draft.Script;
-import com.github.anba.es6draft.Scripts;
 import com.github.anba.es6draft.repl.global.StopExecutionException;
 import com.github.anba.es6draft.runtime.AbstractOperations;
 import com.github.anba.es6draft.runtime.ExecutionContext;
@@ -933,7 +932,7 @@ public final class Properties {
         String sourceText = String.format("(class %s { })", sanitizeName(className));
         ScriptLoader scriptLoader = cx.getRealm().getScriptLoader();
         Script script = scriptLoader.script(new Source("<Constructor>", 1), sourceText);
-        Object constructor = Scripts.ScriptEvaluation(script, cx.getRealm());
+        Object constructor = script.evaluate(cx);
         assert constructor instanceof OrdinaryConstructorFunction : constructor.getClass();
         return (OrdinaryConstructorFunction) constructor;
     }

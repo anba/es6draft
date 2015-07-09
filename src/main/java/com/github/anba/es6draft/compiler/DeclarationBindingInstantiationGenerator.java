@@ -29,6 +29,7 @@ import com.github.anba.es6draft.runtime.GlobalEnvironmentRecord;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
 import com.github.anba.es6draft.runtime.internal.ScriptRuntime;
+import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
 
 /**
  * Base class for Binding Instantiation generators
@@ -43,31 +44,6 @@ abstract class DeclarationBindingInstantiationGenerator {
         static final MethodName ExecutionContext_getVariableEnvironment = MethodName.findVirtual(
                 Types.ExecutionContext, "getVariableEnvironment",
                 Type.methodType(Types.LexicalEnvironment));
-
-        // class: EnvironmentRecord
-        static final MethodName EnvironmentRecord_hasBinding = MethodName.findInterface(
-                Types.EnvironmentRecord, "hasBinding",
-                Type.methodType(Type.BOOLEAN_TYPE, Types.String));
-
-        static final MethodName EnvironmentRecord_createMutableBinding = MethodName.findInterface(
-                Types.EnvironmentRecord, "createMutableBinding",
-                Type.methodType(Type.VOID_TYPE, Types.String, Type.BOOLEAN_TYPE));
-
-        static final MethodName EnvironmentRecord_createImmutableBinding = MethodName
-                .findInterface(Types.EnvironmentRecord, "createImmutableBinding",
-                        Type.methodType(Type.VOID_TYPE, Types.String, Type.BOOLEAN_TYPE));
-
-        static final MethodName EnvironmentRecord_initializeBinding = MethodName.findInterface(
-                Types.EnvironmentRecord, "initializeBinding",
-                Type.methodType(Type.VOID_TYPE, Types.String, Types.Object));
-
-        static final MethodName EnvironmentRecord_setMutableBinding = MethodName.findInterface(
-                Types.EnvironmentRecord, "setMutableBinding",
-                Type.methodType(Type.VOID_TYPE, Types.String, Types.Object, Type.BOOLEAN_TYPE));
-
-        static final MethodName EnvironmentRecord_getBindingValue = MethodName.findInterface(
-                Types.EnvironmentRecord, "getBindingValue",
-                Type.methodType(Types.Object, Types.String, Type.BOOLEAN_TYPE));
 
         // class: GlobalEnvironmentRecord
         static final MethodName GlobalEnvironmentRecord_createGlobalVarBinding = MethodName
@@ -129,208 +105,9 @@ abstract class DeclarationBindingInstantiationGenerator {
     }
 
     /**
-     * Emit function call for: {@link EnvironmentRecord#hasBinding(String)}
-     * <p>
-     * stack: [] {@literal ->} [boolean]
-     * 
-     * @param envRec
-     *            the variable which holds the environment record
-     * @param name
-     *            the binding name
-     * @param mv
-     *            the instruction visitor
-     */
-    protected final void hasBinding(Variable<? extends EnvironmentRecord> envRec, Name name,
-            InstructionVisitor mv) {
-        mv.load(envRec);
-        mv.aconst(name.getIdentifier());
-        mv.invoke(Methods.EnvironmentRecord_hasBinding);
-    }
-
-    /**
-     * Emit function call for: {@link EnvironmentRecord#createMutableBinding(String, boolean)}
-     * <p>
-     * stack: [] {@literal ->} []
-     * 
-     * @param envRec
-     *            the variable which holds the environment record
-     * @param node
-     *            the declaration node
-     * @param name
-     *            the binding name
-     * @param deletable
-     *            the deletable flag
-     * @param mv
-     *            the instruction visitor
-     */
-    protected final void createMutableBinding(Variable<? extends EnvironmentRecord> envRec,
-            Node node, Name name, boolean deletable, InstructionVisitor mv) {
-        mv.load(envRec);
-        mv.aconst(name.getIdentifier());
-        mv.iconst(deletable);
-        mv.lineInfo(node);
-        mv.invoke(Methods.EnvironmentRecord_createMutableBinding);
-    }
-
-    /**
-     * Emit function call for: {@link EnvironmentRecord#createMutableBinding(String, boolean)}
-     * <p>
-     * stack: [] {@literal ->} []
-     * 
-     * @param envRec
-     *            the variable which holds the environment record
-     * @param name
-     *            the binding name
-     * @param deletable
-     *            the deletable flag
-     * @param mv
-     *            the instruction visitor
-     */
-    protected final void createMutableBinding(Variable<? extends EnvironmentRecord> envRec,
-            Name name, boolean deletable, InstructionVisitor mv) {
-        mv.load(envRec);
-        mv.aconst(name.getIdentifier());
-        mv.iconst(deletable);
-        mv.invoke(Methods.EnvironmentRecord_createMutableBinding);
-    }
-
-    /**
-     * Emit function call for: {@link EnvironmentRecord#createImmutableBinding(String, boolean)}
-     * <p>
-     * stack: [] {@literal ->} []
-     * 
-     * @param envRec
-     *            the variable which holds the environment record
-     * @param node
-     *            the declaration node
-     * @param name
-     *            the binding name
-     * @param mv
-     *            the instruction visitor
-     */
-    protected final void createImmutableBinding(Variable<? extends EnvironmentRecord> envRec,
-            Node node, Name name, boolean strict, InstructionVisitor mv) {
-        mv.load(envRec);
-        mv.aconst(name.getIdentifier());
-        mv.iconst(strict);
-        mv.lineInfo(node);
-        mv.invoke(Methods.EnvironmentRecord_createImmutableBinding);
-    }
-
-    /**
-     * Emit function call for: {@link EnvironmentRecord#createImmutableBinding(String, boolean)}
-     * <p>
-     * stack: [] {@literal ->} []
-     * 
-     * @param envRec
-     *            the variable which holds the environment record
-     * @param name
-     *            the binding name
-     * @param mv
-     *            the instruction visitor
-     */
-    protected final void createImmutableBinding(Variable<? extends EnvironmentRecord> envRec,
-            Name name, boolean strict, InstructionVisitor mv) {
-        mv.load(envRec);
-        mv.aconst(name.getIdentifier());
-        mv.iconst(strict);
-        mv.invoke(Methods.EnvironmentRecord_createImmutableBinding);
-    }
-
-    /**
-     * Emit function call for: {@link EnvironmentRecord#initializeBinding(String, Object)}
-     * <p>
-     * stack: [] {@literal ->} []
-     * 
-     * @param envRec
-     *            the variable which holds the environment record
-     * @param name
-     *            the binding name
-     * @param value
-     *            the variable which holds the binding value
-     * @param mv
-     *            the instruction visitor
-     */
-    protected final void initializeBinding(Variable<? extends EnvironmentRecord> envRec, Name name,
-            Variable<?> value, InstructionVisitor mv) {
-        mv.load(envRec);
-        mv.aconst(name.getIdentifier());
-        mv.load(value);
-        mv.invoke(Methods.EnvironmentRecord_initializeBinding);
-    }
-
-    /**
-     * Emit function call for: {@link EnvironmentRecord#initializeBinding(String, Object)}
-     * <p>
-     * stack: [envRec, name, obj] {@literal ->} []
-     * 
-     * @param mv
-     *            the instruction visitor
-     */
-    protected final void initializeBinding(InstructionVisitor mv) {
-        mv.invoke(Methods.EnvironmentRecord_initializeBinding);
-    }
-
-    /**
-     * Emit fused function call for: {@link EnvironmentRecord#getBindingValue(String, boolean)} and
-     * {@link EnvironmentRecord#initializeBinding(String, Object)}
-     * <p>
-     * stack: [] {@literal ->} []
-     * 
-     * @param targetEnvRec
-     *            the variable which holds the target environment record
-     * @param sourceEnvRec
-     *            the variable which holds the source environment record
-     * @param name
-     *            the binding name
-     * @param strict
-     *            the strict-mode flag
-     * @param mv
-     *            the instruction visitor
-     */
-    protected final void initializeBindingFrom(Variable<? extends EnvironmentRecord> targetEnvRec,
-            Variable<? extends EnvironmentRecord> sourceEnvRec, Name name, boolean strict,
-            InstructionVisitor mv) {
-        mv.load(targetEnvRec);
-        mv.aconst(name.getIdentifier());
-        {
-            mv.load(sourceEnvRec);
-            mv.aconst(name.getIdentifier());
-            mv.iconst(strict);
-            mv.invoke(Methods.EnvironmentRecord_getBindingValue);
-        }
-        mv.invoke(Methods.EnvironmentRecord_initializeBinding);
-    }
-
-    /**
-     * Emit function call for: {@link EnvironmentRecord#setMutableBinding(String, Object, boolean)}
-     * <p>
-     * stack: [obj] {@literal ->} []
-     * 
-     * @param envRec
-     *            the variable which holds the environment record
-     * @param name
-     *            the binding name
-     * @param value
-     *            the value
-     * @param strict
-     *            the strict-mode flag
-     * @param mv
-     *            the instruction visitor
-     */
-    protected final void setMutableBinding(Variable<? extends EnvironmentRecord> envRec, Name name,
-            Variable<?> value, boolean strict, InstructionVisitor mv) {
-        mv.load(envRec);
-        mv.aconst(name.getIdentifier());
-        mv.load(value);
-        mv.iconst(strict);
-        mv.invoke(Methods.EnvironmentRecord_setMutableBinding);
-    }
-
-    /**
      * Emit function call for: {@link ExecutionContext#getLexicalEnvironment()}
      * <p>
-     * stack: [] {@literal ->} [env]
+     * stack: [] {@literal ->} []
      * 
      * @param context
      *            the variable which holds the execution context
@@ -341,7 +118,6 @@ abstract class DeclarationBindingInstantiationGenerator {
      */
     protected final void getLexicalEnvironment(Variable<ExecutionContext> context,
             Variable<? extends LexicalEnvironment<?>> env, InstructionVisitor mv) {
-        // stack: [] -> []
         mv.load(context);
         mv.invoke(Methods.ExecutionContext_getLexicalEnvironment);
         mv.store(env);
@@ -350,7 +126,7 @@ abstract class DeclarationBindingInstantiationGenerator {
     /**
      * Emit function call for: {@link ExecutionContext#getVariableEnvironment()}
      * <p>
-     * stack: [] {@literal ->} [env]
+     * stack: [] {@literal ->} []
      * 
      * @param context
      *            the variable which holds the execution context
@@ -361,7 +137,6 @@ abstract class DeclarationBindingInstantiationGenerator {
      */
     protected final void getVariableEnvironment(Variable<ExecutionContext> context,
             Variable<? extends LexicalEnvironment<?>> env, InstructionVisitor mv) {
-        // stack: [] -> []
         mv.load(context);
         mv.invoke(Methods.ExecutionContext_getVariableEnvironment);
         mv.store(env);
@@ -522,7 +297,7 @@ abstract class DeclarationBindingInstantiationGenerator {
      * envRec.createGlobalFunctionBinding(name, functionObject, deletableBindings)
      * </code>
      * <p>
-     * stack: [fo] {@literal ->} []
+     * stack: [] {@literal ->} []
      * 
      * @param envRec
      *            the variable which holds the environment record
@@ -530,18 +305,19 @@ abstract class DeclarationBindingInstantiationGenerator {
      *            the function node
      * @param name
      *            the binding name
+     * @param fo
+     *            the function object
      * @param deletableBindings
      *            the variable which holds the deletable flag
      * @param mv
      *            the instruction visitor
      */
     protected final void createGlobalFunctionBinding(Variable<GlobalEnvironmentRecord> envRec,
-            HoistableDeclaration node, Name name, boolean deletableBindings, InstructionVisitor mv) {
-        // stack: [fo] -> []
+            HoistableDeclaration node, Name name, Variable<FunctionObject> fo,
+            boolean deletableBindings, InstructionVisitor mv) {
         mv.load(envRec);
-        mv.swap();
         mv.aconst(name.getIdentifier());
-        mv.swap();
+        mv.load(fo);
         mv.iconst(deletableBindings);
         mv.lineInfo(node);
         mv.invoke(Methods.GlobalEnvironmentRecord_createGlobalFunctionBinding);

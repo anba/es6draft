@@ -11,6 +11,7 @@ import static com.github.anba.es6draft.semantics.StaticSemantics.IsStrict;
 import com.github.anba.es6draft.ast.FunctionDeclaration;
 import com.github.anba.es6draft.ast.FunctionExpression;
 import com.github.anba.es6draft.ast.FunctionNode;
+import com.github.anba.es6draft.ast.FunctionNode.ThisMode;
 import com.github.anba.es6draft.ast.MethodDefinition;
 import com.github.anba.es6draft.compiler.CodeGenerator.FunctionName;
 import com.github.anba.es6draft.compiler.assembler.Code.MethodCode;
@@ -49,12 +50,7 @@ final class FunctionCodeGenerator {
         // ExecutionContext
         static final MethodName ExecutionContext_newFunctionExecutionContext = MethodName
                 .findStatic(Types.ExecutionContext, "newFunctionExecutionContext", Type.methodType(
-                        Types.ExecutionContext, Types.FunctionObject, Types.Constructor,
-                        Types.Object));
-
-        static final MethodName ExecutionContext_newFunctionExecutionContextConstructDerived = MethodName
-                .findStatic(Types.ExecutionContext, "newFunctionExecutionContext", Type.methodType(
-                        Types.ExecutionContext, Types.FunctionObject, Types.Constructor));
+                        Types.ExecutionContext, Types.FunctionObject, Types.LexicalEnvironment));
 
         static final MethodName ExecutionContext_getCurrentFunction = MethodName
                 .findVirtual(Types.ExecutionContext, "getCurrentFunction",
@@ -83,6 +79,16 @@ final class FunctionCodeGenerator {
         static final MethodName FunctionObject_restoreLegacyProperties = MethodName.findVirtual(
                 Types.FunctionObject, "restoreLegacyProperties",
                 Type.methodType(Type.VOID_TYPE, Types.Object, Types.Object));
+
+        // LexicalEnvironment
+        static final MethodName LexicalEnvironment_newFunctionEnvironment = MethodName.findStatic(
+                Types.LexicalEnvironment, "newFunctionEnvironment", Type.methodType(
+                        Types.LexicalEnvironment, Types.FunctionObject, Types.Constructor,
+                        Types.Object));
+
+        static final MethodName LexicalEnvironment_newFunctionEnvironment_ConstructDerived = MethodName
+                .findStatic(Types.LexicalEnvironment, "newFunctionEnvironment", Type.methodType(
+                        Types.LexicalEnvironment, Types.FunctionObject, Types.Constructor));
 
         // OrdinaryAsyncFunction
         static final MethodName OrdinaryAsyncFunction_EvaluateBody = MethodName.findStatic(
@@ -113,6 +119,11 @@ final class FunctionCodeGenerator {
         static final MethodName TailCallInvocation_toConstructTailCallWithEnvironment = MethodName
                 .findVirtual(Types.TailCallInvocation, "toConstructTailCall",
                         Type.methodType(Types.TailCallInvocation, Types.FunctionEnvironmentRecord));
+
+        // class: ScriptRuntime
+        static final MethodName ScriptRuntime_functionThisValue = MethodName.findStatic(
+                Types.ScriptRuntime, "functionThisValue",
+                Type.methodType(Types.ScriptObject, Types.FunctionObject, Types.Object));
     }
 
     private static final int FUNCTION = 0;
@@ -350,7 +361,7 @@ final class FunctionCodeGenerator {
         mv.mark(startFinally);
         {
             // (3) Create a new ExecutionContext
-            prepareCallAndBindThis(calleeContext, function, null, thisValue, mv);
+            prepareCallAndBindThis(node, calleeContext, function, null, thisValue, mv);
 
             // (4) Call OrdinaryCallEvaluateBody
             ordinaryCallEvaluateBody(node, calleeContext, function, arguments, mv);
@@ -397,7 +408,7 @@ final class FunctionCodeGenerator {
 
         // (1) Create a new ExecutionContext
         /* steps 1-6 */
-        prepareCallAndBindThis(calleeContext, function, null, thisValue, mv);
+        prepareCallAndBindThis(node, calleeContext, function, null, thisValue, mv);
 
         // (2) Call OrdinaryCallEvaluateBody
         /* steps 7-8 */
@@ -488,7 +499,7 @@ final class FunctionCodeGenerator {
             ordinaryCreateFromConstructor(callerContext, newTarget, thisArg, mv);
 
             // (4) Create a new ExecutionContext
-            prepareCallAndBindThis(calleeContext, function, newTarget, thisArg, mv);
+            prepareCallAndBindThis(node, calleeContext, function, newTarget, thisArg, mv);
 
             // (5) Call OrdinaryCallEvaluateBody
             ordinaryCallEvaluateBody(node, calleeContext, function, arguments, mv);
@@ -546,7 +557,7 @@ final class FunctionCodeGenerator {
 
         // (1) Create a new ExecutionContext
         /* steps 6-10 */
-        prepareCallAndBindThis(calleeContext, function, newTarget, thisArgument, mv);
+        prepareCallAndBindThis(node, calleeContext, function, newTarget, thisArgument, mv);
 
         // (2) Call OrdinaryCallEvaluateBody
         /* steps 11-12 */
@@ -588,7 +599,7 @@ final class FunctionCodeGenerator {
         // (1) Create a new ExecutionContext
         /* steps 1-5 (not applicable) */
         /* steps 6-7 */
-        prepareCall(calleeContext, function, newTarget, mv);
+        prepareCall(node, calleeContext, function, newTarget, mv);
         /* steps 8-10 (not applicable) */
 
         // (2) Call OrdinaryCallEvaluateBody
@@ -624,7 +635,7 @@ final class FunctionCodeGenerator {
                 ExecutionContext.class);
 
         // (1) Create a new ExecutionContext
-        prepareCallAndBindThis(calleeContext, function, null, thisValue, mv);
+        prepareCallAndBindThis(node, calleeContext, function, null, thisValue, mv);
 
         // (2) Perform FunctionDeclarationInstantiation
         functionDeclarationInstantiation(node, calleeContext, function, arguments, mv);
@@ -666,7 +677,7 @@ final class FunctionCodeGenerator {
         // 9.2.4 FunctionAllocate - Async functions are always derived constructor kinds.
 
         // (1) Create a new ExecutionContext
-        prepareCall(calleeContext, function, newTarget, mv);
+        prepareCall(node, calleeContext, function, newTarget, mv);
 
         // (2) Perform OrdinaryCallEvaluateBody - FunctionDeclarationInstantiation
         functionDeclarationInstantiation(node, calleeContext, function, arguments, mv);
@@ -703,7 +714,7 @@ final class FunctionCodeGenerator {
                 ExecutionContext.class);
 
         // (1) Create a new ExecutionContext
-        prepareCallAndBindThis(calleeContext, generator, null, thisValue, mv);
+        prepareCallAndBindThis(node, calleeContext, generator, null, thisValue, mv);
 
         // (2) Perform OrdinaryCallEvaluateBody - FunctionDeclarationInstantiation
         functionDeclarationInstantiation(node, calleeContext, generator, arguments, mv);
@@ -744,7 +755,7 @@ final class FunctionCodeGenerator {
         // 9.2.4 FunctionAllocate - Generator functions are always derived constructor kinds.
 
         // (1) Create a new ExecutionContext
-        prepareCall(calleeContext, generator, newTarget, mv);
+        prepareCall(node, calleeContext, generator, newTarget, mv);
 
         // (2) Perform OrdinaryCallEvaluateBody - FunctionDeclarationInstantiation
         functionDeclarationInstantiation(node, calleeContext, generator, arguments, mv);
@@ -759,13 +770,16 @@ final class FunctionCodeGenerator {
     }
 
     /**
-     * 9.2.2.1 PrepareForOrdinaryCall( F, newTarget )<br>
-     * 9.2.2.2 OrdinaryCallBindThis ( F, calleeContext, thisArgument )
+     * 9.2.1.1 PrepareForOrdinaryCall( F, newTarget )<br>
+     * 9.2.1.2 OrdinaryCallBindThis ( F, calleeContext, thisArgument )
      * 
      * <pre>
-     * calleeContext = newFunctionExecutionContext(function, newTarget, thisValue)
+     * funEnv = newFunctionEnvironment(function, newTarget, thisValue)
+     * calleeContext = newFunctionExecutionContext(function, funEnv)
      * </pre>
      * 
+     * @param node
+     *            the function node
      * @param calleeContext
      *            the variable which holds the callee context
      * @param function
@@ -777,27 +791,36 @@ final class FunctionCodeGenerator {
      * @param mv
      *            the instruction visitor
      */
-    private void prepareCallAndBindThis(Variable<ExecutionContext> calleeContext,
-            Variable<? extends FunctionObject> function, Variable<Constructor> newTarget,
-            Variable<? extends Object> thisArgument, InstructionVisitor mv) {
+    private void prepareCallAndBindThis(FunctionNode node,
+            Variable<ExecutionContext> calleeContext, Variable<? extends FunctionObject> function,
+            Variable<Constructor> newTarget, Variable<? extends Object> thisArgument,
+            InstructionVisitor mv) {
         mv.load(function);
-        if (newTarget != null) {
-            mv.load(newTarget);
-        } else {
-            mv.anull();
+        {
+            // Create new function environment.
+            mv.load(function);
+            if (newTarget != null) {
+                mv.load(newTarget);
+            } else {
+                mv.anull();
+            }
+            ordinaryCallBindThis(node, function, thisArgument, mv);
+            mv.invoke(Methods.LexicalEnvironment_newFunctionEnvironment);
         }
-        mv.load(thisArgument);
         mv.invoke(Methods.ExecutionContext_newFunctionExecutionContext);
         mv.store(calleeContext);
     }
 
     /**
-     * 9.2.2.1 PrepareForOrdinaryCall( F, newTarget )
+     * 9.2.1.1 PrepareForOrdinaryCall( F, newTarget )
      * 
      * <pre>
-     * calleeContext = newFunctionExecutionContext(function, newTarget)
+     * funEnv = newFunctionEnvironment(function, newTarget)
+     * calleeContext = newFunctionExecutionContext(function, funEnv)
      * </pre>
      * 
+     * @param node
+     *            the function node
      * @param calleeContext
      *            the variable which holds the callee context
      * @param function
@@ -807,17 +830,59 @@ final class FunctionCodeGenerator {
      * @param mv
      *            the instruction visitor
      */
-    private void prepareCall(Variable<ExecutionContext> calleeContext,
+    private void prepareCall(FunctionNode node, Variable<ExecutionContext> calleeContext,
             Variable<? extends FunctionObject> function, Variable<Constructor> newTarget,
             InstructionVisitor mv) {
         mv.load(function);
-        mv.load(newTarget);
-        mv.invoke(Methods.ExecutionContext_newFunctionExecutionContextConstructDerived);
+        {
+            // Create new function environment.
+            mv.load(function);
+            mv.load(newTarget);
+            mv.invoke(Methods.LexicalEnvironment_newFunctionEnvironment_ConstructDerived);
+        }
+        mv.invoke(Methods.ExecutionContext_newFunctionExecutionContext);
         mv.store(calleeContext);
     }
 
     /**
-     * 9.2.2.3 OrdinaryCallEvaluateBody ( F, argumentsList )
+     * 9.2.1.2 OrdinaryCallBindThis ( F, calleeContext, thisArgument )
+     * 
+     * @param node
+     *            the function node
+     * @param function
+     *            the variable which holds the function object
+     * @param thisArgument
+     *            the variable which holds the thisArgument
+     * @param mv
+     *            the instruction visitor
+     */
+    private void ordinaryCallBindThis(FunctionNode node,
+            Variable<? extends FunctionObject> function, Variable<? extends Object> thisArgument,
+            InstructionVisitor mv) {
+        /* step 1 */
+        FunctionNode.ThisMode thisMode = node.getThisMode();
+        /* step 2 */
+        if (thisMode == ThisMode.Lexical) {
+            mv.anull();
+            return;
+        }
+        /* steps 3-4 (not applicable) */
+        /* steps 5-6 */
+        if (thisMode == ThisMode.Strict) {
+            /* step 5 */
+            mv.load(thisArgument);
+        } else {
+            /* step 6 */
+            mv.load(function);
+            mv.load(thisArgument);
+            mv.lineInfo(node);
+            mv.invoke(Methods.ScriptRuntime_functionThisValue);
+        }
+        /* steps 7-9 (not applicable) */
+    }
+
+    /**
+     * 9.2.1.3 OrdinaryCallEvaluateBody ( F, argumentsList )
      * 
      * @param node
      *            the function node

@@ -68,6 +68,7 @@ public final class Name implements Cloneable {
      * @return {@code true} if local name
      */
     public boolean isLocal() {
+        // FIXME: local a mis-nomer?
         return scope != null && !globalName && !lookupByName;
     }
 
@@ -90,8 +91,10 @@ public final class Name implements Cloneable {
      * @return {@code true} on success
      */
     public boolean resolve(Scope scope, boolean lookupByName) {
-        assert scope != null && !globalName;
+        // assert scope != null && !globalName;
         this.lookupByName |= lookupByName;
+        // FIXME: Remove assignment to scope, already performed by bind()
+        // TODO: requires bind() for global/module top level
         if (this.scope == null) {
             this.scope = scope;
             return true;

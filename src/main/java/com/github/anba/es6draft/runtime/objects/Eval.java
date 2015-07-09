@@ -6,8 +6,6 @@
  */
 package com.github.anba.es6draft.runtime.objects;
 
-import static com.github.anba.es6draft.runtime.ExecutionContext.newEvalExecutionContext;
-import static com.github.anba.es6draft.runtime.LexicalEnvironment.newDeclarativeEnvironment;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import java.util.EnumSet;
@@ -16,11 +14,8 @@ import com.github.anba.es6draft.Script;
 import com.github.anba.es6draft.compiler.CompilationException;
 import com.github.anba.es6draft.parser.Parser;
 import com.github.anba.es6draft.parser.ParserException;
-import com.github.anba.es6draft.runtime.DeclarativeEnvironmentRecord;
 import com.github.anba.es6draft.runtime.ExecutionContext;
-import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
 import com.github.anba.es6draft.runtime.internal.Source;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Type;
@@ -236,7 +231,6 @@ public final class Eval {
      */
     private static Object PerformEval(ExecutionContext cx, ExecutionContext caller, Object source,
             int flags) {
-        Realm evalRealm = cx.getRealm();
         boolean strictCaller = EvalFlags.Strict.isSet(flags);
         boolean direct = EvalFlags.Direct.isSet(flags);
         assert direct || cx == cx.getRealm().defaultContext() : "indirect eval with non-default context";
@@ -253,35 +247,8 @@ public final class Eval {
         if (script == null) {
             return UNDEFINED;
         }
-        /* step 5 */
-        RuntimeInfo.ScriptBody body = script.getScriptBody();
-        /* steps 6-7 */
-        boolean strictEval = body.isStrict();
-        // strictCaller implies IsStrict(script), but no such assertion in the specification
-        assert !strictCaller || strictEval : "'strictCaller => strictEval' does not hold";
-        /* step 8 (omitted) */
-        /* steps 9-10 */
-        LexicalEnvironment<DeclarativeEnvironmentRecord> lexEnv;
-        LexicalEnvironment<?> varEnv;
-        if (direct) {
-            /* step 9 */
-            lexEnv = newDeclarativeEnvironment(cx.getLexicalEnvironment());
-            varEnv = cx.getVariableEnvironment();
-        } else {
-            /* step 10 */
-            lexEnv = newDeclarativeEnvironment(evalRealm.getGlobalEnv());
-            varEnv = evalRealm.getGlobalEnv();
-        }
-        /* step 11 */
-        if (strictEval) {
-            varEnv = lexEnv;
-        }
-        /* steps 12-17 */
-        ExecutionContext evalCxt = newEvalExecutionContext(cx, script, varEnv, lexEnv);
-        /* step 18 */
-        body.evalDeclarationInstantiation(evalCxt);
-        /* steps 19-23 */
-        return script.evaluate(evalCxt);
+        /* steps 5-23 */
+        return script.evaluate(cx);
     }
 
     private static Script script(ExecutionContext cx, ExecutionContext caller, String sourceCode,

@@ -6,10 +6,6 @@
  */
 package com.github.anba.es6draft.runtime;
 
-import static com.github.anba.es6draft.runtime.AbstractOperations.ToObject;
-import static com.github.anba.es6draft.runtime.LexicalEnvironment.newDeclarativeEnvironment;
-import static com.github.anba.es6draft.runtime.LexicalEnvironment.newFunctionEnvironment;
-
 import com.github.anba.es6draft.Executable;
 import com.github.anba.es6draft.Module;
 import com.github.anba.es6draft.Script;
@@ -20,9 +16,7 @@ import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Reference;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
-import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
-import com.github.anba.es6draft.runtime.types.builtins.FunctionObject.ThisMode;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
@@ -70,6 +64,25 @@ public final class ExecutionContext {
      */
     public OrdinaryObject getIntrinsic(Intrinsics id) {
         return realm.getIntrinsic(id);
+    }
+
+    /**
+     * Returns the requested intrinsic from this execution context's {@code Realm}.
+     * 
+     * @param <T>
+     *            the intrisic's type
+     * @param id
+     *            the intrinsic identifier
+     * @param klass
+     *            the intrinsic's class
+     * @return the intrinsic object
+     * @see Realm#getIntrinsic(Intrinsics)
+     */
+    @SuppressWarnings("unchecked")
+    public <T extends OrdinaryObject> OrdinaryObject getIntrinsic(Intrinsics id, Class<T> klass) {
+        OrdinaryObject intrinsic = realm.getIntrinsic(id);
+        assert klass.isInstance(intrinsic) : "Unexpected type: " + intrinsic.getClass();
+        return (T) intrinsic;
     }
 
     /**
@@ -354,8 +367,7 @@ public final class ExecutionContext {
      * @return the new eval execution context
      */
     public static ExecutionContext newEvalExecutionContext(ExecutionContext callerContext,
-            Script evalScript, LexicalEnvironment<?> varEnv,
-            LexicalEnvironment<DeclarativeEnvironmentRecord> lexEnv) {
+            Script evalScript, LexicalEnvironment<?> varEnv, LexicalEnvironment<?> lexEnv) {
         /* steps 12-17 */
         return new ExecutionContext(callerContext.realm, varEnv, lexEnv, callerContext.funVarEnv,
                 evalScript, callerContext.function);
@@ -373,52 +385,16 @@ public final class ExecutionContext {
      * 
      * @param f
      *            the callee function object
-     * @param newTarget
-     *            the newTarget for the function call
+     * @param localEnv
+     *            the function environment
      * @return the new function execution context
      */
     public static ExecutionContext newFunctionExecutionContext(FunctionObject f,
-            Constructor newTarget) {
-        /* steps 1-2 (not applicable) */
-        /* step 5 */
-        Realm calleeRealm = f.getRealm();
-        /* steps 7-9 */
-        LexicalEnvironment<FunctionEnvironmentRecord> localEnv = newFunctionEnvironment(f,
-                newTarget);
-        /* steps 3-4, 6, 10-14 */
-        return new ExecutionContext(calleeRealm, localEnv, localEnv, localEnv, f.getExecutable(), f);
-    }
-
-    /**
-     * <ul>
-     * <li>9 Ordinary and Exotic Objects Behaviours
-     * <ul>
-     * <li>9.2 ECMAScript Function Objects
-     * </ul>
-     * </ul>
-     * <p>
-     * 9.2.2.1 PrepareForOrdinaryCall( F, newTarget )<br>
-     * 9.2.2.2 OrdinaryCallBindThis ( F, calleeContext, thisArgument )
-     * 
-     * @param f
-     *            the callee function object
-     * @param newTarget
-     *            the newTarget for the function call
-     * @param thisArgument
-     *            the this-argument for the function call
-     * @return the new function execution context
-     */
-    public static ExecutionContext newFunctionExecutionContext(FunctionObject f,
-            Constructor newTarget, Object thisArgument) {
-        /* steps 1-2 (not applicable) */
-        /* step 5 */
-        Realm calleeRealm = f.getRealm();
-        Object thisValue = bindThisValue(f, thisArgument);
-        /* step 7 */
-        LexicalEnvironment<FunctionEnvironmentRecord> localEnv = newFunctionEnvironment(f,
-                newTarget, thisValue);
-        /* steps 3-4, 6, 10-13 */
-        return new ExecutionContext(calleeRealm, localEnv, localEnv, localEnv, f.getExecutable(), f);
+            LexicalEnvironment<FunctionEnvironmentRecord> localEnv) {
+        /* steps 1-2, 7 (not applicable) */
+        /* steps 3-6, 8-13 */
+        return new ExecutionContext(f.getRealm(), localEnv, localEnv, localEnv, f.getExecutable(),
+                f);
     }
 
     /**
@@ -434,43 +410,7 @@ public final class ExecutionContext {
      */
     public static ExecutionContext newScriptingExecutionContext(Realm realm, Script script,
             LexicalEnvironment<?> varEnv) {
-        LexicalEnvironment<DeclarativeEnvironmentRecord> lexEnv = newDeclarativeEnvironment(varEnv);
-        return new ExecutionContext(realm, varEnv, lexEnv, null, script, null);
-    }
-
-    /**
-     * 9.2.2.2 OrdinaryCallBindThis ( F, calleeContext, thisArgument )
-     * 
-     * @param calleeRealm
-     * @param f
-     * @param thisArgument
-     * @return
-     */
-    private static Object bindThisValue(FunctionObject f, Object thisArgument) {
-        /* step 1 */
-        ThisMode thisMode = f.getThisMode();
-        /* step 2 */
-        if (thisMode == ThisMode.Lexical) {
-            return null;
-        }
-        /* step 3 */
-        Realm calleeRealm = f.getRealm();
-        /* step 4 (not applicable) */
-        /* steps 5-6 */
-        Object thisValue;
-        if (thisMode == ThisMode.Strict) {
-            /* step 5 */
-            thisValue = thisArgument;
-        } else {
-            /* step 6 */
-            if (Type.isUndefinedOrNull(thisArgument)) {
-                thisValue = calleeRealm.getGlobalThis();
-            } else {
-                thisValue = ToObject(calleeRealm.defaultContext(), thisArgument);
-            }
-        }
-        /* steps 7-9 (not applicable) */
-        return thisValue;
+        return new ExecutionContext(realm, varEnv, varEnv, null, script, null);
     }
 
     /**

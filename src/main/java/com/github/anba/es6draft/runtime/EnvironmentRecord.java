@@ -56,7 +56,7 @@ public interface EnvironmentRecord {
     boolean hasBinding(String name);
 
     /**
-     * CreateMutableBinding(N,D)
+     * CreateMutableBinding(N, D)
      * 
      * @param name
      *            the binding name
@@ -66,7 +66,7 @@ public interface EnvironmentRecord {
     void createMutableBinding(String name, boolean deletable);
 
     /**
-     * CreateImmutableBinding(N)
+     * CreateImmutableBinding(N, S)
      * 
      * @param name
      *            the binding name
@@ -76,7 +76,7 @@ public interface EnvironmentRecord {
     void createImmutableBinding(String name, boolean strict);
 
     /**
-     * InitializeBinding(N,V)
+     * InitializeBinding(N, V)
      * 
      * @param name
      *            the binding name
@@ -86,7 +86,7 @@ public interface EnvironmentRecord {
     void initializeBinding(String name, Object value);
 
     /**
-     * SetMutableBinding(N,V,S)
+     * SetMutableBinding(N, V, S)
      * 
      * @param name
      *            the binding name
@@ -98,7 +98,7 @@ public interface EnvironmentRecord {
     void setMutableBinding(String name, Object value, boolean strict);
 
     /**
-     * GetBindingValue(N,S)
+     * GetBindingValue(N, S)
      * 
      * @param name
      *            the binding name

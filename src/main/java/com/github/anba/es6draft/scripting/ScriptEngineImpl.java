@@ -53,17 +53,16 @@ import com.github.anba.es6draft.runtime.types.ScriptObject;
 final class ScriptEngineImpl extends AbstractScriptEngine implements ScriptEngine, Compilable,
         Invocable {
     private final ScriptEngineFactoryImpl factory;
-    private final ScriptLoader evalScriptLoader;
+    private final ScriptLoader scriptingLoader;
     private final World<ScriptingGlobalObject> world;
 
     ScriptEngineImpl(ScriptEngineFactoryImpl factory) {
         this.factory = factory;
 
         // Scripting sources have an extra scope object before the global environment record, the
-        // ScriptContext object. To ensure this extra scope is properly handled, we use
-        // eval-declaration instead of the normal global declaration instantiation when evaluating
-        // the source code.
-        this.evalScriptLoader = new ScriptLoader(CompatibilityOption.WebCompatibility(),
+        // ScriptContext object. To ensure this extra scope is properly handled, we use the
+        // 'scripting' parser-option when evaluating the source code.
+        this.scriptingLoader = new ScriptLoader(CompatibilityOption.WebCompatibility(),
                 EnumSet.of(Parser.Option.Scripting), EnumSet.noneOf(Compiler.Option.class));
 
         ObjectAllocator<ScriptingGlobalObject> allocator = ScriptingGlobalObject
@@ -149,7 +148,7 @@ final class ScriptEngineImpl extends AbstractScriptEngine implements ScriptEngin
             throws javax.script.ScriptException {
         Source source = createSource(context);
         try {
-            return evalScriptLoader.script(source, sourceCode);
+            return scriptingLoader.script(source, sourceCode);
         } catch (ParserException e) {
             throw new javax.script.ScriptException(e.getMessage(), e.getFile(), e.getLine(),
                     e.getColumn());
@@ -161,7 +160,7 @@ final class ScriptEngineImpl extends AbstractScriptEngine implements ScriptEngin
     private Script script(Reader reader, ScriptContext context) throws javax.script.ScriptException {
         Source source = createSource(context);
         try {
-            return evalScriptLoader.script(source, reader);
+            return scriptingLoader.script(source, reader);
         } catch (ParserException e) {
             throw new javax.script.ScriptException(e.getMessage(), e.getFile(), e.getLine(),
                     e.getColumn());
@@ -173,11 +172,10 @@ final class ScriptEngineImpl extends AbstractScriptEngine implements ScriptEngin
     Object eval(Script script, ScriptContext context) throws javax.script.ScriptException {
         try {
             Realm realm = getEvalRealm(context);
-            ExecutionContext cx = realm.defaultContext();
-            LexicalEnvironment<ScriptContextEnvironmentRecord> varEnv = new LexicalEnvironment<>(
-                    realm.getGlobalEnv(), new ScriptContextEnvironmentRecord(cx, context));
-            ExecutionContext evalCxt = newScriptingExecutionContext(realm, script, varEnv);
-            script.getScriptBody().evalDeclarationInstantiation(evalCxt);
+            // Prepare a new execution context before calling the generated code.
+            ExecutionContext evalCxt = newScriptingExecutionContext(realm, script,
+                    new LexicalEnvironment<>(realm.getGlobalEnv(),
+                            new ScriptContextEnvironmentRecord(realm.defaultContext(), context)));
             Object result = script.evaluate(evalCxt);
             realm.getWorld().runEventLoop();
             return TypeConverter.toJava(result);

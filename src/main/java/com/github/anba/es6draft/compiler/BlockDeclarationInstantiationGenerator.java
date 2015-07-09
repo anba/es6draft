@@ -18,6 +18,7 @@ import com.github.anba.es6draft.ast.scope.Name;
 import com.github.anba.es6draft.compiler.assembler.Variable;
 import com.github.anba.es6draft.runtime.DeclarativeEnvironmentRecord;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
+import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
 
 /**
  * <h1>13 ECMAScript Language: Statements and Declarations</h1><br>
@@ -115,6 +116,7 @@ final class BlockDeclarationInstantiationGenerator extends DeclarationBindingIns
                 LexicalEnvironment.class).uncheckedCast();
         Variable<DeclarativeEnvironmentRecord> envRec = mv.newVariable("envRec",
                 DeclarativeEnvironmentRecord.class);
+        Variable<FunctionObject> fo = null;
 
         // stack: [env] -> []
         mv.store(env);
@@ -124,28 +126,28 @@ final class BlockDeclarationInstantiationGenerator extends DeclarationBindingIns
         for (Declaration d : declarations) {
             if (!(d instanceof HoistableDeclaration)) {
                 for (Name dn : BoundNames(d)) {
+                    BindingOp<DeclarativeEnvironmentRecord> op = BindingOp.of(envRec, dn);
                     if (IsConstantDeclaration(d)) {
                         // FIXME: spec bug (CreateImmutableBinding concrete method of `env`)
-                        createImmutableBinding(envRec, dn, true, mv);
+                        op.createImmutableBinding(envRec, dn, true, mv);
                     } else {
                         // FIXME: spec bug (CreateMutableBinding concrete method of `env`)
-                        createMutableBinding(envRec, dn, false, mv);
+                        op.createMutableBinding(envRec, dn, false, mv);
                     }
                 }
             } else {
                 Name fn = BoundName((HoistableDeclaration) d);
+                BindingOp<DeclarativeEnvironmentRecord> op = BindingOp.of(envRec, fn);
 
-                createMutableBinding(envRec, fn, false, mv);
+                op.createMutableBinding(envRec, fn, false, mv);
 
-                // stack: [] -> [envRec, name]
-                mv.load(envRec);
-                mv.aconst(fn.getIdentifier());
-
-                // stack: [envRec, name] -> [envRec, name, fo]
                 InstantiateFunctionObject(mv.executionContext(), env, d, mv);
+                if (fo == null) {
+                    fo = mv.newVariable("fo", FunctionObject.class);
+                }
+                mv.store(fo);
 
-                // stack: [envRec, name, fo] -> []
-                initializeBinding(mv);
+                op.initializeBinding(envRec, fn, fo, mv);
             }
         }
 

@@ -124,3 +124,5 @@ function testConcatAllParens() {
 testConcatAllParens();
 
 }
+
+assertEq((("" + "a") + ("0" + ("1" - "2"))), "a0-1");

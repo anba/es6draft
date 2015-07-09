@@ -51,7 +51,7 @@ public final class LocaleTest {
 
     private static Object eval(Realm realm, String sourceCode) {
         Source source = new Source("eval-locale-test", 1);
-        return Scripts.ScriptEvaluation(realm.getScriptLoader().script(source, sourceCode), realm);
+        return realm.getScriptLoader().script(source, sourceCode).evaluate(realm);
     }
 
     private enum Intl {

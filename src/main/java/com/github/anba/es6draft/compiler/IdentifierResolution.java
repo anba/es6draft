@@ -8,6 +8,7 @@ package com.github.anba.es6draft.compiler;
 
 import com.github.anba.es6draft.ast.BindingIdentifier;
 import com.github.anba.es6draft.ast.IdentifierReference;
+import com.github.anba.es6draft.ast.Node;
 import com.github.anba.es6draft.compiler.DefaultCodeGenerator.ValType;
 import com.github.anba.es6draft.compiler.assembler.MethodName;
 import com.github.anba.es6draft.compiler.assembler.Type;
@@ -17,6 +18,7 @@ import com.github.anba.es6draft.compiler.assembler.Type;
  */
 final class IdentifierResolution {
     private static final class Methods {
+        // class: ExecutionContext
         static final MethodName ExecutionContext_resolveBinding = MethodName.findVirtual(
                 Types.ExecutionContext, "resolveBinding",
                 Type.methodType(Types.Reference, Types.String, Type.BOOLEAN_TYPE));
@@ -26,35 +28,33 @@ final class IdentifierResolution {
                 Type.methodType(Types.Object, Types.String, Type.BOOLEAN_TYPE));
     }
 
-    ValType resolve(IdentifierReference node, ExpressionVisitor mv) {
-        mv.lineInfo(node);
-        return resolve(node.getName(), mv);
+    static ValType resolve(IdentifierReference node, ExpressionVisitor mv) {
+        return resolve(node, node.getName(), mv);
     }
 
-    ValType resolve(BindingIdentifier node, ExpressionVisitor mv) {
-        return resolve(node.getName().getIdentifier(), mv);
+    static ValType resolve(BindingIdentifier node, ExpressionVisitor mv) {
+        return resolve(node, node.getName().getIdentifier(), mv);
     }
 
-    ValType resolveValue(IdentifierReference node, ExpressionVisitor mv) {
-        mv.lineInfo(node);
-        return resolveValue(node.getName(), mv);
+    static ValType resolveValue(IdentifierReference node, ExpressionVisitor mv) {
+        return resolveValue(node, node.getName(), mv);
     }
 
-    private ValType resolve(String identifierName, ExpressionVisitor mv) {
+    private static ValType resolve(Node node, String identifierName, ExpressionVisitor mv) {
         mv.loadExecutionContext();
         mv.aconst(identifierName);
         mv.iconst(mv.isStrict());
+        mv.lineInfo(node);
         mv.invoke(Methods.ExecutionContext_resolveBinding);
-
         return ValType.Reference;
     }
 
-    private ValType resolveValue(String identifierName, ExpressionVisitor mv) {
+    private static ValType resolveValue(Node node, String identifierName, ExpressionVisitor mv) {
         mv.loadExecutionContext();
         mv.aconst(identifierName);
         mv.iconst(mv.isStrict());
+        mv.lineInfo(node);
         mv.invoke(Methods.ExecutionContext_resolveBindingValue);
-
         return ValType.Any;
     }
 }

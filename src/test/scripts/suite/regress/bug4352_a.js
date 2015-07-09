@@ -5,7 +5,7 @@
  * <https://github.com/anba/es6draft>
  */
 const {
-  fail
+  assertTrue
 } = Assert;
 
 // Annex E: Changed evaluation order in for-in statement
@@ -18,6 +18,8 @@ var p = {
     return {};
   }
 };
+var loopEntered = false;
 for (p.q.v in o) {
-  fail `unreachable`;
+  loopEntered = true;
 }
+assertTrue(loopEntered);

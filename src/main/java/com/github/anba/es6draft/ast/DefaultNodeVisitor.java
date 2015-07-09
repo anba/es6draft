@@ -289,11 +289,6 @@ public abstract class DefaultNodeVisitor<R, V> implements NodeVisitor<R, V> {
     }
 
     @Override
-    public R visit(ElementAccessorValue node, V value) {
-        return visit((ElementAccessor) node, value);
-    }
-
-    @Override
     public R visit(Elision node, V value) {
         return visit((Expression) node, value);
     }
@@ -406,11 +401,6 @@ public abstract class DefaultNodeVisitor<R, V> implements NodeVisitor<R, V> {
     @Override
     public R visit(IdentifierReference node, V value) {
         return visit((Expression) node, value);
-    }
-
-    @Override
-    public R visit(IdentifierReferenceValue node, V value) {
-        return visit((IdentifierReference) node, value);
     }
 
     @Override
@@ -559,11 +549,6 @@ public abstract class DefaultNodeVisitor<R, V> implements NodeVisitor<R, V> {
     }
 
     @Override
-    public R visit(PropertyAccessorValue node, V value) {
-        return visit((PropertyAccessor) node, value);
-    }
-
-    @Override
     public R visit(PropertyNameDefinition node, V value) {
         return visit((PropertyDefinition) node, value);
     }
@@ -619,11 +604,6 @@ public abstract class DefaultNodeVisitor<R, V> implements NodeVisitor<R, V> {
     }
 
     @Override
-    public R visit(SuperElementAccessorValue node, V value) {
-        return visit((SuperElementAccessor) node, value);
-    }
-
-    @Override
     public R visit(SuperNewExpression node, V value) {
         return visit((Expression) node, value);
     }
@@ -631,11 +611,6 @@ public abstract class DefaultNodeVisitor<R, V> implements NodeVisitor<R, V> {
     @Override
     public R visit(SuperPropertyAccessor node, V value) {
         return visit((Expression) node, value);
-    }
-
-    @Override
-    public R visit(SuperPropertyAccessorValue node, V value) {
-        return visit((SuperPropertyAccessor) node, value);
     }
 
     @Override

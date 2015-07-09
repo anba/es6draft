@@ -90,8 +90,6 @@ public interface IntNodeVisitor<V> {
 
     int visit(ElementAccessor node, V value);
 
-    int visit(ElementAccessorValue node, V value);
-
     int visit(Elision node, V value);
 
     int visit(EmptyExpression node, V value);
@@ -137,8 +135,6 @@ public interface IntNodeVisitor<V> {
     int visit(IdentifierName node, V value);
 
     int visit(IdentifierReference node, V value);
-
-    int visit(IdentifierReferenceValue node, V value);
 
     int visit(IfStatement node, V value);
 
@@ -198,8 +194,6 @@ public interface IntNodeVisitor<V> {
 
     int visit(PropertyAccessor node, V value);
 
-    int visit(PropertyAccessorValue node, V value);
-
     int visit(PropertyNameDefinition node, V value);
 
     int visit(PropertyValueDefinition node, V value);
@@ -222,13 +216,9 @@ public interface IntNodeVisitor<V> {
 
     int visit(SuperElementAccessor node, V value);
 
-    int visit(SuperElementAccessorValue node, V value);
-
     int visit(SuperNewExpression node, V value);
 
     int visit(SuperPropertyAccessor node, V value);
-
-    int visit(SuperPropertyAccessorValue node, V value);
 
     int visit(SwitchClause node, V value);
 

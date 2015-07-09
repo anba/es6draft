@@ -75,7 +75,7 @@ final class ArrayComprehensionGenerator extends ComprehensionGenerator {
     @Override
     protected Void visit(Expression node, ExpressionVisitor mv) {
         /* steps 1-3 */
-        expressionBoxedValue(node, mv);
+        expressionBoxed(node, mv);
         /* step 4 */
         mv.load(result);
         mv.swap();

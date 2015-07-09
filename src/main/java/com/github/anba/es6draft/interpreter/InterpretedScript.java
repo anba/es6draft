@@ -8,6 +8,7 @@ package com.github.anba.es6draft.interpreter;
 
 import com.github.anba.es6draft.Script;
 import com.github.anba.es6draft.runtime.ExecutionContext;
+import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
 import com.github.anba.es6draft.runtime.internal.RuntimeInfo.SourceObject;
 
@@ -32,7 +33,12 @@ public final class InterpretedScript implements Script {
     }
 
     @Override
+    public Object evaluate(Realm realm) {
+        return scriptBody.evaluate(realm.defaultContext(), this);
+    }
+
+    @Override
     public Object evaluate(ExecutionContext cx) {
-        return scriptBody.evaluate(cx);
+        return scriptBody.evaluate(cx, this);
     }
 }

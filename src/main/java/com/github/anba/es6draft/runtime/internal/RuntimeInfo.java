@@ -13,6 +13,7 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 
+import com.github.anba.es6draft.Script;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.ModuleEnvironmentRecord;
@@ -140,18 +141,13 @@ public final class RuntimeInfo {
      *            the source name
      * @param sourcePath
      *            the source path
-     * @param isStrict
-     *            the strict mode flag
-     * @param initialization
-     *            the initialization method handle
-     * @param handle
-     *            the code method handle
+     * @param evaluation
+     *            the script evaluation method handle
      * @return the new script object
      */
-    public static ScriptBody newScriptBody(String sourceName, String sourcePath, boolean isStrict,
-            MethodHandle initialization, MethodHandle handle) {
-        return new CompiledScriptBody(sourceName, sourcePath, isStrict, initialization, handle,
-                null);
+    public static ScriptBody newScriptBody(String sourceName, String sourcePath,
+            MethodHandle evaluation) {
+        return new CompiledScriptBody(sourceName, sourcePath, evaluation, null);
     }
 
     /**
@@ -161,20 +157,15 @@ public final class RuntimeInfo {
      *            the source name
      * @param sourcePath
      *            the source path
-     * @param isStrict
-     *            the strict mode flag
-     * @param initialization
-     *            the initialization method handle
-     * @param handle
-     *            the code method handle
+     * @param evaluation
+     *            the script evaluation method handle
      * @param debugInfo
      *            the debug info method handle
      * @return the new script object
      */
-    public static ScriptBody newScriptBody(String sourceName, String sourcePath, boolean isStrict,
-            MethodHandle initialization, MethodHandle handle, MethodHandle debugInfo) {
-        return new CompiledScriptBody(sourceName, sourcePath, isStrict, initialization, handle,
-                debugInfo);
+    public static ScriptBody newScriptBody(String sourceName, String sourcePath,
+            MethodHandle evaluation, MethodHandle debugInfo) {
+        return new CompiledScriptBody(sourceName, sourcePath, evaluation, debugInfo);
     }
 
     /**
@@ -201,53 +192,28 @@ public final class RuntimeInfo {
      */
     public interface ScriptBody extends SourceObject {
         /**
-         * Returns {@code true} if the script uses strict mode semantics.
-         * 
-         * @return {@code true} if the script is strict
-         */
-        boolean isStrict();
-
-        /**
-         * Performs 15.1.8 Runtime Semantics: GlobalDeclarationInstantiation.
+         * Evaluates the script.
          * 
          * @param cx
          *            the execution context
-         */
-        void globalDeclarationInstantiation(ExecutionContext cx);
-
-        /**
-         * Performs 18.2.1.2 Eval Declaration Instantiation.
-         * 
-         * @param cx
-         *            the execution context
-         */
-        void evalDeclarationInstantiation(ExecutionContext cx);
-
-        /**
-         * Performs 15.1.7 Runtime Semantics: Script Evaluation.
-         * 
-         * @param cx
-         *            the execution context
+         * @param script
+         *            the script
          * @return the evaluation result
          */
-        Object evaluate(ExecutionContext cx);
+        Object evaluate(ExecutionContext cx, Script script);
     }
 
     private static final class CompiledScriptBody implements ScriptBody {
         private final String sourceName;
         private final String sourceFile;
-        private final boolean isStrict;
-        private final MethodHandle initialization;
-        private final MethodHandle handle;
+        private final MethodHandle evaluation;
         private final MethodHandle debugInfo;
 
-        CompiledScriptBody(String sourceName, String sourceFile, boolean isStrict,
-                MethodHandle initialization, MethodHandle handle, MethodHandle debugInfo) {
+        CompiledScriptBody(String sourceName, String sourceFile, MethodHandle evaluation,
+                MethodHandle debugInfo) {
             this.sourceName = sourceName;
             this.sourceFile = sourceFile;
-            this.isStrict = isStrict;
-            this.initialization = initialization;
-            this.handle = handle;
+            this.evaluation = evaluation;
             this.debugInfo = debugInfo;
         }
 
@@ -257,36 +223,9 @@ public final class RuntimeInfo {
         }
 
         @Override
-        public boolean isStrict() {
-            return isStrict;
-        }
-
-        @Override
-        public void globalDeclarationInstantiation(ExecutionContext cx) {
+        public Object evaluate(ExecutionContext cx, Script script) {
             try {
-                initialization.invokeExact(cx);
-            } catch (RuntimeException | Error e) {
-                throw e;
-            } catch (Throwable e) {
-                throw new RuntimeException(e);
-            }
-        }
-
-        @Override
-        public void evalDeclarationInstantiation(ExecutionContext cx) {
-            try {
-                initialization.invokeExact(cx);
-            } catch (RuntimeException | Error e) {
-                throw e;
-            } catch (Throwable e) {
-                throw new RuntimeException(e);
-            }
-        }
-
-        @Override
-        public Object evaluate(ExecutionContext cx) {
-            try {
-                return handle.invokeExact(cx);
+                return evaluation.invokeExact(cx, script);
             } catch (RuntimeException | Error e) {
                 throw e;
             } catch (Throwable e) {
@@ -491,7 +430,12 @@ public final class RuntimeInfo {
         /**
          * Flag for native functions.
          */
-        Native(0x10000);
+        Native(0x10000),
+
+        /**
+         * Flag for functions with direct eval calls.
+         */
+        Eval(0x20000),
 
         ;
 
@@ -657,14 +601,14 @@ public final class RuntimeInfo {
         /**
          * (? extends FunctionObject, ExecutionContext, Constructor, Object[]) {@literal ->} Object.
          * 
-         * @return the method handle for normal construct calls
+         * @return the method handle for construct calls
          */
         MethodHandle constructMethod();
 
         /**
          * (ExecutionContext, ...?) {@literal ->} Object
          * 
-         * @return the method handle for tail calls
+         * @return the method handle for the function body
          */
         MethodHandle handle();
 

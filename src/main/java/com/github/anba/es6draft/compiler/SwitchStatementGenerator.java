@@ -10,7 +10,6 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
-import com.github.anba.es6draft.ast.AbruptNode.Abrupt;
 import com.github.anba.es6draft.ast.BinaryExpression;
 import com.github.anba.es6draft.ast.Expression;
 import com.github.anba.es6draft.ast.Node;
@@ -19,6 +18,7 @@ import com.github.anba.es6draft.ast.StringLiteral;
 import com.github.anba.es6draft.ast.SwitchClause;
 import com.github.anba.es6draft.ast.SwitchStatement;
 import com.github.anba.es6draft.ast.UnaryExpression;
+import com.github.anba.es6draft.ast.scope.BlockScope;
 import com.github.anba.es6draft.compiler.Labels.BreakLabel;
 import com.github.anba.es6draft.compiler.StatementGenerator.Completion;
 import com.github.anba.es6draft.compiler.assembler.Jump;
@@ -145,7 +145,7 @@ final class SwitchStatementGenerator extends
     @Override
     public Completion visit(SwitchStatement node, StatementVisitor mv) {
         // stack -> switchValue
-        ValType switchValueType = expressionValue(node.getExpression(), mv);
+        ValType switchValueType = expression(node.getExpression(), mv);
 
         SwitchType type = SwitchType.of(node);
         boolean defaultOrReturn = false;
@@ -189,8 +189,9 @@ final class SwitchStatementGenerator extends
             mv.store(switchValue);
         }
 
-        if (node.getScope().isPresent()) {
-            newDeclarativeEnvironment(mv);
+        BlockScope scope = node.getScope();
+        if (scope.isPresent()) {
+            newDeclarativeEnvironment(scope, mv);
             codegen.blockInit(node, mv);
             pushLexicalEnvironment(mv);
         }
@@ -206,12 +207,12 @@ final class SwitchStatementGenerator extends
         if (!defaultClausePresent) {
             mv.mark(lblExit);
         }
-        if (node.getScope().isPresent() && !result.isAbrupt()) {
+        if (scope.isPresent() && !result.isAbrupt()) {
             popLexicalEnvironment(mv);
         }
         if (lblBreak.isTarget()) {
             mv.mark(lblBreak);
-            restoreEnvironment(node, Abrupt.Break, savedEnv, mv);
+            restoreEnvironment(savedEnv, mv);
         }
         mv.exitVariableScope();
 
@@ -387,7 +388,7 @@ final class SwitchStatementGenerator extends
             if (expr != null) {
                 mv.load(switchValue);
                 // 13.11.10 Runtime Semantics: CaseSelectorEvaluation
-                expressionBoxedValue(expr, mv);
+                expressionBoxed(expr, mv);
                 invokeDynamicOperator(BinaryExpression.Operator.SHEQ, mv);
                 mv.ifne(caseLabel);
             }

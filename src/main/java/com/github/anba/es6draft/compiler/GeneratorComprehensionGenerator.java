@@ -37,7 +37,7 @@ final class GeneratorComprehensionGenerator extends ComprehensionGenerator {
     @Override
     protected Void visit(Expression node, ExpressionVisitor mv) {
         /* steps 1-3 */
-        expressionBoxedValue(node, mv);
+        expressionBoxed(node, mv);
         /* step 4 (not applicable) */
         /* steps 5-8 */
         yield(node, mv);

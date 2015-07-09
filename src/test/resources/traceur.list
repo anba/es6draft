@@ -29,6 +29,9 @@ feature/Classes/Error_NoSuperInDerivedClass.js
 # invalid test, `function*g(){ return {yield} }` is not allowed
 feature/ObjectInitializerShorthand/StrictKeyword.js
 
+# async function have own prototype
+feature/AsyncFunctions/Prototype.js
+
 
 ############################################
 # Implementation specific differences      #

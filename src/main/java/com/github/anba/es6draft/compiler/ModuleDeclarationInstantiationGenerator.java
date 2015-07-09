@@ -30,7 +30,9 @@ import com.github.anba.es6draft.runtime.modules.ExportEntry;
 import com.github.anba.es6draft.runtime.modules.ImportEntry;
 import com.github.anba.es6draft.runtime.modules.ModuleExport;
 import com.github.anba.es6draft.runtime.modules.SourceTextModuleRecord;
+import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Undefined;
+import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
 
 /**
  * <h1>15 ECMAScript Language: Scripts and Modules</h1><br>
@@ -108,6 +110,8 @@ final class ModuleDeclarationInstantiationGenerator extends
         getEnvironmentRecord(env, envRec, mv);
 
         Variable<ModuleExport> resolved = mv.newVariable("resolved", ModuleExport.class);
+        Variable<ScriptObject> namespace = null;
+        Variable<FunctionObject> fo = null;
 
         Variable<Undefined> undef = mv.newVariable("undef", Undefined.class);
         mv.loadUndefined();
@@ -126,17 +130,20 @@ final class ModuleDeclarationInstantiationGenerator extends
         for (ImportEntry importEntry : moduleRecord.getImportEntries()) {
             mv.lineInfo(importEntry.getLine());
             if (importEntry.isStarImport()) {
-                createImmutableBinding(envRec, importEntry.getLocalName(), true, mv);
+                Name localName = new Name(importEntry.getLocalName());
+                BindingOp<ModuleEnvironmentRecord> op = BindingOp.of(envRec, localName);
+                op.createImmutableBinding(envRec, localName, true, mv);
 
-                mv.load(envRec);
-                mv.aconst(importEntry.getLocalName());
-                {
-                    mv.load(context);
-                    mv.load(moduleRec);
-                    mv.aconst(importEntry.getModuleRequest());
-                    mv.invoke(Methods.ScriptRuntime_getModuleNamespace);
+                mv.load(context);
+                mv.load(moduleRec);
+                mv.aconst(importEntry.getModuleRequest());
+                mv.invoke(Methods.ScriptRuntime_getModuleNamespace);
+                if (namespace == null) {
+                    namespace = mv.newVariable("namespace", ScriptObject.class);
                 }
-                initializeBinding(mv);
+                mv.store(namespace);
+
+                op.initializeBinding(envRec, localName, namespace, mv);
             } else {
                 mv.load(moduleRec);
                 mv.aconst(importEntry.getModuleRequest());
@@ -153,8 +160,9 @@ final class ModuleDeclarationInstantiationGenerator extends
         for (StatementListItem d : varDeclarations) {
             assert d instanceof VariableStatement;
             for (Name dn : BoundNames((VariableStatement) d)) {
-                createMutableBinding(envRec, dn, false, mv);
-                initializeBinding(envRec, dn, undef, mv);
+                BindingOp<ModuleEnvironmentRecord> op = BindingOp.of(envRec, dn);
+                op.createMutableBinding(envRec, dn, false, mv);
+                op.initializeBinding(envRec, dn, undef, mv);
             }
         }
         /* step 15 */
@@ -162,32 +170,24 @@ final class ModuleDeclarationInstantiationGenerator extends
         /* step 16 */
         for (Declaration d : lexDeclarations) {
             for (Name dn : BoundNames(d)) {
+                BindingOp<ModuleEnvironmentRecord> op = BindingOp.of(envRec, dn);
                 if (d.isConstDeclaration()) {
-                    createImmutableBinding(envRec, dn, true, mv);
+                    op.createImmutableBinding(envRec, dn, true, mv);
                 } else {
-                    createMutableBinding(envRec, dn, false, mv);
+                    op.createMutableBinding(envRec, dn, false, mv);
                 }
-
                 if (d instanceof HoistableDeclaration) {
-                    // stack: [] -> [envRec, name]
-                    mv.load(envRec);
-                    mv.aconst(dn.getIdentifier());
-
-                    // stack: [envRec, name] -> [envRec, name, fo]
                     InstantiateFunctionObject(context, env, d, mv);
-
-                    // stack: [envRec, name, fo] -> []
-                    initializeBinding(mv);
+                    if (fo == null) {
+                        fo = mv.newVariable("fo", FunctionObject.class);
+                    }
+                    mv.store(fo);
+                    op.initializeBinding(envRec, dn, fo, mv);
                 }
             }
         }
         /* step 17 */
         mv._return();
-    }
-
-    private void createImmutableBinding(Variable<ModuleEnvironmentRecord> envRec, String name,
-            boolean strict, InstructionVisitor mv) {
-        createImmutableBinding(envRec, new Name(name), strict, mv);
     }
 
     private void createImportBinding(Variable<ExecutionContext> context,

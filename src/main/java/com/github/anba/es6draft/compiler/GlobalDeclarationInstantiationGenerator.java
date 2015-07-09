@@ -27,6 +27,7 @@ import com.github.anba.es6draft.compiler.assembler.Variable;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.GlobalEnvironmentRecord;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
+import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
 
 /**
  * <h1>15 ECMAScript Language: Scripts and Modules</h1><br>
@@ -76,6 +77,7 @@ final class GlobalDeclarationInstantiationGenerator extends
                 LexicalEnvironment.class).uncheckedCast();
         Variable<GlobalEnvironmentRecord> envRec = mv.newVariable("envRec",
                 GlobalEnvironmentRecord.class);
+        Variable<FunctionObject> fo = null;
 
         /* steps 1-2 */
         getLexicalEnvironment(context, env, mv);
@@ -85,7 +87,7 @@ final class GlobalDeclarationInstantiationGenerator extends
         /* step 4 */
         HashSet<Name> varNames = new HashSet<>();
         /* step 5 */
-        // NB: Iterate over declarations to ensure proper iteration order.
+        // Iterate over declarations to be able to emit line-info entries.
         for (Declaration d : LexicallyScopedDeclarations(script)) {
             assert !(d instanceof HoistableDeclaration);
             for (Name name : BoundNames(d)) {
@@ -95,7 +97,7 @@ final class GlobalDeclarationInstantiationGenerator extends
             }
         }
         /* step 6 */
-        // NB: Iterate over declarations to ensure proper iteration order.
+        // Iterate over declarations to be able to emit line-info entries.
         for (StatementListItem item : VarScopedDeclarations(script)) {
             if (item instanceof VariableStatement) {
                 for (VariableDeclaration vd : ((VariableStatement) item).getElements()) {
@@ -130,6 +132,9 @@ final class GlobalDeclarationInstantiationGenerator extends
                 }
             }
         }
+        if (!functionsToInitialize.isEmpty()) {
+            fo = mv.newVariable("fo", FunctionObject.class);
+        }
         /* step 11 */
         LinkedHashMap<Name, VariableDeclaration> declaredVarNames = new LinkedHashMap<>();
         /* step 12 */
@@ -151,20 +156,22 @@ final class GlobalDeclarationInstantiationGenerator extends
         /* step 15 */
         for (Declaration d : lexDeclarations) {
             assert !(d instanceof HoistableDeclaration);
+            mv.lineInfo(d);
             for (Name dn : BoundNames(d)) {
+                BindingOp<GlobalEnvironmentRecord> op = BindingOp.of(envRec, dn);
                 if (d.isConstDeclaration()) {
-                    createImmutableBinding(envRec, d, dn, true, mv);
+                    op.createImmutableBinding(envRec, dn, true, mv);
                 } else {
-                    createMutableBinding(envRec, d, dn, false, mv);
+                    op.createMutableBinding(envRec, dn, false, mv);
                 }
             }
         }
         /* steps 16 */
         for (HoistableDeclaration f : functionsToInitialize) {
             Name fn = BoundName(f);
-            // stack: [] -> [fo]
             InstantiateFunctionObject(context, env, f, mv);
-            createGlobalFunctionBinding(envRec, f, fn, false, mv);
+            mv.store(fo);
+            createGlobalFunctionBinding(envRec, f, fn, fo, false, mv);
         }
         /* step 17 */
         for (Map.Entry<Name, VariableDeclaration> e : declaredVarNames.entrySet()) {

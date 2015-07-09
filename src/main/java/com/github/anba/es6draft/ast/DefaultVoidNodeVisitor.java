@@ -288,11 +288,6 @@ public abstract class DefaultVoidNodeVisitor<V> implements VoidNodeVisitor<V> {
     }
 
     @Override
-    public void visit(ElementAccessorValue node, V value) {
-        visit((ElementAccessor) node, value);
-    }
-
-    @Override
     public void visit(Elision node, V value) {
         visit((Expression) node, value);
     }
@@ -405,11 +400,6 @@ public abstract class DefaultVoidNodeVisitor<V> implements VoidNodeVisitor<V> {
     @Override
     public void visit(IdentifierReference node, V value) {
         visit((Expression) node, value);
-    }
-
-    @Override
-    public void visit(IdentifierReferenceValue node, V value) {
-        visit((IdentifierReference) node, value);
     }
 
     @Override
@@ -558,11 +548,6 @@ public abstract class DefaultVoidNodeVisitor<V> implements VoidNodeVisitor<V> {
     }
 
     @Override
-    public void visit(PropertyAccessorValue node, V value) {
-        visit((PropertyAccessor) node, value);
-    }
-
-    @Override
     public void visit(PropertyNameDefinition node, V value) {
         visit((PropertyDefinition) node, value);
     }
@@ -618,11 +603,6 @@ public abstract class DefaultVoidNodeVisitor<V> implements VoidNodeVisitor<V> {
     }
 
     @Override
-    public void visit(SuperElementAccessorValue node, V value) {
-        visit((SuperElementAccessor) node, value);
-    }
-
-    @Override
     public void visit(SuperNewExpression node, V value) {
         visit((Expression) node, value);
     }
@@ -630,11 +610,6 @@ public abstract class DefaultVoidNodeVisitor<V> implements VoidNodeVisitor<V> {
     @Override
     public void visit(SuperPropertyAccessor node, V value) {
         visit((Expression) node, value);
-    }
-
-    @Override
-    public void visit(SuperPropertyAccessorValue node, V value) {
-        visit((SuperPropertyAccessor) node, value);
     }
 
     @Override

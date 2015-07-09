@@ -6,8 +6,6 @@
  */
 package com.github.anba.es6draft.ast;
 
-import com.github.anba.es6draft.ast.synthetic.SuperElementAccessorValue;
-
 /**
  * <h1>12 ECMAScript Language: Expressions</h1><br>
  * <h2>12.3 Left-Hand-Side Expressions</h2>
@@ -15,7 +13,7 @@ import com.github.anba.es6draft.ast.synthetic.SuperElementAccessorValue;
  * <li>12.3.4 The super Keyword
  * </ul>
  */
-public class SuperElementAccessor extends LeftHandSideExpression {
+public final class SuperElementAccessor extends LeftHandSideExpression {
     private final Expression expression;
 
     public SuperElementAccessor(long beginPosition, long endPosition, Expression expression) {
@@ -25,11 +23,6 @@ public class SuperElementAccessor extends LeftHandSideExpression {
 
     public Expression getExpression() {
         return expression;
-    }
-
-    @Override
-    public Expression asValue() {
-        return new SuperElementAccessorValue(getBeginPosition(), getEndPosition(), expression);
     }
 
     @Override

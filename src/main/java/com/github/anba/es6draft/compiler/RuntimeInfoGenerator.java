@@ -44,12 +44,11 @@ final class RuntimeInfoGenerator {
         // class: RuntimeInfo
         static final MethodName RTI_newScriptBody = MethodName.findStatic(Types.RuntimeInfo,
                 "newScriptBody", Type.methodType(Types.RuntimeInfo$ScriptBody, Types.String,
-                        Types.String, Type.BOOLEAN_TYPE, Types.MethodHandle, Types.MethodHandle));
+                        Types.String, Types.MethodHandle));
 
         static final MethodName RTI_newScriptBodyDebug = MethodName.findStatic(Types.RuntimeInfo,
                 "newScriptBody", Type.methodType(Types.RuntimeInfo$ScriptBody, Types.String,
-                        Types.String, Type.BOOLEAN_TYPE, Types.MethodHandle, Types.MethodHandle,
-                        Types.MethodHandle));
+                        Types.String, Types.MethodHandle, Types.MethodHandle));
 
         static final MethodName RTI_newModuleBody = MethodName.findStatic(Types.RuntimeInfo,
                 "newModuleBody", Type.methodType(Types.RuntimeInfo$ModuleBody, Types.String,
@@ -138,6 +137,9 @@ final class RuntimeInfoGenerator {
         if (codegen.isEnabled(Parser.Option.NativeFunction)) {
             functionFlags |= FunctionFlags.Native.getValue();
         }
+        if (node.getScope().hasEval()) {
+            functionFlags |= FunctionFlags.Eval.getValue();
+        }
         return functionFlags;
     }
 
@@ -203,9 +205,7 @@ final class RuntimeInfoGenerator {
 
         asm.aconst(node.getSource().getName());
         asm.aconst(node.getSource().getFileString());
-        asm.iconst(IsStrict(node));
-        asm.handle(codegen.methodDesc(node, ScriptName.Init));
-        asm.handle(codegen.methodDesc(node, ScriptName.Code));
+        asm.handle(codegen.methodDesc(node, ScriptName.Eval));
         if (codegen.isEnabled(Compiler.Option.DebugInfo)) {
             debugInfo(node);
             asm.handle(codegen.methodDesc(node, ScriptName.DebugInfo));
@@ -260,6 +260,7 @@ final class RuntimeInfoGenerator {
     private void debugInfo(Script node) {
         debugInfo(codegen.newMethod(node, ScriptName.DebugInfo),
                 codegen.methodDesc(node, ScriptName.RTI),
+                codegen.methodDesc(node, ScriptName.Eval),
                 codegen.methodDesc(node, ScriptName.Init),
                 codegen.methodDesc(node, ScriptName.Code));
     }

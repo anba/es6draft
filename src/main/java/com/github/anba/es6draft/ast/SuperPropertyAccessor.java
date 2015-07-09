@@ -6,8 +6,6 @@
  */
 package com.github.anba.es6draft.ast;
 
-import com.github.anba.es6draft.ast.synthetic.SuperPropertyAccessorValue;
-
 /**
  * <h1>12 ECMAScript Language: Expressions</h1><br>
  * <h2>12.3 Left-Hand-Side Expressions</h2>
@@ -15,7 +13,7 @@ import com.github.anba.es6draft.ast.synthetic.SuperPropertyAccessorValue;
  * <li>12.3.4 The super Keyword
  * </ul>
  */
-public class SuperPropertyAccessor extends LeftHandSideExpression {
+public final class SuperPropertyAccessor extends LeftHandSideExpression {
     private final String name;
 
     public SuperPropertyAccessor(long beginPosition, long endPosition, String name) {
@@ -25,11 +23,6 @@ public class SuperPropertyAccessor extends LeftHandSideExpression {
 
     public String getName() {
         return name;
-    }
-
-    @Override
-    public Expression asValue() {
-        return new SuperPropertyAccessorValue(getBeginPosition(), getEndPosition(), name);
     }
 
     @Override

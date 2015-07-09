@@ -135,6 +135,8 @@ final class CodeGenerator {
                 .methodType(Types.RuntimeInfo$Function);
         static final MethodTypeDescriptor FunctionNode_DebugInfo = Type.methodType(Types.DebugInfo);
 
+        static final MethodTypeDescriptor Script_Eval = Type.methodType(Types.Object,
+                Types.ExecutionContext, Types.Script);
         static final MethodTypeDescriptor Script_Code = Type.methodType(Types.Object,
                 Types.ExecutionContext);
         static final MethodTypeDescriptor Script_Init = Type.methodType(Type.VOID_TYPE,
@@ -211,7 +213,7 @@ final class CodeGenerator {
     /* ----------------------------------------------------------------------------------------- */
 
     enum ScriptName {
-        Code, Init, RTI, DebugInfo
+        Eval, Code, Init, RTI, DebugInfo
     }
 
     enum ModuleName {
@@ -234,8 +236,10 @@ final class CodeGenerator {
 
     private String methodName(Script node, ScriptName name) {
         switch (name) {
+        case Eval:
+            return "!script";
         case Code:
-            return "~script";
+            return "~script_code";
         case Init:
             return "~script_init";
         case RTI:
@@ -439,6 +443,8 @@ final class CodeGenerator {
 
     private MethodTypeDescriptor methodDescriptor(Script node, ScriptName name) {
         switch (name) {
+        case Eval:
+            return MethodDescriptors.Script_Eval;
         case Code:
             return MethodDescriptors.Script_Code;
         case Init:
@@ -643,6 +649,9 @@ final class CodeGenerator {
         // runtime method
         scriptBody(node);
 
+        // eval method
+        new ScriptCodeGenerator(this).generate(node);
+
         // runtime-info method
         new RuntimeInfoGenerator(this).runtimeInfo(node);
 
@@ -824,14 +833,12 @@ final class CodeGenerator {
         body.lineInfo(node);
         body.begin();
 
-        // expression as value to ensure tail-call nodes set contains the value node
-        Expression expression = node.getExpression().asValue();
-
         // call expression in concise function body is always in tail-call position
+        Expression expression = node.getExpression();
         body.enterTailCallPosition(expression);
 
         body.enterFunction(node);
-        expressionBoxedValue(expression, body);
+        expressionBoxed(expression, body);
         body.exitFunction();
 
         body._return();
@@ -872,7 +879,7 @@ final class CodeGenerator {
         }
 
         body.enterFunction(node);
-        expressionBoxedValue(node.getExpression(), body);
+        expressionBoxed(node.getExpression(), body);
         body.exitFunction();
 
         body._return();
@@ -1025,7 +1032,7 @@ final class CodeGenerator {
             body.lineInfo(node);
             body.begin();
 
-            expressionBoxedValue(node.getExpression(), body);
+            expressionBoxed(node.getExpression(), body);
 
             body._return();
             body.end();
@@ -1070,15 +1077,8 @@ final class CodeGenerator {
         return node.accept(exprgen, mv);
     }
 
-    ValType expressionValue(Expression node, ExpressionVisitor mv) {
-        Expression valueNode = node.asValue();
-        ValType type = valueNode.accept(exprgen, mv);
-        assert type != ValType.Reference : "value node returned reference: " + valueNode.getClass();
-        return type;
-    }
-
-    ValType expressionBoxedValue(Expression node, ExpressionVisitor mv) {
-        ValType type = expressionValue(node, mv);
+    ValType expressionBoxed(Expression node, ExpressionVisitor mv) {
+        ValType type = node.accept(exprgen, mv);
         if (type.isJavaPrimitive()) {
             mv.toBoxed(type);
             return ValType.Any;

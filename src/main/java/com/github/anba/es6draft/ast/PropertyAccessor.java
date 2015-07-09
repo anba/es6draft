@@ -6,8 +6,6 @@
  */
 package com.github.anba.es6draft.ast;
 
-import com.github.anba.es6draft.ast.synthetic.PropertyAccessorValue;
-
 /**
  * <h1>12 ECMAScript Language: Expressions</h1><br>
  * <h2>12.3 Left-Hand-Side Expressions</h2>
@@ -15,7 +13,7 @@ import com.github.anba.es6draft.ast.synthetic.PropertyAccessorValue;
  * <li>12.3.1 Property Accessors
  * </ul>
  */
-public class PropertyAccessor extends LeftHandSideExpression {
+public final class PropertyAccessor extends LeftHandSideExpression {
     private final Expression base;
     private final String name;
 
@@ -31,11 +29,6 @@ public class PropertyAccessor extends LeftHandSideExpression {
 
     public String getName() {
         return name;
-    }
-
-    @Override
-    public PropertyAccessorValue asValue() {
-        return new PropertyAccessorValue(getBeginPosition(), getEndPosition(), base, name);
     }
 
     @Override

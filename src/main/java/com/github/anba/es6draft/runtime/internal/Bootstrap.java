@@ -828,10 +828,8 @@ public final class Bootstrap {
         case ADD:
             return CallNames.ADD;
         case EQ:
-        case NE:
             return CallNames.EQ;
         case SHEQ:
-        case SHNE:
             return CallNames.SHEQ;
         case LT:
             return CallNames.LT;
@@ -841,6 +839,8 @@ public final class Bootstrap {
             return CallNames.LE;
         case GE:
             return CallNames.GE;
+        case NE:
+        case SHNE:
         default:
             throw new UnsupportedOperationException(binary.toString());
         }
@@ -858,16 +858,16 @@ public final class Bootstrap {
         case ADD:
             return Descriptors.ADD;
         case EQ:
-        case NE:
             return Descriptors.EQ;
         case SHEQ:
-        case SHNE:
             return Descriptors.STRICT_EQ;
         case LT:
         case GT:
         case LE:
         case GE:
             return Descriptors.CMP;
+        case NE:
+        case SHNE:
         default:
             throw new UnsupportedOperationException(binary.toString());
         }
@@ -884,14 +884,14 @@ public final class Bootstrap {
         switch (binary) {
         case ADD:
         case EQ:
-        case NE:
         case SHEQ:
-        case SHNE:
         case LT:
         case GT:
         case LE:
         case GE:
             return BOOTSTRAP;
+        case NE:
+        case SHNE:
         default:
             throw new UnsupportedOperationException(binary.toString());
         }

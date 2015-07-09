@@ -7,7 +7,6 @@
 package com.github.anba.es6draft.compiler;
 
 import static com.github.anba.es6draft.compiler.BindingInitializationGenerator.BindingInitialization;
-import static com.github.anba.es6draft.compiler.BindingInitializationGenerator.BindingInitializationWithEnvironment;
 import static com.github.anba.es6draft.semantics.StaticSemantics.*;
 
 import java.util.ArrayDeque;
@@ -19,6 +18,7 @@ import java.util.Set;
 import com.github.anba.es6draft.ast.*;
 import com.github.anba.es6draft.ast.scope.FunctionScope;
 import com.github.anba.es6draft.ast.scope.Name;
+import com.github.anba.es6draft.ast.scope.Scope;
 import com.github.anba.es6draft.compiler.CodeGenerator.FunctionName;
 import com.github.anba.es6draft.compiler.assembler.Code.MethodCode;
 import com.github.anba.es6draft.compiler.assembler.MethodName;
@@ -185,11 +185,11 @@ final class FunctionDeclarationInstantiationGenerator extends
         // invariant: hasParameterExpressions => !simpleParameterList
         assert !hasParameterExpressions || !simpleParameterList;
         /* step 11 */
-        Set<Name> varNames = VarDeclaredNames(function); // unordered set!
+        Set<Name> varNames = VarDeclaredNames(function);
         /* step 12 */
         List<StatementListItem> varDeclarations = VarScopedDeclarations(function);
         /* step 13 */
-        Set<Name> lexicalNames = LexicallyDeclaredNames(function); // unordered set!
+        Set<Name> lexicalNames = LexicallyDeclaredNames(function);
         /* step 14 */
         HashSet<Name> functionNames = new HashSet<>();
         /* step 15 */
@@ -211,6 +211,7 @@ final class FunctionDeclarationInstantiationGenerator extends
         // Optimization: Skip 'arguments' allocation if it's not referenced within the function.
         boolean argumentsObjectNeeded = function.getScope().needsArguments();
         Name arguments = function.getScope().arguments();
+        argumentsObjectNeeded &= arguments != null;
         /* step 18 */
         if (function.getThisMode() == FunctionNode.ThisMode.Lexical) {
             argumentsObjectNeeded = false;
@@ -226,17 +227,16 @@ final class FunctionDeclarationInstantiationGenerator extends
             }
         }
         /* step 21 */
-        HashSet<Name> bindings = new HashSet<>();
-        for (Name paramName : parameterNames) {
-            if (bindings.add(paramName)) {
-                createMutableBinding(envRec, paramName, false, mv);
-                if (hasDuplicates) {
-                    initializeBinding(envRec, paramName, undefined, mv);
-                }
+        for (Name paramName : function.getScope().parameterNames()) {
+            BindingOp<FunctionEnvironmentRecord> op = BindingOp.of(envRec, paramName);
+            op.createMutableBinding(envRec, paramName, false, mv);
+            if (hasDuplicates) {
+                op.initializeBinding(envRec, paramName, undefined, mv);
             }
         }
         /* step 22 */
         if (argumentsObjectNeeded) {
+            assert arguments != null;
             Variable<ArgumentsObject> argumentsObj = mv.newVariable("argumentsObj",
                     ArgumentsObject.class);
             if (strict || !simpleParameterList) {
@@ -250,12 +250,13 @@ final class FunctionDeclarationInstantiationGenerator extends
             if (legacy) {
                 CreateLegacyArguments(argumentsObj, mv);
             }
+            BindingOp<FunctionEnvironmentRecord> op = BindingOp.of(envRec, arguments);
             if (strict) {
-                createImmutableBinding(envRec, arguments, false, mv);
+                op.createImmutableBinding(envRec, arguments, false, mv);
             } else {
-                createMutableBinding(envRec, arguments, false, mv);
+                op.createMutableBinding(envRec, arguments, false, mv);
             }
-            initializeBinding(envRec, arguments, argumentsObj, mv);
+            op.initializeBinding(envRec, arguments, argumentsObj, mv);
             parameterNames.add(arguments);
             parameterNamesSet.add(arguments);
         } else if (legacy) {
@@ -273,7 +274,7 @@ final class FunctionDeclarationInstantiationGenerator extends
                 BindingInitialization(codegen, function, env, iterator, mv);
             } else {
                 /* step 25 */
-                BindingInitializationWithEnvironment(codegen, function, env, envRec, iterator, mv);
+                BindingInitialization(codegen, function, env, envRec, iterator, mv);
             }
         }
         /* steps 27-28 */
@@ -288,8 +289,9 @@ final class FunctionDeclarationInstantiationGenerator extends
             /* step 27.c */
             for (Name varName : varNames) {
                 if (instantiatedVarNames.add(varName)) {
-                    createMutableBinding(envRec, varName, false, mv);
-                    initializeBinding(envRec, varName, undefined, mv);
+                    BindingOp<FunctionEnvironmentRecord> op = BindingOp.of(envRec, varName);
+                    op.createMutableBinding(envRec, varName, false, mv);
+                    op.initializeBinding(envRec, varName, undefined, mv);
                 }
             }
             /* steps 27.d-27.e */
@@ -311,50 +313,39 @@ final class FunctionDeclarationInstantiationGenerator extends
             /* step 28.e */
             instantiatedVarNames = new HashSet<>();
             /* step 28.f */
+            Variable<Object> tempValue = null;
             for (Name varName : varNames) {
                 if (instantiatedVarNames.add(varName)) {
-                    createMutableBinding(varEnvRec, varName, false, mv);
+                    BindingOp<DeclarativeEnvironmentRecord> op = BindingOp.of(varEnvRec, varName);
+                    op.createMutableBinding(varEnvRec, varName, false, mv);
                     if (!parameterNamesSet.contains(varName) || functionNames.contains(varName)) {
-                        initializeBinding(varEnvRec, varName, undefined, mv);
+                        op.initializeBinding(varEnvRec, varName, undefined, mv);
                     } else {
-                        initializeBindingFrom(varEnvRec, envRec, varName, false, mv);
+                        BindingOp.of(envRec, varName).getBindingValue(envRec, varName, strict, mv);
+                        if (tempValue == null) {
+                            tempValue = mv.newVariable("tempValue", Object.class);
+                        }
+                        mv.store(tempValue);
+                        op.initializeBinding(varEnvRec, varName, tempValue, mv);
                     }
                 }
             }
         }
 
         /* step 29 (B.3.3 Block-Level Function Declarations Web Legacy Compatibility Semantics) */
-        for (FunctionDeclaration f : function.getScope().blockFunctions()) {
-            Name fname = f.getIdentifier().getName();
-            assert f.isLegacyBlockScoped() : "Missing block-scope flag: " + fname.getIdentifier();
+        for (Name fname : function.getScope().blockFunctionNames()) {
             if (instantiatedVarNames.add(fname)) {
-                createMutableBinding(varEnvRec, fname, false, mv);
-                initializeBinding(varEnvRec, fname, undefined, mv);
+                BindingOp<DeclarativeEnvironmentRecord> op = BindingOp.of(varEnvRec, fname);
+                op.createMutableBinding(varEnvRec, fname, false, mv);
+                op.initializeBinding(varEnvRec, fname, undefined, mv);
             }
         }
 
         /* steps 30-32 */
         Variable<? extends LexicalEnvironment<? extends DeclarativeEnvironmentRecord>> lexEnv;
         Variable<? extends DeclarativeEnvironmentRecord> lexEnvRec;
-        if (!strict) {
-            assert fscope.variableScope() != fscope.lexicalScope();
-            mv.enterScope(fscope.lexicalScope());
-            if (!lexicalNames.isEmpty()) {
-                /* step 30 */
-                lexEnv = mv.newVariable("lexEnv", LexicalEnvironment.class).uncheckedCast();
-                newDeclarativeEnvironment(varEnv, mv);
-                mv.store(lexEnv);
-                /* step 32 */
-                lexEnvRec = mv.newVariable("lexEnvRec", DeclarativeEnvironmentRecord.class);
-                getEnvironmentRecord(lexEnv, lexEnvRec, mv);
-            } else {
-                // Optimization: Skip environment allocation if no lexical names are defined.
-                /* step 30 */
-                lexEnv = varEnv;
-                /* step 32 */
-                lexEnvRec = varEnvRec;
-            }
-        } else if (fscope.variableScope() != fscope.lexicalScope()) {
+        assert strict || fscope.variableScope() != fscope.lexicalScope();
+        if (!strict || fscope.variableScope() != fscope.lexicalScope()) {
             // NB: Scopes are unmodifiable once constructed, that means we need to emit the extra
             // scope for functions with deferred strict-ness, even if this scope is not present in
             // the specification.
@@ -375,7 +366,6 @@ final class FunctionDeclarationInstantiationGenerator extends
                 lexEnvRec = varEnvRec;
             }
         } else {
-            assert fscope.variableScope() == fscope.lexicalScope();
             /* step 30 */
             lexEnv = varEnv;
             /* step 32 */
@@ -389,10 +379,11 @@ final class FunctionDeclarationInstantiationGenerator extends
         for (Declaration d : lexDeclarations) {
             assert !(d instanceof HoistableDeclaration);
             for (Name dn : BoundNames(d)) {
+                BindingOp<DeclarativeEnvironmentRecord> op = BindingOp.of(lexEnvRec, dn);
                 if (d.isConstDeclaration()) {
-                    createImmutableBinding(lexEnvRec, dn, true, mv);
+                    op.createImmutableBinding(lexEnvRec, dn, true, mv);
                 } else {
-                    createMutableBinding(lexEnvRec, dn, false, mv);
+                    op.createMutableBinding(lexEnvRec, dn, false, mv);
                 }
             }
         }
@@ -405,7 +396,11 @@ final class FunctionDeclarationInstantiationGenerator extends
             mv.store(fo);
 
             // stack: [fo] -> []
-            setMutableBinding(varEnvRec, fn, fo, false, mv);
+            // Resolve the actual binding name: function(a){ function a(){} }
+            // TODO: Can be removed when StaticIdResolution handles this case.
+            Name name = fscope.variableScope().resolveName(fn, false);
+            BindingOp<DeclarativeEnvironmentRecord> op = BindingOp.of(varEnvRec, name);
+            op.setMutableBinding(varEnvRec, name, fo, false, mv);
         }
         /* step 37 */
         mv._return();

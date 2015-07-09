@@ -16,7 +16,4 @@ public abstract class LeftHandSideExpression extends Expression {
     protected LeftHandSideExpression(long beginPosition, long endPosition) {
         super(beginPosition, endPosition);
     }
-
-    @Override
-    public abstract Expression asValue();
 }

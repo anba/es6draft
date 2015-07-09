@@ -16,14 +16,24 @@ import java.util.List;
 
 import com.github.anba.es6draft.ast.*;
 import com.github.anba.es6draft.ast.AbruptNode.Abrupt;
+import com.github.anba.es6draft.ast.scope.BlockScope;
+import com.github.anba.es6draft.ast.scope.ModuleScope;
 import com.github.anba.es6draft.ast.scope.Name;
+import com.github.anba.es6draft.ast.scope.Scope;
+import com.github.anba.es6draft.ast.scope.ScriptScope;
+import com.github.anba.es6draft.ast.scope.WithScope;
 import com.github.anba.es6draft.compiler.CodeGenerator.FunctionName;
 import com.github.anba.es6draft.compiler.assembler.FieldName;
 import com.github.anba.es6draft.compiler.assembler.Jump;
 import com.github.anba.es6draft.compiler.assembler.MethodName;
 import com.github.anba.es6draft.compiler.assembler.Type;
 import com.github.anba.es6draft.compiler.assembler.Variable;
+import com.github.anba.es6draft.runtime.DeclarativeEnvironmentRecord;
+import com.github.anba.es6draft.runtime.EnvironmentRecord;
+import com.github.anba.es6draft.runtime.GlobalEnvironmentRecord;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
+import com.github.anba.es6draft.runtime.ModuleEnvironmentRecord;
+import com.github.anba.es6draft.runtime.ObjectEnvironmentRecord;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Null;
 import com.github.anba.es6draft.runtime.types.Reference;
@@ -35,8 +45,8 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 /**
  * Abstract base class for specialised generators
  */
-abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
-        DefaultNodeVisitor<R, V> {
+abstract class DefaultCodeGenerator<RETURN, VISITOR extends ExpressionVisitor> extends
+        DefaultNodeVisitor<RETURN, VISITOR> {
     private static final class Fields {
         static final FieldName Double_NaN = FieldName.findStatic(Types.Double, "NaN",
                 Type.DOUBLE_TYPE);
@@ -142,15 +152,6 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
         static final MethodName CharSequence_toString = MethodName.findInterface(
                 Types.CharSequence, "toString", Type.methodType(Types.String));
 
-        // class: EnvironmentRecord
-        static final MethodName EnvironmentRecord_createImmutableBinding = MethodName
-                .findInterface(Types.EnvironmentRecord, "createImmutableBinding",
-                        Type.methodType(Type.VOID_TYPE, Types.String, Type.BOOLEAN_TYPE));
-
-        static final MethodName EnvironmentRecord_initializeBinding = MethodName.findInterface(
-                Types.EnvironmentRecord, "initializeBinding",
-                Type.methodType(Type.VOID_TYPE, Types.String, Types.Object));
-
         // class: ExecutionContext
         static final MethodName ExecutionContext_getLexicalEnvironment = MethodName.findVirtual(
                 Types.ExecutionContext, "getLexicalEnvironment",
@@ -158,6 +159,10 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
 
         static final MethodName ExecutionContext_getLexicalEnvironmentRecord = MethodName
                 .findVirtual(Types.ExecutionContext, "getLexicalEnvironmentRecord",
+                        Type.methodType(Types.EnvironmentRecord));
+
+        static final MethodName ExecutionContext_getVariableEnvironmentRecord = MethodName
+                .findVirtual(Types.ExecutionContext, "getVariableEnvironmentRecord",
                         Type.methodType(Types.EnvironmentRecord));
 
         static final MethodName ExecutionContext_pushLexicalEnvironment = MethodName.findVirtual(
@@ -288,19 +293,6 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
     }
 
     /**
-     * stack: [] {@literal ->} [value]
-     * 
-     * @param node
-     *            the expression node
-     * @param mv
-     *            the expression visitor
-     * @return the value type returned by the expression
-     */
-    protected final ValType expressionValue(Expression node, ExpressionVisitor mv) {
-        return codegen.expressionValue(node, mv);
-    }
-
-    /**
      * stack: [] {@literal ->} [boxed(value)]
      * 
      * @param node
@@ -309,8 +301,8 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
      *            the expression visitor
      * @return the value type returned by the expression
      */
-    protected final ValType expressionBoxedValue(Expression node, ExpressionVisitor mv) {
-        return codegen.expressionBoxedValue(node, mv);
+    protected final ValType expressionBoxed(Expression node, ExpressionVisitor mv) {
+        return codegen.expressionBoxed(node, mv);
     }
 
     /**
@@ -341,41 +333,9 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
     protected final Variable<LexicalEnvironment<?>> saveEnvironment(StatementVisitor mv) {
         Variable<LexicalEnvironment<?>> savedEnv = mv.newVariable("savedEnv",
                 LexicalEnvironment.class).uncheckedCast();
-        saveEnvironment(savedEnv, mv);
-        return savedEnv;
-    }
-
-    /**
-     * stack: [] {@literal ->} []
-     * 
-     * @param savedEnv
-     *            the variable to hold the saved environment
-     * @param mv
-     *            the statement visitor
-     */
-    protected final void saveEnvironment(Variable<LexicalEnvironment<?>> savedEnv,
-            StatementVisitor mv) {
         getLexicalEnvironment(mv);
         mv.store(savedEnv);
-    }
-
-    /**
-     * stack: [] {@literal ->} []
-     * 
-     * @param node
-     *            the abrupt node
-     * @param abrupt
-     *            the abrupt completion type
-     * @param savedEnv
-     *            the variable which holds the saved environment
-     * @param mv
-     *            the statement visitor
-     */
-    protected final void restoreEnvironment(AbruptNode node, Abrupt abrupt,
-            Variable<LexicalEnvironment<?>> savedEnv, StatementVisitor mv) {
-        assert node.getAbrupt().contains(abrupt);
-        assert savedEnv != null;
-        restoreEnvironment(savedEnv, mv);
+        return savedEnv;
     }
 
     /**
@@ -420,14 +380,92 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
     }
 
     /**
+     * stack: [] {@literal ->} []
+     * 
+     * @param envRec
+     *            the variable which holds the lexical environment record
+     * @param mv
+     *            the expression visitor
+     */
+    protected final <R extends EnvironmentRecord> void getLexicalEnvironmentRecord(
+            Variable<? extends R> envRec, ExpressionVisitor mv) {
+        mv.loadExecutionContext();
+        mv.invoke(Methods.ExecutionContext_getLexicalEnvironmentRecord);
+        if (envRec.getType() != Types.EnvironmentRecord) {
+            mv.checkcast(envRec.getType());
+        }
+        mv.store(envRec);
+    }
+
+    /**
+     * stack: [] {@literal ->} [envRec]
+     * 
+     * @param envRec
+     *            the variable which holds the lexical environment record
+     * @param mv
+     *            the expression visitor
+     */
+    protected final void getLexicalEnvironmentRecord(Type type, ExpressionVisitor mv) {
+        mv.loadExecutionContext();
+        mv.invoke(Methods.ExecutionContext_getLexicalEnvironmentRecord);
+        if (type != Types.EnvironmentRecord) {
+            mv.checkcast(type);
+        }
+    }
+
+    /**
+     * stack: [] {@literal ->} []
+     * 
+     * @param envRec
+     *            the variable which holds the variable environment record
+     * @param mv
+     *            the expression visitor
+     */
+    protected final <R extends EnvironmentRecord> void getVariableEnvironmentRecord(
+            Variable<? extends R> envRec, ExpressionVisitor mv) {
+        mv.loadExecutionContext();
+        mv.invoke(Methods.ExecutionContext_getVariableEnvironmentRecord);
+        if (envRec.getType() != Types.EnvironmentRecord) {
+            mv.checkcast(envRec.getType());
+        }
+        mv.store(envRec);
+    }
+
+    /**
      * stack: [] {@literal ->} [envRec]
      * 
      * @param mv
      *            the expression visitor
      */
-    protected final void getEnvironmentRecord(ExpressionVisitor mv) {
+    protected final void getVariableEnvironmentRecord(Type type, ExpressionVisitor mv) {
         mv.loadExecutionContext();
-        mv.invoke(Methods.ExecutionContext_getLexicalEnvironmentRecord);
+        mv.invoke(Methods.ExecutionContext_getVariableEnvironmentRecord);
+        if (type != Types.EnvironmentRecord) {
+            mv.checkcast(type);
+        }
+    }
+
+    /**
+     * Returns the current environment record type.
+     * 
+     * @param mv
+     *            the expression visitor
+     * @return the current environment record type
+     */
+    protected final Class<? extends EnvironmentRecord> getEnvironmentRecordClass(
+            ExpressionVisitor mv) {
+        Scope scope = mv.getScope();
+        if (scope instanceof ScriptScope) {
+            Script script = ((ScriptScope) scope).getNode();
+            if (!(script.isEvalScript() || script.isScripting())) {
+                return GlobalEnvironmentRecord.class;
+            }
+        } else if (scope instanceof ModuleScope) {
+            return ModuleEnvironmentRecord.class;
+        } else if (scope instanceof WithScope) {
+            return ObjectEnvironmentRecord.class;
+        }
+        return DeclarativeEnvironmentRecord.class;
     }
 
     /**
@@ -455,7 +493,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
      * @param mv
      *            the expression visitor
      */
-    protected final void newDeclarativeEnvironment(ExpressionVisitor mv) {
+    protected final void newDeclarativeEnvironment(BlockScope scope, ExpressionVisitor mv) {
         mv.loadExecutionContext();
         mv.invoke(Methods.ExecutionContext_getLexicalEnvironment);
         mv.invoke(Methods.LexicalEnvironment_newDeclarativeEnvironment);
@@ -469,7 +507,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
      * @param mv
      *            the expression visitor
      */
-    protected final void newCatchDeclarativeEnvironment(ExpressionVisitor mv) {
+    protected final void newCatchDeclarativeEnvironment(BlockScope scope, ExpressionVisitor mv) {
         mv.loadExecutionContext();
         mv.invoke(Methods.ExecutionContext_getLexicalEnvironment);
         mv.invoke(Methods.LexicalEnvironment_newCatchDeclarativeEnvironment);
@@ -510,6 +548,51 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
     protected final void popLexicalEnvironment(ExpressionVisitor mv) {
         mv.loadExecutionContext();
         mv.invoke(Methods.ExecutionContext_popLexicalEnvironment);
+    }
+
+    /**
+     * Emit function call for: {@link LexicalEnvironment#getEnvRec()}
+     * <p>
+     * stack: [] {@literal ->} []
+     * 
+     * @param env
+     *            the variable which holds the lexical environment
+     * @param envRec
+     *            the variable which holds the environment record
+     * @param mv
+     *            the instruction visitor
+     */
+    protected final <R extends EnvironmentRecord, R2 extends R> void getEnvRec(
+            Variable<? extends LexicalEnvironment<? extends R2>> env, Variable<? extends R> envRec,
+            InstructionVisitor mv) {
+        mv.load(env);
+        mv.invoke(Methods.LexicalEnvironment_getEnvRec);
+        if (envRec.getType() != Types.EnvironmentRecord) {
+            mv.checkcast(envRec.getType());
+        }
+        mv.store(envRec);
+    }
+
+    /**
+     * Emit function call for: {@link LexicalEnvironment#getEnvRec()}
+     * <p>
+     * stack: [env] {@literal ->} [env]
+     * 
+     * @param env
+     *            the variable which holds the lexical environment
+     * @param envRec
+     *            the variable which holds the environment record
+     * @param mv
+     *            the instruction visitor
+     */
+    protected final <R extends EnvironmentRecord> void getEnvRec(Variable<? extends R> envRec,
+            InstructionVisitor mv) {
+        mv.dup(); // TODO: Remove dup?!
+        mv.invoke(Methods.LexicalEnvironment_getEnvRec);
+        if (envRec.getType() != Types.EnvironmentRecord) {
+            mv.checkcast(envRec.getType());
+        }
+        mv.store(envRec);
     }
 
     /**
@@ -1242,7 +1325,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
                     return true;
                 }
             } else if (property instanceof PropertyValueDefinition) {
-                // NB: Only static class properties are supported.
+                // Only static class properties are supported.
                 PropertyValueDefinition valueDefinition = (PropertyValueDefinition) property;
                 String methodName = valueDefinition.getPropertyName().getName();
                 if (methodName == null || "name".equals(methodName)) {
@@ -1255,54 +1338,6 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
     }
 
     /**
-     * stack: [value] {@literal ->} []
-     * 
-     * @param node
-     *            the binding node
-     * @param mv
-     *            the expression visitor
-     */
-    protected final void BindingInitialization(Binding node, ExpressionVisitor mv) {
-        BindingInitializationGenerator.BindingInitialization(codegen, node, mv);
-    }
-
-    /**
-     * stack: [envRec, value] {@literal ->} []
-     * 
-     * @param node
-     *            the binding node
-     * @param mv
-     *            the expression visitor
-     */
-    protected final void BindingInitializationWithEnvironment(Binding node, ExpressionVisitor mv) {
-        BindingInitializationGenerator.BindingInitializationWithEnvironment(codegen, node, mv);
-    }
-
-    /**
-     * stack: [envRec, value] {@literal ->} []
-     * 
-     * @param name
-     *            the binding name
-     * @param mv
-     *            the expression visitor
-     */
-    protected final void BindingInitializationWithEnvironment(Name name, ExpressionVisitor mv) {
-        BindingInitializationGenerator.BindingInitializationWithEnvironment(codegen, name, mv);
-    }
-
-    /**
-     * stack: [value] {@literal ->} []
-     * 
-     * @param node
-     *            the assignment pattern node
-     * @param mv
-     *            the expression visitor
-     */
-    protected final void DestructuringAssignment(AssignmentPattern node, ExpressionVisitor mv) {
-        DestructuringAssignmentGenerator.DestructuringAssignment(codegen, node, mv);
-    }
-
-    /**
      * 14.5.14 Runtime Semantics: ClassDefinitionEvaluation
      * 
      * @param def
@@ -1312,7 +1347,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
      * @param mv
      *            the expression visitor
      */
-    protected final void ClassDefinitionEvaluation(ClassDefinition def, String className,
+    protected final void ClassDefinitionEvaluation(ClassDefinition def, Name className,
             ExpressionVisitor mv) {
         mv.enterVariableScope();
         Variable<ArrayList<Callable>> classDecorators = null;
@@ -1326,17 +1361,21 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
 
         // step 1 (not applicable)
         // steps 2-4
-        assert (def.getScope() != null && def.getScope().isPresent()) == (className != null);
+        BlockScope scope = def.getScope();
+        assert (scope != null && scope.isPresent()) == (className != null);
+        Variable<DeclarativeEnvironmentRecord> classScopeEnvRec = null;
         if (className != null) {
             // stack: [] -> [classScope]
-            newDeclarativeEnvironment(mv);
+            newDeclarativeEnvironment(scope, mv);
+
+            classScopeEnvRec = mv.newVariable("classScopeEnvRec",
+                    DeclarativeEnvironmentRecord.class);
+            getEnvRec(classScopeEnvRec, mv);
 
             // stack: [classScope] -> [classScope]
-            mv.dup();
-            mv.invoke(Methods.LexicalEnvironment_getEnvRec);
-            mv.aconst(className);
-            mv.iconst(true);
-            mv.invoke(Methods.EnvironmentRecord_createImmutableBinding);
+            Name innerName = scope.resolveName(className, false);
+            BindingOp<DeclarativeEnvironmentRecord> op = BindingOp.of(classScopeEnvRec, innerName);
+            op.createImmutableBinding(classScopeEnvRec, innerName, true, mv);
 
             // stack: [classScope] -> []
             pushLexicalEnvironment(mv);
@@ -1353,7 +1392,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
             mv.loadExecutionContext();
             mv.invoke(Methods.ScriptRuntime_getClassProto_Null);
         } else {
-            expressionBoxedValue(classHeritage, mv);
+            expressionBoxed(classHeritage, mv);
             mv.loadExecutionContext();
             mv.lineInfo(def);
             mv.invoke(Methods.ScriptRuntime_getClassProto);
@@ -1421,19 +1460,13 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
             mv.invoke(Methods.ScriptRuntime_EvaluateClassMethodDecorators);
         }
 
-        // step 23 (moved)
+        // steps 22-23 (moved)
         if (className != null) {
-            // stack: [] -> [envRec, name, F]
-            getEnvironmentRecord(mv);
-            mv.aconst(className);
-            mv.load(F);
+            // stack: [] -> []
+            Name innerName = scope.resolveName(className, false);
+            BindingOp<DeclarativeEnvironmentRecord> op = BindingOp.of(classScopeEnvRec, innerName);
+            op.initializeBinding(classScopeEnvRec, innerName, F, mv);
 
-            // stack: [envRec, name, F] -> []
-            mv.invoke(Methods.EnvironmentRecord_initializeBinding);
-        }
-
-        // step 22
-        if (className != null) {
             mv.exitScope();
             popLexicalEnvironment(mv);
         }
@@ -1484,7 +1517,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
             List<Expression> decorators, ExpressionVisitor mv) {
         for (Expression decorator : decorators) {
             mv.load(var);
-            expressionBoxedValue(decorator, mv);
+            expressionBoxed(decorator, mv);
             mv.loadExecutionContext();
             mv.lineInfo(decorator);
             mv.invoke(Methods.ScriptRuntime_CheckCallable);

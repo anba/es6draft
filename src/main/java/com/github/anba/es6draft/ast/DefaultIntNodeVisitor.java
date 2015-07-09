@@ -289,11 +289,6 @@ public abstract class DefaultIntNodeVisitor<V> implements IntNodeVisitor<V> {
     }
 
     @Override
-    public int visit(ElementAccessorValue node, V value) {
-        return visit((ElementAccessor) node, value);
-    }
-
-    @Override
     public int visit(Elision node, V value) {
         return visit((Expression) node, value);
     }
@@ -406,11 +401,6 @@ public abstract class DefaultIntNodeVisitor<V> implements IntNodeVisitor<V> {
     @Override
     public int visit(IdentifierReference node, V value) {
         return visit((Expression) node, value);
-    }
-
-    @Override
-    public int visit(IdentifierReferenceValue node, V value) {
-        return visit((IdentifierReference) node, value);
     }
 
     @Override
@@ -559,11 +549,6 @@ public abstract class DefaultIntNodeVisitor<V> implements IntNodeVisitor<V> {
     }
 
     @Override
-    public int visit(PropertyAccessorValue node, V value) {
-        return visit((PropertyAccessor) node, value);
-    }
-
-    @Override
     public int visit(PropertyNameDefinition node, V value) {
         return visit((PropertyDefinition) node, value);
     }
@@ -619,11 +604,6 @@ public abstract class DefaultIntNodeVisitor<V> implements IntNodeVisitor<V> {
     }
 
     @Override
-    public int visit(SuperElementAccessorValue node, V value) {
-        return visit((SuperElementAccessor) node, value);
-    }
-
-    @Override
     public int visit(SuperNewExpression node, V value) {
         return visit((Expression) node, value);
     }
@@ -631,11 +611,6 @@ public abstract class DefaultIntNodeVisitor<V> implements IntNodeVisitor<V> {
     @Override
     public int visit(SuperPropertyAccessor node, V value) {
         return visit((Expression) node, value);
-    }
-
-    @Override
-    public int visit(SuperPropertyAccessorValue node, V value) {
-        return visit((SuperPropertyAccessor) node, value);
     }
 
     @Override

@@ -47,7 +47,6 @@ import org.kohsuke.args4j.spi.Setter;
 import org.kohsuke.args4j.spi.StopOptionHandler;
 
 import com.github.anba.es6draft.Script;
-import com.github.anba.es6draft.Scripts;
 import com.github.anba.es6draft.compiler.Compiler;
 import com.github.anba.es6draft.parser.Characters;
 import com.github.anba.es6draft.parser.Parser;
@@ -794,7 +793,7 @@ public final class Repl {
         } else {
             script = realm.getScriptLoader().load(parsedScript, className);
         }
-        return Scripts.ScriptEvaluation(script, realm);
+        return script.evaluate(realm);
     }
 
     /**

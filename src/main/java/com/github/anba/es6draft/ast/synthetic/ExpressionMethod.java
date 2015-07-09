@@ -42,15 +42,6 @@ public final class ExpressionMethod extends Expression {
     }
 
     @Override
-    public Expression asValue() {
-        Expression valueExpression = expression.asValue();
-        if (valueExpression != expression) {
-            return new ExpressionMethod(valueExpression);
-        }
-        return this;
-    }
-
-    @Override
     public <R, V> R accept(NodeVisitor<R, V> visitor, V value) {
         return visitor.visit(this, value);
     }

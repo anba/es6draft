@@ -45,12 +45,13 @@ final class DeclarationBindingInstantiation {
      *            the execution context
      * @param script
      *            the global script to instantiate
+     * @param env
+     *            the global environment
      */
-    public static void GlobalDeclarationInstantiation(ExecutionContext cx, Script script) {
-        LexicalEnvironment<?> env = cx.getLexicalEnvironment();
+    public static void GlobalDeclarationInstantiation(ExecutionContext cx, Script script,
+            LexicalEnvironment<GlobalEnvironmentRecord> env) {
         /* steps 1-2 */
-        assert env.getEnvRec() instanceof GlobalEnvironmentRecord;
-        GlobalEnvironmentRecord envRec = (GlobalEnvironmentRecord) env.getEnvRec();
+        GlobalEnvironmentRecord envRec = env.getEnvRec();
         /* step 3 */
         assert LexicallyDeclaredNames(script).isEmpty();
         /* step 4 */
@@ -89,12 +90,13 @@ final class DeclarationBindingInstantiation {
      *            the execution context
      * @param evalScript
      *            the global script to instantiate
-     * @param deletableBindings
-     *            the deletable flag for bindings
+     * @param varEnv
+     *            the variable environment
+     * @param lexEnv
+     *            the lexical environment
      */
-    public static void EvalDeclarationInstantiation(ExecutionContext cx, Script evalScript) {
-        LexicalEnvironment<?> varEnv = cx.getVariableEnvironment();
-        LexicalEnvironment<?> lexEnv = cx.getLexicalEnvironment();
+    public static void EvalDeclarationInstantiation(ExecutionContext cx, Script evalScript,
+            LexicalEnvironment<?> varEnv, LexicalEnvironment<DeclarativeEnvironmentRecord> lexEnv) {
         boolean strict = evalScript.isStrict();
         boolean nonStrictGlobal = !strict && evalScript.isGlobalCode() && !evalScript.isScripting();
 
@@ -164,8 +166,9 @@ final class DeclarationBindingInstantiation {
     }
 
     private static void checkLexicalRedeclaration(Script evalScript, ExecutionContext cx,
-            LexicalEnvironment<?> varEnv, LexicalEnvironment<?> lexEnv, Set<Name> varNames) {
-        // NB: Skip the initial lexEnv which is empty by construction.
+            LexicalEnvironment<?> varEnv, LexicalEnvironment<DeclarativeEnvironmentRecord> lexEnv,
+            Set<Name> varNames) {
+        // Skip the initial lexEnv which is empty by construction.
         assert lexEnv.getEnvRec().bindingNames().isEmpty();
         final boolean catchVar = cx.getRealm().isEnabled(CompatibilityOption.CatchVarStatement);
         for (LexicalEnvironment<?> thisLex = lexEnv; (thisLex = thisLex.getOuter()) != varEnv;) {

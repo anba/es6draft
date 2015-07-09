@@ -48,6 +48,13 @@ public interface FunctionScope extends TopLevelScope {
     Name arguments();
 
     /**
+     * Returns the set of block function names.
+     * 
+     * @return the block function names
+     */
+    Set<Name> blockFunctionNames();
+
+    /**
      * {@inheritDoc}
      * <p>
      * A function scope is dynamic if it contains a non-strict, direct-eval call.

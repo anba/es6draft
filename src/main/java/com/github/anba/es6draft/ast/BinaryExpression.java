@@ -64,6 +64,7 @@ public final class BinaryExpression extends Expression {
     private final Operator operator;
     private Expression left;
     private Expression right;
+    private boolean completion = true;
 
     public BinaryExpression(Operator operator, Expression left, Expression right) {
         super(left.getBeginPosition(), right.getEndPosition());
@@ -90,6 +91,16 @@ public final class BinaryExpression extends Expression {
 
     public void setRight(Expression right) {
         this.right = right;
+    }
+
+    @Override
+    public Expression emptyCompletion() {
+        completion = false;
+        return this;
+    }
+
+    public boolean hasCompletion() {
+        return completion;
     }
 
     @Override

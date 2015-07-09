@@ -376,11 +376,6 @@ final class CodeSizeVisitor implements IntNodeVisitor<CodeSizeHandler> {
     }
 
     @Override
-    public int visit(ElementAccessorValue node, CodeSizeHandler handler) {
-        return analyze(node, node.getBase(), node.getElement(), 10, handler);
-    }
-
-    @Override
     public int visit(Elision node, CodeSizeHandler handler) {
         return 0;
     }
@@ -523,11 +518,6 @@ final class CodeSizeVisitor implements IntNodeVisitor<CodeSizeHandler> {
     }
 
     @Override
-    public int visit(IdentifierReferenceValue node, CodeSizeHandler handler) {
-        return 10;
-    }
-
-    @Override
     public int visit(IfStatement node, CodeSizeHandler handler) {
         return analyze(node, node.getTest(), node.getOtherwise(), node.getThen(), 10, handler);
     }
@@ -660,11 +650,6 @@ final class CodeSizeVisitor implements IntNodeVisitor<CodeSizeHandler> {
     }
 
     @Override
-    public int visit(PropertyAccessorValue node, CodeSizeHandler handler) {
-        return analyze(node, node.getBase(), 10, handler);
-    }
-
-    @Override
     public int visit(PropertyDefinitionsMethod node, CodeSizeHandler handler) {
         // don't descend into synthetic nodes
         return 10;
@@ -739,11 +724,6 @@ final class CodeSizeVisitor implements IntNodeVisitor<CodeSizeHandler> {
     }
 
     @Override
-    public int visit(SuperElementAccessorValue node, CodeSizeHandler handler) {
-        return visit((SuperElementAccessor) node, handler);
-    }
-
-    @Override
     public int visit(SuperNewExpression node, CodeSizeHandler handler) {
         return analyze(node, node.getArguments(), 25, 5, handler);
     }
@@ -751,11 +731,6 @@ final class CodeSizeVisitor implements IntNodeVisitor<CodeSizeHandler> {
     @Override
     public int visit(SuperPropertyAccessor node, CodeSizeHandler handler) {
         return 10;
-    }
-
-    @Override
-    public int visit(SuperPropertyAccessorValue node, CodeSizeHandler handler) {
-        return visit((SuperPropertyAccessor) node, handler);
     }
 
     @Override

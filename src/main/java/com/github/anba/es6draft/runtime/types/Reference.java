@@ -632,6 +632,20 @@ public abstract class Reference<BASE, NAME> {
             }
             return getPrimitiveBaseProto(cx, Type.of(base)).get(cx, referencedName, base);
         }
+
+        public static void PutValue(ExecutionContext cx, Object base, long referencedName,
+                Object value, boolean strict) {
+            assert !Type.isUndefinedOrNull(base);
+            boolean succeeded;
+            if (base instanceof ScriptObject) {
+                succeeded = ((ScriptObject) base).set(cx, referencedName, value, base);
+            } else {
+                succeeded = ToObject(cx, base).set(cx, referencedName, value, base);
+            }
+            if (!succeeded && strict) {
+                throw newTypeError(cx, Messages.Key.PropertyNotModifiable, ToString(referencedName));
+            }
+        }
     }
 
     /**
@@ -740,6 +754,20 @@ public abstract class Reference<BASE, NAME> {
             }
             return getPrimitiveBaseProto(cx, Type.of(base)).get(cx, referencedName, base);
         }
+
+        public static void PutValue(ExecutionContext cx, Object base, String referencedName,
+                Object value, boolean strict) {
+            assert !Type.isUndefinedOrNull(base);
+            boolean succeeded;
+            if (base instanceof ScriptObject) {
+                succeeded = ((ScriptObject) base).set(cx, referencedName, value, base);
+            } else {
+                succeeded = ToObject(cx, base).set(cx, referencedName, value, base);
+            }
+            if (!succeeded && strict) {
+                throw newTypeError(cx, Messages.Key.PropertyNotModifiable, referencedName);
+            }
+        }
     }
 
     /**
@@ -823,6 +851,21 @@ public abstract class Reference<BASE, NAME> {
         private static Object GetValuePrimitive(ExecutionContext cx, Object base,
                 Symbol referencedName) {
             return getPrimitiveBaseProto(cx, Type.of(base)).get(cx, referencedName, base);
+        }
+
+        public static void PutValue(ExecutionContext cx, Object base, Symbol referencedName,
+                Object value, boolean strict) {
+            assert !Type.isUndefinedOrNull(base);
+            boolean succeeded;
+            if (base instanceof ScriptObject) {
+                succeeded = ((ScriptObject) base).set(cx, referencedName, value, base);
+            } else {
+                succeeded = ToObject(cx, base).set(cx, referencedName, value, base);
+            }
+            if (!succeeded && strict) {
+                throw newTypeError(cx, Messages.Key.PropertyNotModifiable,
+                        referencedName.toString());
+            }
         }
     }
 

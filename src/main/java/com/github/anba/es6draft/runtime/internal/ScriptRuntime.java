@@ -49,6 +49,7 @@ import com.github.anba.es6draft.runtime.FunctionEnvironmentRecord;
 import com.github.anba.es6draft.runtime.GlobalEnvironmentRecord;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.ModuleEnvironmentRecord;
+import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.modules.MalformedNameException;
 import com.github.anba.es6draft.runtime.modules.ModuleExport;
 import com.github.anba.es6draft.runtime.modules.ModuleRecord;
@@ -72,6 +73,23 @@ public final class ScriptRuntime {
     public static final Object[] EMPTY_ARRAY = new Object[0];
 
     private ScriptRuntime() {
+    }
+
+    /**
+     * 9.2.2.2 OrdinaryCallBindThis ( F, calleeContext, thisArgument )
+     * 
+     * @param f
+     *            the function object
+     * @param thisArgument
+     *            the thisArgument
+     * @return the thisValue
+     */
+    public static ScriptObject functionThisValue(FunctionObject f, Object thisArgument) {
+        Realm calleeRealm = f.getRealm();
+        if (Type.isUndefinedOrNull(thisArgument)) {
+            return calleeRealm.getGlobalThis();
+        }
+        return ToObject(calleeRealm.defaultContext(), thisArgument);
     }
 
     /**
@@ -665,6 +683,88 @@ public final class ScriptRuntime {
         }
     }
 
+    public static Object checkAccessElement(Object baseValue, Object propertyName,
+            ExecutionContext cx) {
+        /* steps 1-6 (generated code) */
+        /* steps 7-8 */
+        RequireObjectCoercible(cx, baseValue);
+        /* step 9 */
+        if (Type.isString(propertyName)) {
+            // flat-string
+            return Type.stringValue(propertyName).toString();
+        }
+        if (Type.isNumber(propertyName)) {
+            double propertyKey = Type.numberValue(propertyName);
+            long index = (long) propertyKey;
+            if (index == propertyKey) {
+                return index;
+            }
+            return ToString(propertyKey);
+        }
+        return ToPropertyKey(cx, propertyName);
+    }
+
+    public static int checkAccessProperty(Object baseValue, int propertyName, ExecutionContext cx) {
+        /* steps 1-6 (generated code) */
+        /* steps 7-8 */
+        RequireObjectCoercible(cx, baseValue);
+        return propertyName;
+    }
+
+    public static long checkAccessProperty(Object baseValue, long propertyName, ExecutionContext cx) {
+        /* steps 1-6 (generated code) */
+        /* steps 7-8 */
+        RequireObjectCoercible(cx, baseValue);
+        return propertyName;
+    }
+
+    public static double checkAccessProperty(Object baseValue, double propertyName,
+            ExecutionContext cx) {
+        /* steps 1-6 (generated code) */
+        /* steps 7-8 */
+        RequireObjectCoercible(cx, baseValue);
+        return propertyName;
+    }
+
+    public static String checkAccessProperty(Object baseValue, String propertyName,
+            ExecutionContext cx) {
+        /* steps 1-6 (generated code) */
+        /* steps 7-8 */
+        RequireObjectCoercible(cx, baseValue);
+        return propertyName;
+    }
+
+    public static Object checkAccessProperty(Object baseValue, ExecutionContext cx) {
+        /* steps 1-6 (generated code) */
+        /* steps 7-8 */
+        return RequireObjectCoercible(cx, baseValue);
+    }
+
+    public static boolean deleteElement(Object baseValue, Object propertyName, ExecutionContext cx,
+            boolean strict) {
+        return getElement(baseValue, propertyName, cx, strict).delete(cx);
+    }
+
+    public static boolean deleteProperty(Object baseValue, int propertyName, ExecutionContext cx,
+            boolean strict) {
+        return getProperty(baseValue, propertyName, cx, strict).delete(cx);
+    }
+
+    public static boolean deleteProperty(Object baseValue, long propertyName, ExecutionContext cx,
+            boolean strict) {
+        return getProperty(baseValue, propertyName, cx, strict).delete(cx);
+    }
+
+    public static boolean deleteProperty(Object baseValue, double propertyName,
+            ExecutionContext cx, boolean strict) {
+        return getProperty(baseValue, propertyName, cx, strict).delete(cx);
+    }
+
+    public static boolean deleteProperty(Object baseValue, String propertyName,
+            ExecutionContext cx, boolean strict) {
+        return getProperty(baseValue, propertyName, cx, strict).delete(cx);
+    }
+
     /**
      * 12.3.2 Property Accessors
      * <p>
@@ -948,6 +1048,47 @@ public final class ScriptRuntime {
             return Reference.PropertyNameReference.GetValue(cx, baseValue, (String) propertyKey);
         }
         return Reference.PropertySymbolReference.GetValue(cx, baseValue, (Symbol) propertyKey);
+    }
+
+    public static void setPropertyValue(Object base, int propertyKey, Object value,
+            ExecutionContext cx, boolean strict) {
+        setPropertyValue(base, (long) propertyKey, value, cx, strict);
+    }
+
+    public static void setPropertyValue(Object base, long propertyKey, Object value,
+            ExecutionContext cx, boolean strict) {
+        Reference.PropertyIndexReference.PutValue(cx, base, propertyKey, value, strict);
+    }
+
+    public static void setPropertyValue(Object base, double propertyKey, Object value,
+            ExecutionContext cx, boolean strict) {
+        long index = (long) propertyKey;
+        if (index == propertyKey) {
+            setPropertyValue(base, index, value, cx, strict);
+        } else {
+            setPropertyValue(base, ToString(propertyKey), value, cx, strict);
+        }
+    }
+
+    public static void setPropertyValue(Object base, String propertyKey, Object value,
+            ExecutionContext cx, boolean strict) {
+        Reference.PropertyNameReference.PutValue(cx, base, propertyKey, value, strict);
+    }
+
+    public static void setPropertyValue(Object base, Symbol propertyKey, Object value,
+            ExecutionContext cx, boolean strict) {
+        Reference.PropertySymbolReference.PutValue(cx, base, propertyKey, value, strict);
+    }
+
+    public static void setElementValue(Object base, Object propertyKey, Object value,
+            ExecutionContext cx, boolean strict) {
+        if (propertyKey instanceof String) {
+            setPropertyValue(base, (String) propertyKey, value, cx, strict);
+        } else if (propertyKey instanceof Long) {
+            setPropertyValue(base, (Long) propertyKey, value, cx, strict);
+        } else {
+            setPropertyValue(base, (Symbol) propertyKey, value, cx, strict);
+        }
     }
 
     /**
@@ -1266,7 +1407,7 @@ public final class ScriptRuntime {
      *            the strict mode flag
      * @return the super reference value
      */
-    public static Object getSuperPropertyReferenceValue(ExecutionContext cx, Object propertyKey,
+    public static Object getSuperPropertyValue(ExecutionContext cx, Object propertyKey,
             boolean strict) {
         return MakeSuperPropertyReference(cx, propertyKey, strict).getValue(cx);
     }
@@ -1284,7 +1425,7 @@ public final class ScriptRuntime {
      *            the strict mode flag
      * @return the super reference value
      */
-    public static Object getSuperPropertyReferenceValue(ExecutionContext cx, String propertyKey,
+    public static Object getSuperPropertyValue(ExecutionContext cx, String propertyKey,
             boolean strict) {
         return MakeSuperPropertyReference(cx, propertyKey, strict).getValue(cx);
     }
@@ -1383,6 +1524,36 @@ public final class ScriptRuntime {
             }
             val = ref.getValue(cx);
         }
+        return typeof(val);
+    }
+
+    /**
+     * 12.5 Unary Operators<br>
+     * 12.5.6 The typeof Operator
+     * 
+     * @param ref
+     *            the reference
+     * @param cx
+     *            the execution context
+     * @return the typeof descriptor string
+     */
+    public static String typeof(Reference<?, ?> ref, ExecutionContext cx) {
+        if (ref.isUnresolvableReference()) {
+            return "undefined";
+        }
+        return typeof(ref.getValue(cx));
+    }
+
+    /**
+     * 12.5 Unary Operators<br>
+     * 12.5.6 The typeof Operator
+     * 
+     * @param val
+     *            the value
+     * @return the typeof descriptor string
+     */
+    public static String typeof(Object val) {
+        /* steps 1-2 (generated code) */
         /* steps 3-4 */
         switch (Type.of(val)) {
         case Undefined:
@@ -3118,29 +3289,5 @@ public final class ScriptRuntime {
         if (Type.isObjectOrNull(value)) {
             object.setPrototypeOf(cx, Type.objectValueOrNull(value));
         }
-    }
-
-    /**
-     * B.3.2 Block-Level Function Declarations Web Legacy Compatibility Semantics
-     * 
-     * @param name
-     *            the binding name
-     * @param cx
-     *            the execution context
-     */
-    public static void setFunctionBlockBinding(String name, ExecutionContext cx) {
-        assert cx.getVariableEnvironmentRecord() instanceof DeclarativeEnvironmentRecord;
-        assert cx.getLexicalEnvironmentRecord() instanceof DeclarativeEnvironmentRecord;
-        /* step 2.b.1 */
-        DeclarativeEnvironmentRecord fenv = (DeclarativeEnvironmentRecord) cx
-                .getVariableEnvironmentRecord();
-        /* step 2.b.2 */
-        DeclarativeEnvironmentRecord benv = (DeclarativeEnvironmentRecord) cx
-                .getLexicalEnvironmentRecord();
-        /* step 2.b.3-2.b.4 */
-        Object fobj = benv.getBindingValue(name, false);
-        /* step 2.b.5-2.b.6 */
-        fenv.setMutableBinding(name, fobj, false);
-        /* step 2.b.7 (return) */
     }
 }

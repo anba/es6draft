@@ -6,7 +6,6 @@
  */
 package com.github.anba.es6draft.runtime.extensions.timer;
 
-import static com.github.anba.es6draft.Scripts.ScriptEvaluation;
 import static com.github.anba.es6draft.runtime.AbstractOperations.IsCallable;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToFlatString;
 
@@ -154,7 +153,7 @@ public final class Timers implements TaskSource {
             } catch (ParserException | CompilationException e) {
                 throw e.toScriptException(cx);
             }
-            ScriptEvaluation(script, cx.getRealm());
+            script.evaluate(cx);
         }
     }
 

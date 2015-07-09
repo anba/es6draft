@@ -34,11 +34,6 @@ public final class ArrayAssignmentPattern extends AssignmentPattern {
     }
 
     @Override
-    public Expression asValue() {
-        throw new IllegalStateException();
-    }
-
-    @Override
     public <R, V> R accept(NodeVisitor<R, V> visitor, V value) {
         return visitor.visit(this, value);
     }
