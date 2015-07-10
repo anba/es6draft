@@ -33,7 +33,7 @@ before_install:
   - export JAVA_HOME=/usr/lib/jvm/java-$JAVA_VERSION-oracle
   - export PATH=$JAVA_HOME/bin:$PATH
   - java -version
-  - if [[ $JAVA_VERSION = 9 ]]; "echo \"export MAVEN_OPTS='-Dmaven.repo.local=$HOME/.m2/repository -Xmx512m'\" > ~/.mavenrc"
+  - if [[ $JAVA_VERSION = '9' ]]; then echo "export MAVEN_OPTS='-Dmaven.repo.local=$HOME/.m2/repository -Xmx512m'" > ~/.mavenrc; else true; fi
 
 install:
   - if [[ $PROFILE = 'test262-travisci' ]]; then git clone --depth 1 --branch master git://github.com/tc39/test262.git "${TEST262_PATH}"; else true; fi
