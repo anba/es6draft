@@ -16,21 +16,23 @@ env:
 matrix:
   include:
     # Run the default profile with Java 7-9 (latest through installer)
-    - &Profile_SkipExternal
-      addons: {apt: {packages: oracle-java7-installer}}
-      env: PROFILE='skip-external'
-    - <<: *Profile_SkipExternal
-      addons: {apt: {packages: oracle-java8-installer}}
-    - <<: *Profile_SkipExternal
-      addons: {apt: {packages: oracle-java9-installer}}
+    - addons: {apt: {packages: oracle-java7-installer}}
+      env: PROFILE='skip-external' JAVA_VERSION=7
+    - addons: {apt: {packages: oracle-java8-installer}}
+      env: PROFILE='skip-external' JAVA_VERSION=8
+    - addons: {apt: {packages: oracle-java9-installer}}
+      env: PROFILE='skip-external' JAVA_VERSION=9
     # Run test262 profile with Java 8-9
-    - &Profile_Test262
       addons: {apt: {packages: oracle-java8-installer}}
-      env: PROFILE='test262-travisci'
-    - <<: *Profile_Test262
-      addons: {apt: {packages: oracle-java9-installer}}
+      env: PROFILE='test262-travisci' JAVA_VERSION=8
+    - addons: {apt: {packages: oracle-java9-installer}}
+      env: PROFILE='test262-travisci' JAVA_VERSION=9
 
-# before_install: <cmd>
+before_install:
+  - remove_dir_from_path $JAVA_HOME/bin
+  - export JAVA_HOME=/usr/lib/jvm/java-$JAVA_VERSION-oracle
+  - export PATH=$JAVA_HOME/bin:$PATH
+  - java -version
 
 install:
   - if [[ $PROFILE = 'test262-travisci' ]]; then git clone --depth 1 --branch master git://github.com/tc39/test262.git "${TEST262_PATH}"; else true; fi
