@@ -202,7 +202,7 @@ public abstract class TestGlobals<GLOBAL extends ShellGlobalObject, TEST extends
         PreloadModules(List<ModuleRecord> modules, Collection<? extends ModuleRecord> requires) {
             assert modules.size() <= requires.size();
             this.mainModules = Collections.unmodifiableList(modules);
-            this.allModules = Collections.unmodifiableCollection(requires);
+            this.allModules = Collections.<ModuleRecord> unmodifiableCollection(requires);
         }
     }
 }
