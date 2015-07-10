@@ -735,7 +735,7 @@ public final class RegExpParser {
                         throw error(Messages.Key.RegExpTrailingSlash);
                     }
                     int d = get(unicode);
-                    if (unicode ? !isSyntaxCharacter(d) : !web && isUnicodeIDContinue(d)) {
+                    if (unicode ? !isSyntaxCharacterOrSlash(d) : !web && isUnicodeIDContinue(d)) {
                         throw error(Messages.Key.RegExpInvalidEscape,
                                 new String(Character.toChars(d)));
                     }
@@ -1177,7 +1177,7 @@ public final class RegExpParser {
                         throw error(Messages.Key.RegExpTrailingSlash);
                     }
                     int d = get(unicode);
-                    if (unicode ? !isSyntaxCharacter(d) : !web && isUnicodeIDContinue(d)) {
+                    if (unicode ? !isSyntaxCharacterOrSlash(d) : !web && isUnicodeIDContinue(d)) {
                         throw error(Messages.Key.RegExpInvalidEscape,
                                 new String(Character.toChars(d)));
                     }
@@ -1888,9 +1888,9 @@ public final class RegExpParser {
      * 
      * @param c
      *            the character to inspect
-     * @return {@code true} if the character is a syntax character
+     * @return {@code true} if the character is a syntax character or a forward slash ({@code /})
      */
-    private static final boolean isSyntaxCharacter(int c) {
+    private static final boolean isSyntaxCharacterOrSlash(int c) {
         switch (c) {
         case '^':
         case '$':
@@ -1906,6 +1906,7 @@ public final class RegExpParser {
         case '{':
         case '}':
         case '|':
+        case '/':
             return true;
         default:
             return false;
