@@ -23,7 +23,7 @@ matrix:
     - addons: {apt: {packages: oracle-java9-installer}}
       env: PROFILE='skip-external' JAVA_VERSION=9
     # Run test262 profile with Java 8-9
-      addons: {apt: {packages: oracle-java8-installer}}
+    - addons: {apt: {packages: oracle-java8-installer}}
       env: PROFILE='test262-travisci' JAVA_VERSION=8
     - addons: {apt: {packages: oracle-java9-installer}}
       env: PROFILE='test262-travisci' JAVA_VERSION=9
@@ -33,6 +33,7 @@ before_install:
   - export JAVA_HOME=/usr/lib/jvm/java-$JAVA_VERSION-oracle
   - export PATH=$JAVA_HOME/bin:$PATH
   - java -version
+  - if [[ $JAVA_VERSION = 9 ]]; "echo \"export MAVEN_OPTS='-Dmaven.repo.local=$HOME/.m2/repository -Xmx512m'\" > ~/.mavenrc"
 
 install:
   - if [[ $PROFILE = 'test262-travisci' ]]; then git clone --depth 1 --branch master git://github.com/tc39/test262.git "${TEST262_PATH}"; else true; fi
