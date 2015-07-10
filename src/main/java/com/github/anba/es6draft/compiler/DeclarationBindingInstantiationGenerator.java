@@ -154,8 +154,8 @@ abstract class DeclarationBindingInstantiationGenerator {
      * @param mv
      *            the instruction visitor
      */
-    protected final <R extends EnvironmentRecord, R2 extends R> void getEnvironmentRecord(
-            Variable<? extends LexicalEnvironment<? extends R2>> env, Variable<? extends R> envRec,
+    protected final <R extends EnvironmentRecord, R2 extends R, R3 extends R2> void getEnvironmentRecord(
+            Variable<? extends LexicalEnvironment<? extends R2>> env, Variable<R3> envRec,
             InstructionVisitor mv) {
         mv.load(env);
         mv.invoke(Methods.LexicalEnvironment_getEnvRec);

@@ -18,7 +18,6 @@ import java.util.Set;
 import com.github.anba.es6draft.ast.*;
 import com.github.anba.es6draft.ast.scope.FunctionScope;
 import com.github.anba.es6draft.ast.scope.Name;
-import com.github.anba.es6draft.ast.scope.Scope;
 import com.github.anba.es6draft.compiler.CodeGenerator.FunctionName;
 import com.github.anba.es6draft.compiler.assembler.Code.MethodCode;
 import com.github.anba.es6draft.compiler.assembler.MethodName;

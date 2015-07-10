@@ -139,7 +139,7 @@ abstract class BindingOp<ENVREC extends EnvironmentRecord> {
      * @return the {@code BindingOp}
      */
     @SuppressWarnings("unchecked")
-    static <ENV extends EnvironmentRecord> BindingOp<ENV> of(Value<? extends ENV> envRec,
+    static <ENV extends EnvironmentRecord, E extends ENV> BindingOp<ENV> of(Value<E> envRec,
             Name name) {
         return (BindingOp<ENV>) LOOKUP;
     }

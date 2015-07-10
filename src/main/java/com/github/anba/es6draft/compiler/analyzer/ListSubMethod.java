@@ -34,7 +34,7 @@ abstract class ListSubMethod<NODE extends Node> extends SubMethod<NODE> {
     }
 
     protected static final <NODE extends Node, ELEMENT extends NodeElement<NODE>> List<NODE> newNodes(
-            int oldSize, List<? extends NODE> oldNodes, NodeElementMapper<NODE, ELEMENT> mapper,
+            int oldSize, List<NODE> oldNodes, NodeElementMapper<NODE, ELEMENT> mapper,
             Conflater<ELEMENT, NODE> conflater, int maxElementSize, int maxAccSize,
             int maxConflateSize) {
         ArrayList<NODE> newNodes = new ArrayList<>(oldNodes);
