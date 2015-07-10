@@ -65,7 +65,7 @@ public final class Functional {
      * Applies the mapper on the input (lazy operation)
      */
     public static <T, U> Iterable<U> map(Iterable<T> base, Function<? super T, ? extends U> mapper) {
-        return new $FilterMap<>(base, Functional.<T> alwaysTrue(), mapper);
+        return new $FilterMap<T, U>(base, Functional.<T> alwaysTrue(), mapper);
     }
 
     /**
@@ -73,7 +73,7 @@ public final class Functional {
      */
     public static <T, U> Iterable<U> filterMap(Iterable<T> base, Predicate<? super T> predicate,
             Function<? super T, ? extends U> mapper) {
-        return new $FilterMap<>(base, predicate, mapper);
+        return new $FilterMap<T, U>(base, predicate, mapper);
     }
 
     /**
