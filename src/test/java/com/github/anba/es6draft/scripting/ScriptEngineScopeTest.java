@@ -29,7 +29,7 @@ import org.junit.runners.MethodSorters;
  * JSR-223 Scripting API tests
  */
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
-public class ScriptEngineScopeTest {
+public final class ScriptEngineScopeTest {
     private ScriptEngineManager manager;
     private ScriptEngine engine;
 

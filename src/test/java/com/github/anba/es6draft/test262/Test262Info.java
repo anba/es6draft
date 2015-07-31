@@ -18,6 +18,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -50,6 +51,7 @@ final class Test262Info extends TestInfo {
 
     private String testName, description, errorType;
     private List<String> includes = Collections.emptyList();
+    private List<String> features = Collections.emptyList();
     private boolean onlyStrict, noStrict, negative, async, module, raw;
 
     public Test262Info(Path basedir, Path script) {
@@ -102,6 +104,13 @@ final class Test262Info extends TestInfo {
     }
 
     /**
+     * Returns the list of required features.
+     */
+    public List<String> getFeatures() {
+        return features;
+    }
+
+    /**
      * Returns whether the test should only be run in strict-mode.
      */
     public boolean isOnlyStrict() {
@@ -145,7 +154,7 @@ final class Test262Info extends TestInfo {
     }
 
     /**
-     * Returns {@code true} if the test should be executed.
+     * Returns {@code true} if the test configuration supports the requested strict (or sloppy) mode.
      * 
      * @param strictTest
      *            {@code true} if strict-mode test
@@ -153,12 +162,35 @@ final class Test262Info extends TestInfo {
      *            the default test mode
      * @return {@code true} if the test should be executed
      */
-    public boolean isValidTest(boolean strictTest, DefaultMode unmarkedDefault) {
+    public boolean hasMode(boolean strictTest, DefaultMode unmarkedDefault) {
+        if (module) {
+            // Module tests don't need to run with explicit Use Strict directive.
+            return !strictTest;
+        }
         if (strictTest) {
             return !isNoStrict() && (isOnlyStrict() || unmarkedDefault != DefaultMode.NonStrict);
         } else {
             return !isOnlyStrict() && (isNoStrict() || unmarkedDefault != DefaultMode.Strict);
         }
+    }
+
+    /**
+     * Returns {@code true} if the test configuration has the requested features.
+     * 
+     * @param includeFeatures
+     *            the set of include features, ignored if empty
+     * @param excludeFeatures
+     *            the set of exclude features, ignored if empty
+     * @return {@code true} if the requested features are present
+     */
+    public boolean hasFeature(Set<String> includeFeatures, Set<String> excludeFeatures) {
+        if (!includeFeatures.isEmpty() && Collections.disjoint(includeFeatures, features)) {
+            return false;
+        }
+        if (!excludeFeatures.isEmpty() && !Collections.disjoint(excludeFeatures, features)) {
+            return false;
+        }
+        return true;
     }
 
     @SuppressWarnings("serial")
@@ -260,6 +292,7 @@ final class Test262Info extends TestInfo {
         }
         this.description = desc.getDescription();
         this.includes = desc.getIncludes();
+        this.features = desc.getFeatures();
         this.errorType = desc.getNegative();
         this.negative = desc.getNegative() != null;
         if (!desc.getFlags().isEmpty()) {

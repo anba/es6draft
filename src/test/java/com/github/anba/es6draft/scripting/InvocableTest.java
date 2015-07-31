@@ -25,7 +25,7 @@ import org.junit.Test;
 /**
  * JSR-223 Scripting API tests
  */
-public class InvocableTest {
+public final class InvocableTest {
     private ScriptEngineManager manager;
     private ScriptEngine engine;
     private Invocable invocable;

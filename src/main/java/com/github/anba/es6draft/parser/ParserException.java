@@ -105,6 +105,24 @@ public class ParserException extends InternalException {
     }
 
     /**
+     * Returns the message key of this exception.
+     * 
+     * @return the error message key
+     */
+    public Messages.Key getMessageKey() {
+        return messageKey;
+    }
+
+    /**
+     * Returns the message arguments of this exception.
+     * 
+     * @return the error message arguments
+     */
+    public String[] getMessageArguments() {
+        return messageArguments.clone();
+    }
+
+    /**
      * Returns a formatted message describing this exception.
      * 
      * @return the formatted error message in the default locale

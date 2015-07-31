@@ -44,7 +44,6 @@
   <test id="15.3.5.4_2-86gs" />
   <test id="15.3.5.4_2-87gs" />
   <test id="15.3.5.4_2-88gs" />
-  <!-- test case broken (https://bugs.ecmascript.org/show_bug.cgi?id=1533) -->
   <test id="15.3.5.4_2-89gs" />
   <test id="15.3.5.4_2-90gs" />
   <test id="15.3.5.4_2-91gs" />

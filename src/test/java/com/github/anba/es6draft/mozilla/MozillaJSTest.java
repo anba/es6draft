@@ -18,6 +18,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
@@ -86,6 +87,14 @@ public final class MozillaJSTest {
                 TestInfo test, ScriptCache scriptCache) {
             return newGlobalObjectAllocator(console, test, scriptCache);
         }
+
+        @Override
+        protected Set<CompatibilityOption> getOptions() {
+            EnumSet<CompatibilityOption> options = EnumSet.copyOf(super.getOptions());
+            options.add(CompatibilityOption.ArrayBufferMissingLength);
+            options.add(CompatibilityOption.Exponentiation);
+            return options;
+        }
     };
 
     @Rule
@@ -142,8 +151,7 @@ public final class MozillaJSTest {
 
     @Before
     public void setUp() throws Throwable {
-        // Filter disabled tests
-        assumeTrue(moztest.isEnabled());
+        assumeTrue("Test disabled", moztest.isEnabled());
 
         global = globals.newGlobal(new MozTestConsole(collector), moztest);
         exceptionHandler.setExecutionContext(global.getRealm().defaultContext());
@@ -152,7 +160,7 @@ public final class MozillaJSTest {
         scriptConditions();
 
         // Filter disabled tests (may have changed after applying scripted conditions)
-        assumeTrue(moztest.isEnabled());
+        assumeTrue("Test disabled", moztest.isEnabled());
 
         if (moztest.random) {
             // Results from random tests are simply ignored...

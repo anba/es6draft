@@ -7,13 +7,14 @@
 package com.github.anba.es6draft.test262;
 
 import static com.github.anba.es6draft.test262.Test262GlobalObject.newGlobalObjectAllocator;
+import static com.github.anba.es6draft.util.Functional.intoCollection;
+import static com.github.anba.es6draft.util.Functional.toStrings;
 import static com.github.anba.es6draft.util.Resources.loadConfiguration;
 import static com.github.anba.es6draft.util.matchers.ErrorMessageMatcher.hasErrorMessage;
 import static com.github.anba.es6draft.util.matchers.PatternMatcher.matchesPattern;
-import static org.hamcrest.Matchers.instanceOf;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assume.assumeThat;
+import static org.junit.Assume.assumeTrue;
 
 import java.io.IOException;
 import java.lang.annotation.ElementType;
@@ -21,14 +22,14 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
 import org.apache.commons.configuration.Configuration;
-import org.hamcrest.Matcher;
 import org.hamcrest.Matchers;
 import org.junit.After;
 import org.junit.Before;
@@ -46,7 +47,6 @@ import org.junit.runners.Parameterized.UseParametersRunnerFactory;
 
 import com.github.anba.es6draft.repl.console.ShellConsole;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
-import com.github.anba.es6draft.runtime.internal.Properties;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
 import com.github.anba.es6draft.runtime.internal.Strings;
 import com.github.anba.es6draft.util.Functional.BiFunction;
@@ -69,7 +69,10 @@ public final class Test262Web {
     private static final Configuration configuration = loadConfiguration(Test262Web.class);
     private static final DefaultMode unmarkedDefault = DefaultMode.forName(configuration
             .getString("unmarked_default"));
-    private static final Path selfTestDirectory = Paths.get(configuration.getString("self_test"));
+    private static final Set<String> includeFeatures = intoCollection(
+            toStrings(configuration.getList("include.features")), new HashSet<String>());
+    private static final Set<String> excludeFeatures = intoCollection(
+            toStrings(configuration.getList("exclude.features")), new HashSet<String>());
 
     @Parameters(name = "{0}")
     public static List<Test262Info> suiteValues() throws IOException {
@@ -123,25 +126,26 @@ public final class Test262Web {
     public Test262Info test;
 
     private Test262GlobalObject global;
-    private AsyncHelper async;
+    private Test262Async async;
     private String sourceCode;
     private int preambleLines;
 
-    // Reduces displayed allocation count in multi-threaded environments...
-    private static final Matcher<Boolean> isTrue = Matchers.is(true);
+    private boolean isValidTestConfiguration() {
+        return test.hasMode(isStrictTest, unmarkedDefault) && test.hasFeature(includeFeatures, excludeFeatures);
+    }
 
     @Before
     public void setUp() throws Throwable {
         // Filter disabled tests
-        assumeThat(test.isEnabled(), isTrue);
+        assumeTrue("Test disabled", test.isEnabled());
 
         String fileContent = test.readFile();
-        if (!test.isValidTest(isStrictTest, unmarkedDefault)) {
+        if (!isValidTestConfiguration()) {
             return;
         }
 
         final String preamble;
-        if (test.isRaw()) {
+        if (test.isRaw() || test.isModule()) {
             preamble = "";
             preambleLines = 0;
         } else if (isStrictTest) {
@@ -161,8 +165,7 @@ public final class Test262Web {
             exceptionHandler.match(ScriptExceptionHandler.defaultMatcher());
         } else {
             expected.expect(Matchers.either(StandardErrorHandler.defaultMatcher())
-                    .or(ScriptExceptionHandler.defaultMatcher())
-                    .or(instanceOf(Test262AssertionError.class)));
+                    .or(ScriptExceptionHandler.defaultMatcher()));
             String errorType = test.getErrorType();
             if (errorType != null) {
                 expected.expect(hasErrorMessage(global.getRealm().defaultContext(),
@@ -176,13 +179,7 @@ public final class Test262Web {
         }
 
         if (test.isAsync()) {
-            // "doneprintHandle.js" is replaced with AsyncHelper
-            async = global.install(new AsyncHelper(), AsyncHelper.class);
-        }
-
-        // Install test hooks
-        if (!test.getScript().startsWith(selfTestDirectory)) {
-            global.install(global, Test262GlobalObject.class);
+            async = global.install(new Test262Async(), Test262Async.class);
         }
     }
 
@@ -197,9 +194,10 @@ public final class Test262Web {
 
     @Test
     public void runTest() throws Throwable {
-        if (!test.isValidTest(isStrictTest, unmarkedDefault)) {
+        if (!isValidTestConfiguration()) {
             return;
         }
+
         // Evaluate actual test-script
         if (test.isModule()) {
             global.evalModule(test.toModuleName(), sourceCode, 1 - preambleLines);
@@ -220,9 +218,10 @@ public final class Test262Web {
     @Test
     @Strict
     public void runTestStrict() throws Throwable {
-        if (!test.isValidTest(isStrictTest, unmarkedDefault)) {
+        if (!isValidTestConfiguration()) {
             return;
         }
+
         // Evaluate actual test-script
         if (test.isModule()) {
             global.evalModule(test.toModuleName(), sourceCode, 1 - preambleLines);
@@ -243,18 +242,5 @@ public final class Test262Web {
     @Retention(RetentionPolicy.RUNTIME)
     @Target({ ElementType.METHOD })
     public @interface Strict {
-    }
-
-    public static final class AsyncHelper {
-        boolean doneCalled = false;
-
-        @Properties.Function(name = "$DONE", arity = 0)
-        public void done(boolean argument) {
-            assertFalse(doneCalled);
-            doneCalled = true;
-            if (argument) {
-                throw new Test262AssertionError(argument);
-            }
-        }
     }
 }

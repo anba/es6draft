@@ -102,6 +102,45 @@ public final class StackTraces {
         return new StackTraceElementIterable2(e);
     }
 
+    /**
+     * Returns the script stack trace elements.
+     * 
+     * @param e
+     *            the throwable object
+     * @return the script stack trace elements
+     */
+    public static StackTraceElement[] scriptStackTrace(Throwable e) {
+        return scriptStackTrace(e.getStackTrace());
+    }
+
+    /**
+     * Returns the script stack trace elements.
+     * 
+     * @param stackTrace
+     *            the stack trace elements
+     * @return the script stack trace elements
+     */
+    public static StackTraceElement[] scriptStackTrace(StackTraceElement[] stackTrace) {
+        ArrayList<StackTraceElement> list = new ArrayList<>();
+        for (Iterator<StackTraceElement> it = new StackTraceElementIterator(stackTrace); it.hasNext();) {
+            list.add(toScriptFrame(it.next()));
+        }
+        return list.toArray(new StackTraceElement[list.size()]);
+    }
+
+    /**
+     * Returns a script stack trace element.
+     * 
+     * @param e
+     *            the stack trace element
+     * @return the script stack trace element
+     */
+    public static StackTraceElement toScriptFrame(StackTraceElement e) {
+        String className = "", methodName = getMethodName(e), fileName = e.getFileName();
+        int lineNumber = e.getLineNumber();
+        return new StackTraceElement(className, methodName, fileName, lineNumber);
+    }
+
     private static final class StackTraceElementIterable implements Iterable<StackTraceElement> {
         private final ErrorObject error;
 
@@ -130,9 +169,9 @@ public final class StackTraces {
 
     private static final class StackTraceElementIterator extends SimpleIterator<StackTraceElement> {
         private StackTraceElement[] elements;
+        private final Iterator<StackTraceElement[]> stackTraces;
         private int cursor = 0;
         private boolean foundScriptFrame = false;
-        private final Iterator<StackTraceElement[]> stackTraces;
 
         StackTraceElementIterator(ErrorObject error) {
             this.elements = error.getException().getStackTrace();
@@ -141,6 +180,11 @@ public final class StackTraces {
 
         StackTraceElementIterator(Throwable exception) {
             this.elements = exception.getStackTrace();
+            this.stackTraces = Collections.emptyIterator();
+        }
+
+        StackTraceElementIterator(StackTraceElement[] elements) {
+            this.elements = elements;
             this.stackTraces = Collections.emptyIterator();
         }
 

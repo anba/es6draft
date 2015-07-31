@@ -24,7 +24,7 @@ import org.junit.Test;
 /**
  * JSR-223 Scripting API tests
  */
-public class ScriptEngineFactoryTest {
+public final class ScriptEngineFactoryTest {
     private static final String ENGINE_NAME = "es6draft";
     private static final String LANGUAGE_VERSION = "ECMAScript 2015";
     private static final String LANGUAGE_NAME = "ECMAScript";

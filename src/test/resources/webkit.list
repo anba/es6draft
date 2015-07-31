@@ -49,6 +49,12 @@ js/script-tests/regexp-toString.js
 # invalid test, `(class { super(){} })` is valid syntax
 js/script-tests/class-syntax-super.js
 
+# invalid test, function `shouldBeType` not defined
+js/script-tests/intl.js
+
+# invalid test, `for (let; ; ) {}` is valid
+js/script-tests/let-syntax.js
+
 
 ###################
 # Misc issues     #
@@ -138,6 +144,9 @@ js/script-tests/regexp-no-extensions.js
 
 # Multiple invalid tests
 js/script-tests/unicode-escape-sequences.js
+
+# Different maximal function arguments
+js/script-tests/function-apply.js
 
 
 ###############################################################

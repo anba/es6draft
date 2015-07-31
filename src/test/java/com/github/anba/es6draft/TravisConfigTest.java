@@ -17,7 +17,7 @@ import org.yaml.snakeyaml.Yaml;
 /**
  * Test travis configuration file is valid YAML.
  */
-public class TravisConfigTest {
+public final class TravisConfigTest {
     private static final String CONFIG_FILE_NAME = ".travis.yml";
 
     @Test

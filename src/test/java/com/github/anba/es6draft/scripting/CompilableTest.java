@@ -32,7 +32,7 @@ import org.junit.Test;
 /**
  * JSR-223 Scripting API tests
  */
-public class CompilableTest {
+public final class CompilableTest {
     private ScriptEngineManager manager;
     private ScriptEngine engine;
     private Compilable compilable;

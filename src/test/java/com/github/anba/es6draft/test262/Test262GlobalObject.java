@@ -6,9 +6,6 @@
  */
 package com.github.anba.es6draft.test262;
 
-import static com.github.anba.es6draft.runtime.AbstractOperations.ToBoolean;
-import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
-
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -18,11 +15,8 @@ import com.github.anba.es6draft.compiler.CompilationException;
 import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.repl.console.ShellConsole;
 import com.github.anba.es6draft.repl.global.ShellGlobalObject;
-import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
-import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
-import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
 import com.github.anba.es6draft.runtime.internal.Source;
 import com.github.anba.es6draft.runtime.modules.MalformedNameException;
@@ -32,7 +26,6 @@ import com.github.anba.es6draft.runtime.modules.ModuleSource;
 import com.github.anba.es6draft.runtime.modules.ResolutionException;
 import com.github.anba.es6draft.runtime.modules.SourceIdentifier;
 import com.github.anba.es6draft.runtime.modules.loader.StringModuleSource;
-import com.github.anba.es6draft.runtime.types.Callable;
 
 /**
  * Global object for test262 tests, includes all necessary global function definitions.
@@ -44,6 +37,15 @@ public final class Test262GlobalObject extends ShellGlobalObject {
             ScriptCache scriptCache) {
         super(realm, console, test.getBaseDir(), test.getScript(), scriptCache);
         this.test = test;
+    }
+
+    /**
+     * Returns the test info object.
+     * 
+     * @return the test object
+     */
+    public Test262Info getTest() {
+        return test;
     }
 
     /**
@@ -65,6 +67,19 @@ public final class Test262GlobalObject extends ShellGlobalObject {
                 return new Test262GlobalObject(realm, console, test, scriptCache);
             }
         };
+    }
+
+    /**
+     * Loads and evaluates the requested test harness file.
+     * 
+     * @param file
+     *            the file name
+     * @throws IOException
+     *             if there was any I/O error
+     */
+    void include(String file) throws IOException {
+        assert !"sta.js".equals(file) : "cannot load sta.js harness file";
+        super.include(Paths.get("harness", file));
     }
 
     /**
@@ -116,62 +131,5 @@ public final class Test262GlobalObject extends ShellGlobalObject {
         ModuleRecord module = moduleLoader.define(moduleId, source, getRealm());
         module.instantiate();
         module.evaluate();
-    }
-
-    /**
-     * Process test failure with message
-     */
-    private void failure(String message) {
-        String msg = String.format("%s [file: %s]", message, test);
-        throw new Test262AssertionError(msg);
-    }
-
-    /**
-     * {@code $ERROR} function for test262 tests
-     */
-    @Function(name = "$ERROR", arity = 1, attributes = @Attributes(writable = true,
-            enumerable = true, configurable = false))
-    public void error(String message) {
-        failure(message);
-    }
-
-    /**
-     * {@code $FAIL} function for test262 tests
-     */
-    @Function(name = "$FAIL", arity = 1, attributes = @Attributes(writable = true,
-            enumerable = true, configurable = false))
-    public void fail(String message) {
-        failure(message);
-    }
-
-    /**
-     * {@code $PRINT} function for test262 tests
-     */
-    @Function(name = "$PRINT", arity = 1, attributes = @Attributes(writable = true,
-            enumerable = true, configurable = false))
-    public void print(String message) {
-        console.print(message);
-    }
-
-    /**
-     * {@code $INCLUDE} function for test262 tests
-     */
-    @Function(name = "$INCLUDE", arity = 1, attributes = @Attributes(writable = true,
-            enumerable = true, configurable = false))
-    public void include(String file) throws IOException {
-        // resolve the input file against the library path
-        super.include(Paths.get("harness", file));
-    }
-
-    /**
-     * {@code runTestCase} function for test262 tests
-     */
-    @Function(name = "runTestCase", arity = 1, attributes = @Attributes(writable = true,
-            enumerable = true, configurable = false))
-    public void runTestCase(ExecutionContext cx, Callable testcase) {
-        Object value = testcase.call(cx, UNDEFINED);
-        if (!ToBoolean(value)) {
-            failure(test.getDescription());
-        }
     }
 }

@@ -15,6 +15,7 @@ import static org.junit.Assume.assumeTrue;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -83,6 +84,13 @@ public final class MozillaJitTest {
                 MozTest test, ScriptCache scriptCache) {
             return newGlobalObjectAllocator(console, test, scriptCache);
         }
+
+        @Override
+        protected Set<CompatibilityOption> getOptions() {
+            EnumSet<CompatibilityOption> options = EnumSet.copyOf(super.getOptions());
+            options.add(CompatibilityOption.ArrayBufferMissingLength);
+            return options;
+        }
     };
 
     @Rule
@@ -118,8 +126,7 @@ public final class MozillaJitTest {
 
     @Before
     public void setUp() throws Throwable {
-        // Filter disabled tests
-        assumeTrue(moztest.isEnabled());
+        assumeTrue("Test disabled", moztest.isEnabled());
 
         global = globals.newGlobal(new MozTestConsole(collector), moztest);
         exceptionHandler.setExecutionContext(global.getRealm().defaultContext());

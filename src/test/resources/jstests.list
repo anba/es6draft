@@ -35,11 +35,13 @@ ecma_6/Proxy/regress-bug950407.js
 # - need to implement version() function...
 ecma_6/Generators/syntax.js
 
-# Boxing broken in strict mode accessor (Bug 603201, Bug 869098)
+# Primitives always boxed, even in strict mode accessor (Bug 603201, Bug 869098)
 ecma_6/Symbol/as-base-value.js
+ecma_6/Reflect/get.js
 
 # @@toPrimitive not supported in SM
 ecma_6/Symbol/conversions.js
+ecma_6/Reflect/propertyKeys.js
 
 # Detached ArrayBuffer object issues, maybe request spec changes?
 ecma_6/extensions/DataView-construct-arguments-neutering.js
@@ -156,6 +158,19 @@ ecma/Statements/12.6.3-2.js
 
 # ES6: invalid test - Date.prototype.toString.call(null) throws TypeError
 ecma_6/Date/toString-generic.js
+
+# super() not implemented
+ecma_6/Reflect/construct.js
+
+# bug 888969
+ecma_6/Reflect/getPrototypeOf.js
+
+# bug 1184414
+ecma_6/Reflect/setPrototypeOf.js
+
+# Reflect.enumerate not supported
+ecma_6/Reflect/surfaces.js
+ecma_6/Reflect/target.js
 
 
 ####################################

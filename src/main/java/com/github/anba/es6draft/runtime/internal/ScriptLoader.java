@@ -356,7 +356,9 @@ public final class ScriptLoader {
         if (!file.isAbsolute()) {
             throw new IllegalArgumentException(String.format("'%s' is not an absolute path", file));
         }
-        return script(source, readFully(file));
+        // Don't interpret script files to get better stack trace information.
+        com.github.anba.es6draft.ast.Script parsedScript = parseScript(source, readFully(file));
+        return compile(parsedScript, nextScriptName());
     }
 
     /**

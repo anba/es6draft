@@ -19,6 +19,7 @@ import com.github.anba.es6draft.repl.global.StopExecutionException;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
 import com.github.anba.es6draft.util.Functional.Function;
+import com.github.anba.es6draft.util.TestAssertions;
 
 /**
  * Default exception handlers.
@@ -43,7 +44,7 @@ public final class ExceptionHandlers {
      * {@link ExceptionHandler} for {@link ParserException}, {@link CompilationException} and
      * {@link StackOverflowError} errors.
      */
-    public static class StandardErrorHandler extends ExceptionHandler {
+    public static final class StandardErrorHandler extends ExceptionHandler {
         private static final Matcher<Object> defaultMatcher = anyInstanceOf(ParserException.class,
                 CompilationException.class, StackOverflowError.class);
 
@@ -57,6 +58,9 @@ public final class ExceptionHandlers {
 
         @Override
         protected void handle(Throwable t) {
+            if (t instanceof ParserException) {
+                throw TestAssertions.toAssertionError((ParserException) t);
+            }
             throw new AssertionError(t.getMessage(), t);
         }
 
@@ -72,7 +76,7 @@ public final class ExceptionHandlers {
     /**
      * {@link ExceptionHandler} for {@link ScriptException} errors.
      */
-    public static class ScriptExceptionHandler extends ExceptionHandler {
+    public static final class ScriptExceptionHandler extends ExceptionHandler {
         private static final Matcher<Object> defaultMatcher = instanceOf(ScriptException.class);
 
         private ExecutionContext cx;
@@ -91,7 +95,7 @@ public final class ExceptionHandlers {
 
         @Override
         protected void handle(Throwable t) {
-            throw new AssertionError(((ScriptException) t).getMessage(cx), t);
+            throw TestAssertions.toAssertionError(cx, (ScriptException) t);
         }
 
         public static ScriptExceptionHandler none() {
@@ -107,7 +111,7 @@ public final class ExceptionHandlers {
      * {@link ExceptionHandler} for {@link ParserException}, {@link CompilationException},
      * {@link StackOverflowError} and {@link ScriptException} errors.
      */
-    public static class IgnoreExceptionHandler extends ExceptionHandler {
+    public static final class IgnoreExceptionHandler extends ExceptionHandler {
         private static final Matcher<Object> defaultMatcher = anyInstanceOf(ParserException.class,
                 CompilationException.class, StackOverflowError.class, ScriptException.class);
 
@@ -136,7 +140,7 @@ public final class ExceptionHandlers {
     /**
      * {@link ExceptionHandler} for {@link StopExecutionException} errors.
      */
-    public static class StopExecutionHandler extends ExceptionHandler {
+    public static final class StopExecutionHandler extends ExceptionHandler {
         private static final Matcher<Object> defaultMatcher = instanceOf(StopExecutionException.class);
 
         public StopExecutionHandler() {

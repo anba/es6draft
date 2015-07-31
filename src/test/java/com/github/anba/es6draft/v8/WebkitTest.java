@@ -83,8 +83,7 @@ public final class WebkitTest {
 
     @Before
     public void setUp() throws Throwable {
-        // Filter disabled tests
-        assumeTrue(test.isEnabled());
+        assumeTrue("Test disabled", test.isEnabled());
 
         global = globals.newGlobal(new V8TestConsole(collector), test);
         exceptionHandler.setExecutionContext(global.getRealm().defaultContext());

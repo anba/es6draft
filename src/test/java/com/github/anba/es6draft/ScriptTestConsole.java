@@ -11,7 +11,7 @@ import com.github.anba.es6draft.repl.console.ShellConsole;
 /**
  *
  */
-class ScriptTestConsole implements ShellConsole {
+final class ScriptTestConsole implements ShellConsole {
     @Override
     public String readLine() {
         return "";

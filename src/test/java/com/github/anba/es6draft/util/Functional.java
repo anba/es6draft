@@ -10,8 +10,7 @@ import java.util.Arrays;
 import java.util.Collection;
 
 /**
- * Java8 compatibility shim
- * 
+ * Java8 compatibility class.
  */
 public final class Functional {
     private Functional() {

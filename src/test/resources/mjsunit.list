@@ -75,6 +75,12 @@ es6/templates.js
 # invalid test, `function f({x}) { var x; }` is allowed
 harmony/destructuring.js
 
+# v8 does not implement Annex B, B.3.3
+harmony/block-let-semantics-sloppy.js
+
+# invalid test, `Object.defineProperty(new Int32Array(), 0, {get(){}})` doesn't throw in v8
+element-accessor.js
+
 
 ###################
 # Misc issues     #
@@ -130,6 +136,7 @@ object-prevent-extensions.js
 object-seal.js
 es6/block-conflicts.js
 es6/typedarray-reduce.js
+harmony/block-conflicts-sloppy.js
 regress/regress-1591.js
 regress/regress-1980.js
 regress/regress-3159.js

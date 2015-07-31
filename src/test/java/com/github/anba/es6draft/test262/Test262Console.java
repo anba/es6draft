@@ -11,7 +11,7 @@ import com.github.anba.es6draft.repl.console.ShellConsole;
 /**
  *
  */
-class Test262Console implements ShellConsole {
+final class Test262Console implements ShellConsole {
     @Override
     public String readLine() {
         return "";
@@ -19,13 +19,16 @@ class Test262Console implements ShellConsole {
 
     @Override
     public void putstr(String s) {
+        System.out.print(s);
     }
 
     @Override
     public void print(String s) {
+        System.out.println(s);
     }
 
     @Override
     public void printErr(String s) {
+        System.err.println(s);
     }
 }

@@ -9,6 +9,7 @@ package com.github.anba.es6draft.v8;
 import org.junit.rules.ErrorCollector;
 
 import com.github.anba.es6draft.repl.console.ShellConsole;
+import com.github.anba.es6draft.util.TestAssertions;
 
 /**
  *
@@ -33,7 +34,7 @@ final class V8TestConsole implements ShellConsole {
     public void print(String s) {
         if (s.startsWith("FAIL ")) {
             // collect all failures instead of calling fail() directly
-            collector.addError(new AssertionError(s));
+            collector.addError(TestAssertions.newAssertionError(s));
         }
     }
 

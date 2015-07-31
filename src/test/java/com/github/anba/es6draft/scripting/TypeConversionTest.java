@@ -22,7 +22,7 @@ import org.junit.Test;
 /**
  * JSR-223 Scripting API tests
  */
-public class TypeConversionTest {
+public final class TypeConversionTest {
     private ScriptEngineManager manager;
     private ScriptEngine engine;
 

@@ -30,7 +30,7 @@ import com.github.anba.es6draft.util.Resources;
  */
 @RunWith(Parallelized.class)
 @UseParametersRunnerFactory(ParameterizedRunnerFactory.class)
-public class DescriptorTest {
+public final class DescriptorTest {
     private static final Configuration configuration = loadConfiguration(Test262Web.class);
 
     @Parameters(name = "{0}")

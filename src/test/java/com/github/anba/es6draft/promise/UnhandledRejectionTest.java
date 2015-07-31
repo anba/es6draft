@@ -13,6 +13,7 @@ import static org.junit.Assume.assumeTrue;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -78,7 +79,7 @@ public final class UnhandledRejectionTest {
 
         @Override
         protected Set<CompatibilityOption> getOptions() {
-            Set<CompatibilityOption> options = super.getOptions();
+            EnumSet<CompatibilityOption> options = EnumSet.copyOf(super.getOptions());
             options.add(CompatibilityOption.PromiseRejection);
             return options;
         }
@@ -118,8 +119,7 @@ public final class UnhandledRejectionTest {
 
     @Before
     public void setUp() throws Throwable {
-        // Filter disabled tests
-        assumeTrue(test.isEnabled());
+        assumeTrue("Test disabled", test.isEnabled());
 
         global = globals.newGlobal(new PromiseTestConsole(), test);
         exceptionHandler.setExecutionContext(global.getRealm().defaultContext());

@@ -13,6 +13,7 @@ import static org.junit.Assume.assumeTrue;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -78,7 +79,7 @@ public final class MiniJSUnitTest {
 
         @Override
         protected Set<CompatibilityOption> getOptions() {
-            Set<CompatibilityOption> options = super.getOptions();
+            EnumSet<CompatibilityOption> options = EnumSet.copyOf(super.getOptions());
             options.add(CompatibilityOption.ArrayIncludes);
             return options;
         }
@@ -116,8 +117,7 @@ public final class MiniJSUnitTest {
 
     @Before
     public void setUp() throws Throwable {
-        // Filter disabled tests
-        assumeTrue(test.isEnabled());
+        assumeTrue("Test disabled", test.isEnabled());
 
         global = globals.newGlobal(new V8TestConsole(collector), test);
         exceptionHandler.setExecutionContext(global.getRealm().defaultContext());

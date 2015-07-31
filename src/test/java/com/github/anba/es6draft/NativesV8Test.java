@@ -100,8 +100,7 @@ public final class NativesV8Test {
 
     @Before
     public void setUp() throws Throwable {
-        // Filter disabled tests
-        assumeTrue(test.isEnabled());
+        assumeTrue("Test disabled", test.isEnabled());
 
         global = globals.newGlobal(new ScriptTestConsole(), test);
         exceptionHandler.setExecutionContext(global.getRealm().defaultContext());

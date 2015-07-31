@@ -90,8 +90,7 @@ public final class PromiseUnwrappingTest {
 
     @Before
     public void setUp() throws Throwable {
-        // Filter disabled tests
-        assumeTrue(test.isEnabled());
+        assumeTrue("Test disabled", test.isEnabled());
 
         global = globals.newGlobal(new PromiseTestConsole(), test);
         exceptionHandler.setExecutionContext(global.getRealm().defaultContext());

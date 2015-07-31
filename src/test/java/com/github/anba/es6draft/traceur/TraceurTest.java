@@ -145,8 +145,7 @@ public final class TraceurTest {
 
     @Before
     public void setUp() throws Throwable {
-        // filter disabled tests
-        assumeTrue(test.isEnabled());
+        assumeTrue("Test disabled", test.isEnabled());
 
         global = globals.newGlobal(new TraceurConsole(), test);
         exceptionHandler.setExecutionContext(global.getRealm().defaultContext());

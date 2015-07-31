@@ -26,7 +26,7 @@ import org.junit.Test;
 /**
  * JSR-223 Scripting API tests
  */
-public class ScriptEngineTest {
+public final class ScriptEngineTest {
     private ScriptEngineManager manager;
     private ScriptEngine engine;
 

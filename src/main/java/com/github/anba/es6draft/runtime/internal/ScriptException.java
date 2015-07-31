@@ -90,6 +90,19 @@ public final class ScriptException extends RuntimeException implements InternalT
         }
     }
 
+    /**
+     * Returns the script stack trace elements.
+     * 
+     * @return the script stack trace elements
+     */
+    public StackTraceElement[] getScriptStackTrace() {
+        return StackTraces.scriptStackTrace(super.getStackTrace());
+    }
+
+    public final StackTraceElement[] getNativeStackTrace() {
+        return super.getStackTrace();
+    }
+
     @Override
     public ScriptException toScriptException(ExecutionContext cx) {
         return this;
