@@ -253,6 +253,11 @@ public final class Repl {
         if (options.evalScripts.isEmpty()) {
             // Default to interactive mode when no files or expressions were set
             options.interactive = true;
+
+            // Warn if --module is used without input files.
+            if (options.module) {
+                System.err.println(formatMessage("module_no_files"));
+            }
         }
     }
 

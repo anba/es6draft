@@ -1494,11 +1494,11 @@ public final class StringPrototype extends OrdinaryObject implements Initializab
         // Unicode 7.0: Other_Uppercase
         private static boolean isOtherUpperCase(int c) {
             /* @formatter:off */
-            if (0x2160 <= c && 0x216F <= c) return true;
-            if (0x24B6 <= c && 0x24CF <= c) return true;
-            if (0x1F130 <= c && 0x1F149 <= c) return true;
-            if (0x1F150 <= c && 0x1F169 <= c) return true;
-            if (0x1F170 <= c && 0x1F189 <= c) return true;
+            if (0x2160 <= c && c <= 0x216F) return true;
+            if (0x24B6 <= c && c <= 0x24CF) return true;
+            if (0x1F130 <= c && c <= 0x1F149) return true;
+            if (0x1F150 <= c && c <= 0x1F169) return true;
+            if (0x1F170 <= c && c <= 0x1F189) return true;
             return false;
             /* @formatter:on */
         }
@@ -1508,24 +1508,24 @@ public final class StringPrototype extends OrdinaryObject implements Initializab
             /* @formatter:off */
             if (c == 0x00AA) return true;
             if (c == 0x00BA) return true;
-            if (0x02B0 <= c && 0x02B8 <= c) return true;
-            if (0x02C0 <= c && 0x02C1 <= c) return true;
-            if (0x02E0 <= c && 0x02E4 <= c) return true;
+            if (0x02B0 <= c && c <= 0x02B8) return true;
+            if (0x02C0 <= c && c <= 0x02C1) return true;
+            if (0x02E0 <= c && c <= 0x02E4) return true;
             if (c == 0x0345) return true;
             if (c == 0x037A) return true;
-            if (0x1D2C <= c && 0x1D6A <= c) return true;
+            if (0x1D2C <= c && c <= 0x1D6A) return true;
             if (c == 0x1D78) return true;
-            if (0x1D9B <= c && 0x1DBF <= c) return true;
+            if (0x1D9B <= c && c <= 0x1DBF) return true;
             if (c == 0x2071) return true;
             if (c == 0x207F) return true;
-            if (0x2090 <= c && 0x209C <= c) return true;
-            if (0x2170 <= c && 0x217F <= c) return true;
-            if (0x24D0 <= c && 0x24E9 <= c) return true;
-            if (0x2C7C <= c && 0x2C7D <= c) return true;
-            if (0xA69C <= c && 0xA69D <= c) return true;
+            if (0x2090 <= c && c <= 0x209C) return true;
+            if (0x2170 <= c && c <= 0x217F) return true;
+            if (0x24D0 <= c && c <= 0x24E9) return true;
+            if (0x2C7C <= c && c <= 0x2C7D) return true;
+            if (0xA69C <= c && c <= 0xA69D) return true;
             if (c == 0xA770) return true;
-            if (0xA7F8 <= c && 0xA7F9 <= c) return true;
-            if (0xAB5C <= c && 0xAB5F <= c) return true;
+            if (0xA7F8 <= c && c <= 0xA7F9) return true;
+            if (0xAB5C <= c && c <= 0xAB5F) return true;
             return false;
             /* @formatter:on */
         }
