@@ -17,6 +17,11 @@ public final class AssignmentRestProperty extends AstNode {
         this.target = target;
     }
 
+    /**
+     * Returns the left-hand side expression target.
+     * 
+     * @return the target expression
+     */
     public IdentifierReference getTarget() {
         return target;
     }

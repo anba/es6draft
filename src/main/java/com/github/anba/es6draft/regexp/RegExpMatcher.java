@@ -32,6 +32,8 @@ public interface RegExpMatcher extends Cloneable {
      * Returns a clone of this {@link RegExpMatcher} object.
      * 
      * @return the new matcher
+     * @throws CloneNotSupportedException
+     *             if not supported
      */
-    RegExpMatcher clone();
+    RegExpMatcher clone() throws CloneNotSupportedException;
 }

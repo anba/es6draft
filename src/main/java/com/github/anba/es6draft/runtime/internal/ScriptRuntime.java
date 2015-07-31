@@ -62,9 +62,16 @@ import com.github.anba.es6draft.runtime.objects.binary.TypedArrayObject;
 import com.github.anba.es6draft.runtime.objects.binary.TypedArrayPrototypePrototype;
 import com.github.anba.es6draft.runtime.objects.iteration.GeneratorObject;
 import com.github.anba.es6draft.runtime.types.*;
-import com.github.anba.es6draft.runtime.types.builtins.*;
+import com.github.anba.es6draft.runtime.types.builtins.ArrayObject;
+import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
 import com.github.anba.es6draft.runtime.types.builtins.FunctionObject.ConstructorKind;
 import com.github.anba.es6draft.runtime.types.builtins.FunctionObject.FunctionKind;
+import com.github.anba.es6draft.runtime.types.builtins.NativeFunction;
+import com.github.anba.es6draft.runtime.types.builtins.OrdinaryAsyncFunction;
+import com.github.anba.es6draft.runtime.types.builtins.OrdinaryConstructorFunction;
+import com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction;
+import com.github.anba.es6draft.runtime.types.builtins.OrdinaryGenerator;
+import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
  * Runtime support methods
@@ -676,11 +683,14 @@ public final class ScriptRuntime {
     private static String[] evaluateTemplateStrings(MethodHandle handle) {
         try {
             return (String[]) handle.invokeExact();
-        } catch (RuntimeException | Error e) {
-            throw e;
         } catch (Throwable e) {
-            throw new RuntimeException(e);
+            throw ScriptRuntime.<RuntimeException> rethrow(e);
         }
+    }
+
+    @SuppressWarnings("unchecked")
+    private static <E extends Throwable> E rethrow(Throwable e) throws E {
+        throw (E) e;
     }
 
     public static Object checkAccessElement(Object baseValue, Object propertyName,
@@ -2900,8 +2910,7 @@ public final class ScriptRuntime {
             throw newTypeError(cx, Messages.Key.NotConstructor);
         } else {
             Constructor superClassObj = (Constructor) superClass;
-            if (superClassObj instanceof OrdinaryGenerator
-                    || superClassObj instanceof OrdinaryAsyncFunction) {
+            if (superClassObj instanceof OrdinaryGenerator) {
                 throw newTypeError(cx, Messages.Key.InvalidSuperClass);
             }
             Object p = Get(cx, superClassObj, "prototype");
@@ -2935,12 +2944,8 @@ public final class ScriptRuntime {
         /* step 3 */
         OrdinaryAsyncFunction f = AsyncFunctionCreate(cx, FunctionKind.Normal, fd, scope);
         /* step 4 */
-        OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.FunctionPrototype);
-        /* step 5 */
-        MakeConstructor(f, true, prototype);
-        /* step 6 */
         SetFunctionName(f, name);
-        /* step 7 */
+        /* step 5 */
         return f;
     }
 
@@ -2962,10 +2967,6 @@ public final class ScriptRuntime {
             LexicalEnvironment<?> scope = cx.getLexicalEnvironment();
             /* step 3 */
             closure = AsyncFunctionCreate(cx, FunctionKind.Normal, fd, scope);
-            /* step 4 */
-            OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.FunctionPrototype);
-            /* step 5 */
-            MakeConstructor(closure, true, prototype);
         } else {
             /* step 1 (not applicable) */
             /* step 2 */
@@ -2981,15 +2982,11 @@ public final class ScriptRuntime {
             /* step 7 */
             closure = AsyncFunctionCreate(cx, FunctionKind.Normal, fd, funcEnv);
             /* step 8 */
-            OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.FunctionPrototype);
-            /* step 9 */
-            MakeConstructor(closure, true, prototype);
-            /* step 10 */
             SetFunctionName(closure, name);
-            /* step 11 */
+            /* step 9 */
             envRec.initializeBinding(name, closure);
         }
-        /* step 6/12 */
+        /* step 4/10 */
         return closure;
     }
 
@@ -3007,13 +3004,9 @@ public final class ScriptRuntime {
         /* step 1 (not applicable) */
         /* step 2 */
         LexicalEnvironment<?> scope = cx.getLexicalEnvironment();
-        /* step 3 */
+        /* steps 3-4/3-5 */
         OrdinaryAsyncFunction closure = AsyncFunctionCreate(cx, FunctionKind.Arrow, fd, scope);
-        /* step ? */
-        OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.FunctionPrototype);
-        /* step ? */
-        MakeConstructor(closure, true, prototype);
-        /* step 5 */
+        /* step 5/6 */
         return closure;
     }
 
@@ -3065,14 +3058,10 @@ public final class ScriptRuntime {
         /* step 6 */
         MakeMethod(closure, object);
         /* step 7 */
-        OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.FunctionPrototype);
-        /* step 8 */
-        MakeConstructor(closure, true, prototype);
-        /* step 9 */
         SetFunctionName(closure, propKey);
-        /* step 10 */
+        /* step 8 */
         PropertyDescriptor desc = new PropertyDescriptor(closure, true, enumerable, true);
-        /* step 11 */
+        /* step 9 */
         DefinePropertyOrThrow(cx, object, propKey, desc);
     }
 
@@ -3101,14 +3090,10 @@ public final class ScriptRuntime {
         /* step 6 */
         MakeMethod(closure, object);
         /* step 7 */
-        OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.FunctionPrototype);
-        /* step 8 */
-        MakeConstructor(closure, true, prototype);
-        /* step 9 */
         SetFunctionName(closure, propKey);
-        /* step 10 */
+        /* step 8 */
         PropertyDescriptor desc = new PropertyDescriptor(closure, true, enumerable, true);
-        /* step 11 */
+        /* step 9 */
         DefinePropertyOrThrow(cx, object, propKey, desc);
     }
 

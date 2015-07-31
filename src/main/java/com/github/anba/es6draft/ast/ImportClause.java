@@ -10,7 +10,10 @@ import java.util.List;
 
 /**
  * <h1>15 ECMAScript Language: Scripts and Modules</h1><br>
- * <h2>15.3 Modules</h2>
+ * <h2>15.2 Modules</h2>
+ * <ul>
+ * <li>15.2.2 Imports
+ * </ul>
  */
 public final class ImportClause extends AstNode {
     private final BindingIdentifier defaultEntry;
@@ -25,14 +28,29 @@ public final class ImportClause extends AstNode {
         this.nameSpace = nameSpace;
     }
 
+    /**
+     * Returns the optional default import entry.
+     * 
+     * @return the default import or {@code null}
+     */
     public BindingIdentifier getDefaultEntry() {
         return defaultEntry;
     }
 
+    /**
+     * Returns the list of imported names.
+     * 
+     * @return the list of named imports
+     */
     public List<ImportSpecifier> getNamedImports() {
         return namedImports;
     }
 
+    /**
+     * Returns the optional namespace import binding name.
+     * 
+     * @return the namespace import name or {@code null}
+     */
     public BindingIdentifier getNameSpace() {
         return nameSpace;
     }

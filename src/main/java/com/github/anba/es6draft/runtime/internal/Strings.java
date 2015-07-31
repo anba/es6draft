@@ -25,19 +25,30 @@ public final class Strings {
      * @return the string with leading whitespace removed
      */
     public static String trimLeft(String s) {
-        int start = 0, end = s.length();
-        for (; start < end; ++start) {
+        for (int start = 0, end = s.length(); start < end; ++start) {
             char c = s.charAt(start);
             if (!isWhitespaceOrLineTerminator(c)) {
-                break;
+                return s.substring(start, end);
             }
         }
-        assert start <= end;
-        if (start == end) {
-            // empty string
-            return "";
+        return "";
+    }
+
+    /**
+     * Removes trailing whitespace.
+     * 
+     * @param s
+     *            the string
+     * @return the string with trailing whitespace removed
+     */
+    public static String trimRight(String s) {
+        for (int end = s.length(); end > 0; --end) {
+            char c = s.charAt(end - 1);
+            if (!isWhitespaceOrLineTerminator(c)) {
+                return s.substring(0, end);
+            }
         }
-        return s.substring(start, end);
+        return "";
     }
 
     /**
@@ -63,7 +74,6 @@ public final class Strings {
         }
         assert start <= end;
         if (start == end) {
-            // empty string
             return "";
         }
         return s.substring(start, end);

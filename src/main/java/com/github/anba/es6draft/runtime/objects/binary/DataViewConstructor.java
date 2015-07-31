@@ -175,10 +175,8 @@ public final class DataViewConstructor extends BuiltinConstructor implements Ini
      */
     @Override
     public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
-        ExecutionContext calleeContext = calleeContext();
         /* step 1 */
-        throw newTypeError(calleeContext, Messages.Key.InvalidCall, "DataView");
-        /* steps 2-19 (not applicable) */
+        throw newTypeError(calleeContext(), Messages.Key.InvalidCall, "DataView");
     }
 
     /**
@@ -189,6 +187,7 @@ public final class DataViewConstructor extends BuiltinConstructor implements Ini
             Object... args) {
         ExecutionContext calleeContext = calleeContext();
         Object buffer = argument(args, 0);
+        // FIXME: spec bug - missing/undefined byteOffset parameter not handled.
         Object byteOffset = argument(args, 1, 0);
         Object byteLength = argument(args, 2);
         /* step 1 (not applicable)*/

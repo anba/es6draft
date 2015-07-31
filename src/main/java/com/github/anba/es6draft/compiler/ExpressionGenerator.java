@@ -33,6 +33,7 @@ import com.github.anba.es6draft.compiler.assembler.Type;
 import com.github.anba.es6draft.compiler.assembler.Variable;
 import com.github.anba.es6draft.parser.Parser;
 import com.github.anba.es6draft.runtime.DeclarativeEnvironmentRecord;
+import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.internal.Bootstrap;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.NativeCalls;
@@ -287,7 +288,11 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
     /**
      * [12.3.3.1.1 Runtime Semantics: EvaluateNew(thisCall, constructProduction, arguments)]
      * 
-     * @return
+     * @param node
+     *            the <tt>NewExpression</tt> node
+     * @param mv
+     *            the expression visitor
+     * @return the returned value type
      */
     private ValType EvaluateNew(NewExpression node, ExpressionVisitor mv) {
         /* steps 1-2 (not applicable) */
@@ -836,8 +841,10 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
     }
 
     /**
-     * 12.2.4.1.3 Runtime Semantics: Evaluation<br>
-     * 12.2.4.1.2 Runtime Semantics: Array Accumulation
+     * 12.2.5 Array Initializer
+     * <p>
+     * 12.2.5.3 Runtime Semantics: Evaluation<br>
+     * 12.2.5.2 Runtime Semantics: ArrayAccumulation
      */
     @Override
     public ValType visit(ArrayLiteral node, ExpressionVisitor mv) {
@@ -1040,6 +1047,8 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
     }
 
     /**
+     * 12.14 Assignment Operators
+     * <p>
      * 12.14.4 Runtime Semantics: Evaluation
      */
     @Override
@@ -1213,7 +1222,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
                 return ValType.Number;
             }
         };
-        // 12.7.1 The Addition operator ( + )
+        // 12.7.3 The Addition operator ( + )
         static final AssignmentOp ADD = new AssignmentOp() {
             @Override
             ValType emit(AssignmentExpression node, ExpressionVisitor mv, ExpressionGenerator gen) {
@@ -1251,7 +1260,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
                 return op.putValue(left, ltype, result, node.hasCompletion(), mv);
             }
         };
-        // 12.7.2 The Subtraction Operator ( - )
+        // 12.7.4 The Subtraction Operator ( - )
         static final CompoundAssignmentOp SUB = new ArithmeticCompoundAssignmentOp() {
             @Override
             ValType operation(ExpressionVisitor mv) {
@@ -1259,7 +1268,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
                 return ValType.Number;
             }
         };
-        // 12.8.1 The Left Shift Operator ( << )
+        // 12.8.3 The Left Shift Operator ( << )
         static final CompoundAssignmentOp SHL = new IntegerCompoundAssignmentOp() {
             @Override
             ValType operation(ExpressionVisitor mv) {
@@ -1269,7 +1278,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
                 return ValType.Number_int;
             }
         };
-        // 12.8.2 The Signed Right Shift Operator ( >> )
+        // 12.8.4 The Signed Right Shift Operator ( >> )
         static final CompoundAssignmentOp SHR = new IntegerCompoundAssignmentOp() {
             @Override
             ValType operation(ExpressionVisitor mv) {
@@ -1279,7 +1288,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
                 return ValType.Number_int;
             }
         };
-        // 12.8.3 The Unsigned Right Shift Operator ( >>> )
+        // 12.8.5 The Unsigned Right Shift Operator ( >>> )
         static final CompoundAssignmentOp USHR = new CompoundAssignmentOp() {
             @Override
             ValType convertLeft(ValType type, ExpressionVisitor mv) {
@@ -1364,21 +1373,21 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
         ValType type = node.getExpression().accept(this, mv);
         mv.toBoxed(type);
 
-        yield(node, mv);
+        await(node, mv);
 
         return ValType.Any;
     }
 
     /**
-     * 12.6.2 Runtime Semantics: Evaluation<br>
-     * 12.7.2.1 Runtime Semantics: Evaluation<br>
+     * 12.6.3 Runtime Semantics: Evaluation<br>
      * 12.7.3.1 Runtime Semantics: Evaluation<br>
-     * 12.8.2.1 Runtime Semantics: Evaluation<br>
+     * 12.7.4.1 Runtime Semantics: Evaluation<br>
      * 12.8.3.1 Runtime Semantics: Evaluation<br>
      * 12.8.4.1 Runtime Semantics: Evaluation<br>
-     * 12.9.2 Runtime Semantics: Evaluation<br>
-     * 12.10.2 Runtime Semantics: Evaluation<br>
-     * 12.11.2 Runtime Semantics: Evaluation<br>
+     * 12.8.5.1 Runtime Semantics: Evaluation<br>
+     * 12.9.3 Runtime Semantics: Evaluation<br>
+     * 12.10.3 Runtime Semantics: Evaluation<br>
+     * 12.11.3 Runtime Semantics: Evaluation<br>
      * 12.12.3 Runtime Semantics: Evaluation<br>
      */
     @Override
@@ -1596,7 +1605,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
                 return ValType.Number;
             }
         };
-        // 12.7.1 The Addition operator ( + )
+        // 12.7.3 The Addition operator ( + )
         static final BinaryOp ADD = new BinaryOp() {
             @Override
             ValType emit(BinaryExpression node, ExpressionVisitor mv, ExpressionGenerator gen) {
@@ -1847,7 +1856,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
                 return toStringForConcat(node, type, mv);
             }
         };
-        // 12.7.2 The Subtraction Operator ( - )
+        // 12.7.4 The Subtraction Operator ( - )
         static final ArithmeticOp SUB = new ArithmeticOp() {
             @Override
             ValType operation(ExpressionVisitor mv) {
@@ -1855,7 +1864,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
                 return ValType.Number;
             }
         };
-        // 12.8.1 The Left Shift Operator ( << )
+        // 12.8.3 The Left Shift Operator ( << )
         static final IntegerOp SHL = new IntegerOp() {
             @Override
             ValType operation(ExpressionVisitor mv) {
@@ -1865,7 +1874,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
                 return ValType.Number_int;
             }
         };
-        // 12.8.2 The Signed Right Shift Operator ( >> )
+        // 12.8.4 The Signed Right Shift Operator ( >> )
         static final IntegerOp SHR = new IntegerOp() {
             @Override
             ValType operation(ExpressionVisitor mv) {
@@ -1875,7 +1884,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
                 return ValType.Number_int;
             }
         };
-        // 12.8.3 The Unsigned Right Shift Operator ( >>> )
+        // 12.8.5 The Unsigned Right Shift Operator ( >>> )
         static final ConvertOp USHR = new ConvertOp() {
             @Override
             ValType convertLeft(ValType type, ExpressionVisitor mv) {
@@ -1931,6 +1940,22 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
                 invokeDynamicOperator(BinaryExpression.Operator.GE, mv);
             }
         };
+        // 12.9 Relational Operators ( instanceof )
+        static final RelationalOp INSTANCEOF = new RelationalOp() {
+            @Override
+            void operation(ExpressionVisitor mv) {
+                mv.loadExecutionContext();
+                mv.invoke(Methods.ScriptRuntime_InstanceofOperator);
+            }
+        };
+        // 12.9 Relational Operators ( in )
+        static final RelationalOp IN = new RelationalOp() {
+            @Override
+            void operation(ExpressionVisitor mv) {
+                mv.loadExecutionContext();
+                mv.invoke(Methods.ScriptRuntime_in);
+            }
+        };
         // 12.10 Equality Operators ( == )
         static final EqualityOp EQ = new EqualityOp() {
             @Override
@@ -1946,22 +1971,6 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
                 mv.loadExecutionContext();
                 invokeDynamicOperator(BinaryExpression.Operator.EQ, mv);
                 mv.not();
-            }
-        };
-        // 12.9 Relational Operators ( instanceof )
-        static final EqualityOp INSTANCEOF = new EqualityOp() {
-            @Override
-            void operation(ExpressionVisitor mv) {
-                mv.loadExecutionContext();
-                mv.invoke(Methods.ScriptRuntime_InstanceofOperator);
-            }
-        };
-        // 12.9 Relational Operators ( in )
-        static final EqualityOp IN = new EqualityOp() {
-            @Override
-            void operation(ExpressionVisitor mv) {
-                mv.loadExecutionContext();
-                mv.invoke(Methods.ScriptRuntime_in);
             }
         };
         // 12.10 Equality Operators ( === )
@@ -2177,7 +2186,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
             ConditionalExpression conditional = (ConditionalExpression) node;
             ValType ltype = expressionType(conditional.getThen());
             ValType rtype = expressionType(conditional.getOtherwise());
-            if (ltype != rtype && (ltype.isNumeric() && rtype.isNumeric())) {
+            if (ltype != rtype && ltype.isNumeric() && rtype.isNumeric()) {
                 return ValType.Number;
             }
             return ltype == rtype ? ltype : ValType.Any;
@@ -2274,16 +2283,20 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
     }
 
     /**
-     * 12.2.3.1 Runtime Semantics: Evaluation
+     * 12.2.4 Literals
+     * <p>
+     * 12.2.4.1 Runtime Semantics: Evaluation
      */
     @Override
     public ValType visit(BooleanLiteral node, ExpressionVisitor mv) {
+        /* steps 1-2 */
         mv.iconst(node.getValue());
-
         return ValType.Boolean;
     }
 
     /**
+     * 12.3.4 Function Calls
+     * <p>
      * 12.3.4.1 Runtime Semantics: Evaluation
      */
     @Override
@@ -2340,6 +2353,8 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
     }
 
     /**
+     * 12.13 Conditional Operator ( ? : )
+     * <p>
      * 12.13.3 Runtime Semantics: Evaluation
      */
     @Override
@@ -2385,6 +2400,8 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
     }
 
     /**
+     * 12.3.2 Property Accessors
+     * <p>
      * 12.3.2.1 Runtime Semantics: Evaluation
      */
     @Override
@@ -2477,7 +2494,9 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
     }
 
     /**
-     * 12.2.2.1 Runtime Semantics: Evaluation
+     * 12.1 Identifiers
+     * <p>
+     * 12.1.6 Runtime Semantics: Evaluation
      */
     @Override
     public ValType visit(IdentifierReference node, ExpressionVisitor mv) {
@@ -2493,15 +2512,16 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
     public ValType visit(LetExpression node, ExpressionVisitor mv) {
         BlockScope scope = node.getScope();
         if (scope.isPresent()) {
-            // stack: [] -> [env]
-            newDeclarativeEnvironment(scope, mv);
-            // stack: [env] -> [env]
             mv.enterVariableScope();
+            Variable<LexicalEnvironment<DeclarativeEnvironmentRecord>> env = mv.newVariable("env",
+                    LexicalEnvironment.class).uncheckedCast();
             Variable<DeclarativeEnvironmentRecord> envRec = mv.newVariable("envRec",
                     DeclarativeEnvironmentRecord.class);
-            getEnvRec(envRec, mv);
 
-            // stack: [env] -> [env]
+            newDeclarativeEnvironment(scope, mv);
+            mv.store(env);
+            getEnvRec(env, envRec, mv);
+
             for (LexicalBinding lexical : node.getBindings()) {
                 Binding binding = lexical.getBinding();
                 Expression initializer = lexical.getInitializer();
@@ -2531,9 +2551,11 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
                             (BindingPattern) binding, mv);
                 }
             }
-            mv.exitVariableScope();
-            // stack: [env] -> []
+
+            mv.load(env);
             pushLexicalEnvironment(mv);
+
+            mv.exitVariableScope();
         }
 
         mv.enterScope(node);
@@ -2557,6 +2579,8 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
     }
 
     /**
+     * 12.3.3 The new Operator
+     * <p>
      * 12.3.3.1 Runtime Semantics: Evaluation
      */
     @Override
@@ -2566,6 +2590,8 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
     }
 
     /**
+     * 12.3.8 Meta Properties
+     * <p>
      * 12.3.8.1 Runtime Semantics: Evaluation
      */
     @Override
@@ -2576,7 +2602,9 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
     }
 
     /**
-     * 12.2.3.1 Runtime Semantics: Evaluation
+     * 12.2.4 Literals
+     * <p>
+     * 12.2.4.1 Runtime Semantics: Evaluation
      */
     @Override
     public ValType visit(NullLiteral node, ExpressionVisitor mv) {
@@ -2586,7 +2614,9 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
     }
 
     /**
-     * 12.2.3.1 Runtime Semantics: Evaluation
+     * 12.2.4 Literals
+     * <p>
+     * 12.2.4.1 Runtime Semantics: Evaluation
      */
     @Override
     public ValType visit(NumericLiteral node, ExpressionVisitor mv) {
@@ -2602,7 +2632,9 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
     }
 
     /**
-     * 12.2.5.6 Runtime Semantics: Evaluation
+     * 12.2.6 Object Initializer
+     * <p>
+     * 12.2.6.8 Runtime Semantics: Evaluation
      */
     @Override
     public ValType visit(ObjectLiteral node, ExpressionVisitor mv) {
@@ -2635,6 +2667,8 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
     }
 
     /**
+     * 12.3.2 Property Accessors
+     * <p>
      * 12.3.2.1 Runtime Semantics: Evaluation
      */
     @Override
@@ -2644,6 +2678,8 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
     }
 
     /**
+     * 12.2.8 Regular Expression Literals
+     * <p>
      * 12.2.8.2 Runtime Semantics: Evaluation
      */
     @Override
@@ -2660,7 +2696,9 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
     }
 
     /**
-     * 12.2.3.1 Runtime Semantics: Evaluation
+     * 12.2.4 Literals
+     * <p>
+     * 12.2.4.1 Runtime Semantics: Evaluation
      */
     @Override
     public ValType visit(StringLiteral node, ExpressionVisitor mv) {
@@ -2762,6 +2800,8 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
     }
 
     /**
+     * 12.3.7 Tagged Templates
+     * <p>
      * 12.3.7.1 Runtime Semantics: Evaluation
      */
     @Override
@@ -2782,7 +2822,9 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
     }
 
     /**
-     * 12.2.9.2.4 Runtime Semantics: Evaluation
+     * 12.2.9 Template Literals
+     * <p>
+     * 12.2.9.5 Runtime Semantics: Evaluation
      */
     @Override
     public ValType visit(TemplateLiteral node, ExpressionVisitor mv) {
@@ -2818,7 +2860,9 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
     }
 
     /**
-     * 12.2.1.1 Runtime Semantics: Evaluation
+     * 12.2.2 The this Keyword
+     * <p>
+     * 12.2.2.1 Runtime Semantics: Evaluation
      */
     @Override
     public ValType visit(ThisExpression node, ExpressionVisitor mv) {
@@ -2830,10 +2874,9 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
     }
 
     /**
-     * 12.4.3.1 Runtime Semantics: Evaluation<br>
-     * 12.4.3.1 Runtime Semantics: Evaluation<br>
-     * 12.5.3.2 Runtime Semantics: Evaluation<br>
-     * 12.5.4.1 Runtime Semantics: Evaluation<br>
+     * 12.4.4.1 Runtime Semantics: Evaluation<br>
+     * 12.4.5.1 Runtime Semantics: Evaluation<br>
+     * 12.5.4.2 Runtime Semantics: Evaluation<br>
      * 12.5.5.1 Runtime Semantics: Evaluation<br>
      * 12.5.6.1 Runtime Semantics: Evaluation<br>
      * 12.5.7.1 Runtime Semantics: Evaluation<br>
@@ -2841,6 +2884,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
      * 12.5.9.1 Runtime Semantics: Evaluation<br>
      * 12.5.10.1 Runtime Semantics: Evaluation<br>
      * 12.5.11.1 Runtime Semantics: Evaluation<br>
+     * 12.5.12.1 Runtime Semantics: Evaluation<br>
      */
     @Override
     public ValType visit(UnaryExpression node, ExpressionVisitor mv) {
@@ -2851,7 +2895,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
         case PRE_DEC:
             return unaryUpdateOp(node).emit(node, mv, this);
         case DELETE: {
-            // 12.5.3 The delete Operator
+            // 12.5.4 The delete Operator
             Expression operand = node.getOperand();
             if (operand instanceof LeftHandSideExpression) {
                 LeftHandSideExpression lhs = (LeftHandSideExpression) operand;
@@ -2864,7 +2908,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
             return ValType.Boolean;
         }
         case VOID: {
-            // 12.5.4 The void Operator
+            // 12.5.5 The void Operator
             ValType type = node.getOperand().emptyCompletion().accept(this, mv);
             mv.pop(type);
             if (node.hasCompletion()) {
@@ -2874,7 +2918,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
             return ValType.Empty;
         }
         case TYPEOF: {
-            // 12.5.5 The typeof Operator
+            // 12.5.6 The typeof Operator
             Expression operand = node.getOperand();
             if (operand instanceof IdentifierReference) {
                 IdentifierReference ident = (IdentifierReference) operand;
@@ -2894,27 +2938,27 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
             return ValType.String;
         }
         case POS: {
-            // 12.5.8 Unary + Operator
+            // 12.5.9 Unary + Operator
             ValType type = node.getOperand().accept(this, mv);
             ToNumber(type, mv);
             return ValType.Number;
         }
         case NEG: {
-            // 12.5.9 Unary - Operator
+            // 12.5.10 Unary - Operator
             ValType type = node.getOperand().accept(this, mv);
             ToNumber(type, mv);
             mv.dneg();
             return ValType.Number;
         }
         case BITNOT: {
-            // 12.5.10 Bitwise NOT Operator ( ~ )
+            // 12.5.11 Bitwise NOT Operator ( ~ )
             ValType type = node.getOperand().accept(this, mv);
             ToInt32(type, mv);
             mv.bitnot();
             return ValType.Number_int;
         }
         case NOT: {
-            // 12.5.11 Logical NOT Operator ( ! )
+            // 12.5.12 Logical NOT Operator ( ! )
             if (!node.hasCompletion()) {
                 ValType type = node.getOperand().emptyCompletion().accept(this, mv);
                 mv.pop(type);
@@ -2970,8 +3014,8 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
             return ValType.Empty;
         }
 
-        // 12.4.3 Postfix Increment Operator
-        // 12.5.6 Prefix Increment Operator
+        // 12.4.4 Postfix Increment Operator
+        // 12.5.7 Prefix Increment Operator
         static final UnaryUpdateOp INCREMENT = new UnaryUpdateOp() {
             @Override
             void operation(ExpressionVisitor mv) {
@@ -2979,8 +3023,8 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
                 mv.dadd();
             }
         };
-        // 12.4.4 Postfix Decrement Operator
-        // 12.5.7 Prefix Decrement Operator
+        // 12.4.5 Postfix Decrement Operator
+        // 12.5.8 Prefix Decrement Operator
         static final UnaryUpdateOp DECREMENT = new UnaryUpdateOp() {
             @Override
             void operation(ExpressionVisitor mv) {
@@ -2991,6 +3035,8 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
     }
 
     /**
+     * 14.4 Generator Function Definitions
+     * <p>
      * 14.4.14 Runtime Semantics: Evaluation
      */
     @Override

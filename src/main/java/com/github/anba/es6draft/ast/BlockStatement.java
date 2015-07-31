@@ -14,7 +14,7 @@ import com.github.anba.es6draft.ast.scope.BlockScope;
 /**
  * <h1>13 ECMAScript Language: Statements and Declarations</h1>
  * <ul>
- * <li>13.1 Block
+ * <li>13.2 Block
  * </ul>
  */
 public final class BlockStatement extends Statement implements ScopedNode {
@@ -33,10 +33,21 @@ public final class BlockStatement extends Statement implements ScopedNode {
         return scope;
     }
 
+    /**
+     * Returns the list of statement list items.
+     * 
+     * @return the block statements
+     */
     public List<StatementListItem> getStatements() {
         return statements;
     }
 
+    /**
+     * Set the list of statement list items.
+     * 
+     * @param statements
+     *            the block statements
+     */
     public void setStatements(List<StatementListItem> statements) {
         assert statements != null;
         this.statements = statements;

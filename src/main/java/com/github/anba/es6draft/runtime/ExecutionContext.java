@@ -11,6 +11,7 @@ import com.github.anba.es6draft.Module;
 import com.github.anba.es6draft.Script;
 import com.github.anba.es6draft.runtime.internal.RuntimeInfo.SourceObject;
 import com.github.anba.es6draft.runtime.modules.SourceTextModuleRecord;
+import com.github.anba.es6draft.runtime.objects.async.AsyncObject;
 import com.github.anba.es6draft.runtime.objects.iteration.GeneratorObject;
 import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
@@ -32,7 +33,8 @@ public final class ExecutionContext {
     private final LexicalEnvironment<FunctionEnvironmentRecord> funVarEnv;
     private final Executable executable;
     private final FunctionObject function;
-    private GeneratorObject generator = null;
+    private GeneratorObject generator;
+    private AsyncObject async;
 
     private ExecutionContext(Realm realm, LexicalEnvironment<?> varEnv,
             LexicalEnvironment<?> lexEnv, LexicalEnvironment<FunctionEnvironmentRecord> funVarEnv,
@@ -121,6 +123,26 @@ public final class ExecutionContext {
     public void setCurrentGenerator(GeneratorObject generator) {
         assert this.generator == null && generator != null;
         this.generator = generator;
+    }
+
+    /**
+     * Returns the {@code AsyncObject} component of this execution context.
+     * 
+     * @return the {@code AsyncObject} component or {@code null} if not evaluating an async function
+     */
+    public AsyncObject getCurrentAsync() {
+        return async;
+    }
+
+    /**
+     * Sets the {@code AsyncObject} component of this execution context.
+     * 
+     * @param async
+     *            the {@code AsyncObject} component
+     */
+    public void setCurrentAsync(AsyncObject async) {
+        assert this.async == null && async != null;
+        this.async = async;
     }
 
     /**

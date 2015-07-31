@@ -12,7 +12,7 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.ToString;
  * <h1>12 ECMAScript Language: Expressions</h1><br>
  * <h2>12.2 Primary Expression</h2>
  * <ul>
- * <li>12.2.3 Literals
+ * <li>12.2.4 Literals
  * </ul>
  */
 public final class NumericLiteral extends ValueLiteral<Double> implements PropertyName {
@@ -23,16 +23,31 @@ public final class NumericLiteral extends ValueLiteral<Double> implements Proper
         this.value = value;
     }
 
+    /**
+     * Returns {@code true} if the value can be represented as an {@code int}.
+     * 
+     * @return {@code true} if the value is an integer
+     */
     public boolean isInt() {
         double value = this.value;
         int intValue = (int) value;
         return intValue == value && (intValue != 0 || Double.doubleToRawLongBits(value) == 0L);
     }
 
+    /**
+     * Returns the numeric literal's {@code int} value.
+     * 
+     * @return the integer value
+     */
     public int intValue() {
         return (int) value;
     }
 
+    /**
+     * Returns the numeric literal's {@code double} value.
+     * 
+     * @return the double value
+     */
     public double doubleValue() {
         return value;
     }

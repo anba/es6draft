@@ -8,9 +8,9 @@ package com.github.anba.es6draft.ast;
 
 /**
  * <h1>13 ECMAScript Language: Statements and Declarations</h1><br>
- * <h2>13.2 Declarations and the Variable Statement</h2>
+ * <h2>13.3 Declarations and the Variable Statement</h2>
  * <ul>
- * <li>13.2.4 Destructuring Binding Patterns
+ * <li>13.3.3 Destructuring Binding Patterns
  * </ul>
  */
 public final class BindingElement extends BindingElementItem {
@@ -24,10 +24,20 @@ public final class BindingElement extends BindingElementItem {
         this.initializer = initializer;
     }
 
+    /**
+     * Returns the target binding.
+     * 
+     * @return the binding node
+     */
     public Binding getBinding() {
         return binding;
     }
 
+    /**
+     * Returns the optional initializer expression.
+     * 
+     * @return the initializer or {@code null}
+     */
     public Expression getInitializer() {
         return initializer;
     }

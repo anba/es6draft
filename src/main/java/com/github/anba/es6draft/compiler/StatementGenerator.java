@@ -282,7 +282,9 @@ final class StatementGenerator extends
     }
 
     /**
-     * 13.1.10 Runtime Semantics: Evaluation
+     * 13.2 Block
+     * <p>
+     * 13.2.13 Runtime Semantics: Evaluation
      */
     @Override
     public Completion visit(BlockStatement node, StatementVisitor mv) {
@@ -304,9 +306,9 @@ final class StatementGenerator extends
         mv.enterScope(node);
         Completion result = Completion.Empty;
         {
-            // 13.1.10 Runtime Semantics: Evaluation
+            // 13.2.13 Runtime Semantics: Evaluation
             // StatementList : StatementList StatementListItem
-            /* steps 1-6 */
+            /* steps 1-4 */
             for (StatementListItem statement : node.getStatements()) {
                 if ((result = result.then(statement.accept(this, mv))).isAbrupt()) {
                     break;
@@ -320,24 +322,25 @@ final class StatementGenerator extends
             popLexicalEnvironment(mv);
         }
 
-        /* steps 7-8 */
+        /* step 7 */
         return result;
     }
 
     /**
-     * 13.8.2 Runtime Semantics: Evaluation
+     * 13.9 The break Statement
+     * <p>
+     * 13.9.3 Runtime Semantics: Evaluation
      */
     @Override
     public Completion visit(BreakStatement node, StatementVisitor mv) {
         /* steps 1-2 */
-        if (node.isUndefinedCompletion()) {
-            mv.storeUndefinedAsCompletionValue();
-        }
         mv.goTo(mv.breakLabel(node));
         return Completion.Break;
     }
 
     /**
+     * 14.5 Class Definitions
+     * <p>
      * 14.5.16 Runtime Semantics: Evaluation
      */
     @Override
@@ -377,7 +380,9 @@ final class StatementGenerator extends
     }
 
     /**
-     * 13.7.2 Runtime Semantics: Evaluation
+     * 13.8 The continue Statement
+     * <p>
+     * 13.8.3 Runtime Semantics: Evaluation
      */
     @Override
     public Completion visit(ContinueStatement node, StatementVisitor mv) {
@@ -387,7 +392,9 @@ final class StatementGenerator extends
     }
 
     /**
-     * 13.15.1 Runtime Semantics: Evaluation
+     * 13.16 The debugger statement
+     * <p>
+     * 13.16.1 Runtime Semantics: Evaluation
      */
     @Override
     public Completion visit(DebuggerStatement node, StatementVisitor mv) {
@@ -398,9 +405,11 @@ final class StatementGenerator extends
     }
 
     /**
-     * 13.0.3 Runtime Semantics: Evaluation<br>
-     * 13.0.2 Runtime Semantics: LabelledEvaluation<br>
-     * 13.6.1.2 Runtime Semantics: LabelledEvaluation
+     * 13.7.2 The do-while Statement
+     * <p>
+     * 13.1.8 Runtime Semantics: Evaluation<br>
+     * 13.1.7 Runtime Semantics: LabelledEvaluation<br>
+     * 13.7.2.6 Runtime Semantics: LabelledEvaluation
      */
     @Override
     public Completion visit(DoWhileStatement node, StatementVisitor mv) {
@@ -427,7 +436,7 @@ final class StatementGenerator extends
             mv.exitIteration(node);
         }
 
-        /* step 2.c (abrupt completion - continue) */
+        /* step 2.b (abrupt completion - continue) */
         if (lblContinue.isTarget()) {
             mv.mark(lblContinue);
             restoreEnvironment(savedEnv, mv);
@@ -444,14 +453,14 @@ final class StatementGenerator extends
             }
         }
 
-        /* step 2.c (abrupt completion - break) */
+        /* step 2.b (abrupt completion - break) */
         if (lblBreak.isTarget()) {
             mv.mark(lblBreak);
             restoreEnvironment(savedEnv, mv);
         }
         mv.exitVariableScope();
 
-        /* steps 2.c, 2.f, 2.g */
+        /* steps 2.b, 2.g */
         if (btest == Bool.True) {
             if (!result.isAbrupt() && !lblBreak.isTarget()) {
                 return Completion.Abrupt; // infinite loop
@@ -462,7 +471,9 @@ final class StatementGenerator extends
     }
 
     /**
-     * 13.3.1 Runtime Semantics: Evaluation
+     * 13.4 Empty Statement
+     * <p>
+     * 13.4.1 Runtime Semantics: Evaluation
      */
     @Override
     public Completion visit(EmptyStatement node, StatementVisitor mv) {
@@ -471,6 +482,8 @@ final class StatementGenerator extends
     }
 
     /**
+     * 15.2.3 Exports
+     * <p>
      * 15.2.3.11 Runtime Semantics: Evaluation
      */
     @Override
@@ -508,6 +521,8 @@ final class StatementGenerator extends
     }
 
     /**
+     * 15.2.3 Exports
+     * <p>
      * 15.2.3.11 Runtime Semantics: Evaluation
      */
     @Override
@@ -526,21 +541,21 @@ final class StatementGenerator extends
     }
 
     /**
-     * 13.4.1 Runtime Semantics: Evaluation
+     * 13.5 Expression Statement
+     * <p>
+     * 13.5.1 Runtime Semantics: Evaluation
      */
     @Override
     public Completion visit(ExpressionStatement node, StatementVisitor mv) {
         boolean hasCompletion = mv.hasCompletion() && node.hasCompletionValue();
-        Expression expr = hasCompletion ? node.getExpression() : node.getExpression()
-                .emptyCompletion();
+        Expression expr = node.getExpression();
 
-        /* steps 1-3 */
-        ValType type = expression(expr, mv);
-
-        /* step 4 */
+        /* steps 1-2 */
         if (hasCompletion) {
+            ValType type = expression(expr, mv);
             mv.storeCompletionValue(type);
         } else {
+            ValType type = expression(expr.emptyCompletion(), mv);
             mv.pop(type);
         }
         return Completion.Normal;
@@ -559,9 +574,11 @@ final class StatementGenerator extends
     }
 
     /**
-     * 13.0.8 Runtime Semantics: Evaluation<br>
-     * 13.0.7 Runtime Semantics: LabelledEvaluation<br>
-     * 13.6.4.11 Runtime Semantics: LabelledEvaluation
+     * 13.7.5 The for-in and for-of Statements
+     * <p>
+     * 13.1.8 Runtime Semantics: Evaluation<br>
+     * 13.1.7 Runtime Semantics: LabelledEvaluation<br>
+     * 13.7.5.11 Runtime Semantics: LabelledEvaluation
      */
     @Override
     public Completion visit(ForInStatement node, StatementVisitor mv) {
@@ -569,9 +586,11 @@ final class StatementGenerator extends
     }
 
     /**
-     * 13.0.8 Runtime Semantics: Evaluation<br>
-     * 13.0.7 Runtime Semantics: LabelledEvaluation<br>
-     * 13.6.4.11 Runtime Semantics: LabelledEvaluation
+     * 13.7.5 The for-in and for-of Statements
+     * <p>
+     * 13.1.8 Runtime Semantics: Evaluation<br>
+     * 13.1.7 Runtime Semantics: LabelledEvaluation<br>
+     * 13.7.5.11 Runtime Semantics: LabelledEvaluation
      */
     @Override
     public Completion visit(ForOfStatement node, StatementVisitor mv) {
@@ -579,7 +598,7 @@ final class StatementGenerator extends
     }
 
     /**
-     * 13.6.4.11 Runtime Semantics: LabelledEvaluation
+     * 13.7.5.11 Runtime Semantics: LabelledEvaluation
      * 
      * @param <FORSTATEMENT>
      *            the for-statement node type
@@ -614,7 +633,7 @@ final class StatementGenerator extends
     }
 
     /**
-     * 13.6.4.12 Runtime Semantics: ForIn/OfHeadEvaluation (TDZnames, expr, iterationKind, labelSet)
+     * 13.7.5.12 Runtime Semantics: ForIn/OfHeadEvaluation (TDZnames, expr, iterationKind, labelSet)
      * <p>
      * stack: [] {@literal ->} [Iterator]
      * 
@@ -637,10 +656,7 @@ final class StatementGenerator extends
         Node lhs = node.getHead();
         List<Name> tdzNames = null;
         if (lhs instanceof LexicalDeclaration) {
-            LexicalDeclaration lexDecl = (LexicalDeclaration) lhs;
-            assert lexDecl.getElements().size() == 1;
-            LexicalBinding lexicalBinding = lexDecl.getElements().get(0);
-            tdzNames = BoundNames(lexicalBinding.getBinding());
+            tdzNames = BoundNames(forDeclarationBinding((LexicalDeclaration) lhs));
             assert scope.isPresent() == !tdzNames.isEmpty();
             if (scope.isPresent()) {
                 // stack: [] -> [TDZ]
@@ -675,7 +691,7 @@ final class StatementGenerator extends
             }
         }
 
-        /* steps 7-10 */
+        /* steps 7-8 */
         if (iterationKind == IterationKind.Enumerate
                 || iterationKind == IterationKind.EnumerateValues) {
             /* step 7.a */
@@ -688,7 +704,7 @@ final class StatementGenerator extends
                 mv.goTo(lblFail);
                 mv.mark(loopstart);
             }
-            /* steps 7.b-c, 9-10 */
+            /* steps 7.b-c */
             if (codegen.isEnabled(CompatibilityOption.LegacyGenerator)) {
                 // legacy generator mode, both, for-in and for-each, perform Iterate on generators
                 Jump l0 = new Jump(), l1 = new Jump();
@@ -723,7 +739,7 @@ final class StatementGenerator extends
                 mv.invoke(Methods.ScriptRuntime_enumerateValues);
             }
         } else {
-            /* steps 8-10 */
+            /* step 8 */
             assert iterationKind == IterationKind.Iterate;
             mv.loadExecutionContext();
             mv.lineInfo(expr);
@@ -734,7 +750,7 @@ final class StatementGenerator extends
     }
 
     /**
-     * 13.6.4.13 Runtime Semantics: ForIn/OfBodyEvaluation (lhs, stmt, iterator, lhsKind, labelSet)
+     * 13.7.5.13 Runtime Semantics: ForIn/OfBodyEvaluation (lhs, stmt, iterator, lhsKind, labelSet)
      * <p>
      * stack: [Iterator] {@literal ->} []
      * 
@@ -769,14 +785,14 @@ final class StatementGenerator extends
         /* step 5 (repeat loop) */
         mv.nonDestructiveGoTo(test);
 
-        /* steps 5.f-g */
+        /* steps 5.d-e */
         mv.mark(enter);
         mv.load(iterator);
         mv.lineInfo(node);
         mv.invoke(Methods.Iterator_next);
         mv.store(nextValue);
 
-        /* steps 5.h-l */
+        /* steps 5.f-l */
         {
             mv.enterIteration(node, lblBreak, lblContinue);
             mv.enterWrapped();
@@ -807,7 +823,7 @@ final class StatementGenerator extends
             restoreEnvironment(savedEnv, mv);
         }
 
-        /* steps 5.c-e */
+        /* steps 5.a-c */
         mv.mark(test);
         mv.load(iterator);
         mv.lineInfo(node);
@@ -828,106 +844,76 @@ final class StatementGenerator extends
             FORSTATEMENT node, Variable<Object> nextValue, StatementVisitor mv) {
         BlockScope scope = node.getScope();
         Node lhs = node.getHead();
-        boolean destructuring = IsDestructuring(lhs);
-        ValType ref = null;
-        Variable<DeclarativeEnvironmentRecord> envRec = null;
 
-        // FIXME: spec bug - https://bugs.ecmascript.org/show_bug.cgi?id=4352
-        /* steps 5.a-b */
+        /* steps 5.f-j */
         if (lhs instanceof Expression) {
-            /* step 5.a */
+            /* steps 5.f, 5.h-j */
             LeftHandSideExpression lhsExpr = (LeftHandSideExpression) lhs;
-            if (!destructuring) {
+            if (!(lhsExpr instanceof AssignmentPattern)) {
                 ReferenceOp<LeftHandSideExpression> op = ReferenceOp.of(lhsExpr);
-                ref = op.reference(lhsExpr, mv, codegen);
+
+                /* step 5.f.i.1 */
+                // stack: [] -> [<ref>]
+                ValType ref = op.reference(lhsExpr, mv, codegen);
+
+                /* steps 5.h.i, 5.h.iii */
+                // stack: [<ref>] -> []
+                mv.load(nextValue);
+                op.putValue(lhsExpr, ref, ValType.Any, mv);
+            } else {
+                /* step 5.i.i */
+                mv.load(nextValue);
+                DestructuringAssignment(codegen, (AssignmentPattern) lhs, mv);
             }
         } else if (lhs instanceof VariableStatement) {
-            /* step 5.a */
-            if (!destructuring) {
-                Binding binding = ((VariableStatement) lhs).getElements().get(0).getBinding();
+            /* steps 5.f, 5.h-j */
+            Binding binding = forVarDeclarationBinding((VariableStatement) lhs);
+            if (binding instanceof BindingIdentifier) {
                 BindingIdentifier bindingId = (BindingIdentifier) binding;
 
+                /* step 5.f.i.1 */
                 // 13.7.5.14 Runtime Semantics: Evaluation
                 IdReferenceOp op = IdReferenceOp.of(bindingId);
                 op.resolveBinding(bindingId, mv);
+
+                /* steps 5.h.i, 5.h.iii */
+                // stack: [<ref>] -> []
+                mv.load(nextValue);
+                op.putValue(bindingId, ValType.Any, mv);
+            } else {
+                /* step 5.i.ii */
+                mv.load(nextValue);
+                BindingInitialization(codegen, (BindingPattern) binding, mv);
             }
         } else {
-            /* step 5.b */
-            LexicalDeclaration lexDecl = (LexicalDeclaration) lhs;
-            LexicalBinding lexicalBinding = lexDecl.getElements().get(0);
-            boolean isConst = IsConstantDeclaration(lexDecl);
-
-            // stack: [] -> []
+            /* step 5.g-j */
+            Binding binding = forDeclarationBinding((LexicalDeclaration) lhs);
+            Variable<DeclarativeEnvironmentRecord> envRec = null;
             if (scope.isPresent()) {
                 mv.enterVariableScope();
                 envRec = mv.newVariable("envRec", DeclarativeEnvironmentRecord.class);
 
                 newDeclarativeEnvironment(scope, mv);
                 getEnvRec(envRec, mv);
-                BindingInstantiation(envRec, lexicalBinding, isConst, mv);
+                BindingInstantiation(envRec, (LexicalDeclaration) lhs, mv);
                 pushLexicalEnvironment(mv);
             }
             mv.enterScope(node);
-        }
-        /* steps 5.h-j */
-        if (!destructuring) {
-            /* steps 5.h, 5.j */
-            if (lhs instanceof Expression) {
+            /* step 5.h */
+            if (binding instanceof BindingIdentifier) {
                 /* step 5.h.ii */
-                LeftHandSideExpression lhsExpr = (LeftHandSideExpression) lhs;
-                ReferenceOp<LeftHandSideExpression> op = ReferenceOp.of(lhsExpr);
-
-                // stack: [<ref>] -> []
-                mv.load(nextValue);
-                op.putValue(lhsExpr, ref, ValType.Any, mv);
-            } else if (lhs instanceof VariableStatement) {
-                /* step 5.h.ii */
-                Binding binding = ((VariableStatement) lhs).getElements().get(0).getBinding();
                 BindingIdentifier bindingId = (BindingIdentifier) binding;
-                IdReferenceOp op = IdReferenceOp.of(bindingId);
+                Name name = bindingId.getName();
+                BindingOp<DeclarativeEnvironmentRecord> op = BindingOp.of(envRec, name);
 
-                // stack: [<ref>] -> []
-                mv.load(nextValue);
-                op.putValue(bindingId, ValType.Any, mv);
-            } else {
-                /* step 5.h.i */
-                Binding binding = ((LexicalDeclaration) lhs).getElements().get(0).getBinding();
-                BindingIdentifier bindingId = (BindingIdentifier) binding;
-                BindingOp<DeclarativeEnvironmentRecord> op = BindingOp.of(envRec,
-                        bindingId.getName());
-
-                op.initializeBinding(envRec, bindingId.getName(), nextValue, mv);
-
-                assert scope.isPresent();
-                mv.exitVariableScope();
-            }
-        } else {
-            /* step 5.i, 5.j */
-            if (lhs instanceof Expression) {
-                /* step 5.i.i */
-                // stack: [] -> []
-                mv.load(nextValue);
-                DestructuringAssignment(codegen, (AssignmentPattern) lhs, mv);
-            } else if (lhs instanceof VariableStatement) {
-                /* step 5.i.ii */
-                VariableDeclaration varDecl = ((VariableStatement) lhs).getElements().get(0);
-                BindingPattern binding = (BindingPattern) varDecl.getBinding();
-
-                // stack: [] -> []
-                mv.load(nextValue);
-                BindingInitialization(codegen, binding, mv);
+                op.initializeBinding(envRec, name, nextValue, mv);
             } else {
                 /* step 5.i.iii */
-                LexicalDeclaration lexDecl = (LexicalDeclaration) lhs;
-                BindingPattern binding = (BindingPattern) lexDecl.getElements().get(0).getBinding();
-
                 // 13.7.5.9 Runtime Semantics: BindingInitialization
-                // stack: [] -> []
-                BindingInitialization(codegen, envRec, binding, nextValue, mv);
-
-                if (scope.isPresent()) {
-                    mv.exitVariableScope();
-                }
+                BindingInitialization(codegen, envRec, (BindingPattern) binding, nextValue, mv);
+            }
+            if (scope.isPresent()) {
+                mv.exitVariableScope();
             }
         }
         /* step 5.k */
@@ -942,29 +928,23 @@ final class StatementGenerator extends
         return result;
     }
 
-    private static boolean IsDestructuring(Node lhs) {
-        if (lhs instanceof Expression) {
-            assert lhs instanceof LeftHandSideExpression;
-            return lhs instanceof AssignmentPattern;
-        } else if (lhs instanceof VariableStatement) {
-            assert ((VariableStatement) lhs).getElements().size() == 1;
-            VariableDeclaration varDecl = ((VariableStatement) lhs).getElements().get(0);
-            return varDecl.getBinding() instanceof BindingPattern;
-        } else {
-            assert lhs instanceof LexicalDeclaration;
-            assert ((LexicalDeclaration) lhs).getElements().size() == 1;
-            LexicalBinding lexicalBinding = ((LexicalDeclaration) lhs).getElements().get(0);
-            return lexicalBinding.getBinding() instanceof BindingPattern;
-        }
+    private static Binding forVarDeclarationBinding(VariableStatement lhs) {
+        assert ((VariableStatement) lhs).getElements().size() == 1;
+        return ((VariableStatement) lhs).getElements().get(0).getBinding();
+    }
+
+    private static Binding forDeclarationBinding(LexicalDeclaration lhs) {
+        assert ((LexicalDeclaration) lhs).getElements().size() == 1;
+        return ((LexicalDeclaration) lhs).getElements().get(0).getBinding();
     }
 
     /**
      * 13.7.5.10 Runtime Semantics: BindingInstantiation
      */
     private void BindingInstantiation(Variable<DeclarativeEnvironmentRecord> envRec,
-            LexicalBinding lexicalBinding, boolean isConst, StatementVisitor mv) {
-        // stack: [] -> []
-        for (Name name : BoundNames(lexicalBinding.getBinding())) {
+            LexicalDeclaration declaration, StatementVisitor mv) {
+        boolean isConst = IsConstantDeclaration(declaration);
+        for (Name name : BoundNames(forDeclarationBinding(declaration))) {
             BindingOp<DeclarativeEnvironmentRecord> op = BindingOp.of(envRec, name);
             if (isConst) {
                 // FIXME: spec bug (CreateImmutableBinding concrete method of `env`)
@@ -977,9 +957,11 @@ final class StatementGenerator extends
     }
 
     /**
-     * 13.0.8 Runtime Semantics: Evaluation<br>
-     * 13.0.7 Runtime Semantics: LabelledEvaluation<br>
-     * 13.6.3.7 Runtime Semantics: LabelledEvaluation
+     * 13.7.4 The for Statement
+     * <p>
+     * 13.1.8 Runtime Semantics: Evaluation<br>
+     * 13.1.7 Runtime Semantics: LabelledEvaluation<br>
+     * 13.7.4.7 Runtime Semantics: LabelledEvaluation
      */
     @Override
     public Completion visit(ForStatement node, StatementVisitor mv) {
@@ -1003,7 +985,7 @@ final class StatementGenerator extends
             if (scope.isPresent()) {
                 // stack: [] -> [loopEnv]
                 newDeclarativeEnvironment(scope, mv);
-                // stack: [loopEnv] -> [loopEnv, envRec]
+                // stack: [loopEnv] -> [loopEnv]
                 mv.enterVariableScope();
                 Variable<DeclarativeEnvironmentRecord> envRec = mv.newVariable("envRec",
                         DeclarativeEnvironmentRecord.class);
@@ -1041,7 +1023,7 @@ final class StatementGenerator extends
     }
 
     /**
-     * 13.6.3.8 Runtime Semantics: ForBodyEvaluation(test, increment, stmt, perIterationBindings,
+     * 13.7.4.8 Runtime Semantics: ForBodyEvaluation(test, increment, stmt, perIterationBindings,
      * labelSet)
      */
     private Completion ForBodyEvaluation(ForStatement node, boolean perIterationsLets,
@@ -1121,7 +1103,7 @@ final class StatementGenerator extends
     }
 
     /**
-     * 13.6.3.9 Runtime Semantics: CreatePerIterationEnvironment( perIterationBindings )
+     * 13.7.4.9 Runtime Semantics: CreatePerIterationEnvironment( perIterationBindings )
      * 
      * @param savedEnv
      *            the variable which holds the saved environment
@@ -1135,10 +1117,11 @@ final class StatementGenerator extends
         mv.store(savedEnv);
         /* step 1.f */
         replaceLexicalEnvironment(savedEnv, mv);
+        /* step 2 (not applicable) */
     }
 
     /**
-     * 14.1.23 Runtime Semantics: Evaluation
+     * 14.1.20 Runtime Semantics: Evaluation
      */
     @Override
     public Completion visit(FunctionDeclaration node, final StatementVisitor mv) {
@@ -1180,7 +1163,7 @@ final class StatementGenerator extends
     }
 
     /**
-     * 13.0.8 Runtime Semantics: Evaluation
+     * 13.1.8 Runtime Semantics: Evaluation
      */
     @Override
     public Completion visit(GeneratorDeclaration node, StatementVisitor mv) {
@@ -1190,7 +1173,9 @@ final class StatementGenerator extends
     }
 
     /**
-     * 13.5.7 Runtime Semantics: Evaluation
+     * 13.6 The if Statement
+     * <p>
+     * 13.6.7 Runtime Semantics: Evaluation
      */
     @Override
     public Completion visit(IfStatement node, StatementVisitor mv) {
@@ -1243,7 +1228,7 @@ final class StatementGenerator extends
                 mv.mark(l1);
             }
 
-            /* steps 6-7 */
+            /* steps 6-8 */
             return resultThen.select(resultOtherwise);
         } else {
             // IfStatement : if ( Expression ) Statement
@@ -1267,14 +1252,13 @@ final class StatementGenerator extends
                 mv.mark(l0);
             }
 
-            /* steps 4, 6-7 */
+            /* steps 4-5 */
             return resultThen.select(Completion.Normal);
         }
     }
 
     /**
-     * 15.2.1.23 Runtime Semantics: Evaluation<br>
-     * 15.2.2.6 Runtime Semantics: Evaluation
+     * 15.2.1.20 Runtime Semantics: Evaluation
      */
     @Override
     public Completion visit(ImportDeclaration node, StatementVisitor mv) {
@@ -1282,8 +1266,10 @@ final class StatementGenerator extends
     }
 
     /**
-     * 13.12.15 Runtime Semantics: Evaluation<br>
-     * 13.12.14 Runtime Semantics: LabelledEvaluation
+     * 13.13 Labelled Statements
+     * <p>
+     * 13.13.15 Runtime Semantics: Evaluation<br>
+     * 13.13.14 Runtime Semantics: LabelledEvaluation
      */
     @Override
     public Completion visit(LabelledStatement node, StatementVisitor mv) {
@@ -1308,7 +1294,9 @@ final class StatementGenerator extends
     }
 
     /**
-     * 13.12.14 Runtime Semantics: LabelledEvaluation<br>
+     * 13.13 Labelled Statements
+     * <p>
+     * 13.13.14 Runtime Semantics: LabelledEvaluation<br>
      * 
      * <code>LabelledItem: FunctionDeclaration</code>
      */
@@ -1318,6 +1306,8 @@ final class StatementGenerator extends
     }
 
     /**
+     * 13.3.1 Let and Const Declarations
+     * <p>
      * 13.3.1.4 Runtime Semantics: Evaluation
      */
     @Override
@@ -1347,8 +1337,7 @@ final class StatementGenerator extends
                 assert binding instanceof BindingPattern;
                 /* steps 1-3 */
                 expressionBoxed(initializer, mv);
-                /* step 4 (not applicable) */
-                /* step 5 */
+                /* steps 4-5 */
                 BindingInitialization(codegen, envRec, (BindingPattern) binding, mv);
             }
         }
@@ -1364,15 +1353,16 @@ final class StatementGenerator extends
     public Completion visit(LetStatement node, StatementVisitor mv) {
         BlockScope scope = node.getScope();
         if (scope.isPresent()) {
-            // stack: [] -> [env]
-            newDeclarativeEnvironment(scope, mv);
-            // stack: [env] -> [env]
             mv.enterVariableScope();
+            Variable<LexicalEnvironment<DeclarativeEnvironmentRecord>> env = mv.newVariable("env",
+                    LexicalEnvironment.class).uncheckedCast();
             Variable<DeclarativeEnvironmentRecord> envRec = mv.newVariable("envRec",
                     DeclarativeEnvironmentRecord.class);
-            getEnvRec(envRec, mv);
 
-            // stack: [env] -> [env]
+            newDeclarativeEnvironment(scope, mv);
+            mv.store(env);
+            getEnvRec(env, envRec, mv);
+
             for (LexicalBinding lexical : node.getBindings()) {
                 Binding binding = lexical.getBinding();
                 Expression initializer = lexical.getInitializer();
@@ -1400,9 +1390,11 @@ final class StatementGenerator extends
                     BindingInitialization(codegen, envRec, (BindingPattern) binding, mv);
                 }
             }
-            mv.exitVariableScope();
-            // stack: [env] -> []
+
+            mv.load(env);
             pushLexicalEnvironment(mv);
+
+            mv.exitVariableScope();
         }
 
         mv.enterScope(node);
@@ -1416,6 +1408,8 @@ final class StatementGenerator extends
     }
 
     /**
+     * 13.10 The return Statement
+     * <p>
      * 13.10.1 Runtime Semantics: Evaluation
      */
     @Override
@@ -1465,6 +1459,8 @@ final class StatementGenerator extends
     }
 
     /**
+     * 13.12 The switch Statement
+     * <p>
      * 13.12.11 Runtime Semantics: Evaluation
      */
     @Override
@@ -1476,6 +1472,8 @@ final class StatementGenerator extends
     }
 
     /**
+     * 13.14 The throw Statement
+     * <p>
      * 13.14.1 Runtime Semantics: Evaluation
      */
     @Override
@@ -1491,6 +1489,8 @@ final class StatementGenerator extends
     }
 
     /**
+     * 13.15 The try Statement
+     * <p>
      * 13.15.8 Runtime Semantics: Evaluation
      */
     @Override
@@ -1932,6 +1932,8 @@ final class StatementGenerator extends
     }
 
     /**
+     * 13.3.2 Variable Statement
+     * <p>
      * 13.3.2.4 Runtime Semantics: Evaluation
      */
     @Override
@@ -1969,6 +1971,8 @@ final class StatementGenerator extends
     }
 
     /**
+     * 13.3.2 Variable Statement
+     * <p>
      * 13.3.2.4 Runtime Semantics: Evaluation
      */
     @Override
@@ -1982,6 +1986,8 @@ final class StatementGenerator extends
     }
 
     /**
+     * 13.7.3 The while Statement
+     * <p>
      * 13.1.8 Runtime Semantics: Evaluation<br>
      * 13.1.7 Runtime Semantics: LabelledEvaluation<br>
      * 13.7.3.6 Runtime Semantics: LabelledEvaluation
@@ -2048,6 +2054,8 @@ final class StatementGenerator extends
     }
 
     /**
+     * 13.11 The with Statement
+     * <p>
      * 13.11.7 Runtime Semantics: Evaluation
      */
     @Override

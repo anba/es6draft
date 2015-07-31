@@ -20,8 +20,8 @@ import com.github.anba.es6draft.compiler.completion.CompletionValueVisitor.State
  * Compute statement nodes which require a completion value.
  */
 public final class CompletionValueVisitor extends DefaultNodeVisitor<Completion, State> {
-    // TODO: Except for the labelled statements issue, this is more or less live variable analysis.
-    // Or rather, with proper live variable analysis this visitor shouldn't be necessary.
+    // TODO: This visitor class performs (more or less) live variable analysis. Or rather, with
+    // proper live variable analysis the visitor shouldn't be necessary at all.
 
     enum Completion {
         Empty, Value;
@@ -121,24 +121,20 @@ public final class CompletionValueVisitor extends DefaultNodeVisitor<Completion,
 
     static final class State {
         final Context context;
-        final ArrayDeque<LabelledBreak> breaks;
         boolean computeValue = true;
 
         State() {
             context = new Context();
-            breaks = new ArrayDeque<>();
             computeValue = true;
         }
 
         private State(State state) {
             context = state.context;
-            breaks = new ArrayDeque<>();
             computeValue = state.computeValue;
         }
 
         void valueStatement() {
             computeValue = false;
-            breaks.clear();
         }
 
         State newState() {
@@ -147,26 +143,6 @@ public final class CompletionValueVisitor extends DefaultNodeVisitor<Completion,
 
         void merge(State left, State right) {
             computeValue = left.computeValue || right.computeValue;
-            if (computeValue) {
-                for (LabelledBreak lbl : left.breaks) {
-                    breaks.push(lbl);
-                }
-                for (LabelledBreak lbl : right.breaks) {
-                    breaks.push(lbl);
-                }
-            } else {
-                breaks.clear();
-            }
-        }
-    }
-
-    private static final class LabelledBreak {
-        final LabelledStatement labelledStatement;
-        final BreakStatement breakStatement;
-
-        public LabelledBreak(LabelledStatement labelledStatement, BreakStatement breakStatement) {
-            this.labelledStatement = labelledStatement;
-            this.breakStatement = breakStatement;
         }
     }
 
@@ -273,9 +249,6 @@ public final class CompletionValueVisitor extends DefaultNodeVisitor<Completion,
         Statement target = state.context.breakTarget(node);
         if (target.hasCompletionValue()) {
             state.computeValue = true;
-            if (target instanceof LabelledStatement) {
-                state.breaks.push(new LabelledBreak((LabelledStatement) target, node));
-            }
         }
         return Completion.Value;
     }
@@ -296,18 +269,6 @@ public final class CompletionValueVisitor extends DefaultNodeVisitor<Completion,
         state.context.enterLabelled(node);
         Completion result = node.getStatement().accept(this, state);
         state.context.exitLabelled(node);
-        if (!state.breaks.isEmpty()) {
-            for (Iterator<LabelledBreak> iterator = state.breaks.iterator(); iterator.hasNext();) {
-                LabelledBreak labelledBreak = iterator.next();
-                if (labelledBreak.labelledStatement == node) {
-                    labelledBreak.breakStatement.setUndefinedCompletion(true);
-                    iterator.remove();
-                }
-            }
-            if (state.breaks.isEmpty()) {
-                state.valueStatement();
-            }
-        }
         return result;
     }
 

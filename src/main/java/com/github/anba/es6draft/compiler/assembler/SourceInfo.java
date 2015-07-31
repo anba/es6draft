@@ -15,12 +15,12 @@ public interface SourceInfo {
      * 
      * @return the file name or {@code null}
      */
-    public String getFileName();
+    String getFileName();
 
     /**
      * Returns the source map or {@code null} if not available.
      * 
      * @return the source map or {@code null}
      */
-    public String getSourceMap();
+    String getSourceMap();
 }

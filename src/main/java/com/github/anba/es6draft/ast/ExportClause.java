@@ -11,6 +11,9 @@ import java.util.List;
 /**
  * <h1>15 ECMAScript Language: Scripts and Modules</h1><br>
  * <h2>15.2 Modules</h2>
+ * <ul>
+ * <li>15.2.3 Exports
+ * </ul>
  */
 public final class ExportClause extends AstNode {
     private final IdentifierName defaultEntry;

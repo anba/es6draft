@@ -10,7 +10,7 @@ import com.github.anba.es6draft.ast.scope.BlockScope;
 
 /**
  * <h1>13 ECMAScript Language: Statements and Declarations</h1><br>
- * <h2>13.14 The try Statement</h2>
+ * <h2>13.15 The try Statement</h2>
  * <ul>
  * <li>Extension: 'catch-if' node
  * </ul>

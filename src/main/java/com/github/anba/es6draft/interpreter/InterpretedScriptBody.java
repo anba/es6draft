@@ -41,7 +41,7 @@ final class InterpretedScriptBody implements RuntimeInfo.ScriptBody {
     public Object evaluate(ExecutionContext cx, Script script) {
         assert script.getScriptBody() == this;
         if (parsedScript.isScripting()) {
-            return scriptingEvaluation(cx, script);
+            return scriptingEvaluation(cx);
         }
         if (parsedScript.isEvalScript()) {
             return evalScriptEvaluation(cx, script);
@@ -121,7 +121,8 @@ final class InterpretedScriptBody implements RuntimeInfo.ScriptBody {
         return parsedScript.accept(new Interpreter(parsedScript), evalCxt);
     }
 
-    private Object scriptingEvaluation(ExecutionContext cx, Script script) {
+    private Object scriptingEvaluation(ExecutionContext cx) {
+        // NB: Don't need to create a new execution context here, cf. ScriptEngineImpl.
         // TODO: Skip allocating lex-env if not needed
         LexicalEnvironment<?> varEnv = cx.getVariableEnvironment();
         LexicalEnvironment<DeclarativeEnvironmentRecord> lexEnv = newDeclarativeEnvironment(cx

@@ -8,7 +8,10 @@ package com.github.anba.es6draft.ast;
 
 /**
  * <h1>15 ECMAScript Language: Scripts and Modules</h1><br>
- * <h2>15.3 Modules</h2>
+ * <h2>15.2 Modules</h2>
+ * <ul>
+ * <li>15.2.2 Imports
+ * </ul>
  */
 public final class ImportSpecifier extends AstNode {
     private final String importName;
@@ -21,10 +24,20 @@ public final class ImportSpecifier extends AstNode {
         this.localName = localName;
     }
 
+    /**
+     * Returns the imported name.
+     * 
+     * @return the import name
+     */
     public String getImportName() {
         return importName;
     }
 
+    /**
+     * Returns the local binding name.
+     * 
+     * @return the local name
+     */
     public BindingIdentifier getLocalName() {
         return localName;
     }

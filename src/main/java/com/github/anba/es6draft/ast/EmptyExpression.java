@@ -7,7 +7,7 @@
 package com.github.anba.es6draft.ast;
 
 /**
- * <h1>14 ECMAScript Language: Functions and Classes</h1><br>
+ * <h1>14 ECMAScript Language: Functions and Classes</h1>
  * <ul>
  * <li>14.2 Arrow Function Definitions
  * </ul>

@@ -21,16 +21,6 @@
     </Or>
   </Match>
 
-  <!-- IllegalMonitorStateException from ICU -->
-  <Match>
-    <Bug pattern="IMSE_DONT_CATCH_IMSE" />
-    <Or>
-      <Class name="com.github.anba.es6draft.runtime.objects.intl.CollatorObject" />
-      <Class name="com.github.anba.es6draft.runtime.objects.intl.DateTimeFormatObject" />
-      <Class name="com.github.anba.es6draft.runtime.objects.intl.NumberFormatObject" />
-    </Or>
-  </Match>
-
   <Match>
     <Bug pattern="EI_EXPOSE_REP" />
     <Or>
@@ -144,6 +134,7 @@
     </Or>
   </Match>
 
+  <!-- @SuppressWarnings("unused") on methods not supported in FindBugs. -->
   <Match>
     <Bug pattern="UPM_UNCALLED_PRIVATE_METHOD" />
     <Class name="com.github.anba.es6draft.runtime.objects.GlobalObject$URIFunctions" />
@@ -191,6 +182,12 @@
         <!-- <Method name="LegacyConsole" /> -->
       </And>
     </Or>
+  </Match>
+
+  <Match>
+    <Bug pattern="AT_OPERATION_SEQUENCE_ON_CONCURRENT_ABSTRACTION" />
+    <Class name="com.github.anba.es6draft.runtime.objects.intl.IntlAbstractOperations" />
+    <Method name="GetMaximizedLocale" />
   </Match>
 
   <Match>

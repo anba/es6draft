@@ -316,7 +316,7 @@ public final class IndexedMap<VALUE> {
         private VALUE[] array;
         private int count;
 
-        private DenseElements(VALUE[] array, int count) {
+        DenseElements(VALUE[] array, int count) {
             this.array = array;
             this.count = count;
         }

@@ -9,7 +9,7 @@ package com.github.anba.es6draft.ast;
 /**
  * <h1>13 ECMAScript Language: Statements and Declarations</h1>
  * <ul>
- * <li>13.1 Block
+ * <li>13.2 Block
  * </ul>
  */
 public abstract class Declaration extends StatementListItem {
@@ -17,5 +17,10 @@ public abstract class Declaration extends StatementListItem {
         super(beginPosition, endPosition);
     }
 
+    /**
+     * Returns {@code true} if this declaration creates an immutable binding.
+     * 
+     * @return {@code true} if a <tt>const</tt> declaration
+     */
     public abstract boolean isConstDeclaration();
 }

@@ -9,7 +9,7 @@ package com.github.anba.es6draft.ast;
 /**
  * <h1>13 ECMAScript Language: Statements and Declarations</h1>
  * <ul>
- * <li>13.15 The debugger statement
+ * <li>13.16 The debugger statement
  * </ul>
  */
 public final class DebuggerStatement extends Statement {

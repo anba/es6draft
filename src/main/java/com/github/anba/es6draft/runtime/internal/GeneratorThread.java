@@ -21,7 +21,7 @@ public final class GeneratorThread extends Thread {
     private final Thread parent;
     private final int stackDepth;
 
-    private GeneratorThread(Thread parent, int stackDepth, Runnable target, String name) {
+    GeneratorThread(Thread parent, int stackDepth, Runnable target, String name) {
         super(target, name);
         this.parent = parent;
         this.stackDepth = stackDepth;

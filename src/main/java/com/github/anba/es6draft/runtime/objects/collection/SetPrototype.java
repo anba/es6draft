@@ -92,8 +92,9 @@ public final class SetPrototype extends OrdinaryObject implements Initializable 
             SetObject s = thisSetObject(cx, thisValue);
             /* step 4 */
             LinkedMap<Object, Void> entries = s.getSetData();
-            /* steps 5-8 */
+            /* steps 5-7 */
             entries.set(value, null);
+            /* step 8 */
             return s;
         }
 

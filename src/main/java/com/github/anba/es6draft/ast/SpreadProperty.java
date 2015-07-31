@@ -17,6 +17,11 @@ public final class SpreadProperty extends PropertyDefinition {
         this.expression = expression;
     }
 
+    /**
+     * Returns the spread expression node.
+     * 
+     * @return the spread expression
+     */
     public Expression getExpression() {
         return expression;
     }

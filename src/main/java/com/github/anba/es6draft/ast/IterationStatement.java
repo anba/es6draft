@@ -12,7 +12,7 @@ import java.util.Set;
 /**
  * <h1>13 ECMAScript Language: Statements and Declarations</h1>
  * <ul>
- * <li>13.6 Iteration Statements
+ * <li>13.7 Iteration Statements
  * </ul>
  */
 public abstract class IterationStatement extends BreakableStatement {
@@ -22,9 +22,9 @@ public abstract class IterationStatement extends BreakableStatement {
     }
 
     /**
-     * Returns <code>true</code> if this node is the target of a ContinueStatement.
+     * Returns <code>true</code> if this node is the target of a <tt>ContinueStatement</tt>.
      * 
-     * @return <code>true</code> if this node is the target of a ContinueStatement
+     * @return <code>true</code> if this node is the target of a <tt>ContinueStatement</tt>
      */
     public final boolean hasContinue() {
         return getAbrupt().contains(Abrupt.Continue);

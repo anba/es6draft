@@ -62,22 +62,17 @@ public final class StringConstructor extends BuiltinConstructor implements Initi
     @Override
     public CharSequence call(ExecutionContext callerContext, Object thisValue, Object... args) {
         ExecutionContext calleeContext = calleeContext();
-        /* steps 1-3 */
-        CharSequence s;
+        /* step 1 */
         if (args.length == 0) {
-            /* step 1 */
-            s = "";
-        } else {
-            /* steps 2-3 */
-            Object value = args[0];
-            if (Type.isSymbol(value)) {
-                return SymbolDescriptiveString(Type.symbolValue(value));
-            }
-            s = ToString(calleeContext, value);
+            return "";
         }
-        /* step 4 */
-        /* step 5 (not applicable) */
-        return s;
+        /* steps 2-3 */
+        Object value = args[0];
+        if (Type.isSymbol(value)) {
+            return SymbolDescriptiveString(Type.symbolValue(value));
+        }
+        /* steps 4-5 */
+        return ToString(calleeContext, value);
     }
 
     /**
@@ -143,8 +138,9 @@ public final class StringConstructor extends BuiltinConstructor implements Initi
             char elements[] = new char[length];
             /* steps 4-5 */
             for (int nextIndex = 0; nextIndex < length; ++nextIndex) {
-                Object next = codeUnits[nextIndex];
-                char nextCU = ToUint16(cx, next);
+                /* steps 5.a-c */
+                char nextCU = ToUint16(cx, codeUnits[nextIndex]);
+                /* steps 5.d-e */
                 elements[nextIndex] = nextCU;
             }
             /* step 6 */
@@ -191,10 +187,8 @@ public final class StringConstructor extends BuiltinConstructor implements Initi
             int elements[] = new int[length];
             /* steps 4-5 */
             for (int nextIndex = 0; nextIndex < length; ++nextIndex) {
-                /* step 5.a */
-                Object next = codePoints[nextIndex];
-                /* steps 5.b-c */
-                double nextCP = ToNumber(cx, next);
+                /* steps 5.a-c */
+                double nextCP = ToNumber(cx, codePoints[nextIndex]);
                 int cp = (int) nextCP;
                 /* step 5.e */
                 if (cp < 0 || cp > 0x10FFFF) {
@@ -245,12 +239,15 @@ public final class StringConstructor extends BuiltinConstructor implements Initi
             StringBuilder stringElements = new StringBuilder();
             /* steps 11-12 */
             for (long nextIndex = 0;; ++nextIndex) {
-                long nextKey = nextIndex;
-                CharSequence nextSeg = ToString(cx, Get(cx, raw, nextKey));
+                /* steps 12.a-c */
+                CharSequence nextSeg = ToString(cx, Get(cx, raw, nextIndex));
+                /* step 12.d */
                 stringElements.append(nextSeg);
+                /* step 12.e */
                 if (nextIndex + 1 == literalSegments) {
                     return stringElements.toString();
                 }
+                /* steps 12.f-j */
                 if (nextIndex < numberOfSubstitutions) {
                     CharSequence nextSub = ToString(cx, substitutions[(int) nextIndex]);
                     stringElements.append(nextSub);

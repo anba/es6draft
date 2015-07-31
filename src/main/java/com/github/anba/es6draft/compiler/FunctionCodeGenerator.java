@@ -262,7 +262,7 @@ final class FunctionCodeGenerator {
             if (isLegacy(node)) {
                 generateLegacyFunctionCall(node, mv);
             } else if (isClassConstructor(node)) {
-                generateClassConstructorCall(node, mv);
+                generateClassConstructorCall(mv);
             } else {
                 generateFunctionCall(node, mv);
             }
@@ -426,12 +426,10 @@ final class FunctionCodeGenerator {
      * throw Errors.newTypeError()
      * </pre>
      * 
-     * @param node
-     *            the function node
      * @param mv
      *            the instruction visitor
      */
-    private void generateClassConstructorCall(FunctionNode node, InstructionVisitor mv) {
+    private void generateClassConstructorCall(InstructionVisitor mv) {
         Variable<ExecutionContext> callerContext = mv.getParameter(EXECUTION_CONTEXT,
                 ExecutionContext.class);
 
@@ -599,7 +597,7 @@ final class FunctionCodeGenerator {
         // (1) Create a new ExecutionContext
         /* steps 1-5 (not applicable) */
         /* steps 6-7 */
-        prepareCall(node, calleeContext, function, newTarget, mv);
+        prepareCall(calleeContext, function, newTarget, mv);
         /* steps 8-10 (not applicable) */
 
         // (2) Call OrdinaryCallEvaluateBody
@@ -677,7 +675,7 @@ final class FunctionCodeGenerator {
         // 9.2.4 FunctionAllocate - Async functions are always derived constructor kinds.
 
         // (1) Create a new ExecutionContext
-        prepareCall(node, calleeContext, function, newTarget, mv);
+        prepareCall(calleeContext, function, newTarget, mv);
 
         // (2) Perform OrdinaryCallEvaluateBody - FunctionDeclarationInstantiation
         functionDeclarationInstantiation(node, calleeContext, function, arguments, mv);
@@ -755,7 +753,7 @@ final class FunctionCodeGenerator {
         // 9.2.4 FunctionAllocate - Generator functions are always derived constructor kinds.
 
         // (1) Create a new ExecutionContext
-        prepareCall(node, calleeContext, generator, newTarget, mv);
+        prepareCall(calleeContext, generator, newTarget, mv);
 
         // (2) Perform OrdinaryCallEvaluateBody - FunctionDeclarationInstantiation
         functionDeclarationInstantiation(node, calleeContext, generator, arguments, mv);
@@ -819,8 +817,6 @@ final class FunctionCodeGenerator {
      * calleeContext = newFunctionExecutionContext(function, funEnv)
      * </pre>
      * 
-     * @param node
-     *            the function node
      * @param calleeContext
      *            the variable which holds the callee context
      * @param function
@@ -830,7 +826,7 @@ final class FunctionCodeGenerator {
      * @param mv
      *            the instruction visitor
      */
-    private void prepareCall(FunctionNode node, Variable<ExecutionContext> calleeContext,
+    private void prepareCall(Variable<ExecutionContext> calleeContext,
             Variable<? extends FunctionObject> function, Variable<Constructor> newTarget,
             InstructionVisitor mv) {
         mv.load(function);

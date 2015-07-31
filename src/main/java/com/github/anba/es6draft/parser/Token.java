@@ -264,11 +264,13 @@ enum Token {/* @formatter:off */
         switch (token) {
         case IMPLEMENTS:
         case INTERFACE:
+        case LET:
         case PACKAGE:
         case PRIVATE:
         case PROTECTED:
         case PUBLIC:
         case STATIC:
+            // 11.6.2.1 Keywords (Strict Mode)
             // 11.6.2.2 Future Reserved Words (Strict Mode)
             return true;
         default:

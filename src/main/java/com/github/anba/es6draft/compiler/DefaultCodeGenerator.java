@@ -142,6 +142,11 @@ abstract class DefaultCodeGenerator<RETURN, VISITOR extends ExpressionVisitor> e
                 Types.AbstractOperations, "ToString",
                 Type.methodType(Types.String, Type.DOUBLE_TYPE));
 
+        // class: AsyncAbstractOperations
+        static final MethodName AsyncAbstractOperations_AsyncFunctionAwait = MethodName.findStatic(
+                Types.AsyncAbstractOperations, "AsyncFunctionAwait",
+                Type.methodType(Types.Object, Types.ExecutionContext, Types.Object));
+
         // class: Boolean
         static final MethodName Boolean_toString = MethodName.findStatic(Types.Boolean, "toString",
                 Type.methodType(Types.String, Type.BOOLEAN_TYPE));
@@ -1717,6 +1722,41 @@ abstract class DefaultCodeGenerator<RETURN, VISITOR extends ExpressionVisitor> e
             // call runtime
             mv.loadExecutionContext();
             mv.invoke(Methods.ScriptRuntime_yield);
+        }
+    }
+
+    /**
+     * Extension: Async Function Definitions
+     * <p>
+     * stack: [value] {@literal ->} [value']
+     * 
+     * @param node
+     *            the expression node
+     * @param mv
+     *            the expression visitor
+     */
+    protected final void await(Expression node, ExpressionVisitor mv) {
+        // stack: [value] -> [value']
+        mv.loadExecutionContext();
+        mv.swap();
+        mv.lineInfo(node);
+        mv.invoke(Methods.AsyncAbstractOperations_AsyncFunctionAwait);
+
+        if (mv.isResumable() && !codegen.isEnabled(Compiler.Option.NoResume)) {
+            assert mv.hasStack();
+
+            mv.newResumptionPoint();
+
+            // check for exception
+            Jump isException = new Jump();
+            mv.dup();
+            mv.instanceOf(Types.ScriptException);
+            mv.ifeq(isException);
+            {
+                mv.checkcast(Types.ScriptException);
+                mv.athrow();
+            }
+            mv.mark(isException);
         }
     }
 

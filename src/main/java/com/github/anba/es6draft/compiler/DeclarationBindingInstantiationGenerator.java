@@ -34,7 +34,7 @@ import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
 /**
  * Base class for Binding Instantiation generators
  */
-abstract class DeclarationBindingInstantiationGenerator {
+class DeclarationBindingInstantiationGenerator {
     private static final class Methods {
         // class: ExecutionContext
         static final MethodName ExecutionContext_getLexicalEnvironment = MethodName.findVirtual(
@@ -106,8 +106,6 @@ abstract class DeclarationBindingInstantiationGenerator {
 
     /**
      * Emit function call for: {@link ExecutionContext#getLexicalEnvironment()}
-     * <p>
-     * stack: [] {@literal ->} []
      * 
      * @param context
      *            the variable which holds the execution context
@@ -125,8 +123,6 @@ abstract class DeclarationBindingInstantiationGenerator {
 
     /**
      * Emit function call for: {@link ExecutionContext#getVariableEnvironment()}
-     * <p>
-     * stack: [] {@literal ->} []
      * 
      * @param context
      *            the variable which holds the execution context
@@ -144,8 +140,6 @@ abstract class DeclarationBindingInstantiationGenerator {
 
     /**
      * Emit function call for: {@link LexicalEnvironment#getEnvRec()}
-     * <p>
-     * stack: [] {@literal ->} []
      * 
      * @param env
      *            the variable which holds the lexical environment
@@ -166,9 +160,7 @@ abstract class DeclarationBindingInstantiationGenerator {
     }
 
     /**
-     * <code>
-     * ScriptRuntime.canDeclareLexicalScopedOrThrow(cx, envRec, name)
-     * </code>
+     * Emit: {@code ScriptRuntime.canDeclareLexicalScopedOrThrow(cx, envRec, name)}
      * 
      * @param context
      *            the variable which holds the execution context
@@ -191,9 +183,7 @@ abstract class DeclarationBindingInstantiationGenerator {
     }
 
     /**
-     * <code>
-     * ScriptRuntime.canDeclareVarScopedOrThrow(cx, envRec, name)
-     * </code>
+     * Emit: {@code ScriptRuntime.canDeclareVarScopedOrThrow(cx, envRec, name)}
      * 
      * @param context
      *            the variable which holds the execution context
@@ -216,9 +206,7 @@ abstract class DeclarationBindingInstantiationGenerator {
     }
 
     /**
-     * <code>
-     * ScriptRuntime.canDeclareGlobalFunctionOrThrow(cx, envRec, name)
-     * </code>
+     * Emit: {@code ScriptRuntime.canDeclareGlobalFunctionOrThrow(cx, envRec, name)}
      * 
      * @param context
      *            the variable which holds the execution context
@@ -242,9 +230,7 @@ abstract class DeclarationBindingInstantiationGenerator {
     }
 
     /**
-     * <code>
-     * ScriptRuntime.canDeclareGlobalVarOrThrow(cx, envRec, name)
-     * </code>
+     * Emit: {@code ScriptRuntime.canDeclareGlobalVarOrThrow(cx, envRec, name)}
      * 
      * @param context
      *            the variable which holds the execution context
@@ -268,9 +254,7 @@ abstract class DeclarationBindingInstantiationGenerator {
     }
 
     /**
-     * <code>
-     * envRec.createGlobalVarBinding(name, deletableBindings)
-     * </code>
+     * Emit: {@code envRec.createGlobalVarBinding(name, deletableBindings)}
      * 
      * @param envRec
      *            the variable which holds the environment record
@@ -293,11 +277,7 @@ abstract class DeclarationBindingInstantiationGenerator {
     }
 
     /**
-     * <code>
-     * envRec.createGlobalFunctionBinding(name, functionObject, deletableBindings)
-     * </code>
-     * <p>
-     * stack: [] {@literal ->} []
+     * Emit: {@code envRec.createGlobalFunctionBinding(name, functionObject, deletableBindings)}
      * 
      * @param envRec
      *            the variable which holds the environment record

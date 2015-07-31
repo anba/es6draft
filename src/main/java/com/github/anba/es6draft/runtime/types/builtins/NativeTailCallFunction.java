@@ -69,10 +69,8 @@ public final class NativeTailCallFunction extends BuiltinFunction {
     public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
         try {
             return mh.invokeExact(getRealm().defaultContext(), callerContext, thisValue, args);
-        } catch (RuntimeException | Error e) {
-            throw e;
         } catch (Throwable e) {
-            throw new RuntimeException(e);
+            throw NativeTailCallFunction.<RuntimeException> rethrow(e);
         }
     }
 
@@ -91,5 +89,10 @@ public final class NativeTailCallFunction extends BuiltinFunction {
         result = MethodHandles.dropArguments(result, 1, ExecutionContext.class);
         result = MethodHandles.foldArguments(result, mh);
         return result;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static <E extends Throwable> E rethrow(Throwable e) throws E {
+        throw (E) e;
     }
 }

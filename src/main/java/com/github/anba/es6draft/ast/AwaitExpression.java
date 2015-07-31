@@ -17,6 +17,11 @@ public final class AwaitExpression extends Expression {
         this.expression = expression;
     }
 
+    /**
+     * Returns the expression part of this <tt>AwaitExpression</tt> node.
+     * 
+     * @return the expression
+     */
     public Expression getExpression() {
         return expression;
     }

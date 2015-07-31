@@ -18,6 +18,11 @@ public final class BindingRestProperty extends AstNode {
         this.bindingIdentifier = bindingIdentifier;
     }
 
+    /**
+     * Returns the target binding identifier.
+     * 
+     * @return the binding node
+     */
     public BindingIdentifier getBindingIdentifier() {
         return bindingIdentifier;
     }

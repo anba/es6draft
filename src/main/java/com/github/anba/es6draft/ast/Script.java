@@ -17,7 +17,7 @@ import com.github.anba.es6draft.runtime.internal.Source;
 /**
  * <h1>15 ECMAScript Language: Scripts and Modules</h1>
  * <ul>
- * <li>15.1 Script
+ * <li>15.1 Scripts
  * </ul>
  */
 public final class Script extends Program implements TopLevelNode<StatementListItem> {

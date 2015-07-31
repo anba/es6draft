@@ -150,8 +150,10 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
          */
         @Accessor(name = "buffer", type = Accessor.Type.Getter)
         public static Object buffer(ExecutionContext cx, Object thisValue) {
-            /* steps 1-5 */
-            return thisArrayBufferView(cx, thisValue).getBuffer();
+            /* steps 1-3 */
+            ArrayBufferView view = thisArrayBufferView(cx, thisValue);
+            /* steps 4-5 */
+            return view.getBuffer();
         }
 
         /**
@@ -186,7 +188,7 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
          */
         @Accessor(name = "byteOffset", type = Accessor.Type.Getter)
         public static Object byteOffset(ExecutionContext cx, Object thisValue) {
-            /* steps 1-4 */
+            /* steps 1-3 */
             ArrayBufferView view = thisArrayBufferView(cx, thisValue);
             /* steps 4-5 */
             if (IsDetachedBuffer(view.getBuffer())) {
@@ -378,7 +380,7 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
         }
 
         /**
-         * 22.2.3.27 %TypedArray%.prototype.subarray( [ begin [ , end ] ] )
+         * 22.2.3.26 %TypedArray%.prototype.subarray( [ begin [ , end ] ] )
          * 
          * @param cx
          *            the execution context
@@ -420,7 +422,7 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
         }
 
         /**
-         * 22.2.3.29 %TypedArray%.prototype.toString ( )
+         * 22.2.3.28 %TypedArray%.prototype.toString ( )
          * 
          * @param cx
          *            the execution context
@@ -432,7 +434,7 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
         }
 
         /**
-         * 22.2.3.28 %TypedArray%.prototype.toLocaleString ([ reserved1 [ , reserved2 ] ])
+         * 22.2.3.27 %TypedArray%.prototype.toLocaleString ([ reserved1 [ , reserved2 ] ])
          * 
          * @param cx
          *            the execution context
@@ -550,7 +552,7 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
         }
 
         /**
-         * 22.2.3.24 %TypedArray%.prototype.slice ( start, end )
+         * 22.2.3.23 %TypedArray%.prototype.slice ( start, end )
          * 
          * @param cx
          *            the execution context
@@ -655,7 +657,7 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
         }
 
         /**
-         * 22.2.3.26 %TypedArray%.prototype.sort ( comparefn )
+         * 22.2.3.25 %TypedArray%.prototype.sort ( comparefn )
          * 
          * @param cx
          *            the execution context
@@ -855,7 +857,7 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
         @Function(name = "every", arity = 1)
         public static Object every(ExecutionContext cx, Object thisValue, Object callbackfn,
                 Object thisArg) {
-            // 22.1.3.5 Array.prototype.every
+            // 22.1.3.5 Array.prototype.every ( callbackfn [ , thisArg ] )
             /* steps 1-2 */
             TypedArrayObject o = ValidateTypedArray(cx, thisValue);
             /* steps 3-4 */
@@ -880,7 +882,7 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
         }
 
         /**
-         * 22.2.3.25 %TypedArray%.prototype.some ( callbackfn [ , thisArg ] )
+         * 22.2.3.24 %TypedArray%.prototype.some ( callbackfn [ , thisArg ] )
          * 
          * @param cx
          *            the execution context
@@ -1030,7 +1032,7 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
             /* steps 8-9 */
             Constructor c = SpeciesConstructor(cx, o, defaultConstructor);
             /* steps 10, 12 */
-            int keptIndex = 0;
+            int captured = 0;
             double[] kept = new double[(int) Math.min(len, 1024)];
             /* steps 11, 13 */
             for (long k = 0; k < len; ++k) {
@@ -1038,16 +1040,16 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
                 double kvalue = o.elementGetDirect(cx, pk);
                 boolean selected = ToBoolean(callback.call(cx, thisArg, kvalue, k, o));
                 if (selected) {
-                    if (keptIndex == kept.length) {
-                        kept = Arrays.copyOf(kept, keptIndex + (keptIndex >> 1));
+                    if (captured == kept.length) {
+                        kept = Arrays.copyOf(kept, captured + (captured >> 1));
                     }
-                    kept[keptIndex++] = kvalue;
+                    kept[captured++] = kvalue;
                 }
             }
             /* steps 14-15 */
-            TypedArrayObject a = AllocateTypedArray(cx, c, keptIndex);
+            TypedArrayObject a = AllocateTypedArray(cx, c, captured);
             /* steps 16-17 */
-            for (int n = 0; n < keptIndex; ++n) {
+            for (int n = 0; n < captured; ++n) {
                 double e = kept[n];
                 a.elementSetDirect(cx, n, e);
             }
@@ -1287,6 +1289,7 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
         @Function(name = "copyWithin", arity = 2)
         public static Object copyWithin(ExecutionContext cx, Object thisValue, Object target,
                 Object start, Object end) {
+            // 22.1.3.3 Array.prototype.copyWithin (target, start [, end ] )
             /* steps 1-2 */
             TypedArrayObject o = ValidateTypedArray(cx, thisValue);
             /* steps 3-4 */
@@ -1357,8 +1360,8 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
         }
 
         /**
-         * 22.2.3.30 %TypedArray%.prototype.values ( )<br>
-         * 22.2.3.31 %TypedArray%.prototype [ @@iterator ] ( )
+         * 22.2.3.29 %TypedArray%.prototype.values ( )<br>
+         * 22.2.3.30 %TypedArray%.prototype [ @@iterator ] ( )
          * 
          * @param cx
          *            the execution context
@@ -1376,7 +1379,7 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
         }
 
         /**
-         * 22.2.3.32 get %TypedArray%.prototype [ @@toStringTag ]
+         * 22.2.3.31 get %TypedArray%.prototype [ @@toStringTag ]
          * 
          * @param cx
          *            the execution context

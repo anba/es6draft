@@ -11,7 +11,7 @@ import com.github.anba.es6draft.ast.scope.WithScope;
 /**
  * <h1>13 ECMAScript Language: Statements and Declarations</h1>
  * <ul>
- * <li>13.10 The with Statement
+ * <li>13.11 The with Statement
  * </ul>
  */
 public final class WithStatement extends Statement implements ScopedNode {

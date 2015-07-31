@@ -8,10 +8,9 @@ package com.github.anba.es6draft.ast;
 
 /**
  * <h1>12 ECMAScript Language: Expressions</h1><br>
- * <h2>12.2 Primary Expression</h2><br>
- * <h3>12.2.4 Array Initializer</h3>
+ * <h2>12.2 Primary Expression</h2>
  * <ul>
- * <li>12.2.4.1 Array Literal
+ * <li>12.2.5 Array Initializer
  * </ul>
  */
 public class SpreadElement extends Expression {
@@ -22,6 +21,11 @@ public class SpreadElement extends Expression {
         this.expression = expression;
     }
 
+    /**
+     * Returns the spread expression node.
+     * 
+     * @return the spread expression
+     */
     public Expression getExpression() {
         return expression;
     }

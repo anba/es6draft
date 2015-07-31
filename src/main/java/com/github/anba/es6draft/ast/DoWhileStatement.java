@@ -11,9 +11,9 @@ import java.util.Set;
 
 /**
  * <h1>13 ECMAScript Language: Statements and Declarations</h1><br>
- * <h2>13.6 Iteration Statements</h2>
+ * <h2>13.7 Iteration Statements</h2>
  * <ul>
- * <li>13.6.1 The do-while Statement
+ * <li>13.7.1 The do-while Statement
  * </ul>
  */
 public final class DoWhileStatement extends IterationStatement {

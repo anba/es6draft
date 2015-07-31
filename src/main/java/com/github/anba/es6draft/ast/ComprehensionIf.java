@@ -17,6 +17,11 @@ public final class ComprehensionIf extends ComprehensionQualifier {
         this.test = test;
     }
 
+    /**
+     * Returns the comprehension test expression.
+     * 
+     * @return the test expression
+     */
     public Expression getTest() {
         return test;
     }

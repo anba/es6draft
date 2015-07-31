@@ -493,8 +493,7 @@ final class IntlDataTools {
         try {
             DocumentBuilder builder = factory.newDocumentBuilder();
             InputSource source = new InputSource(xml);
-            Document doc = builder.parse(source);
-            return doc;
+            return builder.parse(source);
         } catch (ParserConfigurationException | SAXException e) {
             throw new IOException(e);
         }

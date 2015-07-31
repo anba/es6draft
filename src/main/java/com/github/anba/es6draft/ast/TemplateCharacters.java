@@ -23,10 +23,20 @@ public final class TemplateCharacters extends Expression {
         this.rawValue = rawValue;
     }
 
+    /**
+     * Returns the cooked template value.
+     * 
+     * @return the template value
+     */
     public String getValue() {
         return value;
     }
 
+    /**
+     * Returns the raw template value.
+     * 
+     * @return the raw template value
+     */
     public String getRawValue() {
         return rawValue;
     }

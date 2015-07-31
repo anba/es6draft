@@ -46,12 +46,12 @@ abstract class NestedSubMethod<NODE extends Node> extends SubMethod<NODE> {
         }
 
         @Override
-        protected final StatementListItem createReplacement() {
+        protected StatementListItem createReplacement() {
             return new StatementListMethod(singletonList(getNode()));
         }
 
         @Override
-        protected final int getReplacementSize() {
+        protected int getReplacementSize() {
             return STMT_METHOD_SIZE;
         }
 

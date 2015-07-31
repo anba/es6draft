@@ -91,6 +91,11 @@ public final class ArrowFunction extends Expression implements FunctionNode {
         return parameters;
     }
 
+    /**
+     * Returns the expression for a concise arrow function.
+     * 
+     * @return the expression or {@code null}
+     */
     public Expression getExpression() {
         return expression;
     }

@@ -8,9 +8,9 @@ package com.github.anba.es6draft.ast;
 
 /**
  * <h1>13 ECMAScript Language: Statements and Declarations</h1><br>
- * <h2>13.2 Declarations and the Variable Statement</h2>
+ * <h2>13.3 Declarations and the Variable Statement</h2>
  * <ul>
- * <li>13.2.2 Variable Statement
+ * <li>13.3.2 Variable Statement
  * </ul>
  */
 public final class VariableDeclaration extends AstNode {

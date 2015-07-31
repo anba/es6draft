@@ -12,7 +12,7 @@ import java.util.List;
  * <h1>12 ECMAScript Language: Expressions</h1><br>
  * <h2>12.3 Left-Hand-Side Expressions</h2>
  * <ul>
- * <li>12.3.3 Function Calls
+ * <li>12.3.4 Function Calls
  * </ul>
  */
 public final class CallExpression extends Expression {
@@ -26,10 +26,21 @@ public final class CallExpression extends Expression {
         this.arguments = arguments;
     }
 
+    /**
+     * Returns the function call's base expression.
+     * 
+     * @return the callee expression
+     */
     public Expression getBase() {
+        // TODO: Rename to 'callee'?
         return base;
     }
 
+    /**
+     * Returns the list of arguments.
+     * 
+     * @return the arguments
+     */
     public List<Expression> getArguments() {
         return arguments;
     }

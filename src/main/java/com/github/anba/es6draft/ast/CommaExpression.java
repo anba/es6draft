@@ -22,10 +22,21 @@ public final class CommaExpression extends Expression {
         this.operands = operands;
     }
 
+    /**
+     * Returns the list of operand expressions.
+     * 
+     * @return the list of operands
+     */
     public List<Expression> getOperands() {
         return operands;
     }
 
+    /**
+     * Sets the list of operand expressions.
+     * 
+     * @param operands
+     *            the list of operands
+     */
     public void setOperands(List<Expression> operands) {
         this.operands = operands;
     }

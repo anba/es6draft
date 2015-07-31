@@ -46,10 +46,8 @@ public final class OrdinaryConstructorFunction extends OrdinaryFunction implemen
         try {
             return (ScriptObject) getConstructMethod().invokeExact(this, callerContext, newTarget,
                     argumentsList);
-        } catch (RuntimeException | Error e) {
-            throw e;
         } catch (Throwable e) {
-            throw new RuntimeException(e);
+            throw FunctionObject.<RuntimeException> rethrow(e);
         }
     }
 

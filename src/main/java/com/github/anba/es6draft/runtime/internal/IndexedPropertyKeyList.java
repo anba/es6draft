@@ -37,7 +37,7 @@ public final class IndexedPropertyKeyList extends AbstractList<String> {
 
     @Override
     public int size() {
-        return (int) length;
+        return (int) Math.min(length, Integer.MAX_VALUE);
     }
 
     @Override
@@ -47,7 +47,7 @@ public final class IndexedPropertyKeyList extends AbstractList<String> {
 
     private static final class Iter implements Iterator<String> {
         private final long length;
-        private int index = 0;
+        private long index = 0;
 
         Iter(long length) {
             this.length = length;

@@ -17,6 +17,11 @@ public final class ArrayComprehension extends ArrayInitializer {
         this.comprehension = comprehension;
     }
 
+    /**
+     * Returns the comprehension part of this array comprehension.
+     * 
+     * @return the comprehension part
+     */
     public Comprehension getComprehension() {
         return comprehension;
     }

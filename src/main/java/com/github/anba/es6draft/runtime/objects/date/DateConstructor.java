@@ -71,7 +71,7 @@ public final class DateConstructor extends BuiltinConstructor implements Initial
         /* steps 1-3 (not applicable) */
         /* step 4 */
         long now = System.currentTimeMillis();
-        return DatePrototype.ToDateString(calleeContext, now, DateString.DateTime);
+        return DatePrototype.ToDateString(calleeContext.getRealm(), now, DateString.DateTime);
     }
 
     /**

@@ -9,7 +9,7 @@ package com.github.anba.es6draft.ast;
 /**
  * <h1>13 ECMAScript Language: Statements and Declarations</h1>
  * <ul>
- * <li>13.7 The continue Statement
+ * <li>13.8 The continue Statement
  * </ul>
  */
 public final class ContinueStatement extends Statement {
@@ -20,6 +20,11 @@ public final class ContinueStatement extends Statement {
         this.label = label;
     }
 
+    /**
+     * Returns the optional {@code continue} label.
+     * 
+     * @return the label or {@code null}
+     */
     public String getLabel() {
         return label;
     }

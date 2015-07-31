@@ -242,6 +242,10 @@ public class InstructionAssembler {
         return variables.snapshot();
     }
 
+    public final VariablesSnapshot getVariablesSnapshot(int startSlot) {
+        return variables.snapshot(startSlot);
+    }
+
     private boolean isInstanceMethod() {
         return (method.access & Opcodes.ACC_STATIC) == 0;
     }

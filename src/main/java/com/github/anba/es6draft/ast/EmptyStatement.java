@@ -9,7 +9,7 @@ package com.github.anba.es6draft.ast;
 /**
  * <h1>13 ECMAScript Language: Statements and Declarations</h1>
  * <ul>
- * <li>13.3 Empty Statement
+ * <li>13.4 Empty Statement
  * </ul>
  */
 public final class EmptyStatement extends Statement {

@@ -169,11 +169,6 @@ regress/regress-944.js
 # Date.prototype.toUTCString and Date.prototype.toGMTString distinct objects in V8
 function-names.js
 
-# different maximum arguments size
-regress/regress-3027.js
-regress/regress-331444.js
-regress/regress-358090.js
-
 # Error.prototype.message is limited to 350 characters in V8
 error-tostring-omit.js
 
@@ -193,9 +188,6 @@ stack-traces-overflow.js
 
 # v8 restriction test
 regexp-not-sticky-yet.js
-
-# different function source string
-function-bind-name.js
 
 # Function.arguments and Function.caller non-writable in V8
 regress/regress-1530.js
@@ -324,7 +316,6 @@ regress/regress-91120.js
 
 # different scope for const
 declare-locally.js
-es6/regress/regress-2506.js
 regress/regress-1170.js
 regress/regress-1178598.js
 regress/regress-1182832.js

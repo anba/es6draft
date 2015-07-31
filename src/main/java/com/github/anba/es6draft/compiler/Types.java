@@ -22,6 +22,7 @@ import com.github.anba.es6draft.runtime.modules.ModuleRecord;
 import com.github.anba.es6draft.runtime.modules.ModuleSemantics;
 import com.github.anba.es6draft.runtime.modules.SourceTextModuleRecord;
 import com.github.anba.es6draft.runtime.objects.Eval;
+import com.github.anba.es6draft.runtime.objects.async.AsyncAbstractOperations;
 import com.github.anba.es6draft.runtime.objects.iteration.GeneratorObject;
 import com.github.anba.es6draft.runtime.objects.promise.PromiseObject;
 import com.github.anba.es6draft.runtime.objects.text.RegExpConstructor;
@@ -111,6 +112,9 @@ final class Types {
     static final Type PromiseObject = Type.of(PromiseObject.class);
     static final Type RegExpConstructor = Type.of(RegExpConstructor.class);
     static final Type RegExpObject = Type.of(RegExpObject.class);
+
+    // runtime.objects.async
+    static final Type AsyncAbstractOperations = Type.of(AsyncAbstractOperations.class);
 
     // runtime.objects.iteration
     static final Type GeneratorObject = Type.of(GeneratorObject.class);

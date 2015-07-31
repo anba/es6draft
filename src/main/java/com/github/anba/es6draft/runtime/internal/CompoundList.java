@@ -33,7 +33,12 @@ public final class CompoundList<E> extends AbstractList<E> {
 
     @Override
     public int size() {
-        return firstList.size() + secondList.size();
+        int size = firstList.size() + secondList.size();
+        if (size < 0) {
+            // overflow
+            return Integer.MAX_VALUE;
+        }
+        return size;
     }
 
     @Override

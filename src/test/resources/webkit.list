@@ -108,6 +108,9 @@ js/script-tests/symbol-abstract-relational-comparison.js
 js/script-tests/symbol-object.js
 js/script-tests/symbol-prototype-is-ordinary-object.js
 js/script-tests/symbol-tostring.js
+js/script-tests/intl-collator.js
+js/script-tests/intl-datetimeformat.js
+js/script-tests/intl-numberformat.js
 
 # Date.parse incompatibility
 js/script-tests/date-constructor.js
@@ -147,6 +150,9 @@ js/script-tests/unicode-escape-sequences.js
 
 # Different maximal function arguments
 js/script-tests/function-apply.js
+
+# Different legacy function.arguments behaviour
+js/script-tests/function-dot-arguments.js
 
 
 ###############################################################
@@ -196,12 +202,8 @@ js/script-tests/function-declaration-statement.js
 # function declaration redeclaration at block-level not allowed
 js/script-tests/function-declarations-in-switch-statement.js
 
-# const without initializer
-js/script-tests/const-without-initializer.js
-js/script-tests/constant-count.js
-js/script-tests/arguments.js
+# assignment to non-simple target is early ReferenceError
 js/script-tests/parser-syntax-check.js
-js/script-tests/function-dot-arguments.js
 
 
 #######################################

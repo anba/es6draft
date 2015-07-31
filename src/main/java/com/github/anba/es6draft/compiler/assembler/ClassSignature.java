@@ -19,7 +19,6 @@ public final class ClassSignature extends Signature {
 
     public ClassSignature(String signature) {
         this.signature = signature;
-
     }
 
     @Override

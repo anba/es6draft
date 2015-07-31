@@ -8,9 +8,9 @@ package com.github.anba.es6draft.ast;
 
 /**
  * <h1>13 ECMAScript Language: Statements and Declarations</h1><br>
- * <h2>13.2 Declarations and the Variable Statement</h2>
+ * <h2>13.3 Declarations and the Variable Statement</h2>
  * <ul>
- * <li>13.2.1 Let and Const Declarations
+ * <li>13.3.1 Let and Const Declarations
  * </ul>
  */
 public final class LexicalBinding extends AstNode {
@@ -24,10 +24,20 @@ public final class LexicalBinding extends AstNode {
         this.initializer = initializer;
     }
 
+    /**
+     * Returns the target binding.
+     * 
+     * @return the binding node
+     */
     public Binding getBinding() {
         return binding;
     }
 
+    /**
+     * Returns the optional initializer expression.
+     * 
+     * @return the initializer or {@code null}
+     */
     public Expression getInitializer() {
         return initializer;
     }

@@ -9,28 +9,24 @@ package com.github.anba.es6draft.ast;
 /**
  * <h1>13 ECMAScript Language: Statements and Declarations</h1>
  * <ul>
- * <li>13.8 The break Statement
+ * <li>13.9 The break Statement
  * </ul>
  */
 public final class BreakStatement extends Statement {
     private final String label;
-    private boolean undefinedCompletion;
 
     public BreakStatement(long beginPosition, long endPosition, String label) {
         super(beginPosition, endPosition);
         this.label = label;
     }
 
+    /**
+     * Returns the optional {@code break} label.
+     * 
+     * @return the label or {@code null}
+     */
     public String getLabel() {
         return label;
-    }
-
-    public boolean isUndefinedCompletion() {
-        return undefinedCompletion;
-    }
-
-    public void setUndefinedCompletion(boolean undefinedCompletion) {
-        this.undefinedCompletion = undefinedCompletion;
     }
 
     @Override

@@ -319,9 +319,9 @@ public final class AbstractOperations {
         double number = ToNumber(cx, value);
         /* step 3 */
         if (Double.isNaN(number))
-            return +0.0;
+            return +0d;
         /* step 4 */
-        if (number == 0.0 || Double.isInfinite(number))
+        if (number == 0d || Double.isInfinite(number))
             return number;
         /* step 5 */
         return Math.signum(number) * Math.floor(Math.abs(number));
@@ -338,9 +338,9 @@ public final class AbstractOperations {
         /* steps 1-2 (not applicable) */
         /* step 3 */
         if (Double.isNaN(number))
-            return +0.0;
+            return +0d;
         /* step 4 */
-        if (number == 0.0 || Double.isInfinite(number))
+        if (number == 0d || Double.isInfinite(number))
             return number;
         /* step 5 */
         return Math.signum(number) * Math.floor(Math.abs(number));
@@ -659,7 +659,7 @@ public final class AbstractOperations {
             return "Infinity";
         } else if (value == Double.NEGATIVE_INFINITY) {
             return "-Infinity";
-        } else if (value == 0.0) {
+        } else if (value == 0d) {
             return "0";
         }
 
@@ -2845,7 +2845,8 @@ public final class AbstractOperations {
         /* steps 2-3 */
         List<?> ownKeys = object.ownPropertyKeys(cx);
         /* step 4 */
-        ArrayList<String> names = new ArrayList<>();
+        int initialSize = Math.min(32, ownKeys.size());
+        ArrayList<String> names = new ArrayList<>(initialSize);
         /* step 5 */
         for (Object key : ownKeys) {
             if (key instanceof String) {

@@ -143,6 +143,21 @@ public abstract class Reference<BASE, NAME> {
     }
 
     /**
+     * [6.2.3.1] GetValue (V)
+     * 
+     * @param v
+     *            the reference
+     * @param cx
+     *            the execution context
+     * @return the reference value
+     */
+    public static Object GetValue(Reference<?, ?> v, ExecutionContext cx) {
+        /* steps 1-2 (not applicable) */
+        /* steps 3-6 */
+        return v.getValue(cx);
+    }
+
+    /**
      * [6.2.3.2] PutValue (V, W)
      * 
      * @param v
@@ -160,6 +175,22 @@ public abstract class Reference<BASE, NAME> {
         }
         /* steps 4-8 */
         ((Reference<?, ?>) v).putValue(w, cx);
+    }
+
+    /**
+     * [6.2.3.2] PutValue (V, W)
+     * 
+     * @param v
+     *            the reference
+     * @param w
+     *            the new reference value
+     * @param cx
+     *            the execution context
+     */
+    public static void PutValue(Reference<?, ?> v, Object w, ExecutionContext cx) {
+        /* steps 1-3 (not applicable) */
+        /* steps 4-8 */
+        v.putValue(w, cx);
     }
 
     /**

@@ -248,8 +248,47 @@ public class ArrayObject extends OrdinaryObject {
      *            the array length
      * @return the new array object
      */
+    public static ArrayObject ArrayCreate(ExecutionContext cx, int length) {
+        return ArrayCreate(cx, length, cx.getIntrinsic(Intrinsics.ArrayPrototype));
+    }
+
+    /**
+     * 9.4.2.2 ArrayCreate(length, proto)
+     * 
+     * @param cx
+     *            the execution context
+     * @param length
+     *            the array length
+     * @return the new array object
+     */
     public static ArrayObject ArrayCreate(ExecutionContext cx, long length) {
         return ArrayCreate(cx, length, cx.getIntrinsic(Intrinsics.ArrayPrototype));
+    }
+
+    /**
+     * 9.4.2.2 ArrayCreate(length, proto)
+     * 
+     * @param cx
+     *            the execution context
+     * @param length
+     *            the array length
+     * @param proto
+     *            the prototype object
+     * @return the new array object
+     */
+    public static ArrayObject ArrayCreate(ExecutionContext cx, int length, ScriptObject proto) {
+        assert proto != null;
+        /* steps 1-2 */
+        assert length >= 0;
+        /* steps 3-4 (not applicable) */
+        /* steps 5-7, 9 (implicit) */
+        ArrayObject array = new ArrayObject(cx.getRealm());
+        /* step 8 */
+        array.setPrototype(proto);
+        /* steps 10-11 */
+        array.length = length;
+        /* step 12 */
+        return array;
     }
 
     /**

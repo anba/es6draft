@@ -409,7 +409,7 @@ public final class SourceTextModuleRecord implements ModuleRecord, Cloneable {
     }
 
     /**
-     * 15.2.1.16.3 ResolveExport(.exportName, resolveSet, exportStarSet) Concrete Method
+     * 15.2.1.16.3 ResolveExport(exportName, resolveSet, exportStarSet) Concrete Method
      */
     @Override
     public ModuleExport resolveExport(String exportName, Map<ModuleRecord, Set<String>> resolveSet,

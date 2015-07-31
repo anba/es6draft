@@ -24,9 +24,9 @@ public final class YieldExpression extends Expression {
     }
 
     /**
-     * Returns <code>true</code> if this yield expression represents a delegating yield expression.
+     * Returns {@code true} if this yield expression represents a delegating yield expression.
      * 
-     * @return <code>true</code> if a delegating yield expression
+     * @return {@code true} if a delegating yield expression
      */
     public boolean isDelegatedYield() {
         return delegatedYield;

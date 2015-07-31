@@ -43,14 +43,14 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>26.1 The Reflect Object
  * </ul>
  */
-public final class Reflect extends OrdinaryObject implements Initializable {
+public final class ReflectObject extends OrdinaryObject implements Initializable {
     /**
      * Constructs a new Reflect object.
      * 
      * @param realm
      *            the realm object
      */
-    public Reflect(Realm realm) {
+    public ReflectObject(Realm realm) {
         super(realm);
     }
 
@@ -124,6 +124,8 @@ public final class Reflect extends OrdinaryObject implements Initializable {
             }
             /* steps 2-3 */
             if (newTarget == null) {
+                // FIXME: spec issue - compare to undefined?
+                // https://bugs.ecmascript.org/show_bug.cgi?id=4416
                 newTarget = target;
             } else if (!IsConstructor(newTarget)) {
                 throw newTypeError(cx, Messages.Key.NotConstructor);
@@ -135,99 +137,7 @@ public final class Reflect extends OrdinaryObject implements Initializable {
         }
 
         /**
-         * 26.1.8 Reflect.getPrototypeOf (target)
-         * 
-         * @param cx
-         *            the execution context
-         * @param thisValue
-         *            the function this-value
-         * @param target
-         *            the target object
-         * @return the prototype object
-         */
-        @Function(name = "getPrototypeOf", arity = 1)
-        public static Object getPrototypeOf(ExecutionContext cx, Object thisValue, Object target) {
-            /* step 1 */
-            if (!Type.isObject(target)) {
-                throw newTypeError(cx, Messages.Key.NotObjectType);
-            }
-            /* step 2 */
-            ScriptObject proto = Type.objectValue(target).getPrototypeOf(cx);
-            return proto != null ? proto : NULL;
-        }
-
-        /**
-         * 26.1.14 Reflect.setPrototypeOf (target, proto)
-         * 
-         * @param cx
-         *            the execution context
-         * @param thisValue
-         *            the function this-value
-         * @param target
-         *            the target object
-         * @param proto
-         *            the new prototype object
-         * @return {@code true} on success
-         */
-        @Function(name = "setPrototypeOf", arity = 2)
-        public static Object setPrototypeOf(ExecutionContext cx, Object thisValue, Object target,
-                Object proto) {
-            /* step 1 */
-            if (!Type.isObject(target)) {
-                throw newTypeError(cx, Messages.Key.NotObjectType);
-            }
-            /* step 2 */
-            if (!Type.isObjectOrNull(proto)) {
-                throw newTypeError(cx, Messages.Key.NotObjectOrNull);
-            }
-            /* step 4 */
-            return Type.objectValue(target).setPrototypeOf(cx, Type.objectValueOrNull(proto));
-        }
-
-        /**
-         * 26.1.10 Reflect.isExtensible (target)
-         * 
-         * @param cx
-         *            the execution context
-         * @param thisValue
-         *            the function this-value
-         * @param target
-         *            the target object
-         * @return {@code true} if the object is extensible
-         */
-        @Function(name = "isExtensible", arity = 1)
-        public static Object isExtensible(ExecutionContext cx, Object thisValue, Object target) {
-            /* step 1 */
-            if (!Type.isObject(target)) {
-                throw newTypeError(cx, Messages.Key.NotObjectType);
-            }
-            /* step 2 */
-            return Type.objectValue(target).isExtensible(cx);
-        }
-
-        /**
-         * 26.1.12 Reflect.preventExtensions (target)
-         * 
-         * @param cx
-         *            the execution context
-         * @param thisValue
-         *            the function this-value
-         * @param target
-         *            the target object
-         * @return {@code true} on success
-         */
-        @Function(name = "preventExtensions", arity = 1)
-        public static Object preventExtensions(ExecutionContext cx, Object thisValue, Object target) {
-            /* step 1 */
-            if (!Type.isObject(target)) {
-                throw newTypeError(cx, Messages.Key.NotObjectType);
-            }
-            /* step 2 */
-            return Type.objectValue(target).preventExtensions(cx);
-        }
-
-        /**
-         * 26.1.9 Reflect.has (target, propertyKey)
+         * 26.1.3 Reflect.defineProperty(target, propertyKey, attributes)
          * 
          * @param cx
          *            the execution context
@@ -237,28 +147,65 @@ public final class Reflect extends OrdinaryObject implements Initializable {
          *            the target object
          * @param propertyKey
          *            the property key
-         * @return {@code true} if the property was found
+         * @param attributes
+         *            the property descriptor object
+         * @return {@code true} on success
          */
-        @Function(name = "has", arity = 2)
-        public static Object has(ExecutionContext cx, Object thisValue, Object target,
+        @Function(name = "defineProperty", arity = 3)
+        public static Object defineProperty(ExecutionContext cx, Object thisValue, Object target,
+                Object propertyKey, Object attributes) {
+            /* step 1 */
+            if (!Type.isObject(target)) {
+                throw newTypeError(cx, Messages.Key.NotObjectType);
+            }
+            ScriptObject targetObject = Type.objectValue(target);
+            /* steps 2-3 */
+            Object key = ToPropertyKey(cx, propertyKey);
+            /* steps 4-5 */
+            PropertyDescriptor desc = ToPropertyDescriptor(cx, attributes);
+            /* step 6 */
+            if (key instanceof String) {
+                return targetObject.defineOwnProperty(cx, (String) key, desc);
+            } else {
+                assert key instanceof Symbol;
+                return targetObject.defineOwnProperty(cx, (Symbol) key, desc);
+            }
+        }
+
+        /**
+         * 26.1.4 Reflect.deleteProperty (target, propertyKey)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param target
+         *            the target object
+         * @param propertyKey
+         *            the property key
+         * @return {@code true} on success
+         */
+        @Function(name = "deleteProperty", arity = 2)
+        public static Object deleteProperty(ExecutionContext cx, Object thisValue, Object target,
                 Object propertyKey) {
             /* step 1 */
             if (!Type.isObject(target)) {
                 throw newTypeError(cx, Messages.Key.NotObjectType);
             }
+            ScriptObject targetObject = Type.objectValue(target);
             /* steps 2-3 */
             Object key = ToPropertyKey(cx, propertyKey);
             /* step 4 */
             if (key instanceof String) {
-                return Type.objectValue(target).hasProperty(cx, (String) key);
+                return targetObject.delete(cx, (String) key);
             } else {
                 assert key instanceof Symbol;
-                return Type.objectValue(target).hasProperty(cx, (Symbol) key);
+                return targetObject.delete(cx, (Symbol) key);
             }
         }
 
         /**
-         * 26.1.7 Reflect.getOwnPropertyDescriptor(target, propertyKey)
+         * 26.1.5 Reflect.enumerate (target)
          * 
          * @param cx
          *            the execution context
@@ -266,29 +213,17 @@ public final class Reflect extends OrdinaryObject implements Initializable {
          *            the function this-value
          * @param target
          *            the target object
-         * @param propertyKey
-         *            the property key
-         * @return the property descriptor object
+         * @return the enumeration iterator object
          */
-        @Function(name = "getOwnPropertyDescriptor", arity = 2)
-        public static Object getOwnPropertyDescriptor(ExecutionContext cx, Object thisValue,
-                Object target, Object propertyKey) {
+        @Function(name = "enumerate", arity = 1)
+        public static Object enumerate(ExecutionContext cx, Object thisValue, Object target) {
             /* step 1 */
             if (!Type.isObject(target)) {
                 throw newTypeError(cx, Messages.Key.NotObjectType);
             }
-            /* steps 2-3 */
-            Object key = ToPropertyKey(cx, propertyKey);
-            /* steps 4-5 */
-            Property desc;
-            if (key instanceof String) {
-                desc = Type.objectValue(target).getOwnProperty(cx, (String) key);
-            } else {
-                assert key instanceof Symbol;
-                desc = Type.objectValue(target).getOwnProperty(cx, (Symbol) key);
-            }
-            /* step 6 */
-            return FromPropertyDescriptor(cx, desc);
+            ScriptObject targetObject = Type.objectValue(target);
+            /* step 2 */
+            return targetObject.enumerate(cx);
         }
 
         /**
@@ -313,6 +248,7 @@ public final class Reflect extends OrdinaryObject implements Initializable {
             if (!Type.isObject(target)) {
                 throw newTypeError(cx, Messages.Key.NotObjectType);
             }
+            ScriptObject targetObject = Type.objectValue(target);
             /* steps 2-3 */
             Object key = ToPropertyKey(cx, propertyKey);
             /* step 4 */
@@ -321,11 +257,169 @@ public final class Reflect extends OrdinaryObject implements Initializable {
             }
             /* step 5 */
             if (key instanceof String) {
-                return Type.objectValue(target).get(cx, (String) key, receiver);
+                return targetObject.get(cx, (String) key, receiver);
             } else {
                 assert key instanceof Symbol;
-                return Type.objectValue(target).get(cx, (Symbol) key, receiver);
+                return targetObject.get(cx, (Symbol) key, receiver);
             }
+        }
+
+        /**
+         * 26.1.7 Reflect.getOwnPropertyDescriptor(target, propertyKey)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param target
+         *            the target object
+         * @param propertyKey
+         *            the property key
+         * @return the property descriptor object
+         */
+        @Function(name = "getOwnPropertyDescriptor", arity = 2)
+        public static Object getOwnPropertyDescriptor(ExecutionContext cx, Object thisValue,
+                Object target, Object propertyKey) {
+            /* step 1 */
+            if (!Type.isObject(target)) {
+                throw newTypeError(cx, Messages.Key.NotObjectType);
+            }
+            ScriptObject targetObject = Type.objectValue(target);
+            /* steps 2-3 */
+            Object key = ToPropertyKey(cx, propertyKey);
+            /* steps 4-5 */
+            Property desc;
+            if (key instanceof String) {
+                desc = targetObject.getOwnProperty(cx, (String) key);
+            } else {
+                assert key instanceof Symbol;
+                desc = targetObject.getOwnProperty(cx, (Symbol) key);
+            }
+            /* step 6 */
+            return FromPropertyDescriptor(cx, desc);
+        }
+
+        /**
+         * 26.1.8 Reflect.getPrototypeOf (target)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param target
+         *            the target object
+         * @return the prototype object
+         */
+        @Function(name = "getPrototypeOf", arity = 1)
+        public static Object getPrototypeOf(ExecutionContext cx, Object thisValue, Object target) {
+            /* step 1 */
+            if (!Type.isObject(target)) {
+                throw newTypeError(cx, Messages.Key.NotObjectType);
+            }
+            ScriptObject targetObject = Type.objectValue(target);
+            /* step 2 */
+            ScriptObject proto = targetObject.getPrototypeOf(cx);
+            return proto != null ? proto : NULL;
+        }
+
+        /**
+         * 26.1.9 Reflect.has (target, propertyKey)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param target
+         *            the target object
+         * @param propertyKey
+         *            the property key
+         * @return {@code true} if the property was found
+         */
+        @Function(name = "has", arity = 2)
+        public static Object has(ExecutionContext cx, Object thisValue, Object target,
+                Object propertyKey) {
+            /* step 1 */
+            if (!Type.isObject(target)) {
+                throw newTypeError(cx, Messages.Key.NotObjectType);
+            }
+            ScriptObject targetObject = Type.objectValue(target);
+            /* steps 2-3 */
+            Object key = ToPropertyKey(cx, propertyKey);
+            /* step 4 */
+            if (key instanceof String) {
+                return targetObject.hasProperty(cx, (String) key);
+            } else {
+                assert key instanceof Symbol;
+                return targetObject.hasProperty(cx, (Symbol) key);
+            }
+        }
+
+        /**
+         * 26.1.10 Reflect.isExtensible (target)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param target
+         *            the target object
+         * @return {@code true} if the object is extensible
+         */
+        @Function(name = "isExtensible", arity = 1)
+        public static Object isExtensible(ExecutionContext cx, Object thisValue, Object target) {
+            /* step 1 */
+            if (!Type.isObject(target)) {
+                throw newTypeError(cx, Messages.Key.NotObjectType);
+            }
+            ScriptObject targetObject = Type.objectValue(target);
+            /* step 2 */
+            return targetObject.isExtensible(cx);
+        }
+
+        /**
+         * 26.1.11 Reflect.ownKeys (target)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param target
+         *            the target object
+         * @return the properties iterator object
+         */
+        @Function(name = "ownKeys", arity = 1)
+        public static Object ownKeys(ExecutionContext cx, Object thisValue, Object target) {
+            /* step 1 */
+            if (!Type.isObject(target)) {
+                throw newTypeError(cx, Messages.Key.NotObjectType);
+            }
+            ScriptObject targetObject = Type.objectValue(target);
+            /* steps 2-3 */
+            List<?> keys = targetObject.ownPropertyKeys(cx);
+            /* step 4 */
+            return CreateArrayFromList(cx, keys);
+        }
+
+        /**
+         * 26.1.12 Reflect.preventExtensions (target)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param target
+         *            the target object
+         * @return {@code true} on success
+         */
+        @Function(name = "preventExtensions", arity = 1)
+        public static Object preventExtensions(ExecutionContext cx, Object thisValue, Object target) {
+            /* step 1 */
+            if (!Type.isObject(target)) {
+                throw newTypeError(cx, Messages.Key.NotObjectType);
+            }
+            ScriptObject targetObject = Type.objectValue(target);
+            /* step 2 */
+            return targetObject.preventExtensions(cx);
         }
 
         /**
@@ -352,6 +446,7 @@ public final class Reflect extends OrdinaryObject implements Initializable {
             if (!Type.isObject(target)) {
                 throw newTypeError(cx, Messages.Key.NotObjectType);
             }
+            ScriptObject targetObject = Type.objectValue(target);
             /* steps 2-3 */
             Object key = ToPropertyKey(cx, propertyKey);
             /* step 4 */
@@ -360,15 +455,15 @@ public final class Reflect extends OrdinaryObject implements Initializable {
             }
             /* step 5 */
             if (key instanceof String) {
-                return Type.objectValue(target).set(cx, (String) key, value, receiver);
+                return targetObject.set(cx, (String) key, value, receiver);
             } else {
                 assert key instanceof Symbol;
-                return Type.objectValue(target).set(cx, (Symbol) key, value, receiver);
+                return targetObject.set(cx, (Symbol) key, value, receiver);
             }
         }
 
         /**
-         * 26.1.4 Reflect.deleteProperty (target, propertyKey)
+         * 26.1.14 Reflect.setPrototypeOf (target, proto)
          * 
          * @param cx
          *            the execution context
@@ -376,105 +471,24 @@ public final class Reflect extends OrdinaryObject implements Initializable {
          *            the function this-value
          * @param target
          *            the target object
-         * @param propertyKey
-         *            the property key
+         * @param proto
+         *            the new prototype object
          * @return {@code true} on success
          */
-        @Function(name = "deleteProperty", arity = 2)
-        public static Object deleteProperty(ExecutionContext cx, Object thisValue, Object target,
-                Object propertyKey) {
+        @Function(name = "setPrototypeOf", arity = 2)
+        public static Object setPrototypeOf(ExecutionContext cx, Object thisValue, Object target,
+                Object proto) {
             /* step 1 */
             if (!Type.isObject(target)) {
                 throw newTypeError(cx, Messages.Key.NotObjectType);
             }
-            /* steps 2-3 */
-            Object key = ToPropertyKey(cx, propertyKey);
-            /* step 4 */
-            if (key instanceof String) {
-                return Type.objectValue(target).delete(cx, (String) key);
-            } else {
-                assert key instanceof Symbol;
-                return Type.objectValue(target).delete(cx, (Symbol) key);
-            }
-        }
-
-        /**
-         * 26.1.3 Reflect.defineProperty(target, propertyKey, attributes)
-         * 
-         * @param cx
-         *            the execution context
-         * @param thisValue
-         *            the function this-value
-         * @param target
-         *            the target object
-         * @param propertyKey
-         *            the property key
-         * @param attributes
-         *            the property descriptor object
-         * @return {@code true} on success
-         */
-        @Function(name = "defineProperty", arity = 3)
-        public static Object defineProperty(ExecutionContext cx, Object thisValue, Object target,
-                Object propertyKey, Object attributes) {
-            /* step 1 */
-            if (!Type.isObject(target)) {
-                throw newTypeError(cx, Messages.Key.NotObjectType);
-            }
-            /* steps 2-3 */
-            Object key = ToPropertyKey(cx, propertyKey);
-            /* steps 4-5 */
-            PropertyDescriptor desc = ToPropertyDescriptor(cx, attributes);
-            /* step 6 */
-            if (key instanceof String) {
-                return Type.objectValue(target).defineOwnProperty(cx, (String) key, desc);
-            } else {
-                assert key instanceof Symbol;
-                return Type.objectValue(target).defineOwnProperty(cx, (Symbol) key, desc);
-            }
-        }
-
-        /**
-         * 26.1.5 Reflect.enumerate (target)
-         * 
-         * @param cx
-         *            the execution context
-         * @param thisValue
-         *            the function this-value
-         * @param target
-         *            the target object
-         * @return the enumeration iterator object
-         */
-        @Function(name = "enumerate", arity = 1)
-        public static Object enumerate(ExecutionContext cx, Object thisValue, Object target) {
-            /* step 1 */
-            if (!Type.isObject(target)) {
-                throw newTypeError(cx, Messages.Key.NotObjectType);
-            }
+            ScriptObject targetObject = Type.objectValue(target);
             /* step 2 */
-            return Type.objectValue(target).enumerate(cx);
-        }
-
-        /**
-         * 26.1.11 Reflect.ownKeys (target)
-         * 
-         * @param cx
-         *            the execution context
-         * @param thisValue
-         *            the function this-value
-         * @param target
-         *            the target object
-         * @return the properties iterator object
-         */
-        @Function(name = "ownKeys", arity = 1)
-        public static Object ownKeys(ExecutionContext cx, Object thisValue, Object target) {
-            /* step 1 */
-            if (!Type.isObject(target)) {
-                throw newTypeError(cx, Messages.Key.NotObjectType);
+            if (!Type.isObjectOrNull(proto)) {
+                throw newTypeError(cx, Messages.Key.NotObjectOrNull);
             }
-            /* steps 2-3 */
-            List<?> keys = Type.objectValue(target).ownPropertyKeys(cx);
-            /* step 4 */
-            return CreateArrayFromList(cx, keys);
+            /* step 3 */
+            return targetObject.setPrototypeOf(cx, Type.objectValueOrNull(proto));
         }
     }
 

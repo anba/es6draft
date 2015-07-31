@@ -10,9 +10,9 @@ import java.util.List;
 
 /**
  * <h1>13 ECMAScript Language: Statements and Declarations</h1><br>
- * <h2>13.2 Declarations and the Variable Statement</h2>
+ * <h2>13.3 Declarations and the Variable Statement</h2>
  * <ul>
- * <li>13.2.4 Destructuring Binding Patterns
+ * <li>13.3.3 Destructuring Binding Patterns
  * </ul>
  */
 public final class ObjectBindingPattern extends BindingPattern {
@@ -26,10 +26,20 @@ public final class ObjectBindingPattern extends BindingPattern {
         this.rest = rest;
     }
 
+    /**
+     * Returns the binding properties of this object binding pattern.
+     * 
+     * @return the binding properties
+     */
     public List<BindingProperty> getProperties() {
         return properties;
     }
 
+    /**
+     * Returns the optional binding rest property.
+     * 
+     * @return the binding rest property or {@code null}
+     */
     public BindingRestProperty getRest() {
         return rest;
     }

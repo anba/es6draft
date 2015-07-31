@@ -30,6 +30,11 @@ public final class FormalParameter extends AstNode implements ScopedNode {
         this.scope = null;
     }
 
+    /**
+     * Returns the binding element.
+     * 
+     * @return the binding element
+     */
     public BindingElementItem getElement() {
         return element;
     }
@@ -37,7 +42,7 @@ public final class FormalParameter extends AstNode implements ScopedNode {
     /**
      * {@inheritDoc}
      * <p>
-     * Returns {@code null} for simple formals.
+     * Returns {@code null} for simple or rest formal parameters.
      */
     @Override
     public Scope getScope() {

@@ -71,9 +71,8 @@ public final class GeneratorFunctionConstructor extends BuiltinConstructor imple
      */
     @Override
     public OrdinaryGenerator call(ExecutionContext callerContext, Object thisValue, Object... args) {
-        ExecutionContext calleeContext = calleeContext();
         /* steps 1-3 */
-        return CreateDynamicFunction(callerContext, calleeContext, this, args);
+        return CreateDynamicFunction(callerContext, calleeContext(), this, args);
     }
 
     /**
@@ -82,9 +81,8 @@ public final class GeneratorFunctionConstructor extends BuiltinConstructor imple
     @Override
     public OrdinaryGenerator construct(ExecutionContext callerContext, Constructor newTarget,
             Object... args) {
-        ExecutionContext calleeContext = calleeContext();
         /* steps 1-3 */
-        return CreateDynamicFunction(callerContext, calleeContext, newTarget, args);
+        return CreateDynamicFunction(callerContext, calleeContext(), newTarget, args);
     }
 
     /**

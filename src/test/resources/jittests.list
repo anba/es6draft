@@ -81,9 +81,6 @@ tests/basic/testArrayComp1.js
 tests/basic/testArrayComp2.js
 tests/basic/testCustomIterator.js
 
-# ES6: "Concrats on implementing Reflect.set"
-tests/proxy/testDirectProxySetArray2.js
-
 
 ############################################
 # Implementation specific differences      #
@@ -163,10 +160,6 @@ tests/basic/bug807623.js
 # Old Proxy API not completely emulated
 tests/auto-regress/bug578015.js
 tests/proxy/testIndirectProxyGetOwnPropertyDescriptor.js
-
-# SpiderMonkey does not allow duplicate property keys in "ownKeys" trap
-tests/proxy/testDirectProxyGetOwnPropertyNames4.js
-tests/proxy/testDirectProxyKeys4.js
 
 
 ###############################################################
@@ -349,9 +342,6 @@ tests/tracelogger/setupTraceLogger.js
 # Spidermonkey strict/werror options
 tests/basic/bug629858.js
 tests/basic/statement-after-return.js
-tests/collections/Map-constructor-1.js
-tests/collections/Set-constructor-1.js
-tests/collections/WeakMap-constructor-1.js
 
 # Unsupported shell functions
 # shapeOf

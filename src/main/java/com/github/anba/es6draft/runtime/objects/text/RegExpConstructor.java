@@ -103,7 +103,7 @@ public final class RegExpConstructor extends BuiltinConstructor implements Initi
         /* steps 1-2 */
         boolean patternIsRegExp = IsRegExp(calleeContext, pattern);
         /* step 3 (omitted) */
-        /* step 4 (not applicable) */
+        /* steps 4 (not applicable) */
         /* steps 5-10 */
         return RegExpCreate(calleeContext, newTarget, pattern, flags, patternIsRegExp);
     }
@@ -278,17 +278,17 @@ public final class RegExpConstructor extends BuiltinConstructor implements Initi
      * 21.2.3.2 Abstract Operations for the RegExp Constructor<br>
      * 21.2.3.2.4 Runtime Semantics: EscapeRegExpPattern ( P, F )
      * 
-     * @param cx
-     *            the execution context
+     * @param realm
+     *            the realm instance
      * @param p
      *            the regular expression pattern
      * @param f
      *            the regular expression flags
      * @return the escaped regular expression pattern
      */
-    public static String EscapeRegExpPattern(ExecutionContext cx, String p, String f) {
+    public static String EscapeRegExpPattern(Realm realm, String p, String f) {
         if (p.isEmpty()) {
-            if (cx.getRealm().isEnabled(CompatibilityOption.RegExpEmptySource)) {
+            if (realm.isEnabled(CompatibilityOption.RegExpEmptySource)) {
                 return "";
             }
             return "(?:)";

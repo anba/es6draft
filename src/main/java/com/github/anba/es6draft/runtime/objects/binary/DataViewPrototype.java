@@ -55,16 +55,16 @@ public final class DataViewPrototype extends OrdinaryObject implements Initializ
     public enum Properties {
         ;
 
-        private static ArrayBufferView thisArrayBufferView(ExecutionContext cx, Object m) {
-            if (m instanceof ArrayBufferView) {
-                return (ArrayBufferView) m;
+        private static ArrayBufferView thisArrayBufferView(ExecutionContext cx, Object v) {
+            if (v instanceof ArrayBufferView) {
+                return (ArrayBufferView) v;
             }
             throw newTypeError(cx, Messages.Key.IncompatibleObject);
         }
 
-        private static ArrayBufferView thisArrayBufferViewChecked(ExecutionContext cx, Object m) {
-            if (m instanceof ArrayBufferView) {
-                ArrayBufferView view = (ArrayBufferView) m;
+        private static ArrayBufferView thisArrayBufferViewChecked(ExecutionContext cx, Object v) {
+            if (v instanceof ArrayBufferView) {
+                ArrayBufferView view = (ArrayBufferView) v;
                 if (IsDetachedBuffer(view.getBuffer())) {
                     throw newTypeError(cx, Messages.Key.BufferDetached);
                 }
@@ -93,8 +93,10 @@ public final class DataViewPrototype extends OrdinaryObject implements Initializ
          */
         @Accessor(name = "buffer", type = Accessor.Type.Getter)
         public static Object buffer(ExecutionContext cx, Object thisValue) {
-            /* steps 1-5 */
-            return thisArrayBufferView(cx, thisValue).getBuffer();
+            /* steps 1-3 */
+            ArrayBufferView view = thisArrayBufferView(cx, thisValue);
+            /* steps 4-5 */
+            return view.getBuffer();
         }
 
         /**
@@ -108,8 +110,10 @@ public final class DataViewPrototype extends OrdinaryObject implements Initializ
          */
         @Accessor(name = "byteLength", type = Accessor.Type.Getter)
         public static Object byteLength(ExecutionContext cx, Object thisValue) {
-            /* steps 1-7 */
-            return thisArrayBufferViewChecked(cx, thisValue).getByteLength();
+            /* steps 1-5 */
+            ArrayBufferView view = thisArrayBufferViewChecked(cx, thisValue);
+            /* steps 6-7 */
+            return view.getByteLength();
         }
 
         /**
@@ -123,8 +127,10 @@ public final class DataViewPrototype extends OrdinaryObject implements Initializ
          */
         @Accessor(name = "byteOffset", type = Accessor.Type.Getter)
         public static Object byteOffset(ExecutionContext cx, Object thisValue) {
-            /* steps 1-7 */
-            return thisArrayBufferViewChecked(cx, thisValue).getByteOffset();
+            /* steps 1-5 */
+            ArrayBufferView view = thisArrayBufferViewChecked(cx, thisValue);
+            /* steps 6-7 */
+            return view.getByteOffset();
         }
 
         /**

@@ -9,7 +9,7 @@ package com.github.anba.es6draft.ast;
 /**
  * <h1>15 ECMAScript Language: Scripts and Modules</h1>
  * <ul>
- * <li>15.1 Modules
+ * <li>15.2 Modules
  * </ul>
  */
 public abstract class ModuleItem extends AstNode {

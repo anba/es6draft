@@ -29,10 +29,20 @@ public final class ComprehensionFor extends ComprehensionQualifier implements Sc
         return scope;
     }
 
+    /**
+     * Returns the target binding.
+     * 
+     * @return the binding node
+     */
     public Binding getBinding() {
         return binding;
     }
 
+    /**
+     * Returns the comprehension expression.
+     * 
+     * @return the comprehension expression
+     */
     public Expression getExpression() {
         return expression;
     }

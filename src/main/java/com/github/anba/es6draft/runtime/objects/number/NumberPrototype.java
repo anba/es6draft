@@ -124,7 +124,7 @@ public final class NumberPrototype extends OrdinaryObject implements Initializab
                 return "Infinity";
             } else if (x == Double.NEGATIVE_INFINITY) {
                 return "-Infinity";
-            } else if (x == 0.0) {
+            } else if (x == 0d) {
                 return "0";
             }
             return DToA.JS_dtobasestr((int) radixNumber, x);
@@ -147,8 +147,7 @@ public final class NumberPrototype extends OrdinaryObject implements Initializab
         @Function(name = "toLocaleString", arity = 0)
         public static Object toLocaleString(ExecutionContext cx, Object thisValue, Object locales,
                 Object options) {
-            // N.B. permissible but no encouraged
-            // ES5/6
+            // N.B. permissible but not encouraged:
             // return ToString(thisNumberValue(cx, thisValue));
 
             // ECMA-402
@@ -173,6 +172,7 @@ public final class NumberPrototype extends OrdinaryObject implements Initializab
          */
         @Function(name = "valueOf", arity = 0)
         public static Object valueOf(ExecutionContext cx, Object thisValue) {
+            /* steps 1-2 */
             return thisNumberValue(cx, thisValue);
         }
 

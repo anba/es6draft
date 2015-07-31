@@ -119,6 +119,23 @@ public final class MapPrototype extends OrdinaryObject implements Initializable 
         }
 
         /**
+         * 23.1.3.4 Map.prototype.entries ( )<br>
+         * 23.1.3.12 Map.prototype[ @@iterator ] ( )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the entries iterator
+         */
+        @Function(name = "entries", arity = 0)
+        @AliasFunction(name = "[Symbol.iterator]", symbol = BuiltinSymbol.iterator)
+        public static Object entries(ExecutionContext cx, Object thisValue) {
+            /* steps 1-2 */
+            return CreateMapIterator(cx, thisValue, MapIterationKind.KeyValue);
+        }
+
+        /**
          * 23.1.3.5 Map.prototype.forEach ( callbackfn [ , thisArg ] )
          * 
          * @param cx
@@ -196,23 +213,6 @@ public final class MapPrototype extends OrdinaryObject implements Initializable 
         }
 
         /**
-         * 23.1.3.4 Map.prototype.entries ( )<br>
-         * 23.1.3.12 Map.prototype[ @@iterator ] ( )
-         * 
-         * @param cx
-         *            the execution context
-         * @param thisValue
-         *            the function this-value
-         * @return the entries iterator
-         */
-        @Function(name = "entries", arity = 0)
-        @AliasFunction(name = "[Symbol.iterator]", symbol = BuiltinSymbol.iterator)
-        public static Object entries(ExecutionContext cx, Object thisValue) {
-            /* steps 1-2 */
-            return CreateMapIterator(cx, thisValue, MapIterationKind.KeyValue);
-        }
-
-        /**
          * 23.1.3.8 Map.prototype.keys ( )
          * 
          * @param cx
@@ -246,8 +246,9 @@ public final class MapPrototype extends OrdinaryObject implements Initializable 
             MapObject m = thisMapObject(cx, thisValue);
             /* step 4 */
             LinkedMap<Object, Object> entries = m.getMapData();
-            /* steps 5-9 */
+            /* steps 5-8 */
             entries.set(key, value);
+            /* step 9 */
             return m;
         }
 

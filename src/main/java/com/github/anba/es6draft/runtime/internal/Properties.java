@@ -352,7 +352,7 @@ public final class Properties {
         Value, Function, Accessor, Alias
     }
 
-    private static abstract class PropertyLayout {
+    private static class PropertyLayout {
         static final int WRITABLE = 0x01;
         static final int ENUMERABLE = 0x02;
         static final int CONFIGURABLE = 0x04;
@@ -804,9 +804,7 @@ public final class Properties {
             if (cause instanceof InternalThrowable)
                 return ((InternalThrowable) cause).toScriptException(cx);
             String info = Objects.toString(cause.getMessage(), cause.getClass().getSimpleName());
-            ScriptException error = Errors.newInternalError(cx, Messages.Key.InternalError, info);
-            error.addSuppressed(cause);
-            return error;
+            return Errors.newInternalError(cx, cause, Messages.Key.InternalError, info);
         }
 
         private static void throwTypeErrorIncompatible(ExecutionContext cx, Object ignore) {
@@ -890,8 +888,8 @@ public final class Properties {
         OrdinaryObject proto = (OrdinaryObject) objects[1];
         assert constructorParent == cx.getIntrinsic(Intrinsics.FunctionPrototype);
 
-        OrdinaryObject constructor = createConstructor(cx, className, proto, constructorParent,
-                converter, protoLayout);
+        OrdinaryObject constructor = createConstructor(cx, className, proto, converter,
+                protoLayout);
         assert constructor instanceof Constructor;
         if (ctorLayout.functions != null) {
             createExternalFunctions(cx, constructor, ctorLayout, converter);
@@ -909,8 +907,7 @@ public final class Properties {
     }
 
     private static OrdinaryObject createConstructor(ExecutionContext cx, String className,
-            OrdinaryObject proto, ScriptObject constructorParent, Converter converter,
-            ObjectLayout layout) {
+            OrdinaryObject proto, Converter converter, ObjectLayout layout) {
         Entry<Function, MethodHandle> constructorEntry = findConstructor(layout);
         if (constructorEntry != null) {
             // User supplied method, perform manual ClassDefinitionEvaluation for constructors
@@ -1463,15 +1460,13 @@ public final class Properties {
             assert n == defaultValues.length;
             if (args.length == n) {
                 return args;
-            } else if (args.length > n) {
-                Object[] arguments = Arrays.copyOf(args, n, Object[].class);
-                return arguments;
-            } else {
-                Object[] arguments = Arrays.copyOf(args, n, Object[].class);
+            }
+            Object[] arguments = Arrays.copyOf(args, n, Object[].class);
+            if (args.length < n) {
                 int argslen = args.length;
                 System.arraycopy(defaultValues, argslen, arguments, argslen, (n - argslen));
-                return arguments;
             }
+            return arguments;
         }
 
         private static Object[] filterVarArgs(int n, Object[] args) {
@@ -1490,14 +1485,12 @@ public final class Properties {
         private static Object[] filter(int n, Object[] args) {
             if (args.length == n) {
                 return args;
-            } else if (args.length > n) {
-                Object[] arguments = Arrays.copyOf(args, n, Object[].class);
-                return arguments;
-            } else {
-                Object[] arguments = Arrays.copyOf(args, n, Object[].class);
-                Arrays.fill(arguments, args.length, n, UNDEFINED);
-                return arguments;
             }
+            Object[] arguments = Arrays.copyOf(args, n, Object[].class);
+            if (args.length < n) {
+                Arrays.fill(arguments, args.length, n, UNDEFINED);
+            }
+            return arguments;
         }
     }
 

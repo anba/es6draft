@@ -22,9 +22,9 @@ import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
 
 /**
  * <h1>13 ECMAScript Language: Statements and Declarations</h1><br>
- * <h2>13.1 Block</h2>
+ * <h2>13.2 Block</h2>
  * <ul>
- * <li>13.1.11 Runtime Semantics: Block Declaration Instantiation
+ * <li>13.2.14 Runtime Semantics: BlockDeclarationInstantiation( code, env )
  * </ul>
  */
 final class BlockDeclarationInstantiationGenerator extends DeclarationBindingInstantiationGenerator {
@@ -122,7 +122,7 @@ final class BlockDeclarationInstantiationGenerator extends DeclarationBindingIns
         mv.store(env);
         getEnvironmentRecord(env, envRec, mv);
 
-        /* steps 1-3 */
+        /* steps 1-2 */
         for (Declaration d : declarations) {
             if (!(d instanceof HoistableDeclaration)) {
                 for (Name dn : BoundNames(d)) {

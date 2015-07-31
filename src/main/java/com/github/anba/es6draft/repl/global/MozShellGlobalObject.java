@@ -400,23 +400,6 @@ public class MozShellGlobalObject extends ShellGlobalObject {
     }
 
     /**
-     * shell-function: {@code wrap(obj)}
-     *
-     * @param cx
-     *            the execution context
-     * @param obj
-     *            the proxy target object
-     * @return the new proxy object
-     */
-    @Function(name = "wrap", arity = 1)
-    public Object wrap(ExecutionContext cx, Object obj) {
-        if (!Type.isObject(obj)) {
-            return obj;
-        }
-        return CreateWrapProxy(cx, obj);
-    }
-
-    /**
      * shell-function: {@code wrapWithProto(obj, proto)}
      *
      * @param cx
@@ -552,21 +535,6 @@ public class MozShellGlobalObject extends ShellGlobalObject {
         return CreateArrayFromList(cx, new ArrayList<>(weakMap.getWeakMapData().keySet()));
     }
 
-    private static DebugInfo debugInfo(ExecutionContext caller, Object... args) {
-        if (args.length == 0) {
-            FunctionObject currentFunction = caller.getCurrentFunction();
-            Executable currentExec = caller.getCurrentExecutable();
-            if (currentFunction != null && currentFunction.getExecutable() == currentExec) {
-                return currentFunction.getCode().debugInfo();
-            } else if (currentExec != null && currentExec.getSourceObject() != null) {
-                return currentExec.getSourceObject().debugInfo();
-            }
-        } else if (args[0] instanceof FunctionObject) {
-            return ((FunctionObject) args[0]).getCode().debugInfo();
-        }
-        return null;
-    }
-
     /**
      * shell-function: {@code dis([function])}
      * 
@@ -619,5 +587,20 @@ public class MozShellGlobalObject extends ShellGlobalObject {
             return sb.toString();
         }
         return "";
+    }
+
+    private static DebugInfo debugInfo(ExecutionContext caller, Object... args) {
+        if (args.length == 0) {
+            FunctionObject currentFunction = caller.getCurrentFunction();
+            Executable currentExec = caller.getCurrentExecutable();
+            if (currentFunction != null && currentFunction.getExecutable() == currentExec) {
+                return currentFunction.getCode().debugInfo();
+            } else if (currentExec != null && currentExec.getSourceObject() != null) {
+                return currentExec.getSourceObject().debugInfo();
+            }
+        } else if (args[0] instanceof FunctionObject) {
+            return ((FunctionObject) args[0]).getCode().debugInfo();
+        }
+        return null;
     }
 }

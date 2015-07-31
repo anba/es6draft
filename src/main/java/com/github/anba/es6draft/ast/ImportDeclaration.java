@@ -8,15 +8,29 @@ package com.github.anba.es6draft.ast;
 
 /**
  * <h1>15 ECMAScript Language: Scripts and Modules</h1><br>
- * <h2>15.3 Modules</h2>
+ * <h2>15.2 Modules</h2>
+ * <ul>
+ * <li>15.2.2 Imports
+ * </ul>
  */
 public final class ImportDeclaration extends ModuleItem {
     private final Type type;
     private final ImportClause importClause;
     private final String moduleSpecifier;
 
+    /**
+     * The import declaration type.
+     */
     public enum Type {
-        ImportFrom, ImportModule
+        /**
+         * Import type: {@code import <thing> from module}
+         */
+        ImportFrom,
+
+        /**
+         * Import type: {@code import module}
+         */
+        ImportModule
     }
 
     public ImportDeclaration(long beginPosition, long endPosition, ImportClause importClause,
@@ -34,14 +48,29 @@ public final class ImportDeclaration extends ModuleItem {
         this.moduleSpecifier = moduleSpecifier;
     }
 
+    /**
+     * Returns the import declaration type.
+     * 
+     * @return the import type
+     */
     public Type getType() {
         return type;
     }
 
+    /**
+     * Returns the optional import clause of this import declaration.
+     * 
+     * @return the import clause or {@code null}
+     */
     public ImportClause getImportClause() {
         return importClause;
     }
 
+    /**
+     * Returns the module specifier of this import declaration.
+     * 
+     * @return the module specifier
+     */
     public String getModuleSpecifier() {
         return moduleSpecifier;
     }

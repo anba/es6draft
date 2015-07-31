@@ -69,7 +69,7 @@ public final class ArrayConstructor extends BuiltinConstructor implements Initia
      */
     @Override
     public ArrayObject call(ExecutionContext callerContext, Object thisValue, Object... args) {
-        /* steps 1-9/1-11/1-13 */
+        /* steps 1-6/1-11/1-12 */
         return construct(callerContext, this, args);
     }
 
@@ -108,7 +108,7 @@ public final class ArrayConstructor extends BuiltinConstructor implements Initia
             }
         } else {
             // [22.1.1.3]
-            /* steps 6-13 */
+            /* steps 6-12 */
             return DenseArrayCreate(calleeContext, proto, args);
         }
     }
@@ -226,16 +226,16 @@ public final class ArrayConstructor extends BuiltinConstructor implements Initia
             Callable usingIterator = GetMethod(cx, items, BuiltinSymbol.iterator.get());
             /* step 6 */
             if (usingIterator != null) {
-                /* steps 6a-6c */
+                /* steps 6.a-c */
                 ScriptObject a;
                 if (IsConstructor(c)) {
                     a = ((Constructor) c).construct(cx, (Constructor) c);
                 } else {
                     a = ArrayCreate(cx, 0);
                 }
-                /* steps 6d-6e */
+                /* steps 6.d-e */
                 ScriptIterator<?> iterator = GetScriptIterator(cx, items, usingIterator);
-                /* steps 6f-6g */
+                /* steps 6.f-g */
                 int k = 0;
                 try {
                     while (iterator.hasNext()) {

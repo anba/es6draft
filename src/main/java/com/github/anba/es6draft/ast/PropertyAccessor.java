@@ -10,7 +10,7 @@ package com.github.anba.es6draft.ast;
  * <h1>12 ECMAScript Language: Expressions</h1><br>
  * <h2>12.3 Left-Hand-Side Expressions</h2>
  * <ul>
- * <li>12.3.1 Property Accessors
+ * <li>12.3.2 Property Accessors
  * </ul>
  */
 public final class PropertyAccessor extends LeftHandSideExpression {
@@ -23,10 +23,20 @@ public final class PropertyAccessor extends LeftHandSideExpression {
         this.name = name;
     }
 
+    /**
+     * Returns the base expression.
+     * 
+     * @return the base expression
+     */
     public Expression getBase() {
         return base;
     }
 
+    /**
+     * Returns the property name.
+     * 
+     * @return the property name
+     */
     public String getName() {
         return name;
     }

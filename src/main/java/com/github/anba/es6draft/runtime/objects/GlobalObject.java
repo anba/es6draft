@@ -716,7 +716,7 @@ public class GlobalObject extends OrdinaryObject implements Initializable {
          * 
          * @param encodedURI
          *            the encoded URI
-         * @return the decoded URI
+         * @return the decoded URI or {@code null} if invalid
          */
         public static String decodeURI(String encodedURI) {
             return decode(encodedURI, RESERVED_LO | HASH, RESERVED_HI);
@@ -727,7 +727,7 @@ public class GlobalObject extends OrdinaryObject implements Initializable {
          * 
          * @param encodedURIComponent
          *            the encoded URI component
-         * @return the decoded URI component
+         * @return the decoded URI component or {@code null} if invalid
          */
         public static String decodeURIComponent(String encodedURIComponent) {
             return decode(encodedURIComponent, 0, 0);
@@ -738,7 +738,7 @@ public class GlobalObject extends OrdinaryObject implements Initializable {
          * 
          * @param uri
          *            the URI
-         * @return the encoded URI
+         * @return the encoded URI or {@code null} if invalid
          */
         public static String encodeURI(String uri) {
             return encode(uri, RESERVED_LO | UNESCAPED_LO | HASH, RESERVED_HI | UNESCAPED_HI);
@@ -749,7 +749,7 @@ public class GlobalObject extends OrdinaryObject implements Initializable {
          * 
          * @param uriComponent
          *            the URI component
-         * @return the encoded URI component
+         * @return the encoded URI component or {@code null} if invalid
          */
         public static String encodeURIComponent(String uriComponent) {
             return encode(uriComponent, UNESCAPED_LO, UNESCAPED_HI);
@@ -830,55 +830,56 @@ public class GlobalObject extends OrdinaryObject implements Initializable {
          * @return the encoded string
          */
         private static String encode(String s, long low, long high) {
-            int length = s.length();
+            final int length = s.length();
+            int j = 0;
             StringBuilder sb = null;
             for (int i = 0; i < length; ++i) {
                 char c = s.charAt(i);
                 if (masked(c, low, high)) {
-                    if (sb != null) {
-                        sb.append(c);
-                    }
-                } else {
-                    if (sb == null) {
-                        // 10 = 5 * encoded ASCII or 1 * encoded supplementary character
-                        // sb = new StringBuilder(length + 10).append(s.substring(0, i));
-                        sb = new StringBuilder(length + 10).append(s, 0, i);
-                    }
-                    if (c <= 0x7F) {
-                        writeByte(sb, c);
-                    } else if (c <= 0x7FF) {
-                        int c0 = ((c >> 6) & 0b11111);
-                        int c1 = (c & 0b111111);
-                        writeByte(sb, 0b11000000 | c0);
-                        writeByte(sb, 0b10000000 | c1);
-                    } else if (c <= 0xD7FF || c >= 0xE000) {
-                        int c0 = ((c >> 12) & 0b1111);
-                        int c1 = ((c >> 6) & 0b111111);
-                        int c2 = (c & 0b111111);
-                        writeByte(sb, 0b11100000 | c0);
-                        writeByte(sb, 0b10000000 | c1);
-                        writeByte(sb, 0b10000000 | c2);
-                    } else if (Character.isHighSurrogate(c)) {
-                        int cp = s.codePointAt(i);
-                        if (cp <= 0xFFFF || cp > 0x10FFFF) {
-                            return null;
-                        }
-                        int c0 = ((cp >> 18) & 0b111);
-                        int c1 = ((cp >> 12) & 0b111111);
-                        int c2 = ((cp >> 6) & 0b111111);
-                        int c3 = (cp & 0b111111);
-                        writeByte(sb, 0b11110000 | c0);
-                        writeByte(sb, 0b10000000 | c1);
-                        writeByte(sb, 0b10000000 | c2);
-                        writeByte(sb, 0b10000000 | c3);
-                        // add one b/c of surrogate pair
-                        i += 1;
-                    } else {
+                    continue;
+                }
+                if (sb == null) {
+                    // 10 = 5 * encoded ASCII or 1 * encoded supplementary character
+                    sb = new StringBuilder(length + 10);
+                }
+                if (j < i) {
+                    sb.append(s, j, i);
+                }
+                if (c <= 0x7F) {
+                    writeByte(sb, c);
+                } else if (c <= 0x7FF) {
+                    writeByte(sb, 0b11000000 | ((c >> 6) & 0b11111));
+                    writeByte(sb, 0b10000000 | (c & 0b111111));
+                } else if (c <= 0xD7FF || c >= 0xE000) {
+                    writeByte(sb, 0b11100000 | ((c >> 12) & 0b1111));
+                    writeByte(sb, 0b10000000 | ((c >> 6) & 0b111111));
+                    writeByte(sb, 0b10000000 | (c & 0b111111));
+                } else if (Character.isHighSurrogate(c) && i + 1 < length) {
+                    char d = s.charAt(i + 1);
+                    if (!Character.isLowSurrogate(d)) {
+                        // lone high surrogate
                         return null;
                     }
+                    int cp = Character.toCodePoint(c, d);
+                    writeByte(sb, 0b11110000 | ((cp >> 18) & 0b111));
+                    writeByte(sb, 0b10000000 | ((cp >> 12) & 0b111111));
+                    writeByte(sb, 0b10000000 | ((cp >> 6) & 0b111111));
+                    writeByte(sb, 0b10000000 | (cp & 0b111111));
+                    // Read two chars, increment i accordingly.
+                    i += 1;
+                } else {
+                    // lone surrogate
+                    return null;
                 }
+                j = i + 1;
             }
-            return sb != null ? sb.toString() : s;
+            if (sb == null) {
+                return s;
+            }
+            if (j < length) {
+                sb.append(s, j, length);
+            }
+            return sb.toString();
         }
 
         /**
@@ -899,11 +900,11 @@ public class GlobalObject extends OrdinaryObject implements Initializable {
             if (i < 0) {
                 return s;
             }
-            int len = s.length();
+            final int length = s.length();
             int j = 0;
             StringBuilder sb = null;
             while (i >= 0) {
-                if (i + 2 >= len)
+                if (i + 2 >= length)
                     return null;
                 int c0 = readByte(s, i);
                 if (c0 < 0)
@@ -918,7 +919,7 @@ public class GlobalObject extends OrdinaryObject implements Initializable {
                     }
                     cp = (char) c0;
                 } else {
-                    cp = decodeNonASCII(c0, s, i, len);
+                    cp = decodeNonASCII(c0, s, i, length);
                     if (cp < 0)
                         return null;
                 }
@@ -940,11 +941,11 @@ public class GlobalObject extends OrdinaryObject implements Initializable {
                     k = 12;
                 }
                 if (sb == null) {
-                    if (i == 0 && k == len) {
+                    if (i == 0 && k == length) {
                         // Single character escape
                         return fromCodePoint(cp);
                     }
-                    sb = new StringBuilder(len);
+                    sb = new StringBuilder(length);
                 }
                 if (j < i) {
                     // append substring before '%'
@@ -957,9 +958,9 @@ public class GlobalObject extends OrdinaryObject implements Initializable {
             if (sb == null) {
                 return s;
             }
-            if (j < len) {
+            if (j < length) {
                 // append remaining substring
-                sb.append(s, j, len);
+                sb.append(s, j, length);
             }
             return sb.toString();
         }

@@ -10,10 +10,9 @@ import java.util.List;
 
 /**
  * <h1>12 ECMAScript Language: Expressions</h1><br>
- * <h2>12.2 Primary Expression</h2><br>
- * <h3>12.2.4 Array Initializer</h3>
+ * <h2>12.2 Primary Expression</h2>
  * <ul>
- * <li>12.2.4.1 Array Literal
+ * <li>12.2.5 Array Initializer
  * </ul>
  */
 public class ArrayLiteral extends ArrayInitializer {
@@ -27,14 +26,30 @@ public class ArrayLiteral extends ArrayInitializer {
         this.trailingComma = trailingComma;
     }
 
+    /**
+     * Returns the array element expressions.
+     * 
+     * @return the array elements
+     */
     public List<Expression> getElements() {
         return elements;
     }
 
+    /**
+     * Sets the array element expressions
+     * 
+     * @param elements
+     *            the array elements
+     */
     public void setElements(List<Expression> elements) {
         this.elements = elements;
     }
 
+    /**
+     * Returns {@code true} if the <tt>ArrayLiteral</tt> has a trailing comma.
+     * 
+     * @return {@code true} if the array literal has a trailing comma
+     */
     public boolean hasTrailingComma() {
         return trailingComma;
     }

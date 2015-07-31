@@ -11,14 +11,14 @@ package com.github.anba.es6draft.ast;
  * <h2>12.6 Multiplicative Operators</h2><br>
  * <h2>12.7 Additive Operators</h2>
  * <ul>
- * <li>12.7.1 The Addition operator ( + )
- * <li>12.7.2 The Subtraction Operator ( - )
+ * <li>12.7.3 The Addition operator ( + )
+ * <li>12.7.4 The Subtraction Operator ( - )
  * </ul>
  * <h2>12.8 Bitwise Shift Operators</h2>
  * <ul>
- * <li>12.8.1 The Left Shift Operator ( {@literal <<} )
- * <li>12.8.2 The Signed Right Shift Operator ( {@literal <<} )
- * <li>12.8.3 The Unsigned Right Shift Operator ( {@literal >>>} )
+ * <li>12.8.3 The Left Shift Operator ( {@literal <<} )
+ * <li>12.8.4 The Signed Right Shift Operator ( {@literal <<} )
+ * <li>12.8.5 The Unsigned Right Shift Operator ( {@literal >>>} )
  * </ul>
  * <h2>12.9 Relational Operators</h2><br>
  * <h2>12.10 Equality Operators</h2><br>
@@ -48,14 +48,30 @@ public final class BinaryExpression extends Expression {
             this.precedence = precedence;
         }
 
+        /**
+         * Returns the binary operator name.
+         * 
+         * @return the operator name
+         */
         public String getName() {
+            // TODO: This is not a 'name'.
             return name;
         }
 
+        /**
+         * Returns the operator precedence level.
+         * 
+         * @return the operator precedence
+         */
         public int getPrecedence() {
             return precedence;
         }
 
+        /**
+         * Returns {@code true} if the operator is right-associative.
+         * 
+         * @return {@code true} if right-associative
+         */
         public boolean isRightAssociative() {
             return this == EXP;
         }
@@ -73,22 +89,49 @@ public final class BinaryExpression extends Expression {
         this.right = right;
     }
 
+    /**
+     * Returns the binary operator.
+     * 
+     * @return the operator
+     */
     public Operator getOperator() {
         return operator;
     }
 
+    /**
+     * Returns the left-hand side expression.
+     * 
+     * @return the left-hand side expression
+     */
     public Expression getLeft() {
         return left;
     }
 
+    /**
+     * Sets the left-hand side expression.
+     * 
+     * @param left
+     *            the left-hand side expression
+     */
     public void setLeft(Expression left) {
         this.left = left;
     }
 
+    /**
+     * Returns the right-hand side expression.
+     * 
+     * @return the right-hand side expression
+     */
     public Expression getRight() {
         return right;
     }
 
+    /**
+     * Sets the right-hand side expression.
+     * 
+     * @param right
+     *            the right-hand side expression
+     */
     public void setRight(Expression right) {
         this.right = right;
     }
@@ -99,6 +142,12 @@ public final class BinaryExpression extends Expression {
         return this;
     }
 
+    /**
+     * Returns {@code true} if the completion value is used.
+     * 
+     * @return {@code true} if the completion value is used
+     * @see #emptyCompletion()
+     */
     public boolean hasCompletion() {
         return completion;
     }

@@ -274,6 +274,18 @@ final class TokenStream {
     }
 
     /**
+     * Returns the string data of the next token.
+     * 
+     * @return the next string data
+     */
+    public String getNextString() {
+        if (next == null) {
+            peekToken();
+        }
+        return buffer.toString();
+    }
+
+    /**
      * Returns <code>true</code> if the current token is a string literal which contains an escape
      * sequence.
      * 

@@ -85,9 +85,8 @@ public final class RealmConstructor extends BuiltinConstructor implements Initia
      */
     @Override
     public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
-        ExecutionContext calleeContext = calleeContext();
         /* step 1 */
-        throw newTypeError(calleeContext, Messages.Key.InvalidCall, "Realm");
+        throw newTypeError(calleeContext(), Messages.Key.InvalidCall, "Realm");
     }
 
     /**

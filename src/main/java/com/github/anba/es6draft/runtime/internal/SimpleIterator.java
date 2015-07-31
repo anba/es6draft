@@ -13,7 +13,7 @@ import java.util.NoSuchElementException;
  * Abstract {@link Iterator} base class
  */
 public abstract class SimpleIterator<E> implements Iterator<E> {
-    private E next = null;
+    private E next;
 
     /**
      * Returns the next element or {@code null} if the iterator is drained.

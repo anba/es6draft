@@ -46,7 +46,7 @@ import com.github.anba.es6draft.runtime.types.builtins.ProxyObject;
  * </ul>
  */
 public final class FunctionPrototype extends BuiltinFunction implements Initializable {
-    private static final int MAX_ARGUMENTS = 0x10000;
+    private static final int MAX_ARGUMENTS = 0x1ffff;
 
     /**
      * Constructs a new Function prototype object.
@@ -74,7 +74,7 @@ public final class FunctionPrototype extends BuiltinFunction implements Initiali
      * 
      * @return the maximum number of supported arguments
      */
-    public static final int getMaxArguments() {
+    public static int getMaxArguments() {
         return MAX_ARGUMENTS;
     }
 
@@ -110,7 +110,7 @@ public final class FunctionPrototype extends BuiltinFunction implements Initiali
         public static final Intrinsics constructor = Intrinsics.Function;
 
         /**
-         * 19.2.3.6 Function.prototype.toString ( )
+         * 19.2.3.5 Function.prototype.toString ( )
          * 
          * @param cx
          *            the execution context
@@ -237,7 +237,7 @@ public final class FunctionPrototype extends BuiltinFunction implements Initiali
         }
 
         /**
-         * 19.2.3.7 Function.prototype[@@hasInstance] (V)
+         * 19.2.3.6 Function.prototype[@@hasInstance] (V)
          * 
          * @param cx
          *            the execution context

@@ -139,8 +139,8 @@ public final class CodeSizeAnalysis {
     }
 
     private final class Entry implements Callable<Integer> {
-        private TopLevelNode<?> node;
-        private List<? extends Node> children;
+        private final TopLevelNode<?> node;
+        private final List<? extends Node> children;
 
         Entry(TopLevelNode<?> node, List<? extends Node> children) {
             this.node = node;

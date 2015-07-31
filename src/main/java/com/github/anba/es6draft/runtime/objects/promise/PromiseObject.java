@@ -10,7 +10,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
@@ -27,9 +26,6 @@ public class PromiseObject extends OrdinaryObject {
 
     /** [[PromiseState]] */
     private State state;
-
-    /** [[PromiseConstructor]] */
-    private Constructor constructor;
 
     /** [[PromiseResult]] */
     private Object result;
@@ -48,20 +44,7 @@ public class PromiseObject extends OrdinaryObject {
      */
     public PromiseObject(Realm realm) {
         super(realm);
-    }
-
-    /**
-     * Initializes a Promise object.
-     * <p>
-     * <strong>Must not be called on initialized Promise objects!</strong>
-     * 
-     * @param promiseConstructor
-     *            the promise constructor function
-     */
-    public final void initialize(Constructor promiseConstructor) {
-        assert state == null && promiseConstructor != null;
         state = PromiseObject.State.Pending;
-        constructor = promiseConstructor;
         fulfillReactions = new ArrayList<>();
         rejectReactions = new ArrayList<>();
     }
@@ -86,15 +69,6 @@ public class PromiseObject extends OrdinaryObject {
      */
     public final State getState() {
         return state;
-    }
-
-    /**
-     * [[PromiseConstructor]]
-     * 
-     * @return the promise constructor function
-     */
-    public final Constructor getConstructor() {
-        return constructor;
     }
 
     /**

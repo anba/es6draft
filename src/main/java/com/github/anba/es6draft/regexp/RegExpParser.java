@@ -67,7 +67,7 @@ public final class RegExpParser {
     private int pos = 0;
 
     // map of groups created within negative lookahead
-    private BitSet negativeLAGroups = new BitSet();
+    private final BitSet negativeLAGroups = new BitSet();
 
     private RegExpParser(String source, String flags, String sourceFile, int sourceLine,
             int sourceColumn, boolean webRegExp) {
@@ -663,7 +663,7 @@ public final class RegExpParser {
                         throw error(Messages.Key.RegExpInvalidEscape, "x");
                     } else {
                         // invalid hex escape sequence, use "x"
-                        out.append("x");
+                        out.append('x');
                         cv = 'x';
                     }
                     break classatom;
@@ -684,7 +684,7 @@ public final class RegExpParser {
                             throw error(Messages.Key.RegExpInvalidEscape, "u");
                         } else {
                             // invalid unicode escape sequence, use "u"
-                            out.append("u");
+                            out.append('u');
                             cv = 'u';
                         }
                     }
@@ -1048,7 +1048,7 @@ public final class RegExpParser {
                     if (unicode && disableUnicodeInAssertion()) {
                         // Disable unicode - does not fix all spec violations, but it's better than
                         // nothing.
-                        out.append("(?-u:").append('\\').append(get()).append(")");
+                        out.append("(?-u:").append('\\').append(get()).append(')');
                     } else {
                         out.append('\\').append(get());
                     }
@@ -1087,7 +1087,7 @@ public final class RegExpParser {
                         throw error(Messages.Key.RegExpInvalidEscape, "x");
                     } else {
                         // invalid hex escape sequence, use "x"
-                        out.append("x");
+                        out.append('x');
                     }
                     break atom;
                 }
@@ -1105,7 +1105,7 @@ public final class RegExpParser {
                             throw error(Messages.Key.RegExpInvalidEscape, "u");
                         } else {
                             // invalid unicode escape sequence, use "u"
-                            out.append("u");
+                            out.append('u');
                         }
                     }
                     break atom;
@@ -1656,7 +1656,7 @@ public final class RegExpParser {
     }
 
     private void appendCodePoint(int codePoint) {
-        out.append("\\x{").append(Integer.toHexString(codePoint)).append("}");
+        out.append("\\x{").append(Integer.toHexString(codePoint)).append('}');
     }
 
     private void appendCaseInsensitive(int codePoint, boolean characterClass) {
@@ -1872,11 +1872,11 @@ public final class RegExpParser {
         appendCodePoint(codePoint);
     }
 
-    private static final char toControlLetter(int c) {
+    private static char toControlLetter(int c) {
         return (char) ('A' - 1 + (c & 0x1F));
     }
 
-    private static final char toHexDigit(int c, int shift) {
+    private static char toHexDigit(int c, int shift) {
         return HEXDIGITS[(c >> shift) & 0xf];
     }
 
@@ -1890,7 +1890,7 @@ public final class RegExpParser {
      *            the character to inspect
      * @return {@code true} if the character is a syntax character or a forward slash ({@code /})
      */
-    private static final boolean isSyntaxCharacterOrSlash(int c) {
+    private static boolean isSyntaxCharacterOrSlash(int c) {
         switch (c) {
         case '^':
         case '$':

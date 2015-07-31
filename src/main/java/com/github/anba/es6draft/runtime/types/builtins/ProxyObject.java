@@ -1082,6 +1082,7 @@ public class ProxyObject implements ScriptObject {
             return trapResult;
         }
         /* step 20 */
+        // TODO: Simply with Java 8 APIs.
         HashSet<Object> uncheckedResultKeys = new HashSet<>();
         HashMap<Object, Integer> uncheckedDuplicateKeys = null;
         for (Object key : trapResult) {

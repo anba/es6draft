@@ -20,7 +20,7 @@ final class LanguageSubtagRegistryData {
     private LanguageSubtagRegistryData() {
     }
 
-    static final String grandfathered(String languageTag) {
+    static String grandfathered(String languageTag) {
         String v = grandfatheredData.get(languageTag);
         if (v != null) {
             return v;
@@ -35,7 +35,7 @@ final class LanguageSubtagRegistryData {
      *            the language tag
      * @return the canonicalized language tag or {@code null} if not applicable
      */
-    static final String redundant(String languageTag) {
+    static String redundant(String languageTag) {
         String v = redundantData.get(languageTag);
         if (v != null) {
             return v;
@@ -50,7 +50,7 @@ final class LanguageSubtagRegistryData {
      *            the language
      * @return the canonicalized language or the input if not applicable
      */
-    static final String language(String language) {
+    static String language(String language) {
         String v = languageData.get(language);
         if (v != null) {
             return v;
@@ -67,7 +67,7 @@ final class LanguageSubtagRegistryData {
      *            the extended language
      * @return the canonicalized extended language or {@code null} if not applicable
      */
-    static final String extlang(String prefix, String extlang) {
+    static String extlang(String prefix, String extlang) {
         String v = extlangData.get(extlang);
         if (v != null && v.equals(prefix)) {
             return extlang;
@@ -82,7 +82,7 @@ final class LanguageSubtagRegistryData {
      *            the region
      * @return the canonicalized region or the input if not applicable
      */
-    static final String region(String region) {
+    static String region(String region) {
         String v = regionData.get(region);
         if (v != null) {
             return v;
@@ -99,7 +99,7 @@ final class LanguageSubtagRegistryData {
      *            the variant
      * @return the canonicalized variant or {@code null} if not applicable
      */
-    static final String variant(StringBuilder prefix, String variant) {
+    static String variant(StringBuilder prefix, String variant) {
         // handle this replacement manually
         if ("heploc".equals(variant) && "ja-Latn-hepburn".equals(prefix.toString())) {
             // apparently this should replace the complete tag...?

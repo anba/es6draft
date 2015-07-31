@@ -294,7 +294,7 @@ public final class IntlAbstractOperations {
                 && isAlpha(normalized.charAt(2));
     }
 
-    private static final boolean isAlpha(char c) {
+    private static boolean isAlpha(char c) {
         return ('A' <= c && c <= 'Z') || ('a' <= c && c <= 'z');
     }
 
@@ -793,8 +793,7 @@ public final class IntlAbstractOperations {
 
     private static LocaleMatcher CreateDefaultMatcher() {
         LocalePriorityList priorityList = LocalePriorityList.add(ULocale.ROOT).build();
-        LocaleMatcher matcher = new LocaleMatcher(priorityList);
-        return matcher;
+        return new LocaleMatcher(priorityList);
     }
 
     /**

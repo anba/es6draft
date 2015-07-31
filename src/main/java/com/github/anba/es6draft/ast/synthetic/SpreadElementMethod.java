@@ -12,7 +12,7 @@ import com.github.anba.es6draft.ast.SpreadElement;
 import com.github.anba.es6draft.ast.VoidNodeVisitor;
 
 /**
- * {@link SpreadElement} as an external Java method
+ * {@link SpreadElement} as an external Java method.
  */
 public final class SpreadElementMethod extends SpreadElement {
     public SpreadElementMethod(SpreadArrayLiteral array) {

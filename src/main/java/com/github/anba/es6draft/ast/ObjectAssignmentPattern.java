@@ -26,10 +26,20 @@ public final class ObjectAssignmentPattern extends AssignmentPattern {
         this.rest = rest;
     }
 
+    /**
+     * Returns the assignment properties of this object assignment pattern.
+     * 
+     * @return the assignment properties
+     */
     public List<AssignmentProperty> getProperties() {
         return properties;
     }
 
+    /**
+     * Returns the optional assignment rest property.
+     * 
+     * @return the assignment rest property or {@code null}
+     */
     public AssignmentRestProperty getRest() {
         return rest;
     }

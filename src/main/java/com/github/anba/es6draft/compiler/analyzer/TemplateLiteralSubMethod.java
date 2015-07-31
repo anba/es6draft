@@ -22,12 +22,12 @@ final class TemplateLiteralSubMethod extends ListSubMethod<TemplateLiteral> {
         }
 
         @Override
-        protected final Expression createReplacement() {
+        protected Expression createReplacement() {
             return new ExpressionMethod(getNode());
         }
 
         @Override
-        protected final int getReplacementSize() {
+        protected int getReplacementSize() {
             return EXPR_METHOD_SIZE;
         }
     }

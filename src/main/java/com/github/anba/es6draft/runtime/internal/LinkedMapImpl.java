@@ -23,7 +23,7 @@ public final class LinkedMapImpl<VALUE> extends LinkedMap<Object, VALUE> {
             // int/long/double -> double
             double v = Type.numberValue(key);
             // Map +/-0 to +0 to enforce SameValueZero comparison semantics
-            return v == 0 ? +0.0 : v;
+            return v == 0 ? +0d : v;
         }
         return key;
     }

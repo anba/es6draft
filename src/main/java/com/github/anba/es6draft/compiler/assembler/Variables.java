@@ -53,16 +53,30 @@ public final class Variables {
     }
 
     VariablesSnapshot snapshot() {
-        return new VariablesSnapshot((BitSet) variables.clone(), (BitSet) active.clone(),
-                Arrays.copyOf(types, types.length));
+        return snapshot(0);
+    }
+
+    VariablesSnapshot snapshot(int startSlot) {
+        BitSet vars = (BitSet) variables.clone();
+        vars.clear(0, startSlot);
+        BitSet actv = (BitSet) active.clone();
+        actv.clear(0, startSlot);
+        Type[] typs = new Type[types.length];
+        System.arraycopy(types, startSlot, typs, startSlot, types.length - startSlot);
+        return new VariablesSnapshot(startSlot, vars, actv, typs);
     }
 
     void restore(VariablesSnapshot snapshot) {
-        variables.clear();
+        int start = snapshot.getStartSlot();
+        variables.clear(start, variables.length());
         variables.or(snapshot.getVariables());
-        active.clear();
+        active.clear(start, active.length());
         active.or(snapshot.getActive());
-        types = Arrays.copyOf(snapshot.getTypes(), snapshot.getTypes().length);
+        Type[] savedTypes = snapshot.getTypes();
+        Type[] newTypes = new Type[savedTypes.length];
+        System.arraycopy(types, 0, newTypes, 0, Math.min(start, types.length));
+        System.arraycopy(savedTypes, start, newTypes, start, savedTypes.length - start);
+        types = newTypes;
     }
 
     VariableScope enter() {

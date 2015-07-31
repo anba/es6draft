@@ -201,7 +201,7 @@ public final class PropertyDescriptor implements Cloneable {
      * 
      * @return {@code true} if this descriptor is an accessor property
      */
-    public final boolean isAccessorDescriptor() {
+    public boolean isAccessorDescriptor() {
         return (present & (GET | SET)) != 0;
     }
 
@@ -227,7 +227,7 @@ public final class PropertyDescriptor implements Cloneable {
      * 
      * @return {@code true} if this descriptor is a data property
      */
-    public final boolean isDataDescriptor() {
+    public boolean isDataDescriptor() {
         return (present & (VALUE | WRITABLE)) != 0;
     }
 
@@ -253,7 +253,7 @@ public final class PropertyDescriptor implements Cloneable {
      * 
      * @return {@code true} if this descriptor is a generic property
      */
-    public final boolean isGenericDescriptor() {
+    public boolean isGenericDescriptor() {
         return (present & (GET | SET | VALUE | WRITABLE)) == 0;
     }
 
@@ -447,8 +447,8 @@ public final class PropertyDescriptor implements Cloneable {
 
     @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder();
-        sb.append("{");
+        StringBuilder sb = new StringBuilder(128);
+        sb.append('{');
         if (hasWritable()) {
             sb.append("[[Writable]]: ").append(isWritable()).append(", ");
         }
@@ -470,7 +470,7 @@ public final class PropertyDescriptor implements Cloneable {
         if (sb.length() > 1) {
             sb.setLength(sb.length() - 2);
         }
-        sb.append("}");
+        sb.append('}');
         return sb.toString();
     }
 
@@ -479,7 +479,7 @@ public final class PropertyDescriptor implements Cloneable {
      * 
      * @return {@code true} if every field is absent
      */
-    public final boolean isEmpty() {
+    public boolean isEmpty() {
         return present == 0;
     }
 
@@ -492,7 +492,7 @@ public final class PropertyDescriptor implements Cloneable {
      *            the property descriptor
      * @return {@code true} if <var>desc</var> if a subset of this property descriptor
      */
-    public final boolean isSubset(PropertyDescriptor desc) {
+    public boolean isSubset(PropertyDescriptor desc) {
         if (desc.hasValue() && !(hasValue() && SameValue(desc.value, value))) {
             return false;
         }
@@ -519,7 +519,7 @@ public final class PropertyDescriptor implements Cloneable {
      * 
      * @return {@code true} if the value field is present
      */
-    public final boolean hasValue() {
+    public boolean hasValue() {
         return (present & VALUE) != 0;
     }
 
@@ -528,7 +528,7 @@ public final class PropertyDescriptor implements Cloneable {
      * 
      * @return {@code true} if the getter field is present
      */
-    public final boolean hasGetter() {
+    public boolean hasGetter() {
         return (present & GET) != 0;
     }
 
@@ -537,7 +537,7 @@ public final class PropertyDescriptor implements Cloneable {
      * 
      * @return {@code true} if the setter field is present
      */
-    public final boolean hasSetter() {
+    public boolean hasSetter() {
         return (present & SET) != 0;
     }
 
@@ -546,7 +546,7 @@ public final class PropertyDescriptor implements Cloneable {
      * 
      * @return {@code true} if the writable field is present
      */
-    public final boolean hasWritable() {
+    public boolean hasWritable() {
         return (present & WRITABLE) != 0;
     }
 
@@ -555,7 +555,7 @@ public final class PropertyDescriptor implements Cloneable {
      * 
      * @return {@code true} if the enumerable field is present
      */
-    public final boolean hasEnumerable() {
+    public boolean hasEnumerable() {
         return (present & ENUMERABLE) != 0;
     }
 
@@ -564,7 +564,7 @@ public final class PropertyDescriptor implements Cloneable {
      * 
      * @return {@code true} if the configurable field is present
      */
-    public final boolean hasConfigurable() {
+    public boolean hasConfigurable() {
         return (present & CONFIGURABLE) != 0;
     }
 
@@ -573,7 +573,7 @@ public final class PropertyDescriptor implements Cloneable {
      * 
      * @return the value field
      */
-    public final Object getValue() {
+    public Object getValue() {
         return value;
     }
 
@@ -583,7 +583,7 @@ public final class PropertyDescriptor implements Cloneable {
      * @param value
      *            the new value
      */
-    public final void setValue(Object value) {
+    public void setValue(Object value) {
         present |= VALUE;
         this.value = value;
     }
@@ -593,7 +593,7 @@ public final class PropertyDescriptor implements Cloneable {
      * 
      * @return the getter accessor field
      */
-    public final Callable getGetter() {
+    public Callable getGetter() {
         return getter;
     }
 
@@ -603,7 +603,7 @@ public final class PropertyDescriptor implements Cloneable {
      * @param getter
      *            the new getter function
      */
-    public final void setGetter(Callable getter) {
+    public void setGetter(Callable getter) {
         present |= GET;
         this.getter = getter;
     }
@@ -613,7 +613,7 @@ public final class PropertyDescriptor implements Cloneable {
      * 
      * @return the setter accessor field
      */
-    public final Callable getSetter() {
+    public Callable getSetter() {
         return setter;
     }
 
@@ -623,7 +623,7 @@ public final class PropertyDescriptor implements Cloneable {
      * @param setter
      *            the new setter function
      */
-    public final void setSetter(Callable setter) {
+    public void setSetter(Callable setter) {
         present |= SET;
         this.setter = setter;
     }
@@ -633,7 +633,7 @@ public final class PropertyDescriptor implements Cloneable {
      * 
      * @return the writable field
      */
-    public final boolean isWritable() {
+    public boolean isWritable() {
         return writable;
     }
 
@@ -643,7 +643,7 @@ public final class PropertyDescriptor implements Cloneable {
      * @param writable
      *            the new writable mode
      */
-    public final void setWritable(boolean writable) {
+    public void setWritable(boolean writable) {
         present |= WRITABLE;
         this.writable = writable;
     }
@@ -653,7 +653,7 @@ public final class PropertyDescriptor implements Cloneable {
      * 
      * @return the enumerable field
      */
-    public final boolean isEnumerable() {
+    public boolean isEnumerable() {
         return enumerable;
     }
 
@@ -663,7 +663,7 @@ public final class PropertyDescriptor implements Cloneable {
      * @param enumerable
      *            the new enumerable mode
      */
-    public final void setEnumerable(boolean enumerable) {
+    public void setEnumerable(boolean enumerable) {
         present |= ENUMERABLE;
         this.enumerable = enumerable;
     }
@@ -673,7 +673,7 @@ public final class PropertyDescriptor implements Cloneable {
      * 
      * @return the configurable field
      */
-    public final boolean isConfigurable() {
+    public boolean isConfigurable() {
         return configurable;
     }
 
@@ -683,7 +683,7 @@ public final class PropertyDescriptor implements Cloneable {
      * @param configurable
      *            the new configurable mode
      */
-    public final void setConfigurable(boolean configurable) {
+    public void setConfigurable(boolean configurable) {
         present |= CONFIGURABLE;
         this.configurable = configurable;
     }

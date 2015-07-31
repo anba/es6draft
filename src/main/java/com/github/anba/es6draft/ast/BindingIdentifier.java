@@ -9,10 +9,9 @@ package com.github.anba.es6draft.ast;
 import com.github.anba.es6draft.ast.scope.Name;
 
 /**
- * <h1>13 ECMAScript Language: Statements and Declarations</h1><br>
- * <h2>13.2 Declarations and the Variable Statement</h2>
+ * <h1>12 ECMAScript Language: Expressions</h1>
  * <ul>
- * <li>13.2.1 Let and Const Declarations
+ * <li>12.1 Identifiers
  * </ul>
  */
 public final class BindingIdentifier extends Binding {
@@ -24,6 +23,11 @@ public final class BindingIdentifier extends Binding {
         this.name = new Name(name);
     }
 
+    /**
+     * Returns the binding identifier's name.
+     * 
+     * @return the binding name
+     */
     public Name getName() {
         return name;
     }

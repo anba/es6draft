@@ -12,7 +12,7 @@ import java.util.List;
  * <h1>12 ECMAScript Language: Expressions</h1><br>
  * <h2>12.2 Primary Expression</h2>
  * <ul>
- * <li>12.2.5 Object Initializer
+ * <li>12.2.6 Object Initializer
  * </ul>
  */
 public final class ObjectLiteral extends Expression {
@@ -23,10 +23,21 @@ public final class ObjectLiteral extends Expression {
         this.properties = properties;
     }
 
+    /**
+     * Returns the object property definitions.
+     * 
+     * @return the object properties
+     */
     public List<PropertyDefinition> getProperties() {
         return properties;
     }
 
+    /**
+     * Sets the object property definitions.
+     * 
+     * @param properties
+     *            the object properties
+     */
     public void setProperties(List<PropertyDefinition> properties) {
         this.properties = properties;
     }

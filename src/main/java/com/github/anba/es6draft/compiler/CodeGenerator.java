@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -42,7 +43,6 @@ import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.ImmediateFuture;
 import com.github.anba.es6draft.runtime.internal.JVMNames;
-import com.github.anba.es6draft.runtime.internal.ResumptionPoint;
 import com.github.anba.es6draft.runtime.internal.SourceCompressor;
 import com.github.anba.es6draft.runtime.internal.Strings;
 import com.github.anba.es6draft.runtime.modules.SourceTextModuleRecord;
@@ -822,9 +822,22 @@ final class CodeGenerator {
     private Future<String> getSource(FunctionNode node) {
         if (INCLUDE_SOURCE && !isEnabled(Parser.Option.NativeFunction)) {
             String source = Strings.concat(node.getHeaderSource(), node.getBodySource());
-            return executor.submit(SourceCompressor.compress(source));
+            return executor.submit(new CompressSourceTask(source));
         }
         return NO_SOURCE;
+    }
+
+    private static final class CompressSourceTask implements Callable<String> {
+        private final String source;
+
+        CompressSourceTask(String source) {
+            this.source = source;
+        }
+
+        @Override
+        public String call() throws Exception {
+            return SourceCompressor.compress(source);
+        }
     }
 
     private boolean conciseFunctionBody(ArrowFunction node) {
@@ -872,10 +885,9 @@ final class CodeGenerator {
         GeneratorStatementVisitor body = new GeneratorStatementVisitor(method, node);
         body.lineInfo(node);
         body.begin();
-        Variable<ResumptionPoint> resume = body.getResumeParameter();
         GeneratorState state = null;
         if (body.isResumable() && !isEnabled(Compiler.Option.NoResume)) {
-            state = body.prologue(resume);
+            state = body.prologue();
         }
 
         body.enterFunction(node);
@@ -884,7 +896,7 @@ final class CodeGenerator {
 
         body._return();
         if (state != null) {
-            body.epilogue(resume, state);
+            body.epilogue(state);
         }
         body.end();
 
@@ -901,10 +913,9 @@ final class CodeGenerator {
         GeneratorStatementVisitor body = new GeneratorStatementVisitor(method, node);
         body.lineInfo(node);
         body.begin();
-        Variable<ResumptionPoint> resume = body.getResumeParameter();
         GeneratorState state = null;
         if (body.isResumable() && !isEnabled(Compiler.Option.NoResume)) {
-            state = body.prologue(resume);
+            state = body.prologue();
         }
 
         body.enterFunction(node);
@@ -917,7 +928,7 @@ final class CodeGenerator {
             body._return();
         }
         if (state != null) {
-            body.epilogue(resume, state);
+            body.epilogue(state);
         }
         body.end();
 
@@ -929,10 +940,9 @@ final class CodeGenerator {
         GeneratorStatementVisitor body = new GeneratorStatementVisitor(method, node);
         body.lineInfo(node);
         body.begin();
-        Variable<ResumptionPoint> resume = body.getResumeParameter();
         GeneratorState state = null;
         if (body.isResumable() && !isEnabled(Compiler.Option.NoResume)) {
-            state = body.prologue(resume);
+            state = body.prologue();
         }
 
         body.enterFunction(node);
@@ -942,7 +952,7 @@ final class CodeGenerator {
         body.loadUndefined();
         body._return();
         if (state != null) {
-            body.epilogue(resume, state);
+            body.epilogue(state);
         }
         body.end();
 
@@ -1175,10 +1185,6 @@ final class CodeGenerator {
             super.begin();
             setParameterName("cx", 0, Types.ExecutionContext);
             setParameterName("rp", 1, Types.ResumptionPoint);
-        }
-
-        Variable<ResumptionPoint> getResumeParameter() {
-            return getParameter(1, ResumptionPoint.class);
         }
     }
 

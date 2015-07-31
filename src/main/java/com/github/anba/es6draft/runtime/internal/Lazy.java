@@ -10,7 +10,7 @@ package com.github.anba.es6draft.runtime.internal;
  * Class to perform lazy value computation.
  */
 public abstract class Lazy<VALUE> {
-    private VALUE value = null;
+    private VALUE value;
 
     /**
      * Computes the actual value lazily.

@@ -15,7 +15,7 @@ public final class ResumptionPoint {
     private final int offset;
 
     private ResumptionPoint(Object[] stack, Object[] locals, int offset) {
-        assert stack != null && locals != null && offset >= 0;
+        assert stack != null && offset >= 0;
         this.stack = stack;
         this.locals = locals;
         this.offset = offset;

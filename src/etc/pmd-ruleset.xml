@@ -16,7 +16,29 @@
     <exclude name="AvoidUsingOctalValues" />
     <exclude name="CollapsibleIfStatements" />
   </rule>
-  <!-- <rule ref="rulesets/java/clone.xml" /> -->
+  <rule ref="rulesets/java/braces.xml">
+    <exclude name="IfElseStmtsMustUseBraces" />
+    <exclude name="IfStmtsMustUseBraces" />
+  </rule>
+  <rule ref="rulesets/java/clone.xml">
+    <exclude name="CloneMethodMustImplementCloneable" />
+    <exclude name="CloneThrowsCloneNotSupportedException" />
+    <exclude name="ProperCloneImplementation" />
+  </rule>
+  <rule ref="rulesets/java/codesize.xml">
+    <exclude name="CyclomaticComplexity" />
+    <exclude name="ModifiedCyclomaticComplexity" />
+    <exclude name="NcssMethodCount" />
+    <exclude name="NcssTypeCount" />
+    <exclude name="NPathComplexity" />
+    <exclude name="ExcessiveClassLength" />
+    <exclude name="ExcessiveMethodLength" />
+    <exclude name="ExcessiveParameterList" />
+    <exclude name="ExcessivePublicCount" />
+    <exclude name="StdCyclomaticComplexity" />
+    <exclude name="TooManyFields" />
+    <exclude name="TooManyMethods" />
+  </rule>
   <rule ref="rulesets/java/comments.xml">
     <exclude name="CommentRequired" />
     <exclude name="CommentSize" />
@@ -39,9 +61,8 @@
     <exclude name="UseConcurrentHashMap" />
     <exclude name="UseObjectForClearerAPI" />
   </rule>
+  <!-- <rule ref="rulesets/java/coupling.xml" /> -->
   <rule ref="rulesets/java/design.xml">
-    <exclude name="AbstractClassWithoutAbstractMethod" />
-    <exclude name="AccessorClassGeneration" />
     <exclude name="AvoidDeeplyNestedIfStmts" />
     <exclude name="AvoidReassigningParameters" />
     <exclude name="AvoidSynchronizedAtMethodLevel" />
@@ -52,7 +73,6 @@
     <exclude name="EmptyMethodInAbstractClassShouldBeAbstract" />
     <exclude name="FieldDeclarationsShouldBeAtStartOfClass" />
     <exclude name="GodClass" />
-    <exclude name="ImmutableField" />
     <exclude name="LogicInversion" />
     <exclude name="MissingBreakInSwitch" />
     <exclude name="MissingStaticMethodInNonInstantiatableClass" />
@@ -64,7 +84,6 @@
     <exclude name="UncommentedEmptyMethod" />
     <exclude name="UnnecessaryLocalBeforeReturn" />
     <exclude name="UseCollectionIsEmpty" />
-    <exclude name="UseUtilityClass" />
     <exclude name="UseVarargs" />
   </rule>
   <rule ref="rulesets/java/empty.xml">
@@ -72,7 +91,21 @@
     <exclude name="EmptyIfStmt" />
   </rule>
   <rule ref="rulesets/java/finalizers.xml" />
+  <rule ref="rulesets/java/imports.xml">
+    <exclude name="DontImportJavaLang" />
+    <exclude name="DuplicateImports" />
+    <exclude name="TooManyStaticImports" />
+    <exclude name="UnnecessaryFullyQualifiedName" />
+    <exclude name="UnusedImports" />
+  </rule>
   <rule ref="rulesets/java/junit.xml" />
+  <rule ref="rulesets/java/logging-java.xml">
+    <exclude name="AvoidPrintStackTrace" />
+    <exclude name="SystemPrintln" />
+  </rule>
+  <rule ref="rulesets/java/migrating.xml">
+    <exclude name="JUnit4TestShouldUseTestAnnotation" />
+  </rule>
   <rule ref="rulesets/java/naming.xml">
     <exclude name="AbstractNaming" />
     <exclude name="AvoidDollarSigns" />
@@ -103,12 +136,28 @@
     <exclude name="AvoidThrowingRawExceptionTypes" />
     <exclude name="SignatureDeclareThrowsException" />
   </rule>
+  <rule ref="rulesets/java/strings.xml">
+    <exclude name="AvoidDuplicateLiterals" />
+    <exclude name="AvoidStringBufferField" />
+    <exclude name="ConsecutiveAppendsShouldReuse" />
+    <exclude name="ConsecutiveLiteralAppends" />
+    <exclude name="InsufficientStringBufferDeclaration" />
+  </rule>
   <rule ref="rulesets/java/sunsecure.xml">
     <exclude name="MethodReturnsInternalArray" />
     <exclude name="ArrayIsStoredDirectly" />
   </rule>
+  <rule ref="rulesets/java/typeresolution.xml">
+    <exclude name="CloneMethodMustImplementCloneable" />
+    <exclude name="LooseCoupling" />
+    <exclude name="SignatureDeclareThrowsException" />
+    <exclude name="UnusedImports" />
+  </rule>
   <rule ref="rulesets/java/unnecessary.xml">
-    <exclude name="UnnecessaryFinalModifier" />
     <exclude name="UselessParentheses" />
+  </rule>
+  <rule ref="rulesets/java/unusedcode.xml">
+    <exclude name="UnusedFormalParameter" />
+    <exclude name="UnusedPrivateMethod" />
   </rule>
 </ruleset>

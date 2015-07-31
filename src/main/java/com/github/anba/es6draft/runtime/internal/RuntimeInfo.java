@@ -203,6 +203,11 @@ public final class RuntimeInfo {
         Object evaluate(ExecutionContext cx, Script script);
     }
 
+    @SuppressWarnings("unchecked")
+    private static <E extends Throwable> E rethrow(Throwable e) throws E {
+        throw (E) e;
+    }
+
     private static final class CompiledScriptBody implements ScriptBody {
         private final String sourceName;
         private final String sourceFile;
@@ -226,10 +231,8 @@ public final class RuntimeInfo {
         public Object evaluate(ExecutionContext cx, Script script) {
             try {
                 return evaluation.invokeExact(cx, script);
-            } catch (RuntimeException | Error e) {
-                throw e;
             } catch (Throwable e) {
-                throw new RuntimeException(e);
+                throw RuntimeInfo.<RuntimeException> rethrow(e);
             }
         }
 
@@ -238,10 +241,8 @@ public final class RuntimeInfo {
             if (debugInfo != null) {
                 try {
                     return (DebugInfo) debugInfo.invokeExact();
-                } catch (RuntimeException | Error e) {
-                    throw e;
                 } catch (Throwable e) {
-                    throw new RuntimeException(e);
+                    throw RuntimeInfo.<RuntimeException> rethrow(e);
                 }
             }
             return null;
@@ -309,11 +310,8 @@ public final class RuntimeInfo {
                 throws IOException, ResolutionException, MalformedNameException {
             try {
                 initialization.invokeExact(cx, module, env);
-            } catch (RuntimeException | Error | IOException | ResolutionException
-                    | MalformedNameException e) {
-                throw e;
             } catch (Throwable e) {
-                throw new RuntimeException(e);
+                throw RuntimeInfo.<RuntimeException> rethrow(e);
             }
         }
 
@@ -321,10 +319,8 @@ public final class RuntimeInfo {
         public Object evaluate(ExecutionContext cx) {
             try {
                 return handle.invokeExact(cx);
-            } catch (RuntimeException | Error e) {
-                throw e;
             } catch (Throwable e) {
-                throw new RuntimeException(e);
+                throw RuntimeInfo.<RuntimeException> rethrow(e);
             }
         }
 
@@ -333,10 +329,8 @@ public final class RuntimeInfo {
             if (debugInfo != null) {
                 try {
                     return (DebugInfo) debugInfo.invokeExact();
-                } catch (RuntimeException | Error e) {
-                    throw e;
                 } catch (Throwable e) {
-                    throw new RuntimeException(e);
+                    throw RuntimeInfo.<RuntimeException> rethrow(e);
                 }
             }
             return null;
@@ -474,7 +468,7 @@ public final class RuntimeInfo {
         private final int bodyStart;
         private boolean compressed = true;
 
-        private FunctionSource(String source, int bodyStart) {
+        FunctionSource(String source, int bodyStart) {
             this.source = source;
             this.bodyStart = bodyStart;
         }
@@ -487,8 +481,8 @@ public final class RuntimeInfo {
         public synchronized String sourceString() {
             if (compressed) {
                 try {
-                    source = SourceCompressor.decompress(source).call();
-                } catch (Exception e) {
+                    source = SourceCompressor.decompress(source);
+                } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
                 compressed = false;
@@ -710,10 +704,8 @@ public final class RuntimeInfo {
             if (debugInfo != null) {
                 try {
                     return (DebugInfo) debugInfo.invokeExact();
-                } catch (RuntimeException | Error e) {
-                    throw e;
                 } catch (Throwable e) {
-                    throw new RuntimeException(e);
+                    throw RuntimeInfo.<RuntimeException> rethrow(e);
                 }
             }
             return null;

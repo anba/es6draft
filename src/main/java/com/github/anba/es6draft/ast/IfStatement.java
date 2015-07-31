@@ -9,7 +9,7 @@ package com.github.anba.es6draft.ast;
 /**
  * <h1>13 ECMAScript Language: Statements and Declarations</h1>
  * <ul>
- * <li>13.5 The if Statement
+ * <li>13.6 The if Statement
  * </ul>
  */
 public final class IfStatement extends Statement {

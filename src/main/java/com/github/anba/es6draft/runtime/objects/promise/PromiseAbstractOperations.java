@@ -63,14 +63,17 @@ public final class PromiseAbstractOperations {
     }
 
     /**
+     * Returns the Promise object allocator for the realm object.
      * 
      * @param realm
-     *            the realm object
+     *            the realm instance
      * @return the promise allocator
      */
     public static ObjectAllocator<? extends PromiseObject> GetPromiseAllocator(Realm realm) {
-        return realm.isEnabled(CompatibilityOption.PromiseRejection) ? FinalizablePromiseObjectAllocator.INSTANCE
-                : PromiseObjectAllocator.INSTANCE;
+        if (realm.isEnabled(CompatibilityOption.PromiseRejection)) {
+            return FinalizablePromiseObjectAllocator.INSTANCE;
+        }
+        return PromiseObjectAllocator.INSTANCE;
     }
 
     public static final class ResolvingFunctions {
@@ -117,7 +120,6 @@ public final class PromiseAbstractOperations {
      */
     public static ResolvingFunctions CreateResolvingFunctions(ExecutionContext cx,
             PromiseObject promise) {
-        assert promise.getState() != null : "Promise not initialized";
         /* step 1 */
         AtomicBoolean alreadyResolved = new AtomicBoolean(false);
         /* steps 2-4 */
@@ -148,7 +150,6 @@ public final class PromiseAbstractOperations {
         private PromiseRejectFunction(Realm realm, PromiseObject promise,
                 AtomicBoolean alreadyResolved, Void ignore) {
             super(realm, ANONYMOUS, 1);
-            assert promise.getState() != null : "Promise not initialized";
             this.promise = promise;
             this.alreadyResolved = alreadyResolved;
         }
@@ -193,7 +194,6 @@ public final class PromiseAbstractOperations {
         private PromiseResolveFunction(Realm realm, PromiseObject promise,
                 AtomicBoolean alreadyResolved, Void ignore) {
             super(realm, ANONYMOUS, 1);
-            assert promise.getState() != null : "Promise not initialized";
             this.promise = promise;
             this.alreadyResolved = alreadyResolved;
         }
@@ -262,7 +262,9 @@ public final class PromiseAbstractOperations {
      *            the resolve value
      */
     public static void FulfillPromise(ExecutionContext cx, PromiseObject promise, Object value) {
+        /* steps 1-6 */
         List<PromiseReaction> reactions = promise.fufill(value);
+        /* step 7 */
         TriggerPromiseReactions(cx, reactions, value);
     }
 
@@ -396,7 +398,9 @@ public final class PromiseAbstractOperations {
      *            the rejection reason
      */
     public static void RejectPromise(ExecutionContext cx, PromiseObject promise, Object reason) {
+        /* steps 1-6 */
         List<PromiseReaction> reactions = promise.reject(reason);
+        /* step 7 */
         TriggerPromiseReactions(cx, reactions, reason);
     }
 
@@ -414,10 +418,12 @@ public final class PromiseAbstractOperations {
      */
     public static void TriggerPromiseReactions(ExecutionContext cx,
             List<PromiseReaction> reactions, Object argument) {
+        /* step 1 */
         Realm realm = cx.getRealm();
         for (PromiseReaction reaction : reactions) {
             realm.enqueuePromiseTask(new PromiseReactionTask(realm, reaction, argument));
         }
+        /* step 2 (return) */
     }
 
     /**
@@ -443,18 +449,17 @@ public final class PromiseAbstractOperations {
             /* step 2 */
             PromiseCapability<?> promiseCapability = reaction.getCapabilities();
             /* steps 3-7 */
-            Object handlerResult;
             if (reaction.getType() == PromiseReaction.Type.Identity) {
-                /* step 4 */
-                handlerResult = argument;
+                /* steps 4, 8 */
+                promiseCapability.getResolve().call(cx, UNDEFINED, argument);
             } else if (reaction.getType() == PromiseReaction.Type.Thrower) {
                 /* steps 5, 7 */
                 promiseCapability.getReject().call(cx, UNDEFINED, argument);
-                return;
             } else {
                 /* step 3 */
                 Callable handler = reaction.getHandler();
                 /* steps 6-7 */
+                Object handlerResult;
                 try {
                     handlerResult = handler.call(cx, UNDEFINED, argument);
                 } catch (ScriptException e) {
@@ -462,9 +467,9 @@ public final class PromiseAbstractOperations {
                     promiseCapability.getReject().call(cx, UNDEFINED, e.getValue());
                     return;
                 }
+                /* steps 8-9 */
+                promiseCapability.getResolve().call(cx, UNDEFINED, handlerResult);
             }
-            /* steps 8-9 */
-            promiseCapability.getResolve().call(cx, UNDEFINED, handlerResult);
         }
     }
 
@@ -481,7 +486,6 @@ public final class PromiseAbstractOperations {
 
         public PromiseResolveThenableTask(Realm realm, PromiseObject promise,
                 ScriptObject thenable, Callable then) {
-            assert promise.getState() != null : "Promise not initialized";
             this.realm = realm;
             this.promise = promise;
             this.thenable = thenable;
@@ -503,20 +507,6 @@ public final class PromiseAbstractOperations {
                 resolvingFunctions.getReject().call(cx, UNDEFINED, e.getValue());
             }
         }
-    }
-
-    /**
-     * PromiseNew ( executor )
-     * 
-     * @param cx
-     *            the execution context
-     * @param executor
-     *            the executor function
-     * @return the new promise object
-     */
-    public static PromiseObject PromiseNew(ExecutionContext cx, Callable executor) {
-        PromiseConstructor ctor = (PromiseConstructor) cx.getIntrinsic(Intrinsics.Promise);
-        return ctor.construct(cx, ctor, executor);
     }
 
     /**

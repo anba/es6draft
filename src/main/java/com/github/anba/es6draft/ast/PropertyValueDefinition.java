@@ -10,7 +10,7 @@ package com.github.anba.es6draft.ast;
  * <h1>12 ECMAScript Language: Expressions</h1><br>
  * <h2>12.2 Primary Expression</h2>
  * <ul>
- * <li>12.2.5 Object Initializer
+ * <li>12.2.6 Object Initializer
  * </ul>
  */
 public final class PropertyValueDefinition extends PropertyDefinition {
@@ -29,6 +29,11 @@ public final class PropertyValueDefinition extends PropertyDefinition {
         return propertyName;
     }
 
+    /**
+     * Returns the property value expression.
+     * 
+     * @return the property value
+     */
     public Expression getPropertyValue() {
         return propertyValue;
     }

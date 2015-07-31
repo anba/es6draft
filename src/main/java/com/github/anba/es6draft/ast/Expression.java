@@ -43,7 +43,7 @@ public abstract class Expression extends AstNode {
 
     /**
      * Returns a {@link Expression} instance representing this node as a no-value-expression, i.e.
-     * an expression which returns no value at all.
+     * an expression which returns no completion value.
      * 
      * @return the expression no-value node
      */

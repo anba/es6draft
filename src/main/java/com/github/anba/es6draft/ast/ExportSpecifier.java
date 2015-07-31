@@ -9,6 +9,9 @@ package com.github.anba.es6draft.ast;
 /**
  * <h1>15 ECMAScript Language: Scripts and Modules</h1><br>
  * <h2>15.2 Modules</h2>
+ * <ul>
+ * <li>15.2.3 Exports
+ * </ul>
  */
 public final class ExportSpecifier extends AstNode {
     private final String sourceName;
@@ -21,10 +24,20 @@ public final class ExportSpecifier extends AstNode {
         this.exportName = exportName;
     }
 
+    /**
+     * Returns the source name of this export specifier.
+     * 
+     * @return the source name
+     */
     public String getSourceName() {
         return sourceName;
     }
 
+    /**
+     * Returns the export name of this export specifier.
+     * 
+     * @return the export name
+     */
     public String getExportName() {
         return exportName;
     }

@@ -210,7 +210,7 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
         return new ReverseIter(from, to, arrayKeys(array, from, to, inherited), inherited);
     }
 
-    private static abstract class KeyIter {
+    private static class KeyIter {
         protected final long from;
         protected final long to;
         protected final long[] keys;
@@ -562,8 +562,11 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
             } else {
                 /* steps 12-13 */
                 for (long k = 1; k < len; ++k) {
+                    /* step 13.a */
                     r.append(sep);
+                    /* step 13.b */
                     Object element = Get(cx, o, k);
+                    /* steps 13.c-e */
                     if (!Type.isUndefinedOrNull(element)) {
                         r.append(ToString(cx, element));
                     }
@@ -636,18 +639,27 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
             ScriptObject o = ToObject(cx, thisValue);
             /* steps 3-4 */
             long len = ToLength(cx, Get(cx, o, "length"));
+            /* steps 5-6 */
             if (len == 0) {
                 /* step 5 */
+                /* steps 5.a-b */
                 Set(cx, o, "length", 0, true);
+                /* step 5.c */
                 return UNDEFINED;
             } else {
                 /* step 6 */
                 assert len > 0;
+                /* step 6.a */
                 long newLen = len - 1;
+                /* step 6.b */
                 long index = newLen;
+                /* steps 6.c-d */
                 Object element = Get(cx, o, index);
+                /* steps 6.e-f */
                 DeletePropertyOrThrow(cx, o, index);
+                /* steps 6.g-h */
                 Set(cx, o, "length", newLen, true);
+                /* step 6.i */
                 return element;
             }
         }
@@ -674,9 +686,12 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
             if (len + items.length > ARRAY_LENGTH_LIMIT) {
                 throw newTypeError(cx, Messages.Key.InvalidArrayLength);
             }
-            /* steps 8 */
+            /* step 8 */
             for (Object e : items) {
+                /* step 8.a (not applicable) */
+                /* steps 8.b-c */
                 Set(cx, o, len, e, true);
+                /* step 8.d */
                 len += 1;
             }
             /* steps 9-10 */
@@ -710,13 +725,21 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
                 long middle = len / 2L;
                 /* steps 6-7 */
                 for (long lower = 0; lower != middle; ++lower) {
+                    /* step 7.a */
                     long upper = len - lower - 1;
+                    /* step 7.b */
                     long upperP = upper;
+                    /* step 7.c */
                     long lowerP = lower;
+                    /* steps 7.d-e */
                     boolean lowerExists = HasProperty(cx, o, lowerP);
+                    /* step 7.f */
                     Object lowerValue = lowerExists ? Get(cx, o, lowerP) : null;
+                    /* steps 7.g-h */
                     boolean upperExists = HasProperty(cx, o, upperP);
+                    /* step 7.i */
                     Object upperValue = upperExists ? Get(cx, o, upperP) : null;
+                    /* steps 7.j-m */
                     if (lowerExists && upperExists) {
                         Set(cx, o, lowerP, upperValue, true);
                         Set(cx, o, upperP, lowerValue, true);
@@ -819,9 +842,13 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
             } else {
                 /* steps 8-9 */
                 for (long k = 1; k < len; ++k) {
+                    /* step 9.a */
                     long from = k;
+                    /* step 9.b */
                     long to = k - 1;
+                    /* steps 9.c-d */
                     boolean fromPresent = HasProperty(cx, o, from);
+                    /* steps 9.e-f */
                     if (fromPresent) {
                         Object fromVal = Get(cx, o, from);
                         Set(cx, o, to, fromVal, true);
@@ -1090,7 +1117,7 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
                 int p = offset + i;
                 Set(cx, obj, p, UNDEFINED, true);
             }
-            // User-defined actions in comparefn may have invalidated sparse-property
+            // User-defined actions in comparefn may have invalidated sparse-array property
             IterationKind iterationDelete = iterationKind(obj, length);
             if (iterationDelete.isSparse()) {
                 for (ForwardIter deleteIter = forwardIter((OrdinaryObject) obj, count + undefCount,
@@ -1159,8 +1186,11 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
             } else {
                 /* steps 14-15 */
                 for (long k = 0; k < actualDeleteCount; ++k) {
+                    /* step 15.a */
                     long from = actualStart + k;
+                    /* steps 15.b-c */
                     boolean fromPresent = HasProperty(cx, o, from);
+                    /* step 15.d */
                     if (fromPresent) {
                         Object fromValue = Get(cx, o, from);
                         CreateDataPropertyOrThrow(cx, a, k, fromValue);
@@ -1415,6 +1445,7 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
                 int argCount, boolean inherited) {
             ReverseIter iter = reverseIterator(o, 0, length, inherited);
             int deleteFirst = 0, deleteLast = 0;
+            // TODO: alloc Math.min(iter.size, argCount) + ring buffer?
             long[] keysToDelete = new long[iter.size()];
             while (iter.hasNext()) {
                 long k = iter.next();
@@ -1484,10 +1515,11 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
             }
             /* step 11 */
             for (; k < len; ++k) {
-                long pk = k;
-                boolean kpresent = HasProperty(cx, o, pk);
+                /* step 11.a-b */
+                boolean kpresent = HasProperty(cx, o, k);
+                /* step 11.c */
                 if (kpresent) {
-                    Object elementk = Get(cx, o, pk);
+                    Object elementk = Get(cx, o, k);
                     boolean same = StrictEqualityComparison(searchElement, elementk);
                     if (same) {
                         return k;
@@ -1538,10 +1570,11 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
             }
             /* step 10 */
             for (; k >= 0; --k) {
-                long pk = k;
-                boolean kpresent = HasProperty(cx, o, pk);
+                /* steps 10.a-b */
+                boolean kpresent = HasProperty(cx, o, k);
+                /* step 10.c */
                 if (kpresent) {
-                    Object elementk = Get(cx, o, pk);
+                    Object elementk = Get(cx, o, k);
                     boolean same = StrictEqualityComparison(searchElement, elementk);
                     if (same) {
                         return k;
@@ -1580,8 +1613,11 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
             /* step 6 (omitted) */
             /* steps 7-8 */
             for (long k = 0; k < len; ++k) {
+                /* step 8.a */
                 long pk = k;
+                /* steps 8.b-c */
                 boolean kpresent = HasProperty(cx, o, pk);
+                /* step 8.d */
                 if (kpresent) {
                     Object kvalue = Get(cx, o, pk);
                     boolean testResult = ToBoolean(callback.call(cx, thisArg, kvalue, k, o));
@@ -1664,8 +1700,11 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
             /* step 6 (omitted) */
             /* steps 7-8 */
             for (long k = 0; k < len; ++k) {
+                /* step 8.a */
                 long pk = k;
+                /* steps 8.b-c */
                 boolean kpresent = HasProperty(cx, o, pk);
+                /* step 8.d */
                 if (kpresent) {
                     Object kvalue = Get(cx, o, pk);
                     callback.call(cx, thisArg, kvalue, k, o);
@@ -1705,8 +1744,11 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
             ScriptObject a = ArraySpeciesCreate(cx, o, len);
             /* steps 9-10 */
             for (long k = 0; k < len; ++k) {
+                /* step 10.a */
                 long pk = k;
+                /* steps 10.b-c */
                 boolean kpresent = HasProperty(cx, o, pk);
+                /* step 10.d */
                 if (kpresent) {
                     Object kvalue = Get(cx, o, pk);
                     Object mappedValue = callback.call(cx, thisArg, kvalue, k, o);
@@ -1747,8 +1789,11 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
             ScriptObject a = ArraySpeciesCreate(cx, o, 0);
             /* steps 9-11 */
             for (long k = 0, to = 0; k < len; ++k) {
+                /* step 11.a */
                 long pk = k;
+                /* steps 11.b-c */
                 boolean kpresent = HasProperty(cx, o, pk);
+                /* step 11.d */
                 if (kpresent) {
                     Object kvalue = Get(cx, o, pk);
                     boolean selected = ToBoolean(callback.call(cx, thisArg, kvalue, k, o));
@@ -1796,9 +1841,12 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
             /* steps 8-9 */
             Object accumulator = null;
             if (initialValue != null) {
+                /* step 8.a */
                 accumulator = initialValue;
             } else {
+                /* step 9.a */
                 boolean kpresent = false;
+                /* step 9.b */
                 for (; !kpresent && k < len; ++k) {
                     long pk = k;
                     kpresent = HasProperty(cx, o, pk);
@@ -1806,14 +1854,18 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
                         accumulator = Get(cx, o, pk);
                     }
                 }
+                /* step 9.c */
                 if (!kpresent) {
                     throw newTypeError(cx, Messages.Key.ReduceInitialValue);
                 }
             }
             /* step 10 */
             for (; k < len; ++k) {
+                /* step 10.a */
                 long pk = k;
+                /* steps 10.b-c */
                 boolean kpresent = HasProperty(cx, o, pk);
+                /* step 10.d */
                 if (kpresent) {
                     Object kvalue = Get(cx, o, pk);
                     accumulator = callback.call(cx, UNDEFINED, accumulator, kvalue, k, o);
@@ -1857,9 +1909,12 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
             /* steps 8-9 */
             Object accumulator = null;
             if (initialValue != null) {
+                /* step 8.a */
                 accumulator = initialValue;
             } else {
+                /* step 9.a */
                 boolean kpresent = false;
+                /* step 9.b */
                 for (; !kpresent && k >= 0; --k) {
                     long pk = k;
                     kpresent = HasProperty(cx, o, pk);
@@ -1867,14 +1922,18 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
                         accumulator = Get(cx, o, pk);
                     }
                 }
+                /* step 9.c */
                 if (!kpresent) {
                     throw newTypeError(cx, Messages.Key.ReduceInitialValue);
                 }
             }
             /* step 10 */
             for (; k >= 0; --k) {
+                /* step 10.a */
                 long pk = k;
+                /* steps 10.b-c */
                 boolean kpresent = HasProperty(cx, o, pk);
+                /* step 10.d */
                 if (kpresent) {
                     Object kvalue = Get(cx, o, pk);
                     accumulator = callback.call(cx, UNDEFINED, accumulator, kvalue, k, o);
@@ -1912,9 +1971,13 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
             /* step 6 (omitted) */
             /* steps 7-8 */
             for (long k = 0; k < len; ++k) {
+                /* step 8.a */
                 long pk = k;
+                /* steps 8.b-c */
                 Object kvalue = Get(cx, o, pk);
+                /* steps 8.d-e */
                 boolean testResult = ToBoolean(pred.call(cx, thisArg, kvalue, k, o));
+                /* step 8.f */
                 if (testResult) {
                     return kvalue;
                 }
@@ -1951,9 +2014,13 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
             /* step 6 (omitted) */
             /* steps 7-8 */
             for (long k = 0; k < len; ++k) {
+                /* step 8.a */
                 long pk = k;
+                /* steps 8.b-c */
                 Object kvalue = Get(cx, o, pk);
+                /* steps 8.d-e */
                 boolean testResult = ToBoolean(pred.call(cx, thisArg, kvalue, k, o));
+                /* step 8.f */
                 if (testResult) {
                     return k;
                 }
@@ -2070,7 +2137,9 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
             long finall = Type.isUndefined(end) ? len : ToArrayIndex(cx, end, len);
             /* step 11 */
             for (; k < finall; ++k) {
+                /* step 11.a */
                 long pk = k;
+                /* steps 11.b-c */
                 Set(cx, o, pk, value, true);
             }
             /* step 12 */
@@ -2118,15 +2187,19 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
             }
             /* step 17 */
             for (; count > 0; --count) {
+                /* steps 17.a-b */
                 long fromKey = from;
                 long toKey = to;
+                /* steps 17.c-d */
                 boolean fromPresent = HasProperty(cx, o, fromKey);
+                /* steps 17.e-f */
                 if (fromPresent) {
                     Object fromVal = Get(cx, o, fromKey);
                     Set(cx, o, toKey, fromVal, true);
                 } else {
                     DeletePropertyOrThrow(cx, o, toKey);
                 }
+                /* steps 17.g-h */
                 from += direction;
                 to += direction;
             }

@@ -16,7 +16,7 @@ import com.github.anba.es6draft.ast.Node;
  * Abstract class for list-based node re-writing
  */
 abstract class ListSubMethod<NODE extends Node> extends SubMethod<NODE> {
-    protected static interface NodeElementMapper<NODE extends Node, ELEMENT> {
+    protected interface NodeElementMapper<NODE extends Node, ELEMENT> {
         ELEMENT map(NODE node, int size, int index);
     }
 

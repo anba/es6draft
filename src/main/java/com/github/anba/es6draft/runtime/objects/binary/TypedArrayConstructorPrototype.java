@@ -72,11 +72,7 @@ public final class TypedArrayConstructorPrototype extends BuiltinConstructor imp
      */
     @Override
     public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
-        ExecutionContext calleeContext = calleeContext();
-        /* step 1 (not applicable) */
-        /* step 2 */
-        throw newTypeError(calleeContext, Messages.Key.InvalidCall, "TypedArray");
-        /* step 3-? (not applicable) */
+        throw newTypeError(calleeContext(), Messages.Key.InvalidCall, "TypedArray");
     }
 
     /**
@@ -110,7 +106,8 @@ public final class TypedArrayConstructorPrototype extends BuiltinConstructor imp
     }
 
     /**
-     * 22.2.1.1 %TypedArray% ( length )
+     * 22.2.1.1 %TypedArray% ( )<br>
+     * 22.2.1.2 %TypedArray% ( length )
      * 
      * @param cx
      *            the execution context
@@ -135,7 +132,7 @@ public final class TypedArrayConstructorPrototype extends BuiltinConstructor imp
         /* steps 5-6 */
         long elementLength = ToLength(numberLength);
         /* step 7 */
-        if (!SameValueZero(numberLength, elementLength)) {
+        if (numberLength != elementLength) { // SameValueZero
             throw newRangeError(cx, Messages.Key.InvalidBufferSize);
         }
         /* step 8 */
@@ -143,7 +140,7 @@ public final class TypedArrayConstructorPrototype extends BuiltinConstructor imp
     }
 
     /**
-     * 22.2.1.2 %TypedArray% ( typedArray )
+     * 22.2.1.3 %TypedArray% ( typedArray )
      * 
      * @param cx
      *            the execution context
@@ -182,7 +179,7 @@ public final class TypedArrayConstructorPrototype extends BuiltinConstructor imp
         int elementSize = elementType.size();
         /* step 16 */
         long byteLength = elementSize * elementLength;
-        /* steps 17-19 */
+        /* steps 17-18 */
         ArrayBufferObject data;
         if (elementType == srcType) {
             /* step 17 */
@@ -217,7 +214,7 @@ public final class TypedArrayConstructorPrototype extends BuiltinConstructor imp
     }
 
     /**
-     * 22.2.1.3 %TypedArray% ( object )
+     * 22.2.1.4 %TypedArray% ( object )
      * 
      * @param cx
      *            the execution context
@@ -237,7 +234,7 @@ public final class TypedArrayConstructorPrototype extends BuiltinConstructor imp
     }
 
     /**
-     * 22.2.1.4 %TypedArray% ( buffer [ , byteOffset [ , length ] ] )
+     * 22.2.1.5 %TypedArray% ( buffer [ , byteOffset [ , length ] ] )
      * 
      * @param cx
      *            the execution context
@@ -301,7 +298,7 @@ public final class TypedArrayConstructorPrototype extends BuiltinConstructor imp
     }
 
     /**
-     * 22.2.1.1.1 Runtime Semantics: AllocateTypedArray (newTarget, length )
+     * 22.2.1.2.1 Runtime Semantics: AllocateTypedArray (newTarget, length )
      * 
      * @param cx
      *            the execution context
@@ -319,18 +316,18 @@ public final class TypedArrayConstructorPrototype extends BuiltinConstructor imp
         /* steps 7-8 */
         ScriptObject proto = GetPrototypeFromConstructor(cx, newTarget,
                 Intrinsics.TypedArrayPrototype);
-        /* steps 9-10 (moved) */
+        /* steps 9-11 (moved) */
         /* step 12 (not applicable) */
         assert length >= 0;
         /* step 13 */
         /* step 13.a */
         int elementSize = elementType.size();
-        /* step 13.b */
+        /* steps 13.a-b */
         long byteLength = elementSize * length;
         /* steps 13.c-d */
         ArrayBufferObject data = AllocateArrayBuffer(cx,
                 (Constructor) cx.getIntrinsic(Intrinsics.ArrayBuffer), byteLength);
-        /* steps 9-10, 13.e-h */
+        /* steps 9-11, 13.e-h */
         TypedArrayObject obj = new TypedArrayObject(cx.getRealm(), elementType, data, byteLength,
                 0, length, proto);
         /* step 14 */
@@ -338,7 +335,7 @@ public final class TypedArrayConstructorPrototype extends BuiltinConstructor imp
     }
 
     /**
-     * 22.2.1.1.1 Runtime Semantics: AllocateTypedArray (newTarget, length )
+     * 22.2.1.2.1 Runtime Semantics: AllocateTypedArray (newTarget, length )
      * 
      * @param cx
      *            the execution context
@@ -450,8 +447,11 @@ public final class TypedArrayConstructorPrototype extends BuiltinConstructor imp
             TypedArrayObject newObj = AllocateTypedArray(cx, (Constructor) c, len);
             /* steps 7-8 */
             for (int k = 0; k < len; ++k) {
-                int pk = k;
+                /* step 8.a */
                 Object value = items[k];
+                /* step 8.b */
+                int pk = k;
+                /* steps 8.c-d */
                 newObj.elementSetDirect(cx, pk, ToNumber(cx, value));
             }
             /* step 9 */
@@ -500,20 +500,20 @@ public final class TypedArrayConstructorPrototype extends BuiltinConstructor imp
         Callable usingIterator = GetMethod(cx, items, BuiltinSymbol.iterator.get());
         /* step 8 */
         if (usingIterator != null) {
-            /* steps 8.a-8.b */
+            /* steps 8.a-b */
             ScriptIterator<?> iterator = GetScriptIterator(cx, items, usingIterator);
             /* step 8.c */
             ArrayList<Object> values = new ArrayList<>();
-            /* steps 8.d-8.e */
+            /* steps 8.d-e */
             while (iterator.hasNext()) {
                 Object nextValue = iterator.next();
                 values.add(nextValue);
             }
             /* step 8.f */
             int len = values.size();
-            /* steps 8.g-8.h */
+            /* steps 8.g-h */
             TypedArrayObject targetObj = AllocateTypedArray(cx, constructor, len);
-            /* steps 8.i-8.k */
+            /* steps 8.i-k */
             for (int k = 0; k < len; ++k) {
                 long pk = k;
                 Object kValue = values.get(k);
@@ -537,14 +537,18 @@ public final class TypedArrayConstructorPrototype extends BuiltinConstructor imp
         TypedArrayObject targetObj = AllocateTypedArray(cx, constructor, len);
         /* steps 16-17 */
         for (long k = 0; k < len; ++k) {
+            /* step 17.a */
             long pk = k;
+            /* steps 17.b-c */
             Object kValue = Get(cx, arrayLike, pk);
+            /* steps 17.d-e */
             Object mappedValue;
             if (mapping) {
                 mappedValue = mapfn.call(cx, thisArg, kValue, k);
             } else {
                 mappedValue = kValue;
             }
+            /* steps 17.f-g */
             targetObj.elementSetDirect(cx, pk, ToNumber(cx, mappedValue));
         }
         /* step 18 */

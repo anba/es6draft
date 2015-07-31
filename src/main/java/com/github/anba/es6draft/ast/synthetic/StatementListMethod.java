@@ -16,10 +16,10 @@ import com.github.anba.es6draft.ast.StatementListItem;
 import com.github.anba.es6draft.ast.VoidNodeVisitor;
 
 /**
- * List of {@link StatementListItem}s as an external Java method
+ * List of {@link StatementListItem}s as an external Java method.
  */
 public final class StatementListMethod extends Statement {
-    private List<? extends ModuleItem> statements;
+    private final List<? extends ModuleItem> statements;
 
     public StatementListMethod(List<? extends ModuleItem> statements) {
         super(first(statements).getBeginPosition(), last(statements).getEndPosition());

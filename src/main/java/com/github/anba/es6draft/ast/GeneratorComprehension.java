@@ -30,6 +30,11 @@ public final class GeneratorComprehension extends Expression implements Function
         this.comprehension = comprehension;
     }
 
+    /**
+     * Returns the comprehension part of this generator comprehension.
+     * 
+     * @return the comprehension part
+     */
     public Comprehension getComprehension() {
         return comprehension;
     }

@@ -54,8 +54,7 @@ public final class LoaderConstructor extends BuiltinConstructor implements Initi
      */
     @Override
     public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
-        ExecutionContext calleeContext = calleeContext();
-        throw newTypeError(calleeContext, Messages.Key.InvalidCall, "Loader");
+        throw newTypeError(calleeContext(), Messages.Key.InvalidCall, "Loader");
     }
 
     /**
@@ -64,8 +63,7 @@ public final class LoaderConstructor extends BuiltinConstructor implements Initi
     @Override
     public LoaderObject construct(ExecutionContext callerContext, Constructor newTarget,
             Object... args) {
-        ExecutionContext calleeContext = calleeContext();
-        throw newTypeError(calleeContext, Messages.Key.IncompatibleObject);
+        throw newTypeError(calleeContext(), Messages.Key.IncompatibleObject);
     }
 
     /**

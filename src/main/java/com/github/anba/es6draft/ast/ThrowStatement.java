@@ -9,7 +9,7 @@ package com.github.anba.es6draft.ast;
 /**
  * <h1>13 ECMAScript Language: Statements and Declarations</h1>
  * <ul>
- * <li>13.13 The throw Statement
+ * <li>13.14 The throw Statement
  * </ul>
  */
 public final class ThrowStatement extends Statement {
@@ -20,6 +20,11 @@ public final class ThrowStatement extends Statement {
         this.expression = expression;
     }
 
+    /**
+     * Returns the throw expression.
+     * 
+     * @return the expression
+     */
     public Expression getExpression() {
         return expression;
     }

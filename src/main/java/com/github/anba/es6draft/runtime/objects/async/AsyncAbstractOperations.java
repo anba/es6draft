@@ -6,32 +6,17 @@
  */
 package com.github.anba.es6draft.runtime.objects.async;
 
-import static com.github.anba.es6draft.runtime.AbstractOperations.IsCallable;
-import static com.github.anba.es6draft.runtime.AbstractOperations.IteratorComplete;
-import static com.github.anba.es6draft.runtime.AbstractOperations.IteratorValue;
-import static com.github.anba.es6draft.runtime.objects.iteration.GeneratorAbstractOperations.GeneratorResume;
-import static com.github.anba.es6draft.runtime.objects.iteration.GeneratorAbstractOperations.GeneratorStart;
-import static com.github.anba.es6draft.runtime.objects.iteration.GeneratorAbstractOperations.GeneratorThrow;
 import static com.github.anba.es6draft.runtime.objects.promise.PromiseAbstractOperations.PromiseBuiltinCapability;
-import static com.github.anba.es6draft.runtime.objects.promise.PromiseAbstractOperations.PromiseNew;
-import static com.github.anba.es6draft.runtime.objects.promise.PromiseAbstractOperations.PromiseOf;
 import static com.github.anba.es6draft.runtime.objects.promise.PromisePrototype.PerformPromiseThen;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
-import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject.ObjectCreate;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
-import com.github.anba.es6draft.runtime.internal.ScriptException;
-import com.github.anba.es6draft.runtime.objects.iteration.GeneratorObject;
+import com.github.anba.es6draft.runtime.internal.ReturnValue;
+import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
 import com.github.anba.es6draft.runtime.objects.promise.PromiseCapability;
 import com.github.anba.es6draft.runtime.objects.promise.PromiseObject;
-import com.github.anba.es6draft.runtime.types.Callable;
-import com.github.anba.es6draft.runtime.types.Intrinsics;
-import com.github.anba.es6draft.runtime.types.ScriptObject;
-import com.github.anba.es6draft.runtime.types.Undefined;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
-import com.github.anba.es6draft.runtime.types.builtins.OrdinaryAsyncFunction;
 
 /**
  * Extension: Async Function Definitions
@@ -41,168 +26,111 @@ public final class AsyncAbstractOperations {
     }
 
     /**
-     * Spawn Abstract Operation
+     * 2.2 AsyncFunctionStart(promiseCapability, asyncFunctionBody)
      * 
      * @param cx
      *            the execution context
-     * @param functionObject
-     *            the async function object
-     * @return the new promise object
+     * @param promiseCapability
+     *            the promise capability
+     * @param asyncFunctionBody
+     *            the function body
+     * @return the result value
      */
-    public static PromiseObject Spawn(ExecutionContext cx, OrdinaryAsyncFunction functionObject) {
-        GeneratorObject generator = ObjectCreate(cx, Intrinsics.GeneratorPrototype,
-                GeneratorObjectAllocator.INSTANCE);
-        GeneratorStart(cx, generator, functionObject.getCode());
-        Callable executor = new SpawnExecutor(cx.getRealm(), generator);
-        return PromiseNew(cx, executor);
-    }
-
-    private static final class GeneratorObjectAllocator implements ObjectAllocator<GeneratorObject> {
-        static final ObjectAllocator<GeneratorObject> INSTANCE = new GeneratorObjectAllocator();
-
-        @Override
-        public GeneratorObject newInstance(Realm realm) {
-            return new GeneratorObject(realm);
-        }
+    public static Object AsyncFunctionStart(ExecutionContext cx, PromiseCapability<PromiseObject> promiseCapability,
+            RuntimeInfo.Function asyncFunctionBody) {
+        /* steps 1-7 */
+        AsyncObject asyncObject = new AsyncObject(promiseCapability);
+        return asyncObject.start(cx, asyncFunctionBody);
     }
 
     /**
-     * Spawn Executor Functions
-     */
-    public static final class SpawnExecutor extends BuiltinFunction {
-        private final GeneratorObject generator;
-
-        public SpawnExecutor(Realm realm, GeneratorObject generator) {
-            this(realm, generator, null);
-            createDefaultFunctionProperties();
-        }
-
-        private SpawnExecutor(Realm realm, GeneratorObject generator, Void ignore) {
-            super(realm, ANONYMOUS, 2);
-            this.generator = generator;
-        }
-
-        @Override
-        public SpawnExecutor clone() {
-            return new SpawnExecutor(getRealm(), generator, null);
-        }
-
-        @Override
-        public Undefined call(ExecutionContext callerContext, Object thisValue, Object... args) {
-            ExecutionContext calleeContext = calleeContext();
-            Object resolve = argument(args, 0);
-            Object reject = argument(args, 1);
-            assert IsCallable(resolve) : "resolve not callable";
-            assert IsCallable(reject) : "reject not callable";
-            InitialStep(calleeContext, generator, (Callable) resolve, (Callable) reject);
-            return UNDEFINED;
-        }
-    }
-
-    /**
-     * AsyncState Records
-     */
-    private static final class AsyncState {
-        final GeneratorObject generator;
-        final Callable resolve, reject;
-        final CallStep resolvedAction, rejectedAction;
-
-        public AsyncState(ExecutionContext cx, GeneratorObject generator, Callable resolve,
-                Callable reject) {
-            this.generator = generator;
-            this.resolve = resolve;
-            this.reject = reject;
-            this.resolvedAction = new CallStep(cx.getRealm(), this, StepAction.Next);
-            this.rejectedAction = new CallStep(cx.getRealm(), this, StepAction.Throw);
-        }
-    }
-
-    private enum StepAction {
-        Next, Throw
-    }
-
-    /**
-     * InitialStep Abstract Operation
+     * 2.3 AsyncFunctionAwait(value)
      * 
      * @param cx
      *            the execution context
-     * @param generator
-     *            the generator object
-     * @param resolve
-     *            the resolve callback
-     * @param reject
-     *            the reject callback
-     */
-    private static void InitialStep(ExecutionContext cx, GeneratorObject generator,
-            Callable resolve, Callable reject) {
-        AsyncState asyncState = new AsyncState(cx, generator, (Callable) resolve, (Callable) reject);
-        Step(cx, asyncState, StepAction.Next, UNDEFINED);
-    }
-
-    /**
-     * Step Abstract Operation
-     * 
-     * @param cx
-     *            the execution context
-     * @param asyncState
-     *            the asynchronous state
-     * @param action
-     *            the step action to be performed
      * @param value
-     *            the value argument
+     *            the await value
+     * @return the result value
+     * @throws ReturnValue
+     *             to signal an abrupt Return completion
      */
-    private static void Step(ExecutionContext cx, AsyncState asyncState, StepAction action,
-            Object value) {
-        GeneratorObject generator = asyncState.generator;
-        ScriptObject next;
-        try {
-            if (action == StepAction.Next) {
-                next = GeneratorResume(cx, generator, value);
-            } else {
-                next = GeneratorThrow(cx, generator, value);
-            }
-        } catch (ScriptException e) {
-            asyncState.reject.call(cx, UNDEFINED, e.getValue());
-            return;
-        }
-        if (IteratorComplete(cx, next)) {
-            asyncState.resolve.call(cx, UNDEFINED, IteratorValue(cx, next));
-            return;
-        }
-        PromiseObject p = PromiseOf(cx, IteratorValue(cx, next));
-        PromiseCapability<PromiseObject> capability = PromiseBuiltinCapability(cx);
-        PerformPromiseThen(cx, p, asyncState.resolvedAction, asyncState.rejectedAction, capability);
+    public static Object AsyncFunctionAwait(ExecutionContext cx, Object value) throws ReturnValue {
+        /* step 1 */
+        AsyncObject asyncObject = cx.getCurrentAsync();
+        assert asyncObject != null;
+        /* steps 2-3 */
+        PromiseCapability<PromiseObject> promiseCapability = PromiseBuiltinCapability(cx);
+        /* steps 4-5 */
+        promiseCapability.getResolve().call(cx, UNDEFINED, value);
+        /* steps 6, 8 */
+        AwaitedFulfilled onFulfilled = new AwaitedFulfilled(cx.getRealm(), asyncObject);
+        /* steps 7, 8 */
+        AwaitedRejected onRejected = new AwaitedRejected(cx.getRealm(), asyncObject);
+        /* step 9 */
+        PromiseCapability<PromiseObject> throwawayCapability = PromiseBuiltinCapability(cx);
+        /* step 10 */
+        PerformPromiseThen(cx, promiseCapability.getPromise(), onFulfilled, onRejected, throwawayCapability);
+        /* steps 11-13 */
+        return asyncObject.await(value);
     }
 
     /**
-     * Call Step Functions
+     * 2.4 AsyncFunction Awaited Fulfilled
      */
-    public static final class CallStep extends BuiltinFunction {
-        private final AsyncState asyncState;
-        private final StepAction action;
+    public static final class AwaitedFulfilled extends BuiltinFunction {
+        private final AsyncObject asyncObject;
 
-        public CallStep(Realm realm, AsyncState asyncState, StepAction action) {
-            this(realm, asyncState, action, null);
+        public AwaitedFulfilled(Realm realm, AsyncObject asyncObject) {
+            this(realm, asyncObject, null);
             createDefaultFunctionProperties();
         }
 
-        private CallStep(Realm realm, AsyncState asyncState, StepAction action, Void ignore) {
+        private AwaitedFulfilled(Realm realm, AsyncObject asyncObject, Void ignore) {
             super(realm, ANONYMOUS, 1);
-            this.asyncState = asyncState;
-            this.action = action;
+            this.asyncObject = asyncObject;
         }
 
         @Override
-        public CallStep clone() {
-            return new CallStep(getRealm(), asyncState, action, null);
+        public AwaitedFulfilled clone() {
+            return new AwaitedFulfilled(getRealm(), asyncObject, null);
         }
 
         @Override
-        public Undefined call(ExecutionContext callerContext, Object thisValue, Object... args) {
+        public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
             ExecutionContext calleeContext = calleeContext();
             Object value = argument(args, 0);
-            Step(calleeContext, asyncState, action, value);
-            return UNDEFINED;
+            /* steps 1-7 */
+            return asyncObject.resume(calleeContext, value);
+        }
+    }
+
+    /**
+     * 2.5 AsyncFunction Awaited Rejected
+     */
+    public static final class AwaitedRejected extends BuiltinFunction {
+        private final AsyncObject asyncObject;
+
+        public AwaitedRejected(Realm realm, AsyncObject asyncObject) {
+            this(realm, asyncObject, null);
+            createDefaultFunctionProperties();
+        }
+
+        private AwaitedRejected(Realm realm, AsyncObject asyncObject, Void ignore) {
+            super(realm, ANONYMOUS, 1);
+            this.asyncObject = asyncObject;
+        }
+
+        @Override
+        public AwaitedRejected clone() {
+            return new AwaitedRejected(getRealm(), asyncObject, null);
+        }
+
+        @Override
+        public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
+            ExecutionContext calleeContext = calleeContext();
+            Object reason = argument(args, 0);
+            /* steps 1-7 */
+            return asyncObject._throw(calleeContext, reason);
         }
     }
 }

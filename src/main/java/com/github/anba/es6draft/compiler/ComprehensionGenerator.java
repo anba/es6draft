@@ -33,6 +33,7 @@ import com.github.anba.es6draft.compiler.assembler.MethodName;
 import com.github.anba.es6draft.compiler.assembler.Type;
 import com.github.anba.es6draft.compiler.assembler.Variable;
 import com.github.anba.es6draft.runtime.DeclarativeEnvironmentRecord;
+import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.internal.ScriptIterator;
 
 /**
@@ -123,12 +124,15 @@ abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void, Express
     public Void visit(LegacyComprehension node, ExpressionVisitor mv) {
         BlockScope scope = node.getScope();
         if (scope.isPresent()) {
-            // stack: [] -> [env]
-            newDeclarativeEnvironment(scope, mv);
             mv.enterVariableScope();
+            Variable<LexicalEnvironment<DeclarativeEnvironmentRecord>> env = mv.newVariable("env",
+                    LexicalEnvironment.class).uncheckedCast();
             Variable<DeclarativeEnvironmentRecord> envRec = mv.newVariable("envRec",
                     DeclarativeEnvironmentRecord.class);
-            getEnvRec(envRec, mv);
+
+            newDeclarativeEnvironment(scope, mv);
+            mv.store(env);
+            getEnvRec(env, envRec, mv);
 
             for (Name name : LexicallyDeclaredNames(node.getScope())) {
                 BindingOp<DeclarativeEnvironmentRecord> op = BindingOp.of(envRec, name);
@@ -136,9 +140,11 @@ abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void, Express
 
                 InitializeBoundNameWithUndefined(envRec, name, mv);
             }
-            mv.exitVariableScope();
-            // stack: [env] -> []
+
+            mv.load(env);
             pushLexicalEnvironment(mv);
+
+            mv.exitVariableScope();
         }
 
         mv.enterScope(node);
@@ -209,27 +215,28 @@ abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void, Express
         BlockScope scope = node.getScope();
         if (scope.isPresent()) {
             mv.enterVariableScope();
+            Variable<LexicalEnvironment<DeclarativeEnvironmentRecord>> env = mv.newVariable("env",
+                    LexicalEnvironment.class).uncheckedCast();
+            Variable<DeclarativeEnvironmentRecord> envRec = mv.newVariable("envRec",
+                    DeclarativeEnvironmentRecord.class);
 
             // stack: [nextValue] -> []
             Variable<Object> nextValue = mv.newVariable("nextValue", Object.class);
             mv.store(nextValue);
 
-            // stack: [] -> [forEnv]
             newDeclarativeEnvironment(scope, mv);
-
-            Variable<DeclarativeEnvironmentRecord> envRec = mv.newVariable("envRec",
-                    DeclarativeEnvironmentRecord.class);
-            getEnvRec(envRec, mv);
+            mv.store(env);
+            getEnvRec(env, envRec, mv);
 
             for (Name name : BoundNames(node.getBinding())) {
                 BindingOp<DeclarativeEnvironmentRecord> op = BindingOp.of(envRec, name);
                 op.createMutableBinding(envRec, name, false, mv);
             }
-
             BindingInitialization(codegen, envRec, node.getBinding(), nextValue, mv);
 
-            // stack: [forEnv] -> []
+            mv.load(env);
             pushLexicalEnvironment(mv);
+
             mv.exitVariableScope();
         } else {
             // stack: [nextValue] -> []

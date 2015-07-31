@@ -12,4 +12,4 @@ const {
 // https://bugs.ecmascript.org/show_bug.cgi?id=4338
 
 assertSame(0, eval(`0; L: ;`));
-assertSame(void 0, eval(`0; L: break L;`));
+assertSame(0, eval(`0; L: break L;`));

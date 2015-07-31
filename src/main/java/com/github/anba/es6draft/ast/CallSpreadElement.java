@@ -10,7 +10,7 @@ package com.github.anba.es6draft.ast;
  * <h1>12 ECMAScript Language: Expressions</h1><br>
  * <h2>12.3 Left-Hand-Side Expressions</h2>
  * <ul>
- * <li>12.3.5 Argument Lists
+ * <li>12.3.6 Argument Lists
  * </ul>
  */
 public final class CallSpreadElement extends Expression {
@@ -21,6 +21,11 @@ public final class CallSpreadElement extends Expression {
         this.expression = expression;
     }
 
+    /**
+     * Returns the spread expression.
+     * 
+     * @return the spread expression
+     */
     public Expression getExpression() {
         return expression;
     }

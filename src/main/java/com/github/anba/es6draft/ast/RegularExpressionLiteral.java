@@ -24,10 +24,20 @@ public final class RegularExpressionLiteral extends Expression {
         this.flags = flags;
     }
 
+    /**
+     * Returns the regular expression pattern.
+     * 
+     * @return the regular expression pattern
+     */
     public String getRegexp() {
         return regexp;
     }
 
+    /**
+     * Returns the regular expression flags.
+     * 
+     * @return the regular expression flags
+     */
     public String getFlags() {
         return flags;
     }

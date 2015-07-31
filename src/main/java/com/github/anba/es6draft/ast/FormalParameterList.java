@@ -30,14 +30,29 @@ public final class FormalParameterList extends AstNode implements Iterable<Forma
         this.containsExpression = ContainsExpression(formals);
     }
 
+    /**
+     * Returns the list of formal parameters.
+     * 
+     * @return the list of formal parameters
+     */
     public List<FormalParameter> getFormals() {
         return formals;
     }
 
+    /**
+     * Returns {@code true} for simple parameter lists.
+     * 
+     * @return {@code true} if this parameter list contains only simple parameters
+     */
     public boolean isSimpleParameterList() {
         return simpleParameterList;
     }
 
+    /**
+     * Returns {@code true} for parameter lists with expressions.
+     * 
+     * @return {@code true} if this parameter list contains expression nodes
+     */
     public boolean containsExpression() {
         return containsExpression;
     }

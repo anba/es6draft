@@ -48,10 +48,8 @@ public class OrdinaryFunction extends FunctionObject {
     public Object call(ExecutionContext callerContext, Object thisValue, Object... argumentsList) {
         try {
             return getCallMethod().invokeExact(this, callerContext, thisValue, argumentsList);
-        } catch (RuntimeException | Error e) {
-            throw e;
         } catch (Throwable e) {
-            throw new RuntimeException(e);
+            throw FunctionObject.<RuntimeException> rethrow(e);
         }
     }
 

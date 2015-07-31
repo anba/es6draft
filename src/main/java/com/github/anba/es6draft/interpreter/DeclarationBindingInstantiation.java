@@ -101,35 +101,33 @@ final class DeclarationBindingInstantiation {
         boolean nonStrictGlobal = !strict && evalScript.isGlobalCode() && !evalScript.isScripting();
 
         /* step 1 */
-        assert LexicallyDeclaredNames(evalScript).isEmpty();
-        /* step 2 */
         Set<Name> varNames = VarDeclaredNames(evalScript);
-        /* step 3 */
+        /* step 2 */
         List<StatementListItem> varDeclarations = VarScopedDeclarations(evalScript);
-        /* step 4 (not applicable) */
-        /* step 5 */
+        /* step 3 (not applicable) */
+        /* step 4 */
         EnvironmentRecord varEnvRec = varEnv.getEnvRec();
         assert !nonStrictGlobal || varEnvRec instanceof GlobalEnvironmentRecord : String.format(
                 "Unexpected environment record type: %s", varEnvRec);
-        /* step 6 */
+        /* step 5 */
         if (!strict) {
             if (nonStrictGlobal) {
-                /* step 6.a */
+                /* step 5.a */
                 GlobalEnvironmentRecord gEnvRec = (GlobalEnvironmentRecord) varEnvRec;
                 for (Name name : varNames) {
                     ScriptRuntime.canDeclareVarScopedOrThrow(cx, gEnvRec, name.getIdentifier());
                 }
             }
-            /* steps 6.b-d */
+            /* steps 5.b-d */
             if (!evalScript.isScripting() && !varNames.isEmpty()
                     && isEnclosedByLexicalOrHasVarForOf(evalScript)) {
-                checkLexicalRedeclaration(evalScript, cx, varEnv, lexEnv, varNames);
+                checkLexicalRedeclaration(cx, varEnv, lexEnv, varNames);
             }
         }
-        /* steps 7-9 (not applicable) */
-        /* step 10 */
+        /* steps 6-8 (not applicable) */
+        /* step 9 */
         LinkedHashSet<Name> declaredNames = new LinkedHashSet<>();
-        /* step 11 */
+        /* step 10 */
         for (StatementListItem d : varDeclarations) {
             assert d instanceof VariableStatement;
             for (Name vn : BoundNames((VariableStatement) d)) {
@@ -140,11 +138,11 @@ final class DeclarationBindingInstantiation {
                 declaredNames.add(vn);
             }
         }
-        /* step 12 (note) */
-        /* step 13 */
+        /* step 11 (note) */
+        /* steps 12-13 */
         assert LexicallyScopedDeclarations(evalScript).isEmpty();
-        /* steps 14-15 (not applicable) */
-        /* step 16 */
+        /* step 13 (not applicable) */
+        /* step 15 */
         for (Name vn : declaredNames) {
             if (nonStrictGlobal) {
                 GlobalEnvironmentRecord gEnvRec = (GlobalEnvironmentRecord) varEnvRec;
@@ -157,7 +155,7 @@ final class DeclarationBindingInstantiation {
                 }
             }
         }
-        /* step 17 (return) */
+        /* step 16 (return) */
     }
 
     private static boolean isEnclosedByLexicalOrHasVarForOf(Script evalScript) {
@@ -165,9 +163,8 @@ final class DeclarationBindingInstantiation {
         return evalScript.getParserOptions().contains(Parser.Option.EnclosedByLexicalDeclaration);
     }
 
-    private static void checkLexicalRedeclaration(Script evalScript, ExecutionContext cx,
-            LexicalEnvironment<?> varEnv, LexicalEnvironment<DeclarativeEnvironmentRecord> lexEnv,
-            Set<Name> varNames) {
+    private static void checkLexicalRedeclaration(ExecutionContext cx, LexicalEnvironment<?> varEnv,
+            LexicalEnvironment<DeclarativeEnvironmentRecord> lexEnv, Set<Name> varNames) {
         // Skip the initial lexEnv which is empty by construction.
         assert lexEnv.getEnvRec().bindingNames().isEmpty();
         final boolean catchVar = cx.getRealm().isEnabled(CompatibilityOption.CatchVarStatement);

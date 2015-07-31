@@ -50,10 +50,8 @@ public final class OrdinaryGenerator extends FunctionObject implements Construct
         try {
             return (GeneratorObject) getCallMethod().invokeExact(this, callerContext, thisValue,
                     args);
-        } catch (RuntimeException | Error e) {
-            throw e;
         } catch (Throwable e) {
-            throw new RuntimeException(e);
+            throw FunctionObject.<RuntimeException> rethrow(e);
         }
     }
 
@@ -76,10 +74,8 @@ public final class OrdinaryGenerator extends FunctionObject implements Construct
         try {
             return (GeneratorObject) getConstructMethod().invokeExact(this, callerContext,
                     newTarget, argumentsList);
-        } catch (RuntimeException | Error e) {
-            throw e;
         } catch (Throwable e) {
-            throw new RuntimeException(e);
+            throw FunctionObject.<RuntimeException> rethrow(e);
         }
     }
 

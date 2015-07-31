@@ -241,7 +241,7 @@ final class FunctionDeclarationInstantiationGenerator extends
             if (strict || !simpleParameterList) {
                 CreateUnmappedArgumentsObject(mv);
             } else if (formals.getFormals().isEmpty()) {
-                CreateMappedArgumentsObject(env, mv);
+                CreateMappedArgumentsObject(mv);
             } else {
                 CreateMappedArgumentsObject(env, formals, mv);
             }
@@ -371,7 +371,9 @@ final class FunctionDeclarationInstantiationGenerator extends
             lexEnvRec = varEnvRec;
         }
         /* step 33 */
-        setLexicalEnvironment(lexEnv, mv);
+        if (lexEnv != env) {
+            setLexicalEnvironment(lexEnv, mv);
+        }
         /* step 34 */
         List<Declaration> lexDeclarations = LexicallyScopedDeclarations(function);
         /* step 35 */
@@ -428,8 +430,7 @@ final class FunctionDeclarationInstantiationGenerator extends
         mv.invoke(Methods.ExecutionContext_setLexicalEnvironment);
     }
 
-    private void CreateMappedArgumentsObject(
-            Variable<LexicalEnvironment<FunctionEnvironmentRecord>> env, ExpressionVisitor mv) {
+    private void CreateMappedArgumentsObject(ExpressionVisitor mv) {
         // stack: [] -> [argsObj]
         mv.loadExecutionContext();
         mv.loadParameter(FUNCTION, FunctionObject.class);

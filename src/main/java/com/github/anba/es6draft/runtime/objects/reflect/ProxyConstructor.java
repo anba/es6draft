@@ -31,20 +31,20 @@ import com.github.anba.es6draft.runtime.types.builtins.ProxyObject;
 
 /**
  * <h1>26 Reflection</h1><br>
- * <h2>26.5 Proxy Objects</h2>
+ * <h2>26.2 Proxy Objects</h2>
  * <ul>
- * <li>26.5.1 The Proxy Constructor Function
- * <li>26.5.2 Properties of the Proxy Constructor Function
+ * <li>26.2.1 The Proxy Constructor
+ * <li>26.2.2 Properties of the Proxy Constructor
  * </ul>
  */
-public final class ProxyConstructorFunction extends BuiltinConstructor implements Initializable {
+public final class ProxyConstructor extends BuiltinConstructor implements Initializable {
     /**
      * Constructs a new Proxy constructor function.
      * 
      * @param realm
      *            the realm object
      */
-    public ProxyConstructorFunction(Realm realm) {
+    public ProxyConstructor(Realm realm) {
         super(realm, "Proxy", 2);
     }
 
@@ -54,32 +54,34 @@ public final class ProxyConstructorFunction extends BuiltinConstructor implement
     }
 
     @Override
-    public ProxyConstructorFunction clone() {
-        return new ProxyConstructorFunction(getRealm());
+    public ProxyConstructor clone() {
+        return new ProxyConstructor(getRealm());
     }
 
     /**
-     * 26.5.1.1 Proxy (target, handler)
+     * 26.2.1.1 Proxy (target, handler)
      */
     @Override
     public ProxyObject call(ExecutionContext callerContext, Object thisValue, Object... args) {
+        /* step 1 */
         throw newTypeError(calleeContext(), Messages.Key.ProxyNew);
     }
 
     /**
-     * 26.5.1.2 new Proxy ( target, handler )
+     * 26.2.1.1 Proxy (target, handler)
      */
     @Override
     public ProxyObject construct(ExecutionContext callerContext, Constructor newTarget,
             Object... args) {
         Object target = argument(args, 0);
         Object handler = argument(args, 1);
-        /* step 1 */
-        return ProxyCreate(callerContext, target, handler);
+        /* step 1 (not applicable) */
+        /* step 2 */
+        return ProxyCreate(calleeContext(), target, handler);
     }
 
     /**
-     * 26.5.2 Properties of the Proxy Constructor Function
+     * 26.2.2 Properties of the Proxy Constructor Function
      */
     public enum Properties {
         ;
@@ -96,7 +98,7 @@ public final class ProxyConstructorFunction extends BuiltinConstructor implement
         public static final String name = "Proxy";
 
         /**
-         * 26.5.2.1 Proxy.revocable ( target, handler )
+         * 26.2.2.1 Proxy.revocable ( target, handler )
          * 
          * @param cx
          *            the execution context
@@ -127,7 +129,7 @@ public final class ProxyConstructorFunction extends BuiltinConstructor implement
     }
 
     /**
-     * <h1>26.5.2.1.1 Proxy Revocation Functions</h1>
+     * <h1>26.2.2.1.1 Proxy Revocation Functions</h1>
      */
     public static final class ProxyRevocationFunction extends BuiltinFunction {
         /** [[RevocableProxy]] */

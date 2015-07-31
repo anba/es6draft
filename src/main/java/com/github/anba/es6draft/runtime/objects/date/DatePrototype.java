@@ -62,11 +62,6 @@ public final class DatePrototype extends OrdinaryObject implements Initializable
         createProperties(realm, this, AdditionalProperties.class);
     }
 
-    private static final String ISO_FORMAT = "%04d-%02d-%02dT%02d:%02d:%02d.%03dZ";
-    private static final String ISO_EXTENDED_FORMAT = "%+07d-%02d-%02dT%02d:%02d:%02d.%03dZ";
-
-    private static final String UTC_FORMAT = "%s, %02d %s %04d %02d:%02d:%02d GMT";
-
     private static String toISOString(double t) {
         assert !Double.isNaN(t);
         int year = (int) YearFromTime(t);
@@ -77,13 +72,12 @@ public final class DatePrototype extends OrdinaryObject implements Initializable
         int sec = (int) SecFromTime(t);
         int milli = (int) msFromTime(t);
 
-        String format;
         if (year < 0 || year > 9999) {
-            format = ISO_EXTENDED_FORMAT;
-        } else {
-            format = ISO_FORMAT;
+            return String.format("%+07d-%02d-%02dT%02d:%02d:%02d.%03dZ", year, month, date, hour,
+                    min, sec, milli);
         }
-        return String.format(format, year, month, date, hour, min, sec, milli);
+        return String.format("%04d-%02d-%02dT%02d:%02d:%02d.%03dZ", year, month, date, hour, min,
+                sec, milli);
     }
 
     private static String toUTCString(double t) {
@@ -96,7 +90,8 @@ public final class DatePrototype extends OrdinaryObject implements Initializable
         int min = (int) MinFromTime(t);
         int sec = (int) SecFromTime(t);
 
-        return String.format(UTC_FORMAT, weekday, date, month, year, hour, min, sec);
+        return String.format("%s, %02d %s %04d %02d:%02d:%02d GMT", weekday, date, month, year,
+                hour, min, sec);
     }
 
     private static boolean isFinite(double d) {
@@ -110,15 +105,15 @@ public final class DatePrototype extends OrdinaryObject implements Initializable
     /**
      * 20.3.4.41.1 Runtime Semantics: ToDateString(tv)
      * 
-     * @param cx
-     *            the execution context
+     * @param realm
+     *            the realm instance
      * @param tv
      *            the date-time value
      * @param dateString
      *            the date string modifier
      * @return the date-time string representation
      */
-    public static String ToDateString(ExecutionContext cx, double tv, DateString dateString) {
+    public static String ToDateString(Realm realm, double tv, DateString dateString) {
         /* step 1 (not applicable) */
         /* step 2 */
         if (Double.isNaN(tv)) {
@@ -126,30 +121,30 @@ public final class DatePrototype extends OrdinaryObject implements Initializable
         }
         switch (dateString) {
         case Date:
-            return ToDateString(cx, tv);
+            return ToDateString(realm, tv);
         case Time:
-            return ToTimeString(cx, tv);
+            return ToTimeString(realm, tv);
         case DateTime:
-            return ToDateString(cx, tv) + ' ' + ToTimeString(cx, tv);
+            return ToDateString(realm, tv) + ' ' + ToTimeString(realm, tv);
         default:
             throw new AssertionError();
         }
     }
 
-    private static String ToDateString(ExecutionContext cx, double tv) {
+    private static String ToDateString(Realm realm, double tv) {
         assert !Double.isNaN(tv);
-        double t = LocalTime(cx.getRealm(), tv);
+        double t = LocalTime(realm, tv);
         return String.format("%s %s %02d %04d", WeekDayName(t), MonthNameFromTime(t),
                 (int) DateFromTime(t), (int) YearFromTime(t));
     }
 
-    private static String ToTimeString(ExecutionContext cx, double tv) {
+    private static String ToTimeString(Realm realm, double tv) {
         assert !Double.isNaN(tv);
         long date = (long) tv;
-        TimeZone tz = cx.getRealm().getTimeZone();
+        TimeZone tz = realm.getTimeZone();
         int tzOffset = TimeZoneInfo.getDefault().getOffset(tz, date) / 60000;
         tzOffset = (tzOffset / 60) * 100 + tzOffset % 60;
-        double t = LocalTime(cx.getRealm(), tv);
+        double t = LocalTime(realm, tv);
         String timeZoneDisplayName = TimeZoneInfo.getDefault().getDisplayName(tz, date);
         return String.format("%02d:%02d:%02d GMT%+05d (%s)", (int) HourFromTime(t),
                 (int) MinFromTime(t), (int) SecFromTime(t), tzOffset, timeZoneDisplayName);
@@ -187,275 +182,6 @@ public final class DatePrototype extends OrdinaryObject implements Initializable
         public static final Intrinsics constructor = Intrinsics.Date;
 
         /**
-         * 20.3.4.41 Date.prototype.toString ( )
-         * 
-         * @param cx
-         *            the execution context
-         * @param thisValue
-         *            the function this-value
-         * @return the string representation
-         */
-        @Function(name = "toString", arity = 0)
-        public static Object toString(ExecutionContext cx, Object thisValue) {
-            /* steps 1-3 */
-            double tv;
-            if (Type.isObject(thisValue) && !(thisValue instanceof DateObject)) {
-                tv = Double.NaN;
-            } else {
-                tv = thisTimeValue(cx, thisValue);
-            }
-            /* step 4 */
-            return ToDateString(cx, tv, DateString.DateTime);
-        }
-
-        /**
-         * 20.3.4.35 Date.prototype.toDateString ( )
-         * 
-         * @param cx
-         *            the execution context
-         * @param thisValue
-         *            the function this-value
-         * @return the date string representation
-         */
-        @Function(name = "toDateString", arity = 0)
-        public static Object toDateString(ExecutionContext cx, Object thisValue) {
-            /* step 1 */
-            double tv = thisTimeValue(cx, thisValue);
-            /* step 2 */
-            return ToDateString(cx, tv, DateString.Date);
-        }
-
-        /**
-         * 20.3.4.42 Date.prototype.toTimeString ( )
-         * 
-         * @param cx
-         *            the execution context
-         * @param thisValue
-         *            the function this-value
-         * @return the time string representation
-         */
-        @Function(name = "toTimeString", arity = 0)
-        public static Object toTimeString(ExecutionContext cx, Object thisValue) {
-            /* step 1 */
-            double tv = thisTimeValue(cx, thisValue);
-            /* step 2 */
-            return ToDateString(cx, tv, DateString.Time);
-        }
-
-        /**
-         * 20.3.4.39 Date.prototype.toLocaleString ( [ reserved1 [ , reserved2 ] ] )<br>
-         * 13.3.1 Date.prototype.toLocaleString ([locales [, options ]])
-         * 
-         * @param cx
-         *            the execution context
-         * @param thisValue
-         *            the function this-value
-         * @param locales
-         *            the locales array
-         * @param options
-         *            the options object
-         * @return the locale string representation
-         */
-        @Function(name = "toLocaleString", arity = 0)
-        public static Object toLocaleString(ExecutionContext cx, Object thisValue, Object locales,
-                Object options) {
-            /* steps 1-2 */
-            double t = thisTimeValue(cx, thisValue);
-            /* step 3 */
-            if (Double.isNaN(t)) {
-                return "Invalid Date";
-            }
-            /* steps 4-5 */
-            options = ToDateTimeOptions(cx, options, "any", "all");
-            /* steps 6-7 */
-            DateTimeFormatConstructor ctor = (DateTimeFormatConstructor) cx
-                    .getIntrinsic(Intrinsics.Intl_DateTimeFormat);
-            DateTimeFormatObject dateTimeFormat = ctor.construct(cx, ctor, locales, options);
-            /* step 8 */
-            return FormatDateTime(cx, dateTimeFormat, t);
-        }
-
-        /**
-         * 20.3.4.38 Date.prototype.toLocaleDateString ( [ reserved1 [ , reserved2 ] ] )<br>
-         * 13.3.2 Date.prototype.toLocaleDateString ([locales [, options ]])
-         * 
-         * @param cx
-         *            the execution context
-         * @param thisValue
-         *            the function this-value
-         * @param locales
-         *            the locales array
-         * @param options
-         *            the options object
-         * @return the locale date string representation
-         */
-        @Function(name = "toLocaleDateString", arity = 0)
-        public static Object toLocaleDateString(ExecutionContext cx, Object thisValue,
-                Object locales, Object options) {
-            /* steps 1-2 */
-            double t = thisTimeValue(cx, thisValue);
-            /* step 3 */
-            if (Double.isNaN(t)) {
-                return "Invalid Date";
-            }
-            /* steps 4-5 */
-            options = ToDateTimeOptions(cx, options, "date", "date");
-            /* steps 6-7 */
-            DateTimeFormatConstructor ctor = (DateTimeFormatConstructor) cx
-                    .getIntrinsic(Intrinsics.Intl_DateTimeFormat);
-            DateTimeFormatObject dateTimeFormat = ctor.construct(cx, ctor, locales, options);
-            /* step 8 */
-            return FormatDateTime(cx, dateTimeFormat, t);
-        }
-
-        /**
-         * 20.3.4.40 Date.prototype.toLocaleTimeString ( [ reserved1 [ , reserved2 ] ] )<br>
-         * 13.3.3 Date.prototype.toLocaleTimeString ([locales [, options ]])
-         * 
-         * @param cx
-         *            the execution context
-         * @param thisValue
-         *            the function this-value
-         * @param locales
-         *            the locales array
-         * @param options
-         *            the options object
-         * @return the locale time string representation
-         */
-        @Function(name = "toLocaleTimeString", arity = 0)
-        public static Object toLocaleTimeString(ExecutionContext cx, Object thisValue,
-                Object locales, Object options) {
-            /* steps 1-2 */
-            double t = thisTimeValue(cx, thisValue);
-            /* step 2 */
-            if (Double.isNaN(t)) {
-                return "Invalid Date";
-            }
-            /* steps 4-5 */
-            options = ToDateTimeOptions(cx, options, "time", "time");
-            /* steps 6-7 */
-            DateTimeFormatConstructor ctor = (DateTimeFormatConstructor) cx
-                    .getIntrinsic(Intrinsics.Intl_DateTimeFormat);
-            DateTimeFormatObject dateTimeFormat = ctor.construct(cx, ctor, locales, options);
-            /* step 8 */
-            return FormatDateTime(cx, dateTimeFormat, t);
-        }
-
-        /**
-         * 20.3.4.44 Date.prototype.valueOf ( )
-         * 
-         * @param cx
-         *            the execution context
-         * @param thisValue
-         *            the function this-value
-         * @return the date-time value of this date object
-         */
-        @Function(name = "valueOf", arity = 0)
-        public static Object valueOf(ExecutionContext cx, Object thisValue) {
-            return thisTimeValue(cx, thisValue);
-        }
-
-        /**
-         * 20.3.4.10 Date.prototype.getTime ( )
-         * 
-         * @param cx
-         *            the execution context
-         * @param thisValue
-         *            the function this-value
-         * @return the date-time value of this date object
-         */
-        @Function(name = "getTime", arity = 0)
-        public static Object getTime(ExecutionContext cx, Object thisValue) {
-            return thisTimeValue(cx, thisValue);
-        }
-
-        /**
-         * 20.3.4.4 Date.prototype.getFullYear ( )
-         * 
-         * @param cx
-         *            the execution context
-         * @param thisValue
-         *            the function this-value
-         * @return the full year of this date object
-         */
-        @Function(name = "getFullYear", arity = 0)
-        public static Object getFullYear(ExecutionContext cx, Object thisValue) {
-            Realm realm = cx.getRealm();
-            /* steps 1-2 */
-            double t = thisTimeValue(cx, thisValue);
-            /* step 3 */
-            if (Double.isNaN(t)) {
-                return Double.NaN;
-            }
-            /* step 4 */
-            return YearFromTime(LocalTime(realm, t));
-        }
-
-        /**
-         * 20.3.4.14 Date.prototype.getUTCFullYear ( )
-         * 
-         * @param cx
-         *            the execution context
-         * @param thisValue
-         *            the function this-value
-         * @return the full year in the UTC time zone
-         */
-        @Function(name = "getUTCFullYear", arity = 0)
-        public static Object getUTCFullYear(ExecutionContext cx, Object thisValue) {
-            /* steps 1-2 */
-            double t = thisTimeValue(cx, thisValue);
-            /* step 3 */
-            if (Double.isNaN(t)) {
-                return Double.NaN;
-            }
-            /* step 4 */
-            return YearFromTime(t);
-        }
-
-        /**
-         * 20.3.4.8 Date.prototype.getMonth ( )
-         * 
-         * @param cx
-         *            the execution context
-         * @param thisValue
-         *            the function this-value
-         * @return the month of this date object
-         */
-        @Function(name = "getMonth", arity = 0)
-        public static Object getMonth(ExecutionContext cx, Object thisValue) {
-            Realm realm = cx.getRealm();
-            /* steps 1-2 */
-            double t = thisTimeValue(cx, thisValue);
-            /* step 3 */
-            if (Double.isNaN(t)) {
-                return Double.NaN;
-            }
-            /* step 4 */
-            return MonthFromTime(LocalTime(realm, t));
-        }
-
-        /**
-         * 20.3.4.18 Date.prototype.getUTCMonth ( )
-         * 
-         * @param cx
-         *            the execution context
-         * @param thisValue
-         *            the function this-value
-         * @return the month in the UTC time zone
-         */
-        @Function(name = "getUTCMonth", arity = 0)
-        public static Object getUTCMonth(ExecutionContext cx, Object thisValue) {
-            /* steps 1-2 */
-            double t = thisTimeValue(cx, thisValue);
-            /* step 3 */
-            if (Double.isNaN(t)) {
-                return Double.NaN;
-            }
-            /* step 4 */
-            return MonthFromTime(t);
-        }
-
-        /**
          * 20.3.4.2 Date.prototype.getDate ( )
          * 
          * @param cx
@@ -475,27 +201,6 @@ public final class DatePrototype extends OrdinaryObject implements Initializable
             }
             /* step 4 */
             return DateFromTime(LocalTime(realm, t));
-        }
-
-        /**
-         * 20.3.4.12 Date.prototype.getUTCDate ( )
-         * 
-         * @param cx
-         *            the execution context
-         * @param thisValue
-         *            the function this-value
-         * @return the date in the UTC time zone
-         */
-        @Function(name = "getUTCDate", arity = 0)
-        public static Object getUTCDate(ExecutionContext cx, Object thisValue) {
-            /* steps 1-2 */
-            double t = thisTimeValue(cx, thisValue);
-            /* step 3 */
-            if (Double.isNaN(t)) {
-                return Double.NaN;
-            }
-            /* step 4 */
-            return DateFromTime(t);
         }
 
         /**
@@ -521,16 +226,17 @@ public final class DatePrototype extends OrdinaryObject implements Initializable
         }
 
         /**
-         * 20.3.4.13 Date.prototype.getUTCDay ( )
+         * 20.3.4.4 Date.prototype.getFullYear ( )
          * 
          * @param cx
          *            the execution context
          * @param thisValue
          *            the function this-value
-         * @return the week day in the UTC time zone
+         * @return the full year of this date object
          */
-        @Function(name = "getUTCDay", arity = 0)
-        public static Object getUTCDay(ExecutionContext cx, Object thisValue) {
+        @Function(name = "getFullYear", arity = 0)
+        public static Object getFullYear(ExecutionContext cx, Object thisValue) {
+            Realm realm = cx.getRealm();
             /* steps 1-2 */
             double t = thisTimeValue(cx, thisValue);
             /* step 3 */
@@ -538,7 +244,7 @@ public final class DatePrototype extends OrdinaryObject implements Initializable
                 return Double.NaN;
             }
             /* step 4 */
-            return WeekDay(t);
+            return YearFromTime(LocalTime(realm, t));
         }
 
         /**
@@ -564,16 +270,17 @@ public final class DatePrototype extends OrdinaryObject implements Initializable
         }
 
         /**
-         * 20.3.4.15 Date.prototype.getUTCHours ( )
+         * 20.3.4.6 Date.prototype.getMilliseconds ( )
          * 
          * @param cx
          *            the execution context
          * @param thisValue
          *            the function this-value
-         * @return the hours in the UTC time zone
+         * @return the milli-seconds of this date object
          */
-        @Function(name = "getUTCHours", arity = 0)
-        public static Object getUTCHours(ExecutionContext cx, Object thisValue) {
+        @Function(name = "getMilliseconds", arity = 0)
+        public static Object getMilliseconds(ExecutionContext cx, Object thisValue) {
+            Realm realm = cx.getRealm();
             /* steps 1-2 */
             double t = thisTimeValue(cx, thisValue);
             /* step 3 */
@@ -581,7 +288,7 @@ public final class DatePrototype extends OrdinaryObject implements Initializable
                 return Double.NaN;
             }
             /* step 4 */
-            return HourFromTime(t);
+            return msFromTime(LocalTime(realm, t));
         }
 
         /**
@@ -607,16 +314,17 @@ public final class DatePrototype extends OrdinaryObject implements Initializable
         }
 
         /**
-         * 20.3.4.17 Date.prototype.getUTCMinutes ( )
+         * 20.3.4.8 Date.prototype.getMonth ( )
          * 
          * @param cx
          *            the execution context
          * @param thisValue
          *            the function this-value
-         * @return the minutes in the UTC time zone
+         * @return the month of this date object
          */
-        @Function(name = "getUTCMinutes", arity = 0)
-        public static Object getUTCMinutes(ExecutionContext cx, Object thisValue) {
+        @Function(name = "getMonth", arity = 0)
+        public static Object getMonth(ExecutionContext cx, Object thisValue) {
+            Realm realm = cx.getRealm();
             /* steps 1-2 */
             double t = thisTimeValue(cx, thisValue);
             /* step 3 */
@@ -624,7 +332,7 @@ public final class DatePrototype extends OrdinaryObject implements Initializable
                 return Double.NaN;
             }
             /* step 4 */
-            return MinFromTime(t);
+            return MonthFromTime(LocalTime(realm, t));
         }
 
         /**
@@ -650,67 +358,18 @@ public final class DatePrototype extends OrdinaryObject implements Initializable
         }
 
         /**
-         * 20.3.4.19 Date.prototype.getUTCSeconds ( )
+         * 20.3.4.10 Date.prototype.getTime ( )
          * 
          * @param cx
          *            the execution context
          * @param thisValue
          *            the function this-value
-         * @return the seconds in the UTC time zone
+         * @return the date-time value of this date object
          */
-        @Function(name = "getUTCSeconds", arity = 0)
-        public static Object getUTCSeconds(ExecutionContext cx, Object thisValue) {
-            /* steps 1-2 */
-            double t = thisTimeValue(cx, thisValue);
-            /* step 3 */
-            if (Double.isNaN(t)) {
-                return Double.NaN;
-            }
-            /* step 4 */
-            return SecFromTime(t);
-        }
-
-        /**
-         * 20.3.4.6 Date.prototype.getMilliseconds ( )
-         * 
-         * @param cx
-         *            the execution context
-         * @param thisValue
-         *            the function this-value
-         * @return the milli-seconds of this date object
-         */
-        @Function(name = "getMilliseconds", arity = 0)
-        public static Object getMilliseconds(ExecutionContext cx, Object thisValue) {
-            Realm realm = cx.getRealm();
-            /* steps 1-2 */
-            double t = thisTimeValue(cx, thisValue);
-            /* step 3 */
-            if (Double.isNaN(t)) {
-                return Double.NaN;
-            }
-            /* step 4 */
-            return msFromTime(LocalTime(realm, t));
-        }
-
-        /**
-         * 20.3.4.16 Date.prototype.getUTCMilliseconds ( )
-         * 
-         * @param cx
-         *            the execution context
-         * @param thisValue
-         *            the function this-value
-         * @return the milli-seconds in the UTC time zone
-         */
-        @Function(name = "getUTCMilliseconds", arity = 0)
-        public static Object getUTCMilliseconds(ExecutionContext cx, Object thisValue) {
-            /* steps 1-2 */
-            double t = thisTimeValue(cx, thisValue);
-            /* step 3 */
-            if (Double.isNaN(t)) {
-                return Double.NaN;
-            }
-            /* step 4 */
-            return msFromTime(t);
+        @Function(name = "getTime", arity = 0)
+        public static Object getTime(ExecutionContext cx, Object thisValue) {
+            /* step 1 */
+            return thisTimeValue(cx, thisValue);
         }
 
         /**
@@ -736,52 +395,196 @@ public final class DatePrototype extends OrdinaryObject implements Initializable
         }
 
         /**
-         * 20.3.4.27 Date.prototype.setTime (time)
+         * 20.3.4.12 Date.prototype.getUTCDate ( )
          * 
          * @param cx
          *            the execution context
          * @param thisValue
          *            the function this-value
-         * @param time
-         *            the new time value
-         * @return the new date-time value
+         * @return the date in the UTC time zone
          */
-        @Function(name = "setTime", arity = 1)
-        public static Object setTime(ExecutionContext cx, Object thisValue, Object time) {
+        @Function(name = "getUTCDate", arity = 0)
+        public static Object getUTCDate(ExecutionContext cx, Object thisValue) {
             /* steps 1-2 */
-            thisTimeValue(cx, thisValue);
-            /* steps 3-4 */
-            double t = ToNumber(cx, time);
-            /* step 5 */
-            double v = TimeClip(t);
-            /* step 6 */
-            ((DateObject) thisValue).setDateValue(v);
-            /* step 7 */
-            return v;
+            double t = thisTimeValue(cx, thisValue);
+            /* step 3 */
+            if (Double.isNaN(t)) {
+                return Double.NaN;
+            }
+            /* step 4 */
+            return DateFromTime(t);
         }
 
         /**
-         * 20.3.4.23 Date.prototype.setMilliseconds (ms)
+         * 20.3.4.13 Date.prototype.getUTCDay ( )
          * 
          * @param cx
          *            the execution context
          * @param thisValue
          *            the function this-value
-         * @param ms
-         *            the new milli-seconds value
+         * @return the week day in the UTC time zone
+         */
+        @Function(name = "getUTCDay", arity = 0)
+        public static Object getUTCDay(ExecutionContext cx, Object thisValue) {
+            /* steps 1-2 */
+            double t = thisTimeValue(cx, thisValue);
+            /* step 3 */
+            if (Double.isNaN(t)) {
+                return Double.NaN;
+            }
+            /* step 4 */
+            return WeekDay(t);
+        }
+
+        /**
+         * 20.3.4.14 Date.prototype.getUTCFullYear ( )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the full year in the UTC time zone
+         */
+        @Function(name = "getUTCFullYear", arity = 0)
+        public static Object getUTCFullYear(ExecutionContext cx, Object thisValue) {
+            /* steps 1-2 */
+            double t = thisTimeValue(cx, thisValue);
+            /* step 3 */
+            if (Double.isNaN(t)) {
+                return Double.NaN;
+            }
+            /* step 4 */
+            return YearFromTime(t);
+        }
+
+        /**
+         * 20.3.4.15 Date.prototype.getUTCHours ( )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the hours in the UTC time zone
+         */
+        @Function(name = "getUTCHours", arity = 0)
+        public static Object getUTCHours(ExecutionContext cx, Object thisValue) {
+            /* steps 1-2 */
+            double t = thisTimeValue(cx, thisValue);
+            /* step 3 */
+            if (Double.isNaN(t)) {
+                return Double.NaN;
+            }
+            /* step 4 */
+            return HourFromTime(t);
+        }
+
+        /**
+         * 20.3.4.16 Date.prototype.getUTCMilliseconds ( )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the milli-seconds in the UTC time zone
+         */
+        @Function(name = "getUTCMilliseconds", arity = 0)
+        public static Object getUTCMilliseconds(ExecutionContext cx, Object thisValue) {
+            /* steps 1-2 */
+            double t = thisTimeValue(cx, thisValue);
+            /* step 3 */
+            if (Double.isNaN(t)) {
+                return Double.NaN;
+            }
+            /* step 4 */
+            return msFromTime(t);
+        }
+
+        /**
+         * 20.3.4.17 Date.prototype.getUTCMinutes ( )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the minutes in the UTC time zone
+         */
+        @Function(name = "getUTCMinutes", arity = 0)
+        public static Object getUTCMinutes(ExecutionContext cx, Object thisValue) {
+            /* steps 1-2 */
+            double t = thisTimeValue(cx, thisValue);
+            /* step 3 */
+            if (Double.isNaN(t)) {
+                return Double.NaN;
+            }
+            /* step 4 */
+            return MinFromTime(t);
+        }
+
+        /**
+         * 20.3.4.18 Date.prototype.getUTCMonth ( )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the month in the UTC time zone
+         */
+        @Function(name = "getUTCMonth", arity = 0)
+        public static Object getUTCMonth(ExecutionContext cx, Object thisValue) {
+            /* steps 1-2 */
+            double t = thisTimeValue(cx, thisValue);
+            /* step 3 */
+            if (Double.isNaN(t)) {
+                return Double.NaN;
+            }
+            /* step 4 */
+            return MonthFromTime(t);
+        }
+
+        /**
+         * 20.3.4.19 Date.prototype.getUTCSeconds ( )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the seconds in the UTC time zone
+         */
+        @Function(name = "getUTCSeconds", arity = 0)
+        public static Object getUTCSeconds(ExecutionContext cx, Object thisValue) {
+            /* steps 1-2 */
+            double t = thisTimeValue(cx, thisValue);
+            /* step 3 */
+            if (Double.isNaN(t)) {
+                return Double.NaN;
+            }
+            /* step 4 */
+            return SecFromTime(t);
+        }
+
+        /**
+         * 20.3.4.20 Date.prototype.setDate (date)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param date
+         *            the new date value
          * @return the new date-time value
          */
-        @Function(name = "setMilliseconds", arity = 1)
-        public static Object setMilliseconds(ExecutionContext cx, Object thisValue, Object ms) {
+        @Function(name = "setDate", arity = 1)
+        public static Object setDate(ExecutionContext cx, Object thisValue, Object date) {
             Realm realm = cx.getRealm();
             /* steps 1-2 */
             double t = LocalTime(realm, thisTimeValue(cx, thisValue));
             /* steps 3-4 */
-            double milli = ToNumber(cx, ms);
+            double dt = ToNumber(cx, date);
             /* step 5 */
-            double time = MakeTime(HourFromTime(t), MinFromTime(t), SecFromTime(t), milli);
+            double newDate = MakeDate(MakeDay(YearFromTime(t), MonthFromTime(t), dt),
+                    TimeWithinDay(t));
             /* step 6 */
-            double u = TimeClip(UTC(realm, MakeDate(Day(t), time)));
+            double u = TimeClip(UTC(realm, newDate));
             /* step 7 */
             ((DateObject) thisValue).setDateValue(u);
             /* step 8 */
@@ -789,170 +592,42 @@ public final class DatePrototype extends OrdinaryObject implements Initializable
         }
 
         /**
-         * 20.3.4.31 Date.prototype.setUTCMilliseconds (ms)
+         * 20.3.4.21 Date.prototype.setFullYear (year [, month [, date ] ] )
          * 
          * @param cx
          *            the execution context
          * @param thisValue
          *            the function this-value
-         * @param ms
-         *            the new milli-seconds value
+         * @param year
+         *            the new year value
+         * @param month
+         *            the new month value
+         * @param date
+         *            the new date value
          * @return the new date-time value
          */
-        @Function(name = "setUTCMilliseconds", arity = 1)
-        public static Object setUTCMilliseconds(ExecutionContext cx, Object thisValue, Object ms) {
-            /* steps 1-2 */
-            double t = thisTimeValue(cx, thisValue);
-            /* steps 3-4 */
-            double milli = ToNumber(cx, ms);
-            /* step 5 */
-            double time = MakeTime(HourFromTime(t), MinFromTime(t), SecFromTime(t), milli);
-            /* step 6 */
-            double v = TimeClip(MakeDate(Day(t), time));
-            /* step 7 */
-            ((DateObject) thisValue).setDateValue(v);
-            /* step 8 */
-            return v;
-        }
-
-        /**
-         * 20.3.4.26 Date.prototype.setSeconds (sec [, ms ] )
-         * 
-         * @param cx
-         *            the execution context
-         * @param thisValue
-         *            the function this-value
-         * @param sec
-         *            the new seconds value
-         * @param ms
-         *            the new milli-seconds value
-         * @return the new date-time value
-         */
-        @Function(name = "setSeconds", arity = 2)
-        public static Object setSeconds(ExecutionContext cx, Object thisValue, Object sec,
-                @Optional(Optional.Default.NONE) Object ms) {
+        @Function(name = "setFullYear", arity = 3)
+        public static Object setFullYear(ExecutionContext cx, Object thisValue, Object year,
+                @Optional(Optional.Default.NONE) Object month,
+                @Optional(Optional.Default.NONE) Object date) {
             Realm realm = cx.getRealm();
-            /* steps 1-2 */
-            double t = LocalTime(realm, thisTimeValue(cx, thisValue));
-            /* steps 3-4 */
-            double s = ToNumber(cx, sec);
-            /* steps 5-6 */
-            double milli = (ms == null ? msFromTime(t) : ToNumber(cx, ms));
-            /* step 7 */
-            double date = MakeDate(Day(t), MakeTime(HourFromTime(t), MinFromTime(t), s, milli));
-            /* step 8 */
-            double u = TimeClip(UTC(realm, date));
-            /* step 9 */
-            ((DateObject) thisValue).setDateValue(u);
-            /* step 10 */
-            return u;
-        }
-
-        /**
-         * 20.3.4.34 Date.prototype.setUTCSeconds (sec [, ms ] )
-         * 
-         * @param cx
-         *            the execution context
-         * @param thisValue
-         *            the function this-value
-         * @param sec
-         *            the new seconds value
-         * @param ms
-         *            the new milli-seconds value
-         * @return the new date-time value
-         */
-        @Function(name = "setUTCSeconds", arity = 2)
-        public static Object setUTCSeconds(ExecutionContext cx, Object thisValue, Object sec,
-                @Optional(Optional.Default.NONE) Object ms) {
-            /* steps 1-2 */
+            /* steps 1-4 */
             double t = thisTimeValue(cx, thisValue);
-            /* steps 3-4 */
-            double s = ToNumber(cx, sec);
+            t = Double.isNaN(t) ? +0 : LocalTime(realm, t);
             /* steps 5-6 */
-            double milli = (ms == null ? msFromTime(t) : ToNumber(cx, ms));
-            /* step 7 */
-            double date = MakeDate(Day(t), MakeTime(HourFromTime(t), MinFromTime(t), s, milli));
-            /* step 8 */
-            double v = TimeClip(date);
-            /* step 9 */
-            ((DateObject) thisValue).setDateValue(v);
-            /* step 10 */
-            return v;
-        }
-
-        /**
-         * 20.3.4.24 Date.prototype.setMinutes (min [, sec [, ms ] ] )
-         * 
-         * @param cx
-         *            the execution context
-         * @param thisValue
-         *            the function this-value
-         * @param min
-         *            the new minutes value
-         * @param sec
-         *            the new seconds value
-         * @param ms
-         *            the new milli-seconds value
-         * @return the new date-time value
-         */
-        @Function(name = "setMinutes", arity = 3)
-        public static Object setMinutes(ExecutionContext cx, Object thisValue, Object min,
-                @Optional(Optional.Default.NONE) Object sec,
-                @Optional(Optional.Default.NONE) Object ms) {
-            Realm realm = cx.getRealm();
-            /* steps 1-2 */
-            double t = LocalTime(realm, thisTimeValue(cx, thisValue));
-            /* steps 3-4 */
-            double m = ToNumber(cx, min);
-            /* steps 5-6 */
-            double s = (sec == null ? SecFromTime(t) : ToNumber(cx, sec));
+            double y = ToNumber(cx, year);
             /* steps 7-8 */
-            double milli = (ms == null ? msFromTime(t) : ToNumber(cx, ms));
-            /* step 9 */
-            double date = MakeDate(Day(t), MakeTime(HourFromTime(t), m, s, milli));
-            /* step 10 */
-            double u = TimeClip(UTC(realm, date));
+            double m = (month == null ? MonthFromTime(t) : ToNumber(cx, month));
+            /* steps 9-10 */
+            double dt = (date == null ? DateFromTime(t) : ToNumber(cx, date));
             /* step 11 */
+            double newDate = MakeDate(MakeDay(y, m, dt), TimeWithinDay(t));
+            /* step 12 */
+            double u = TimeClip(UTC(realm, newDate));
+            /* step 13 */
             ((DateObject) thisValue).setDateValue(u);
-            /* step 12 */
+            /* step 14 */
             return u;
-        }
-
-        /**
-         * 20.3.4.32 Date.prototype.setUTCMinutes (min [, sec [, ms ] ] )
-         * 
-         * @param cx
-         *            the execution context
-         * @param thisValue
-         *            the function this-value
-         * @param min
-         *            the new minutes value
-         * @param sec
-         *            the new seconds value
-         * @param ms
-         *            the new milli-seconds value
-         * @return the new date-time value
-         */
-        @Function(name = "setUTCMinutes", arity = 3)
-        public static Object setUTCMinutes(ExecutionContext cx, Object thisValue, Object min,
-                @Optional(Optional.Default.NONE) Object sec,
-                @Optional(Optional.Default.NONE) Object ms) {
-            /* steps 1-2 */
-            double t = thisTimeValue(cx, thisValue);
-            /* steps 3-4 */
-            double m = ToNumber(cx, min);
-            /* steps 5-6 */
-            double s = (sec == null ? SecFromTime(t) : ToNumber(cx, sec));
-            /* steps 7-8 */
-            double milli = (ms == null ? msFromTime(t) : ToNumber(cx, ms));
-            /* step 9 */
-            double date = MakeDate(Day(t), MakeTime(HourFromTime(t), m, s, milli));
-            /* step 10 */
-            double v = TimeClip(date);
-            /* step 11 */
-            ((DateObject) thisValue).setDateValue(v);
-            /* step 12 */
-            return v;
         }
 
         /**
@@ -999,14 +674,40 @@ public final class DatePrototype extends OrdinaryObject implements Initializable
         }
 
         /**
-         * 20.3.4.30 Date.prototype.setUTCHours (hour [, min [, sec [, ms ] ] ] )
+         * 20.3.4.23 Date.prototype.setMilliseconds (ms)
          * 
          * @param cx
          *            the execution context
          * @param thisValue
          *            the function this-value
-         * @param hour
-         *            the new hours value
+         * @param ms
+         *            the new milli-seconds value
+         * @return the new date-time value
+         */
+        @Function(name = "setMilliseconds", arity = 1)
+        public static Object setMilliseconds(ExecutionContext cx, Object thisValue, Object ms) {
+            Realm realm = cx.getRealm();
+            /* steps 1-2 */
+            double t = LocalTime(realm, thisTimeValue(cx, thisValue));
+            /* steps 3-4 */
+            double milli = ToNumber(cx, ms);
+            /* step 5 */
+            double time = MakeTime(HourFromTime(t), MinFromTime(t), SecFromTime(t), milli);
+            /* step 6 */
+            double u = TimeClip(UTC(realm, MakeDate(Day(t), time)));
+            /* step 7 */
+            ((DateObject) thisValue).setDateValue(u);
+            /* step 8 */
+            return u;
+        }
+
+        /**
+         * 20.3.4.24 Date.prototype.setMinutes (min [, sec [, ms ] ] )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
          * @param min
          *            the new minutes value
          * @param sec
@@ -1015,86 +716,27 @@ public final class DatePrototype extends OrdinaryObject implements Initializable
          *            the new milli-seconds value
          * @return the new date-time value
          */
-        @Function(name = "setUTCHours", arity = 4)
-        public static Object setUTCHours(ExecutionContext cx, Object thisValue, Object hour,
-                @Optional(Optional.Default.NONE) Object min,
+        @Function(name = "setMinutes", arity = 3)
+        public static Object setMinutes(ExecutionContext cx, Object thisValue, Object min,
                 @Optional(Optional.Default.NONE) Object sec,
                 @Optional(Optional.Default.NONE) Object ms) {
-            /* steps 1-2 */
-            double t = thisTimeValue(cx, thisValue);
-            /* steps 3-4 */
-            double h = ToNumber(cx, hour);
-            /* steps 5-6 */
-            double m = (min == null ? MinFromTime(t) : ToNumber(cx, min));
-            /* steps 7-8 */
-            double s = (sec == null ? SecFromTime(t) : ToNumber(cx, sec));
-            /* steps 9-10 */
-            double milli = (ms == null ? msFromTime(t) : ToNumber(cx, ms));
-            /* step 11 */
-            double newDate = MakeDate(Day(t), MakeTime(h, m, s, milli));
-            /* step 12 */
-            double v = TimeClip(newDate);
-            /* step 13 */
-            ((DateObject) thisValue).setDateValue(v);
-            /* step 14 */
-            return v;
-        }
-
-        /**
-         * 20.3.4.20 Date.prototype.setDate (date)
-         * 
-         * @param cx
-         *            the execution context
-         * @param thisValue
-         *            the function this-value
-         * @param date
-         *            the new date value
-         * @return the new date-time value
-         */
-        @Function(name = "setDate", arity = 1)
-        public static Object setDate(ExecutionContext cx, Object thisValue, Object date) {
             Realm realm = cx.getRealm();
             /* steps 1-2 */
             double t = LocalTime(realm, thisTimeValue(cx, thisValue));
             /* steps 3-4 */
-            double dt = ToNumber(cx, date);
-            /* step 5 */
-            double newDate = MakeDate(MakeDay(YearFromTime(t), MonthFromTime(t), dt),
-                    TimeWithinDay(t));
-            /* step 6 */
-            double u = TimeClip(UTC(realm, newDate));
-            /* step 7 */
+            double m = ToNumber(cx, min);
+            /* steps 5-6 */
+            double s = (sec == null ? SecFromTime(t) : ToNumber(cx, sec));
+            /* steps 7-8 */
+            double milli = (ms == null ? msFromTime(t) : ToNumber(cx, ms));
+            /* step 9 */
+            double date = MakeDate(Day(t), MakeTime(HourFromTime(t), m, s, milli));
+            /* step 10 */
+            double u = TimeClip(UTC(realm, date));
+            /* step 11 */
             ((DateObject) thisValue).setDateValue(u);
-            /* step 8 */
+            /* step 12 */
             return u;
-        }
-
-        /**
-         * 20.3.4.28 Date.prototype.setUTCDate (date)
-         * 
-         * @param cx
-         *            the execution context
-         * @param thisValue
-         *            the function this-value
-         * @param date
-         *            the new date value
-         * @return the new date-time value
-         */
-        @Function(name = "setUTCDate", arity = 1)
-        public static Object setUTCDate(ExecutionContext cx, Object thisValue, Object date) {
-            /* steps 1-2 */
-            double t = thisTimeValue(cx, thisValue);
-            /* steps 3-4 */
-            double dt = ToNumber(cx, date);
-            /* step 5 */
-            double newDate = MakeDate(MakeDay(YearFromTime(t), MonthFromTime(t), dt),
-                    TimeWithinDay(t));
-            /* step 6 */
-            double v = TimeClip(newDate);
-            /* step 7 */
-            ((DateObject) thisValue).setDateValue(v);
-            /* step 8 */
-            return v;
         }
 
         /**
@@ -1131,74 +773,89 @@ public final class DatePrototype extends OrdinaryObject implements Initializable
         }
 
         /**
-         * 20.3.4.33 Date.prototype.setUTCMonth (month [, date ] )
+         * 20.3.4.26 Date.prototype.setSeconds (sec [, ms ] )
          * 
          * @param cx
          *            the execution context
          * @param thisValue
          *            the function this-value
-         * @param month
-         *            the new month value
-         * @param date
-         *            the new date value
+         * @param sec
+         *            the new seconds value
+         * @param ms
+         *            the new milli-seconds value
          * @return the new date-time value
          */
-        @Function(name = "setUTCMonth", arity = 2)
-        public static Object setUTCMonth(ExecutionContext cx, Object thisValue, Object month,
-                @Optional(Optional.Default.NONE) Object date) {
+        @Function(name = "setSeconds", arity = 2)
+        public static Object setSeconds(ExecutionContext cx, Object thisValue, Object sec,
+                @Optional(Optional.Default.NONE) Object ms) {
+            Realm realm = cx.getRealm();
             /* steps 1-2 */
-            double t = thisTimeValue(cx, thisValue);
+            double t = LocalTime(realm, thisTimeValue(cx, thisValue));
             /* steps 3-4 */
-            double m = ToNumber(cx, month);
+            double s = ToNumber(cx, sec);
             /* steps 5-6 */
-            double dt = (date == null ? DateFromTime(t) : ToNumber(cx, date));
+            double milli = (ms == null ? msFromTime(t) : ToNumber(cx, ms));
             /* step 7 */
-            double newDate = MakeDate(MakeDay(YearFromTime(t), m, dt), TimeWithinDay(t));
+            double date = MakeDate(Day(t), MakeTime(HourFromTime(t), MinFromTime(t), s, milli));
             /* step 8 */
-            double v = TimeClip(newDate);
+            double u = TimeClip(UTC(realm, date));
             /* step 9 */
-            ((DateObject) thisValue).setDateValue(v);
+            ((DateObject) thisValue).setDateValue(u);
             /* step 10 */
+            return u;
+        }
+
+        /**
+         * 20.3.4.27 Date.prototype.setTime (time)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param time
+         *            the new time value
+         * @return the new date-time value
+         */
+        @Function(name = "setTime", arity = 1)
+        public static Object setTime(ExecutionContext cx, Object thisValue, Object time) {
+            /* steps 1-2 */
+            thisTimeValue(cx, thisValue);
+            /* steps 3-4 */
+            double t = ToNumber(cx, time);
+            /* step 5 */
+            double v = TimeClip(t);
+            /* step 6 */
+            ((DateObject) thisValue).setDateValue(v);
+            /* step 7 */
             return v;
         }
 
         /**
-         * 20.3.4.21 Date.prototype.setFullYear (year [, month [, date ] ] )
+         * 20.3.4.28 Date.prototype.setUTCDate (date)
          * 
          * @param cx
          *            the execution context
          * @param thisValue
          *            the function this-value
-         * @param year
-         *            the new year value
-         * @param month
-         *            the new month value
          * @param date
          *            the new date value
          * @return the new date-time value
          */
-        @Function(name = "setFullYear", arity = 3)
-        public static Object setFullYear(ExecutionContext cx, Object thisValue, Object year,
-                @Optional(Optional.Default.NONE) Object month,
-                @Optional(Optional.Default.NONE) Object date) {
-            Realm realm = cx.getRealm();
-            /* steps 1-4 */
+        @Function(name = "setUTCDate", arity = 1)
+        public static Object setUTCDate(ExecutionContext cx, Object thisValue, Object date) {
+            /* steps 1-2 */
             double t = thisTimeValue(cx, thisValue);
-            t = Double.isNaN(t) ? +0 : LocalTime(realm, t);
-            /* steps 5-6 */
-            double y = ToNumber(cx, year);
-            /* steps 7-8 */
-            double m = (month == null ? MonthFromTime(t) : ToNumber(cx, month));
-            /* steps 9-10 */
-            double dt = (date == null ? DateFromTime(t) : ToNumber(cx, date));
-            /* step 11 */
-            double newDate = MakeDate(MakeDay(y, m, dt), TimeWithinDay(t));
-            /* step 12 */
-            double u = TimeClip(UTC(realm, newDate));
-            /* step 13 */
-            ((DateObject) thisValue).setDateValue(u);
-            /* step 14 */
-            return u;
+            /* steps 3-4 */
+            double dt = ToNumber(cx, date);
+            /* step 5 */
+            double newDate = MakeDate(MakeDay(YearFromTime(t), MonthFromTime(t), dt),
+                    TimeWithinDay(t));
+            /* step 6 */
+            double v = TimeClip(newDate);
+            /* step 7 */
+            ((DateObject) thisValue).setDateValue(v);
+            /* step 8 */
+            return v;
         }
 
         /**
@@ -1243,21 +900,188 @@ public final class DatePrototype extends OrdinaryObject implements Initializable
         }
 
         /**
-         * 20.3.4.43 Date.prototype.toUTCString ( )
+         * 20.3.4.30 Date.prototype.setUTCHours (hour [, min [, sec [, ms ] ] ] )
          * 
          * @param cx
          *            the execution context
          * @param thisValue
          *            the function this-value
-         * @return the date-time string in the UTC time zone
+         * @param hour
+         *            the new hours value
+         * @param min
+         *            the new minutes value
+         * @param sec
+         *            the new seconds value
+         * @param ms
+         *            the new milli-seconds value
+         * @return the new date-time value
          */
-        @Function(name = "toUTCString", arity = 0)
-        public static Object toUTCString(ExecutionContext cx, Object thisValue) {
-            double dateValue = thisTimeValue(cx, thisValue);
-            if (Double.isNaN(dateValue)) {
-                return "Invalid Date";
-            }
-            return DatePrototype.toUTCString(dateValue);
+        @Function(name = "setUTCHours", arity = 4)
+        public static Object setUTCHours(ExecutionContext cx, Object thisValue, Object hour,
+                @Optional(Optional.Default.NONE) Object min,
+                @Optional(Optional.Default.NONE) Object sec,
+                @Optional(Optional.Default.NONE) Object ms) {
+            /* steps 1-2 */
+            double t = thisTimeValue(cx, thisValue);
+            /* steps 3-4 */
+            double h = ToNumber(cx, hour);
+            /* steps 5-6 */
+            double m = (min == null ? MinFromTime(t) : ToNumber(cx, min));
+            /* steps 7-8 */
+            double s = (sec == null ? SecFromTime(t) : ToNumber(cx, sec));
+            /* steps 9-10 */
+            double milli = (ms == null ? msFromTime(t) : ToNumber(cx, ms));
+            /* step 11 */
+            double newDate = MakeDate(Day(t), MakeTime(h, m, s, milli));
+            /* step 12 */
+            double v = TimeClip(newDate);
+            /* step 13 */
+            ((DateObject) thisValue).setDateValue(v);
+            /* step 14 */
+            return v;
+        }
+
+        /**
+         * 20.3.4.31 Date.prototype.setUTCMilliseconds (ms)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param ms
+         *            the new milli-seconds value
+         * @return the new date-time value
+         */
+        @Function(name = "setUTCMilliseconds", arity = 1)
+        public static Object setUTCMilliseconds(ExecutionContext cx, Object thisValue, Object ms) {
+            /* steps 1-2 */
+            double t = thisTimeValue(cx, thisValue);
+            /* steps 3-4 */
+            double milli = ToNumber(cx, ms);
+            /* step 5 */
+            double time = MakeTime(HourFromTime(t), MinFromTime(t), SecFromTime(t), milli);
+            /* step 6 */
+            double v = TimeClip(MakeDate(Day(t), time));
+            /* step 7 */
+            ((DateObject) thisValue).setDateValue(v);
+            /* step 8 */
+            return v;
+        }
+
+        /**
+         * 20.3.4.32 Date.prototype.setUTCMinutes (min [, sec [, ms ] ] )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param min
+         *            the new minutes value
+         * @param sec
+         *            the new seconds value
+         * @param ms
+         *            the new milli-seconds value
+         * @return the new date-time value
+         */
+        @Function(name = "setUTCMinutes", arity = 3)
+        public static Object setUTCMinutes(ExecutionContext cx, Object thisValue, Object min,
+                @Optional(Optional.Default.NONE) Object sec,
+                @Optional(Optional.Default.NONE) Object ms) {
+            /* steps 1-2 */
+            double t = thisTimeValue(cx, thisValue);
+            /* steps 3-4 */
+            double m = ToNumber(cx, min);
+            /* steps 5-6 */
+            double s = (sec == null ? SecFromTime(t) : ToNumber(cx, sec));
+            /* steps 7-8 */
+            double milli = (ms == null ? msFromTime(t) : ToNumber(cx, ms));
+            /* step 9 */
+            double date = MakeDate(Day(t), MakeTime(HourFromTime(t), m, s, milli));
+            /* step 10 */
+            double v = TimeClip(date);
+            /* step 11 */
+            ((DateObject) thisValue).setDateValue(v);
+            /* step 12 */
+            return v;
+        }
+
+        /**
+         * 20.3.4.33 Date.prototype.setUTCMonth (month [, date ] )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param month
+         *            the new month value
+         * @param date
+         *            the new date value
+         * @return the new date-time value
+         */
+        @Function(name = "setUTCMonth", arity = 2)
+        public static Object setUTCMonth(ExecutionContext cx, Object thisValue, Object month,
+                @Optional(Optional.Default.NONE) Object date) {
+            /* steps 1-2 */
+            double t = thisTimeValue(cx, thisValue);
+            /* steps 3-4 */
+            double m = ToNumber(cx, month);
+            /* steps 5-6 */
+            double dt = (date == null ? DateFromTime(t) : ToNumber(cx, date));
+            /* step 7 */
+            double newDate = MakeDate(MakeDay(YearFromTime(t), m, dt), TimeWithinDay(t));
+            /* step 8 */
+            double v = TimeClip(newDate);
+            /* step 9 */
+            ((DateObject) thisValue).setDateValue(v);
+            /* step 10 */
+            return v;
+        }
+
+        /**
+         * 20.3.4.34 Date.prototype.setUTCSeconds (sec [, ms ] )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param sec
+         *            the new seconds value
+         * @param ms
+         *            the new milli-seconds value
+         * @return the new date-time value
+         */
+        @Function(name = "setUTCSeconds", arity = 2)
+        public static Object setUTCSeconds(ExecutionContext cx, Object thisValue, Object sec,
+                @Optional(Optional.Default.NONE) Object ms) {
+            /* steps 1-2 */
+            double t = thisTimeValue(cx, thisValue);
+            /* steps 3-4 */
+            double s = ToNumber(cx, sec);
+            /* steps 5-6 */
+            double milli = (ms == null ? msFromTime(t) : ToNumber(cx, ms));
+            /* step 7 */
+            double date = MakeDate(Day(t), MakeTime(HourFromTime(t), MinFromTime(t), s, milli));
+            /* step 8 */
+            double v = TimeClip(date);
+            /* step 9 */
+            ((DateObject) thisValue).setDateValue(v);
+            /* step 10 */
+            return v;
+        }
+
+        /**
+         * 20.3.4.35 Date.prototype.toDateString ( )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the date string representation
+         */
+        @Function(name = "toDateString", arity = 0)
+        public static Object toDateString(ExecutionContext cx, Object thisValue) {
+            double tv = thisTimeValue(cx, thisValue);
+            return ToDateString(cx.getRealm(), tv, DateString.Date);
         }
 
         /**
@@ -1304,6 +1128,174 @@ public final class DatePrototype extends OrdinaryObject implements Initializable
         }
 
         /**
+         * 20.3.4.38 Date.prototype.toLocaleDateString ( [ reserved1 [ , reserved2 ] ] )<br>
+         * 13.3.2 Date.prototype.toLocaleDateString ([locales [, options ]])
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param locales
+         *            the locales array
+         * @param options
+         *            the options object
+         * @return the locale date string representation
+         */
+        @Function(name = "toLocaleDateString", arity = 0)
+        public static Object toLocaleDateString(ExecutionContext cx, Object thisValue,
+                Object locales, Object options) {
+            /* steps 1-2 */
+            double t = thisTimeValue(cx, thisValue);
+            /* step 3 */
+            if (Double.isNaN(t)) {
+                return "Invalid Date";
+            }
+            /* steps 4-5 */
+            options = ToDateTimeOptions(cx, options, "date", "date");
+            /* steps 6-7 */
+            DateTimeFormatConstructor ctor = (DateTimeFormatConstructor) cx
+                    .getIntrinsic(Intrinsics.Intl_DateTimeFormat);
+            DateTimeFormatObject dateTimeFormat = ctor.construct(cx, ctor, locales, options);
+            /* step 8 */
+            return FormatDateTime(cx, dateTimeFormat, t);
+        }
+
+        /**
+         * 20.3.4.39 Date.prototype.toLocaleString ( [ reserved1 [ , reserved2 ] ] )<br>
+         * 13.3.1 Date.prototype.toLocaleString ([locales [, options ]])
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param locales
+         *            the locales array
+         * @param options
+         *            the options object
+         * @return the locale string representation
+         */
+        @Function(name = "toLocaleString", arity = 0)
+        public static Object toLocaleString(ExecutionContext cx, Object thisValue, Object locales,
+                Object options) {
+            /* steps 1-2 */
+            double t = thisTimeValue(cx, thisValue);
+            /* step 3 */
+            if (Double.isNaN(t)) {
+                return "Invalid Date";
+            }
+            /* steps 4-5 */
+            options = ToDateTimeOptions(cx, options, "any", "all");
+            /* steps 6-7 */
+            DateTimeFormatConstructor ctor = (DateTimeFormatConstructor) cx
+                    .getIntrinsic(Intrinsics.Intl_DateTimeFormat);
+            DateTimeFormatObject dateTimeFormat = ctor.construct(cx, ctor, locales, options);
+            /* step 8 */
+            return FormatDateTime(cx, dateTimeFormat, t);
+        }
+
+        /**
+         * 20.3.4.40 Date.prototype.toLocaleTimeString ( [ reserved1 [ , reserved2 ] ] )<br>
+         * 13.3.3 Date.prototype.toLocaleTimeString ([locales [, options ]])
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param locales
+         *            the locales array
+         * @param options
+         *            the options object
+         * @return the locale time string representation
+         */
+        @Function(name = "toLocaleTimeString", arity = 0)
+        public static Object toLocaleTimeString(ExecutionContext cx, Object thisValue,
+                Object locales, Object options) {
+            /* steps 1-2 */
+            double t = thisTimeValue(cx, thisValue);
+            /* step 2 */
+            if (Double.isNaN(t)) {
+                return "Invalid Date";
+            }
+            /* steps 4-5 */
+            options = ToDateTimeOptions(cx, options, "time", "time");
+            /* steps 6-7 */
+            DateTimeFormatConstructor ctor = (DateTimeFormatConstructor) cx
+                    .getIntrinsic(Intrinsics.Intl_DateTimeFormat);
+            DateTimeFormatObject dateTimeFormat = ctor.construct(cx, ctor, locales, options);
+            /* step 8 */
+            return FormatDateTime(cx, dateTimeFormat, t);
+        }
+
+        /**
+         * 20.3.4.41 Date.prototype.toString ( )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the string representation
+         */
+        @Function(name = "toString", arity = 0)
+        public static Object toString(ExecutionContext cx, Object thisValue) {
+            /* steps 1-3 */
+            double tv;
+            if (Type.isObject(thisValue) && !(thisValue instanceof DateObject)) {
+                tv = Double.NaN;
+            } else {
+                tv = thisTimeValue(cx, thisValue);
+            }
+            /* step 4 */
+            return ToDateString(cx.getRealm(), tv, DateString.DateTime);
+        }
+
+        /**
+         * 20.3.4.42 Date.prototype.toTimeString ( )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the time string representation
+         */
+        @Function(name = "toTimeString", arity = 0)
+        public static Object toTimeString(ExecutionContext cx, Object thisValue) {
+            double tv = thisTimeValue(cx, thisValue);
+            return ToDateString(cx.getRealm(), tv, DateString.Time);
+        }
+
+        /**
+         * 20.3.4.43 Date.prototype.toUTCString ( )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the date-time string in the UTC time zone
+         */
+        @Function(name = "toUTCString", arity = 0)
+        public static Object toUTCString(ExecutionContext cx, Object thisValue) {
+            double dateValue = thisTimeValue(cx, thisValue);
+            if (Double.isNaN(dateValue)) {
+                return "Invalid Date";
+            }
+            return DatePrototype.toUTCString(dateValue);
+        }
+
+        /**
+         * 20.3.4.44 Date.prototype.valueOf ( )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the date-time value of this date object
+         */
+        @Function(name = "valueOf", arity = 0)
+        public static Object valueOf(ExecutionContext cx, Object thisValue) {
+            return thisTimeValue(cx, thisValue);
+        }
+
+        /**
          * 20.3.4.45 Date.prototype[@@toPrimitive] ( hint )
          * 
          * @param cx
@@ -1317,14 +1309,13 @@ public final class DatePrototype extends OrdinaryObject implements Initializable
         @Function(name = "[Symbol.toPrimitive]", arity = 1, symbol = BuiltinSymbol.toPrimitive,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static Object toPrimitive(ExecutionContext cx, Object thisValue, Object hint) {
-            // TODO: is this function generic?
             /* steps 1-2 */
             if (!Type.isObject(thisValue)) {
                 throw newTypeError(cx, Messages.Key.NotObjectType);
             }
             /* step 5 */
             if (!Type.isString(hint)) {
-                throw newTypeError(cx, Messages.Key.InvalidToPrimitiveHint, "?");
+                throw newTypeError(cx, Messages.Key.NotString);
             }
             /* steps 3-5 */
             ToPrimitiveHint tryFirst;
@@ -1339,7 +1330,6 @@ public final class DatePrototype extends OrdinaryObject implements Initializable
             /* step 6 */
             return OrdinaryToPrimitive(cx, Type.objectValue(thisValue), tryFirst);
         }
-
     }
 
     /**
@@ -1412,16 +1402,16 @@ public final class DatePrototype extends OrdinaryObject implements Initializable
                 ((DateObject) thisValue).setDateValue(Double.NaN);
                 return Double.NaN;
             }
-            /* step 7 */
+            /* steps 7-8 */
             double intYear = ToInteger(y);
             double yyyy = (0 <= intYear && intYear <= 99 ? intYear + 1900 : y);
-            /* step 8 */
-            double d = MakeDay(yyyy, MonthFromTime(t), DateFromTime(t));
             /* step 9 */
-            double date = UTC(realm, MakeDate(d, TimeWithinDay(t)));
+            double d = MakeDay(yyyy, MonthFromTime(t), DateFromTime(t));
             /* step 10 */
-            ((DateObject) thisValue).setDateValue(TimeClip(date));
+            double date = UTC(realm, MakeDate(d, TimeWithinDay(t)));
             /* step 11 */
+            ((DateObject) thisValue).setDateValue(TimeClip(date));
+            /* step 12 */
             return ((DateObject) thisValue).getDateValue();
         }
 

@@ -509,9 +509,9 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
                 if (Type.isUndefinedOrNull(nextSource)) {
                     continue;
                 }
-                /* step 5.b.i-5.b.ii */
+                /* step 5.b.i-ii */
                 ScriptObject from = ToObject(cx, nextSource);
-                /* steps 5.b.iii-5.b.iv */
+                /* steps 5.b.iii-iv */
                 List<?> keys = from.ownPropertyKeys(cx);
                 /* step 5.c */
                 for (Object nextKey : keys) {
@@ -594,14 +594,15 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
             throw newTypeError(cx, Messages.Key.NotObjectType);
         }
         ScriptObject obj = Type.objectValue(o);
-        /* step 2 */
+        /* steps 2-3 */
         ScriptObject props = ToObject(cx, properties);
-        /* steps 3-4 */
+        /* steps 4-5 */
         List<?> keys = props.ownPropertyKeys(cx);
-        /* step 5 */
-        ArrayList<PropertyDescriptor> descriptors = new ArrayList<>();
-        ArrayList<Object> names = new ArrayList<>();
         /* step 6 */
+        int initialSize = Math.min(32, keys.size());
+        ArrayList<PropertyDescriptor> descriptors = new ArrayList<>(initialSize);
+        ArrayList<Object> names = new ArrayList<>(initialSize);
+        /* step 7 */
         for (Object nextKey : keys) {
             Property propDesc;
             if (nextKey instanceof String) {
@@ -616,13 +617,13 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
                 names.add(nextKey);
             }
         }
-        /* step 7 */
+        /* step 8 */
         for (int i = 0, size = names.size(); i < size; ++i) {
             Object p = names.get(i);
             PropertyDescriptor desc = descriptors.get(i);
             DefinePropertyOrThrow(cx, obj, p, desc);
         }
-        /* step 8 */
+        /* step 9 */
         return obj;
     }
 
@@ -641,7 +642,8 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
         /* steps 3-4 */
         List<?> keys = obj.ownPropertyKeys(cx);
         /* step 5 */
-        ArrayList<String> nameList = new ArrayList<>();
+        int initialSize = Math.min(32, keys.size());
+        ArrayList<String> nameList = new ArrayList<>(initialSize);
         /* step 6 */
         for (Object key : keys) {
             if (key instanceof String) {
@@ -667,7 +669,8 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
         /* steps 3-4 */
         List<?> keys = obj.ownPropertyKeys(cx);
         /* step 5 */
-        ArrayList<Symbol> nameList = new ArrayList<>();
+        int initialSize = Math.min(8, keys.size());
+        ArrayList<Symbol> nameList = new ArrayList<>(initialSize);
         /* step 6 */
         for (Object key : keys) {
             if (key instanceof Symbol) {

@@ -37,7 +37,7 @@ public final class MathImpl {
     Lg6 = 1.531383769920937332e-01,  /* 3FC39A09 D078C69F */
     Lg7 = 1.479819860511658591e-01;  /* 3FC2F112 DF3E5244 */
 
-    private static final double zero = 0.0;
+    private static final double zero = 0d;
 
     /**
      * Returns the base 2 logarithm of {@code x}.

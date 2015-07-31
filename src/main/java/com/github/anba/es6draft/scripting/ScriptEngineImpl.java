@@ -181,9 +181,6 @@ final class ScriptEngineImpl extends AbstractScriptEngine implements ScriptEngin
             return TypeConverter.toJava(result);
         } catch (ScriptException e) {
             throw new javax.script.ScriptException(e);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new javax.script.ScriptException(e);
         }
     }
 
@@ -204,9 +201,6 @@ final class ScriptEngineImpl extends AbstractScriptEngine implements ScriptEngin
             realm.getWorld().runEventLoop();
             return TypeConverter.toJava(result);
         } catch (ScriptException e) {
-            throw new javax.script.ScriptException(e);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
             throw new javax.script.ScriptException(e);
         }
     }

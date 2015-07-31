@@ -31,7 +31,7 @@ import com.github.anba.es6draft.runtime.internal.Bootstrap;
 /**
  * <h1>13 ECMAScript Language: Statements and Declarations</h1>
  * <ul>
- * <li>13.11 The switch Statement
+ * <li>13.12 The switch Statement
  * </ul>
  */
 final class SwitchStatementGenerator extends
@@ -132,7 +132,7 @@ final class SwitchStatementGenerator extends
     }
 
     /**
-     * 13.11.11 Runtime Semantics: Evaluation
+     * 13.12.11 Runtime Semantics: Evaluation
      */
     @Override
     public Completion visit(SwitchClause node, StatementVisitor mv) {
@@ -140,7 +140,7 @@ final class SwitchStatementGenerator extends
     }
 
     /**
-     * 13.11.11 Runtime Semantics: Evaluation
+     * 13.12.11 Runtime Semantics: Evaluation
      */
     @Override
     public Completion visit(SwitchStatement node, StatementVisitor mv) {
@@ -220,7 +220,7 @@ final class SwitchStatementGenerator extends
     }
 
     /**
-     * 13.11.9 Runtime Semantics: CaseBlockEvaluation
+     * 13.12.9 Runtime Semantics: CaseBlockEvaluation
      * 
      * @param node
      *            the switch statement
@@ -257,7 +257,10 @@ final class SwitchStatementGenerator extends
             emitGenericSwitch(clauses, labels, lblDefault, lblExit, switchValue, mv);
         } else {
             assert type == SwitchType.Default;
-            emitDefaultSwitch(clauses, labels, lblDefault, lblExit, switchValue, mv);
+            assert switchValue == null;
+            // Directly jump to default clause; since switch clauses before default clause are not
+            // emitted, jump instruction can be elided as well, so we directly fall into the default
+            // clause.
         }
 
         Completion result = Completion.Normal, lastResult = Completion.Normal;
@@ -310,40 +313,6 @@ final class SwitchStatementGenerator extends
         // stack: [lval, rval, cx?] -> [result]
         mv.invokedynamic(Bootstrap.getName(operator), Bootstrap.getMethodDescriptor(operator),
                 Bootstrap.getBootstrap(operator));
-    }
-
-    /**
-     * <h3>default-switch</h3>
-     * 
-     * <pre>
-     * switch (v) {
-     * case key1: ...
-     * case key2: ...
-     * default: ...
-     * }
-     * 
-     * goto :default
-     * </pre>
-     * 
-     * @param clauses
-     *            the switch clauses
-     * @param labels
-     *            the labels for each switch clause
-     * @param defaultClause
-     *            the label for the default clause
-     * @param lblExit
-     *            the exit label
-     * @param switchValue
-     *            the variable which holds the switch value
-     * @param mv
-     *            the statement visitor
-     */
-    private void emitDefaultSwitch(List<SwitchClause> clauses, Jump[] labels, Jump defaultClause,
-            Jump lblExit, Variable<?> switchValue, StatementVisitor mv) {
-        assert switchValue == null;
-        // directly jump to default clause; since switch clauses before default clause are not
-        // emitted, jump instruction can be elided as well, so we directly fall into the
-        // default clause
     }
 
     /**
@@ -780,15 +749,15 @@ final class SwitchStatementGenerator extends
         return entries;
     }
 
-    private static final long Entry(int value, int index) {
+    private static long Entry(int value, int index) {
         return ((long) value) << 32 | index;
     }
 
-    private static final int Index(long entry) {
+    private static int Index(long entry) {
         return (int) entry;
     }
 
-    private static final int Value(long entry) {
+    private static int Value(long entry) {
         return (int) (entry >> 32);
     }
 }

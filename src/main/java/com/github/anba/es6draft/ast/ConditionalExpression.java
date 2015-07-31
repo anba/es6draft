@@ -24,14 +24,29 @@ public final class ConditionalExpression extends Expression {
         this.otherwise = otherwise;
     }
 
+    /**
+     * Returns the test expression.
+     * 
+     * @return the test expression
+     */
     public Expression getTest() {
         return test;
     }
 
+    /**
+     * Returns the consequent expression.
+     * 
+     * @return the consequent expression
+     */
     public Expression getThen() {
         return then;
     }
 
+    /**
+     * Returns the alternate expression.
+     * 
+     * @return the alternate expression
+     */
     public Expression getOtherwise() {
         return otherwise;
     }

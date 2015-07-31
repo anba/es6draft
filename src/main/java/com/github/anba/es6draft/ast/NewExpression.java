@@ -12,7 +12,7 @@ import java.util.List;
  * <h1>12 ECMAScript Language: Expressions</h1><br>
  * <h2>12.3 Left-Hand-Side Expressions</h2>
  * <ul>
- * <li>12.3.2 The new Operator
+ * <li>12.3.3 The new Operator
  * </ul>
  */
 public final class NewExpression extends Expression {

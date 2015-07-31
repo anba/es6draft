@@ -11,7 +11,7 @@ import java.util.List;
 /**
  * <h1>13 ECMAScript Language: Statements and Declarations</h1>
  * <ul>
- * <li>13.11 The switch Statement
+ * <li>13.12 The switch Statement
  * </ul>
  */
 public final class SwitchClause extends AstNode {
@@ -25,19 +25,40 @@ public final class SwitchClause extends AstNode {
         this.statements = statements;
     }
 
+    /**
+     * Returns the <tt>CaseClause</tt> expression or {@code null} for <tt>DefaultClause</tt> nodes.
+     * 
+     * @return the expression or {@code null}
+     */
     public Expression getExpression() {
         return expression;
     }
 
+    /**
+     * Returns this node's statement list.
+     * 
+     * @return the statements
+     */
     public List<StatementListItem> getStatements() {
         return statements;
     }
 
+    /**
+     * Updates this node's statement list.
+     * 
+     * @param statements
+     *            the new statements
+     */
     public void setStatements(List<StatementListItem> statements) {
         assert statements != null;
         this.statements = statements;
     }
 
+    /**
+     * Returns {@code true} if this node is a <tt>DefaultClause</tt>.
+     * 
+     * @return {@code true} if <tt>DefaultClause</tt>
+     */
     public boolean isDefaultClause() {
         return expression == null;
     }

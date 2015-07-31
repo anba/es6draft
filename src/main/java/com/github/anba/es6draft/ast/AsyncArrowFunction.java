@@ -88,6 +88,11 @@ public final class AsyncArrowFunction extends Expression implements FunctionNode
         return parameters;
     }
 
+    /**
+     * Returns the expression for a concise async arrow function.
+     * 
+     * @return the expression or {@code null}
+     */
     public Expression getExpression() {
         return expression;
     }

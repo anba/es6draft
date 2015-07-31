@@ -138,8 +138,7 @@ public final class SimpleTypeTextifier extends Textifier {
                 sb.append(", ");
             }
         }
-        sb.append(')');
-        sb.append(getDescriptor(returnType));
+        sb.append(')').append(getDescriptor(returnType));
 
         return sb.toString();
     }

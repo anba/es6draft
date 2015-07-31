@@ -59,11 +59,11 @@ final class LanguageTagParser {
         private String extLang1, extLang2, extLang3;
         private String script;
         private String region;
-        private HashSet<String> variants = null;
-        private TreeMap<Character, String> extensions = null;
+        private HashSet<String> variants;
+        private TreeMap<Character, String> extensions;
         private String privateuse;
 
-        private LanguageTag(String input) {
+        LanguageTag(String input) {
             this.input = input;
         }
 
@@ -200,7 +200,7 @@ final class LanguageTagParser {
             return sb.toString();
         }
 
-        private static final int indexOf(String s, int ch, int fromIndex) {
+        private static int indexOf(String s, int ch, int fromIndex) {
             int index = s.indexOf(ch, fromIndex);
             return (index < 0 ? s.length() : index);
         }

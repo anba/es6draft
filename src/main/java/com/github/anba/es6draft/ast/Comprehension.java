@@ -21,10 +21,20 @@ public class Comprehension extends AstNode {
         this.expression = expression;
     }
 
+    /**
+     * Returns the list of comprehension qualifiers.
+     * 
+     * @return the list of comprehension qualifiers
+     */
     public List<ComprehensionQualifier> getList() {
         return list;
     }
 
+    /**
+     * Returns the comprehension expression.
+     * 
+     * @return the comprehension expression
+     */
     public Expression getExpression() {
         return expression;
     }

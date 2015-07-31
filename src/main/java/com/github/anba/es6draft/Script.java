@@ -32,7 +32,7 @@ public interface Script extends Program {
      *            the realm instance
      * @return the return value after evaluating this script
      */
-    Object evaluate(Realm realm);
+    Object evaluate(Realm realm); // TODO: Add default implementation
 
     /**
      * Evaluates this script in the given {@link ExecutionContext}.

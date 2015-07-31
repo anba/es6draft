@@ -190,8 +190,8 @@ public final class Property implements Cloneable {
 
     @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder();
-        sb.append("{");
+        StringBuilder sb = new StringBuilder(128);
+        sb.append('{');
         if (isDataDescriptor()) {
             sb.append("[[Writable]]: ").append(isWritable()).append(", ");
         }
@@ -203,7 +203,7 @@ public final class Property implements Cloneable {
             sb.append("[[Get]]: ").append(getGetter()).append(", ");
             sb.append("[[Set]]: ").append(getSetter());
         }
-        sb.append("}");
+        sb.append('}');
         return sb.toString();
     }
 
@@ -213,7 +213,7 @@ public final class Property implements Cloneable {
      * 
      * @return {@code true} if this object is an accessor property
      */
-    public final boolean isAccessorDescriptor() {
+    public boolean isAccessorDescriptor() {
         return type == PropertyType.Accessor;
     }
 
@@ -223,7 +223,7 @@ public final class Property implements Cloneable {
      * 
      * @return {@code true} if this object is a data property
      */
-    public final boolean isDataDescriptor() {
+    public boolean isDataDescriptor() {
         return type == PropertyType.Data;
     }
 
@@ -236,7 +236,7 @@ public final class Property implements Cloneable {
      *            the property descriptor
      * @return {@code true} if <var>desc</var> if a subset of this property
      */
-    public final boolean isSubset(PropertyDescriptor desc) {
+    public boolean isSubset(PropertyDescriptor desc) {
         if (isDataDescriptor()) {
             if (desc.hasValue() && !SameValue(desc.getValue(), value)) {
                 return false;
@@ -272,7 +272,7 @@ public final class Property implements Cloneable {
      * 
      * @return the value field
      */
-    public final Object getValue() {
+    public Object getValue() {
         return value;
     }
 
@@ -281,7 +281,7 @@ public final class Property implements Cloneable {
      * 
      * @return the getter field
      */
-    public final Callable getGetter() {
+    public Callable getGetter() {
         return getter;
     }
 
@@ -290,7 +290,7 @@ public final class Property implements Cloneable {
      * 
      * @return the setter field
      */
-    public final Callable getSetter() {
+    public Callable getSetter() {
         return setter;
     }
 
@@ -299,7 +299,7 @@ public final class Property implements Cloneable {
      * 
      * @return the writable flag
      */
-    public final boolean isWritable() {
+    public boolean isWritable() {
         return writable;
     }
 
@@ -308,7 +308,7 @@ public final class Property implements Cloneable {
      * 
      * @return the enumerable flag
      */
-    public final boolean isEnumerable() {
+    public boolean isEnumerable() {
         return enumerable;
     }
 
@@ -317,7 +317,7 @@ public final class Property implements Cloneable {
      * 
      * @return the configurable flag
      */
-    public final boolean isConfigurable() {
+    public boolean isConfigurable() {
         return configurable;
     }
 }

@@ -66,7 +66,7 @@ public final class NumberConstructor extends BuiltinConstructor implements Initi
         ExecutionContext calleeContext = calleeContext();
         /* step 1 (omitted) */
         /* steps 1-4 */
-        return args.length > 0 ? ToNumber(calleeContext, args[0]) : +0.0;
+        return args.length > 0 ? ToNumber(calleeContext, args[0]) : 0d;
         /* steps 6-8 (not applicable) */
     }
 
@@ -78,7 +78,7 @@ public final class NumberConstructor extends BuiltinConstructor implements Initi
             Object... args) {
         ExecutionContext calleeContext = calleeContext();
         /* steps 1-3 */
-        double n = args.length > 0 ? ToNumber(calleeContext, args[0]) : +0.0;
+        double n = args.length > 0 ? ToNumber(calleeContext, args[0]) : 0d;
         /* step 4 (not applicable) */
         /* steps 5-8 */
         return NumberCreate(calleeContext, n,

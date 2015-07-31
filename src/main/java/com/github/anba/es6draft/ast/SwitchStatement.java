@@ -15,7 +15,7 @@ import com.github.anba.es6draft.ast.scope.BlockScope;
 /**
  * <h1>13 ECMAScript Language: Statements and Declarations</h1>
  * <ul>
- * <li>13.11 The switch Statement
+ * <li>13.12 The switch Statement
  * </ul>
  */
 public final class SwitchStatement extends BreakableStatement implements ScopedNode {
@@ -37,10 +37,20 @@ public final class SwitchStatement extends BreakableStatement implements ScopedN
         return scope;
     }
 
+    /**
+     * Returns the {@code switch} expression node.
+     * 
+     * @return the expression
+     */
     public Expression getExpression() {
         return expression;
     }
 
+    /**
+     * Returns the list of <tt>CaseClause</tt> nodes.
+     * 
+     * @return the list of <tt>CaseClause</tt> nodes
+     */
     public List<SwitchClause> getClauses() {
         return clauses;
     }

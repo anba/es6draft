@@ -65,6 +65,7 @@ public class ParserException extends InternalException {
         } else if (line != -1) {
             message += " (line " + line + ")";
         }
+        // FIXME: Add file info
         return message;
     }
 

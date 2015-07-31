@@ -10,7 +10,7 @@ package com.github.anba.es6draft.ast;
  * <h1>12 ECMAScript Language: Expressions</h1><br>
  * <h2>12.3 Left-Hand-Side Expressions</h2>
  * <ul>
- * <li>12.3.4 The super Keyword
+ * <li>12.3.5 The super Keyword
  * </ul>
  */
 public final class SuperElementAccessor extends LeftHandSideExpression {
@@ -21,6 +21,11 @@ public final class SuperElementAccessor extends LeftHandSideExpression {
         this.expression = expression;
     }
 
+    /**
+     * Returns the element expression.
+     * 
+     * @return the element expression
+     */
     public Expression getExpression() {
         return expression;
     }

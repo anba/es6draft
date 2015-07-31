@@ -29,30 +29,28 @@ import com.github.anba.es6draft.runtime.modules.ImportEntry;
 /**
  * <h1>Static Semantics</h1>
  * <ul>
- * <li>BoundNames</li>
- * <li>ConstructorMethod</li>
- * <li>ContainsExpression</li>
- * <li>ExpectedArgumentCount</li>
- * <li>ExportEntries</li>
- * <li>HasInitializer</li>
- * <li>HasName</li>
- * <li>ImportedBindings</li>
- * <li>ImportEntries</li>
- * <li>IsAnonymousFunctionDefinition</li>
- * <li>IsConstantDeclaration</li>
- * <li>IsFunctionDefinition</li>
- * <li>IsIdentifierRef</li>
- * <li>IsSimpleParameterList</li>
- * <li>IsStrict</li>
- * <li>IsValidSimpleAssignmentTarget</li>
- * <li>LexicallyDeclaredNames</li>
- * <li>LexicallyScopedDeclarations</li>
- * <li>MethodDefinitions</li>
- * <li>ModuleRequests</li>
- * <li>PropName</li>
- * <li>SpecialMethod</li>
- * <li>VarDeclaredNames</li>
- * <li>VarScopedDeclarations</li>
+ * <li>BoundNames
+ * <li>ConstructorMethod
+ * <li>ContainsExpression
+ * <li>ExpectedArgumentCount
+ * <li>ExportEntries
+ * <li>HasInitializer
+ * <li>HasName
+ * <li>ImportedLocalNames
+ * <li>ImportEntries
+ * <li>IsAnonymousFunctionDefinition
+ * <li>IsConstantDeclaration
+ * <li>IsFunctionDefinition
+ * <li>IsIdentifierRef
+ * <li>IsSimpleParameterList
+ * <li>IsStrict
+ * <li>LexicallyDeclaredNames
+ * <li>LexicallyScopedDeclarations
+ * <li>ModuleRequests
+ * <li>PropName
+ * <li>SpecialMethod
+ * <li>VarDeclaredNames
+ * <li>VarScopedDeclarations
  * </ul>
  */
 public final class StaticSemantics {
@@ -105,8 +103,8 @@ public final class StaticSemantics {
     /**
      * Static Semantics: BoundNames
      * <ul>
-     * <li>12.1.3 Static Semantics: BoundNames
-     * <li>13.2.3.1 Static Semantics: BoundNames
+     * <li>12.1.2 Static Semantics: BoundNames
+     * <li>13.3.3.1 Static Semantics: BoundNames
      * </ul>
      * 
      * @param node
@@ -133,22 +131,7 @@ public final class StaticSemantics {
      * @return the bound names
      */
     public static List<Name> BoundNames(FormalParameterList node) {
-        return node.accept(BoundNames.INSTANCE, new InlineArrayList<Name>());
-    }
-
-    /**
-     * Static Semantics: BoundNames
-     * <ul>
-     * <li>14.1.3 Static Semantics: BoundNames
-     * <li>14.2.2 Static Semantics: BoundNames
-     * </ul>
-     * 
-     * @param node
-     *            the formal parameter node
-     * @return the bound names
-     */
-    public static List<Name> BoundNames(FormalParameter node) {
-        return node.accept(BoundNames.INSTANCE, new InlineArrayList<Name>());
+        return BoundNames(node.getFormals());
     }
 
     /**
@@ -163,6 +146,7 @@ public final class StaticSemantics {
      * @return the bound names
      */
     public static List<Name> BoundNames(List<FormalParameter> formals) {
+        // TODO: Some callers expect the returned list to be mutable.
         InlineArrayList<Name> list = new InlineArrayList<Name>();
         for (FormalParameter formalParameter : formals) {
             formalParameter.accept(BoundNames.INSTANCE, list);
@@ -173,7 +157,30 @@ public final class StaticSemantics {
     /**
      * Static Semantics: BoundNames
      * <ul>
-     * <li>13.2.1.2 Static Semantics: BoundNames
+     * <li>14.1.3 Static Semantics: BoundNames
+     * <li>14.2.2 Static Semantics: BoundNames
+     * </ul>
+     * 
+     * @param node
+     *            the formal parameter node
+     * @return the bound names
+     */
+    public static List<Name> BoundNames(FormalParameter node) {
+        BindingElementItem element = node.getElement();
+        if (element instanceof BindingElement) {
+            return BoundNames(((BindingElement) element).getBinding());
+        }
+        if (element instanceof BindingRestElement) {
+            return BoundNames(((BindingRestElement) element).getBindingIdentifier());
+        }
+        assert element instanceof BindingElision;
+        return node.accept(BoundNames.INSTANCE, new InlineArrayList<Name>());
+    }
+
+    /**
+     * Static Semantics: BoundNames
+     * <ul>
+     * <li>13.3.1.2 Static Semantics: BoundNames
      * <li>14.1.3 Static Semantics: BoundNames
      * <li>14.4.2 Static Semantics: BoundNames
      * <li>14.5.2 Static Semantics: BoundNames
@@ -188,7 +195,7 @@ public final class StaticSemantics {
     }
 
     /**
-     * 13.2.2.1 Static Semantics: BoundNames
+     * 13.3.2.1 Static Semantics: BoundNames
      * 
      * @param node
      *            the variable statement
@@ -199,7 +206,7 @@ public final class StaticSemantics {
     }
 
     /**
-     * 13.2.2.1 Static Semantics: BoundNames
+     * 13.3.2.1 Static Semantics: BoundNames
      * 
      * @param node
      *            the variable statement
@@ -210,7 +217,7 @@ public final class StaticSemantics {
     }
 
     /**
-     * 15.2.1.2 Static Semantics: BoundNames
+     * 15.2.2.2 Static Semantics: BoundNames
      * 
      * @param node
      *            the import declaration
@@ -221,7 +228,7 @@ public final class StaticSemantics {
     }
 
     /**
-     * 15.2.2.1 Static Semantics: BoundNames
+     * 15.2.3.2 Static Semantics: BoundNames
      * 
      * @param node
      *            the export declaration
@@ -261,7 +268,7 @@ public final class StaticSemantics {
     /**
      * Static Semantics: ContainsExpression
      * <ul>
-     * <li>13.2.3.2 Static Semantics: ContainsExpression
+     * <li>13.3.3.2 Static Semantics: ContainsExpression
      * <li>14.1.5 Static Semantics: ContainsExpression
      * <li>14.2.4 Static Semantics: ContainsExpression
      * </ul>
@@ -277,7 +284,7 @@ public final class StaticSemantics {
     /**
      * Static Semantics: ContainsExpression
      * <ul>
-     * <li>13.2.3.2 Static Semantics: ContainsExpression
+     * <li>13.3.3.2 Static Semantics: ContainsExpression
      * <li>14.1.5 Static Semantics: ContainsExpression
      * <li>14.2.4 Static Semantics: ContainsExpression
      * </ul>
@@ -297,7 +304,7 @@ public final class StaticSemantics {
     }
 
     /**
-     * 13.2.3.2 Static Semantics: ContainsExpression
+     * 13.3.3.2 Static Semantics: ContainsExpression
      * 
      * @param element
      *            the binding element node
@@ -311,7 +318,7 @@ public final class StaticSemantics {
     }
 
     /**
-     * 13.2.3.2 Static Semantics: ContainsExpression
+     * 13.3.3.2 Static Semantics: ContainsExpression
      * 
      * @param binding
      *            the binding node
@@ -329,7 +336,7 @@ public final class StaticSemantics {
     }
 
     /**
-     * 13.2.3.2 Static Semantics: ContainsExpression
+     * 13.3.3.2 Static Semantics: ContainsExpression
      * 
      * @param pattern
      *            the array binding pattern node
@@ -345,7 +352,7 @@ public final class StaticSemantics {
     }
 
     /**
-     * 13.2.3.2 Static Semantics: ContainsExpression
+     * 13.3.3.2 Static Semantics: ContainsExpression
      * 
      * @param pattern
      *            the object binding pattern node
@@ -370,7 +377,7 @@ public final class StaticSemantics {
      * Static Semantics: ExpectedArgumentCount
      * <ul>
      * <li>14.1.6 Static Semantics: ExpectedArgumentCount
-     * <li>14.2.6 Static Semantics: ExpectedArgumentCount
+     * <li>14.2.5 Static Semantics: ExpectedArgumentCount
      * <li>14.3.3 Static Semantics: ExpectedArgumentCount
      * </ul>
      * 
@@ -394,7 +401,7 @@ public final class StaticSemantics {
     }
 
     /**
-     * 13.2.3.3 Static Semantics: HasInitializer
+     * 13.3.3.3 Static Semantics: HasInitializer
      * 
      * @param node
      *            the binding element
@@ -425,8 +432,8 @@ public final class StaticSemantics {
      * Static Semantics: HasName
      * <ul>
      * <li>14.1.8 Static Semantics: HasName
-     * <li>14.2.9 Static Semantics: HasName
-     * <li>14.4.6 Static Semantics: HasName
+     * <li>14.2.7 Static Semantics: HasName
+     * <li>14.4.7 Static Semantics: HasName
      * </ul>
      * 
      * @param <FUNCTION>
@@ -453,10 +460,11 @@ public final class StaticSemantics {
     /**
      * Static Semantics: IsConstantDeclaration
      * <ul>
-     * <li>13.2.1.3 Static Semantics: IsConstantDeclaration
+     * <li>13.3.1.3 Static Semantics: IsConstantDeclaration
      * <li>14.1.10 Static Semantics: IsConstantDeclaration
-     * <li>14.4.7 Static Semantics: IsConstantDeclaration
+     * <li>14.4.8 Static Semantics: IsConstantDeclaration
      * <li>14.5.7 Static Semantics: IsConstantDeclaration
+     * <li>15.2.3.7 Static Semantics: IsConstantDeclaration
      * </ul>
      * 
      * @param node
@@ -470,7 +478,7 @@ public final class StaticSemantics {
     /**
      * Static Semantics: IsFunctionDefinition
      * <ul>
-     * <li>12.2.0.2 Static Semantics: IsFunctionDefinition
+     * <li>12.2.1.3 Static Semantics: IsFunctionDefinition
      * <li>12.2.10.2 Static Semantics: IsFunctionDefinition
      * <li>12.3.1.2 Static Semantics: IsFunctionDefinition
      * <li>12.4.2 Static Semantics: IsFunctionDefinition
@@ -486,7 +494,7 @@ public final class StaticSemantics {
      * <li>12.14.2 Static Semantics: IsFunctionDefinition
      * <li>12.15.1 Static Semantics: IsFunctionDefinition
      * <li>14.1.11 Static Semantics: IsFunctionDefinition
-     * <li>14.4.8 Static Semantics: IsFunctionDefinition
+     * <li>14.4.9 Static Semantics: IsFunctionDefinition
      * <li>14.5.8 Static Semantics: IsFunctionDefinition
      * </ul>
      * 
@@ -501,7 +509,7 @@ public final class StaticSemantics {
     /**
      * Static Semantics: IsIdentifierRef
      * <ul>
-     * <li>12.2.0.3 Static Semantics: IsIdentifierRef
+     * <li>12.2.1.4 Static Semantics: IsIdentifierRef
      * <li>12.3.1.4 Static Semantics: IsIdentifierRef
      * </ul>
      * 
@@ -517,7 +525,7 @@ public final class StaticSemantics {
      * Static Semantics: IsSimpleParameterList
      * <ul>
      * <li>14.1.12 Static Semantics: IsSimpleParameterList
-     * <li>14.2.9 Static Semantics: IsSimpleParameterList
+     * <li>14.2.8 Static Semantics: IsSimpleParameterList
      * </ul>
      * 
      * @param formals
@@ -532,7 +540,7 @@ public final class StaticSemantics {
      * Static Semantics: IsSimpleParameterList
      * <ul>
      * <li>14.1.12 Static Semantics: IsSimpleParameterList
-     * <li>14.2.9 Static Semantics: IsSimpleParameterList
+     * <li>14.2.8 Static Semantics: IsSimpleParameterList
      * </ul>
      * 
      * @param formals
@@ -944,30 +952,31 @@ public final class StaticSemantics {
     public static Set<String> ModuleRequests(Module node) {
         LinkedHashSet<String> requests = new LinkedHashSet<>();
         for (ModuleItem item : node.getStatements()) {
+            String moduleSpecifier;
             if (item instanceof ExportDeclaration) {
                 ExportDeclaration export = (ExportDeclaration) item;
                 switch (export.getType()) {
                 case All:
-                case External: {
-                    String moduleSpecifier = export.getModuleSpecifier();
-                    assert moduleSpecifier != null;
-                    requests.add(moduleSpecifier);
+                case External:
+                    moduleSpecifier = export.getModuleSpecifier();
                     break;
-                }
                 case Local:
                 case Variable:
                 case Declaration:
                 case DefaultHoistableDeclaration:
                 case DefaultClassDeclaration:
                 case DefaultExpression:
+                    continue;
                 default:
-                    break;
+                    throw new AssertionError();
                 }
             } else if (item instanceof ImportDeclaration) {
-                String moduleSpecifier = ((ImportDeclaration) item).getModuleSpecifier();
-                assert moduleSpecifier != null;
-                requests.add(moduleSpecifier);
+                moduleSpecifier = ((ImportDeclaration) item).getModuleSpecifier();
+            } else {
+                continue;
             }
+            assert moduleSpecifier != null;
+            requests.add(moduleSpecifier);
         }
         return requests;
     }
@@ -1056,8 +1065,9 @@ public final class StaticSemantics {
         case BaseConstructor:
         case DerivedConstructor:
         case Function:
-        default:
             return false;
+        default:
+            throw new AssertionError();
         }
     }
 

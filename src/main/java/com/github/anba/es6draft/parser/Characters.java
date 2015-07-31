@@ -428,7 +428,7 @@ public final class Characters {
      *            the character to test
      * @return {@code true} if the character is an ASCII alphabetical letter
      */
-    public static final boolean isASCIIAlpha(int c) {
+    public static boolean isASCIIAlpha(int c) {
         return 'a' <= (c | 0x20) && (c | 0x20) <= 'z';
     }
 
@@ -440,7 +440,7 @@ public final class Characters {
      *            the character to test
      * @return {@code true} if the character is an ASCII alphanumeric letter or underscore
      */
-    public static final boolean isASCIIAlphaNumericUnderscore(int c) {
+    public static boolean isASCIIAlphaNumericUnderscore(int c) {
         return ('0' <= c && c <= '9') || ('a' <= (c | 0x20) && (c | 0x20) <= 'z') || c == '_';
     }
 }

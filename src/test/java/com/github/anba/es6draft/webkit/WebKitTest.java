@@ -80,6 +80,7 @@ public final class WebKitTest {
         protected Set<CompatibilityOption> getOptions() {
             EnumSet<CompatibilityOption> options = EnumSet.copyOf(super.getOptions());
             options.add(CompatibilityOption.ArrayIncludes);
+            options.add(CompatibilityOption.ArrayBufferMissingLength);
             return options;
         }
     };

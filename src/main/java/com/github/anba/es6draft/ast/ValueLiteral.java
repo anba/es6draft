@@ -10,7 +10,7 @@ package com.github.anba.es6draft.ast;
  * <h1>12 ECMAScript Language: Expressions</h1><br>
  * <h2>12.2 Primary Expression</h2>
  * <ul>
- * <li>12.2.3 Literals
+ * <li>12.2.4 Literals
  * </ul>
  */
 public abstract class ValueLiteral<T> extends Literal {
@@ -19,7 +19,7 @@ public abstract class ValueLiteral<T> extends Literal {
     }
 
     /**
-     * Returns the value.
+     * Returns the value of this literal node.
      * 
      * @return the value
      */

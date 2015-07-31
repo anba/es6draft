@@ -12,7 +12,7 @@ import java.util.Set;
 /**
  * <h1>13 ECMAScript Language: Statements and Declarations</h1>
  * <ul>
- * <li>13.12 Labelled Statements
+ * <li>13.13 Labelled Statements
  * </ul>
  */
 public final class LabelledStatement extends Statement implements AbruptNode {
@@ -39,9 +39,9 @@ public final class LabelledStatement extends Statement implements AbruptNode {
     }
 
     /**
-     * Returns <code>true</code> if this node is the target of a BreakStatement.
+     * Returns <code>true</code> if this node is the target of a <tt>BreakStatement</tt>.
      * 
-     * @return <code>true</code> if this node is the target of a BreakStatement
+     * @return <code>true</code> if this node is the target of a <tt>BreakStatement</tt>
      */
     public boolean hasBreak() {
         return getAbrupt().contains(Abrupt.Break);

@@ -170,8 +170,9 @@ public final class WeakMapPrototype extends OrdinaryObject implements Initializa
             if (!Type.isObject(key)) {
                 throw newTypeError(cx, Messages.Key.NotObjectType);
             }
-            /* steps 6-9 */
+            /* steps 6-8 */
             entries.put(Type.objectValue(key), value);
+            /* step 9 */
             return m;
         }
 

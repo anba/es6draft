@@ -10,21 +10,16 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.CreateIterResu
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
-import java.lang.invoke.MethodHandle;
-import java.util.Objects;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-import java.util.concurrent.SynchronousQueue;
-
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.internal.GeneratorThread;
+import com.github.anba.es6draft.runtime.internal.CodeContinuation;
+import com.github.anba.es6draft.runtime.internal.Continuation;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.ResumptionPoint;
 import com.github.anba.es6draft.runtime.internal.ReturnValue;
 import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
+import com.github.anba.es6draft.runtime.internal.ThreadContinuation;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
@@ -53,7 +48,7 @@ public final class GeneratorObject extends OrdinaryObject {
     private ExecutionContext context;
 
     // internal generator implementation
-    private Generator generator;
+    private Continuation<ScriptObject> continuation;
 
     /**
      * Constructs a new Generator object.
@@ -100,7 +95,7 @@ public final class GeneratorObject extends OrdinaryObject {
         this.state = GeneratorState.Completed;
         this.context = null;
         this.code = null;
-        this.generator = null;
+        this.continuation = null;
     }
 
     /**
@@ -120,8 +115,12 @@ public final class GeneratorObject extends OrdinaryObject {
         this.code = code;
         this.state = GeneratorState.SuspendedStart;
         this.context.setCurrentGenerator(this);
-        this.generator = code.is(RuntimeInfo.FunctionFlags.ResumeGenerator) ? new ResumeGenerator(
-                this) : new ThreadGenerator(this);
+        GeneratorHandler handler = new GeneratorHandler(this);
+        if (code.is(RuntimeInfo.FunctionFlags.ResumeGenerator)) {
+            this.continuation = new CodeContinuation<>(handler);
+        } else {
+            this.continuation = new ThreadContinuation<>(handler);
+        }
     }
 
     /**
@@ -142,11 +141,11 @@ public final class GeneratorObject extends OrdinaryObject {
             return CreateIterResultObject(cx, UNDEFINED, true);
         case SuspendedStart:
             this.state = GeneratorState.Executing;
-            return generator.start(cx);
+            return continuation.start(cx);
         case SuspendedYield:
         default:
             this.state = GeneratorState.Executing;
-            return generator.resume(cx, value);
+            return continuation.resume(cx, value);
         }
     }
 
@@ -172,7 +171,7 @@ public final class GeneratorObject extends OrdinaryObject {
         case SuspendedYield:
         default:
             this.state = GeneratorState.Executing;
-            return generator._return(cx, new ReturnValue(value));
+            return continuation._return(cx, value);
         }
     }
 
@@ -198,7 +197,7 @@ public final class GeneratorObject extends OrdinaryObject {
         case SuspendedYield:
         default:
             this.state = GeneratorState.Executing;
-            return generator._throw(cx, ScriptException.create(value));
+            return continuation._throw(cx, ScriptException.create(value));
         }
     }
 
@@ -214,271 +213,42 @@ public final class GeneratorObject extends OrdinaryObject {
      */
     Object yield(ScriptObject value) throws ReturnValue {
         assert state == GeneratorState.Executing : "yield from: " + state;
-        return generator.yield(value);
+        return continuation.suspend(value);
     }
 
-    /**
-     * Generator implementation abstraction.
-     */
-    private interface Generator {
-        /**
-         * Starts generator execution.
-         * 
-         * @param cx
-         *            the execution context
-         * @return the iterator result object
-         */
-        ScriptObject start(ExecutionContext cx);
-
-        /**
-         * Resumes generator execution.
-         * 
-         * @param cx
-         *            the execution context
-         * @param value
-         *            the resumption value
-         * @return the iterator result object
-         */
-        ScriptObject resume(ExecutionContext cx, Object value);
-
-        /**
-         * Resumes generator execution with a return instruction.
-         * 
-         * @param cx
-         *            the execution context
-         * @param value
-         *            the return value
-         * @return the iterator result object
-         */
-        ScriptObject _return(ExecutionContext cx, ReturnValue value);
-
-        /**
-         * Resumes generator execution with an exception.
-         * 
-         * @param cx
-         *            the execution context
-         * @param exception
-         *            the exception object
-         * @return the iterator result object
-         */
-        ScriptObject _throw(ExecutionContext cx, ScriptException exception);
-
-        /**
-         * Yield support method (optional)
-         * 
-         * @param value
-         *            the iterator result object
-         * @return the yield value
-         * @throws ReturnValue
-         *             to signal an abrupt Return completion
-         */
-        Object yield(ScriptObject value) throws ReturnValue;
-    }
-
-    /**
-     * ResumptionPoint-based generator implementation.
-     */
-    private static final class ResumeGenerator implements Generator {
+    private static final class GeneratorHandler implements Continuation.Handler<ScriptObject> {
         private final GeneratorObject generatorObject;
-        private ResumptionPoint resumptionPoint = null;
 
-        public ResumeGenerator(GeneratorObject generatorObject) {
+        GeneratorHandler(GeneratorObject generatorObject) {
             this.generatorObject = generatorObject;
         }
 
         @Override
-        public ScriptObject start(ExecutionContext cx) {
-            assert resumptionPoint == null;
-            return execute(cx);
+        public Object evaluate(ResumptionPoint resumptionPoint) throws Throwable {
+            GeneratorObject genObj = generatorObject;
+            return genObj.code.handle().invokeExact(genObj.context, resumptionPoint);
         }
 
         @Override
-        public ScriptObject resume(ExecutionContext cx, Object value) {
-            assert resumptionPoint != null && value != null;
-            resumptionPoint.setResumeValue(value);
-            return execute(cx);
-        }
-
-        @Override
-        public ScriptObject _return(ExecutionContext cx, ReturnValue value) {
-            assert resumptionPoint != null && value != null;
-            resumptionPoint.setResumeValue(value);
-            return execute(cx);
-        }
-
-        @Override
-        public ScriptObject _throw(ExecutionContext cx, ScriptException exception) {
-            assert resumptionPoint != null && exception != null;
-            resumptionPoint.setResumeValue(exception);
-            return execute(cx);
-        }
-
-        @Override
-        public Object yield(ScriptObject value) {
-            // implemented in generated code
-            throw new IllegalStateException();
-        }
-
-        private ResumptionPoint getResumptionPoint() {
-            ResumptionPoint point = resumptionPoint;
-            resumptionPoint = null;
-            return point;
-        }
-
-        private ScriptObject execute(ExecutionContext cx) {
-            GeneratorObject genObject = generatorObject;
-            Object result;
-            try {
-                result = evaluate(genObject.code.handle(), genObject.context, getResumptionPoint());
-            } catch (RuntimeException | Error e) {
-                genObject.close();
-                throw e;
-            } catch (Throwable t) {
-                genObject.close();
-                throw new RuntimeException(t);
-            }
-            if (result instanceof ResumptionPoint) {
-                genObject.suspend();
-                resumptionPoint = (ResumptionPoint) result;
-                Object value = resumptionPoint.getSuspendValue();
-                assert value instanceof ScriptObject : Objects.toString(value);
-                return (ScriptObject) value;
-            }
-            genObject.close();
-            assert result != null;
-            return CreateIterResultObject(cx, result, true);
-        }
-
-        private static Object evaluate(MethodHandle handle, ExecutionContext cx,
-                ResumptionPoint point) throws Throwable {
-            return handle.invokeExact(cx, point);
-        }
-    }
-
-    /**
-     * Thread-based generator implementation.
-     */
-    private static final class ThreadGenerator implements Generator {
-        private static final Object COMPLETED = new Object();
-        private final GeneratorObject generatorObject;
-        private Future<Object> future;
-        private SynchronousQueue<Object> out;
-        private SynchronousQueue<Object> in;
-
-        public ThreadGenerator(GeneratorObject generatorObject) {
-            this.generatorObject = generatorObject;
-        }
-
-        @Override
-        public ScriptObject start(ExecutionContext cx) {
-            start0();
-            return execute0(cx);
-        }
-
-        @Override
-        public ScriptObject resume(ExecutionContext cx, Object value) {
-            resume0(value);
-            return execute0(cx);
-        }
-
-        @Override
-        public ScriptObject _return(ExecutionContext cx, ReturnValue value) {
-            resume0(value);
-            return execute0(cx);
-        }
-
-        @Override
-        public ScriptObject _throw(ExecutionContext cx, ScriptException exception) {
-            resume0(exception);
-            return execute0(cx);
-        }
-
-        @Override
-        public Object yield(ScriptObject value) throws ReturnValue {
-            try {
-                this.out.put(value);
-                Object resumptionValue = this.in.take();
-                if (resumptionValue instanceof ScriptException) {
-                    throw (ScriptException) resumptionValue;
-                }
-                if (resumptionValue instanceof ReturnValue) {
-                    throw (ReturnValue) resumptionValue;
-                }
-                return resumptionValue;
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-        }
-
-        private void start0() {
-            in = new SynchronousQueue<>();
-            out = new SynchronousQueue<>();
-            future = GeneratorThread.submit(new Callable<Object>() {
-                @Override
-                public Object call() throws Exception {
-                    Object result;
-                    try {
-                        result = evaluate(generatorObject.code.handle(), generatorObject.context);
-                    } catch (ScriptException | StackOverflowError e) {
-                        result = e;
-                    } catch (ReturnValue e) {
-                        result = e.getValue();
-                    } catch (RuntimeException | Error e) {
-                        out.put(COMPLETED);
-                        throw e;
-                    } catch (Throwable e) {
-                        out.put(COMPLETED);
-                        throw new RuntimeException(e);
-                    }
-                    out.put(COMPLETED);
-                    assert result != null;
-                    return result;
-                }
-            });
-        }
-
-        private void resume0(Object value) {
-            try {
-                in.put(value);
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-        }
-
-        private ScriptObject execute0(ExecutionContext cx) {
-            if (!future.isDone()) {
-                Object result;
-                try {
-                    result = out.take();
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
-                }
-                if (result != COMPLETED) {
-                    generatorObject.suspend();
-                    return (ScriptObject) result;
-                }
-            }
-
+        public void close() {
             generatorObject.close();
-            Object result;
-            try {
-                result = future.get();
-            } catch (ExecutionException e) {
-                throw new RuntimeException(e.getCause());
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-            if (result instanceof ScriptException) {
-                throw (ScriptException) result;
-            }
-            if (result instanceof StackOverflowError) {
-                throw (StackOverflowError) result;
-            }
+        }
+
+        @Override
+        public ScriptObject suspendWith(ExecutionContext cx, Object value) {
+            generatorObject.suspend();
+            // The iteration result object was already constructed at the call site.
+            return (ScriptObject) value;
+        }
+
+        @Override
+        public ScriptObject returnWith(ExecutionContext cx, Object result) {
             return CreateIterResultObject(cx, result, true);
         }
 
-        private static Object evaluate(MethodHandle handle, ExecutionContext cx) throws Throwable {
-            return handle.invokeExact(cx, (ResumptionPoint) null);
+        @Override
+        public ScriptObject returnWith(ExecutionContext cx, ScriptException exception) {
+            throw exception;
         }
     }
 }

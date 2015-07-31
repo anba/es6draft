@@ -15,8 +15,8 @@ package com.github.anba.es6draft.ast;
 public final class AssignmentExpression extends Expression {
     public enum Operator {
         ASSIGN("="), ASSIGN_ADD("+="), ASSIGN_SUB("-="), ASSIGN_MUL("*="), ASSIGN_DIV("/="),
-        ASSIGN_MOD("%="), ASSIGN_SHL("<<="), ASSIGN_SHR(">>="), ASSIGN_USHR(">>>="), ASSIGN_BITAND(
-                "&="), ASSIGN_BITOR("|="), ASSIGN_BITXOR("^="), ASSIGN_EXP("**=");
+        ASSIGN_MOD("%="), ASSIGN_SHL("<<="), ASSIGN_SHR(">>="), ASSIGN_USHR(">>>="),
+        ASSIGN_BITAND("&="), ASSIGN_BITOR("|="), ASSIGN_BITXOR("^="), ASSIGN_EXP("**=");
 
         private String name;
 
@@ -24,7 +24,13 @@ public final class AssignmentExpression extends Expression {
             this.name = name;
         }
 
+        /**
+         * Returns the assignment operator name.
+         * 
+         * @return the operator name
+         */
         public String getName() {
+            // TODO: This is not a 'name'.
             return name;
         }
     }
@@ -41,14 +47,29 @@ public final class AssignmentExpression extends Expression {
         this.right = right;
     }
 
+    /**
+     * Returns the assignment operator.
+     * 
+     * @return the assignment operator
+     */
     public Operator getOperator() {
         return operator;
     }
 
+    /**
+     * Returns the left-hand side assignment target.
+     * 
+     * @return the assignment target
+     */
     public LeftHandSideExpression getLeft() {
         return left;
     }
 
+    /**
+     * Returns the right-hand side value expression.
+     * 
+     * @return the value expression
+     */
     public Expression getRight() {
         return right;
     }
@@ -59,6 +80,12 @@ public final class AssignmentExpression extends Expression {
         return this;
     }
 
+    /**
+     * Returns {@code true} if the completion value is used.
+     * 
+     * @return {@code true} if the completion value is used
+     * @see #emptyCompletion()
+     */
     public boolean hasCompletion() {
         return completion;
     }

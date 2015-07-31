@@ -10,7 +10,7 @@ package com.github.anba.es6draft.ast;
  * <h1>12 ECMAScript Language: Expressions</h1><br>
  * <h2>12.3 Left-Hand-Side Expressions</h2>
  * <ul>
- * <li>12.3.6 Tagged Templates
+ * <li>12.3.7 Tagged Templates
  * </ul>
  */
 public final class TemplateCallExpression extends Expression {
@@ -24,10 +24,20 @@ public final class TemplateCallExpression extends Expression {
         this.template = template;
     }
 
+    /**
+     * Returns the template call's base expression.
+     * 
+     * @return the callee expression
+     */
     public Expression getBase() {
         return base;
     }
 
+    /**
+     * Returns the tagged template literal.
+     * 
+     * @return the template literal
+     */
     public TemplateLiteral getTemplate() {
         return template;
     }

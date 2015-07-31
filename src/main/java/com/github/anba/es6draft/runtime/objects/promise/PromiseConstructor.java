@@ -76,9 +76,8 @@ public final class PromiseConstructor extends BuiltinConstructor implements Init
      */
     @Override
     public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
-        ExecutionContext calleeContext = calleeContext();
         /* step 1 */
-        throw newTypeError(calleeContext, Messages.Key.InvalidCall, "Promise");
+        throw newTypeError(calleeContext(), Messages.Key.InvalidCall, "Promise");
     }
 
     /**
@@ -95,23 +94,21 @@ public final class PromiseConstructor extends BuiltinConstructor implements Init
         if (!IsCallable(executor)) {
             throw newTypeError(calleeContext, Messages.Key.NotCallable);
         }
-        /* steps 3-4 */
+        /* steps 3-7 */
         PromiseObject promise = OrdinaryCreateFromConstructor(calleeContext, newTarget,
                 Intrinsics.PromisePrototype, GetPromiseAllocator(calleeContext.getRealm()));
-        /* steps 5-8 */
-        promise.initialize(newTarget);
-        /* step 9 */
+        /* step 8 */
         ResolvingFunctions resolvingFunctions = CreateResolvingFunctions(calleeContext, promise);
-        /* steps 10-11 */
+        /* steps 9-10 */
         try {
-            /* step 10 */
+            /* step 9 */
             ((Callable) executor).call(calleeContext, UNDEFINED, resolvingFunctions.getResolve(),
                     resolvingFunctions.getReject());
         } catch (ScriptException e) {
-            /* step 11 */
+            /* step 10 */
             resolvingFunctions.getReject().call(calleeContext, UNDEFINED, e.getValue());
         }
-        /* step 12 */
+        /* step 11 */
         return promise;
     }
 
@@ -184,6 +181,7 @@ public final class PromiseConstructor extends BuiltinConstructor implements Init
             try {
                 return PerformPromiseAll(cx, iterator, c, promiseCapability);
             } catch (ScriptException e) {
+                /* step 12 */
                 try {
                     iterator.close(e);
                 } catch (ScriptException inner) {
@@ -222,6 +220,7 @@ public final class PromiseConstructor extends BuiltinConstructor implements Init
             try {
                 return PerformPromiseRace(cx, iterator, c, promiseCapability);
             } catch (ScriptException e) {
+                /* step 12 */
                 try {
                     iterator.close(e);
                 } catch (ScriptException inner) {
@@ -340,7 +339,7 @@ public final class PromiseConstructor extends BuiltinConstructor implements Init
             values.add(null);
             /* steps 6.i-j */
             Object nextPromise = Invoke(cx, constructor, "resolve", nextValue);
-            /* steps 6.k-q */
+            /* steps 6.k-p */
             PromiseAllResolveElementFunction resolveElement = new PromiseAllResolveElementFunction(
                     cx.getRealm(), new AtomicBoolean(false), index, values, resultCapability,
                     remainingElementsCount);
@@ -454,9 +453,9 @@ public final class PromiseConstructor extends BuiltinConstructor implements Init
         while (iterator.hasNext()) {
             /* steps 1.a-c, 1.e-g */
             Object nextValue = iterator.next();
-            /* steps 1.f-1.g */
+            /* steps 1.f-g */
             Object nextPromise = Invoke(cx, constructor, "resolve", nextValue);
-            /* steps 1.h-1.i */
+            /* steps 1.h-i */
             Invoke(cx, nextPromise, "then", promiseCapability.getResolve(),
                     promiseCapability.getReject());
         }

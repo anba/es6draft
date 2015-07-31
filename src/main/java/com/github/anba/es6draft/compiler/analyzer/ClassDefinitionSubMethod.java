@@ -26,12 +26,12 @@ final class ClassDefinitionSubMethod extends ListSubMethod<ClassDefinition> {
         }
 
         @Override
-        protected final PropertyDefinition createReplacement() {
+        protected PropertyDefinition createReplacement() {
             throw new AssertionError();
         }
 
         @Override
-        protected final int getReplacementSize() {
+        protected int getReplacementSize() {
             throw new AssertionError();
         }
     }

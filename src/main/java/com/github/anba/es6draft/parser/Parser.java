@@ -145,7 +145,6 @@ public final class Parser {
         boolean yieldAllowed = false;
         boolean awaitAllowed = false;
         boolean returnAllowed = false;
-        boolean inArrowParameters = false;
         boolean legacyGenerator = false;
         boolean explicitStrict = false;
         boolean isDerivedClassConstructor = false;
@@ -1268,28 +1267,6 @@ public final class Parser {
     private void addVarScopedDeclaration(VariableStatement decl) {
         context.topContext.addVarScopedDeclaration(decl);
     }
-
-    /**
-     * <strong>[13.1] Block</strong>
-     * <p>
-     * Static Semantics: Early Errors<br>
-     * <ul>
-     * <li>It is a Syntax Error if any element of the LexicallyDeclaredNames of StatementList also
-     * occurs in the VarDeclaredNames of StatementList.
-     * </ul>
-     * 
-     * @param binding
-     *            the binding to add to the variable scope
-     */
-    private void addVarDeclaredName(Binding binding) {
-        if (binding instanceof BindingIdentifier) {
-            addVarDeclaredName((BindingIdentifier) binding);
-        } else {
-            assert binding instanceof BindingPattern;
-            addVarDeclaredName((BindingPattern) binding);
-        }
-    }
-
     private void addVarDeclaredName(BindingIdentifier bindingIdentifier) {
         Name name = BoundName(bindingIdentifier);
         addVarDeclaredName(bindingIdentifier, name);
@@ -1301,6 +1278,20 @@ public final class Parser {
         }
     }
 
+    /**
+     * <strong>[13.2] Block</strong>
+     * <p>
+     * Static Semantics: Early Errors<br>
+     * <ul>
+     * <li>It is a Syntax Error if any element of the LexicallyDeclaredNames of StatementList also
+     * occurs in the VarDeclaredNames of StatementList.
+     * </ul>
+     * 
+     * @param binding
+     *            the binding to add to the variable scope
+     * @param name
+     *            the var declared name
+     */
     private void addVarDeclaredName(Binding binding, Name name) {
         addVarDeclaredName(binding, context, name);
         for (ScopeContext next = context.scopeContext.parent; next != null; next = next.parent) {
@@ -1353,7 +1344,7 @@ public final class Parser {
     }
 
     /**
-     * <strong>[13.1] Block</strong>
+     * <strong>[13.2] Block</strong>
      * <p>
      * Static Semantics: Early Errors<br>
      * <ul>
@@ -2207,7 +2198,7 @@ public final class Parser {
                     options, parserOptions);
             scope.node = module;
 
-            module_EarlyErrors(module);
+            module_EarlyErrors();
 
             return module;
         } finally {
@@ -2217,11 +2208,8 @@ public final class Parser {
 
     /**
      * 15.2.1.1 Static Semantics: Early Errors
-     * 
-     * @param module
-     *            the module node
      */
-    private void module_EarlyErrors(Module module) {
+    private void module_EarlyErrors() {
         assert context.scopeContext == context.modContext;
 
         ModuleContext scope = context.modContext;
@@ -2272,7 +2260,7 @@ public final class Parser {
     }
 
     /**
-     * <strong>[15.2.1] Imports</strong>
+     * <strong>[15.2.2] Imports</strong>
      * 
      * <pre>
      * ImportDeclaration :
@@ -2300,7 +2288,7 @@ public final class Parser {
     }
 
     /**
-     * <strong>[15.2.1] Imports</strong>
+     * <strong>[15.2.2] Imports</strong>
      * 
      * <pre>
      * FromClause :
@@ -2315,7 +2303,7 @@ public final class Parser {
     }
 
     /**
-     * <strong>[15.2.1] Imports</strong>
+     * <strong>[15.2.2] Imports</strong>
      * 
      * <pre>
      * ImportClause :
@@ -2335,6 +2323,13 @@ public final class Parser {
         BindingIdentifier defaultEntry = null;
         BindingIdentifier nameSpace = null;
         List<ImportSpecifier> namedImports = emptyList();
+        if (isEnabled(CompatibilityOption.TypeAnnotation)) {
+            // import typeof <ImportClause> from "module";
+            // import type <ImportClause> from "module";
+            if (token() == Token.TYPEOF || (isName("type") && !(peek() == Token.COMMA || isNextName("from")))) {
+                consume(token());
+            }
+        }
         if (token() == Token.LC) {
             namedImports = namedImports();
         } else if (token() == Token.MUL) {
@@ -2361,7 +2356,7 @@ public final class Parser {
     }
 
     /**
-     * <strong>[15.2.1] Imports</strong>
+     * <strong>[15.2.2] Imports</strong>
      * 
      * <pre>
      * NameSpaceImport :
@@ -2378,7 +2373,7 @@ public final class Parser {
     }
 
     /**
-     * <strong>[15.2.1] Imports</strong>
+     * <strong>[15.2.2] Imports</strong>
      * 
      * <pre>
      * NamedImports :
@@ -2408,7 +2403,7 @@ public final class Parser {
     }
 
     /**
-     * <strong>[15.2.1] Imports</strong>
+     * <strong>[15.2.2] Imports</strong>
      * 
      * <pre>
      * ImportSpecifier :
@@ -2455,7 +2450,7 @@ public final class Parser {
     }
 
     /**
-     * <strong>[15.2.1] Imports</strong>
+     * <strong>[15.2.2] Imports</strong>
      * 
      * <pre>
      * ModuleSpecifier :
@@ -2469,7 +2464,7 @@ public final class Parser {
     }
 
     /**
-     * <strong>[15.2.1] Imports</strong>
+     * <strong>[15.2.2] Imports</strong>
      * 
      * <pre>
      * ImportedDefaultBinding :
@@ -2485,7 +2480,7 @@ public final class Parser {
     }
 
     /**
-     * <strong>[15.2.2] Exports</strong>
+     * <strong>[15.2.3] Exports</strong>
      * 
      * <pre>
      * ExportDeclaration :
@@ -2556,7 +2551,7 @@ public final class Parser {
 
         case VAR: {
             // export VariableStatement
-            VariableStatement variableStatement = variableStatement();
+            VariableStatement variableStatement = variableStatement(true);
 
             // 15.2.3.3 Static Semantics: ExportedBindings
             // 15.2.3.4 Static Semantics: ExportedNames
@@ -2706,11 +2701,11 @@ public final class Parser {
     private static boolean isModuleReservedName(String name) {
         Token token = TokenStream.readReservedWord(name);
         return Token.isReservedWord(token) || Token.isStrictReservedWord(token)
-                || token == Token.LET || token == Token.YIELD || token == Token.AWAIT;
+                || token == Token.AWAIT;
     }
 
     /**
-     * <strong>[15.2.2] Exports</strong>
+     * <strong>[15.2.3] Exports</strong>
      * 
      * <pre>
      * ExportClause :
@@ -2731,7 +2726,7 @@ public final class Parser {
     }
 
     /**
-     * <strong>[15.2.2] Exports</strong>
+     * <strong>[15.2.3] Exports</strong>
      * 
      * <pre>
      * ExportSpecifier :
@@ -2864,7 +2859,7 @@ public final class Parser {
     }
 
     /**
-     * <strong>[15.3] Directive Prologues and the Use Strict Directive</strong>
+     * <strong>[14.1.1] Directive Prologues and the Use Strict Directive</strong>
      * 
      * <pre>
      * DirectivePrologue :
@@ -3302,8 +3297,7 @@ public final class Parser {
                 return element;
             }
         }
-        assert false : String.format("no duplicate: %s - %s", set, list);
-        return null;
+        throw new AssertionError(String.format("no duplicate: %s - %s", set, list));
     }
 
     private void checkFormalParameterDuplication(FunctionNode node, List<Name> boundNames,
@@ -3327,7 +3321,7 @@ public final class Parser {
     }
 
     /**
-     * 14.1.1 Static Semantics: Early Errors
+     * 14.1.2 Static Semantics: Early Errors
      * 
      * @param function
      *            the function definition to validate
@@ -3406,8 +3400,8 @@ public final class Parser {
             assert enclosingScope != topScope : "top-level function declaration";
             assert enclosingScope.isDeclared(name) : "undeclared block scoped function: " + name;
             for (ScopeContext scope = enclosingScope; (scope = scope.parent) != topScope;) {
-                // See 13.1.1 Static Semantics: Early Errors
-                // See 13.11.1 Static Semantics: Early Errors
+                // See 13.2.1 Static Semantics: Early Errors
+                // See 13.12.1 Static Semantics: Early Errors
                 if (scope.isDeclared(name)) {
                     // Found a block scoped, lexical declaration - cannot declare function as var.
                     if (isEnabled(CompatibilityOption.CatchVarStatement)
@@ -3500,11 +3494,14 @@ public final class Parser {
             if (token() == Token.LP) {
                 consume(Token.LP);
                 startFunction = ts.position() - 1;
-                context.inArrowParameters = true;
+                context.yieldAllowed = context.parent.yieldAllowed;
+                context.awaitAllowed = context.parent.awaitAllowed;
                 parameters = strictFormalParameters(Token.RP);
-                context.inArrowParameters = false;
+                context.yieldAllowed = false;
+                context.awaitAllowed = false;
                 consume(Token.RP);
             } else {
+                // Don't need to set {await,yield}Allowed for single parameter case.
                 BindingIdentifier identifier = bindingIdentifier();
                 parameters = arrowFormalParameterList(identifier);
 
@@ -3852,7 +3849,7 @@ public final class Parser {
             }
         }
         if (token() == Token.ASYNC) {
-            if (isEnabled(CompatibilityOption.AsyncFunction) && isPropertyName(peek())) {
+            if (isEnabled(CompatibilityOption.AsyncFunction) && isPropertyName(peek()) && noNextLineTerminator()) {
                 return MethodType.AsyncFunction;
             }
         }
@@ -4697,11 +4694,13 @@ public final class Parser {
             if (token() == Token.LP) {
                 consume(Token.LP);
                 startFunction = ts.position() - 1;
-                context.inArrowParameters = true;
+                context.yieldAllowed = context.parent.yieldAllowed;
+                context.awaitAllowed = false;
                 parameters = strictFormalParameters(Token.RP);
-                context.inArrowParameters = false;
+                context.yieldAllowed = false;
                 consume(Token.RP);
             } else {
+                // Don't need to set {await,yield}Allowed for single parameter case.
                 BindingIdentifier identifier = bindingIdentifier();
                 parameters = arrowFormalParameterList(identifier);
 
@@ -4877,17 +4876,24 @@ public final class Parser {
         if (token() == Token.HOOK) {
             consume(Token.HOOK);
         }
-        if (token() == Token.LC) {
-            objectTypeAnnotation();
-        } else if (token() == Token.STRING) {
-            stringLiteral();
-        } else {
-            identifier();
-            if (token() == Token.LT) {
-                consume(Token.LT);
+        for (;;) {
+            if (token() == Token.LC) {
+                objectTypeAnnotation();
+            } else if (token() == Token.STRING) {
+                stringLiteral();
+            } else {
                 identifier();
-                consume(Token.GT);
+                if (token() == Token.LT) {
+                    consume(Token.LT);
+                    identifier();
+                    consume(Token.GT);
+                }
             }
+            if (token() == Token.BITOR) {
+                consume(Token.BITOR);
+                continue;
+            }
+            break;
         }
     }
 
@@ -4944,7 +4950,7 @@ public final class Parser {
         case LC:
             return block(NO_INHERITED_BINDING);
         case VAR:
-            return variableStatement();
+            return variableStatement(true);
         case SEMI:
             return emptyStatement();
         case IF:
@@ -5004,7 +5010,7 @@ public final class Parser {
     }
 
     /**
-     * <strong>[13.1] Block</strong>
+     * <strong>[13.2] Block</strong>
      * 
      * <pre>
      * BlockStatement<span><sub>[Yield, Return]</sub></span> :
@@ -5038,7 +5044,7 @@ public final class Parser {
     }
 
     /**
-     * <strong>[13.1] Block</strong>
+     * <strong>[13.2] Block</strong>
      * 
      * <pre>
      * StatementList<span><sub>[Yield, Return]</sub></span> :
@@ -5062,7 +5068,7 @@ public final class Parser {
     }
 
     /**
-     * <strong>[13.1] Block</strong>
+     * <strong>[13.2] Block</strong>
      * 
      * <pre>
      * StatementListItem<span><sub>[Yield, Return]</sub></span> :
@@ -5160,7 +5166,7 @@ public final class Parser {
     }
 
     /**
-     * <strong>[13.2.1] Let and Const Declarations</strong>
+     * <strong>[13.3.1] Let and Const Declarations</strong>
      * 
      * <pre>
      * LexicalDeclaration<span><sub>[In, Yield]</sub></span> :
@@ -5195,7 +5201,7 @@ public final class Parser {
     }
 
     /**
-     * <strong>[13.2.1] Let and Const Declarations</strong>
+     * <strong>[13.3.1] Let and Const Declarations</strong>
      * 
      * <pre>
      * BindingList<span><sub>[In, Yield]</sub></span> :
@@ -5220,7 +5226,7 @@ public final class Parser {
     }
 
     /**
-     * <strong>[13.2.1] Let and Const Declarations</strong>
+     * <strong>[13.3.1] Let and Const Declarations</strong>
      * 
      * <pre>
      * LexicalBinding<span><sub>[In, Yield]</sub></span> :
@@ -5278,14 +5284,14 @@ public final class Parser {
         case YIELD:
             return !context.yieldAllowed;
         case AWAIT:
-            return !moduleCode;
+            return !(moduleCode || context.awaitAllowed);
         default:
             return isBindingIdentifier(token);
         }
     }
 
     /**
-     * <strong>[12.2.5] Object Initializer</strong>
+     * <strong>[12.2.6] Object Initializer</strong>
      * 
      * <pre>
      * Initializer<span><sub>[In, Yield]</sub></span> :
@@ -5302,27 +5308,31 @@ public final class Parser {
     }
 
     /**
-     * <strong>[13.2.2] Variable Statement</strong>
+     * <strong>[13.3.2] Variable Statement</strong>
      * 
      * <pre>
      * VariableStatement<span><sub>[Yield]</sub></span> :
      *     var VariableDeclarationList<span><sub>[In, ?Yield]</sub></span> ;
      * </pre>
      * 
+     * @param allowIn
+     *            the flag to select whether or not the in-operator is allowed
      * @return the parsed variable statement
      */
-    private VariableStatement variableStatement() {
+    private VariableStatement variableStatement(boolean allowIn) {
         long begin = ts.beginPosition();
         consume(Token.VAR);
-        List<VariableDeclaration> decls = variableDeclarationList(true);
-        semicolon();
+        List<VariableDeclaration> decls = variableDeclarationList(allowIn);
+        if (allowIn) {
+            semicolon();
+        }
         VariableStatement varStmt = new VariableStatement(begin, ts.endPosition(), decls);
         addVarScopedDeclaration(varStmt);
         return varStmt;
     }
 
     /**
-     * <strong>[13.2.2] Variable Statement</strong>
+     * <strong>[13.3.2] Variable Statement</strong>
      * 
      * <pre>
      * VariableDeclarationList<span><sub>[In, Yield]</sub></span> :
@@ -5345,7 +5355,7 @@ public final class Parser {
     }
 
     /**
-     * <strong>[13.2.2] Variable Statement</strong>
+     * <strong>[13.3.2] Variable Statement</strong>
      * 
      * <pre>
      * VariableDeclaration<span><sub>[In, Yield]</sub></span> :
@@ -5385,7 +5395,7 @@ public final class Parser {
     }
 
     /**
-     * <strong>[13.2.3] Destructuring Binding Patterns</strong>
+     * <strong>[13.3.3] Destructuring Binding Patterns</strong>
      * 
      * <pre>
      * BindingPattern<span><sub>[Yield, GeneratorParameter]</sub></span> :
@@ -5406,7 +5416,7 @@ public final class Parser {
     }
 
     /**
-     * <strong>[13.2.3] Destructuring Binding Patterns</strong>
+     * <strong>[13.3.3] Destructuring Binding Patterns</strong>
      * 
      * <pre>
      * ObjectBindingPattern<span><sub>[Yield, GeneratorParameter]</sub></span> :
@@ -5445,7 +5455,7 @@ public final class Parser {
     }
 
     /**
-     * <strong>[13.2.3] Destructuring Binding Patterns</strong>
+     * <strong>[13.3.3] Destructuring Binding Patterns</strong>
      * 
      * <pre>
      * BindingProperty<span><sub>[Yield, GeneratorParameter]</sub></span> :
@@ -5495,7 +5505,7 @@ public final class Parser {
     }
 
     /**
-     * <strong>[13.2.3] Destructuring Binding Patterns</strong>
+     * <strong>[13.3.3] Destructuring Binding Patterns</strong>
      * 
      * <pre>
      * ArrayBindingPattern<span><sub>[Yield, GeneratorParameter]</sub></span> :
@@ -5560,7 +5570,7 @@ public final class Parser {
     }
 
     /**
-     * <strong>[13.2.3] Destructuring Binding Patterns</strong>
+     * <strong>[13.3.3] Destructuring Binding Patterns</strong>
      * 
      * <pre>
      * BindingElement<span><sub>[Yield, GeneratorParameter]</sub></span> :
@@ -5594,7 +5604,7 @@ public final class Parser {
     }
 
     /**
-     * <strong>[13.2.3] Destructuring Binding Patterns</strong>
+     * <strong>[13.3.3] Destructuring Binding Patterns</strong>
      * 
      * <pre>
      * BindingRestElement<span><sub>[Yield, GeneratorParameter]</sub></span> :
@@ -5614,7 +5624,7 @@ public final class Parser {
     }
 
     /**
-     * <strong>[13.3] Empty Statement</strong>
+     * <strong>[13.4] Empty Statement</strong>
      * 
      * <pre>
      * EmptyStatement:
@@ -5630,7 +5640,7 @@ public final class Parser {
     }
 
     /**
-     * <strong>[13.4] Expression Statement</strong>
+     * <strong>[13.5] Expression Statement</strong>
      * 
      * <pre>
      * ExpressionStatement<span><sub>[Yield]</sub></span> :
@@ -5652,7 +5662,6 @@ public final class Parser {
             }
             break;
         case ASYNC:
-            // FIXME: spec issue - check for line-terminator
             if (isEnabled(CompatibilityOption.AsyncFunction) && LOOKAHEAD(Token.FUNCTION) && noNextLineTerminator()) {
                 throw reportSyntaxError(Messages.Key.InvalidToken, token().toString());
             }
@@ -5667,7 +5676,7 @@ public final class Parser {
     }
 
     /**
-     * <strong>[13.5] The <code>if</code> Statement</strong>
+     * <strong>[13.6] The <code>if</code> Statement</strong>
      * 
      * <pre>
      * IfStatement<span><sub>[Yield, Return]</sub></span> :
@@ -5726,7 +5735,7 @@ public final class Parser {
     }
 
     /**
-     * <strong>[13.6.1] The <code>do-while</code> Statement</strong>
+     * <strong>[13.7.2] The <code>do-while</code> Statement</strong>
      * 
      * <pre>
      * IterationStatement<span><sub>[Yield, Return]</sub></span> :
@@ -5758,7 +5767,7 @@ public final class Parser {
     }
 
     /**
-     * <strong>[13.6.2] The <code>while</code> Statement</strong>
+     * <strong>[13.7.3] The <code>while</code> Statement</strong>
      * 
      * <pre>
      * IterationStatement<span><sub>[Yield, Return]</sub></span> :
@@ -5784,59 +5793,55 @@ public final class Parser {
                 stmt);
     }
 
-    /**
-     * <strong>[13.6.3] The <code>for</code> Statement</strong> <br>
-     * <strong>[13.6.4] The <code>for-in</code> and <code>for-of</code> Statements</strong>
-     * 
-     * @param labelSet
-     *            the label set
-     * @return the parsed for-loop or for-in/of statement
-     */
-    private IterationStatement forStatementOrForInOfStatement(Set<String> labelSet) {
-        long position = ts.position(), lineinfo = ts.lineinfo();
-        ForStatement forStatement = forStatement(labelSet);
-        if (forStatement != null) {
-            return forStatement;
-        }
-        // Reset tokenstream and parse again to ensure correct block scopes are created
-        // TODO: Re-evaluate, latest spec changes may have obviated the need to reset the stream.
-        ts.reset(position, lineinfo);
-        return forInOfStatement(labelSet);
+    private enum ForType {
+        Each, In, Of
     }
 
     /**
-     * <strong>[13.6.3] The <code>for</code> Statement</strong> <br>
+     * <strong>[13.7.4] The <code>for</code> Statement</strong> <br>
+     * <strong>[13.7.5] The <code>for-in</code> and <code>for-of</code> Statements</strong>
      * 
      * <pre>
      * IterationStatement<span><sub>[Yield, Return]</sub></span> :
      *     for ( [LA &#x2209; { <b>let [</b> }] Expression<span><sub>[?Yield]opt</sub></span> ; Expression<span><sub>[In, ?Yield]opt</sub></span> ; Expression<span><sub>[In, ?Yield]opt</sub></span> ) Statement<span><sub>[?Yield, ?Return]</sub></span>
      *     for ( var VariableDeclarationList<span><sub>[?Yield]</sub></span> ; Expression<span><sub>[In, ?Yield]opt</sub></span> ; Expression<span><sub>[In, ?Yield]opt</sub></span> ) Statement<span><sub>[?Yield, ?Return]</sub></span>
      *     for ( LexicalDeclaration<span><sub>[?Yield]</sub></span> Expression<span><sub>[In, ?Yield]opt</sub></span> ; Expression<span><sub>[In, ?Yield]opt</sub></span> ) Statement<span><sub>[?Yield, ?Return]</sub></span>
+     *     for ( [LA &#x2209; { <b>let [</b> }] LeftHandSideExpression<span><sub>[?Yield]</sub></span> in Expression<span><sub>[In, ?Yield]</sub></span> ) Statement<span><sub>[?Yield, ?Return]</sub></span>
+     *     for ( var ForBinding<span><sub>[?Yield]</sub></span> in Expression<span><sub>[In, ?Yield]</sub></span> ) Statement<span><sub>[?Yield, ?Return]</sub></span>
+     *     for ( ForDeclaration<span><sub>[?Yield]</sub></span> in Expression<span><sub>[In, ?Yield]</sub></span> ) Statement<span><sub>[?Yield, ?Return]</sub></span>
+     *     for ( [LA &#x2209; { <b>let</b> }] LeftHandSideExpression<span><sub>[?Yield]</sub></span> of AssignmentExpression<span><sub>[In, ?Yield]</sub></span> ) Statement<span><sub>[?Yield, ?Return]</sub></span>
+     *     for ( var ForBinding<span><sub>[?Yield]</sub></span> of AssignmentExpression<span><sub>[In, ?Yield]</sub></span> ) Statement<span><sub>[?Yield, ?Return]</sub></span>
+     *     for ( ForDeclaration<span><sub>[?Yield]</sub></span> of AssignmentExpression<span><sub>[In, ?Yield]</sub></span> ) Statement<span><sub>[?Yield, ?Return]</sub></span>
+     * ForDeclaration<span><sub>[Yield]</sub></span> :
+     *     LetOrConst ForBinding<span><sub>[?Yield]</sub></span>
+     * ForBinding<span><sub>[Yield]</sub></span> :
+     *     BindingIdentifier<span><sub>[?Yield]</sub></span>
+     *     BindingPattern<span><sub>[?Yield]</sub></span>
      * </pre>
      * 
      * @param labelSet
      *            the label set
-     * @return the parsed for-loop statement
+     * @return the parsed for-loop or for-in/of statement
      */
-    private ForStatement forStatement(Set<String> labelSet) {
+    private IterationStatement forStatementOrForInOfStatement(Set<String> labelSet) {
         long begin = ts.beginPosition();
+        boolean forEach = false;
+
         consume(Token.FOR);
         if (token() != Token.LP && isName("each")
                 && isEnabled(CompatibilityOption.ForEachStatement)) {
-            // Don't bother to make the legacy ForEachStatement case fast
-            return null;
+            consume("each");
+            forEach = true;
         }
         consume(Token.LP);
 
         // NB: This code needs to be able to parse ForStatement and ForIn/OfStatement
+        boolean letIdentifier = false;
         BlockContext lexBlockContext = null;
         Node head;
         switch (token()) {
         case VAR:
-            long beginVar = ts.beginPosition();
-            consume(Token.VAR);
-            List<VariableDeclaration> decls = variableDeclarationList(false);
-            head = new VariableStatement(beginVar, ts.endPosition(), decls);
+            head = variableStatement(false);
             break;
         case SEMI:
             head = null;
@@ -5852,21 +5857,126 @@ public final class Parser {
                 break;
             }
             // 'let' as identifier, e.g. `for (let ;;) {}`
+            // 'let' as identifier, e.g. `for (let in "") {}` or `for (let.prop in "") {}`
+            letIdentifier = true;
             // fall-through
         default:
-            head = expressionOrLeftHandSideExpression();
+            int count = context.countLiterals();
+            Expression expr = assignmentExpressionNoValidation(false);
+            if (token() == Token.SEMI || token() == Token.COMMA) {
+                // ForStatement, apply early error checks for object literals
+                objectLiteral_EarlyErrors(count);
+                // Proceed to parse expression tail, if any
+                if (token() == Token.COMMA) {
+                    head = commaExpression(expr, false);
+                } else {
+                    head = expr;
+                }
+            } else {
+                // ForInStatement or ForOfStatement, check assignment target
+                head = validateAssignment(expr, ExceptionType.SyntaxError,
+                        Messages.Key.InvalidAssignmentTarget);
+                // Apply early error checks for remaining object literals
+                objectLiteral_EarlyErrors(count);
+            }
             break;
         }
 
-        if (token() != Token.SEMI) {
-            // This is not a for-statement, try for-in/of next
-            if (lexBlockContext != null) {
-                // Leave block context before rollback
-                exitBlockContext();
+        if (forEach) {
+            return forInOfStatement(labelSet, begin, head, lexBlockContext, ForType.Each);
+        } else if (token() == Token.IN) {
+            return forInOfStatement(labelSet, begin, head, lexBlockContext, ForType.In);
+        } else if (token() == Token.NAME && !letIdentifier && isName("of")) {
+            return forInOfStatement(labelSet, begin, head, lexBlockContext, ForType.Of);
+        } else {
+            return forStatement(labelSet, begin, head, lexBlockContext);
+        }
+    }
+
+    private IterationStatement forInOfStatement(Set<String> labelSet, long begin, Node head,
+            BlockContext lexBlockContext, ForType type) {
+        // Only allow single binding without initializer in for-in/of head.
+        if (head == null) {
+            // for-each loop without head: `for each (;`
+            assert type == ForType.Each;
+            reportSyntaxError(begin, Messages.Key.InvalidForEachStatement);
+        } else if (head instanceof VariableStatement) {
+            VariableStatement varStmt = (VariableStatement) head;
+            if (varStmt.getElements().size() != 1) {
+                reportSyntaxError(varStmt, Messages.Key.InvalidForStatementLeftHandSide);
             }
-            return null;
+            VariableDeclaration varDecl = varStmt.getElements().get(0);
+            if (varDecl.getInitializer() != null) {
+                if (type == ForType.Of || varDecl.getBinding() instanceof BindingPattern) {
+                    reportSyntaxError(varDecl, Messages.Key.InvalidForStatementLeftHandSide);
+                }
+                if (!isEnabled(CompatibilityOption.ForInVarInitializer)) {
+                    reportSyntaxError(varDecl, Messages.Key.InvalidForStatementLeftHandSide);
+                }
+            }
+            if (type == ForType.Of) {
+                checkVarDeclaredName(varDecl.getBinding());
+            }
+        } else if (head instanceof LexicalDeclaration) {
+            // Forbid initializer for BindingPattern and const declarations
+            LexicalDeclaration lexDecl = (LexicalDeclaration) head;
+            if (lexDecl.getElements().size() != 1) {
+                reportSyntaxError(lexDecl, Messages.Key.InvalidForStatementLeftHandSide);
+            }
+            LexicalBinding lexBinding = lexDecl.getElements().get(0);
+            if (lexBinding.getInitializer() != null) {
+                reportSyntaxError(lexBinding, Messages.Key.InvalidForStatementLeftHandSide);
+            }
+        } else if (!(head instanceof LeftHandSideExpression)) {
+            // Handle: `for (a, b in ...` and `for each (false; ...`
+            assert head instanceof CommaExpression || type == ForType.Each;
+            reportSyntaxError(head, Messages.Key.InvalidForStatementLeftHandSide);
         }
 
+        Expression expr;
+        if (type != ForType.Of) {
+            consume(Token.IN);
+            expr = expression(true);
+        } else {
+            consume("of");
+            expr = assignmentExpression(true);
+        }
+        consume(Token.RP);
+
+        LabelContext labelCx = enterIteration(labelSet);
+        Statement stmt = statement(false);
+        exitIteration();
+
+        if (lexBlockContext != null) {
+            exitBlockContext();
+        }
+
+        if (type == ForType.Each) {
+            ForEachStatement iteration = new ForEachStatement(begin, ts.endPosition(),
+                    lexBlockContext, labelCx.abrupts, labelCx.labelSet, head, expr, stmt);
+            if (lexBlockContext != null) {
+                lexBlockContext.node = iteration;
+            }
+            return iteration;
+        } else if (type == ForType.In) {
+            ForInStatement iteration = new ForInStatement(begin, ts.endPosition(), lexBlockContext,
+                    labelCx.abrupts, labelCx.labelSet, head, expr, stmt);
+            if (lexBlockContext != null) {
+                lexBlockContext.node = iteration;
+            }
+            return iteration;
+        } else {
+            ForOfStatement iteration = new ForOfStatement(begin, ts.endPosition(), lexBlockContext,
+                    labelCx.abrupts, labelCx.labelSet, head, expr, stmt);
+            if (lexBlockContext != null) {
+                lexBlockContext.node = iteration;
+            }
+            return iteration;
+        }
+    }
+
+    private ForStatement forStatement(Set<String> labelSet, long begin, Node head,
+            BlockContext lexBlockContext) {
         if (head instanceof VariableStatement) {
             // Enforce initializer for BindingPattern
             VariableStatement varStmt = (VariableStatement) head;
@@ -5875,8 +5985,6 @@ public final class Parser {
                     reportSyntaxError(varStmt, Messages.Key.DestructuringMissingInitializer);
                 }
             }
-            // Add variable statement after for-statement type is known
-            addVarScopedDeclaration(varStmt);
         } else if (head instanceof LexicalDeclaration) {
             // Enforce initializer for BindingPattern and const declarations
             LexicalDeclaration lexDecl = (LexicalDeclaration) head;
@@ -5920,207 +6028,7 @@ public final class Parser {
     }
 
     /**
-     * Parses the Expression or LeftHandSideExpression production in ForStatement.
-     * 
-     * @return the parsed expression or left-hand side expression
-     * @see #expression(boolean)
-     * @see #leftHandSideExpression(boolean)
-     */
-    private Expression expressionOrLeftHandSideExpression() {
-        int count = context.countLiterals();
-        Expression expr = assignmentExpressionNoValidation(false);
-        if (token() == Token.SEMI || token() == Token.COMMA) {
-            // ForStatement, apply early error checks for object literals
-            objectLiteral_EarlyErrors(count);
-            // Proceed to parse expression tail, if any
-            if (token() == Token.COMMA) {
-                return commaExpression(expr, false);
-            }
-            return expr;
-        }
-        // ForInStatement or ForOfStatement, discard unchecked object literals
-        discardUncheckedObjectLiterals(count);
-        return expr;
-    }
-
-    /**
-     * <strong>[13.6.4] The <code>for-in</code> and <code>for-of</code> Statements</strong>
-     * 
-     * <pre>
-     * IterationStatement<span><sub>[Yield, Return]</sub></span> :
-     *     for ( [LA &#x2209; { <b>let [</b> }] LeftHandSideExpression<span><sub>[?Yield]</sub></span> in Expression<span><sub>[In, ?Yield]</sub></span> ) Statement<span><sub>[?Yield, ?Return]</sub></span>
-     *     for ( var ForBinding<span><sub>[?Yield]</sub></span> in Expression<span><sub>[In, ?Yield]</sub></span> ) Statement<span><sub>[?Yield, ?Return]</sub></span>
-     *     for ( ForDeclaration<span><sub>[?Yield]</sub></span> in Expression<span><sub>[In, ?Yield]</sub></span> ) Statement<span><sub>[?Yield, ?Return]</sub></span>
-     *     for ( [LA &#x2209; { <b>let</b> }] LeftHandSideExpression<span><sub>[?Yield]</sub></span> of AssignmentExpression<span><sub>[In, ?Yield]</sub></span> ) Statement<span><sub>[?Yield, ?Return]</sub></span>
-     *     for ( var ForBinding<span><sub>[?Yield]</sub></span> of AssignmentExpression<span><sub>[In, ?Yield]</sub></span> ) Statement<span><sub>[?Yield, ?Return]</sub></span>
-     *     for ( ForDeclaration<span><sub>[?Yield]</sub></span> of AssignmentExpression<span><sub>[In, ?Yield]</sub></span> ) Statement<span><sub>[?Yield, ?Return]</sub></span>
-     * ForDeclaration<span><sub>[Yield]</sub></span> :
-     *     LetOrConst ForBinding<span><sub>[?Yield]</sub></span>
-     * ForBinding<span><sub>[Yield]</sub></span> :
-     *     BindingIdentifier<span><sub>[?Yield]</sub></span>
-     *     BindingPattern<span><sub>[?Yield]</sub></span>
-     * </pre>
-     * 
-     * @param labelSet
-     *            the label set
-     * @return the parsed for-in/of statement
-     */
-    private IterationStatement forInOfStatement(Set<String> labelSet) {
-        long begin = ts.beginPosition();
-        consume(Token.FOR);
-        boolean forEach = false, forOf = false;
-        if (token() != Token.LP && isName("each")
-                && isEnabled(CompatibilityOption.ForEachStatement)) {
-            consume("each");
-            forEach = true;
-        }
-        consume(Token.LP);
-
-        boolean isLetIdentifier = false;
-        BlockContext lexBlockContext = null;
-        Node head;
-        switch (token()) {
-        case VAR:
-            VariableStatement varStmt = forVarDeclaration();
-            assert varStmt.getElements().size() == 1;
-            assert varStmt.getElements().get(0).getInitializer() == null;
-            addVarDeclaredName(varStmt.getElements().get(0).getBinding());
-            addVarScopedDeclaration(varStmt);
-            head = varStmt;
-            if (token() == Token.ASSIGN && isEnabled(CompatibilityOption.ForInVarInitializer)) {
-                Binding binding = varStmt.getElements().get(0).getBinding();
-                if (binding instanceof BindingIdentifier) {
-                    initializer(false);
-                    if (token() != Token.IN) {
-                        reportTokenMismatch(Token.IN, token());
-                    }
-                }
-            }
-            break;
-        case CONST:
-            lexBlockContext = enterBlockContext();
-            head = forDeclaration();
-            break;
-        case LET:
-            if (lexicalBindingFirstSet(peek())) {
-                lexBlockContext = enterBlockContext();
-                head = forDeclaration();
-                break;
-            }
-            // 'let' as identifier, e.g. `for (let in "") {}` or `for (let.prop in "") {}`
-            isLetIdentifier = true;
-            // fall-through
-        default:
-            int count = context.countLiterals();
-            Expression lhs = leftHandSideExpression(true, true);
-            head = validateAssignment(lhs, ExceptionType.SyntaxError,
-                    Messages.Key.InvalidAssignmentTarget);
-            objectLiteral_EarlyErrors(count);
-            break;
-        }
-
-        Expression expr;
-        if (forEach || isLetIdentifier || token() == Token.IN) {
-            consume(Token.IN);
-            expr = expression(true);
-        } else {
-            forOf = true;
-            consume("of");
-            expr = assignmentExpression(true);
-        }
-        consume(Token.RP);
-
-        if (forOf && head instanceof VariableStatement) {
-            VariableStatement varStmt = (VariableStatement) head;
-            assert varStmt.getElements().size() == 1;
-            assert varStmt.getElements().get(0).getInitializer() == null;
-            checkVarDeclaredName(varStmt.getElements().get(0).getBinding());
-        }
-
-        if (lexBlockContext != null) {
-            LexicalDeclaration lexDecl = (LexicalDeclaration) head;
-            assert lexDecl.getElements().size() == 1;
-            assert lexDecl.getElements().get(0).getInitializer() == null;
-            addLexDeclaredName(lexDecl.getElements().get(0).getBinding());
-            addLexScopedDeclaration(lexDecl);
-        }
-
-        LabelContext labelCx = enterIteration(labelSet);
-        Statement stmt = statement(false);
-        exitIteration();
-
-        if (lexBlockContext != null) {
-            exitBlockContext();
-        }
-
-        if (forEach) {
-            ForEachStatement iteration = new ForEachStatement(begin, ts.endPosition(),
-                    lexBlockContext, labelCx.abrupts, labelCx.labelSet, head, expr, stmt);
-            if (lexBlockContext != null) {
-                lexBlockContext.node = iteration;
-            }
-            return iteration;
-        } else if (!forOf) {
-            ForInStatement iteration = new ForInStatement(begin, ts.endPosition(), lexBlockContext,
-                    labelCx.abrupts, labelCx.labelSet, head, expr, stmt);
-            if (lexBlockContext != null) {
-                lexBlockContext.node = iteration;
-            }
-            return iteration;
-        } else {
-            ForOfStatement iteration = new ForOfStatement(begin, ts.endPosition(), lexBlockContext,
-                    labelCx.abrupts, labelCx.labelSet, head, expr, stmt);
-            if (lexBlockContext != null) {
-                lexBlockContext.node = iteration;
-            }
-            return iteration;
-        }
-    }
-
-    /**
-     * <strong>[13.6.4] The <code>for-in</code> and <code>for-of</code> Statements</strong>
-     * 
-     * <pre>
-     * ForDeclaration<span><sub>[Yield]</sub></span> :
-     *     LetOrConst ForBinding<span><sub>[?Yield]</sub></span>
-     * </pre>
-     * 
-     * @return the parsed for-declaration node
-     */
-    private LexicalDeclaration forDeclaration() {
-        long begin = ts.beginPosition();
-        LexicalDeclaration.Type type;
-        if (token() == Token.LET) {
-            consume(Token.LET);
-            type = LexicalDeclaration.Type.Let;
-        } else {
-            consume(Token.CONST);
-            type = LexicalDeclaration.Type.Const;
-        }
-        Binding binding = forBinding(false);
-        LexicalBinding lexicalBinding = new LexicalBinding(begin, ts.endPosition(), binding, null);
-        return new LexicalDeclaration(begin, ts.endPosition(), type, singletonList(lexicalBinding));
-    }
-
-    /**
-     * <strong>[13.6.4] The <code>for-in</code> and <code>for-of</code> Statements</strong>
-     * 
-     * <pre>
-     * var ForBinding<span><sub>[?Yield]</sub></span>
-     * </pre>
-     * 
-     * @return the parsed for-loop variable declaration node
-     */
-    private VariableStatement forVarDeclaration() {
-        long beginVar = ts.beginPosition();
-        consume(Token.VAR);
-        Binding binding = forBinding(true);
-        VariableDeclaration variableDeclaration = new VariableDeclaration(binding, null);
-        return new VariableStatement(beginVar, ts.endPosition(), singletonList(variableDeclaration));
-    }
-
-    /**
-     * <strong>[13.7] The <code>continue</code> Statement</strong>
+     * <strong>[13.8] The <code>continue</code> Statement</strong>
      * 
      * <pre>
      * ContinueStatement<span><sub>[Yield]</sub></span> :
@@ -6158,7 +6066,7 @@ public final class Parser {
     }
 
     /**
-     * <strong>[13.8] The <code>break</code> Statement</strong>
+     * <strong>[13.9] The <code>break</code> Statement</strong>
      * 
      * <pre>
      * BreakStatement<span><sub>[Yield]</sub></span> :
@@ -6193,7 +6101,7 @@ public final class Parser {
     }
 
     /**
-     * <strong>[13.9] The <code>return</code> Statement</strong>
+     * <strong>[13.10] The <code>return</code> Statement</strong>
      * 
      * <pre>
      * ReturnStatement<span><sub>[Yield]</sub></span> :
@@ -6219,7 +6127,7 @@ public final class Parser {
     }
 
     /**
-     * <strong>[13.10] The <code>with</code> Statement</strong>
+     * <strong>[13.11] The <code>with</code> Statement</strong>
      * 
      * <pre>
      * WithStatement<span><sub>[Yield, Return]</sub></span> :
@@ -6247,7 +6155,7 @@ public final class Parser {
     }
 
     /**
-     * <strong>[13.11] The <code>switch</code> Statement</strong>
+     * <strong>[13.12] The <code>switch</code> Statement</strong>
      * 
      * <pre>
      * SwitchStatement<span><sub>[Yield, Return]</sub></span> :
@@ -6296,6 +6204,13 @@ public final class Parser {
             } else {
                 break;
             }
+            Token next = token();
+            if (next == Token.CASE || next == Token.DEFAULT) {
+                // empty case clause
+                List<StatementListItem> list = emptyList();
+                clauses.add(new SwitchClause(beginClause, ts.endPosition(), caseExpr, list));
+                continue;
+            }
             InlineArrayList<StatementListItem> list = newList();
             statementlist: for (;;) {
                 switch (token()) {
@@ -6320,7 +6235,7 @@ public final class Parser {
     }
 
     /**
-     * <strong>[13.12] Labelled Statements</strong>
+     * <strong>[13.13] Labelled Statements</strong>
      * 
      * <pre>
      * LabelledStatement<span><sub>[Yield, Return]</sub></span> :
@@ -6423,7 +6338,7 @@ public final class Parser {
     }
 
     /**
-     * <strong>[13.13] The <code>throw</code> Statement</strong>
+     * <strong>[13.14] The <code>throw</code> Statement</strong>
      * 
      * <pre>
      * ThrowStatement<span><sub>[Yield]</sub></span> :
@@ -6444,7 +6359,7 @@ public final class Parser {
     }
 
     /**
-     * <strong>[13.14] The <code>try</code> Statement</strong>
+     * <strong>[13.15] The <code>try</code> Statement</strong>
      * 
      * <pre>
      * TryStatement<span><sub>[Yield, Return]</sub></span> :
@@ -6543,7 +6458,7 @@ public final class Parser {
     }
 
     /**
-     * <strong>[13.15] The <code>debugger</code> Statement</strong>
+     * <strong>[13.16] The <code>debugger</code> Statement</strong>
      * 
      * <pre>
      * DebuggerStatement :
@@ -6742,7 +6657,9 @@ public final class Parser {
      */
     private BindingIdentifier bindingIdentifierFunctionName(boolean isDeclaration) {
         Token tok = token();
-        if (tok == Token.YIELD || tok == Token.ESCAPED_YIELD) {
+        switch (tok) {
+        case YIELD:
+        case ESCAPED_YIELD: {
             // function declarations inherit the yield mode from the parent context
             long begin = ts.beginPosition();
             if (!isYieldName(isDeclaration ? context.parent : context)) {
@@ -6751,33 +6668,19 @@ public final class Parser {
             consume(tok);
             return new BindingIdentifier(begin, ts.endPosition(), getName(Token.YIELD));
         }
-        return bindingIdentifier(true);
-    }
-
-    /**
-     * <strong>[12.1] Identifiers</strong>
-     * <p>
-     * Special case for {@link Token#YIELD} as {@link BindingIdentifier} arrow rest parameter.
-     * 
-     * <pre>
-     * BindingIdentifier<span><sub>[Yield]</sub></span> :
-     *     Identifier
-     *     <span><sub>[~Yield]</sub></span> yield
-     * </pre>
-     * 
-     * @return the parsed binding identifier
-     */
-    private BindingIdentifier bindingIdentifierArrowRestParameter() {
-        Token tok = token();
-        if (tok == Token.YIELD || tok == Token.ESCAPED_YIELD) {
+        case AWAIT:
+        case ESCAPED_AWAIT: {
+            // function declarations inherit the await mode from the parent context
             long begin = ts.beginPosition();
-            if (!isYieldName(context)) {
-                reportTokenNotIdentifier(Token.YIELD);
+            if (!isAwaitName(isDeclaration ? context.parent : context)) {
+                reportTokenNotIdentifier(Token.AWAIT);
             }
             consume(tok);
-            return new BindingIdentifier(begin, ts.endPosition(), getName(Token.YIELD));
+            return new BindingIdentifier(begin, ts.endPosition(), getName(Token.AWAIT));
         }
-        return bindingIdentifier();
+        default:
+            return bindingIdentifier(true);
+        }
     }
 
     /**
@@ -6913,25 +6816,20 @@ public final class Parser {
             // 'yield' is always a keyword in generator functions
             reportSyntaxError(Messages.Key.InvalidIdentifier, getName(Token.YIELD));
             break;
+        case ArrowFunction:
+        case AsyncArrowFunction:
         case GeneratorComprehension:
             if (yieldContext.yieldAllowed) {
+                // 'yield' in arrow function parameters embedded in generator or generator compr.
                 // 'yield' in generator comprehension, embedded in generator
                 reportSyntaxError(Messages.Key.InvalidIdentifier, getName(Token.YIELD));
             }
             break;
-        case ArrowFunction:
-        case AsyncArrowFunction:
-            if (yieldContext.inArrowParameters && yieldContext.parent.yieldAllowed) {
-                // 'yield' in arrow function parameters embedded in generator or generator compr.
-                reportSyntaxError(Messages.Key.InvalidIdentifier, getName(Token.YIELD));
-            }
-            break;
         default:
-            break;
+            assert !yieldContext.yieldAllowed : String.format(
+                    "unexpected context kind '%s' with yield allowed", yieldContext.kind);
         }
 
-        assert !yieldContext.yieldAllowed : String.format(
-                "unexpected context kind '%s' with yield allowed", yieldContext.kind);
         // 'yield' is always a keyword in strict-mode (independent of `yieldContext`)
         if (context.strictMode != StrictMode.NonStrict) {
             reportStrictModeSyntaxError(Messages.Key.StrictModeInvalidIdentifier,
@@ -6949,6 +6847,26 @@ public final class Parser {
      * @return {@code true} if 'await' is a valid name in the parse context
      */
     private boolean isAwaitName(ParseContext awaitContext) {
+        switch (awaitContext.kind) {
+        case AsyncArrowFunction:
+        case AsyncFunction:
+        case AsyncMethod:
+            // 'await' is always a keyword in async functions
+            reportSyntaxError(Messages.Key.InvalidIdentifier, getName(Token.AWAIT));
+            break;
+        case ArrowFunction:
+        case GeneratorComprehension:
+            if (awaitContext.awaitAllowed) {
+                // 'await' in arrow function parameters, embedded in async function
+                // 'await' in generator comprehension, embedded in async function
+                reportSyntaxError(Messages.Key.InvalidIdentifier, getName(Token.AWAIT));
+            }
+            break;
+        default:
+            assert !awaitContext.awaitAllowed;
+        }
+
+        // 'await' is always a keyword in module-mode (independent of `awaitContext`)
         if (moduleCode) {
             reportSyntaxError(Messages.Key.InvalidIdentifier, getName(Token.AWAIT));
         }
@@ -7130,7 +7048,7 @@ public final class Parser {
     private SpreadElement arrowFunctionRestParameter() {
         long begin = ts.beginPosition();
         consume(Token.TRIPLE_DOT);
-        String ident = bindingIdentifierArrowRestParameter().getName().getIdentifier();
+        String ident = bindingIdentifier().getName().getIdentifier();
         IdentifierReference identifier = new IdentifierReference(ts.beginPosition(),
                 ts.endPosition(), ident);
         SpreadElement spread = new SpreadElement(begin, ts.endPosition(), identifier);
@@ -7141,7 +7059,7 @@ public final class Parser {
     }
 
     /**
-     * <strong>[12.2.4] Array Initializer</strong>
+     * <strong>[12.2.5] Array Initializer</strong>
      * 
      * <pre>
      * ArrayInitializer<span><sub>[Yield]</sub></span> :
@@ -7182,7 +7100,7 @@ public final class Parser {
     }
 
     /**
-     * <strong>[12.2.4] Array Initializer</strong>
+     * <strong>[12.2.5] Array Initializer</strong>
      * 
      * <pre>
      * ArrayLiteral<span><sub>[Yield]</sub></span> :
@@ -7444,7 +7362,7 @@ public final class Parser {
     }
 
     /**
-     * <strong>[12.2.5] Object Initializer</strong>
+     * <strong>[12.2.6] Object Initializer</strong>
      * 
      * <pre>
      * ObjectLiteral<span><sub>[Yield]</sub></span> :
@@ -7492,7 +7410,7 @@ public final class Parser {
     }
 
     /**
-     * 12.2.5.1 Static Semantics: Early Errors
+     * 12.2.6.1 Static Semantics: Early Errors
      * 
      * @param oldCount
      *            the previous count of object literals
@@ -7507,7 +7425,7 @@ public final class Parser {
     }
 
     /**
-     * 12.2.5.1 Static Semantics: Early Errors
+     * 12.2.6.1 Static Semantics: Early Errors
      * 
      * @param object
      *            the object literal to check for early errors
@@ -7601,7 +7519,7 @@ public final class Parser {
     }
 
     /**
-     * <strong>[12.2.5] Object Initializer</strong>
+     * <strong>[12.2.6] Object Initializer</strong>
      * 
      * <pre>
      * PropertyDefinition<span><sub>[Yield]</sub></span> :
@@ -7666,7 +7584,7 @@ public final class Parser {
     }
 
     /**
-     * <strong>[12.2.5] Object Initializer</strong>
+     * <strong>[12.2.6] Object Initializer</strong>
      * 
      * <pre>
      * PropertyName<span><sub>[Yield, GeneratorParameter]</sub></span> :
@@ -7686,7 +7604,7 @@ public final class Parser {
     }
 
     /**
-     * <strong>[12.2.5] Object Initializer</strong>
+     * <strong>[12.2.6] Object Initializer</strong>
      * 
      * <pre>
      * LiteralPropertyName :
@@ -7713,7 +7631,7 @@ public final class Parser {
     }
 
     /**
-     * <strong>[12.2.5] Object Initializer</strong>
+     * <strong>[12.2.6] Object Initializer</strong>
      * 
      * <pre>
      * ComputedPropertyName<span><sub>[Yield]</sub></span> :
@@ -7731,7 +7649,7 @@ public final class Parser {
     }
 
     /**
-     * <strong>[12.2.7] Generator Comprehensions</strong>
+     * <strong>Generator Comprehensions</strong>
      * 
      * <pre>
      * GeneratorComprehension<span><sub>[Yield]</sub></span> :
@@ -7781,7 +7699,7 @@ public final class Parser {
     }
 
     /**
-     * <strong>[12.2.7] Generator Comprehensions</strong>
+     * <strong>Generator Comprehensions</strong>
      * 
      * <pre>
      * LegacyGeneratorComprehension<span><sub>[Yield]</sub></span> :
@@ -8120,7 +8038,7 @@ public final class Parser {
 
     private void superCall() {
         ParseContext superContext = context.findSuperContext();
-        // 12.2.5.1 Static Semantics: Early Errors
+        // 12.2.6.1 Static Semantics: Early Errors
         // 14.1.2 Static Semantics: Early Errors
         // 14.4.1 Static Semantics: Early Errors
         // 14.5.1 Static Semantics: Early Errors
@@ -8138,7 +8056,8 @@ public final class Parser {
 
     private void newSuper() {
         ParseContext superContext = context.findSuperContext();
-        // 12.2.5.1 Static Semantics: Early Errors
+        // 12.2.6.1 Static Semantics: Early Errors
+        // 14.1.2 Static Semantics: Early Errors
         // 14.4.1 Static Semantics: Early Errors
         // 14.5.1 Static Semantics: Early Errors
         // 15.1.1 Static Semantics: Early Errors
@@ -8303,19 +8222,28 @@ public final class Parser {
             return unary;
         }
         case AWAIT:
-            if (isEnabled(CompatibilityOption.AsyncFunction)
-                    && (context.awaitAllowed || context.kind.isAsync())) {
-                if (context.kind.isAsync()) {
+            if (isEnabled(CompatibilityOption.AsyncFunction)) {
+                switch (context.kind) {
+                case AsyncArrowFunction:
+                case AsyncFunction:
+                case AsyncMethod:
                     if (!context.awaitAllowed) {
-                        // await in default parameters
+                        // await in async function parameters
                         reportSyntaxError(Messages.Key.InvalidAwaitExpression);
                     }
                     return awaitExpression();
-                } else if (context.kind == ContextKind.GeneratorComprehension) {
-                    // await nested in generator comprehension, nested in async function
-                    reportSyntaxError(Messages.Key.InvalidAwaitExpression);
+                case ArrowFunction:
+                case GeneratorComprehension:
+                    if (context.awaitAllowed) {
+                        // One of:
+                        // - await in arrow function parameters, nested in async function
+                        // - await in generator comprehension, nested in async function
+                        reportSyntaxError(Messages.Key.InvalidAwaitExpression);
+                    }
+                    break;
+                default:
+                    assert !context.awaitAllowed;
                 }
-                assert false : "unexpected context-kind: " + context.kind;
             }
             // fall-through
         default: {
@@ -8548,16 +8476,35 @@ public final class Parser {
 
     private Expression assignmentExpression(boolean allowIn, int oldCount) {
         if (token() == Token.YIELD) {
-            if (context.kind.isGenerator() && context.yieldAllowed) {
-                // `yield` in default parameters expressions is parsed as identifier.
+            switch (context.kind) {
+            case Generator:
+            case GeneratorMethod:
+                if (!context.yieldAllowed) {
+                    // Static Semantics: Early Errors for GeneratorDeclaration/GeneratorExpression
+                    // - It is a Syntax Error if FormalParameters Contains YieldExpression.
+                    // Static Semantics: Early Errors for GeneratorMethod
+                    // - It is a Syntax Error if StrictFormalParameters Contains YieldExpression.
+                    reportSyntaxError(Messages.Key.InvalidYieldExpression);
+                }
                 return yieldExpression(allowIn);
-            } else if (context.kind == ContextKind.GeneratorComprehension && context.yieldAllowed) {
-                // Static Semantics: Early Errors for GeneratorComprehension
-                // `yield` nested in generator comprehension, nested in generator.
-                reportSyntaxError(Messages.Key.InvalidYieldExpression);
-            } else if (context.kind == ContextKind.Function
-                    && isEnabled(CompatibilityOption.LegacyGenerator)) {
-                throw new RetryGenerator();
+            case ArrowFunction:
+            case AsyncArrowFunction:
+            case GeneratorComprehension:
+                if (context.yieldAllowed) {
+                    // Static Semantics: Early Errors for ArrowFunction
+                    // - It is a Syntax Error if ArrowParameters Contains YieldExpression.
+                    // Static Semantics: Early Errors for GeneratorComprehension
+                    // - `yield` nested in generator comprehension, nested in generator.
+                    reportSyntaxError(Messages.Key.InvalidYieldExpression);
+                }
+                break;
+            case Function:
+                if (isEnabled(CompatibilityOption.LegacyGenerator)) {
+                    throw new RetryGenerator();
+                }
+                // fall-through
+            default:
+                assert !context.yieldAllowed;
             }
         }
         long position = ts.position(), lineinfo = ts.lineinfo();
@@ -8566,7 +8513,7 @@ public final class Parser {
             Token next = peek();
             if (noNextLineTerminator()) {
                 if (isBindingIdentifier(next)) {
-                    // async BindingIdentifier => ConciseBody
+                    // Production: `async AsyncArrowBindingIdentifier => AsyncConciseBody`
                     consume(Token.ASYNC);
                     // Parse in this context, but ignore result (escaped yield)
                     bindingIdentifier();
@@ -8579,7 +8526,7 @@ public final class Parser {
                     }
                     // Invalid async arrow function, fall through
                 } else if (next == Token.LP) {
-                    // async CoverArgumentsAndAsyncArrowParameterList => ConciseBody
+                    // Production: `CoverCallExpressionAndAsyncArrowHead => AsyncConciseBody`
                     asyncArrow = true;
                 }
             }
@@ -8733,7 +8680,8 @@ public final class Parser {
             if (context.strictMode != StrictMode.NonStrict) {
                 String name = ident.getName();
                 if ("eval".equals(name) || "arguments".equals(name)) {
-                    // FIXME: spec issue - early SyntaxError in ES5, but ReferenceError in rev38.
+                    // FIXME: spec issue - early SyntaxError in ES5, but ReferenceError in ES6.
+                    // https://bugs.ecmascript.org/show_bug.cgi?id=4375
                     reportStrictModeSyntaxError(ident,
                             Messages.Key.StrictModeInvalidAssignmentTarget);
                 }
@@ -8753,7 +8701,7 @@ public final class Parser {
      * <ul>
      * <li>12.14.1 Static Semantics: Early Errors
      * <li>12.14.5.1 Static Semantics: Early Errors
-     * <li>13.6.4.1 Static Semantics: Early Errors
+     * <li>13.7.5.1 Static Semantics: Early Errors
      * </ul>
      * 
      * @param lhs
@@ -9081,6 +9029,18 @@ public final class Parser {
     }
 
     /**
+     * Returns true if the next token is of type {@link Token#NAME} and its name is {@code name}.
+     * 
+     * @param name
+     *            the name to test
+     * @return {@code true} if the next token is the requested name
+     */
+    private boolean isNextName(String name) {
+        Token tok = peek();
+        return tok == Token.NAME && name.equals(getNextName(tok));
+    }
+
+    /**
      * Returns the token's name.
      * 
      * @param tok
@@ -9104,7 +9064,30 @@ public final class Parser {
     }
 
     /**
-     * <strong>[11.6] Identifier Names and Identifiers</strong>
+     * Returns the token's name.
+     * 
+     * @param tok
+     *            the token to inspect
+     * @return the token name
+     */
+    private String getNextName(Token tok) {
+        switch (tok) {
+        case NAME:
+        case ESCAPED_NAME:
+        case ESCAPED_RESERVED_WORD:
+        case ESCAPED_STRICT_RESERVED_WORD:
+        case ESCAPED_YIELD:
+        case ESCAPED_ASYNC:
+        case ESCAPED_AWAIT:
+        case ESCAPED_LET:
+            return ts.getNextString();
+        default:
+            return tok.getName();
+        }
+    }
+
+    /**
+     * <strong>[11.6] Names and Keywords</strong>
      * 
      * @return the parsed identifier name
      */

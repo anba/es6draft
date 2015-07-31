@@ -13,7 +13,7 @@ import com.github.anba.es6draft.ast.scope.BlockScope;
 
 /**
  * <h1>13 ECMAScript Language: Statements and Declarations</h1><br>
- * <h2>13.6 Iteration Statements</h2>
+ * <h2>13.7 Iteration Statements</h2>
  * <ul>
  * <li>Extension: 'for-each' statement
  * </ul>
@@ -39,48 +39,22 @@ public final class ForEachStatement extends IterationStatement implements ForIte
         return scope;
     }
 
-    /**
-     * Returns the <tt>for each</tt>-statement's head node. The head node is one of the following
-     * types:
-     * <ul>
-     * <li>{@link VariableStatement}:&emsp;{@code for each (var decl in expr)}
-     * <li>{@link LexicalDeclaration}:&emsp;{@code for each (let/const decl in expr)}
-     * <li>{@link LeftHandSideExpression}:&emsp;{@code for each (lhs in expr)}
-     * </ul>
-     * 
-     * @return the head node
-     */
     @Override
     public Node getHead() {
         return head;
     }
 
-    /**
-     * Returns the <tt>for each</tt>-statement's expression node.
-     * 
-     * @return the expression node
-     */
     @Override
     public Expression getExpression() {
         return expression;
     }
 
-    /**
-     * Returns the <tt>for each</tt>-statement's statement node.
-     * 
-     * @return the statement node
-     */
     @Override
     public Statement getStatement() {
         return statement;
     }
 
-    /**
-     * Sets the <tt>for each</tt>-statement's statement node.
-     * 
-     * @param statement
-     *            the new statement node
-     */
+    @Override
     public void setStatement(Statement statement) {
         this.statement = statement;
     }

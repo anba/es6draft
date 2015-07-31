@@ -77,9 +77,8 @@ public final class SymbolConstructor extends BuiltinConstructor implements Initi
     @Override
     public ScriptObject construct(ExecutionContext callerContext, Constructor newTarget,
             Object... args) {
-        ExecutionContext calleeContext = calleeContext();
         /* step 1 */
-        throw newTypeError(calleeContext, Messages.Key.SymbolCreate);
+        throw newTypeError(calleeContext(), Messages.Key.SymbolCreate);
     }
 
     /**

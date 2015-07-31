@@ -11,7 +11,7 @@ import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
 /**
  * Abstract base class for compiled functions.
  */
-public abstract class CompiledFunction {
+public class CompiledFunction {
     private final RuntimeInfo.Function function;
 
     protected CompiledFunction(RuntimeInfo.Function function) {

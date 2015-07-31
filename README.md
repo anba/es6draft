@@ -9,7 +9,7 @@ ECMAScript 2015 (ECMA-262 6th Edition) compiler and runtime written in Java.
 
 ## Implementation Status ##
 
-Full support of [ECMAScript 2015, Final Draft, Rev 38, April 14, 2015] [esdrafts].
+Full support of [ECMAScript® 2015] [es2015].
 
 Full support of [ECMAScript® 2015 Internationalization API, ECMA-402 2nd edition] [intl].
 
@@ -90,7 +90,7 @@ To skip an external test, use `-D<name>.skip=true`. For example to run only the 
 mvn test -P external -Dtraceur.path=<...> -Dmozilla.skip=true -Dv8.skip=true -Dwebkit.skip=true
 ```
 
-[esdrafts]: http://wiki.ecmascript.org/doku.php?id=harmony:specification_drafts "Draft Specification for ES.next"
+[es2015]: http://ecma-international.org/publications/standards/Ecma-262.htm "ECMAScript® 2015 Language Specification"
 [intl]: http://ecma-international.org/publications/standards/Ecma-402.htm "ECMAScript® 2015 Internationalization API Specification"
 [icu]: http://site.icu-project.org/
 [java]: http://java.sun.com/

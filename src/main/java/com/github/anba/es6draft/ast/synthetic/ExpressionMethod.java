@@ -12,10 +12,10 @@ import com.github.anba.es6draft.ast.NodeVisitor;
 import com.github.anba.es6draft.ast.VoidNodeVisitor;
 
 /**
- * {@link Expression} as an external Java method
+ * {@link Expression} as an external Java method.
  */
 public final class ExpressionMethod extends Expression {
-    private Expression expression;
+    private final Expression expression;
 
     public ExpressionMethod(Expression expression) {
         super(expression.getBeginPosition(), expression.getEndPosition());

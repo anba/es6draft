@@ -62,11 +62,11 @@ import com.github.anba.es6draft.runtime.objects.promise.PromiseConstructor;
 import com.github.anba.es6draft.runtime.objects.promise.PromisePrototype;
 import com.github.anba.es6draft.runtime.objects.reflect.LoaderConstructor;
 import com.github.anba.es6draft.runtime.objects.reflect.LoaderPrototype;
-import com.github.anba.es6draft.runtime.objects.reflect.ProxyConstructorFunction;
+import com.github.anba.es6draft.runtime.objects.reflect.ProxyConstructor;
 import com.github.anba.es6draft.runtime.objects.reflect.RealmConstructor;
 import com.github.anba.es6draft.runtime.objects.reflect.RealmObject;
 import com.github.anba.es6draft.runtime.objects.reflect.RealmPrototype;
-import com.github.anba.es6draft.runtime.objects.reflect.Reflect;
+import com.github.anba.es6draft.runtime.objects.reflect.ReflectObject;
 import com.github.anba.es6draft.runtime.objects.reflect.SystemObject;
 import com.github.anba.es6draft.runtime.objects.text.RegExpConstructor;
 import com.github.anba.es6draft.runtime.objects.text.RegExpPrototype;
@@ -704,7 +704,7 @@ public final class Realm {
         intrinsics.put(Intrinsics.FunctionPrototype, functionPrototype);
 
         // Create [[ThrowTypeError]] function before initializing intrinsics.
-        realm.throwTypeError = TypeErrorThrower.createThrowTypeError(realm);
+        realm.throwTypeError = new TypeErrorThrower(realm);
 
         // Also stored in intrinsics table.
         intrinsics.put(Intrinsics.ThrowTypeError, realm.throwTypeError);
@@ -936,8 +936,8 @@ public final class Realm {
         EnumMap<Intrinsics, OrdinaryObject> intrinsics = realm.intrinsics;
 
         // allocation phase
-        ProxyConstructorFunction proxy = new ProxyConstructorFunction(realm);
-        Reflect reflect = new Reflect(realm);
+        ProxyConstructor proxy = new ProxyConstructor(realm);
+        ReflectObject reflect = new ReflectObject(realm);
 
         // registration phase
         intrinsics.put(Intrinsics.Proxy, proxy);

@@ -13,9 +13,9 @@ import com.github.anba.es6draft.ast.scope.BlockScope;
 
 /**
  * <h1>13 ECMAScript Language: Statements and Declarations</h1><br>
- * <h2>13.6 Iteration Statements</h2>
+ * <h2>13.7 Iteration Statements</h2>
  * <ul>
- * <li>13.6.4 The for-in and for-of Statements
+ * <li>13.7.5 The for-in and for-of Statements
  * </ul>
  */
 public final class ForInStatement extends IterationStatement implements ForIterationNode {
@@ -39,48 +39,22 @@ public final class ForInStatement extends IterationStatement implements ForItera
         return scope;
     }
 
-    /**
-     * Returns the <tt>for in</tt>-statement's head node. The head node is one of the following
-     * types:
-     * <ul>
-     * <li>{@link VariableStatement}:&emsp;{@code for (var decl in expr)}
-     * <li>{@link LexicalDeclaration}:&emsp;{@code for (let/const decl in expr)}
-     * <li>{@link LeftHandSideExpression}:&emsp;{@code for (lhs in expr)}
-     * </ul>
-     * 
-     * @return the head node
-     */
     @Override
     public Node getHead() {
         return head;
     }
 
-    /**
-     * Returns the <tt>for in</tt>-statement's expression node.
-     * 
-     * @return the expression node
-     */
     @Override
     public Expression getExpression() {
         return expression;
     }
 
-    /**
-     * Returns the <tt>for in</tt>-statement's statement node.
-     * 
-     * @return the statement node
-     */
     @Override
     public Statement getStatement() {
         return statement;
     }
 
-    /**
-     * Sets the <tt>for in</tt>-statement's statement node.
-     * 
-     * @param statement
-     *            the new statement node
-     */
+    @Override
     public void setStatement(Statement statement) {
         this.statement = statement;
     }

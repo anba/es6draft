@@ -9,6 +9,9 @@ package com.github.anba.es6draft.ast;
 /**
  * <h1>15 ECMAScript Language: Scripts and Modules</h1><br>
  * <h2>15.2 Modules</h2>
+ * <ul>
+ * <li>15.2.3 Exports
+ * </ul>
  */
 public final class ExportDefaultExpression extends Declaration {
     private final BindingIdentifier binding;
@@ -21,10 +24,20 @@ public final class ExportDefaultExpression extends Declaration {
         this.expression = expression;
     }
 
+    /**
+     * Returns the binding name ({@code *default*}) of this default export.
+     * 
+     * @return the default binding name
+     */
     public BindingIdentifier getBinding() {
         return binding;
     }
 
+    /**
+     * Returns the default export expression.
+     * 
+     * @return the export expression
+     */
     public Expression getExpression() {
         return expression;
     }

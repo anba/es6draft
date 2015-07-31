@@ -41,7 +41,7 @@ import com.github.anba.es6draft.runtime.types.builtins.ArrayObject;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
- * Simple interpreter to speed-up `eval` evaluation
+ * Basic interpreter to speed-up evaluation of simple eval-scripts.
  */
 public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionContext> {
     /**
@@ -78,7 +78,7 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
      *            the execution context
      * @return the return value after applying the operation
      */
-    private static Double postIncrement(Object lhs, ExecutionContext cx) {
+    private static Double postIncrement(Reference<?, ?> lhs, ExecutionContext cx) {
         double oldValue = ToNumber(cx, GetValue(lhs, cx));
         double newValue = oldValue + 1;
         PutValue(lhs, newValue, cx);
@@ -94,7 +94,7 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
      *            the execution context
      * @return the return value after applying the operation
      */
-    private static Double postDecrement(Object lhs, ExecutionContext cx) {
+    private static Double postDecrement(Reference<?, ?> lhs, ExecutionContext cx) {
         double oldValue = ToNumber(cx, GetValue(lhs, cx));
         double newValue = oldValue - 1;
         PutValue(lhs, newValue, cx);
@@ -122,11 +122,10 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
      * 
      * @param value
      *            the expression value
-     * @param cx
-     *            the execution context
      * @return the return value after applying the operation
      */
-    private static Undefined _void(Object value, ExecutionContext cx) {
+    private static Undefined _void(Object value) {
+        assert !(value instanceof Reference);
         return UNDEFINED;
     }
 
@@ -139,7 +138,7 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
      *            the execution context
      * @return the return value after applying the operation
      */
-    private static Double preIncrement(Object expr, ExecutionContext cx) {
+    private static Double preIncrement(Reference<?, ?> expr, ExecutionContext cx) {
         double oldValue = ToNumber(cx, GetValue(expr, cx));
         double newValue = oldValue + 1;
         PutValue(expr, newValue, cx);
@@ -155,7 +154,7 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
      *            the execution context
      * @return the return value after applying the operation
      */
-    private static Double preDecrement(Object expr, ExecutionContext cx) {
+    private static Double preDecrement(Reference<?, ?> expr, ExecutionContext cx) {
         double oldValue = ToNumber(cx, GetValue(expr, cx));
         double newValue = oldValue - 1;
         PutValue(expr, newValue, cx);
@@ -185,8 +184,7 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
      * @return the return value after applying the operation
      */
     private static Double neg(Object value, ExecutionContext cx) {
-        double oldValue = ToNumber(cx, value);
-        return -oldValue;
+        return -ToNumber(cx, value);
     }
 
     /**
@@ -199,8 +197,7 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
      * @return the return value after applying the operation
      */
     private static Integer bitnot(Object value, ExecutionContext cx) {
-        int oldValue = ToInt32(cx, value);
-        return ~oldValue;
+        return ~ToInt32(cx, value);
     }
 
     /**
@@ -208,13 +205,10 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
      * 
      * @param value
      *            the expression value
-     * @param cx
-     *            the execution context
      * @return the return value after applying the operation
      */
-    private static Boolean not(Object value, ExecutionContext cx) {
-        boolean oldValue = ToBoolean(value);
-        return !oldValue;
+    private static Boolean not(Object value) {
+        return !ToBoolean(value);
     }
 
     /**
@@ -468,11 +462,9 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
      *            the left-hand side expression value
      * @param rval
      *            the right-hand side expression value
-     * @param cx
-     *            the execution context
      * @return the return value after applying the operation
      */
-    private static Boolean strictEquals(Object lval, Object rval, ExecutionContext cx) {
+    private static Boolean strictEquals(Object lval, Object rval) {
         return StrictEqualityComparison(rval, lval);
     }
 
@@ -483,11 +475,9 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
      *            the left-hand side expression value
      * @param rval
      *            the right-hand side expression value
-     * @param cx
-     *            the execution context
      * @return the return value after applying the operation
      */
-    private static Boolean strictNotEquals(Object lval, Object rval, ExecutionContext cx) {
+    private static Boolean strictNotEquals(Object lval, Object rval) {
         return !StrictEqualityComparison(rval, lval);
     }
 
@@ -574,77 +564,73 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
         BindingIdentifier binding = (BindingIdentifier) node.getBinding();
         Expression initializer = node.getInitializer();
         if (initializer != null) {
-            Object val = initializer.accept(this, cx);
-            val = GetValue(val, cx);
-            cx.resolveBinding(binding.getName().getIdentifier(), strict).putValue(val, cx);
+            Reference<?, String> lhs = cx.resolveBinding(binding.getName().getIdentifier(), strict);
+            Object val = GetValue(initializer.accept(this, cx), cx);
+            lhs.putValue(val, cx);
         }
         return null;
     }
 
     @Override
     public Object visit(ExpressionStatement node, ExecutionContext cx) {
-        Object value = node.getExpression().accept(this, cx);
-        value = GetValue(value, cx);
-        return value;
+        return GetValue(node.getExpression().accept(this, cx), cx);
     }
 
     @Override
     public Object visit(AssignmentExpression node, ExecutionContext cx) {
         if (node.getOperator() == AssignmentExpression.Operator.ASSIGN) {
-            Object lref = node.getLeft().accept(this, cx);
-            Object rval = node.getRight().accept(this, cx);
-            rval = GetValue(rval, cx);
+            Reference<?, ?> lref = (Reference<?, ?>) node.getLeft().accept(this, cx);
+            Object rval = GetValue(node.getRight().accept(this, cx), cx);
             PutValue(lref, rval, cx);
             return rval;
         } else {
-            Object lref = node.getLeft().accept(this, cx);
+            Reference<?, ?> lref = (Reference<?, ?>) node.getLeft().accept(this, cx);
             Object lval = GetValue(lref, cx);
-            Object rval = node.getRight().accept(this, cx);
-            rval = GetValue(rval, cx);
-
+            Object rval = GetValue(node.getRight().accept(this, cx), cx);
+            Object r;
             switch (node.getOperator()) {
             case ASSIGN_ADD:
-                rval = ScriptRuntime.add(lval, rval, cx);
+                r = ScriptRuntime.add(lval, rval, cx);
                 break;
             case ASSIGN_BITAND:
-                rval = bitand(lval, rval, cx);
+                r = bitand(lval, rval, cx);
                 break;
             case ASSIGN_BITOR:
-                rval = bitor(lval, rval, cx);
+                r = bitor(lval, rval, cx);
                 break;
             case ASSIGN_BITXOR:
-                rval = bitxor(lval, rval, cx);
+                r = bitxor(lval, rval, cx);
                 break;
             case ASSIGN_DIV:
-                rval = div(lval, rval, cx);
+                r = div(lval, rval, cx);
                 break;
             case ASSIGN_EXP:
-                rval = exp(lval, rval, cx);
+                r = exp(lval, rval, cx);
                 break;
             case ASSIGN_MOD:
-                rval = mod(lval, rval, cx);
+                r = mod(lval, rval, cx);
                 break;
             case ASSIGN_MUL:
-                rval = mul(lval, rval, cx);
+                r = mul(lval, rval, cx);
                 break;
             case ASSIGN_SHL:
-                rval = leftShift(lval, rval, cx);
+                r = leftShift(lval, rval, cx);
                 break;
             case ASSIGN_SHR:
-                rval = rightShift(lval, rval, cx);
+                r = rightShift(lval, rval, cx);
                 break;
             case ASSIGN_SUB:
-                rval = sub(lval, rval, cx);
+                r = sub(lval, rval, cx);
                 break;
             case ASSIGN_USHR:
-                rval = unsignedRightShift(lval, rval, cx);
+                r = unsignedRightShift(lval, rval, cx);
                 break;
             case ASSIGN:
             default:
                 throw new AssertionError();
             }
-            PutValue(lref, rval, cx);
-            return rval;
+            PutValue(lref, r, cx);
+            return r;
         }
     }
 
@@ -654,15 +640,9 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
                 || node.getOperator() == BinaryExpression.Operator.OR) {
             return visitAndOr(node, cx);
         }
-
-        // evaluate lhs/rhs and call GetValue()
-        /* steps 1-6 */
-        Object lval = node.getLeft().accept(this, cx);
-        lval = GetValue(lval, cx);
-        Object rval = node.getRight().accept(this, cx);
-        rval = GetValue(rval, cx);
-
-        // call binary operator specific code
+        /* steps 1-? */
+        Object lval = GetValue(node.getLeft().accept(this, cx), cx);
+        Object rval = GetValue(node.getRight().accept(this, cx), cx);
         switch (node.getOperator()) {
         case ADD:
             return ScriptRuntime.add(lval, rval, cx);
@@ -697,11 +677,11 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
         case NE:
             return notEquals(lval, rval, cx);
         case SHEQ:
-            return strictEquals(lval, rval, cx);
+            return strictEquals(lval, rval);
         case SHL:
             return leftShift(lval, rval, cx);
         case SHNE:
-            return strictNotEquals(lval, rval, cx);
+            return strictNotEquals(lval, rval);
         case SHR:
             return rightShift(lval, rval, cx);
         case SUB:
@@ -716,15 +696,11 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
     }
 
     private Object visitAndOr(BinaryExpression node, ExecutionContext cx) {
-        Object lval = node.getLeft().accept(this, cx);
-        lval = GetValue(lval, cx);
+        Object lval = GetValue(node.getLeft().accept(this, cx), cx);
         if (ToBoolean(lval) ^ node.getOperator() == Operator.AND) {
             return lval;
-        } else {
-            Object rval = node.getRight().accept(this, cx);
-            rval = GetValue(rval, cx);
-            return rval;
         }
+        return GetValue(node.getRight().accept(this, cx), cx);
     }
 
     @Override
@@ -738,21 +714,21 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
         case NEG:
             return neg(GetValue(val, cx), cx);
         case NOT:
-            return not(GetValue(val, cx), cx);
+            return not(GetValue(val, cx));
         case POS:
             return pos(GetValue(val, cx), cx);
         case POST_DEC:
-            return postDecrement(val, cx);
+            return postDecrement((Reference<?, ?>) val, cx);
         case POST_INC:
-            return postIncrement(val, cx);
+            return postIncrement((Reference<?, ?>) val, cx);
         case PRE_DEC:
-            return preDecrement(val, cx);
+            return preDecrement((Reference<?, ?>) val, cx);
         case PRE_INC:
-            return preIncrement(val, cx);
+            return preIncrement((Reference<?, ?>) val, cx);
         case TYPEOF:
             return ScriptRuntime.typeof(val, cx);
         case VOID:
-            return _void(GetValue(val, cx), cx);
+            return _void(GetValue(val, cx));
         default:
             throw new AssertionError();
         }
@@ -770,8 +746,7 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
 
     @Override
     public Object visit(ConditionalExpression node, ExecutionContext cx) {
-        Object test = node.getTest().accept(this, cx);
-        test = GetValue(test, cx);
+        Object test = GetValue(node.getTest().accept(this, cx), cx);
         Object val;
         if (ToBoolean(test)) {
             val = node.getThen().accept(this, cx);
@@ -818,8 +793,7 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
             String propName = PropName(propertyName);
             long propIndex = propName != null ? IndexedMap.toIndex(propName) : -1;
             assert propName != null && !(propertyName instanceof ComputedPropertyName);
-            Object value = propertyValue.accept(this, cx);
-            value = GetValue(value, cx);
+            Object value = GetValue(propertyValue.accept(this, cx), cx);
 
             if ("__proto__".equals(propName)
                     && cx.getRealm().isEnabled(CompatibilityOption.ProtoInitializer)) {
@@ -841,8 +815,7 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
             if (element instanceof Elision) {
                 // Elision
             } else {
-                Object value = element.accept(this, cx);
-                value = GetValue(value, cx);
+                Object value = GetValue(element.accept(this, cx), cx);
                 ScriptRuntime.defineProperty(array, nextIndex, value);
             }
             nextIndex += 1;
@@ -917,8 +890,7 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
         int size = arguments.size();
         Object[] args = new Object[size];
         for (int i = 0; i < size; ++i) {
-            Object arg = arguments.get(i).accept(this, cx);
-            args[i] = GetValue(arg, cx);
+            args[i] = GetValue(arguments.get(i).accept(this, cx), cx);
         }
         return args;
     }
@@ -942,17 +914,14 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
 
     @Override
     public Object visit(ElementAccessor node, ExecutionContext cx) {
-        Object base = node.getBase().accept(this, cx);
-        base = GetValue(base, cx);
-        Object element = node.getElement().accept(this, cx);
-        element = GetValue(element, cx);
+        Object base = GetValue(node.getBase().accept(this, cx), cx);
+        Object element = GetValue(node.getElement().accept(this, cx), cx);
         return ScriptRuntime.getElement(base, element, cx, strict);
     }
 
     @Override
     public Object visit(PropertyAccessor node, ExecutionContext cx) {
-        Object base = node.getBase().accept(this, cx);
-        base = GetValue(base, cx);
+        Object base = GetValue(node.getBase().accept(this, cx), cx);
         return ScriptRuntime.getProperty(base, node.getName(), cx, strict);
     }
 
@@ -967,7 +936,7 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
     }
 
     /**
-     * {@link NodeVisitor} to test whether or not the given nodes can be executed by the interpreter
+     * {@link NodeVisitor} to test whether or not the script can be executed by the interpreter.
      */
     private static final class InterpreterTest extends DefaultNodeVisitor<Boolean, Void> {
         static final DefaultNodeVisitor<Boolean, Void> INSTANCE = new InterpreterTest();

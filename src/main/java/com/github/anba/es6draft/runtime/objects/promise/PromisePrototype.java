@@ -178,7 +178,8 @@ public final class PromisePrototype extends OrdinaryObject implements Initializa
             realm.enqueuePromiseTask(new PromiseReactionTask(realm, fulfillReaction, value));
         }
         /* step 9 */
-        else if (promise.getState() == PromiseObject.State.Rejected) {
+        else {
+            assert promise.getState() == PromiseObject.State.Rejected;
             Object reason = promise.getResult();
             Realm realm = cx.getRealm();
             realm.enqueuePromiseTask(new PromiseReactionTask(realm, rejectReaction, reason));

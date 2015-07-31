@@ -88,6 +88,7 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
         }
         try {
             /* step 3 */
+            // TODO: Call allocateDirect() if size exceeds predefined limit?
             return ByteBuffer.allocate((int) size).order(DEFAULT_BYTE_ORDER);
         } catch (OutOfMemoryError e) {
             /* step 2 */
@@ -288,6 +289,7 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
         ByteBuffer block = arrayBuffer.getData();
         /* steps 7-8 */
         if ((block.order() == ByteOrder.LITTLE_ENDIAN) != isLittleEndian) {
+            // NB: Byte order is not reset after this call.
             block.order(isLittleEndian ? ByteOrder.LITTLE_ENDIAN : ByteOrder.BIG_ENDIAN);
         }
 
@@ -370,6 +372,7 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
         assert block != null;
         /* step 8 */
         if ((block.order() == ByteOrder.LITTLE_ENDIAN) != isLittleEndian) {
+            // NB: Byte order is not reset after this call.
             block.order(isLittleEndian ? ByteOrder.LITTLE_ENDIAN : ByteOrder.BIG_ENDIAN);
         }
 
@@ -419,10 +422,8 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
      */
     @Override
     public ArrayBufferObject call(ExecutionContext callerContext, Object thisValue, Object... args) {
-        ExecutionContext calleeContext = calleeContext();
         /* step 1 */
-        throw newTypeError(calleeContext, Messages.Key.InvalidCall, "ArrayBuffer");
-        /* steps 2-6 (not applicable) */
+        throw newTypeError(calleeContext(), Messages.Key.InvalidCall, "ArrayBuffer");
     }
 
     /**
@@ -434,8 +435,9 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
         ExecutionContext calleeContext = calleeContext();
         Object length = argument(args, 0);
         /* step 1 (not applicable) */
-        // FIXME: spec issue? - undefined length is same as 0 for bwcompat?
-        if (Type.isUndefined(length)) {
+        // FIXME: spec issue? - missing length parameter same as 0 for bwcompat?
+        if (args.length == 0
+                && getRealm().isEnabled(CompatibilityOption.ArrayBufferMissingLength)) {
             length = 0;
         }
         /* step 2 */
@@ -443,7 +445,7 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
         /* steps 3-4 */
         long byteLength = ToLength(numberLength);
         /* step 5 */
-        if (!SameValueZero(numberLength, byteLength)) {
+        if (numberLength != byteLength) { // SameValueZero
             throw newRangeError(calleeContext, Messages.Key.InvalidBufferSize);
         }
         /* step 6 */
@@ -550,7 +552,7 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
             // Perform length same validation as in new ArrayBuffer(length).
             double numberLength = ToNumber(cx, newByteLength);
             long byteLength = ToLength(numberLength);
-            if (!SameValueZero(numberLength, byteLength)) {
+            if (numberLength != byteLength) { // SameValueZero
                 throw newRangeError(cx, Messages.Key.InvalidBufferSize);
             }
             // Create new array buffer from @@species like in CloneArrayBuffer().

@@ -83,6 +83,11 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
         Lexical, Strict, Global
     }
 
+    @SuppressWarnings("unchecked")
+    protected static final <E extends Throwable> E rethrow(Throwable e) throws E {
+        throw (E) e;
+    }
+
     private static boolean isNonStrictFunctionOrNull(Object v) {
         return v == NULL || (v instanceof FunctionObject && !((FunctionObject) v).isStrict());
     }

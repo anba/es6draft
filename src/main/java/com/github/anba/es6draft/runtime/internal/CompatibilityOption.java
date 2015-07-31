@@ -264,6 +264,11 @@ public enum CompatibilityOption {
     TypeAnnotation,
 
     /**
+     * ArrayBuffer: Missing length parameter in constructor call
+     */
+    ArrayBufferMissingLength,
+
+    /**
      * Track unhandled rejected promise objects
      */
     PromiseRejection,

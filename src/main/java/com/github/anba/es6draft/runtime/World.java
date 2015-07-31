@@ -174,12 +174,14 @@ public final class World<GLOBAL extends GlobalObject> {
 
     /**
      * Executes the queue of pending tasks.
-     * 
-     * @throws InterruptedException
-     *             if interrupted while waiting
      */
-    public void runEventLoop() throws InterruptedException {
-        runEventLoop(EMPTY_TASK_SOURCE);
+    public void runEventLoop() {
+        try {
+            runEventLoop(EMPTY_TASK_SOURCE);
+        } catch (InterruptedException e) {
+            // The empty task source never throws InterruptedException.
+            throw new AssertionError(e);
+        }
     }
 
     /**

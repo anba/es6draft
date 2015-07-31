@@ -22,7 +22,7 @@ final class CaseFoldDataGenerator {
     private CaseFoldDataGenerator() {
     }
 
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args) throws IOException {
         // generateSpaceRange();
         // generateInvalidToLowerCases();
         // generateCaseFoldData();
@@ -139,7 +139,7 @@ final class CaseFoldDataGenerator {
      * Create {@link CaseFoldData#appendCaseInsensitiveUnicodeRange(RegExpParser, int, int)} method
      */
     public static void generateUnicodeCaseFoldRange() {
-        StringBuilder code = new StringBuilder();
+        StringBuilder code = new StringBuilder(256);
         code.append("public static final void appendCaseInsensitiveUnicodeRange(RegExpParser parser, int startChar, int endChar) {\n");
         code.append("// Type 1\n");
         addType1Characters(code);
@@ -281,7 +281,7 @@ final class CaseFoldDataGenerator {
      * Create {@link CaseFoldData#isValidToLower(int)} method
      */
     public static void generateInvalidToLowerCases() {
-        StringBuilder code = new StringBuilder();
+        StringBuilder code = new StringBuilder(256);
         String methodName = "isValidToLower";
         code.append(String.format("public static final boolean %s(int codePoint) {%n", methodName));
         code.append("switch(codePoint) {\n");
@@ -434,7 +434,7 @@ final class CaseFoldDataGenerator {
     public static void generateCaseFoldMethods() {
         TreeMap<Integer, List<Integer>> entries = findEntries();
         for (int minListSize = 1;; minListSize += 1) {
-            StringBuilder code = new StringBuilder();
+            StringBuilder code = new StringBuilder(256);
             String methodName = "caseFold" + minListSize;
             code.append(String.format("public static final int %s(int codePoint) {%n", methodName));
             code.append("switch(codePoint) {\n");

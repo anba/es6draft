@@ -62,9 +62,8 @@ public final class WeakSetConstructor extends BuiltinConstructor implements Init
      */
     @Override
     public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
-        ExecutionContext calleeContext = calleeContext();
         /* step 1 */
-        throw newTypeError(calleeContext, Messages.Key.InvalidCall, "WeakSet");
+        throw newTypeError(calleeContext(), Messages.Key.InvalidCall, "WeakSet");
     }
 
     /**
@@ -80,25 +79,17 @@ public final class WeakSetConstructor extends BuiltinConstructor implements Init
         /* steps 2-4 */
         WeakSetObject set = OrdinaryCreateFromConstructor(calleeContext, newTarget,
                 Intrinsics.WeakSetPrototype, WeakSetObjectAllocator.INSTANCE);
-
-        /* steps 5-7 */
-        ScriptIterator<?> iter;
-        Callable adder = null;
+        /* steps 5-6, 8 */
         if (Type.isUndefinedOrNull(iterable)) {
-            iter = null;
-        } else {
-            Object _adder = Get(calleeContext, set, "add");
-            if (!IsCallable(_adder)) {
-                throw newTypeError(calleeContext, Messages.Key.PropertyNotCallable, "add");
-            }
-            adder = (Callable) _adder;
-            iter = GetScriptIterator(calleeContext, iterable);
-        }
-
-        /* step 8 */
-        if (iter == null) {
             return set;
         }
+        /* step 7 */
+        Object _adder = Get(calleeContext, set, "add");
+        if (!IsCallable(_adder)) {
+            throw newTypeError(calleeContext, Messages.Key.PropertyNotCallable, "add");
+        }
+        Callable adder = (Callable) _adder;
+        ScriptIterator<?> iter = GetScriptIterator(calleeContext, iterable);
         /* step 9 */
         try {
             while (iter.hasNext()) {

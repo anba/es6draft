@@ -9,6 +9,9 @@ package com.github.anba.es6draft.ast;
 /**
  * <h1>15 ECMAScript Language: Scripts and Modules</h1><br>
  * <h2>15.2 Modules</h2>
+ * <ul>
+ * <li>15.2.3 Exports
+ * </ul>
  */
 public final class ExportDeclaration extends ModuleItem {
     private final Type type;
@@ -18,9 +21,49 @@ public final class ExportDeclaration extends ModuleItem {
     private final VariableStatement variableStatement;
     private final Declaration declaration;
 
+    /**
+     * The export declaration type.
+     */
     public enum Type {
-        All, External, Local, Variable, Declaration, DefaultHoistableDeclaration,
-        DefaultClassDeclaration, DefaultExpression
+        /**
+         * Export type: {@code export * from module}
+         */
+        All,
+
+        /**
+         * Export type: {@code export <thing> from module}
+         */
+        External,
+
+        /**
+         * Export type: {@code export <thing>}
+         */
+        Local,
+
+        /**
+         * Export type: {@code export var}
+         */
+        Variable,
+
+        /**
+         * Export type: {@code export <declaration>}
+         */
+        Declaration,
+
+        /**
+         * Export type: {@code export default <function>}
+         */
+        DefaultHoistableDeclaration,
+
+        /**
+         * Export type: {@code export default <class>}
+         */
+        DefaultClassDeclaration,
+
+        /**
+         * Export type: {@code export default <expression>}
+         */
+        DefaultExpression
     }
 
     /**
@@ -190,40 +233,81 @@ public final class ExportDeclaration extends ModuleItem {
         this.declaration = null;
     }
 
+    /**
+     * Returns the export declaration type.
+     * 
+     * @return the export type
+     */
     public Type getType() {
         return type;
     }
 
+    /**
+     * Returns the module specifier for "{@code export * from <module>}" or "{@code export ... from
+     * <module>}" export declarations.
+     * 
+     * @return the module specifier
+     */
     public String getModuleSpecifier() {
         assert type == Type.All || type == Type.External : "Type=" + type;
         return moduleSpecifier;
     }
 
+    /**
+     * Returns the export clause node.
+     * 
+     * @return the export clause
+     */
     public ExportClause getExportClause() {
         assert type == Type.Local || type == Type.External : "Type=" + type;
         return exportClause;
     }
 
+    /**
+     * Returns the exported default expression for {@code export default <expression>}.
+     * 
+     * @return the exported default expression
+     */
     public ExportDefaultExpression getExpression() {
         assert type == Type.DefaultExpression : "Type=" + type;
         return expression;
     }
 
+    /**
+     * Returns the exported variable statement for {@code export var <...>}.
+     * 
+     * @return the exported variable statement
+     */
     public VariableStatement getVariableStatement() {
         assert type == Type.Variable : "Type=" + type;
         return variableStatement;
     }
 
+    /**
+     * Returns the exported declaration for {@code export <declaration>}.
+     * 
+     * @return the exported declaration
+     */
     public Declaration getDeclaration() {
         assert type == Type.Declaration : "Type=" + type;
         return declaration;
     }
 
+    /**
+     * Returns the hoistable declaration for {@code export default function <...>}.
+     * 
+     * @return the default export hoistable declaration
+     */
     public HoistableDeclaration getHoistableDeclaration() {
         assert type == Type.DefaultHoistableDeclaration : "Type=" + type;
         return (HoistableDeclaration) declaration;
     }
 
+    /**
+     * Returns the class declaration for {@code export default class <...>}.
+     * 
+     * @return the default export class declaration
+     */
     public ClassDeclaration getClassDeclaration() {
         assert type == Type.DefaultClassDeclaration : "Type=" + type;
         return (ClassDeclaration) declaration;

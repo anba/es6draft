@@ -143,7 +143,7 @@ final class ExternConstantPool extends ConstantPool {
         return new ConstantClassAssembler(method);
     }
 
-    private void load(InstructionAssembler assembler, Object cst, int index, TypeSpec<?> spec) {
+    private void load(InstructionAssembler assembler, int index, TypeSpec<?> spec) {
         assert 0 <= index && index <= EXTERN_CONSTANTS_LIMIT;
         assembler.iconst(index);
         assembler.invokestatic(classCode.classType, spec.methodName, spec.methodDescriptor, false);
@@ -151,26 +151,26 @@ final class ExternConstantPool extends ConstantPool {
 
     @Override
     protected void iconst(InstructionAssembler assembler, Integer cst, int index) {
-        load(assembler, cst, index, TypeSpec.INT);
+        load(assembler, index, TypeSpec.INT);
     }
 
     @Override
     protected void lconst(InstructionAssembler assembler, Long cst, int index) {
-        load(assembler, cst, index, TypeSpec.LONG);
+        load(assembler, index, TypeSpec.LONG);
     }
 
     @Override
     protected void fconst(InstructionAssembler assembler, Float cst, int index) {
-        load(assembler, cst, index, TypeSpec.FLOAT);
+        load(assembler, index, TypeSpec.FLOAT);
     }
 
     @Override
     protected void dconst(InstructionAssembler assembler, Double cst, int index) {
-        load(assembler, cst, index, TypeSpec.DOUBLE);
+        load(assembler, index, TypeSpec.DOUBLE);
     }
 
     @Override
     protected void aconst(InstructionAssembler assembler, String cst, int index) {
-        load(assembler, cst, index, TypeSpec.STRING);
+        load(assembler, index, TypeSpec.STRING);
     }
 }

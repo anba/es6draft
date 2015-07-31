@@ -64,9 +64,8 @@ public final class SetConstructor extends BuiltinConstructor implements Initiali
      */
     @Override
     public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
-        ExecutionContext calleeContext = calleeContext();
         /* step 1 */
-        throw newTypeError(calleeContext, Messages.Key.InvalidCall, "Set");
+        throw newTypeError(calleeContext(), Messages.Key.InvalidCall, "Set");
     }
 
     /**
@@ -82,25 +81,17 @@ public final class SetConstructor extends BuiltinConstructor implements Initiali
         /* steps 2-4 */
         SetObject set = OrdinaryCreateFromConstructor(calleeContext, newTarget,
                 Intrinsics.SetPrototype, SetObjectAllocator.INSTANCE);
-
-        /* steps 5-7 */
-        ScriptIterator<?> iter;
-        Callable adder = null;
+        /* steps 5-6, 8 */
         if (Type.isUndefinedOrNull(iterable)) {
-            iter = null;
-        } else {
-            Object _adder = Get(calleeContext, set, "add");
-            if (!IsCallable(_adder)) {
-                throw newTypeError(calleeContext, Messages.Key.PropertyNotCallable, "add");
-            }
-            adder = (Callable) _adder;
-            iter = GetScriptIterator(calleeContext, iterable);
-        }
-
-        /* step 8 */
-        if (iter == null) {
             return set;
         }
+        /* step 7 */
+        Object _adder = Get(calleeContext, set, "add");
+        if (!IsCallable(_adder)) {
+            throw newTypeError(calleeContext, Messages.Key.PropertyNotCallable, "add");
+        }
+        Callable adder = (Callable) _adder;
+        ScriptIterator<?> iter = GetScriptIterator(calleeContext, iterable);
         /* step 9 */
         try {
             while (iter.hasNext()) {

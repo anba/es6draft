@@ -6,8 +6,8 @@
  */
 package com.github.anba.es6draft.runtime.objects.number;
 
+import static com.github.anba.es6draft.runtime.AbstractOperations.ToInt32;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToNumber;
-import static com.github.anba.es6draft.runtime.AbstractOperations.ToUint32;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
@@ -69,11 +69,18 @@ public final class MathObject extends OrdinaryObject implements Initializable {
         public static final Double LN10 = Math.log(10d);
 
         /**
-         * 20.2.1.4 Math.LN2
+         * 20.2.1.3 Math.LN2
          */
         @Value(name = "LN2", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Double LN2 = Math.log(2d);
+
+        /**
+         * 20.2.1.4 Math.LOG10E
+         */
+        @Value(name = "LOG10E", attributes = @Attributes(writable = false, enumerable = false,
+                configurable = false))
+        public static final Double LOG10E = Math.log10(Math.E);
 
         /**
          * 20.2.1.5 Math.LOG2E
@@ -81,13 +88,6 @@ public final class MathObject extends OrdinaryObject implements Initializable {
         @Value(name = "LOG2E", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Double LOG2E = 1d / Math.log(2d);
-
-        /**
-         * 20.2.1.3 Math.LOG10E
-         */
-        @Value(name = "LOG10E", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = false))
-        public static final Double LOG10E = Math.log10(Math.E);
 
         /**
          * 20.2.1.6 Math.PI
@@ -157,6 +157,33 @@ public final class MathObject extends OrdinaryObject implements Initializable {
         }
 
         /**
+         * 20.2.2.3 Math.acosh(x)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param x
+         *            the argument number
+         * @return the hyperbolic arc cosine of <var>x</var>
+         */
+        @Function(name = "acosh", arity = 1)
+        public static Object acosh(ExecutionContext cx, Object thisValue, Object x) {
+            double d = ToNumber(cx, x);
+            if (Double.isNaN(d) || d < 1.0) {
+                return Double.NaN;
+            }
+            if (d == 1) {
+                return +0.0;
+            }
+            if (d == Double.POSITIVE_INFINITY) {
+                return Double.POSITIVE_INFINITY;
+            }
+            // return Math.log(d + Math.sqrt(d * d - 1.0));
+            return org.mozilla.javascript.MathImpl.acosh(d);
+        }
+
+        /**
          * 20.2.2.4 Math.asin (x)
          * 
          * @param cx
@@ -170,6 +197,27 @@ public final class MathObject extends OrdinaryObject implements Initializable {
         @Function(name = "asin", arity = 1)
         public static Object asin(ExecutionContext cx, Object thisValue, Object x) {
             return Math.asin(ToNumber(cx, x));
+        }
+
+        /**
+         * 20.2.2.5 Math.asinh(x)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param x
+         *            the argument number
+         * @return the hyperbolic arc sine of <var>x</var>
+         */
+        @Function(name = "asinh", arity = 1)
+        public static Object asinh(ExecutionContext cx, Object thisValue, Object x) {
+            double d = ToNumber(cx, x);
+            if (Double.isNaN(d) || d == 0.0 || Double.isInfinite(d)) {
+                return d;
+            }
+            // return Math.log(d + Math.sqrt(d * d + 1.0));
+            return org.mozilla.javascript.MathImpl.asinh(d);
         }
 
         /**
@@ -189,7 +237,37 @@ public final class MathObject extends OrdinaryObject implements Initializable {
         }
 
         /**
-         * 20.2.2.7 Math.atan2 (y, x)
+         * 20.2.2.7 Math.atanh(x)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param x
+         *            the argument number
+         * @return the hyperbolic arc tangent of <var>x</var>
+         */
+        @Function(name = "atanh", arity = 1)
+        public static Object atanh(ExecutionContext cx, Object thisValue, Object x) {
+            double d = ToNumber(cx, x);
+            if (Double.isNaN(d) || d < -1.0 || d > 1.0) {
+                return Double.NaN;
+            }
+            if (d == -1.0) {
+                return Double.NEGATIVE_INFINITY;
+            }
+            if (d == +1.0) {
+                return Double.POSITIVE_INFINITY;
+            }
+            if (d == 0.0) {
+                return d;
+            }
+            // return (Math.log(1.0 + d) - Math.log(1.0 - d)) / 2.0;
+            return org.mozilla.javascript.MathImpl.atanh(d);
+        }
+
+        /**
+         * 20.2.2.8 Math.atan2 (y, x)
          * 
          * @param cx
          *            the execution context
@@ -204,6 +282,22 @@ public final class MathObject extends OrdinaryObject implements Initializable {
         @Function(name = "atan2", arity = 2)
         public static Object atan2(ExecutionContext cx, Object thisValue, Object y, Object x) {
             return Math.atan2(ToNumber(cx, y), ToNumber(cx, x));
+        }
+
+        /**
+         * 20.2.2.9 Math.cbrt(x)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param x
+         *            the argument number
+         * @return the cubic root of its argument
+         */
+        @Function(name = "cbrt", arity = 1)
+        public static Object cbrt(ExecutionContext cx, Object thisValue, Object x) {
+            return Math.cbrt(ToNumber(cx, x));
         }
 
         /**
@@ -223,6 +317,22 @@ public final class MathObject extends OrdinaryObject implements Initializable {
         }
 
         /**
+         * 20.2.2.11 Math.clz32 ( x )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param x
+         *            the argument number
+         * @return the number of leading zeroes in the 32-bit integer representation of the number
+         */
+        @Function(name = "clz32", arity = 1)
+        public static Object clz32(ExecutionContext cx, Object thisValue, Object x) {
+            return Integer.numberOfLeadingZeros((int) ToInt32(cx, x));
+        }
+
+        /**
          * 20.2.2.12 Math.cos (x)
          * 
          * @param cx
@@ -236,6 +346,22 @@ public final class MathObject extends OrdinaryObject implements Initializable {
         @Function(name = "cos", arity = 1)
         public static Object cos(ExecutionContext cx, Object thisValue, Object x) {
             return Math.cos(ToNumber(cx, x));
+        }
+
+        /**
+         * 20.2.2.13 Math.cosh(x)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param x
+         *            the argument number
+         * @return the hyperbolic cosine of <var>x</var>
+         */
+        @Function(name = "cosh", arity = 1)
+        public static Object cosh(ExecutionContext cx, Object thisValue, Object x) {
+            return Math.cosh(ToNumber(cx, x));
         }
 
         /**
@@ -255,6 +381,22 @@ public final class MathObject extends OrdinaryObject implements Initializable {
         }
 
         /**
+         * 20.2.2.15 Math.expm1 (x)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param x
+         *            the argument number
+         * @return the value <i>e</i><span><sup><var>x</var></sup></span>-1
+         */
+        @Function(name = "expm1", arity = 1)
+        public static Object expm1(ExecutionContext cx, Object thisValue, Object x) {
+            return Math.expm1(ToNumber(cx, x));
+        }
+
+        /**
          * 20.2.2.16 Math.floor (x)
          * 
          * @param cx
@@ -268,6 +410,111 @@ public final class MathObject extends OrdinaryObject implements Initializable {
         @Function(name = "floor", arity = 1)
         public static Object floor(ExecutionContext cx, Object thisValue, Object x) {
             return Math.floor(ToNumber(cx, x));
+        }
+
+        /**
+         * 20.2.2.17 Math.fround (x)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param x
+         *            the argument number
+         * @return the value <i>float32</i>(<var>x</var>)
+         */
+        @Function(name = "fround", arity = 1)
+        public static Object fround(ExecutionContext cx, Object thisValue, Object x) {
+            double d = ToNumber(cx, x);
+            /* step 1 */
+            if (Double.isNaN(d)) {
+                return Double.NaN;
+            }
+            /* step 2 */
+            if (d == 0 || Double.isInfinite(d)) {
+                return d;
+            }
+            /* steps 3-5 */
+            return (double) (float) d;
+        }
+
+        /**
+         * 20.2.2.18 Math.hypot ( value1, value2, ...values )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param values
+         *            the argument values
+         * @return the square root of the sum of squares of its arguments
+         */
+        @Function(name = "hypot", arity = 2)
+        public static Object hypot(ExecutionContext cx, Object thisValue, Object... values) {
+            if (values.length == 0) {
+                return +0.0;
+            }
+            if (values.length == 1) {
+                return Math.abs(ToNumber(cx, values[0])); // sqrt(x * x) == |x|
+            }
+            if (values.length == 2) {
+                return Math.hypot(ToNumber(cx, values[0]), ToNumber(cx, values[1]));
+            }
+            return hypotN(cx, values);
+        }
+
+        private static double hypotN(ExecutionContext cx, Object... values) {
+            assert values.length >= 3;
+            boolean hasInfinity = false, hasNaN = false;
+            double max = 0;
+            double[] numbers = new double[values.length];
+            for (int i = 0, len = values.length; i < len; ++i) {
+                double v = ToNumber(cx, values[i]);
+                if (Double.isInfinite(v)) {
+                    hasInfinity = true;
+                } else if (Double.isNaN(v)) {
+                    hasNaN = true;
+                } else {
+                    v = Math.abs(v);
+                    max = Math.max(max, v);
+                    numbers[i] = v;
+                }
+            }
+            if (hasInfinity) {
+                return Double.POSITIVE_INFINITY;
+            } else if (hasNaN) {
+                return Double.NaN;
+            } else if (max == 0.0) {
+                return +0.0;
+            }
+            // Kahan summation with normalisation
+            double result = 0.0, c = 0.0;
+            for (int i = 0, len = numbers.length; i < len; ++i) {
+                double v = numbers[i] / max;
+                double y = v * v - c;
+                double t = result + y;
+                c = (t - result) - y;
+                result = t;
+            }
+            return Math.sqrt(result) * max;
+        }
+
+        /**
+         * 20.2.2.19 Math.imul(x, y)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param x
+         *            the first argument number
+         * @param y
+         *            the second argument number
+         * @return the integer multiplication of its arguments
+         */
+        @Function(name = "imul", arity = 2)
+        public static Object imul(ExecutionContext cx, Object thisValue, Object x, Object y) {
+            return ToInt32(cx, x) * ToInt32(cx, y);
         }
 
         /**
@@ -287,6 +534,55 @@ public final class MathObject extends OrdinaryObject implements Initializable {
         }
 
         /**
+         * 20.2.2.21 Math.log1p (x)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param x
+         *            the argument number
+         * @return the natural logarithm of <var>x</var> + 1
+         */
+        @Function(name = "log1p", arity = 1)
+        public static Object log1p(ExecutionContext cx, Object thisValue, Object x) {
+            return Math.log1p(ToNumber(cx, x));
+        }
+
+        /**
+         * 20.2.2.22 Math.log10 (x)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param x
+         *            the argument number
+         * @return the decimal logarithm of <var>x</var>
+         */
+        @Function(name = "log10", arity = 1)
+        public static Object log10(ExecutionContext cx, Object thisValue, Object x) {
+            return Math.log10(ToNumber(cx, x));
+        }
+
+        /**
+         * 20.2.2.23 Math.log2 (x)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param x
+         *            the argument number
+         * @return the binary logarithm of <var>x</var>
+         */
+        @Function(name = "log2", arity = 1)
+        public static Object log2(ExecutionContext cx, Object thisValue, Object x) {
+            // return Math.log(ToNumber(cx, x)) / Math.log(2d);
+            return MathImpl.log2(ToNumber(cx, x));
+        }
+
+        /**
          * 20.2.2.24 Math.max ( value1, value2, ...values )
          * 
          * @param cx
@@ -299,17 +595,11 @@ public final class MathObject extends OrdinaryObject implements Initializable {
          */
         @Function(name = "max", arity = 2)
         public static Object max(ExecutionContext cx, Object thisValue, Object... values) {
-            double max = Double.NEGATIVE_INFINITY;
+            double result = Double.NEGATIVE_INFINITY;
             for (Object value : values) {
-                double v = ToNumber(cx, value);
-                // Do not call `Double.compare(v, max)` (parameter order!), to handle NaN properly
-                // N.B. Double.compare() includes all necessary checks to be compliant to Abstract
-                // Relational Comparison Algorithm (11.8.1)
-                if (Double.compare(max, v) != 1) {
-                    max = v;
-                }
+                result = Math.max(result, ToNumber(cx, value));
             }
-            return max;
+            return result;
         }
 
         /**
@@ -325,17 +615,11 @@ public final class MathObject extends OrdinaryObject implements Initializable {
          */
         @Function(name = "min", arity = 2)
         public static Object min(ExecutionContext cx, Object thisValue, Object... values) {
-            double min = Double.POSITIVE_INFINITY;
+            double result = Double.POSITIVE_INFINITY;
             for (Object value : values) {
-                double v = ToNumber(cx, value);
-                // Do not call `Double.compare(-v, -min)` (parameter order!), to handle NaN properly
-                // N.B. Double.compare() includes all necessary checks to be compliant to Abstract
-                // Relational Comparison Algorithm (11.8.1)
-                if (Double.compare(-min, -v) != 1) {
-                    min = v;
-                }
+                result = Math.min(result, ToNumber(cx, value));
             }
-            return min;
+            return result;
         }
 
         /**
@@ -388,16 +672,32 @@ public final class MathObject extends OrdinaryObject implements Initializable {
                 return d;
             }
             if (d > 0 && d < 0.5) {
-                return +0.0d;
+                return +0.0;
             }
             if (d < 0 && d >= -0.5) {
-                return -0.0d;
+                return -0.0;
             }
             int exp = Math.getExponent(d);
             if (exp >= 52) {
                 return d;
             }
             return Math.floor(d + 0.5);
+        }
+
+        /**
+         * 20.2.2.29 Math.sign(x)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param x
+         *            the argument number
+         * @return the sign of <var>x</var>
+         */
+        @Function(name = "sign", arity = 1)
+        public static Object sign(ExecutionContext cx, Object thisValue, Object x) {
+            return Math.signum(ToNumber(cx, x));
         }
 
         /**
@@ -414,6 +714,22 @@ public final class MathObject extends OrdinaryObject implements Initializable {
         @Function(name = "sin", arity = 1)
         public static Object sin(ExecutionContext cx, Object thisValue, Object x) {
             return Math.sin(ToNumber(cx, x));
+        }
+
+        /**
+         * 20.2.2.31 Math.sinh(x)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param x
+         *            the argument number
+         * @return the hyperbolic sine of <var>x</var>
+         */
+        @Function(name = "sinh", arity = 1)
+        public static Object sinh(ExecutionContext cx, Object thisValue, Object x) {
+            return Math.sinh(ToNumber(cx, x));
         }
 
         /**
@@ -449,103 +765,6 @@ public final class MathObject extends OrdinaryObject implements Initializable {
         }
 
         /**
-         * 20.2.2.21 Math.log10 (x)
-         * 
-         * @param cx
-         *            the execution context
-         * @param thisValue
-         *            the function this-value
-         * @param x
-         *            the argument number
-         * @return the decimal logarithm of <var>x</var>
-         */
-        @Function(name = "log10", arity = 1)
-        public static Object log10(ExecutionContext cx, Object thisValue, Object x) {
-            return Math.log10(ToNumber(cx, x));
-        }
-
-        /**
-         * 20.2.2.23 Math.log2 (x)
-         * 
-         * @param cx
-         *            the execution context
-         * @param thisValue
-         *            the function this-value
-         * @param x
-         *            the argument number
-         * @return the binary logarithm of <var>x</var>
-         */
-        @Function(name = "log2", arity = 1)
-        public static Object log2(ExecutionContext cx, Object thisValue, Object x) {
-            // return Math.log(ToNumber(cx, x)) / Math.log(2d);
-            return MathImpl.log2(ToNumber(cx, x));
-        }
-
-        /**
-         * 20.2.2.22 Math.log1p (x)
-         * 
-         * @param cx
-         *            the execution context
-         * @param thisValue
-         *            the function this-value
-         * @param x
-         *            the argument number
-         * @return the natural logarithm of <var>x</var> + 1
-         */
-        @Function(name = "log1p", arity = 1)
-        public static Object log1p(ExecutionContext cx, Object thisValue, Object x) {
-            return Math.log1p(ToNumber(cx, x));
-        }
-
-        /**
-         * 20.2.2.15 Math.expm1 (x)
-         * 
-         * @param cx
-         *            the execution context
-         * @param thisValue
-         *            the function this-value
-         * @param x
-         *            the argument number
-         * @return the value <i>e</i><span><sup><var>x</var></sup></span>-1
-         */
-        @Function(name = "expm1", arity = 1)
-        public static Object expm1(ExecutionContext cx, Object thisValue, Object x) {
-            return Math.expm1(ToNumber(cx, x));
-        }
-
-        /**
-         * 20.2.2.13 Math.cosh(x)
-         * 
-         * @param cx
-         *            the execution context
-         * @param thisValue
-         *            the function this-value
-         * @param x
-         *            the argument number
-         * @return the hyperbolic cosine of <var>x</var>
-         */
-        @Function(name = "cosh", arity = 1)
-        public static Object cosh(ExecutionContext cx, Object thisValue, Object x) {
-            return Math.cosh(ToNumber(cx, x));
-        }
-
-        /**
-         * 20.2.2.31 Math.sinh(x)
-         * 
-         * @param cx
-         *            the execution context
-         * @param thisValue
-         *            the function this-value
-         * @param x
-         *            the argument number
-         * @return the hyperbolic sine of <var>x</var>
-         */
-        @Function(name = "sinh", arity = 1)
-        public static Object sinh(ExecutionContext cx, Object thisValue, Object x) {
-            return Math.sinh(ToNumber(cx, x));
-        }
-
-        /**
          * 20.2.2.34 Math.tanh(x)
          * 
          * @param cx
@@ -559,137 +778,6 @@ public final class MathObject extends OrdinaryObject implements Initializable {
         @Function(name = "tanh", arity = 1)
         public static Object tanh(ExecutionContext cx, Object thisValue, Object x) {
             return Math.tanh(ToNumber(cx, x));
-        }
-
-        /**
-         * 20.2.2.3 Math.acosh(x)
-         * 
-         * @param cx
-         *            the execution context
-         * @param thisValue
-         *            the function this-value
-         * @param x
-         *            the argument number
-         * @return the hyperbolic arc cosine of <var>x</var>
-         */
-        @Function(name = "acosh", arity = 1)
-        public static Object acosh(ExecutionContext cx, Object thisValue, Object x) {
-            double d = ToNumber(cx, x);
-            if (Double.isNaN(d) || d < 1.0) {
-                return Double.NaN;
-            }
-            if (d == 1) {
-                return +0.0;
-            }
-            if (d == Double.POSITIVE_INFINITY) {
-                return Double.POSITIVE_INFINITY;
-            }
-            // return Math.log(d + Math.sqrt(d * d - 1.0));
-            return org.mozilla.javascript.MathImpl.acosh(d);
-        }
-
-        /**
-         * 20.2.2.5 Math.asinh(x)
-         * 
-         * @param cx
-         *            the execution context
-         * @param thisValue
-         *            the function this-value
-         * @param x
-         *            the argument number
-         * @return the hyperbolic arc sine of <var>x</var>
-         */
-        @Function(name = "asinh", arity = 1)
-        public static Object asinh(ExecutionContext cx, Object thisValue, Object x) {
-            double d = ToNumber(cx, x);
-            if (Double.isNaN(d) || d == 0.0 || Double.isInfinite(d)) {
-                return d;
-            }
-            // return Math.log(d + Math.sqrt(d * d + 1.0));
-            return org.mozilla.javascript.MathImpl.asinh(d);
-        }
-
-        /**
-         * 20.2.2.8 Math.atanh(x)
-         * 
-         * @param cx
-         *            the execution context
-         * @param thisValue
-         *            the function this-value
-         * @param x
-         *            the argument number
-         * @return the hyperbolic arc tangent of <var>x</var>
-         */
-        @Function(name = "atanh", arity = 1)
-        public static Object atanh(ExecutionContext cx, Object thisValue, Object x) {
-            double d = ToNumber(cx, x);
-            if (Double.isNaN(d) || d < -1.0 || d > 1.0) {
-                return Double.NaN;
-            }
-            if (d == -1.0) {
-                return Double.NEGATIVE_INFINITY;
-            }
-            if (d == +1.0) {
-                return Double.POSITIVE_INFINITY;
-            }
-            if (d == 0.0) {
-                return d;
-            }
-            // return (Math.log(1.0 + d) - Math.log(1.0 - d)) / 2.0;
-            return org.mozilla.javascript.MathImpl.atanh(d);
-        }
-
-        /**
-         * 20.2.2.18 Math.hypot ( value1, value2, ...values )
-         * 
-         * @param cx
-         *            the execution context
-         * @param thisValue
-         *            the function this-value
-         * @param values
-         *            the argument values
-         * @return the square root of the sum of squares of its arguments
-         */
-        @Function(name = "hypot", arity = 2)
-        public static Object hypot(ExecutionContext cx, Object thisValue, Object... values) {
-            boolean hasInfinity = false, hasNaN = false;
-            double max = 0;
-            double[] numbers = new double[values.length];
-            for (int i = 0, len = values.length; i < len; ++i) {
-                double num = ToNumber(cx, values[i]);
-                if (Double.isInfinite(num)) {
-                    hasInfinity = true;
-                } else if (Double.isNaN(num)) {
-                    hasNaN = true;
-                } else {
-                    num = Math.abs(num);
-                    max = Math.max(max, num);
-                    numbers[i] = num;
-                }
-            }
-            if (hasInfinity) {
-                return Double.POSITIVE_INFINITY;
-            } else if (hasNaN) {
-                return Double.NaN;
-            } else if (max == 0.0) {
-                return +0.0;
-            }
-            if (values.length == 1) {
-                return numbers[0]; // sqrt(value1^2)
-            } else if (values.length == 2) {
-                return Math.hypot(numbers[0], numbers[1]);
-            } else {
-                // Kahan summation with normalisation
-                double result = 0.0, c = 0.0;
-                for (int i = 0, len = numbers.length; i < len; ++i) {
-                    double num = numbers[i] / max;
-                    double y = num * num - c;
-                    double t = result + y;
-                    c = (t - result) - y;
-                    result = t;
-                }
-                return Math.sqrt(result) * max;
-            }
         }
 
         /**
@@ -707,100 +795,6 @@ public final class MathObject extends OrdinaryObject implements Initializable {
         public static Object trunc(ExecutionContext cx, Object thisValue, Object x) {
             double d = ToNumber(cx, x);
             return d < 0 ? Math.ceil(d) : Math.floor(d);
-        }
-
-        /**
-         * 20.2.2.29 Math.sign(x)
-         * 
-         * @param cx
-         *            the execution context
-         * @param thisValue
-         *            the function this-value
-         * @param x
-         *            the argument number
-         * @return the sign of <var>x</var>
-         */
-        @Function(name = "sign", arity = 1)
-        public static Object sign(ExecutionContext cx, Object thisValue, Object x) {
-            return Math.signum(ToNumber(cx, x));
-        }
-
-        /**
-         * 20.2.2.9 Math.cbrt(x)
-         * 
-         * @param cx
-         *            the execution context
-         * @param thisValue
-         *            the function this-value
-         * @param x
-         *            the argument number
-         * @return the cubic root of its argument
-         */
-        @Function(name = "cbrt", arity = 1)
-        public static Object cbrt(ExecutionContext cx, Object thisValue, Object x) {
-            return Math.cbrt(ToNumber(cx, x));
-        }
-
-        /**
-         * 20.2.2.19 Math.imul(x, y)
-         * 
-         * @param cx
-         *            the execution context
-         * @param thisValue
-         *            the function this-value
-         * @param x
-         *            the first argument number
-         * @param y
-         *            the second argument number
-         * @return the integer multiplication of its arguments
-         */
-        @Function(name = "imul", arity = 2)
-        public static Object imul(ExecutionContext cx, Object thisValue, Object x, Object y) {
-            long a = ToUint32(cx, x);
-            long b = ToUint32(cx, y);
-            return (int) (a * b);
-        }
-
-        /**
-         * 20.2.2.17 Math.fround (x)
-         * 
-         * @param cx
-         *            the execution context
-         * @param thisValue
-         *            the function this-value
-         * @param x
-         *            the argument number
-         * @return the value <i>float32</i>(<var>x</var>)
-         */
-        @Function(name = "fround", arity = 1)
-        public static Object fround(ExecutionContext cx, Object thisValue, Object x) {
-            double d = ToNumber(cx, x);
-            if (Double.isNaN(d)) {
-                return Double.NaN;
-            }
-            if (d == 0 || Double.isInfinite(d)) {
-                return d;
-            }
-            float x32 = (float) d;
-            double x64 = (double) x32;
-            return x64;
-        }
-
-        /**
-         * 20.2.2.11 Math.clz32 ( x )
-         * 
-         * @param cx
-         *            the execution context
-         * @param thisValue
-         *            the function this-value
-         * @param x
-         *            the argument number
-         * @return the number of leading zeroes in the 32-bit integer representation of the number
-         */
-        @Function(name = "clz32", arity = 1)
-        public static Object clz32(ExecutionContext cx, Object thisValue, Object x) {
-            long n = ToUint32(cx, x);
-            return Integer.numberOfLeadingZeros((int) n);
         }
     }
 }

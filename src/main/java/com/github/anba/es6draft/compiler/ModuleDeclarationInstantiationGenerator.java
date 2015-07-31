@@ -10,6 +10,7 @@ import static com.github.anba.es6draft.semantics.StaticSemantics.BoundNames;
 import static com.github.anba.es6draft.semantics.StaticSemantics.LexicallyScopedDeclarations;
 import static com.github.anba.es6draft.semantics.StaticSemantics.VarScopedDeclarations;
 
+import java.util.HashSet;
 import java.util.List;
 
 import com.github.anba.es6draft.ast.Declaration;
@@ -70,7 +71,7 @@ final class ModuleDeclarationInstantiationGenerator extends
     private static final int MODULE_ENV = 2;
 
     private static final class ModuleDeclInitMethodGenerator extends InstructionVisitor {
-        ModuleDeclInitMethodGenerator(MethodCode method, Module module) {
+        ModuleDeclInitMethodGenerator(MethodCode method) {
             super(method);
         }
 
@@ -89,7 +90,7 @@ final class ModuleDeclarationInstantiationGenerator extends
 
     void generate(Module module, SourceTextModuleRecord moduleRecord) {
         MethodCode method = codegen.newMethod(module, ModuleName.Init);
-        InstructionVisitor mv = new ModuleDeclInitMethodGenerator(method, module);
+        InstructionVisitor mv = new ModuleDeclInitMethodGenerator(method);
 
         mv.lineInfo(module);
         mv.begin();
@@ -155,14 +156,18 @@ final class ModuleDeclarationInstantiationGenerator extends
             }
         }
         /* step 13 */
+        // FIXME: spec bug - check for duplicate var-declared names!
         List<StatementListItem> varDeclarations = VarScopedDeclarations(module);
+        HashSet<Name> declaredVarNames = new HashSet<>();
         /* step 14 */
         for (StatementListItem d : varDeclarations) {
             assert d instanceof VariableStatement;
             for (Name dn : BoundNames((VariableStatement) d)) {
-                BindingOp<ModuleEnvironmentRecord> op = BindingOp.of(envRec, dn);
-                op.createMutableBinding(envRec, dn, false, mv);
-                op.initializeBinding(envRec, dn, undef, mv);
+                if (declaredVarNames.add(dn)) {
+                    BindingOp<ModuleEnvironmentRecord> op = BindingOp.of(envRec, dn);
+                    op.createMutableBinding(envRec, dn, false, mv);
+                    op.initializeBinding(envRec, dn, undef, mv);
+                }
             }
         }
         /* step 15 */

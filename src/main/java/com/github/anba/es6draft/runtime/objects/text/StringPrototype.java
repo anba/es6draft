@@ -197,6 +197,35 @@ public final class StringPrototype extends OrdinaryObject implements Initializab
         }
 
         /**
+         * 21.1.3.3 String.prototype.codePointAt (pos)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param pos
+         *            the start position
+         * @return the code point
+         */
+        @Function(name = "codePointAt", arity = 1)
+        public static Object codePointAt(ExecutionContext cx, Object thisValue, Object pos) {
+            /* step 1 */
+            Object obj = RequireObjectCoercible(cx, thisValue);
+            /* steps 2-3 */
+            String s = ToFlatString(cx, obj);
+            /* steps 4-5 */
+            double position = ToInteger(cx, pos);
+            /* step 6 */
+            int size = s.length();
+            /* step 7 */
+            if (position < 0 || position >= size) {
+                return UNDEFINED;
+            }
+            /* steps 8-12 */
+            return s.codePointAt((int) position);
+        }
+
+        /**
          * 21.1.3.4 String.prototype.concat ( ...args )
          * 
          * @param cx
@@ -213,17 +242,98 @@ public final class StringPrototype extends OrdinaryObject implements Initializab
             Object obj = RequireObjectCoercible(cx, thisValue);
             /* steps 2-3 */
             CharSequence s = ToString(cx, obj);
-            /* step 4 (omitted) */
+            /* step 4 (not applicable) */
             /* step 5 */
             StringBuilder r = new StringBuilder(s);
             /* step 6 */
             for (int i = 0; i < args.length; ++i) {
-                Object next = args[i];
-                CharSequence nextString = ToString(cx, next);
+                CharSequence nextString = ToString(cx, args[i]);
                 r.append(nextString);
             }
             /* step 7 */
             return r.toString();
+        }
+
+        /**
+         * 21.1.3.6 String.prototype.endsWith (searchString [, endPosition] )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param searchString
+         *            the search string
+         * @param endPosition
+         *            the end position
+         * @return {@code true} if the string ends with <var>searchString</var>
+         */
+        @Function(name = "endsWith", arity = 1)
+        public static Object endsWith(ExecutionContext cx, Object thisValue, Object searchString,
+                Object endPosition) {
+            /* step 1 */
+            Object obj = RequireObjectCoercible(cx, thisValue);
+            /* steps 2-3 */
+            String s = ToFlatString(cx, obj);
+            /* steps 4-6 */
+            if (IsRegExp(cx, searchString)) {
+                throw newTypeError(cx, Messages.Key.InvalidRegExpArgument);
+            }
+            /* steps 7-8 */
+            String searchStr = ToFlatString(cx, searchString);
+            /* step 9 */
+            int len = s.length();
+            /* steps 10-11 */
+            double pos = Type.isUndefined(endPosition) ? len : ToInteger(cx, endPosition);
+            /* step 12 */
+            int end = (int) Math.min(Math.max(pos, 0), len);
+            /* step 13 */
+            int searchLength = searchStr.length();
+            /* step 14 */
+            int start = end - searchLength;
+            /* step 15 */
+            if (start < 0) {
+                return false;
+            }
+            /* steps 16-17 */
+            return s.startsWith(searchStr, start);
+        }
+
+        /**
+         * 21.1.3.7 String.prototype.includes ( searchString [ , position ] )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param searchString
+         *            the search string
+         * @param position
+         *            the start position
+         * @return {@code true} if the search string was found
+         */
+        @Function(name = "includes", arity = 1)
+        public static Object includes(ExecutionContext cx, Object thisValue, Object searchString,
+                Object position /* = 0 */) {
+            /* step 1 */
+            Object obj = RequireObjectCoercible(cx, thisValue);
+            /* steps 2-3 */
+            String s = ToFlatString(cx, obj);
+            /* steps 4-6 */
+            if (IsRegExp(cx, searchString)) {
+                throw newTypeError(cx, Messages.Key.InvalidRegExpArgument);
+            }
+            /* steps 7-8 */
+            String searchStr = ToFlatString(cx, searchString);
+            /* steps 9-10 */
+            double pos = ToInteger(cx, position);
+            /* step 11 */
+            int len = s.length();
+            /* step 12 */
+            int start = (int) Math.min(Math.max(pos, 0), len);
+            /* step 13 */
+            // int searchLen = searchStr.length();
+            /* step 14 */
+            return s.indexOf(searchStr, start) != -1;
         }
 
         /**
@@ -363,6 +473,84 @@ public final class StringPrototype extends OrdinaryObject implements Initializab
         }
 
         /**
+         * 21.1.3.12 String.prototype.normalize ( [ form ] )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param form
+         *            the normalisation form
+         * @return the normalized string
+         */
+        @Function(name = "normalize", arity = 0)
+        public static Object normalize(ExecutionContext cx, Object thisValue, Object form) {
+            /* step 1 */
+            Object obj = RequireObjectCoercible(cx, thisValue);
+            /* steps 2-3 */
+            String s = ToFlatString(cx, obj);
+            /* steps 4-6 */
+            String f = "NFC";
+            if (!Type.isUndefined(form)) {
+                f = ToFlatString(cx, form);
+            }
+            /* steps 7-9 */
+            switch (f) {
+            case "NFC":
+                return Normalizer.normalize(s, Normalizer.NFC);
+            case "NFD":
+                return Normalizer.normalize(s, Normalizer.NFD);
+            case "NFKC":
+                return Normalizer.normalize(s, Normalizer.NFKC);
+            case "NFKD":
+                return Normalizer.normalize(s, Normalizer.NFKD);
+            default:
+                throw newRangeError(cx, Messages.Key.InvalidNormalizationForm, f);
+            }
+        }
+
+        /**
+         * 21.1.3.13 String.prototype.repeat (count)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param count
+         *            the repetition count
+         * @return the string repeated <var>count</var> times
+         */
+        @Function(name = "repeat", arity = 1)
+        public static Object repeat(ExecutionContext cx, Object thisValue, Object count) {
+            /* step 1 */
+            Object obj = RequireObjectCoercible(cx, thisValue);
+            /* steps 2-3 */
+            String s = ToFlatString(cx, obj);
+            /* steps 4-5 */
+            double n = ToInteger(cx, count);
+            /* steps 6-7 */
+            if (n < 0 || n == Double.POSITIVE_INFINITY) {
+                throw newRangeError(cx, Messages.Key.InvalidStringRepeat);
+            }
+            /* step 8 */
+            if (n == 0 || s.length() == 0) {
+                return "";
+            }
+            double capacity = s.length() * n;
+            if (capacity > 1 << 27) {
+                // likely to exceed heap space, follow SpiderMonkey and throw RangeError
+                throw newRangeError(cx, Messages.Key.InvalidStringRepeat);
+            }
+            /* step 8 */
+            StringBuilder t = new StringBuilder((int) capacity);
+            for (int c = (int) n; c > 0; --c) {
+                t.append(s);
+            }
+            /* step 9 */
+            return t.toString();
+        }
+
+        /**
          * 21.1.3.14 String.prototype.replace (searchValue, replaceValue)
          * 
          * @param cx
@@ -452,35 +640,45 @@ public final class StringPrototype extends OrdinaryObject implements Initializab
             int tailPos = position + matchLength;
             assert tailPos >= 0 && tailPos <= stringLength;
             /* step 10 (not applicable) */
-
             /* step 11 */
-            StringBuilder result = new StringBuilder();
-            for (int cursor = 0, len = replacement.length(); cursor < len;) {
-                char c = replacement.charAt(cursor++);
-                if (c == '$' && cursor < len) {
-                    c = replacement.charAt(cursor++);
-                    switch (c) {
-                    case '&':
-                        result.append(matched);
-                        break;
-                    case '`':
-                        result.append(string, 0, position);
-                        break;
-                    case '\'':
-                        result.append(string, tailPos, stringLength);
-                        break;
-                    case '$':
-                        result.append('$');
-                        break;
-                    default:
-                        result.append('$').append(c);
-                        break;
-                    }
-                } else {
-                    result.append(c);
-                }
+            int i = replacement.indexOf('$');
+            if (i < 0) {
+                return replacement;
             }
-
+            final int length = replacement.length();
+            int j = 0;
+            StringBuilder result = new StringBuilder();
+            do {
+                if (i + 1 >= length) {
+                    break;
+                }
+                if (j < i) {
+                    result.append(replacement, j, i);
+                }
+                char c = replacement.charAt(i + 1);
+                switch (c) {
+                case '&':
+                    result.append(matched);
+                    break;
+                case '`':
+                    result.append(string, 0, position);
+                    break;
+                case '\'':
+                    result.append(string, tailPos, stringLength);
+                    break;
+                case '$':
+                    result.append('$');
+                    break;
+                default:
+                    result.append('$').append(c);
+                    break;
+                }
+                j = i + 2;
+                i = replacement.indexOf('$', j);
+            } while (i >= 0);
+            if (j < length) {
+                result.append(replacement, j, length);
+            }
             /* step 12 */
             return result.toString();
         }
@@ -658,220 +856,6 @@ public final class StringPrototype extends OrdinaryObject implements Initializab
         }
 
         /**
-         * 21.1.3.19 String.prototype.substring (start, end)
-         * 
-         * @param cx
-         *            the execution context
-         * @param thisValue
-         *            the function this-value
-         * @param start
-         *            the start position
-         * @param end
-         *            the end position
-         * @return the substring
-         */
-        @Function(name = "substring", arity = 2)
-        public static Object substring(ExecutionContext cx, Object thisValue, Object start,
-                Object end) {
-            /* step 1 */
-            Object obj = RequireObjectCoercible(cx, thisValue);
-            /* steps 2-3 */
-            CharSequence s = ToString(cx, obj);
-            /* step 4 */
-            int len = s.length();
-            /* steps 5-6 */
-            double intStart = ToInteger(cx, start);
-            /* steps 7-8 */
-            double intEnd = Type.isUndefined(end) ? len : ToInteger(cx, end);
-            /* step 9 */
-            int finalStart = (int) Math.min(Math.max(intStart, 0), len);
-            /* step 10 */
-            int finalEnd = (int) Math.min(Math.max(intEnd, 0), len);
-            /* step 11 */
-            int from = Math.min(finalStart, finalEnd);
-            /* step 12 */
-            int to = Math.max(finalStart, finalEnd);
-            /* step 13 */
-            return s.subSequence(from, to);
-        }
-
-        /**
-         * 21.1.3.22 String.prototype.toLowerCase ( )
-         * 
-         * @param cx
-         *            the execution context
-         * @param thisValue
-         *            the function this-value
-         * @return the lower case string
-         */
-        @Function(name = "toLowerCase", arity = 0)
-        public static Object toLowerCase(ExecutionContext cx, Object thisValue) {
-            /* step 1 */
-            Object obj = RequireObjectCoercible(cx, thisValue);
-            /* steps 2-3 */
-            String s = ToFlatString(cx, obj);
-            /* steps 4-9 */
-            return replaceIWithDot(s).toLowerCase(Locale.ROOT);
-        }
-
-        /**
-         * 21.1.3.20 String.prototype.toLocaleLowerCase ( )<br>
-         * 13.1.2 String.prototype.toLocaleLowerCase ([locales])
-         * 
-         * @param cx
-         *            the execution context
-         * @param thisValue
-         *            the function this-value
-         * @param locales
-         *            the optional locales array
-         * @return the lower case string
-         */
-        @Function(name = "toLocaleLowerCase", arity = 0)
-        public static Object toLocaleLowerCase(ExecutionContext cx, Object thisValue, Object locales) {
-            /* step 1 */
-            Object obj = RequireObjectCoercible(cx, thisValue);
-            /* steps 2-3 */
-            String s = ToFlatString(cx, obj);
-
-            // ES5/6
-            // return s.toLowerCase(cx.getRealm().getLocale());
-
-            /* steps 4-5 */
-            Set<String> requestedLocales = CanonicalizeLocaleList(cx, locales);
-            /* steps 6-8 */
-            String requestedLocale = !requestedLocales.isEmpty() ? requestedLocales.iterator()
-                    .next() : DefaultLocale(cx.getRealm());
-            /* step 9 */
-            String noExtensionsLocale = RemoveUnicodeLocaleExtension(requestedLocale);
-            /* step 10 */
-            HashSet<String> availableLocales = new HashSet<>(Arrays.asList("az", "lt", "tr"));
-            /* step 11 */
-            String locale = BestAvailableLocale(availableLocales, noExtensionsLocale);
-            /* step 12 */
-            String supportedLocale = locale == null ? "und" : locale;
-            /* steps 13-18 */
-            return UCharacter.toLowerCase(ULocale.forLanguageTag(supportedLocale), s);
-        }
-
-        /**
-         * 21.1.3.24 String.prototype.toUpperCase ( )
-         * 
-         * @param cx
-         *            the execution context
-         * @param thisValue
-         *            the function this-value
-         * @return the upper case string
-         */
-        @Function(name = "toUpperCase", arity = 0)
-        public static Object toUpperCase(ExecutionContext cx, Object thisValue) {
-            /* step 1 */
-            Object obj = RequireObjectCoercible(cx, thisValue);
-            /* steps 2-3 */
-            String s = ToFlatString(cx, obj);
-            /* steps 4-9 */
-            return s.toUpperCase(Locale.ROOT);
-        }
-
-        /**
-         * 21.1.3.21 String.prototype.toLocaleUpperCase ( )<br>
-         * 13.1.3 String.prototype.toLocaleUpperCase ([locales ])
-         * 
-         * @param cx
-         *            the execution context
-         * @param thisValue
-         *            the function this-value
-         * @param locales
-         *            the optional locales array
-         * @return the upper case string
-         */
-        @Function(name = "toLocaleUpperCase", arity = 0)
-        public static Object toLocaleUpperCase(ExecutionContext cx, Object thisValue, Object locales) {
-            /* step 1 */
-            Object obj = RequireObjectCoercible(cx, thisValue);
-            /* steps 2-3 */
-            String s = ToFlatString(cx, obj);
-
-            // ES5/6
-            // return s.toUpperCase(cx.getRealm().getLocale());
-
-            /* steps 4-5 */
-            Set<String> requestedLocales = CanonicalizeLocaleList(cx, locales);
-            /* steps 6-8 */
-            String requestedLocale = !requestedLocales.isEmpty() ? requestedLocales.iterator()
-                    .next() : DefaultLocale(cx.getRealm());
-            /* step 9 */
-            String noExtensionsLocale = RemoveUnicodeLocaleExtension(requestedLocale);
-            /* step 10 */
-            HashSet<String> availableLocales = new HashSet<>(Arrays.asList("az", "lt", "tr"));
-            /* step 11 */
-            String locale = BestAvailableLocale(availableLocales, noExtensionsLocale);
-            /* step 12 */
-            String supportedLocale = locale == null ? "und" : locale;
-            /* steps 13-18 */
-            return UCharacter.toUpperCase(ULocale.forLanguageTag(supportedLocale), s);
-        }
-
-        /**
-         * 21.1.3.25 String.prototype.trim ( )
-         * 
-         * @param cx
-         *            the execution context
-         * @param thisValue
-         *            the function this-value
-         * @return the string with leading and trailing whitespace removed
-         */
-        @Function(name = "trim", arity = 0)
-        public static Object trim(ExecutionContext cx, Object thisValue) {
-            /* step 1 */
-            Object obj = RequireObjectCoercible(cx, thisValue);
-            /* steps 2-3 */
-            String s = ToFlatString(cx, obj);
-            /* steps 4-5 */
-            return Strings.trim(s);
-        }
-
-        /**
-         * 21.1.3.13 String.prototype.repeat (count)
-         * 
-         * @param cx
-         *            the execution context
-         * @param thisValue
-         *            the function this-value
-         * @param count
-         *            the repetition count
-         * @return the string repeated <var>count</var> times
-         */
-        @Function(name = "repeat", arity = 1)
-        public static Object repeat(ExecutionContext cx, Object thisValue, Object count) {
-            /* step 1 */
-            Object obj = RequireObjectCoercible(cx, thisValue);
-            /* steps 2-3 */
-            String s = ToFlatString(cx, obj);
-            /* steps 4-5 */
-            double n = ToInteger(cx, count);
-            /* steps 6-7 */
-            if (n < 0 || n == Double.POSITIVE_INFINITY) {
-                throw newRangeError(cx, Messages.Key.InvalidStringRepeat);
-            }
-            /* step 8 */
-            if (n == 0 || s.length() == 0) {
-                return "";
-            }
-            double capacity = s.length() * n;
-            if (capacity > 1 << 27) {
-                // likely to exceed heap space, follow SpiderMonkey and throw RangeError
-                throw newRangeError(cx, Messages.Key.InvalidStringRepeat);
-            }
-            /* step 8 */
-            StringBuilder t = new StringBuilder((int) capacity);
-            for (int c = (int) n; c > 0; --c) {
-                t.append(s);
-            }
-            /* step 9 */
-            return t.toString();
-        }
-
-        /**
          * 21.1.3.18 String.prototype.startsWith (searchString [, position ] )
          * 
          * @param cx
@@ -914,151 +898,176 @@ public final class StringPrototype extends OrdinaryObject implements Initializab
         }
 
         /**
-         * 21.1.3.6 String.prototype.endsWith (searchString [, endPosition] )
+         * 21.1.3.19 String.prototype.substring (start, end)
          * 
          * @param cx
          *            the execution context
          * @param thisValue
          *            the function this-value
-         * @param searchString
-         *            the search string
-         * @param endPosition
+         * @param start
+         *            the start position
+         * @param end
          *            the end position
-         * @return {@code true} if the string ends with <var>searchString</var>
+         * @return the substring
          */
-        @Function(name = "endsWith", arity = 1)
-        public static Object endsWith(ExecutionContext cx, Object thisValue, Object searchString,
-                Object endPosition) {
+        @Function(name = "substring", arity = 2)
+        public static Object substring(ExecutionContext cx, Object thisValue, Object start,
+                Object end) {
             /* step 1 */
             Object obj = RequireObjectCoercible(cx, thisValue);
             /* steps 2-3 */
-            String s = ToFlatString(cx, obj);
-            /* steps 4-6 */
-            if (IsRegExp(cx, searchString)) {
-                throw newTypeError(cx, Messages.Key.InvalidRegExpArgument);
-            }
+            CharSequence s = ToString(cx, obj);
+            /* step 4 */
+            int len = s.length();
+            /* steps 5-6 */
+            double intStart = ToInteger(cx, start);
             /* steps 7-8 */
-            String searchStr = ToFlatString(cx, searchString);
+            double intEnd = Type.isUndefined(end) ? len : ToInteger(cx, end);
             /* step 9 */
-            int len = s.length();
-            /* steps 10-11 */
-            double pos = Type.isUndefined(endPosition) ? len : ToInteger(cx, endPosition);
+            int finalStart = (int) Math.min(Math.max(intStart, 0), len);
+            /* step 10 */
+            int finalEnd = (int) Math.min(Math.max(intEnd, 0), len);
+            /* step 11 */
+            int from = Math.min(finalStart, finalEnd);
             /* step 12 */
-            int end = (int) Math.min(Math.max(pos, 0), len);
+            int to = Math.max(finalStart, finalEnd);
             /* step 13 */
-            int searchLength = searchStr.length();
-            /* step 14 */
-            int start = end - searchLength;
-            /* step 15 */
-            if (start < 0) {
-                return false;
-            }
-            /* steps 16-17 */
-            return s.startsWith(searchStr, start);
+            return s.subSequence(from, to);
         }
 
         /**
-         * 21.1.3.7 String.prototype.includes ( searchString [ , position ] )
+         * 21.1.3.20 String.prototype.toLocaleLowerCase ( )<br>
+         * 13.1.2 String.prototype.toLocaleLowerCase ([locales])
          * 
          * @param cx
          *            the execution context
          * @param thisValue
          *            the function this-value
-         * @param searchString
-         *            the search string
-         * @param position
-         *            the start position
-         * @return {@code true} if the search string was found
+         * @param locales
+         *            the optional locales array
+         * @return the lower case string
          */
-        @Function(name = "includes", arity = 1)
-        public static Object includes(ExecutionContext cx, Object thisValue, Object searchString,
-                Object position /* = 0 */) {
+        @Function(name = "toLocaleLowerCase", arity = 0)
+        public static Object toLocaleLowerCase(ExecutionContext cx, Object thisValue, Object locales) {
             /* step 1 */
             Object obj = RequireObjectCoercible(cx, thisValue);
             /* steps 2-3 */
             String s = ToFlatString(cx, obj);
-            /* steps 4-6 */
-            if (IsRegExp(cx, searchString)) {
-                throw newTypeError(cx, Messages.Key.InvalidRegExpArgument);
-            }
-            /* steps 7-8 */
-            String searchStr = ToFlatString(cx, searchString);
-            /* steps 9-10 */
-            double pos = ToInteger(cx, position);
+
+            // ES5/6
+            // return s.toLowerCase(cx.getRealm().getLocale());
+
+            /* steps 4-5 */
+            Set<String> requestedLocales = CanonicalizeLocaleList(cx, locales);
+            /* steps 6-8 */
+            String requestedLocale = !requestedLocales.isEmpty() ? requestedLocales.iterator()
+                    .next() : DefaultLocale(cx.getRealm());
+            /* step 9 */
+            String noExtensionsLocale = RemoveUnicodeLocaleExtension(requestedLocale);
+            /* step 10 */
+            HashSet<String> availableLocales = new HashSet<>(Arrays.asList("az", "lt", "tr"));
             /* step 11 */
-            int len = s.length();
+            String locale = BestAvailableLocale(availableLocales, noExtensionsLocale);
             /* step 12 */
-            int start = (int) Math.min(Math.max(pos, 0), len);
-            /* step 13 */
-            // int searchLen = searchStr.length();
-            /* step 14 */
-            return s.indexOf(searchStr, start) != -1;
+            String supportedLocale = locale == null ? "und" : locale;
+            /* steps 13-18 */
+            return UCharacter.toLowerCase(ULocale.forLanguageTag(supportedLocale), s);
         }
 
         /**
-         * 21.1.3.3 String.prototype.codePointAt (pos)
+         * 21.1.3.21 String.prototype.toLocaleUpperCase ( )<br>
+         * 13.1.3 String.prototype.toLocaleUpperCase ([locales ])
          * 
          * @param cx
          *            the execution context
          * @param thisValue
          *            the function this-value
-         * @param pos
-         *            the start position
-         * @return the code point
+         * @param locales
+         *            the optional locales array
+         * @return the upper case string
          */
-        @Function(name = "codePointAt", arity = 1)
-        public static Object codePointAt(ExecutionContext cx, Object thisValue, Object pos) {
+        @Function(name = "toLocaleUpperCase", arity = 0)
+        public static Object toLocaleUpperCase(ExecutionContext cx, Object thisValue, Object locales) {
+            /* step 1 */
+            Object obj = RequireObjectCoercible(cx, thisValue);
+            /* steps 2-3 */
+            String s = ToFlatString(cx, obj);
+
+            // ES5/6
+            // return s.toUpperCase(cx.getRealm().getLocale());
+
+            /* steps 4-5 */
+            Set<String> requestedLocales = CanonicalizeLocaleList(cx, locales);
+            /* steps 6-8 */
+            String requestedLocale = !requestedLocales.isEmpty() ? requestedLocales.iterator()
+                    .next() : DefaultLocale(cx.getRealm());
+            /* step 9 */
+            String noExtensionsLocale = RemoveUnicodeLocaleExtension(requestedLocale);
+            /* step 10 */
+            HashSet<String> availableLocales = new HashSet<>(Arrays.asList("az", "lt", "tr"));
+            /* step 11 */
+            String locale = BestAvailableLocale(availableLocales, noExtensionsLocale);
+            /* step 12 */
+            String supportedLocale = locale == null ? "und" : locale;
+            /* steps 13-18 */
+            return UCharacter.toUpperCase(ULocale.forLanguageTag(supportedLocale), s);
+        }
+
+        /**
+         * 21.1.3.22 String.prototype.toLowerCase ( )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the lower case string
+         */
+        @Function(name = "toLowerCase", arity = 0)
+        public static Object toLowerCase(ExecutionContext cx, Object thisValue) {
+            /* step 1 */
+            Object obj = RequireObjectCoercible(cx, thisValue);
+            /* steps 2-3 */
+            String s = ToFlatString(cx, obj);
+            /* steps 4-9 */
+            return StringPrototype.toLowerCase(s);
+        }
+
+        /**
+         * 21.1.3.24 String.prototype.toUpperCase ( )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the upper case string
+         */
+        @Function(name = "toUpperCase", arity = 0)
+        public static Object toUpperCase(ExecutionContext cx, Object thisValue) {
+            /* step 1 */
+            Object obj = RequireObjectCoercible(cx, thisValue);
+            /* steps 2-3 */
+            String s = ToFlatString(cx, obj);
+            /* steps 4-9 */
+            return s.toUpperCase(Locale.ROOT);
+        }
+
+        /**
+         * 21.1.3.25 String.prototype.trim ( )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the string with leading and trailing whitespace removed
+         */
+        @Function(name = "trim", arity = 0)
+        public static Object trim(ExecutionContext cx, Object thisValue) {
             /* step 1 */
             Object obj = RequireObjectCoercible(cx, thisValue);
             /* steps 2-3 */
             String s = ToFlatString(cx, obj);
             /* steps 4-5 */
-            double position = ToInteger(cx, pos);
-            /* step 6 */
-            int size = s.length();
-            /* step 7 */
-            if (position < 0 || position >= size) {
-                return UNDEFINED;
-            }
-            /* steps 8-12 */
-            return s.codePointAt((int) position);
-        }
-
-        /**
-         * 21.1.3.12 String.prototype.normalize ( [ form ] )
-         * 
-         * @param cx
-         *            the execution context
-         * @param thisValue
-         *            the function this-value
-         * @param form
-         *            the normalisation form
-         * @return the normalized string
-         */
-        @Function(name = "normalize", arity = 0)
-        public static Object normalize(ExecutionContext cx, Object thisValue, Object form) {
-            /* step 1 */
-            Object obj = RequireObjectCoercible(cx, thisValue);
-            /* steps 2-3 */
-            String s = ToFlatString(cx, obj);
-            /* steps 4-6 */
-            String f = "NFC";
-            if (!Type.isUndefined(form)) {
-                f = ToFlatString(cx, form);
-            }
-            /* steps 7-9 */
-            switch (f) {
-            case "NFC":
-                return Normalizer.normalize(s, Normalizer.NFC);
-            case "NFD":
-                return Normalizer.normalize(s, Normalizer.NFD);
-            case "NFKC":
-                return Normalizer.normalize(s, Normalizer.NFKC);
-            case "NFKD":
-                return Normalizer.normalize(s, Normalizer.NFKD);
-            default:
-                throw newRangeError(cx, Messages.Key.InvalidNormalizationForm, f);
-            }
+            return Strings.trim(s);
         }
 
         /**
@@ -1152,15 +1161,15 @@ public final class StringPrototype extends OrdinaryObject implements Initializab
             /* steps 2-3 */
             String s = ToFlatString(cx, str);
             /* steps 4-5 */
-            StringBuilder p = new StringBuilder().append("<").append(tag);
+            StringBuilder p = new StringBuilder().append('<').append(tag);
             if (!attribute.isEmpty()) {
                 String v = ToFlatString(cx, value);
                 String escapedV = v.replace("\"", "&quot;");
-                p.append(" ").append(attribute).append("=").append('"').append(escapedV)
+                p.append(' ').append(attribute).append('=').append('"').append(escapedV)
                         .append('"');
             }
             /* steps 6-9 */
-            return p.append(">").append(s).append("</").append(tag).append(">").toString();
+            return p.append('>').append(s).append("</").append(tag).append('>').toString();
         }
 
         /**
@@ -1368,54 +1377,196 @@ public final class StringPrototype extends OrdinaryObject implements Initializab
     }
 
     /**
-     * SpecialCasing support for u+0130 (LATIN CAPITAL LETTER I WITH DOT ABOVE) was removed in
-     * Java8: https://bugs.openjdk.java.net/browse/JDK-8020037
+     * SpecialCasing support for u+0130 (LATIN CAPITAL LETTER I WITH DOT ABOVE) was removed in Java8:
+     * <a href="https://bugs.openjdk.java.net/browse/JDK-8020037">JDK-8020037</a>
+     * <p>
+     * SpecialCasing support for u+03A3 (GREEK CAPITAL LETTER SIGMA) uses the old Unicode 4.0 definition of Final_Cased
+     * instead of the newer (= Unicode 5.0) Final_Sigma definition.
      * 
      * @param s
      *            the string
-     * @return the string with u+0130 replaced
+     * @return the string converted to lower-case
      */
-    private static String replaceIWithDot(String s) {
-        if (ReplaceIWithDot.specialCasingAvailable) {
-            return s;
+    private static String toLowerCase(String s) {
+        if (SpecialCasing.specialCasingRequired) {
+            return SpecialCasing.toLowerCase(s);
         }
-        return ReplaceIWithDot.replace(s);
+        return s.toLowerCase(Locale.ROOT);
     }
 
-    private static final class ReplaceIWithDot {
-        static final boolean specialCasingAvailable = "".toLowerCase(Locale.ROOT).length() == 2;
+    static final class SpecialCasing {
+        static final boolean iWithDot = "\u0130".toLowerCase(Locale.ROOT).length() != 2;
+        static final boolean finalSigma = "A\u03A3:B".toLowerCase(Locale.ROOT).charAt(1) != '\u03C3';
+        static final boolean specialCasingRequired = iWithDot || finalSigma;
 
-        static String replace(String s) {
-            int index = s.indexOf('\u0130');
-            if (index < 0) {
-                return s;
-            }
-            // string contains at least one u+0130 character, translate to u+0069 u+0307
-            return replace(s, index);
+        private SpecialCasing() {
         }
 
-        private static String replace(String s, int index) {
+        static String toLowerCase(String s) {
             final int length = s.length();
-            final int space = Math.min(10, length);
-            int offset = 0, remaining = space;
-            char[] replacement = new char[length + space];
-            s.getChars(0, index, replacement, 0);
-            for (; index < length; ++index) {
-                char c = s.charAt(index);
-                if (c == '\u0130') {
-                    if (remaining == 0) {
-                        replacement = Arrays.copyOf(replacement, replacement.length + space);
-                        remaining = space;
+            int index = 0;
+            Lower: {
+                for (int cp; index < length; index += Character.charCount(cp)) {
+                    cp = s.codePointAt(index);
+                    if (cp != Character.toLowerCase(cp)) {
+                        break Lower;
                     }
-                    replacement[offset + index + 0] = '\u0069';
-                    replacement[offset + index + 1] = '\u0307';
+                }
+                return s;
+            }
+
+            char[] newChars = new char[length];
+            int offset = 0;
+            s.getChars(0, index, newChars, 0);
+            for (int cp, cc; index < length; index += cc) {
+                cp = s.codePointAt(index);
+                cc = Character.charCount(cp);
+                if (cp == '\u0130') {
+                    // Workaround for: https://bugs.openjdk.java.net/browse/JDK-8020037
+                    newChars = Arrays.copyOf(newChars, newChars.length + 1);
+                    newChars[offset + index + 0] = '\u0069';
+                    newChars[offset + index + 1] = '\u0307';
                     offset += 1;
-                    remaining -= 1;
+                } else if (cp == '\u03A3') {
+                    // Workaround for: https://bugs.openjdk.java.net/browse/JDK-xxxxxxx
+                    newChars[offset + index] = isFinalSigma(s, index) ? '\u03C2' : '\u03C3';
                 } else {
-                    replacement[offset + index] = c;
+                    int lower = Character.toLowerCase(cp);
+                    if (Character.isBmpCodePoint(lower)) {
+                        newChars[offset + index] = (char) lower;
+                        if (cc == 2) {
+                            offset -= 1;
+                        }
+                    } else {
+                        if (cc == 1) {
+                            newChars = Arrays.copyOf(newChars, newChars.length + 1);
+                        }
+                        newChars[offset + index + 0] = Character.highSurrogate(lower);
+                        newChars[offset + index + 1] = Character.lowSurrogate(lower);
+                        offset += 2 - cc;
+                    }
                 }
             }
-            return new String(replacement, 0, length + offset);
+
+            return new String(newChars, 0, offset + length);
+        }
+
+        private static boolean isFinalSigma(String s, int index) {
+            for (int codePoint, i = index;; i -= Character.charCount(codePoint)) {
+                // Preceded by: \p{cased} (\p{case-ignorable})*
+                if (i == 0) {
+                    return false;
+                }
+                codePoint = s.codePointBefore(i);
+                if (isCaseIgnorable(codePoint)) {
+                    continue;
+                }
+                if (isCased(codePoint)) {
+                    break;
+                }
+                return false;
+            }
+            for (int codePoint, i = index + 1, length = s.length(); i < length; i += Character.charCount(codePoint)) {
+                // Not followed by: (\p{case-ignorable})* \p{cased}
+                codePoint = s.codePointAt(i);
+                if (isCaseIgnorable(codePoint)) {
+                    continue;
+                }
+                if (!isCased(codePoint)) {
+                    break;
+                }
+                return false;
+            }
+            return true;
+        }
+
+        private static boolean isCased(int codePoint) {
+            switch (Character.getType(codePoint)) {
+            case Character.UPPERCASE_LETTER:
+            case Character.LOWERCASE_LETTER:
+            case Character.TITLECASE_LETTER:
+                return true;
+            default:
+                return isOtherUpperCase(codePoint) || isOtherLowerCase(codePoint);
+            }
+        }
+
+        // Unicode 7.0: Other_Uppercase
+        private static boolean isOtherUpperCase(int c) {
+            /* @formatter:off */
+            if (0x2160 <= c && 0x216F <= c) return true;
+            if (0x24B6 <= c && 0x24CF <= c) return true;
+            if (0x1F130 <= c && 0x1F149 <= c) return true;
+            if (0x1F150 <= c && 0x1F169 <= c) return true;
+            if (0x1F170 <= c && 0x1F189 <= c) return true;
+            return false;
+            /* @formatter:on */
+        }
+
+        // Unicode 7.0: Other_Lowercase
+        private static boolean isOtherLowerCase(int c) {
+            /* @formatter:off */
+            if (c == 0x00AA) return true;
+            if (c == 0x00BA) return true;
+            if (0x02B0 <= c && 0x02B8 <= c) return true;
+            if (0x02C0 <= c && 0x02C1 <= c) return true;
+            if (0x02E0 <= c && 0x02E4 <= c) return true;
+            if (c == 0x0345) return true;
+            if (c == 0x037A) return true;
+            if (0x1D2C <= c && 0x1D6A <= c) return true;
+            if (c == 0x1D78) return true;
+            if (0x1D9B <= c && 0x1DBF <= c) return true;
+            if (c == 0x2071) return true;
+            if (c == 0x207F) return true;
+            if (0x2090 <= c && 0x209C <= c) return true;
+            if (0x2170 <= c && 0x217F <= c) return true;
+            if (0x24D0 <= c && 0x24E9 <= c) return true;
+            if (0x2C7C <= c && 0x2C7D <= c) return true;
+            if (0xA69C <= c && 0xA69D <= c) return true;
+            if (c == 0xA770) return true;
+            if (0xA7F8 <= c && 0xA7F9 <= c) return true;
+            if (0xAB5C <= c && 0xAB5F <= c) return true;
+            return false;
+            /* @formatter:on */
+        }
+
+        private static boolean isCaseIgnorable(int codePoint) {
+            // Unicode 7.0: WordBreakProperty
+            switch (codePoint) {
+            // Single_Quote
+            case '\'':
+
+                // MidLetter
+            case '\u003A':
+            case '\u00B7':
+            case '\u02D7':
+            case '\u0387':
+            case '\u05F4':
+            case '\u2027':
+            case '\uFE13':
+            case '\uFE55':
+            case '\uFF1A':
+
+                // MidNumLet
+            case '\u002E':
+            case '\u2018':
+            case '\u2019':
+            case '\u2024':
+            case '\uFE52':
+            case '\uFF07':
+            case '\uFF0E':
+                return true;
+            }
+            switch (Character.getType(codePoint)) {
+            case Character.MODIFIER_LETTER:
+            case Character.NON_SPACING_MARK:
+            case Character.ENCLOSING_MARK:
+            case Character.FORMAT:
+            case Character.MODIFIER_SYMBOL:
+                return true;
+            default:
+                return false;
+            }
         }
     }
 }

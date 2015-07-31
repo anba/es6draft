@@ -101,9 +101,8 @@ public final class TypedArrayConstructor extends BuiltinConstructor implements I
      */
     @Override
     public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
-        ExecutionContext calleeContext = calleeContext();
         /* step 1 */
-        throw newTypeError(calleeContext, Messages.Key.InvalidCall,
+        throw newTypeError(calleeContext(), Messages.Key.InvalidCall,
                 elementType.getConstructorName());
     }
 

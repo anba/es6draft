@@ -256,7 +256,7 @@ public final class Repl {
         }
     }
 
-    private static interface EvalScript {
+    private interface EvalScript {
         Source getSource();
 
         String getSourceCode() throws IOException;
@@ -880,7 +880,7 @@ public final class Repl {
 
     private final class InteractiveTaskSource implements TaskSource {
         private final Realm realm;
-        private int[] line = { 1 };
+        private final int[] line = { 1 };
 
         InteractiveTaskSource(Realm realm) {
             this.realm = realm;

@@ -19,7 +19,7 @@ import com.github.anba.es6draft.runtime.types.Property;
  * <ul>
  * <li>9.2 ECMAScript Function Objects
  * <ul>
- * <li>9.2.8.1 %ThrowTypeError% ( )
+ * <li>9.2.7.1 %ThrowTypeError% ( )
  * </ul>
  * </ul>
  */
@@ -30,8 +30,9 @@ public final class TypeErrorThrower extends BuiltinFunction {
      * @param realm
      *            the realm object
      */
-    private TypeErrorThrower(Realm realm) {
+    public TypeErrorThrower(Realm realm) {
         super(realm, ANONYMOUS, 0);
+        assert realm.getIntrinsic(Intrinsics.FunctionPrototype) != null : "%FunctionPrototype% not initialized";
         setPrototype(realm.getIntrinsic(Intrinsics.FunctionPrototype));
         // 'length' is non-configurable to ensure %ThrowTypeError% is not a communication channel
         infallibleDefineOwnProperty("length", new Property(0, false, false, false));
@@ -51,17 +52,5 @@ public final class TypeErrorThrower extends BuiltinFunction {
     @Override
     public TypeErrorThrower clone() {
         return new TypeErrorThrower(getRealm(), null);
-    }
-
-    /**
-     * 9.2.8.1 %ThrowTypeError% ( )
-     * 
-     * @param realm
-     *            the realm instance
-     * @return the %ThrowTypeError% function object
-     */
-    public static TypeErrorThrower createThrowTypeError(Realm realm) {
-        assert realm.getIntrinsic(Intrinsics.FunctionPrototype) != null : "%FunctionPrototype% not initialized";
-        return new TypeErrorThrower(realm);
     }
 }

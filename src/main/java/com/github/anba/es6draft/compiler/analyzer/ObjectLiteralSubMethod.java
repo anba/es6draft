@@ -29,7 +29,7 @@ final class ObjectLiteralSubMethod extends ListSubMethod<ObjectLiteral> {
         }
 
         @Override
-        protected final PropertyDefinition createReplacement() {
+        protected PropertyDefinition createReplacement() {
             assert getNode() instanceof PropertyValueDefinition : getNode().getClass();
             PropertyValueDefinition valDef = (PropertyValueDefinition) getNode();
             return new PropertyValueDefinition(valDef.getBeginPosition(), valDef.getEndPosition(),
@@ -37,7 +37,7 @@ final class ObjectLiteralSubMethod extends ListSubMethod<ObjectLiteral> {
         }
 
         @Override
-        protected final int getReplacementSize() {
+        protected int getReplacementSize() {
             return EXPR_METHOD_SIZE;
         }
     }

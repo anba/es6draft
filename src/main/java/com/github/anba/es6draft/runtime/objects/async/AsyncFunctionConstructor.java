@@ -12,7 +12,6 @@ import static com.github.anba.es6draft.runtime.objects.FunctionConstructor.funct
 import static com.github.anba.es6draft.runtime.objects.FunctionConstructor.newFunctionExecutable;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryAsyncFunction.FunctionAllocate;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.FunctionInitialize;
-import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.MakeConstructor;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.SetFunctionName;
 
 import com.github.anba.es6draft.compiler.CompilationException;
@@ -25,10 +24,10 @@ import com.github.anba.es6draft.runtime.internal.Initializable;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
-import com.github.anba.es6draft.runtime.objects.FunctionConstructor.SourceKind;
 import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
 import com.github.anba.es6draft.runtime.internal.ScriptLoader;
 import com.github.anba.es6draft.runtime.internal.Source;
+import com.github.anba.es6draft.runtime.objects.FunctionConstructor.SourceKind;
 import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
@@ -71,9 +70,8 @@ public final class AsyncFunctionConstructor extends BuiltinConstructor implement
     @Override
     public OrdinaryAsyncFunction call(ExecutionContext callerContext, Object thisValue,
             Object... args) {
-        ExecutionContext calleeContext = calleeContext();
         /* steps 1-3 */
-        return CreateDynamicFunction(callerContext, calleeContext, this, args);
+        return CreateDynamicFunction(callerContext, calleeContext(), this, args);
     }
 
     /**
@@ -82,9 +80,8 @@ public final class AsyncFunctionConstructor extends BuiltinConstructor implement
     @Override
     public OrdinaryAsyncFunction construct(ExecutionContext callerContext, Constructor newTarget,
             Object... args) {
-        ExecutionContext calleeContext = calleeContext();
         /* steps 1-3 */
-        return CreateDynamicFunction(callerContext, calleeContext, newTarget, args);
+        return CreateDynamicFunction(callerContext, calleeContext(), newTarget, args);
     }
 
     /**
@@ -131,9 +128,7 @@ public final class AsyncFunctionConstructor extends BuiltinConstructor implement
         LexicalEnvironment<GlobalEnvironmentRecord> scope = f.getRealm().getGlobalEnv();
         /* step 26 */
         FunctionInitialize(f, FunctionKind.Normal, function, scope, newFunctionExecutable(source));
-        /* step 27 */
-        MakeConstructor(cx, f);
-        /* step 28 (not applicable) */
+        /* steps 27-28 (not applicable) */
         /* step 29 */
         SetFunctionName(f, "anonymous");
         /* step 30 */

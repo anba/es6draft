@@ -72,9 +72,8 @@ public final class FunctionConstructor extends BuiltinConstructor implements Ini
      */
     @Override
     public OrdinaryFunction call(ExecutionContext callerContext, Object thisValue, Object... args) {
-        ExecutionContext calleeContext = calleeContext();
         /* steps 1-3 */
-        return CreateDynamicFunction(callerContext, calleeContext, this, args);
+        return CreateDynamicFunction(callerContext, calleeContext(), this, args);
     }
 
     /**
@@ -83,9 +82,8 @@ public final class FunctionConstructor extends BuiltinConstructor implements Ini
     @Override
     public OrdinaryFunction construct(ExecutionContext callerContext, Constructor newTarget,
             Object... args) {
-        ExecutionContext calleeContext = calleeContext();
         /* steps 1-3 */
-        return CreateDynamicFunction(callerContext, calleeContext, newTarget, args);
+        return CreateDynamicFunction(callerContext, calleeContext(), newTarget, args);
     }
 
     /**

@@ -76,10 +76,8 @@ public final class NativeConstructor extends BuiltinConstructor {
     public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
         try {
             return callMethod.invokeExact(callerContext, thisValue, args);
-        } catch (RuntimeException | Error e) {
-            throw e;
         } catch (Throwable e) {
-            throw new RuntimeException(e);
+            throw NativeConstructor.<RuntimeException> rethrow(e);
         }
     }
 
@@ -91,10 +89,13 @@ public final class NativeConstructor extends BuiltinConstructor {
             Object... args) {
         try {
             return (ScriptObject) constructMethod.invokeExact(callerContext, newTarget, args);
-        } catch (RuntimeException | Error e) {
-            throw e;
         } catch (Throwable e) {
-            throw new RuntimeException(e);
+            throw NativeConstructor.<RuntimeException> rethrow(e);
         }
+    }
+
+    @SuppressWarnings("unchecked")
+    private static <E extends Throwable> E rethrow(Throwable e) throws E {
+        throw (E) e;
     }
 }

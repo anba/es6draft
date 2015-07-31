@@ -33,7 +33,7 @@ final class DateAbstractOperations {
      *            the divisor
      * @return the modulo result
      */
-    private static final double modulo(double dividend, double divisor) {
+    private static double modulo(double dividend, double divisor) {
         assert divisor != 0 && isFinite(divisor);
         double remainder = dividend % divisor;
         // NB: add +0 to convert -0 to +0
@@ -119,11 +119,12 @@ final class DateAbstractOperations {
      */
     public static double YearFromTime(double t) {
         double y = 1970 + Math.floor(t / (365 * msPerDay));
-        if (TimeFromYear(y) > t) {
+        double e = TimeFromYear(y);
+        if (e > t) {
             do {
                 y -= 1;
             } while (TimeFromYear(y) > t);
-        } else if (TimeFromYear(y) + DaysInYear(y) * msPerDay <= t) {
+        } else if (e + DaysInYear(y) * msPerDay <= t) {
             do {
                 y += 1;
             } while (TimeFromYear(y) + DaysInYear(y) * msPerDay <= t);
@@ -403,8 +404,7 @@ final class DateAbstractOperations {
         double m = ToInteger(min);
         double s = ToInteger(sec);
         double milli = ToInteger(ms);
-        double t = h * msPerHour + m * msPerMinute + s * msPerSecond + milli;
-        return t;
+        return h * msPerHour + m * msPerMinute + s * msPerSecond + milli;
     }
 
     /**
@@ -671,10 +671,8 @@ final class DateAbstractOperations {
      * @return the week day name
      */
     public static String WeekDayName(double t) {
+        assert !Double.isNaN(t);
         double weekDay = WeekDay(t);
-        if (Double.isNaN(weekDay)) {
-            return "";
-        }
         return weekDayNames[(int) weekDay];
     }
 
@@ -689,10 +687,8 @@ final class DateAbstractOperations {
      * @return the month name
      */
     public static String MonthNameFromTime(double t) {
+        assert !Double.isNaN(t);
         double month = MonthFromTime(t);
-        if (Double.isNaN(month)) {
-            return "";
-        }
         return monthNames[(int) month];
     }
 

@@ -7,7 +7,6 @@
 package com.github.anba.es6draft.compiler;
 
 import com.github.anba.es6draft.ast.Script;
-import com.github.anba.es6draft.ast.scope.ScriptScope;
 import com.github.anba.es6draft.compiler.CodeGenerator.ScriptName;
 import com.github.anba.es6draft.compiler.assembler.Code.MethodCode;
 import com.github.anba.es6draft.compiler.assembler.MethodName;
@@ -198,17 +197,15 @@ final class ScriptCodeGenerator {
             if (noDeclarations) {
                 getLexicalEnvironment(callerContext, lexEnv, mv);
             } else {
-                newDeclarativeEnvironment(node.getScope(), callerContext, lexEnv, mv);
+                newDeclarativeEnvironment(callerContext, lexEnv, mv);
             }
         } else {
-            Variable<Realm> evalRealm = mv.newVariable("evalRealm", Realm.class);
-            getRealm(callerContext, evalRealm, mv);
             /* step 10 */
-            getGlobalEnv(evalRealm, varEnv, mv);
+            getGlobalEnv(callerContext, varEnv, mv);
             if (noDeclarations) {
                 lexEnv = varEnv;
             } else {
-                newDeclarativeEnvironment(node.getScope(), varEnv, lexEnv, mv);
+                newDeclarativeEnvironment(varEnv, lexEnv, mv);
             }
         }
         /* step 11 */
@@ -233,7 +230,7 @@ final class ScriptCodeGenerator {
                 .newVariable("lexEnv", LexicalEnvironment.class).uncheckedCast();
 
         // Create an empty declarative environment for the lexical bindings.
-        newDeclarativeEnvironment(node.getScope(), context, lexEnv, mv);
+        newDeclarativeEnvironment(context, lexEnv, mv);
 
         // Replace the lexical environment component.
         setLexicalEnvironment(context, lexEnv, mv);
@@ -288,11 +285,12 @@ final class ScriptCodeGenerator {
     }
 
     /**
-     * Emit: {@code env = realm.getGlobalEnv()}
+     * Emit: {@code env = cx.getRealm().getGlobalEnv()}
      */
-    private void getGlobalEnv(Variable<Realm> realm, Variable<? extends LexicalEnvironment<?>> env,
-            InstructionVisitor mv) {
-        mv.load(realm);
+    private void getGlobalEnv(Variable<ExecutionContext> context,
+            Variable<? extends LexicalEnvironment<?>> env, InstructionVisitor mv) {
+        mv.load(context);
+        mv.invoke(Methods.ExecutionContext_getRealm);
         mv.invoke(Methods.Realm_getGlobalEnv);
         mv.store(env);
     }
@@ -320,8 +318,7 @@ final class ScriptCodeGenerator {
     /**
      * Emit: {@code env = LexicalEnvironment.newDeclarativeEnvironment(outer)}
      */
-    private void newDeclarativeEnvironment(ScriptScope scope,
-            Value<? extends LexicalEnvironment<?>> outer,
+    private void newDeclarativeEnvironment(Value<? extends LexicalEnvironment<?>> outer,
             Variable<? extends LexicalEnvironment<?>> env, InstructionVisitor mv) {
         mv.load(outer);
         mv.invoke(Methods.LexicalEnvironment_newDeclarativeEnvironment);
@@ -332,7 +329,7 @@ final class ScriptCodeGenerator {
      * Emit:
      * {@code env = LexicalEnvironment.newDeclarativeEnvironment(context.getLexicalEnvironment())}
      */
-    private void newDeclarativeEnvironment(ScriptScope scope, Variable<ExecutionContext> context,
+    private void newDeclarativeEnvironment(Variable<ExecutionContext> context,
             Variable<? extends LexicalEnvironment<?>> env, InstructionVisitor mv) {
         mv.load(context);
         mv.invoke(Methods.ExecutionContext_getLexicalEnvironment);

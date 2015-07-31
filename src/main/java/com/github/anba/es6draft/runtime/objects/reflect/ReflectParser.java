@@ -2088,8 +2088,7 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
         if (hasBuilder(Type.ThisExpression)) {
             return call(Type.ThisExpression, node);
         }
-        OrdinaryObject expression = createExpression(node, Type.ThisExpression);
-        return expression;
+        return createExpression(node, Type.ThisExpression);
     }
 
     @Override

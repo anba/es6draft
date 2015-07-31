@@ -28,6 +28,9 @@ final class IdentifierResolution {
                 Type.methodType(Types.Object, Types.String, Type.BOOLEAN_TYPE));
     }
 
+    private IdentifierResolution() {
+    }
+
     static ValType resolve(IdentifierReference node, ExpressionVisitor mv) {
         return resolve(node, node.getName(), mv);
     }

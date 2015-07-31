@@ -468,7 +468,7 @@ public final class JSONObject extends OrdinaryObject implements Initializable {
                     gap, p, value);
             if (strP != null) {
                 StringBuilder member = new StringBuilder(p.length() + strP.length() + 4);
-                member.append(QuoteJSONString(p)).append(":");
+                member.append(QuoteJSONString(p)).append(':');
                 if (!gap.isEmpty()) {
                     member.append(' ');
                 }

@@ -10,7 +10,7 @@ package com.github.anba.es6draft.ast;
  * <h1>12 ECMAScript Language: Expressions</h1><br>
  * <h2>12.14 Assignment Operators</h2>
  * <ul>
- * <li>12.14.1 Destructuring Assignment
+ * <li>12.14.5 Destructuring Assignment
  * </ul>
  */
 public final class AssignmentRestElement extends AstNode implements AssignmentElementItem {
@@ -21,6 +21,11 @@ public final class AssignmentRestElement extends AstNode implements AssignmentEl
         this.target = target;
     }
 
+    /**
+     * Returns the left-hand side expression target.
+     * 
+     * @return the target expression
+     */
     public LeftHandSideExpression getTarget() {
         return target;
     }

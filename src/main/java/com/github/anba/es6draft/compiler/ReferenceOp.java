@@ -553,6 +553,8 @@ abstract class ReferenceOp<NODE extends LeftHandSideExpression> {
     }
 
     /**
+     * 12.1 Identifiers
+     * <p>
      * 12.1.6 Runtime Semantics: Evaluation
      */
     static final ReferenceOp<IdentifierReference> LOOKUP = new ReferenceOp<IdentifierReference>() {
@@ -628,6 +630,8 @@ abstract class ReferenceOp<NODE extends LeftHandSideExpression> {
     };
 
     /**
+     * 12.3.2 Property Accessors
+     * <p>
      * 12.3.2.1 Runtime Semantics: Evaluation
      */
     static final ReferenceOp<PropertyAccessor> PROPERTY = new ReferenceOp<PropertyAccessor>() {
@@ -707,6 +711,8 @@ abstract class ReferenceOp<NODE extends LeftHandSideExpression> {
     };
 
     /**
+     * 12.3.2 Property Accessors
+     * <p>
      * 12.3.2.1 Runtime Semantics: Evaluation
      */
     static final ReferenceOp<ElementAccessor> ELEMENT = new ReferenceOp<ElementAccessor>() {

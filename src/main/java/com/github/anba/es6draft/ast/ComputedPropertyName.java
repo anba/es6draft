@@ -12,7 +12,7 @@ import com.github.anba.es6draft.runtime.internal.Strings;
  * <h1>12 ECMAScript Language: Expressions</h1><br>
  * <h2>12.2 Primary Expression</h2>
  * <ul>
- * <li>12.2.5 Object Initializer
+ * <li>12.2.6 Object Initializer
  * </ul>
  */
 public final class ComputedPropertyName extends AstNode implements PropertyName {
@@ -23,10 +23,20 @@ public final class ComputedPropertyName extends AstNode implements PropertyName 
         this.expression = expression;
     }
 
+    /**
+     * Returns the computed property name expression.
+     * 
+     * @return the expression
+     */
     public Expression getExpression() {
         return expression;
     }
 
+    /**
+     * {@inheritDoc}
+     * <p>
+     * Always returns {@code null} for computed property names.
+     */
     @Override
     public String getName() {
         return null;

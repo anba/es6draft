@@ -149,6 +149,8 @@ public final class Messages {
         DuplicateExport("parser.duplicate_export"),
         DuplicateImport("parser.duplicate_import"),
         MissingExportBinding("parser.missing_export_binding"),
+        InvalidForStatementLeftHandSide("parser.invalid_for_statement_lhs"),
+        InvalidForEachStatement("parser.invalid_for_each_statement"),
 
         // strict mode TokenStream/Parser errors
         StrictModeRestrictedIdentifier("parser.strict.restricted_identifier"),
@@ -185,6 +187,7 @@ public final class Messages {
         NotObjectOrNull("type.not_object_or_null"),
         NotUndefined("type.not_undefined"),
         NotSymbol("type.not_symbol"),
+        NotString("type.not_string"),
         NotExtensible("type.not_extensible"),
         IncompatibleObject("type.incompatible_object"),
         InitializedObject("type.initialized_object"),

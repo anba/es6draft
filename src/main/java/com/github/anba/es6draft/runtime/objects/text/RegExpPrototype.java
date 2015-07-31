@@ -135,29 +135,30 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
             /* step 1 */
             ScriptObject r = Type.objectValue(thisValue);
             /* step 3 */
-            StringBuilder result = new StringBuilder(5);
+            int c = 0;
+            char[] result = new char[5];
             /* steps 4-6 */
             if (ToBoolean(Get(cx, r, "global"))) {
-                result.append('g');
+                result[c++] = 'g';
             }
             /* steps 7-9 */
             if (ToBoolean(Get(cx, r, "ignoreCase"))) {
-                result.append('i');
+                result[c++] = 'i';
             }
             /* steps 10-12 */
             if (ToBoolean(Get(cx, r, "multiline"))) {
-                result.append('m');
+                result[c++] = 'm';
             }
             /* steps 13-15 */
             if (ToBoolean(Get(cx, r, "unicode"))) {
-                result.append('u');
+                result[c++] = 'u';
             }
             /* steps 16-18 */
             if (ToBoolean(Get(cx, r, "sticky"))) {
-                result.append('y');
+                result[c++] = 'y';
             }
             /* step 19 */
-            return result.toString();
+            return String.valueOf(result, 0, c);
         }
 
         /**
@@ -226,7 +227,7 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
             /* steps 1-4 */
             RegExpObject r = thisRegExpObject(cx, thisValue);
             /* steps 5-7 */
-            return EscapeRegExpPattern(cx, r.getOriginalSource(), r.getOriginalFlags());
+            return EscapeRegExpPattern(cx.getRealm(), r.getOriginalSource(), r.getOriginalFlags());
         }
 
         /**
@@ -270,7 +271,7 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
             // TODO: ToFlatString for small strings, ToString for large strings?
             String s = ToFlatString(cx, string);
             /* steps 5-6 */
-            MatchResult match = getMatcherOrNull(cx, r, s, true);
+            MatchResult match = matchResultOrNull(cx, r, s, true);
             /* step 7 */
             return match != null;
         }
@@ -359,7 +360,7 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
                 /* steps 8.f-g */
                 for (int n = 0;; ++n) {
                     // ScriptObject result = RegExpExec(cx, rx, s);
-                    MatchResult result = getMatcherOrNull(cx, rx, s, true);
+                    MatchResult result = matchResultOrNull(cx, rx, s, true);
                     if (result == null) {
                         return n == 0 ? NULL : array;
                     }
@@ -429,7 +430,7 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
             /* step 13 */
             while (!done) {
                 /* steps 13.a-b */
-                MatchResult result = getMatcherOrNull(cx, rx, s, false);
+                MatchResult result = matchResultOrNull(cx, rx, s, false);
                 /* steps 13.c-d */
                 if (result == null) {
                     /* step 13.c */
@@ -522,7 +523,7 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
             /* steps 7-8 */
             Set(cx, rx, "lastIndex", 0, true);
             /* steps 9-10 */
-            MatchResult result = getMatcherOrNull(cx, rx, s, true);
+            MatchResult result = matchResultOrNull(cx, rx, s, true);
             /* steps 11-12 */
             Set(cx, rx, "lastIndex", previousLastIndex, true);
             /* step 13 */
@@ -619,7 +620,7 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
             /* step 22 */
             if (size == 0) {
                 // ScriptObject z = RegExpExec(cx, splitter, s);
-                MatchResult z = getMatcherOrNull(cx, splitter, s, true);
+                MatchResult z = matchResultOrNull(cx, splitter, s, true);
                 if (z != null) {
                     return a;
                 }
@@ -634,7 +635,7 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
                 Set(cx, splitter, "lastIndex", q, true);
                 /* steps 24.c-d */
                 // ScriptObject z = RegExpExec(cx, splitter, s);
-                MatchResult z = getMatcherOrNull(cx, splitter, s, true);
+                MatchResult z = matchResultOrNull(cx, splitter, s, true);
                 /* step 24.e */
                 if (z == null) {
                     q = AdvanceStringIndex(s, q, unicodeMatching);
@@ -726,6 +727,29 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
     }
 
     /**
+     * Marker class for {@code RegExp.prototype.exec}.
+     */
+    private static final class RegExpPrototypeExec {
+    }
+
+    /**
+     * Marker class for {@code RegExp.prototype.global}.
+     */
+    private static final class RegExpPrototypeGlobal {
+    }
+
+    /**
+     * Marker class for {@code RegExp.prototype.sticky}.
+     */
+    private static final class RegExpPrototypeSticky {
+    }
+
+    private static boolean isBuiltin(ExecutionContext cx, Object value, Class<?> nativeId) {
+        return value instanceof NativeFunction && ((NativeFunction) value).getId() == nativeId
+                && ((NativeFunction) value).getRealm() == cx.getRealm();
+    }
+
+    /**
      * 21.2.5.2.1 Runtime Semantics: RegExpExec ( R, S )
      * 
      * @param cx
@@ -739,7 +763,6 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
     public static ScriptObject RegExpExec(ExecutionContext cx, ScriptObject r, String s) {
         /* steps 1-2 (not applicable) */
         /* steps 3-4 */
-        // FIXME: spec bug - change to GetMethod ?
         Object exec = Get(cx, r, "exec");
         /* step 5 */
         // Don't take the slow path for built-in RegExp.prototype.exec
@@ -765,7 +788,7 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
      *            {@code true} if the match result is stored
      * @return the match result object or null
      */
-    private static MatchResult getMatcherOrNull(ExecutionContext cx, ScriptObject r, String s,
+    private static MatchResult matchResultOrNull(ExecutionContext cx, ScriptObject r, String s,
             boolean storeResult) {
         /* steps 1-2 (not applicable) */
         /* steps 3-4 */
@@ -779,30 +802,7 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
         /* step 6 */
         RegExpObject rx = thisRegExpObject(cx, r);
         /* step 7 */
-        return getMatcherOrNull(cx, rx, s, storeResult);
-    }
-
-    /**
-     * Marker class for {@code RegExp.prototype.exec}.
-     */
-    private static final class RegExpPrototypeExec {
-    }
-
-    /**
-     * Marker class for {@code RegExp.prototype.global}.
-     */
-    private static final class RegExpPrototypeGlobal {
-    }
-
-    /**
-     * Marker class for {@code RegExp.prototype.sticky}.
-     */
-    private static final class RegExpPrototypeSticky {
-    }
-
-    private static boolean isBuiltin(ExecutionContext cx, Object value, Class<?> nativeId) {
-        return value instanceof NativeFunction && ((NativeFunction) value).getId() == nativeId
-                && ((NativeFunction) value).getRealm() == cx.getRealm();
+        return matchResultOrNull(cx, rx, s, storeResult);
     }
 
     private static ScriptObject RegExpUserExec(ExecutionContext cx, Callable exec, ScriptObject r,
@@ -826,16 +826,16 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
      *            the regular expression object
      * @param s
      *            the string
-     * @return the match result object or null
+     * @return the match result object or {@code null}
      */
     private static ArrayObject RegExpBuiltinExec(ExecutionContext cx, RegExpObject r, String s) {
         /* steps 1-18 */
-        MatchResult m = getMatcherOrNull(cx, r, s, true);
+        MatchResult m = matchResultOrNull(cx, r, s, true);
         if (m == null) {
             return null;
         }
         /* steps 19-29 */
-        return toMatchResult(cx, s, m);
+        return toMatchArray(cx, s, m);
     }
 
     /**
@@ -851,7 +851,7 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
      *            {@code true} if the match result is stored
      * @return the match result or {@code null}
      */
-    private static MatchResult getMatcherOrNull(ExecutionContext cx, RegExpObject r, String s,
+    private static MatchResult matchResultOrNull(ExecutionContext cx, RegExpObject r, String s,
             boolean storeResult) {
         /* step 1 */
         assert r.getRegExpMatcher() != null;
@@ -913,7 +913,7 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
      *            the lastIndex position
      * @return the match result or {@code null}
      */
-    private static MatchResult getMatcherOrNull(RegExpObject r, String s, int lastIndex) {
+    private static MatchResult matchResultOrNull(RegExpObject r, String s, int lastIndex) {
         /* step 1 */
         assert r.getRegExpMatcher() != null;
         /* steps 2-5 (not applicable) */
@@ -958,7 +958,7 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
      *            the match result
      * @return the match result script object
      */
-    private static ArrayObject toMatchResult(ExecutionContext cx, String s, MatchResult m) {
+    private static ArrayObject toMatchArray(ExecutionContext cx, String s, MatchResult m) {
         /* steps 16-17 */
         int e = m.end();
         /* step 19 */
@@ -1187,7 +1187,7 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
      */
     public static boolean RegExpTest(ExecutionContext cx, RegExpObject rx, String string) {
         int lastIndex = 0;
-        return getMatcherOrNull(rx, string, lastIndex) != null;
+        return matchResultOrNull(rx, string, lastIndex) != null;
     }
 
     /**
@@ -1222,7 +1222,7 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
         /* steps 15, 19 */
         do {
             /* steps 15.a-15.b */
-            MatchResult result = getMatcherOrNull(rx, string, lastIndex);
+            MatchResult result = matchResultOrNull(rx, string, lastIndex);
             /* step 15.c */
             if (result == null) {
                 break;

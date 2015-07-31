@@ -59,6 +59,13 @@ abstract class ExpressionVisitor extends InstructionVisitor {
     }
 
     private static final int CONTEXT_SLOT = 0;
+    private static final int RESUME_SLOT = 1;
+    private static final int MIN_RECOVER_SLOT = 2;
+
+    static {
+        assert CONTEXT_SLOT < RESUME_SLOT;
+        assert RESUME_SLOT < MIN_RECOVER_SLOT;
+    }
 
     private final ExpressionVisitor parent;
     private final TopLevelNode<?> topLevelNode;
@@ -263,7 +270,7 @@ abstract class ExpressionVisitor extends InstructionVisitor {
         private final Jump instruction;
         private final int offset;
         private final int line;
-        private InlineArrayList<ExecutionState> shared = null;
+        private InlineArrayList<ExecutionState> shared;
 
         ExecutionState(VariablesSnapshot locals, Type[] stack, Jump instruction, int offset,
                 int line) {
@@ -303,7 +310,9 @@ abstract class ExpressionVisitor extends InstructionVisitor {
         if (states == null) {
             states = new ArrayList<>();
         }
-        VariablesSnapshot locals = getVariablesSnapshot();
+        assert hasParameter(CONTEXT_SLOT, ExecutionContext.class);
+        assert hasParameter(RESUME_SLOT, ResumptionPoint.class);
+        VariablesSnapshot locals = getVariablesSnapshot(MIN_RECOVER_SLOT);
         Type[] stack = getStack();
         Jump instruction = new Jump();
         int offset = stateOffsetCounter++;
@@ -339,14 +348,12 @@ abstract class ExpressionVisitor extends InstructionVisitor {
     /**
      * Generate prologue code for generator functions.
      * 
-     * @param resume
-     *            the variable which holds the resumption point
      * @return the generator state
      */
-    GeneratorState prologue(Variable<ResumptionPoint> resume) {
+    GeneratorState prologue() {
         assert isResumable();
         GeneratorState state = new GeneratorState();
-        load(resume);
+        loadParameter(RESUME_SLOT, ResumptionPoint.class);
         ifnonnull(state.resumeSwitch);
         mark(state.startBody);
         return state;
@@ -355,18 +362,17 @@ abstract class ExpressionVisitor extends InstructionVisitor {
     /**
      * Generate epilogue code for generator functions.
      * 
-     * @param resume
-     *            the variable which holds the resumption point
      * @param state
      *            the generator state
      */
-    void epilogue(Variable<ResumptionPoint> resume, GeneratorState state) {
+    void epilogue(GeneratorState state) {
         assert isResumable();
         mark(state.resumeSwitch);
         ArrayList<ExecutionState> states = this.states;
         if (states == null) {
             goTo(state.startBody);
         } else {
+            Variable<ResumptionPoint> resume = getParameter(RESUME_SLOT, ResumptionPoint.class);
             int count = stateOffsetCounter;
             int uniqueCount = states.size();
             assert count > 0 && uniqueCount > 0;
@@ -447,26 +453,31 @@ abstract class ExpressionVisitor extends InstructionVisitor {
 
         // (2) Save locals
         VariablesSnapshot locals = state.locals;
-        if (RuntimeBootstrap.ENABLED) {
-            int i = 0;
-            Type[] llocals = new Type[locals.getSize()];
-            for (Variable<?> v : locals) {
-                llocals[i++] = v.getType();
-                load(v);
+        int numLocals = locals.getSize();
+        if (numLocals > 0) {
+            if (RuntimeBootstrap.ENABLED) {
+                int i = 0;
+                Type[] llocals = new Type[numLocals];
+                for (Variable<?> v : locals) {
+                    llocals[i++] = v.getType();
+                    load(v);
+                }
+                invokedynamic(RuntimeBootstrap.LOCALS, Type.methodType(Types.Object_, llocals),
+                        RuntimeBootstrap.BOOTSTRAP);
+            } else {
+                int i = 0;
+                anewarray(numLocals, Types.Object);
+                for (Variable<?> v : locals) {
+                    // stack: [array] -> [array, index, v]
+                    dup();
+                    iconst(i++);
+                    load(v);
+                    toBoxed(v.getType());
+                    astore(Types.Object);
+                }
             }
-            invokedynamic(RuntimeBootstrap.LOCALS, Type.methodType(Types.Object_, llocals),
-                    RuntimeBootstrap.BOOTSTRAP);
         } else {
-            int i = 0;
-            anewarray(locals.getSize(), Types.Object);
-            for (Variable<?> v : locals) {
-                // stack: [array] -> [array, index, v]
-                dup();
-                iconst(i++);
-                load(v);
-                toBoxed(v.getType());
-                astore(Types.Object);
-            }
+            anull();
         }
 
         // stack: [stack, locals] -> [r]
@@ -490,60 +501,43 @@ abstract class ExpressionVisitor extends InstructionVisitor {
         assert hasStack() && isResumable();
         assert getStackSize() == 0;
 
-        // emit line info for debugging
+        VariablesSnapshot variables = state.locals;
+        boolean hasLocals = variables.getSize() > 0;
+
+        // Emit line info for debugging.
         lineInfo(state.line);
 
-        // stack: [] -> [r, r]
-        load(resume);
-        dup();
-
         // (1) Restore locals
-        // stack: [r, r] -> [r, <locals>]
-        invoke(Methods.ResumptionPoint_getLocals);
-        VariablesSnapshot variables = state.locals;
-        // manually restore locals type information
-        restoreVariables(variables);
-        int index = 0;
-        for (Variable<?> v : variables) {
-            // stack: [<locals>] -> [<locals>, value]
-            dup();
-            loadFromArray(index++, v.getType());
-            // stack: [r, <locals>, value] -> [r, <locals>]
-            store(v);
-        }
-        // stack: [r, <locals>] -> [r]
-        pop();
-
-        assert getStackSize() == 1 && getStack()[0].equals(Types.ResumptionPoint) : Arrays
-                .toString(getStack());
-
-        boolean hasSimpleStack = state.stack.length == 1;
-        if (!hasSimpleStack) {
-            enterVariableScope();
-        }
-
-        // stack: [r] -> [r?, r]
-        boolean hasShared = state.shared != null;
-        Variable<Integer> offset = null;
-        if (hasShared) {
-            // stack: [r] -> [r, r]
-            dup();
-            if (!hasSimpleStack) {
-                // stack: [r, r] -> [r]
-                invoke(Methods.ResumptionPoint_getOffset);
-                offset = newVariable("offset", int.class);
-                store(offset);
+        if (hasLocals) {
+            // stack: [] -> [<locals>]
+            load(resume);
+            invoke(Methods.ResumptionPoint_getLocals);
+            // manually restore locals type information
+            restoreVariables(variables);
+            int index = 0;
+            for (Variable<?> v : variables) {
+                // stack: [<locals>] -> [<locals>, value]
+                dup();
+                loadFromArray(index++, v.getType());
+                // stack: [<locals>, value] -> [<locals>]
+                store(v);
             }
+            // stack: [<locals>] -> []
+            pop();
         }
 
         // (2) Restore stack
-        // stack: [r] -> [<stack>]
+        // stack: [] -> [<stack>]
+        assert getStackSize() == 0;
+        load(resume);
         invoke(Methods.ResumptionPoint_getStack);
         Type[] stack = state.stack;
+        boolean hasSimpleStack = stack.length == 1;
         if (hasSimpleStack) {
             // stack: [<stack>] -> [v]
             loadFromArray(0, stack[0]);
         } else {
+            enterVariableScope();
             Variable<Object[]> stackContent = newVariable("stack", Object[].class);
             // stack: [<stack>] -> []
             store(stackContent);
@@ -556,27 +550,24 @@ abstract class ExpressionVisitor extends InstructionVisitor {
             // Set 'stackContent' variable to null to avoid leaking the saved stack
             aconst(null);
             store(stackContent);
-        }
-
-        // stack: [...] -> [..., offset]
-        if (hasShared) {
-            if (!hasSimpleStack) {
-                load(offset);
-            } else {
-                swap(Types.ResumptionPoint, stack[0]);
-                invoke(Methods.ResumptionPoint_getOffset);
-            }
-        }
-
-        if (!hasSimpleStack) {
             exitVariableScope();
         }
+        assert Arrays.equals(stack, getStack()) : String.format("%s != %s", Arrays.toString(stack),
+                Arrays.toString(getStack()));
+
+        // stack: [...] -> [..., offset]
+        boolean hasShared = state.shared != null;
+        if (hasShared) {
+            load(resume);
+            invoke(Methods.ResumptionPoint_getOffset);
+        }
+
+        // Clear resume parameter to avoid leaking saved state.
+        anull();
+        store(resume);
 
         if (hasShared) {
-            assert getStackSize() >= 1
-                    && Arrays.equals(stack, Arrays.copyOf(getStack(), getStackSize() - 1)) : String
-                    .format("%s != %s", Arrays.toString(stack), Arrays.toString(getStack()));
-
+            // stack: [..., offset] -> [...]
             InlineArrayList<ExecutionState> sharedStates = state.shared;
             int sharedSize = sharedStates.size();
             assert sharedSize > 0;
@@ -605,9 +596,6 @@ abstract class ExpressionVisitor extends InstructionVisitor {
                 }
             }
         } else {
-            assert Arrays.equals(stack, getStack()) : String.format("%s != %s",
-                    Arrays.toString(stack), Arrays.toString(getStack()));
-
             goTo(state.instruction);
         }
     }

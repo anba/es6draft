@@ -50,9 +50,6 @@ ecma_6/extensions/DataView-set-arguments-neutering.js
 # Template string realm registry
 ecma_6/TemplateStrings/tagTempl.js
 
-# Reflect.set not supported in SM
-ecma_6/Reflect/set.js
-
 # SM bug (https://bugzilla.mozilla.org/show_bug.cgi?id=1115361)
 ecma_6/TypedArray/keys.js
 ecma_6/TypedArray/values.js
@@ -92,9 +89,6 @@ ecma_6/RegExp/descriptor.js
 
 # ES6: Symbol.length changed to 0
 ecma_6/Symbol/surfaces.js
-
-# TODO: investigate
-ecma_6/String/normalize-generateddata-part1-not-listed.js
 
 # ES6: Support for classes is incomplete in SM.
 ecma_6/Class/classHeritage.js
@@ -260,9 +254,6 @@ ecma_5/String/string-upper-lower-mapping.js
 # different function source representation
 ecma_5/extensions/strict-function-toSource.js
 js1_8/extensions/regress-385729.js
-
-# old 'Proxy' not completely emulated
-js1_8_5/extensions/proxy-enumerateOwn-duplicates.js
 
 # Date parser
 ecma_3/Date/15.9.3.2-1.js
@@ -636,6 +627,7 @@ ecma/Date/15.9.5.10-2.js
 ecma/Date/15.9.5.11-2.js
 ecma/Date/15.9.5.12-2.js
 ecma_6/String/normalize-generateddata-input.js
+ecma_6/String/normalize-generateddata-part1-not-listed.js
 js1_5/extensions/regress-311161.js
 js1_5/extensions/regress-363988.js
 js1_5/GC/regress-203278-2.js

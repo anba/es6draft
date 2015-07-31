@@ -24,7 +24,7 @@ final class CaseFoldData {
      *            the code point to test
      * @return {@code true} if the code point is applicable for case folding
      */
-    public static final boolean caseFoldType(int codePoint) {
+    public static boolean caseFoldType(int codePoint) {
         switch (Character.getType(codePoint)) {
         case Character.UPPERCASE_LETTER:
         case Character.LOWERCASE_LETTER:
@@ -49,7 +49,7 @@ final class CaseFoldData {
      *            the lower case conversion to test
      * @return {@code true} if the case fold is valid
      */
-    public static final boolean isValidCaseFold(int codePoint, int toUpper, int toLower) {
+    public static boolean isValidCaseFold(int codePoint, int toUpper, int toLower) {
         // 21.2.2.8.2: Canonicalize Abstract Operation
         // Conditions:
         // - simple or common case folding mapping available: toUpper != toLower
@@ -65,7 +65,7 @@ final class CaseFoldData {
      *            the code point to test
      * @return {@code true} if the code point is valid for lower case conversion
      */
-    public static final boolean isValidToLower(int codePoint) {
+    public static boolean isValidToLower(int codePoint) {
         switch (codePoint) {
         case 0x0130:
         case 0x03f4:
@@ -84,7 +84,7 @@ final class CaseFoldData {
      * 
      * @return the encoded array of code units
      */
-    public static final int[] allCaseFoldData() {
+    public static int[] allCaseFoldData() {
         // Format: (codeUnit:16:31) + (foldCodeUnit:0:15)
         int index = 0;
         int[] data = new int[0x80F];
@@ -120,7 +120,7 @@ final class CaseFoldData {
     /*
      * !Generated method!
      */
-    public static final int caseFold1(int codePoint) {
+    public static int caseFold1(int codePoint) {
         switch (codePoint) {
         case 0x00b5:
             return 0x03bc;
@@ -198,7 +198,7 @@ final class CaseFoldData {
     /*
      * !Generated method!
      */
-    public static final int caseFold2(int codePoint) {
+    public static int caseFold2(int codePoint) {
         switch (codePoint) {
         case 0x0345:
         case 0x0399:
@@ -211,19 +211,19 @@ final class CaseFoldData {
         }
     }
 
-    public static final boolean hasAdditionalUnicodeCaseFold(int codePoint) {
+    public static boolean hasAdditionalUnicodeCaseFold(int codePoint) {
         // special case for sharp-s, `/\xdf/ui.test("\u1e9e")` does not work in Java out-of-the-box,
         // also see CaseFoldDataGenerator#findSpecialUnicodeCaseFold()
         return codePoint == 0x00df;
     }
 
-    public static final void appendCaseInsensitiveUnicode(RegExpParser parser, int codePoint) {
+    public static void appendCaseInsensitiveUnicode(RegExpParser parser, int codePoint) {
         assert hasAdditionalUnicodeCaseFold(codePoint);
         parser.appendCharacter(0x00df);
         parser.appendCharacter(0x1e9e);
     }
 
-    public static final boolean hasRestrictedUnicodeCaseFold(int codePoint) {
+    public static boolean hasRestrictedUnicodeCaseFold(int codePoint) {
         switch (codePoint) {
         case 0x0049:
         case 0x0069:
@@ -238,7 +238,7 @@ final class CaseFoldData {
     /*
      * !Generated method!
      */
-    public static final void appendCaseInsensitiveUnicodeRange(RegExpParser parser, int startChar,
+    public static void appendCaseInsensitiveUnicodeRange(RegExpParser parser, int startChar,
             int endChar) {
         // Type 1
         if (startChar <= 0x00b5 && 0x00b5 <= endChar && !(0x039c <= endChar)) {
@@ -366,7 +366,7 @@ final class CaseFoldData {
         return Unicode63Data.CaseUnfold_To;
     }
 
-    private static class Unicode63Data {
+    private static final class Unicode63Data {
         static final int[] CaseFold_From = {
             /* @formatter:off */
             0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47, 0x48,
@@ -645,8 +645,9 @@ final class CaseFoldData {
         static {
             int[] from = CaseFold_From, to = CaseFold_To;
             IntHash<int[]> fold = new IntHash<int[]>(1200);
-            for (int i = 0; i < from.length; ++i)
+            for (int i = 0; i < from.length; ++i) {
                 fold.putDirect(from[i], new int[] { to[i] });
+            }
             FoldHash = fold;
         }
 
@@ -968,8 +969,9 @@ final class CaseFoldData {
             IntHash<int[]> unfold1 = new IntHash<int[]>(1200);
             int[] from = CaseUnfold_From;
             int[][] to = CaseUnfold_To;
-            for (int i = 0; i < from.length; ++i)
+            for (int i = 0; i < from.length; ++i) {
                 unfold1.putDirect(from[i], to[i]);
+            }
             UnfoldHash = unfold1;
         }
     }

@@ -97,7 +97,21 @@ public final class ObjectPrototype extends OrdinaryObject implements Initializab
             ScriptObject o = ToObject(cx, thisValue);
             /* steps 4-5 */
             boolean isArray = IsArray(cx, o);
-            /* steps 6-15 */
+            /* steps 6-15 (not applicable) */
+            /* steps 16-17 */
+            Object ttag = Get(cx, o, BuiltinSymbol.toStringTag.get());
+            /* step 18 */
+            String tag;
+            if (!Type.isString(ttag)) {
+                tag = builtinTag(o, isArray);
+            } else {
+                tag = Type.stringValue(ttag).toString();
+            }
+            /* step 19 */
+            return "[object " + tag + "]";
+        }
+
+        private static String builtinTag(ScriptObject o, boolean isArray) {
             String builtinTag;
             if (isArray) {
                 builtinTag = "Array";
@@ -118,20 +132,9 @@ public final class ObjectPrototype extends OrdinaryObject implements Initializab
             } else if (o instanceof RegExpObject) {
                 builtinTag = "RegExp";
             } else {
-                // TODO: Use "global" if o instanceof GlobalObject?
                 builtinTag = "Object";
             }
-            /* steps 16-17 */
-            Object ttag = Get(cx, o, BuiltinSymbol.toStringTag.get());
-            /* step 18 */
-            String tag;
-            if (!Type.isString(ttag)) {
-                tag = builtinTag;
-            } else {
-                tag = Type.stringValue(ttag).toString();
-            }
-            /* step 19 */
-            return "[object " + tag + "]";
+            return builtinTag;
         }
 
         /**

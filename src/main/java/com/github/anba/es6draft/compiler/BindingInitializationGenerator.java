@@ -39,24 +39,20 @@ import com.github.anba.es6draft.runtime.internal.ScriptIterator;
 /**
  * <h1>Runtime Semantics: BindingInitialization</h1>
  * <ul>
- * <li>12.1.2 Runtime Semantics: BindingInitialization
- * <li>12.2.4.2.2 Runtime Semantics: BindingInitialization
- * <li>13.2.2.2 Runtime Semantics: BindingInitialization
- * <li>13.2.3.5 Runtime Semantics: BindingInitialization
- * <li>13.14.3 Runtime Semantics: BindingInitialization
+ * <li>12.1.5 Runtime Semantics: BindingInitialization
+ * <li>13.3.3.5 Runtime Semantics: BindingInitialization
  * </ul>
  * 
  * <h2>Runtime Semantics: IteratorBindingInitialization</h2>
  * <ul>
- * <li>13.2.3.6 Runtime Semantics: IteratorBindingInitialization
- * <li>14.1.20 Runtime Semantics: IteratorBindingInitialization
- * <li>14.2.16 Runtime Semantics: IteratorBindingInitialization
- * <li>
+ * <li>13.3.3.6 Runtime Semantics: IteratorBindingInitialization
+ * <li>14.1.18 Runtime Semantics: IteratorBindingInitialization
+ * <li>14.2.14 Runtime Semantics: IteratorBindingInitialization
  * </ul>
  * 
  * <h2>Runtime Semantics: KeyedBindingInitialization</h2>
  * <ul>
- * <li>13.2.3.7 Runtime Semantics: KeyedBindingInitialization
+ * <li>13.3.3.7 Runtime Semantics: KeyedBindingInitialization
  * </ul>
  */
 final class BindingInitializationGenerator {
@@ -197,6 +193,9 @@ final class BindingInitializationGenerator {
     }
 
     /**
+     * 12.1.5 Runtime Semantics: BindingInitialization<br>
+     * 13.3.3.5 Runtime Semantics: BindingInitialization
+     * <p>
      * stack: [value] {@literal ->} []
      * 
      * @param codegen
@@ -215,6 +214,8 @@ final class BindingInitializationGenerator {
     }
 
     /**
+     * 13.3.3.5 Runtime Semantics: BindingInitialization
+     * <p>
      * stack: [value] {@literal ->} []
      * 
      * @param codegen
@@ -231,6 +232,9 @@ final class BindingInitializationGenerator {
     }
 
     /**
+     * 12.1.5 Runtime Semantics: BindingInitialization<br>
+     * 13.3.3.5 Runtime Semantics: BindingInitialization
+     * <p>
      * stack: [] {@literal ->} []
      * 
      * @param codegen
@@ -254,6 +258,8 @@ final class BindingInitializationGenerator {
     }
 
     /**
+     * 13.3.3.5 Runtime Semantics: BindingInitialization
+     * <p>
      * stack: [] {@literal ->} []
      * 
      * @param codegen
@@ -276,6 +282,8 @@ final class BindingInitializationGenerator {
     }
 
     /**
+     * 13.3.3.5 Runtime Semantics: BindingInitialization
+     * <p>
      * stack: [value] {@literal ->} []
      * 
      * @param codegen
@@ -294,6 +302,8 @@ final class BindingInitializationGenerator {
     }
 
     /**
+     * 14.1.18 Runtime Semantics: IteratorBindingInitialization
+     * <p>
      * stack: [] {@literal ->} []
      * 
      * @param codegen
@@ -316,6 +326,8 @@ final class BindingInitializationGenerator {
     }
 
     /**
+     * 14.1.18 Runtime Semantics: IteratorBindingInitialization
+     * <p>
      * stack: [] {@literal ->} []
      * 
      * @param codegen
@@ -419,7 +431,7 @@ final class BindingInitializationGenerator {
     /**
      * <h1>Runtime Semantics: BindingInitialization</h1>
      * <ul>
-     * <li>13.2.3.5 Runtime Semantics: BindingInitialization
+     * <li>13.3.3.5 Runtime Semantics: BindingInitialization
      * </ul>
      */
     private static final class BindingInitialization extends RuntimeSemantics<Void> {
@@ -559,9 +571,9 @@ final class BindingInitializationGenerator {
     /**
      * <h2>Runtime Semantics: IteratorBindingInitialization</h2>
      * <ul>
-     * <li>13.2.3.6 Runtime Semantics: IteratorBindingInitialization
-     * <li>14.1.21 Runtime Semantics: IteratorBindingInitialization
-     * <li>14.2.15 Runtime Semantics: IteratorBindingInitialization
+     * <li>13.3.3.6 Runtime Semantics: IteratorBindingInitialization
+     * <li>14.1.18 Runtime Semantics: IteratorBindingInitialization
+     * <li>14.2.14 Runtime Semantics: IteratorBindingInitialization
      * </ul>
      */
     private static final class FormalsIteratorBindingInitialization extends
@@ -570,8 +582,7 @@ final class BindingInitializationGenerator {
         private final IteratorBindingInitialization iteratorBindingInit;
 
         FormalsIteratorBindingInitialization(CodeGenerator codegen, ExpressionVisitor mv,
-
-        Variable<LexicalEnvironment<FunctionEnvironmentRecord>> env,
+                Variable<LexicalEnvironment<FunctionEnvironmentRecord>> env,
                 Variable<? extends EnvironmentRecord> envRec) {
             super(codegen, mv, envRec);
             this.env = env;
@@ -602,6 +613,7 @@ final class BindingInitializationGenerator {
                 node.getElement().accept(iteratorBindingInit, iterator);
                 /* steps 10-11 */
                 setVariableAndLexicalEnvironment(env);
+                /* step 12 (return) */
             }
             if (scope != null) {
                 mv.exitScope();
@@ -639,7 +651,6 @@ final class BindingInitializationGenerator {
 
         @Override
         public void visit(ArrayBindingPattern node, Variable<? extends Iterator<?>> iterator) {
-            // stack: [] -> []
             for (BindingElementItem element : node.getElements()) {
                 element.accept(this, iterator);
             }
@@ -647,7 +658,6 @@ final class BindingInitializationGenerator {
 
         @Override
         public void visit(BindingElision node, Variable<? extends Iterator<?>> iterator) {
-            // stack: [] -> []
             mv.load(iterator);
             mv.lineInfo(node);
             mv.invoke(Methods.ScriptRuntime_iteratorNextAndIgnore);
@@ -734,16 +744,16 @@ final class BindingInitializationGenerator {
             BindingIdentifier identifier = node.getBindingIdentifier();
             if (envRec == null) {
                 /* steps 1-2 */
-                // stack: [] -> [<env, id>|ref]
+                // stack: [] -> [ref]
                 IdReferenceOp op = IdReferenceOp.of(identifier);
                 op.resolveBinding(identifier, mv);
 
                 /* steps 3-5 */
-                // stack: [<env, id>|ref] -> [<env, id>|ref, array]
+                // stack: [ref] -> [ref, array]
                 emitCreateRestArray(node, iterator);
 
                 /* step 5.b */
-                // stack: [<env, id>|ref, array] -> []
+                // stack: [ref, array] -> []
                 op.putValue(identifier, ValType.Any, mv);
             } else {
                 /* steps 1-2, 5.b */
@@ -771,7 +781,7 @@ final class BindingInitializationGenerator {
     /**
      * <h2>Runtime Semantics: KeyedBindingInitialization</h2>
      * <ul>
-     * <li>13.2.3.7 Runtime Semantics: KeyedBindingInitialization
+     * <li>13.3.3.7 Runtime Semantics: KeyedBindingInitialization
      * </ul>
      */
     private static abstract class KeyedBindingInitialization<PROPERTYNAME> extends
@@ -817,7 +827,7 @@ final class BindingInitializationGenerator {
                 mv.loadExecutionContext();
                 mv.load(value);
 
-                /* steps 1-2 (Runtime Semantics: BindingInitialization 13.2.3.5) */
+                /* steps 1-2 (Runtime Semantics: BindingInitialization 13.3.3.5) */
                 // stack: [cx, value] -> [cx, value, propertyName]
                 ValType type = evaluatePropertyName(propertyName);
 
@@ -845,7 +855,7 @@ final class BindingInitializationGenerator {
 
                 ValType type;
                 if (isSimplePropertyNameOrTarget(bindingId, propertyName)) {
-                    /* step 2 */
+                    /* steps 2-3 */
                     // stack: [] -> [ref]
                     op.resolveBinding(bindingId, mv);
 
@@ -853,17 +863,17 @@ final class BindingInitializationGenerator {
                     mv.loadExecutionContext();
                     mv.load(value);
 
-                    /* steps 1-2 (Runtime Semantics: BindingInitialization 13.2.3.5) */
+                    /* steps 1-2 (Runtime Semantics: BindingInitialization 13.3.3.5) */
                     // stack: [ref, cx, value] -> [ref, cx, value, propertyName]
                     type = evaluatePropertyName(propertyName);
                 } else {
-                    /* steps 1-2 (Runtime Semantics: BindingInitialization 13.2.3.5) */
+                    /* steps 1-2 (Runtime Semantics: BindingInitialization 13.3.3.5) */
                     // stack: [] -> []
                     type = evaluatePropertyName(propertyName);
                     Variable<?> propertyNameVar = mv.newScratchVariable(type.toClass());
                     mv.store(propertyNameVar);
 
-                    /* step 2 */
+                    /* steps 2-3 */
                     // stack: [] -> [ref]
                     op.resolveBinding(bindingId, mv);
 
@@ -874,23 +884,23 @@ final class BindingInitializationGenerator {
                     mv.freeVariable(propertyNameVar);
                 }
 
-                /* steps 3-4 */
+                /* steps 4-5 */
                 // stack: [ref, cx, value, propertyName] -> [ref, v]
                 emitGetV(node, type);
 
-                /* step 5 */
+                /* step 6 */
                 // stack: [ref, v] -> [ref, v']
                 if (initializer != null) {
                     emitDefaultInitializer(initializer, bindingId);
                 }
 
-                /* steps 6-7 */
+                /* steps 7-8 */
                 // stack: [ref, v'] -> []
                 op.putValue(bindingId, ValType.Any, mv);
             } else {
                 /* step 1 */
                 final BindingIdentifier bindingId = (BindingIdentifier) binding;
-                /* steps 2, 6-7 */
+                /* steps 2-3, 7-8 */
                 BindingOp<EnvironmentRecord> op = BindingOp.of(envRec, bindingId.getName());
                 op.initializeBinding(envRec, bindingId.getName(), new Value<Object>() {
                     @Override
@@ -899,15 +909,15 @@ final class BindingInitializationGenerator {
                         mv.loadExecutionContext();
                         mv.load(value);
 
-                        /* steps 1-2 (Runtime Semantics: BindingInitialization 13.2.3.5) */
+                        /* steps 1-2 (Runtime Semantics: BindingInitialization 13.3.3.5) */
                         // stack: [cx, value] -> [cx, value, propertyName]
                         ValType type = evaluatePropertyName(propertyName);
 
-                        /* steps 3-4 */
+                        /* steps 4-5 */
                         // stack: [<env, id>|ref, cx, value, propertyName] -> [<env, id>|ref, v]
                         emitGetV(node, type);
 
-                        /* step 5 */
+                        /* step 6 */
                         // stack: [<env, id>|ref, v] -> [<env, id>|ref, v']
                         if (initializer != null) {
                             emitDefaultInitializer(initializer, bindingId);
@@ -921,7 +931,7 @@ final class BindingInitializationGenerator {
     /**
      * <h2>Runtime Semantics: KeyedBindingInitialization</h2>
      * <ul>
-     * <li>13.2.3.7 Runtime Semantics: KeyedBindingInitialization
+     * <li>13.3.3.7 Runtime Semantics: KeyedBindingInitialization
      * </ul>
      */
     private static final class LiteralKeyedBindingInitialization extends
@@ -946,7 +956,7 @@ final class BindingInitializationGenerator {
     /**
      * <h2>Runtime Semantics: KeyedBindingInitialization</h2>
      * <ul>
-     * <li>13.2.3.7 Runtime Semantics: KeyedBindingInitialization
+     * <li>13.3.3.7 Runtime Semantics: KeyedBindingInitialization
      * </ul>
      */
     private static final class ComputedKeyedBindingInitialization extends
