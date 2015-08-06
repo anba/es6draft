@@ -110,9 +110,9 @@ public abstract class AbstractModuleLoader<MODULE extends ModuleRecord> implemen
         MODULE module = getModule(identifier);
         if (module == null) {
             module = parseModule(identifier, source);
-            linkModule(module, realm);
             defineModule(module);
         }
+        linkModule(module, realm);
         return module;
     }
 

@@ -196,13 +196,6 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
         this.builder = builder;
     }
 
-    @SuppressWarnings("serial")
-    private static final class NotImplementedExpception extends RuntimeException {
-        NotImplementedExpception(Node node) {
-            super(node.getClass().toString());
-        }
-    }
-
     /**
      * Parses the given script code and returns the matching Reflect AST nodes.
      * 
@@ -1527,29 +1520,30 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
     }
 
     @Override
+    public Object visit(ImportClause node, Void value) {
+        ArrayList<Object> specifiers = new ArrayList<>();
+        if (node.getDefaultEntry() != null) {
+            specifiers.add(createImportSpecifier(node, "default", node.getDefaultEntry(), value));
+        }
+        for (ImportSpecifier specifier : node.getNamedImports()) {
+            specifiers.add(specifier.accept(this, value));
+        }
+        return createListFromValues(specifiers);
+    }
+
+    @Override
     public Object visit(ImportSpecifier node, Void value) {
-        Object id = createIdentifier(node.getImportName());
-        Object name = node.getLocalName().accept(this, value);
+        return createImportSpecifier(node, node.getImportName(), node.getLocalName(), value);
+    }
+
+    private OrdinaryObject createImportSpecifier(Node node, String importName, BindingIdentifier localName,
+            Void value) {
+        Object id = createIdentifier(importName);
+        Object name = localName.accept(this, value);
         OrdinaryObject importSpec = createNode(node, Type.ImportSpecifier);
         addProperty(importSpec, "id", id);
         addProperty(importSpec, "name", name);
         return importSpec;
-    }
-
-    @Override
-    public Object visit(ImportClause node, Void value) {
-        if (node.getDefaultEntry() != null && !node.getNamedImports().isEmpty()) {
-            throw new NotImplementedExpception(node);
-        }
-        if (node.getDefaultEntry() != null) {
-            Object id = createIdentifier("default");
-            Object name = node.getDefaultEntry().accept(this, value);
-            OrdinaryObject importSpec = createNode(node, Type.ImportSpecifier);
-            addProperty(importSpec, "id", id);
-            addProperty(importSpec, "name", name);
-            return createListFromValues(Collections.singletonList(importSpec));
-        }
-        return createList(node.getNamedImports(), value);
     }
 
     @Override

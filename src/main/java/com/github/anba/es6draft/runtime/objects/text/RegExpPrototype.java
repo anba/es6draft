@@ -643,7 +643,8 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
                 }
                 /* step 24.f */
                 /* step 24.f.i-ii */
-                int e = (int) ToLength(cx, Get(cx, splitter, "lastIndex"));
+                // FIXME: spec bug - https://bugs.ecmascript.org/show_bug.cgi?id=4434
+                int e = Math.min((int) ToLength(cx, Get(cx, splitter, "lastIndex")), size);
                 /* step 24.f.iii */
                 if (e == p) {
                     q = AdvanceStringIndex(s, q, unicodeMatching);

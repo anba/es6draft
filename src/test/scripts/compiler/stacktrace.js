@@ -888,6 +888,7 @@ function testAsync() {
     p.constructor = function(r) {
       r(() => {}, e => { throw e });
     };
+    p.constructor[Symbol.species] = p.constructor;
     p.then();
   }
   function testStackTrace(f, expectedName) {
