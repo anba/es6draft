@@ -7,7 +7,7 @@
 (function OldProxyAPI() {
 "use strict";
 
-const global = %GlobalObject();
+const global = %GlobalTemplate();
 
 const {
   Object, Proxy, Symbol, TypeError, Reflect,

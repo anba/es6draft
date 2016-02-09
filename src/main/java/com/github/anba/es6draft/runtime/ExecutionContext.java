@@ -528,6 +528,6 @@ public final class ExecutionContext {
         /* steps 1-2 */
         Realm currentRealm = realm;
         /* step 3 */
-        return currentRealm.getGlobalThis();
+        return currentRealm.getGlobalObject();
     }
 }

@@ -7,7 +7,7 @@
 (function LegacyGenerator() {
 "use strict";
 
-const global = %GlobalObject();
+const global = %GlobalTemplate();
 
 const {
   Object, Function, Symbol, StopIteration, Reflect

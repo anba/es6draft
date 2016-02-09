@@ -7,7 +7,7 @@
 (function Collection() {
 "use strict";
 
-const global = %GlobalObject();
+const global = %GlobalTemplate();
 
 const {
   Object, WeakMap, WeakSet

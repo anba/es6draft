@@ -237,7 +237,7 @@ public final class World {
      * @return the new realm object
      */
     public Realm newRealm() {
-        return Realm.newRealm(this);
+        return new Realm(this);
     }
 
     /**
@@ -254,7 +254,7 @@ public final class World {
      *             if the parsed source could not be compiled
      */
     public Realm newInitializedRealm() throws ParserException, CompilationException, IOException, URISyntaxException {
-        Realm realm = Realm.newRealm(this);
+        Realm realm = new Realm(this);
         InitializeHostDefinedRealm(realm);
         return realm;
     }

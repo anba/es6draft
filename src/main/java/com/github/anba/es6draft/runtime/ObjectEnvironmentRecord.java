@@ -33,8 +33,7 @@ public final class ObjectEnvironmentRecord implements EnvironmentRecord {
     private final ScriptObject bindings;
     private final boolean withEnvironment;
 
-    public ObjectEnvironmentRecord(ExecutionContext cx, ScriptObject bindings,
-            boolean withEnvironment) {
+    public ObjectEnvironmentRecord(ExecutionContext cx, ScriptObject bindings, boolean withEnvironment) {
         this.cx = cx;
         this.bindings = bindings;
         this.withEnvironment = withEnvironment;
@@ -42,8 +41,8 @@ public final class ObjectEnvironmentRecord implements EnvironmentRecord {
 
     @Override
     public String toString() {
-        return String.format("%s: {%n\twithEnvironment=%b,%n\tbindings=%n\t%s%n}", getClass()
-                .getSimpleName(), withEnvironment, bindings);
+        return String.format("%s: {%n\twithEnvironment=%b,%n\tbindings=%n\t%s%n}", getClass().getSimpleName(),
+                withEnvironment, bindings);
     }
 
     @Override

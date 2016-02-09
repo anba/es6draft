@@ -128,7 +128,7 @@ public final class Timers implements TaskSource {
 
         @Override
         protected void executeInner() {
-            f.call(cx, cx.getGlobalObject(), args);
+            f.call(cx, cx.getRealm().getGlobalThis(), args);
         }
     }
 

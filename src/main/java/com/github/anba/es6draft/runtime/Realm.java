@@ -29,6 +29,7 @@ import com.github.anba.es6draft.compiler.CompilationException;
 import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.Messages;
+import com.github.anba.es6draft.runtime.internal.Properties;
 import com.github.anba.es6draft.runtime.internal.ScriptLoader;
 import com.github.anba.es6draft.runtime.internal.Source;
 import com.github.anba.es6draft.runtime.modules.ModuleLoader;
@@ -106,6 +107,11 @@ public final class Realm {
     private final RealmObject realmObject;
 
     /**
+     * [[globalObject]]
+     */
+    private final ScriptObject globalObject;
+
+    /**
      * [[globalThis]]
      */
     private final ScriptObject globalThis;
@@ -148,16 +154,17 @@ public final class Realm {
 
     private final ExecutionContext defaultContext;
 
-    private final GlobalObject globalObject;
+    private final GlobalObject globalObjectTemplate;
 
     private final SecureRandom random = new SecureRandom();
 
-    private Realm(World world) {
+    /*package*/ Realm(World world) {
         this.world = world;
         this.defaultContext = newDefaultExecutionContext(this);
-        this.globalObject = newGlobal(world, this);
-        this.globalThis = newGlobal(world, this); // TODO: yuk...
-        this.globalEnv = newGlobalEnvironment(defaultContext, globalThis);
+        this.globalObjectTemplate = newGlobal(world, this);
+        this.globalObject = newGlobal(world, this); // TODO: yuk...
+        this.globalThis = globalObject;
+        this.globalEnv = newGlobalEnvironment(defaultContext, globalObject, globalThis);
         this.realmObject = new RealmObject(this);
 
         // Create all built-in intrinsics
@@ -167,19 +174,20 @@ public final class Realm {
         builtinEval = (Callable) intrinsics.get(Intrinsics.eval);
 
         // [[Prototype]] for default global is implementation-dependent
-        globalThis.setPrototypeOf(defaultContext, getIntrinsic(Intrinsics.ObjectPrototype));
+        globalObject.setPrototypeOf(defaultContext, getIntrinsic(Intrinsics.ObjectPrototype));
 
         // Set [[Prototype]] after intrinsics are initialized
         realmObject.setPrototype(getIntrinsic(Intrinsics.RealmPrototype));
         realmObject.setRealm(this);
     }
 
-    private Realm(World world, RealmObject realmObject) {
+    private Realm(World world, RealmObject realmObject, ScriptObject globalObj, ScriptObject thisValue) {
         this.world = world;
         this.defaultContext = newDefaultExecutionContext(this);
-        this.globalObject = newGlobal(world, this);
-        this.globalThis = ObjectCreate(defaultContext, (ScriptObject) null);
-        this.globalEnv = newGlobalEnvironment(defaultContext, globalThis);
+        this.globalObjectTemplate = newGlobal(world, this);
+        this.globalObject = globalObj != null ? globalObj : ObjectCreate(defaultContext, (ScriptObject) null);
+        this.globalThis = thisValue != null ? thisValue : globalObject;
+        this.globalEnv = newGlobalEnvironment(defaultContext, globalObject, globalThis);
         this.realmObject = realmObject;
 
         // Create all built-in intrinsics
@@ -188,23 +196,10 @@ public final class Realm {
         // Store reference to built-in eval
         builtinEval = (Callable) intrinsics.get(Intrinsics.eval);
 
-        // Set prototype to %ObjectPrototype%, cf. 8.2.3 SetRealmGlobalObject
-        globalThis.setPrototypeOf(defaultContext, getIntrinsic(Intrinsics.ObjectPrototype));
-    }
-
-    private Realm(World world, RealmObject realmObject, ScriptObject globalThis) {
-        this.world = world;
-        this.defaultContext = newDefaultExecutionContext(this);
-        this.globalObject = newGlobal(world, this);
-        this.globalThis = globalThis;
-        this.globalEnv = newGlobalEnvironment(defaultContext, globalThis);
-        this.realmObject = realmObject;
-
-        // Create all built-in intrinsics
-        CreateIntrinsics(this);
-
-        // Store reference to built-in eval
-        builtinEval = (Callable) intrinsics.get(Intrinsics.eval);
+        if (globalObj == null) {
+            // Set prototype to %ObjectPrototype%, cf. 8.2.3 SetRealmGlobalObject
+            globalObject.setPrototypeOf(defaultContext, getIntrinsic(Intrinsics.ObjectPrototype));
+        }
     }
 
     /**
@@ -280,9 +275,20 @@ public final class Realm {
     }
 
     /**
-     * [[globalThis]]
+     * [[globalObject]]
      * 
      * @return the global object
+     */
+    public ScriptObject getGlobalObject() {
+        return globalObject;
+    }
+
+    /**
+     * [[globalThis]]
+     * <p>
+     * Short cut for: {@code getGlobalEnv().getEnvRec().getGlobalThisValue()}
+     * 
+     * @return the global this value
      */
     public ScriptObject getGlobalThis() {
         return globalThis;
@@ -364,10 +370,10 @@ public final class Realm {
     /**
      * Returns the {@link GlobalObject} for this realm.
      * 
-     * @return the global object instance
+     * @return the global object template
      */
-    public GlobalObject getGlobalObject() {
-        return globalObject;
+    public GlobalObject getGlobalObjectTemplate() {
+        return globalObjectTemplate;
     }
 
     /**
@@ -532,8 +538,7 @@ public final class Realm {
         Collator collator = Collator.getInstance(getLocale());
         // Use Normalized Form D for comparison (cf. 21.1.3.10, Note 2)
         collator.setDecomposition(Collator.CANONICAL_DECOMPOSITION);
-        // Multi-line comments to workaround: https://bugs.eclipse.org/bugs/show_bug.cgi?id=471090
-        /* `"\u0001".localeCompare("\u0002") == -1` should yield true */
+        // `"\u0001".localeCompare("\u0002") == -1` should yield true
         collator.setStrength(Collator.IDENTICAL);
         return collator;
     }
@@ -565,14 +570,19 @@ public final class Realm {
     }
 
     /**
-     * Creates a new {@link Realm} object.
+     * Creates user-defined native global functions.
      * 
-     * @param world
-     *            the world instance
-     * @return the new realm instance
+     * @param <T>
+     *            the owner type
+     * @param object
+     *            the owner object instance
+     * @param clazz
+     *            the class which holds the properties
+     * @return the owner object
      */
-    static Realm newRealm(World world) {
-        return new Realm(world);
+    public <T> T createGlobalProperties(T object, Class<T> clazz) {
+        Properties.createProperties(defaultContext(), getGlobalObject(), object, clazz);
+        return object;
     }
 
     /**
@@ -590,7 +600,7 @@ public final class Realm {
     }
 
     /**
-     * 8.2.3 SetRealmGlobalObject ( realmRec, globalObj )
+     * 8.2.3 SetRealmGlobalObject ( realmRec, globalObj, thisValue )
      * 
      * @param cx
      *            the execution context
@@ -598,16 +608,19 @@ public final class Realm {
      *            the realm instance
      * @param globalObj
      *            the global this object or {@code null}
+     * @param thisValue
+     *            the global this value or {@code null}
      * @return the new realm instance
      */
-    public static Realm SetRealmGlobalObject(ExecutionContext cx, Realm realm, ScriptObject globalObj) {
+    public static Realm SetRealmGlobalObject(ExecutionContext cx, Realm realm, ScriptObject globalObj,
+            ScriptObject thisValue) {
         // The operation is not supported in this implementation.
         throw new UnsupportedOperationException();
     }
 
     /**
      * 8.2.1 CreateRealm ( )<br>
-     * 8.2.3 SetRealmGlobalObject ( realmRec, globalObj )
+     * 8.2.3 SetRealmGlobalObject ( realmRec, globalObj, thisValue )
      * <p>
      * Creates a new {@link Realm} object.
      * 
@@ -616,45 +629,43 @@ public final class Realm {
      * @param realmObject
      *            the realm object
      * @param globalObj
-     *            the global this object or {@code null}
+     *            the global object or {@code null}
+     * @param thisValue
+     *            the global this value or {@code null}
      * @return the new realm instance
      */
     public static Realm CreateRealmAndSetRealmGlobalObject(ExecutionContext cx, RealmObject realmObject,
-            ScriptObject globalObj) {
+            ScriptObject globalObj, ScriptObject thisValue) {
         World world = cx.getRealm().getWorld();
-        if (globalObj == null) {
-            return new Realm(world, realmObject);
-        } else {
-            return new Realm(world, realmObject, globalObj);
-        }
+        return new Realm(world, realmObject, globalObj, thisValue);
     }
 
     /**
      * 8.2.4 SetDefaultGlobalBindings ( realmRec )
      * <p>
-     * Initializes {@code [[globalThis]]} with the default properties of the Global Object.
+     * Initializes {@code [[globalObject]]} with the default properties of the Global Object.
      * 
      * @param cx
      *            the execution context
      * @param realm
      *            the realm instance
-     * @return the global this object
+     * @return the global object
      */
     public static ScriptObject SetDefaultGlobalBindings(ExecutionContext cx, Realm realm) {
         /* step 1 */
-        ScriptObject globalThis = realm.getGlobalThis();
-        GlobalObject globalObject = realm.getGlobalObject();
-        assert globalThis != null && globalObject != null;
+        ScriptObject globalObject = realm.getGlobalObject();
+        GlobalObject globalTemplate = realm.getGlobalObjectTemplate();
+        assert globalObject != null && globalTemplate != null;
         /* step 2 */
-        for (Object key : globalObject.ownPropertyKeys(cx)) {
-            Property prop = globalObject.getOwnProperty(cx, key);
+        for (Object key : globalTemplate.ownPropertyKeys(cx)) {
+            Property prop = globalTemplate.getOwnProperty(cx, key);
             if (prop != null) {
                 PropertyDescriptor desc = prop.toPropertyDescriptor();
-                DefinePropertyOrThrow(cx, globalThis, key, desc);
+                DefinePropertyOrThrow(cx, globalObject, key, desc);
             }
         }
         /* step 3 */
-        return globalThis;
+        return globalObject;
     }
 
     /**
@@ -676,13 +687,13 @@ public final class Realm {
     public static void InitializeHostDefinedRealm(Realm realm)
             throws IOException, URISyntaxException, ParserException, CompilationException {
         /* steps 1-2 (not applicable) */
-        GlobalObject global = realm.getGlobalObject();
+        GlobalObject globalTemplate = realm.getGlobalObjectTemplate();
         // Run initialization scripts before installing global bindings and extensions.
-        global.initializeScripted();
+        globalTemplate.initializeScripted();
         /* steps 3-4 */
         SetDefaultGlobalBindings(realm.defaultContext(), realm);
         /* step 5 */
-        global.initializeExtensions();
+        globalTemplate.initializeExtensions();
     }
 
     /**
@@ -1329,7 +1340,7 @@ public final class Realm {
      */
     private static void initializeGlobalObject(Realm realm) {
         EnumMap<Intrinsics, OrdinaryObject> intrinsics = realm.intrinsics;
-        GlobalObject global = realm.globalObject;
+        GlobalObject global = realm.globalObjectTemplate;
 
         global.initialize(realm);
 

@@ -186,9 +186,9 @@ public final class RealmPrototype extends OrdinaryObject implements Initializabl
             /* step 5 */
             OrdinaryObject props = ObjectCreate(cx, Intrinsics.ObjectPrototype);
             /* step 6 */
-            GlobalObject globalObject = realm.getGlobalObject();
-            for (Object key : globalObject.ownPropertyKeys(cx)) {
-                Property prop = globalObject.getOwnProperty(cx, key);
+            GlobalObject globalTemplate = realm.getGlobalObjectTemplate();
+            for (Object key : globalTemplate.ownPropertyKeys(cx)) {
+                Property prop = globalTemplate.getOwnProperty(cx, key);
                 if (prop != null) {
                     CreateDataProperty(cx, props, key, FromPropertyDescriptor(cx, prop));
                 }
@@ -261,7 +261,8 @@ public final class RealmPrototype extends OrdinaryObject implements Initializabl
             /* steps 1-4 */
             Realm realm = thisRealmValue(cx, thisValue);
             /* step 5 */
-            return SetDefaultGlobalBindings(cx, realm);
+            SetDefaultGlobalBindings(cx, realm);
+            return realm.getGlobalThis();
         }
 
         /**

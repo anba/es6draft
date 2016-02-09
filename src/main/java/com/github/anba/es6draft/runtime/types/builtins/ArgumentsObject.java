@@ -276,9 +276,9 @@ public final class ArgumentsObject extends OrdinaryObject {
         obj.infallibleDefineOwnProperty(BuiltinSymbol.iterator.get(),
                 new Property(cx.getIntrinsic(Intrinsics.ArrayProto_values), true, false, true));
         /* step 8 */
-        obj.infallibleDefineOwnProperty("caller", new Property(thrower, thrower, false, false));
-        /* step 9 */
         obj.infallibleDefineOwnProperty("callee", new Property(thrower, thrower, false, false));
+        /* step 9 */
+        obj.infallibleDefineOwnProperty("caller", new Property(thrower, thrower, false, false));
         /* step 10 (not applicable) */
         /* step 11 */
         return obj;

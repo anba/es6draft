@@ -32,21 +32,27 @@ import com.github.anba.es6draft.runtime.types.ScriptObject;
 public final class GlobalEnvironmentRecord implements EnvironmentRecord {
     private final ExecutionContext cx;
     private final ScriptObject globalObject;
+    /** [[GlobalThisValue]] */
+    private final ScriptObject globalThisValue;
+    /** [[ObjectRecord]] */
     private final ObjectEnvironmentRecord objectRec;
+    /** [[DeclarativeRecord]] */
     private final DeclarativeEnvironmentRecord declRec;
+    /** [[VarNames]] */
     private final HashSet<String> varNames = new HashSet<>();
 
-    public GlobalEnvironmentRecord(ExecutionContext cx, ScriptObject globalObject) {
+    public GlobalEnvironmentRecord(ExecutionContext cx, ScriptObject globalObject, ScriptObject thisValue) {
         this.cx = cx;
         this.globalObject = globalObject;
+        this.globalThisValue = thisValue;
         this.objectRec = new ObjectEnvironmentRecord(cx, globalObject, false);
         this.declRec = new DeclarativeEnvironmentRecord(cx, false);
     }
 
     @Override
     public String toString() {
-        return String.format("%s: {%n\tobjectEnv=%s,%n\tdeclEnv=%s,%n\tvarNames=%s%n}", getClass()
-                .getSimpleName(), objectRec, declRec, varNames);
+        return String.format("%s: {%n\tobjectEnv=%s,%n\tdeclEnv=%s,%n\tvarNames=%s%n}", getClass().getSimpleName(),
+                objectRec, declRec, varNames);
     }
 
     @Override
@@ -55,6 +61,15 @@ public final class GlobalEnvironmentRecord implements EnvironmentRecord {
         names.addAll(declRec.bindingNames());
         names.addAll(objectRec.bindingNames());
         return names;
+    }
+
+    /**
+     * [[GlobalThisValue]]
+     * 
+     * @return the global this value
+     */
+    public ScriptObject getGlobalThisValue() {
+        return globalThisValue;
     }
 
     /**
@@ -208,8 +223,8 @@ public final class GlobalEnvironmentRecord implements EnvironmentRecord {
      */
     @Override
     public ScriptObject getThisBinding(ExecutionContext cx) {
-        /* steps 1-4 */
-        return globalObject;
+        /* steps 1-2 */
+        return globalThisValue;
     }
 
     /**

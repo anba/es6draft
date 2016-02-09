@@ -112,8 +112,7 @@ public final class LexicalEnvironment<RECORD extends EnvironmentRecord> {
             String name, boolean strict) {
         /* steps 2-6 */
         for (LexicalEnvironment<?> env = lex; env != null; env = env.outer) {
-            Reference<? extends EnvironmentRecord, String> ref = env.envRec.getReferenceOrNull(
-                    name, strict);
+            Reference<? extends EnvironmentRecord, String> ref = env.envRec.getReferenceOrNull(name, strict);
             if (ref != null) {
                 return ref;
             }
@@ -129,8 +128,7 @@ public final class LexicalEnvironment<RECORD extends EnvironmentRecord> {
      *            the outer lexical environment
      * @return the new declarative environment
      */
-    public static LexicalEnvironment<DeclarativeEnvironmentRecord> newDeclarativeEnvironment(
-            LexicalEnvironment<?> e) {
+    public static LexicalEnvironment<DeclarativeEnvironmentRecord> newDeclarativeEnvironment(LexicalEnvironment<?> e) {
         /* step 2 */
         DeclarativeEnvironmentRecord envRec = new DeclarativeEnvironmentRecord(e.cx, false);
         /* steps 1, 3-4 */
@@ -202,13 +200,12 @@ public final class LexicalEnvironment<RECORD extends EnvironmentRecord> {
      *            the function this-binding or {@code null}
      * @return the new function environment
      */
-    public static LexicalEnvironment<FunctionEnvironmentRecord> newFunctionEnvironment(
-            FunctionObject f, Constructor newTarget, Object thisValue) {
+    public static LexicalEnvironment<FunctionEnvironmentRecord> newFunctionEnvironment(FunctionObject f,
+            Constructor newTarget, Object thisValue) {
         /* steps 1-2 (not applicable) */
         LexicalEnvironment<?> e = f.getEnvironment();
         /* steps 4-10 */
-        FunctionEnvironmentRecord envRec = new FunctionEnvironmentRecord(e.cx, f, newTarget,
-                thisValue);
+        FunctionEnvironmentRecord envRec = new FunctionEnvironmentRecord(e.cx, f, newTarget, thisValue);
         /* steps 3, 11-12 */
         LexicalEnvironment<FunctionEnvironmentRecord> env = new LexicalEnvironment<>(e, envRec);
         /* step 13 */
@@ -224,8 +221,8 @@ public final class LexicalEnvironment<RECORD extends EnvironmentRecord> {
      *            the newTarget constructor object
      * @return the new function environment
      */
-    public static LexicalEnvironment<FunctionEnvironmentRecord> newFunctionEnvironment(
-            FunctionObject f, Constructor newTarget) {
+    public static LexicalEnvironment<FunctionEnvironmentRecord> newFunctionEnvironment(FunctionObject f,
+            Constructor newTarget) {
         /* steps 1-2 (not applicable) */
         LexicalEnvironment<?> e = f.getEnvironment();
         /* steps 4-10 */
@@ -237,18 +234,20 @@ public final class LexicalEnvironment<RECORD extends EnvironmentRecord> {
     }
 
     /**
-     * 8.1.2.5 NewGlobalEnvironment ( G )
+     * 8.1.2.5 NewGlobalEnvironment ( G, thisValue )
      * 
      * @param cx
      *            the default execution context
      * @param g
      *            the global object
+     * @param thisValue
+     *            the global this value
      * @return the new global environment
      */
-    public static LexicalEnvironment<GlobalEnvironmentRecord> newGlobalEnvironment(
-            ExecutionContext cx, ScriptObject g) {
+    public static LexicalEnvironment<GlobalEnvironmentRecord> newGlobalEnvironment(ExecutionContext cx, ScriptObject g,
+            ScriptObject thisValue) {
         /* steps 2-7 */
-        GlobalEnvironmentRecord globalRec = new GlobalEnvironmentRecord(cx, g);
+        GlobalEnvironmentRecord globalRec = new GlobalEnvironmentRecord(cx, g, thisValue);
         /* steps 1, 8-9 */
         LexicalEnvironment<GlobalEnvironmentRecord> env = new LexicalEnvironment<>(cx, globalRec);
         /* step 10 */
@@ -262,8 +261,7 @@ public final class LexicalEnvironment<RECORD extends EnvironmentRecord> {
      *            the outer lexical environment
      * @return the new module environment
      */
-    public static LexicalEnvironment<ModuleEnvironmentRecord> newModuleEnvironment(
-            LexicalEnvironment<?> e) {
+    public static LexicalEnvironment<ModuleEnvironmentRecord> newModuleEnvironment(LexicalEnvironment<?> e) {
         /* step 2 */
         ModuleEnvironmentRecord envRec = new ModuleEnvironmentRecord(e.cx);
         /* steps 1, 3-4 */

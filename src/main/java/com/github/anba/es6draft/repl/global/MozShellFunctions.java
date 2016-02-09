@@ -94,7 +94,7 @@ public final class MozShellFunctions {
         int sourceLine = 1;
         boolean noScriptRval = false;
         boolean catchTermination = false;
-        GlobalObject global = cx.getRealm().getGlobalObject();
+        Realm realm = cx.getRealm();
         if (Type.isObject(options)) {
             ScriptObject opts = Type.objectValue(options);
             Object fileName = Get(cx, opts, "fileName");
@@ -111,14 +111,13 @@ public final class MozShellFunctions {
                 if (!(obj instanceof GlobalObject)) {
                     throw Errors.newError(cx, "invalid global argument");
                 }
-                global = (GlobalObject) obj;
+                realm = ((GlobalObject) obj).getRealm();
             }
             noScriptRval = ToBoolean(Get(cx, opts, "noScriptRval"));
             catchTermination = ToBoolean(Get(cx, opts, "catchTermination"));
         }
 
         Source source = new Source(cx.getRealm().sourceInfo(caller), sourceName, sourceLine);
-        Realm realm = global.getRealm();
         try {
             Script script = realm.getScriptLoader().script(source, sourceCode);
             Object result = script.evaluate(realm);

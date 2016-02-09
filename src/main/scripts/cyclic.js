@@ -7,7 +7,7 @@
 (function Cyclic() {
 "use strict";
 
-const global = %GlobalObject();
+const global = %GlobalTemplate();
 
 const {
   Object, Array, Error, Set, WeakSet,

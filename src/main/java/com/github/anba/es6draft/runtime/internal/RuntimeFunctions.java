@@ -145,6 +145,19 @@ public final class RuntimeFunctions {
     }
 
     /**
+     * Native function: {@code %GlobalTemplate()}.
+     * <p>
+     * Returns the global object template.
+     * 
+     * @param cx
+     *            the execution context
+     * @return the global object template
+     */
+    public static GlobalObject GlobalTemplate(ExecutionContext cx) {
+        return cx.getRealm().getGlobalObjectTemplate();
+    }
+
+    /**
      * Native function: {@code %GlobalObject()}.
      * <p>
      * Returns the global object.
@@ -153,7 +166,7 @@ public final class RuntimeFunctions {
      *            the execution context
      * @return the global object
      */
-    public static GlobalObject GlobalObject(ExecutionContext cx) {
+    public static ScriptObject GlobalObject(ExecutionContext cx) {
         return cx.getRealm().getGlobalObject();
     }
 

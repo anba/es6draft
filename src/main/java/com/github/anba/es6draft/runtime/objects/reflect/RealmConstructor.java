@@ -112,15 +112,15 @@ public final class RealmConstructor extends BuiltinConstructor implements Initia
         }
 
         /* steps 6-7 */
-        Realm realm = CreateRealmAndSetRealmGlobalObject(calleeContext, realmObject, newGlobal);
+        Realm realm = CreateRealmAndSetRealmGlobalObject(calleeContext, realmObject, newGlobal, newGlobal);
         /* step 17 (Moved before extracting extension hooks to avoid uninitialized object state) */
         realmObject.setRealm(realm);
 
         // Run any initialization scripts, if required. But do _not_ install extensions!
         try {
-            GlobalObject globalObject = realm.getGlobalObject();
-            assert globalObject != null;
-            globalObject.initializeScripted();
+            GlobalObject globalTemplate = realm.getGlobalObjectTemplate();
+            assert globalTemplate != null;
+            globalTemplate.initializeScripted();
         } catch (ParserException | CompilationException e) {
             throw e.toScriptException(calleeContext);
         } catch (IOException | URISyntaxException e) {

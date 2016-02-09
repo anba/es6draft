@@ -7,7 +7,7 @@
 (function ToSource() {
 "use strict";
 
-const global = %GlobalObject();
+const global = %GlobalTemplate();
 
 const {
   Object, Function, Array, String, Boolean,

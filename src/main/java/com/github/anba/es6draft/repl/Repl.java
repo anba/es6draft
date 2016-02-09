@@ -917,7 +917,7 @@ public final class Repl {
             sources.add(new InteractiveTaskSource(realm));
         }
         if (options.timers) {
-            sources.add(createTimersTaskSource(realm));
+            sources.add(realm.createGlobalProperties(new Timers(), Timers.class));
         }
         switch (sources.size()) {
         case 0:
@@ -927,10 +927,6 @@ public final class Repl {
         default:
             return new MultiTaskSource(sources);
         }
-    }
-
-    private static Timers createTimersTaskSource(Realm realm) {
-        return realm.getGlobalObject().createGlobalProperties(new Timers(), Timers.class);
     }
 
     private static final class EmptyTaskSource implements TaskSource {
@@ -1120,12 +1116,12 @@ public final class Repl {
 
             // Add global "arguments" property
             ScriptObject arguments = CreateArrayFromList(cx, options.arguments);
-            CreateMethodProperty(cx, realm.getGlobalThis(), "arguments", arguments);
+            CreateMethodProperty(cx, realm.getGlobalObject(), "arguments", arguments);
         });
         if (options.console) {
             enqueueScriptTask(realm, () -> {
                 ScriptObject console = ConsoleObject.createConsole(realm);
-                CreateMethodProperty(cx, realm.getGlobalThis(), "console", console);
+                CreateMethodProperty(cx, realm.getGlobalObject(), "console", console);
             });
         }
         if (options.moduleLoaderMode == ModuleLoaderMode.Node) {

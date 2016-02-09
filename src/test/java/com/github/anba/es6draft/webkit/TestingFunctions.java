@@ -27,7 +27,7 @@ public final class TestingFunctions {
 
     @Value(name = "window")
     public ScriptObject window(ExecutionContext cx) {
-        return cx.getGlobalObject();
+        return cx.getRealm().getGlobalThis();
     }
 
     @Function(name = "neverInlineFunction", arity = 0)

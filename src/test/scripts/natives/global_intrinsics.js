@@ -6,11 +6,13 @@
  */
 %Include("lib/assert.js");
 
+const globalTemplate = %GlobalTemplate();
 const globalObject = %GlobalObject();
 const globalThis = %GlobalThis();
 
 assertEq(globalThis, this);
-if (globalThis === globalObject) {
+assertEq(globalThis, globalObject);
+if (globalThis === globalTemplate) {
   assertEq(globalObject, "<fail>");
 }
 

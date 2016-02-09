@@ -24,7 +24,6 @@ import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.Initializable;
 import com.github.anba.es6draft.runtime.internal.Messages;
-import com.github.anba.es6draft.runtime.internal.Properties;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.CompatibilityExtension;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
@@ -104,9 +103,7 @@ public class GlobalObject extends OrdinaryObject implements Initializable {
      * @return the owner object
      */
     public final <T> T createGlobalProperties(T object, Class<T> clazz) {
-        Realm realm = getRealm();
-        Properties.createProperties(realm.defaultContext(), realm.getGlobalThis(), object, clazz);
-        return object;
+        return getRealm().createGlobalProperties(object, clazz);
     }
 
     /**

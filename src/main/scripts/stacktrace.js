@@ -7,7 +7,7 @@
 (function Stacktrace() {
 "use strict";
 
-const global = %GlobalObject();
+const global = %GlobalTemplate();
 
 const {
   Object, Math, Error,

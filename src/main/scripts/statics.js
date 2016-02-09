@@ -7,7 +7,7 @@
 (function ArrayStringStatics() {
 "use strict";
 
-const global = %GlobalObject();
+const global = %GlobalTemplate();
 
 const {
   Object, Array, String

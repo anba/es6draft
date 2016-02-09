@@ -10,7 +10,7 @@
 // Return early if SIMD not enabled.
 if (!%IsCompatibilityOptionEnabled("SIMD")) return;
 
-const global = %GlobalObject();
+const global = %GlobalTemplate();
 
 const {
   SIMD,

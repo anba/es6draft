@@ -7,7 +7,7 @@
 (function StringExtensions() {
 "use strict";
 
-const global = %GlobalObject();
+const global = %GlobalTemplate();
 
 const {
   Object, String, RegExp
