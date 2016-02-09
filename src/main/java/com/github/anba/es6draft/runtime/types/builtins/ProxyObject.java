@@ -363,29 +363,33 @@ public class ProxyObject implements ScriptObject {
         ScriptObject handler = getProxyHandler(cx);
         /* step 5 */
         ScriptObject target = getProxyTarget();
-        /* steps 6-7 */
+        /* step 6 */
         Callable trap = GetMethod(cx, handler, "setPrototypeOf");
-        /* step 8 */
+        /* step 7 */
         if (trap == null) {
             return target.setPrototypeOf(cx, prototype);
         }
-        /* steps 9-10 */
+        /* step 8 */
         Object prototypeValue = prototype != null ? prototype : NULL;
         boolean trapResult = ToBoolean(trap.call(cx, handler, target, prototypeValue));
-        /* steps 11-12 */
-        boolean extensibleTarget = IsExtensible(cx, target);
-        /* step 13 */
-        if (extensibleTarget) {
-            return trapResult;
+        /* step 9 */
+        if (!trapResult) {
+            return false;
         }
-        /* steps 14-15 */
+        /* step 10 */
+        boolean extensibleTarget = IsExtensible(cx, target);
+        /* step 11 */
+        if (extensibleTarget) {
+            return true;
+        }
+        /* step 12 */
         ScriptObject targetProto = target.getPrototypeOf(cx);
-        /* step 16 */
-        if (trapResult && prototype != targetProto) {
+        /* step 13 */
+        if (prototype != targetProto) {
             throw newTypeError(cx, Messages.Key.ProxySamePrototype);
         }
-        /* step 17 */
-        return trapResult;
+        /* step 14 */
+        return true;
     }
 
     /**

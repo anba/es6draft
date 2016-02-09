@@ -113,6 +113,8 @@ public final class ArrayConstructor extends BuiltinConstructor implements Initia
         }
     }
 
+    private static final long ARRAY_LENGTH_LIMIT = 0x1F_FFFF_FFFF_FFFFL;
+
     /**
      * 22.1.2 Properties of the Array Constructor
      */
@@ -211,16 +213,17 @@ public final class ArrayConstructor extends BuiltinConstructor implements Initia
             /* step 1 */
             Object c = thisValue;
             /* steps 2-3 */
-            Callable mapper = null;
+            Callable mapper;
             boolean mapping;
             if (Type.isUndefined(mapfn)) {
+                mapper = null;
                 mapping = false;
             } else {
                 if (!IsCallable(mapfn)) {
                     throw newTypeError(cx, Messages.Key.NotCallable);
                 }
-                mapping = true;
                 mapper = (Callable) mapfn;
+                mapping = true;
             }
             /* steps 4-5 */
             Callable usingIterator = GetMethod(cx, items, BuiltinSymbol.iterator.get());
@@ -236,10 +239,14 @@ public final class ArrayConstructor extends BuiltinConstructor implements Initia
                 /* steps 6.d-e */
                 ScriptIterator<?> iterator = GetScriptIterator(cx, items, usingIterator);
                 /* steps 6.f-g */
-                int k = 0;
+                long k = 0;
                 try {
-                    while (iterator.hasNext()) {
-                        int pk = k;
+                    for (; iterator.hasNext(); ++k) {
+                        // FIXME: spec bug - throw if `k` exceeds 2^53-1 limit
+                        if (k >= ARRAY_LENGTH_LIMIT) {
+                            throw newTypeError(cx, Messages.Key.InvalidArrayLength);
+                        }
+                        long pk = k;
                         Object nextValue = iterator.next();
                         Object mappedValue;
                         if (mapping) {
@@ -248,13 +255,13 @@ public final class ArrayConstructor extends BuiltinConstructor implements Initia
                             mappedValue = nextValue;
                         }
                         CreateDataPropertyOrThrow(cx, a, pk, mappedValue);
-                        k += 1;
                     }
                 } catch (ScriptException e) {
                     iterator.close(e);
                     throw e;
                 }
                 /* step 6.g.iv */
+                assert k <= ARRAY_LENGTH_LIMIT;
                 Set(cx, a, "length", k, true);
                 return a;
             }

@@ -7,467 +7,449 @@
 package com.github.anba.es6draft.regexp;
 
 import java.io.IOException;
+import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Formatter;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 /**
  * Utility class to generate the case folding data used in {@link CaseFoldData}
  */
+@SuppressWarnings("unused")
 final class CaseFoldDataGenerator {
     private CaseFoldDataGenerator() {
     }
 
     public static void main(String[] args) throws IOException {
-        // generateSpaceRange();
-        // generateInvalidToLowerCases();
-        // generateCaseFoldData();
-        // generateCaseFoldMethods();
-        // generateUnicodeCaseFoldRange();
+        Path unicode = Paths.get(args.length > 0 ? args[0] : "/tmp/unicode/Unicode8.0");
 
-        // findSpecialUnicodeCaseFold();
-        // findEntries();
+        // String range = generateSpaceRange(unicode);
+        // System.out.println(range);
+
+        CaseFold bmpMapping = generateCaseFoldDataBMP(unicode);
+        CaseFold unicodeMapping = generateCaseFoldDataUnicode(unicode);
+        CaseFold caseFoldMapping = generateCaseFoldData(unicode);
+
+        System.out.println(unicodeMapping.equals(caseFoldMapping));
+        // unicodeMapping.printTo(System.out);
+
+        // String caseFoldTest = generateCaseFoldTest(unicode);
+        // System.out.println(caseFoldTest);
     }
 
-    public static void generateCaseFoldData() throws IOException {
-        List<Integer> caseFold_From = new ArrayList<>();
-        List<Integer> caseFold_To = new ArrayList<>();
-        List<Integer> caseUnfold_From = new ArrayList<>();
-        Map<Integer, List<Integer>> caseUnfold_To = new LinkedHashMap<>();
+    static CaseFold generateCaseFoldDataBMP(Path unicode) throws IOException {
+        Map<Integer, Integer> toUpper = new HashMap<>();
+        Map<Integer, Integer> toLower = new HashMap<>();
+        caseMappings(unicode, toUpper, toLower);
 
-        Pattern p = Pattern
-                .compile("([0-9A-F]{4,5}); ([CFST]); ([0-9A-F]{4,5})(?: ([0-9A-F]{4,5}))?(?: ([0-9A-F]{4,5}))?; # .*");
-        Path caseFolding = Paths.get("/tmp/Unicode6.3/CaseFolding.txt");
-        List<String> lines = Files.readAllLines(caseFolding, StandardCharsets.UTF_8);
-        for (String line : lines) {
-            line = line.trim();
-            if (line.isEmpty() || line.charAt(0) == '#') {
-                continue;
+        CaseFold caseFolding = new CaseFold();
+        codePoints(unicode).forEach(codeValue -> {
+            int caseFold;
+            if (toUpper.containsKey(codeValue)) {
+                caseFold = toUpper.get(codeValue);
+            } else {
+                return;
             }
-            Matcher m = p.matcher(line);
-            if (!m.matches()) {
-                System.err.println("Invalid line: " + line);
+            // ES2015, 21.2.2.8.2 Runtime Semantics: Canonicalize ( ch )
+            // 1. Ignore non-BMP code points.
+            if (codeValue > 0xffff) {
+                return;
             }
-            char kind = m.group(2).charAt(0);
+            // 2. Ignore mapping outside of basic multilingual plane.
+            if (caseFold > 0xffff) {
+                return;
+            }
+            // 3. Ignore mapping from non-ASCII to ASCII.
+            if (codeValue > 0x7f && caseFold <= 0x7f) {
+                return;
+            }
+            caseFolding.add(codeValue, caseFold);
+        });
+        return caseFolding;
+    }
+
+    static CaseFold generateCaseFoldDataUnicode(Path unicode) throws IOException {
+        Map<Integer, Integer> toUpper = new HashMap<>();
+        Map<Integer, Integer> toLower = new HashMap<>();
+        caseMappings(unicode, toUpper, toLower);
+
+        CaseFold caseFolding = new CaseFold();
+        codePoints(unicode).forEach(codeValue -> {
+            int caseFold;
+            if (isCherokeeUppercase(codeValue)) {
+                // Switch Cherokee uppercase/lowercase for compatibility with CaseFolding.txt output.
+                return;
+            } else if (isCherokeeLowercase(codeValue)) {
+                caseFold = toUpper.get(codeValue);
+            } else if (toLower.containsKey(codeValue)) {
+                caseFold = toLower.get(codeValue);
+            } else if (toUpper.containsKey(codeValue) && toLower.containsKey(toUpper.get(codeValue))
+                    && codeValue != toLower.get(toUpper.get(codeValue))) {
+                caseFold = toLower.get(toUpper.get(codeValue));
+            } else {
+                return;
+            }
+            caseFolding.add(codeValue, caseFold);
+        });
+        return caseFolding;
+    }
+
+    static CaseFold generateCaseFoldData(Path unicode) throws IOException {
+        CaseFold caseFolding = new CaseFold();
+        caseFolding(unicode).forEach(m -> {
+            char kind = m.group("status").charAt(0);
             if (kind == 'T' || kind == 'F') {
-                continue;
+                return;
             }
-            if (m.group(3 + 1) != null || m.group(3 + 2) != null) {
-                System.err.println("Invalid line: " + line);
+            if (!isSingleCodePoint(m.group("mapping"))) {
+                System.err.println("Invalid line: " + m.group());
             }
-            int from = Integer.parseInt(m.group(1), 16);
-            int to = Integer.parseInt(m.group(3), 16);
-
-            caseFold_From.add(from);
-            caseFold_To.add(to);
-            if (!caseUnfold_To.containsKey(to)) {
-                caseUnfold_From.add(to);
-                caseUnfold_To.put(to, new ArrayList<Integer>());
-            }
-            caseUnfold_To.get(to).add(from);
-        }
-
-        System.out.println(array("CaseFold_From", caseFold_From));
-        System.out.println(array("CaseFold_To", caseFold_To));
-        System.out.println(array("CaseUnfold_From", caseUnfold_From));
-        System.out.println(array("CaseUnfold_To", caseUnfold_To.values()));
-    }
-
-    private static String array(String name, List<Integer> codePoints) {
-        try (Formatter fmt = new Formatter(new StringBuilder(), Locale.ROOT)) {
-            fmt.format("static final int[] %s = {%n/* @formatter:off */%n", name);
-            boolean isNewLine = true;
-            int index = 0;
-            for (int codePoint : codePoints) {
-                if (isNewLine) {
-                    isNewLine = false;
-                    // fmt.format("    ");
-                }
-                fmt.format("0x%x,", codePoint);
-                if (++index % 8 == 0) {
-                    isNewLine = true;
-                    fmt.format("%n");
-                } else {
-                    fmt.format(" ");
-                }
-            }
-            if (!isNewLine) {
-                fmt.format("%n");
-            }
-            fmt.format("/* @formatter:on */%n};%n");
-            return fmt.toString();
-        }
-    }
-
-    private static String array(String name, Collection<List<Integer>> codePoints) {
-        try (Formatter fmt = new Formatter(new StringBuilder(), Locale.ROOT)) {
-            fmt.format("static final int[][] %s = {%n/* @formatter:off */%n", name);
-            boolean isNewLine = true;
-            int index = 0;
-            for (List<Integer> codePoint : codePoints) {
-                if (isNewLine) {
-                    isNewLine = false;
-                    // fmt.format("    ");
-                }
-                fmt.format("{");
-                String prefix = "";
-                for (int cp : codePoint) {
-                    fmt.format("%s0x%x", prefix, cp);
-                    prefix = ", ";
-                }
-                fmt.format("},");
-                if (++index % 6 == 0) {
-                    isNewLine = true;
-                    fmt.format("%n");
-                } else {
-                    fmt.format(" ");
-                }
-            }
-            if (!isNewLine) {
-                fmt.format("%n");
-            }
-            fmt.format("/* @formatter:on */%n};%n");
-            return fmt.toString();
-        }
+            int codeValue = Integer.parseInt(m.group("code"), 16);
+            int caseFold = Integer.parseInt(m.group("mapping"), 16);
+            caseFolding.add(codeValue, caseFold);
+        });
+        return caseFolding;
     }
 
     /**
-     * Create {@link CaseFoldData#appendCaseInsensitiveUnicodeRange(RegExpParser, int, int)} method
+     * Generates the test data for "unicode_case_folding.jsm".
      */
-    public static void generateUnicodeCaseFoldRange() {
-        StringBuilder code = new StringBuilder(256);
-        code.append("public static final void appendCaseInsensitiveUnicodeRange(RegExpParser parser, int startChar, int endChar) {\n");
-        code.append("// Type 1\n");
-        addType1Characters(code);
-        code.append("\n// Type 2\n");
-        addType2Characters(code);
-        code.append("\n// Type 3\n");
-        addType3Characters(code);
-        code.append("}\n");
+    static String generateCaseFoldTest(Path unicode) throws IOException {
+        class CaseFoldRange {
+            final Stream.Builder<int[]> builder = Stream.builder();
+            boolean started, inRange;
+            int startCodeValue, startCaseFold;
+            int endCodeValue, endCaseFold;
+            int steps;
 
-        System.out.println(code);
-    }
-
-    private static void addType1Characters(StringBuilder code) {
-        final int minCodePoint = Character.MIN_CODE_POINT, maxCodePoint = Character.MAX_CODE_POINT;
-
-        for (int codePoint = minCodePoint; codePoint <= maxCodePoint; ++codePoint) {
-            int toUpper = Character.toUpperCase(codePoint);
-            int caseFold = Character.toLowerCase(toUpper);
-            int foldUpper = Character.toUpperCase(caseFold);
-            if (toUpper == caseFold || !isCommonOrSimpleCaseFold(codePoint)) {
-                // skip if no case fold or neither common nor simple case fold
-                continue;
+            Stream<int[]> stream() {
+                if (started) {
+                    builder.add(new int[] { startCodeValue, startCaseFold, endCodeValue, endCaseFold, steps });
+                }
+                return builder.build();
             }
-            assert Character.toLowerCase(foldUpper) == caseFold;
 
-            // code points which are lowercase but not casefold-lowercase
-            if (codePoint != toUpper && codePoint != caseFold) {
-                addIfStatement2(code, codePoint, toUpper, caseFold, toUpper, caseFold);
+            CaseFoldRange add(int[] m) {
+                int codeValue = m[0];
+                int caseFold = m[1];
+                assert codeValue > endCodeValue;
+                int step1 = codeValue - endCodeValue;
+                int step2 = caseFold - endCaseFold;
+                if (started && step1 == step2 && (!inRange || step1 == steps)) {
+                    endCodeValue = codeValue;
+                    endCaseFold = caseFold;
+                    steps = step1;
+                    inRange = true;
+                } else {
+                    if (started) {
+                        builder.add(new int[] { startCodeValue, startCaseFold, endCodeValue, endCaseFold, steps });
+                    }
+                    startCodeValue = endCodeValue = codeValue;
+                    startCaseFold = endCaseFold = caseFold;
+                    steps = 1;
+                    started = true;
+                    inRange = false;
+                }
+                return this;
             }
-        }
-    }
 
-    private static void addType2Characters(StringBuilder code) {
-        final int minCodePoint = Character.MIN_CODE_POINT, maxCodePoint = Character.MAX_CODE_POINT;
-
-        for (int codePoint = minCodePoint; codePoint <= maxCodePoint; ++codePoint) {
-            int toUpper = Character.toUpperCase(codePoint);
-            int caseFold = Character.toLowerCase(toUpper);
-            int foldUpper = Character.toUpperCase(caseFold);
-            if (toUpper == caseFold || !isCommonOrSimpleCaseFold(codePoint)) {
-                // skip if no case fold or neither common nor simple case fold
-                continue;
-            }
-            assert Character.toLowerCase(foldUpper) == caseFold;
-
-            // code points which are uppercase but not casefold-uppercase:
-            // - case fold has different upper and lower case representations
-            if (codePoint == toUpper && codePoint != foldUpper && caseFold != foldUpper) {
-                addIfStatement2(code, codePoint, foldUpper, caseFold, foldUpper, caseFold);
-                addIfStatement2(code, foldUpper, toUpper, caseFold, toUpper);
+            CaseFoldRange unsupportedCombine(CaseFoldRange other) {
+                throw new IllegalStateException();
             }
         }
+        Map<Integer, Integer> toUpper = new HashMap<>();
+        Map<Integer, Integer> toLower = new HashMap<>();
+        caseMappings(unicode, toUpper, toLower);
+
+        return caseFolding(unicode).filter(m -> {
+            char kind = m.group("status").charAt(0);
+            return kind == 'C' || kind == 'S';
+        }).map(m -> {
+            return new int[] { Integer.parseInt(m.group("code"), 16), Integer.parseInt(m.group("mapping"), 16) };
+        }).sequential().reduce(new CaseFoldRange(), CaseFoldRange::add, CaseFoldRange::unsupportedCombine).stream()
+                .map(range -> {
+                    int startCodeValue = range[0], startCaseFold = range[1];
+                    int endCodeValue = range[2], endCaseFold = range[3];
+                    int steps = range[4];
+                    String type;
+                    if (startCodeValue <= 0xff && startCaseFold <= 0xff && endCodeValue <= 0xff
+                            && endCaseFold <= 0xff) {
+                        type = "latin";
+                    } else if (startCodeValue <= 0xffff && startCaseFold <= 0xffff && endCodeValue <= 0xffff
+                            && endCaseFold <= 0xffff) {
+                        type = "basic";
+                    } else {
+                        type = "supplementary";
+                    }
+                    String options = "";
+                    if (startCodeValue == endCodeValue && startCaseFold == endCaseFold) {
+                        if (startCodeValue > 0x7f && startCaseFold <= 0x7f) {
+                            // Single mapping with case folding into ASCII range.
+                            options = ", {unicode: true}";
+                        } else {
+                            // Single mapping with different case-fold-upper value.
+                            int codePoint = startCodeValue;
+                            int upperCase = toUpper.getOrDefault(codePoint, codePoint);
+                            int caseFold = toLower.getOrDefault(upperCase, upperCase);
+                            int caseFoldUpper = toUpper.getOrDefault(caseFold, caseFold);
+                            if (codePoint == upperCase && codePoint != caseFoldUpper) {
+                                options = ", {unicode: true}";
+                            }
+                        }
+                    }
+                    return String.format("test(range(0x%x, 0x%x, %d), range(0x%x, 0x%x, %d), %s%s);", startCodeValue,
+                            endCodeValue, steps, startCaseFold, endCaseFold, steps, type, options);
+                }).collect(Collectors.joining("\n"));
     }
 
-    private static void addType3Characters(StringBuilder code) {
-        final int minCodePoint = Character.MIN_CODE_POINT, maxCodePoint = Character.MAX_CODE_POINT;
+    private static final class CaseFold {
+        private final List<Integer> caseFold_From = new ArrayList<>();
+        private final List<Integer> caseFold_To = new ArrayList<>();
+        private final List<Integer> caseUnfold_From = new ArrayList<>();
+        private final Map<Integer, List<Integer>> caseUnfold_To = new LinkedHashMap<>();
 
-        for (int codePoint = minCodePoint; codePoint <= maxCodePoint; ++codePoint) {
-            int toUpper = Character.toUpperCase(codePoint);
-            int caseFold = Character.toLowerCase(toUpper);
-            int foldUpper = Character.toUpperCase(caseFold);
-            if (toUpper == caseFold || !isCommonOrSimpleCaseFold(codePoint)) {
-                // skip if no case fold or neither common nor simple case fold
-                continue;
+        void add(int codeValue, int caseFold) {
+            assert codeValue != caseFold : String.format("%d == %d", codeValue, caseFold);
+            caseFold_From.add(codeValue);
+            caseFold_To.add(caseFold);
+            if (!caseUnfold_To.containsKey(caseFold)) {
+                caseUnfold_From.add(caseFold);
+                caseUnfold_To.put(caseFold, new ArrayList<>());
             }
-            assert Character.toLowerCase(foldUpper) == caseFold;
-
-            // code points which are uppercase but not casefold-uppercase
-            // - case fold has same upper and lower case representation
-            if (codePoint == toUpper && codePoint != foldUpper && caseFold == foldUpper) {
-                addIfStatement1(code, codePoint, foldUpper);
-                addIfStatement1(code, foldUpper, toUpper);
-            }
+            caseUnfold_To.get(caseFold).add(codeValue);
         }
-    }
 
-    private static boolean isCommonOrSimpleCaseFold(int codePoint) {
-        switch (codePoint) {
-        case 0x0130:
-        case 0x0131:
-            return false;
-        default:
+        void printTo(PrintStream stream) {
+            stream.println(array("CaseFold_From", caseFold_From));
+            stream.println(array("CaseFold_To", caseFold_To));
+            stream.println(array("CaseUnfold_From", caseUnfold_From));
+            stream.println(array("CaseUnfold_To", caseUnfold_To.values()));
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (!(obj instanceof CaseFold)) {
+                return false;
+            }
+            CaseFold other = (CaseFold) obj;
+            if (!caseFold_From.equals(other.caseFold_From)) {
+                return false;
+            }
+            if (!caseFold_To.equals(other.caseFold_To)) {
+                return false;
+            }
+            if (!caseUnfold_From.equals(other.caseUnfold_From)) {
+                return false;
+            }
+            if (!caseUnfold_To.equals(other.caseUnfold_To)) {
+                return false;
+            }
             return true;
         }
-    }
 
-    private static String rangeCheck(int v) {
-        return String.format("startChar <= 0x%04x && 0x%04x <= endChar", v, v);
-    }
-
-    private static String rangeCheck(int t, int v) {
-        if (t < v) {
-            return String.format("0x%04x <= endChar", v);
-        }
-        if (t > v) {
-            return String.format("startChar <= 0x%04x", v);
-        }
-        throw new AssertionError();
-    }
-
-    private static String block(int... args) {
-        StringBuilder block = new StringBuilder();
-        for (int i : args) {
-            block.append(String.format("parser.appendCharacter(0x%04x);", i));
-        }
-        return block.toString();
-    }
-
-    private static void addIfStatement1(StringBuilder code, int test, int range1) {
-        assert test != range1;
-
-        String cond = String.format("%s && !(%s)", rangeCheck(test), rangeCheck(test, range1));
-        String block = block(range1);
-        String ifStatement = String.format("if (%s) { %s }%n", cond, block);
-        code.append(ifStatement);
-    }
-
-    private static void addIfStatement2(StringBuilder code, int test, int range1, int range2,
-            int... args) {
-        assert test != range1 && test != range2 && range1 != range2;
-
-        String cond;
-        if (test < range1 && test < range2) {
-            cond = String.format("%s && !(%s)", rangeCheck(test),
-                    rangeCheck(test, Math.min(range1, range2)));
-        } else if (test > range1 && test > range2) {
-            cond = String.format("%s && !(%s)", rangeCheck(test),
-                    rangeCheck(test, Math.max(range1, range2)));
-        } else {
-            cond = String.format("%s && !(%s || %s)", rangeCheck(test), rangeCheck(test, range1),
-                    rangeCheck(test, range2));
-        }
-        String block = block(args);
-        String ifStatement = String.format("if (%s) { %s }%n", cond, block);
-        code.append(ifStatement);
-    }
-
-    /**
-     * Create {@link CaseFoldData#isValidToLower(int)} method
-     */
-    public static void generateInvalidToLowerCases() {
-        StringBuilder code = new StringBuilder(256);
-        String methodName = "isValidToLower";
-        code.append(String.format("public static final boolean %s(int codePoint) {%n", methodName));
-        code.append("switch(codePoint) {\n");
-        for (int codePoint = Character.MIN_VALUE; codePoint <= Character.MAX_VALUE; ++codePoint) {
-            int toLower = Character.toLowerCase(codePoint);
-            int toUpper = Character.toUpperCase(codePoint);
-            if (toUpper != Character.toUpperCase(toLower)) {
-                assert codePoint == toUpper;
-                // System.out.printf("u+%04x -> u+%04x%n", codePoint, toLower);
-                code.append(String.format("case 0x%04x:%n", codePoint));
-            }
-        }
-        code.append("return false;\n");
-        code.append("default:\nreturn true;\n");
-        code.append("}\n");
-        code.append("}\n");
-        System.out.println(code);
-    }
-
-    /**
-     * Check {@link CaseFoldData#hasAdditionalUnicodeCaseFold(int)} is correct
-     */
-    public static void findSpecialUnicodeCaseFold() {
-        LinkedHashMap<Integer, Integer> entries = new LinkedHashMap<>();
-        for (int codePoint = Character.MIN_CODE_POINT; codePoint <= Character.MAX_CODE_POINT; ++codePoint) {
-            if (!CaseFoldData.caseFoldType(codePoint)) {
-                continue;
-            }
-            int toUpper = Character.toUpperCase(codePoint);
-            int caseFold = Character.toLowerCase(toUpper);
-            if (toUpper == caseFold) {
-                for (int other = Character.MIN_CODE_POINT; other <= Character.MAX_CODE_POINT; ++other) {
-                    if (other == codePoint) {
-                        continue;
+        private static String array(String name, List<Integer> codePoints) {
+            try (Formatter fmt = new Formatter(new StringBuilder(), Locale.ROOT)) {
+                fmt.format("static final int[] %s = {%n/* @formatter:off */%n", name);
+                boolean isNewLine = true;
+                int index = 0;
+                for (int codePoint : codePoints) {
+                    if (isNewLine) {
+                        isNewLine = false;
                     }
-                    int toUpper2 = Character.toUpperCase(other);
-                    int caseFold2 = Character.toLowerCase(toUpper2);
-                    if (caseFold == caseFold2) {
-                        System.out.printf("u+%04x -> u+%04x%n", codePoint, other);
-                        entries.put(codePoint, other);
+                    fmt.format("0x%x,", codePoint);
+                    if (++index % 8 == 0) {
+                        isNewLine = true;
+                        fmt.format("%n");
+                    } else {
+                        fmt.format(" ");
                     }
                 }
+                if (!isNewLine) {
+                    fmt.format("%n");
+                }
+                fmt.format("/* @formatter:on */%n};%n");
+                return fmt.toString();
             }
         }
 
-        // Test only <u+00df, u+1e9e> has this special behaviour
-        assert entries.equals(Collections.singletonMap(0x00df, 0x1e9e));
+        private static String array(String name, Collection<List<Integer>> codePoints) {
+            try (Formatter fmt = new Formatter(new StringBuilder(), Locale.ROOT)) {
+                fmt.format("static final int[][] %s = {%n/* @formatter:off */%n", name);
+                boolean isNewLine = true;
+                int index = 0;
+                for (List<Integer> codePoint : codePoints) {
+                    if (isNewLine) {
+                        isNewLine = false;
+                    }
+                    fmt.format("{");
+                    String prefix = "";
+                    for (int cp : codePoint) {
+                        fmt.format("%s0x%x", prefix, cp);
+                        prefix = ", ";
+                    }
+                    fmt.format("},");
+                    if (++index % 6 == 0) {
+                        isNewLine = true;
+                        fmt.format("%n");
+                    } else {
+                        fmt.format(" ");
+                    }
+                }
+                if (!isNewLine) {
+                    fmt.format("%n");
+                }
+                fmt.format("/* @formatter:on */%n};%n");
+                return fmt.toString();
+            }
+        }
+    }
+
+    private static IntStream codePoints(Path unicode) throws IOException {
+        return unicodeData(unicode).mapToInt(m -> Integer.parseInt(m.group("codeValue"), 16));
+    }
+
+    private static Stream<Matcher> unicodeData(Path unicode) throws IOException {
+        // ftp://ftp.unicode.org/Public/3.0-Update/UnicodeData-3.0.0.html
+        String codeValue = "(?<codeValue>[0-9A-F]{4,6})";
+        String characterName = "(?<characterName>[A-Z0-9\\- ]+|<control>|<(?<rangeName>[A-Za-z0-9 ]+), (?<range>First|Last)>)";
+        String generalCategory = "(?<generalCategory>[A-Z][a-z])";
+        String canonicalCombiningClass = "(?<canonicalCombiningClass>[0-9]+)";
+        String bidirectionalCategory = "(?<bidirectionalCategory>[A-Z]{1,3})";
+        String characterDecompositionMapping = "(?<characterDecompositionMapping>(?:<[A-Za-z]+> )?[0-9A-F]{4,6}(?: [0-9A-F]{4,6})*)?";
+        String decimalDigitValue = "(?<decimalDigitValue>[0-9])?";
+        String digitValue = "(?<digitValue>[0-9]+)?";
+        String numericValue = "(?<numericValue>-?[0-9]+(?:/[0-9]+)?)?";
+        String mirrored = "(?<mirrored>Y|N)";
+        String unicode1Name = "(?<unicode1Name>[^;]*)";
+        String commentField = "(?<commentField>[^;]*)";
+        String uppercaseMapping = "(?<uppercaseMapping>[0-9A-F]{4,6})?";
+        String lowercaseMapping = "(?<lowercaseMapping>[0-9A-F]{4,6})?";
+        String titlecaseMapping = "(?<titlecaseMapping>[0-9A-F]{4,6})?";
+        Pattern p = Pattern.compile(String.join(";", codeValue, characterName, generalCategory, canonicalCombiningClass,
+                bidirectionalCategory, characterDecompositionMapping, decimalDigitValue, digitValue, numericValue,
+                mirrored, unicode1Name, commentField, uppercaseMapping, lowercaseMapping, titlecaseMapping));
+
+        return unicodeStream(unicode.resolve("UnicodeData.txt"), p);
+    }
+
+    private static Stream<Matcher> caseFolding(Path unicode) throws IOException {
+        // Format "<code>; <status>; <mapping>; # <name>" defined in CaseFolding.txt.
+        String code = "(?<code>[0-9A-F]{4,6})";
+        String status = "(?<status>[CFST])";
+        String mapping = "(?<mapping>[0-9A-F]{4,6}(?: [0-9A-F]{4,6})*)";
+        String name = "# (?<name>.*)";
+        Pattern p = Pattern.compile(String.join("; ", code, status, mapping, name));
+
+        return unicodeStream(unicode.resolve("CaseFolding.txt"), p);
+    }
+
+    private static Stream<Matcher> unicodeStream(Path path, Pattern pattern) throws IOException {
+        return Files.lines(path, StandardCharsets.UTF_8).filter(line -> !(line.isEmpty() || line.charAt(0) == '#'))
+                .map(line -> {
+                    Matcher matcher = pattern.matcher(line);
+                    if (!matcher.matches()) {
+                        System.err.println("Invalid line: " + line);
+                    }
+                    return matcher;
+                });
+    }
+
+    private static void caseMappings(Path unicode, Map<Integer, Integer> toUpper, Map<Integer, Integer> toLower)
+            throws IOException {
+        unicodeData(unicode).forEach(matcher -> {
+            int codeValue = Integer.parseInt(matcher.group("codeValue"), 16);
+            if (codeValue == 0x0130 || codeValue == 0x0131) {
+                // Skip: LATIN CAPITAL LETTER I WITH DOT ABOVE
+                // Skip: LATIN SMALL LETTER DOTLESS I
+                return;
+            }
+            String uppercaseMapping = matcher.group("uppercaseMapping");
+            String lowercaseMapping = matcher.group("lowercaseMapping");
+            if (uppercaseMapping != null && isSingleCodePoint(uppercaseMapping)) {
+                toUpper.put(codeValue, Integer.parseInt(uppercaseMapping, 16));
+            }
+            if (lowercaseMapping != null && isSingleCodePoint(lowercaseMapping)) {
+                toLower.put(codeValue, Integer.parseInt(lowercaseMapping, 16));
+            }
+        });
+    }
+
+    private static boolean isCherokeeUppercase(int codeValue) {
+        return (0x13A0 <= codeValue && codeValue <= 0x13EF) || (0x13F0 <= codeValue && codeValue <= 0x13F5);
+    }
+
+    private static boolean isCherokeeLowercase(int codeValue) {
+        return (0xAB70 <= codeValue && codeValue <= 0xABBF) || (0x13F8 <= codeValue && codeValue <= 0x13FD);
+    }
+
+    private static boolean isSingleCodePoint(String s) {
+        if (4 <= s.length() && s.length() <= 6) {
+            for (int i = 0; i < s.length(); ++i) {
+                if (Character.digit(s.charAt(i), 16) < 0) {
+                    return false;
+                }
+            }
+            return true;
+        }
+        return false;
     }
 
     /**
-     * Generate {@link UCS2Encoding#codeRangeSpace} array
+     * Generate {@link UEncoding#codeRangeSpace} array
      */
-    public static void generateSpaceRange() {
+    static String generateSpaceRange(Path unicode) throws IOException {
+        Set<Integer> spaceSeparator = unicodeData(unicode).filter(m -> "Zs".equals(m.group("generalCategory")))
+                .map(m -> Integer.parseInt(m.group("codeValue"), 16)).collect(Collectors.toSet());
         StringBuilder code = new StringBuilder();
         int count = 0;
-        for (int c = Character.MIN_VALUE; c <= Character.MAX_VALUE; ++c) {
-            if (isSpace(c)) {
+        for (int c = Character.MIN_CODE_POINT; c <= Character.MAX_CODE_POINT; ++c) {
+            if (isSpace(c, spaceSeparator)) {
                 count += 1;
                 int from = c, to = c;
-                for (int d = from + 1; d <= Character.MAX_VALUE && isSpace(d); ++d) {
+                for (int d = from + 1; d <= Character.MAX_VALUE && isSpace(d, spaceSeparator); ++d) {
                     to = d;
                 }
                 code.append(String.format(", 0x%04x, 0x%04x", from, to));
                 c = to;
             }
         }
-        code.insert(0, count);
-        System.out.println(code);
+        return code.insert(0, count).toString();
     }
 
-    private static boolean isSpace(int c) {
+    private static boolean isSpace(int c, Set<Integer> spaceSeparator) {
         switch (c) {
+        /* ES2015 11.2 White Space */
         case 0x0009:
         case 0x000B:
         case 0x000C:
         case 0x0020:
         case 0x00A0:
         case 0xFEFF:
+            return true;
+        /* ES2015 11.3 Line Terminators */
         case 0x000A:
         case 0x000D:
         case 0x2028:
         case 0x2029:
             return true;
+        /* ES2015 11.2 White Space */
         default:
-            return Character.getType(c) == Character.SPACE_SEPARATOR;
+            return spaceSeparator.contains(c);
         }
-    }
-
-    private static TreeMap<Integer, List<Integer>> findEntries() {
-        TreeMap<Integer, List<Integer>> entries = new TreeMap<>();
-        for (int codePoint = Character.MIN_VALUE; codePoint <= Character.MAX_VALUE; ++codePoint) {
-            if (!CaseFoldData.caseFoldType(codePoint)) {
-                continue;
-            }
-            if (codePoint <= 0x7f) {
-                // ignore mappings from ASCII
-                continue;
-            }
-            int toLower = Character.toLowerCase(codePoint);
-            int toUpper = Character.toUpperCase(codePoint);
-            if (!CaseFoldData.isValidCaseFold(codePoint, toUpper, toLower)) {
-                continue;
-            }
-            for (int other = Character.MIN_VALUE; other <= Character.MAX_VALUE; ++other) {
-                if (other == codePoint || other == toLower || other == toUpper) {
-                    continue;
-                }
-                if (!CaseFoldData.caseFoldType(other)) {
-                    continue;
-                }
-                if (other <= 0x7f) {
-                    // ignore mappings to ASCII
-                    continue;
-                }
-                int toUpper2 = Character.toUpperCase(other);
-                if (toUpper == toUpper2) {
-                    // found two different code points with same uppercase representation
-                    // System.out.printf("u+%04x -> u+%04x%n", codePoint, other);
-
-                    // additional entry for codePoint -> other
-                    if (!entries.containsKey(codePoint)) {
-                        entries.put(codePoint, new ArrayList<Integer>());
-                    }
-                    entries.get(codePoint).add(other);
-                }
-            }
-
-            assert toUpper > 0x7f : Integer.toString(codePoint, 16);
-            assert toLower > 0x7f || !CaseFoldData.isValidToLower(codePoint) : Integer.toString(
-                    codePoint, 16);
-
-            // check for duplicates
-            ArrayList<Integer> out = new ArrayList<>();
-            out.add(codePoint);
-            if (codePoint != toUpper) {
-                out.add(toUpper);
-            }
-            if (codePoint != toLower && CaseFoldData.isValidToLower(codePoint)) {
-                out.add(toLower);
-            }
-            if (entries.containsKey(codePoint)) {
-                out.addAll(entries.get(codePoint));
-            }
-            assert new HashSet<>(out).size() == out.size() : "duplicates: " + out;
-        }
-
-        return entries;
-    }
-
-    public static void generateCaseFoldMethods() {
-        TreeMap<Integer, List<Integer>> entries = findEntries();
-        for (int minListSize = 1;; minListSize += 1) {
-            StringBuilder code = new StringBuilder(256);
-            String methodName = "caseFold" + minListSize;
-            code.append(String.format("public static final int %s(int codePoint) {%n", methodName));
-            code.append("switch(codePoint) {\n");
-            LinkedHashMap<Integer, List<Integer>> clauses = collect(entries, minListSize);
-            if (clauses.isEmpty()) {
-                break;
-            }
-            for (Map.Entry<Integer, List<Integer>> clause : clauses.entrySet()) {
-                for (int codePoint : clause.getValue()) {
-                    code.append(String.format("case 0x%04x: %n", codePoint));
-                }
-                code.append(String.format(" return 0x%04x;%n", clause.getKey()));
-            }
-            code.append("default: return -1;\n");
-            code.append("}\n");
-            code.append("}\n");
-            System.out.println(code);
-        }
-    }
-
-    private static LinkedHashMap<Integer, List<Integer>> collect(
-            TreeMap<Integer, List<Integer>> entries, int minListSize) {
-        LinkedHashMap<Integer, List<Integer>> clauses = new LinkedHashMap<>();
-        for (Map.Entry<Integer, List<Integer>> entry : entries.entrySet()) {
-            if (entry.getValue().size() >= minListSize) {
-                int codePoint = entry.getKey();
-                int other = entry.getValue().get(minListSize - 1);
-                if (!clauses.containsKey(other)) {
-                    clauses.put(other, new ArrayList<Integer>());
-                }
-                clauses.get(other).add(codePoint);
-            }
-        }
-        return clauses;
     }
 }

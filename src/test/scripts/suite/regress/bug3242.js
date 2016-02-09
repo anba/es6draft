@@ -12,7 +12,7 @@ const {
 // https://bugs.ecmascript.org/show_bug.cgi?id=3242
 
 var callCount = 0;
-Object.setPrototypeOf(Object.prototype, new Proxy(Object.create(null), {
+Object.setPrototypeOf(Function.prototype, new Proxy(Object.create(Object.prototype), {
   __proto__: null,
   getPrototypeOf(t) {
     fail `unreachable`;

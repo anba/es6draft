@@ -23,7 +23,6 @@ import static com.github.anba.es6draft.runtime.types.builtins.ArrayObject.ArrayC
 
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.Locale;
 import java.util.Set;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
@@ -1077,7 +1076,31 @@ public final class StringPrototype extends StringObject implements Initializable
             /* steps 2-3 */
             String s = ToFlatString(cx, obj);
             /* steps 4-9 */
-            return StringPrototype.toLowerCase(s);
+            Latin1: {
+                int index = 0;
+                Lower: {
+                    for (; index < s.length(); index++) {
+                        int c = s.charAt(index);
+                        if (c > 0xff) {
+                            break Latin1;
+                        }
+                        if (c != Character.toLowerCase(c)) {
+                            break Lower;
+                        }
+                    }
+                    return s;
+                }
+                char[] chars = s.toCharArray();
+                for (; index < chars.length; ++index) {
+                    int c = chars[index];
+                    if (c > 0xff) {
+                        break Latin1;
+                    }
+                    chars[index] = (char) Character.toLowerCase(c);
+                }
+                return new String(chars);
+            }
+            return UCharacter.toLowerCase(ULocale.ROOT, s);
         }
 
         /**
@@ -1096,7 +1119,31 @@ public final class StringPrototype extends StringObject implements Initializable
             /* steps 2-3 */
             String s = ToFlatString(cx, obj);
             /* steps 4-9 */
-            return s.toUpperCase(Locale.ROOT);
+            Latin1: {
+                int index = 0;
+                Upper: {
+                    for (; index < s.length(); index++) {
+                        int c = s.charAt(index);
+                        if (c > 0xff || c == 0xdf) {
+                            break Latin1;
+                        }
+                        if (c != Character.toUpperCase(c)) {
+                            break Upper;
+                        }
+                    }
+                    return s;
+                }
+                char[] chars = s.toCharArray();
+                for (; index < chars.length; ++index) {
+                    int c = chars[index];
+                    if (c > 0xff || c == 0xdf) {
+                        break Latin1;
+                    }
+                    chars[index] = (char) Character.toUpperCase(c);
+                }
+                return new String(chars);
+            }
+            return UCharacter.toUpperCase(ULocale.ROOT, s);
         }
 
         /**
@@ -1637,200 +1684,6 @@ public final class StringPrototype extends StringObject implements Initializable
             Set(cx, rx, "lastIndex", lastIndex, true);
             /* step 15 */
             return CreateRegExpStringIterator(cx, rx, s);
-        }
-    }
-
-    /**
-     * SpecialCasing support for u+0130 (LATIN CAPITAL LETTER I WITH DOT ABOVE) was removed in Java8:
-     * <a href="https://bugs.openjdk.java.net/browse/JDK-8020037">JDK-8020037</a>
-     * <p>
-     * SpecialCasing support for u+03A3 (GREEK CAPITAL LETTER SIGMA) uses the old Unicode 4.0 definition of Final_Cased
-     * instead of the newer (= Unicode 5.0) Final_Sigma definition.
-     * 
-     * @param s
-     *            the string
-     * @return the string converted to lower-case
-     */
-    private static String toLowerCase(String s) {
-        if (SpecialCasing.specialCasingRequired) {
-            return SpecialCasing.toLowerCase(s);
-        }
-        return s.toLowerCase(Locale.ROOT);
-    }
-
-    static final class SpecialCasing {
-        static final boolean iWithDot = "\u0130".toLowerCase(Locale.ROOT).length() != 2;
-        static final boolean finalSigma = "A\u03A3:B".toLowerCase(Locale.ROOT).charAt(1) != '\u03C3';
-        static final boolean specialCasingRequired = iWithDot || finalSigma;
-
-        private SpecialCasing() {
-        }
-
-        static String toLowerCase(String s) {
-            final int length = s.length();
-            int index = 0;
-            Lower: {
-                for (int cp; index < length; index += Character.charCount(cp)) {
-                    cp = s.codePointAt(index);
-                    if (cp != Character.toLowerCase(cp)) {
-                        break Lower;
-                    }
-                }
-                return s;
-            }
-
-            char[] newChars = new char[length];
-            int offset = 0;
-            s.getChars(0, index, newChars, 0);
-            for (int cp, cc; index < length; index += cc) {
-                cp = s.codePointAt(index);
-                cc = Character.charCount(cp);
-                if (cp == '\u0130') {
-                    // Workaround for: https://bugs.openjdk.java.net/browse/JDK-8020037
-                    newChars = Arrays.copyOf(newChars, newChars.length + 1);
-                    newChars[offset + index + 0] = '\u0069';
-                    newChars[offset + index + 1] = '\u0307';
-                    offset += 1;
-                } else if (cp == '\u03A3') {
-                    // Workaround for: https://bugs.openjdk.java.net/browse/JDK-8133167
-                    newChars[offset + index] = isFinalSigma(s, index) ? '\u03C2' : '\u03C3';
-                } else {
-                    int lower = Character.toLowerCase(cp);
-                    if (Character.isBmpCodePoint(lower)) {
-                        newChars[offset + index] = (char) lower;
-                        if (cc == 2) {
-                            offset -= 1;
-                        }
-                    } else {
-                        if (cc == 1) {
-                            newChars = Arrays.copyOf(newChars, newChars.length + 1);
-                        }
-                        newChars[offset + index + 0] = Character.highSurrogate(lower);
-                        newChars[offset + index + 1] = Character.lowSurrogate(lower);
-                        offset += 2 - cc;
-                    }
-                }
-            }
-
-            return new String(newChars, 0, offset + length);
-        }
-
-        private static boolean isFinalSigma(String s, int index) {
-            for (int codePoint, i = index;; i -= Character.charCount(codePoint)) {
-                // Preceded by: \p{cased} (\p{case-ignorable})*
-                if (i == 0) {
-                    return false;
-                }
-                codePoint = s.codePointBefore(i);
-                if (isCaseIgnorable(codePoint)) {
-                    continue;
-                }
-                if (isCased(codePoint)) {
-                    break;
-                }
-                return false;
-            }
-            for (int codePoint, i = index + 1, length = s.length(); i < length; i += Character.charCount(codePoint)) {
-                // Not followed by: (\p{case-ignorable})* \p{cased}
-                codePoint = s.codePointAt(i);
-                if (isCaseIgnorable(codePoint)) {
-                    continue;
-                }
-                if (!isCased(codePoint)) {
-                    break;
-                }
-                return false;
-            }
-            return true;
-        }
-
-        private static boolean isCased(int codePoint) {
-            switch (Character.getType(codePoint)) {
-            case Character.UPPERCASE_LETTER:
-            case Character.LOWERCASE_LETTER:
-            case Character.TITLECASE_LETTER:
-                return true;
-            default:
-                return isOtherUpperCase(codePoint) || isOtherLowerCase(codePoint);
-            }
-        }
-
-        // Unicode 7.0: Other_Uppercase
-        private static boolean isOtherUpperCase(int c) {
-            /* @formatter:off */
-            if (0x2160 <= c && c <= 0x216F) return true;
-            if (0x24B6 <= c && c <= 0x24CF) return true;
-            if (0x1F130 <= c && c <= 0x1F149) return true;
-            if (0x1F150 <= c && c <= 0x1F169) return true;
-            if (0x1F170 <= c && c <= 0x1F189) return true;
-            return false;
-            /* @formatter:on */
-        }
-
-        // Unicode 7.0: Other_Lowercase
-        private static boolean isOtherLowerCase(int c) {
-            /* @formatter:off */
-            if (c == 0x00AA) return true;
-            if (c == 0x00BA) return true;
-            if (0x02B0 <= c && c <= 0x02B8) return true;
-            if (0x02C0 <= c && c <= 0x02C1) return true;
-            if (0x02E0 <= c && c <= 0x02E4) return true;
-            if (c == 0x0345) return true;
-            if (c == 0x037A) return true;
-            if (0x1D2C <= c && c <= 0x1D6A) return true;
-            if (c == 0x1D78) return true;
-            if (0x1D9B <= c && c <= 0x1DBF) return true;
-            if (c == 0x2071) return true;
-            if (c == 0x207F) return true;
-            if (0x2090 <= c && c <= 0x209C) return true;
-            if (0x2170 <= c && c <= 0x217F) return true;
-            if (0x24D0 <= c && c <= 0x24E9) return true;
-            if (0x2C7C <= c && c <= 0x2C7D) return true;
-            if (0xA69C <= c && c <= 0xA69D) return true;
-            if (c == 0xA770) return true;
-            if (0xA7F8 <= c && c <= 0xA7F9) return true;
-            if (0xAB5C <= c && c <= 0xAB5F) return true;
-            return false;
-            /* @formatter:on */
-        }
-
-        private static boolean isCaseIgnorable(int codePoint) {
-            // Unicode 7.0: WordBreakProperty
-            switch (codePoint) {
-            // Single_Quote
-            case '\'':
-
-                // MidLetter
-            case '\u003A':
-            case '\u00B7':
-            case '\u02D7':
-            case '\u0387':
-            case '\u05F4':
-            case '\u2027':
-            case '\uFE13':
-            case '\uFE55':
-            case '\uFF1A':
-
-                // MidNumLet
-            case '\u002E':
-            case '\u2018':
-            case '\u2019':
-            case '\u2024':
-            case '\uFE52':
-            case '\uFF07':
-            case '\uFF0E':
-                return true;
-            }
-            switch (Character.getType(codePoint)) {
-            case Character.MODIFIER_LETTER:
-            case Character.NON_SPACING_MARK:
-            case Character.ENCLOSING_MARK:
-            case Character.FORMAT:
-            case Character.MODIFIER_SYMBOL:
-                return true;
-            default:
-                return false;
-            }
         }
     }
 }

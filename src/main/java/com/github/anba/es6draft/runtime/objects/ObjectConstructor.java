@@ -36,6 +36,7 @@ import com.github.anba.es6draft.runtime.types.Symbol;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.ArrayObject;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
+import com.github.anba.es6draft.runtime.types.builtins.ImmutablePrototypeObject;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
@@ -557,7 +558,7 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
             /* step 7 */
             if (!status) {
                 // provide better error messages for ordinary objects
-                if (obj instanceof OrdinaryObject) {
+                if (obj instanceof OrdinaryObject && !(obj instanceof ImmutablePrototypeObject)) {
                     if (!obj.isExtensible(cx)) {
                         throw newTypeError(cx, Messages.Key.NotExtensible);
                     }

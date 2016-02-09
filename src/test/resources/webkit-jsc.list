@@ -41,6 +41,12 @@ stress/class-subclassing-function.js
 # Assignment to oob index should throw in strict mode
 stress/class-subclassing-typedarray.js
 
+# invalid: expects built-in Symbol.species properties are non-configurable
+stress/symbol-species.js
+
+# invalid: typo? test has `Symbol('test')` but expects `Symbol('foo')`
+es6/Object_static_methods_Object.getOwnPropertyDescriptors-proxy.js
+
 
 ############################################
 # Implementation specific differences      #
@@ -64,6 +70,7 @@ stress/array-from-with-iterator.js
 stress/array-iterators-next-with-call.js
 stress/arrow-function-token-is-not-keyword.js
 stress/builtin-function-is-construct-type-none.js
+stress/catch-parameter-syntax.js
 stress/class-expression-generates-environment.js
 stress/class-expression-should-be-tdz-in-heritage.js
 stress/const-and-with-statement.js
@@ -132,6 +139,7 @@ stress/string-raw.js
 stress/super-in-lexical-scope.js
 stress/symbol-registry.js
 stress/tagged-templates-syntax.js
+stress/tail-call-host-call-throw.js
 stress/tail-call-no-stack-overflow.js
 stress/tail-call-varargs-no-stack-overflow.js
 stress/template-literal-syntax.js
@@ -144,9 +152,11 @@ stress/typedarray-filter.js
 stress/typedarray-find.js
 stress/typedarray-findIndex.js
 stress/typedarray-forEach.js
+stress/typedarray-functions-with-neutered.js
 stress/typedarray-map.js
 stress/typedarray-reduce.js
 stress/typedarray-reduceRight.js
+stress/typedarray-set.js
 stress/typedarray-some.js
 stress/typedarray-sort.js
 stress/weak-map-constructor.js
@@ -229,7 +239,10 @@ stress/wasm-type-conversion.js
 # platformSupportsSamplingProfiler()
 stress/sampling-profiler-anonymous-function.js
 stress/sampling-profiler-basic.js
+stress/sampling-profiler-bound-function-name.js
 stress/sampling-profiler-deep-stack.js
+stress/sampling-profiler-display-name.js
+stress/sampling-profiler-internal-function-name.js
 stress/sampling-profiler-microtasks.js
 
 # Disables legacy Function#arguments property

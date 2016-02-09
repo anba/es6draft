@@ -103,6 +103,7 @@ tests/basic/bug1100623.js
 tests/basic/bug1147216.js
 tests/basic/bug1172503.js
 tests/basic/bug1237564.js
+tests/basic/evalInWorker-nested.js
 tests/basic/expression-autopsy.js
 tests/basic/iterable-error-messages.js
 tests/basic/spread-call-maxarg.js
@@ -171,9 +172,6 @@ tests/auto-regress/bug678090.js
 # ToLength() moved array length restriction to 2^53-1
 tests/for-of/array-iterator-generic.js
 tests/basic/bug1200108.js
-
-# contextual .name property for functions
-tests/self-test/assertDeepEq.js
 
 # formal parameter initializers are evaluated in extra scope
 tests/arguments/defaults-scoping.js
@@ -262,7 +260,6 @@ tests/basic/testBug663789-2.js
 tests/basic/testBug895774.js
 tests/basic/testEvalInFrameEdgeCase.js
 tests/basic/testGeneratorDieButScopeAlive.js
-tests/self-test/findPath-bug1234428.js
 tests/tracelogger/bug1174542.js
 tests/tracelogger/bug1231170.js
 tests/tracelogger/drainTraceLogger.js
@@ -354,16 +351,11 @@ tests/basic/bug1061534.js
 tests/parser/columnNumber.js
 # getBacktrace
 tests/basic/bug1015339.js
-tests/self-test/getBacktrace-bug1138195.js
+tests/basic/bug1122581.js
 # relazifyFunctions
 tests/basic/relazify.js
-# inJit
-tests/self-test/notInJit.js
-tests/self-test/inJit.js
 # inIon
 tests/basic/invokeFunctionMagic.js
-tests/self-test/notInIon.js
-tests/self-test/inIon.js
 # setLazyParsingEnabled
 tests/basic/eval-scopes.js
 tests/basic/function-gname.js
@@ -387,12 +379,12 @@ tests/basic/bug1220766.js
 # enableLastWarning
 tests/parser/expr-closure-warn.js
 tests/basic/regexp-multiline-warning.js
-# isRelazifiableFunction
-tests/self-test/isRelazifiableFunction-0.js
 # os.file.redirect
 tests/basic/bug908915.js
 # GetBuiltinConstructor
 tests/self-hosting/getbuiltinconstructor.js
+# enableMatchFlagArgument
+tests/basic/bug593663-regexp.js
 
 
 #######################################

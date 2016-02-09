@@ -49,7 +49,7 @@ ecma_6/Generators/syntax.js
 ecma_6/Symbol/as-base-value.js
 
 # Detached ArrayBuffer object issues, maybe request spec changes?
-ecma_6/extensions/DataView-construct-arguments-neutering.js
+ecma_6/extensions/DataView-construct-arguments-detaching.js
 
 # Template string realm registry
 # https://bugzilla.mozilla.org/show_bug.cgi?id=1108941
@@ -134,11 +134,12 @@ js1_8_5/extensions/sharedtypedarray.js
 # Invalid test: new SharedArrayBuffer() called without valid byte length
 ecma_6/Class/extendBuiltinConstructors.js
 
-# Requires Unicode update (Unicode 7)
-ecma_6/RegExp/unicode-ignoreCase.js
-
 # Invalid test: Annex B calls CreateGlobalFunctionBinding which overrides accessor properties
 ecma_6/LexicalEnvironment/block-scoped-functions-annex-b-property.js
+
+# Unicode 8 not supported in SM (mongolian vowel separator)
+ecma_5/RegExp/regexp-space-character-class.js
+ecma_5/String/string-space-trim.js
 
 
 ####################################
@@ -301,7 +302,7 @@ ecma_6/Comprehensions/error-messages.js
 ecma_5/extensions/function-caller-strict-cross-global.js
 
 # Tests SM limitations
-ecma_6/extensions/element-setting-ToNumber-neuters.js
+ecma_6/extensions/element-setting-ToNumber-detaches.js
 js1_5/Regress/regress-422348.js
 js1_8_5/extensions/typedarray-set-neutering.js
 
@@ -437,6 +438,7 @@ js1_8_5/extensions/regress-677589.js
 # serialize()/deserialize() not supported
 js1_8_5/extensions/clone-forge.js
 js1_8_5/extensions/clone-leaf-object.js
+js1_8_5/extensions/clone-many-transferables.js
 js1_8_5/extensions/clone-object.js
 js1_8_5/extensions/clone-regexp.js
 js1_8_5/extensions/clone-simple.js
@@ -449,6 +451,9 @@ js1_8_5/extensions/sps-generators.js
 
 # objectEmulatingUndefined() not supported
 Intl/extensions/options-value-emulates-undefined.js
+
+# enableMatchFlagArgument()
+js1_5/Regress/regress-179524.js
 
 
 #######################################
@@ -485,6 +490,9 @@ ecma_3/extensions/regress-368516.js
 
 # keywords and reserved words allowed as Identifier in Spidermonkey
 js1_7/lexical/regress-351515.js
+
+# Sloppy block-scoped function redeclarations
+ecma_6/LexicalEnvironment/block-scoped-functions-deprecated-redecl.js
 
 
 #######################################

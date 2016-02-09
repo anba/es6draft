@@ -7,3 +7,20 @@
 
 # Expected change from early reference to syntax error b/c of exponentiation operator
 test/language/asi/S7.9_A5.7_T1.js
+
+# Mongolian Vowel Separator (Unicode 8)
+test/built-ins/Number/S9.3.1_A2.js
+test/built-ins/Number/S9.3.1_A3_T1.js
+test/built-ins/Number/S9.3.1_A3_T2.js
+test/built-ins/parseFloat/S15.1.2.3_A2_T10.js
+test/built-ins/parseInt/S15.1.2.2_A2_T10.js
+test/built-ins/RegExp/S15.10.2.12_A1_T1.js
+test/built-ins/RegExp/S15.10.2.12_A2_T1.js
+test/built-ins/String/prototype/trim/15.5.4.20-3-2.js
+test/built-ins/String/prototype/trim/15.5.4.20-3-3.js
+test/built-ins/String/prototype/trim/15.5.4.20-3-4.js
+test/built-ins/String/prototype/trim/15.5.4.20-3-5.js
+test/built-ins/String/prototype/trim/15.5.4.20-3-6.js
+
+# "length" property changed from 3 to 0 in ES2016
+test/built-ins/TypedArray/length.js

@@ -11,7 +11,9 @@ import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.objects.binary.TypedArrayConstructor.TypedArrayCreate;
 
+import java.util.AbstractList;
 import java.util.ArrayList;
+import java.util.List;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
@@ -47,7 +49,7 @@ public final class TypedArrayConstructorPrototype extends BuiltinConstructor imp
      *            the realm object
      */
     public TypedArrayConstructorPrototype(Realm realm) {
-        super(realm, "TypedArray", 3);
+        super(realm, "TypedArray", 0);
     }
 
     @Override
@@ -99,9 +101,8 @@ public final class TypedArrayConstructorPrototype extends BuiltinConstructor imp
         @Prototype
         public static final Intrinsics __proto__ = Intrinsics.FunctionPrototype;
 
-        // FIXME: spec bug - Change length from 3 to 0?
         @Value(name = "length", attributes = @Attributes(writable = false, enumerable = false, configurable = true))
-        public static final int length = 3;
+        public static final int length = 0;
 
         @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static final String name = "TypedArray";
@@ -137,16 +138,43 @@ public final class TypedArrayConstructorPrototype extends BuiltinConstructor imp
                 throw newTypeError(cx, Messages.Key.NotConstructor);
             }
             /* steps 3-4 */
-            Callable f = null;
+            Callable mapper;
+            boolean mapping;
             if (!Type.isUndefined(mapfn)) {
                 if (!IsCallable(mapfn)) {
                     throw newTypeError(cx, Messages.Key.NotCallable);
                 }
-                f = (Callable) mapfn;
+                mapper = (Callable) mapfn;
+                mapping = true;
+            } else {
+                mapper = null;
+                mapping = false;
             }
             /* step 5 (omitted) */
             /* step 6 */
-            return TypedArrayFrom(cx, (Constructor) c, source, f, thisArg);
+            List<Object> arrayLike = IterableToArrayLike(cx, source);
+            /* step 7 */
+            int len = arrayLike.size();
+            /* step 8 */
+            TypedArrayObject targetObj = TypedArrayCreate(cx, (Constructor) c, len);
+            /* steps 9-10 */
+            for (int k = 0; k < len; ++k) {
+                /* step 10.a */
+                int pk = k;
+                /* step 10.b */
+                Object kValue = arrayLike.get(pk);
+                /* steps 10.c-d */
+                Object mappedValue;
+                if (mapping) {
+                    mappedValue = mapper.call(cx, thisArg, kValue, k);
+                } else {
+                    mappedValue = kValue;
+                }
+                /* step 10.e */
+                targetObj.elementSetDirect(cx, pk, ToNumber(cx, mappedValue));
+            }
+            /* step 11 */
+            return targetObj;
         }
 
         /**
@@ -202,82 +230,58 @@ public final class TypedArrayConstructorPrototype extends BuiltinConstructor imp
     }
 
     /**
-     * 22.2.2.1.1 Runtime Semantics: TypedArrayFrom( constructor, items, mapfn, thisArg )
+     * 22.2.2.1.1 Runtime Semantics: IterableToArrayLike( items )
      * 
      * @param cx
      *            the execution context
-     * @param constructor
-     *            the constructor function or {@code null}
      * @param items
-     *            the source object
-     * @param mapfn
-     *            the mapping function or {@code null}
-     * @param thisArg
-     *            the this-argument for the mapping function or {@code null}
-     * @return the new typed array object
+     *            the items object
+     * @return the items list
      */
-    public static TypedArrayObject TypedArrayFrom(ExecutionContext cx, Constructor constructor, Object items,
-            Callable mapfn, Object thisArg) {
-        /* step 1 (omitted) */
-        /* steps 2-3 (not applicable) */
-        /* steps 4-5 */
-        boolean mapping = mapfn != null;
-        /* step 6 */
+    public static List<Object> IterableToArrayLike(ExecutionContext cx, Object items) {
+        /* step 1 */
         Callable usingIterator = GetMethod(cx, items, BuiltinSymbol.iterator.get());
-        /* step 7 */
+        /* step 2 */
         if (usingIterator != null) {
-            /* step 7.a */
+            /* step 2.a */
             ScriptIterator<?> iterator = GetScriptIterator(cx, items, usingIterator);
-            /* step 7.b */
+            /* step 2.b */
             ArrayList<Object> values = new ArrayList<>();
-            /* steps 7.c-d */
+            /* steps 2.c-d */
             while (iterator.hasNext()) {
                 Object nextValue = iterator.next();
                 values.add(nextValue);
             }
-            /* step 7.e */
-            int len = values.size();
-            /* step 7.f */
-            TypedArrayObject targetObj = TypedArrayCreate(cx, constructor, len);
-            /* steps 7.g-i */
-            for (int k = 0; k < len; ++k) {
-                long pk = k;
-                Object kValue = values.get(k);
-                Object mappedValue;
-                if (mapping) {
-                    mappedValue = mapfn.call(cx, thisArg, kValue, k);
-                } else {
-                    mappedValue = kValue;
-                }
-                targetObj.elementSetDirect(cx, pk, ToNumber(cx, mappedValue));
-            }
-            /* step 7.j */
-            return targetObj;
+            /* step 2.e */
+            return values;
         }
-        /* step 8 (?) */
-        /* step 9 */
-        ScriptObject arrayLike = ToObject(cx, items);
-        /* step 10 */
-        long len = ToLength(cx, Get(cx, arrayLike, "length"));
-        /* step 11 */
-        TypedArrayObject targetObj = TypedArrayCreate(cx, constructor, len);
-        /* steps 12-13 */
-        for (long k = 0; k < len; ++k) {
-            /* step 13.a */
-            long pk = k;
-            /* step 13.b */
-            Object kValue = Get(cx, arrayLike, pk);
-            /* steps 13.c-d */
-            Object mappedValue;
-            if (mapping) {
-                mappedValue = mapfn.call(cx, thisArg, kValue, k);
-            } else {
-                mappedValue = kValue;
-            }
-            /* step 13.e */
-            targetObj.elementSetDirect(cx, pk, ToNumber(cx, mappedValue));
+        /* step 3 (note) */
+        /* step 4 */
+        return new ScriptArrayList(cx, ToObject(cx, items));
+    }
+
+    private final static class ScriptArrayList extends AbstractList<Object> {
+        private final ExecutionContext cx;
+        private final ScriptObject arrayLike;
+        private final long length;
+
+        ScriptArrayList(ExecutionContext cx, ScriptObject arrayLike) {
+            this.cx = cx;
+            this.arrayLike = arrayLike;
+            this.length = ToLength(cx, Get(cx, arrayLike, "length"));
         }
-        /* step 14 */
-        return targetObj;
+
+        @Override
+        public int size() {
+            return (int) Math.min(length, Integer.MAX_VALUE);
+        }
+
+        @Override
+        public Object get(int index) {
+            if (index < 0 || index >= length) {
+                throw new IndexOutOfBoundsException();
+            }
+            return Get(cx, arrayLike, index);
+        }
     }
 }

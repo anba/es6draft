@@ -169,7 +169,7 @@ public enum CompatibilityOption {
     LetStatement,
 
     /**
-     * Exponentiation operator {@code **} (Stage 3 proposal)
+     * Exponentiation operator {@code **} (Stage 4 proposal)
      */
     Exponentiation,
 
@@ -483,10 +483,10 @@ public enum CompatibilityOption {
             return EnumSet.of(Atomics, FormatToParts, FunctionSent, Locale, ObjectRestDestructuring,
                     ObjectSpreadInitializer, PluralRules);
         case Candidate:
-            return EnumSet.of(AsyncFunction, Exponentiation, FunctionCallTrailingComma, ObjectGetOwnPropertyDescriptors,
+            return EnumSet.of(AsyncFunction, FunctionCallTrailingComma, ObjectGetOwnPropertyDescriptors,
                     ObjectValuesEntries, StringPad, SIMD);
         case Finished:
-            return EnumSet.of(ArrayIncludes);
+            return EnumSet.of(ArrayIncludes, Exponentiation);
         default:
             throw new AssertionError();
         }

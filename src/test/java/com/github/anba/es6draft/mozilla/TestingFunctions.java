@@ -152,7 +152,7 @@ public final class TestingFunctions {
     }
 
     /**
-     * shell-function: {@code neuter(arrayBuffer, type)}
+     * shell-function: {@code detachArrayBuffer(arrayBuffer, type)}
      * 
      * @param cx
      *            the execution context
@@ -161,11 +161,19 @@ public final class TestingFunctions {
      * @param type
      *            the neuter type
      */
-    @Function(name = "neuter", arity = 2)
-    public void neuter(ExecutionContext cx, ArrayBufferObject arrayBuffer, String type) {
+    @Function(name = "detachArrayBuffer", arity = 2)
+    public void detachArrayBuffer(ExecutionContext cx, ArrayBufferObject arrayBuffer, String type) {
         assert "change-data".equals(type) || "same-data".equals(type);
         if (arrayBuffer.getData() != null) {
             DetachArrayBuffer(cx, arrayBuffer);
         }
+    }
+
+    /**
+     * shell-function: {@code immutablePrototypesEnabled()}
+     */
+    @Function(name = "immutablePrototypesEnabled", arity = 0)
+    public boolean immutablePrototypesEnabled() {
+        return true;
     }
 }

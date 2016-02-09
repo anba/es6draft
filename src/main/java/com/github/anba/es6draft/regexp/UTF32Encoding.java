@@ -76,8 +76,8 @@ final class UTF32Encoding extends UEncoding {
 
     @Override
     public int mbcToCode(byte[] bytes, int p, int end) {
-        return ((bytes[p + 0] & 0xff) << 24) | ((bytes[p + 1] & 0xff) << 16)
-                | ((bytes[p + 2] & 0xff) << 8) | (bytes[p + 3] & 0xff);
+        return ((bytes[p + 0] & 0xff) << 24) | ((bytes[p + 1] & 0xff) << 16) | ((bytes[p + 2] & 0xff) << 8)
+                | (bytes[p + 3] & 0xff);
     }
 
     @Override

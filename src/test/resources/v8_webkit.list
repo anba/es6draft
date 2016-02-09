@@ -17,6 +17,10 @@ fast/js/toString-overrides.js
 # invalid test, `JSON.stringify(Object.assign(new Boolean(true), {valueOf(){ return 2 }}))` is "true"
 run-json-stringify.js
 
+# Mongolian vowel separator still recognised as whitespace in v8
+parseFloat.js
+ToNumber.js
+
 
 ###################
 # Misc issues     #

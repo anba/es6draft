@@ -186,7 +186,7 @@ public final class Realm {
         globalObject.setPrototypeOf(defaultContext, getIntrinsic(Intrinsics.ObjectPrototype));
 
         // Set [[Prototype]] after intrinsics are initialized
-        realmObject.setPrototype(getIntrinsic(Intrinsics.RealmPrototype));
+        realmObject.setPrototypeOf(defaultContext, getIntrinsic(Intrinsics.RealmPrototype));
         realmObject.setRealm(this);
     }
 

@@ -50,6 +50,10 @@ js/script-tests/class-syntax-method-names.js
 # invalid test: super in non-method context
 js/script-tests/arrowfunction-superproperty.js
 
+# Unicode 8 not supported in JSC (mongolian vowel separator)
+js/script-tests/parseFloat.js
+js/script-tests/ToNumber.js
+
 
 ###################
 # Misc issues     #
@@ -83,6 +87,7 @@ js/script-tests/basic-strict-mode.js
 js/script-tests/numeric-escapes-in-string-literals.js
 
 # different error message
+js/script-tests/arrowfunction-syntax-errors.js
 js/script-tests/caller-property.js
 js/script-tests/class-syntax-call.js
 js/script-tests/class-syntax-declaration.js
@@ -108,6 +113,8 @@ js/script-tests/intl-datetimeformat.js
 js/script-tests/intl-numberformat.js
 js/script-tests/Promise-types.js
 js/script-tests/array-findIndex.js
+js/script-tests/array-toLocaleString.js
+js/script-tests/date-toLocaleString.js
 js/script-tests/number-toLocaleString.js
 js/script-tests/string-toLocaleLowerCase.js
 js/script-tests/string-toLocaleUpperCase.js

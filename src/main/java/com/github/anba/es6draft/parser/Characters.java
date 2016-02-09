@@ -6,6 +6,9 @@
  */
 package com.github.anba.es6draft.parser;
 
+import com.ibm.icu.lang.UCharacter;
+import com.ibm.icu.lang.UCharacterCategory;
+
 /**
  * 
  */
@@ -46,8 +49,9 @@ public final class Characters {
      * @return {@code true} if the character is space separator
      */
     public static boolean isSpaceSeparator(int c) {
-        return c == 0x20 || c == 0xA0 || c == 0x1680 || c == 0x180E || (c >= 0x2000 && c <= 0x200A)
-                || c == 0x202F || c == 0x205F || c == 0x3000;
+        // Unicode 8.0
+        return c == 0x20 || c == 0xA0 || c == 0x1680 || (0x2000 <= c && c <= 0x200A) || c == 0x202F || c == 0x205F
+                || c == 0x3000;
     }
 
     /**
@@ -111,30 +115,30 @@ public final class Characters {
         return isIdentifierStartUnlikely(c);
     }
 
+    // Cf. definition of "ID_Start" from http://www.unicode.org/reports/tr31/.
+    private static final int ID_START_MASK = 1 << UCharacterCategory.UPPERCASE_LETTER
+            | 1 << UCharacterCategory.LOWERCASE_LETTER | 1 << UCharacterCategory.TITLECASE_LETTER
+            | 1 << UCharacterCategory.MODIFIER_LETTER | 1 << UCharacterCategory.OTHER_LETTER
+            | 1 << UCharacterCategory.LETTER_NUMBER;
+
     private static boolean isIdentifierStartUnlikely(int c) {
-        // cf. http://www.unicode.org/reports/tr31/ for definition of "ID_Start"
         if (c == '\u2E2F') {
             // VERTICAL TILDE is in 'Lm' and [:Pattern_Syntax:]
             return false;
         }
-        switch (Character.getType(c)) {
-        case Character.UPPERCASE_LETTER:
-        case Character.LOWERCASE_LETTER:
-        case Character.TITLECASE_LETTER:
-        case Character.MODIFIER_LETTER:
-        case Character.OTHER_LETTER:
-        case Character.LETTER_NUMBER:
+        if ((1 << UCharacter.getType(c) & ID_START_MASK) != 0) {
             return true;
         }
-        // Grandfathered characters (Other_ID_Start) [Unicode 7.0].
+        // Grandfathered characters (Other_ID_Start) [Unicode 8.0].
         switch (c) {
         case '\u2118':
         case '\u212E':
         case '\u309B':
         case '\u309C':
             return true;
+        default:
+            return false;
         }
-        return false;
     }
 
     /**
@@ -158,34 +162,30 @@ public final class Characters {
      */
     public static boolean isIdentifierPart(int c) {
         if (c <= 127) {
-            return ('a' <= (c | 0x20) && (c | 0x20) <= 'z') || ('0' <= c && c <= '9') || c == '$'
-                    || c == '_';
+            return ('a' <= (c | 0x20) && (c | 0x20) <= 'z') || ('0' <= c && c <= '9') || c == '$' || c == '_';
         }
         return isIdentifierPartUnlikely(c);
     }
 
+    // Cf. definition of "ID_Continue" from http://www.unicode.org/reports/tr31/.
+    private static final int ID_CONTINUE_MASK = 1 << UCharacterCategory.UPPERCASE_LETTER
+            | 1 << UCharacterCategory.LOWERCASE_LETTER | 1 << UCharacterCategory.TITLECASE_LETTER
+            | 1 << UCharacterCategory.MODIFIER_LETTER | 1 << UCharacterCategory.OTHER_LETTER
+            | 1 << UCharacterCategory.LETTER_NUMBER | 1 << UCharacterCategory.NON_SPACING_MARK
+            | 1 << UCharacterCategory.COMBINING_SPACING_MARK | 1 << UCharacterCategory.DECIMAL_DIGIT_NUMBER
+            | 1 << UCharacterCategory.CONNECTOR_PUNCTUATION;
+
     private static boolean isIdentifierPartUnlikely(int c) {
         if (c == '\u200C' || c == '\u200D')
             return true;
-        // cf. http://www.unicode.org/reports/tr31/ for definition of "ID_Continue"
         if (c == '\u2E2F') {
             // VERTICAL TILDE is in 'Lm' and [:Pattern_Syntax:]
             return false;
         }
-        switch (Character.getType(c)) {
-        case Character.UPPERCASE_LETTER:
-        case Character.LOWERCASE_LETTER:
-        case Character.TITLECASE_LETTER:
-        case Character.MODIFIER_LETTER:
-        case Character.OTHER_LETTER:
-        case Character.LETTER_NUMBER:
-        case Character.NON_SPACING_MARK:
-        case Character.COMBINING_SPACING_MARK:
-        case Character.DECIMAL_DIGIT_NUMBER:
-        case Character.CONNECTOR_PUNCTUATION:
+        if ((1 << UCharacter.getType(c) & ID_CONTINUE_MASK) != 0) {
             return true;
         }
-        // Grandfathered characters (Other_ID_Start + Other_ID_Continue) [Unicode 7.0].
+        // Grandfathered characters (Other_ID_Start + Other_ID_Continue) [Unicode 8.0].
         switch (c) {
         case '\u00B7':
         case '\u0387':
@@ -204,8 +204,9 @@ public final class Characters {
         case '\u309B':
         case '\u309C':
             return true;
+        default:
+            return false;
         }
-        return false;
     }
 
     /**
@@ -228,29 +229,23 @@ public final class Characters {
     }
 
     private static boolean isUnicodeIDStartUnlikely(int c) {
-        // cf. http://www.unicode.org/reports/tr31/ for definition of "ID_Start"
         if (c == '\u2E2F') {
             // VERTICAL TILDE is in 'Lm' and [:Pattern_Syntax:]
             return false;
         }
-        switch (Character.getType(c)) {
-        case Character.UPPERCASE_LETTER:
-        case Character.LOWERCASE_LETTER:
-        case Character.TITLECASE_LETTER:
-        case Character.MODIFIER_LETTER:
-        case Character.OTHER_LETTER:
-        case Character.LETTER_NUMBER:
+        if ((1 << UCharacter.getType(c) & ID_START_MASK) != 0) {
             return true;
         }
-        // Grandfathered characters (Other_ID_Start) [Unicode 7.0].
+        // Grandfathered characters (Other_ID_Start) [Unicode 8.0].
         switch (c) {
         case '\u2118':
         case '\u212E':
         case '\u309B':
         case '\u309C':
             return true;
+        default:
+            return false;
         }
-        return false;
     }
 
     /**
@@ -273,25 +268,14 @@ public final class Characters {
     }
 
     private static boolean isUnicodeIDContinueUnlikely(int c) {
-        // cf. http://www.unicode.org/reports/tr31/ for definition of "ID_Continue"
         if (c == '\u2E2F') {
             // VERTICAL TILDE is in 'Lm' and [:Pattern_Syntax:]
             return false;
         }
-        switch (Character.getType(c)) {
-        case Character.UPPERCASE_LETTER:
-        case Character.LOWERCASE_LETTER:
-        case Character.TITLECASE_LETTER:
-        case Character.MODIFIER_LETTER:
-        case Character.OTHER_LETTER:
-        case Character.LETTER_NUMBER:
-        case Character.NON_SPACING_MARK:
-        case Character.COMBINING_SPACING_MARK:
-        case Character.DECIMAL_DIGIT_NUMBER:
-        case Character.CONNECTOR_PUNCTUATION:
+        if ((1 << UCharacter.getType(c) & ID_CONTINUE_MASK) != 0) {
             return true;
         }
-        // Grandfathered characters (Other_ID_Start + Other_ID_Continue) [Unicode 7.0].
+        // Grandfathered characters (Other_ID_Start + Other_ID_Continue) [Unicode 8.0].
         switch (c) {
         case '\u00B7':
         case '\u0387':
@@ -310,8 +294,9 @@ public final class Characters {
         case '\u309B':
         case '\u309C':
             return true;
+        default:
+            return false;
         }
-        return false;
     }
 
     /**
@@ -421,8 +406,7 @@ public final class Characters {
     }
 
     /**
-     * Tests for ASCII alphabetical letter, i.e. a character in the ranges {@code A-Z} and
-     * {@code a-z} .
+     * Tests for ASCII alphabetical letter, i.e. a character in the ranges {@code A-Z} and {@code a-z} .
      * 
      * @param c
      *            the character to test
@@ -433,8 +417,8 @@ public final class Characters {
     }
 
     /**
-     * Tests for ASCII alphanumeric letter including underscore, i.e. a character in the ranges
-     * {@code 0-9}, {@code A-Z} and {@code a-z} plus the single letter {@code _}.
+     * Tests for ASCII alphanumeric letter including underscore, i.e. a character in the ranges {@code 0-9}, {@code A-Z}
+     * and {@code a-z} plus the single letter {@code _}.
      * 
      * @param c
      *            the character to test

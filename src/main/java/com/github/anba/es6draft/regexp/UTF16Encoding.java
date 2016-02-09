@@ -73,8 +73,7 @@ final class UTF16Encoding extends UEncoding {
     public int length(byte[] bytes, int p, int end) {
         if (p + 1 < end) {
             char c = codeUnit(bytes, p);
-            if (Character.isHighSurrogate(c) && p + 3 < end
-                    && Character.isLowSurrogate(codeUnit(bytes, p + 2))) {
+            if (Character.isHighSurrogate(c) && p + 3 < end && Character.isLowSurrogate(codeUnit(bytes, p + 2))) {
                 return 4;
             }
             return 2;

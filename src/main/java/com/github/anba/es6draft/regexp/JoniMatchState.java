@@ -27,8 +27,7 @@ final class JoniMatchState implements MatchState, IterableMatchResult {
     private int begin = -1, end = 0;
     private Region region;
 
-    public JoniMatchState(UEncoding encoding, Matcher matcher, CharSequence string,
-            BitSet negativeLAGroups) {
+    public JoniMatchState(UEncoding encoding, Matcher matcher, CharSequence string, BitSet negativeLAGroups) {
         this.encoding = encoding;
         this.matcher = matcher;
         this.string = string;
@@ -36,8 +35,8 @@ final class JoniMatchState implements MatchState, IterableMatchResult {
         this.position = new StringPosition(encoding.length(string));
     }
 
-    private JoniMatchState(UEncoding encoding, CharSequence string, BitSet negativeLAGroups,
-            StringPosition position, int begin, int end, Region region) {
+    private JoniMatchState(UEncoding encoding, CharSequence string, BitSet negativeLAGroups, StringPosition position,
+            int begin, int end, Region region) {
         this.encoding = encoding;
         this.matcher = null;
         this.string = string;
@@ -165,8 +164,7 @@ final class JoniMatchState implements MatchState, IterableMatchResult {
 
     @Override
     public String toString() {
-        return String.format("%s: [string=%s, begin=%d, end=%d]", getClass().getSimpleName(),
-                string, begin, end);
+        return String.format("%s: [string=%s, begin=%d, end=%d]", getClass().getSimpleName(), string, begin, end);
     }
 
     @Override

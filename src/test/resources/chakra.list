@@ -14,6 +14,12 @@ es6/stickyflag.js
 # todo: `"a\uDC00b".normalize()` throws in chakra
 es6/normalize.js
 
+# typo in testcase: l.281 "aliasOfobj0" instead of "aliasOfObj0"
+Bugs/bug6.shrua-3.js
+
+# typo in baseline file name (propertyIsEnumarable_2 -> propertyIsEnumerable_2)
+Object/propertyIsEnumerable.js
+
 
 ##############################################
 # Misc specification compatibility issues    #
@@ -179,6 +185,16 @@ typedarray/uint8array.js
 typedarray/uint16array.js
 typedarray/uint32array.js
 
+# Unicode 8 not supported in Chakra (mongolian vowel separator)
+es5/regexSpace.js
+es6/unicode_whitespace.js
+
+# `for ([x] = [((b) = 1)] of ' ') { }` should throw a syntax error
+es6/destructuring_bugs.js
+
+# String.prototype.search uses GetMethod to retrieve the @@search property, undefinded values should be ignored
+es6/regex-symbols.js
+
 
 #######################################
 # ES6 related runtime changes         #
@@ -286,7 +302,7 @@ Error/NativeErrors.js
 Error/RuntimeCompileStackOverflow.js
 es5/DateGetSet9.js
 es5/exceptions.js
-es5/SemiCollonAfterBlockEs5.js
+es5/SemiColonAfterBlockEs5.js
 es5/settersArguments.js
 es6/letconst_eval_redecl.js
 es7/stringpad.js
@@ -379,6 +395,7 @@ strict/delete.js
 strict/formal_samename1.js
 strict/formal_samename2.js
 strict/multiunit.js
+strict/nonSimpleParameterList.js
 strict/strictargs-deferred.js
 strict/strictargs2-deferred.js
 strict/strictargs3-deferred.js
@@ -424,7 +441,7 @@ fieldopts/objtypespec-newobj.2.js
 Operators/equals.js
 
 # RegExp.multiline legacy property
-Object/propertyIsEnumarable.js
+# Object/propertyIsEnumarable.js
 
 # RegExp.$_ legacy property non-configurable in chakra
 Regex/configurableTest.js

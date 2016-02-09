@@ -9,7 +9,7 @@ import range from "lib/range.jsm";
 export function UnicodeCaseFolding(test, {latin, basic, supplementary}) {
   test(range('A', 'Z'), range('a', 'z'), latin);
 
-  // Generated from CaseFolding-6.3.0.txt
+  // Generated from CaseFolding-8.0.0.txt
   test(range(0x41, 0x49, 1), range(0x61, 0x69, 1), latin);
   test(range(0x4a, 0x5a, 1), range(0x6a, 0x7a, 1), latin);
   test(range(0xb5, 0xb5, 1), range(0x3bc, 0x3bc, 1), basic);
@@ -77,6 +77,7 @@ export function UnicodeCaseFolding(test, {latin, basic, supplementary}) {
   test(range(0x345, 0x345, 1), range(0x3b9, 0x3b9, 1), basic);
   test(range(0x370, 0x372, 2), range(0x371, 0x373, 2), basic);
   test(range(0x376, 0x376, 1), range(0x377, 0x377, 1), basic);
+  test(range(0x37f, 0x37f, 1), range(0x3f3, 0x3f3, 1), basic);
   test(range(0x386, 0x386, 1), range(0x3ac, 0x3ac, 1), basic);
   test(range(0x388, 0x38a, 1), range(0x3ad, 0x3af, 1), basic);
   test(range(0x38c, 0x38c, 1), range(0x3cc, 0x3cc, 1), basic);
@@ -104,10 +105,11 @@ export function UnicodeCaseFolding(test, {latin, basic, supplementary}) {
   test(range(0x48a, 0x4be, 2), range(0x48b, 0x4bf, 2), basic);
   test(range(0x4c0, 0x4c0, 1), range(0x4cf, 0x4cf, 1), basic);
   test(range(0x4c1, 0x4cd, 2), range(0x4c2, 0x4ce, 2), basic);
-  test(range(0x4d0, 0x526, 2), range(0x4d1, 0x527, 2), basic);
+  test(range(0x4d0, 0x52e, 2), range(0x4d1, 0x52f, 2), basic);
   test(range(0x531, 0x556, 1), range(0x561, 0x586, 1), basic);
   test(range(0x10a0, 0x10c5, 1), range(0x2d00, 0x2d25, 1), basic);
   test(range(0x10c7, 0x10cd, 6), range(0x2d27, 0x2d2d, 6), basic);
+  test(range(0x13f8, 0x13fd, 1), range(0x13f0, 0x13f5, 1), basic);
   test(range(0x1e00, 0x1e94, 2), range(0x1e01, 0x1e95, 2), basic);
   test(range(0x1e9b, 0x1e9b, 1), range(0x1e61, 0x1e61, 1), basic);
   test(range(0x1e9e, 0x1e9e, 1), range(0xdf, 0xdf, 1), basic, {unicode: true});
@@ -180,7 +182,7 @@ export function UnicodeCaseFolding(test, {latin, basic, supplementary}) {
   test(range(0x2ceb, 0x2ced, 2), range(0x2cec, 0x2cee, 2), basic);
   test(range(0x2cf2, 0xa640, 31054), range(0x2cf3, 0xa641, 31054), basic);
   test(range(0xa642, 0xa66c, 2), range(0xa643, 0xa66d, 2), basic);
-  test(range(0xa680, 0xa696, 2), range(0xa681, 0xa697, 2), basic);
+  test(range(0xa680, 0xa69a, 2), range(0xa681, 0xa69b, 2), basic);
   test(range(0xa722, 0xa72e, 2), range(0xa723, 0xa72f, 2), basic);
   test(range(0xa732, 0xa76e, 2), range(0xa733, 0xa76f, 2), basic);
   test(range(0xa779, 0xa77b, 2), range(0xa77a, 0xa77c, 2), basic);
@@ -189,8 +191,19 @@ export function UnicodeCaseFolding(test, {latin, basic, supplementary}) {
   test(range(0xa78b, 0xa78b, 1), range(0xa78c, 0xa78c, 1), basic);
   test(range(0xa78d, 0xa78d, 1), range(0x265, 0x265, 1), basic);
   test(range(0xa790, 0xa792, 2), range(0xa791, 0xa793, 2), basic);
-  test(range(0xa7a0, 0xa7a8, 2), range(0xa7a1, 0xa7a9, 2), basic);
+  test(range(0xa796, 0xa7a8, 2), range(0xa797, 0xa7a9, 2), basic);
   test(range(0xa7aa, 0xa7aa, 1), range(0x266, 0x266, 1), basic);
+  test(range(0xa7ab, 0xa7ab, 1), range(0x25c, 0x25c, 1), basic);
+  test(range(0xa7ac, 0xa7ac, 1), range(0x261, 0x261, 1), basic);
+  test(range(0xa7ad, 0xa7ad, 1), range(0x26c, 0x26c, 1), basic);
+  test(range(0xa7b0, 0xa7b0, 1), range(0x29e, 0x29e, 1), basic);
+  test(range(0xa7b1, 0xa7b1, 1), range(0x287, 0x287, 1), basic);
+  test(range(0xa7b2, 0xa7b2, 1), range(0x29d, 0x29d, 1), basic);
+  test(range(0xa7b3, 0xa7b3, 1), range(0xab53, 0xab53, 1), basic);
+  test(range(0xa7b4, 0xa7b6, 2), range(0xa7b5, 0xa7b7, 2), basic);
+  test(range(0xab70, 0xabbf, 1), range(0x13a0, 0x13ef, 1), basic);
   test(range(0xff21, 0xff3a, 1), range(0xff41, 0xff5a, 1), basic);
   test(range(0x10400, 0x10427, 1), range(0x10428, 0x1044f, 1), supplementary);
+  test(range(0x10c80, 0x10cb2, 1), range(0x10cc0, 0x10cf2, 1), supplementary);
+  test(range(0x118a0, 0x118bf, 1), range(0x118c0, 0x118df, 1), supplementary);
 }

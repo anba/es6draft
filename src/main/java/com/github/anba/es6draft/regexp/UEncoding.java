@@ -98,9 +98,13 @@ abstract class UEncoding extends UnicodeEncoding {
 
     @Override
     public void applyAllCaseFold(int flag, ApplyAllCaseFoldFunction fun, Object arg) {
-        int[] code = new int[1];
         int[] unfoldFrom = CaseFoldData.caseUnfoldFrom();
         int[][] unfoldTo = CaseFoldData.caseUnfoldTo();
+        applyAllCaseFold(fun, arg, unfoldFrom, unfoldTo);
+    }
+
+    protected final void applyAllCaseFold(ApplyAllCaseFoldFunction f, Object arg, int[] unfoldFrom, int[][] unfoldTo) {
+        int[] code = new int[1];
         for (int i = 0; i < unfoldFrom.length; ++i) {
             int from = unfoldFrom[i];
             int[] to = unfoldTo[i];
@@ -108,19 +112,19 @@ abstract class UEncoding extends UnicodeEncoding {
                 int codePoint = to[j];
 
                 code[0] = from;
-                fun.apply(codePoint, code, 1, arg);
+                f.apply(codePoint, code, 1, arg);
 
                 code[0] = codePoint;
-                fun.apply(from, code, 1, arg);
+                f.apply(from, code, 1, arg);
 
                 for (int k = 0; k < j; k++) {
                     int otherCodePoint = to[k];
 
                     code[0] = otherCodePoint;
-                    fun.apply(codePoint, code, 1, arg);
+                    f.apply(codePoint, code, 1, arg);
 
                     code[0] = codePoint;
-                    fun.apply(otherCodePoint, code, 1, arg);
+                    f.apply(otherCodePoint, code, 1, arg);
                 }
             }
         }
@@ -132,36 +136,43 @@ abstract class UEncoding extends UnicodeEncoding {
         int length = length(bytes, p, end);
         int caseFold = CaseFoldData.caseFold(codePoint);
         if (caseFold >= 0) {
-            int n = 1;
             int[] to = CaseFoldData.caseUnfold(caseFold);
             if (to != null) {
-                for (int i = 0; i < to.length; ++i) {
-                    if (to[i] != codePoint) {
-                        n += 1;
-                    }
-                }
+                return caseFoldCodesByString(codePoint, length, caseFold, to);
             }
-            int k = 0;
-            CaseFoldCodeItem[] items = new CaseFoldCodeItem[n];
-            items[k++] = new CaseFoldCodeItem(length, 1, new int[] { caseFold });
-            if (to != null) {
-                for (int i = 0; i < to.length; ++i) {
-                    if (to[i] != codePoint) {
-                        items[k++] = new CaseFoldCodeItem(length, 1, new int[] { to[i] });
-                    }
-                }
-            }
-            return items;
+            return new CaseFoldCodeItem[] { new CaseFoldCodeItem(length, 1, new int[] { caseFold }) };
         }
         int[] to = CaseFoldData.caseUnfold(codePoint);
         if (to != null) {
-            CaseFoldCodeItem[] items = new CaseFoldCodeItem[to.length];
-            for (int i = 0; i < to.length; ++i) {
-                items[i] = new CaseFoldCodeItem(length, 1, new int[] { to[i] });
-            }
-            return items;
+            return caseFoldCodesByString(codePoint, length, to);
         }
         return EMPTY_FOLD_CODES;
+    }
+
+    protected final CaseFoldCodeItem[] caseFoldCodesByString(int codePoint, int length, int caseFold, int[] to) {
+        int n = 1;
+        for (int i = 0; i < to.length; ++i) {
+            if (to[i] != codePoint) {
+                n += 1;
+            }
+        }
+        int k = 0;
+        CaseFoldCodeItem[] items = new CaseFoldCodeItem[n];
+        items[k++] = new CaseFoldCodeItem(length, 1, new int[] { caseFold });
+        for (int i = 0; i < to.length; ++i) {
+            if (to[i] != codePoint) {
+                items[k++] = new CaseFoldCodeItem(length, 1, new int[] { to[i] });
+            }
+        }
+        return items;
+    }
+
+    protected final CaseFoldCodeItem[] caseFoldCodesByString(int codePoint, int length, int[] to) {
+        CaseFoldCodeItem[] items = new CaseFoldCodeItem[to.length];
+        for (int i = 0; i < to.length; ++i) {
+            items[i] = new CaseFoldCodeItem(length, 1, new int[] { to[i] });
+        }
+        return items;
     }
 
     @Override
@@ -192,7 +203,7 @@ abstract class UEncoding extends UnicodeEncoding {
             return Characters.isWhitespaceOrLineTerminator(code);
         case CharacterType.UPPER:
             // needs to be implemented to parse hexadecimal digits
-            return Character.isUpperCase(code);
+            return 'A' <= code && code <= 'Z';
         case CharacterType.XDIGIT:
             // needs to be implemented to parse hexadecimal digits
             return Characters.isHexDigit(code);
@@ -205,12 +216,12 @@ abstract class UEncoding extends UnicodeEncoding {
     }
 
     private static final int[] codeRangeDigit, codeRangeWord, codeRangeSpace;
+
     static {
         codeRangeDigit = new int[] { 1, '0', '9' };
         codeRangeWord = new int[] { 4, '0', '9', 'A', 'Z', '_', '_', 'a', 'z' };
-        codeRangeSpace = new int[] { 11, 0x0009, 0x000d, 0x0020, 0x0020, 0x00a0, 0x00a0, 0x1680,
-                0x1680, 0x180e, 0x180e, 0x2000, 0x200a, 0x2028, 0x2029, 0x202f, 0x202f, 0x205f,
-                0x205f, 0x3000, 0x3000, 0xfeff, 0xfeff };
+        codeRangeSpace = new int[] { 10, 0x0009, 0x000d, 0x0020, 0x0020, 0x00a0, 0x00a0, 0x1680, 0x1680, 0x2000, 0x200a,
+                0x2028, 0x2029, 0x202f, 0x202f, 0x205f, 0x205f, 0x3000, 0x3000, 0xfeff, 0xfeff };
     }
 
     @Override

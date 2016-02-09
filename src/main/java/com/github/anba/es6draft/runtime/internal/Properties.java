@@ -1523,7 +1523,7 @@ public final class Properties {
     private static void createPrototype(Realm realm, OrdinaryObject target, Object rawValue) {
         Object value = resolveValue(realm, rawValue);
         assert value == null || value instanceof ScriptObject;
-        target.setPrototype((ScriptObject) value);
+        target.infallibleSetPrototype((ScriptObject) value);
     }
 
     private static void createValue(Realm realm, OrdinaryObject target, ValueLayout layout) {

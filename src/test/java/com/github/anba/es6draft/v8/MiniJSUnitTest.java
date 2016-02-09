@@ -11,6 +11,9 @@ import static com.github.anba.es6draft.util.Resources.loadTests;
 import static org.junit.Assume.assumeTrue;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Iterator;
 import java.util.List;
@@ -146,7 +149,7 @@ public final class MiniJSUnitTest {
                         } else if (flag.equals("--expose-externalize-string")) {
                             // don't run tests with externalize-string
                             test.setEnabled(false);
-                        } else if (flag.equals("--allow-natives-syntax")) {
+                        } else if (flag.equals("--allow-natives-syntax") && containsNativeSyntax(test.toFile())) {
                             // don't run tests with native syntax
                             test.setEnabled(false);
                         } else if (flag.equals("--lazy")) {
@@ -168,5 +171,14 @@ public final class MiniJSUnitTest {
             }
             return test;
         };
+    }
+
+    private static boolean containsNativeSyntax(Path p) {
+        try {
+            String content = new String(Files.readAllBytes(p), StandardCharsets.UTF_8);
+            return content.indexOf('%') != -1;
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 }

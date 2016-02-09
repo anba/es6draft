@@ -201,6 +201,10 @@
   </Match>
 
   <Match>
+    <Class name="~.*\.CaseFoldDataGenerator.*" />
+  </Match>
+
+  <Match>
     <Package name="org.mozilla.javascript" />
   </Match>
 </FindBugsFilter>

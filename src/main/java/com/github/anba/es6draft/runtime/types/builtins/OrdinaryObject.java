@@ -195,6 +195,10 @@ public class OrdinaryObject implements ScriptObject {
         return symbolProperties.get(propertyKey);
     }
 
+    public final void infallibleSetPrototype(ScriptObject prototype) {
+        this.prototype = prototype;
+    }
+
     /**
      * Returns the indexed properties length.
      * 
@@ -423,7 +427,7 @@ public class OrdinaryObject implements ScriptObject {
      * @param prototype
      *            the new prototype object
      */
-    public final void setPrototype(ScriptObject prototype) {
+    protected final void setPrototype(ScriptObject prototype) {
         this.prototype = prototype;
     }
 

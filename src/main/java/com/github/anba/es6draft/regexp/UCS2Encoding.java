@@ -96,75 +96,47 @@ final class UCS2Encoding extends UEncoding {
         int p = pp.value;
         pp.value += 2;
         int codePoint = mbcToCode(bytes, p, end);
-        int caseFold = codePoint;
+        int caseFold;
         if (isAscii(codePoint)) {
+            // Fast path for ASCII characters.
             caseFold = asciiToUpper(codePoint);
         } else {
-            int toUpper = Character.toUpperCase(codePoint);
-            int toLower = Character.toLowerCase(codePoint);
-            if (CaseFoldData.isValidCaseFold(codePoint, toUpper, toLower)) {
-                caseFold = toUpper;
+            caseFold = CaseFoldDataBMP.caseFold(codePoint);
+            if (caseFold < 0) {
+                caseFold = codePoint;
             }
         }
         return codeToMbc(caseFold, to, 0);
     }
 
-    private static int[] allCaseFoldData;
-
     @Override
     public void applyAllCaseFold(int flag, ApplyAllCaseFoldFunction fun, Object arg) {
-        int[] caseFoldData = allCaseFoldData;
-        if (caseFoldData == null) {
-            allCaseFoldData = caseFoldData = CaseFoldData.allCaseFoldData();
-        }
-
-        int[] to = { 0 };
-        for (int i = 0, len = caseFoldData.length; i < len; ++i) {
-            int entry = caseFoldData[i];
-            int codePoint = (entry >>> 16) & 0xffff;
-            int foldCodePoint = (entry >>> 0) & 0xffff;
-            to[0] = foldCodePoint;
-            fun.apply(codePoint, to, 1, arg);
-        }
+        int[] unfoldFrom = CaseFoldDataBMP.caseUnfoldFrom();
+        int[][] unfoldTo = CaseFoldDataBMP.caseUnfoldTo();
+        applyAllCaseFold(fun, arg, unfoldFrom, unfoldTo);
     }
 
     @Override
     public CaseFoldCodeItem[] caseFoldCodesByString(int flag, byte[] bytes, int p, int end) {
         int codePoint = mbcToCode(bytes, p, end);
         if (isAscii(codePoint)) {
+            // Fast path for ASCII characters.
             if (Characters.isASCIIAlpha(codePoint)) {
-                return new CaseFoldCodeItem[] { new CaseFoldCodeItem(2, 1,
-                        new int[] { codePoint ^ 0x20 }) };
+                return new CaseFoldCodeItem[] { new CaseFoldCodeItem(2, 1, new int[] { codePoint ^ 0x20 }) };
             }
             return EMPTY_FOLD_CODES;
         }
-
-        int toUpper = Character.toUpperCase(codePoint);
-        int toLower = Character.toLowerCase(codePoint);
-        if (CaseFoldData.isValidCaseFold(codePoint, toUpper, toLower)) {
-            int caseFold1 = CaseFoldData.caseFold1(codePoint);
-            int caseFold2 = CaseFoldData.caseFold2(codePoint);
-
-            int n = 0;
-            n += (codePoint != toUpper ? 1 : 0);
-            n += (codePoint != toLower && CaseFoldData.isValidToLower(codePoint) ? 1 : 0);
-            n += (caseFold1 != -1 ? 1 : 0);
-            n += (caseFold2 != -1 ? 1 : 0);
-            int k = 0;
-            CaseFoldCodeItem[] items = new CaseFoldCodeItem[n];
-            if (codePoint != toUpper) {
-                items[k++] = new CaseFoldCodeItem(2, 1, new int[] { toUpper });
+        int caseFold = CaseFoldDataBMP.caseFold(codePoint);
+        if (caseFold >= 0) {
+            int[] to = CaseFoldDataBMP.caseUnfold(caseFold);
+            if (to != null) {
+                return caseFoldCodesByString(codePoint, 2, caseFold, to);
             }
-            if (codePoint != toLower && CaseFoldData.isValidToLower(codePoint)) {
-                items[k++] = new CaseFoldCodeItem(2, 1, new int[] { toLower });
-            }
-            if (caseFold1 != -1) {
-                items[k++] = new CaseFoldCodeItem(2, 1, new int[] { caseFold1 });
-            }
-            if (caseFold2 != -1) {
-                items[k++] = new CaseFoldCodeItem(2, 1, new int[] { caseFold2 });
-            }
-            return items;
+            return new CaseFoldCodeItem[] { new CaseFoldCodeItem(2, 1, new int[] { caseFold }) };
+        }
+        int[] to = CaseFoldDataBMP.caseUnfold(codePoint);
+        if (to != null) {
+            return caseFoldCodesByString(codePoint, 2, to);
         }
         return EMPTY_FOLD_CODES;
     }

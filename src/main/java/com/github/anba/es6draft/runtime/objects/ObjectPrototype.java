@@ -27,6 +27,7 @@ import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Property;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
+import com.github.anba.es6draft.runtime.types.builtins.ImmutablePrototypeObject;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
@@ -37,7 +38,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>19.1.4 Properties of Object Instances
  * </ul>
  */
-public final class ObjectPrototype extends OrdinaryObject implements Initializable {
+public final class ObjectPrototype extends ImmutablePrototypeObject implements Initializable {
     /**
      * Constructs a new Object prototype object.
      * 
@@ -45,7 +46,7 @@ public final class ObjectPrototype extends OrdinaryObject implements Initializab
      *            the realm object
      */
     public ObjectPrototype(Realm realm) {
-        super(realm);
+        super(realm, null);
     }
 
     @Override
@@ -270,7 +271,7 @@ public final class ObjectPrototype extends OrdinaryObject implements Initializab
             /* step 7 */
             if (!status) {
                 // provide better error messages for ordinary objects
-                if (obj instanceof OrdinaryObject) {
+                if (obj instanceof OrdinaryObject && !(obj instanceof ImmutablePrototypeObject)) {
                     if (!obj.isExtensible(cx)) {
                         throw newTypeError(cx, Messages.Key.NotExtensible);
                     }

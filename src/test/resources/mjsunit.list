@@ -57,9 +57,6 @@ es6/computed-property-names-classes.js
 harmony/block-sloppy-function.js
 harmony/block-eval-var-over-let.js
 
-# Incomplete v8 implementation, see todo in test file.
-regress/regress-544991.js
-
 # RegExp: Changing flags does not change internal flags in V8
 es6/regexp-flags.js
 
@@ -82,7 +79,7 @@ regress/regress-4576.js
 es6/object-tostring.js
 
 # Symbol.species not implemented in V8
-harmony/array-concat.js
+es6/array-concat.js
 
 # Proxy not allowed on Object.prototype chain in V8
 harmony/proxies-global-reference.js
@@ -99,6 +96,12 @@ harmony/function-name.js
 # `/\ud808\udf45{3}/u.test("\u{12345}\udf45\udf45")` returns true in v8
 harmony/unicode-escapes-in-regexps.js
 
+# `[1].concat(new Array(0xffffffff))` should throw type error
+regress/regress-crbug-387031.js
+
+# Mongolian vowel separator still recognised as whitespace in v8
+whitespaces.js
+
 # `new SharedArrayBuffer(2.567)` does not throw in v8
 harmony/sharedarraybuffer.js
 
@@ -107,6 +110,22 @@ regress/regress-crbug-501809.js
 
 # ` Atomics.compareExchange(new Int32Array(new SharedArrayBuffer(4)), "", 0, 0)` does not throw in v8
 harmony/atomics.js
+
+# ES2016: %ObjectPrototype% is an immutable prototype object
+regress/regress-1403.js
+regress/regress-crbug-571517.js
+
+# v8 also sets function.sent for throw completions.
+harmony/function-sent.js
+
+# missing proxy invariant checks?
+harmony/proxies-ownkeys.js
+
+# TypedArray.subarray web-compat workaround in v8
+regress/regress-4665-2.js
+
+# https://github.com/tc39/ecma262/issues/347
+regress/regress-integer-indexed-element.js
 
 
 ###################
@@ -159,8 +178,10 @@ object-get-own-property-names.js
 object-prevent-extensions.js
 object-seal.js
 es6/block-conflicts.js
+es6/super.js
 es6/typedarray-reduce.js
 harmony/block-conflicts-sloppy.js
+ignition/stack-trace-source-position.js
 regress/regress-1591.js
 regress/regress-1980.js
 regress/regress-3159.js
@@ -175,6 +196,7 @@ regress/regress-3229.js
 newline-in-string.js
 
 # Date.parse incompatibility
+date.js
 date-parse.js
 json.js
 regress/regress-396.js
@@ -235,6 +257,12 @@ string-replace.js
 # Function.arguments created anew on each access
 arguments-indirect.js
 
+# infinite loop in Object.prototype.isPrototypeOf, throws RangeError in V8
+regress/regress-578775.js
+
+# v8 restriction test when ICU not available
+harmony/unicode-regexp-ignore-case-noi18n.js
+
 
 ############################################
 # Unsupported built-in object functions    #
@@ -264,6 +292,7 @@ harmony/proxies-accesschecks.js
 harmony/proxies-construct.js
 harmony/regress/regress-576662.js
 regress/regress-280531.js
+regress/regress-4509-Class-constructor-typeerror-realm.js
 regress/regress-crbug-501711.js
 regress/regress-crbug-501808.js
 
@@ -276,6 +305,7 @@ regress/regress-3315.js
 regress/regress-356589.js
 regress/regress-417709a.js
 regress/regress-417709b.js
+regress/regress-observe-map-cache.js
 es6/regress/regress-3750.js
 
 # Promise.defer
@@ -297,6 +327,13 @@ harmony/module-resolution.js
 # Legacy const declarations
 es6/block-eval-var-over-legacy-const.js
 es6/block-let-contextual-sloppy.js
+
+# RegExp lookbehind
+harmony/unicode-character-ranges.js
+harmony/unicode-regexp-backrefs.js
+
+# Duplicate block-scoped function declarations in non-strict mode
+regress/regress-4693.js
 
 
 #######################################
@@ -373,6 +410,9 @@ regress/regress-crbug-435825.js
 
 # for-in with initializer
 for-in.js
+
+# for-in with invalid assignment target
+ignition/dead-code-source-position.js
 
 # var-declaration on global only calls setter when executed
 regress/regress-1119.js
