@@ -35,12 +35,12 @@ abstract class ReferenceOp<NODE extends LeftHandSideExpression> {
      * @param node
      *            the reference node
      * @param mv
-     *            the expression visitor
+     *            the code visitor
      * @param gen
      *            the code generator
      * @return the reference value type
      */
-    final ValType reference(NODE node, ExpressionVisitor mv, CodeGenerator gen) {
+    final ValType reference(NODE node, CodeVisitor mv, CodeGenerator gen) {
         return reference(node, false, mv, gen);
     }
 
@@ -52,12 +52,12 @@ abstract class ReferenceOp<NODE extends LeftHandSideExpression> {
      * @param node
      *            the reference node
      * @param mv
-     *            the expression visitor
+     *            the code visitor
      * @param gen
      *            the code generator
      * @return the reference value type
      */
-    final ValType referenceForUpdate(NODE node, ExpressionVisitor mv, CodeGenerator gen) {
+    final ValType referenceForUpdate(NODE node, CodeVisitor mv, CodeGenerator gen) {
         return reference(node, true, mv, gen);
     }
 
@@ -72,13 +72,12 @@ abstract class ReferenceOp<NODE extends LeftHandSideExpression> {
      * @param update
      *            if {@code true} duplicate reference
      * @param mv
-     *            the expression visitor
+     *            the code visitor
      * @param gen
      *            the code generator
      * @return the reference value type
      */
-    protected abstract ValType reference(NODE node, boolean update, ExpressionVisitor mv,
-            CodeGenerator gen);
+    protected abstract ValType reference(NODE node, boolean update, CodeVisitor mv, CodeGenerator gen);
 
     /**
      * Retrieves the reference's value.
@@ -90,10 +89,10 @@ abstract class ReferenceOp<NODE extends LeftHandSideExpression> {
      * @param ref
      *            the reference value type
      * @param mv
-     *            the expression visitor
+     *            the code visitor
      * @return the stack top value or empty
      */
-    abstract ValType getValue(NODE node, ValType ref, ExpressionVisitor mv);
+    abstract ValType getValue(NODE node, ValType ref, CodeVisitor mv);
 
     /**
      * Assigns a new value to the reference.
@@ -107,9 +106,9 @@ abstract class ReferenceOp<NODE extends LeftHandSideExpression> {
      * @param value
      *            the top stack value type
      * @param mv
-     *            the expression visitor
+     *            the code visitor
      */
-    abstract void putValue(NODE node, ValType ref, ValType value, ExpressionVisitor mv);
+    abstract void putValue(NODE node, ValType ref, ValType value, CodeVisitor mv);
 
     /**
      * Assigns a new value to the reference.
@@ -126,10 +125,9 @@ abstract class ReferenceOp<NODE extends LeftHandSideExpression> {
      * @param completion
      *            if {@code true} keep a copy of the new value on the stack
      * @param mv
-     *            the expression visitor
+     *            the code visitor
      */
-    final ValType putValue(NODE node, ValType ref, ValType value, boolean completion,
-            ExpressionVisitor mv) {
+    final ValType putValue(NODE node, ValType ref, ValType value, boolean completion, CodeVisitor mv) {
         if (completion) {
             Variable<?> saved = saveValue(ref, value, mv);
             putValue(node, ref, value, mv);
@@ -148,12 +146,12 @@ abstract class ReferenceOp<NODE extends LeftHandSideExpression> {
      * @param node
      *            the reference node
      * @param mv
-     *            the expression visitor
+     *            the code visitor
      * @param gen
      *            the code generator
      * @return the stack top value or empty
      */
-    abstract ValType delete(NODE node, ExpressionVisitor mv, CodeGenerator gen);
+    abstract ValType delete(NODE node, CodeVisitor mv, CodeGenerator gen);
 
     /**
      * Evaluates {@code node} and pushes the reference value on the stack.
@@ -165,12 +163,12 @@ abstract class ReferenceOp<NODE extends LeftHandSideExpression> {
      * @param mode
      *            the reference operation mode
      * @param mv
-     *            the expression visitor
+     *            the code visitor
      * @param gen
      *            the code generator
      * @return the reference value type
      */
-    final ValType referenceValue(NODE node, ExpressionVisitor mv, CodeGenerator gen) {
+    final ValType referenceValue(NODE node, CodeVisitor mv, CodeGenerator gen) {
         return referenceValue(node, false, mv, gen);
     }
 
@@ -184,12 +182,12 @@ abstract class ReferenceOp<NODE extends LeftHandSideExpression> {
      * @param mode
      *            the reference operation mode
      * @param mv
-     *            the expression visitor
+     *            the code visitor
      * @param gen
      *            the code generator
      * @return the reference value type
      */
-    final ValType referenceValueAndThis(NODE node, ExpressionVisitor mv, CodeGenerator gen) {
+    final ValType referenceValueAndThis(NODE node, CodeVisitor mv, CodeGenerator gen) {
         return referenceValue(node, true, mv, gen);
     }
 
@@ -204,13 +202,12 @@ abstract class ReferenceOp<NODE extends LeftHandSideExpression> {
      * @param withThis
      *            if {@code true} pushes this-value
      * @param mv
-     *            the expression visitor
+     *            the code visitor
      * @param gen
      *            the code generator
      * @return the reference value type
      */
-    protected abstract ValType referenceValue(NODE node, boolean withThis, ExpressionVisitor mv,
-            CodeGenerator gen);
+    protected abstract ValType referenceValue(NODE node, boolean withThis, CodeVisitor mv, CodeGenerator gen);
 
     /**
      * Saves the top stack value.
@@ -225,10 +222,10 @@ abstract class ReferenceOp<NODE extends LeftHandSideExpression> {
      * @param value
      *            the top stack value type
      * @param mv
-     *            the expression visitor
+     *            the code visitor
      * @return the variable to hold the value or {@code null} if saved on stack
      */
-    abstract Variable<?> saveValue(ValType ref, ValType value, ExpressionVisitor mv);
+    abstract Variable<?> saveValue(ValType ref, ValType value, CodeVisitor mv);
 
     /**
      * Restores the top stack value. This operation is a no-op if <var>variable</var> is
@@ -239,9 +236,9 @@ abstract class ReferenceOp<NODE extends LeftHandSideExpression> {
      * @param variable
      *            the variable or {@code null}
      * @param mv
-     *            the expression visitor
+     *            the code visitor
      */
-    abstract void restoreValue(Variable<?> variable, ExpressionVisitor mv);
+    abstract void restoreValue(Variable<?> variable, CodeVisitor mv);
 
     /**
      * Returns the {@code ReferenceOp} implementation for the left-hand side expression.
@@ -434,8 +431,7 @@ abstract class ReferenceOp<NODE extends LeftHandSideExpression> {
                         Types.Object, Type.DOUBLE_TYPE, Types.ExecutionContext, Type.BOOLEAN_TYPE));
     }
 
-    private static ValType GetValue(LeftHandSideExpression node, ValType type,
-            ExpressionVisitor mv) {
+    private static ValType GetValue(LeftHandSideExpression node, ValType type, CodeVisitor mv) {
         assert type == ValType.Reference : "type is not reference: " + type;
         mv.loadExecutionContext();
         mv.lineInfo(node);
@@ -443,8 +439,7 @@ abstract class ReferenceOp<NODE extends LeftHandSideExpression> {
         return ValType.Any;
     }
 
-    private static void PutValue(LeftHandSideExpression node, ValType type, ValType value,
-            ExpressionVisitor mv) {
+    private static void PutValue(LeftHandSideExpression node, ValType type, ValType value, CodeVisitor mv) {
         assert type == ValType.Reference : "type is not reference: " + type;
         mv.toBoxed(value);
         mv.loadExecutionContext();
@@ -452,7 +447,7 @@ abstract class ReferenceOp<NODE extends LeftHandSideExpression> {
         mv.invoke(Methods.Reference_putValue);
     }
 
-    private static ValType Delete(LeftHandSideExpression node, ValType type, ExpressionVisitor mv) {
+    private static ValType Delete(LeftHandSideExpression node, ValType type, CodeVisitor mv) {
         assert type == ValType.Reference : "type is not reference: " + type;
         mv.loadExecutionContext();
         mv.lineInfo(node);
@@ -460,8 +455,7 @@ abstract class ReferenceOp<NODE extends LeftHandSideExpression> {
         return ValType.Boolean;
     }
 
-    private static ValType getElement(LeftHandSideExpression node, ValType elementType,
-            ExpressionVisitor mv) {
+    private static ValType getElement(LeftHandSideExpression node, ValType elementType, CodeVisitor mv) {
         // stack: [base, key] -> [value]
         mv.loadExecutionContext();
         mv.lineInfo(node);
@@ -469,8 +463,7 @@ abstract class ReferenceOp<NODE extends LeftHandSideExpression> {
         return ValType.Any;
     }
 
-    private static ValType setElement(LeftHandSideExpression node, ValType elementType,
-            ValType value, ExpressionVisitor mv) {
+    private static ValType setElement(LeftHandSideExpression node, ValType elementType, ValType value, CodeVisitor mv) {
         // stack: [base, key, value] -> []
         mv.toBoxed(value);
         mv.loadExecutionContext();
@@ -480,8 +473,7 @@ abstract class ReferenceOp<NODE extends LeftHandSideExpression> {
         return ValType.Empty;
     }
 
-    private static ValType deleteElement(LeftHandSideExpression node, ValType elementType,
-            ExpressionVisitor mv) {
+    private static ValType deleteElement(LeftHandSideExpression node, ValType elementType, CodeVisitor mv) {
         // stack: [base, key] -> [result]
         mv.loadExecutionContext();
         mv.iconst(mv.isStrict());
@@ -564,27 +556,27 @@ abstract class ReferenceOp<NODE extends LeftHandSideExpression> {
         }
     }
 
-    private static void GetSuperEnvironment(LeftHandSideExpression node, ExpressionVisitor mv) {
+    private static void GetSuperEnvironment(LeftHandSideExpression node, CodeVisitor mv) {
         mv.loadExecutionContext();
         mv.lineInfo(node);
         mv.invoke(Methods.ScriptRuntime_GetSuperEnvironmentRecord);
         mv.dup();
     }
 
-    private static void GetSuperThis(ExpressionVisitor mv) {
+    private static void GetSuperThis(CodeVisitor mv) {
         // stack: [env] -> [thisValue]
         mv.loadExecutionContext();
         mv.invoke(Methods.ScriptRuntime_GetSuperThis);
     }
 
-    private static void GetSuperBase(ExpressionVisitor mv) {
+    private static void GetSuperBase(CodeVisitor mv) {
         // stack: [env, thisValue] -> [thisValue, baseValue]
         mv.swap();
         mv.loadExecutionContext();
         mv.invoke(Methods.ScriptRuntime_GetSuperBase);
     }
 
-    private static ValType GetSuperElement(LeftHandSideExpression node, ValType elementType, ExpressionVisitor mv) {
+    private static ValType GetSuperElement(LeftHandSideExpression node, ValType elementType, CodeVisitor mv) {
         // stack: [pk, thisValue, baseValue] -> [value]
         mv.loadExecutionContext();
         mv.lineInfo(node);
@@ -597,8 +589,8 @@ abstract class ReferenceOp<NODE extends LeftHandSideExpression> {
         return ValType.Any;
     }
 
-    private static ValType GetSuperElement(LeftHandSideExpression node, ValType elementType, ValType value,
-            ExpressionVisitor mv) {
+    private static ValType SetSuperElement(LeftHandSideExpression node, ValType elementType, ValType value,
+            CodeVisitor mv) {
         // stack: [pk, thisValue, baseValue, value] -> []
         mv.toBoxed(value);
         mv.loadExecutionContext();
@@ -613,7 +605,7 @@ abstract class ReferenceOp<NODE extends LeftHandSideExpression> {
         return ValType.Empty;
     }
 
-    private static ValType DeleteSuperElement(LeftHandSideExpression node, ValType elementType, ExpressionVisitor mv) {
+    private static ValType DeleteSuperElement(LeftHandSideExpression node, ValType elementType, CodeVisitor mv) {
         mv.pop(elementType);
         mv.loadExecutionContext();
         mv.lineInfo(node);
@@ -621,14 +613,14 @@ abstract class ReferenceOp<NODE extends LeftHandSideExpression> {
         return ValType.Boolean;
     }
 
-    private static Variable<?> saveToVariable(ValType value, ExpressionVisitor mv) {
+    private static Variable<?> saveToVariable(ValType value, CodeVisitor mv) {
         Variable<?> result = mv.newScratchVariable(value.toClass());
         mv.dup(value);
         mv.store(result);
         return result;
     }
 
-    private static void loadFromVariable(Variable<?> variable, ExpressionVisitor mv) {
+    private static void loadFromVariable(Variable<?> variable, CodeVisitor mv) {
         mv.load(variable);
         mv.freeVariable(variable);
     }
@@ -640,8 +632,7 @@ abstract class ReferenceOp<NODE extends LeftHandSideExpression> {
      */
     static final ReferenceOp<IdentifierReference> LOOKUP = new ReferenceOp<IdentifierReference>() {
         @Override
-        protected ValType reference(IdentifierReference node, boolean update, ExpressionVisitor mv,
-                CodeGenerator gen) {
+        protected ValType reference(IdentifierReference node, boolean update, CodeVisitor mv, CodeGenerator gen) {
             // stack: [] -> [ref]
             ValType ref = IdentifierResolution.resolve(node, mv);
             assert ref == ValType.Reference : "type is not reference: " + ref;
@@ -652,26 +643,26 @@ abstract class ReferenceOp<NODE extends LeftHandSideExpression> {
         }
 
         @Override
-        ValType getValue(IdentifierReference node, ValType ref, ExpressionVisitor mv) {
+        ValType getValue(IdentifierReference node, ValType ref, CodeVisitor mv) {
             // stack: [ref] -> [value]
             return GetValue(node, ref, mv);
         }
 
         @Override
-        void putValue(IdentifierReference node, ValType ref, ValType value, ExpressionVisitor mv) {
+        void putValue(IdentifierReference node, ValType ref, ValType value, CodeVisitor mv) {
             // stack: [ref, value] -> []
             PutValue(node, ref, value, mv);
         }
 
         @Override
-        ValType delete(IdentifierReference node, ExpressionVisitor mv, CodeGenerator gen) {
+        ValType delete(IdentifierReference node, CodeVisitor mv, CodeGenerator gen) {
             ValType ref = reference(node, false, mv, gen);
             return Delete(node, ref, mv);
         }
 
         @Override
-        protected ValType referenceValue(IdentifierReference node, boolean withThis,
-                ExpressionVisitor mv, CodeGenerator gen) {
+        protected ValType referenceValue(IdentifierReference node, boolean withThis, CodeVisitor mv,
+                CodeGenerator gen) {
             if (withThis) {
                 // stack: [] -> [ref, ref]
                 ValType ref = reference(node, mv, gen);
@@ -698,14 +689,14 @@ abstract class ReferenceOp<NODE extends LeftHandSideExpression> {
         }
 
         @Override
-        Variable<?> saveValue(ValType ref, ValType value, ExpressionVisitor mv) {
+        Variable<?> saveValue(ValType ref, ValType value, CodeVisitor mv) {
             // stack: [ref, value] -> [value, ref, value]
             mv.dupX(ref, value);
             return null;
         }
 
         @Override
-        void restoreValue(Variable<?> result, ExpressionVisitor mv) {
+        void restoreValue(Variable<?> result, CodeVisitor mv) {
             // stack: [] -> []
         }
     };
@@ -717,8 +708,7 @@ abstract class ReferenceOp<NODE extends LeftHandSideExpression> {
      */
     static final ReferenceOp<PropertyAccessor> PROPERTY = new ReferenceOp<PropertyAccessor>() {
         @Override
-        protected ValType reference(PropertyAccessor node, boolean update, ExpressionVisitor mv,
-                CodeGenerator gen) {
+        protected ValType reference(PropertyAccessor node, boolean update, CodeVisitor mv, CodeGenerator gen) {
             // stack: [] -> [base, key]
             /* steps 1-3 */
             gen.expressionBoxed(node.getBase(), mv);
@@ -738,19 +728,19 @@ abstract class ReferenceOp<NODE extends LeftHandSideExpression> {
         }
 
         @Override
-        ValType getValue(PropertyAccessor node, ValType ref, ExpressionVisitor mv) {
+        ValType getValue(PropertyAccessor node, ValType ref, CodeVisitor mv) {
             // stack: [base, key] -> [value]
             return getElement(node, ValType.String, mv);
         }
 
         @Override
-        void putValue(PropertyAccessor node, ValType ref, ValType value, ExpressionVisitor mv) {
+        void putValue(PropertyAccessor node, ValType ref, ValType value, CodeVisitor mv) {
             // stack: [base, key, value] -> []
             setElement(node, ValType.String, value, mv);
         }
 
         @Override
-        ValType delete(PropertyAccessor node, ExpressionVisitor mv, CodeGenerator gen) {
+        ValType delete(PropertyAccessor node, CodeVisitor mv, CodeGenerator gen) {
             // stack: [] -> [base]
             gen.expressionBoxed(node.getBase(), mv);
             // stack: [base] -> [base, key]
@@ -760,8 +750,7 @@ abstract class ReferenceOp<NODE extends LeftHandSideExpression> {
         }
 
         @Override
-        protected ValType referenceValue(PropertyAccessor node, boolean withThis,
-                ExpressionVisitor mv, CodeGenerator gen) {
+        protected ValType referenceValue(PropertyAccessor node, boolean withThis, CodeVisitor mv, CodeGenerator gen) {
             gen.expressionBoxed(node.getBase(), mv);
             if (withThis) {
                 mv.dup();
@@ -778,7 +767,7 @@ abstract class ReferenceOp<NODE extends LeftHandSideExpression> {
         }
 
         @Override
-        Variable<?> saveValue(ValType ref, ValType value, ExpressionVisitor mv) {
+        Variable<?> saveValue(ValType ref, ValType value, CodeVisitor mv) {
             // stack: [base, key, value] -> [value, base, key, value]
             // ValType.Number to represent (base, key) tuple
             mv.dupX(ValType.Number, value);
@@ -786,7 +775,7 @@ abstract class ReferenceOp<NODE extends LeftHandSideExpression> {
         }
 
         @Override
-        void restoreValue(Variable<?> variable, ExpressionVisitor mv) {
+        void restoreValue(Variable<?> variable, CodeVisitor mv) {
             // stack: [] -> []
         }
     };
@@ -797,8 +786,7 @@ abstract class ReferenceOp<NODE extends LeftHandSideExpression> {
      * 12.3.2.1 Runtime Semantics: Evaluation
      */
     static final ReferenceOp<ElementAccessor> ELEMENT = new ReferenceOp<ElementAccessor>() {
-        private ValType evalPropertyKey(Expression propertyKey, ExpressionVisitor mv,
-                CodeGenerator gen) {
+        private ValType evalPropertyKey(Expression propertyKey, CodeVisitor mv, CodeGenerator gen) {
             ValType elementType = gen.expression(propertyKey, mv);
             switch (elementType) {
             case String:
@@ -817,8 +805,7 @@ abstract class ReferenceOp<NODE extends LeftHandSideExpression> {
         }
 
         @Override
-        protected ValType reference(ElementAccessor node, boolean update, ExpressionVisitor mv,
-                CodeGenerator gen) {
+        protected ValType reference(ElementAccessor node, boolean update, CodeVisitor mv, CodeGenerator gen) {
             // stack: [] -> [base, base?, key]
             /* steps 1-3 */
             gen.expressionBoxed(node.getBase(), mv);
@@ -851,19 +838,19 @@ abstract class ReferenceOp<NODE extends LeftHandSideExpression> {
         }
 
         @Override
-        ValType getValue(ElementAccessor node, ValType ref, ExpressionVisitor mv) {
+        ValType getValue(ElementAccessor node, ValType ref, CodeVisitor mv) {
             // stack: [base, key] -> [value]
             return getElement(node, ref, mv);
         }
 
         @Override
-        void putValue(ElementAccessor node, ValType ref, ValType value, ExpressionVisitor mv) {
+        void putValue(ElementAccessor node, ValType ref, ValType value, CodeVisitor mv) {
             // stack: [base, key, value] -> []
             setElement(node, ref, value, mv);
         }
 
         @Override
-        ValType delete(ElementAccessor node, ExpressionVisitor mv, CodeGenerator gen) {
+        ValType delete(ElementAccessor node, CodeVisitor mv, CodeGenerator gen) {
             // stack: [] -> [base]
             gen.expressionBoxed(node.getBase(), mv);
             // stack: [base] -> [base, key]
@@ -873,8 +860,7 @@ abstract class ReferenceOp<NODE extends LeftHandSideExpression> {
         }
 
         @Override
-        protected ValType referenceValue(ElementAccessor node, boolean withThis,
-                ExpressionVisitor mv, CodeGenerator gen) {
+        protected ValType referenceValue(ElementAccessor node, boolean withThis, CodeVisitor mv, CodeGenerator gen) {
             gen.expressionBoxed(node.getBase(), mv);
             if (withThis) {
                 mv.dup();
@@ -890,7 +876,7 @@ abstract class ReferenceOp<NODE extends LeftHandSideExpression> {
         }
 
         @Override
-        Variable<?> saveValue(ValType ref, ValType value, ExpressionVisitor mv) {
+        Variable<?> saveValue(ValType ref, ValType value, CodeVisitor mv) {
             // stack: [base, key, value] -> [value, base, key, value]
             if (ref.size() == 1) {
                 // ValType.Number to represent (base, key) tuple
@@ -901,7 +887,7 @@ abstract class ReferenceOp<NODE extends LeftHandSideExpression> {
         }
 
         @Override
-        void restoreValue(Variable<?> variable, ExpressionVisitor mv) {
+        void restoreValue(Variable<?> variable, CodeVisitor mv) {
             if (variable != null) {
                 loadFromVariable(variable, mv);
             }
@@ -913,8 +899,7 @@ abstract class ReferenceOp<NODE extends LeftHandSideExpression> {
      */
     static final ReferenceOp<SuperPropertyAccessor> SUPER_PROPERTY = new ReferenceOp<SuperPropertyAccessor>() {
         @Override
-        protected ValType reference(SuperPropertyAccessor node, boolean update, ExpressionVisitor mv,
-                CodeGenerator gen) {
+        protected ValType reference(SuperPropertyAccessor node, boolean update, CodeVisitor mv, CodeGenerator gen) {
             // stack: [] -> [pk, pk?]
             mv.aconst(node.getName());
             if (update) {
@@ -935,24 +920,24 @@ abstract class ReferenceOp<NODE extends LeftHandSideExpression> {
         }
 
         @Override
-        ValType getValue(SuperPropertyAccessor node, ValType ref, ExpressionVisitor mv) {
+        ValType getValue(SuperPropertyAccessor node, ValType ref, CodeVisitor mv) {
             // stack: [pk, thisValue, baseValue] -> [value]
             return GetSuperElement(node, ref, mv);
         }
 
         @Override
-        void putValue(SuperPropertyAccessor node, ValType ref, ValType value, ExpressionVisitor mv) {
+        void putValue(SuperPropertyAccessor node, ValType ref, ValType value, CodeVisitor mv) {
             // stack: [pk, thisValue, baseValue, value] -> []
-            GetSuperElement(node, ref, value, mv);
+            SetSuperElement(node, ref, value, mv);
         }
 
         @Override
-        ValType delete(SuperPropertyAccessor node, ExpressionVisitor mv, CodeGenerator gen) {
+        ValType delete(SuperPropertyAccessor node, CodeVisitor mv, CodeGenerator gen) {
             return DeleteSuperElement(node, ValType.Empty, mv);
         }
 
         @Override
-        protected ValType referenceValue(SuperPropertyAccessor node, boolean withThis, ExpressionVisitor mv,
+        protected ValType referenceValue(SuperPropertyAccessor node, boolean withThis, CodeVisitor mv,
                 CodeGenerator gen) {
             // stack: [] -> [pk]
             mv.aconst(node.getName());
@@ -977,13 +962,13 @@ abstract class ReferenceOp<NODE extends LeftHandSideExpression> {
         }
 
         @Override
-        Variable<?> saveValue(ValType ref, ValType value, ExpressionVisitor mv) {
+        Variable<?> saveValue(ValType ref, ValType value, CodeVisitor mv) {
             // stack: [pk, thisValue, baseValue, value] -> [pk, thisValue, baseValue, value]
             return saveToVariable(value, mv);
         }
 
         @Override
-        void restoreValue(Variable<?> variable, ExpressionVisitor mv) {
+        void restoreValue(Variable<?> variable, CodeVisitor mv) {
             // stack: [] -> [value]
             loadFromVariable(variable, mv);
         }
@@ -994,8 +979,7 @@ abstract class ReferenceOp<NODE extends LeftHandSideExpression> {
      */
     static final ReferenceOp<SuperElementAccessor> SUPER_ELEMENT = new ReferenceOp<SuperElementAccessor>() {
         @Override
-        protected ValType reference(SuperElementAccessor node, boolean update, ExpressionVisitor mv,
-                CodeGenerator gen) {
+        protected ValType reference(SuperElementAccessor node, boolean update, CodeVisitor mv, CodeGenerator gen) {
             // stack: [] -> [pk, pk?]
             ValType type = gen.expression(node.getElement(), mv);
             type = ToPropertyKey(type, mv);
@@ -1017,25 +1001,25 @@ abstract class ReferenceOp<NODE extends LeftHandSideExpression> {
         }
 
         @Override
-        ValType getValue(SuperElementAccessor node, ValType ref, ExpressionVisitor mv) {
+        ValType getValue(SuperElementAccessor node, ValType ref, CodeVisitor mv) {
             // stack: [pk, thisValue, baseValue] -> [value]
             return GetSuperElement(node, ref, mv);
         }
 
         @Override
-        void putValue(SuperElementAccessor node, ValType ref, ValType value, ExpressionVisitor mv) {
+        void putValue(SuperElementAccessor node, ValType ref, ValType value, CodeVisitor mv) {
             // stack: [pk, thisValue, baseValue, value] -> []
-            GetSuperElement(node, ref, value, mv);
+            SetSuperElement(node, ref, value, mv);
         }
 
         @Override
-        ValType delete(SuperElementAccessor node, ExpressionVisitor mv, CodeGenerator gen) {
+        ValType delete(SuperElementAccessor node, CodeVisitor mv, CodeGenerator gen) {
             ValType type = gen.expression(node.getElement().emptyCompletion(), mv);
             return DeleteSuperElement(node, type, mv);
         }
 
         @Override
-        protected ValType referenceValue(SuperElementAccessor node, boolean withThis, ExpressionVisitor mv,
+        protected ValType referenceValue(SuperElementAccessor node, boolean withThis, CodeVisitor mv,
                 CodeGenerator gen) {
             // stack: [] -> [pk]
             ValType type = gen.expression(node.getElement(), mv);
@@ -1061,13 +1045,13 @@ abstract class ReferenceOp<NODE extends LeftHandSideExpression> {
         }
 
         @Override
-        Variable<?> saveValue(ValType ref, ValType value, ExpressionVisitor mv) {
+        Variable<?> saveValue(ValType ref, ValType value, CodeVisitor mv) {
             // stack: [pk, thisValue, baseValue, value] -> [pk, thisValue, baseValue, value]
             return saveToVariable(value, mv);
         }
 
         @Override
-        void restoreValue(Variable<?> variable, ExpressionVisitor mv) {
+        void restoreValue(Variable<?> variable, CodeVisitor mv) {
             // stack: [] -> [value]
             loadFromVariable(variable, mv);
         }

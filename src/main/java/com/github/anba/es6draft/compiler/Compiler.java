@@ -20,7 +20,7 @@ import com.github.anba.es6draft.ast.Module;
 import com.github.anba.es6draft.ast.Script;
 import com.github.anba.es6draft.ast.scope.Scope;
 import com.github.anba.es6draft.ast.scope.ScriptScope;
-import com.github.anba.es6draft.compiler.analyzer.CodeSizeAnalysis;
+import com.github.anba.es6draft.compiler.analyzer.CodeSize;
 import com.github.anba.es6draft.compiler.analyzer.CodeSizeException;
 import com.github.anba.es6draft.compiler.assembler.ClassSignature;
 import com.github.anba.es6draft.compiler.assembler.Code;
@@ -35,8 +35,8 @@ import com.github.anba.es6draft.runtime.modules.SourceTextModuleRecord;
  */
 public final class Compiler {
     public enum Option {
-        DebugInfo, PrintCode, PrintFullCode, IterationCatchStackOverflow, NoResume, NoCompletion,
-        NoByteCodeSizeValidation, NoTailCall, SourceMap
+        DebugInfo, PrintCode, PrintFullCode, IterationCatchStackOverflow, NoCompletion, NoByteCodeSizeValidation,
+        NoTailCall, SourceMap
     }
 
     private final ExecutorService executor;
@@ -59,15 +59,15 @@ public final class Compiler {
      *             if the script node could not be compiled
      */
     public CompiledScript compile(Script script, String className) throws CompilationException {
-        if (!isEnabled(Compiler.Option.NoCompletion)) {
-            CompletionValueVisitor.performCompletion(script);
-        }
         if (!isEnabled(Compiler.Option.NoByteCodeSizeValidation)) {
             try {
-                CodeSizeAnalysis.analyze(script, executor);
+                CodeSize.analyze(script);
             } catch (CodeSizeException e) {
                 throw new CompilationException(e.getMessage());
             }
+        }
+        if (!isEnabled(Compiler.Option.NoCompletion)) {
+            CompletionValueVisitor.performCompletion(script);
         }
 
         Code code = new Code(Modifier.PUBLIC | Modifier.FINAL, className, ClassSignature.NONE,
@@ -94,12 +94,9 @@ public final class Compiler {
      */
     public CompiledModule compile(Module module, SourceTextModuleRecord moduleRecord,
             String className) throws CompilationException {
-        if (!isEnabled(Compiler.Option.NoCompletion)) {
-            CompletionValueVisitor.performCompletion(module);
-        }
         if (!isEnabled(Compiler.Option.NoByteCodeSizeValidation)) {
             try {
-                CodeSizeAnalysis.analyze(module, executor);
+                CodeSize.analyze(module);
             } catch (CodeSizeException e) {
                 throw new CompilationException(e.getMessage());
             }
@@ -166,7 +163,7 @@ public final class Compiler {
         Script script = functionScript(function);
         if (!isEnabled(Compiler.Option.NoByteCodeSizeValidation)) {
             try {
-                CodeSizeAnalysis.analyze(function, executor);
+                CodeSize.analyze(function);
             } catch (CodeSizeException e) {
                 throw new CompilationException(e.getMessage());
             }

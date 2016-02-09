@@ -24,11 +24,10 @@ public final class FunctionExpression extends Expression implements FunctionDefi
     private final String headerSource, bodySource;
     private String functionName, methodName;
     private StrictMode strictMode;
-    private boolean syntheticNodes;
 
-    public FunctionExpression(long beginPosition, long endPosition, FunctionScope scope,
-            BindingIdentifier identifier, FormalParameterList parameters,
-            List<StatementListItem> statements, String headerSource, String bodySource) {
+    public FunctionExpression(long beginPosition, long endPosition, FunctionScope scope, BindingIdentifier identifier,
+            FormalParameterList parameters, List<StatementListItem> statements, String headerSource,
+            String bodySource) {
         super(beginPosition, endPosition);
         this.scope = scope;
         this.identifier = identifier;
@@ -127,16 +126,6 @@ public final class FunctionExpression extends Expression implements FunctionDefi
     @Override
     public boolean isConstructor() {
         return true;
-    }
-
-    @Override
-    public boolean hasSyntheticNodes() {
-        return syntheticNodes;
-    }
-
-    @Override
-    public void setSyntheticNodes(boolean syntheticNodes) {
-        this.syntheticNodes = syntheticNodes;
     }
 
     @Override

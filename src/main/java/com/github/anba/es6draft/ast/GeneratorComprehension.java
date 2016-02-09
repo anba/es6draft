@@ -21,7 +21,6 @@ public final class GeneratorComprehension extends Expression implements Function
     private final Comprehension comprehension;
     private String functionName, methodName;
     private StrictMode strictMode;
-    private boolean syntheticNodes;
 
     public GeneratorComprehension(long beginPosition, long endPosition, FunctionScope scope, GeneratorKind kind,
             FormalParameterList parameters, Comprehension comprehension) {
@@ -131,16 +130,6 @@ public final class GeneratorComprehension extends Expression implements Function
     @Override
     public boolean isConstructor() {
         return kind == GeneratorKind.Constructor;
-    }
-
-    @Override
-    public boolean hasSyntheticNodes() {
-        return syntheticNodes;
-    }
-
-    @Override
-    public void setSyntheticNodes(boolean syntheticNodes) {
-        this.syntheticNodes = syntheticNodes;
     }
 
     @Override

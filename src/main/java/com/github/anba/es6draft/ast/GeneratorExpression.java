@@ -25,7 +25,6 @@ public class GeneratorExpression extends Expression implements GeneratorDefiniti
     private final String headerSource, bodySource;
     private String functionName, methodName;
     private StrictMode strictMode;
-    private boolean syntheticNodes;
 
     public GeneratorExpression(long beginPosition, long endPosition, FunctionScope scope, GeneratorKind kind,
             BindingIdentifier identifier, FormalParameterList parameters, List<StatementListItem> statements,
@@ -129,16 +128,6 @@ public class GeneratorExpression extends Expression implements GeneratorDefiniti
     @Override
     public boolean isConstructor() {
         return kind == GeneratorKind.Constructor;
-    }
-
-    @Override
-    public boolean hasSyntheticNodes() {
-        return syntheticNodes;
-    }
-
-    @Override
-    public void setSyntheticNodes(boolean syntheticNodes) {
-        this.syntheticNodes = syntheticNodes;
     }
 
     @Override

@@ -36,7 +36,7 @@ public final class TestAssertions {
      */
     public static AssertionError newAssertionError(String message) {
         AssertionError error = new AssertionError(message);
-        error.setStackTrace(StackTraces.scriptStackTrace(error.getStackTrace()));
+        error.setStackTrace(StackTraces.scriptStackTrace(error));
         return error;
     }
 

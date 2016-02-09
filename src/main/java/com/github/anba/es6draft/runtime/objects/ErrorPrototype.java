@@ -14,8 +14,6 @@ import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
-import java.util.ArrayList;
-
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initializable;
@@ -25,11 +23,11 @@ import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
+import com.github.anba.es6draft.runtime.internal.ScriptException;
 import com.github.anba.es6draft.runtime.internal.StackTraces;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
-import com.github.anba.es6draft.runtime.types.builtins.ArrayObject;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
@@ -134,7 +132,8 @@ public final class ErrorPrototype extends OrdinaryObject implements Initializabl
             if (!(thisValue instanceof ErrorObject)) {
                 return UNDEFINED;
             }
-            return StackTraces.getTopStackTraceElement((ErrorObject) thisValue).getFileName();
+            ScriptException e = ((ErrorObject) thisValue).getException();
+            return StackTraces.stackTraceStream(e).findFirst().map(StackTraceElement::getFileName).orElse("");
         }
 
         /**
@@ -173,7 +172,8 @@ public final class ErrorPrototype extends OrdinaryObject implements Initializabl
             if (!(thisValue instanceof ErrorObject)) {
                 return UNDEFINED;
             }
-            return StackTraces.getTopStackTraceElement((ErrorObject) thisValue).getLineNumber();
+            ScriptException e = ((ErrorObject) thisValue).getException();
+            return StackTraces.stackTraceStream(e).findFirst().map(StackTraceElement::getLineNumber).orElse(0);
         }
 
         /**
@@ -252,7 +252,13 @@ public final class ErrorPrototype extends OrdinaryObject implements Initializabl
             if (!(thisValue instanceof ErrorObject)) {
                 return UNDEFINED;
             }
-            return getStack((ErrorObject) thisValue);
+            ScriptException e = ((ErrorObject) thisValue).getException();
+            return StackTraces.stackTraceStream(e).collect(StringBuilder::new, (sb, element) -> {
+                String methodName = element.getMethodName();
+                String fileName = element.getFileName();
+                int lineNumber = element.getLineNumber();
+                sb.append(methodName).append('@').append(fileName).append(':').append(lineNumber).append('\n');
+            }, StringBuilder::append).toString();
         }
 
         /**
@@ -291,31 +297,14 @@ public final class ErrorPrototype extends OrdinaryObject implements Initializabl
             if (!(thisValue instanceof ErrorObject)) {
                 return UNDEFINED;
             }
-            return getStackTrace(cx, (ErrorObject) thisValue);
+            ScriptException e = ((ErrorObject) thisValue).getException();
+            return CreateArrayFromList(cx, StackTraces.stackTraceStream(e).map(element -> {
+                OrdinaryObject elem = ObjectCreate(cx, Intrinsics.ObjectPrototype);
+                CreateDataProperty(cx, elem, "methodName", element.getMethodName());
+                CreateDataProperty(cx, elem, "fileName", element.getFileName());
+                CreateDataProperty(cx, elem, "lineNumber", element.getLineNumber());
+                return elem;
+            }));
         }
-    }
-
-    private static String getStack(ErrorObject e) {
-        StringBuilder sb = new StringBuilder();
-        for (StackTraceElement element : StackTraces.getStackTrace(e)) {
-            String methodName = StackTraces.getMethodName(element);
-            String fileName = element.getFileName();
-            int lineNumber = element.getLineNumber();
-            sb.append(methodName).append('@').append(fileName).append(':').append(lineNumber)
-                    .append('\n');
-        }
-        return sb.toString();
-    }
-
-    private static ArrayObject getStackTrace(ExecutionContext cx, ErrorObject e) {
-        ArrayList<OrdinaryObject> list = new ArrayList<>();
-        for (StackTraceElement element : StackTraces.getStackTrace(e)) {
-            OrdinaryObject elem = ObjectCreate(cx, Intrinsics.ObjectPrototype);
-            CreateDataProperty(cx, elem, "methodName", StackTraces.getMethodName(element));
-            CreateDataProperty(cx, elem, "fileName", element.getFileName());
-            CreateDataProperty(cx, elem, "lineNumber", element.getLineNumber());
-            list.add(elem);
-        }
-        return CreateArrayFromList(cx, list);
     }
 }

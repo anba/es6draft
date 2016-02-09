@@ -22,10 +22,10 @@ import com.github.anba.es6draft.ast.scope.Scope;
 import com.github.anba.es6draft.compiler.DefaultCodeGenerator.ValType;
 import com.github.anba.es6draft.compiler.Labels.TempLabel;
 import com.github.anba.es6draft.compiler.StatementGenerator.Completion;
-import com.github.anba.es6draft.compiler.assembler.Field;
 import com.github.anba.es6draft.compiler.assembler.FieldName;
 import com.github.anba.es6draft.compiler.assembler.Jump;
 import com.github.anba.es6draft.compiler.assembler.MethodName;
+import com.github.anba.es6draft.compiler.assembler.MutableValue;
 import com.github.anba.es6draft.compiler.assembler.Type;
 import com.github.anba.es6draft.compiler.assembler.Value;
 import com.github.anba.es6draft.compiler.assembler.Variable;
@@ -55,9 +55,6 @@ import com.github.anba.es6draft.runtime.internal.ScriptIterator;
  */
 final class BindingInitializationGenerator {
     private static final class Fields {
-        static final FieldName Undefined_UNDEFINED = FieldName.findStatic(Types.Undefined, "UNDEFINED",
-                Types.Undefined);
-
         static final FieldName Collections_EMPTY_SET = FieldName.findStatic(Types.Collections, "EMPTY_SET", Types.Set);
     }
 
@@ -119,10 +116,9 @@ final class BindingInitializationGenerator {
      * @param node
      *            the binding identifier
      * @param mv
-     *            the expression visitor
+     *            the code visitor
      */
-    static <ENVREC extends EnvironmentRecord> void InitializeBoundName(BindingIdentifier node,
-            ExpressionVisitor mv) {
+    static <ENVREC extends EnvironmentRecord> void InitializeBoundName(BindingIdentifier node, CodeVisitor mv) {
         IdReferenceOp op = IdReferenceOp.of(node);
 
         /* steps 1-2 (not applicable) */
@@ -146,10 +142,10 @@ final class BindingInitializationGenerator {
      * @param value
      *            the value
      * @param mv
-     *            the expression visitor
+     *            the code visitor
      */
-    static <ENVREC extends EnvironmentRecord> void InitializeBoundName(
-            Variable<? extends ENVREC> envRec, Name name, Value<?> value, ExpressionVisitor mv) {
+    static <ENVREC extends EnvironmentRecord> void InitializeBoundName(Variable<? extends ENVREC> envRec, Name name,
+            Value<?> value, CodeVisitor mv) {
         BindingOp<ENVREC> op = BindingOp.of(envRec, name);
         op.initializeBinding(envRec, name, value, mv);
     }
@@ -164,11 +160,11 @@ final class BindingInitializationGenerator {
      * @param name
      *            the binding name
      * @param mv
-     *            the statement visitor
+     *            the code visitor
      */
-    static <ENVREC extends EnvironmentRecord> void InitializeBoundNameWithUndefined(
-            Variable<? extends ENVREC> envRec, Name name, ExpressionVisitor mv) {
-        InitializeBoundName(envRec, name, new Field<>(Fields.Undefined_UNDEFINED), mv);
+    static <ENVREC extends EnvironmentRecord> void InitializeBoundNameWithUndefined(Variable<? extends ENVREC> envRec,
+            Name name, CodeVisitor mv) {
+        InitializeBoundName(envRec, name, mv.undefinedValue(), mv);
     }
 
     /**
@@ -177,10 +173,10 @@ final class BindingInitializationGenerator {
      * stack: [] {@literal ->} []
      * 
      * @param mv
-     *            the expression visitor
+     *            the code visitor
      */
     static <ENVREC extends EnvironmentRecord> void InitializeBoundNameWithInitializer(CodeGenerator codegen,
-            Variable<? extends ENVREC> envRec, Name name, Expression initializer, ExpressionVisitor mv) {
+            Variable<? extends ENVREC> envRec, Name name, Expression initializer, CodeVisitor mv) {
         InitializeBoundName(envRec, name, asm -> {
             codegen.expressionBoxed(initializer, mv);
             if (IsAnonymousFunctionDefinition(initializer)) {
@@ -200,9 +196,9 @@ final class BindingInitializationGenerator {
      * @param node
      *            the binding node
      * @param mv
-     *            the expression visitor
+     *            the code visitor
      */
-    static void BindingInitialization(CodeGenerator codegen, Binding node, ExpressionVisitor mv) {
+    static void BindingInitialization(CodeGenerator codegen, Binding node, CodeVisitor mv) {
         if (node instanceof BindingIdentifier) {
             InitializeBoundName((BindingIdentifier) node, mv);
         } else {
@@ -220,10 +216,9 @@ final class BindingInitializationGenerator {
      * @param node
      *            the binding node
      * @param mv
-     *            the expression visitor
+     *            the code visitor
      */
-    static void BindingInitialization(CodeGenerator codegen, BindingPattern node,
-            ExpressionVisitor mv) {
+    static void BindingInitialization(CodeGenerator codegen, BindingPattern node, CodeVisitor mv) {
         BindingInitialization init = new BindingInitialization(codegen, mv, null);
         node.accept(init, null);
     }
@@ -243,10 +238,10 @@ final class BindingInitializationGenerator {
      * @param value
      *            the value
      * @param mv
-     *            the expression visitor
+     *            the code visitor
      */
     static <ENVREC extends EnvironmentRecord> void BindingInitialization(CodeGenerator codegen,
-            Variable<? extends ENVREC> envRec, Binding node, Value<?> value, ExpressionVisitor mv) {
+            Variable<? extends ENVREC> envRec, Binding node, Value<?> value, CodeVisitor mv) {
         if (node instanceof BindingIdentifier) {
             InitializeBoundName(envRec, ((BindingIdentifier) node).getName(), value, mv);
         } else {
@@ -268,11 +263,10 @@ final class BindingInitializationGenerator {
      * @param value
      *            the value
      * @param mv
-     *            the expression visitor
+     *            the code visitor
      */
     static <ENVREC extends EnvironmentRecord> void BindingInitialization(CodeGenerator codegen,
-            Variable<? extends ENVREC> envRec, BindingPattern node, Value<?> value,
-            ExpressionVisitor mv) {
+            Variable<? extends ENVREC> envRec, BindingPattern node, Value<?> value, CodeVisitor mv) {
         mv.load(value);
         BindingInitialization init = new BindingInitialization(codegen, mv, envRec);
         node.accept(init, null);
@@ -290,10 +284,10 @@ final class BindingInitializationGenerator {
      * @param node
      *            the binding node
      * @param mv
-     *            the expression visitor
+     *            the code visitor
      */
     static <ENVREC extends EnvironmentRecord> void BindingInitialization(CodeGenerator codegen,
-            Variable<? extends ENVREC> envRec, BindingPattern node, ExpressionVisitor mv) {
+            Variable<? extends ENVREC> envRec, BindingPattern node, CodeVisitor mv) {
         BindingInitialization init = new BindingInitialization(codegen, mv, envRec);
         node.accept(init, null);
     }
@@ -312,11 +306,11 @@ final class BindingInitializationGenerator {
      * @param iterator
      *            the arguments iterator
      * @param mv
-     *            the expression visitor
+     *            the code visitor
      */
     static void BindingInitialization(CodeGenerator codegen, FunctionNode node,
-            Variable<LexicalEnvironment<FunctionEnvironmentRecord>> env,
-            Variable<Iterator<?>> iterator, ExpressionVisitor mv) {
+            Variable<LexicalEnvironment<FunctionEnvironmentRecord>> env, Variable<Iterator<?>> iterator,
+            CodeVisitor mv) {
         FormalsIteratorBindingInitialization init = new FormalsIteratorBindingInitialization(
                 codegen, mv, env, null);
         node.getParameters().accept(init, iterator);
@@ -338,12 +332,11 @@ final class BindingInitializationGenerator {
      * @param iterator
      *            the arguments iterator
      * @param mv
-     *            the expression visitor
+     *            the code visitor
      */
     static void BindingInitialization(CodeGenerator codegen, FunctionNode node,
-            Variable<LexicalEnvironment<FunctionEnvironmentRecord>> env,
-            Variable<? extends EnvironmentRecord> envRec, Variable<Iterator<?>> iterator,
-            ExpressionVisitor mv) {
+            Variable<LexicalEnvironment<FunctionEnvironmentRecord>> env, Variable<? extends EnvironmentRecord> envRec,
+            Variable<Iterator<?>> iterator, CodeVisitor mv) {
         FormalsIteratorBindingInitialization init = new FormalsIteratorBindingInitialization(
                 codegen, mv, env, envRec);
         node.getParameters().accept(init, iterator);
@@ -352,11 +345,10 @@ final class BindingInitializationGenerator {
     private static abstract class RuntimeSemantics<V> extends
             com.github.anba.es6draft.ast.DefaultVoidNodeVisitor<V> {
         protected final CodeGenerator codegen;
-        protected final ExpressionVisitor mv;
+        protected final CodeVisitor mv;
         protected final Variable<? extends EnvironmentRecord> envRec;
 
-        RuntimeSemantics(CodeGenerator codegen, ExpressionVisitor mv,
-                Variable<? extends EnvironmentRecord> envRec) {
+        RuntimeSemantics(CodeGenerator codegen, CodeVisitor mv, Variable<? extends EnvironmentRecord> envRec) {
             this.codegen = codegen;
             this.mv = mv;
             this.envRec = envRec;
@@ -386,11 +378,11 @@ final class BindingInitializationGenerator {
             throw new IllegalStateException();
         }
 
-        protected final ValType expression(Expression node, ExpressionVisitor mv) {
+        protected final ValType expression(Expression node, CodeVisitor mv) {
             return codegen.expression(node, mv);
         }
 
-        protected final ValType expressionBoxed(Expression node, ExpressionVisitor mv) {
+        protected final ValType expressionBoxed(Expression node, CodeVisitor mv) {
             return codegen.expressionBoxed(node, mv);
         }
 
@@ -432,8 +424,7 @@ final class BindingInitializationGenerator {
      * </ul>
      */
     private static final class BindingInitialization extends RuntimeSemantics<Void> {
-        BindingInitialization(CodeGenerator codegen, ExpressionVisitor mv,
-                Variable<? extends EnvironmentRecord> envRec) {
+        BindingInitialization(CodeGenerator codegen, CodeVisitor mv, Variable<? extends EnvironmentRecord> envRec) {
             super(codegen, mv, envRec);
         }
 
@@ -449,31 +440,29 @@ final class BindingInitializationGenerator {
             mv.invoke(Methods.ScriptRuntime_iterate);
             mv.store(iterator);
 
-            new IterationGenerator<ArrayBindingPattern, ExpressionVisitor>(codegen) {
+            new IterationGenerator<ArrayBindingPattern, CodeVisitor>(codegen) {
                 @Override
-                protected Completion iterationBody(ArrayBindingPattern node,
-                        Variable<ScriptIterator<?>> iterator, ExpressionVisitor mv) {
+                protected Completion iterationBody(ArrayBindingPattern node, Variable<ScriptIterator<?>> iterator,
+                        CodeVisitor mv) {
                     // step 4
                     IteratorBindingInitialization(node, iterator);
                     return Completion.Normal;
                 }
 
                 @Override
-                protected void epilogue(ArrayBindingPattern node,
-                        Variable<ScriptIterator<?>> iterator, ExpressionVisitor mv) {
+                protected void epilogue(ArrayBindingPattern node, Variable<ScriptIterator<?>> iterator,
+                        CodeVisitor mv) {
                     // step 5
                     IteratorClose(node, iterator, mv);
                 }
 
                 @Override
-                protected Variable<Object> enterIteration(ArrayBindingPattern node,
-                        ExpressionVisitor mv) {
+                protected MutableValue<Object> enterIteration(ArrayBindingPattern node, CodeVisitor mv) {
                     return mv.enterIteration();
                 }
 
                 @Override
-                protected List<TempLabel> exitIteration(ArrayBindingPattern node,
-                        ExpressionVisitor mv) {
+                protected List<TempLabel> exitIteration(ArrayBindingPattern node, CodeVisitor mv) {
                     return mv.exitIteration();
                 }
             }.generate(node, iterator, mv);
@@ -581,7 +570,7 @@ final class BindingInitializationGenerator {
         private final Variable<LexicalEnvironment<FunctionEnvironmentRecord>> env;
         private final IteratorBindingInitialization iteratorBindingInit;
 
-        FormalsIteratorBindingInitialization(CodeGenerator codegen, ExpressionVisitor mv,
+        FormalsIteratorBindingInitialization(CodeGenerator codegen, CodeVisitor mv,
                 Variable<LexicalEnvironment<FunctionEnvironmentRecord>> env,
                 Variable<? extends EnvironmentRecord> envRec) {
             super(codegen, mv, envRec);
@@ -644,7 +633,7 @@ final class BindingInitializationGenerator {
      */
     private static final class IteratorBindingInitialization extends
             RuntimeSemantics<Variable<? extends Iterator<?>>> {
-        IteratorBindingInitialization(CodeGenerator codegen, ExpressionVisitor mv,
+        IteratorBindingInitialization(CodeGenerator codegen, CodeVisitor mv,
                 Variable<? extends EnvironmentRecord> envRec) {
             super(codegen, mv, envRec);
         }
@@ -792,8 +781,8 @@ final class BindingInitializationGenerator {
             RuntimeSemantics<PROPERTYNAME> {
         private final Variable<Object> value;
 
-        KeyedBindingInitialization(CodeGenerator codegen, ExpressionVisitor mv,
-                Variable<? extends EnvironmentRecord> envRec, Variable<Object> value) {
+        KeyedBindingInitialization(CodeGenerator codegen, CodeVisitor mv, Variable<? extends EnvironmentRecord> envRec,
+                Variable<Object> value) {
             super(codegen, mv, envRec);
             this.value = value;
         }
@@ -939,7 +928,7 @@ final class BindingInitializationGenerator {
             KeyedBindingInitialization<String> {
         private final Variable<HashSet<?>> propertyNames;
 
-        LiteralKeyedBindingInitialization(CodeGenerator codegen, ExpressionVisitor mv,
+        LiteralKeyedBindingInitialization(CodeGenerator codegen, CodeVisitor mv,
                 Variable<? extends EnvironmentRecord> envRec, Variable<Object> value,
                 Variable<HashSet<?>> propertyNames) {
             super(codegen, mv, envRec, value);
@@ -974,7 +963,7 @@ final class BindingInitializationGenerator {
             KeyedBindingInitialization<ComputedPropertyName> {
         private final Variable<HashSet<?>> propertyNames;
 
-        ComputedKeyedBindingInitialization(CodeGenerator codegen, ExpressionVisitor mv,
+        ComputedKeyedBindingInitialization(CodeGenerator codegen, CodeVisitor mv,
                 Variable<? extends EnvironmentRecord> envRec, Variable<Object> value,
                 Variable<HashSet<?>> propertyNames) {
             super(codegen, mv, envRec, value);

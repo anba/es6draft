@@ -21,11 +21,9 @@ import com.github.anba.es6draft.runtime.internal.Source;
 public final class Module extends Program implements TopLevelNode<ModuleItem> {
     private final ModuleScope scope;
     private List<ModuleItem> statements;
-    private boolean syntheticNodes;
 
-    public Module(long beginPosition, long endPosition, Source source, ModuleScope scope,
-            List<ModuleItem> statements, EnumSet<CompatibilityOption> options,
-            EnumSet<Parser.Option> parserOptions) {
+    public Module(long beginPosition, long endPosition, Source source, ModuleScope scope, List<ModuleItem> statements,
+            EnumSet<CompatibilityOption> options, EnumSet<Parser.Option> parserOptions) {
         super(beginPosition, endPosition, source, options, parserOptions);
         this.scope = scope;
         this.statements = statements;
@@ -44,16 +42,6 @@ public final class Module extends Program implements TopLevelNode<ModuleItem> {
     @Override
     public void setStatements(List<ModuleItem> statements) {
         this.statements = statements;
-    }
-
-    @Override
-    public boolean hasSyntheticNodes() {
-        return syntheticNodes;
-    }
-
-    @Override
-    public void setSyntheticNodes(boolean syntheticNodes) {
-        this.syntheticNodes = syntheticNodes;
     }
 
     @Override

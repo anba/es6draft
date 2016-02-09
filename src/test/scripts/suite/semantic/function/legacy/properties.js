@@ -5,13 +5,16 @@
  * <https://github.com/anba/es6draft>
  */
 const {
-  assertSame, assertEquals, assertNotNull, assertNull, assertFalse, assertTrue, assertDataProperty
+  assertSame, assertNotSame, assertEquals,
+  assertFalse, assertTrue, assertNotNull, assertNull,
+  assertNotUndefined, assertDataProperty
 } = Assert;
 
 function MakeLegacyArguments(callee, ...args) {
-  var arguments = {callee, length: 0};
+  var arguments = {callee, length: 0, [Symbol.iterator]: [].values};
   Object.defineProperty(arguments, "length", {enumerable: false});
   Object.defineProperty(arguments, "callee", {enumerable: false});
+  Object.defineProperty(arguments, Symbol.iterator, {enumerable: false});
   Array.prototype.push.call(arguments, ...args);
   return arguments;
 }
@@ -26,13 +29,28 @@ function MakeLegacyArguments(callee, ...args) {
 // [[GetOwnProperty]] (2)
 {
   (function f() {
-    assertDataProperty(f, "arguments", {value: f.arguments, writable: true, enumerable: false, configurable: false});
+    let desc = Object.getOwnPropertyDescriptor(f, "arguments");
+    assertNotUndefined(desc);
+    assertNotNull(desc.value);
+    assertTrue(desc.writable);
+    assertFalse(desc.enumerable);
+    assertFalse(desc.configurable);
   })();
   (function f() {
-    assertDataProperty(f, "arguments", {value: f.arguments, writable: true, enumerable: false, configurable: false});
+    let desc = Object.getOwnPropertyDescriptor(f, "arguments");
+    assertNotUndefined(desc);
+    assertNotNull(desc.value);
+    assertTrue(desc.writable);
+    assertFalse(desc.enumerable);
+    assertFalse(desc.configurable);
   })(123);
   (function f() {
-    assertDataProperty(f, "arguments", {value: f.arguments, writable: true, enumerable: false, configurable: false});
+    let desc = Object.getOwnPropertyDescriptor(f, "arguments");
+    assertNotUndefined(desc);
+    assertNotNull(desc.value);
+    assertTrue(desc.writable);
+    assertFalse(desc.enumerable);
+    assertFalse(desc.configurable);
   })(123, 456);
   (function g() {
     (function f() {
@@ -82,7 +100,7 @@ function MakeLegacyArguments(callee, ...args) {
   (function f() {
     var oldArguments = f.arguments;
     assertTrue(Reflect.set(f, "arguments", 0));
-    assertSame(oldArguments, f.arguments);
+    assertNotSame(oldArguments, f.arguments);
   })();
   (function f() {
     var oldCaller = f.caller;

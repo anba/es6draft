@@ -23,6 +23,7 @@ import com.github.anba.es6draft.compiler.StatementGenerator.Completion;
 import com.github.anba.es6draft.compiler.assembler.FieldName;
 import com.github.anba.es6draft.compiler.assembler.Jump;
 import com.github.anba.es6draft.compiler.assembler.MethodName;
+import com.github.anba.es6draft.compiler.assembler.MutableValue;
 import com.github.anba.es6draft.compiler.assembler.Type;
 import com.github.anba.es6draft.compiler.assembler.Variable;
 import com.github.anba.es6draft.runtime.internal.ScriptIterator;
@@ -87,19 +88,18 @@ final class DestructuringAssignmentGenerator {
      * @param node
      *            the assignment pattern node
      * @param mv
-     *            the expression visitor
+     *            the code visitor
      */
-    static void DestructuringAssignment(CodeGenerator codegen, AssignmentPattern node,
-            ExpressionVisitor mv) {
+    static void DestructuringAssignment(CodeGenerator codegen, AssignmentPattern node, CodeVisitor mv) {
         DestructuringAssignmentEvaluation init = new DestructuringAssignmentEvaluation(codegen, mv);
         node.accept(init, null);
     }
 
     private static abstract class RuntimeSemantics<V> extends DefaultVoidNodeVisitor<V> {
         protected final CodeGenerator codegen;
-        protected final ExpressionVisitor mv;
+        protected final CodeVisitor mv;
 
-        RuntimeSemantics(CodeGenerator codegen, ExpressionVisitor mv) {
+        RuntimeSemantics(CodeGenerator codegen, CodeVisitor mv) {
             this.codegen = codegen;
             this.mv = mv;
         }
@@ -123,11 +123,11 @@ final class DestructuringAssignmentGenerator {
             node.accept(new ComputedKeyedDestructuringAssignmentEvaluation(codegen, mv, value, propertyNames), key);
         }
 
-        protected final ValType expression(Expression node, ExpressionVisitor mv) {
+        protected final ValType expression(Expression node, CodeVisitor mv) {
             return codegen.expression(node, mv);
         }
 
-        protected final ValType expressionBoxed(Expression node, ExpressionVisitor mv) {
+        protected final ValType expressionBoxed(Expression node, CodeVisitor mv) {
             return codegen.expressionBoxed(node, mv);
         }
 
@@ -141,7 +141,7 @@ final class DestructuringAssignmentGenerator {
      * 12.14.5.2 Runtime Semantics: DestructuringAssignmentEvaluation
      */
     private static final class DestructuringAssignmentEvaluation extends RuntimeSemantics<Void> {
-        DestructuringAssignmentEvaluation(CodeGenerator codegen, ExpressionVisitor mv) {
+        DestructuringAssignmentEvaluation(CodeGenerator codegen, CodeVisitor mv) {
             super(codegen, mv);
         }
 
@@ -156,10 +156,10 @@ final class DestructuringAssignmentGenerator {
             mv.invoke(Methods.ScriptRuntime_iterate);
             mv.store(iterator);
 
-            new IterationGenerator<ArrayAssignmentPattern, ExpressionVisitor>(codegen) {
+            new IterationGenerator<ArrayAssignmentPattern, CodeVisitor>(codegen) {
                 @Override
-                protected Completion iterationBody(ArrayAssignmentPattern node,
-                        Variable<ScriptIterator<?>> iterator, ExpressionVisitor mv) {
+                protected Completion iterationBody(ArrayAssignmentPattern node, Variable<ScriptIterator<?>> iterator,
+                        CodeVisitor mv) {
                     for (AssignmentElementItem element : node.getElements()) {
                         IteratorDestructuringAssignmentEvaluation(element, iterator);
                     }
@@ -167,20 +167,18 @@ final class DestructuringAssignmentGenerator {
                 }
 
                 @Override
-                protected void epilogue(ArrayAssignmentPattern node,
-                        Variable<ScriptIterator<?>> iterator, ExpressionVisitor mv) {
+                protected void epilogue(ArrayAssignmentPattern node, Variable<ScriptIterator<?>> iterator,
+                        CodeVisitor mv) {
                     IteratorClose(node, iterator, mv);
                 }
 
                 @Override
-                protected Variable<Object> enterIteration(ArrayAssignmentPattern node,
-                        ExpressionVisitor mv) {
+                protected MutableValue<Object> enterIteration(ArrayAssignmentPattern node, CodeVisitor mv) {
                     return mv.enterIteration();
                 }
 
                 @Override
-                protected List<TempLabel> exitIteration(ArrayAssignmentPattern node,
-                        ExpressionVisitor mv) {
+                protected List<TempLabel> exitIteration(ArrayAssignmentPattern node, CodeVisitor mv) {
                     return mv.exitIteration();
                 }
             }.generate(node, iterator, mv);
@@ -288,7 +286,7 @@ final class DestructuringAssignmentGenerator {
      */
     private static final class IteratorDestructuringAssignmentEvaluation extends
             RuntimeSemantics<Variable<ScriptIterator<?>>> {
-        IteratorDestructuringAssignmentEvaluation(CodeGenerator codegen, ExpressionVisitor mv) {
+        IteratorDestructuringAssignmentEvaluation(CodeGenerator codegen, CodeVisitor mv) {
             super(codegen, mv);
         }
 
@@ -386,7 +384,7 @@ final class DestructuringAssignmentGenerator {
             RuntimeSemantics<PROPERTYNAME> {
         private final Variable<Object> value;
 
-        KeyedDestructuringAssignmentEvaluation(CodeGenerator codegen, ExpressionVisitor mv, Variable<Object> value) {
+        KeyedDestructuringAssignmentEvaluation(CodeGenerator codegen, CodeVisitor mv, Variable<Object> value) {
             super(codegen, mv);
             this.value = value;
         }
@@ -500,8 +498,8 @@ final class DestructuringAssignmentGenerator {
             KeyedDestructuringAssignmentEvaluation<String> {
         private final Variable<HashSet<?>> propertyNames;
 
-        LiteralKeyedDestructuringAssignmentEvaluation(CodeGenerator codegen, ExpressionVisitor mv,
-                Variable<Object> value, Variable<HashSet<?>> propertyNames) {
+        LiteralKeyedDestructuringAssignmentEvaluation(CodeGenerator codegen, CodeVisitor mv, Variable<Object> value,
+                Variable<HashSet<?>> propertyNames) {
             super(codegen, mv, value);
             this.propertyNames = propertyNames;
         }
@@ -531,8 +529,8 @@ final class DestructuringAssignmentGenerator {
             KeyedDestructuringAssignmentEvaluation<ComputedPropertyName> {
         private final Variable<HashSet<?>> propertyNames;
 
-        ComputedKeyedDestructuringAssignmentEvaluation(CodeGenerator codegen, ExpressionVisitor mv,
-                Variable<Object> value, Variable<HashSet<?>> propertyNames) {
+        ComputedKeyedDestructuringAssignmentEvaluation(CodeGenerator codegen, CodeVisitor mv, Variable<Object> value,
+                Variable<HashSet<?>> propertyNames) {
             super(codegen, mv, value);
             this.propertyNames = propertyNames;
         }

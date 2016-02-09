@@ -12,7 +12,6 @@ import static com.github.anba.es6draft.runtime.internal.Errors.*;
 import static com.github.anba.es6draft.runtime.internal.TailCallInvocation.newTailCallInvocation;
 import static com.github.anba.es6draft.runtime.modules.ModuleSemantics.GetModuleNamespace;
 import static com.github.anba.es6draft.runtime.modules.ModuleSemantics.HostResolveImportedModule;
-import static com.github.anba.es6draft.runtime.objects.iteration.GeneratorAbstractOperations.GeneratorYield;
 import static com.github.anba.es6draft.runtime.types.PropertyDescriptor.AccessorPropertyDescriptor;
 import static com.github.anba.es6draft.runtime.types.PropertyDescriptor.FromPropertyDescriptor;
 import static com.github.anba.es6draft.runtime.types.PropertyDescriptor.ToPropertyDescriptor;
@@ -3099,105 +3098,6 @@ public final class ScriptRuntime {
         }
         /* step 6/12 */
         return closure;
-    }
-
-    /**
-     * 14.4 Generator Function Definitions
-     * <p>
-     * 14.4.14 Runtime Semantics: Evaluation
-     * <ul>
-     * <li>YieldExpression : yield
-     * <li>YieldExpression : yield AssignmentExpression
-     * </ul>
-     * 
-     * @param value
-     *            the value to yield
-     * @param cx
-     *            the execution context
-     * @return the result value
-     * @throws ReturnValue
-     *             to signal an abrupt Return completion
-     */
-    public static Object yield(Object value, ExecutionContext cx) throws ReturnValue {
-        return GeneratorYield(cx, CreateIterResultObject(cx, value, false));
-    }
-
-    /**
-     * 14.4 Generator Function Definitions
-     * <p>
-     * 14.4.14 Runtime Semantics: Evaluation
-     * <ul>
-     * <li>YieldExpression : yield * AssignmentExpression
-     * </ul>
-     * 
-     * @param value
-     *            the value to yield
-     * @param cx
-     *            the execution context
-     * @return the result value
-     * @throws ReturnValue
-     *             to signal an abrupt Return completion
-     */
-    public static Object delegatedYield(Object value, ExecutionContext cx) throws ReturnValue {
-        /* steps 1-2 (generated code) */
-        /* steps 3-4 */
-        ScriptObject iterator = GetIterator(cx, value);
-        /* step 5 */
-        Object received = UNDEFINED;
-        /* step 6 */
-        outer: for (;;) {
-            /* steps 6.a.i-ii */
-            ScriptObject innerResult = IteratorNext(cx, iterator, received);
-            /* steps 6.a.iii-iv */
-            boolean done = IteratorComplete(cx, innerResult);
-            /* step 6.a.v */
-            if (done) {
-                return IteratorValue(cx, innerResult);
-            }
-            inner: for (;;) {
-                try {
-                    /* step 6.a.vi */
-                    received = GeneratorYield(cx, innerResult);
-                    continue outer;
-                } catch (ScriptException e) {
-                    /* step 6.b */
-                    /* steps 6.b.i-ii, 6.b.iii.1-4, 6.b.iv */
-                    ScriptObject innerThrowResult = yieldThrowCompletion(cx, iterator, e);
-                    /* steps 6.b.iii.5-6 */
-                    boolean doneThrow = IteratorComplete(cx, innerThrowResult);
-                    /* step 6.b.iii.7 */
-                    if (doneThrow) {
-                        /* step 6.b.iii.7.a */
-                        Object innerResultValue = IteratorValue(cx, innerThrowResult);
-                        throw new ReturnValue(innerResultValue);
-                    }
-                    /* step 6.b.iii.8 */
-                    // GeneratorYield
-                    innerResult = innerThrowResult;
-                    continue inner;
-                } catch (ReturnValue e) {
-                    /* step 6.c */
-                    /* steps 6.c.i-iii, 6.c.v-vii */
-                    ScriptObject innerReturnResult = yieldReturnCompletion(cx, iterator, e);
-                    /* step 6.c.iv */
-                    if (innerReturnResult == null) {
-                        throw e;
-                    }
-                    /* steps 6.c.viii-ix */
-                    boolean doneReturn = IteratorComplete(cx, innerReturnResult);
-                    /* step 6.c.x */
-                    if (doneReturn) {
-                        /* step 6.c.x.1 */
-                        Object innerResultValue = IteratorValue(cx, innerReturnResult);
-                        throw new ReturnValue(innerResultValue);
-                    }
-                    /* step 6.c.xi */
-                    // GeneratorYield
-                    innerResult = innerReturnResult;
-                    continue inner;
-                }
-            }
-        }
     }
 
     /**

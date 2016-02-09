@@ -15,14 +15,14 @@ import com.github.anba.es6draft.ast.scope.BlockScope;
  * <li>Extension: 'catch-if' node
  * </ul>
  */
-public final class GuardedCatchNode extends AstNode implements ScopedNode {
+public final class GuardedCatchNode extends AstNode implements CatchClause {
     private final BlockScope scope;
     private final Binding catchParameter;
     private final BlockStatement catchBlock;
     private final Expression guard;
 
-    public GuardedCatchNode(long beginPosition, long endPosition, BlockScope scope,
-            Binding catchParameter, Expression guard, BlockStatement catchBlock) {
+    public GuardedCatchNode(long beginPosition, long endPosition, BlockScope scope, Binding catchParameter,
+            Expression guard, BlockStatement catchBlock) {
         super(beginPosition, endPosition);
         this.scope = scope;
         this.catchParameter = catchParameter;
@@ -35,6 +35,7 @@ public final class GuardedCatchNode extends AstNode implements ScopedNode {
         return scope;
     }
 
+    @Override
     public Binding getCatchParameter() {
         return catchParameter;
     }
@@ -43,6 +44,7 @@ public final class GuardedCatchNode extends AstNode implements ScopedNode {
         return guard;
     }
 
+    @Override
     public BlockStatement getCatchBlock() {
         return catchBlock;
     }

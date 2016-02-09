@@ -38,8 +38,7 @@ import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
  * <li>15.1.8 Runtime Semantics: GlobalDeclarationInstantiation (script, env)
  * </ul>
  */
-final class GlobalDeclarationInstantiationGenerator extends
-        DeclarationBindingInstantiationGenerator {
+final class GlobalDeclarationInstantiationGenerator extends DeclarationBindingInstantiationGenerator {
     private static final int EXECUTION_CONTEXT = 0;
 
     private static final class GlobalDeclInitMethodGenerator extends InstructionVisitor {

@@ -22,7 +22,6 @@ import com.github.anba.es6draft.ast.scope.Name;
 import com.github.anba.es6draft.ast.scope.Scope;
 import com.github.anba.es6draft.ast.scope.ScriptScope;
 import com.github.anba.es6draft.ast.scope.WithScope;
-import com.github.anba.es6draft.compiler.CodeGenerator.FunctionName;
 import com.github.anba.es6draft.compiler.assembler.FieldName;
 import com.github.anba.es6draft.compiler.assembler.Jump;
 import com.github.anba.es6draft.compiler.assembler.MethodName;
@@ -46,8 +45,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 /**
  * Abstract base class for specialised generators
  */
-abstract class DefaultCodeGenerator<RETURN, VISITOR extends ExpressionVisitor> extends
-        DefaultNodeVisitor<RETURN, VISITOR> {
+abstract class DefaultCodeGenerator<RETURN> extends DefaultNodeVisitor<RETURN, CodeVisitor> {
     private static final class Fields {
         static final FieldName Double_NaN = FieldName.findStatic(Types.Double, "NaN",
                 Type.DOUBLE_TYPE);
@@ -146,7 +144,7 @@ abstract class DefaultCodeGenerator<RETURN, VISITOR extends ExpressionVisitor> e
         // class: AsyncAbstractOperations
         static final MethodName AsyncAbstractOperations_AsyncFunctionAwait = MethodName.findStatic(
                 Types.AsyncAbstractOperations, "AsyncFunctionAwait",
-                Type.methodType(Types.Object, Types.ExecutionContext, Types.Object));
+                Type.methodType(Type.VOID_TYPE, Types.ExecutionContext, Types.Object));
 
         // class: Boolean
         static final MethodName Boolean_toString = MethodName.findStatic(Types.Boolean, "toString",
@@ -225,10 +223,6 @@ abstract class DefaultCodeGenerator<RETURN, VISITOR extends ExpressionVisitor> e
                 Types.ScriptRuntime, "CheckCallable",
                 Type.methodType(Types.Callable, Types.Object, Types.ExecutionContext));
 
-        static final MethodName ScriptRuntime_delegatedYield = MethodName.findStatic(
-                Types.ScriptRuntime, "delegatedYield",
-                Type.methodType(Types.Object, Types.Object, Types.ExecutionContext));
-
         static final MethodName ScriptRuntime_EvaluateConstructorMethod = MethodName.findStatic(
                 Types.ScriptRuntime, "EvaluateConstructorMethod", Type.methodType(
                         Types.OrdinaryConstructorFunction, Types.ScriptObject,
@@ -255,9 +249,6 @@ abstract class DefaultCodeGenerator<RETURN, VISITOR extends ExpressionVisitor> e
         static final MethodName ScriptRuntime_getDefaultClassProto = MethodName.findStatic(
                 Types.ScriptRuntime, "getDefaultClassProto",
                 Type.methodType(Types.ScriptObject_, Types.ExecutionContext));
-
-        static final MethodName ScriptRuntime_yield = MethodName.findStatic(Types.ScriptRuntime,
-                "yield", Type.methodType(Types.Object, Types.Object, Types.ExecutionContext));
 
         static final MethodName ScriptRuntime_yieldThrowCompletion = MethodName.findStatic(
                 Types.ScriptRuntime, "yieldThrowCompletion", Type.methodType(Types.ScriptObject,
@@ -291,10 +282,10 @@ abstract class DefaultCodeGenerator<RETURN, VISITOR extends ExpressionVisitor> e
      * @param node
      *            the expression node
      * @param mv
-     *            the expression visitor
+     *            the code visitor
      * @return the value type returned by the expression
      */
-    protected final ValType expression(Expression node, ExpressionVisitor mv) {
+    protected final ValType expression(Expression node, CodeVisitor mv) {
         return codegen.expression(node, mv);
     }
 
@@ -304,10 +295,10 @@ abstract class DefaultCodeGenerator<RETURN, VISITOR extends ExpressionVisitor> e
      * @param node
      *            the expression node
      * @param mv
-     *            the expression visitor
+     *            the code visitor
      * @return the value type returned by the expression
      */
-    protected final ValType expressionBoxed(Expression node, ExpressionVisitor mv) {
+    protected final ValType expressionBoxed(Expression node, CodeVisitor mv) {
         return codegen.expressionBoxed(node, mv);
     }
 
@@ -317,11 +308,10 @@ abstract class DefaultCodeGenerator<RETURN, VISITOR extends ExpressionVisitor> e
      * @param node
      *            the abrupt node
      * @param mv
-     *            the statement visitor
+     *            the code visitor
      * @return the variable holding the saved environment or {@code null}
      */
-    protected final Variable<LexicalEnvironment<?>> saveEnvironment(AbruptNode node,
-            StatementVisitor mv) {
+    protected final Variable<LexicalEnvironment<?>> saveEnvironment(AbruptNode node, CodeVisitor mv) {
         EnumSet<Abrupt> abrupt = node.getAbrupt();
         if (abrupt.contains(Abrupt.Break) || abrupt.contains(Abrupt.Continue)) {
             return saveEnvironment(mv);
@@ -333,10 +323,10 @@ abstract class DefaultCodeGenerator<RETURN, VISITOR extends ExpressionVisitor> e
      * stack: [] {@literal ->} []
      * 
      * @param mv
-     *            the statement visitor
+     *            the code visitor
      * @return the variable holding the saved environment
      */
-    protected final Variable<LexicalEnvironment<?>> saveEnvironment(StatementVisitor mv) {
+    protected final Variable<LexicalEnvironment<?>> saveEnvironment(CodeVisitor mv) {
         Variable<LexicalEnvironment<?>> savedEnv = mv.newVariable("savedEnv",
                 LexicalEnvironment.class).uncheckedCast();
         getLexicalEnvironment(mv);
@@ -350,10 +340,9 @@ abstract class DefaultCodeGenerator<RETURN, VISITOR extends ExpressionVisitor> e
      * @param savedEnv
      *            the variable which holds the saved environment
      * @param mv
-     *            the statement visitor
+     *            the code visitor
      */
-    protected final void restoreEnvironment(Variable<LexicalEnvironment<?>> savedEnv,
-            StatementVisitor mv) {
+    protected final void restoreEnvironment(Variable<LexicalEnvironment<?>> savedEnv, CodeVisitor mv) {
         mv.loadExecutionContext();
         mv.load(savedEnv);
         mv.invoke(Methods.ExecutionContext_restoreLexicalEnvironment);
@@ -365,10 +354,9 @@ abstract class DefaultCodeGenerator<RETURN, VISITOR extends ExpressionVisitor> e
      * @param savedEnv
      *            the variable which holds the saved environment
      * @param mv
-     *            the statement visitor
+     *            the code visitor
      */
-    protected final void replaceLexicalEnvironment(Variable<LexicalEnvironment<?>> savedEnv,
-            StatementVisitor mv) {
+    protected final void replaceLexicalEnvironment(Variable<LexicalEnvironment<?>> savedEnv, CodeVisitor mv) {
         mv.loadExecutionContext();
         mv.load(savedEnv);
         mv.invoke(Methods.ExecutionContext_replaceLexicalEnvironment);
@@ -378,9 +366,9 @@ abstract class DefaultCodeGenerator<RETURN, VISITOR extends ExpressionVisitor> e
      * stack: [] {@literal ->} [lexEnv]
      * 
      * @param mv
-     *            the expression visitor
+     *            the code visitor
      */
-    protected final void getLexicalEnvironment(ExpressionVisitor mv) {
+    protected final void getLexicalEnvironment(CodeVisitor mv) {
         mv.loadExecutionContext();
         mv.invoke(Methods.ExecutionContext_getLexicalEnvironment);
     }
@@ -391,10 +379,10 @@ abstract class DefaultCodeGenerator<RETURN, VISITOR extends ExpressionVisitor> e
      * @param envRec
      *            the variable which holds the lexical environment record
      * @param mv
-     *            the expression visitor
+     *            the code visitor
      */
-    protected final <R extends EnvironmentRecord> void getLexicalEnvironmentRecord(
-            Variable<? extends R> envRec, ExpressionVisitor mv) {
+    protected final <R extends EnvironmentRecord> void getLexicalEnvironmentRecord(Variable<? extends R> envRec,
+            CodeVisitor mv) {
         mv.loadExecutionContext();
         mv.invoke(Methods.ExecutionContext_getLexicalEnvironmentRecord);
         if (envRec.getType() != Types.EnvironmentRecord) {
@@ -411,10 +399,9 @@ abstract class DefaultCodeGenerator<RETURN, VISITOR extends ExpressionVisitor> e
      * @param type
      *            the environment record type
      * @param mv
-     *            the expression visitor
+     *            the code visitor
      */
-    protected final <R extends EnvironmentRecord> Value<R> getLexicalEnvironmentRecord(Type type,
-            ExpressionVisitor mv) {
+    protected final <R extends EnvironmentRecord> Value<R> getLexicalEnvironmentRecord(Type type, CodeVisitor mv) {
         return asm -> {
             mv.loadExecutionContext();
             mv.invoke(Methods.ExecutionContext_getLexicalEnvironmentRecord);
@@ -430,10 +417,10 @@ abstract class DefaultCodeGenerator<RETURN, VISITOR extends ExpressionVisitor> e
      * @param envRec
      *            the variable which holds the variable environment record
      * @param mv
-     *            the expression visitor
+     *            the code visitor
      */
-    protected final <R extends EnvironmentRecord> void getVariableEnvironmentRecord(
-            Variable<? extends R> envRec, ExpressionVisitor mv) {
+    protected final <R extends EnvironmentRecord> void getVariableEnvironmentRecord(Variable<? extends R> envRec,
+            CodeVisitor mv) {
         mv.loadExecutionContext();
         mv.invoke(Methods.ExecutionContext_getVariableEnvironmentRecord);
         if (envRec.getType() != Types.EnvironmentRecord) {
@@ -450,10 +437,9 @@ abstract class DefaultCodeGenerator<RETURN, VISITOR extends ExpressionVisitor> e
      * @param type
      *            the environment record type
      * @param mv
-     *            the expression visitor
+     *            the code visitor
      */
-    protected final <R extends EnvironmentRecord> Value<R> getVariableEnvironmentRecord(Type type,
-            ExpressionVisitor mv) {
+    protected final <R extends EnvironmentRecord> Value<R> getVariableEnvironmentRecord(Type type, CodeVisitor mv) {
         return asm -> {
             mv.loadExecutionContext();
             mv.invoke(Methods.ExecutionContext_getVariableEnvironmentRecord);
@@ -467,11 +453,10 @@ abstract class DefaultCodeGenerator<RETURN, VISITOR extends ExpressionVisitor> e
      * Returns the current environment record type.
      * 
      * @param mv
-     *            the expression visitor
+     *            the code visitor
      * @return the current environment record type
      */
-    protected final Class<? extends EnvironmentRecord> getEnvironmentRecordClass(
-            ExpressionVisitor mv) {
+    protected final Class<? extends EnvironmentRecord> getEnvironmentRecordClass(CodeVisitor mv) {
         Scope scope = mv.getScope();
         while (!scope.isPresent()) {
             scope = scope.getParent();
@@ -495,11 +480,11 @@ abstract class DefaultCodeGenerator<RETURN, VISITOR extends ExpressionVisitor> e
      * stack: [obj] {@literal ->} [lexEnv]
      * 
      * @param mv
-     *            the expression visitor
+     *            the code visitor
      * @param withEnvironment
      *            the withEnvironment flag
      */
-    protected final void newObjectEnvironment(ExpressionVisitor mv, boolean withEnvironment) {
+    protected final void newObjectEnvironment(CodeVisitor mv, boolean withEnvironment) {
         mv.loadExecutionContext();
         mv.invoke(Methods.ExecutionContext_getLexicalEnvironment);
         mv.iconst(withEnvironment);
@@ -512,9 +497,9 @@ abstract class DefaultCodeGenerator<RETURN, VISITOR extends ExpressionVisitor> e
      * stack: [] {@literal ->} [lexEnv]
      * 
      * @param mv
-     *            the expression visitor
+     *            the code visitor
      */
-    protected final void newDeclarativeEnvironment(BlockScope scope, ExpressionVisitor mv) {
+    protected final void newDeclarativeEnvironment(BlockScope scope, CodeVisitor mv) {
         mv.loadExecutionContext();
         mv.invoke(Methods.ExecutionContext_getLexicalEnvironment);
         mv.invoke(Methods.LexicalEnvironment_newDeclarativeEnvironment);
@@ -526,9 +511,9 @@ abstract class DefaultCodeGenerator<RETURN, VISITOR extends ExpressionVisitor> e
      * stack: [] {@literal ->} [lexEnv]
      * 
      * @param mv
-     *            the expression visitor
+     *            the code visitor
      */
-    protected final void newCatchDeclarativeEnvironment(BlockScope scope, ExpressionVisitor mv) {
+    protected final void newCatchDeclarativeEnvironment(BlockScope scope, CodeVisitor mv) {
         mv.loadExecutionContext();
         mv.invoke(Methods.ExecutionContext_getLexicalEnvironment);
         mv.invoke(Methods.LexicalEnvironment_newCatchDeclarativeEnvironment);
@@ -538,9 +523,9 @@ abstract class DefaultCodeGenerator<RETURN, VISITOR extends ExpressionVisitor> e
      * stack: [] {@literal ->} [lexEnv]
      * 
      * @param mv
-     *            the expression visitor
+     *            the code visitor
      */
-    protected final void cloneDeclarativeEnvironment(ExpressionVisitor mv) {
+    protected final void cloneDeclarativeEnvironment(CodeVisitor mv) {
         mv.loadExecutionContext();
         mv.invoke(Methods.ExecutionContext_getLexicalEnvironment);
         mv.invoke(Methods.LexicalEnvironment_cloneDeclarativeEnvironment);
@@ -550,9 +535,9 @@ abstract class DefaultCodeGenerator<RETURN, VISITOR extends ExpressionVisitor> e
      * stack: [lexEnv] {@literal ->} []
      * 
      * @param mv
-     *            the expression visitor
+     *            the code visitor
      */
-    protected final void pushLexicalEnvironment(ExpressionVisitor mv) {
+    protected final void pushLexicalEnvironment(CodeVisitor mv) {
         mv.loadExecutionContext();
         mv.swap();
         mv.invoke(Methods.ExecutionContext_pushLexicalEnvironment);
@@ -564,9 +549,9 @@ abstract class DefaultCodeGenerator<RETURN, VISITOR extends ExpressionVisitor> e
      * stack: [] {@literal ->} []
      * 
      * @param mv
-     *            the expression visitor
+     *            the code visitor
      */
-    protected final void popLexicalEnvironment(ExpressionVisitor mv) {
+    protected final void popLexicalEnvironment(CodeVisitor mv) {
         mv.loadExecutionContext();
         mv.invoke(Methods.ExecutionContext_popLexicalEnvironment);
     }
@@ -620,9 +605,9 @@ abstract class DefaultCodeGenerator<RETURN, VISITOR extends ExpressionVisitor> e
      * stack: [object] {@literal ->} [boolean]
      * 
      * @param mv
-     *            the expression visitor
+     *            the code visitor
      */
-    protected final void isUndefinedOrNull(ExpressionVisitor mv) {
+    protected final void isUndefinedOrNull(CodeVisitor mv) {
         mv.invoke(Methods.Type_isUndefinedOrNull);
     }
 
@@ -844,10 +829,10 @@ abstract class DefaultCodeGenerator<RETURN, VISITOR extends ExpressionVisitor> e
      * @param from
      *            the input value type
      * @param mv
-     *            the expression visitor
+     *            the code visitor
      * @return the returned value type
      */
-    protected static final ValType ToPrimitive(ValType from, ExpressionVisitor mv) {
+    protected static final ValType ToPrimitive(ValType from, CodeVisitor mv) {
         switch (from) {
         case Number:
         case Number_int:
@@ -876,9 +861,9 @@ abstract class DefaultCodeGenerator<RETURN, VISITOR extends ExpressionVisitor> e
      * @param from
      *            the input value type
      * @param mv
-     *            the expression visitor
+     *            the code visitor
      */
-    protected static final void ToBoolean(ValType from, ExpressionVisitor mv) {
+    protected static final void ToBoolean(ValType from, CodeVisitor mv) {
         switch (from) {
         case Number:
             mv.invoke(Methods.AbstractOperations_ToBoolean_double);
@@ -929,9 +914,9 @@ abstract class DefaultCodeGenerator<RETURN, VISITOR extends ExpressionVisitor> e
      * @param from
      *            the input value type
      * @param mv
-     *            the expression visitor
+     *            the code visitor
      */
-    protected static final void ToNumber(ValType from, ExpressionVisitor mv) {
+    protected static final void ToNumber(ValType from, CodeVisitor mv) {
         switch (from) {
         case Number:
             return;
@@ -974,9 +959,9 @@ abstract class DefaultCodeGenerator<RETURN, VISITOR extends ExpressionVisitor> e
      * @param from
      *            the input value type
      * @param mv
-     *            the expression visitor
+     *            the code visitor
      */
-    protected static final void ToInt32(ValType from, ExpressionVisitor mv) {
+    protected static final void ToInt32(ValType from, CodeVisitor mv) {
         switch (from) {
         case Number:
             mv.invoke(Methods.AbstractOperations_ToInt32_double);
@@ -1016,9 +1001,9 @@ abstract class DefaultCodeGenerator<RETURN, VISITOR extends ExpressionVisitor> e
      * @param from
      *            the input value type
      * @param mv
-     *            the expression visitor
+     *            the code visitor
      */
-    protected static final void ToUint32(ValType from, ExpressionVisitor mv) {
+    protected static final void ToUint32(ValType from, CodeVisitor mv) {
         switch (from) {
         case Number:
             mv.invoke(Methods.AbstractOperations_ToUint32_double);
@@ -1061,9 +1046,9 @@ abstract class DefaultCodeGenerator<RETURN, VISITOR extends ExpressionVisitor> e
      * @param from
      *            the input value type
      * @param mv
-     *            the expression visitor
+     *            the code visitor
      */
-    protected static final void ToString(ValType from, ExpressionVisitor mv) {
+    protected static final void ToString(ValType from, CodeVisitor mv) {
         switch (from) {
         case Number:
             mv.invoke(Methods.AbstractOperations_ToString_double);
@@ -1106,9 +1091,9 @@ abstract class DefaultCodeGenerator<RETURN, VISITOR extends ExpressionVisitor> e
      * @param from
      *            the input value type
      * @param mv
-     *            the expression visitor
+     *            the code visitor
      */
-    protected static final void ToFlatString(ValType from, ExpressionVisitor mv) {
+    protected static final void ToFlatString(ValType from, CodeVisitor mv) {
         switch (from) {
         case Number:
             mv.invoke(Methods.AbstractOperations_ToString_double);
@@ -1152,9 +1137,9 @@ abstract class DefaultCodeGenerator<RETURN, VISITOR extends ExpressionVisitor> e
      * @param from
      *            the input value type
      * @param mv
-     *            the expression visitor
+     *            the code visitor
      */
-    protected static final void ToObject(ValType from, ExpressionVisitor mv) {
+    protected static final void ToObject(ValType from, CodeVisitor mv) {
         switch (from) {
         case Number:
         case Number_int:
@@ -1188,9 +1173,9 @@ abstract class DefaultCodeGenerator<RETURN, VISITOR extends ExpressionVisitor> e
      * @param from
      *            the input value type
      * @param mv
-     *            the expression visitor
+     *            the code visitor
      */
-    protected static final void ToObject(Node node, ValType from, ExpressionVisitor mv) {
+    protected static final void ToObject(Node node, ValType from, CodeVisitor mv) {
         switch (from) {
         case Number:
         case Number_int:
@@ -1223,9 +1208,9 @@ abstract class DefaultCodeGenerator<RETURN, VISITOR extends ExpressionVisitor> e
      * @param from
      *            the input value type
      * @param mv
-     *            the expression visitor
+     *            the code visitor
      */
-    protected static final ValType ToPropertyKey(ValType from, ExpressionVisitor mv) {
+    protected static final ValType ToPropertyKey(ValType from, CodeVisitor mv) {
         switch (from) {
         case Number:
             mv.invoke(Methods.AbstractOperations_ToString_double);
@@ -1275,9 +1260,9 @@ abstract class DefaultCodeGenerator<RETURN, VISITOR extends ExpressionVisitor> e
      * @param propertyKeyType
      *            the property key value type
      * @param mv
-     *            the expression visitor
+     *            the code visitor
      */
-    protected static void SetFunctionName(Node node, ValType propertyKeyType, ExpressionVisitor mv) {
+    protected static void SetFunctionName(Node node, ValType propertyKeyType, CodeVisitor mv) {
         Jump hasOwnName = null;
         switch (hasOwnNameProperty(node)) {
         case HasOwn:
@@ -1329,9 +1314,9 @@ abstract class DefaultCodeGenerator<RETURN, VISITOR extends ExpressionVisitor> e
      * @param name
      *            the new function name
      * @param mv
-     *            the expression visitor
+     *            the code visitor
      */
-    protected static void SetFunctionName(Node node, Name name, ExpressionVisitor mv) {
+    protected static void SetFunctionName(Node node, Name name, CodeVisitor mv) {
         SetFunctionName(node, name.getIdentifier(), mv);
     }
 
@@ -1343,9 +1328,9 @@ abstract class DefaultCodeGenerator<RETURN, VISITOR extends ExpressionVisitor> e
      * @param name
      *            the new function name
      * @param mv
-     *            the expression visitor
+     *            the code visitor
      */
-    protected static void SetFunctionName(Node node, String name, ExpressionVisitor mv) {
+    protected static void SetFunctionName(Node node, String name, CodeVisitor mv) {
         Jump hasOwnName = null;
         switch (hasOwnNameProperty(node)) {
         case HasOwn:
@@ -1369,7 +1354,7 @@ abstract class DefaultCodeGenerator<RETURN, VISITOR extends ExpressionVisitor> e
         }
     }
 
-    private static void emitHasOwnNameProperty(ExpressionVisitor mv) {
+    private static void emitHasOwnNameProperty(CodeVisitor mv) {
         // stack: [function] -> [function, cx, function, "name"]
         mv.dup();
         mv.loadExecutionContext();
@@ -1428,10 +1413,9 @@ abstract class DefaultCodeGenerator<RETURN, VISITOR extends ExpressionVisitor> e
      * @param className
      *            the class name or {@code null} if not present
      * @param mv
-     *            the expression visitor
+     *            the code visitor
      */
-    protected final void ClassDefinitionEvaluation(ClassDefinition def, Name className,
-            ExpressionVisitor mv) {
+    protected final void ClassDefinitionEvaluation(ClassDefinition def, Name className, CodeVisitor mv) {
         mv.enterVariableScope();
         Variable<ArrayList<Callable>> classDecorators = null;
         boolean hasClassDecorators = !def.getDecorators().isEmpty();
@@ -1496,9 +1480,9 @@ abstract class DefaultCodeGenerator<RETURN, VISITOR extends ExpressionVisitor> e
         // stack: [constructorParent, proto] -> [constructorParent, proto, <rti>]
         MethodDefinition constructor = ConstructorMethod(def);
         assert constructor != null;
-        codegen.compile(def);
+        MethodName method = codegen.compile(def);
         // Runtime Semantics: Evaluation -> MethodDefinition
-        mv.invoke(codegen.methodDesc(constructor, FunctionName.RTI));
+        mv.invoke(method);
 
         // step 10 (not applicable)
         // steps 11-18
@@ -1563,7 +1547,7 @@ abstract class DefaultCodeGenerator<RETURN, VISITOR extends ExpressionVisitor> e
         mv.exitClassDefinition();
     }
 
-    protected final <T> Variable<ArrayList<T>> newDecoratorVariable(String name, ExpressionVisitor mv) {
+    protected final <T> Variable<ArrayList<T>> newDecoratorVariable(String name, CodeVisitor mv) {
         Variable<ArrayList<T>> var = mv.newVariable(name, ArrayList.class).uncheckedCast();
         mv.anew(Types.ArrayList, Methods.ArrayList_init);
         mv.store(var);
@@ -1571,21 +1555,21 @@ abstract class DefaultCodeGenerator<RETURN, VISITOR extends ExpressionVisitor> e
     }
 
     protected final void addDecoratorObject(Variable<ArrayList<Object>> var, Variable<? extends ScriptObject> object,
-            ExpressionVisitor mv) {
+            CodeVisitor mv) {
         mv.load(var);
         mv.load(object);
         mv.invoke(Methods.ArrayList_add);
         mv.pop();
     }
 
-    protected final void addDecoratorKey(Variable<ArrayList<Object>> var, String propertyKey, ExpressionVisitor mv) {
+    protected final void addDecoratorKey(Variable<ArrayList<Object>> var, String propertyKey, CodeVisitor mv) {
         mv.load(var);
         mv.aconst(propertyKey);
         mv.invoke(Methods.ArrayList_add);
         mv.pop();
     }
 
-    protected final void addDecoratorKey(Variable<ArrayList<Object>> var, ValType type, ExpressionVisitor mv) {
+    protected final void addDecoratorKey(Variable<ArrayList<Object>> var, ValType type, CodeVisitor mv) {
         mv.dup(type);
         mv.load(var);
         mv.swap(type.toType(), Types.ArrayList);
@@ -1594,7 +1578,7 @@ abstract class DefaultCodeGenerator<RETURN, VISITOR extends ExpressionVisitor> e
     }
 
     protected final <T> void evaluateDecorators(Variable<ArrayList<T>> var, List<Expression> decorators,
-            ExpressionVisitor mv) {
+            CodeVisitor mv) {
         for (Expression decorator : decorators) {
             mv.load(var);
             expressionBoxed(decorator, mv);
@@ -1619,127 +1603,124 @@ abstract class DefaultCodeGenerator<RETURN, VISITOR extends ExpressionVisitor> e
      * @param node
      *            the expression node
      * @param mv
-     *            the expression visitor
+     *            the code visitor
      */
-    protected final void delegatedYield(Expression node, ExpressionVisitor mv) {
+    protected final void delegatedYield(Expression node, CodeVisitor mv) {
+        Jump iteratorNext = new Jump();
+        Jump generatorYield = new Jump();
+        Jump generatorYieldOrReturn = new Jump();
+        Jump done = new Jump();
+
         mv.lineInfo(node);
-        if (mv.isResumable() && !codegen.isEnabled(Compiler.Option.NoResume)) {
-            assert mv.hasStack();
-            Jump iteratorNext = new Jump();
-            Jump generatorYield = new Jump();
-            Jump generatorYieldOrReturn = new Jump();
-            Jump done = new Jump();
+        mv.enterVariableScope();
+        Variable<ScriptObject> iterator = mv.newVariable("iterator", ScriptObject.class);
+        Variable<ScriptObject> innerResult = mv.newVariable("innerResult", ScriptObject.class);
+        Variable<Object> received = mv.newVariable("received", Object.class);
 
-            mv.enterVariableScope();
-            Variable<ScriptObject> iterator = mv.newVariable("iterator", ScriptObject.class);
-            Variable<ScriptObject> innerResult = mv.newVariable("innerResult", ScriptObject.class);
-            Variable<Object> received = mv.newVariable("received", Object.class);
+        /* steps 3-4 */
+        // stack: [value] -> []
+        mv.loadExecutionContext();
+        mv.swap();
+        mv.invoke(Methods.AbstractOperations_GetIterator);
+        mv.store(iterator);
 
-            /* steps 3-4 */
-            // stack: [value] -> []
-            mv.loadExecutionContext();
-            mv.swap();
-            mv.invoke(Methods.AbstractOperations_GetIterator);
-            mv.store(iterator);
+        /* step 5 */
+        // stack: [] -> []
+        mv.loadUndefined();
+        mv.store(received);
 
-            /* step 5 */
-            // stack: [] -> []
-            mv.loadUndefined();
-            mv.store(received);
+        /* step 6.a.i-6.a.ii */
+        // stack: [] -> []
+        mv.mark(iteratorNext);
+        mv.loadExecutionContext();
+        mv.load(iterator);
+        mv.load(received);
+        mv.invoke(Methods.AbstractOperations_IteratorNext);
+        mv.store(innerResult);
 
-            /* step 6.a.i-6.a.ii */
-            // stack: [] -> []
-            mv.mark(iteratorNext);
+        /* steps 6.a.iii-6.a.v */
+        // stack: [] -> []
+        mv.loadExecutionContext();
+        mv.load(innerResult);
+        mv.invoke(Methods.AbstractOperations_IteratorComplete);
+        mv.ifne(done);
+
+        /* step 6.a.vi */
+        // stack: [] -> [Object(innerResult)]
+        // force stack top to Object-type
+        mv.mark(generatorYield);
+        mv.load(innerResult);
+        mv.checkcast(Types.Object);
+        mv.suspend();
+        mv.store(received);
+
+        /* step 6.b */
+        Jump isException = new Jump();
+        mv.load(received);
+        mv.instanceOf(Types.ScriptException);
+        mv.ifeq(isException);
+        {
+            /* steps 6.b.iii.1-4, 6.b.iv */
             mv.loadExecutionContext();
             mv.load(iterator);
             mv.load(received);
-            mv.invoke(Methods.AbstractOperations_IteratorNext);
+            mv.checkcast(Types.ScriptException);
+            mv.invoke(Methods.ScriptRuntime_yieldThrowCompletion);
             mv.store(innerResult);
 
-            /* steps 6.a.iii-6.a.v */
-            // stack: [] -> []
+            mv.goTo(generatorYieldOrReturn);
+        }
+        mv.mark(isException);
+
+        /* step 6.c */
+        mv.load(received);
+        mv.instanceOf(Types.ReturnValue);
+        mv.ifeq(iteratorNext);
+        {
+            /* steps 6.c.i-vii */
             mv.loadExecutionContext();
-            mv.load(innerResult);
-            mv.invoke(Methods.AbstractOperations_IteratorComplete);
-            mv.ifne(done);
-
-            /* step 6.a.vi */
-            // stack: [] -> [Object(innerResult)]
-            // force stack top to Object-type
-            mv.mark(generatorYield);
-            mv.load(innerResult);
-            mv.checkcast(Types.Object);
-            mv.newResumptionPoint();
-            mv.store(received);
-
-            /* step 6.b */
-            Jump isException = new Jump();
+            mv.load(iterator);
             mv.load(received);
-            mv.instanceOf(Types.ScriptException);
-            mv.ifeq(isException);
+            mv.checkcast(Types.ReturnValue);
+            mv.invoke(Methods.ScriptRuntime_yieldReturnCompletion);
+            mv.store(innerResult);
+
+            mv.load(innerResult);
+            mv.ifnonnull(generatorYieldOrReturn);
             {
-                /* steps 6.b.iii.1-4, 6.b.iv */
-                mv.loadExecutionContext();
-                mv.load(iterator);
-                mv.load(received);
-                mv.checkcast(Types.ScriptException);
-                mv.invoke(Methods.ScriptRuntime_yieldThrowCompletion);
-                mv.store(innerResult);
-
-                mv.goTo(generatorYieldOrReturn);
-            }
-            mv.mark(isException);
-
-            /* step 6.c */
-            mv.load(received);
-            mv.instanceOf(Types.ReturnValue);
-            mv.ifeq(iteratorNext);
-            {
-                /* steps 6.c.i-vii */
-                mv.loadExecutionContext();
-                mv.load(iterator);
-                mv.load(received);
-                mv.checkcast(Types.ReturnValue);
-                mv.invoke(Methods.ScriptRuntime_yieldReturnCompletion);
-                mv.store(innerResult);
-
-                mv.load(innerResult);
-                mv.ifnonnull(generatorYieldOrReturn);
-                {
-                    /* step 6.c.iv */
+                /* step 6.c.iv */
+                mv.popStack();
+                mv.returnCompletion(__ -> {
                     mv.load(received);
                     mv.checkcast(Types.ReturnValue);
                     mv.invoke(Methods.ReturnValue_getValue);
-                    popStackAndReturn(mv);
-                }
+                });
             }
-
-            mv.mark(generatorYieldOrReturn);
-
-            /* steps 6.b.iii.5-6, 6.c.viii-ix */
-            mv.loadExecutionContext();
-            mv.load(innerResult);
-            mv.invoke(Methods.AbstractOperations_IteratorComplete);
-            mv.ifeq(generatorYield);
-
-            /* step 6.b.iii.7, 6.c.x */
-            mv.loadExecutionContext();
-            mv.load(innerResult);
-            mv.invoke(Methods.AbstractOperations_IteratorValue);
-            popStackAndReturn(mv);
-
-            /* step 6.a.v */
-            mv.mark(done);
-            mv.loadExecutionContext();
-            mv.load(innerResult);
-            mv.invoke(Methods.AbstractOperations_IteratorValue);
-
-            mv.exitVariableScope();
-        } else {
-            // call runtime
-            mv.loadExecutionContext();
-            mv.invoke(Methods.ScriptRuntime_delegatedYield);
         }
+
+        mv.mark(generatorYieldOrReturn);
+
+        /* steps 6.b.iii.5-6, 6.c.viii-ix */
+        mv.loadExecutionContext();
+        mv.load(innerResult);
+        mv.invoke(Methods.AbstractOperations_IteratorComplete);
+        mv.ifeq(generatorYield);
+
+        /* step 6.b.iii.7, 6.c.x */
+        mv.popStack();
+        mv.returnCompletion(__ -> {
+            mv.loadExecutionContext();
+            mv.load(innerResult);
+            mv.invoke(Methods.AbstractOperations_IteratorValue);
+        });
+
+        /* step 6.a.v */
+        mv.mark(done);
+        mv.loadExecutionContext();
+        mv.load(innerResult);
+        mv.invoke(Methods.AbstractOperations_IteratorValue);
+
+        mv.exitVariableScope();
     }
 
     /**
@@ -1756,48 +1737,50 @@ abstract class DefaultCodeGenerator<RETURN, VISITOR extends ExpressionVisitor> e
      * @param node
      *            the expression node
      * @param mv
-     *            the expression visitor
+     *            the code visitor
      */
-    protected final void yield(Expression node, ExpressionVisitor mv) {
+    protected final void yield(Expression node, CodeVisitor mv) {
         mv.lineInfo(node);
-        if (mv.isResumable() && !codegen.isEnabled(Compiler.Option.NoResume)) {
-            assert mv.hasStack();
-            mv.loadExecutionContext();
-            mv.swap();
-            mv.iconst(false);
-            mv.invoke(Methods.AbstractOperations_CreateIterResultObject);
+        mv.loadExecutionContext();
+        mv.swap();
+        mv.iconst(false);
+        mv.invoke(Methods.AbstractOperations_CreateIterResultObject);
 
-            // force stack top to Object-type
-            mv.checkcast(Types.Object);
-            mv.newResumptionPoint();
+        // force stack top to Object-type
+        mv.checkcast(Types.Object);
+        mv.suspend();
 
-            // check for exception
-            Jump isException = new Jump();
-            mv.dup();
-            mv.instanceOf(Types.ScriptException);
-            mv.ifeq(isException);
-            {
-                mv.checkcast(Types.ScriptException);
-                mv.athrow();
-            }
-            mv.mark(isException);
-
-            // check for return value
-            Jump isReturn = new Jump();
-            mv.dup();
-            mv.instanceOf(Types.ReturnValue);
-            mv.ifeq(isReturn);
-            {
-                mv.checkcast(Types.ReturnValue);
-                mv.invoke(Methods.ReturnValue_getValue);
-                popStackAndReturn(mv);
-            }
-            mv.mark(isReturn);
-        } else {
-            // call runtime
-            mv.loadExecutionContext();
-            mv.invoke(Methods.ScriptRuntime_yield);
+        // check for exception
+        Jump isException = new Jump();
+        mv.dup();
+        mv.instanceOf(Types.ScriptException);
+        mv.ifeq(isException);
+        {
+            mv.checkcast(Types.ScriptException);
+            mv.athrow();
         }
+        mv.mark(isException);
+
+        // check for return value
+        Jump isReturn = new Jump();
+        mv.dup();
+        mv.instanceOf(Types.ReturnValue);
+        mv.ifeq(isReturn);
+        {
+            mv.checkcast(Types.ReturnValue);
+            mv.invoke(Methods.ReturnValue_getValue);
+            if (mv.getStackSize() == 1) {
+                mv.returnCompletion();
+            } else {
+                mv.enterVariableScope();
+                Variable<Object> returnValue = mv.newVariable("returnValue", Object.class);
+                mv.store(returnValue);
+                mv.popStack();
+                mv.returnCompletion(returnValue);
+                mv.exitVariableScope();
+            }
+        }
+        mv.mark(isReturn);
     }
 
     /**
@@ -1808,48 +1791,28 @@ abstract class DefaultCodeGenerator<RETURN, VISITOR extends ExpressionVisitor> e
      * @param node
      *            the expression node
      * @param mv
-     *            the expression visitor
+     *            the code visitor
      */
-    protected final void await(Expression node, ExpressionVisitor mv) {
+    protected final void await(Expression node, CodeVisitor mv) {
         // stack: [value] -> [value']
         mv.loadExecutionContext();
         mv.swap();
         mv.lineInfo(node);
         mv.invoke(Methods.AsyncAbstractOperations_AsyncFunctionAwait);
 
-        if (mv.isResumable() && !codegen.isEnabled(Compiler.Option.NoResume)) {
-            assert mv.hasStack();
+        // Reserve stack space for await return value.
+        mv.anull();
+        mv.suspend();
 
-            mv.newResumptionPoint();
-
-            // check for exception
-            Jump isException = new Jump();
-            mv.dup();
-            mv.instanceOf(Types.ScriptException);
-            mv.ifeq(isException);
-            {
-                mv.checkcast(Types.ScriptException);
-                mv.athrow();
-            }
-            mv.mark(isException);
+        // check for exception
+        Jump isException = new Jump();
+        mv.dup();
+        mv.instanceOf(Types.ScriptException);
+        mv.ifeq(isException);
+        {
+            mv.checkcast(Types.ScriptException);
+            mv.athrow();
         }
-    }
-
-    private void popStackAndReturn(ExpressionVisitor mv) {
-        // stack: [..., returnValue] -> [returnValue]
-        Type[] stack = mv.getStack();
-        assert stack.length != 0 && stack[stack.length - 1].equals(Types.Object);
-        if (stack.length > 1) {
-            // pop all remaining entries from stack before emitting return instruction
-            mv.enterVariableScope();
-            Variable<Object> returnValue = mv.newVariable("returnValue", Object.class);
-            mv.store(returnValue);
-            for (int i = stack.length - 2; i >= 0; --i) {
-                mv.pop(stack[i]);
-            }
-            mv.load(returnValue);
-            mv.exitVariableScope();
-        }
-        mv.returnCompletion();
+        mv.mark(isException);
     }
 }

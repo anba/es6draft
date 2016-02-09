@@ -11,10 +11,14 @@ import java.io.PrintStream;
 import com.github.anba.es6draft.ast.Node;
 import com.github.anba.es6draft.compiler.DefaultCodeGenerator.ValType;
 import com.github.anba.es6draft.compiler.assembler.Code.MethodCode;
+import com.github.anba.es6draft.compiler.assembler.Field;
 import com.github.anba.es6draft.compiler.assembler.FieldName;
 import com.github.anba.es6draft.compiler.assembler.InstructionAssembler;
 import com.github.anba.es6draft.compiler.assembler.MethodName;
 import com.github.anba.es6draft.compiler.assembler.Type;
+import com.github.anba.es6draft.compiler.assembler.Value;
+import com.github.anba.es6draft.runtime.types.Null;
+import com.github.anba.es6draft.runtime.types.Undefined;
 
 /**
  *
@@ -23,21 +27,38 @@ class InstructionVisitor extends InstructionAssembler {
     private static final class Fields {
         static final FieldName Null_NULL = FieldName.findStatic(Types.Null, "NULL", Types.Null);
 
-        static final FieldName Undefined_UNDEFINED = FieldName.findStatic(Types.Undefined,
-                "UNDEFINED", Types.Undefined);
+        static final FieldName Undefined_UNDEFINED = FieldName.findStatic(Types.Undefined, "UNDEFINED",
+                Types.Undefined);
 
         static final FieldName System_out = FieldName.findStatic(Type.of(System.class), "out",
                 Type.of(PrintStream.class));
     }
 
     private static final class Methods {
-        static final MethodName PrintStream_println = MethodName.findVirtual(
-                Type.of(PrintStream.class), "println",
+        static final MethodName PrintStream_println = MethodName.findVirtual(Type.of(PrintStream.class), "println",
                 Type.methodType(Type.VOID_TYPE, Types.String));
     }
 
     protected InstructionVisitor(MethodCode method) {
         super(method);
+    }
+
+    /**
+     * The {@code undefined} value.
+     * 
+     * @return {@code undefined} value
+     */
+    final Value<Undefined> undefinedValue() {
+        return new Field<>(Fields.Undefined_UNDEFINED);
+    }
+
+    /**
+     * The {@code null} value.
+     * 
+     * @return {@code null} value
+     */
+    final Value<Null> nullValue() {
+        return new Field<>(Fields.Null_NULL);
     }
 
     /**
@@ -186,6 +207,20 @@ class InstructionVisitor extends InstructionAssembler {
     public void toUnboxed(ValType type) {
         if (type.isJavaPrimitive()) {
             toUnboxed(type.toType());
+        }
+    }
+
+    /**
+     * Pop all stack entries.
+     * <p>
+     * stack: [...] → []
+     */
+    public void popStack() {
+        if (getStackSize() > 0) {
+            Type[] stack = getStack();
+            for (int i = stack.length - 1; i >= 0; --i) {
+                pop(stack[i]);
+            }
         }
     }
 }

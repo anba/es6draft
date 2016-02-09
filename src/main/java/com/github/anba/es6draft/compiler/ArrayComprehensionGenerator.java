@@ -45,8 +45,7 @@ final class ArrayComprehensionGenerator extends ComprehensionGenerator {
     /**
      * Runtime Semantics: Evaluation
      */
-    static ValType EvaluateArrayComprehension(CodeGenerator codegen, ArrayComprehension node,
-            ExpressionVisitor mv) {
+    static ValType EvaluateArrayComprehension(CodeGenerator codegen, ArrayComprehension node, CodeVisitor mv) {
         ArrayComprehensionGenerator generator = new ArrayComprehensionGenerator(codegen);
 
         /* step 1 */
@@ -73,7 +72,7 @@ final class ArrayComprehensionGenerator extends ComprehensionGenerator {
      * ComprehensionTail : AssignmentExpression
      */
     @Override
-    protected Void visit(Expression node, ExpressionVisitor mv) {
+    protected Void visit(Expression node, CodeVisitor mv) {
         /* steps 1-3 */
         expressionBoxed(node, mv);
         /* step 4 */

@@ -39,6 +39,11 @@
     </Or>
   </Match>
 
+  <Match>
+    <Bug pattern="EI_EXPOSE_REP2" />
+    <Class name="com.github.anba.es6draft.runtime.types.builtins.LegacyConstructorFunction$Arguments" />
+  </Match>
+
   <!-- Objects.requireNonNull not detected by findbugs? -->
   <Match>
     <Bug pattern="NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE" />

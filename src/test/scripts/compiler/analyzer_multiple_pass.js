@@ -24,9 +24,7 @@ eval("function f() {return; " + r("g();") + " }")
 eval("function f() {() => {return; " + r("g();") + "} }")
 
 // nested statements
-// - broken at count=19
-// eval("function f() {return; {" + r("g();",19) + "} }")
+eval("function f() {return; {" + r("g();",19) + "} }")
 
 // nested statements in ArrowFunction
-// - broken at count=19
-// eval("function f() {()=>{return; {" + r("g();",19) + "}} }")
+eval("function f() {()=>{return; {" + r("g();",19) + "}} }")

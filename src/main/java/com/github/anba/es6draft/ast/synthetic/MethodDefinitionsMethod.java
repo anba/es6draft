@@ -18,8 +18,9 @@ import com.github.anba.es6draft.ast.VoidNodeVisitor;
 /**
  * List of {@link PropertyDefinition}s as an external Java method.
  */
-public final class MethodDefinitionsMethod extends PropertyDefinition {
+public final class MethodDefinitionsMethod extends PropertyDefinition implements SyntheticNode {
     private final List<PropertyDefinition> properties;
+    private boolean resumePoint;
 
     public MethodDefinitionsMethod(PropertyDefinition property) {
         super(property.getBeginPosition(), property.getEndPosition());
@@ -38,6 +39,16 @@ public final class MethodDefinitionsMethod extends PropertyDefinition {
     @Override
     public PropertyName getPropertyName() {
         throw new AssertionError();
+    }
+
+    @Override
+    public boolean hasResumePoint() {
+        return resumePoint;
+    }
+
+    @Override
+    public void setResumePoint(boolean resumePoint) {
+        this.resumePoint = resumePoint;
     }
 
     @Override

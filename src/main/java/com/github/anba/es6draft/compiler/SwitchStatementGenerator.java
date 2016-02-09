@@ -34,8 +34,7 @@ import com.github.anba.es6draft.runtime.internal.Bootstrap;
  * <li>13.12 The switch Statement
  * </ul>
  */
-final class SwitchStatementGenerator extends
-        DefaultCodeGenerator<StatementGenerator.Completion, StatementVisitor> {
+final class SwitchStatementGenerator extends DefaultCodeGenerator<StatementGenerator.Completion> {
     private static final class Methods {
         // class: CharSequence
         static final MethodName CharSequence_charAt = MethodName.findInterface(Types.CharSequence,
@@ -127,7 +126,7 @@ final class SwitchStatementGenerator extends
     }
 
     @Override
-    protected Completion visit(Node node, StatementVisitor mv) {
+    protected Completion visit(Node node, CodeVisitor mv) {
         throw new IllegalStateException(String.format("node-class: %s", node.getClass()));
     }
 
@@ -135,7 +134,7 @@ final class SwitchStatementGenerator extends
      * 13.12.11 Runtime Semantics: Evaluation
      */
     @Override
-    public Completion visit(SwitchClause node, StatementVisitor mv) {
+    public Completion visit(SwitchClause node, CodeVisitor mv) {
         return codegen.statements(node.getStatements(), mv);
     }
 
@@ -143,7 +142,7 @@ final class SwitchStatementGenerator extends
      * 13.12.11 Runtime Semantics: Evaluation
      */
     @Override
-    public Completion visit(SwitchStatement node, StatementVisitor mv) {
+    public Completion visit(SwitchStatement node, CodeVisitor mv) {
         // stack -> switchValue
         ValType switchValueType = expression(node.getExpression(), mv);
 
@@ -231,11 +230,11 @@ final class SwitchStatementGenerator extends
      * @param switchValue
      *            the variable which holds the switch value
      * @param mv
-     *            the statement visitor
+     *            the code visitor
      * @return the completion value
      */
-    private Completion CaseBlockEvaluation(SwitchStatement node, SwitchType type, Jump lblExit,
-            Variable<?> switchValue, StatementVisitor mv) {
+    private Completion CaseBlockEvaluation(SwitchStatement node, SwitchType type, Jump lblExit, Variable<?> switchValue,
+            CodeVisitor mv) {
         List<SwitchClause> clauses = node.getClauses();
         Jump lblDefault = null;
         Jump[] labels = new Jump[clauses.size()];
@@ -309,7 +308,7 @@ final class SwitchStatementGenerator extends
         return false;
     }
 
-    private void invokeDynamicOperator(BinaryExpression.Operator operator, ExpressionVisitor mv) {
+    private void invokeDynamicOperator(BinaryExpression.Operator operator, CodeVisitor mv) {
         // stack: [lval, rval, cx?] -> [result]
         mv.invokedynamic(Bootstrap.getName(operator), Bootstrap.getMethodDescriptor(operator),
                 Bootstrap.getBootstrap(operator));
@@ -343,10 +342,10 @@ final class SwitchStatementGenerator extends
      * @param switchValue
      *            the variable which holds the switch value
      * @param mv
-     *            the statement visitor
+     *            the code visitor
      */
-    private void emitGenericSwitch(List<SwitchClause> clauses, Jump[] labels, Jump defaultClause,
-            Jump lblExit, Variable<?> switchValue, StatementVisitor mv) {
+    private void emitGenericSwitch(List<SwitchClause> clauses, Jump[] labels, Jump defaultClause, Jump lblExit,
+            Variable<?> switchValue, CodeVisitor mv) {
         assert switchValue.getType().equals(Types.Object);
         Jump switchDefault = defaultClause != null ? defaultClause : lblExit;
 
@@ -397,10 +396,10 @@ final class SwitchStatementGenerator extends
      * @param switchValue
      *            the variable which holds the switch value
      * @param mv
-     *            the statement visitor
+     *            the code visitor
      */
-    private void emitStringSwitch(List<SwitchClause> clauses, Jump[] labels, Jump defaultClause,
-            Jump lblExit, Variable<?> switchValue, StatementVisitor mv) {
+    private void emitStringSwitch(List<SwitchClause> clauses, Jump[] labels, Jump defaultClause, Jump lblExit,
+            Variable<?> switchValue, CodeVisitor mv) {
         Jump switchDefault = defaultClause != null ? defaultClause : lblExit;
         mv.enterVariableScope();
         Variable<String> switchValueString = mv.newVariable("switchValueString", String.class);
@@ -495,10 +494,10 @@ final class SwitchStatementGenerator extends
      * @param switchValue
      *            the variable which holds the switch value
      * @param mv
-     *            the statement visitor
+     *            the code visitor
      */
-    private void emitCharSwitch(List<SwitchClause> clauses, Jump[] labels, Jump defaultClause,
-            Jump lblExit, Variable<?> switchValue, StatementVisitor mv) {
+    private void emitCharSwitch(List<SwitchClause> clauses, Jump[] labels, Jump defaultClause, Jump lblExit,
+            Variable<?> switchValue, CodeVisitor mv) {
         Jump switchDefault = defaultClause != null ? defaultClause : lblExit;
         if (switchValue.getType().equals(Types.CharSequence)) {
             // test for char: value is character (string with only one character)
@@ -574,10 +573,10 @@ final class SwitchStatementGenerator extends
      * @param switchValue
      *            the variable which holds the switch value
      * @param mv
-     *            the statement visitor
+     *            the code visitor
      */
-    private void emitIntSwitch(List<SwitchClause> clauses, Jump[] labels, Jump defaultClause,
-            Jump lblExit, Variable<?> switchValue, StatementVisitor mv) {
+    private void emitIntSwitch(List<SwitchClause> clauses, Jump[] labels, Jump defaultClause, Jump lblExit,
+            Variable<?> switchValue, CodeVisitor mv) {
         Jump switchDefault = defaultClause != null ? defaultClause : lblExit;
         if (switchValue.getType().equals(Type.INT_TYPE)) {
             mv.load(switchValue);
@@ -645,10 +644,9 @@ final class SwitchStatementGenerator extends
      * @param entries
      *            the switch entries, value-index pairs
      * @param mv
-     *            the statement visitor
+     *            the code visitor
      */
-    private static void switchInstruction(Jump switchDefault, Jump[] labels, long[] entries,
-            StatementVisitor mv) {
+    private static void switchInstruction(Jump switchDefault, Jump[] labels, long[] entries, CodeVisitor mv) {
         int entriesLength = entries.length;
         int distinctValues = distinctValues(entries);
         int minValue = Value(entries[0]);

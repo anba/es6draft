@@ -30,8 +30,22 @@ import com.github.anba.es6draft.runtime.types.ScriptObject;
  * </ul>
  */
 public final class LegacyConstructorFunction extends FunctionObject implements Constructor {
-    private final Property caller = new Property(NULL, true, false, false);
-    private final Property arguments = new Property(NULL, true, false, false);
+    private FunctionObject caller;
+    private Arguments arguments;
+    private boolean callerWritable = true;
+    private boolean argumentsWritable = true;
+
+    public static final class Arguments {
+        private final Object[] arguments;
+
+        public Arguments(Object[] arguments) {
+            this.arguments = arguments;
+        }
+
+        ArgumentsObject createArgumentsObject(ExecutionContext cx, LegacyConstructorFunction callee) {
+            return ArgumentsObject.CreateMappedArgumentsObject(cx, callee, arguments);
+        }
+    }
 
     /**
      * Constructs a new legacy Constructor Function object.
@@ -48,8 +62,8 @@ public final class LegacyConstructorFunction extends FunctionObject implements C
         return FunctionAllocate(getRealm().defaultContext(), getPrototype());
     }
 
-    private static boolean isNonStrictFunctionOrNull(Object v) {
-        return v == NULL || (v instanceof FunctionObject && !((FunctionObject) v).isStrict());
+    private static boolean isNonStrictFunctionOrNull(FunctionObject v) {
+        return v == null || !v.isStrict();
     }
 
     /**
@@ -75,8 +89,8 @@ public final class LegacyConstructorFunction extends FunctionObject implements C
      * 
      * @return the legacy caller value
      */
-    public Object getLegacyCaller() {
-        return caller.getValue();
+    public FunctionObject getLegacyCaller() {
+        return caller;
     }
 
     /**
@@ -84,8 +98,8 @@ public final class LegacyConstructorFunction extends FunctionObject implements C
      * 
      * @return the legacy arguments value
      */
-    public Object getLegacyArguments() {
-        return arguments.getValue();
+    public Arguments getLegacyArguments() {
+        return arguments;
     }
 
     /**
@@ -95,10 +109,8 @@ public final class LegacyConstructorFunction extends FunctionObject implements C
      *            the new caller value
      */
     public void setLegacyCaller(FunctionObject caller) {
-        if (caller == null || caller.isStrict()) {
-            setPropertyValueIfWritable(this.caller, NULL);
-        } else {
-            setPropertyValueIfWritable(this.caller, caller);
+        if (callerWritable) {
+            this.caller = isNonStrictFunctionOrNull(caller) ? caller : null;
         }
     }
 
@@ -108,32 +120,25 @@ public final class LegacyConstructorFunction extends FunctionObject implements C
      * @param arguments
      *            the new arguments value
      */
-    public void setLegacyArguments(LegacyArgumentsObject arguments) {
-        setPropertyValueIfWritable(this.arguments, arguments);
-    }
-
-    /**
-     * [Called from generated code]
-     * 
-     * @param oldCaller
-     *            the old caller value
-     * @param oldArguments
-     *            the old arguments value
-     */
-    public void restoreLegacyProperties(Object oldCaller, Object oldArguments) {
-        setPropertyValueIfWritable(this.caller, oldCaller);
-        setPropertyValueIfWritable(this.arguments, oldArguments);
-    }
-
-    private void setPropertyValueIfWritable(Property property, Object value) {
-        if (property.isWritable()) {
-            property.setValue(value);
+    public void setLegacyArguments(Arguments arguments) {
+        if (argumentsWritable) {
+            this.arguments = arguments;
         }
+    }
+
+    private Property callerProperty() {
+        Object callerObj = caller != null ? caller : NULL;
+        return new Property(callerObj, callerWritable, false, false);
+    }
+
+    private Property argumentsProperty(ExecutionContext cx) {
+        Object argumentsObj = arguments != null ? arguments.createArgumentsObject(cx, this) : NULL;
+        return new Property(argumentsObj, argumentsWritable, false, false);
     }
 
     @Override
     protected boolean has(ExecutionContext cx, String propertyKey) {
-        if (("arguments".equals(propertyKey) && hasArguments()) || "caller".equals(propertyKey) && hasCaller()) {
+        if (("arguments".equals(propertyKey) && hasArguments()) || ("caller".equals(propertyKey) && hasCaller())) {
             return true;
         }
         return super.has(cx, propertyKey);
@@ -141,7 +146,7 @@ public final class LegacyConstructorFunction extends FunctionObject implements C
 
     @Override
     protected boolean hasOwnProperty(ExecutionContext cx, String propertyKey) {
-        if (("arguments".equals(propertyKey) && hasArguments()) || "caller".equals(propertyKey) && hasCaller()) {
+        if (("arguments".equals(propertyKey) && hasArguments()) || ("caller".equals(propertyKey) && hasCaller())) {
             return true;
         }
         return super.hasOwnProperty(cx, propertyKey);
@@ -150,36 +155,38 @@ public final class LegacyConstructorFunction extends FunctionObject implements C
     @Override
     protected Property getProperty(ExecutionContext cx, String propertyKey) {
         if ("arguments".equals(propertyKey) && hasArguments()) {
-            return arguments;
+            return argumentsProperty(cx);
         }
         if ("caller".equals(propertyKey) && hasCaller()) {
-            assert isNonStrictFunctionOrNull(caller.getValue());
-            return caller;
+            assert isNonStrictFunctionOrNull(caller);
+            return callerProperty();
         }
         return ordinaryGetOwnProperty(propertyKey);
     }
 
     @Override
     protected boolean defineProperty(ExecutionContext cx, String propertyKey, PropertyDescriptor desc) {
-        if ("arguments".equals(propertyKey) && hasArguments()) {
-            return defineLegacyProperty(arguments, desc);
-        }
-        if ("caller".equals(propertyKey) && hasCaller()) {
-            return defineLegacyProperty(caller, desc);
-        }
-        return super.defineProperty(cx, propertyKey, desc);
-    }
-
-    private boolean defineLegacyProperty(Property property, PropertyDescriptor desc) {
         // If the property descriptor is compatible and the [[Writable]] field is present, assume
         // this call to [[DefineOwnProperty]] is meant to freeze the property value. Also reset the
         // property value by setting its value to `null`, so we won't leak previous .arguments or
         // .caller objects.
-        boolean compatible = IsCompatiblePropertyDescriptor(isExtensible(), desc, property);
-        if (compatible && desc.hasWritable() && !desc.isWritable()) {
-            property.apply(new PropertyDescriptor(NULL, false, false, false));
+        if ("arguments".equals(propertyKey) && hasArguments()) {
+            boolean compatible = IsCompatiblePropertyDescriptor(isExtensible(), desc, argumentsProperty(cx));
+            if (compatible && desc.hasWritable() && !desc.isWritable()) {
+                arguments = null;
+                argumentsWritable = false;
+            }
+            return compatible;
         }
-        return compatible;
+        if ("caller".equals(propertyKey) && hasCaller()) {
+            boolean compatible = IsCompatiblePropertyDescriptor(isExtensible(), desc, callerProperty());
+            if (compatible && desc.hasWritable() && !desc.isWritable()) {
+                caller = null;
+                callerWritable = false;
+            }
+            return compatible;
+        }
+        return super.defineProperty(cx, propertyKey, desc);
     }
 
     @Override

@@ -30,7 +30,7 @@ const {
   let [arg0, arg1, arg2] = f(0, [2]);
   assertSame(1, arg0);
   assertSame(2, arg1);
-  assertSame(1, arg2);
+  assertSame(0, arg2);
 }
 
 // parameter map - assignment (2)
@@ -67,7 +67,7 @@ const {
   let [arg0, arg1, arg2] = f(0, [2]);
   assertSame(1, arg0);
   assertSame(void 0, arg1);
-  assertSame(1, arg2);
+  assertSame(0, arg2);
 }
 
 // parameter map - delete (2)

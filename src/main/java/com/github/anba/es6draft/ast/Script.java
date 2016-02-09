@@ -24,7 +24,6 @@ public final class Script extends Program implements TopLevelNode<StatementListI
     private final ScriptScope scope;
     private List<StatementListItem> statements;
     private final boolean strict;
-    private boolean syntheticNodes;
 
     public Script(long beginPosition, long endPosition, Source source, ScriptScope scope,
             List<StatementListItem> statements, EnumSet<CompatibilityOption> options,
@@ -80,16 +79,6 @@ public final class Script extends Program implements TopLevelNode<StatementListI
 
     public boolean isGlobalThis() {
         return !getParserOptions().contains(Parser.Option.FunctionThis);
-    }
-
-    @Override
-    public boolean hasSyntheticNodes() {
-        return syntheticNodes;
-    }
-
-    @Override
-    public void setSyntheticNodes(boolean syntheticNodes) {
-        this.syntheticNodes = syntheticNodes;
     }
 
     @Override

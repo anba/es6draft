@@ -103,6 +103,12 @@ fast/js/regexp-no-extensions.js
 # Different maximal function arguments
 fast/js/function-apply.js
 
+# Different legacy function.arguments behaviour
+dfg-inline-arguments-become-double.js
+dfg-inline-arguments-become-int32.js
+dfg-inline-arguments-reset.js
+dfg-inline-arguments-reset-changetype.js
+
 
 ###############################################################
 # ES6 <Object>.prototype no longer instance of <Type>         #

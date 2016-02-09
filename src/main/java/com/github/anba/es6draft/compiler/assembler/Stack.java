@@ -108,8 +108,8 @@ public class Stack {
     }
 
     private static boolean assertEqualTypes(Type[] stack, int sp, Type[] labelStack, int labelsp) {
-        assert sp == labelsp : String.format("%d != %d (%s, %s)", sp, labelsp,
-                Arrays.toString(stack), Arrays.toString(labelStack));
+        assert sp == labelsp : String.format("%d != %d (%s, %s)", sp, labelsp, Arrays.toString(stack),
+                Arrays.toString(labelStack));
         for (int i = 0; i < sp; ++i) {
             Type t0 = stack[i], t1 = labelStack[i];
             assert t0.equals(t1) : String.format("%s != %s", t0, t1);
@@ -118,15 +118,14 @@ public class Stack {
     }
 
     private void alignStack(Type[] stack, int sp, Type[] labelStack, int labelsp) {
-        assert sp == labelsp : String.format("%d != %d (%s, %s)", sp, labelsp,
-                Arrays.toString(stack), Arrays.toString(labelStack));
+        assert sp == labelsp : String.format("%d != %d (%s, %s)", sp, labelsp, Arrays.toString(stack),
+                Arrays.toString(labelStack));
         for (int i = 0; i < sp; ++i) {
             Type t0 = stack[i], t1 = labelStack[i];
             if (!t0.equals(t1)) {
                 assert compatibleTypes(t0, t1);
                 if (t0.getSort() <= Type.Sort.INT) {
-                    stack[i] = Type
-                            .of(Math.max(Math.max(t0.getSort(), t1.getSort()), Type.Sort.INT));
+                    stack[i] = Type.of(Math.max(Math.max(t0.getSort(), t1.getSort()), Type.Sort.INT));
                 } else if (t0.getSort() <= Type.Sort.DOUBLE) {
                     stack[i] = Type.DOUBLE_TYPE;
                 } else {
@@ -161,8 +160,7 @@ public class Stack {
     protected Type pop(int size) {
         assert sp > 0 : getStackString();
         Type t = stack[--sp];
-        assert t.getSize() == size : String.format("%d[%s] != %d, %s", t.getSize(), t, size,
-                getStackString());
+        assert t.getSize() == size : String.format("%d[%s] != %d, %s", t.getSize(), t, size, getStackString());
         return t;
     }
 

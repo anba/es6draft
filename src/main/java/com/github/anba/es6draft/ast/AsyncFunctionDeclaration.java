@@ -14,8 +14,7 @@ import com.github.anba.es6draft.ast.scope.Name;
 /**
  * Extension: Async Function Declaration
  */
-public final class AsyncFunctionDeclaration extends HoistableDeclaration implements
-        AsyncFunctionDefinition {
+public final class AsyncFunctionDeclaration extends HoistableDeclaration implements AsyncFunctionDefinition {
     private final FunctionScope scope;
     private final BindingIdentifier identifier;
     private final Name name;
@@ -24,12 +23,10 @@ public final class AsyncFunctionDeclaration extends HoistableDeclaration impleme
     private final String functionName;
     private final String headerSource, bodySource;
     private StrictMode strictMode;
-    private boolean syntheticNodes;
 
     public AsyncFunctionDeclaration(long beginPosition, long endPosition, FunctionScope scope,
-            BindingIdentifier identifier, FormalParameterList parameters,
-            List<StatementListItem> statements, String functionName, String headerSource,
-            String bodySource) {
+            BindingIdentifier identifier, FormalParameterList parameters, List<StatementListItem> statements,
+            String functionName, String headerSource, String bodySource) {
         super(beginPosition, endPosition);
         this.scope = scope;
         this.identifier = identifier;
@@ -134,16 +131,6 @@ public final class AsyncFunctionDeclaration extends HoistableDeclaration impleme
     @Override
     public boolean isConstDeclaration() {
         return false;
-    }
-
-    @Override
-    public boolean hasSyntheticNodes() {
-        return syntheticNodes;
-    }
-
-    @Override
-    public void setSyntheticNodes(boolean syntheticNodes) {
-        this.syntheticNodes = syntheticNodes;
     }
 
     @Override

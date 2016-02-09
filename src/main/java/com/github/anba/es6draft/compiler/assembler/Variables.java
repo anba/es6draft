@@ -45,8 +45,7 @@ public final class Variables {
      * @return the variable type
      */
     Type getVariable(int slot) {
-        assert 0 <= slot && slot <= types.length : String.format("slot=%d not in [%d, %d]", slot,
-                0, types.length);
+        assert 0 <= slot && slot <= types.length : String.format("slot=%d not in [%d, %d]", slot, 0, types.length);
         assert variables.get(slot) && types[slot] != null && types[slot] != Type.RESERVED : String
                 .format("slot=%d, used=%b, type=%s", slot, variables.get(slot), types[slot]);
         return types[slot];

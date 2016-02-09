@@ -49,6 +49,9 @@ final class Types {
     private Types() {
     }
 
+    // Primitive
+    static final Type int_ = Type.of(int[].class);
+
     // java.lang
     static final Type Boolean = Type.of(Boolean.class);
     static final Type Byte = Type.of(Byte.class);
@@ -149,10 +152,9 @@ final class Types {
     static final Type ArgumentsObject = Type.of(ArgumentsObject.class);
     static final Type ArrayObject = Type.of(ArrayObject.class);
     static final Type FunctionObject = Type.of(FunctionObject.class);
-    static final Type FunctionObject$ConstructorKind = Type
-            .of(FunctionObject.ConstructorKind.class);
-    static final Type LegacyArgumentsObject = Type.of(LegacyArgumentsObject.class);
+    static final Type FunctionObject$ConstructorKind = Type.of(FunctionObject.ConstructorKind.class);
     static final Type LegacyConstructorFunction = Type.of(LegacyConstructorFunction.class);
+    static final Type LegacyConstructorFunction$Arguments = Type.of(LegacyConstructorFunction.Arguments.class);
     static final Type ModuleNamespaceObject = Type.of(ModuleNamespaceObject.class);
     static final Type OrdinaryAsyncFunction = Type.of(OrdinaryAsyncFunction.class);
     static final Type OrdinaryConstructorFunction = Type.of(OrdinaryConstructorFunction.class);
@@ -166,6 +168,7 @@ final class Types {
     static final Type Errors = Type.of(Errors.class);
     static final Type Messages$Key = Type.of(Messages.Key.class);
     static final Type ResumptionPoint = Type.of(ResumptionPoint.class);
+    static final Type ResumptionPoint_ = Type.of(ResumptionPoint[].class);
     static final Type ReturnValue = Type.of(ReturnValue.class);
     static final Type RuntimeInfo = Type.of(RuntimeInfo.class);
     static final Type RuntimeInfo$Function = Type.of(RuntimeInfo.Function.class);

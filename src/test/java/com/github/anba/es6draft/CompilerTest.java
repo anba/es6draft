@@ -11,6 +11,7 @@ import static com.github.anba.es6draft.util.Resources.loadTests;
 import static org.junit.Assume.assumeTrue;
 
 import java.io.IOException;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -26,6 +27,7 @@ import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
 import org.junit.runners.Parameterized.UseParametersRunnerFactory;
 
+import com.github.anba.es6draft.parser.Parser;
 import com.github.anba.es6draft.util.Parallelized;
 import com.github.anba.es6draft.util.ParameterizedRunnerFactory;
 import com.github.anba.es6draft.util.SystemConsole;
@@ -50,8 +52,13 @@ public final class CompilerTest {
     }
 
     @ClassRule
-    public static TestGlobals<TestGlobalObject, TestInfo> globals = new TestGlobals<>(configuration,
-            TestGlobalObject::new);
+    public static TestGlobals<TestGlobalObject, TestInfo> globals = new TestGlobals<TestGlobalObject, TestInfo>(
+            configuration, TestGlobalObject::new) {
+        @Override
+        protected EnumSet<Parser.Option> getParserOptions() {
+            return EnumSet.of(Parser.Option.NativeCall);
+        }
+    };
 
     @Rule
     public Timeout maxTime = new Timeout(120, TimeUnit.SECONDS);

@@ -36,8 +36,7 @@ public final class MethodName {
      */
     public final MethodTypeDescriptor descriptor;
 
-    private MethodName(MethodName.Invoke invoke, Type owner, String name,
-            MethodTypeDescriptor descriptor) {
+    private MethodName(MethodName.Invoke invoke, Type owner, String name, MethodTypeDescriptor descriptor) {
         this.invoke = invoke;
         this.owner = owner;
         this.name = name;
@@ -136,8 +135,7 @@ public final class MethodName {
      * @return the method name descriptor
      */
     public static MethodName findConstructor(Class<?> owner, MethodType methodType) {
-        return new MethodName(Invoke.Special, Type.of(owner), "<init>",
-                MethodTypeDescriptor.methodType(methodType));
+        return new MethodName(Invoke.Special, Type.of(owner), "<init>", MethodTypeDescriptor.methodType(methodType));
     }
 
     /**
@@ -152,8 +150,7 @@ public final class MethodName {
      * @return the method name descriptor
      */
     public static MethodName findInterface(Class<?> owner, String name, MethodType methodType) {
-        return new MethodName(Invoke.Interface, Type.of(owner), name,
-                MethodTypeDescriptor.methodType(methodType));
+        return new MethodName(Invoke.Interface, Type.of(owner), name, MethodTypeDescriptor.methodType(methodType));
     }
 
     /**
@@ -168,8 +165,7 @@ public final class MethodName {
      * @return the method name descriptor
      */
     public static MethodName findSpecial(Class<?> owner, String name, MethodType methodType) {
-        return new MethodName(Invoke.Special, Type.of(owner), name,
-                MethodTypeDescriptor.methodType(methodType));
+        return new MethodName(Invoke.Special, Type.of(owner), name, MethodTypeDescriptor.methodType(methodType));
     }
 
     /**
@@ -184,8 +180,7 @@ public final class MethodName {
      * @return the method name descriptor
      */
     public static MethodName findStatic(Class<?> owner, String name, MethodType methodType) {
-        return new MethodName(Invoke.Static, Type.of(owner), name,
-                MethodTypeDescriptor.methodType(methodType));
+        return new MethodName(Invoke.Static, Type.of(owner), name, MethodTypeDescriptor.methodType(methodType));
     }
 
     /**
@@ -200,7 +195,6 @@ public final class MethodName {
      * @return the method name descriptor
      */
     public static MethodName findVirtual(Class<?> owner, String name, MethodType methodType) {
-        return new MethodName(Invoke.Virtual, Type.of(owner), name,
-                MethodTypeDescriptor.methodType(methodType));
+        return new MethodName(Invoke.Virtual, Type.of(owner), name, MethodTypeDescriptor.methodType(methodType));
     }
 }

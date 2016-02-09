@@ -30,6 +30,7 @@ import com.github.anba.es6draft.compiler.Labels.TempLabel;
 import com.github.anba.es6draft.compiler.StatementGenerator.Completion;
 import com.github.anba.es6draft.compiler.assembler.Jump;
 import com.github.anba.es6draft.compiler.assembler.MethodName;
+import com.github.anba.es6draft.compiler.assembler.MutableValue;
 import com.github.anba.es6draft.compiler.assembler.Type;
 import com.github.anba.es6draft.compiler.assembler.Variable;
 import com.github.anba.es6draft.runtime.DeclarativeEnvironmentRecord;
@@ -43,7 +44,7 @@ import com.github.anba.es6draft.runtime.internal.ScriptIterator;
  * <li>Array Comprehension
  * </ul>
  */
-abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void, ExpressionVisitor> {
+abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void> {
     private static final class Methods {
         // class: GeneratorObject
         static final MethodName GeneratorObject_isLegacyGenerator = MethodName.findVirtual(
@@ -78,7 +79,7 @@ abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void, Express
     }
 
     @Override
-    protected Void visit(Node node, ExpressionVisitor mv) {
+    protected Void visit(Node node, CodeVisitor mv) {
         throw new IllegalStateException(String.format("node-class: %s", node.getClass()));
     }
 
@@ -88,13 +89,13 @@ abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void, Express
      * ComprehensionTail : AssignmentExpression
      */
     @Override
-    protected abstract Void visit(Expression node, ExpressionVisitor mv);
+    protected abstract Void visit(Expression node, CodeVisitor mv);
 
     /**
      * Runtime Semantics: ComprehensionEvaluation
      */
     @Override
-    public Void visit(Comprehension node, ExpressionVisitor mv) {
+    public Void visit(Comprehension node, CodeVisitor mv) {
         ArrayList<Node> list = new ArrayList<>(node.getList().size() + 1);
         list.addAll(node.getList());
         list.add(node.getExpression());
@@ -121,7 +122,7 @@ abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void, Express
      * Runtime Semantics: ComprehensionEvaluation
      */
     @Override
-    public Void visit(LegacyComprehension node, ExpressionVisitor mv) {
+    public Void visit(LegacyComprehension node, CodeVisitor mv) {
         BlockScope scope = node.getScope();
         if (scope.isPresent()) {
             mv.enterVariableScope();
@@ -164,7 +165,7 @@ abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void, Express
      * ComprehensionIf : if ( AssignmentExpression )
      */
     @Override
-    public Void visit(ComprehensionIf node, ExpressionVisitor mv) {
+    public Void visit(ComprehensionIf node, CodeVisitor mv) {
         /* steps 1-2 */
         ValType type = expression(node.getTest(), mv);
         /* steps 3-4 */
@@ -187,7 +188,7 @@ abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void, Express
      * ComprehensionFor : for ( ForBinding of AssignmentExpression )
      */
     @Override
-    public Void visit(ComprehensionFor node, ExpressionVisitor mv) {
+    public Void visit(ComprehensionFor node, CodeVisitor mv) {
         Jump lblTest = new Jump(), lblLoop = new Jump();
         Variable<ScriptIterator<?>> iter = iterators.next();
 
@@ -245,21 +246,21 @@ abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void, Express
 
         /* step 6.k */
         mv.enterScope(node);
-        new IterationGenerator<ComprehensionFor, ExpressionVisitor>(codegen) {
+        new IterationGenerator<ComprehensionFor, CodeVisitor>(codegen) {
             @Override
-            protected Completion iterationBody(ComprehensionFor node,
-                    Variable<ScriptIterator<?>> iterator, ExpressionVisitor mv) {
+            protected Completion iterationBody(ComprehensionFor node, Variable<ScriptIterator<?>> iterator,
+                    CodeVisitor mv) {
                 elements.next().accept(ComprehensionGenerator.this, mv);
                 return Completion.Normal;
             }
 
             @Override
-            protected Variable<Object> enterIteration(ComprehensionFor node, ExpressionVisitor mv) {
+            protected MutableValue<Object> enterIteration(ComprehensionFor node, CodeVisitor mv) {
                 return mv.enterIteration();
             }
 
             @Override
-            protected List<TempLabel> exitIteration(ComprehensionFor node, ExpressionVisitor mv) {
+            protected List<TempLabel> exitIteration(ComprehensionFor node, CodeVisitor mv) {
                 return mv.exitIteration();
             }
         }.generate(node, iter, mv);
@@ -286,7 +287,7 @@ abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void, Express
      * ComprehensionFor : for ( ForBinding of AssignmentExpression )
      */
     @Override
-    public Void visit(LegacyComprehensionFor node, ExpressionVisitor mv) {
+    public Void visit(LegacyComprehensionFor node, CodeVisitor mv) {
         Jump lblTest = new Jump(), lblLoop = new Jump(), lblFail = new Jump();
         Variable<ScriptIterator<?>> iter = iterators.next();
 
@@ -341,10 +342,10 @@ abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void, Express
         mv.lineInfo(node);
         mv.invoke(Methods.Iterator_next);
 
-        new IterationGenerator<LegacyComprehensionFor, ExpressionVisitor>(codegen) {
+        new IterationGenerator<LegacyComprehensionFor, CodeVisitor>(codegen) {
             @Override
-            protected Completion iterationBody(LegacyComprehensionFor node,
-                    Variable<ScriptIterator<?>> iterator, ExpressionVisitor mv) {
+            protected Completion iterationBody(LegacyComprehensionFor node, Variable<ScriptIterator<?>> iterator,
+                    CodeVisitor mv) {
                 // stack: [nextValue] -> []
                 BindingInitialization(codegen, node.getBinding(), mv);
                 elements.next().accept(ComprehensionGenerator.this, mv);
@@ -352,14 +353,12 @@ abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void, Express
             }
 
             @Override
-            protected Variable<Object> enterIteration(LegacyComprehensionFor node,
-                    ExpressionVisitor mv) {
+            protected MutableValue<Object> enterIteration(LegacyComprehensionFor node, CodeVisitor mv) {
                 return mv.enterIteration();
             }
 
             @Override
-            protected List<TempLabel> exitIteration(LegacyComprehensionFor node,
-                    ExpressionVisitor mv) {
+            protected List<TempLabel> exitIteration(LegacyComprehensionFor node, CodeVisitor mv) {
                 return mv.exitIteration();
             }
         }.generate(node, iter, mv);

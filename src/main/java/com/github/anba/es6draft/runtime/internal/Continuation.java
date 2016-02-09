@@ -105,15 +105,4 @@ public interface Continuation<VALUE> {
      * @return the result value
      */
     VALUE _throw(ExecutionContext cx, ScriptException exception);
-
-    /**
-     * Suspend support method (optional).
-     * 
-     * @param value
-     *            the result value
-     * @return the suspended value
-     * @throws ReturnValue
-     *             to signal an abrupt Return completion
-     */
-    Object suspend(VALUE value) throws ReturnValue;
 }

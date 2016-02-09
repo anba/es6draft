@@ -10,7 +10,6 @@ import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.internal.Messages;
-import com.github.anba.es6draft.runtime.internal.ReturnValue;
 import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 
@@ -116,25 +115,5 @@ public final class GeneratorAbstractOperations {
         GeneratorObject gen = GeneratorValidate(cx, generator);
         /* steps 4-13 */
         return gen._throw(cx, exception);
-    }
-
-    /**
-     * 25.3.3.5 GeneratorYield (iterNextObj)
-     * 
-     * @param genContext
-     *            the execution context
-     * @param iterNextObj
-     *            the iterator result object
-     * @return the yield value
-     * @throws ReturnValue
-     *             to signal an abrupt Return completion
-     */
-    public static Object GeneratorYield(ExecutionContext genContext, ScriptObject iterNextObj) throws ReturnValue {
-        /* step 1 (?) */
-        /* steps 2-4 */
-        GeneratorObject generator = genContext.getCurrentGenerator();
-        assert generator != null : "not evaluating a generator function";
-        /* steps 5-11 */
-        return generator.yield(iterNextObj);
     }
 }

@@ -9,7 +9,7 @@ package com.github.anba.es6draft.runtime.internal;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 
 /**
- * Bytecode-based continuation implementation. 
+ * Bytecode-based continuation implementation.
  */
 public final class CodeContinuation<VALUE> implements Continuation<VALUE> {
     private final Continuation.Handler<VALUE> handler;
@@ -38,12 +38,6 @@ public final class CodeContinuation<VALUE> implements Continuation<VALUE> {
     @Override
     public VALUE _throw(ExecutionContext cx, ScriptException exception) {
         return execute(cx, prepareResume(exception));
-    }
-
-    @Override
-    public Object suspend(VALUE value) {
-        // Context switch is implemented in generated code.
-        return null;
     }
 
     private ResumptionPoint prepareResume(Object value) {

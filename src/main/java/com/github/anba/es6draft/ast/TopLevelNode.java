@@ -18,34 +18,18 @@ public interface TopLevelNode<STATEMENT extends ModuleItem> extends ScopedNode {
     TopLevelScope getScope();
 
     /**
-     * Returns this node's statement list, or <code>null</code> if this node does not contain any
-     * statements.
+     * Returns this node's statement list, or <code>null</code> if this node does not contain any statements.
      * 
      * @return the statements
      */
     List<STATEMENT> getStatements();
 
     /**
-     * Updates this node's statement list, may throw an {@link UnsupportedOperationException} if the
-     * operation is not supported by this node.
+     * Updates this node's statement list, may throw an {@link UnsupportedOperationException} if the operation is not
+     * supported by this node.
      * 
      * @param statements
      *            the new statements
      */
     void setStatements(List<STATEMENT> statements);
-
-    /**
-     * Returns <code>true</code> for nodes with synthetic sub-nodes, <code>false</code> otherwise.
-     * 
-     * @return <code>true</code> if synthetic sub-nodes are present
-     */
-    boolean hasSyntheticNodes();
-
-    /**
-     * Updates the synthetic node information for this node. Used by code size analysis.
-     * 
-     * @param syntheticNodes
-     *            the synthetic nodes flag
-     */
-    void setSyntheticNodes(boolean syntheticNodes);
 }

@@ -17,7 +17,9 @@ import com.github.anba.es6draft.ast.VoidNodeVisitor;
 /**
  * {@link SpreadElement} as an external Java method.
  */
-public final class SpreadElementMethod extends SpreadElement {
+public final class SpreadElementMethod extends SpreadElement implements SyntheticNode {
+    private boolean resumePoint;
+
     public SpreadElementMethod(List<Expression> elements) {
         this(new SpreadArrayLiteral(elements));
     }
@@ -29,6 +31,16 @@ public final class SpreadElementMethod extends SpreadElement {
     @Override
     public SpreadArrayLiteral getExpression() {
         return (SpreadArrayLiteral) super.getExpression();
+    }
+
+    @Override
+    public boolean hasResumePoint() {
+        return resumePoint;
+    }
+
+    @Override
+    public void setResumePoint(boolean resumePoint) {
+        this.resumePoint = resumePoint;
     }
 
     @Override

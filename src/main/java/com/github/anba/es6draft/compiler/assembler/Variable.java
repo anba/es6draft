@@ -12,7 +12,7 @@ package com.github.anba.es6draft.compiler.assembler;
  * @param <T>
  *            the variable type
  */
-public final class Variable<T> implements Value<T> {
+public final class Variable<T> implements MutableValue<T> {
     private final String name;
     private final Type type;
     private final int slot;
@@ -91,5 +91,10 @@ public final class Variable<T> implements Value<T> {
     @Override
     public void load(InstructionAssembler assembler) {
         assembler.load(this);
+    }
+
+    @Override
+    public void store(InstructionAssembler assembler) {
+        assembler.store(this);
     }
 }

@@ -153,6 +153,10 @@ js/script-tests/unicode-escape-sequences.js
 js/script-tests/function-apply.js
 
 # Different legacy function.arguments behaviour
+js/script-tests/dfg-inline-arguments-become-double.js
+js/script-tests/dfg-inline-arguments-become-int32.js
+js/script-tests/dfg-inline-arguments-reset.js
+js/script-tests/dfg-inline-arguments-reset-changetype.js
 js/script-tests/function-dot-arguments.js
 
 

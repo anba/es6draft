@@ -12,10 +12,10 @@ import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.internal.ReturnValue;
 import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
 import com.github.anba.es6draft.runtime.objects.promise.PromiseCapability;
 import com.github.anba.es6draft.runtime.objects.promise.PromiseObject;
+import com.github.anba.es6draft.runtime.types.Undefined;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
 
 /**
@@ -34,13 +34,12 @@ public final class AsyncAbstractOperations {
      *            the promise capability
      * @param asyncFunctionBody
      *            the function body
-     * @return the result value
      */
-    public static Object AsyncFunctionStart(ExecutionContext cx, PromiseCapability<PromiseObject> promiseCapability,
+    public static void AsyncFunctionStart(ExecutionContext cx, PromiseCapability<PromiseObject> promiseCapability,
             RuntimeInfo.Function asyncFunctionBody) {
         /* steps 1-7 */
         AsyncObject asyncObject = new AsyncObject(promiseCapability);
-        return asyncObject.start(cx, asyncFunctionBody);
+        asyncObject.start(cx, asyncFunctionBody);
     }
 
     /**
@@ -50,11 +49,8 @@ public final class AsyncAbstractOperations {
      *            the execution context
      * @param value
      *            the await value
-     * @return the result value
-     * @throws ReturnValue
-     *             to signal an abrupt Return completion
      */
-    public static Object AsyncFunctionAwait(ExecutionContext cx, Object value) throws ReturnValue {
+    public static void AsyncFunctionAwait(ExecutionContext cx, Object value) {
         /* step 1 */
         AsyncObject asyncObject = cx.getCurrentAsync();
         assert asyncObject != null;
@@ -70,8 +66,7 @@ public final class AsyncAbstractOperations {
         PromiseCapability<PromiseObject> throwawayCapability = PromiseBuiltinCapability(cx);
         /* step 10 */
         PerformPromiseThen(cx, promiseCapability.getPromise(), onFulfilled, onRejected, throwawayCapability);
-        /* steps 11-13 */
-        return asyncObject.await(value);
+        /* steps 11-13 (implemented in generated code) */
     }
 
     /**
@@ -96,11 +91,12 @@ public final class AsyncAbstractOperations {
         }
 
         @Override
-        public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
+        public Undefined call(ExecutionContext callerContext, Object thisValue, Object... args) {
             ExecutionContext calleeContext = calleeContext();
             Object value = argument(args, 0);
             /* steps 1-7 */
-            return asyncObject.resume(calleeContext, value);
+            asyncObject.resume(calleeContext, value);
+            return UNDEFINED;
         }
     }
 
@@ -126,11 +122,12 @@ public final class AsyncAbstractOperations {
         }
 
         @Override
-        public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
+        public Undefined call(ExecutionContext callerContext, Object thisValue, Object... args) {
             ExecutionContext calleeContext = calleeContext();
             Object reason = argument(args, 0);
             /* steps 1-7 */
-            return asyncObject._throw(calleeContext, reason);
+            asyncObject._throw(calleeContext, reason);
+            return UNDEFINED;
         }
     }
 }

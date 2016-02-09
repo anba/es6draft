@@ -21,7 +21,6 @@ import com.github.anba.es6draft.ast.LegacyGeneratorDeclaration;
 import com.github.anba.es6draft.ast.Node;
 import com.github.anba.es6draft.ast.VariableDeclaration;
 import com.github.anba.es6draft.ast.scope.Name;
-import com.github.anba.es6draft.compiler.CodeGenerator.FunctionName;
 import com.github.anba.es6draft.compiler.assembler.Jump;
 import com.github.anba.es6draft.compiler.assembler.MethodName;
 import com.github.anba.es6draft.compiler.assembler.Type;
@@ -475,11 +474,11 @@ class DeclarationBindingInstantiationGenerator {
     private void InstantiateAsyncFunctionObject(Variable<ExecutionContext> context,
             Variable<? extends LexicalEnvironment<?>> env, AsyncFunctionDeclaration f,
             InstructionVisitor mv) {
-        codegen.compile(f);
+        MethodName method = codegen.compile(f);
 
         mv.load(env);
         mv.load(context);
-        mv.invoke(codegen.methodDesc(f, FunctionName.RTI));
+        mv.invoke(method);
         mv.invoke(Methods.ScriptRuntime_InstantiateAsyncFunctionObject);
     }
 
@@ -501,11 +500,11 @@ class DeclarationBindingInstantiationGenerator {
     private void InstantiateFunctionObject(Variable<ExecutionContext> context,
             Variable<? extends LexicalEnvironment<?>> env, FunctionDeclaration f,
             InstructionVisitor mv) {
-        codegen.compile(f);
+        MethodName method = codegen.compile(f);
 
         mv.load(env);
         mv.load(context);
-        mv.invoke(codegen.methodDesc(f, FunctionName.RTI));
+        mv.invoke(method);
         mv.invoke(Methods.ScriptRuntime_InstantiateFunctionObject);
     }
 
@@ -526,11 +525,11 @@ class DeclarationBindingInstantiationGenerator {
      */
     private void InstantiateLegacyFunctionObject(Variable<ExecutionContext> context,
             Variable<? extends LexicalEnvironment<?>> env, FunctionDeclaration f, InstructionVisitor mv) {
-        codegen.compile(f);
+        MethodName method = codegen.compile(f);
 
         mv.load(env);
         mv.load(context);
-        mv.invoke(codegen.methodDesc(f, FunctionName.RTI));
+        mv.invoke(method);
         mv.invoke(Methods.ScriptRuntime_InstantiateLegacyFunctionObject);
     }
 
@@ -552,11 +551,11 @@ class DeclarationBindingInstantiationGenerator {
     private void InstantiateGeneratorObject(Variable<ExecutionContext> context,
             Variable<? extends LexicalEnvironment<?>> env, GeneratorDeclaration f,
             InstructionVisitor mv) {
-        codegen.compile(f);
+        MethodName method = codegen.compile(f);
 
         mv.load(env);
         mv.load(context);
-        mv.invoke(codegen.methodDesc(f, FunctionName.RTI));
+        mv.invoke(method);
         if (f instanceof LegacyGeneratorDeclaration) {
             mv.invoke(Methods.ScriptRuntime_InstantiateLegacyGeneratorObject);
         } else if (f.isConstructor()) {

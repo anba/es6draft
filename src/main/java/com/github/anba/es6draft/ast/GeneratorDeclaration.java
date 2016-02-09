@@ -27,7 +27,6 @@ public class GeneratorDeclaration extends HoistableDeclaration implements Genera
     private final String functionName;
     private final String headerSource, bodySource;
     private StrictMode strictMode;
-    private boolean syntheticNodes;
 
     public GeneratorDeclaration(long beginPosition, long endPosition, FunctionScope scope, GeneratorKind kind,
             BindingIdentifier identifier, FormalParameterList parameters, List<StatementListItem> statements,
@@ -137,16 +136,6 @@ public class GeneratorDeclaration extends HoistableDeclaration implements Genera
     @Override
     public boolean isConstDeclaration() {
         return false;
-    }
-
-    @Override
-    public boolean hasSyntheticNodes() {
-        return syntheticNodes;
-    }
-
-    @Override
-    public void setSyntheticNodes(boolean syntheticNodes) {
-        this.syntheticNodes = syntheticNodes;
     }
 
     @Override

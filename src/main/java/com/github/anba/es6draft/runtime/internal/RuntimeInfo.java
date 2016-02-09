@@ -45,6 +45,8 @@ public final class RuntimeInfo {
      *            the function flags
      * @param expectedArgumentCount
      *            the number of expected arguments
+     * @param parameters
+     *            the parameter names or {@code null}
      * @param source
      *            the encoded source string
      * @param bodySourceStart
@@ -58,10 +60,10 @@ public final class RuntimeInfo {
      * @return the new function object
      */
     public static Function newFunction(Object methodInfo, String functionName, int functionFlags,
-            int expectedArgumentCount, String source, int bodySourceStart, MethodHandle handle,
+            int expectedArgumentCount, String[] parameters, String source, int bodySourceStart, MethodHandle handle,
             MethodHandle callMethod, MethodHandle constructMethod) {
-        return new CompiledFunction(methodInfo, functionName, functionFlags, expectedArgumentCount,
-                source, bodySourceStart, handle, callMethod, constructMethod, null);
+        return new CompiledFunction(methodInfo, functionName, functionFlags, expectedArgumentCount, parameters, source,
+                bodySourceStart, handle, callMethod, constructMethod, null);
     }
 
     /**
@@ -75,6 +77,8 @@ public final class RuntimeInfo {
      *            the function flags
      * @param expectedArgumentCount
      *            the number of expected arguments
+     * @param parameters
+     *            the parameter names or {@code null}
      * @param source
      *            the encoded source string
      * @param bodySourceStart
@@ -90,10 +94,10 @@ public final class RuntimeInfo {
      * @return the new function object
      */
     public static Function newFunction(Object methodInfo, String functionName, int functionFlags,
-            int expectedArgumentCount, String source, int bodySourceStart, MethodHandle handle,
+            int expectedArgumentCount, String[] parameters, String source, int bodySourceStart, MethodHandle handle,
             MethodHandle callMethod, MethodHandle constructMethod, MethodHandle debugInfo) {
-        return new CompiledFunction(methodInfo, functionName, functionFlags, expectedArgumentCount,
-                source, bodySourceStart, handle, callMethod, constructMethod, debugInfo);
+        return new CompiledFunction(methodInfo, functionName, functionFlags, expectedArgumentCount, parameters, source,
+                bodySourceStart, handle, callMethod, constructMethod, debugInfo);
     }
 
     /**
@@ -412,9 +416,9 @@ public final class RuntimeInfo {
         Super(0x2000),
 
         /**
-         * Flag to select resume generator implementation.
+         * Unused.
          */
-        ResumeGenerator(0x4000),
+        Unused(0x4000),
 
         /**
          * Flag for tail-call functions.
@@ -440,6 +444,11 @@ public final class RuntimeInfo {
          * Flag for class functions.
          */
         Class(0x80000),
+
+        /**
+         * Flag for mapped arguments.
+         */
+        MappedArguments(0x100000),
 
         ;
 
@@ -589,6 +598,13 @@ public final class RuntimeInfo {
         int expectedArgumentCount();
 
         /**
+         * Returns the parameter names of this function.
+         * 
+         * @return the formal parameter names or {@code null}
+         */
+        String[] parameters();
+
+        /**
          * Returns the compressed source string.
          * 
          * @return the compressed source string
@@ -629,19 +645,21 @@ public final class RuntimeInfo {
         private final String functionName;
         private final int functionFlags;
         private final int expectedArgumentCount;
+        private final String[] parameters;
         private final FunctionSource source;
         private final MethodHandle handle;
         private final MethodHandle callMethod;
         private final MethodHandle constructMethod;
         private final MethodHandle debugInfo;
 
-        CompiledFunction(Object methodInfo, String functionName, int functionFlags,
-                int expectedArgumentCount, String source, int bodySourceStart, MethodHandle handle,
-                MethodHandle callMethod, MethodHandle constructMethod, MethodHandle debugInfo) {
+        CompiledFunction(Object methodInfo, String functionName, int functionFlags, int expectedArgumentCount,
+                String[] parameters, String source, int bodySourceStart, MethodHandle handle, MethodHandle callMethod,
+                MethodHandle constructMethod, MethodHandle debugInfo) {
             this.methodInfo = methodInfo;
             this.functionName = functionName;
             this.functionFlags = functionFlags;
             this.expectedArgumentCount = expectedArgumentCount;
+            this.parameters = parameters;
             this.source = source != null ? new FunctionSource(source, bodySourceStart) : null;
             this.handle = handle;
             this.callMethod = callMethod;
@@ -687,6 +705,11 @@ public final class RuntimeInfo {
         @Override
         public int expectedArgumentCount() {
             return expectedArgumentCount;
+        }
+
+        @Override
+        public String[] parameters() {
+            return parameters;
         }
 
         @Override

@@ -21,11 +21,9 @@ public final class AsyncArrowFunction extends Expression implements FunctionNode
     private final String headerSource, bodySource;
     private String functionName, methodName;
     private StrictMode strictMode;
-    private boolean syntheticNodes;
 
-    public AsyncArrowFunction(long beginPosition, long endPosition, FunctionScope scope,
-            FormalParameterList parameters, List<StatementListItem> statements,
-            String headerSource, String bodySource) {
+    public AsyncArrowFunction(long beginPosition, long endPosition, FunctionScope scope, FormalParameterList parameters,
+            List<StatementListItem> statements, String headerSource, String bodySource) {
         super(beginPosition, endPosition);
         this.scope = scope;
         this.parameters = parameters;
@@ -35,9 +33,8 @@ public final class AsyncArrowFunction extends Expression implements FunctionNode
         this.bodySource = bodySource;
     }
 
-    public AsyncArrowFunction(long beginPosition, long endPosition, FunctionScope scope,
-            FormalParameterList parameters, Expression expression, String headerSource,
-            String bodySource) {
+    public AsyncArrowFunction(long beginPosition, long endPosition, FunctionScope scope, FormalParameterList parameters,
+            Expression expression, String headerSource, String bodySource) {
         super(beginPosition, endPosition);
         this.scope = scope;
         this.parameters = parameters;
@@ -146,16 +143,6 @@ public final class AsyncArrowFunction extends Expression implements FunctionNode
     @Override
     public boolean isConstructor() {
         return false;
-    }
-
-    @Override
-    public boolean hasSyntheticNodes() {
-        return syntheticNodes;
-    }
-
-    @Override
-    public void setSyntheticNodes(boolean syntheticNodes) {
-        this.syntheticNodes = syntheticNodes;
     }
 
     @Override

@@ -16,6 +16,7 @@ import static com.github.anba.es6draft.semantics.StaticSemantics.IsAnonymousFunc
 import static com.github.anba.es6draft.semantics.StaticSemantics.IsConstantDeclaration;
 
 import java.util.List;
+import java.util.Map.Entry;
 
 import com.github.anba.es6draft.ast.*;
 import com.github.anba.es6draft.ast.scope.BlockScope;
@@ -24,11 +25,14 @@ import com.github.anba.es6draft.ast.scope.Name;
 import com.github.anba.es6draft.ast.scope.ScriptScope;
 import com.github.anba.es6draft.ast.scope.TopLevelScope;
 import com.github.anba.es6draft.ast.synthetic.StatementListMethod;
+import com.github.anba.es6draft.compiler.CodeVisitor.LabelState;
 import com.github.anba.es6draft.compiler.Labels.BreakLabel;
 import com.github.anba.es6draft.compiler.Labels.ContinueLabel;
 import com.github.anba.es6draft.compiler.Labels.TempLabel;
+import com.github.anba.es6draft.compiler.assembler.InstructionAssembler;
 import com.github.anba.es6draft.compiler.assembler.Jump;
 import com.github.anba.es6draft.compiler.assembler.MethodName;
+import com.github.anba.es6draft.compiler.assembler.MutableValue;
 import com.github.anba.es6draft.compiler.assembler.TryCatchLabel;
 import com.github.anba.es6draft.compiler.assembler.Type;
 import com.github.anba.es6draft.compiler.assembler.Value;
@@ -44,8 +48,7 @@ import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
 /**
  *
  */
-final class StatementGenerator extends
-        DefaultCodeGenerator<StatementGenerator.Completion, StatementVisitor> {
+final class StatementGenerator extends DefaultCodeGenerator<StatementGenerator.Completion> {
     /**
      * 6.2.2 The Completion Record Specification Type
      */
@@ -245,7 +248,7 @@ final class StatementGenerator extends
     /* ----------------------------------------------------------------------------------------- */
 
     @Override
-    protected Completion visit(Node node, StatementVisitor mv) {
+    protected Completion visit(Node node, CodeVisitor mv) {
         throw new IllegalStateException(String.format("node-class: %s", node.getClass()));
     }
 
@@ -257,9 +260,9 @@ final class StatementGenerator extends
      * @param clazz
      *            the variable type
      * @param mv
-     *            the statement visitor
+     *            the code visitor
      */
-    private <T> void InitializeBoundNameWithValue(Name name, Class<T> clazz, StatementVisitor mv) {
+    private <T> void InitializeBoundNameWithValue(Name name, Class<T> clazz, CodeVisitor mv) {
         mv.enterVariableScope();
 
         Variable<T> value = mv.newVariable("value", clazz);
@@ -278,8 +281,7 @@ final class StatementGenerator extends
      * Extension: Async Function Definitions
      */
     @Override
-    public Completion visit(AsyncFunctionDeclaration node, StatementVisitor mv) {
-        codegen.compile(node);
+    public Completion visit(AsyncFunctionDeclaration node, CodeVisitor mv) {
         /* step 1 */
         return Completion.Empty;
     }
@@ -290,7 +292,7 @@ final class StatementGenerator extends
      * 13.2.13 Runtime Semantics: Evaluation
      */
     @Override
-    public Completion visit(BlockStatement node, StatementVisitor mv) {
+    public Completion visit(BlockStatement node, CodeVisitor mv) {
         if (node.getStatements().isEmpty()) {
             // Block : { }
             // -> Return NormalCompletion(empty)
@@ -335,7 +337,8 @@ final class StatementGenerator extends
      * 13.9.3 Runtime Semantics: Evaluation
      */
     @Override
-    public Completion visit(BreakStatement node, StatementVisitor mv) {
+    public Completion visit(BreakStatement node, CodeVisitor mv) {
+        assert mv.getStackSize() == 0;
         /* steps 1-2 */
         mv.goTo(mv.breakLabel(node));
         return Completion.Break;
@@ -347,7 +350,7 @@ final class StatementGenerator extends
      * 14.5.16 Runtime Semantics: Evaluation
      */
     @Override
-    public Completion visit(ClassDeclaration node, StatementVisitor mv) {
+    public Completion visit(ClassDeclaration node, CodeVisitor mv) {
         /* steps 1-2 */
         BindingClassDeclarationEvaluation(node, mv);
         /* step 3 */
@@ -360,9 +363,9 @@ final class StatementGenerator extends
      * @param node
      *            the class declaration node
      * @param mv
-     *            the statement visitor
+     *            the code visitor
      */
-    private void BindingClassDeclarationEvaluation(ClassDeclaration node, StatementVisitor mv) {
+    private void BindingClassDeclarationEvaluation(ClassDeclaration node, CodeVisitor mv) {
         if (node.getIdentifier() != null) {
             /* step 1 */
             Name className = node.getIdentifier().getName();
@@ -388,7 +391,8 @@ final class StatementGenerator extends
      * 13.8.3 Runtime Semantics: Evaluation
      */
     @Override
-    public Completion visit(ContinueStatement node, StatementVisitor mv) {
+    public Completion visit(ContinueStatement node, CodeVisitor mv) {
+        assert mv.getStackSize() == 0;
         /* steps 1-2 */
         mv.goTo(mv.continueLabel(node));
         return Completion.Continue;
@@ -400,7 +404,7 @@ final class StatementGenerator extends
      * 13.16.1 Runtime Semantics: Evaluation
      */
     @Override
-    public Completion visit(DebuggerStatement node, StatementVisitor mv) {
+    public Completion visit(DebuggerStatement node, CodeVisitor mv) {
         /* steps 1-3 */
         mv.lineInfo(node);
         mv.invoke(Methods.ScriptRuntime_debugger);
@@ -415,7 +419,8 @@ final class StatementGenerator extends
      * 13.7.2.6 Runtime Semantics: LabelledEvaluation
      */
     @Override
-    public Completion visit(DoWhileStatement node, StatementVisitor mv) {
+    public Completion visit(DoWhileStatement node, CodeVisitor mv) {
+        assert mv.getStackSize() == 0;
         Jump lblNext = new Jump();
         ContinueLabel lblContinue = new ContinueLabel();
         BreakLabel lblBreak = new BreakLabel();
@@ -479,7 +484,7 @@ final class StatementGenerator extends
      * 13.4.1 Runtime Semantics: Evaluation
      */
     @Override
-    public Completion visit(EmptyStatement node, StatementVisitor mv) {
+    public Completion visit(EmptyStatement node, CodeVisitor mv) {
         /* step 1 */
         return Completion.Empty;
     }
@@ -490,7 +495,7 @@ final class StatementGenerator extends
      * 15.2.3.11 Runtime Semantics: Evaluation
      */
     @Override
-    public Completion visit(ExportDeclaration node, StatementVisitor mv) {
+    public Completion visit(ExportDeclaration node, CodeVisitor mv) {
         switch (node.getType()) {
         case All:
         case External:
@@ -529,7 +534,7 @@ final class StatementGenerator extends
      * 15.2.3.11 Runtime Semantics: Evaluation
      */
     @Override
-    public Completion visit(ExportDefaultExpression node, StatementVisitor mv) {
+    public Completion visit(ExportDefaultExpression node, CodeVisitor mv) {
         Expression expr = node.getExpression();
         /* steps 1-3 */
         expressionBoxed(expr, mv);
@@ -549,7 +554,7 @@ final class StatementGenerator extends
      * 13.5.1 Runtime Semantics: Evaluation
      */
     @Override
-    public Completion visit(ExpressionStatement node, StatementVisitor mv) {
+    public Completion visit(ExpressionStatement node, CodeVisitor mv) {
         boolean hasCompletion = mv.hasCompletion() && node.hasCompletionValue();
         Expression expr = node.getExpression();
 
@@ -572,7 +577,7 @@ final class StatementGenerator extends
      * Extension: 'for-each' statement
      */
     @Override
-    public Completion visit(ForEachStatement node, StatementVisitor mv) {
+    public Completion visit(ForEachStatement node, CodeVisitor mv) {
         return visitForInOfLoop(node, IterationKind.EnumerateValues, mv);
     }
 
@@ -584,7 +589,7 @@ final class StatementGenerator extends
      * 13.7.5.11 Runtime Semantics: LabelledEvaluation
      */
     @Override
-    public Completion visit(ForInStatement node, StatementVisitor mv) {
+    public Completion visit(ForInStatement node, CodeVisitor mv) {
         return visitForInOfLoop(node, IterationKind.Enumerate, mv);
     }
 
@@ -596,7 +601,7 @@ final class StatementGenerator extends
      * 13.7.5.11 Runtime Semantics: LabelledEvaluation
      */
     @Override
-    public Completion visit(ForOfStatement node, StatementVisitor mv) {
+    public Completion visit(ForOfStatement node, CodeVisitor mv) {
         return visitForInOfLoop(node, IterationKind.Iterate, mv);
     }
 
@@ -616,11 +621,12 @@ final class StatementGenerator extends
      * @param iterationKind
      *            the for-statement's iteration kind
      * @param mv
-     *            the statement visitor
+     *            the code visitor
      * @return the completion value
      */
-    private <FORSTATEMENT extends IterationStatement & ForIterationNode> Completion visitForInOfLoop(
-            FORSTATEMENT node, IterationKind iterationKind, StatementVisitor mv) {
+    private <FORSTATEMENT extends IterationStatement & ForIterationNode> Completion visitForInOfLoop(FORSTATEMENT node,
+            IterationKind iterationKind, CodeVisitor mv) {
+        assert mv.getStackSize() == 0;
         Jump lblFail = new Jump();
 
         /* steps 1-2 */
@@ -649,11 +655,11 @@ final class StatementGenerator extends
      * @param lblFail
      *            the target instruction if the expression node does not produce an object type
      * @param mv
-     *            the statement visitor
+     *            the code visitor
      * @return the value type of the expression
      */
     private <FORSTATEMENT extends IterationStatement & ForIterationNode> ValType ForInOfHeadEvaluation(
-            FORSTATEMENT node, IterationKind iterationKind, Jump lblFail, StatementVisitor mv) {
+            FORSTATEMENT node, IterationKind iterationKind, Jump lblFail, CodeVisitor mv) {
         /* steps 1-2 */
         BlockScope scope = node.getScope();
         Node lhs = node.getHead();
@@ -761,11 +767,12 @@ final class StatementGenerator extends
      * @param node
      *            the for-statement node
      * @param mv
-     *            the statement visitor
+     *            the code visitor
      * @return the completion value
      */
     private <FORSTATEMENT extends IterationStatement & ForIterationNode> Completion ForInOfBodyEvaluation(
-            FORSTATEMENT node, StatementVisitor mv) {
+            FORSTATEMENT node, CodeVisitor mv) {
+        assert mv.getStackSize() == 1;
         ContinueLabel lblContinue = new ContinueLabel();
         BreakLabel lblBreak = new BreakLabel();
         Jump enter = new Jump(), test = new Jump();
@@ -798,20 +805,20 @@ final class StatementGenerator extends
         {
             mv.enterIteration(node, lblBreak, lblContinue);
             mv.enterWrapped();
-            new IterationGenerator<FORSTATEMENT, StatementVisitor>(codegen) {
+            new IterationGenerator<FORSTATEMENT, CodeVisitor>(codegen) {
                 @Override
-                protected Completion iterationBody(FORSTATEMENT node,
-                        Variable<ScriptIterator<?>> iterator, StatementVisitor mv) {
+                protected Completion iterationBody(FORSTATEMENT node, Variable<ScriptIterator<?>> iterator,
+                        CodeVisitor mv) {
                     return ForInOfBodyEvaluationInner(node, nextValue, mv);
                 }
 
                 @Override
-                protected Variable<Object> enterIteration(FORSTATEMENT node, StatementVisitor mv) {
+                protected MutableValue<Object> enterIteration(FORSTATEMENT node, CodeVisitor mv) {
                     return mv.enterIterationBody(node);
                 }
 
                 @Override
-                protected List<TempLabel> exitIteration(FORSTATEMENT node, StatementVisitor mv) {
+                protected List<TempLabel> exitIteration(FORSTATEMENT node, CodeVisitor mv) {
                     return mv.exitIterationBody(node);
                 }
             }.generate(node, iterator, test, mv);
@@ -843,7 +850,7 @@ final class StatementGenerator extends
     }
 
     private <FORSTATEMENT extends IterationStatement & ForIterationNode> Completion ForInOfBodyEvaluationInner(
-            FORSTATEMENT node, Variable<Object> nextValue, StatementVisitor mv) {
+            FORSTATEMENT node, Variable<Object> nextValue, CodeVisitor mv) {
         BlockScope scope = node.getScope();
         Node lhs = node.getHead();
 
@@ -943,8 +950,8 @@ final class StatementGenerator extends
     /**
      * 13.7.5.10 Runtime Semantics: BindingInstantiation
      */
-    private void BindingInstantiation(Variable<DeclarativeEnvironmentRecord> envRec,
-            LexicalDeclaration declaration, StatementVisitor mv) {
+    private void BindingInstantiation(Variable<DeclarativeEnvironmentRecord> envRec, LexicalDeclaration declaration,
+            CodeVisitor mv) {
         boolean isConst = IsConstantDeclaration(declaration);
         for (Name name : BoundNames(forDeclarationBinding(declaration))) {
             BindingOp<DeclarativeEnvironmentRecord> op = BindingOp.of(envRec, name);
@@ -964,7 +971,8 @@ final class StatementGenerator extends
      * 13.7.4.7 Runtime Semantics: LabelledEvaluation
      */
     @Override
-    public Completion visit(ForStatement node, StatementVisitor mv) {
+    public Completion visit(ForStatement node, CodeVisitor mv) {
+        assert mv.getStackSize() == 0;
         boolean perIterationsLets = false;
         BlockScope scope = node.getScope();
         Node head = node.getHead();
@@ -1024,8 +1032,8 @@ final class StatementGenerator extends
      * 13.7.4.8 Runtime Semantics: ForBodyEvaluation(test, increment, stmt, perIterationBindings,
      * labelSet)
      */
-    private Completion ForBodyEvaluation(ForStatement node, boolean perIterationsLets,
-            StatementVisitor mv) {
+    private Completion ForBodyEvaluation(ForStatement node, boolean perIterationsLets, CodeVisitor mv) {
+        assert mv.getStackSize() == 0;
         mv.enterVariableScope();
         /* step 1 */
         if (node.hasCompletionValue()) {
@@ -1106,10 +1114,10 @@ final class StatementGenerator extends
      * @param savedEnv
      *            the variable which holds the saved environment
      * @param mv
-     *            the statement visitor
+     *            the code visitor
      */
-    private void CreatePerIterationEnvironment(Variable<LexicalEnvironment<?>> savedEnv,
-            StatementVisitor mv) {
+    private void CreatePerIterationEnvironment(Variable<LexicalEnvironment<?>> savedEnv, CodeVisitor mv) {
+        // NB: Non-fallible operation as long as do-expressions in for-init cannot target current for-loop.
         /* steps 1.a-e */
         cloneDeclarativeEnvironment(mv);
         mv.store(savedEnv);
@@ -1122,9 +1130,7 @@ final class StatementGenerator extends
      * 14.1.20 Runtime Semantics: Evaluation
      */
     @Override
-    public Completion visit(FunctionDeclaration node, final StatementVisitor mv) {
-        codegen.compile(node);
-
+    public Completion visit(FunctionDeclaration node, CodeVisitor mv) {
         /* B.3.3 Block-Level Function Declarations Web Legacy Compatibility Semantics */
         if (node.isLegacyBlockScoped()) {
             Name name = node.getIdentifier().getName();
@@ -1183,8 +1189,7 @@ final class StatementGenerator extends
      * 13.1.8 Runtime Semantics: Evaluation
      */
     @Override
-    public Completion visit(GeneratorDeclaration node, StatementVisitor mv) {
-        codegen.compile(node);
+    public Completion visit(GeneratorDeclaration node, CodeVisitor mv) {
         /* step 1 */
         return Completion.Empty;
     }
@@ -1195,7 +1200,7 @@ final class StatementGenerator extends
      * 13.6.7 Runtime Semantics: Evaluation
      */
     @Override
-    public Completion visit(IfStatement node, StatementVisitor mv) {
+    public Completion visit(IfStatement node, CodeVisitor mv) {
         Bool btest = Bool.evaluate(node.getTest());
         if (btest != Bool.Any) {
             if (node.hasCompletionValue()) {
@@ -1277,7 +1282,7 @@ final class StatementGenerator extends
      * 15.2.1.20 Runtime Semantics: Evaluation
      */
     @Override
-    public Completion visit(ImportDeclaration node, StatementVisitor mv) {
+    public Completion visit(ImportDeclaration node, CodeVisitor mv) {
         return Completion.Empty;
     }
 
@@ -1288,7 +1293,8 @@ final class StatementGenerator extends
      * 13.13.14 Runtime Semantics: LabelledEvaluation
      */
     @Override
-    public Completion visit(LabelledStatement node, StatementVisitor mv) {
+    public Completion visit(LabelledStatement node, CodeVisitor mv) {
+        assert mv.getStackSize() == 0;
         mv.enterVariableScope();
         Variable<LexicalEnvironment<?>> savedEnv = saveEnvironment(node, mv);
 
@@ -1317,7 +1323,7 @@ final class StatementGenerator extends
      * <code>LabelledItem: FunctionDeclaration</code>
      */
     @Override
-    public Completion visit(LabelledFunctionStatement node, StatementVisitor mv) {
+    public Completion visit(LabelledFunctionStatement node, CodeVisitor mv) {
         return node.getFunction().accept(this, mv);
     }
 
@@ -1327,7 +1333,7 @@ final class StatementGenerator extends
      * 13.3.1.4 Runtime Semantics: Evaluation
      */
     @Override
-    public Completion visit(LexicalDeclaration node, StatementVisitor mv) {
+    public Completion visit(LexicalDeclaration node, CodeVisitor mv) {
         mv.enterVariableScope();
         Class<? extends EnvironmentRecord> envRecClass = getEnvironmentRecordClass(mv);
         Variable<? extends EnvironmentRecord> envRec = mv.newVariable("envRec", envRecClass);
@@ -1366,7 +1372,7 @@ final class StatementGenerator extends
      * Extension: 'let' statement
      */
     @Override
-    public Completion visit(LetStatement node, StatementVisitor mv) {
+    public Completion visit(LetStatement node, CodeVisitor mv) {
         BlockScope scope = node.getScope();
         if (scope.isPresent()) {
             mv.enterVariableScope();
@@ -1429,49 +1435,76 @@ final class StatementGenerator extends
      * 13.10.1 Runtime Semantics: Evaluation
      */
     @Override
-    public Completion visit(ReturnStatement node, StatementVisitor mv) {
+    public Completion visit(ReturnStatement node, CodeVisitor mv) {
         Expression expr = node.getExpression();
         if (expr == null) {
             // ReturnStatement : return ;
             /* step 1 */
-            mv.loadUndefined();
+            mv.returnCompletion(mv.undefinedValue());
         } else {
             // ReturnStatement : return Expression;
             /* steps 1-3 */
             mv.enterTailCallPosition(expr);
             expressionBoxed(expr, mv);
             mv.exitTailCallPosition();
+            /* step 4 */
+            mv.returnCompletion();
         }
-        /* step 1/4 */
-        mv.returnCompletion();
         return Completion.Return;
     }
 
     @Override
-    public Completion visit(StatementListMethod node, StatementVisitor mv) {
-        Completion result = codegen.compile(node, mv);
-        assert !(result == Completion.Break || result == Completion.Continue);
+    public Completion visit(StatementListMethod node, CodeVisitor mv) {
+        Entry<MethodName, LabelState> entry = codegen.compile(node, mv);
+        MethodName method = entry.getKey();
+        LabelState labelState = entry.getValue();
+        boolean hasCompletion = labelState.hasReturn() || (mv.hasCompletion() && node.hasCompletionValue());
+        boolean hasResume = node.hasResumePoint();
+        boolean hasTarget = hasResume || labelState.hasTargetInstruction();
 
+        mv.enterVariableScope();
+        Value<Object[]> completion;
+        if (hasCompletion) {
+            Variable<Object[]> completionVar = mv.newVariable("completion", Object[].class);
+            mv.anewarray(1, Types.Object);
+            mv.store(completionVar);
+            if (mv.hasCompletion()) {
+                mv.astore(completionVar, 0, mv.completionValue());
+            }
+            completion = completionVar;
+        } else {
+            completion = mv.anullValue();
+        }
+        MutableValue<Integer> target = hasTarget ? mv.newVariable("target", int.class) : new PopStoreValue<>();
+
+        // stack: [] -> []
         mv.lineInfo(0); // 0 = hint for stacktraces to omit this frame
-        mv.loadExecutionContext();
-        mv.loadCompletionValue();
-        mv.invoke(codegen.methodDesc(node));
-
-        if (mv.isFunction()) {
-            // TODO: only emit when `return` used in StatementListMethod
-            Jump noReturn = new Jump();
-            mv.dup();
-            mv.ifnull(noReturn);
-            mv.returnCompletion();
-            mv.mark(noReturn);
-            mv.pop();
-
-            return Completion.Empty;
+        if (hasResume) {
+            mv.callWithSuspendInt(method, target, completion);
+        } else {
+            mv.callWithResult(method, target, completion);
         }
 
-        mv.storeCompletionValue(ValType.Any);
-        assert result != Completion.Return;
-        return result;
+        Value<Object> completionValue = mv.arrayElement(completion, 0, Object.class);
+        if (node.hasCompletionValue()) {
+            mv.storeCompletionValue(completionValue);
+        }
+        mv.labelSwitch(labelState, target, completionValue);
+        mv.exitVariableScope();
+
+        return labelState.completion;
+    }
+
+    private static final class PopStoreValue<V> implements MutableValue<V> {
+        @Override
+        public void load(InstructionAssembler assembler) {
+            throw new AssertionError();
+        }
+
+        @Override
+        public void store(InstructionAssembler assembler) {
+            assembler.pop();
+        }
     }
 
     /**
@@ -1480,7 +1513,8 @@ final class StatementGenerator extends
      * 13.12.11 Runtime Semantics: Evaluation
      */
     @Override
-    public Completion visit(SwitchStatement node, StatementVisitor mv) {
+    public Completion visit(SwitchStatement node, CodeVisitor mv) {
+        assert mv.getStackSize() == 0;
         if (node.hasCompletionValue()) {
             mv.storeUndefinedAsCompletionValue();
         }
@@ -1493,7 +1527,7 @@ final class StatementGenerator extends
      * 13.14.1 Runtime Semantics: Evaluation
      */
     @Override
-    public Completion visit(ThrowStatement node, StatementVisitor mv) {
+    public Completion visit(ThrowStatement node, CodeVisitor mv) {
         /* steps 1-3 */
         expressionBoxed(node.getExpression(), mv);
         mv.lineInfo(node);
@@ -1510,7 +1544,8 @@ final class StatementGenerator extends
      * 13.15.8 Runtime Semantics: Evaluation
      */
     @Override
-    public Completion visit(TryStatement node, StatementVisitor mv) {
+    public Completion visit(TryStatement node, CodeVisitor mv) {
+        assert mv.getStackSize() == 0;
         if (node.hasCompletionValue()) {
             mv.storeUndefinedAsCompletionValue();
         }
@@ -1532,25 +1567,20 @@ final class StatementGenerator extends
      * @param node
      *            the try-statement
      * @param mv
-     *            the statement visitor
+     *            the code visitor
      * @return the completion value
      */
-    private Completion visitTryCatchFinally(TryStatement node, StatementVisitor mv) {
+    private Completion visitTryCatchFinally(TryStatement node, CodeVisitor mv) {
         TryCatchLabel startCatchFinally = new TryCatchLabel();
         TryCatchLabel endCatch = new TryCatchLabel(), handlerCatch = new TryCatchLabel();
         TryCatchLabel endFinally = new TryCatchLabel(), handlerFinally = new TryCatchLabel();
         TryCatchLabel handlerCatchStackOverflow = new TryCatchLabel();
         TryCatchLabel handlerFinallyStackOverflow = new TryCatchLabel();
-        TryCatchLabel handlerReturn = null;
-        if (mv.isGeneratorOrAsync()
-                && !(mv.isResumable() && !codegen.isEnabled(Compiler.Option.NoResume))) {
-            handlerReturn = new TryCatchLabel();
-        }
         Jump noException = new Jump();
 
         mv.enterVariableScope();
         Variable<LexicalEnvironment<?>> savedEnv = saveEnvironment(mv);
-        Variable<Object> completion = mv.enterFinallyScoped(node);
+        MutableValue<Object> completion = mv.enterFinallyScoped(node);
 
         /* step 1 */
         // Emit try-block
@@ -1572,16 +1602,12 @@ final class StatementGenerator extends
 
         /* step 4 */
         // Emit finally-block
-        Completion finallyResult = emitFinallyBlock(node, savedEnv, completion, tryResult,
-                catchResult, handlerFinally, handlerFinallyStackOverflow, handlerReturn,
-                noException, tempLabels, mv);
+        Completion finallyResult = emitFinallyBlock(node, savedEnv, completion, tryResult, catchResult, handlerFinally,
+                handlerFinallyStackOverflow, noException, tempLabels, mv);
 
         mv.exitVariableScope();
         mv.tryCatch(startCatchFinally, endCatch, handlerCatch, Types.ScriptException);
         mv.tryCatch(startCatchFinally, endCatch, handlerCatchStackOverflow, Types.Error);
-        if (handlerReturn != null) {
-            mv.tryCatch(startCatchFinally, endFinally, handlerReturn, Types.ReturnValue);
-        }
         mv.tryCatch(startCatchFinally, endFinally, handlerFinally, Types.ScriptException);
         mv.tryCatch(startCatchFinally, endFinally, handlerFinallyStackOverflow, Types.Error);
 
@@ -1597,10 +1623,10 @@ final class StatementGenerator extends
      * @param node
      *            the try-statement
      * @param mv
-     *            the statement visitor
+     *            the code visitor
      * @return the completion value
      */
-    private Completion visitTryCatch(TryStatement node, StatementVisitor mv) {
+    private Completion visitTryCatch(TryStatement node, CodeVisitor mv) {
         TryCatchLabel startCatch = new TryCatchLabel(), endCatch = new TryCatchLabel();
         TryCatchLabel handlerCatch = new TryCatchLabel();
         TryCatchLabel handlerCatchStackOverflow = new TryCatchLabel();
@@ -1641,23 +1667,18 @@ final class StatementGenerator extends
      * @param node
      *            the try-statement
      * @param mv
-     *            the statement visitor
+     *            the code visitor
      * @return the completion value
      */
-    private Completion visitTryFinally(TryStatement node, StatementVisitor mv) {
+    private Completion visitTryFinally(TryStatement node, CodeVisitor mv) {
         TryCatchLabel startFinally = new TryCatchLabel(), endFinally = new TryCatchLabel();
         TryCatchLabel handlerFinally = new TryCatchLabel();
         TryCatchLabel handlerFinallyStackOverflow = new TryCatchLabel();
-        TryCatchLabel handlerReturn = null;
-        if (mv.isGeneratorOrAsync()
-                && !(mv.isResumable() && !codegen.isEnabled(Compiler.Option.NoResume))) {
-            handlerReturn = new TryCatchLabel();
-        }
         Jump noException = new Jump();
 
         mv.enterVariableScope();
         Variable<LexicalEnvironment<?>> savedEnv = saveEnvironment(mv);
-        Variable<Object> completion = mv.enterFinallyScoped(node);
+        MutableValue<Object> completion = mv.enterFinallyScoped(node);
 
         /* step 1 */
         // Emit try-block
@@ -1670,14 +1691,10 @@ final class StatementGenerator extends
 
         /* step 2 */
         // Emit finally-block
-        Completion finallyResult = emitFinallyBlock(node, savedEnv, completion, tryResult,
-                Completion.Abrupt, handlerFinally, handlerFinallyStackOverflow, handlerReturn,
-                noException, tempLabels, mv);
+        Completion finallyResult = emitFinallyBlock(node, savedEnv, completion, tryResult, Completion.Abrupt,
+                handlerFinally, handlerFinallyStackOverflow, noException, tempLabels, mv);
 
         mv.exitVariableScope();
-        if (handlerReturn != null) {
-            mv.tryCatch(startFinally, endFinally, handlerReturn, Types.ReturnValue);
-        }
         mv.tryCatch(startFinally, endFinally, handlerFinally, Types.ScriptException);
         mv.tryCatch(startFinally, endFinally, handlerFinallyStackOverflow, Types.Error);
 
@@ -1685,7 +1702,7 @@ final class StatementGenerator extends
         return finallyResult.then(tryResult);
     }
 
-    private Completion emitTryBlock(TryStatement node, Jump noException, StatementVisitor mv) {
+    private Completion emitTryBlock(TryStatement node, Jump noException, CodeVisitor mv) {
         mv.enterWrapped();
         Completion tryResult = node.getTryBlock().accept(this, mv);
         mv.exitWrapped();
@@ -1696,7 +1713,7 @@ final class StatementGenerator extends
     }
 
     private Completion emitCatchBlock(TryStatement node, Variable<LexicalEnvironment<?>> savedEnv,
-            TryCatchLabel handlerCatch, TryCatchLabel handlerCatchStackOverflow, StatementVisitor mv) {
+            TryCatchLabel handlerCatch, TryCatchLabel handlerCatchStackOverflow, CodeVisitor mv) {
         boolean hasFinally = node.getFinallyBlock() != null;
         CatchNode catchNode = node.getCatchNode();
         List<GuardedCatchNode> guardedCatchNodes = node.getGuardedCatchNodes();
@@ -1716,21 +1733,20 @@ final class StatementGenerator extends
         Completion catchResult;
         if (!guardedCatchNodes.isEmpty()) {
             mv.enterVariableScope();
-            Variable<ScriptException> exception = mv
-                    .newVariable("exception", ScriptException.class);
-            mv.enterCatchWithGuarded(node, new Jump());
+            Variable<ScriptException> exception = mv.newVariable("exception", ScriptException.class);
+            Jump catchWithGuardedLabel = new Jump();
 
             mv.store(exception);
             Completion result = null;
             for (GuardedCatchNode guardedCatchNode : guardedCatchNodes) {
                 mv.load(exception);
-                Completion guardedResult = guardedCatchNode.accept(this, mv);
+                Completion guardedResult = CatchClauseEvaluation(guardedCatchNode, catchWithGuardedLabel, mv);
                 result = result != null ? result.select(guardedResult) : guardedResult;
             }
             assert result != null;
             if (catchNode != null) {
                 mv.load(exception);
-                catchResult = catchNode.accept(this, mv);
+                catchResult = CatchClauseEvaluation(catchNode, mv);
             } else {
                 mv.load(exception);
                 mv.athrow();
@@ -1738,14 +1754,13 @@ final class StatementGenerator extends
             }
 
             if (!result.isAbrupt()) {
-                mv.mark(mv.catchWithGuardedLabel());
+                mv.mark(catchWithGuardedLabel);
             }
-            mv.exitCatchWithGuarded(node);
             mv.exitVariableScope();
 
             catchResult = catchResult.select(result);
         } else {
-            catchResult = catchNode.accept(this, mv);
+            catchResult = CatchClauseEvaluation(catchNode, mv);
         }
         if (hasFinally) {
             mv.exitWrapped();
@@ -1753,11 +1768,9 @@ final class StatementGenerator extends
         return catchResult.nonEmpty();
     }
 
-    private Completion emitFinallyBlock(TryStatement node,
-            Variable<LexicalEnvironment<?>> savedEnv, Variable<Object> completion,
-            Completion tryResult, Completion catchResult, TryCatchLabel handlerFinally,
-            TryCatchLabel handlerFinallyStackOverflow, TryCatchLabel handlerReturn,
-            Jump noException, List<TempLabel> tempLabels, StatementVisitor mv) {
+    private Completion emitFinallyBlock(TryStatement node, Variable<LexicalEnvironment<?>> savedEnv,
+            Value<Object> completion, Completion tryResult, Completion catchResult, TryCatchLabel handlerFinally,
+            TryCatchLabel handlerFinallyStackOverflow, Jump noException, List<TempLabel> tempLabels, CodeVisitor mv) {
         BlockStatement finallyBlock = node.getFinallyBlock();
         assert finallyBlock != null;
 
@@ -1768,9 +1781,6 @@ final class StatementGenerator extends
         mv.catchHandler(handlerFinallyStackOverflow, Types.Error);
         mv.invoke(Methods.ScriptRuntime_stackOverflowError);
         mv.catchHandler(handlerFinally, Types.ScriptException);
-        if (handlerReturn != null) {
-            mv.catchHandler(handlerReturn, Types.ReturnValue);
-        }
         mv.store(throwable);
         restoreEnvironment(savedEnv, mv);
         Completion finallyResult = finallyBlock.accept(this, mv);
@@ -1822,11 +1832,53 @@ final class StatementGenerator extends
     /**
      * 13.15.7 Runtime Semantics: CatchClauseEvaluation
      */
-    @Override
-    public Completion visit(CatchNode node, StatementVisitor mv) {
-        Binding catchParameter = node.getCatchParameter();
-        BlockStatement catchBlock = node.getCatchBlock();
+    private Completion CatchClauseEvaluation(CatchNode node, CodeVisitor mv) {
+        /* steps 1-6 */
+        enterCatchScope(node, mv);
+
+        /* step 7 */
+        Completion result = node.getCatchBlock().accept(this, mv);
+
+        /* step 8 */
+        exitCatchScope(node, result, mv);
+
+        /* step 9 */
+        return result;
+    }
+
+    /**
+     * Extension: 'catch-if' statement
+     */
+    private Completion CatchClauseEvaluation(GuardedCatchNode node, Jump catchWithGuardedLabel, CodeVisitor mv) {
+        /* steps 1-6 */
+        enterCatchScope(node, mv);
+
+        /* step 7 */
+        Jump l0 = new Jump();
+        Completion result;
+        ToBoolean(expression(node.getGuard(), mv), mv);
+        mv.ifeq(l0);
+        {
+            result = node.getCatchBlock().accept(this, mv);
+            if (!result.isAbrupt()) {
+                if (node.getScope().isPresent()) {
+                    popLexicalEnvironment(mv);
+                }
+                mv.goTo(catchWithGuardedLabel);
+            }
+        }
+        mv.mark(l0);
+
+        /* step 8 */
+        exitCatchScope(node, Completion.Normal, mv);
+
+        /* step 9 */
+        return result;
+    }
+
+    private void enterCatchScope(CatchClause node, CodeVisitor mv) {
         BlockScope scope = node.getScope();
+        Binding catchParameter = node.getCatchParameter();
 
         /* steps 1-6 */
         // stack: [e] -> []
@@ -1842,12 +1894,11 @@ final class StatementGenerator extends
             if (scope.isPresent()) {
                 /* step 2 */
                 // stack: [] -> [catchEnv]
-                newCatchEnvironment(node.getCatchParameter(), scope, mv);
+                newCatchEnvironment(catchParameter, scope, mv);
                 envRec = mv.newVariable("envRec", DeclarativeEnvironmentRecord.class);
                 getEnvRec(envRec, mv);
 
                 /* step 3 */
-                // FIXME: spec bug (CreateMutableBinding concrete method of `catchEnv`)
                 for (Name name : BoundNames(catchParameter)) {
                     BindingOp<DeclarativeEnvironmentRecord> op = BindingOp.of(envRec, name);
                     op.createMutableBinding(envRec, name, false, mv);
@@ -1864,92 +1915,16 @@ final class StatementGenerator extends
             BindingInitialization(codegen, envRec, catchParameter, exception, mv);
         }
         mv.exitVariableScope();
-
-        /* step 7 */
-        Completion result = catchBlock.accept(this, mv);
-
-        /* step 8 */
-        mv.exitScope();
-        if (scope.isPresent() && !result.isAbrupt()) {
-            popLexicalEnvironment(mv);
-        }
-
-        /* step 9 */
-        return result;
     }
 
-    /**
-     * Extension: 'catch-if' statement
-     */
-    @Override
-    public Completion visit(GuardedCatchNode node, StatementVisitor mv) {
-        Binding catchParameter = node.getCatchParameter();
-        BlockStatement catchBlock = node.getCatchBlock();
-        BlockScope scope = node.getScope();
-        Jump l0 = new Jump();
-
-        /* steps 1-6 */
-        // stack: [e] -> []
-        mv.enterVariableScope();
-        {
-            Variable<Object> exception = mv.newVariable("exception", Object.class);
-            mv.invoke(Methods.ScriptException_getValue);
-            mv.store(exception);
-
-            /* step 1 (not applicable) */
-            /* steps 2-4 */
-            Variable<DeclarativeEnvironmentRecord> envRec = null;
-            if (scope.isPresent()) {
-                /* step 2 */
-                // stack: [] -> [catchEnv]
-                newCatchEnvironment(node.getCatchParameter(), scope, mv);
-                envRec = mv.newVariable("envRec", DeclarativeEnvironmentRecord.class);
-                getEnvRec(envRec, mv);
-
-                /* step 3 */
-                for (Name name : BoundNames(catchParameter)) {
-                    BindingOp<DeclarativeEnvironmentRecord> op = BindingOp.of(envRec, name);
-                    op.createMutableBinding(envRec, name, false, mv);
-                }
-
-                /* step 4 */
-                // stack: [catchEnv] -> []
-                pushLexicalEnvironment(mv);
-            }
-            mv.enterScope(node);
-
-            /* steps 5-6 */
-            // stack: [] -> []
-            BindingInitialization(codegen, envRec, catchParameter, exception, mv);
-        }
-        mv.exitVariableScope();
-
-        /* step 7 */
-        Completion result;
-        ToBoolean(expression(node.getGuard(), mv), mv);
-        mv.ifeq(l0);
-        {
-            result = catchBlock.accept(this, mv);
-            if (!result.isAbrupt()) {
-                if (scope.isPresent()) {
-                    popLexicalEnvironment(mv);
-                }
-                mv.goTo(mv.catchWithGuardedLabel());
-            }
-        }
-        mv.mark(l0);
-
-        /* step 8 */
+    private void exitCatchScope(CatchClause node, Completion result, CodeVisitor mv) {
         mv.exitScope();
-        if (scope.isPresent()) {
+        if (node.getScope().isPresent() && !result.isAbrupt()) {
             popLexicalEnvironment(mv);
         }
-
-        /* step 9 */
-        return result;
     }
 
-    private void newCatchEnvironment(Binding catchParameter, BlockScope scope, StatementVisitor mv) {
+    private void newCatchEnvironment(Binding catchParameter, BlockScope scope, CodeVisitor mv) {
         if (codegen.isEnabled(CompatibilityOption.CatchVarPattern)) {
             if (catchParameter instanceof BindingPattern) {
                 newDeclarativeEnvironment(scope, mv);
@@ -1969,7 +1944,7 @@ final class StatementGenerator extends
      * 13.3.2.4 Runtime Semantics: Evaluation
      */
     @Override
-    public Completion visit(VariableDeclaration node, StatementVisitor mv) {
+    public Completion visit(VariableDeclaration node, CodeVisitor mv) {
         Binding binding = node.getBinding();
         Expression initializer = node.getInitializer();
         if (initializer == null) {
@@ -2008,7 +1983,7 @@ final class StatementGenerator extends
      * 13.3.2.4 Runtime Semantics: Evaluation
      */
     @Override
-    public Completion visit(VariableStatement node, StatementVisitor mv) {
+    public Completion visit(VariableStatement node, CodeVisitor mv) {
         /* steps 1-2 */
         for (VariableDeclaration decl : node.getElements()) {
             decl.accept(this, mv);
@@ -2025,7 +2000,8 @@ final class StatementGenerator extends
      * 13.7.3.6 Runtime Semantics: LabelledEvaluation
      */
     @Override
-    public Completion visit(WhileStatement node, StatementVisitor mv) {
+    public Completion visit(WhileStatement node, CodeVisitor mv) {
+        assert mv.getStackSize() == 0;
         Jump lblNext = new Jump(), lblTest = new Jump();
         ContinueLabel lblContinue = new ContinueLabel();
         BreakLabel lblBreak = new BreakLabel();
@@ -2091,7 +2067,7 @@ final class StatementGenerator extends
      * 13.11.7 Runtime Semantics: Evaluation
      */
     @Override
-    public Completion visit(WithStatement node, StatementVisitor mv) {
+    public Completion visit(WithStatement node, CodeVisitor mv) {
         /* step 1 */
         ValType type = expression(node.getExpression(), mv);
 

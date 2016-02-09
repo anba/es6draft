@@ -13,29 +13,29 @@ import com.github.anba.es6draft.compiler.Labels.TempLabel;
 import com.github.anba.es6draft.compiler.StatementGenerator.Completion;
 import com.github.anba.es6draft.compiler.assembler.Jump;
 import com.github.anba.es6draft.compiler.assembler.MethodName;
+import com.github.anba.es6draft.compiler.assembler.MutableValue;
 import com.github.anba.es6draft.compiler.assembler.TryCatchLabel;
 import com.github.anba.es6draft.compiler.assembler.Type;
+import com.github.anba.es6draft.compiler.assembler.Value;
 import com.github.anba.es6draft.compiler.assembler.Variable;
-import com.github.anba.es6draft.runtime.internal.ReturnValue;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
 import com.github.anba.es6draft.runtime.internal.ScriptIterator;
 
 /** 
  *
  */
-abstract class IterationGenerator<NODE extends Node, VISITOR extends ExpressionVisitor> {
+abstract class IterationGenerator<NODE extends Node, VISITOR extends CodeVisitor> {
     private static final class Methods {
         // class: ScriptIterator
-        static final MethodName ScriptIterator_close = MethodName.findInterface(
-                Types.ScriptIterator, "close", Type.methodType(Type.VOID_TYPE));
+        static final MethodName ScriptIterator_close = MethodName.findInterface(Types.ScriptIterator, "close",
+                Type.methodType(Type.VOID_TYPE));
 
-        static final MethodName ScriptIterator_close_exception = MethodName.findInterface(
-                Types.ScriptIterator, "close", Type.methodType(Type.VOID_TYPE, Types.Throwable));
+        static final MethodName ScriptIterator_close_exception = MethodName.findInterface(Types.ScriptIterator, "close",
+                Type.methodType(Type.VOID_TYPE, Types.Throwable));
 
         // class: ScriptRuntime
-        static final MethodName ScriptRuntime_stackOverflowError = MethodName.findStatic(
-                Types.ScriptRuntime, "stackOverflowError",
-                Type.methodType(Types.StackOverflowError, Types.Error));
+        static final MethodName ScriptRuntime_stackOverflowError = MethodName.findStatic(Types.ScriptRuntime,
+                "stackOverflowError", Type.methodType(Types.StackOverflowError, Types.Error));
     }
 
     private final CodeGenerator codegen;
@@ -52,11 +52,10 @@ abstract class IterationGenerator<NODE extends Node, VISITOR extends ExpressionV
      * @param iterator
      *            the iterator variable
      * @param mv
-     *            the expression visitor
+     *            the code visitor
      * @return the completion value
      */
-    protected abstract Completion iterationBody(NODE node, Variable<ScriptIterator<?>> iterator,
-            VISITOR mv);
+    protected abstract Completion iterationBody(NODE node, Variable<ScriptIterator<?>> iterator, VISITOR mv);
 
     /**
      * Emit code for the iteration epilogue.
@@ -66,7 +65,7 @@ abstract class IterationGenerator<NODE extends Node, VISITOR extends ExpressionV
      * @param iterator
      *            the iterator variable
      * @param mv
-     *            the expression visitor
+     *            the code visitor
      */
     protected void epilogue(NODE node, Variable<ScriptIterator<?>> iterator, VISITOR mv) {
         // Default implementation is empty.
@@ -78,10 +77,10 @@ abstract class IterationGenerator<NODE extends Node, VISITOR extends ExpressionV
      * @param node
      *            the ast node
      * @param mv
-     *            the expression visitor
+     *            the code visitor
      * @return the temporary completion object variable or {@code null}
      */
-    protected abstract Variable<Object> enterIteration(NODE node, VISITOR mv);
+    protected abstract MutableValue<Object> enterIteration(NODE node, VISITOR mv);
 
     /**
      * Called after emitting the iteration body.
@@ -89,7 +88,7 @@ abstract class IterationGenerator<NODE extends Node, VISITOR extends ExpressionV
      * @param node
      *            the ast node
      * @param mv
-     *            the expression visitor
+     *            the code visitor
      * @return the list of generated labels
      */
     protected abstract List<TempLabel> exitIteration(NODE node, VISITOR mv);
@@ -102,7 +101,7 @@ abstract class IterationGenerator<NODE extends Node, VISITOR extends ExpressionV
      * @param iterator
      *            the iterator variable
      * @param mv
-     *            the expression visitor
+     *            the code visitor
      * @return the completion value
      */
     public final Completion generate(NODE node, Variable<ScriptIterator<?>> iterator, VISITOR mv) {
@@ -119,21 +118,15 @@ abstract class IterationGenerator<NODE extends Node, VISITOR extends ExpressionV
      * @param target
      *            the target label
      * @param mv
-     *            the expression visitor
+     *            the code visitor
      * @return the completion value
      */
-    public final Completion generate(NODE node, Variable<ScriptIterator<?>> iterator, Jump target,
-            VISITOR mv) {
+    public final Completion generate(NODE node, Variable<ScriptIterator<?>> iterator, Jump target, VISITOR mv) {
         TryCatchLabel startIteration = new TryCatchLabel(), endIteration = new TryCatchLabel();
         TryCatchLabel handlerCatch = new TryCatchLabel();
         TryCatchLabel handlerCatchStackOverflow = null;
         if (codegen.isEnabled(Compiler.Option.IterationCatchStackOverflow)) {
             handlerCatchStackOverflow = new TryCatchLabel();
-        }
-        TryCatchLabel handlerReturn = null;
-        if (mv.isGeneratorOrAsync()
-                && !(mv.isResumable() && !codegen.isEnabled(Compiler.Option.NoResume))) {
-            handlerReturn = new TryCatchLabel();
         }
         boolean hasTarget = target != null;
         if (!hasTarget) {
@@ -141,7 +134,7 @@ abstract class IterationGenerator<NODE extends Node, VISITOR extends ExpressionV
         }
 
         mv.enterVariableScope();
-        Variable<Object> completion = enterIteration(node, mv);
+        MutableValue<Object> completion = enterIteration(node, mv);
 
         // Emit loop body
         mv.mark(startIteration);
@@ -155,20 +148,15 @@ abstract class IterationGenerator<NODE extends Node, VISITOR extends ExpressionV
         List<TempLabel> tempLabels = exitIteration(node, mv);
 
         // Emit throw handler
-        Completion throwResult = emitThrowHandler(node, iterator, handlerCatch,
-                handlerCatchStackOverflow, mv);
+        Completion throwResult = emitThrowHandler(node, iterator, handlerCatch, handlerCatchStackOverflow, mv);
 
         // Emit return handler
-        Completion returnResult = emitReturnHandler(node, iterator, completion, handlerReturn,
-                tempLabels, mv);
+        Completion returnResult = emitReturnHandler(node, iterator, completion, tempLabels, mv);
 
         mv.exitVariableScope();
         mv.tryCatch(startIteration, endIteration, handlerCatch, Types.ScriptException);
         if (handlerCatchStackOverflow != null) {
             mv.tryCatch(startIteration, endIteration, handlerCatchStackOverflow, Types.Error);
-        }
-        if (handlerReturn != null) {
-            mv.tryCatch(startIteration, endIteration, handlerReturn, Types.ReturnValue);
         }
 
         if (!hasTarget) {
@@ -176,16 +164,15 @@ abstract class IterationGenerator<NODE extends Node, VISITOR extends ExpressionV
             epilogue(node, iterator, mv);
         }
 
-        if (handlerReturn == null && tempLabels.isEmpty()) {
+        if (tempLabels.isEmpty()) {
             // No Return handler installed
             return throwResult.select(loopBodyResult);
         }
         return returnResult.select(throwResult.select(loopBodyResult));
     }
 
-    private Completion emitThrowHandler(Node node, Variable<ScriptIterator<?>> iterator,
-            TryCatchLabel handlerCatch, TryCatchLabel handlerCatchStackOverflow,
-            ExpressionVisitor mv) {
+    private Completion emitThrowHandler(Node node, Variable<ScriptIterator<?>> iterator, TryCatchLabel handlerCatch,
+            TryCatchLabel handlerCatchStackOverflow, CodeVisitor mv) {
         mv.enterVariableScope();
         Variable<? extends Throwable> throwable;
         if (handlerCatchStackOverflow == null) {
@@ -210,24 +197,9 @@ abstract class IterationGenerator<NODE extends Node, VISITOR extends ExpressionV
         return Completion.Throw;
     }
 
-    private Completion emitReturnHandler(Node node, Variable<ScriptIterator<?>> iterator,
-            Variable<Object> completion, TryCatchLabel handlerReturn, List<TempLabel> tempLabels,
-            ExpressionVisitor mv) {
-        // (1) Optional ReturnValue exception handler
-        if (handlerReturn != null) {
-            mv.enterVariableScope();
-            Variable<ReturnValue> returnValue = mv.newVariable("returnValue", ReturnValue.class);
-            mv.catchHandler(handlerReturn, Types.ReturnValue);
-            mv.store(returnValue);
-
-            IteratorClose(node, iterator, mv);
-
-            mv.load(returnValue);
-            mv.athrow();
-            mv.exitVariableScope();
-        }
-
-        // (2) Intercept return instructions
+    private Completion emitReturnHandler(Node node, Variable<ScriptIterator<?>> iterator, Value<Object> completion,
+            List<TempLabel> tempLabels, CodeVisitor mv) {
+        // (1) Intercept return instructions
         assert tempLabels.isEmpty() || completion != null;
         for (TempLabel temp : tempLabels) {
             if (temp.isTarget()) {
@@ -243,15 +215,14 @@ abstract class IterationGenerator<NODE extends Node, VISITOR extends ExpressionV
     }
 
     protected final void IteratorClose(Node node, Variable<ScriptIterator<?>> iterator,
-            Variable<? extends Throwable> throwable, ExpressionVisitor mv) {
+            Variable<? extends Throwable> throwable, CodeVisitor mv) {
         mv.load(iterator);
         mv.load(throwable);
         mv.lineInfo(node);
         mv.invoke(Methods.ScriptIterator_close_exception);
     }
 
-    protected final void IteratorClose(Node node, Variable<ScriptIterator<?>> iterator,
-            ExpressionVisitor mv) {
+    protected final void IteratorClose(Node node, Variable<ScriptIterator<?>> iterator, CodeVisitor mv) {
         mv.load(iterator);
         mv.lineInfo(node);
         mv.invoke(Methods.ScriptIterator_close);

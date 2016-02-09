@@ -6,12 +6,10 @@
  */
 package com.github.anba.es6draft.runtime.objects;
 
-import java.util.List;
 import java.util.Objects;
 
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
-import com.github.anba.es6draft.runtime.internal.StackTraces;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Property;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
@@ -31,7 +29,6 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  */
 public final class ErrorObject extends OrdinaryObject {
     private final ScriptException exception;
-    private final List<StackTraceElement[]> stackTraces;
 
     /**
      * Constructs a new Error object.
@@ -42,7 +39,6 @@ public final class ErrorObject extends OrdinaryObject {
     public ErrorObject(Realm realm) {
         super(realm);
         this.exception = new ScriptException(this);
-        this.stackTraces = StackTraces.collectGeneratorStackTraces();
     }
 
     /**
@@ -56,7 +52,6 @@ public final class ErrorObject extends OrdinaryObject {
     public ErrorObject(Realm realm, Throwable cause) {
         super(realm);
         this.exception = new ScriptException(this, cause);
-        this.stackTraces = StackTraces.collectGeneratorStackTraces();
     }
 
     /**
@@ -158,15 +153,6 @@ public final class ErrorObject extends OrdinaryObject {
      */
     public ScriptException getException() {
         return exception;
-    }
-
-    /**
-     * Returns the list of additional stack trace frames.
-     * 
-     * @return the list of additional stack trace frames
-     */
-    public List<StackTraceElement[]> getStackTraces() {
-        return stackTraces;
     }
 
     @Override

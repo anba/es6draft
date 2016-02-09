@@ -138,6 +138,9 @@ tests/basic/error-stack-accessors.js
 tests/basic/exception-column-number.js
 tests/parser/arrow-rest.js
 
+# Different legacy function.arguments behaviour
+tests/arguments/bug1227287.js
+
 
 ############################################
 # Misc proxy implementation isssues        #

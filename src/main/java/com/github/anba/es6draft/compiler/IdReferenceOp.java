@@ -25,10 +25,10 @@ abstract class IdReferenceOp {
      * @param node
      *            the reference node
      * @param mv
-     *            the expression visitor
+     *            the code visitor
      * @return the reference value type
      */
-    abstract ValType resolveBinding(BindingIdentifier node, ExpressionVisitor mv);
+    abstract ValType resolveBinding(BindingIdentifier node, CodeVisitor mv);
 
     /**
      * <h1>6.2.3.2 PutValue (V, W)</h1>
@@ -42,9 +42,9 @@ abstract class IdReferenceOp {
      * @param value
      *            the top stack value type
      * @param mv
-     *            the expression visitor
+     *            the code visitor
      */
-    abstract void putValue(BindingIdentifier node, ValType value, ExpressionVisitor mv);
+    abstract void putValue(BindingIdentifier node, ValType value, CodeVisitor mv);
 
     /**
      * Returns the {@code IdReferenceOp} implementation for the binding identifier.
@@ -68,14 +68,14 @@ abstract class IdReferenceOp {
      */
     static final IdReferenceOp LOOKUP = new IdReferenceOp() {
         @Override
-        ValType resolveBinding(BindingIdentifier node, ExpressionVisitor mv) {
+        ValType resolveBinding(BindingIdentifier node, CodeVisitor mv) {
             // stack: [] -> [ref]
             IdentifierResolution.resolve(node, mv);
             return ValType.Reference;
         }
 
         @Override
-        void putValue(BindingIdentifier node, ValType value, ExpressionVisitor mv) {
+        void putValue(BindingIdentifier node, ValType value, CodeVisitor mv) {
             // stack: [ref, value] -> []
             mv.toBoxed(value);
             mv.loadExecutionContext();

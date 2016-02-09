@@ -44,8 +44,7 @@ import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
  * <li>15.2.1.15.4 ModuleDeclarationInstantiation( ) Concrete Method
  * </ul>
  */
-final class ModuleDeclarationInstantiationGenerator extends
-        DeclarationBindingInstantiationGenerator {
+final class ModuleDeclarationInstantiationGenerator extends DeclarationBindingInstantiationGenerator {
     private static final class Methods {
         // class: ScriptRuntime
         static final MethodName ScriptRuntime_createImportBinding = MethodName.findStatic(

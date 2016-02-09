@@ -15,6 +15,7 @@ import java.util.Objects;
 
 import com.github.anba.es6draft.Script;
 import com.github.anba.es6draft.compiler.CompilationException;
+import com.github.anba.es6draft.compiler.analyzer.CodeSize;
 import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.runtime.AbstractOperations;
 import com.github.anba.es6draft.runtime.ExecutionContext;
@@ -420,5 +421,24 @@ public final class RuntimeFunctions {
             return "";
         }
         return arrayBuffer.getData().order().toString();
+    }
+
+    /**
+     * Returns the estimated code size for the given source code.
+     * 
+     * @param cx
+     *            the execution context
+     * @param sourceCode
+     *            the source code
+     * @return the estimated code size
+     */
+    public static int CodeSize(ExecutionContext cx, CharSequence sourceCode) {
+        try {
+            com.github.anba.es6draft.ast.Script parsedScript = cx.getRealm().getScriptLoader()
+                    .parseScript(new Source("<script>", 1), sourceCode.toString());
+            return CodeSize.calculate(parsedScript);
+        } catch (ParserException e) {
+            throw e.toScriptException(cx);
+        }
     }
 }

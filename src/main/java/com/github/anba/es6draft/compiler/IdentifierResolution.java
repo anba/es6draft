@@ -31,19 +31,19 @@ final class IdentifierResolution {
     private IdentifierResolution() {
     }
 
-    static ValType resolve(IdentifierReference node, ExpressionVisitor mv) {
+    static ValType resolve(IdentifierReference node, CodeVisitor mv) {
         return resolve(node, node.getName(), mv);
     }
 
-    static ValType resolve(BindingIdentifier node, ExpressionVisitor mv) {
+    static ValType resolve(BindingIdentifier node, CodeVisitor mv) {
         return resolve(node, node.getName().getIdentifier(), mv);
     }
 
-    static ValType resolveValue(IdentifierReference node, ExpressionVisitor mv) {
+    static ValType resolveValue(IdentifierReference node, CodeVisitor mv) {
         return resolveValue(node, node.getName(), mv);
     }
 
-    private static ValType resolve(Node node, String identifierName, ExpressionVisitor mv) {
+    private static ValType resolve(Node node, String identifierName, CodeVisitor mv) {
         mv.loadExecutionContext();
         mv.aconst(identifierName);
         mv.iconst(mv.isStrict());
@@ -52,7 +52,7 @@ final class IdentifierResolution {
         return ValType.Reference;
     }
 
-    private static ValType resolveValue(Node node, String identifierName, ExpressionVisitor mv) {
+    private static ValType resolveValue(Node node, String identifierName, CodeVisitor mv) {
         mv.loadExecutionContext();
         mv.aconst(identifierName);
         mv.iconst(mv.isStrict());

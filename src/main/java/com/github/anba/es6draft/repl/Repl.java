@@ -26,7 +26,15 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.MessageFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.EnumSet;
+import java.util.Enumeration;
+import java.util.List;
+import java.util.Locale;
+import java.util.Objects;
+import java.util.ResourceBundle;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Semaphore;
@@ -195,20 +203,17 @@ public final class Repl {
         final String indent = Strings.repeat('\t', level);
         final int maxDepth = options.stacktraceDepth;
         int depth = 0;
-        Iterator<StackTraceElement> iterator = StackTraces.getStackTrace(e).iterator();
-        for (; iterator.hasNext() && depth < maxDepth; ++depth) {
-            StackTraceElement element = iterator.next();
-            String methodName = StackTraces.getMethodName(element);
+        StackTraceElement[] stackTrace = StackTraces.scriptStackTrace(e);
+        for (; depth < Math.min(stackTrace.length, maxDepth); ++depth) {
+            StackTraceElement element = stackTrace[depth];
+            String methodName = element.getMethodName();
             String fileName = element.getFileName();
             int lineNumber = element.getLineNumber();
             sb.append(indent).append("at ").append(methodName).append(" (").append(fileName).append(':')
                     .append(lineNumber).append(")\n");
         }
-        if (depth == maxDepth && iterator.hasNext()) {
-            int skipped = 0;
-            for (; iterator.hasNext(); ++skipped) {
-                iterator.next();
-            }
+        if (depth < stackTrace.length) {
+            int skipped = stackTrace.length - depth;
             sb.append("\t.. ").append(skipped).append(" frames omitted\n");
         }
         if (e.getSuppressed().length > 0 && level == 1) {
@@ -509,9 +514,6 @@ public final class Repl {
 
         @Option(name = "--debug-info", hidden = true, usage = "options.debug_info")
         boolean debugInfo;
-
-        @Option(name = "--no-resume", hidden = true, usage = "options.no_resume")
-        boolean noResume;
 
         @Option(name = "--no-tailcall", hidden = true, usage = "options.no_tailcall")
         boolean noTailCall;
@@ -1255,9 +1257,6 @@ public final class Repl {
         }
         if (options.debugInfo) {
             compilerOptions.add(Compiler.Option.DebugInfo);
-        }
-        if (options.noResume) {
-            compilerOptions.add(Compiler.Option.NoResume);
         }
         if (options.noTailCall) {
             compilerOptions.add(Compiler.Option.NoTailCall);

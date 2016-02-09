@@ -53,54 +53,29 @@ final class FunctionDeclarationInstantiationGenerator extends
                 Type.methodType(Types.List, Types.Object_));
 
         // class: ExecutionContext
-        static final MethodName ExecutionContext_setLexicalEnvironment = MethodName.findVirtual(
-                Types.ExecutionContext, "setLexicalEnvironment",
-                Type.methodType(Type.VOID_TYPE, Types.LexicalEnvironment));
+        static final MethodName ExecutionContext_setLexicalEnvironment = MethodName.findVirtual(Types.ExecutionContext,
+                "setLexicalEnvironment", Type.methodType(Type.VOID_TYPE, Types.LexicalEnvironment));
 
-        static final MethodName ExecutionContext_setVariableEnvironment = MethodName.findVirtual(
-                Types.ExecutionContext, "setVariableEnvironment",
-                Type.methodType(Type.VOID_TYPE, Types.LexicalEnvironment));
+        static final MethodName ExecutionContext_setVariableEnvironment = MethodName.findVirtual(Types.ExecutionContext,
+                "setVariableEnvironment", Type.methodType(Type.VOID_TYPE, Types.LexicalEnvironment));
 
         // class: ArgumentsObject
-        static final MethodName ArgumentsObject_CreateMappedArgumentsObject_Empty = MethodName
-                .findStatic(Types.ArgumentsObject, "CreateMappedArgumentsObject", Type.methodType(
-                        Types.ArgumentsObject, Types.ExecutionContext, Types.FunctionObject,
-                        Types.Object_));
+        static final MethodName ArgumentsObject_CreateMappedArgumentsObject_Empty = MethodName.findStatic(
+                Types.ArgumentsObject, "CreateMappedArgumentsObject",
+                Type.methodType(Types.ArgumentsObject, Types.ExecutionContext, Types.FunctionObject, Types.Object_));
 
         static final MethodName ArgumentsObject_CreateMappedArgumentsObject = MethodName
-                .findStatic(Types.ArgumentsObject, "CreateMappedArgumentsObject", Type.methodType(
-                        Types.ArgumentsObject, Types.ExecutionContext, Types.FunctionObject,
-                        Types.String_, Types.Object_, Types.LexicalEnvironment));
+                .findStatic(Types.ArgumentsObject, "CreateMappedArgumentsObject", Type.methodType(Types.ArgumentsObject,
+                        Types.ExecutionContext, Types.FunctionObject, Types.Object_, Types.LexicalEnvironment));
 
-        static final MethodName ArgumentsObject_CreateUnmappedArgumentsObject = MethodName
-                .findStatic(Types.ArgumentsObject, "CreateUnmappedArgumentsObject", Type
-                        .methodType(Types.ArgumentsObject, Types.ExecutionContext, Types.Object_));
-
-        static final MethodName LegacyArgumentsObject_CreateLegacyArgumentsObject = MethodName
-                .findStatic(Types.LegacyArgumentsObject, "CreateLegacyArgumentsObject", Type
-                        .methodType(Types.LegacyArgumentsObject, Types.ExecutionContext,
-                                Types.FunctionObject, Types.Object_, Types.String_,
-                                Types.LexicalEnvironment));
-
-        static final MethodName LegacyArgumentsObject_CreateLegacyArgumentsObjectFrom = MethodName
-                .findStatic(Types.LegacyArgumentsObject, "CreateLegacyArgumentsObject", Type
-                        .methodType(Types.LegacyArgumentsObject, Types.ExecutionContext,
-                                Types.FunctionObject, Types.Object_, Types.ArgumentsObject));
-
-        static final MethodName LegacyArgumentsObject_CreateLegacyArgumentsObjectUnmapped = MethodName
-                .findStatic(Types.LegacyArgumentsObject, "CreateLegacyArgumentsObject", Type
-                        .methodType(Types.LegacyArgumentsObject, Types.ExecutionContext,
-                                Types.FunctionObject, Types.Object_));
-
-        // FunctionObject
-        static final MethodName LegacyFunction_setLegacyArguments = MethodName.findVirtual(
-                Types.LegacyConstructorFunction, "setLegacyArguments",
-                Type.methodType(Type.VOID_TYPE, Types.LegacyArgumentsObject));
+        static final MethodName ArgumentsObject_CreateUnmappedArgumentsObject = MethodName.findStatic(
+                Types.ArgumentsObject, "CreateUnmappedArgumentsObject",
+                Type.methodType(Types.ArgumentsObject, Types.ExecutionContext, Types.Object_));
 
         // class: LexicalEnvironment
-        static final MethodName LexicalEnvironment_newDeclarativeEnvironment = MethodName
-                .findStatic(Types.LexicalEnvironment, "newDeclarativeEnvironment",
-                        Type.methodType(Types.LexicalEnvironment, Types.LexicalEnvironment));
+        static final MethodName LexicalEnvironment_newDeclarativeEnvironment = MethodName.findStatic(
+                Types.LexicalEnvironment, "newDeclarativeEnvironment",
+                Type.methodType(Types.LexicalEnvironment, Types.LexicalEnvironment));
 
         // class: List
         static final MethodName List_iterator = MethodName.findInterface(Types.List, "iterator",
@@ -111,12 +86,12 @@ final class FunctionDeclarationInstantiationGenerator extends
     private static final int FUNCTION = 1;
     private static final int ARGUMENTS = 2;
 
-    private static final class FunctionDeclInitMethodGenerator extends ExpressionVisitor {
+    private static final class FunctionDeclInitMethodGenerator extends CodeVisitor {
         private final String name;
         private final Type type;
 
         FunctionDeclInitMethodGenerator(MethodCode method, FunctionNode node, Type type) {
-            super(method, node, IsStrict(node));
+            super(method, node);
             this.name = targetName(node);
             this.type = type;
         }
@@ -136,7 +111,7 @@ final class FunctionDeclarationInstantiationGenerator extends
 
     void generate(FunctionNode function) {
         MethodCode method = codegen.newMethod(function, FunctionName.Init);
-        ExpressionVisitor mv = new FunctionDeclInitMethodGenerator(method, function, targetType(function));
+        CodeVisitor mv = new FunctionDeclInitMethodGenerator(method, function, targetType(function));
 
         mv.lineInfo(function);
         mv.begin();
@@ -188,13 +163,11 @@ final class FunctionDeclarationInstantiationGenerator extends
         }
     }
 
-    private void generate(FunctionNode function, ExpressionVisitor mv) {
-        Variable<ExecutionContext> context = mv.getParameter(EXECUTION_CONTEXT,
-                ExecutionContext.class);
-        Variable<LexicalEnvironment<FunctionEnvironmentRecord>> env = mv.newVariable("env",
-                LexicalEnvironment.class).uncheckedCast();
-        Variable<FunctionEnvironmentRecord> envRec = mv.newVariable("envRec",
-                FunctionEnvironmentRecord.class);
+    private void generate(FunctionNode function, CodeVisitor mv) {
+        Variable<ExecutionContext> context = mv.getParameter(EXECUTION_CONTEXT, ExecutionContext.class);
+        Variable<LexicalEnvironment<FunctionEnvironmentRecord>> env = mv.newVariable("env", LexicalEnvironment.class)
+                .uncheckedCast();
+        Variable<FunctionEnvironmentRecord> envRec = mv.newVariable("envRec", FunctionEnvironmentRecord.class);
         Variable<FunctionObject> fo = null;
         Variable<Undefined> undefined = mv.newVariable("undef", Undefined.class);
         mv.loadUndefined();
@@ -220,7 +193,6 @@ final class FunctionDeclarationInstantiationGenerator extends
         // RuntimeInfo.Function code = func.getCode();
         /* step 5 */
         boolean strict = IsStrict(function);
-        boolean legacy = hasLegacyArguments(function);
         /* step 6 */
         FormalParameterList formals = function.getParameters();
         /* step 7 */
@@ -289,8 +261,7 @@ final class FunctionDeclarationInstantiationGenerator extends
         /* step 22 */
         if (argumentsObjectNeeded) {
             assert arguments != null;
-            Variable<ArgumentsObject> argumentsObj = mv.newVariable("argumentsObj",
-                    ArgumentsObject.class);
+            Variable<ArgumentsObject> argumentsObj = mv.newVariable("argumentsObj", ArgumentsObject.class);
             if (strict || !simpleParameterList) {
                 CreateUnmappedArgumentsObject(mv);
             } else if (formals.getFormals().isEmpty()) {
@@ -299,9 +270,6 @@ final class FunctionDeclarationInstantiationGenerator extends
                 CreateMappedArgumentsObject(env, formals, mv);
             }
             mv.store(argumentsObj);
-            if (legacy) {
-                CreateLegacyArguments(argumentsObj, mv);
-            }
             BindingOp<FunctionEnvironmentRecord> op = BindingOp.of(envRec, arguments);
             if (strict) {
                 op.createImmutableBinding(envRec, arguments, false, mv);
@@ -311,12 +279,6 @@ final class FunctionDeclarationInstantiationGenerator extends
             op.initializeBinding(envRec, arguments, argumentsObj, mv);
             parameterNames.add(arguments);
             parameterNamesSet.add(arguments);
-        } else if (legacy) {
-            if (!simpleParameterList || formals.getFormals().isEmpty()) {
-                CreateLegacyArguments(mv);
-            } else {
-                CreateLegacyArguments(env, formals, mv);
-            }
         }
         /* step 23 (not applicable) */
         /* steps 24-26 */
@@ -460,30 +422,27 @@ final class FunctionDeclarationInstantiationGenerator extends
         mv._return();
     }
 
-    private void newDeclarativeEnvironment(Variable<? extends LexicalEnvironment<?>> env,
-            ExpressionVisitor mv) {
+    private void newDeclarativeEnvironment(Variable<? extends LexicalEnvironment<?>> env, CodeVisitor mv) {
         // stack: [] -> [env]
         mv.load(env);
         mv.invoke(Methods.LexicalEnvironment_newDeclarativeEnvironment);
     }
 
-    private void setVariableEnvironment(Variable<? extends LexicalEnvironment<?>> env,
-            ExpressionVisitor mv) {
+    private void setVariableEnvironment(Variable<? extends LexicalEnvironment<?>> env, CodeVisitor mv) {
         // stack: [] -> []
         mv.loadExecutionContext();
         mv.load(env);
         mv.invoke(Methods.ExecutionContext_setVariableEnvironment);
     }
 
-    private void setLexicalEnvironment(Variable<? extends LexicalEnvironment<?>> env,
-            ExpressionVisitor mv) {
+    private void setLexicalEnvironment(Variable<? extends LexicalEnvironment<?>> env, CodeVisitor mv) {
         // stack: [] -> []
         mv.loadExecutionContext();
         mv.load(env);
         mv.invoke(Methods.ExecutionContext_setLexicalEnvironment);
     }
 
-    private void CreateMappedArgumentsObject(ExpressionVisitor mv) {
+    private void CreateMappedArgumentsObject(CodeVisitor mv) {
         // stack: [] -> [argsObj]
         mv.loadExecutionContext();
         mv.loadParameter(FUNCTION, targetClass((FunctionNode) mv.getTopLevelNode()));
@@ -491,103 +450,21 @@ final class FunctionDeclarationInstantiationGenerator extends
         mv.invoke(Methods.ArgumentsObject_CreateMappedArgumentsObject_Empty);
     }
 
-    private void CreateMappedArgumentsObject(
-            Variable<LexicalEnvironment<FunctionEnvironmentRecord>> env,
-            FormalParameterList formals, ExpressionVisitor mv) {
+    private void CreateMappedArgumentsObject(Variable<LexicalEnvironment<FunctionEnvironmentRecord>> env,
+            FormalParameterList formals, CodeVisitor mv) {
         // stack: [] -> [argsObj]
         mv.loadExecutionContext();
         mv.loadParameter(FUNCTION, targetClass((FunctionNode) mv.getTopLevelNode()));
-        newStringArray(mv, mappedNames(formals));
         mv.loadParameter(ARGUMENTS, Object[].class);
         mv.load(env);
         mv.invoke(Methods.ArgumentsObject_CreateMappedArgumentsObject);
     }
 
-    private void CreateUnmappedArgumentsObject(ExpressionVisitor mv) {
+    private void CreateUnmappedArgumentsObject(CodeVisitor mv) {
         // stack: [] -> [argsObj]
         mv.loadExecutionContext();
         mv.loadParameter(ARGUMENTS, Object[].class);
         mv.invoke(Methods.ArgumentsObject_CreateUnmappedArgumentsObject);
-    }
-
-    private void CreateLegacyArguments(ExpressionVisitor mv) {
-        // function.setLegacyArguments(<legacy-arguments>)
-        mv.loadParameter(FUNCTION, LegacyConstructorFunction.class);
-        {
-            // CreateLegacyArgumentsObject(cx, function, arguments)
-            mv.loadExecutionContext();
-            mv.loadParameter(FUNCTION, LegacyConstructorFunction.class);
-            mv.loadParameter(ARGUMENTS, Object[].class);
-            mv.invoke(Methods.LegacyArgumentsObject_CreateLegacyArgumentsObjectUnmapped);
-        }
-        mv.invoke(Methods.LegacyFunction_setLegacyArguments);
-    }
-
-    private void CreateLegacyArguments(Variable<LexicalEnvironment<FunctionEnvironmentRecord>> env,
-            FormalParameterList formals, ExpressionVisitor mv) {
-        // function.setLegacyArguments(<legacy-arguments>)
-        mv.loadParameter(FUNCTION, LegacyConstructorFunction.class);
-        {
-            // CreateLegacyArgumentsObject(cx, function, arguments, formals, scope)
-            mv.loadExecutionContext();
-            mv.loadParameter(FUNCTION, LegacyConstructorFunction.class);
-            mv.loadParameter(ARGUMENTS, Object[].class);
-            newStringArray(mv, mappedNames(formals));
-            mv.load(env);
-            mv.invoke(Methods.LegacyArgumentsObject_CreateLegacyArgumentsObject);
-        }
-        mv.invoke(Methods.LegacyFunction_setLegacyArguments);
-    }
-
-    private void CreateLegacyArguments(Variable<ArgumentsObject> argumentsObj, ExpressionVisitor mv) {
-        // function.setLegacyArguments(<legacy-arguments>)
-        mv.loadParameter(FUNCTION, LegacyConstructorFunction.class);
-        {
-            // CreateLegacyArgumentsObject(cx, function, arguments, argumentsObj)
-            mv.loadExecutionContext();
-            mv.loadParameter(FUNCTION, LegacyConstructorFunction.class);
-            mv.loadParameter(ARGUMENTS, Object[].class);
-            mv.load(argumentsObj);
-            mv.invoke(Methods.LegacyArgumentsObject_CreateLegacyArgumentsObjectFrom);
-        }
-        mv.invoke(Methods.LegacyFunction_setLegacyArguments);
-    }
-
-    private String[] mappedNames(FormalParameterList formals) {
-        assert IsSimpleParameterList(formals);
-        List<FormalParameter> list = formals.getFormals();
-        int numberOfParameters = list.size();
-        HashSet<String> mappedNames = new HashSet<>();
-        String[] names = new String[numberOfParameters];
-        for (int index = numberOfParameters - 1; index >= 0; --index) {
-            BindingElementItem element = list.get(index).getElement();
-            assert element instanceof BindingElement : element.getClass().toString();
-            Binding binding = ((BindingElement) element).getBinding();
-            assert binding instanceof BindingIdentifier : binding.getClass().toString();
-            String name = ((BindingIdentifier) binding).getName().getIdentifier();
-            if (mappedNames.add(name)) {
-                names[index] = name;
-            }
-        }
-        return names;
-    }
-
-    private void newStringArray(InstructionVisitor mv, String[] strings) {
-        mv.anewarray(strings.length, Types.String);
-        int index = 0;
-        for (String string : strings) {
-            mv.astore(index++, string);
-        }
-    }
-
-    private boolean hasLegacyArguments(FunctionNode node) {
-        if (IsStrict(node)) {
-            return false;
-        }
-        if (!(node instanceof FunctionDeclaration || node instanceof FunctionExpression)) {
-            return false;
-        }
-        return codegen.isEnabled(CompatibilityOption.FunctionArguments);
     }
 
     private boolean isLegacy(FunctionNode node) {

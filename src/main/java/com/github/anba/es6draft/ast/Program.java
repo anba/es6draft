@@ -24,8 +24,8 @@ public abstract class Program extends AstNode {
     private final EnumSet<CompatibilityOption> options;
     private final EnumSet<Parser.Option> parserOptions;
 
-    public Program(long beginPosition, long endPosition, Source source,
-            EnumSet<CompatibilityOption> options, EnumSet<Parser.Option> parserOptions) {
+    public Program(long beginPosition, long endPosition, Source source, EnumSet<CompatibilityOption> options,
+            EnumSet<Parser.Option> parserOptions) {
         super(beginPosition, endPosition);
         this.source = source;
         this.options = options;

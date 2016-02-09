@@ -39,29 +39,28 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryGenerator;
  */
 final class FunctionCodeGenerator {
     private static final class Fields {
-        static final FieldName Intrinsics_ObjectPrototype = FieldName.findStatic(Types.Intrinsics,
-                "ObjectPrototype", Types.Intrinsics);
+        static final FieldName Intrinsics_ObjectPrototype = FieldName.findStatic(Types.Intrinsics, "ObjectPrototype",
+                Types.Intrinsics);
 
-        static final FieldName MessagesKey_InvalidCallClass = FieldName.findStatic(
-                Types.Messages$Key, "InvalidCallClass", Types.Messages$Key);
+        static final FieldName MessagesKey_InvalidCallClass = FieldName.findStatic(Types.Messages$Key,
+                "InvalidCallClass", Types.Messages$Key);
 
-        static final FieldName MessagesKey_NotObjectTypeFromConstructor = FieldName.findStatic(
-                Types.Messages$Key, "NotObjectTypeFromConstructor", Types.Messages$Key);
+        static final FieldName MessagesKey_NotObjectTypeFromConstructor = FieldName.findStatic(Types.Messages$Key,
+                "NotObjectTypeFromConstructor", Types.Messages$Key);
     }
 
     private static final class Methods {
         // ExecutionContext
-        static final MethodName ExecutionContext_newFunctionExecutionContext = MethodName
-                .findStatic(Types.ExecutionContext, "newFunctionExecutionContext", Type.methodType(
-                        Types.ExecutionContext, Types.FunctionObject, Types.LexicalEnvironment));
+        static final MethodName ExecutionContext_newFunctionExecutionContext = MethodName.findStatic(
+                Types.ExecutionContext, "newFunctionExecutionContext",
+                Type.methodType(Types.ExecutionContext, Types.FunctionObject, Types.LexicalEnvironment));
 
-        static final MethodName ExecutionContext_getCurrentFunction = MethodName
-                .findVirtual(Types.ExecutionContext, "getCurrentFunction",
-                        Type.methodType(Types.FunctionObject));
+        static final MethodName ExecutionContext_getCurrentFunction = MethodName.findVirtual(Types.ExecutionContext,
+                "getCurrentFunction", Type.methodType(Types.FunctionObject));
 
-        static final MethodName ExecutionContext_getFunctionVariableEnvironmentRecord = MethodName
-                .findVirtual(Types.ExecutionContext, "getFunctionVariableEnvironmentRecord",
-                        Type.methodType(Types.FunctionEnvironmentRecord));
+        static final MethodName ExecutionContext_getFunctionVariableEnvironmentRecord = MethodName.findVirtual(
+                Types.ExecutionContext, "getFunctionVariableEnvironmentRecord",
+                Type.methodType(Types.FunctionEnvironmentRecord));
 
         // FunctionEnvironmentRecord
         static final MethodName FunctionEnvironmentRecord_getThisBinding = MethodName.findVirtual(
@@ -69,39 +68,42 @@ final class FunctionCodeGenerator {
                 Type.methodType(Types.Object, Types.ExecutionContext));
 
         // LegacyFunction
-        static final MethodName LegacyFunction_getLegacyArguments = MethodName.findVirtual(
-                Types.LegacyConstructorFunction, "getLegacyArguments", Type.methodType(Types.Object));
+        static final MethodName LegacyConstructorFunction_getLegacyArguments = MethodName.findVirtual(
+                Types.LegacyConstructorFunction, "getLegacyArguments",
+                Type.methodType(Types.LegacyConstructorFunction$Arguments));
 
-        static final MethodName LegacyFunction_getLegacyCaller = MethodName.findVirtual(
-                Types.LegacyConstructorFunction, "getLegacyCaller", Type.methodType(Types.Object));
+        static final MethodName LegacyConstructorFunction_getLegacyCaller = MethodName
+                .findVirtual(Types.LegacyConstructorFunction, "getLegacyCaller", Type.methodType(Types.FunctionObject));
 
-        static final MethodName LegacyFunction_setLegacyCaller = MethodName.findVirtual(
+        static final MethodName LegacyConstructorFunction_setLegacyCaller = MethodName.findVirtual(
                 Types.LegacyConstructorFunction, "setLegacyCaller",
                 Type.methodType(Type.VOID_TYPE, Types.FunctionObject));
 
-        static final MethodName LegacyFunction_restoreLegacyProperties = MethodName.findVirtual(
-                Types.LegacyConstructorFunction, "restoreLegacyProperties",
-                Type.methodType(Type.VOID_TYPE, Types.Object, Types.Object));
+        static final MethodName LegacyConstructorFunction_setLegacyArguments = MethodName.findVirtual(
+                Types.LegacyConstructorFunction, "setLegacyArguments",
+                Type.methodType(Type.VOID_TYPE, Types.LegacyConstructorFunction$Arguments));
+
+        static final MethodName LegacyConstructorFunction$Arguments_new = MethodName.findConstructor(
+                Types.LegacyConstructorFunction$Arguments, Type.methodType(Type.VOID_TYPE, Types.Object_));
 
         // LexicalEnvironment
         static final MethodName LexicalEnvironment_newFunctionEnvironment = MethodName.findStatic(
-                Types.LexicalEnvironment, "newFunctionEnvironment", Type.methodType(
-                        Types.LexicalEnvironment, Types.FunctionObject, Types.Constructor,
-                        Types.Object));
+                Types.LexicalEnvironment, "newFunctionEnvironment",
+                Type.methodType(Types.LexicalEnvironment, Types.FunctionObject, Types.Constructor, Types.Object));
 
-        static final MethodName LexicalEnvironment_newFunctionEnvironment_ConstructDerived = MethodName
-                .findStatic(Types.LexicalEnvironment, "newFunctionEnvironment", Type.methodType(
-                        Types.LexicalEnvironment, Types.FunctionObject, Types.Constructor));
+        static final MethodName LexicalEnvironment_newFunctionEnvironment_ConstructDerived = MethodName.findStatic(
+                Types.LexicalEnvironment, "newFunctionEnvironment",
+                Type.methodType(Types.LexicalEnvironment, Types.FunctionObject, Types.Constructor));
 
         // OrdinaryAsyncFunction
-        static final MethodName OrdinaryAsyncFunction_EvaluateBody = MethodName.findStatic(
-                Types.OrdinaryAsyncFunction, "EvaluateBody", Type.methodType(Types.PromiseObject,
-                        Types.ExecutionContext, Types.OrdinaryAsyncFunction));
+        static final MethodName OrdinaryAsyncFunction_EvaluateBody = MethodName.findStatic(Types.OrdinaryAsyncFunction,
+                "EvaluateBody",
+                Type.methodType(Types.PromiseObject, Types.ExecutionContext, Types.OrdinaryAsyncFunction));
 
         // OrdinaryConstructorGenerator
         static final MethodName OrdinaryConstructorGenerator_EvaluateBody = MethodName.findStatic(
-                Types.OrdinaryConstructorGenerator, "EvaluateBody", Type.methodType(Types.GeneratorObject,
-                        Types.ExecutionContext, Types.OrdinaryConstructorGenerator));
+                Types.OrdinaryConstructorGenerator, "EvaluateBody",
+                Type.methodType(Types.GeneratorObject, Types.ExecutionContext, Types.OrdinaryConstructorGenerator));
 
         // OrdinaryGenerator
         static final MethodName OrdinaryGenerator_EvaluateBody = MethodName.findStatic(Types.OrdinaryGenerator,
@@ -109,14 +111,12 @@ final class FunctionCodeGenerator {
                 Type.methodType(Types.GeneratorObject, Types.ExecutionContext, Types.OrdinaryGenerator));
 
         // OrdinaryObject
-        static final MethodName OrdinaryObject_OrdinaryCreateFromConstructor = MethodName
-                .findStatic(Types.OrdinaryObject, "OrdinaryCreateFromConstructor", Type.methodType(
-                        Types.OrdinaryObject, Types.ExecutionContext, Types.Callable,
-                        Types.Intrinsics));
+        static final MethodName OrdinaryObject_OrdinaryCreateFromConstructor = MethodName.findStatic(
+                Types.OrdinaryObject, "OrdinaryCreateFromConstructor",
+                Type.methodType(Types.OrdinaryObject, Types.ExecutionContext, Types.Callable, Types.Intrinsics));
 
         // class: Errors
-        static final MethodName Errors_newTypeError = MethodName.findStatic(Types.Errors,
-                "newTypeError",
+        static final MethodName Errors_newTypeError = MethodName.findStatic(Types.Errors, "newTypeError",
                 Type.methodType(Types.ScriptException, Types.ExecutionContext, Types.Messages$Key));
 
         // class: TailCallInvocation
@@ -124,14 +124,13 @@ final class FunctionCodeGenerator {
                 Types.TailCallInvocation, "toConstructTailCall",
                 Type.methodType(Types.TailCallInvocation, Types.ScriptObject));
 
-        static final MethodName TailCallInvocation_toConstructTailCallWithEnvironment = MethodName
-                .findVirtual(Types.TailCallInvocation, "toConstructTailCall",
-                        Type.methodType(Types.TailCallInvocation, Types.FunctionEnvironmentRecord));
+        static final MethodName TailCallInvocation_toConstructTailCallWithEnvironment = MethodName.findVirtual(
+                Types.TailCallInvocation, "toConstructTailCall",
+                Type.methodType(Types.TailCallInvocation, Types.FunctionEnvironmentRecord));
 
         // class: ScriptRuntime
-        static final MethodName ScriptRuntime_functionThisValue = MethodName.findStatic(
-                Types.ScriptRuntime, "functionThisValue",
-                Type.methodType(Types.ScriptObject, Types.FunctionObject, Types.Object));
+        static final MethodName ScriptRuntime_functionThisValue = MethodName.findStatic(Types.ScriptRuntime,
+                "functionThisValue", Type.methodType(Types.ScriptObject, Types.FunctionObject, Types.Object));
 
         // class: PromiseAbstractOperations
         static final MethodName PromiseAbstractOperations_PromiseOf = MethodName.findStatic(
@@ -319,21 +318,20 @@ final class FunctionCodeGenerator {
         final boolean hasCaller = codegen.isEnabled(CompatibilityOption.FunctionCaller);
 
         Variable<LegacyConstructorFunction> function = mv.getParameter(FUNCTION, LegacyConstructorFunction.class);
-        Variable<ExecutionContext> callerContext = mv.getParameter(EXECUTION_CONTEXT,
-                ExecutionContext.class);
+        Variable<ExecutionContext> callerContext = mv.getParameter(EXECUTION_CONTEXT, ExecutionContext.class);
         Variable<Object> thisValue = mv.getParameter(THIS_VALUE, Object.class);
         Variable<Object[]> arguments = mv.getParameter(ARGUMENTS, Object[].class);
 
-        Variable<ExecutionContext> calleeContext = mv.newVariable("calleeContext",
-                ExecutionContext.class);
-        Variable<Object> oldCaller = mv.newVariable("oldCaller", Object.class);
-        Variable<Object> oldArguments = mv.newVariable("oldArguments", Object.class);
+        Variable<ExecutionContext> calleeContext = mv.newVariable("calleeContext", ExecutionContext.class);
+        Variable<FunctionObject> oldCaller = mv.newVariable("oldCaller", FunctionObject.class);
+        Variable<LegacyConstructorFunction.Arguments> oldArguments = mv.newVariable("oldArguments",
+                LegacyConstructorFunction.Arguments.class);
         Variable<Throwable> throwable = mv.newVariable("throwable", Throwable.class);
 
         // (1) Retrieve 'caller' and 'arguments' and store in local variables
         if (hasCaller) {
             mv.load(function);
-            mv.invoke(Methods.LegacyFunction_getLegacyCaller);
+            mv.invoke(Methods.LegacyConstructorFunction_getLegacyCaller);
         } else {
             mv.anull();
         }
@@ -341,15 +339,18 @@ final class FunctionCodeGenerator {
 
         if (hasArguments) {
             mv.load(function);
-            mv.invoke(Methods.LegacyFunction_getLegacyArguments);
+            mv.invoke(Methods.LegacyConstructorFunction_getLegacyArguments);
         } else {
             mv.anull();
         }
         mv.store(oldArguments);
 
-        // (2) Update 'caller' property
+        // (2) Update 'caller' and 'arguments' properties
         if (hasCaller) {
             setLegacyCaller(function, callerContext, mv);
+        }
+        if (hasArguments) {
+            setLegacyArguments(function, arguments, mv);
         }
 
         TryCatchLabel startFinally = new TryCatchLabel(), endFinally = new TryCatchLabel();
@@ -428,8 +429,7 @@ final class FunctionCodeGenerator {
      *            the instruction visitor
      */
     private void generateClassConstructorCall(InstructionVisitor mv) {
-        Variable<ExecutionContext> callerContext = mv.getParameter(EXECUTION_CONTEXT,
-                ExecutionContext.class);
+        Variable<ExecutionContext> callerContext = mv.getParameter(EXECUTION_CONTEXT, ExecutionContext.class);
 
         // 9.2.2 [[Call]] ( thisArgument, argumentsList) - step 2
         mv.load(callerContext);
@@ -465,22 +465,21 @@ final class FunctionCodeGenerator {
         final boolean hasCaller = codegen.isEnabled(CompatibilityOption.FunctionCaller);
 
         Variable<LegacyConstructorFunction> function = mv.getParameter(FUNCTION, LegacyConstructorFunction.class);
-        Variable<ExecutionContext> callerContext = mv.getParameter(EXECUTION_CONTEXT,
-                ExecutionContext.class);
+        Variable<ExecutionContext> callerContext = mv.getParameter(EXECUTION_CONTEXT, ExecutionContext.class);
         Variable<Constructor> newTarget = mv.getParameter(NEW_TARGET, Constructor.class);
         Variable<Object[]> arguments = mv.getParameter(ARGUMENTS, Object[].class);
 
         Variable<ScriptObject> thisArg = mv.newVariable("thisArgument", ScriptObject.class);
-        Variable<ExecutionContext> calleeContext = mv.newVariable("calleeContext",
-                ExecutionContext.class);
-        Variable<Object> oldCaller = mv.newVariable("oldCaller", Object.class);
-        Variable<Object> oldArguments = mv.newVariable("oldArguments", Object.class);
+        Variable<ExecutionContext> calleeContext = mv.newVariable("calleeContext", ExecutionContext.class);
+        Variable<FunctionObject> oldCaller = mv.newVariable("oldCaller", FunctionObject.class);
+        Variable<LegacyConstructorFunction.Arguments> oldArguments = mv.newVariable("oldArguments",
+                LegacyConstructorFunction.Arguments.class);
         Variable<Throwable> throwable = mv.newVariable("throwable", Throwable.class);
 
         // (1) Retrieve 'caller' and 'arguments' and store in local variables
         if (hasCaller) {
             mv.load(function);
-            mv.invoke(Methods.LegacyFunction_getLegacyCaller);
+            mv.invoke(Methods.LegacyConstructorFunction_getLegacyCaller);
         } else {
             mv.anull();
         }
@@ -488,15 +487,18 @@ final class FunctionCodeGenerator {
 
         if (hasArguments) {
             mv.load(function);
-            mv.invoke(Methods.LegacyFunction_getLegacyArguments);
+            mv.invoke(Methods.LegacyConstructorFunction_getLegacyArguments);
         } else {
             mv.anull();
         }
         mv.store(oldArguments);
 
-        // (2) Update 'caller' property
+        // (2) Update 'caller' and 'arguments' properties
         if (hasCaller) {
             setLegacyCaller(function, callerContext, mv);
+        }
+        if (hasArguments) {
+            setLegacyArguments(function, arguments, mv);
         }
 
         TryCatchLabel startFinally = new TryCatchLabel(), endFinally = new TryCatchLabel();
@@ -547,18 +549,14 @@ final class FunctionCodeGenerator {
      * @param mv
      *            the instruction visitor
      */
-    private void generateFunctionConstruct(FunctionNode node, boolean tailCall,
-            InstructionVisitor mv) {
-        Variable<OrdinaryConstructorFunction> function = mv.getParameter(FUNCTION,
-                OrdinaryConstructorFunction.class);
-        Variable<ExecutionContext> callerContext = mv.getParameter(EXECUTION_CONTEXT,
-                ExecutionContext.class);
+    private void generateFunctionConstruct(FunctionNode node, boolean tailCall, InstructionVisitor mv) {
+        Variable<OrdinaryConstructorFunction> function = mv.getParameter(FUNCTION, OrdinaryConstructorFunction.class);
+        Variable<ExecutionContext> callerContext = mv.getParameter(EXECUTION_CONTEXT, ExecutionContext.class);
         Variable<Constructor> newTarget = mv.getParameter(NEW_TARGET, Constructor.class);
         Variable<Object[]> arguments = mv.getParameter(ARGUMENTS, Object[].class);
 
         Variable<ScriptObject> thisArgument = mv.newVariable("thisArgument", ScriptObject.class);
-        Variable<ExecutionContext> calleeContext = mv.newVariable("calleeContext",
-                ExecutionContext.class);
+        Variable<ExecutionContext> calleeContext = mv.newVariable("calleeContext", ExecutionContext.class);
 
         /* steps 1-5 */
         ordinaryCreateFromConstructor(callerContext, newTarget, thisArgument, mv);
@@ -592,17 +590,13 @@ final class FunctionCodeGenerator {
      * @param mv
      *            the instruction visitor
      */
-    private void generateDerivedClassConstructorConstruct(FunctionNode node, boolean tailCall,
-            InstructionVisitor mv) {
-        Variable<OrdinaryConstructorFunction> function = mv.getParameter(FUNCTION,
-                OrdinaryConstructorFunction.class);
-        Variable<ExecutionContext> callerContext = mv.getParameter(EXECUTION_CONTEXT,
-                ExecutionContext.class);
+    private void generateDerivedClassConstructorConstruct(FunctionNode node, boolean tailCall, InstructionVisitor mv) {
+        Variable<OrdinaryConstructorFunction> function = mv.getParameter(FUNCTION, OrdinaryConstructorFunction.class);
+        Variable<ExecutionContext> callerContext = mv.getParameter(EXECUTION_CONTEXT, ExecutionContext.class);
         Variable<Constructor> newTarget = mv.getParameter(NEW_TARGET, Constructor.class);
         Variable<Object[]> arguments = mv.getParameter(ARGUMENTS, Object[].class);
 
-        Variable<ExecutionContext> calleeContext = mv.newVariable("calleeContext",
-                ExecutionContext.class);
+        Variable<ExecutionContext> calleeContext = mv.newVariable("calleeContext", ExecutionContext.class);
 
         // (1) Create a new ExecutionContext
         /* steps 1-5 (not applicable) */
@@ -634,13 +628,11 @@ final class FunctionCodeGenerator {
      *            the instruction visitor
      */
     private void generateAsyncFunctionCall(FunctionNode node, InstructionVisitor mv) {
-        Variable<OrdinaryAsyncFunction> function = mv.getParameter(FUNCTION,
-                OrdinaryAsyncFunction.class);
+        Variable<OrdinaryAsyncFunction> function = mv.getParameter(FUNCTION, OrdinaryAsyncFunction.class);
         Variable<Object> thisValue = mv.getParameter(THIS_VALUE, Object.class);
         Variable<Object[]> arguments = mv.getParameter(ARGUMENTS, Object[].class);
 
-        Variable<ExecutionContext> calleeContext = mv.newVariable("calleeContext",
-                ExecutionContext.class);
+        Variable<ExecutionContext> calleeContext = mv.newVariable("calleeContext", ExecutionContext.class);
 
         // (1) Create a new ExecutionContext
         prepareCallAndBindThis(node, calleeContext, function, thisValue, mv);
@@ -848,10 +840,9 @@ final class FunctionCodeGenerator {
      * @param mv
      *            the instruction visitor
      */
-    private void prepareCallAndBindThis(FunctionNode node,
-            Variable<ExecutionContext> calleeContext, Variable<? extends FunctionObject> function,
-            Variable<Constructor> newTarget, Variable<ScriptObject> thisArgument,
-            InstructionVisitor mv) {
+    private void prepareCallAndBindThis(FunctionNode node, Variable<ExecutionContext> calleeContext,
+            Variable<? extends FunctionObject> function, Variable<Constructor> newTarget,
+            Variable<ScriptObject> thisArgument, InstructionVisitor mv) {
         mv.load(function);
         {
             // Create new function environment.
@@ -881,9 +872,8 @@ final class FunctionCodeGenerator {
      * @param mv
      *            the instruction visitor
      */
-    private void prepareCall(Variable<ExecutionContext> calleeContext,
-            Variable<? extends FunctionObject> function, Variable<Constructor> newTarget,
-            InstructionVisitor mv) {
+    private void prepareCall(Variable<ExecutionContext> calleeContext, Variable<? extends FunctionObject> function,
+            Variable<Constructor> newTarget, InstructionVisitor mv) {
         mv.load(function);
         {
             // Create new function environment.
@@ -907,9 +897,8 @@ final class FunctionCodeGenerator {
      * @param mv
      *            the instruction visitor
      */
-    private void ordinaryCallBindThis(FunctionNode node,
-            Variable<? extends FunctionObject> function, Variable<? extends Object> thisArgument,
-            InstructionVisitor mv) {
+    private void ordinaryCallBindThis(FunctionNode node, Variable<? extends FunctionObject> function,
+            Variable<? extends Object> thisArgument, InstructionVisitor mv) {
         /* step 1 */
         FunctionNode.ThisMode thisMode = node.getThisMode();
         /* step 2 */
@@ -946,10 +935,8 @@ final class FunctionCodeGenerator {
      * @param mv
      *            the instruction visitor
      */
-    private void ordinaryCallEvaluateBody(FunctionNode node,
-            Variable<ExecutionContext> calleeContext,
-            Variable<? extends FunctionObject> function, Variable<Object[]> arguments,
-            InstructionVisitor mv) {
+    private void ordinaryCallEvaluateBody(FunctionNode node, Variable<ExecutionContext> calleeContext,
+            Variable<? extends FunctionObject> function, Variable<Object[]> arguments, InstructionVisitor mv) {
         /* steps 1-2 (Perform FunctionDeclarationInstantiation) */
         functionDeclarationInstantiation(node, calleeContext, function, arguments, mv);
 
@@ -973,9 +960,8 @@ final class FunctionCodeGenerator {
      * @param mv
      *            the instruction visitor
      */
-    private void functionDeclarationInstantiation(FunctionNode node,
-            Variable<ExecutionContext> calleeContext, Variable<? extends FunctionObject> function,
-            Variable<Object[]> arguments, InstructionVisitor mv) {
+    private void functionDeclarationInstantiation(FunctionNode node, Variable<ExecutionContext> calleeContext,
+            Variable<? extends FunctionObject> function, Variable<Object[]> arguments, InstructionVisitor mv) {
         mv.load(calleeContext);
         mv.load(function);
         mv.load(arguments);
@@ -994,8 +980,7 @@ final class FunctionCodeGenerator {
      * @param mv
      *            the instruction visitor
      */
-    private void evaluateBody(FunctionNode node, Variable<ExecutionContext> calleeContext,
-            InstructionVisitor mv) {
+    private void evaluateBody(FunctionNode node, Variable<ExecutionContext> calleeContext, InstructionVisitor mv) {
         mv.load(calleeContext);
         mv.invoke(codegen.methodDesc(node, FunctionName.Code));
     }
@@ -1012,17 +997,37 @@ final class FunctionCodeGenerator {
      * @param mv
      *            the instruction visitor
      */
-    private void setLegacyCaller(Variable<? extends FunctionObject> function,
-            Variable<ExecutionContext> callerContext, InstructionVisitor mv) {
+    private void setLegacyCaller(Variable<? extends FunctionObject> function, Variable<ExecutionContext> callerContext,
+            InstructionVisitor mv) {
         mv.load(function);
         mv.load(callerContext);
         mv.invoke(Methods.ExecutionContext_getCurrentFunction);
-        mv.invoke(Methods.LegacyFunction_setLegacyCaller);
+        mv.invoke(Methods.LegacyConstructorFunction_setLegacyCaller);
     }
 
     /**
      * <code>
-     * function.restoreLegacyProperties(oldCaller, oldArguments)
+     * function.setLegacyCaller(callerContext.getCurrentFunction())
+     * </code>
+     * 
+     * @param function
+     *            the variable which holds the function object
+     * @param arguments
+     *            the variable which holds the function arguments
+     * @param mv
+     *            the instruction visitor
+     */
+    private void setLegacyArguments(Variable<? extends FunctionObject> function, Variable<Object[]> arguments,
+            InstructionVisitor mv) {
+        mv.load(function);
+        mv.anew(Types.LegacyConstructorFunction$Arguments, Methods.LegacyConstructorFunction$Arguments_new, arguments);
+        mv.invoke(Methods.LegacyConstructorFunction_setLegacyArguments);
+    }
+
+    /**
+     * <code>
+     * function.setLegacyCaller(oldCaller)
+     * function.setLegacyArguments(oldArguments)
      * </code>
      * 
      * @param function
@@ -1035,11 +1040,15 @@ final class FunctionCodeGenerator {
      *            the instruction visitor
      */
     private void restoreLegacyProperties(Variable<? extends FunctionObject> function,
-            Variable<Object> oldCaller, Variable<Object> oldArguments, InstructionVisitor mv) {
+            Variable<FunctionObject> oldCaller, Variable<LegacyConstructorFunction.Arguments> oldArguments,
+            InstructionVisitor mv) {
         mv.load(function);
         mv.load(oldCaller);
+        mv.invoke(Methods.LegacyConstructorFunction_setLegacyCaller);
+
+        mv.load(function);
         mv.load(oldArguments);
-        mv.invoke(Methods.LegacyFunction_restoreLegacyProperties);
+        mv.invoke(Methods.LegacyConstructorFunction_setLegacyArguments);
     }
 
     /**
@@ -1057,8 +1066,7 @@ final class FunctionCodeGenerator {
      *            the instruction visitor
      */
     private void ordinaryCreateFromConstructor(Variable<ExecutionContext> callerContext,
-            Variable<Constructor> newTarget, Variable<ScriptObject> thisArgument,
-            InstructionVisitor mv) {
+            Variable<Constructor> newTarget, Variable<ScriptObject> thisArgument, InstructionVisitor mv) {
         mv.load(callerContext);
         mv.load(newTarget);
         mv.get(Fields.Intrinsics_ObjectPrototype);
@@ -1086,8 +1094,7 @@ final class FunctionCodeGenerator {
      * @param mv
      *            the instruction visitor
      */
-    private void returnResultOrThis(Variable<ScriptObject> thisArgument, boolean tailCall,
-            InstructionVisitor mv) {
+    private void returnResultOrThis(Variable<ScriptObject> thisArgument, boolean tailCall, InstructionVisitor mv) {
         if (tailCall) {
             Jump noTailCall = new Jump();
             mv.dup();
@@ -1142,8 +1149,8 @@ final class FunctionCodeGenerator {
      * @param mv
      *            the instruction visitor
      */
-    private void returnResultOrThis(Variable<ExecutionContext> callerContext,
-            Variable<ExecutionContext> calleeContext, boolean tailCall, InstructionVisitor mv) {
+    private void returnResultOrThis(Variable<ExecutionContext> callerContext, Variable<ExecutionContext> calleeContext,
+            boolean tailCall, InstructionVisitor mv) {
         if (tailCall) {
             Jump noTailCall = new Jump();
             mv.dup();

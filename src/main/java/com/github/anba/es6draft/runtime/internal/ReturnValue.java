@@ -9,8 +9,7 @@ package com.github.anba.es6draft.runtime.internal;
 /**
  * Holds the value component of an abrupt return completion in generators.
  */
-@SuppressWarnings("serial")
-public final class ReturnValue extends Throwable {
+public final class ReturnValue {
     private final Object value;
 
     /**
@@ -20,7 +19,6 @@ public final class ReturnValue extends Throwable {
      *            the completion value
      */
     public ReturnValue(Object value) {
-        super("ReturnValue", null, false, false);
         this.value = value;
     }
 

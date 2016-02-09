@@ -24,8 +24,7 @@ final class GeneratorComprehensionGenerator extends ComprehensionGenerator {
     /**
      * Runtime Semantics: Evaluation
      */
-    static void EvaluateGeneratorComprehension(CodeGenerator codegen, GeneratorComprehension node,
-            ExpressionVisitor mv) {
+    static void EvaluateGeneratorComprehension(CodeGenerator codegen, GeneratorComprehension node, CodeVisitor mv) {
         node.getComprehension().accept(new GeneratorComprehensionGenerator(codegen), mv);
     }
 
@@ -35,7 +34,7 @@ final class GeneratorComprehensionGenerator extends ComprehensionGenerator {
      * ComprehensionTail : AssignmentExpression
      */
     @Override
-    protected Void visit(Expression node, ExpressionVisitor mv) {
+    protected Void visit(Expression node, CodeVisitor mv) {
         /* steps 1-3 */
         expressionBoxed(node, mv);
         /* step 4 (not applicable) */

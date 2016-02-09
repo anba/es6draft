@@ -203,8 +203,7 @@ public final class Type {
         return new Type(descriptor);
     }
 
-    private static final Map<Class<?>, Type> typeCache = Collections
-            .synchronizedMap(new WeakHashMap<Class<?>, Type>());
+    private static final Map<Class<?>, Type> typeCache = Collections.synchronizedMap(new WeakHashMap<>());
 
     /**
      * Create a type instance for the given class.

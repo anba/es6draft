@@ -125,8 +125,7 @@ public final class MethodTypeDescriptor {
      * @return the method type descriptor
      */
     public static MethodTypeDescriptor methodType(Class<?> returnType, Class<?>... parameters) {
-        return new MethodTypeDescriptor(MethodType.methodType(returnType, parameters)
-                .toMethodDescriptorString());
+        return new MethodTypeDescriptor(MethodType.methodType(returnType, parameters).toMethodDescriptorString());
     }
 
     /**

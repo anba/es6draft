@@ -13,12 +13,15 @@ public final class ResumptionPoint {
     private final Object[] stack;
     private final Object[] locals;
     private final int offset;
+    // Null for generator frames, non-null for other method frames.
+    private final ResumptionPoint next;
 
-    private ResumptionPoint(Object[] stack, Object[] locals, int offset) {
+    private ResumptionPoint(Object[] stack, Object[] locals, int offset, ResumptionPoint next) {
         assert stack != null && offset >= 0;
         this.stack = stack;
         this.locals = locals;
         this.offset = offset;
+        this.next = next;
     }
 
     /**
@@ -33,7 +36,24 @@ public final class ResumptionPoint {
      * @return the new resumption point
      */
     public static ResumptionPoint create(Object[] stack, Object[] locals, int offset) {
-        return new ResumptionPoint(stack, locals, offset);
+        return new ResumptionPoint(stack, locals, offset, null);
+    }
+
+    /**
+     * Creates a new {@link ResumptionPoint} object.
+     * 
+     * @param stack
+     *            the current stack
+     * @param locals
+     *            the current locals
+     * @param offset
+     *            the resumption point offset
+     * @param next
+     *            the next resumption point
+     * @return the new resumption point
+     */
+    public static ResumptionPoint create(Object[] stack, Object[] locals, int offset, ResumptionPoint next) {
+        return new ResumptionPoint(stack, locals, offset, next);
     }
 
     /**
@@ -42,8 +62,11 @@ public final class ResumptionPoint {
      * @return the suspend value
      */
     public Object getSuspendValue() {
-        assert stack.length > 0;
-        return stack[stack.length - 1];
+        if (next == null) {
+            assert stack.length > 0;
+            return stack[stack.length - 1];
+        }
+        return next.getSuspendValue();
     }
 
     /**
@@ -53,8 +76,12 @@ public final class ResumptionPoint {
      *            the resume value
      */
     public void setResumeValue(Object value) {
-        assert stack.length > 0;
-        stack[stack.length - 1] = value;
+        if (next == null) {
+            assert stack.length > 0;
+            stack[stack.length - 1] = value;
+        } else {
+            next.setResumeValue(value);
+        }
     }
 
     /**

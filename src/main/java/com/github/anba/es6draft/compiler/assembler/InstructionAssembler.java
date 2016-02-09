@@ -7,6 +7,7 @@
 package com.github.anba.es6draft.compiler.assembler;
 
 import java.io.PrintWriter;
+import java.util.Arrays;
 import java.util.HashMap;
 
 import org.objectweb.asm.Label;
@@ -28,26 +29,26 @@ public class InstructionAssembler {
 
     private static final class Methods {
         // class: StringBuilder
-        static final MethodName StringBuilder_append_String = MethodName.findVirtual(
-                Types.StringBuilder, "append", Type.methodType(Types.StringBuilder, Types.String));
+        static final MethodName StringBuilder_append_String = MethodName.findVirtual(Types.StringBuilder, "append",
+                Type.methodType(Types.StringBuilder, Types.String));
 
-        static final MethodName StringBuilder_init_int = MethodName.findConstructor(
-                Types.StringBuilder, Type.methodType(Type.VOID_TYPE, Type.INT_TYPE));
+        static final MethodName StringBuilder_init_int = MethodName.findConstructor(Types.StringBuilder,
+                Type.methodType(Type.VOID_TYPE, Type.INT_TYPE));
 
-        static final MethodName StringBuilder_toString = MethodName.findVirtual(
-                Types.StringBuilder, "toString", Type.methodType(Types.String));
+        static final MethodName StringBuilder_toString = MethodName.findVirtual(Types.StringBuilder, "toString",
+                Type.methodType(Types.String));
 
         static final MethodName Boolean_valueOf = MethodName.findStatic(Types.Boolean, "valueOf",
                 Type.methodType(Types.Boolean, Type.BOOLEAN_TYPE));
 
-        static final MethodName Boolean_booleanValue = MethodName.findVirtual(Types.Boolean,
-                "booleanValue", Type.methodType(Type.BOOLEAN_TYPE));
+        static final MethodName Boolean_booleanValue = MethodName.findVirtual(Types.Boolean, "booleanValue",
+                Type.methodType(Type.BOOLEAN_TYPE));
 
-        static final MethodName Character_valueOf = MethodName.findStatic(Types.Character,
-                "valueOf", Type.methodType(Types.Character, Type.CHAR_TYPE));
+        static final MethodName Character_valueOf = MethodName.findStatic(Types.Character, "valueOf",
+                Type.methodType(Types.Character, Type.CHAR_TYPE));
 
-        static final MethodName Character_charValue = MethodName.findVirtual(Types.Character,
-                "charValue", Type.methodType(Type.CHAR_TYPE));
+        static final MethodName Character_charValue = MethodName.findVirtual(Types.Character, "charValue",
+                Type.methodType(Type.CHAR_TYPE));
 
         static final MethodName Byte_valueOf = MethodName.findStatic(Types.Byte, "valueOf",
                 Type.methodType(Types.Byte, Type.BYTE_TYPE));
@@ -58,14 +59,14 @@ public class InstructionAssembler {
         static final MethodName Short_valueOf = MethodName.findStatic(Types.Short, "valueOf",
                 Type.methodType(Types.Short, Type.SHORT_TYPE));
 
-        static final MethodName Short_shortValue = MethodName.findVirtual(Types.Short,
-                "shortValue", Type.methodType(Type.SHORT_TYPE));
+        static final MethodName Short_shortValue = MethodName.findVirtual(Types.Short, "shortValue",
+                Type.methodType(Type.SHORT_TYPE));
 
         static final MethodName Integer_valueOf = MethodName.findStatic(Types.Integer, "valueOf",
                 Type.methodType(Types.Integer, Type.INT_TYPE));
 
-        static final MethodName Integer_intValue = MethodName.findVirtual(Types.Integer,
-                "intValue", Type.methodType(Type.INT_TYPE));
+        static final MethodName Integer_intValue = MethodName.findVirtual(Types.Integer, "intValue",
+                Type.methodType(Type.INT_TYPE));
 
         static final MethodName Long_valueOf = MethodName.findStatic(Types.Long, "valueOf",
                 Type.methodType(Types.Long, Type.LONG_TYPE));
@@ -76,14 +77,14 @@ public class InstructionAssembler {
         static final MethodName Float_valueOf = MethodName.findStatic(Types.Float, "valueOf",
                 Type.methodType(Types.Float, Type.FLOAT_TYPE));
 
-        static final MethodName Float_floatValue = MethodName.findVirtual(Types.Float,
-                "floatValue", Type.methodType(Type.FLOAT_TYPE));
+        static final MethodName Float_floatValue = MethodName.findVirtual(Types.Float, "floatValue",
+                Type.methodType(Type.FLOAT_TYPE));
 
         static final MethodName Double_valueOf = MethodName.findStatic(Types.Double, "valueOf",
                 Type.methodType(Types.Double, Type.DOUBLE_TYPE));
 
-        static final MethodName Double_doubleValue = MethodName.findVirtual(Types.Double,
-                "doubleValue", Type.methodType(Type.DOUBLE_TYPE));
+        static final MethodName Double_doubleValue = MethodName.findVirtual(Types.Double, "doubleValue",
+                Type.methodType(Type.DOUBLE_TYPE));
     }
 
     private static final class $CodeSizeEvaluator extends CodeSizeEvaluator {
@@ -117,8 +118,8 @@ public class InstructionAssembler {
 
         public void trace() {
             PrintWriter printWriter = new PrintWriter(System.out);
-            printWriter.format("%nClass=%s, Method=%s [%s]%n", method.classCode.className,
-                    method.methodName, method.methodDescriptor);
+            printWriter.format("%nClass=%s, Method=%s [%s]%n", method.classCode.className, method.methodName,
+                    method.methodDescriptor);
             ((TraceMethodVisitor) mv).p.print(printWriter);
             printWriter.format("%n");
             printWriter.flush();
@@ -318,8 +319,8 @@ public class InstructionAssembler {
 
     private void localVariable(Variable<?> variable, Label start, Label end) {
         if (variable.hasSlot()) {
-            methodVisitor.visitLocalVariable(variable.getName(), variable.getType().descriptor(),
-                    null, start, end, variable.getSlot());
+            methodVisitor.visitLocalVariable(variable.getName(), variable.getType().descriptor(), null, start, end,
+                    variable.getSlot());
         }
     }
 
@@ -356,6 +357,40 @@ public class InstructionAssembler {
         variables.freeVariable(variable);
     }
 
+    public <T> MutableValue<T> arrayElement(Value<T[]> array, int index, Class<T> clazz) {
+        return new ArrayElement<>(array, index, clazz);
+    }
+
+    private static final class ArrayElement<V> implements MutableValue<V> {
+        private final Value<V[]> array;
+        private final int index;
+        private final Class<V> clazz;
+
+        ArrayElement(Value<V[]> array, int index, Class<V> clazz) {
+            this.array = array;
+            this.index = index;
+            this.clazz = clazz;
+        }
+
+        @Override
+        public void load(InstructionAssembler assembler) {
+            assembler.aload(array, index, assembler.getType(clazz));
+        }
+
+        @Override
+        public void store(InstructionAssembler assembler) {
+            Variable<V> value = assembler.newScratchVariable(clazz);
+            assembler.store(value);
+            assembler.astore(array, index, value);
+            assembler.freeVariable(value);
+        }
+
+        @Override
+        public void store(InstructionAssembler assembler, Value<? extends V> value) {
+            assembler.astore(array, index, value);
+        }
+    }
+
     /* annotations */
 
     public void annotation(Type type, boolean visible) {
@@ -378,6 +413,10 @@ public class InstructionAssembler {
 
     protected final void restoreStack(Type[] stack) {
         this.stack.setStack(stack);
+    }
+
+    protected final boolean isEqualStack(Jump label, Type[] stack) {
+        return Arrays.equals(label.stack(), stack);
     }
 
     /**
@@ -431,8 +470,7 @@ public class InstructionAssembler {
      *            the exception type
      */
     public void tryCatch(TryCatchLabel start, TryCatchLabel end, TryCatchLabel handler, Type type) {
-        methodVisitor.visitTryCatchBlock(start.label(), end.label(), handler.label(),
-                type.internalName());
+        methodVisitor.visitTryCatchBlock(start.label(), end.label(), handler.label(), type.internalName());
     }
 
     /**
@@ -480,6 +518,10 @@ public class InstructionAssembler {
     public void anull() {
         methodVisitor.visitInsn(Opcodes.ACONST_NULL);
         stack.anull();
+    }
+
+    public <T> Value<T> anullValue() {
+        return asm -> asm.anull();
     }
 
     public void aconst(String cst) {
@@ -677,6 +719,25 @@ public class InstructionAssembler {
     /* array load instructions */
 
     /**
+     * &#x2205; → value.
+     * 
+     * @param <T>
+     *            the array component type
+     * @param array
+     *            the array
+     * @param index
+     *            the array index
+     * @param type
+     *            the array element type
+     */
+    public final <T> void aload(Value<T[]> array, int index, Type type) {
+        assert index >= 0;
+        load(array);
+        iconst(index);
+        aload(type);
+    }
+
+    /**
      * array → value.
      * 
      * @param index
@@ -763,6 +824,14 @@ public class InstructionAssembler {
 
     /* local store instructions */
 
+    public final void store(MutableValue<?> value) {
+        value.store(this);
+    }
+
+    public final <V> void store(MutableValue<V> value, Value<? extends V> v) {
+        value.store(this, v);
+    }
+
     public final void store(Variable<?> variable) {
         assert variable.isAlive() : "variable out of scope";
         store(variable.getSlot(), variable.getType());
@@ -835,18 +904,39 @@ public class InstructionAssembler {
     }
 
     /**
-     * array → array
+     * &#x2205; → &#x2205;
      * 
+     * @param array
+     *            the array
      * @param index
      *            the array index
      * @param element
      *            the int element to store
      */
-    public final void astore(int index, int element) {
-        dup();
+    public final void astore(Value<int[]> array, int index, int element) {
+        load(array);
         iconst(index);
         iconst(element);
         astore(Type.INT_TYPE);
+    }
+
+    /**
+     * &#x2205; → &#x2205;
+     * 
+     * @param <T>
+     *            the array component type
+     * @param array
+     *            the array
+     * @param index
+     *            the array index
+     * @param element
+     *            the element to store
+     */
+    public final <T> void astore(Value<T[]> array, int index, Value<? extends T> element) {
+        load(array);
+        iconst(index);
+        load(element);
+        astore(Types.Object);
     }
 
     public final void astore(Type type) {
@@ -1926,26 +2016,22 @@ public class InstructionAssembler {
     }
 
     public void getstatic(Type owner, String name, Type desc) {
-        methodVisitor.visitFieldInsn(Opcodes.GETSTATIC, owner.internalName(), name,
-                desc.descriptor());
+        methodVisitor.visitFieldInsn(Opcodes.GETSTATIC, owner.internalName(), name, desc.descriptor());
         stack.getstatic(desc);
     }
 
     public void putstatic(Type owner, String name, Type desc) {
-        methodVisitor.visitFieldInsn(Opcodes.PUTSTATIC, owner.internalName(), name,
-                desc.descriptor());
+        methodVisitor.visitFieldInsn(Opcodes.PUTSTATIC, owner.internalName(), name, desc.descriptor());
         stack.putstatic(desc);
     }
 
     public void getfield(Type owner, String name, Type desc) {
-        methodVisitor.visitFieldInsn(Opcodes.GETFIELD, owner.internalName(), name,
-                desc.descriptor());
+        methodVisitor.visitFieldInsn(Opcodes.GETFIELD, owner.internalName(), name, desc.descriptor());
         stack.getfield(owner, desc);
     }
 
     public void putfield(Type owner, String name, Type desc) {
-        methodVisitor.visitFieldInsn(Opcodes.PUTFIELD, owner.internalName(), name,
-                desc.descriptor());
+        methodVisitor.visitFieldInsn(Opcodes.PUTFIELD, owner.internalName(), name, desc.descriptor());
         stack.putfield(owner, desc);
     }
 
@@ -1986,26 +2072,22 @@ public class InstructionAssembler {
     }
 
     public void invokevirtual(Type owner, String name, MethodTypeDescriptor desc, boolean itf) {
-        methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, owner.internalName(), name,
-                desc.descriptor(), itf);
+        methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, owner.internalName(), name, desc.descriptor(), itf);
         stack.invokevirtual(desc);
     }
 
     public void invokespecial(Type owner, String name, MethodTypeDescriptor desc, boolean itf) {
-        methodVisitor.visitMethodInsn(Opcodes.INVOKESPECIAL, owner.internalName(), name,
-                desc.descriptor(), itf);
+        methodVisitor.visitMethodInsn(Opcodes.INVOKESPECIAL, owner.internalName(), name, desc.descriptor(), itf);
         stack.invokespecial(desc);
     }
 
     public void invokestatic(Type owner, String name, MethodTypeDescriptor desc, boolean itf) {
-        methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, owner.internalName(), name,
-                desc.descriptor(), itf);
+        methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, owner.internalName(), name, desc.descriptor(), itf);
         stack.invokestatic(desc);
     }
 
     public void invokeinterface(Type owner, String name, MethodTypeDescriptor desc) {
-        methodVisitor.visitMethodInsn(Opcodes.INVOKEINTERFACE, owner.internalName(), name,
-                desc.descriptor(), true);
+        methodVisitor.visitMethodInsn(Opcodes.INVOKEINTERFACE, owner.internalName(), name, desc.descriptor(), true);
         stack.invokeinterface(desc);
     }
 
@@ -2035,6 +2117,25 @@ public class InstructionAssembler {
     public final void anew(Type type, MethodName init) {
         anew(type);
         dup();
+        invoke(init);
+    }
+
+    /**
+     * &#x2205; → object
+     * 
+     * @param type
+     *            the type descriptor
+     * @param init
+     *            the init-method call descriptor
+     * @param arguments
+     *            the constructor call arguments
+     */
+    public final void anew(Type type, MethodName init, Value<?>... arguments) {
+        anew(type);
+        dup();
+        for (Value<?> argument : arguments) {
+            load(argument);
+        }
         invoke(init);
     }
 

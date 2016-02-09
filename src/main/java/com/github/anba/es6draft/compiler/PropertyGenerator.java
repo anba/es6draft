@@ -21,20 +21,20 @@ import com.github.anba.es6draft.ast.PropertyNameDefinition;
 import com.github.anba.es6draft.ast.PropertyValueDefinition;
 import com.github.anba.es6draft.ast.SpreadProperty;
 import com.github.anba.es6draft.ast.synthetic.PropertyDefinitionsMethod;
-import com.github.anba.es6draft.compiler.CodeGenerator.FunctionName;
 import com.github.anba.es6draft.compiler.assembler.MethodName;
 import com.github.anba.es6draft.compiler.assembler.Type;
+import com.github.anba.es6draft.compiler.assembler.Value;
 import com.github.anba.es6draft.compiler.assembler.Variable;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.IndexedMap;
+import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
  * 12.2.5.8 Runtime Semantics: PropertyDefinitionEvaluation<br>
  * 14.3.9 Runtime Semantics: PropertyDefinitionEvaluation<br>
  * 14.4.13 Runtime Semantics: PropertyDefinitionEvaluation
  */
-final class PropertyGenerator extends
-        DefaultCodeGenerator<DefaultCodeGenerator.ValType, ExpressionVisitor> {
+final class PropertyGenerator extends DefaultCodeGenerator<DefaultCodeGenerator.ValType> {
     private static final class Methods {
         // class: ScriptRuntime
         static final MethodName ScriptRuntime_EvaluatePropertyDefinition = MethodName.findStatic(
@@ -138,8 +138,12 @@ final class PropertyGenerator extends
         this.decorators = decorators;
     }
 
+    private Value<ArrayList<Object>> decoratorsOrNull(CodeVisitor mv) {
+        return this.decorators != null ? this.decorators : mv.anullValue();
+    }
+
     @Override
-    protected ValType visit(Node node, ExpressionVisitor mv) {
+    protected ValType visit(Node node, CodeVisitor mv) {
         throw new IllegalStateException(String.format("node-class: %s", node.getClass()));
     }
 
@@ -149,7 +153,7 @@ final class PropertyGenerator extends
      * ComputedPropertyName : [ AssignmentExpression ]
      */
     @Override
-    public ValType visit(ComputedPropertyName node, ExpressionVisitor mv) {
+    public ValType visit(ComputedPropertyName node, CodeVisitor mv) {
         /* steps 1-3 */
         ValType type = expression(node.getExpression(), mv);
         /* step 4 */
@@ -157,18 +161,24 @@ final class PropertyGenerator extends
     }
 
     @Override
-    public ValType visit(PropertyDefinitionsMethod node, ExpressionVisitor mv) {
-        codegen.compile(node, decorators != null, mv);
+    public ValType visit(PropertyDefinitionsMethod node, CodeVisitor mv) {
+        MethodName method = codegen.compile(node, decorators != null, mv);
+        boolean hasResume = node.hasResumePoint();
+
+        mv.enterVariableScope();
+        Variable<OrdinaryObject> object = mv.newVariable("object", OrdinaryObject.class);
 
         // stack: [<object>] -> []
-        mv.loadExecutionContext();
-        mv.swap();
-        if (decorators != null) {
-            mv.load(decorators);
+        mv.store(object);
+
+        // stack: [] -> []
+        mv.lineInfo(0); // 0 = hint for stacktraces to omit this frame
+        if (hasResume) {
+            mv.callWithSuspend(method, object, decoratorsOrNull(mv));
         } else {
-            mv.anull();
+            mv.call(method, object, decoratorsOrNull(mv));
         }
-        mv.invoke(codegen.methodDesc(node));
+        mv.exitVariableScope();
 
         return null;
     }
@@ -178,8 +188,8 @@ final class PropertyGenerator extends
      * 14.4.13 Runtime Semantics: PropertyDefinitionEvaluation
      */
     @Override
-    public ValType visit(MethodDefinition node, ExpressionVisitor mv) {
-        codegen.compile(node);
+    public ValType visit(MethodDefinition node, CodeVisitor mv) {
+        MethodName method = codegen.compile(node);
 
         boolean hasDecorators = !node.getDecorators().isEmpty();
         if (hasDecorators) {
@@ -195,7 +205,7 @@ final class PropertyGenerator extends
                 addDecoratorKey(decorators, propKey, mv);
             }
             mv.iconst(node.getAllocation() == MethodDefinition.MethodAllocation.Object);
-            mv.invoke(codegen.methodDesc(node, FunctionName.RTI));
+            mv.invoke(method);
             mv.loadExecutionContext();
             mv.lineInfo(node);
 
@@ -230,7 +240,7 @@ final class PropertyGenerator extends
             }
             mv.aconst(propName);
             mv.iconst(node.getAllocation() == MethodDefinition.MethodAllocation.Object);
-            mv.invoke(codegen.methodDesc(node, FunctionName.RTI));
+            mv.invoke(method);
             mv.loadExecutionContext();
             mv.lineInfo(node);
 
@@ -270,7 +280,7 @@ final class PropertyGenerator extends
      * PropertyDefinition : IdentifierReference
      */
     @Override
-    public ValType visit(PropertyNameDefinition node, ExpressionVisitor mv) {
+    public ValType visit(PropertyNameDefinition node, CodeVisitor mv) {
         IdentifierReference propertyName = node.getPropertyName();
         String propName = PropName(propertyName);
         assert propName != null;
@@ -291,7 +301,7 @@ final class PropertyGenerator extends
      * PropertyDefinition : PropertyName : AssignmentExpression
      */
     @Override
-    public ValType visit(PropertyValueDefinition node, ExpressionVisitor mv) {
+    public ValType visit(PropertyValueDefinition node, CodeVisitor mv) {
         Expression propertyValue = node.getPropertyValue();
         PropertyName propertyName = node.getPropertyName();
         String propName = PropName(propertyName);
@@ -308,8 +318,7 @@ final class PropertyGenerator extends
             mv.loadExecutionContext();
             mv.lineInfo(node);
             mv.invoke(Methods.ScriptRuntime_defineProperty);
-        } else if ("__proto__".equals(propName)
-                && codegen.isEnabled(CompatibilityOption.ProtoInitializer)) {
+        } else if ("__proto__".equals(propName) && codegen.isEnabled(CompatibilityOption.ProtoInitializer)) {
             expressionBoxed(propertyValue, mv);
             mv.loadExecutionContext();
             mv.lineInfo(node);
@@ -338,7 +347,7 @@ final class PropertyGenerator extends
     }
 
     @Override
-    public ValType visit(SpreadProperty node, ExpressionVisitor mv) {
+    public ValType visit(SpreadProperty node, CodeVisitor mv) {
         // stack: [<object>] -> [<object>, value]
         expressionBoxed(node.getExpression(), mv);
 

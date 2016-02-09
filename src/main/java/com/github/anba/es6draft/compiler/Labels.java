@@ -53,16 +53,30 @@ final class Labels {
         }
 
         /**
+         * Recursively unwraps this temp label.
+         * 
+         * @return the wrapped label
+         */
+        Jump unwrap() {
+            Jump w = wrapped;
+            while (w instanceof TempLabel) {
+                w = ((TempLabel) w).wrapped;
+            }
+            return w;
+        }
+
+        /**
          * Returns {@code true} if the wrapped label is a {@code return} label.
          * 
          * @return {@code true} if {@code return} label
          */
         boolean isReturn() {
-            Jump w = wrapped;
-            while (w instanceof TempLabel) {
-                w = ((TempLabel) w).wrapped;
-            }
-            return w instanceof ReturnLabel;
+            return unwrap() instanceof ReturnLabel;
+        }
+
+        @Override
+        public String toString() {
+            return String.format("TempLabel [%s]", unwrap().getClass().getSimpleName());
         }
     }
 }

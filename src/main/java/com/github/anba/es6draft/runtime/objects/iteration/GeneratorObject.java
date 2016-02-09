@@ -16,10 +16,8 @@ import com.github.anba.es6draft.runtime.internal.CodeContinuation;
 import com.github.anba.es6draft.runtime.internal.Continuation;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.ResumptionPoint;
-import com.github.anba.es6draft.runtime.internal.ReturnValue;
 import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
-import com.github.anba.es6draft.runtime.internal.ThreadContinuation;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
@@ -127,12 +125,7 @@ public final class GeneratorObject extends OrdinaryObject {
         this.state = GeneratorState.SuspendedStart;
         this.lastYieldValue = UNDEFINED;
         this.context.setCurrentGenerator(this);
-        GeneratorHandler handler = new GeneratorHandler(this);
-        if (code.is(RuntimeInfo.FunctionFlags.ResumeGenerator)) {
-            this.continuation = new CodeContinuation<>(handler);
-        } else {
-            this.continuation = new ThreadContinuation<>(handler);
-        }
+        this.continuation = new CodeContinuation<>(new GeneratorHandler(this));
     }
 
     /**
@@ -216,21 +209,6 @@ public final class GeneratorObject extends OrdinaryObject {
         default:
             throw new AssertionError();
         }
-    }
-
-    /**
-     * Suspends the current generator execution.
-     * 
-     * @param value
-     *            the iteration result object to yield
-     * @return the yield result
-     * @see GeneratorAbstractOperations#GeneratorYield(ExecutionContext, ScriptObject)
-     * @throws ReturnValue
-     *             to signal an abrupt Return completion
-     */
-    Object yield(ScriptObject value) throws ReturnValue {
-        assert state == GeneratorState.Executing : "yield from: " + state;
-        return continuation.suspend(value);
     }
 
     private static final class GeneratorHandler implements Continuation.Handler<ScriptObject> {

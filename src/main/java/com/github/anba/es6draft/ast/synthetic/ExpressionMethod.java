@@ -14,8 +14,9 @@ import com.github.anba.es6draft.ast.VoidNodeVisitor;
 /**
  * {@link Expression} as an external Java method.
  */
-public final class ExpressionMethod extends Expression {
+public final class ExpressionMethod extends Expression implements SyntheticNode {
     private final Expression expression;
+    private boolean resumePoint;
 
     public ExpressionMethod(Expression expression) {
         super(expression.getBeginPosition(), expression.getEndPosition());
@@ -24,6 +25,16 @@ public final class ExpressionMethod extends Expression {
 
     public Expression getExpression() {
         return expression;
+    }
+
+    @Override
+    public boolean hasResumePoint() {
+        return resumePoint;
+    }
+
+    @Override
+    public void setResumePoint(boolean resumePoint) {
+        this.resumePoint = resumePoint;
     }
 
     @Override

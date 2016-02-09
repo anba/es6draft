@@ -380,6 +380,7 @@ regress/regress-1119.js
 
 # Method code too large
 # too many arguments
+regress/regress-492.js
 regress/regress-1122.js
 
 # Different maximal stack depth

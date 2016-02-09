@@ -6,15 +6,17 @@
  */
 package com.github.anba.es6draft.compiler;
 
-import static com.github.anba.es6draft.semantics.StaticSemantics.ExpectedArgumentCount;
-import static com.github.anba.es6draft.semantics.StaticSemantics.IsStrict;
+import static com.github.anba.es6draft.semantics.StaticSemantics.*;
 
 import java.lang.invoke.CallSite;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
+import java.util.HashSet;
+import java.util.List;
 import java.util.function.BiConsumer;
 
 import com.github.anba.es6draft.ast.*;
+import com.github.anba.es6draft.ast.scope.Name;
 import com.github.anba.es6draft.compiler.CodeGenerator.FunctionName;
 import com.github.anba.es6draft.compiler.CodeGenerator.ModuleName;
 import com.github.anba.es6draft.compiler.CodeGenerator.ScriptName;
@@ -37,36 +39,34 @@ final class RuntimeInfoGenerator {
         static final MethodName DebugInfo_init = MethodName.findConstructor(Types.DebugInfo,
                 Type.methodType(Type.VOID_TYPE));
 
-        static final MethodName DebugInfo_addMethod = MethodName.findVirtual(Types.DebugInfo,
-                "addMethod", Type.methodType(Type.VOID_TYPE, Types.MethodHandle));
+        static final MethodName DebugInfo_addMethod = MethodName.findVirtual(Types.DebugInfo, "addMethod",
+                Type.methodType(Type.VOID_TYPE, Types.MethodHandle));
 
         // class: RuntimeInfo
-        static final MethodName RTI_newScriptBody = MethodName.findStatic(Types.RuntimeInfo,
-                "newScriptBody", Type.methodType(Types.RuntimeInfo$ScriptBody, Types.String,
-                        Types.String, Types.MethodHandle));
+        static final MethodName RTI_newScriptBody = MethodName.findStatic(Types.RuntimeInfo, "newScriptBody",
+                Type.methodType(Types.RuntimeInfo$ScriptBody, Types.String, Types.String, Types.MethodHandle));
 
-        static final MethodName RTI_newScriptBodyDebug = MethodName.findStatic(Types.RuntimeInfo,
-                "newScriptBody", Type.methodType(Types.RuntimeInfo$ScriptBody, Types.String,
-                        Types.String, Types.MethodHandle, Types.MethodHandle));
-
-        static final MethodName RTI_newModuleBody = MethodName.findStatic(Types.RuntimeInfo,
-                "newModuleBody", Type.methodType(Types.RuntimeInfo$ModuleBody, Types.String,
-                        Types.String, Types.MethodHandle, Types.MethodHandle));
-
-        static final MethodName RTI_newModuleBodyDebug = MethodName.findStatic(Types.RuntimeInfo,
-                "newModuleBody", Type.methodType(Types.RuntimeInfo$ModuleBody, Types.String,
-                        Types.String, Types.MethodHandle, Types.MethodHandle, Types.MethodHandle));
-
-        static final MethodName RTI_newFunction = MethodName.findStatic(Types.RuntimeInfo,
-                "newFunction", Type.methodType(Types.RuntimeInfo$Function, Types.Object,
-                        Types.String, Type.INT_TYPE, Type.INT_TYPE, Types.String, Type.INT_TYPE,
-                        Types.MethodHandle, Types.MethodHandle, Types.MethodHandle));
-
-        static final MethodName RTI_newFunctionDebug = MethodName.findStatic(Types.RuntimeInfo,
-                "newFunction", Type.methodType(Types.RuntimeInfo$Function, Types.Object,
-                        Types.String, Type.INT_TYPE, Type.INT_TYPE, Types.String, Type.INT_TYPE,
-                        Types.MethodHandle, Types.MethodHandle, Types.MethodHandle,
+        static final MethodName RTI_newScriptBodyDebug = MethodName.findStatic(Types.RuntimeInfo, "newScriptBody",
+                Type.methodType(Types.RuntimeInfo$ScriptBody, Types.String, Types.String, Types.MethodHandle,
                         Types.MethodHandle));
+
+        static final MethodName RTI_newModuleBody = MethodName.findStatic(Types.RuntimeInfo, "newModuleBody",
+                Type.methodType(Types.RuntimeInfo$ModuleBody, Types.String, Types.String, Types.MethodHandle,
+                        Types.MethodHandle));
+
+        static final MethodName RTI_newModuleBodyDebug = MethodName.findStatic(Types.RuntimeInfo, "newModuleBody",
+                Type.methodType(Types.RuntimeInfo$ModuleBody, Types.String, Types.String, Types.MethodHandle,
+                        Types.MethodHandle, Types.MethodHandle));
+
+        static final MethodName RTI_newFunction = MethodName.findStatic(Types.RuntimeInfo, "newFunction",
+                Type.methodType(Types.RuntimeInfo$Function, Types.Object, Types.String, Type.INT_TYPE, Type.INT_TYPE,
+                        Types.String_, Types.String, Type.INT_TYPE, Types.MethodHandle, Types.MethodHandle,
+                        Types.MethodHandle));
+
+        static final MethodName RTI_newFunctionDebug = MethodName.findStatic(Types.RuntimeInfo, "newFunction",
+                Type.methodType(Types.RuntimeInfo$Function, Types.Object, Types.String, Type.INT_TYPE, Type.INT_TYPE,
+                        Types.String_, Types.String, Type.INT_TYPE, Types.MethodHandle, Types.MethodHandle,
+                        Types.MethodHandle, Types.MethodHandle));
     }
 
     private final CodeGenerator codegen;
@@ -116,7 +116,7 @@ final class RuntimeInfoGenerator {
         if (isLegacyGenerator(node)) {
             functionFlags |= FunctionFlags.LegacyGenerator.getValue();
         }
-        if (isLegacy(node)) {
+        if (!IsStrict(node) && isLegacy(node)) {
             functionFlags |= FunctionFlags.Legacy.getValue();
         }
         if (hasScopedName(node)) {
@@ -124,9 +124,6 @@ final class RuntimeInfoGenerator {
         }
         if (node.getScope().hasSuperReference()) {
             functionFlags |= FunctionFlags.Super.getValue();
-        }
-        if (!node.hasSyntheticNodes() && !codegen.isEnabled(Compiler.Option.NoResume)) {
-            functionFlags |= FunctionFlags.ResumeGenerator.getValue();
         }
         if (tailCall) {
             assert !node.isGenerator() && !node.isAsync() && strict;
@@ -142,6 +139,9 @@ final class RuntimeInfoGenerator {
         if (node.getScope().hasEval()) {
             functionFlags |= FunctionFlags.Eval.getValue();
         }
+        if (hasMappedOrLegacyArguments(node)) {
+            functionFlags |= FunctionFlags.MappedArguments.getValue();
+        }
         return functionFlags;
     }
 
@@ -156,9 +156,6 @@ final class RuntimeInfoGenerator {
     }
 
     private boolean isLegacy(FunctionNode node) {
-        if (IsStrict(node)) {
-            return false;
-        }
         if (!(node instanceof FunctionDeclaration || node instanceof FunctionExpression)) {
             return false;
         }
@@ -178,6 +175,53 @@ final class RuntimeInfoGenerator {
 
     private static boolean hasScopedName(FunctionNode node) {
         return node instanceof Expression && node.getIdentifier() != null;
+    }
+
+    private boolean hasLegacyArguments(FunctionNode node) {
+        if (!(node instanceof FunctionDeclaration || node instanceof FunctionExpression)) {
+            return false;
+        }
+        return codegen.isEnabled(CompatibilityOption.FunctionArguments);
+    }
+
+    private boolean hasMappedOrLegacyArguments(FunctionNode node) {
+        // Strict or arrow functions never have mapped arguments.
+        if (IsStrict(node) || node.getThisMode() == FunctionNode.ThisMode.Lexical) {
+            return false;
+        }
+        // Functions with non-simple parameters (or no parameters at all) also never have mapped arguments.
+        FormalParameterList formals = node.getParameters();
+        if (formals.getFormals().isEmpty() || !IsSimpleParameterList(formals)) {
+            return false;
+        }
+        // Legacy functions always need the argument name mapping.
+        if (hasLegacyArguments(node)) {
+            return true;
+        }
+        // No mapping needed when 'arguments' is never accessed.
+        boolean argumentsObjectNeeded = node.getScope().needsArguments();
+        Name arguments = node.getScope().arguments();
+        if (!argumentsObjectNeeded || arguments == null) {
+            return false;
+        }
+        // Or a parameter named 'arguments' is present.
+        if (BoundNames(formals).contains(arguments)) {
+            return false;
+        }
+        // Or a lexical variable named 'arguments' is present.
+        if (LexicallyDeclaredNames(node).contains(arguments)) {
+            return false;
+        }
+        // Or a function named 'arguments' is present.
+        for (StatementListItem item : VarScopedDeclarations(node)) {
+            if (item instanceof HoistableDeclaration) {
+                HoistableDeclaration d = (HoistableDeclaration) item;
+                if (arguments.equals(BoundName(d))) {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 
     private static final Handle RUNTIME_INFO_BOOTSTRAP = MethodName
@@ -207,6 +251,12 @@ final class RuntimeInfoGenerator {
         asm.aconst(node.getFunctionName());
         asm.iconst(functionFlags(node, tailCall, tailConstruct));
         asm.iconst(ExpectedArgumentCount(node.getParameters()));
+        if (hasMappedOrLegacyArguments(node)) {
+            // TODO: Make this a compact string (to save bytecode and memory size)?
+            newStringArray(asm, mappedNames(node.getParameters()));
+        } else {
+            asm.anull();
+        }
         asm.aconst(source);
         asm.iconst(sourceSplit);
         if (node.isAsync() || node.isGenerator()) {
@@ -269,6 +319,32 @@ final class RuntimeInfoGenerator {
         asm._return();
 
         asm.end();
+    }
+
+    private String[] mappedNames(FormalParameterList formals) {
+        List<FormalParameter> list = formals.getFormals();
+        int numberOfParameters = list.size();
+        HashSet<String> mappedNames = new HashSet<>();
+        String[] names = new String[numberOfParameters];
+        for (int index = numberOfParameters - 1; index >= 0; --index) {
+            BindingElementItem element = list.get(index).getElement();
+            assert element instanceof BindingElement : element.getClass().toString();
+            Binding binding = ((BindingElement) element).getBinding();
+            assert binding instanceof BindingIdentifier : binding.getClass().toString();
+            String name = ((BindingIdentifier) binding).getName().getIdentifier();
+            if (mappedNames.add(name)) {
+                names[index] = name;
+            }
+        }
+        return names;
+    }
+
+    private void newStringArray(InstructionAssembler mv, String[] strings) {
+        mv.anewarray(strings.length, Types.String);
+        int index = 0;
+        for (String string : strings) {
+            mv.astore(index++, string);
+        }
     }
 
     private void debugInfo(FunctionNode node, FunctionName constructName) {

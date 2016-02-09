@@ -43,8 +43,6 @@ public class OrdinaryObject implements ScriptObject {
     private static final int STRING_PROPERTIES_DEFAULT_INITIAL_CAPACITY = 16;
     private static final int SYMBOL_PROPERTIES_DEFAULT_INITIAL_CAPACITY = 4;
     private static final Object[] EMPTY_GETTER_ARGS = new Object[0];
-    private static final PropertyMap<?, Property> SHARED_PROPERTIES = new PropertyMap<>(0);
-    private static final IndexedMap<Property> SHARED_INDEXED = new IndexedMap<>(0);
 
     // Maps for String and Symbol valued property keys
     private final PropertyMap<String, Property> properties;
@@ -86,22 +84,6 @@ public class OrdinaryObject implements ScriptObject {
     private OrdinaryObject(Realm realm, ScriptObject prototype) {
         this(realm);
         this.prototype = prototype;
-    }
-
-    /**
-     * Constructs a new Ordinary Object instance.
-     * 
-     * @param realm
-     *            the realm object
-     * @param empty
-     *            unused placeholder
-     */
-    @SuppressWarnings("unchecked")
-    /* package */ OrdinaryObject(Realm realm, Void empty) {
-        this.realm = realm;
-        this.properties = (PropertyMap<String, Property>) SHARED_PROPERTIES;
-        this.symbolProperties = (PropertyMap<Symbol, Property>) SHARED_PROPERTIES;
-        this.indexedProperties = SHARED_INDEXED;
     }
 
     @Override
@@ -1773,7 +1755,7 @@ public class OrdinaryObject implements ScriptObject {
         private final ScriptObject object;
 
         FakeObject(Realm realm, ScriptObject object) {
-            super(realm, (Void) null);
+            super(realm);
             this.object = object;
         }
 

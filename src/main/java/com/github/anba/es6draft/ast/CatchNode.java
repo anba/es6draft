@@ -14,13 +14,13 @@ import com.github.anba.es6draft.ast.scope.BlockScope;
  * <li>13.15 The try Statement
  * </ul>
  */
-public final class CatchNode extends AstNode implements ScopedNode {
+public final class CatchNode extends AstNode implements CatchClause {
     private final BlockScope scope;
     private final Binding catchParameter;
     private final BlockStatement catchBlock;
 
-    public CatchNode(long beginPosition, long endPosition, BlockScope scope,
-            Binding catchParameter, BlockStatement catchBlock) {
+    public CatchNode(long beginPosition, long endPosition, BlockScope scope, Binding catchParameter,
+            BlockStatement catchBlock) {
         super(beginPosition, endPosition);
         this.scope = scope;
         this.catchParameter = catchParameter;
@@ -32,20 +32,12 @@ public final class CatchNode extends AstNode implements ScopedNode {
         return scope;
     }
 
-    /**
-     * Returns the catch parameter binding node.
-     * 
-     * @return the catch parameter
-     */
+    @Override
     public Binding getCatchParameter() {
         return catchParameter;
     }
 
-    /**
-     * Returns the catch block statement.
-     * 
-     * @return the catch block
-     */
+    @Override
     public BlockStatement getCatchBlock() {
         return catchBlock;
     }
