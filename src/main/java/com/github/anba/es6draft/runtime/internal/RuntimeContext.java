@@ -7,6 +7,7 @@
 package com.github.anba.es6draft.runtime.internal;
 
 import static com.github.anba.es6draft.runtime.internal.RuntimeWorkerThreadFactory.createThreadPoolExecutor;
+import static com.github.anba.es6draft.runtime.internal.RuntimeWorkerThreadFactory.createWorkerThreadPoolExecutor;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -16,10 +17,12 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.TimeZone;
 import java.util.concurrent.ExecutorService;
+import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 
 import com.github.anba.es6draft.compiler.Compiler;
 import com.github.anba.es6draft.parser.Parser;
+import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.modules.ModuleLoader;
 import com.github.anba.es6draft.runtime.modules.loader.FileModuleLoader;
 import com.github.anba.es6draft.runtime.objects.GlobalObject;
@@ -40,6 +43,10 @@ public final class RuntimeContext {
     private final ScriptCache scriptCache;
     private final ExecutorService executor;
     private final boolean shutdownExecutorOnFinalization;
+    private final ExecutorService workerExecutor;
+    private final boolean shutdownWorkerExecutorOnFinalization;
+    private final BiConsumer<ExecutionContext, Throwable> workerErrorReporter;
+    private final Futex futex;
 
     private final EnumSet<CompatibilityOption> options;
     private final EnumSet<Parser.Option> parserOptions;
@@ -48,6 +55,7 @@ public final class RuntimeContext {
     RuntimeContext(ObjectAllocator<? extends GlobalObject> globalAllocator,
             BiFunction<RuntimeContext, ScriptLoader, ? extends ModuleLoader> moduleLoader, Locale locale,
             TimeZone timeZone, Path baseDirectory, Console console, ScriptCache scriptCache, ExecutorService executor,
+            ExecutorService workerExecutor, BiConsumer<ExecutionContext, Throwable> workerErrorReporter, Futex futex,
             EnumSet<CompatibilityOption> options, EnumSet<Parser.Option> parserOptions,
             EnumSet<Compiler.Option> compilerOptions) {
         this.globalAllocator = globalAllocator;
@@ -59,6 +67,10 @@ public final class RuntimeContext {
         this.scriptCache = scriptCache;
         this.executor = executor != null ? executor : createThreadPoolExecutor();
         this.shutdownExecutorOnFinalization = executor == null;
+        this.workerExecutor = workerExecutor != null ? workerExecutor : createWorkerThreadPoolExecutor();
+        this.shutdownWorkerExecutorOnFinalization = workerExecutor == null;
+        this.workerErrorReporter = workerErrorReporter;
+        this.futex = futex;
         this.options = EnumSet.copyOf(options);
         this.parserOptions = EnumSet.copyOf(parserOptions);
         this.compilerOptions = EnumSet.copyOf(compilerOptions);
@@ -68,6 +80,8 @@ public final class RuntimeContext {
     protected void finalize() throws Throwable {
         if (shutdownExecutorOnFinalization)
             executor.shutdown();
+        if (shutdownWorkerExecutorOnFinalization)
+            workerExecutor.shutdown();
         super.finalize();
     }
 
@@ -154,6 +168,33 @@ public final class RuntimeContext {
     }
 
     /**
+     * Returns the executor service for workers.
+     * 
+     * @return the executor service
+     */
+    public ExecutorService getWorkerExecutor() {
+        return workerExecutor;
+    }
+
+    /**
+     * Returns the worker error reporter.
+     * 
+     * @return the worker error reporter
+     */
+    public BiConsumer<ExecutionContext, Throwable> getWorkerErrorReporter() {
+        return workerErrorReporter;
+    }
+
+    /**
+     * Returns the futex object.
+     * 
+     * @return the futex object
+     */
+    public Futex getFutex() {
+        return futex;
+    }
+
+    /**
      * Returns the compatibility options for this instance.
      * 
      * @return the compatibility options
@@ -192,6 +233,9 @@ public final class RuntimeContext {
         private Console console;
         private ScriptCache scriptCache;
         private ExecutorService executor;
+        private ExecutorService workerExecutor;
+        private BiConsumer<ExecutionContext, Throwable> workerErrorReporter;
+        private Futex futex;
         private final EnumSet<CompatibilityOption> options = EnumSet.noneOf(CompatibilityOption.class);
         private final EnumSet<Parser.Option> parserOptions = EnumSet.noneOf(Parser.Option.class);
         private final EnumSet<Compiler.Option> compilerOptions = EnumSet.noneOf(Compiler.Option.class);
@@ -203,6 +247,10 @@ public final class RuntimeContext {
             timeZone = TimeZone.getDefault();
             baseDirectory = Paths.get("");
             scriptCache = new ScriptCache();
+            workerErrorReporter = (cx, e) -> {
+                // empty
+            };
+            futex = new Futex();
         }
 
         public Builder(RuntimeContext context) {
@@ -214,6 +262,9 @@ public final class RuntimeContext {
             console = context.console;
             scriptCache = context.scriptCache;
             executor = context.executor;
+            workerExecutor = context.workerExecutor;
+            workerErrorReporter = context.workerErrorReporter;
+            futex = context.futex;
             options.addAll(context.options);
             parserOptions.addAll(context.parserOptions);
             compilerOptions.addAll(context.compilerOptions);
@@ -226,7 +277,7 @@ public final class RuntimeContext {
          */
         public RuntimeContext build() {
             return new RuntimeContext(allocator, moduleLoader, locale, timeZone, baseDirectory, console, scriptCache,
-                    executor, options, parserOptions, compilerOptions);
+                    executor, workerExecutor, workerErrorReporter, futex, options, parserOptions, compilerOptions);
         }
 
         /**
@@ -322,6 +373,42 @@ public final class RuntimeContext {
          */
         public Builder setExecutor(ExecutorService executor) {
             this.executor = executor; // null allowed
+            return this;
+        }
+
+        /**
+         * Sets the executor for shared workers.
+         * 
+         * @param executor
+         *            the executor
+         * @return this builder
+         */
+        public Builder setWorkerExecutor(ExecutorService executor) {
+            this.workerExecutor = executor; // null allowed
+            return this;
+        }
+
+        /**
+         * Sets the worker error reporter.
+         * 
+         * @param workerErrorReporter
+         *            the worker error reporter
+         * @return this builder
+         */
+        public Builder setWorkerErrorReporter(BiConsumer<ExecutionContext, Throwable> workerErrorReporter) {
+            this.workerErrorReporter = Objects.requireNonNull(workerErrorReporter);
+            return this;
+        }
+
+        /**
+         * Sets the futex object.
+         * 
+         * @param futex
+         *            the futex object
+         * @return this builder
+         */
+        public Builder setFutex(Futex futex) {
+            this.futex = Objects.requireNonNull(futex);
             return this;
         }
 

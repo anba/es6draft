@@ -315,6 +315,14 @@ public enum Intrinsics {/* @formatter:off */
     /** Intrinsic: %SubscriptionObserverPrototype% */
     SubscriptionObserverPrototype,
 
+    // Extension: Shared Memory and Atomics
+    /** Intrinsic: <code>%Atomics%</code> */
+    Atomics,
+    /** Intrinsic: <code>%SharedArrayBuffer%</code> */
+    SharedArrayBuffer,
+    /** Intrinsic: <code>%SharedArrayBufferPrototype%</code> */
+    SharedArrayBufferPrototype,
+
     /* @formatter:on */
     ;
 

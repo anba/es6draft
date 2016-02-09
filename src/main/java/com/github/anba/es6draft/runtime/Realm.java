@@ -37,6 +37,9 @@ import com.github.anba.es6draft.runtime.objects.*;
 import com.github.anba.es6draft.runtime.objects.NativeErrorConstructor.ErrorType;
 import com.github.anba.es6draft.runtime.objects.async.AsyncFunctionConstructor;
 import com.github.anba.es6draft.runtime.objects.async.AsyncFunctionPrototype;
+import com.github.anba.es6draft.runtime.objects.atomics.AtomicsObject;
+import com.github.anba.es6draft.runtime.objects.atomics.SharedArrayBufferConstructor;
+import com.github.anba.es6draft.runtime.objects.atomics.SharedArrayBufferPrototype;
 import com.github.anba.es6draft.runtime.objects.binary.ArrayBufferConstructor;
 import com.github.anba.es6draft.runtime.objects.binary.ArrayBufferPrototype;
 import com.github.anba.es6draft.runtime.objects.binary.DataViewConstructor;
@@ -735,6 +738,11 @@ public final class Realm {
             initializeObservableModule(realm);
         }
 
+        // intrinsics: Shared Memory and Atomics
+        if (realm.isEnabled(CompatibilityOption.Atomics)) {
+            initializeAtomicsModule(realm);
+        }
+
         // Initialized last because it accesses other intrinsics.
         initializeGlobalObject(realm);
     }
@@ -1367,6 +1375,31 @@ public final class Realm {
         observablePrototype.initialize(realm);
         subscriptionPrototype.initialize(realm);
         subscriptionObserverPrototype.initialize(realm);
+    }
+
+    /**
+     * <h1>Extension: Shared Memory and Atomics</h1>
+     * 
+     * @param realm
+     *            the realm instance
+     */
+    private static void initializeAtomicsModule(Realm realm) {
+        EnumMap<Intrinsics, OrdinaryObject> intrinsics = realm.intrinsics;
+
+        // allocation phase
+        AtomicsObject atomicsObject = new AtomicsObject(realm);
+        SharedArrayBufferConstructor sharedArrayBufferConstructor = new SharedArrayBufferConstructor(realm);
+        SharedArrayBufferPrototype sharedArrayBufferPrototype = new SharedArrayBufferPrototype(realm);
+
+        // registration phase
+        intrinsics.put(Intrinsics.Atomics, atomicsObject);
+        intrinsics.put(Intrinsics.SharedArrayBuffer, sharedArrayBufferConstructor);
+        intrinsics.put(Intrinsics.SharedArrayBufferPrototype, sharedArrayBufferPrototype);
+
+        // initialization phase
+        atomicsObject.initialize(realm);
+        sharedArrayBufferConstructor.initialize(realm);
+        sharedArrayBufferPrototype.initialize(realm);
     }
 
     /**

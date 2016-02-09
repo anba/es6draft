@@ -339,6 +339,13 @@ public final class Messages {
         SIMDInvalidLane("simd.invalid_lane"),
         SIMDOutOfRange("simd.out_of_range"),
         SIMDNumber("simd.number"),
+
+        // Atomics
+        AtomicsInvalidArrayType("atomics.invalid_array_type"),
+        AtomicsInt32ArrayType("atomics.int32_array_type"),
+        AtomicsNotSharedBuffer("atomics.not_shared_buffer"),
+        AtomicsInvalidArrayIndex("atomics.invalid_array_index"),
+
         ;
         /* @formatter:on */
 

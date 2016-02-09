@@ -33,6 +33,7 @@ Supports the following [ECMAScript proposals] [proposals]:
   * Class and Property Decorators
   * Class Property Declarations (Only class static properties are currently supported)
   * Observable
+  * Shared memory and atomics
   * String.prototype.{trimLeft,trimRight}
   * String#matchAll
   * System.global

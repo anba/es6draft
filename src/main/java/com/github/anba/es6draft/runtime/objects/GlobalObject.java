@@ -68,6 +68,7 @@ public class GlobalObject extends OrdinaryObject implements Initializable {
         }
         createProperties(realm, this, SIMDProperty.class);
         createProperties(realm, this, ObservableProperty.class);
+        createProperties(realm, this, AtomicsProperties.class);
         createProperties(realm, this, AdditionalProperties.class);
     }
 
@@ -609,6 +610,17 @@ public class GlobalObject extends OrdinaryObject implements Initializable {
 
         @Value(name = "Observable")
         public static final Intrinsics Observable = Intrinsics.Observable;
+    }
+
+    @CompatibilityExtension(CompatibilityOption.Atomics)
+    public enum AtomicsProperties {
+        ;
+
+        @Value(name = "Atomics")
+        public static final Intrinsics Atomics = Intrinsics.Atomics;
+
+        @Value(name = "SharedArrayBuffer")
+        public static final Intrinsics SharedArrayBuffer = Intrinsics.SharedArrayBuffer;
     }
 
     /**

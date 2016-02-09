@@ -194,10 +194,10 @@ public final class DataViewConstructor extends BuiltinConstructor implements Ini
         Object byteLength = argument(args, 2);
         /* step 1 (not applicable)*/
         /* steps 2-3 */
-        if (!(buffer instanceof ArrayBufferObject)) {
+        if (!(buffer instanceof ArrayBuffer)) {
             throw newTypeError(calleeContext, Messages.Key.IncompatibleObject);
         }
-        ArrayBufferObject bufferObj = (ArrayBufferObject) buffer;
+        ArrayBuffer bufferObj = (ArrayBuffer) buffer;
         /* step 4 */
         double numberOffset = ToNumber(calleeContext, byteOffset);
         /* steps 5-6 */

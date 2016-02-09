@@ -131,6 +131,9 @@ ecma_6/DataView/detach-after-construction.js
 # Invalid test: SharedArrayBuffer called as function
 js1_8_5/extensions/sharedtypedarray.js
 
+# Invalid test: new SharedArrayBuffer() called without valid byte length
+ecma_6/Class/extendBuiltinConstructors.js
+
 # Requires Unicode update (Unicode 7)
 ecma_6/RegExp/unicode-ignoreCase.js
 

@@ -210,6 +210,7 @@ public final class TypedArrayConstructor extends BuiltinConstructor implements I
         } else {
             /* step 17 */
             /* step 17.a */
+            // FIXME: spec bug - SharedArrayBuffers not handled correctly!
             Constructor bufferConstructor = SpeciesConstructor(cx, srcData, Intrinsics.ArrayBuffer);
             /* step 17.b */
             data = AllocateArrayBuffer(cx, bufferConstructor, byteLength);

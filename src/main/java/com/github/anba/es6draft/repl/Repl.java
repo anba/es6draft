@@ -913,6 +913,33 @@ public final class Repl {
         }
     }
 
+    private void errorReporter(ExecutionContext cx, Throwable throwable) {
+        try {
+            throw throwable;
+        } catch (StopExecutionException e) {
+            if (e.getReason() == Reason.Quit) {
+                System.exit(0);
+            }
+        } catch (ScriptException e) {
+            handleException(cx.getRealm(), e);
+        } catch (UnhandledRejectionException e) {
+            handleException(cx.getRealm(), e);
+        } catch (StackOverflowError e) {
+            handleException(cx.getRealm(), e);
+        } catch (OutOfMemoryError e) {
+            handleException(cx.getRealm(), e);
+        } catch (InternalException e) {
+            handleException(e);
+        } catch (BootstrapMethodError e) {
+            handleException(e.getCause());
+        } catch (UncheckedIOException e) {
+            handleException(e.getCause());
+        } catch (Throwable e) {
+            printStackTrace(System.err, e, options.stacktraceDepth);
+            System.exit(1);
+        }
+    }
+
     private TaskSource createTaskSource(Realm realm) {
         ArrayList<TaskSource> sources = new ArrayList<>();
         if (options.interactive) {
@@ -1099,6 +1126,7 @@ public final class Repl {
                                                    .setGlobalAllocator(allocator)
                                                    .setModuleLoader(moduleLoader)
                                                    .setConsole(console)
+                                                   .setWorkerErrorReporter(this::errorReporter)
                                                    .setOptions(compatibilityOptions(options))
                                                    .setParserOptions(parserOptions(options))
                                                    .setCompilerOptions(compilerOptions(options))

@@ -34,6 +34,7 @@ import org.junit.rules.ExternalResource;
 import com.github.anba.es6draft.Script;
 import com.github.anba.es6draft.compiler.Compiler;
 import com.github.anba.es6draft.parser.Parser;
+import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.World;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
@@ -106,6 +107,7 @@ public class TestGlobals<GLOBAL extends GlobalObject, TEST extends TestInfo> ext
                                  .setParserOptions(getParserOptions())
                                  .setCompilerOptions(getCompilerOptions())
                                  .setScriptCache(scriptCache)
+                                 .setWorkerErrorReporter(this::workerErrorReporter)
                                  .build();
         /* @formatter:on */
     }
@@ -124,6 +126,7 @@ public class TestGlobals<GLOBAL extends GlobalObject, TEST extends TestInfo> ext
                                  .setParserOptions(getParserOptions())
                                  .setCompilerOptions(getCompilerOptions())
                                  .setScriptCache(scriptCache)
+                                 .setWorkerErrorReporter(this::workerErrorReporter)
                                  .build();
         /* @formatter:on */
     }
@@ -134,6 +137,10 @@ public class TestGlobals<GLOBAL extends GlobalObject, TEST extends TestInfo> ext
 
     protected TimeZone getTimeZone(TEST test) {
         return TimeZone.getDefault();
+    }
+
+    protected void workerErrorReporter(ExecutionContext cx, Throwable t) {
+        t.printStackTrace();
     }
 
     protected static ThreadPoolExecutor createDefaultSharedExecutor() {
@@ -194,6 +201,7 @@ public class TestGlobals<GLOBAL extends GlobalObject, TEST extends TestInfo> ext
     public void release(GLOBAL global) {
         if (global != null) {
             global.getRuntimeContext().getExecutor().shutdown();
+            global.getRuntimeContext().getWorkerExecutor().shutdown();
         }
     }
 

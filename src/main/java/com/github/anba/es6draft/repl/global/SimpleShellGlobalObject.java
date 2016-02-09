@@ -20,5 +20,6 @@ public final class SimpleShellGlobalObject extends ShellGlobalObject {
     public void initializeExtensions() {
         createGlobalProperties(new BaseShellFunctions(), BaseShellFunctions.class);
         createGlobalProperties(new ShellFunctions(), ShellFunctions.class);
+        createGlobalProperties(new AtomicsTestFunctions(), AtomicsTestFunctions.class);
     }
 }

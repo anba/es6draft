@@ -259,9 +259,19 @@ public enum CompatibilityOption {
     SystemGlobal,
 
     /**
+     * Shared Memory and Atomics (Stage 2 proposal)
+     */
+    Atomics,
+
+    /**
      * SIMD (Stage 3 proposal)
      */
     SIMD,
+
+    /**
+     * Atomics.fence() function
+     */
+    AtomicsFence,
 
     /**
      * SIMD (Float64x2, Bool64x2, selectBits)
@@ -359,8 +369,8 @@ public enum CompatibilityOption {
      * @return the options set for mozilla-compatibility
      */
     public static final Set<CompatibilityOption> MozCompatibility() {
-        return addAll(WebCompatibility(), MozExtensions(),
-                EnumSet.of(ArrayIncludes, Comprehension, Exponentiation, GeneratorNonConstructor, SIMD, SIMD_Phase2));
+        return addAll(WebCompatibility(), MozExtensions(), EnumSet.of(ArrayIncludes, Comprehension, Exponentiation,
+                GeneratorNonConstructor, SIMD, SIMD_Phase2, Atomics, AtomicsFence));
     }
 
     /**
@@ -445,7 +455,7 @@ public enum CompatibilityOption {
             return EnumSet.of(ArrayBufferTransfer, ExportFrom, Decorator, StringTrim, StringMatchAll,
                     StaticClassProperties, CallConstructor, Observable, SystemGlobal);
         case Draft:
-            return EnumSet.of(FunctionSent, ObjectRestDestructuring, ObjectSpreadInitializer);
+            return EnumSet.of(Atomics, FunctionSent, ObjectRestDestructuring, ObjectSpreadInitializer);
         case Candidate:
             return EnumSet.of(AsyncFunction, Exponentiation, FunctionCallTrailingComma, ObjectValuesEntries, StringPad,
                     SIMD);

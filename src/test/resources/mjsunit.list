@@ -99,6 +99,15 @@ harmony/function-name.js
 # `/\ud808\udf45{3}/u.test("\u{12345}\udf45\udf45")` returns true in v8
 harmony/unicode-escapes-in-regexps.js
 
+# `new SharedArrayBuffer(2.567)` does not throw in v8
+harmony/sharedarraybuffer.js
+
+# `Atomics.compareExchange(new Int32Array(new SharedArrayBuffer(4)), 10, 0, 0)` does not throw in v8
+regress/regress-crbug-501809.js
+
+# ` Atomics.compareExchange(new Int32Array(new SharedArrayBuffer(4)), "", 0, 0)` does not throw in v8
+harmony/atomics.js
+
 
 ###################
 # Misc issues     #
@@ -268,11 +277,6 @@ regress/regress-356589.js
 regress/regress-417709a.js
 regress/regress-417709b.js
 es6/regress/regress-3750.js
-
-# SharedArrayBuffer
-harmony/sharedarraybuffer.js
-harmony/atomics.js
-regress/regress-crbug-501809.js
 
 # Promise.defer
 es6/promise-internal-setter.js

@@ -85,6 +85,9 @@ public final class Test262Web {
         public void release(Test262GlobalObject global) {
             if (!USE_SHARED_EXECUTOR) {
                 super.release(global);
+            } else if (global != null) {
+                // Worker executors are not shared, explicit shutdown required.
+                global.getRuntimeContext().getWorkerExecutor().shutdown();
             }
         }
 

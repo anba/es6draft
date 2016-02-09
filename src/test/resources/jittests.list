@@ -95,6 +95,7 @@ tests/basic/function-tosource-strict.js
 tests/basic/testLet.js
 
 # different error message
+tests/atomics/basic-tests.js
 tests/basic/bug827104.js
 tests/basic/bug839420.js
 tests/basic/bug934997.js

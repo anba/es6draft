@@ -12,6 +12,8 @@ import static com.github.anba.es6draft.runtime.internal.Errors.newRangeError;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.objects.ArrayIteratorPrototype.CreateArrayIterator;
+import static com.github.anba.es6draft.runtime.objects.atomics.SharedArrayBufferConstructor.IsSharedMemory;
+import static com.github.anba.es6draft.runtime.objects.atomics.SharedArrayBufferConstructor.SharedDataBlockID;
 import static com.github.anba.es6draft.runtime.objects.binary.ArrayBufferConstructor.CloneArrayBuffer;
 import static com.github.anba.es6draft.runtime.objects.binary.ArrayBufferConstructor.GetValueFromBuffer;
 import static com.github.anba.es6draft.runtime.objects.binary.ArrayBufferConstructor.IsDetachedBuffer;
@@ -347,8 +349,19 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
                 }
                 long targetIndex = (long) targetOffset;
                 /* steps 24-25 */
+                // Extension: SharedArrayBuffer
+                boolean doClone;
+                if (IsSharedMemory(srcBuffer) && IsSharedMemory(targetBuffer)) {
+                    ByteBuffer srcBlock = srcBuffer.getData();
+                    ByteBuffer targetBlock = targetBuffer.getData();
+                    Object srcId = SharedDataBlockID(srcBlock);
+                    Object targetId = SharedDataBlockID(targetBlock);
+                    doClone = srcId == targetId;
+                } else {
+                    doClone = false;
+                }
                 long srcByteIndex;
-                if (srcBuffer == targetBuffer) {
+                if (srcBuffer == targetBuffer || doClone) {
                     srcBuffer = CloneArrayBuffer(cx, targetBuffer, srcByteOffset, Intrinsics.ArrayBuffer);
                     assert !IsDetachedBuffer(targetBuffer);
                     srcByteIndex = 0;

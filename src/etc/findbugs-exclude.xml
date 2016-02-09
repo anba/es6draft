@@ -152,6 +152,10 @@
         <Method name="loop" />
       </And>
       <And>
+        <Class name="com.github.anba.es6draft.repl.Repl" />
+        <Method name="errorReporter" />
+      </And>
+      <And>
         <Class name="com.github.anba.es6draft.repl.Repl$MultiTaskSource$TaskRunner" />
         <Method name="run" />
       </And>

@@ -61,6 +61,8 @@ const standardProperties = [
 "Intl",
 "SIMD",
 "Observable",
+"Atomics",
+"SharedArrayBuffer",
 "escape",
 "unescape",
 ];

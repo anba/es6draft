@@ -1297,6 +1297,7 @@ public final class SIMD extends OrdinaryObject implements Initializable {
             throw newTypeError(cx, Messages.Key.BufferDetached);
         }
         /* step 4 */
+        // FIXME: spec issue - allow shared array buffers?
         ByteBuffer block = typedArray.getBuffer().getData();
         /* step 5 */
         if (numIndex != ToLength(numIndex)) {
@@ -1523,6 +1524,7 @@ public final class SIMD extends OrdinaryObject implements Initializable {
             throw newTypeError(cx, Messages.Key.BufferDetached);
         }
         /* step 5 */
+        // FIXME: spec issue - allow shared array buffers?
         ByteBuffer block = typedArray.getBuffer().getData();
         /* step 6 */
         if (numIndex != ToLength(numIndex)) {
