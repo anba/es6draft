@@ -65,10 +65,5 @@ public final class IndexedPropertyKeyList extends AbstractList<String> {
             }
             return Long.toString(index++);
         }
-
-        @Override
-        public void remove() {
-            throw new UnsupportedOperationException();
-        }
     }
 }

@@ -6,7 +6,6 @@
  */
 package com.github.anba.es6draft;
 
-import static com.github.anba.es6draft.TestGlobalObject.newGlobalObjectAllocator;
 import static com.github.anba.es6draft.util.Resources.loadConfiguration;
 import static com.github.anba.es6draft.util.Resources.loadTests;
 import static org.junit.Assume.assumeTrue;
@@ -28,13 +27,7 @@ import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
 import org.junit.runners.Parameterized.UseParametersRunnerFactory;
 
-import com.github.anba.es6draft.repl.console.ShellConsole;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
-import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
-import com.github.anba.es6draft.runtime.internal.RuntimeContext;
-import com.github.anba.es6draft.runtime.internal.ScriptLoader;
-import com.github.anba.es6draft.runtime.modules.ModuleRecord;
-import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.util.Parallelized;
 import com.github.anba.es6draft.util.ParameterizedRunnerFactory;
 import com.github.anba.es6draft.util.SystemConsole;
@@ -61,20 +54,10 @@ public final class NodeLoaderTest {
 
     @ClassRule
     public static TestGlobals<TestGlobalObject, TestInfo> globals = new TestGlobals<TestGlobalObject, TestInfo>(
-            configuration) {
-        @Override
-        protected ObjectAllocator<TestGlobalObject> newAllocator(ShellConsole console) {
-            return newGlobalObjectAllocator(console);
-        }
-
-        @Override
-        protected TestNodeModuleLoader createModuleLoader(RuntimeContext context, ScriptLoader scriptLoader) {
-            return new TestNodeModuleLoader(context, scriptLoader);
-        }
-
+            configuration, TestGlobalObject::new, TestNodeModuleLoader::new) {
         @Override
         protected EnumSet<CompatibilityOption> getOptions() {
-            EnumSet<CompatibilityOption> options = EnumSet.copyOf(super.getOptions());
+            EnumSet<CompatibilityOption> options = super.getOptions();
             options.add(CompatibilityOption.Loader);
             options.add(CompatibilityOption.System);
             return options;
@@ -102,10 +85,7 @@ public final class NodeLoaderTest {
         global = globals.newGlobal(new SystemConsole(), test);
         exceptionHandler.setExecutionContext(global.getRealm().defaultContext());
 
-        TestNodeModuleLoader moduleLoader = (TestNodeModuleLoader) global.getRealm().getModuleLoader();
-        ModuleRecord module = global.loadNativeModule("module.jsm");
-        Constructor moduleConstructor = global.getModuleExport(module, "default", Constructor.class);
-        moduleLoader.setModuleConstructor(moduleConstructor);
+        ((TestNodeModuleLoader) global.getRealm().getModuleLoader()).initialize(global.getRealm());
     }
 
     @After

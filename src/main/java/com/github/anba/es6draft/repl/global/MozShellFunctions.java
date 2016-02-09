@@ -164,7 +164,7 @@ public final class MozShellFunctions {
      */
     @Function(name = "printErr", arity = 1)
     public void printErr(ExecutionContext cx, String message) {
-        PrintWriter errorWriter = cx.getRuntimeContext().getErrorWriter();
+        PrintWriter errorWriter = cx.getRuntimeContext().getConsole().errorWriter();
         errorWriter.println(message);
     }
 
@@ -178,7 +178,7 @@ public final class MozShellFunctions {
      */
     @Function(name = "putstr", arity = 1)
     public void putstr(ExecutionContext cx, String message) {
-        PrintWriter writer = cx.getRuntimeContext().getWriter();
+        PrintWriter writer = cx.getRuntimeContext().getConsole().writer();
         writer.print(message);
         writer.flush();
     }
@@ -496,10 +496,9 @@ public final class MozShellFunctions {
             throws IOException, MalformedNameException {
         DebugInfo debugInfo = debugInfo(caller, args);
         if (debugInfo != null) {
-            PrintWriter writer = cx.getRuntimeContext().getWriter();
+            PrintWriter writer = cx.getRuntimeContext().getConsole().writer();
             for (DebugInfo.Method method : debugInfo.getMethods()) {
                 writer.println(method.disassemble());
-                writer.flush();
             }
         }
     }

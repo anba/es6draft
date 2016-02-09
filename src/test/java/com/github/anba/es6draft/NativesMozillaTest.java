@@ -31,11 +31,10 @@ import org.junit.runners.Parameterized.UseParametersRunnerFactory;
 import com.github.anba.es6draft.compiler.CompilationException;
 import com.github.anba.es6draft.parser.Parser;
 import com.github.anba.es6draft.parser.ParserException;
-import com.github.anba.es6draft.repl.console.ShellConsole;
 import com.github.anba.es6draft.repl.global.ShellGlobalObject;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
-import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
+import com.github.anba.es6draft.runtime.internal.NativeCode;
 import com.github.anba.es6draft.util.Parallelized;
 import com.github.anba.es6draft.util.ParameterizedRunnerFactory;
 import com.github.anba.es6draft.util.SystemConsole;
@@ -61,15 +60,10 @@ public final class NativesMozillaTest {
 
     @ClassRule
     public static TestGlobals<MozNativeTestGlobalObject, TestInfo> globals = new TestGlobals<MozNativeTestGlobalObject, TestInfo>(
-            configuration) {
-        @Override
-        protected ObjectAllocator<MozNativeTestGlobalObject> newAllocator(ShellConsole console) {
-            return MozNativeTestGlobalObject.newGlobalObjectAllocator(console);
-        }
-
+            configuration, MozNativeTestGlobalObject::new) {
         @Override
         protected EnumSet<CompatibilityOption> getOptions() {
-            EnumSet<CompatibilityOption> options = EnumSet.copyOf(super.getOptions());
+            EnumSet<CompatibilityOption> options = super.getOptions();
             options.add(CompatibilityOption.Comprehension);
             options.add(CompatibilityOption.Realm);
             options.add(CompatibilityOption.System);
@@ -119,30 +113,22 @@ public final class NativesMozillaTest {
     }
 
     public static final class MozNativeTestGlobalObject extends ShellGlobalObject {
-        MozNativeTestGlobalObject(Realm realm, ShellConsole console) {
-            super(realm, console);
+        MozNativeTestGlobalObject(Realm realm) {
+            super(realm);
         }
 
         @Override
         public void initializeScripted() throws IOException, URISyntaxException, ParserException, CompilationException {
-            includeNative("arraybuffer.js");
-            includeNative("collection.js");
-            includeNative("compat.js");
-            includeNative("iterator.js");
-            includeNative("legacy-generator.js");
-            includeNative("proxy.js");
-            includeNative("source.js");
-            includeNative("statics.js");
-            includeNative("string.js");
-        }
-
-        public static ObjectAllocator<MozNativeTestGlobalObject> newGlobalObjectAllocator(final ShellConsole console) {
-            return new ObjectAllocator<MozNativeTestGlobalObject>() {
-                @Override
-                public MozNativeTestGlobalObject newInstance(Realm realm) {
-                    return new MozNativeTestGlobalObject(realm, console);
-                }
-            };
+            NativeCode.load(getRealm(), "arraybuffer.js");
+            NativeCode.load(getRealm(), "collection.js");
+            NativeCode.load(getRealm(), "compat.js");
+            NativeCode.load(getRealm(), "iterator.js");
+            NativeCode.load(getRealm(), "legacy-generator.js");
+            NativeCode.load(getRealm(), "proxy.js");
+            NativeCode.load(getRealm(), "simd.js");
+            NativeCode.load(getRealm(), "source.js");
+            NativeCode.load(getRealm(), "statics.js");
+            NativeCode.load(getRealm(), "string.js");
         }
     }
 }

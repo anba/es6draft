@@ -25,6 +25,7 @@ import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import org.mozilla.javascript.ConsString;
 import org.mozilla.javascript.DToA;
@@ -2389,12 +2390,7 @@ public final class AbstractOperations {
             PropertyDescriptor nonConfigurable = new PropertyDescriptor();
             nonConfigurable.setConfigurable(false);
             for (Object key : keys) {
-                if (key instanceof String) {
-                    DefinePropertyOrThrow(cx, object, (String) key, nonConfigurable);
-                } else {
-                    assert key instanceof Symbol;
-                    DefinePropertyOrThrow(cx, object, (Symbol) key, nonConfigurable);
-                }
+                DefinePropertyOrThrow(cx, object, key, nonConfigurable);
             }
         } else {
             /* step 9 */
@@ -2404,13 +2400,7 @@ public final class AbstractOperations {
             nonConfigurableWritable.setConfigurable(false);
             nonConfigurableWritable.setWritable(false);
             for (Object key : keys) {
-                Property currentDesc;
-                if (key instanceof String) {
-                    currentDesc = object.getOwnProperty(cx, (String) key);
-                } else {
-                    assert key instanceof Symbol;
-                    currentDesc = object.getOwnProperty(cx, (Symbol) key);
-                }
+                Property currentDesc = object.getOwnProperty(cx, key);
                 if (currentDesc != null) {
                     PropertyDescriptor desc;
                     if (currentDesc.isAccessorDescriptor()) {
@@ -2418,12 +2408,7 @@ public final class AbstractOperations {
                     } else {
                         desc = nonConfigurableWritable;
                     }
-                    if (key instanceof String) {
-                        DefinePropertyOrThrow(cx, object, (String) key, desc);
-                    } else {
-                        assert key instanceof Symbol;
-                        DefinePropertyOrThrow(cx, object, (Symbol) key, desc);
-                    }
+                    DefinePropertyOrThrow(cx, object, key, desc);
                 }
             }
         }
@@ -2458,13 +2443,7 @@ public final class AbstractOperations {
         /* step 9 */
         for (Object key : keys) {
             /* steps 9.a-b */
-            Property currentDesc;
-            if (key instanceof String) {
-                currentDesc = object.getOwnProperty(cx, (String) key);
-            } else {
-                assert key instanceof Symbol;
-                currentDesc = object.getOwnProperty(cx, (Symbol) key);
-            }
+            Property currentDesc = object.getOwnProperty(cx, key);
             /* step 9.c */
             if (currentDesc != null) {
                 if (currentDesc.isConfigurable()) {
@@ -2503,6 +2482,20 @@ public final class AbstractOperations {
      * @return the array object
      */
     public static ArrayObject CreateArrayFromList(ExecutionContext cx, List<?> elements) {
+        /* steps 1-5 */
+        return DenseArrayCreate(cx, elements);
+    }
+
+    /**
+     * 7.3.16 CreateArrayFromList (elements)
+     * 
+     * @param cx
+     *            the execution context
+     * @param elements
+     *            the array elements
+     * @return the array object
+     */
+    public static ArrayObject CreateArrayFromList(ExecutionContext cx, Stream<?> elements) {
         /* steps 1-5 */
         return DenseArrayCreate(cx, elements);
     }
@@ -3211,12 +3204,7 @@ public final class AbstractOperations {
         for (Object nextKey : keys) {
             if (!excluded.contains(nextKey)) {
                 /* steps 4.i.a-b */
-                Property desc;
-                if (nextKey instanceof String) {
-                    desc = from.getOwnProperty(cx, (String) nextKey);
-                } else {
-                    desc = from.getOwnProperty(cx, (Symbol) nextKey);
-                }
+                Property desc = from.getOwnProperty(cx, nextKey);
                 /* step 4.i.c */
                 if (desc != null && desc.isEnumerable()) {
                     Object propValue = Get(cx, from, nextKey);

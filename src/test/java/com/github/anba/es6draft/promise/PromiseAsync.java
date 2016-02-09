@@ -9,7 +9,6 @@ package com.github.anba.es6draft.promise;
 import static org.junit.Assert.assertFalse;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
-import com.github.anba.es6draft.runtime.Task;
 import com.github.anba.es6draft.runtime.internal.Properties;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Undefined;
@@ -31,12 +30,7 @@ public final class PromiseAsync {
     }
 
     @Properties.Function(name = "$async_enqueueTask", arity = 1)
-    public void enqueueTask(final ExecutionContext cx, final Callable task) {
-        cx.getRealm().enqueuePromiseTask(new Task() {
-            @Override
-            public void execute() {
-                task.call(cx, Undefined.UNDEFINED);
-            }
-        });
+    public void enqueueTask(ExecutionContext cx, Callable task) {
+        cx.getRealm().enqueuePromiseTask(() -> task.call(cx, Undefined.UNDEFINED));
     }
 }

@@ -39,7 +39,7 @@ final class RuntimeInfoGenerator {
                 Type.methodType(Type.VOID_TYPE));
 
         static final MethodName DebugInfo_addMethod = MethodName.findVirtual(Types.DebugInfo,
-                "addMethod", Type.methodType(Type.VOID_TYPE, Types.Class, Types.String));
+                "addMethod", Type.methodType(Type.VOID_TYPE, Types.MethodHandle));
 
         // class: RuntimeInfo
         static final MethodName RTI_newScriptBody = MethodName.findStatic(Types.RuntimeInfo,
@@ -284,8 +284,7 @@ final class RuntimeInfoGenerator {
         asm.anew(Types.DebugInfo, Methods.DebugInfo_init);
         for (MethodName name : names) {
             asm.dup();
-            asm.tconst(name.owner);
-            asm.aconst(name.name);
+            asm.handle(name);
             asm.invoke(Methods.DebugInfo_addMethod);
         }
 

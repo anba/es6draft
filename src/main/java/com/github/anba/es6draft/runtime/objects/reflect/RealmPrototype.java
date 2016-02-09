@@ -31,7 +31,6 @@ import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Property;
-import com.github.anba.es6draft.runtime.types.Symbol;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
@@ -189,18 +188,9 @@ public final class RealmPrototype extends OrdinaryObject implements Initializabl
             /* step 6 */
             GlobalObject globalObject = realm.getGlobalObject();
             for (Object key : globalObject.ownPropertyKeys(cx)) {
-                if (key instanceof String) {
-                    String propertyKey = (String) key;
-                    Property prop = globalObject.getOwnProperty(cx, propertyKey);
-                    if (prop != null) {
-                        CreateDataProperty(cx, props, propertyKey, FromPropertyDescriptor(cx, prop));
-                    }
-                } else {
-                    Symbol propertyKey = (Symbol) key;
-                    Property prop = globalObject.getOwnProperty(cx, propertyKey);
-                    if (prop != null) {
-                        CreateDataProperty(cx, props, propertyKey, FromPropertyDescriptor(cx, prop));
-                    }
+                Property prop = globalObject.getOwnProperty(cx, key);
+                if (prop != null) {
+                    CreateDataProperty(cx, props, key, FromPropertyDescriptor(cx, prop));
                 }
             }
             /* step 7 */

@@ -6,6 +6,9 @@
  */
 package com.github.anba.es6draft.ast.synthetic;
 
+import java.util.List;
+
+import com.github.anba.es6draft.ast.Expression;
 import com.github.anba.es6draft.ast.IntNodeVisitor;
 import com.github.anba.es6draft.ast.NodeVisitor;
 import com.github.anba.es6draft.ast.SpreadElement;
@@ -15,6 +18,10 @@ import com.github.anba.es6draft.ast.VoidNodeVisitor;
  * {@link SpreadElement} as an external Java method.
  */
 public final class SpreadElementMethod extends SpreadElement {
+    public SpreadElementMethod(List<Expression> elements) {
+        this(new SpreadArrayLiteral(elements));
+    }
+
     public SpreadElementMethod(SpreadArrayLiteral array) {
         super(array.getBeginPosition(), array.getEndPosition(), array);
     }

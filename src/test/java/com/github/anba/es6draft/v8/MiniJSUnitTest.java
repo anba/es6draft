@@ -8,7 +8,6 @@ package com.github.anba.es6draft.v8;
 
 import static com.github.anba.es6draft.util.Resources.loadConfiguration;
 import static com.github.anba.es6draft.util.Resources.loadTests;
-import static com.github.anba.es6draft.v8.V8TestGlobalObject.newGlobalObjectAllocator;
 import static org.junit.Assume.assumeTrue;
 
 import java.io.IOException;
@@ -17,6 +16,7 @@ import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiFunction;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -33,11 +33,7 @@ import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
 import org.junit.runners.Parameterized.UseParametersRunnerFactory;
 
-import com.github.anba.es6draft.repl.console.ShellConsole;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
-import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
-import com.github.anba.es6draft.util.Functional.BiFunction;
-import com.github.anba.es6draft.util.Functional.Function;
 import com.github.anba.es6draft.util.NullConsole;
 import com.github.anba.es6draft.util.Parallelized;
 import com.github.anba.es6draft.util.ParameterizedRunnerFactory;
@@ -58,12 +54,7 @@ public final class MiniJSUnitTest {
 
     @Parameters(name = "{0}")
     public static List<V8TestInfo> suiteValues() throws IOException {
-        return loadTests(configuration, new Function<Path, BiFunction<Path, Iterator<String>, V8TestInfo>>() {
-            @Override
-            public TestInfos apply(Path basedir) {
-                return new TestInfos(basedir);
-            }
-        });
+        return loadTests(configuration, MiniJSUnitTest::createTest);
     }
 
     @BeforeClass
@@ -73,15 +64,10 @@ public final class MiniJSUnitTest {
 
     @ClassRule
     public static TestGlobals<V8TestGlobalObject, TestInfo> globals = new TestGlobals<V8TestGlobalObject, TestInfo>(
-            configuration) {
-        @Override
-        protected ObjectAllocator<V8TestGlobalObject> newAllocator(ShellConsole console) {
-            return newGlobalObjectAllocator(console);
-        }
-
+            configuration, V8TestGlobalObject::new) {
         @Override
         protected EnumSet<CompatibilityOption> getOptions() {
-            EnumSet<CompatibilityOption> options = EnumSet.copyOf(super.getOptions());
+            EnumSet<CompatibilityOption> options = super.getOptions();
             options.add(CompatibilityOption.ArrayIncludes);
             options.add(CompatibilityOption.ArrayBufferMissingLength);
             return options;
@@ -140,16 +126,10 @@ public final class MiniJSUnitTest {
         global.getRealm().getWorld().runEventLoop();
     }
 
-    private static final class TestInfos implements BiFunction<Path, Iterator<String>, V8TestInfo> {
-        private static final Pattern FlagsPattern = Pattern.compile("\\s*//\\s*Flags:\\s*(.*)\\s*");
-        private final Path basedir;
+    private static final Pattern FlagsPattern = Pattern.compile("\\s*//\\s*Flags:\\s*(.*)\\s*");
 
-        public TestInfos(Path basedir) {
-            this.basedir = basedir;
-        }
-
-        @Override
-        public V8TestInfo apply(Path file, Iterator<String> lines) {
+    private static BiFunction<Path, Iterator<String>, V8TestInfo> createTest(Path basedir) {
+        return (file, lines) -> {
             V8TestInfo test = new V8TestInfo(basedir, file);
             Pattern p = FlagsPattern;
             while (lines.hasNext()) {
@@ -197,6 +177,6 @@ public final class MiniJSUnitTest {
                 }
             }
             return test;
-        }
+        };
     }
 }

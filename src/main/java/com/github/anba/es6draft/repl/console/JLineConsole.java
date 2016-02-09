@@ -16,6 +16,7 @@ import java.io.Writer;
 import java.nio.charset.Charset;
 import java.util.Formatter;
 import java.util.List;
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -34,7 +35,7 @@ public final class JLineConsole implements ShellConsole {
     private final Formatter formatter;
     private final JLineReader reader = new JLineReader();
     private final PrintWriter writer = new PrintWriter(new JLineWriter(), true);
-    private final PrintWriter errorWriter = new PrintWriter(System.err);
+    private final PrintWriter errorWriter = new PrintWriter(System.err, true);
 
     public JLineConsole(String programName) throws IOException {
         this.console = newConsoleReader(programName);
@@ -182,9 +183,15 @@ public final class JLineConsole implements ShellConsole {
     }
 
     @Override
+    public void flush() {
+        writer.flush();
+        errorWriter.flush();
+    }
+
+    @Override
     public String readLine() {
         try {
-            return console.readLine();
+            return console.readLine("");
         } catch (IOException e) {
             throw new IOError(e);
         }
@@ -236,7 +243,11 @@ public final class JLineConsole implements ShellConsole {
 
         @Override
         public int complete(String buffer, int cursor, List<CharSequence> candidates) {
-            Completion c = completer.complete(buffer, cursor);
+            Optional<Completion> opt = completer.complete(buffer, cursor);
+            if (!opt.isPresent()) {
+                return -1;
+            }
+            Completion c = opt.get();
             if (c.result().isEmpty()) {
                 return -1;
             }

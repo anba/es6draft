@@ -6,75 +6,32 @@
  */
 package com.github.anba.es6draft.repl.console;
 
-import java.io.PrintWriter;
-import java.io.Reader;
 import java.util.List;
+import java.util.Optional;
+
+import com.github.anba.es6draft.runtime.internal.Console;
 
 /**
- * Console interface.
+ * Interactive shell console interface.
  */
-public interface ShellConsole {
+public interface ShellConsole extends Console {
     /**
-     * Prints the format string.
-     * 
-     * @param format
-     *            the format string
-     * @param args
-     *            the format string arguments
-     */
-    void printf(String format, Object... args);
-
-    /**
-     * Reads the current line.
-     * 
-     * @return the current line
-     */
-    String readLine();
-
-    /**
-     * Reads the current line.
-     * 
-     * @param prompt
-     *            the command line prompt
-     * @return the current line
-     */
-    String readLine(String prompt);
-
-    /**
-     * Returns the underlying reader.
-     * 
-     * @return the reader
-     */
-    Reader reader();
-
-    /**
-     * Returns the underlying writer.
-     * 
-     * @return the writer
-     */
-    PrintWriter writer();
-
-    /**
-     * Returns the underlying error writer.
-     * 
-     * @return the writer
-     */
-    PrintWriter errorWriter();
-
-    /**
-     * Checks whether or not ANSI mode is supported.
+     * Checks whether or not ANSI mode is supported. (Optional method)
      * 
      * @return {@code true} if ANSI mode is supported
      */
-    boolean isAnsiSupported();
+    default boolean isAnsiSupported() {
+        return false;
+    }
 
     /**
-     * Installs tab-completion support.
+     * Installs tab-completion support. (Optional method)
      * 
      * @param completer
      *            the shell completer
      */
-    void addCompleter(Completer completer);
+    default void addCompleter(Completer completer) {
+    }
 
     /**
      * Shell completer interface.
@@ -89,8 +46,7 @@ public interface ShellConsole {
          *            the line cursor
          * @return the tab completion result
          */
-        // TODO: Use Optional when available
-        Completion complete(String line, int cursor);
+        Optional<Completion> complete(String line, int cursor);
     }
 
     /**

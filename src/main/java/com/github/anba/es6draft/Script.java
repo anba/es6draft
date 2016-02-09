@@ -32,7 +32,9 @@ public interface Script extends Program {
      *            the realm instance
      * @return the return value after evaluating this script
      */
-    Object evaluate(Realm realm); // TODO: Add default implementation
+    default Object evaluate(Realm realm) {
+        return getScriptBody().evaluate(realm.defaultContext(), this);
+    }
 
     /**
      * Evaluates this script in the given {@link ExecutionContext}.
@@ -41,5 +43,7 @@ public interface Script extends Program {
      *            the execution context
      * @return the return value after evaluating this script
      */
-    Object evaluate(ExecutionContext cx);
+    default Object evaluate(ExecutionContext cx) {
+        return getScriptBody().evaluate(cx, this);
+    }
 }

@@ -31,11 +31,10 @@ import org.junit.runners.Parameterized.UseParametersRunnerFactory;
 import com.github.anba.es6draft.compiler.CompilationException;
 import com.github.anba.es6draft.parser.Parser;
 import com.github.anba.es6draft.parser.ParserException;
-import com.github.anba.es6draft.repl.console.ShellConsole;
 import com.github.anba.es6draft.repl.global.ShellGlobalObject;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
-import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
+import com.github.anba.es6draft.runtime.internal.NativeCode;
 import com.github.anba.es6draft.util.Parallelized;
 import com.github.anba.es6draft.util.ParameterizedRunnerFactory;
 import com.github.anba.es6draft.util.SystemConsole;
@@ -61,15 +60,10 @@ public final class NativesV8Test {
 
     @ClassRule
     public static TestGlobals<V8NativeTestGlobalObject, TestInfo> globals = new TestGlobals<V8NativeTestGlobalObject, TestInfo>(
-            configuration) {
-        @Override
-        protected ObjectAllocator<V8NativeTestGlobalObject> newAllocator(ShellConsole console) {
-            return V8NativeTestGlobalObject.newGlobalObjectAllocator(console);
-        }
-
+            configuration, V8NativeTestGlobalObject::new) {
         @Override
         protected EnumSet<CompatibilityOption> getOptions() {
-            EnumSet<CompatibilityOption> options = EnumSet.copyOf(super.getOptions());
+            EnumSet<CompatibilityOption> options = super.getOptions();
             options.add(CompatibilityOption.Comprehension);
             options.add(CompatibilityOption.Realm);
             options.add(CompatibilityOption.System);
@@ -119,28 +113,19 @@ public final class NativesV8Test {
     }
 
     public static final class V8NativeTestGlobalObject extends ShellGlobalObject {
-        V8NativeTestGlobalObject(Realm realm, ShellConsole console) {
-            super(realm, console);
+        V8NativeTestGlobalObject(Realm realm) {
+            super(realm);
         }
 
         @Override
         public void initializeScripted() throws IOException, URISyntaxException, ParserException, CompilationException {
-            includeNative("compat.js");
-            includeNative("cyclic.js");
-            includeNative("generator.js");
-            includeNative("internal-error.js");
-            includeNative("proxy.js");
-            includeNative("stacktrace.js");
-            includeNative("typed-array.js");
-        }
-
-        public static ObjectAllocator<V8NativeTestGlobalObject> newGlobalObjectAllocator(final ShellConsole console) {
-            return new ObjectAllocator<V8NativeTestGlobalObject>() {
-                @Override
-                public V8NativeTestGlobalObject newInstance(Realm realm) {
-                    return new V8NativeTestGlobalObject(realm, console);
-                }
-            };
+            NativeCode.load(getRealm(), "compat.js");
+            NativeCode.load(getRealm(), "cyclic.js");
+            NativeCode.load(getRealm(), "generator.js");
+            NativeCode.load(getRealm(), "internal-error.js");
+            NativeCode.load(getRealm(), "proxy.js");
+            NativeCode.load(getRealm(), "stacktrace.js");
+            NativeCode.load(getRealm(), "typed-array.js");
         }
     }
 }

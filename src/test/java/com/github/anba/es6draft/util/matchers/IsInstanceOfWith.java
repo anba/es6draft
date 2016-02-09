@@ -46,8 +46,7 @@ public class IsInstanceOfWith<T> extends DiagnosingMatcher<Object> {
     /**
      * Factory method to create a new matcher for this class.
      */
-    public static <T> IsInstanceOfWith<T> instanceOfWith(Class<? extends T> expectedClass,
-            Matcher<T> predicate) {
+    public static <T> IsInstanceOfWith<T> instanceOfWith(Class<? extends T> expectedClass, Matcher<T> predicate) {
         return new IsInstanceOfWith<>(expectedClass, predicate);
     }
 }

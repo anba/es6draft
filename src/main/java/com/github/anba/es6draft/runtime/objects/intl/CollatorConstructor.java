@@ -20,7 +20,6 @@ import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initializable;
 import com.github.anba.es6draft.runtime.internal.Lazy;
-import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
@@ -47,12 +46,8 @@ import com.ibm.icu.util.ULocale;
  */
 public final class CollatorConstructor extends BuiltinConstructor implements Initializable {
     /** [[availableLocales]] */
-    private final Lazy<Set<String>> availableLocales = new Lazy<Set<String>>() {
-        @Override
-        protected Set<String> computeValue() {
-            return GetAvailableLocales(LanguageData.getAvailableCollatorLocales());
-        }
-    };
+    private final Lazy<Set<String>> availableLocales = Lazy
+            .of(() -> GetAvailableLocales(LanguageData.getAvailableCollatorLocales()));
 
     /**
      * [[availableLocales]]
@@ -381,19 +376,10 @@ public final class CollatorConstructor extends BuiltinConstructor implements Ini
         /* step 1 (not applicable) */
         /* steps 2-3 */
         CollatorObject collator = OrdinaryCreateFromConstructor(calleeContext, newTarget,
-                Intrinsics.Intl_CollatorPrototype, CollatorObjectAllocator.INSTANCE);
+                Intrinsics.Intl_CollatorPrototype, CollatorObject::new);
         /* step 4 */
         InitializeCollator(calleeContext, collator, locales, options);
         return collator;
-    }
-
-    private static final class CollatorObjectAllocator implements ObjectAllocator<CollatorObject> {
-        static final ObjectAllocator<CollatorObject> INSTANCE = new CollatorObjectAllocator();
-
-        @Override
-        public CollatorObject newInstance(Realm realm) {
-            return new CollatorObject(realm);
-        }
     }
 
     /**

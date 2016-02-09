@@ -93,6 +93,22 @@ public interface ScriptObject {
     Property getOwnProperty(ExecutionContext cx, Symbol propertyKey);
 
     /**
+     * [[GetOwnProperty]] (P)
+     * 
+     * @param cx
+     *            the execution context
+     * @param propertyKey
+     *            the property key
+     * @return the property or {@code null} if none found
+     */
+    default Property getOwnProperty(ExecutionContext cx, Object propertyKey) {
+        if (propertyKey instanceof String) {
+            return getOwnProperty(cx, (String) propertyKey);
+        }
+        return getOwnProperty(cx, (Symbol) propertyKey);
+    }
+
+    /**
      * [[HasProperty]](P)
      * 
      * @param cx
@@ -124,6 +140,22 @@ public interface ScriptObject {
      * @return {@code true} if the property was found
      */
     boolean hasProperty(ExecutionContext cx, Symbol propertyKey);
+
+    /**
+     * [[HasProperty]](P)
+     * 
+     * @param cx
+     *            the execution context
+     * @param propertyKey
+     *            the property key
+     * @return {@code true} if the property was found
+     */
+    default boolean hasProperty(ExecutionContext cx, Object propertyKey) {
+        if (propertyKey instanceof String) {
+            return hasProperty(cx, (String) propertyKey);
+        }
+        return hasProperty(cx, (Symbol) propertyKey);
+    }
 
     /**
      * [[Get]] (P, Receiver)
@@ -163,6 +195,24 @@ public interface ScriptObject {
      * @return the property value
      */
     Object get(ExecutionContext cx, Symbol propertyKey, Object receiver);
+
+    /**
+     * [[Get]] (P, Receiver)
+     *
+     * @param cx
+     *            the execution context
+     * @param propertyKey
+     *            the property key
+     * @param receiver
+     *            the receiver object
+     * @return the property value
+     */
+    default Object get(ExecutionContext cx, Object propertyKey, Object receiver) {
+        if (propertyKey instanceof String) {
+            return get(cx, (String) propertyKey, receiver);
+        }
+        return get(cx, (Symbol) propertyKey, receiver);
+    }
 
     /**
      * [[Set] (P, V, Receiver)
@@ -210,6 +260,26 @@ public interface ScriptObject {
     boolean set(ExecutionContext cx, Symbol propertyKey, Object value, Object receiver);
 
     /**
+     * [[Set] (P, V, Receiver)
+     * 
+     * @param cx
+     *            the execution context
+     * @param propertyKey
+     *            the property key
+     * @param value
+     *            the new property value
+     * @param receiver
+     *            the receiver object
+     * @return {@code true} on success
+     */
+    default boolean set(ExecutionContext cx, Object propertyKey, Object value, Object receiver) {
+        if (propertyKey instanceof String) {
+            return set(cx, (String) propertyKey, value, receiver);
+        }
+        return set(cx, (Symbol) propertyKey, value, receiver);
+    }
+
+    /**
      * [[Delete]] (P)
      *
      * @param cx
@@ -241,6 +311,22 @@ public interface ScriptObject {
      * @return {@code true} if the property was successfully deleted
      */
     boolean delete(ExecutionContext cx, Symbol propertyKey);
+
+    /**
+     * [[Delete]] (P)
+     *
+     * @param cx
+     *            the execution context
+     * @param propertyKey
+     *            the property key
+     * @return {@code true} if the property was successfully deleted
+     */
+    default boolean delete(ExecutionContext cx, Object propertyKey) {
+        if (propertyKey instanceof String) {
+            return delete(cx, (String) propertyKey);
+        }
+        return delete(cx, (Symbol) propertyKey);
+    }
 
     /**
      * [[DefineOwnProperty]] (P, Desc)
@@ -282,6 +368,24 @@ public interface ScriptObject {
     boolean defineOwnProperty(ExecutionContext cx, Symbol propertyKey, PropertyDescriptor desc);
 
     /**
+     * [[DefineOwnProperty]] (P, Desc)
+     * 
+     * @param cx
+     *            the execution context
+     * @param propertyKey
+     *            the property key
+     * @param desc
+     *            the property descriptor
+     * @return {@code true} if the property was successfully defined
+     */
+    default boolean defineOwnProperty(ExecutionContext cx, Object propertyKey, PropertyDescriptor desc) {
+        if (propertyKey instanceof String) {
+            return defineOwnProperty(cx, (String) propertyKey, desc);
+        }
+        return defineOwnProperty(cx, (Symbol) propertyKey, desc);
+    }
+
+    /**
      * [[Enumerate]] ()
      *
      * @param cx
@@ -316,4 +420,13 @@ public interface ScriptObject {
      * @return the properties iterator object
      */
     Iterator<?> ownKeys(ExecutionContext cx);
+
+    /**
+     * Returns the class name of this script object. (Used in {@code Object.prototype.toString}.)
+     * 
+     * @return the class name
+     */
+    default String className() {
+        return "Object";
+    }
 }

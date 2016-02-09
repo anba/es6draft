@@ -17,7 +17,6 @@ import java.util.Set;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
-import com.github.anba.es6draft.runtime.types.Reference;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
 
@@ -58,22 +57,6 @@ public final class ObjectEnvironmentRecord implements EnvironmentRecord {
             }
         }
         return names;
-    }
-
-    @Override
-    public Object getBindingValueOrNull(String name, boolean strict) {
-        if (hasBinding(name)) {
-            return getBindingValue(name, strict);
-        }
-        return null;
-    }
-
-    @Override
-    public Reference<ObjectEnvironmentRecord, String> getReferenceOrNull(String name, boolean strict) {
-        if (hasBinding(name)) {
-            return new Reference.IdentifierReference<>(this, name, strict);
-        }
-        return null;
     }
 
     /**

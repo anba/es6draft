@@ -6,6 +6,7 @@
  */
 package com.github.anba.es6draft.ast.synthetic;
 
+import java.util.Collections;
 import java.util.List;
 
 import com.github.anba.es6draft.ast.IntNodeVisitor;
@@ -20,6 +21,11 @@ import com.github.anba.es6draft.ast.VoidNodeVisitor;
  */
 public final class StatementListMethod extends Statement {
     private final List<? extends ModuleItem> statements;
+
+    public StatementListMethod(ModuleItem statement) {
+        super(statement.getBeginPosition(), statement.getEndPosition());
+        this.statements = Collections.singletonList(statement);
+    }
 
     public StatementListMethod(List<? extends ModuleItem> statements) {
         super(first(statements).getBeginPosition(), last(statements).getEndPosition());

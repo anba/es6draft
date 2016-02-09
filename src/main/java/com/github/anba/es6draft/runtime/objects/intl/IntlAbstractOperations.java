@@ -300,20 +300,17 @@ public final class IntlAbstractOperations {
             "CNT", "CST", "CTT", "EAT", "ECT", "IET", "IST", "JST", "MIT", "NET", "NST", "PLT", "PNT", "PRT", "PST",
             "SST", "VST");
 
-    private static final Lazy<HashMap<String, String>> timezones = new Lazy<HashMap<String, String>>() {
-        @Override
-        protected HashMap<String, String> computeValue() {
-            HashMap<String, String> map = new HashMap<>();
-            for (String id : TimeZone.getAvailableIDs(SystemTimeZoneType.ANY, null, null)) {
-                if (JDK_TIMEZONE_NAMES.contains(id)) {
-                    // ignore non-IANA, JDK-specific timezones
-                    continue;
-                }
-                map.put(ToUpperCase(id), id);
+    private static final Lazy<HashMap<String, String>> timezones = Lazy.syncOf(() -> {
+        HashMap<String, String> map = new HashMap<>();
+        for (String id : TimeZone.getAvailableIDs(SystemTimeZoneType.ANY, null, null)) {
+            if (JDK_TIMEZONE_NAMES.contains(id)) {
+                // ignore non-IANA, JDK-specific timezones
+                continue;
             }
-            return map;
+            map.put(ToUpperCase(id), id);
         }
-    };
+        return map;
+    });
 
     /**
      * 6.4.1 IsValidTimeZoneName (timeZone)

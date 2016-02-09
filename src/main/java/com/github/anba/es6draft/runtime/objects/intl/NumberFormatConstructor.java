@@ -23,7 +23,6 @@ import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initializable;
 import com.github.anba.es6draft.runtime.internal.Lazy;
 import com.github.anba.es6draft.runtime.internal.Messages;
-import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
@@ -50,12 +49,8 @@ import com.ibm.icu.util.ULocale;
  */
 public final class NumberFormatConstructor extends BuiltinConstructor implements Initializable {
     /** [[availableLocales]] */
-    private final Lazy<Set<String>> availableLocales = new Lazy<Set<String>>() {
-        @Override
-        protected Set<String> computeValue() {
-            return GetAvailableLocales(LanguageData.getAvailableNumberFormatLocales());
-        }
-    };
+    private final Lazy<Set<String>> availableLocales = Lazy
+            .of(() -> GetAvailableLocales(LanguageData.getAvailableNumberFormatLocales()));
 
     /**
      * [[availableLocales]]
@@ -358,20 +353,10 @@ public final class NumberFormatConstructor extends BuiltinConstructor implements
         /* step 1 (not applicable) */
         /* steps 2-3 */
         NumberFormatObject obj = OrdinaryCreateFromConstructor(calleeContext, newTarget,
-                Intrinsics.Intl_NumberFormatPrototype, NumberFormatObjectAllocator.INSTANCE);
+                Intrinsics.Intl_NumberFormatPrototype, NumberFormatObject::new);
         /* step 4 */
         InitializeNumberFormat(calleeContext, obj, locales, options);
         return obj;
-    }
-
-    private static final class NumberFormatObjectAllocator
-            implements ObjectAllocator<NumberFormatObject> {
-        static final ObjectAllocator<NumberFormatObject> INSTANCE = new NumberFormatObjectAllocator();
-
-        @Override
-        public NumberFormatObject newInstance(Realm realm) {
-            return new NumberFormatObject(realm);
-        }
     }
 
     /**

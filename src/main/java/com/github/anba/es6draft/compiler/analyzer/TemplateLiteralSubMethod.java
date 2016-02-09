@@ -32,14 +32,6 @@ final class TemplateLiteralSubMethod extends ListSubMethod<TemplateLiteral> {
         }
     }
 
-    private static final class TemplateElementMapper implements
-            NodeElementMapper<Expression, TemplateElement> {
-        @Override
-        public TemplateElement map(Expression node, int size, int index) {
-            return new TemplateElement(node, size, index);
-        }
-    }
-
     private static final class TemplateConflater extends Conflater<TemplateElement, Expression> {
         @Override
         protected int getSourceSize(TemplateElement source) {
@@ -56,17 +48,15 @@ final class TemplateLiteralSubMethod extends ListSubMethod<TemplateLiteral> {
             assert !list.isEmpty();
             long beginPosition = list.get(0).getBeginPosition();
             long endPosition = list.get(list.size() - 1).getEndPosition();
-            return new ExpressionMethod(
-                    new TemplateLiteral(beginPosition, endPosition, false, list));
+            return new ExpressionMethod(new TemplateLiteral(beginPosition, endPosition, false, list));
         }
     }
 
     @Override
     int processNode(TemplateLiteral node, int oldSize) {
         assert !node.isTagged();
-        List<Expression> newElements = newNodes(oldSize, node.getElements(),
-                new TemplateElementMapper(), new TemplateConflater(), MAX_EXPR_SIZE, MAX_EXPR_SIZE,
-                MAX_EXPR_SIZE);
+        List<Expression> newElements = newNodes(oldSize, node.getElements(), TemplateElement::new,
+                new TemplateConflater(), MAX_EXPR_SIZE, MAX_EXPR_SIZE, MAX_EXPR_SIZE);
         node.setElements(newElements);
         return validateSize(node);
     }

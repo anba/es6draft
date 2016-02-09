@@ -12,7 +12,6 @@ import com.github.anba.es6draft.runtime.Realm;
  * Interface for objects with post-construction initialization.
  */
 public interface Initializable {
-
     /**
      * The initialization method for this object.
      * 

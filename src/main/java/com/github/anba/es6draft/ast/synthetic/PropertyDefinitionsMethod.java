@@ -6,6 +6,7 @@
  */
 package com.github.anba.es6draft.ast.synthetic;
 
+import java.util.Collections;
 import java.util.List;
 
 import com.github.anba.es6draft.ast.IntNodeVisitor;
@@ -19,6 +20,11 @@ import com.github.anba.es6draft.ast.VoidNodeVisitor;
  */
 public final class PropertyDefinitionsMethod extends PropertyDefinition {
     private final List<PropertyDefinition> properties;
+
+    public PropertyDefinitionsMethod(PropertyDefinition property) {
+        super(property.getBeginPosition(), property.getEndPosition());
+        this.properties = Collections.singletonList(property);
+    }
 
     public PropertyDefinitionsMethod(List<PropertyDefinition> properties) {
         super(first(properties).getBeginPosition(), last(properties).getEndPosition());

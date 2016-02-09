@@ -58,6 +58,11 @@ public final class StringObject extends OrdinaryObject {
     }
 
     @Override
+    public String className() {
+        return "String";
+    }
+
+    @Override
     public boolean hasSpecialIndexedProperties() {
         return true;
     }

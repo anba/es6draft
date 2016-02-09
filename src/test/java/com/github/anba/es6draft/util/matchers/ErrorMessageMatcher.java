@@ -27,8 +27,7 @@ public class ErrorMessageMatcher<T extends Throwable> extends TypeSafeMatcher<T>
         this.matcher = matcher;
     }
 
-    public static <T extends Throwable> Matcher<T> hasErrorMessage(ExecutionContext cx,
-            Matcher<String> matcher) {
+    public static <T extends Throwable> Matcher<T> hasErrorMessage(ExecutionContext cx, Matcher<String> matcher) {
         return new ErrorMessageMatcher<>(cx, matcher);
     }
 
@@ -53,8 +52,7 @@ public class ErrorMessageMatcher<T extends Throwable> extends TypeSafeMatcher<T>
             return ((ScriptException) error).getMessage(cx);
         }
         if (error instanceof StackOverflowError) {
-            return String.format("InternalError: %s",
-                    cx.getRealm().message(Messages.Key.StackOverflow));
+            return String.format("InternalError: %s", cx.getRealm().message(Messages.Key.StackOverflow));
         }
         return error.getMessage();
     }

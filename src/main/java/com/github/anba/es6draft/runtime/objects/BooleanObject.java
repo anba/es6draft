@@ -48,6 +48,11 @@ public final class BooleanObject extends OrdinaryObject {
         return booleanData;
     }
 
+    @Override
+    public String className() {
+        return "Boolean";
+    }
+
     /**
      * Creates a new Boolean object with the default %BooleanPrototype% prototype object.
      * 

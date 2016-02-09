@@ -42,14 +42,6 @@ final class ObjectLiteralSubMethod extends ListSubMethod<ObjectLiteral> {
         }
     }
 
-    private static final class ObjectElementMapper implements
-            NodeElementMapper<PropertyDefinition, ObjectElement> {
-        @Override
-        public ObjectElement map(PropertyDefinition node, int size, int index) {
-            return new ObjectElement(node, size, index);
-        }
-    }
-
     private static final class ObjectConflater extends Conflater<ObjectElement, PropertyDefinition> {
         @Override
         protected int getSourceSize(ObjectElement source) {
@@ -69,9 +61,8 @@ final class ObjectLiteralSubMethod extends ListSubMethod<ObjectLiteral> {
 
     @Override
     int processNode(ObjectLiteral node, int oldSize) {
-        List<PropertyDefinition> newProperties = newNodes(oldSize, node.getProperties(),
-                new ObjectElementMapper(), new ObjectConflater(), MAX_OBJECT_ELEMENT_SIZE,
-                MAX_OBJECT_SIZE, MAX_SPREAD_SIZE);
+        List<PropertyDefinition> newProperties = newNodes(oldSize, node.getProperties(), ObjectElement::new,
+                new ObjectConflater(), MAX_OBJECT_ELEMENT_SIZE, MAX_OBJECT_SIZE, MAX_SPREAD_SIZE);
         node.setProperties(newProperties);
         return validateSize(node);
     }

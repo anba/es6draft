@@ -18,7 +18,6 @@ import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initializable;
 import com.github.anba.es6draft.runtime.internal.Messages;
-import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Optional;
@@ -120,20 +119,11 @@ public final class DateConstructor extends BuiltinConstructor implements Initial
             // [20.3.2.3]
             dateValue = System.currentTimeMillis();
         }
-        DateObject obj = OrdinaryCreateFromConstructor(calleeContext, newTarget,
-                Intrinsics.DatePrototype, DateObjectAllocator.INSTANCE);
+        DateObject obj = OrdinaryCreateFromConstructor(calleeContext, newTarget, Intrinsics.DatePrototype,
+                DateObject::new);
         obj.setDateValue(dateValue);
         return obj;
         /* step 4 (not applicable) */
-    }
-
-    private static final class DateObjectAllocator implements ObjectAllocator<DateObject> {
-        static final ObjectAllocator<DateObject> INSTANCE = new DateObjectAllocator();
-
-        @Override
-        public DateObject newInstance(Realm realm) {
-            return new DateObject(realm);
-        }
     }
 
     /**

@@ -133,10 +133,10 @@ public final class ScriptCache {
      *             if the parsed source could not be compiled
      */
     public Script get(ScriptLoader scriptLoader, Path file) throws IOException, ParserException, CompilationException {
-        // TODO: Replace with computeIfAbsent
         CacheKey cacheKey = keyFor(file);
-        if (cache.containsKey(cacheKey)) {
-            return cache.get(cacheKey);
+        Script cachedScript = cache.get(cacheKey);
+        if (cachedScript != null) {
+            return cachedScript;
         }
         Source source = new Source(file, Objects.requireNonNull(file.getFileName()).toString(), 1);
         Script script = scriptLoader.script(source, file);
@@ -163,10 +163,10 @@ public final class ScriptCache {
      */
     public Script get(ScriptLoader scriptLoader, URL file)
             throws IOException, URISyntaxException, ParserException, CompilationException {
-        // TODO: Replace with computeIfAbsent
         CacheKey cacheKey = keyFor(file);
-        if (cache.containsKey(cacheKey)) {
-            return cache.get(cacheKey);
+        Script cachedScript = cache.get(cacheKey);
+        if (cachedScript != null) {
+            return cachedScript;
         }
         Source source = new Source(file.getPath(), 1);
         Script script = scriptLoader.script(source, file);

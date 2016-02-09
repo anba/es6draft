@@ -9,6 +9,7 @@ package com.github.anba.es6draft.repl.loader;
 import static com.github.anba.es6draft.runtime.AbstractOperations.Construct;
 
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Collections;
@@ -18,11 +19,13 @@ import java.util.Set;
 
 import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.runtime.Realm;
+import com.github.anba.es6draft.runtime.internal.NativeCode;
 import com.github.anba.es6draft.runtime.internal.RuntimeContext;
 import com.github.anba.es6draft.runtime.internal.ScriptLoader;
 import com.github.anba.es6draft.runtime.modules.MalformedNameException;
 import com.github.anba.es6draft.runtime.modules.ModuleRecord;
 import com.github.anba.es6draft.runtime.modules.ModuleSource;
+import com.github.anba.es6draft.runtime.modules.ResolutionException;
 import com.github.anba.es6draft.runtime.modules.SourceIdentifier;
 import com.github.anba.es6draft.runtime.modules.loader.AbstractFileModuleLoader;
 import com.github.anba.es6draft.runtime.modules.loader.FileSourceIdentifier;
@@ -44,6 +47,27 @@ public class NodeModuleLoader extends AbstractFileModuleLoader<ModuleRecord> {
 
     public void setModuleConstructor(Constructor moduleConstructor) {
         this.moduleConstructor = moduleConstructor;
+    }
+
+    /**
+     * Initializes this module loader.
+     * 
+     * @param realm
+     *            the realm instance
+     * @throws IOException
+     *             if there was any I/O error
+     * @throws URISyntaxException
+     *             the URL is not a valid URI
+     * @throws MalformedNameException
+     *             if any imported module request cannot be normalized
+     * @throws ResolutionException
+     *             if any export binding cannot be resolved
+     */
+    public void initialize(Realm realm)
+            throws IOException, URISyntaxException, MalformedNameException, ResolutionException {
+        ModuleRecord module = NativeCode.loadModule(realm, "module.jsm");
+        Constructor moduleConstructor = NativeCode.getModuleExport(module, "default", Constructor.class);
+        setModuleConstructor(moduleConstructor);
     }
 
     private ScriptObject createModuleObject(NodeModuleRecord module, Realm realm) {

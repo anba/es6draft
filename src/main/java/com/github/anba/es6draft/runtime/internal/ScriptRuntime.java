@@ -1922,7 +1922,7 @@ public final class ScriptRuntime {
         return new ValuesIterator(cx, obj, obj.enumerateKeys(cx));
     }
 
-    private static final class ValuesIterator extends SimpleIterator<Object>implements ScriptIterator<Object> {
+    private static final class ValuesIterator extends SimpleIterator<Object> implements ScriptIterator<Object> {
         private final ExecutionContext cx;
         private final ScriptObject object;
         private final ScriptIterator<?> keysIterator;
@@ -3297,12 +3297,7 @@ public final class ScriptRuntime {
         }
         assert count > 0;
         Object propKey = decorators.get(start + count);
-        Property property;
-        if (propKey instanceof String) {
-            property = object.getOwnProperty(cx, (String) propKey);
-        } else {
-            property = object.getOwnProperty(cx, (Symbol) propKey);
-        }
+        Property property = object.getOwnProperty(cx, propKey);
         // Current proposal uses `undefined` instead of the initial property descriptor in, and only
         // in, object literals. We don't support this distinction between decorators for object and
         // decorators for class methods.

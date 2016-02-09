@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 
 import com.github.anba.es6draft.ast.Node;
 import com.github.anba.es6draft.ast.StatementListItem;
@@ -61,12 +62,41 @@ abstract class SubMethod<NODE extends Node> {
         return newSize;
     }
 
+    /**
+     * Subdivides statement lists into smaller parts.
+     * 
+     * @param nodes
+     *            the statements
+     * @return the new statements list
+     */
+    protected final <T> List<T> subdivide(List<T> nodes, Conflater<T, T> conflater, int maxSize) {
+        return subdivide(nodes, Function.identity(), conflater, maxSize);
+    }
+
+    /**
+     * Subdivides statement lists into smaller parts.
+     * 
+     * @param statements
+     *            the statements
+     * @return the new statements list
+     */
+    protected final <T, S> List<T> subdivide(List<T> nodes, Function<ArrayList<T>, ArrayList<S>> mapper,
+            Conflater<S, T> conflater, int maxSize) {
+        boolean needsRerun;
+        do {
+            ArrayList<T> newNodes = new ArrayList<>(nodes);
+            ArrayList<S> newElements = mapper.apply(newNodes);
+            needsRerun = conflater.conflate(newElements, newNodes, maxSize);
+            nodes = newNodes;
+        } while (needsRerun);
+        return nodes;
+    }
+
     protected enum ExportState {
         NotExported, Exported, MaybeExported, Empty;
     }
 
-    protected static abstract class NodeElement<NODE extends Node> implements
-            Comparable<NodeElement<?>> {
+    protected static abstract class NodeElement<NODE extends Node> implements Comparable<NodeElement<?>> {
         private ExportState state;
         private NODE node;
         private int size;
@@ -125,8 +155,8 @@ abstract class SubMethod<NODE extends Node> {
 
         @Override
         public String toString() {
-            return String.format("%s [state=%s, node=%s, size=%d, index=%d]", getClass()
-                    .getSimpleName(), state, node, size, index);
+            return String.format("%s [state=%s, node=%s, size=%d, index=%d]", getClass().getSimpleName(), state, node,
+                    size, index);
         }
     }
 

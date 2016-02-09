@@ -37,6 +37,7 @@ import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
 import com.github.anba.es6draft.runtime.types.builtins.FunctionObject.ConstructorKind;
 import com.github.anba.es6draft.runtime.types.builtins.FunctionObject.FunctionKind;
 import com.github.anba.es6draft.runtime.types.builtins.LegacyConstructorFunction;
+import com.github.anba.es6draft.runtime.types.builtins.OrdinaryConstructorFunction;
 
 /**
  * <h1>19 Fundamental Objects</h1><br>
@@ -179,14 +180,20 @@ public final class FunctionConstructor extends BuiltinConstructor implements Ini
         FunctionInitialize(f, FunctionKind.Normal, function, scope, newFunctionExecutable(source));
         /* step 27 (not applicable) */
         /* step 28 */
-        MakeConstructor(cx, uncheckedCast(f));
+        // MakeConstructor(cx, uncheckedCast(f));
+        // Work around for: https://bugs.eclipse.org/bugs/show_bug.cgi?id=479802
+        if (f instanceof LegacyConstructorFunction) {
+            MakeConstructor(cx, (LegacyConstructorFunction) f);
+        } else {
+            MakeConstructor(cx, (OrdinaryConstructorFunction) f);
+        }
         /* step 29 */
         SetFunctionName(f, "anonymous");
         /* step 30 */
         return f;
     }
 
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({ "unchecked", "unused" })
     private static <T extends FunctionObject & Constructor> T uncheckedCast(FunctionObject f) {
         return (T) f;
     }

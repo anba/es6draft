@@ -48,6 +48,11 @@ public final class NumberObject extends OrdinaryObject {
         return numberData;
     }
 
+    @Override
+    public String className() {
+        return "Number";
+    }
+
     /**
      * Creates a new Number object with the default %NumberPrototype% prototype object.
      * 

@@ -8,7 +8,6 @@ package com.github.anba.es6draft.webkit;
 
 import static com.github.anba.es6draft.util.Resources.loadConfiguration;
 import static com.github.anba.es6draft.util.Resources.loadTests;
-import static com.github.anba.es6draft.webkit.WebKitTestGlobalObject.newGlobalObjectAllocator;
 import static org.junit.Assume.assumeTrue;
 
 import java.io.IOException;
@@ -35,12 +34,9 @@ import org.junit.runners.Parameterized.Parameters;
 import org.junit.runners.Parameterized.UseParametersRunnerFactory;
 import org.junit.runners.model.MultipleFailureException;
 
-import com.github.anba.es6draft.repl.console.ShellConsole;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
-import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Strings;
-import com.github.anba.es6draft.util.Functional.BiFunction;
 import com.github.anba.es6draft.util.NullConsole;
 import com.github.anba.es6draft.util.Parallelized;
 import com.github.anba.es6draft.util.ParameterizedRunnerFactory;
@@ -62,12 +58,7 @@ public final class WebKitTest {
 
     @Parameters(name = "{0}")
     public static List<WebKitTestInfo> suiteValues() throws IOException {
-        return loadTests(configuration, new BiFunction<Path, Path, WebKitTestInfo>() {
-            @Override
-            public WebKitTestInfo apply(Path basedir, Path file) {
-                return new WebKitTestInfo(basedir, file);
-            }
-        });
+        return loadTests(configuration, WebKitTestInfo::new);
     }
 
     @BeforeClass
@@ -77,15 +68,10 @@ public final class WebKitTest {
 
     @ClassRule
     public static TestGlobals<WebKitTestGlobalObject, TestInfo> globals = new TestGlobals<WebKitTestGlobalObject, TestInfo>(
-            configuration) {
-        @Override
-        protected ObjectAllocator<WebKitTestGlobalObject> newAllocator(ShellConsole console) {
-            return newGlobalObjectAllocator(console);
-        }
-
+            configuration, WebKitTestGlobalObject::new) {
         @Override
         protected EnumSet<CompatibilityOption> getOptions() {
-            EnumSet<CompatibilityOption> options = EnumSet.copyOf(super.getOptions());
+            EnumSet<CompatibilityOption> options = super.getOptions();
             options.add(CompatibilityOption.ArrayIncludes);
             options.add(CompatibilityOption.ArrayBufferMissingLength);
             return options;

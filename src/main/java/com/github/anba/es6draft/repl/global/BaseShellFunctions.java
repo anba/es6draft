@@ -14,7 +14,6 @@ import java.io.PrintWriter;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import com.github.anba.es6draft.repl.console.ShellConsole;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Strings;
@@ -23,20 +22,16 @@ import com.github.anba.es6draft.runtime.internal.Strings;
  * Standard shell functions.
  */
 public final class BaseShellFunctions {
-    private final ShellConsole console;
-
-    public BaseShellFunctions(ShellConsole console) {
-        this.console = console;
-    }
-
     /**
      * shell-function: {@code readline()}
      * 
+     * @param cx
+     *            the execution context
      * @return the read line from stdin
      */
     @Function(name = "readline", arity = 0)
-    public String readline() {
-        return console.readLine();
+    public String readline(ExecutionContext cx) {
+        return cx.getRuntimeContext().getConsole().readLine();
     }
 
     /**
@@ -49,9 +44,8 @@ public final class BaseShellFunctions {
      */
     @Function(name = "print", arity = 1)
     public void print(ExecutionContext cx, String... messages) {
-        PrintWriter writer = cx.getRuntimeContext().getWriter();
+        PrintWriter writer = cx.getRuntimeContext().getConsole().writer();
         writer.println(Strings.concatWith(' ', messages));
-        writer.flush();
     }
 
     /**

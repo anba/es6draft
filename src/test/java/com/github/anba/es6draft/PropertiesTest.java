@@ -11,25 +11,16 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 
-import java.nio.file.Paths;
-import java.util.EnumSet;
-
 import org.junit.Before;
 import org.junit.Test;
 
-import com.github.anba.es6draft.compiler.Compiler;
-import com.github.anba.es6draft.parser.Parser;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.World;
-import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.Properties;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.RuntimeContext;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
-import com.github.anba.es6draft.runtime.internal.ScriptLoader;
-import com.github.anba.es6draft.runtime.modules.ModuleLoader;
-import com.github.anba.es6draft.runtime.modules.loader.FileModuleLoader;
 import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Null;
@@ -45,41 +36,31 @@ public final class PropertiesTest {
 
     @Before
     public void setUp() throws Throwable {
-        /* @formatter:off */
-        RuntimeContext context = new RuntimeContext.Builder()
-                                                   .setBaseDirectory(Paths.get("").toAbsolutePath())
-                                                   .setOptions(CompatibilityOption.WebCompatibility())
-                                                   .setParserOptions(EnumSet.noneOf(Parser.Option.class))
-                                                   .setCompilerOptions(EnumSet.noneOf(Compiler.Option.class))
-                                                   .build();
-        /* @formatter:on */
-
-        ScriptLoader scriptLoader = new ScriptLoader(context);
-        ModuleLoader moduleLoader = new FileModuleLoader(context, scriptLoader);
-        World world = new World(context, moduleLoader, scriptLoader);
+        RuntimeContext context = new RuntimeContext.Builder().build();
+        World world = new World(context);
         realm = world.newInitializedRealm();
         cx = realm.defaultContext();
     }
 
     @Test
     public void createEmptyClass() {
-        Constructor emptyClass = Properties.createClass(cx, "EmptyClass",
-                EmptyClass.ConstructorProperties.class, EmptyClass.PrototypeProperties.class);
+        Constructor emptyClass = Properties.createClass(cx, "EmptyClass", EmptyClass.ConstructorProperties.class,
+                EmptyClass.PrototypeProperties.class);
         assertNotNull(emptyClass);
         assertNotNull(emptyClass.getOwnProperty(cx, "prototype"));
     }
 
     @Test(expected = ScriptException.class)
     public void createEmptyClassAndCall() {
-        Constructor emptyClass = Properties.createClass(cx, "EmptyClass",
-                EmptyClass.ConstructorProperties.class, EmptyClass.PrototypeProperties.class);
+        Constructor emptyClass = Properties.createClass(cx, "EmptyClass", EmptyClass.ConstructorProperties.class,
+                EmptyClass.PrototypeProperties.class);
         emptyClass.call(cx, Null.NULL);
     }
 
     @Test
     public void createEmptyClassAndConstruct() {
-        Constructor emptyClass = Properties.createClass(cx, "EmptyClass",
-                EmptyClass.ConstructorProperties.class, EmptyClass.PrototypeProperties.class);
+        Constructor emptyClass = Properties.createClass(cx, "EmptyClass", EmptyClass.ConstructorProperties.class,
+                EmptyClass.PrototypeProperties.class);
 
         ScriptObject object = emptyClass.construct(cx, emptyClass);
         assertNotNull(object);
@@ -88,8 +69,8 @@ public final class PropertiesTest {
 
     @Test
     public void createCustomClass() {
-        Constructor customClass = Properties.createClass(cx, "CustomClass",
-                CustomClass.ConstructorProperties.class, CustomClass.PrototypeProperties.class);
+        Constructor customClass = Properties.createClass(cx, "CustomClass", CustomClass.ConstructorProperties.class,
+                CustomClass.PrototypeProperties.class);
         ScriptObject object = customClass.construct(cx, customClass);
         assertNotNull(object);
     }
@@ -97,8 +78,7 @@ public final class PropertiesTest {
     @Test
     public void createCustomClassWithSubclass() {
         Constructor customClass = Properties.createClass(cx, "CustomClassWithSubclass",
-                CustomClassWithSubclass.ConstructorProperties.class,
-                CustomClassWithSubclass.PrototypeProperties.class);
+                CustomClassWithSubclass.ConstructorProperties.class, CustomClassWithSubclass.PrototypeProperties.class);
         ScriptObject object = customClass.construct(cx, customClass);
         assertNotNull(object);
     }
@@ -106,8 +86,7 @@ public final class PropertiesTest {
     @Test
     public void createCustomClassWithObject() {
         Constructor customClass = Properties.createClass(cx, "CustomClassWithObject",
-                CustomClassWithObject.ConstructorProperties.class,
-                CustomClassWithObject.PrototypeProperties.class);
+                CustomClassWithObject.ConstructorProperties.class, CustomClassWithObject.PrototypeProperties.class);
         ScriptObject object = customClass.construct(cx, customClass);
         assertNotNull(object);
     }
@@ -115,8 +94,7 @@ public final class PropertiesTest {
     @Test
     public void createCustomClassNoArgs() {
         Constructor customClass = Properties.createClass(cx, "CustomClassNoArgs",
-                CustomClassNoArgs.ConstructorProperties.class,
-                CustomClassNoArgs.PrototypeProperties.class);
+                CustomClassNoArgs.ConstructorProperties.class, CustomClassNoArgs.PrototypeProperties.class);
         ScriptObject object = customClass.construct(cx, customClass);
         assertNotNull(object);
     }
@@ -149,8 +127,8 @@ public final class PropertiesTest {
             ;
 
             @Function(name = "constructor", arity = 0)
-            public static ScriptObject constructor(ExecutionContext cx, Constructor newTarget,
-                    Object thisValue, Object... args) {
+            public static ScriptObject constructor(ExecutionContext cx, Constructor newTarget, Object thisValue,
+                    Object... args) {
                 assertNotNull(newTarget);
                 assertNull(thisValue);
                 return OrdinaryCreateFromConstructor(cx, newTarget, Intrinsics.ObjectPrototype);
@@ -167,8 +145,8 @@ public final class PropertiesTest {
             ;
 
             @Function(name = "constructor", arity = 0)
-            public static OrdinaryObject constructor(ExecutionContext cx, Constructor newTarget,
-                    Object thisValue, Object... args) {
+            public static OrdinaryObject constructor(ExecutionContext cx, Constructor newTarget, Object thisValue,
+                    Object... args) {
                 assertNotNull(newTarget);
                 assertNull(thisValue);
                 return OrdinaryCreateFromConstructor(cx, newTarget, Intrinsics.ObjectPrototype);
@@ -185,8 +163,8 @@ public final class PropertiesTest {
             ;
 
             @Function(name = "constructor", arity = 0)
-            public static Object constructor(ExecutionContext cx, Constructor newTarget,
-                    Object thisValue, Object... args) {
+            public static Object constructor(ExecutionContext cx, Constructor newTarget, Object thisValue,
+                    Object... args) {
                 assertNotNull(newTarget);
                 assertNull(thisValue);
                 return OrdinaryCreateFromConstructor(cx, newTarget, Intrinsics.ObjectPrototype);
@@ -203,8 +181,7 @@ public final class PropertiesTest {
             ;
 
             @Function(name = "constructor", arity = 0)
-            public static ScriptObject constructor(ExecutionContext cx, Constructor newTarget,
-                    Object thisValue) {
+            public static ScriptObject constructor(ExecutionContext cx, Constructor newTarget, Object thisValue) {
                 assertNotNull(newTarget);
                 assertNull(thisValue);
                 return OrdinaryCreateFromConstructor(cx, newTarget, Intrinsics.ObjectPrototype);
@@ -221,8 +198,8 @@ public final class PropertiesTest {
             ;
 
             @Function(name = "constructor", arity = 0)
-            public static ScriptObject constructor(ExecutionContext cx, ExecutionContext caller,
-                    Constructor newTarget, Object thisValue, Object... args) {
+            public static ScriptObject constructor(ExecutionContext cx, ExecutionContext caller, Constructor newTarget,
+                    Object thisValue, Object... args) {
                 assertNotNull(newTarget);
                 assertNull(thisValue);
                 return OrdinaryCreateFromConstructor(cx, newTarget, Intrinsics.ObjectPrototype);

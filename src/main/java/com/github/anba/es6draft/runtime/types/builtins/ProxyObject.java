@@ -1036,12 +1036,7 @@ public class ProxyObject implements ScriptObject {
         ArrayList<Object> targetNonConfigurableKeys = new ArrayList<>();
         /* step 18 */
         for (Object key : targetKeys) {
-            Property desc;
-            if (key instanceof String) {
-                desc = target.getOwnProperty(cx, (String) key);
-            } else {
-                desc = target.getOwnProperty(cx, (Symbol) key);
-            }
+            Property desc = target.getOwnProperty(cx, key);
             if (desc != null && !desc.isConfigurable()) {
                 targetNonConfigurableKeys.add(key);
             } else {

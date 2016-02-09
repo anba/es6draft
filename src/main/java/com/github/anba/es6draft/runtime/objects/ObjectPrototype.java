@@ -22,20 +22,12 @@ import com.github.anba.es6draft.runtime.internal.Properties.CompatibilityExtensi
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
-import com.github.anba.es6draft.runtime.objects.date.DateObject;
-import com.github.anba.es6draft.runtime.objects.number.NumberObject;
-import com.github.anba.es6draft.runtime.objects.text.RegExpObject;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
-import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Property;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
-import com.github.anba.es6draft.runtime.types.Symbol;
 import com.github.anba.es6draft.runtime.types.Type;
-import com.github.anba.es6draft.runtime.types.builtins.ArgumentsObject;
-import com.github.anba.es6draft.runtime.types.builtins.LegacyArgumentsObject;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
-import com.github.anba.es6draft.runtime.types.builtins.StringObject;
 
 /**
  * <h1>19 Fundamental Objects</h1><br>
@@ -103,38 +95,12 @@ public final class ObjectPrototype extends OrdinaryObject implements Initializab
             /* step 18 */
             String tag;
             if (!Type.isString(ttag)) {
-                tag = builtinTag(o, isArray);
+                tag = isArray ? "Array" : o.className();
             } else {
                 tag = Type.stringValue(ttag).toString();
             }
             /* step 19 */
             return "[object " + tag + "]";
-        }
-
-        private static String builtinTag(ScriptObject o, boolean isArray) {
-            String builtinTag;
-            if (isArray) {
-                builtinTag = "Array";
-            } else if (o instanceof StringObject) {
-                builtinTag = "String";
-            } else if (o instanceof ArgumentsObject || o instanceof LegacyArgumentsObject) {
-                builtinTag = "Arguments";
-            } else if (o instanceof Callable) {
-                builtinTag = "Function";
-            } else if (o instanceof ErrorObject) {
-                builtinTag = "Error";
-            } else if (o instanceof BooleanObject) {
-                builtinTag = "Boolean";
-            } else if (o instanceof NumberObject) {
-                builtinTag = "Number";
-            } else if (o instanceof DateObject) {
-                builtinTag = "Date";
-            } else if (o instanceof RegExpObject) {
-                builtinTag = "RegExp";
-            } else {
-                builtinTag = "Object";
-            }
-            return builtinTag;
         }
 
         /**
@@ -185,11 +151,7 @@ public final class ObjectPrototype extends OrdinaryObject implements Initializab
             /* steps 3-4 */
             ScriptObject o = ToObject(cx, thisValue);
             /* step 5 */
-            if (p instanceof String) {
-                return HasOwnProperty(cx, o, (String) p);
-            } else {
-                return HasOwnProperty(cx, o, (Symbol) p);
-            }
+            return HasOwnProperty(cx, o, p);
         }
 
         /**
@@ -242,12 +204,7 @@ public final class ObjectPrototype extends OrdinaryObject implements Initializab
             /* steps 3-4 */
             ScriptObject o = ToObject(cx, thisValue);
             /* steps 5-6 */
-            Property desc;
-            if (p instanceof String) {
-                desc = o.getOwnProperty(cx, (String) p);
-            } else {
-                desc = o.getOwnProperty(cx, (Symbol) p);
-            }
+            Property desc = o.getOwnProperty(cx, p);
             /* step 7 */
             if (desc == null) {
                 return false;

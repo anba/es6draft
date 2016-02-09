@@ -6,7 +6,6 @@
  */
 package com.github.anba.es6draft.promise;
 
-import static com.github.anba.es6draft.TestGlobalObject.newGlobalObjectAllocator;
 import static com.github.anba.es6draft.util.Resources.loadConfiguration;
 import static com.github.anba.es6draft.util.Resources.loadTests;
 import static org.junit.Assert.assertFalse;
@@ -30,9 +29,7 @@ import org.junit.runners.Parameterized.Parameters;
 import org.junit.runners.Parameterized.UseParametersRunnerFactory;
 
 import com.github.anba.es6draft.TestGlobalObject;
-import com.github.anba.es6draft.repl.console.ShellConsole;
 import com.github.anba.es6draft.runtime.extensions.timer.Timers;
-import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.util.Parallelized;
 import com.github.anba.es6draft.util.ParameterizedRunnerFactory;
 import com.github.anba.es6draft.util.SystemConsole;
@@ -58,12 +55,7 @@ public final class PromiseUnwrappingTest {
 
     @ClassRule
     public static TestGlobals<TestGlobalObject, TestInfo> globals = new TestGlobals<TestGlobalObject, TestInfo>(
-            configuration) {
-        @Override
-        protected ObjectAllocator<TestGlobalObject> newAllocator(ShellConsole console) {
-            return newGlobalObjectAllocator(console);
-        }
-    };
+            configuration, TestGlobalObject::new);
 
     @Rule
     public Timeout maxTime = new Timeout(120, TimeUnit.SECONDS);

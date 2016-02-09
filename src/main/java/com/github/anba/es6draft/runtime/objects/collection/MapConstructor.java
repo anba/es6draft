@@ -16,7 +16,6 @@ import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initializable;
 import com.github.anba.es6draft.runtime.internal.Messages;
-import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.Properties.Accessor;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
@@ -81,8 +80,8 @@ public final class MapConstructor extends BuiltinConstructor implements Initiali
 
         /* step 1 (not applicable) */
         /* steps 2-4 */
-        MapObject map = OrdinaryCreateFromConstructor(calleeContext, newTarget,
-                Intrinsics.MapPrototype, MapObjectAllocator.INSTANCE);
+        MapObject map = OrdinaryCreateFromConstructor(calleeContext, newTarget, Intrinsics.MapPrototype,
+                MapObject::new);
         /* steps 5-6, 8 */
         if (Type.isUndefinedOrNull(iterable)) {
             return map;
@@ -122,15 +121,6 @@ public final class MapConstructor extends BuiltinConstructor implements Initiali
         } catch (ScriptException e) {
             iter.close(e);
             throw e;
-        }
-    }
-
-    private static final class MapObjectAllocator implements ObjectAllocator<MapObject> {
-        static final ObjectAllocator<MapObject> INSTANCE = new MapObjectAllocator();
-
-        @Override
-        public MapObject newInstance(Realm realm) {
-            return new MapObject(realm);
         }
     }
 

@@ -23,7 +23,6 @@ import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initializable;
 import com.github.anba.es6draft.runtime.internal.Messages;
-import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
@@ -97,8 +96,8 @@ public final class RealmConstructor extends BuiltinConstructor implements Initia
         ExecutionContext calleeContext = calleeContext();
 
         /* steps 2-3 */
-        RealmObject realmObject = OrdinaryCreateFromConstructor(calleeContext, newTarget,
-                Intrinsics.RealmPrototype, RealmObjectAllocator.INSTANCE);
+        RealmObject realmObject = OrdinaryCreateFromConstructor(calleeContext, newTarget, Intrinsics.RealmPrototype,
+                RealmObject::new);
 
         /* steps 4-5 */
         ScriptObject newGlobal;
@@ -149,15 +148,6 @@ public final class RealmConstructor extends BuiltinConstructor implements Initia
         }
         /* step 22 */
         return realmObject;
-    }
-
-    private static final class RealmObjectAllocator implements ObjectAllocator<RealmObject> {
-        static final ObjectAllocator<RealmObject> INSTANCE = new RealmObjectAllocator();
-
-        @Override
-        public RealmObject newInstance(Realm realm) {
-            return new RealmObject(realm);
-        }
     }
 
     /**

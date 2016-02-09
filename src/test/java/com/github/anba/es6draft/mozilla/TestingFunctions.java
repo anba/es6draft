@@ -10,10 +10,12 @@ import static com.github.anba.es6draft.runtime.objects.binary.ArrayBufferConstru
 
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodHandles.Lookup;
+import java.util.function.BiFunction;
 
 import com.github.anba.es6draft.repl.global.StopExecutionException;
 import com.github.anba.es6draft.runtime.AbstractOperations;
 import com.github.anba.es6draft.runtime.ExecutionContext;
+import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.objects.binary.ArrayBufferObject;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
@@ -121,42 +123,32 @@ public final class TestingFunctions {
     @Function(name = "getSelfHostedValue", arity = 1)
     public ScriptObject getSelfHostedValue(ExecutionContext cx, String name) {
         if ("ToNumber".equals(name)) {
-            return new BuiltinFunction(cx.getRealm(), "ToNumber", 1) {
-                @Override
-                public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
-                    return AbstractOperations.ToNumber(calleeContext(), argument(args, 0));
-                }
-
-                @Override
-                protected BuiltinFunction clone() {
-                    return this;
-                }
-
-                @Override
-                protected Lookup lookup() {
-                    return MethodHandles.lookup();
-                }
-            };
+            return function(cx.getRealm(), "ToNumber", 1, AbstractOperations::ToNumber);
         }
         if ("ToLength".equals(name)) {
-            return new BuiltinFunction(cx.getRealm(), "ToLength", 1) {
-                @Override
-                public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
-                    return AbstractOperations.ToLength(calleeContext(), argument(args, 0));
-                }
-
-                @Override
-                protected BuiltinFunction clone() {
-                    return this;
-                }
-
-                @Override
-                protected Lookup lookup() {
-                    return MethodHandles.lookup();
-                }
-            };
+            return function(cx.getRealm(), "ToLength", 1, AbstractOperations::ToLength);
         }
         throw new IllegalArgumentException(name);
+    }
+
+    private static final <R> BuiltinFunction function(Realm realm, String name, int arity,
+            BiFunction<ExecutionContext, Object, R> fn) {
+        return new BuiltinFunction(realm, name, arity) {
+            @Override
+            public R call(ExecutionContext callerContext, Object thisValue, Object... args) {
+                return fn.apply(calleeContext(), argument(args, 0));
+            }
+
+            @Override
+            protected BuiltinFunction clone() {
+                return this;
+            }
+
+            @Override
+            protected Lookup lookup() {
+                return MethodHandles.lookup();
+            }
+        };
     }
 
     /**

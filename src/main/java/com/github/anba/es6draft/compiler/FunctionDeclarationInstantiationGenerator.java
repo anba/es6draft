@@ -324,7 +324,7 @@ final class FunctionDeclarationInstantiationGenerator extends
         }
         /* steps 27-28 */
         HashSet<Name> instantiatedVarNames;
-        Variable<? extends LexicalEnvironment<? extends DeclarativeEnvironmentRecord>> varEnv;
+        Variable<? extends LexicalEnvironment<?>> varEnv;
         Variable<? extends DeclarativeEnvironmentRecord> varEnvRec;
         if (!hasParameterExpressions) {
             assert fscope == fscope.variableScope();
@@ -387,7 +387,7 @@ final class FunctionDeclarationInstantiationGenerator extends
         }
 
         /* steps 30-32 */
-        Variable<? extends LexicalEnvironment<? extends DeclarativeEnvironmentRecord>> lexEnv;
+        Variable<? extends LexicalEnvironment<?>> lexEnv;
         Variable<? extends DeclarativeEnvironmentRecord> lexEnvRec;
         assert strict || fscope.variableScope() != fscope.lexicalScope();
         if (!strict || fscope.variableScope() != fscope.lexicalScope()) {

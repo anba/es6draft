@@ -6,19 +6,21 @@
  */
 package com.github.anba.es6draft.util.rules;
 
-import static com.github.anba.es6draft.util.Functional.iterable;
-import static com.github.anba.es6draft.util.Functional.map;
 import static org.hamcrest.Matchers.anyOf;
 import static org.hamcrest.Matchers.instanceOf;
 
+import java.util.Arrays;
+import java.util.function.Supplier;
+import java.util.stream.Stream;
+
 import org.hamcrest.Matcher;
+import org.hamcrest.Matchers;
 
 import com.github.anba.es6draft.compiler.CompilationException;
 import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.repl.global.StopExecutionException;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
-import com.github.anba.es6draft.util.Functional.Function;
 import com.github.anba.es6draft.util.TestAssertions;
 
 /**
@@ -31,18 +33,17 @@ public final class ExceptionHandlers {
     /**
      * anyOf(asList(types).map(x -> instanceOf(x)))
      */
-    private static final Matcher<Object> anyInstanceOf(final Class<?>... types) {
-        return anyOf(map(iterable(types), new Function<Class<?>, Matcher<? super Object>>() {
-            @Override
-            public Matcher<? super Object> apply(Class<?> type) {
-                return instanceOf(type);
-            }
-        }));
+    private static final Matcher<Object> anyInstanceOf(Class<?>... types) {
+        return anyOf(asIterable(() -> Arrays.stream(types).map(Matchers::instanceOf)));
+    }
+
+    private static <T> Iterable<T> asIterable(Supplier<Stream<T>> stream) {
+        return () -> stream.get().iterator();
     }
 
     /**
-     * {@link ExceptionHandler} for {@link ParserException}, {@link CompilationException} and
-     * {@link StackOverflowError} errors.
+     * {@link ExceptionHandler} for {@link ParserException}, {@link CompilationException} and {@link StackOverflowError}
+     * errors.
      */
     public static final class StandardErrorHandler extends ExceptionHandler {
         private static final Matcher<Object> defaultMatcher = anyInstanceOf(ParserException.class,
@@ -108,8 +109,8 @@ public final class ExceptionHandlers {
     }
 
     /**
-     * {@link ExceptionHandler} for {@link ParserException}, {@link CompilationException},
-     * {@link StackOverflowError} and {@link ScriptException} errors.
+     * {@link ExceptionHandler} for {@link ParserException}, {@link CompilationException}, {@link StackOverflowError}
+     * and {@link ScriptException} errors.
      */
     public static final class IgnoreExceptionHandler extends ExceptionHandler {
         private static final Matcher<Object> defaultMatcher = anyInstanceOf(ParserException.class,

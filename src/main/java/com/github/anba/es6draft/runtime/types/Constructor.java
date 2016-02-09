@@ -24,6 +24,19 @@ public interface Constructor extends ScriptObject, Callable {
      * 
      * @param callerContext
      *            the caller's execution context
+     * @param args
+     *            the constructor function arguments
+     * @return the new script object
+     */
+    default ScriptObject construct(ExecutionContext callerContext, Object... args) {
+        return construct(callerContext, this, args);
+    }
+
+    /**
+     * [[Construct]]
+     * 
+     * @param callerContext
+     *            the caller's execution context
      * @param newTarget
      *            the constructor to which the {@code new} operator was initially applied
      * @param args

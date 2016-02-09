@@ -8,23 +8,14 @@ package com.github.anba.es6draft;
 
 import static org.junit.Assert.assertEquals;
 
-import java.nio.file.Paths;
-import java.util.EnumSet;
 import java.util.Locale;
-import java.util.TimeZone;
 
 import org.junit.Test;
 
-import com.github.anba.es6draft.compiler.Compiler;
-import com.github.anba.es6draft.parser.Parser;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.World;
-import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.RuntimeContext;
-import com.github.anba.es6draft.runtime.internal.ScriptLoader;
 import com.github.anba.es6draft.runtime.internal.Source;
-import com.github.anba.es6draft.runtime.modules.ModuleLoader;
-import com.github.anba.es6draft.runtime.modules.loader.FileModuleLoader;
 
 /**
  *
@@ -33,19 +24,11 @@ public final class LocaleTest {
     private static World newWorld(Locale locale) {
         /* @formatter:off */
         RuntimeContext context = new RuntimeContext.Builder()
-                                                   .setBaseDirectory(Paths.get("").toAbsolutePath())
-                                                   .setTimeZone(TimeZone.getDefault())
                                                    .setLocale(locale)
-                                                   .setOptions(CompatibilityOption.StrictCompatibility())
-                                                   .setParserOptions(EnumSet.noneOf(Parser.Option.class))
-                                                   .setCompilerOptions(EnumSet.noneOf(Compiler.Option.class))
                                                    .build();
         /* @formatter:on */
 
-        ScriptLoader scriptLoader = new ScriptLoader(context);
-        ModuleLoader moduleLoader = new FileModuleLoader(context, scriptLoader);
-        World world = new World(context, moduleLoader, scriptLoader);
-        return world;
+        return new World(context);
     }
 
     private static Realm newRealm(String languageTag) throws Exception {

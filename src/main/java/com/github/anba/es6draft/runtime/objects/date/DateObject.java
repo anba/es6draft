@@ -48,4 +48,9 @@ public final class DateObject extends OrdinaryObject {
     public void setDateValue(double dateValue) {
         this.dateValue = dateValue;
     }
+
+    @Override
+    public String className() {
+        return "Date";
+    }
 }

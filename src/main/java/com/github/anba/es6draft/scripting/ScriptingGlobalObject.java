@@ -7,7 +7,6 @@
 package com.github.anba.es6draft.scripting;
 
 import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.objects.GlobalObject;
 
 /**
@@ -22,19 +21,5 @@ public final class ScriptingGlobalObject extends GlobalObject {
     public void initializeExtensions() {
         super.initializeExtensions();
         createGlobalProperties(new ScriptingFunctions(), ScriptingFunctions.class);
-    }
-
-    /**
-     * Returns an object to allocate new instances of this class.
-     * 
-     * @return the object allocator to construct new global object instances
-     */
-    public static ObjectAllocator<ScriptingGlobalObject> newGlobalObjectAllocator() {
-        return new ObjectAllocator<ScriptingGlobalObject>() {
-            @Override
-            public ScriptingGlobalObject newInstance(Realm realm) {
-                return new ScriptingGlobalObject(realm);
-            }
-        };
     }
 }

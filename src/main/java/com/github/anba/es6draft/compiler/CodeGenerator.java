@@ -17,6 +17,7 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -41,7 +42,6 @@ import com.github.anba.es6draft.compiler.assembler.Variables;
 import com.github.anba.es6draft.parser.Parser;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
-import com.github.anba.es6draft.runtime.internal.ImmediateFuture;
 import com.github.anba.es6draft.runtime.internal.JVMNames;
 import com.github.anba.es6draft.runtime.internal.SourceCompressor;
 import com.github.anba.es6draft.runtime.internal.Strings;
@@ -166,7 +166,7 @@ final class CodeGenerator {
     }
 
     private static final boolean INCLUDE_SOURCE = true;
-    private static final Future<String> NO_SOURCE = new ImmediateFuture<>(null);
+    private static final Future<String> NO_SOURCE = CompletableFuture.completedFuture(null);
     private static final int MAX_FNAME_LENGTH = 0x400;
 
     private final Code code;

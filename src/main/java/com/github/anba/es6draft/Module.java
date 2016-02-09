@@ -31,5 +31,7 @@ public interface Module extends Program {
      *            the execution context
      * @return the return value after evaluating this module
      */
-    Object evaluate(ExecutionContext cx);
+    default Object evaluate(ExecutionContext cx) {
+        return getModuleBody().evaluate(cx);
+    }
 }

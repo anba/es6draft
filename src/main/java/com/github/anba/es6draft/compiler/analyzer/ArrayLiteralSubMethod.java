@@ -39,14 +39,6 @@ final class ArrayLiteralSubMethod extends ListSubMethod<ArrayLiteral> {
         }
     }
 
-    private static final class ArrayElementMapper implements
-            NodeElementMapper<Expression, ArrayElement> {
-        @Override
-        public ArrayElement map(Expression node, int size, int index) {
-            return new ArrayElement(node, size, index);
-        }
-    }
-
     private static final class ArrayConflater extends Conflater<ArrayElement, Expression> {
         @Override
         protected int getSourceSize(ArrayElement source) {
@@ -66,9 +58,8 @@ final class ArrayLiteralSubMethod extends ListSubMethod<ArrayLiteral> {
 
     @Override
     int processNode(ArrayLiteral node, int oldSize) {
-        List<Expression> newElements = newNodes(oldSize, node.getElements(),
-                new ArrayElementMapper(), new ArrayConflater(), MAX_ARRAY_ELEMENT_SIZE,
-                MAX_ARRAY_SIZE, MAX_SPREAD_SIZE);
+        List<Expression> newElements = newNodes(oldSize, node.getElements(), ArrayElement::new, new ArrayConflater(),
+                MAX_ARRAY_ELEMENT_SIZE, MAX_ARRAY_SIZE, MAX_SPREAD_SIZE);
         node.setElements(newElements);
         return validateSize(node);
     }

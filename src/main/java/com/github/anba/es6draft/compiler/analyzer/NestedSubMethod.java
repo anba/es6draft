@@ -6,11 +6,15 @@
  */
 package com.github.anba.es6draft.compiler.analyzer;
 
-import static java.util.Collections.singletonList;
-
 import java.util.AbstractMap.SimpleEntry;
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.PriorityQueue;
 
 import com.github.anba.es6draft.ast.*;
 import com.github.anba.es6draft.ast.synthetic.StatementListMethod;
@@ -47,7 +51,7 @@ abstract class NestedSubMethod<NODE extends Node> extends SubMethod<NODE> {
 
         @Override
         protected StatementListItem createReplacement() {
-            return new StatementListMethod(singletonList(getNode()));
+            return new StatementListMethod(getNode());
         }
 
         @Override
@@ -60,6 +64,7 @@ abstract class NestedSubMethod<NODE extends Node> extends SubMethod<NODE> {
             ArrayList<StatementElement> list = new ArrayList<>(statements.size());
             for (int i = 0, len = statements.size(); i < len; i++) {
                 StatementListItem stmt = statements.get(i);
+                assert codeSizes.containsKey(stmt) : "Not found " + stmt;
                 int size = codeSizes.get(stmt);
                 list.add(new StatementElement(ExportState.NotExported, stmt, size, i));
             }
@@ -121,8 +126,7 @@ abstract class NestedSubMethod<NODE extends Node> extends SubMethod<NODE> {
             pq = new PriorityQueue<>(elements);
             while (!pq.isEmpty() && accSize > MAX_STATEMENT_SIZE) {
                 StatementElement element = pq.remove();
-                if (element.getState() == ExportState.Exported
-                        || element.getState() == ExportState.Empty) {
+                if (element.getState() == ExportState.Exported || element.getState() == ExportState.Empty) {
                     // or rather break..?
                     continue;
                 }
@@ -138,14 +142,11 @@ abstract class NestedSubMethod<NODE extends Node> extends SubMethod<NODE> {
                 continue;
             }
             Node parent = parents.get(i);
-            assert parent != null : String.format("null parent at %d/%d, element = %s", i, len,
-                    element);
+            assert parent != null : String.format("null parent at %d/%d, element = %s", i, len, element);
             StatementListItem sourceElement = exportable.get(i);
             StatementListMethod targetElement = (StatementListMethod) element.getNode();
-            assert sourceElement != targetElement : sourceElement.getClass() + ", "
-                    + targetElement.getClass();
-            Entry<StatementListItem, StatementListMethod> entry = new SimpleEntry<>(sourceElement,
-                    targetElement);
+            assert sourceElement != targetElement : sourceElement.getClass() + ", " + targetElement.getClass();
+            Entry<StatementListItem, StatementListMethod> entry = new SimpleEntry<>(sourceElement, targetElement);
             parent.accept(updater, entry);
         }
 

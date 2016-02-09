@@ -8,7 +8,6 @@ package com.github.anba.es6draft.v8;
 
 import static com.github.anba.es6draft.util.Resources.loadConfiguration;
 import static com.github.anba.es6draft.util.Resources.loadTests;
-import static com.github.anba.es6draft.v8.V8TestGlobalObject.newGlobalObjectAllocator;
 import static org.junit.Assume.assumeTrue;
 
 import java.io.IOException;
@@ -28,8 +27,6 @@ import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
 import org.junit.runners.Parameterized.UseParametersRunnerFactory;
 
-import com.github.anba.es6draft.repl.console.ShellConsole;
-import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.util.NullConsole;
 import com.github.anba.es6draft.util.Parallelized;
 import com.github.anba.es6draft.util.ParameterizedRunnerFactory;
@@ -60,12 +57,7 @@ public final class IntlTest {
 
     @ClassRule
     public static TestGlobals<V8TestGlobalObject, TestInfo> globals = new TestGlobals<V8TestGlobalObject, TestInfo>(
-            configuration) {
-        @Override
-        protected ObjectAllocator<V8TestGlobalObject> newAllocator(ShellConsole console) {
-            return newGlobalObjectAllocator(console);
-        }
-    };
+            configuration, V8TestGlobalObject::new);
 
     @Rule
     public Timeout maxTime = new Timeout(120, TimeUnit.SECONDS);

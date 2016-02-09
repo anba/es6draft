@@ -6,7 +6,6 @@
  */
 package com.github.anba.es6draft;
 
-import static com.github.anba.es6draft.repl.global.MozShellGlobalObject.newGlobalObjectAllocator;
 import static com.github.anba.es6draft.util.Resources.loadConfiguration;
 import static com.github.anba.es6draft.util.Resources.loadTests;
 import static org.junit.Assume.assumeTrue;
@@ -27,9 +26,7 @@ import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
 import org.junit.runners.Parameterized.UseParametersRunnerFactory;
 
-import com.github.anba.es6draft.repl.console.ShellConsole;
 import com.github.anba.es6draft.repl.global.MozShellGlobalObject;
-import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.util.Parallelized;
 import com.github.anba.es6draft.util.ParameterizedRunnerFactory;
 import com.github.anba.es6draft.util.SystemConsole;
@@ -55,12 +52,7 @@ public final class ReflectTest {
 
     @ClassRule
     public static TestGlobals<MozShellGlobalObject, TestInfo> globals = new TestGlobals<MozShellGlobalObject, TestInfo>(
-            configuration) {
-        @Override
-        protected ObjectAllocator<MozShellGlobalObject> newAllocator(ShellConsole console) {
-            return newGlobalObjectAllocator(console);
-        }
-    };
+            configuration, MozShellGlobalObject::new);
 
     @Rule
     public Timeout maxTime = new Timeout(120, TimeUnit.SECONDS);

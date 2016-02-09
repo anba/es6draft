@@ -11,9 +11,9 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.HasProperty;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToObject;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -46,43 +46,43 @@ final class ShellCompleter implements ShellConsole.Completer {
     }
 
     @Override
-    public Completion complete(String line, int cursor) {
+    public Optional<Completion> complete(String line, int cursor) {
         ExecutionContext cx = realm.defaultContext();
         ScriptObject object = realm.getGlobalThis();
         String leftContext = line.substring(0, cursor);
         if (leftContext.isEmpty()) {
             ArrayList<String> candidates = createCandidates(getPropertyNames(cx, object), "", "");
-            return new Completion(line, 0, cursor, candidates);
+            return Optional.of(new Completion(line, 0, cursor, candidates));
         }
         Matcher m = hierarchyPattern.matcher(leftContext);
-        lookupFailure: if (m.find()) {
-            ArrayList<String> segments = segments(m.group(1));
-            StringBuilder prefix = new StringBuilder();
-            List<String> properties = segments.subList(0, segments.size() - 1);
-            if (!properties.isEmpty() && "this".equals(properties.get(0))) {
-                // skip leading `this` segment in property traversal
-                properties = properties.subList(1, properties.size());
-                prefix.append("this.");
-            }
-            for (String property : properties) {
-                if (!HasProperty(cx, object, property)) {
-                    break lookupFailure;
-                }
-                Object value = Get(cx, object, property);
-                if (Type.isObject(value)) {
-                    object = Type.objectValue(value);
-                } else if (!Type.isUndefinedOrNull(value)) {
-                    object = ToObject(cx, value);
-                } else {
-                    break lookupFailure;
-                }
-                prefix.append(property).append('.');
-            }
-            String partial = segments.get(segments.size() - 1);
-            ArrayList<String> candidates = createCandidates(getPropertyNames(cx, object), partial, prefix.toString());
-            return new Completion(line, m.start(1), cursor, candidates);
+        if (!m.find()) {
+            return Optional.empty();
         }
-        return new Completion(line, 0, 0, Collections.<String> emptyList());
+        ArrayList<String> segments = segments(m.group(1));
+        StringBuilder prefix = new StringBuilder();
+        List<String> properties = segments.subList(0, segments.size() - 1);
+        if (!properties.isEmpty() && "this".equals(properties.get(0))) {
+            // skip leading `this` segment in property traversal
+            properties = properties.subList(1, properties.size());
+            prefix.append("this.");
+        }
+        for (String property : properties) {
+            if (!HasProperty(cx, object, property)) {
+                return Optional.empty();
+            }
+            Object value = Get(cx, object, property);
+            if (Type.isObject(value)) {
+                object = Type.objectValue(value);
+            } else if (!Type.isUndefinedOrNull(value)) {
+                object = ToObject(cx, value);
+            } else {
+                return Optional.empty();
+            }
+            prefix.append(property).append('.');
+        }
+        String partial = segments.get(segments.size() - 1);
+        ArrayList<String> candidates = createCandidates(getPropertyNames(cx, object), partial, prefix.toString());
+        return Optional.of(new Completion(line, m.start(1), cursor, candidates));
     }
 
     private ArrayList<String> createCandidates(Iterable<String> names, String partial, String prefix) {

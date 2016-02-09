@@ -12,7 +12,7 @@ package com.github.anba.es6draft.compiler.assembler;
  * @param <T>
  *            the variable type
  */
-public final class Variable<T> extends Value<T> {
+public final class Variable<T> implements Value<T> {
     private final String name;
     private final Type type;
     private final int slot;
@@ -89,7 +89,7 @@ public final class Variable<T> extends Value<T> {
     }
 
     @Override
-    protected void load(InstructionAssembler assembler) {
+    public void load(InstructionAssembler assembler) {
         assembler.load(this);
     }
 }

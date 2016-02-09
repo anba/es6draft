@@ -254,8 +254,13 @@ public final class SourceBuilder {
         for (int i = 0; keys.hasNext() && i < maxObjectProperties;) {
             Object k = keys.next();
             String key = propertyKeyToSource(cx, k);
-            Property prop = getOwnProperty(cx, object, k);
-            if (prop == null || !prop.isEnumerable()) {
+            Property prop;
+            try {
+                prop = object.getOwnProperty(cx, k);
+            } catch (ScriptException e) {
+                continue;
+            }
+            if (!prop.isEnumerable()) {
                 continue;
             }
             String value;
@@ -272,18 +277,6 @@ public final class SourceBuilder {
         }
         properties.append(" }").setCharAt(0, '{');
         return properties.toString();
-    }
-
-    private static Property getOwnProperty(ExecutionContext cx, ScriptObject object, Object key) {
-        try {
-            if (key instanceof String) {
-                return object.getOwnProperty(cx, (String) key);
-            } else {
-                return object.getOwnProperty(cx, (Symbol) key);
-            }
-        } catch (ScriptException e) {
-            return null;
-        }
     }
 
     private static final Pattern namePattern = Pattern

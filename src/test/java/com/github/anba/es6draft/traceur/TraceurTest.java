@@ -6,7 +6,6 @@
  */
 package com.github.anba.es6draft.traceur;
 
-import static com.github.anba.es6draft.traceur.TraceurTestGlobalObject.newGlobalObjectAllocator;
 import static com.github.anba.es6draft.util.Resources.loadConfiguration;
 import static com.github.anba.es6draft.util.Resources.loadTests;
 import static org.junit.Assert.assertFalse;
@@ -20,6 +19,7 @@ import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiFunction;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -39,16 +39,12 @@ import org.junit.runners.Parameterized.Parameters;
 import org.junit.runners.Parameterized.UseParametersRunnerFactory;
 
 import com.github.anba.es6draft.parser.Parser;
-import com.github.anba.es6draft.repl.console.ShellConsole;
 import com.github.anba.es6draft.runtime.extensions.timer.Timers;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
-import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
+import com.github.anba.es6draft.runtime.internal.Console;
 import com.github.anba.es6draft.runtime.internal.Properties;
 import com.github.anba.es6draft.runtime.internal.RuntimeContext;
-import com.github.anba.es6draft.runtime.internal.ScriptLoader;
 import com.github.anba.es6draft.runtime.modules.ResolutionException;
-import com.github.anba.es6draft.util.Functional.BiFunction;
-import com.github.anba.es6draft.util.Functional.Function;
 import com.github.anba.es6draft.util.NullConsole;
 import com.github.anba.es6draft.util.Parallelized;
 import com.github.anba.es6draft.util.ParameterizedRunnerFactory;
@@ -69,12 +65,7 @@ public final class TraceurTest {
 
     @Parameters(name = "{0}")
     public static List<TraceurTestInfo> suiteValues() throws IOException {
-        return loadTests(configuration, new Function<Path, BiFunction<Path, Iterator<String>, TraceurTestInfo>>() {
-            @Override
-            public TestInfos apply(Path basedir) {
-                return new TestInfos(basedir);
-            }
-        });
+        return loadTests(configuration, TraceurTest::createTest);
     }
 
     @BeforeClass
@@ -84,10 +75,10 @@ public final class TraceurTest {
 
     @ClassRule
     public static TestGlobals<TraceurTestGlobalObject, TraceurTestInfo> globals = new TestGlobals<TraceurTestGlobalObject, TraceurTestInfo>(
-            configuration) {
+            configuration, TraceurTestGlobalObject::new, TraceurFileModuleLoader::new) {
         @Override
         protected EnumSet<CompatibilityOption> getOptions() {
-            EnumSet<CompatibilityOption> options = EnumSet.copyOf(super.getOptions());
+            EnumSet<CompatibilityOption> options = super.getOptions();
             options.add(CompatibilityOption.AsyncFunction);
             options.add(CompatibilityOption.Exponentiation);
             options.add(CompatibilityOption.Comprehension);
@@ -96,22 +87,12 @@ public final class TraceurTest {
         }
 
         @Override
-        protected RuntimeContext createContext(ShellConsole console, TraceurTestInfo test) {
+        protected RuntimeContext createContext(Console console, TraceurTestInfo test) {
             RuntimeContext context = super.createContext(console, test);
             if (test.tailCall) {
                 context.getParserOptions().add(Parser.Option.Strict);
             }
             return context;
-        }
-
-        @Override
-        protected ObjectAllocator<TraceurTestGlobalObject> newAllocator(ShellConsole console) {
-            return newGlobalObjectAllocator(console);
-        }
-
-        @Override
-        protected TraceurFileModuleLoader createModuleLoader(RuntimeContext context, ScriptLoader scriptLoader) {
-            return new TraceurFileModuleLoader(context, scriptLoader);
         }
     };
 
@@ -215,16 +196,10 @@ public final class TraceurTest {
         }
     }
 
-    private static final class TestInfos implements BiFunction<Path, Iterator<String>, TraceurTestInfo> {
-        private static final Pattern FlagsPattern = Pattern.compile("\\s*//\\s*(.*)\\s*");
-        private final Path basedir;
+    private static final Pattern FlagsPattern = Pattern.compile("\\s*//\\s*(.*)\\s*");
 
-        public TestInfos(Path basedir) {
-            this.basedir = basedir;
-        }
-
-        @Override
-        public TraceurTestInfo apply(Path file, Iterator<String> lines) {
+    private static BiFunction<Path, Iterator<String>, TraceurTestInfo> createTest(Path basedir) {
+        return (file, lines) -> {
             TraceurTestInfo test = new TraceurTestInfo(basedir, file);
             Pattern p = FlagsPattern;
             while (lines.hasNext()) {
@@ -251,6 +226,6 @@ public final class TraceurTest {
                 }
             }
             return test;
-        }
+        };
     }
 }

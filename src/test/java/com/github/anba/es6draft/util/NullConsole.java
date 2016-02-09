@@ -10,17 +10,21 @@ import java.io.PrintWriter;
 import java.io.Reader;
 import java.io.StringReader;
 
-import com.github.anba.es6draft.repl.console.ShellConsole;
+import com.github.anba.es6draft.runtime.internal.Console;
 
 /** 
  *
  */
-public final class NullConsole implements ShellConsole {
+public final class NullConsole implements Console {
     private final StringReader reader = new StringReader("");
     private final PrintWriter writer = new PrintWriter(new NullWriter());
 
     @Override
     public void printf(String format, Object... args) {
+    }
+
+    @Override
+    public void flush() {
     }
 
     @Override
@@ -46,14 +50,5 @@ public final class NullConsole implements ShellConsole {
     @Override
     public PrintWriter errorWriter() {
         return writer;
-    }
-
-    @Override
-    public boolean isAnsiSupported() {
-        return false;
-    }
-
-    @Override
-    public void addCompleter(Completer completer) {
     }
 }

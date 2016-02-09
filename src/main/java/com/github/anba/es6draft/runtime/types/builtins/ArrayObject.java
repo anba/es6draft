@@ -14,6 +14,8 @@ import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Spliterator;
+import java.util.stream.Stream;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
@@ -90,6 +92,11 @@ public class ArrayObject extends OrdinaryObject {
     @Override
     public final boolean hasIndexedAccessors() {
         return hasIndexedAccessors;
+    }
+
+    @Override
+    public String className() {
+        return "Array";
     }
 
     /**
@@ -384,6 +391,25 @@ public class ArrayObject extends OrdinaryObject {
         for (Object value : values) {
             array.setIndexed(i++, value);
         }
+        return array;
+    }
+
+    /**
+     * Helper method to create dense arrays.
+     * 
+     * @param cx
+     *            the execution context
+     * @param values
+     *            the element values
+     * @return the new array object
+     */
+    public static ArrayObject DenseArrayCreate(ExecutionContext cx, Stream<?> values) {
+        Spliterator<?> spliterator = values.spliterator();
+        ArrayObject array = ArrayCreate(cx, Math.max(spliterator.getExactSizeIfKnown(), 0));
+        spliterator.forEachRemaining(value -> {
+            array.setIndexed(array.getIndexedLength(), value);
+        });
+        array.setLengthUnchecked(array.getIndexedLength());
         return array;
     }
 

@@ -37,9 +37,4 @@ public final class CompoundIterator<E> implements Iterator<E> {
         }
         throw new NoSuchElementException();
     }
-
-    @Override
-    public void remove() {
-        throw new UnsupportedOperationException();
-    }
 }

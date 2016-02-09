@@ -33,7 +33,6 @@ import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Property;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
-import com.github.anba.es6draft.runtime.types.Symbol;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
@@ -164,12 +163,7 @@ public final class ReflectObject extends OrdinaryObject implements Initializable
             /* steps 4-5 */
             PropertyDescriptor desc = ToPropertyDescriptor(cx, attributes);
             /* step 6 */
-            if (key instanceof String) {
-                return targetObject.defineOwnProperty(cx, (String) key, desc);
-            } else {
-                assert key instanceof Symbol;
-                return targetObject.defineOwnProperty(cx, (Symbol) key, desc);
-            }
+            return targetObject.defineOwnProperty(cx, key, desc);
         }
 
         /**
@@ -196,12 +190,7 @@ public final class ReflectObject extends OrdinaryObject implements Initializable
             /* steps 2-3 */
             Object key = ToPropertyKey(cx, propertyKey);
             /* step 4 */
-            if (key instanceof String) {
-                return targetObject.delete(cx, (String) key);
-            } else {
-                assert key instanceof Symbol;
-                return targetObject.delete(cx, (Symbol) key);
-            }
+            return targetObject.delete(cx, key);
         }
 
         /**
@@ -256,12 +245,7 @@ public final class ReflectObject extends OrdinaryObject implements Initializable
                 receiver = target;
             }
             /* step 5 */
-            if (key instanceof String) {
-                return targetObject.get(cx, (String) key, receiver);
-            } else {
-                assert key instanceof Symbol;
-                return targetObject.get(cx, (Symbol) key, receiver);
-            }
+            return targetObject.get(cx, key, receiver);
         }
 
         /**
@@ -288,13 +272,7 @@ public final class ReflectObject extends OrdinaryObject implements Initializable
             /* steps 2-3 */
             Object key = ToPropertyKey(cx, propertyKey);
             /* steps 4-5 */
-            Property desc;
-            if (key instanceof String) {
-                desc = targetObject.getOwnProperty(cx, (String) key);
-            } else {
-                assert key instanceof Symbol;
-                desc = targetObject.getOwnProperty(cx, (Symbol) key);
-            }
+            Property desc = targetObject.getOwnProperty(cx, key);
             /* step 6 */
             return FromPropertyDescriptor(cx, desc);
         }
@@ -346,12 +324,7 @@ public final class ReflectObject extends OrdinaryObject implements Initializable
             /* steps 2-3 */
             Object key = ToPropertyKey(cx, propertyKey);
             /* step 4 */
-            if (key instanceof String) {
-                return targetObject.hasProperty(cx, (String) key);
-            } else {
-                assert key instanceof Symbol;
-                return targetObject.hasProperty(cx, (Symbol) key);
-            }
+            return targetObject.hasProperty(cx, key);
         }
 
         /**
@@ -454,12 +427,7 @@ public final class ReflectObject extends OrdinaryObject implements Initializable
                 receiver = target;
             }
             /* step 5 */
-            if (key instanceof String) {
-                return targetObject.set(cx, (String) key, value, receiver);
-            } else {
-                assert key instanceof Symbol;
-                return targetObject.set(cx, (Symbol) key, value, receiver);
-            }
+            return targetObject.set(cx, key, value, receiver);
         }
 
         /**

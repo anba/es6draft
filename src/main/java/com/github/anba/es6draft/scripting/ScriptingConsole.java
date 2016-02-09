@@ -4,36 +4,43 @@
  *
  * <https://github.com/anba/es6draft>
  */
-package com.github.anba.es6draft.repl.console;
+package com.github.anba.es6draft.scripting;
 
 import java.io.BufferedReader;
-import java.io.IOError;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.io.Reader;
-import java.nio.charset.Charset;
-import java.util.Formatter;
+import java.io.UncheckedIOException;
+import java.io.Writer;
+
+import javax.script.ScriptContext;
+
+import com.github.anba.es6draft.runtime.internal.Console;
 
 /**
- * {@link ShellConsole} implementation for legacy consoles.
+ *
  */
-public final class LegacyConsole implements ShellConsole {
+final class ScriptingConsole implements Console {
     private final BufferedReader reader;
     private final PrintWriter writer;
     private final PrintWriter errorWriter;
-    private final Formatter formatter;
 
-    public LegacyConsole() {
-        this.reader = new BufferedReader(new InputStreamReader(System.in, Charset.defaultCharset()));
-        this.writer = new PrintWriter(System.out, true);
-        this.errorWriter = new PrintWriter(System.err, true);
-        this.formatter = new Formatter(writer);
+    ScriptingConsole(ScriptContext context) {
+        this.reader = new BufferedReader(context.getReader());
+        this.writer = printWriter(context.getWriter());
+        this.errorWriter = printWriter(context.getErrorWriter());
+    }
+
+    private static PrintWriter printWriter(Writer writer) {
+        if (writer instanceof PrintWriter) {
+            return (PrintWriter) writer;
+        }
+        return new PrintWriter(writer, true);
     }
 
     @Override
     public void printf(String format, Object... args) {
-        formatter.format(format, args).flush();
+        writer.format(format, args).flush();
     }
 
     @Override
@@ -47,7 +54,7 @@ public final class LegacyConsole implements ShellConsole {
         try {
             return reader.readLine();
         } catch (IOException e) {
-            throw new IOError(e);
+            throw new UncheckedIOException(e);
         }
     }
 

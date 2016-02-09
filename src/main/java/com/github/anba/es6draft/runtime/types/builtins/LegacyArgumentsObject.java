@@ -129,6 +129,11 @@ public final class LegacyArgumentsObject extends OrdinaryObject {
     }
 
     @Override
+    public String className() {
+        return "Arguments";
+    }
+
+    @Override
     public long getLength() {
         return arguments.length;
     }

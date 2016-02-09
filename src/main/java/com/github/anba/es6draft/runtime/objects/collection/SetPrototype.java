@@ -21,7 +21,6 @@ import com.github.anba.es6draft.runtime.internal.LinkedMap;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.Properties.Accessor;
 import com.github.anba.es6draft.runtime.internal.Properties.AliasFunction;
-import com.github.anba.es6draft.runtime.internal.Properties.AliasFunctions;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
@@ -281,8 +280,8 @@ public final class SetPrototype extends OrdinaryObject implements Initializable 
          * @return the values iterator
          */
         @Function(name = "values", arity = 0, nativeId = SetPrototypeValues.class)
-        @AliasFunctions({ @AliasFunction(name = "keys"),
-                @AliasFunction(name = "[Symbol.iterator]", symbol = BuiltinSymbol.iterator) })
+        @AliasFunction(name = "keys")
+        @AliasFunction(name = "[Symbol.iterator]", symbol = BuiltinSymbol.iterator)
         public static Object values(ExecutionContext cx, Object thisValue) {
             /* steps 1-2 */
             return CreateSetIterator(cx, thisValue, SetIterationKind.Value);

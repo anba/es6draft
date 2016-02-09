@@ -60,8 +60,9 @@ public final class StackTraces {
      * @return the top script stack trace element
      */
     public static StackTraceElement getTopStackTraceElement(ErrorObject e) {
-        for (StackTraceElement element : new StackTraceElementIterable(e)) {
-            return element;
+        Iterator<StackTraceElement> iterator = new StackTraceElementIterator(e);
+        if (iterator.hasNext()) {
+            return iterator.next();
         }
         throw new AssertionError();
     }
@@ -74,8 +75,9 @@ public final class StackTraces {
      * @return the top script stack trace element
      */
     public static StackTraceElement getTopStackTraceElement(Throwable e) {
-        for (StackTraceElement element : new StackTraceElementIterable2(e)) {
-            return element;
+        Iterator<StackTraceElement> iterator = new StackTraceElementIterator(e);
+        if (iterator.hasNext()) {
+            return iterator.next();
         }
         throw new AssertionError();
     }
@@ -88,7 +90,7 @@ public final class StackTraces {
      * @return the script stack trace elements
      */
     public static Iterable<StackTraceElement> getStackTrace(ErrorObject e) {
-        return new StackTraceElementIterable(e);
+        return () -> new StackTraceElementIterator(e);
     }
 
     /**
@@ -99,7 +101,7 @@ public final class StackTraces {
      * @return the script stack trace elements
      */
     public static Iterable<StackTraceElement> getStackTrace(Throwable e) {
-        return new StackTraceElementIterable2(e);
+        return () -> new StackTraceElementIterator(e);
     }
 
     /**
@@ -139,32 +141,6 @@ public final class StackTraces {
         String className = "", methodName = getMethodName(e), fileName = e.getFileName();
         int lineNumber = e.getLineNumber();
         return new StackTraceElement(className, methodName, fileName, lineNumber);
-    }
-
-    private static final class StackTraceElementIterable implements Iterable<StackTraceElement> {
-        private final ErrorObject error;
-
-        StackTraceElementIterable(ErrorObject error) {
-            this.error = error;
-        }
-
-        @Override
-        public Iterator<StackTraceElement> iterator() {
-            return new StackTraceElementIterator(error);
-        }
-    }
-
-    private static final class StackTraceElementIterable2 implements Iterable<StackTraceElement> {
-        private final Throwable exception;
-
-        StackTraceElementIterable2(Throwable exception) {
-            this.exception = exception;
-        }
-
-        @Override
-        public Iterator<StackTraceElement> iterator() {
-            return new StackTraceElementIterator(exception);
-        }
     }
 
     private static final class StackTraceElementIterator extends SimpleIterator<StackTraceElement> {

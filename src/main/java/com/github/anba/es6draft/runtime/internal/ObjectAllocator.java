@@ -18,6 +18,8 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * @see OrdinaryObject#ObjectCreate(ExecutionContext, Intrinsics, ObjectAllocator)
  * @see OrdinaryObject#ObjectCreate(ExecutionContext, ScriptObject, ObjectAllocator)
  */
+// TODO: Replace with Function<Realm, OrdinaryObject>?
+@FunctionalInterface
 public interface ObjectAllocator<OBJECT extends OrdinaryObject> {
     /**
      * Allocates a new instance of the requested class.

@@ -6,9 +6,6 @@
  */
 package com.github.anba.es6draft.test262;
 
-import static com.github.anba.es6draft.test262.Test262GlobalObject.newGlobalObjectAllocator;
-import static com.github.anba.es6draft.util.Functional.intoCollection;
-import static com.github.anba.es6draft.util.Functional.toStrings;
 import static com.github.anba.es6draft.util.Resources.loadConfiguration;
 import static com.github.anba.es6draft.util.matchers.ErrorMessageMatcher.hasErrorMessage;
 import static com.github.anba.es6draft.util.matchers.PatternMatcher.matchesPattern;
@@ -21,12 +18,13 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
-import java.nio.file.Path;
-import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Predicate;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import org.apache.commons.configuration.Configuration;
 import org.hamcrest.Matchers;
@@ -44,10 +42,7 @@ import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
 import org.junit.runners.Parameterized.UseParametersRunnerFactory;
 
-import com.github.anba.es6draft.repl.console.ShellConsole;
-import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.Strings;
-import com.github.anba.es6draft.util.Functional.BiFunction;
 import com.github.anba.es6draft.util.Parallelized;
 import com.github.anba.es6draft.util.ParameterizedRunnerFactory;
 import com.github.anba.es6draft.util.Resources;
@@ -66,29 +61,22 @@ import com.github.anba.es6draft.util.rules.ExceptionHandlers.StandardErrorHandle
 public final class Test262Strict {
     private static final Configuration configuration = loadConfiguration(Test262Strict.class);
     private static final DefaultMode unmarkedDefault = DefaultMode.forName(configuration.getString("unmarked_default"));
-    private static final Set<String> includeFeatures = intoCollection(
-            toStrings(configuration.getList("include.features")), new HashSet<String>());
-    private static final Set<String> excludeFeatures = intoCollection(
-            toStrings(configuration.getList("exclude.features")), new HashSet<String>());
+    private static final Set<String> includeFeatures = stringSet(configuration.getList("include.features"));
+    private static final Set<String> excludeFeatures = stringSet(configuration.getList("exclude.features"));
+
+    public static final Set<String> stringSet(List<?> xs) {
+        Predicate<String> nonEmpty = ((Predicate<String>) String::isEmpty).negate();
+        return xs.stream().filter(Objects::nonNull).map(Object::toString).filter(nonEmpty).collect(Collectors.toSet());
+    }
 
     @Parameters(name = "{0}")
     public static List<Test262Info> suiteValues() throws IOException {
-        return Resources.loadTests(configuration, new BiFunction<Path, Path, Test262Info>() {
-            @Override
-            public Test262Info apply(Path basedir, Path file) {
-                return new Test262Info(basedir, file);
-            }
-        });
+        return Resources.loadTests(configuration, Test262Info::new);
     }
 
     @ClassRule
     public static TestGlobals<Test262GlobalObject, Test262Info> globals = new TestGlobals<Test262GlobalObject, Test262Info>(
-            configuration) {
-        @Override
-        protected ObjectAllocator<Test262GlobalObject> newAllocator(ShellConsole console) {
-            return newGlobalObjectAllocator(console);
-        }
-    };
+            configuration, Test262GlobalObject::new);
 
     @Rule
     public TestWatcher watcher = new TestWatcher() {

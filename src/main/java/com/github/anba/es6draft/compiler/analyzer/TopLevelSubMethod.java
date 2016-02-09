@@ -6,7 +6,6 @@
  */
 package com.github.anba.es6draft.compiler.analyzer;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import com.github.anba.es6draft.ast.ArrowFunction;
@@ -28,11 +27,10 @@ abstract class TopLevelSubMethod<STATEMENT extends ModuleItem, NODE extends TopL
         @Override
         int processNode(FunctionNode node, int oldSize) {
             assert !(node instanceof ArrowFunction && ((ArrowFunction) node).getExpression() != null);
-            assert !(node instanceof AsyncArrowFunction && ((AsyncArrowFunction) node)
-                    .getExpression() != null);
+            assert !(node instanceof AsyncArrowFunction && ((AsyncArrowFunction) node).getExpression() != null);
 
-            List<StatementListItem> newStatements = super.visitTopLevel(node.getStatements(),
-                    new StatementListItemConflater());
+            List<StatementListItem> newStatements = subdivide(node.getStatements(), new StatementListItemConflater(),
+                    MAX_STATEMENT_SIZE);
             node.setStatements(newStatements);
             return validateSize(node, node.getStatements());
         }
@@ -41,8 +39,8 @@ abstract class TopLevelSubMethod<STATEMENT extends ModuleItem, NODE extends TopL
     static final class ModuleSubMethod extends TopLevelSubMethod<ModuleItem, Module> {
         @Override
         int processNode(Module node, int oldSize) {
-            List<ModuleItem> newStatements = super.visitTopLevel(node.getStatements(),
-                    new ModuleItemConflater());
+            List<ModuleItem> newStatements = subdivide(node.getStatements(), new ModuleItemConflater(),
+                    MAX_STATEMENT_SIZE);
             node.setStatements(newStatements);
             return validateSize(node, node.getStatements());
         }
@@ -51,15 +49,15 @@ abstract class TopLevelSubMethod<STATEMENT extends ModuleItem, NODE extends TopL
     static final class ScriptSubMethod extends TopLevelSubMethod<StatementListItem, Script> {
         @Override
         int processNode(Script node, int oldSize) {
-            List<StatementListItem> newStatements = super.visitTopLevel(node.getStatements(),
-                    new StatementListItemConflater());
+            List<StatementListItem> newStatements = subdivide(node.getStatements(), new StatementListItemConflater(),
+                    MAX_STATEMENT_SIZE);
             node.setStatements(newStatements);
             return validateSize(node, node.getStatements());
         }
     }
 
-    private static abstract class StatementConflater<STATEMENT extends ModuleItem> extends
-            Conflater<STATEMENT, STATEMENT> {
+    private static abstract class StatementConflater<STATEMENT extends ModuleItem>
+            extends Conflater<STATEMENT, STATEMENT> {
         final CodeSizeVisitor visitor = new CodeSizeVisitor();
         final CodeSizeHandler handler = new EmptyHandler();
 
@@ -74,8 +72,7 @@ abstract class TopLevelSubMethod<STATEMENT extends ModuleItem, NODE extends TopL
         }
     }
 
-    private static final class StatementListItemConflater extends
-            StatementConflater<StatementListItem> {
+    private static final class StatementListItemConflater extends StatementConflater<StatementListItem> {
         @Override
         protected StatementListItem newTarget(List<StatementListItem> list) {
             return new StatementListMethod(list);
@@ -87,18 +84,5 @@ abstract class TopLevelSubMethod<STATEMENT extends ModuleItem, NODE extends TopL
         protected ModuleItem newTarget(List<ModuleItem> list) {
             return new StatementListMethod(list);
         }
-    }
-
-    private List<STATEMENT> visitTopLevel(List<STATEMENT> statements,
-            StatementConflater<STATEMENT> conflater) {
-        // Don't need to consider break/continue statements at top-level, simply
-        // subdivide statement list into smaller parts.
-        boolean needsRerun;
-        do {
-            ArrayList<STATEMENT> newStatements = new ArrayList<>(statements);
-            needsRerun = conflater.conflate(newStatements, newStatements, MAX_STATEMENT_SIZE);
-            statements = newStatements;
-        } while (needsRerun);
-        return statements;
     }
 }

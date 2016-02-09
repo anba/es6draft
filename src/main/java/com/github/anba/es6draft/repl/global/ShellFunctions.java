@@ -35,7 +35,6 @@ import com.github.anba.es6draft.compiler.CompilationException;
 import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.Task;
 import com.github.anba.es6draft.runtime.internal.DebugInfo;
 import com.github.anba.es6draft.runtime.internal.Errors;
 import com.github.anba.es6draft.runtime.internal.Messages;
@@ -216,9 +215,8 @@ public final class ShellFunctions {
             // script objects
             id = String.format("%s@%x", object.getClass().getSimpleName(), System.identityHashCode(object));
         }
-        PrintWriter writer = cx.getRuntimeContext().getWriter();
+        PrintWriter writer = cx.getRuntimeContext().getConsole().writer();
         writer.println(id);
-        writer.flush();
     }
 
     /**
@@ -231,9 +229,8 @@ public final class ShellFunctions {
      */
     @Function(name = "dumpObject", arity = 1)
     public void dumpObject(ExecutionContext cx, ScriptObject object) {
-        PrintWriter writer = cx.getRuntimeContext().getWriter();
+        PrintWriter writer = cx.getRuntimeContext().getConsole().writer();
         writer.println(object.toString());
-        writer.flush();
     }
 
     /**
@@ -247,9 +244,8 @@ public final class ShellFunctions {
     @Function(name = "dumpScope", arity = 0)
     public void dumpScope(ExecutionContext cx, ExecutionContext caller) {
         if (caller.getLexicalEnvironment() != null) {
-            PrintWriter writer = cx.getRuntimeContext().getWriter();
+            PrintWriter writer = cx.getRuntimeContext().getConsole().writer();
             writer.println(caller.getLexicalEnvironment().toString());
-            writer.flush();
         }
     }
 
@@ -261,9 +257,8 @@ public final class ShellFunctions {
      */
     @Function(name = "dumpSymbolRegistry", arity = 0)
     public void dumpSymbolRegistry(ExecutionContext cx) {
-        PrintWriter writer = cx.getRuntimeContext().getWriter();
+        PrintWriter writer = cx.getRuntimeContext().getConsole().writer();
         writer.println(cx.getRealm().getSymbolRegistry().toString());
-        writer.flush();
     }
 
     /**
@@ -274,9 +269,8 @@ public final class ShellFunctions {
      */
     @Function(name = "dumpTemplateMap", arity = 0)
     public void dumpTemplateMap(ExecutionContext cx) {
-        PrintWriter writer = cx.getRuntimeContext().getWriter();
+        PrintWriter writer = cx.getRuntimeContext().getConsole().writer();
         writer.println(cx.getRealm().getTemplateMap().toString());
-        writer.flush();
     }
 
     /**
@@ -316,7 +310,7 @@ public final class ShellFunctions {
      */
     @Function(name = "putstr", arity = 1)
     public void putstr(ExecutionContext cx, String message) {
-        PrintWriter writer = cx.getRuntimeContext().getWriter();
+        PrintWriter writer = cx.getRuntimeContext().getConsole().writer();
         writer.print(message);
         writer.flush();
     }
@@ -330,13 +324,8 @@ public final class ShellFunctions {
      *            the callback function
      */
     @Function(name = "nextTick", arity = 1)
-    public void nextTick(final ExecutionContext cx, final Callable function) {
-        cx.getRealm().enqueuePromiseTask(new Task() {
-            @Override
-            public void execute() {
-                function.call(cx, UNDEFINED);
-            }
-        });
+    public void nextTick(ExecutionContext cx, Callable function) {
+        cx.getRealm().enqueuePromiseTask(() -> function.call(cx, UNDEFINED));
     }
 
     /**
@@ -422,10 +411,9 @@ public final class ShellFunctions {
             }
         }
         if (debugInfo != null) {
-            PrintWriter writer = cx.getRuntimeContext().getWriter();
+            PrintWriter writer = cx.getRuntimeContext().getConsole().writer();
             for (DebugInfo.Method method : debugInfo.getMethods()) {
                 writer.println(method.disassemble());
-                writer.flush();
             }
         }
     }

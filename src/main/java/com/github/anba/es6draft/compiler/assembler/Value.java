@@ -9,9 +9,13 @@ package com.github.anba.es6draft.compiler.assembler;
 /**
  *
  */
-public abstract class Value<V> {
-    protected Value() {
-    }
-
-    protected abstract void load(InstructionAssembler assembler);
+@FunctionalInterface
+public interface Value<V> {
+    /**
+     * Loads this value onto the stack.
+     * 
+     * @param assembler
+     *            the instruction assembler
+     */
+    void load(InstructionAssembler assembler);
 }

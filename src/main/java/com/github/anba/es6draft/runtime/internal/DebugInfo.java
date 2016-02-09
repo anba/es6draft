@@ -6,6 +6,9 @@
  */
 package com.github.anba.es6draft.runtime.internal;
 
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandleInfo;
+import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
@@ -22,12 +25,18 @@ public final class DebugInfo {
      *
      */
     public static final class Method {
-        private final Class<?> owner;
-        private final String name;
+        private final MethodHandle handle;
+        private MethodHandleInfo info;
 
-        Method(Class<?> owner, String name) {
-            this.owner = owner;
-            this.name = name;
+        Method(MethodHandle handle) {
+            this.handle = handle;
+        }
+
+        private MethodHandleInfo info() {
+            if (info == null) {
+                info = MethodHandles.publicLookup().revealDirect(handle);
+            }
+            return info;
         }
 
         /**
@@ -36,7 +45,7 @@ public final class DebugInfo {
          * @return the declaring class
          */
         public Class<?> getDeclaringClass() {
-            return owner;
+            return info().getDeclaringClass();
         }
 
         /**
@@ -45,12 +54,12 @@ public final class DebugInfo {
          * @return the method name
          */
         public String getName() {
-            return name;
+            return info().getName();
         }
 
         @Override
         public String toString() {
-            return String.format("class=%s, method=%s", owner, name);
+            return String.format("class=%s, method=%s", getDeclaringClass(), getName());
         }
 
         /**
@@ -73,8 +82,8 @@ public final class DebugInfo {
     }
 
     // called from generated code
-    public void addMethod(Class<?> owner, String name) {
-        methods.add(new Method(owner, name));
+    public void addMethod(MethodHandle handle) {
+        methods.add(new Method(handle));
     }
 
     /**

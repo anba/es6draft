@@ -26,8 +26,7 @@ public final class ScriptingFunctions {
      */
     @Function(name = "print", arity = 1)
     public void print(ExecutionContext cx, String... messages) {
-        PrintWriter writer = cx.getRuntimeContext().getWriter();
+        PrintWriter writer = cx.getRuntimeContext().getConsole().writer();
         writer.println(Strings.concatWith(' ', messages));
-        writer.flush();
     }
 }

@@ -60,6 +60,11 @@ public final class ArgumentsObject extends OrdinaryObject {
     }
 
     @Override
+    public String className() {
+        return "Arguments";
+    }
+
+    @Override
     public boolean hasIndexedAccessors() {
         return hasIndexedAccessors;
     }

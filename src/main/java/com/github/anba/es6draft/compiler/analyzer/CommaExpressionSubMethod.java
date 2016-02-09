@@ -32,14 +32,6 @@ final class CommaExpressionSubMethod extends ListSubMethod<CommaExpression> {
         }
     }
 
-    private static final class ExpressionElementMapper implements
-            NodeElementMapper<Expression, ExpressionElement> {
-        @Override
-        public ExpressionElement map(Expression node, int size, int index) {
-            return new ExpressionElement(node, size, index);
-        }
-    }
-
     private static final class ExpressionConflater extends Conflater<ExpressionElement, Expression> {
         @Override
         protected int getSourceSize(ExpressionElement source) {
@@ -59,9 +51,8 @@ final class CommaExpressionSubMethod extends ListSubMethod<CommaExpression> {
 
     @Override
     int processNode(CommaExpression node, int oldSize) {
-        List<Expression> newOperands = newNodes(oldSize, node.getOperands(),
-                new ExpressionElementMapper(), new ExpressionConflater(), MAX_EXPR_SIZE,
-                MAX_EXPR_SIZE, MAX_EXPR_SIZE);
+        List<Expression> newOperands = newNodes(oldSize, node.getOperands(), ExpressionElement::new,
+                new ExpressionConflater(), MAX_EXPR_SIZE, MAX_EXPR_SIZE, MAX_EXPR_SIZE);
         node.setOperands(newOperands);
         return validateSize(node);
     }

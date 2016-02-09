@@ -33,8 +33,12 @@ public interface EnvironmentRecord {
      *            the strict mode flag
      * @return the binding value
      */
-    // TODO: add default implementation
-    Object getBindingValueOrNull(String name, boolean strict);
+    default Object getBindingValueOrNull(String name, boolean strict) {
+        if (hasBinding(name)) {
+            return getBindingValue(name, strict);
+        }
+        return null;
+    }
 
     /**
      * @param name
@@ -43,8 +47,12 @@ public interface EnvironmentRecord {
      *            the strict mode flag
      * @return the binding reference
      */
-    // TODO: add default implementation
-    Reference<? extends EnvironmentRecord, String> getReferenceOrNull(String name, boolean strict);
+    default Reference<? extends EnvironmentRecord, String> getReferenceOrNull(String name, boolean strict) {
+        if (hasBinding(name)) {
+            return new Reference.IdentifierReference<>(this, name, strict);
+        }
+        return null;
+    }
 
     /**
      * HasBinding(N)

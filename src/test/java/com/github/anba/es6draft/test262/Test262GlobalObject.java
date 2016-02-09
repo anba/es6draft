@@ -12,11 +12,9 @@ import java.nio.file.Paths;
 
 import com.github.anba.es6draft.compiler.CompilationException;
 import com.github.anba.es6draft.parser.ParserException;
-import com.github.anba.es6draft.repl.console.ShellConsole;
 import com.github.anba.es6draft.repl.global.BaseShellFunctions;
 import com.github.anba.es6draft.repl.global.ShellGlobalObject;
 import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.Source;
 import com.github.anba.es6draft.runtime.modules.MalformedNameException;
 import com.github.anba.es6draft.runtime.modules.ModuleLoader;
@@ -30,24 +28,8 @@ import com.github.anba.es6draft.runtime.modules.loader.StringModuleSource;
  * Global object for test262 tests, includes all necessary global function definitions.
  */
 public final class Test262GlobalObject extends ShellGlobalObject {
-    Test262GlobalObject(Realm realm, ShellConsole console) {
-        super(realm, console);
-    }
-
-    /**
-     * Returns an object to allocate new instances of this class.
-     * 
-     * @param console
-     *            the console object
-     * @return the object allocator to construct new global object instances
-     */
-    public static ObjectAllocator<Test262GlobalObject> newGlobalObjectAllocator(final ShellConsole console) {
-        return new ObjectAllocator<Test262GlobalObject>() {
-            @Override
-            public Test262GlobalObject newInstance(Realm realm) {
-                return new Test262GlobalObject(realm, console);
-            }
-        };
+    Test262GlobalObject(Realm realm) {
+        super(realm);
     }
 
     @Override

@@ -13,7 +13,6 @@ import static com.github.anba.es6draft.runtime.internal.Properties.createPropert
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initializable;
-import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
@@ -119,8 +118,7 @@ public final class NativeErrorConstructor extends BuiltinConstructor implements 
         Object message = argument(args, 0);
         /* step 1 (not applicable) */
         /* steps 2-3 */
-        ErrorObject obj = OrdinaryCreateFromConstructor(calleeContext, newTarget, type.prototype(),
-                NativeErrorObjectAllocator.INSTANCE);
+        ErrorObject obj = OrdinaryCreateFromConstructor(calleeContext, newTarget, type.prototype(), ErrorObject::new);
         /* step 4 */
         if (!Type.isUndefined(message)) {
             CharSequence msg = ToString(calleeContext, message);
@@ -143,15 +141,6 @@ public final class NativeErrorConstructor extends BuiltinConstructor implements 
 
         /* step 5 */
         return obj;
-    }
-
-    private static final class NativeErrorObjectAllocator implements ObjectAllocator<ErrorObject> {
-        static final ObjectAllocator<ErrorObject> INSTANCE = new NativeErrorObjectAllocator();
-
-        @Override
-        public ErrorObject newInstance(Realm realm) {
-            return new ErrorObject(realm);
-        }
     }
 
     private static Class<?> propertiesForType(ErrorType errorType) {

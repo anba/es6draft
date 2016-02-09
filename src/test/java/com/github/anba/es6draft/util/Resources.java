@@ -6,8 +6,6 @@
  */
 package com.github.anba.es6draft.util;
 
-import static com.github.anba.es6draft.util.Functional.intoCollection;
-import static com.github.anba.es6draft.util.Functional.toStrings;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 
@@ -17,6 +15,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystems;
 import java.nio.file.FileVisitResult;
@@ -29,8 +28,12 @@ import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -48,9 +51,6 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
-
-import com.github.anba.es6draft.util.Functional.BiFunction;
-import com.github.anba.es6draft.util.Functional.Function;
 
 /**
  * Resource and configuration loading utility
@@ -105,8 +105,8 @@ public final class Resources {
             properties.getInterpolator().setParentInterpolator(MISSING_VAR);
             properties.load(resource(file), "UTF-8");
 
-            Configuration configuration = new CompositeConfiguration(Arrays.asList(
-                    new SystemConfiguration(), properties));
+            Configuration configuration = new CompositeConfiguration(
+                    Arrays.asList(new SystemConfiguration(), properties));
             return configuration.subset(name);
         } catch (ConfigurationException | IOException e) {
             throw new RuntimeException(e);
@@ -116,18 +116,16 @@ public final class Resources {
     }
 
     /**
-     * Loads the named resource through {@link Class#getResourceAsStream(String)} if the uri starts
-     * with "resource:", otherwise loads the resource with
-     * {@link Files#newInputStream(Path, java.nio.file.OpenOption...)}.
+     * Loads the named resource through {@link Class#getResourceAsStream(String)} if the uri starts with "resource:",
+     * otherwise loads the resource with {@link Files#newInputStream(Path, java.nio.file.OpenOption...)}.
      */
     public static InputStream resource(String uri) throws IOException {
         return resource(uri, Paths.get(""));
     }
 
     /**
-     * Loads the named resource through {@link Class#getResourceAsStream(String)} if the uri starts
-     * with "resource:", otherwise loads the resource with
-     * {@link Files#newInputStream(Path, java.nio.file.OpenOption...)}.
+     * Loads the named resource through {@link Class#getResourceAsStream(String)} if the uri starts with "resource:",
+     * otherwise loads the resource with {@link Files#newInputStream(Path, java.nio.file.OpenOption...)}.
      */
     public static InputStream resource(String uri, Path basedir) throws IOException {
         final String RESOURCE = "resource:";
@@ -179,14 +177,14 @@ public final class Resources {
      * Load the test files based on the supplied {@link Configuration}.
      */
     public static List<TestInfo> loadTests(Configuration config) throws IOException {
-        return loadTests(config, defaultCreate);
+        return loadTests(config, TestInfo::new);
     }
 
     /**
      * Load the test files based on the supplied {@link Configuration}.
      */
-    public static <TEST extends TestInfo> List<TEST> loadTests(Configuration config,
-            BiFunction<Path, Path, TEST> fn) throws IOException {
+    public static <TEST extends TestInfo> List<TEST> loadTests(Configuration config, BiFunction<Path, Path, TEST> fn)
+            throws IOException {
         if (!isEnabled(config)) {
             return emptyList();
         }
@@ -215,8 +213,8 @@ public final class Resources {
     /**
      * Recursively searches for js-file test cases in {@code basedir} and its sub-directories.
      */
-    private static <TEST extends TestInfo> List<TEST> loadTests(Configuration config,
-            Function<Path, TEST> mapper, Path basedir) throws IOException {
+    private static <TEST extends TestInfo> List<TEST> loadTests(Configuration config, Function<Path, TEST> mapper,
+            Path basedir) throws IOException {
         FilterFileVisitor<Path> ffv = new FilterFileVisitor<Path>(basedir, new FileMatcher(config));
         CollectorFileVisitor<Path, TEST> cfv = new CollectorFileVisitor<>(ffv, mapper);
         Files.walkFileTree(basedir, cfv);
@@ -241,21 +239,19 @@ public final class Resources {
     /**
      * Filter the initially collected test cases.
      */
-    private static void filterTests(List<? extends TestInfo> tests, Path basedir,
-            Configuration config) throws IOException {
+    private static void filterTests(List<? extends TestInfo> tests, Path basedir, Configuration config)
+            throws IOException {
         if (DISABLE_ALL_TESTS) {
             for (TestInfo test : tests) {
                 test.setEnabled(false);
             }
         }
         if (config.containsKey("exclude.list")) {
-            InputStream exclusionList = Resources.resource(config.getString("exclude.list"),
-                    basedir);
+            InputStream exclusionList = Resources.resource(config.getString("exclude.list"), basedir);
             filterTests(tests, exclusionList, config);
         }
         if (config.containsKey("exclude.xml")) {
-            Set<String> excludes = readExcludeXMLs(config.getList("exclude.xml", emptyList()),
-                    basedir);
+            Set<String> excludes = readExcludeXMLs(config.getList("exclude.xml", emptyList()), basedir);
             filterTests(tests, excludes);
         }
     }
@@ -263,16 +259,15 @@ public final class Resources {
     /**
      * Filter the initially collected test cases.
      */
-    private static void filterTests(List<? extends TestInfo> tests, InputStream resource,
-            Configuration config) throws IOException {
+    private static void filterTests(List<? extends TestInfo> tests, InputStream resource, Configuration config)
+            throws IOException {
         // list->map
         Map<Path, TestInfo> map = new LinkedHashMap<>();
         for (TestInfo test : tests) {
             map.put(test.getScript(), test);
         }
         // disable tests
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(resource,
-                StandardCharsets.UTF_8))) {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(resource, StandardCharsets.UTF_8))) {
             FileMatcher fileMatcher = null;
             String line;
             while ((line = reader.readLine()) != null) {
@@ -330,12 +325,16 @@ public final class Resources {
      */
     private static Set<String> readExcludeXMLs(List<?> values, Path basedir) throws IOException {
         Set<String> exclude = new HashSet<>();
-        for (String s : Functional.toStrings(values)) {
+        for (String s : nonEmpty(values)) {
             try (InputStream res = Resources.resource(s, basedir)) {
                 exclude.addAll(readExcludeXML(res));
             }
         }
         return exclude;
+    }
+
+    private static Iterable<String> nonEmpty(List<?> c) {
+        return () -> c.stream().filter(x -> (x != null && !x.toString().isEmpty())).map(Object::toString).iterator();
     }
 
     /**
@@ -379,33 +378,16 @@ public final class Resources {
         }
     }
 
-    private static final BiFunction<Path, Path, TestInfo> defaultCreate = new BiFunction<Path, Path, TestInfo>() {
-        @Override
-        public TestInfo apply(Path basedir, Path file) {
-            return new TestInfo(basedir, file);
-        }
-    };
-
-    private static <T extends TestInfo> Function<Path, T> mapper(
-            final BiFunction<Path, Path, T> fn, final Path basedir) {
-        return new Function<Path, T>() {
-            @Override
-            public T apply(Path file) {
-                return fn.apply(basedir, file);
-            }
-        };
+    private static <T extends TestInfo> Function<Path, T> mapper(BiFunction<Path, Path, T> fn, Path basedir) {
+        return file -> fn.apply(basedir, file);
     }
 
-    private static <T extends TestInfo> Function<Path, T> mapper(
-            final BiFunction<Path, Iterator<String>, T> fn) {
-        return new Function<Path, T>() {
-            @Override
-            public T apply(Path file) {
-                try (BufferedReader reader = Files.newBufferedReader(file, StandardCharsets.UTF_8)) {
-                    return fn.apply(file, new LineIterator(reader));
-                } catch (IOException e) {
-                    throw new UncheckedIOException(e);
-                }
+    private static <T extends TestInfo> Function<Path, T> mapper(BiFunction<Path, Iterator<String>, T> fn) {
+        return file -> {
+            try (BufferedReader reader = Files.newBufferedReader(file, StandardCharsets.UTF_8)) {
+                return fn.apply(file, new LineIterator(reader));
+            } catch (IOException e) {
+                throw new UncheckedIOException(e);
             }
         };
     }
@@ -439,15 +421,9 @@ public final class Resources {
             this.line = null;
             return line;
         }
-
-        @Override
-        public void remove() {
-            throw new UnsupportedOperationException();
-        }
     }
 
-    private static final class CollectorFileVisitor<PATH extends Path, T> extends
-            SimpleFileVisitor<PATH> {
+    private static final class CollectorFileVisitor<PATH extends Path, T> extends SimpleFileVisitor<PATH> {
         private final FileVisitor<PATH> visitor;
         private Function<PATH, T> mapper;
         private ArrayList<T> result = new ArrayList<>();
@@ -462,8 +438,7 @@ public final class Resources {
         }
 
         @Override
-        public FileVisitResult preVisitDirectory(PATH dir, BasicFileAttributes attrs)
-                throws IOException {
+        public FileVisitResult preVisitDirectory(PATH dir, BasicFileAttributes attrs) throws IOException {
             return visitor.preVisitDirectory(dir, attrs);
         }
 
@@ -490,8 +465,7 @@ public final class Resources {
         }
 
         @Override
-        public FileVisitResult preVisitDirectory(PATH path, BasicFileAttributes attrs)
-                throws IOException {
+        public FileVisitResult preVisitDirectory(PATH path, BasicFileAttributes attrs) throws IOException {
             Path dir = basedir.relativize(path);
             if (fileMatcher.matchesDirectory(dir)) {
                 return FileVisitResult.CONTINUE;
@@ -528,26 +502,24 @@ public final class Resources {
             List<Object> excludeFiles = config.getList("exclude.files", emptyList());
 
             this.includeMatchers = matchers(toStrings(include));
-            this.includeDirs = intoCollection(toStrings(includeDirs), new HashSet<String>());
-            this.includeFiles = intoCollection(toStrings(includeFiles), new HashSet<String>());
+            this.includeDirs = toStrings(includeDirs).collect(Collectors.toSet());
+            this.includeFiles = toStrings(includeFiles).collect(Collectors.toSet());
             this.excludeMatchers = matchers(toStrings(exclude));
-            this.excludeDirs = intoCollection(toStrings(excludeDirs), new HashSet<String>());
-            this.excludeFiles = intoCollection(toStrings(excludeFiles), new HashSet<String>());
+            this.excludeDirs = toStrings(excludeDirs).collect(Collectors.toSet());
+            this.excludeFiles = toStrings(excludeFiles).collect(Collectors.toSet());
             this.includePrefixList = toPrefixList(toStrings(include));
             this.excludePrefixList = toPrefixList(toStrings(exclude));
         }
 
-        private static List<String> toPrefixList(Iterable<String> patterns) {
+        private static final Stream<String> toStrings(List<?> values) {
+            return values.stream().filter(v -> (v != null && !v.toString().isEmpty())).map(Object::toString);
+        }
+
+        private static List<String> toPrefixList(Stream<String> patterns) {
             Pattern dirPattern = Pattern.compile("^(?:glob:)?((?:[^/*?,{}\\[\\]\\\\]+/)+).*$");
-            List<String> prefixList = new ArrayList<>();
-            for (String pattern : patterns) {
-                Matcher m = dirPattern.matcher(pattern);
-                if (!m.matches()) {
-                    return Collections.emptyList();
-                }
-                prefixList.add(m.group(1));
-            }
-            return prefixList;
+            List<String> list = patterns.map(dirPattern::matcher).map(m -> m.matches() ? m.group(1) : null)
+                    .collect(Collectors.toList());
+            return list.stream().allMatch(Objects::nonNull) ? list : Collections.emptyList();
         }
 
         public boolean matchesDirectory(Path directory) {
@@ -570,15 +542,13 @@ public final class Resources {
             return false;
         }
 
-        private static List<PathMatcher> matchers(Iterable<String> patterns) {
-            List<PathMatcher> matchers = new ArrayList<>();
-            for (String pattern : patterns) {
+        private static List<PathMatcher> matchers(Stream<String> patterns) {
+            return patterns.map(pattern -> {
                 if (!(pattern.startsWith("glob:") || pattern.startsWith("regex:"))) {
                     pattern = "glob:" + pattern;
                 }
-                matchers.add(FileSystems.getDefault().getPathMatcher(pattern));
-            }
-            return matchers;
+                return pattern;
+            }).map(pattern -> FileSystems.getDefault().getPathMatcher(pattern)).collect(Collectors.toList());
         }
 
         private static boolean matches(Set<String> names, Path path) {

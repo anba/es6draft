@@ -16,7 +16,6 @@ import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initializable;
 import com.github.anba.es6draft.runtime.internal.Messages;
-import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
@@ -78,8 +77,8 @@ public final class WeakMapConstructor extends BuiltinConstructor implements Init
 
         /* step 1 (not applicable) */
         /* steps 2-4 */
-        WeakMapObject map = OrdinaryCreateFromConstructor(calleeContext, newTarget,
-                Intrinsics.WeakMapPrototype, WeakMapObjectAllocator.INSTANCE);
+        WeakMapObject map = OrdinaryCreateFromConstructor(calleeContext, newTarget, Intrinsics.WeakMapPrototype,
+                WeakMapObject::new);
         /* steps 5-6, 8 */
         if (Type.isUndefinedOrNull(iterable)) {
             return map;
@@ -107,15 +106,6 @@ public final class WeakMapConstructor extends BuiltinConstructor implements Init
         } catch (ScriptException e) {
             iter.close(e);
             throw e;
-        }
-    }
-
-    private static final class WeakMapObjectAllocator implements ObjectAllocator<WeakMapObject> {
-        static final ObjectAllocator<WeakMapObject> INSTANCE = new WeakMapObjectAllocator();
-
-        @Override
-        public WeakMapObject newInstance(Realm realm) {
-            return new WeakMapObject(realm);
         }
     }
 

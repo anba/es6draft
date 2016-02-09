@@ -83,7 +83,6 @@ import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Property;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
-import com.github.anba.es6draft.runtime.types.Symbol;
 import com.github.anba.es6draft.runtime.types.builtins.ArrayObject;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 import com.github.anba.es6draft.runtime.types.builtins.TypeErrorThrower;
@@ -647,20 +646,10 @@ public final class Realm {
         assert globalThis != null && globalObject != null;
         /* step 2 */
         for (Object key : globalObject.ownPropertyKeys(cx)) {
-            if (key instanceof String) {
-                String propertyKey = (String) key;
-                Property prop = globalObject.getOwnProperty(cx, propertyKey);
-                if (prop != null) {
-                    PropertyDescriptor desc = prop.toPropertyDescriptor();
-                    DefinePropertyOrThrow(cx, globalThis, propertyKey, desc);
-                }
-            } else {
-                Symbol propertyKey = (Symbol) key;
-                Property prop = globalObject.getOwnProperty(cx, propertyKey);
-                if (prop != null) {
-                    PropertyDescriptor desc = prop.toPropertyDescriptor();
-                    DefinePropertyOrThrow(cx, globalThis, propertyKey, desc);
-                }
+            Property prop = globalObject.getOwnProperty(cx, key);
+            if (prop != null) {
+                PropertyDescriptor desc = prop.toPropertyDescriptor();
+                DefinePropertyOrThrow(cx, globalThis, key, desc);
             }
         }
         /* step 3 */

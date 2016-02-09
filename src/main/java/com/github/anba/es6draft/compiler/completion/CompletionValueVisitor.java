@@ -146,28 +146,18 @@ public final class CompletionValueVisitor extends DefaultNodeVisitor<Completion,
         }
     }
 
-    private static <T> Iterable<T> reverse(final List<T> list) {
-        return new Iterable<T>() {
+    private static <T> Iterable<T> reverse(List<T> list) {
+        return () -> new Iterator<T>() {
+            final ListIterator<T> iter = list.listIterator(list.size());
+
             @Override
-            public Iterator<T> iterator() {
-                return new Iterator<T>() {
-                    ListIterator<T> iter = list.listIterator(list.size());
+            public boolean hasNext() {
+                return iter.hasPrevious();
+            }
 
-                    @Override
-                    public boolean hasNext() {
-                        return iter.hasPrevious();
-                    }
-
-                    @Override
-                    public T next() {
-                        return iter.previous();
-                    }
-
-                    @Override
-                    public void remove() {
-                        throw new UnsupportedOperationException();
-                    }
-                };
+            @Override
+            public T next() {
+                return iter.previous();
             }
         };
     }

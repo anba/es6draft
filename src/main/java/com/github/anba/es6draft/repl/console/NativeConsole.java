@@ -19,13 +19,19 @@ public final class NativeConsole implements ShellConsole {
 
     public NativeConsole() {
         this.console = System.console();
-        this.errorWriter = new PrintWriter(System.err);
+        this.errorWriter = new PrintWriter(System.err, true);
     }
 
     @Override
     public void printf(String format, Object... args) {
         console.printf(format, args);
         console.flush();
+    }
+
+    @Override
+    public void flush() {
+        console.flush();
+        errorWriter.flush();
     }
 
     @Override
@@ -54,14 +60,5 @@ public final class NativeConsole implements ShellConsole {
     @Override
     public PrintWriter errorWriter() {
         return errorWriter;
-    }
-
-    @Override
-    public boolean isAnsiSupported() {
-        return false;
-    }
-
-    @Override
-    public void addCompleter(Completer completer) {
     }
 }

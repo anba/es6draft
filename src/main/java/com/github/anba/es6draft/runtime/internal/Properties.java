@@ -13,6 +13,7 @@ import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import java.lang.annotation.Annotation;
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
+import java.lang.annotation.Repeatable;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
@@ -208,6 +209,7 @@ public final class Properties {
     @Documented
     @Target({ ElementType.METHOD })
     @Retention(RetentionPolicy.RUNTIME)
+    @Repeatable(AliasFunctions.class)
     public static @interface AliasFunction {
         /**
          * Returns the function name.
@@ -322,7 +324,7 @@ public final class Properties {
         }
     }
 
-    private static ClassValue<CompactLayout> internalLayouts = new ClassValue<CompactLayout>() {
+    private static final ClassValue<CompactLayout> internalLayouts = new ClassValue<CompactLayout>() {
         @Override
         protected CompactLayout computeValue(Class<?> type) {
             return createInternalObjectLayout(type);
@@ -330,14 +332,14 @@ public final class Properties {
     };
 
     // TODO: Consider adding SoftReference to avoid mem-leaks
-    private static ClassValue<ObjectLayout> externalLayouts = new ClassValue<ObjectLayout>() {
+    private static final ClassValue<ObjectLayout> externalLayouts = new ClassValue<ObjectLayout>() {
         @Override
         protected ObjectLayout computeValue(Class<?> type) {
             return createExternalObjectLayout(type, false);
         }
     };
 
-    private static ClassValue<ObjectLayout> externalClassLayouts = new ClassValue<ObjectLayout>() {
+    private static final ClassValue<ObjectLayout> externalClassLayouts = new ClassValue<ObjectLayout>() {
         @Override
         protected ObjectLayout computeValue(Class<?> type) {
             return createExternalObjectLayout(type, true);
@@ -1122,15 +1124,13 @@ public final class Properties {
                     continue;
                 Function function = method.getAnnotation(Function.class);
                 Accessor accessor = method.getAnnotation(Accessor.class);
-                AliasFunction alias = method.getAnnotation(AliasFunction.class);
-                AliasFunctions aliases = method.getAnnotation(AliasFunctions.class);
+                AliasFunction[] aliases = method.getAnnotationsByType(AliasFunction.class);
                 TailCall tailCall = method.getAnnotation(TailCall.class);
                 Value value = method.getAnnotation(Value.class);
                 assert function == null || (accessor == null && value == null);
                 assert accessor == null || (function == null && value == null);
                 assert value == null || (function == null && accessor == null);
-                assert alias == null || function != null;
-                assert aliases == null || function != null;
+                assert aliases.length == 0 || function != null;
                 assert tailCall == null || function != null;
 
                 if (value != null) {
@@ -1146,13 +1146,8 @@ public final class Properties {
                     } else {
                         properties.add(new FunctionLayout(function, tailCall, mh));
                     }
-                    if (alias != null) {
-                        properties.add(new AliasFunctionLayout(alias, function));
-                    }
-                    if (aliases != null) {
-                        for (AliasFunction a : aliases.value()) {
-                            properties.add(new AliasFunctionLayout(a, function));
-                        }
+                    for (AliasFunction a : aliases) {
+                        properties.add(new AliasFunctionLayout(a, function));
                     }
                 }
             }

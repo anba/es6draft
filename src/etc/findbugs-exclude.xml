@@ -179,6 +179,12 @@
     <Method name="GetMaximizedLocale" />
   </Match>
 
+  <!-- CompletableFuture.completedFuture(null) is valid. -->
+  <Match>
+    <Bug pattern="NP_NONNULL_PARAM_VIOLATION" />
+    <Class name="com.github.anba.es6draft.compiler.CodeGenerator" />
+  </Match>
+
   <!-- System.gc() called to reclaim memory after OOM. -->
   <Match>
     <Bug pattern="DM_GC" />

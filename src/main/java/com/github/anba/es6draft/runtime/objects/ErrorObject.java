@@ -170,6 +170,11 @@ public final class ErrorObject extends OrdinaryObject {
     }
 
     @Override
+    public String className() {
+        return "Error";
+    }
+
+    @Override
     public String toString() {
         String name = getErrorObjectProperty(this, "name", "Error");
         String message = getErrorObjectProperty(this, "message", "");

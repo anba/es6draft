@@ -1418,11 +1418,6 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
             }
             return result.group(group++);
         }
-
-        @Override
-        public void remove() {
-            throw new UnsupportedOperationException();
-        }
     }
 
     private static final class ScriptObjectMatchResult implements MatchResult {

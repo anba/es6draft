@@ -10,7 +10,6 @@ import static com.github.anba.es6draft.util.Resources.loadConfiguration;
 import static org.junit.Assert.fail;
 
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.List;
 
 import org.apache.commons.configuration.Configuration;
@@ -20,7 +19,6 @@ import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
 import org.junit.runners.Parameterized.UseParametersRunnerFactory;
 
-import com.github.anba.es6draft.util.Functional.BiFunction;
 import com.github.anba.es6draft.util.Parallelized;
 import com.github.anba.es6draft.util.ParameterizedRunnerFactory;
 import com.github.anba.es6draft.util.Resources;
@@ -35,12 +33,7 @@ public final class DescriptorTest {
 
     @Parameters(name = "{0}")
     public static List<Test262Info> suiteValues() throws IOException {
-        return Resources.loadTests(configuration, new BiFunction<Path, Path, Test262Info>() {
-            @Override
-            public Test262Info apply(Path basedir, Path file) {
-                return new Test262Info(basedir, file);
-            }
-        });
+        return Resources.loadTests(configuration, Test262Info::new);
     }
 
     @Parameter(0)

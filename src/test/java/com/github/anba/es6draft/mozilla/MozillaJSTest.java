@@ -6,7 +6,6 @@
  */
 package com.github.anba.es6draft.mozilla;
 
-import static com.github.anba.es6draft.mozilla.MozTestGlobalObject.newGlobalObjectAllocator;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToBoolean;
 import static com.github.anba.es6draft.util.Resources.loadConfiguration;
 import static com.github.anba.es6draft.util.Resources.loadTests;
@@ -23,6 +22,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiFunction;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -43,14 +43,10 @@ import org.junit.runners.Parameterized.Parameters;
 import org.junit.runners.Parameterized.UseParametersRunnerFactory;
 import org.junit.runners.model.MultipleFailureException;
 
-import com.github.anba.es6draft.repl.console.ShellConsole;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
-import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.Properties;
 import com.github.anba.es6draft.runtime.internal.Source;
 import com.github.anba.es6draft.runtime.internal.Strings;
-import com.github.anba.es6draft.util.Functional.BiFunction;
-import com.github.anba.es6draft.util.Functional.Function;
 import com.github.anba.es6draft.util.NullConsole;
 import com.github.anba.es6draft.util.Parallelized;
 import com.github.anba.es6draft.util.ParameterizedRunnerFactory;
@@ -74,12 +70,7 @@ public final class MozillaJSTest {
 
     @Parameters(name = "{0}")
     public static List<MozTest> suiteValues() throws IOException {
-        return loadTests(configuration, new Function<Path, BiFunction<Path, Iterator<String>, MozTest>>() {
-            @Override
-            public TestInfos apply(Path basedir) {
-                return new TestInfos(basedir);
-            }
-        });
+        return loadTests(configuration, MozillaJSTest::createTest);
     }
 
     @BeforeClass
@@ -89,15 +80,10 @@ public final class MozillaJSTest {
 
     @ClassRule
     public static TestGlobals<MozTestGlobalObject, TestInfo> globals = new TestGlobals<MozTestGlobalObject, TestInfo>(
-            configuration) {
-        @Override
-        protected ObjectAllocator<MozTestGlobalObject> newAllocator(ShellConsole console) {
-            return newGlobalObjectAllocator(console);
-        }
-
+            configuration, MozTestGlobalObject::new) {
         @Override
         protected EnumSet<CompatibilityOption> getOptions() {
-            EnumSet<CompatibilityOption> options = EnumSet.copyOf(super.getOptions());
+            EnumSet<CompatibilityOption> options = super.getOptions();
             options.add(CompatibilityOption.ArrayBufferMissingLength);
             options.add(CompatibilityOption.ArrayIncludes);
             options.add(CompatibilityOption.Exponentiation);
@@ -272,17 +258,10 @@ public final class MozillaJSTest {
         }
     }
 
-    private static final class TestInfos implements BiFunction<Path, Iterator<String>, MozTest> {
-        private static final Pattern testInfoPattern = Pattern.compile("//\\s*\\|(.+?)\\|\\s*(.*)");
+    private static final Pattern testInfoPattern = Pattern.compile("//\\s*\\|(.+?)\\|\\s*(.*)");
 
-        private final Path basedir;
-
-        public TestInfos(Path basedir) {
-            this.basedir = basedir;
-        }
-
-        @Override
-        public MozTest apply(Path file, Iterator<String> lines) {
+    private static BiFunction<Path, Iterator<String>, MozTest> createTest(Path basedir) {
+        return (file, lines) -> {
             MozTest test = new MozTest(basedir, file);
             // Negative tests end with "-n"
             if (file.getFileName().toString().endsWith("-n.js")) {
@@ -326,18 +305,18 @@ public final class MozillaJSTest {
                 }
             }
             return test;
-        }
+        };
+    }
 
-        private static String[] split(String line) {
-            final String comment = "--";
-            final String ws = "[ \t\n\r\f\013]+";
-            // Remove comment if any
-            int k = line.indexOf(comment);
-            if (k != -1) {
-                line = line.substring(0, k);
-            }
-            // Split at whitespace
-            return line.trim().split(ws);
+    private static String[] split(String line) {
+        final String comment = "--";
+        final String ws = "[ \t\n\r\f\013]+";
+        // Remove comment if any
+        int k = line.indexOf(comment);
+        if (k != -1) {
+            line = line.substring(0, k);
         }
+        // Split at whitespace
+        return line.trim().split(ws);
     }
 }

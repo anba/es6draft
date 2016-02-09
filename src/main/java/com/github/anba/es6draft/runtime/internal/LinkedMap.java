@@ -198,11 +198,6 @@ public class LinkedMap<KEY, VALUE> implements Iterable<Map.Entry<KEY, VALUE>> {
                 cursor = next;
                 return next;
             }
-
-            @Override
-            public void remove() {
-                throw new UnsupportedOperationException();
-            }
         };
     }
 }

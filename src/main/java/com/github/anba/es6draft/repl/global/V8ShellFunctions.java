@@ -26,7 +26,7 @@ public final class V8ShellFunctions {
      */
     @Function(name = "write", arity = 1)
     public void write(ExecutionContext cx, String... messages) {
-        PrintWriter writer = cx.getRuntimeContext().getWriter();
+        PrintWriter writer = cx.getRuntimeContext().getConsole().writer();
         writer.print(Strings.concatWith(' ', messages));
         writer.flush();
     }

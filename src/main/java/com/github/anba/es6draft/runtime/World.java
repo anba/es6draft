@@ -57,15 +57,11 @@ public final class World {
      * 
      * @param context
      *            the runtime context
-     * @param moduleLoader
-     *            the module loader
-     * @param scriptLoader
-     *            the script loader
      */
-    public World(RuntimeContext context, ModuleLoader moduleLoader, ScriptLoader scriptLoader) {
+    public World(RuntimeContext context) {
         this.context = context;
-        this.moduleLoader = moduleLoader;
-        this.scriptLoader = scriptLoader;
+        this.scriptLoader = new ScriptLoader(context);
+        this.moduleLoader = context.getModuleLoader().apply(context, scriptLoader);
         this.messages = Messages.create(context.getLocale());
     }
 

@@ -6,7 +6,6 @@
  */
 package com.github.anba.es6draft.mozilla;
 
-import static com.github.anba.es6draft.mozilla.MozTestGlobalObject.newGlobalObjectAllocator;
 import static com.github.anba.es6draft.util.Resources.loadConfiguration;
 import static com.github.anba.es6draft.util.Resources.loadTests;
 import static com.github.anba.es6draft.util.matchers.ErrorMessageMatcher.hasErrorMessage;
@@ -19,6 +18,7 @@ import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiFunction;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -37,16 +37,12 @@ import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
 import org.junit.runners.Parameterized.UseParametersRunnerFactory;
 
-import com.github.anba.es6draft.repl.console.ShellConsole;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
-import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.Properties;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
-import com.github.anba.es6draft.util.Functional.BiFunction;
-import com.github.anba.es6draft.util.Functional.Function;
 import com.github.anba.es6draft.util.NullConsole;
 import com.github.anba.es6draft.util.Parallelized;
 import com.github.anba.es6draft.util.ParameterizedRunnerFactory;
@@ -68,12 +64,7 @@ public final class MozillaJitTest {
 
     @Parameters(name = "{0}")
     public static List<MozTest> suiteValues() throws IOException {
-        return loadTests(configuration, new Function<Path, BiFunction<Path, Iterator<String>, MozTest>>() {
-            @Override
-            public TestInfos apply(Path basedir) {
-                return new TestInfos(basedir);
-            }
-        });
+        return loadTests(configuration, MozillaJitTest::createTest);
     }
 
     @BeforeClass
@@ -83,15 +74,10 @@ public final class MozillaJitTest {
 
     @ClassRule
     public static TestGlobals<MozTestGlobalObject, MozTest> globals = new TestGlobals<MozTestGlobalObject, MozTest>(
-            configuration) {
-        @Override
-        protected ObjectAllocator<MozTestGlobalObject> newAllocator(ShellConsole console) {
-            return newGlobalObjectAllocator(console);
-        }
-
+            configuration, MozTestGlobalObject::new) {
         @Override
         protected EnumSet<CompatibilityOption> getOptions() {
-            EnumSet<CompatibilityOption> options = EnumSet.copyOf(super.getOptions());
+            EnumSet<CompatibilityOption> options = super.getOptions();
             options.add(CompatibilityOption.ArrayBufferMissingLength);
             options.add(CompatibilityOption.ArrayIncludes);
             options.add(CompatibilityOption.Exponentiation);
@@ -186,16 +172,10 @@ public final class MozillaJitTest {
         }
     }
 
-    private static final class TestInfos implements BiFunction<Path, Iterator<String>, MozTest> {
-        private static final Pattern testInfoPattern = Pattern.compile("//\\s*\\|(.+?)\\|\\s*(.*)");
-        private final Path basedir;
+    private static final Pattern testInfoPattern = Pattern.compile("//\\s*\\|(.+?)\\|\\s*(.*)");
 
-        public TestInfos(Path basedir) {
-            this.basedir = basedir;
-        }
-
-        @Override
-        public MozTest apply(Path file, Iterator<String> lines) {
+    private static BiFunction<Path, Iterator<String>, MozTest> createTest(Path basedir) {
+        return (file, lines) -> {
             MozTest test = new MozTest(basedir, file);
             String line = lines.next();
             Matcher m = testInfoPattern.matcher(line);
@@ -260,6 +240,6 @@ public final class MozillaJitTest {
                 }
             }
             return test;
-        }
+        };
     }
 }

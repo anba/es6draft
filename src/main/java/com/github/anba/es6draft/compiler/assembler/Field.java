@@ -9,7 +9,7 @@ package com.github.anba.es6draft.compiler.assembler;
 /** 
  *
  */
-public final class Field<V> extends Value<V> {
+public final class Field<V> implements Value<V> {
     private final FieldName name;
 
     public Field(FieldName name) {
@@ -21,7 +21,7 @@ public final class Field<V> extends Value<V> {
     }
 
     @Override
-    protected void load(InstructionAssembler assembler) {
+    public void load(InstructionAssembler assembler) {
         assembler.get(name);
     }
 }

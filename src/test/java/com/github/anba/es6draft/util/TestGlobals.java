@@ -6,7 +6,6 @@
  */
 package com.github.anba.es6draft.util;
 
-import static com.github.anba.es6draft.util.Functional.toStrings;
 import static java.util.Collections.emptyList;
 
 import java.io.IOException;
@@ -24,6 +23,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiFunction;
 
 import org.apache.commons.configuration.Configuration;
 import org.junit.rules.ExternalResource;
@@ -31,10 +31,10 @@ import org.junit.rules.ExternalResource;
 import com.github.anba.es6draft.Script;
 import com.github.anba.es6draft.compiler.Compiler;
 import com.github.anba.es6draft.parser.Parser;
-import com.github.anba.es6draft.repl.console.ShellConsole;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.World;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
+import com.github.anba.es6draft.runtime.internal.Console;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.RuntimeContext;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
@@ -49,18 +49,25 @@ import com.github.anba.es6draft.runtime.objects.GlobalObject;
 /**
  * {@link ExternalResource} sub-class to facilitate creation of {@link GlobalObject} instances
  */
-public abstract class TestGlobals<GLOBAL extends GlobalObject, TEST extends TestInfo> extends ExternalResource {
+public class TestGlobals<GLOBAL extends GlobalObject, TEST extends TestInfo> extends ExternalResource {
     private final Configuration configuration;
+    private final ObjectAllocator<GLOBAL> allocator;
+    private final BiFunction<RuntimeContext, ScriptLoader, TestModuleLoader<?>> moduleLoader;
     private EnumSet<CompatibilityOption> options;
     private ScriptCache scriptCache;
     private List<Script> scripts;
     private PreloadModules modules;
 
-    protected TestGlobals(Configuration configuration) {
-        this.configuration = configuration;
+    public TestGlobals(Configuration configuration, ObjectAllocator<GLOBAL> allocator) {
+        this(configuration, allocator, TestFileModuleLoader::new);
     }
 
-    protected abstract ObjectAllocator<GLOBAL> newAllocator(ShellConsole console);
+    public TestGlobals(Configuration configuration, ObjectAllocator<GLOBAL> allocator,
+            BiFunction<RuntimeContext, ScriptLoader, TestModuleLoader<?>> moduleLoader) {
+        this.configuration = configuration;
+        this.allocator = allocator;
+        this.moduleLoader = moduleLoader;
+    }
 
     protected ExecutorService getExecutor() {
         return null;
@@ -95,31 +102,22 @@ public abstract class TestGlobals<GLOBAL extends GlobalObject, TEST extends Test
         /* @formatter:on */
     }
 
-    protected RuntimeContext createContext(ShellConsole console, TEST test) {
+    protected RuntimeContext createContext(Console console, TEST test) {
         /* @formatter:off */
         return new RuntimeContext.Builder()
                                  .setLocale(getLocale(test))
                                  .setTimeZone(getTimeZone(test))
-                                 .setGlobalAllocator(newAllocator(console))
+                                 .setGlobalAllocator(allocator)
+                                 .setModuleLoader(moduleLoader)
                                  .setBaseDirectory(test.getBaseDir())
                                  .setExecutor(getExecutor())
-                                 .setReader(console.reader())
-                                 .setWriter(console.writer())
-                                 .setErrorWriter(console.errorWriter())
+                                 .setConsole(console)
                                  .setOptions(getOptions())
                                  .setParserOptions(getParserOptions())
                                  .setCompilerOptions(getCompilerOptions())
                                  .setScriptCache(scriptCache)
                                  .build();
         /* @formatter:on */
-    }
-
-    protected ScriptLoader createScriptLoader(RuntimeContext context) {
-        return new ScriptLoader(context);
-    }
-
-    protected TestModuleLoader<?> createModuleLoader(RuntimeContext context, ScriptLoader scriptLoader) {
-        return new TestFileModuleLoader(context, scriptLoader);
     }
 
     protected Locale getLocale(TEST test) {
@@ -155,15 +153,14 @@ public abstract class TestGlobals<GLOBAL extends GlobalObject, TEST extends Test
         modules = compileModules();
     }
 
-    public final GLOBAL newGlobal(ShellConsole console, TEST test)
+    public final GLOBAL newGlobal(Console console, TEST test)
             throws MalformedNameException, ResolutionException, IOException, URISyntaxException {
         RuntimeContext context = createContext(console, test);
-        ScriptLoader scriptLoader = createScriptLoader(context);
-        TestModuleLoader<?> moduleLoader = createModuleLoader(context, scriptLoader);
-        World world = new World(context, moduleLoader, scriptLoader);
+        World world = new World(context);
         Realm realm = world.newInitializedRealm();
 
         // Evaluate additional initialization scripts and modules
+        TestModuleLoader<?> moduleLoader = (TestModuleLoader<?>) world.getModuleLoader();
         for (ModuleRecord module : modules.allModules) {
             moduleLoader.defineFromTemplate(module, realm);
         }
@@ -212,9 +209,9 @@ public abstract class TestGlobals<GLOBAL extends GlobalObject, TEST extends Test
         }
         Path basedir = getBaseDirectory();
         RuntimeContext context = createContext();
-        ScriptLoader scriptLoader = createScriptLoader(context);
+        ScriptLoader scriptLoader = new ScriptLoader(context);
         ArrayList<Script> scripts = new ArrayList<>();
-        for (String scriptName : toStrings(scriptNames)) {
+        for (String scriptName : nonEmpty(scriptNames)) {
             Source source = new Source(Resources.resourcePath(scriptName, basedir), scriptName, 1);
             Script script = scriptLoader.script(source, Resources.resource(scriptName, basedir));
             scripts.add(script);
@@ -228,10 +225,10 @@ public abstract class TestGlobals<GLOBAL extends GlobalObject, TEST extends Test
             return new PreloadModules(Collections.<ModuleRecord> emptyList(), Collections.<ModuleRecord> emptyList());
         }
         RuntimeContext context = createContext();
-        ScriptLoader scriptLoader = createScriptLoader(context);
-        TestModuleLoader<?> moduleLoader = createModuleLoader(context, scriptLoader);
+        ScriptLoader scriptLoader = new ScriptLoader(context);
+        TestModuleLoader<?> moduleLoader = this.moduleLoader.apply(context, scriptLoader);
         ArrayList<ModuleRecord> modules = new ArrayList<>();
-        for (String moduleName : toStrings(moduleNames)) {
+        for (String moduleName : nonEmpty(moduleNames)) {
             SourceIdentifier moduleId = moduleLoader.normalizeName(moduleName, null);
             modules.add(moduleLoader.load(moduleId));
         }
@@ -247,5 +244,9 @@ public abstract class TestGlobals<GLOBAL extends GlobalObject, TEST extends Test
             this.mainModules = Collections.unmodifiableList(modules);
             this.allModules = Collections.<ModuleRecord> unmodifiableCollection(requires);
         }
+    }
+
+    private static Iterable<String> nonEmpty(List<?> c) {
+        return () -> c.stream().filter(x -> (x != null && !x.toString().isEmpty())).map(Object::toString).iterator();
     }
 }

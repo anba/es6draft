@@ -40,9 +40,4 @@ final class GroupIterator implements Iterator<String> {
         }
         return null;
     }
-
-    @Override
-    public void remove() {
-        throw new UnsupportedOperationException();
-    }
 }

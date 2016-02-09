@@ -24,7 +24,6 @@ import com.github.anba.es6draft.compiler.Labels.TempLabel;
 import com.github.anba.es6draft.compiler.StatementGenerator.Completion;
 import com.github.anba.es6draft.compiler.assembler.Field;
 import com.github.anba.es6draft.compiler.assembler.FieldName;
-import com.github.anba.es6draft.compiler.assembler.InstructionAssembler;
 import com.github.anba.es6draft.compiler.assembler.Jump;
 import com.github.anba.es6draft.compiler.assembler.MethodName;
 import com.github.anba.es6draft.compiler.assembler.Type;
@@ -180,16 +179,12 @@ final class BindingInitializationGenerator {
      * @param mv
      *            the expression visitor
      */
-    static <ENVREC extends EnvironmentRecord> void InitializeBoundNameWithInitializer(
-            final CodeGenerator codegen, Variable<? extends ENVREC> envRec, final Name name,
-            final Expression initializer, final ExpressionVisitor mv) {
-        InitializeBoundName(envRec, name, new Value<Object>() {
-            @Override
-            protected void load(InstructionAssembler assembler) {
-                codegen.expressionBoxed(initializer, mv);
-                if (IsAnonymousFunctionDefinition(initializer)) {
-                    SetFunctionName(initializer, name, mv);
-                }
+    static <ENVREC extends EnvironmentRecord> void InitializeBoundNameWithInitializer(CodeGenerator codegen,
+            Variable<? extends ENVREC> envRec, Name name, Expression initializer, ExpressionVisitor mv) {
+        InitializeBoundName(envRec, name, asm -> {
+            codegen.expressionBoxed(initializer, mv);
+            if (IsAnonymousFunctionDefinition(initializer)) {
+                SetFunctionName(initializer, name, mv);
             }
         }, mv);
     }
@@ -487,7 +482,7 @@ final class BindingInitializationGenerator {
         }
 
         @Override
-        public void visit(final ObjectBindingPattern node, Void value) {
+        public void visit(ObjectBindingPattern node, Void value) {
             // stack: [value] -> [value]
             mv.loadExecutionContext();
             mv.swap();
@@ -502,10 +497,10 @@ final class BindingInitializationGenerator {
 
             // stack: [value] -> []
             mv.enterVariableScope();
-            final Variable<Object> val = mv.newVariable("value", Object.class);
+            Variable<Object> val = mv.newVariable("value", Object.class);
             mv.store(val);
 
-            final Variable<HashSet<?>> propertyNames;
+            Variable<HashSet<?>> propertyNames;
             if (!node.getProperties().isEmpty() && node.getRest() != null) {
                 propertyNames = mv.newVariable("propertyNames", HashSet.class).uncheckedCast();
                 mv.anew(Types.HashSet, Methods.HashSet_init);
@@ -550,12 +545,8 @@ final class BindingInitializationGenerator {
                     op.putValue(identifier, ValType.Any, mv);
                 } else {
                     BindingOp<EnvironmentRecord> op = BindingOp.of(envRec, identifier.getName());
-                    op.initializeBinding(envRec, identifier.getName(), new Value<Object>() {
-                        @Override
-                        protected void load(InstructionAssembler assembler) {
-                            emitCreateRestObject(node, val, propertyNames);
-                        }
-                    }, mv);
+                    op.initializeBinding(envRec, identifier.getName(),
+                            asm -> emitCreateRestObject(node, val, propertyNames), mv);
                 }
             }
 
@@ -673,9 +664,9 @@ final class BindingInitializationGenerator {
         }
 
         @Override
-        public void visit(final BindingElement node, final Variable<? extends Iterator<?>> iterator) {
-            final Binding binding = node.getBinding();
-            final Expression initializer = node.getInitializer();
+        public void visit(BindingElement node, Variable<? extends Iterator<?>> iterator) {
+            Binding binding = node.getBinding();
+            Expression initializer = node.getInitializer();
 
             if (binding instanceof BindingPattern) {
                 // BindingElement : BindingPattern Initializer{opt}
@@ -721,21 +712,18 @@ final class BindingInitializationGenerator {
                 op.putValue(bindingId, ValType.Any, mv);
             } else {
                 /* step 1 */
-                final BindingIdentifier bindingId = (BindingIdentifier) binding;
+                BindingIdentifier bindingId = (BindingIdentifier) binding;
 
                 /* steps 2-3, 7-8 */
                 BindingOp<EnvironmentRecord> op = BindingOp.of(envRec, bindingId.getName());
-                op.initializeBinding(envRec, bindingId.getName(), new Value<Object>() {
-                    @Override
-                    protected void load(InstructionAssembler assembler) {
-                        /* steps 4-5 */
-                        emitIteratorNext(node, iterator);
+                op.initializeBinding(envRec, bindingId.getName(), asm -> {
+                    /* steps 4-5 */
+                    emitIteratorNext(node, iterator);
 
-                        /* step 6 */
-                        // stack: [<env, id>|ref, v] -> [<env, id>|ref, v']
-                        if (initializer != null) {
-                            emitDefaultInitializer(initializer, bindingId);
-                        }
+                    /* step 6 */
+                    // stack: [<env, id>|ref, v] -> [<env, id>|ref, v']
+                    if (initializer != null) {
+                        emitDefaultInitializer(initializer, bindingId);
                     }
                 }, mv);
             }
@@ -748,8 +736,7 @@ final class BindingInitializationGenerator {
         }
 
         @Override
-        public void visit(final BindingRestElement node,
-                final Variable<? extends Iterator<?>> iterator) {
+        public void visit(BindingRestElement node, Variable<? extends Iterator<?>> iterator) {
             BindingIdentifier identifier = node.getBindingIdentifier();
             if (envRec == null) {
                 /* steps 1-2 */
@@ -767,18 +754,14 @@ final class BindingInitializationGenerator {
             } else {
                 /* steps 1-2, 5.b */
                 BindingOp<EnvironmentRecord> op = BindingOp.of(envRec, identifier.getName());
-                op.initializeBinding(envRec, identifier.getName(), new Value<Object>() {
-                    @Override
-                    protected void load(InstructionAssembler assembler) {
-                        /* steps 3-5 */
-                        emitCreateRestArray(node, iterator);
-                    }
+                op.initializeBinding(envRec, identifier.getName(), asm -> {
+                    /* steps 3-5 */
+                    emitCreateRestArray(node, iterator);
                 }, mv);
             }
         }
 
-        private void emitCreateRestArray(BindingRestElement node,
-                Variable<? extends Iterator<?>> iterator) {
+        private void emitCreateRestArray(BindingRestElement node, Variable<? extends Iterator<?>> iterator) {
             // stack: [] -> [array]
             mv.load(iterator);
             mv.loadExecutionContext();
@@ -827,9 +810,9 @@ final class BindingInitializationGenerator {
         }
 
         @Override
-        public void visit(final BindingProperty node, final PROPERTYNAME propertyName) {
-            final Binding binding = node.getBinding();
-            final Expression initializer = node.getInitializer();
+        public void visit(BindingProperty node, PROPERTYNAME propertyName) {
+            Binding binding = node.getBinding();
+            Expression initializer = node.getInitializer();
 
             if (binding instanceof BindingPattern) {
                 // stack: [] -> [cx, value]
@@ -908,29 +891,26 @@ final class BindingInitializationGenerator {
                 op.putValue(bindingId, ValType.Any, mv);
             } else {
                 /* step 1 */
-                final BindingIdentifier bindingId = (BindingIdentifier) binding;
+                BindingIdentifier bindingId = (BindingIdentifier) binding;
                 /* steps 2-3, 7-8 */
                 BindingOp<EnvironmentRecord> op = BindingOp.of(envRec, bindingId.getName());
-                op.initializeBinding(envRec, bindingId.getName(), new Value<Object>() {
-                    @Override
-                    protected void load(InstructionAssembler assembler) {
-                        // stack: [] -> [cx, value]
-                        mv.loadExecutionContext();
-                        mv.load(value);
+                op.initializeBinding(envRec, bindingId.getName(), asm -> {
+                    // stack: [] -> [cx, value]
+                    mv.loadExecutionContext();
+                    mv.load(value);
 
-                        /* steps 1-2 (Runtime Semantics: BindingInitialization 13.3.3.5) */
-                        // stack: [cx, value] -> [cx, value, propertyName]
-                        ValType type = evaluatePropertyName(propertyName);
+                    /* steps 1-2 (Runtime Semantics: BindingInitialization 13.3.3.5) */
+                    // stack: [cx, value] -> [cx, value, propertyName]
+                    ValType type = evaluatePropertyName(propertyName);
 
-                        /* steps 4-5 */
-                        // stack: [cx, value, propertyName] -> [v]
-                        emitGetV(node, type);
+                    /* steps 4-5 */
+                    // stack: [cx, value, propertyName] -> [v]
+                    emitGetV(node, type);
 
-                        /* step 6 */
-                        // stack: [v] -> [v']
-                        if (initializer != null) {
-                            emitDefaultInitializer(initializer, bindingId);
-                        }
+                    /* step 6 */
+                    // stack: [v] -> [v']
+                    if (initializer != null) {
+                        emitDefaultInitializer(initializer, bindingId);
                     }
                 }, mv);
             }

@@ -36,14 +36,6 @@ final class ClassDefinitionSubMethod extends ListSubMethod<ClassDefinition> {
         }
     }
 
-    private static final class ClassElementMapper implements
-            NodeElementMapper<PropertyDefinition, ClassElement> {
-        @Override
-        public ClassElement map(PropertyDefinition node, int size, int index) {
-            return new ClassElement(node, size, index);
-        }
-    }
-
     private static final class ClassConflater extends Conflater<ClassElement, PropertyDefinition> {
         @Override
         protected int getSourceSize(ClassElement source) {
@@ -63,8 +55,8 @@ final class ClassDefinitionSubMethod extends ListSubMethod<ClassDefinition> {
 
     @Override
     int processNode(ClassDefinition node, int oldSize) {
-        List<PropertyDefinition> newProperties = newNodes(oldSize, node.getProperties(),
-                new ClassElementMapper(), new ClassConflater(), MAX_CLASS_SIZE, MAX_SPREAD_SIZE);
+        List<PropertyDefinition> newProperties = newNodes(oldSize, node.getProperties(), ClassElement::new,
+                new ClassConflater(), MAX_CLASS_SIZE, MAX_SPREAD_SIZE);
         node.setProperties(newProperties);
         return validateSize(node);
     }

@@ -26,7 +26,6 @@ import com.github.anba.es6draft.ast.synthetic.StatementListMethod;
 import com.github.anba.es6draft.compiler.Labels.BreakLabel;
 import com.github.anba.es6draft.compiler.Labels.ContinueLabel;
 import com.github.anba.es6draft.compiler.Labels.TempLabel;
-import com.github.anba.es6draft.compiler.assembler.InstructionAssembler;
 import com.github.anba.es6draft.compiler.assembler.Jump;
 import com.github.anba.es6draft.compiler.assembler.MethodName;
 import com.github.anba.es6draft.compiler.assembler.TryCatchLabel;
@@ -1135,26 +1134,15 @@ final class StatementGenerator extends
             Name varName = ((FunctionScope) top).variableScope().resolveName(name, false);
             assert varName != null && name != varName;
             /* step 1.a.ii.3.1 */
-            Value<DeclarativeEnvironmentRecord> fenv = new Value<DeclarativeEnvironmentRecord>() {
-                @Override
-                protected void load(InstructionAssembler assembler) {
-                    getVariableEnvironmentRecord(Types.DeclarativeEnvironmentRecord, mv);
-                }
-            };
+            Value<DeclarativeEnvironmentRecord> fenv = asm -> getVariableEnvironmentRecord(
+                    Types.DeclarativeEnvironmentRecord, mv);
             /* steps 1.a.ii.3.5-6 */
-            BindingOp.of(fenv, varName).setMutableBinding(fenv, varName, new Value<Object>() {
-                @Override
-                protected void load(InstructionAssembler assembler) {
-                    /* step 1.a.ii.3.2 */
-                    Value<DeclarativeEnvironmentRecord> benv = new Value<DeclarativeEnvironmentRecord>() {
-                        @Override
-                        protected void load(InstructionAssembler assembler) {
-                            getLexicalEnvironmentRecord(Types.DeclarativeEnvironmentRecord, mv);
-                        }
-                    };
-                    /* steps 1.a.ii.3.3-4 */
-                    BindingOp.of(benv, name).getBindingValue(benv, name, false, mv);
-                }
+            BindingOp.of(fenv, varName).setMutableBinding(fenv, varName, asm -> {
+                /* step 1.a.ii.3.2 */
+                Value<DeclarativeEnvironmentRecord> benv = asm2 -> getLexicalEnvironmentRecord(
+                        Types.DeclarativeEnvironmentRecord, mv);
+                /* steps 1.a.ii.3.3-4 */
+                BindingOp.of(benv, name).getBindingValue(benv, name, false, mv);
             }, false, mv);
         }
 

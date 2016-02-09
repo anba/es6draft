@@ -418,21 +418,11 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
     }
 
     private ArrayObject createList(List<? extends Node> nodes, Void value) {
-        Object[] values = new Object[nodes.size()];
-        int index = 0;
-        for (Node node : nodes) {
-            values[index++] = node.accept(this, value);
-        }
-        return CreateArrayFromList(cx, values);
+        return CreateArrayFromList(cx, nodes.stream().map(node -> node.accept(this, value)));
     }
 
     private ArrayObject createListWithNull(List<? extends Node> nodes, Void value) {
-        Object[] values = new Object[nodes.size()];
-        int index = 0;
-        for (Node node : nodes) {
-            values[index++] = acceptOrNull(node, value);
-        }
-        return CreateArrayFromList(cx, values);
+        return CreateArrayFromList(cx, nodes.stream().map(node -> acceptOrNull(node, value)));
     }
 
     private ArrayObject createListFromValues(List<? extends Object> values) {

@@ -10,9 +10,7 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.IsCallable;
 import static com.github.anba.es6draft.runtime.ExecutionContext.newScriptingExecutionContext;
 
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.io.Reader;
-import java.io.Writer;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
@@ -32,7 +30,6 @@ import javax.script.ScriptEngineFactory;
 
 import com.github.anba.es6draft.Script;
 import com.github.anba.es6draft.compiler.CompilationException;
-import com.github.anba.es6draft.compiler.Compiler;
 import com.github.anba.es6draft.parser.Parser;
 import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.runtime.ExecutionContext;
@@ -40,12 +37,11 @@ import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.World;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
+import com.github.anba.es6draft.runtime.internal.Console;
 import com.github.anba.es6draft.runtime.internal.RuntimeContext;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
 import com.github.anba.es6draft.runtime.internal.ScriptLoader;
 import com.github.anba.es6draft.runtime.internal.Source;
-import com.github.anba.es6draft.runtime.modules.ModuleLoader;
-import com.github.anba.es6draft.runtime.modules.loader.FileModuleLoader;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 
@@ -66,22 +62,16 @@ final class ScriptEngineImpl extends AbstractScriptEngine implements ScriptEngin
         /* @formatter:off */
         RuntimeContext context = new RuntimeContext.Builder()
                                                    .setBaseDirectory(Paths.get("").toAbsolutePath())
-                                                   .setGlobalAllocator(ScriptingGlobalObject.newGlobalObjectAllocator())
-                                                   .setReader(this.context.getReader())
-                                                   .setWriter(printWriter(this.context.getWriter()))
-                                                   .setErrorWriter(printWriter(this.context.getErrorWriter()))
+                                                   .setGlobalAllocator(ScriptingGlobalObject::new)
+                                                   .setConsole(new ScriptingConsole(this.context))
                                                    .setOptions(CompatibilityOption.WebCompatibility())
-                                                   .setParserOptions(EnumSet.noneOf(Parser.Option.class))
-                                                   .setCompilerOptions(EnumSet.noneOf(Compiler.Option.class))
                                                    .build();
         RuntimeContext scriptingContext = new RuntimeContext.Builder(context)
                                                             .setParserOptions(EnumSet.of(Parser.Option.Scripting))
                                                             .build();
         /* @formatter:on */
 
-        ScriptLoader scriptLoader = new ScriptLoader(context);
-        ModuleLoader moduleLoader = new FileModuleLoader(context, scriptLoader);
-        this.world = new World(context, moduleLoader, scriptLoader);
+        this.world = new World(context);
         this.scriptingLoader = new ScriptLoader(scriptingContext);
         this.context.setBindings(createBindings(), ScriptContext.ENGINE_SCOPE);
     }
@@ -182,12 +172,8 @@ final class ScriptEngineImpl extends AbstractScriptEngine implements ScriptEngin
     Object eval(Script script, ScriptContext context) throws javax.script.ScriptException {
         Realm realm = getEvalRealm(context);
         RuntimeContext runtimeContext = realm.getWorld().getContext();
-        Reader reader = runtimeContext.getReader();
-        Writer writer = runtimeContext.getWriter();
-        Writer errorWriter = runtimeContext.getErrorWriter();
-        runtimeContext.setReader(context.getReader());
-        runtimeContext.setWriter(printWriter(context.getWriter()));
-        runtimeContext.setErrorWriter(printWriter(context.getErrorWriter()));
+        Console console = runtimeContext.getConsole();
+        runtimeContext.setConsole(new ScriptingConsole(context));
         try {
             // Prepare a new execution context before calling the generated code.
             ExecutionContext evalCxt = newScriptingExecutionContext(realm, script, new LexicalEnvironment<>(
@@ -198,9 +184,7 @@ final class ScriptEngineImpl extends AbstractScriptEngine implements ScriptEngin
         } catch (ScriptException e) {
             throw new javax.script.ScriptException(e);
         } finally {
-            runtimeContext.setReader(reader);
-            runtimeContext.setWriter(printWriter(writer));
-            runtimeContext.setErrorWriter(printWriter(errorWriter));
+            runtimeContext.setConsole(console);
         }
     }
 
@@ -208,12 +192,8 @@ final class ScriptEngineImpl extends AbstractScriptEngine implements ScriptEngin
             throws javax.script.ScriptException, NoSuchMethodException {
         Realm realm = getEvalRealm(context);
         RuntimeContext runtimeContext = realm.getWorld().getContext();
-        Reader reader = runtimeContext.getReader();
-        Writer writer = runtimeContext.getWriter();
-        Writer errorWriter = runtimeContext.getErrorWriter();
-        runtimeContext.setReader(context.getReader());
-        runtimeContext.setWriter(printWriter(context.getWriter()));
-        runtimeContext.setErrorWriter(printWriter(context.getErrorWriter()));
+        Console console = runtimeContext.getConsole();
+        runtimeContext.setConsole(new ScriptingConsole(context));
         try {
             Object[] arguments = TypeConverter.fromJava(args);
             if (thisValue == null) {
@@ -230,13 +210,11 @@ final class ScriptEngineImpl extends AbstractScriptEngine implements ScriptEngin
         } catch (ScriptException e) {
             throw new javax.script.ScriptException(e);
         } finally {
-            runtimeContext.setReader(reader);
-            runtimeContext.setWriter(printWriter(writer));
-            runtimeContext.setErrorWriter(printWriter(errorWriter));
+            runtimeContext.setConsole(console);
         }
     }
 
-    private <T> T getInterface(final ScriptObject thisValue, Class<T> clazz) {
+    private <T> T getInterface(ScriptObject thisValue, Class<T> clazz) {
         if (clazz == null || !clazz.isInterface()) {
             throw new IllegalArgumentException();
         }
@@ -262,12 +240,5 @@ final class ScriptEngineImpl extends AbstractScriptEngine implements ScriptEngin
         }
         // Otherwise create a new realm.
         return newScriptingRealm();
-    }
-
-    private static PrintWriter printWriter(Writer writer) {
-        if (writer instanceof PrintWriter) {
-            return (PrintWriter) writer;
-        }
-        return new PrintWriter(writer, true);
     }
 }

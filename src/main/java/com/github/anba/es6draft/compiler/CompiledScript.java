@@ -7,8 +7,6 @@
 package com.github.anba.es6draft.compiler;
 
 import com.github.anba.es6draft.Script;
-import com.github.anba.es6draft.runtime.ExecutionContext;
-import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
 
 /**
@@ -22,15 +20,5 @@ public class CompiledScript extends CompiledObject implements Script {
     @Override
     public final RuntimeInfo.ScriptBody getScriptBody() {
         return (RuntimeInfo.ScriptBody) getSourceObject();
-    }
-
-    @Override
-    public final Object evaluate(Realm realm) {
-        return getScriptBody().evaluate(realm.defaultContext(), this);
-    }
-
-    @Override
-    public final Object evaluate(ExecutionContext cx) {
-        return getScriptBody().evaluate(cx, this);
     }
 }

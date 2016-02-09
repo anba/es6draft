@@ -16,7 +16,6 @@ import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initializable;
 import com.github.anba.es6draft.runtime.internal.Messages;
-import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
@@ -77,8 +76,8 @@ public final class WeakSetConstructor extends BuiltinConstructor implements Init
 
         /* step 1 (not applicable) */
         /* steps 2-4 */
-        WeakSetObject set = OrdinaryCreateFromConstructor(calleeContext, newTarget,
-                Intrinsics.WeakSetPrototype, WeakSetObjectAllocator.INSTANCE);
+        WeakSetObject set = OrdinaryCreateFromConstructor(calleeContext, newTarget, Intrinsics.WeakSetPrototype,
+                WeakSetObject::new);
         /* steps 5-6, 8 */
         if (Type.isUndefinedOrNull(iterable)) {
             return set;
@@ -100,15 +99,6 @@ public final class WeakSetConstructor extends BuiltinConstructor implements Init
         } catch (ScriptException e) {
             iter.close(e);
             throw e;
-        }
-    }
-
-    private static final class WeakSetObjectAllocator implements ObjectAllocator<WeakSetObject> {
-        static final ObjectAllocator<WeakSetObject> INSTANCE = new WeakSetObjectAllocator();
-
-        @Override
-        public WeakSetObject newInstance(Realm realm) {
-            return new WeakSetObject(realm);
         }
     }
 

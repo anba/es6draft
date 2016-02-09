@@ -5,8 +5,6 @@ ECMAScript 2015 (ECMA-262 6th Edition) compiler and runtime written in Java.
 
 [![Build Status](https://travis-ci.org/anba/es6draft.png?branch=master)](https://travis-ci.org/anba/es6draft)
 
-[![Build Status](https://buildhive.cloudbees.com/job/anba/job/es6draft/badge/icon)](https://buildhive.cloudbees.com/job/anba/job/es6draft/)
-
 ## Implementation Status ##
 
 Full support of [ECMAScript® 2015] [es2015].
@@ -31,11 +29,6 @@ Full support of [ECMAScript® 2015 Internationalization API, ECMA-402 2nd editio
 
 * Start the shell using either `./bin/es6draft` or `.\bin\es6draft.bat` on Windows&reg;.
 * `./bin/es6draft --help` prints the available options.
-
-### Downloads ###
-
-Prebuilt packages are available [here] [builds]. The zip archive contains the full distribution,
-simply unzip the archive, start the shell, and you are ready to go!
 
 
 ## Test Suites ##
@@ -100,4 +93,3 @@ mvn test -P external -Dtraceur.path=<...> -Dmozilla.skip=true -Dv8.skip=true -Dw
 [traceur]: https://github.com/google/traceur-compiler/
 [v8]: https://github.com/v8/v8/
 [webkit]: https://www.webkit.org/building/checkout.html
-[builds]: https://buildhive.cloudbees.com/job/anba/job/es6draft/lastSuccessfulBuild/com.github.anba$es6draft/artifact/com.github.anba/es6draft/0.0.1-SNAPSHOT/

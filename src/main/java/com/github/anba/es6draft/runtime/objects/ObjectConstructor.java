@@ -174,12 +174,7 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
             /* steps 3-4 */
             Object key = ToPropertyKey(cx, p);
             /* steps 5-6 */
-            Property desc;
-            if (key instanceof String) {
-                desc = obj.getOwnProperty(cx, (String) key);
-            } else {
-                desc = obj.getOwnProperty(cx, (Symbol) key);
-            }
+            Property desc = obj.getOwnProperty(cx, key);
             /* step 7 */
             return FromPropertyDescriptor(cx, desc);
         }
@@ -518,12 +513,7 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
                 List<?> keys = from.ownPropertyKeys(cx);
                 /* step 5.c */
                 for (Object nextKey : keys) {
-                    Property desc;
-                    if (nextKey instanceof String) {
-                        desc = from.getOwnProperty(cx, (String) nextKey);
-                    } else {
-                        desc = from.getOwnProperty(cx, (Symbol) nextKey);
-                    }
+                    Property desc = from.getOwnProperty(cx, nextKey);
                     if (desc != null && desc.isEnumerable()) {
                         Object propValue = Get(cx, from, nextKey);
                         Set(cx, to, nextKey, propValue, true);
@@ -654,12 +644,7 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
         ArrayList<Object> names = new ArrayList<>(initialSize);
         /* step 7 */
         for (Object nextKey : keys) {
-            Property propDesc;
-            if (nextKey instanceof String) {
-                propDesc = props.getOwnProperty(cx, (String) nextKey);
-            } else {
-                propDesc = props.getOwnProperty(cx, (Symbol) nextKey);
-            }
+            Property propDesc = props.getOwnProperty(cx, nextKey);
             if (propDesc != null && propDesc.isEnumerable()) {
                 Object descObj = Get(cx, props, nextKey);
                 PropertyDescriptor desc = ToPropertyDescriptor(cx, descObj);

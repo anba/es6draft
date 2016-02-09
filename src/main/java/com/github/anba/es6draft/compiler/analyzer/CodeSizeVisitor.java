@@ -56,8 +56,7 @@ final class CodeSizeVisitor implements IntNodeVisitor<CodeSizeHandler> {
         return reportSize(node, size, handler);
     }
 
-    private int analyze(Node node, Node left, Node middle, Node right, int nodeSize,
-            CodeSizeHandler handler) {
+    private int analyze(Node node, Node left, Node middle, Node right, int nodeSize, CodeSizeHandler handler) {
         int size = nodeSize;
         if (left != null) {
             size += left.accept(this, handler);
@@ -89,8 +88,8 @@ final class CodeSizeVisitor implements IntNodeVisitor<CodeSizeHandler> {
         return reportSize(node, size, handler);
     }
 
-    private int analyze(Node node, Node left, Node middle, Node right,
-            List<? extends Node> children, int nodeSize, int childFactor, CodeSizeHandler handler) {
+    private int analyze(Node node, Node left, Node middle, Node right, List<? extends Node> children, int nodeSize,
+            int childFactor, CodeSizeHandler handler) {
         int size = nodeSize + childFactor * children.size();
         if (left != null) {
             size += left.accept(this, handler);
@@ -116,8 +115,8 @@ final class CodeSizeVisitor implements IntNodeVisitor<CodeSizeHandler> {
         return reportSize(node, size, handler);
     }
 
-    private int analyze(Node node, List<? extends Node> children, Node extra, int nodeSize,
-            int childFactor, CodeSizeHandler handler) {
+    private int analyze(Node node, List<? extends Node> children, Node extra, int nodeSize, int childFactor,
+            CodeSizeHandler handler) {
         int size = nodeSize + childFactor * children.size();
         for (Node child : children) {
             size += child.accept(this, handler);
@@ -128,9 +127,8 @@ final class CodeSizeVisitor implements IntNodeVisitor<CodeSizeHandler> {
         return reportSize(node, size, handler);
     }
 
-    private int analyze(Node node, List<? extends Node> children,
-            List<? extends Node> moreChildren, Node extra, int nodeSize, int childFactor,
-            CodeSizeHandler handler) {
+    private int analyze(Node node, List<? extends Node> children, List<? extends Node> moreChildren, Node extra,
+            int nodeSize, int childFactor, CodeSizeHandler handler) {
         int size = nodeSize + childFactor * children.size() + childFactor * moreChildren.size();
         for (Node child : children) {
             size += child.accept(this, handler);
@@ -206,8 +204,7 @@ final class CodeSizeVisitor implements IntNodeVisitor<CodeSizeHandler> {
 
     @Override
     public int visit(AssignmentProperty node, CodeSizeHandler handler) {
-        return analyze(node, node.getPropertyName(), node.getTarget(), node.getInitializer(), 25,
-                handler);
+        return analyze(node, node.getPropertyName(), node.getTarget(), node.getInitializer(), 25, handler);
     }
 
     @Override
@@ -269,8 +266,7 @@ final class CodeSizeVisitor implements IntNodeVisitor<CodeSizeHandler> {
 
     @Override
     public int visit(BindingProperty node, CodeSizeHandler handler) {
-        return analyze(node, node.getPropertyName(), node.getBinding(), node.getInitializer(), 25,
-                handler);
+        return analyze(node, node.getPropertyName(), node.getBinding(), node.getInitializer(), 25, handler);
     }
 
     @Override
@@ -315,14 +311,12 @@ final class CodeSizeVisitor implements IntNodeVisitor<CodeSizeHandler> {
 
     @Override
     public int visit(ClassDeclaration node, CodeSizeHandler handler) {
-        return analyze(node, node.getDecorators(), node.getProperties(), node.getHeritage(), 50,
-                10, handler);
+        return analyze(node, node.getDecorators(), node.getProperties(), node.getHeritage(), 50, 10, handler);
     }
 
     @Override
     public int visit(ClassExpression node, CodeSizeHandler handler) {
-        return analyze(node, node.getDecorators(), node.getProperties(), node.getHeritage(), 50,
-                10, handler);
+        return analyze(node, node.getDecorators(), node.getProperties(), node.getHeritage(), 50, 10, handler);
     }
 
     @Override
@@ -439,14 +433,12 @@ final class CodeSizeVisitor implements IntNodeVisitor<CodeSizeHandler> {
 
     @Override
     public int visit(ForEachStatement node, CodeSizeHandler handler) {
-        return analyze(node, node.getHead(), node.getExpression(), node.getStatement(), 150,
-                handler);
+        return analyze(node, node.getHead(), node.getExpression(), node.getStatement(), 150, handler);
     }
 
     @Override
     public int visit(ForInStatement node, CodeSizeHandler handler) {
-        return analyze(node, node.getHead(), node.getExpression(), node.getStatement(), 150,
-                handler);
+        return analyze(node, node.getHead(), node.getExpression(), node.getStatement(), 150, handler);
     }
 
     @Override
@@ -461,14 +453,12 @@ final class CodeSizeVisitor implements IntNodeVisitor<CodeSizeHandler> {
 
     @Override
     public int visit(ForOfStatement node, CodeSizeHandler handler) {
-        return analyze(node, node.getHead(), node.getExpression(), node.getStatement(), 150,
-                handler);
+        return analyze(node, node.getHead(), node.getExpression(), node.getStatement(), 150, handler);
     }
 
     @Override
     public int visit(ForStatement node, CodeSizeHandler handler) {
-        return analyze(node, node.getHead(), node.getTest(), node.getStep(), node.getStatement(),
-                30, handler);
+        return analyze(node, node.getHead(), node.getTest(), node.getStep(), node.getStatement(), 30, handler);
     }
 
     @Override
@@ -508,8 +498,7 @@ final class CodeSizeVisitor implements IntNodeVisitor<CodeSizeHandler> {
 
     @Override
     public int visit(GuardedCatchNode node, CodeSizeHandler handler) {
-        return analyze(node, node.getCatchParameter(), node.getGuard(), node.getCatchBlock(), 45,
-                handler);
+        return analyze(node, node.getCatchParameter(), node.getGuard(), node.getCatchBlock(), 45, handler);
     }
 
     @Override

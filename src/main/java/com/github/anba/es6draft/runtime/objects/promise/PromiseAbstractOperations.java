@@ -43,25 +43,6 @@ public final class PromiseAbstractOperations {
     private PromiseAbstractOperations() {
     }
 
-    private static final class PromiseObjectAllocator implements ObjectAllocator<PromiseObject> {
-        static final ObjectAllocator<PromiseObject> INSTANCE = new PromiseObjectAllocator();
-
-        @Override
-        public PromiseObject newInstance(Realm realm) {
-            return new PromiseObject(realm);
-        }
-    }
-
-    private static final class FinalizablePromiseObjectAllocator implements
-            ObjectAllocator<FinalizablePromiseObject> {
-        static final ObjectAllocator<FinalizablePromiseObject> INSTANCE = new FinalizablePromiseObjectAllocator();
-
-        @Override
-        public FinalizablePromiseObject newInstance(Realm realm) {
-            return new FinalizablePromiseObject(realm);
-        }
-    }
-
     /**
      * Returns the Promise object allocator for the realm object.
      * 
@@ -71,9 +52,9 @@ public final class PromiseAbstractOperations {
      */
     public static ObjectAllocator<? extends PromiseObject> GetPromiseAllocator(Realm realm) {
         if (realm.isEnabled(CompatibilityOption.PromiseRejection)) {
-            return FinalizablePromiseObjectAllocator.INSTANCE;
+            return FinalizablePromiseObject::new;
         }
-        return PromiseObjectAllocator.INSTANCE;
+        return PromiseObject::new;
     }
 
     public static final class ResolvingFunctions {

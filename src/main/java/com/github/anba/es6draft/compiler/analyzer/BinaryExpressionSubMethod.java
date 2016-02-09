@@ -10,8 +10,7 @@ import com.github.anba.es6draft.ast.BinaryExpression;
 import com.github.anba.es6draft.ast.synthetic.ExpressionMethod;
 
 /**
- * Replaces the left and/or right branch of a {@link BinaryExpression} with an
- * {@link ExpressionMethod} element
+ * Replaces the left and/or right branch of a {@link BinaryExpression} with an {@link ExpressionMethod} element
  */
 final class BinaryExpressionSubMethod extends SubMethod<BinaryExpression> {
     @Override

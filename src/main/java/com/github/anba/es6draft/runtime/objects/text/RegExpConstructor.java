@@ -22,7 +22,6 @@ import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.Initializable;
-import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.Properties.Accessor;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.CompatibilityExtension;
@@ -146,15 +145,6 @@ public final class RegExpConstructor extends BuiltinConstructor implements Initi
         return RegExpInitialize(cx, obj, pattern, flags, defaultMultiline);
     }
 
-    private static final class RegExpObjectAllocator implements ObjectAllocator<RegExpObject> {
-        static final ObjectAllocator<RegExpObject> INSTANCE = new RegExpObjectAllocator();
-
-        @Override
-        public RegExpObject newInstance(Realm realm) {
-            return new RegExpObject(realm);
-        }
-    }
-
     /**
      * 21.2.3.2 Abstract Operations for the RegExp Constructor<br>
      * 21.2.3.2.1 Runtime Semantics: RegExpAlloc ( newTarget )
@@ -167,8 +157,7 @@ public final class RegExpConstructor extends BuiltinConstructor implements Initi
      */
     public static RegExpObject RegExpAlloc(ExecutionContext cx, Constructor newTarget) {
         /* steps 1-2 */
-        RegExpObject obj = OrdinaryCreateFromConstructor(cx, newTarget, Intrinsics.RegExpPrototype,
-                RegExpObjectAllocator.INSTANCE);
+        RegExpObject obj = OrdinaryCreateFromConstructor(cx, newTarget, Intrinsics.RegExpPrototype, RegExpObject::new);
         /* steps 3-4 */
         obj.infallibleDefineOwnProperty("lastIndex", new Property(0, true, false, false));
         /* step 5 */

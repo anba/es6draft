@@ -32,6 +32,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BiFunction;
 
 import org.kohsuke.args4j.Argument;
 import org.kohsuke.args4j.CmdLineException;
@@ -57,6 +58,7 @@ import com.github.anba.es6draft.repl.console.JLineConsole;
 import com.github.anba.es6draft.repl.console.LegacyConsole;
 import com.github.anba.es6draft.repl.console.NativeConsole;
 import com.github.anba.es6draft.repl.console.ShellConsole;
+import com.github.anba.es6draft.repl.global.ConsoleObject;
 import com.github.anba.es6draft.repl.global.MozShellGlobalObject;
 import com.github.anba.es6draft.repl.global.ShellGlobalObject;
 import com.github.anba.es6draft.repl.global.SimpleShellGlobalObject;
@@ -71,17 +73,12 @@ import com.github.anba.es6draft.runtime.Task;
 import com.github.anba.es6draft.runtime.World;
 import com.github.anba.es6draft.runtime.extensions.timer.Timers;
 import com.github.anba.es6draft.runtime.internal.*;
-import com.github.anba.es6draft.runtime.internal.Properties;
-import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.modules.MalformedNameException;
 import com.github.anba.es6draft.runtime.modules.ModuleLoader;
-import com.github.anba.es6draft.runtime.modules.ModuleRecord;
 import com.github.anba.es6draft.runtime.modules.ModuleSource;
 import com.github.anba.es6draft.runtime.modules.ResolutionException;
 import com.github.anba.es6draft.runtime.modules.SourceIdentifier;
 import com.github.anba.es6draft.runtime.modules.loader.FileModuleLoader;
-import com.github.anba.es6draft.runtime.types.Callable;
-import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 
 /**
@@ -1076,181 +1073,122 @@ public final class Repl {
     private Realm newRealm() {
         ObjectAllocator<? extends ShellGlobalObject> allocator;
         if (options.shellMode == ShellMode.Mozilla) {
-            allocator = MozShellGlobalObject.newGlobalObjectAllocator(console);
+            allocator = MozShellGlobalObject::new;
         } else if (options.shellMode == ShellMode.V8) {
-            allocator = V8ShellGlobalObject.newGlobalObjectAllocator(console);
+            allocator = V8ShellGlobalObject::new;
         } else {
-            allocator = SimpleShellGlobalObject.newGlobalObjectAllocator(console);
+            allocator = SimpleShellGlobalObject::new;
+        }
+
+        BiFunction<RuntimeContext, ScriptLoader, ModuleLoader> moduleLoader;
+        switch (options.moduleLoaderMode) {
+        case Default:
+            moduleLoader = FileModuleLoader::new;
+            break;
+        case Node:
+            moduleLoader = NodeModuleLoader::new;
+            break;
+        case NodeStandard:
+            moduleLoader = NodeStandardModuleLoader::new;
+            break;
+        default:
+            throw new AssertionError();
         }
 
         /* @formatter:off */
         RuntimeContext context = new RuntimeContext.Builder()
                                                    .setBaseDirectory(Paths.get("").toAbsolutePath())
                                                    .setGlobalAllocator(allocator)
-                                                   .setReader(console.reader())
-                                                   .setWriter(console.writer())
-                                                   .setErrorWriter(console.errorWriter())
+                                                   .setModuleLoader(moduleLoader)
+                                                   .setConsole(console)
                                                    .setOptions(compatibilityOptions(options))
                                                    .setParserOptions(parserOptions(options))
                                                    .setCompilerOptions(compilerOptions(options))
                                                    .build();
         /* @formatter:on */
 
-        ScriptLoader scriptLoader = new ScriptLoader(context);
-        ModuleLoader moduleLoader;
-        switch (options.moduleLoaderMode) {
-        case Default:
-            moduleLoader = new FileModuleLoader(context, scriptLoader);
-            break;
-        case Node:
-            moduleLoader = new NodeModuleLoader(context, scriptLoader);
-            break;
-        case NodeStandard:
-            moduleLoader = new NodeStandardModuleLoader(context, scriptLoader);
-            break;
-        default:
-            throw new AssertionError();
-        }
-
-        World world = new World(context, moduleLoader, scriptLoader);
-        final Realm realm = world.newRealm();
-        final ShellGlobalObject global = (ShellGlobalObject) realm.getGlobalObject();
-        final ExecutionContext cx = realm.defaultContext();
-        final ScriptObject globalThis = realm.getGlobalThis();
+        World world = new World(context);
+        Realm realm = world.newRealm();
+        ExecutionContext cx = realm.defaultContext();
 
         // Add completion to console
         console.addCompleter(new ShellCompleter(realm));
 
-        // Execute any global specific initialization
-        realm.enqueueScriptTask(new Task() {
-            @Override
-            public void execute() {
-                try {
-                    InitializeHostDefinedRealm(realm);
+        // Execute global specific initialization
+        enqueueScriptTask(realm, () -> {
+            InitializeHostDefinedRealm(realm);
 
-                    // Add global "arguments" property
-                    ScriptObject arguments = CreateArrayFromList(cx, options.arguments);
-                    CreateMethodProperty(cx, globalThis, "arguments", arguments);
-                } catch (IOException e) {
-                    throw new UncheckedIOException(e);
-                } catch (URISyntaxException e) {
-                    throw new UncheckedIOException(new IOException(e));
-                }
-            }
+            // Add global "arguments" property
+            ScriptObject arguments = CreateArrayFromList(cx, options.arguments);
+            CreateMethodProperty(cx, realm.getGlobalThis(), "arguments", arguments);
         });
-
         if (options.console) {
-            realm.enqueueScriptTask(new Task() {
-                @Override
-                public void execute() {
-                    try {
-                        ModuleRecord module = global.loadNativeModule("console.jsm");
-                        ScriptObject console = global.getModuleExport(module, "default", ScriptObject.class);
-                        Callable inspectFn = Properties.createFunction(cx, new InspectFunction(),
-                                InspectFunction.class);
-                        CreateMethodProperty(cx, console, "_inspect", inspectFn);
-                        CreateMethodProperty(cx, globalThis, "console", console);
-                    } catch (IOException e) {
-                        throw new UncheckedIOException(e);
-                    } catch (URISyntaxException e) {
-                        throw new UncheckedIOException(new IOException(e));
-                    } catch (MalformedNameException | ResolutionException e) {
-                        throw e.toScriptException(cx);
-                    }
-                }
+            enqueueScriptTask(realm, () -> {
+                ScriptObject console = ConsoleObject.createConsole(realm);
+                CreateMethodProperty(cx, realm.getGlobalThis(), "console", console);
             });
         }
-
         if (options.moduleLoaderMode == ModuleLoaderMode.Node) {
-            final NodeModuleLoader nodeLoader = (NodeModuleLoader) moduleLoader;
-            realm.enqueueScriptTask(new Task() {
-                @Override
-                public void execute() {
-                    try {
-                        ModuleRecord module = global.loadNativeModule("module.jsm");
-                        Constructor moduleConstructor = global.getModuleExport(module, "default", Constructor.class);
-                        nodeLoader.setModuleConstructor(moduleConstructor);
-                    } catch (IOException e) {
-                        throw new UncheckedIOException(e);
-                    } catch (URISyntaxException e) {
-                        throw new UncheckedIOException(new IOException(e));
-                    } catch (MalformedNameException | ResolutionException e) {
-                        throw e.toScriptException(cx);
-                    }
-                }
+            // TODO: Add default initialize(Realm) method to ModuleLoader interface?
+            enqueueScriptTask(realm, () -> {
+                NodeModuleLoader nodeLoader = (NodeModuleLoader) world.getModuleLoader();
+                nodeLoader.initialize(realm);
             });
         }
 
         // Run eval expressions and files
         for (EvalScript evalScript : options.evalScripts) {
             if (options.module) {
-                realm.enqueueScriptTask(new ModuleEvaluationTask(realm, evalScript));
+                enqueueScriptTask(realm, () -> {
+                    ModuleSource moduleSource = evalScript.getModuleSource();
+                    SourceIdentifier moduleName = evalScript.getModuleName();
+                    try {
+                        ModuleEvaluationJob(realm, moduleName, moduleSource);
+                    } catch (ParserException e) {
+                        Source source = moduleSource.toSource();
+                        String file = e.getFile();
+                        if (file.equals(source.getFileString())) {
+                            throw new ParserExceptionWithSource(e, source, moduleSource.sourceCode());
+                        }
+                        Path filePath = Paths.get(file).toAbsolutePath();
+                        Source errorSource = new Source(filePath, file, 1);
+                        String code = new String(Files.readAllBytes(filePath), StandardCharsets.UTF_8);
+                        throw new ParserExceptionWithSource(e, errorSource, code);
+                    }
+                });
             } else {
-                realm.enqueueScriptTask(new ScriptEvaluationTask(realm, evalScript));
+                enqueueScriptTask(realm, () -> {
+                    Source source = evalScript.getSource();
+                    String sourceCode = evalScript.getSourceCode();
+                    try {
+                        eval(realm, parse(realm, source, sourceCode));
+                    } catch (ParserException e) {
+                        throw new ParserExceptionWithSource(e, source, sourceCode);
+                    }
+                });
             }
         }
 
         return realm;
     }
 
-    private final class ScriptEvaluationTask implements Task {
-        private final Realm realm;
-        private final EvalScript evalScript;
-
-        ScriptEvaluationTask(Realm realm, EvalScript evalScript) {
-            this.realm = realm;
-            this.evalScript = evalScript;
-        }
-
-        @Override
-        public void execute() {
-            try {
-                Source source = evalScript.getSource();
-                String sourceCode = evalScript.getSourceCode();
-                try {
-                    eval(realm, parse(realm, source, sourceCode));
-                } catch (ParserException e) {
-                    throw new ParserExceptionWithSource(e, source, sourceCode);
-                }
-            } catch (IOException e) {
-                throw new UncheckedIOException(e);
-            }
-        }
+    @FunctionalInterface
+    private interface Init {
+        void apply() throws IOException, URISyntaxException, MalformedNameException, ResolutionException;
     }
 
-    private static final class ModuleEvaluationTask implements Task {
-        private final Realm realm;
-        private final EvalScript evalScript;
-
-        ModuleEvaluationTask(Realm realm, EvalScript evalScript) {
-            this.realm = realm;
-            this.evalScript = evalScript;
-        }
-
-        @Override
-        public void execute() {
+    private static void enqueueScriptTask(Realm realm, Init init) {
+        realm.enqueueScriptTask(() -> {
             try {
-                ModuleSource moduleSource = evalScript.getModuleSource();
-                SourceIdentifier moduleName = evalScript.getModuleName();
-                try {
-                    ModuleEvaluationJob(realm, moduleName, moduleSource);
-                } catch (ParserException e) {
-                    Source source = moduleSource.toSource();
-                    String file = e.getFile();
-                    if (file.equals(source.getFileString())) {
-                        throw new ParserExceptionWithSource(e, source, moduleSource.sourceCode());
-                    }
-                    Path filePath = Paths.get(file).toAbsolutePath();
-                    Source errorSource = new Source(filePath, file, 1);
-                    String code = new String(Files.readAllBytes(filePath), StandardCharsets.UTF_8);
-                    throw new ParserExceptionWithSource(e, errorSource, code);
-                }
-            } catch (MalformedNameException | ResolutionException e) {
-                throw e.toScriptException(realm.defaultContext());
+                init.apply();
             } catch (IOException e) {
                 throw new UncheckedIOException(e);
+            } catch (URISyntaxException e) {
+                throw new UncheckedIOException(new IOException(e));
+            } catch (MalformedNameException | ResolutionException e) {
+                throw e.toScriptException(realm.defaultContext());
             }
-        }
+        });
     }
 
     private static Set<CompatibilityOption> compatibilityOptions(Options options) {
@@ -1328,12 +1266,5 @@ public final class Repl {
             compilerOptions.add(Compiler.Option.NoTailCall);
         }
         return compilerOptions;
-    }
-
-    public static final class InspectFunction {
-        @Function(name = "inspect", arity = 1)
-        public Object inspect(ExecutionContext cx, Object argument) {
-            return SourceBuilder.ToSource(cx, argument);
-        }
     }
 }

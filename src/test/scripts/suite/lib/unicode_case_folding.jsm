@@ -107,7 +107,7 @@ export function UnicodeCaseFolding(test, {latin, basic, supplementary}) {
   test(range(0x4d0, 0x526, 2), range(0x4d1, 0x527, 2), basic);
   test(range(0x531, 0x556, 1), range(0x561, 0x586, 1), basic);
   test(range(0x10a0, 0x10c5, 1), range(0x2d00, 0x2d25, 1), basic);
-  // test(range(0x10c7, 0x10cd, 6), range(0x2d27, 0x2d2d, 6), basic); // requires Unicode Data update
+  test(range(0x10c7, 0x10cd, 6), range(0x2d27, 0x2d2d, 6), basic);
   test(range(0x1e00, 0x1e94, 2), range(0x1e01, 0x1e95, 2), basic);
   test(range(0x1e9b, 0x1e9b, 1), range(0x1e61, 0x1e61, 1), basic);
   test(range(0x1e9e, 0x1e9e, 1), range(0xdf, 0xdf, 1), basic, {unicode: true});
@@ -178,7 +178,7 @@ export function UnicodeCaseFolding(test, {latin, basic, supplementary}) {
   test(range(0x2c7e, 0x2c7f, 1), range(0x23f, 0x240, 1), basic);
   test(range(0x2c80, 0x2ce2, 2), range(0x2c81, 0x2ce3, 2), basic);
   test(range(0x2ceb, 0x2ced, 2), range(0x2cec, 0x2cee, 2), basic);
-  // test(range(0x2cf2, 0xa640, 31054), range(0x2cf3, 0xa641, 31054), basic); // requires Unicode Data update
+  test(range(0x2cf2, 0xa640, 31054), range(0x2cf3, 0xa641, 31054), basic);
   test(range(0xa642, 0xa66c, 2), range(0xa643, 0xa66d, 2), basic);
   test(range(0xa680, 0xa696, 2), range(0xa681, 0xa697, 2), basic);
   test(range(0xa722, 0xa72e, 2), range(0xa723, 0xa72f, 2), basic);
@@ -188,9 +188,9 @@ export function UnicodeCaseFolding(test, {latin, basic, supplementary}) {
   test(range(0xa77e, 0xa786, 2), range(0xa77f, 0xa787, 2), basic);
   test(range(0xa78b, 0xa78b, 1), range(0xa78c, 0xa78c, 1), basic);
   test(range(0xa78d, 0xa78d, 1), range(0x265, 0x265, 1), basic);
-  // test(range(0xa790, 0xa792, 2), range(0xa791, 0xa793, 2), basic); // requires Unicode Data update
+  test(range(0xa790, 0xa792, 2), range(0xa791, 0xa793, 2), basic);
   test(range(0xa7a0, 0xa7a8, 2), range(0xa7a1, 0xa7a9, 2), basic);
-  // test(range(0xa7aa, 0xa7aa, 1), range(0x266, 0x266, 1), basic); // requires Unicode Data update
+  test(range(0xa7aa, 0xa7aa, 1), range(0x266, 0x266, 1), basic);
   test(range(0xff21, 0xff3a, 1), range(0xff41, 0xff5a, 1), basic);
   test(range(0x10400, 0x10427, 1), range(0x10428, 0x1044f, 1), supplementary);
 }

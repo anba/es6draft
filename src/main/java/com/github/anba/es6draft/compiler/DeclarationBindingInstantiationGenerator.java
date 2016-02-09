@@ -12,7 +12,14 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 
-import com.github.anba.es6draft.ast.*;
+import com.github.anba.es6draft.ast.AsyncFunctionDeclaration;
+import com.github.anba.es6draft.ast.Declaration;
+import com.github.anba.es6draft.ast.FunctionDeclaration;
+import com.github.anba.es6draft.ast.GeneratorDeclaration;
+import com.github.anba.es6draft.ast.HoistableDeclaration;
+import com.github.anba.es6draft.ast.LegacyGeneratorDeclaration;
+import com.github.anba.es6draft.ast.Node;
+import com.github.anba.es6draft.ast.VariableDeclaration;
 import com.github.anba.es6draft.ast.scope.Name;
 import com.github.anba.es6draft.compiler.CodeGenerator.FunctionName;
 import com.github.anba.es6draft.compiler.assembler.MethodName;
@@ -447,28 +454,18 @@ class DeclarationBindingInstantiationGenerator {
                 || codegen.isEnabled(CompatibilityOption.FunctionCaller);
     }
 
-    protected static final <T> Iterable<T> reverse(final List<T> list) {
-        return new Iterable<T>() {
+    protected static final <T> Iterable<T> reverse(List<T> list) {
+        return () -> new Iterator<T>() {
+            final ListIterator<T> iter = list.listIterator(list.size());
+
             @Override
-            public Iterator<T> iterator() {
-                return new Iterator<T>() {
-                    ListIterator<T> iter = list.listIterator(list.size());
+            public boolean hasNext() {
+                return iter.hasPrevious();
+            }
 
-                    @Override
-                    public boolean hasNext() {
-                        return iter.hasPrevious();
-                    }
-
-                    @Override
-                    public T next() {
-                        return iter.previous();
-                    }
-
-                    @Override
-                    public void remove() {
-                        throw new UnsupportedOperationException();
-                    }
-                };
+            @Override
+            public T next() {
+                return iter.previous();
             }
         };
     }

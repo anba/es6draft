@@ -124,10 +124,5 @@ public final class VariablesSnapshot implements Iterable<Variable<?>> {
             slot = getNextInitializedSlot(slot);
             return v;
         }
-
-        @Override
-        public void remove() {
-            throw new UnsupportedOperationException();
-        }
     }
 }

@@ -66,6 +66,11 @@ public interface Callable extends ScriptObject {
      */
     Realm getRealm(ExecutionContext cx);
 
+    @Override
+    default String className() {
+        return "Function";
+    }
+
     /**
      * Source representation of this callable.
      * 

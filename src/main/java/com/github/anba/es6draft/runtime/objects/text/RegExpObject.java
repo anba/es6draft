@@ -116,6 +116,11 @@ public final class RegExpObject extends OrdinaryObject {
     }
 
     @Override
+    public String className() {
+        return "RegExp";
+    }
+
+    @Override
     public String toString() {
         return String.format("%s, matcher={%s}", super.toString(), Objects.toString(regExpMatcher));
     }

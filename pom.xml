@@ -161,7 +161,7 @@
             <artifactId>maven-pmd-plugin</artifactId>
             <version>3.6</version>
             <configuration>
-              <targetJdk>1.7</targetJdk>
+              <targetJdk>1.8</targetJdk>
               <skipEmptyReport>false</skipEmptyReport>
               <minimumTokens>100</minimumTokens>
               <lineLength>100</lineLength>
@@ -538,8 +538,8 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
         <configuration>
-          <source>1.7</source>
-          <target>1.7</target>
+          <source>1.8</source>
+          <target>1.8</target>
           <debug>true</debug>
         </configuration>
       </plugin>
