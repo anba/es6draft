@@ -1499,8 +1499,19 @@ abstract class CodeVisitor extends InstructionVisitor {
      *            the target array variable
      * @param completion
      *            the completion value
+     * @param expression
+     *            if {@code true} emits the label switch at expression level
      */
-    final void labelSwitch(LabelState labelState, Value<Integer> target, Value<Object> completion) {
+    final void labelSwitch(LabelState labelState, Value<Integer> target, Value<Object> completion, boolean expression) {
+        assert hasStack();
+        if (expression) {
+            labelSwitchExpr(labelState, target, completion);
+        } else {
+            labelSwitchStmt(labelState, target, completion);
+        }
+    }
+
+    private void labelSwitchStmt(LabelState labelState, Value<Integer> target, Value<Object> returnValue) {
         if (labelState.size() == 0) {
             if (labelState.completion.isAbrupt()) {
                 // Unreachable code, create 'throw' completion for bytecode verifier.
@@ -1510,14 +1521,14 @@ abstract class CodeVisitor extends InstructionVisitor {
             Map.Entry<LabelKind, String> entry = labelState.get(0);
             if (entry.getKey() == LabelKind.Return) {
                 if (labelState.completion.isAbrupt()) {
-                    returnCompletion(completion);
+                    returnCompletion(returnValue);
                 } else {
                     Jump noReturn = new Jump();
 
                     load(target);
                     ifeq(noReturn);
                     {
-                        returnCompletion(completion);
+                        returnCompletion(returnValue);
                     }
                     mark(noReturn);
                 }
@@ -1532,29 +1543,32 @@ abstract class CodeVisitor extends InstructionVisitor {
                 }
             }
         } else if (labelState.size() > 1) {
-            Jump defaultInstr = new Jump();
-            Jump returnInstr = null;
-            Jump[] targetInstrs = new Jump[labelState.size()];
-            for (int i = 0; i < labelState.size(); ++i) {
-                Map.Entry<LabelKind, String> entry = labelState.get(i);
-                if (entry.getKey() == LabelKind.Return) {
-                    assert returnInstr == null;
-                    targetInstrs[i] = returnInstr = new Jump();
-                } else {
-                    targetInstrs[i] = targetInstruction(entry);
-                }
-            }
-            load(target);
-            tableswitch(1, labelState.size(), defaultInstr, targetInstrs);
-            if (returnInstr != null) {
-                mark(returnInstr);
-                returnCompletion(completion);
-            }
-            mark(defaultInstr);
+            emitLabelSwitch(labelState, target, returnValue);
             if (labelState.completion.isAbrupt()) {
                 // Unreachable code, create 'throw' completion for bytecode verifier.
                 unreachable();
             }
+        }
+    }
+
+    private void labelSwitchExpr(LabelState labelState, Value<Integer> target, Value<Object> returnValue) {
+        assert hasStack();
+        if (labelState.size() == 1) {
+            popStack(target, () -> {
+                Map.Entry<LabelKind, String> entry = labelState.get(0);
+                if (entry.getKey() == LabelKind.Return) {
+                    returnCompletion(returnValue);
+                } else {
+                    Jump targetInstr = targetInstruction(entry);
+                    goTo(targetInstr);
+                }
+            });
+        } else if (labelState.size() > 1) {
+            popStack(target, () -> {
+                emitLabelSwitch(labelState, target, returnValue);
+                // Unreachable code, create 'throw' completion for bytecode verifier.
+                unreachable();
+            });
         }
     }
 
@@ -1566,8 +1580,47 @@ abstract class CodeVisitor extends InstructionVisitor {
         return labels.continueLabel(entry.getValue());
     }
 
+    private void emitLabelSwitch(LabelState labelState, Value<Integer> target, Value<Object> returnValue) {
+        Jump defaultInstr = new Jump();
+        Jump returnInstr = null;
+        Jump[] targetInstrs = new Jump[labelState.size()];
+        for (int i = 0; i < labelState.size(); ++i) {
+            Map.Entry<LabelKind, String> entry = labelState.get(i);
+            if (entry.getKey() == LabelKind.Return) {
+                assert returnInstr == null;
+                targetInstrs[i] = returnInstr = new Jump();
+            } else {
+                targetInstrs[i] = targetInstruction(entry);
+            }
+        }
+        load(target);
+        tableswitch(1, labelState.size(), defaultInstr, targetInstrs);
+        if (returnInstr != null) {
+            mark(returnInstr);
+            returnCompletion(returnValue);
+        }
+        mark(defaultInstr);
+    }
+
     private void unreachable() {
         anull();
         athrow();
+    }
+
+    @FunctionalInterface
+    private interface Action {
+        void perform();
+    }
+
+    private void popStack(Value<Integer> target, Action then) {
+        Jump noAbrupt = new Jump();
+
+        load(target);
+        ifeq(noAbrupt);
+        {
+            popStack();
+            then.perform();
+        }
+        mark(noAbrupt);
     }
 }

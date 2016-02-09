@@ -284,6 +284,11 @@ public abstract class DefaultNodeVisitor<R, V> implements NodeVisitor<R, V> {
     }
 
     @Override
+    public R visit(DoExpression node, V value) {
+        return visit((Expression) node, value);
+    }
+
+    @Override
     public R visit(DoWhileStatement node, V value) {
         return visit((IterationStatement) node, value);
     }

@@ -283,6 +283,11 @@ public abstract class DefaultVoidNodeVisitor<V> implements VoidNodeVisitor<V> {
     }
 
     @Override
+    public void visit(DoExpression node, V value) {
+        visit((Expression) node, value);
+    }
+
+    @Override
     public void visit(DoWhileStatement node, V value) {
         visit((IterationStatement) node, value);
     }

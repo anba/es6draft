@@ -91,6 +91,8 @@ public interface NodeVisitor<R, V> {
 
     R visit(DebuggerStatement node, V value);
 
+    R visit(DoExpression node, V value);
+
     R visit(DoWhileStatement node, V value);
 
     R visit(ElementAccessor node, V value);

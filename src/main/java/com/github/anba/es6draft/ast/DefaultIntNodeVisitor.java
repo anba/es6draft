@@ -284,6 +284,11 @@ public abstract class DefaultIntNodeVisitor<V> implements IntNodeVisitor<V> {
     }
 
     @Override
+    public int visit(DoExpression node, V value) {
+        return visit((Expression) node, value);
+    }
+
+    @Override
     public int visit(DoWhileStatement node, V value) {
         return visit((IterationStatement) node, value);
     }

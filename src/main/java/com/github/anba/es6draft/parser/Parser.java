@@ -152,6 +152,7 @@ public final class Parser {
         boolean legacyGenerator = false;
         boolean explicitStrict = false;
         boolean isDerivedClassConstructor = false;
+        boolean yieldOrAwaitExpression = false;
 
         StrictMode strictMode = StrictMode.Unknown;
         ParserException strictError;
@@ -198,7 +199,6 @@ public final class Parser {
                 this.topContext = funContext;
             }
             this.scopeContext = topContext;
-            this.returnAllowed = kind.isFunction();
             if (parent.strictMode == StrictMode.Strict) {
                 this.strictMode = parent.strictMode;
             }
@@ -3433,6 +3433,8 @@ public final class Parser {
      * @return the list of parsed statement list items
      */
     private List<StatementListItem> functionBody(FormalParameterList parameters, Token end) {
+        // enable 'return'
+        context.returnAllowed = true;
         // enable 'yield' if in generator
         context.yieldAllowed = context.kind.isGenerator();
         // enable 'await' if in async function
@@ -3553,6 +3555,8 @@ public final class Parser {
      */
     private List<StatementListItem> expressionClosureBody(FormalParameterList parameters) {
         assert !(context.kind.isGenerator() || context.kind.isAsync());
+        // enable 'return'
+        context.returnAllowed = true;
 
         // Necessary to call applyStrictMode() manually b/c directivePrologue() is not used.
         applyStrictMode(false);
@@ -3670,6 +3674,8 @@ public final class Parser {
     }
 
     private Expression arrowFunctionExpressionBody(FormalParameterList parameters, boolean allowIn) {
+        // enable 'return'
+        context.returnAllowed = true;
         // enable 'yield' if in generator
         context.yieldAllowed = context.kind.isGenerator();
         // enable 'await' if in async function
@@ -4259,6 +4265,8 @@ public final class Parser {
      */
     private YieldExpression yieldExpression(boolean allowIn) {
         assert context.kind.isGenerator() && context.yieldAllowed;
+        context.yieldOrAwaitExpression |= true;
+
         long begin = ts.beginPosition();
         consume(Token.YIELD);
         boolean delegatedYield = false;
@@ -4349,6 +4357,9 @@ public final class Parser {
         case ESCAPED_LET:
             // FIRST(Identifier)
             return isIdentifierReference(token);
+        case DO:
+            // FIRST(DoExpression)
+            return isEnabled(CompatibilityOption.DoExpression);
         default:
             return false;
         }
@@ -4998,6 +5009,8 @@ public final class Parser {
      */
     private AwaitExpression awaitExpression() {
         assert context.kind.isAsync() && context.awaitAllowed;
+        context.yieldOrAwaitExpression |= true;
+
         long begin = ts.beginPosition();
         consume(Token.AWAIT);
         Expression expr = unaryExpression(false);
@@ -5831,6 +5844,11 @@ public final class Parser {
             break;
         case ASYNC:
             if (isEnabled(CompatibilityOption.AsyncFunction) && LOOKAHEAD(Token.FUNCTION) && noNextLineTerminator()) {
+                throw reportSyntaxError(Messages.Key.InvalidToken, token().toString());
+            }
+            break;
+        case DO:
+            if (isEnabled(CompatibilityOption.DoExpression)) {
                 throw reportSyntaxError(Messages.Key.InvalidToken, token().toString());
             }
             break;
@@ -7145,6 +7163,11 @@ public final class Parser {
                 return asyncFunctionExpression();
             }
             break;
+        case DO:
+            if (isEnabled(CompatibilityOption.DoExpression)) {
+                return doExpression();
+            }
+            break;
         default:
         }
         return identifierReference();
@@ -7829,6 +7852,8 @@ public final class Parser {
     }
 
     private Comprehension generatorComprehensionBody() {
+        // do not enable 'return' for consistency with 'yield' in comprehensions
+        context.returnAllowed = false;
         // propagate the outer context's 'yield' state
         context.yieldAllowed = context.parent.yieldAllowed;
         // propagate the outer context's 'await' state
@@ -7879,6 +7904,8 @@ public final class Parser {
     }
 
     private LegacyComprehension legacyGeneratorComprehensionBody() {
+        // do not enable 'return' for consistency with 'yield' in comprehensions
+        context.returnAllowed = false;
         // propagate the outer context's 'yield' state
         context.yieldAllowed = context.parent.yieldAllowed;
         // propagate the outer context's 'await' state
@@ -8060,6 +8087,31 @@ public final class Parser {
                 lexicalBindings, expression);
         scope.node = letExpression;
         return letExpression;
+    }
+
+    /**
+     * <strong>[Extension] The <code>do</code> Expression</strong>
+     * 
+     * <pre>
+     * DoExpression<span><sub>[Yield]</sub></span> :
+     *     do Block<span><sub>[?Yield]</sub></span>
+     * </pre>
+     * 
+     * @return the parsed do expression
+     */
+    private DoExpression doExpression() {
+        long begin = ts.beginPosition();
+        consume(Token.DO);
+
+        boolean oldYieldOrAwaitExpression = context.yieldOrAwaitExpression;
+        context.yieldOrAwaitExpression = false;
+        try {
+            BlockStatement block = block(NO_INHERITED_BINDING);
+
+            return new DoExpression(begin, ts.endPosition(), block, context.yieldOrAwaitExpression);
+        } finally {
+            context.yieldOrAwaitExpression = oldYieldOrAwaitExpression;
+        }
     }
 
     /**

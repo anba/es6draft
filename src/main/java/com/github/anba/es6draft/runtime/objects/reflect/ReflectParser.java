@@ -143,6 +143,7 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
 
         // New node types
         AwaitExpression(),
+        DoExpression(),
 
         // Removed node types
         LetExpression("letExpression"),
@@ -1141,6 +1142,13 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
             return call(Type.DebuggerStatement, node);
         }
         return createStatement(node, Type.DebuggerStatement);
+    }
+
+    @Override
+    public Object visit(DoExpression node, Void value) {
+        OrdinaryObject expression = createExpression(node, Type.DoExpression);
+        addProperty(expression, "statement", node.getStatement().accept(this, value));
+        return expression;
     }
 
     @Override

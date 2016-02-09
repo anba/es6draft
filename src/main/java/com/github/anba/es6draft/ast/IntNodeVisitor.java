@@ -91,6 +91,8 @@ public interface IntNodeVisitor<V> {
 
     int visit(DebuggerStatement node, V value);
 
+    int visit(DoExpression node, V value);
+
     int visit(DoWhileStatement node, V value);
 
     int visit(ElementAccessor node, V value);

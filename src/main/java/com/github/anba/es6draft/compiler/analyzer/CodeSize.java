@@ -530,6 +530,13 @@ public final class CodeSize implements IntNodeVisitor<CodeSize.State> {
     }
 
     @Override
+    public int visit(DoExpression node, State state) {
+        int statement = accept(node.getStatement(), state);
+        checkValidSize(statement);
+        return 25;
+    }
+
+    @Override
     public int visit(DoWhileStatement node, State state) {
         int test = accept(node.getTest(), state);
         int statement = statement(node.getStatement(), state, node::setStatement);

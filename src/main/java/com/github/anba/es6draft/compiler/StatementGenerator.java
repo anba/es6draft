@@ -1489,7 +1489,7 @@ final class StatementGenerator extends DefaultCodeGenerator<StatementGenerator.C
         if (node.hasCompletionValue()) {
             mv.storeCompletionValue(completionValue);
         }
-        mv.labelSwitch(labelState, target, completionValue);
+        mv.labelSwitch(labelState, target, completionValue, false);
         mv.exitVariableScope();
 
         return labelState.completion;

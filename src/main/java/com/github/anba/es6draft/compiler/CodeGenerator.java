@@ -88,6 +88,11 @@ final class CodeGenerator {
 
         static final MethodTypeDescriptor TemplateLiteral = Type.methodType(Types.String_);
 
+        static final MethodTypeDescriptor DoExpressionMethod = Type.methodType(Type.INT_TYPE, Types.ExecutionContext,
+                Types.Object_);
+        static final MethodTypeDescriptor DoExpressionMethodWithResume = Type.methodType(Type.INT_TYPE,
+                Types.ExecutionContext, Types.ResumptionPoint_, Types.Object_);
+
         static final MethodTypeDescriptor StatementListMethod = Type.methodType(Type.INT_TYPE, Types.ExecutionContext,
                 Types.Object_);
         static final MethodTypeDescriptor StatementListMethodWithResume = Type.methodType(Type.INT_TYPE,
@@ -232,6 +237,7 @@ final class CodeGenerator {
         return key;
     }
 
+    private final HashMap<DoExpression, LabelState> doExpressionCompletions = new HashMap<>();
     private final HashMap<StatementListMethod, LabelState> statementCompletions = new HashMap<>();
 
     /* ----------------------------------------------------------------------------------------- */
@@ -290,6 +296,14 @@ final class CodeGenerator {
         }
     }
 
+    private String methodName(DoExpression node) {
+        String name = methodNames.get(node);
+        if (name == null) {
+            throw new IllegalStateException("no method-name present for: " + node);
+        }
+        return name;
+    }
+
     private String methodName(StatementListMethod node) {
         String name = methodNames.get(node);
         if (name == null) {
@@ -307,6 +321,10 @@ final class CodeGenerator {
         }
         assert topLevel instanceof Script;
         return methodName((Script) topLevel, ScriptName.Code);
+    }
+
+    private String methodName(TopLevelNode<?> topLevel, DoExpression node) {
+        return addMethodName(node, baseName(topLevel), '\'');
     }
 
     private String methodName(TopLevelNode<?> topLevel, StatementListMethod node) {
@@ -402,6 +420,13 @@ final class CodeGenerator {
 
     private MethodTypeDescriptor methodDescriptor(TemplateLiteral node) {
         return MethodDescriptors.TemplateLiteral;
+    }
+
+    private MethodTypeDescriptor methodDescriptor(DoExpression node) {
+        if (node.hasYieldOrAwait()) {
+            return MethodDescriptors.DoExpressionMethodWithResume;
+        }
+        return MethodDescriptors.DoExpressionMethod;
     }
 
     private MethodTypeDescriptor methodDescriptor(StatementListMethod node) {
@@ -591,6 +616,10 @@ final class CodeGenerator {
         return publicStaticMethod(methodName(node), methodDescriptor(node));
     }
 
+    private MethodCode newMethod(TopLevelNode<?> topLevel, DoExpression node) {
+        return publicStaticMethod(methodName(topLevel, node), methodDescriptor(node));
+    }
+
     private MethodCode newMethod(TopLevelNode<?> topLevel, StatementListMethod node) {
         return publicStaticMethod(methodName(topLevel, node), methodDescriptor(node));
     }
@@ -648,6 +677,11 @@ final class CodeGenerator {
     }
 
     private MethodName methodDesc(TemplateLiteral node) {
+        String methodName = methodName(node);
+        return MethodName.findStatic(owner(methodName), methodName, methodDescriptor(node));
+    }
+
+    private MethodName methodDesc(DoExpression node) {
         String methodName = methodName(node);
         return MethodName.findStatic(owner(methodName), methodName, methodDescriptor(node));
     }
@@ -1110,6 +1144,39 @@ final class CodeGenerator {
         return body.hasTailCalls();
     }
 
+    Entry<MethodName, LabelState> compile(DoExpression node, CodeVisitor mv) {
+        if (!isCompiled(node)) {
+            if (!isEnabled(Compiler.Option.NoCompletion)) {
+                CompletionValueVisitor.performCompletion(node);
+            }
+            MethodCode method = newMethod(mv.getTopLevelNode(), node);
+            DoExpressionCodeVisitor body = new DoExpressionCodeVisitor(node, method, mv);
+            body.lineInfo(node);
+            body.nop(); // force line-number entry
+            body.begin();
+            GeneratorState generatorState = null;
+            if (node.hasYieldOrAwait()) {
+                generatorState = body.generatorPrologue();
+            }
+            body.labelPrologue();
+
+            Completion result = statement(node.getStatement(), body);
+            if (!result.isAbrupt()) {
+                // fall-thru, return `0`.
+                body.iconst(0);
+                body._return();
+            }
+            LabelState labelState = body.labelEpilogue(result);
+            if (generatorState != null) {
+                body.generatorEpilogue(generatorState);
+            }
+            body.end();
+
+            doExpressionCompletions.put(node, labelState);
+        }
+        return new SimpleImmutableEntry<>(methodDesc(node), doExpressionCompletions.get(node));
+    }
+
     Entry<MethodName, LabelState> compile(StatementListMethod node, CodeVisitor mv) {
         if (!isCompiled(node)) {
             MethodCode method = newMethod(mv.getTopLevelNode(), node);
@@ -1388,6 +1455,59 @@ final class CodeGenerator {
             super.begin();
             setParameterName("cx", 0, Types.ExecutionContext);
             setParameterName("rp", 1, Types.ResumptionPoint);
+        }
+    }
+
+    private static final class DoExpressionCodeVisitor extends CodeVisitor {
+        private final boolean withResume;
+
+        DoExpressionCodeVisitor(DoExpression node, MethodCode method, CodeVisitor parent) {
+            super(method, parent);
+            this.withResume = node.hasYieldOrAwait();
+        }
+
+        private int parameter(int index) {
+            assert index > 0;
+            return withResume ? index + 1 : index;
+        }
+
+        private <T> MutableValue<T> arrayElementFromParameter(int index, Class<T[]> arrayType) {
+            @SuppressWarnings("unchecked")
+            Class<T> componentType = (Class<T>) arrayType.getComponentType();
+            return arrayElement(getParameter(index, arrayType), 0, componentType);
+        }
+
+        @Override
+        public void begin() {
+            super.begin();
+            setParameterName("cx", 0, Types.ExecutionContext);
+            if (withResume) {
+                setParameterName("rp", 1, Types.ResumptionPoint_);
+            }
+            setParameterName("completion", parameter(1), Types.Object_);
+        }
+
+        @Override
+        protected MutableValue<Object> createCompletionVariable() {
+            return arrayElementFromParameter(parameter(1), Object[].class);
+        }
+
+        @Override
+        protected boolean hasCompletionValue() {
+            return true;
+        }
+
+        @Override
+        protected MutableValue<ResumptionPoint> resumptionPoint() {
+            assert withResume;
+            return arrayElementFromParameter(1, ResumptionPoint[].class);
+        }
+
+        @Override
+        protected void returnForSuspend() {
+            store(resumptionPoint());
+            iconst(-1);
+            _return();
         }
     }
 

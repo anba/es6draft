@@ -269,6 +269,11 @@ public enum CompatibilityOption {
     SIMD,
 
     /**
+     * {@code do}-expressions (Stage 0 proposal)
+     */
+    DoExpression,
+
+    /**
      * Atomics.fence() function
      */
     AtomicsFence,
@@ -450,7 +455,7 @@ public enum CompatibilityOption {
     public static final Set<CompatibilityOption> of(Stage stage) {
         switch (stage) {
         case Strawman:
-            return EnumSet.noneOf(CompatibilityOption.class);
+            return EnumSet.of(DoExpression);
         case Proposal:
             return EnumSet.of(ArrayBufferTransfer, ExportFrom, Decorator, StringTrim, StringMatchAll,
                     StaticClassProperties, CallConstructor, Observable, SystemGlobal);

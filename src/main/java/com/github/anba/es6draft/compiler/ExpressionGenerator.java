@@ -25,12 +25,16 @@ import com.github.anba.es6draft.ast.scope.WithScope;
 import com.github.anba.es6draft.ast.synthetic.ExpressionMethod;
 import com.github.anba.es6draft.ast.synthetic.SpreadArrayLiteral;
 import com.github.anba.es6draft.ast.synthetic.SpreadElementMethod;
+import com.github.anba.es6draft.compiler.CodeVisitor.LabelState;
 import com.github.anba.es6draft.compiler.DefaultCodeGenerator.ValType;
 import com.github.anba.es6draft.compiler.assembler.FieldName;
+import com.github.anba.es6draft.compiler.assembler.InstructionAssembler;
 import com.github.anba.es6draft.compiler.assembler.Jump;
 import com.github.anba.es6draft.compiler.assembler.MethodName;
 import com.github.anba.es6draft.compiler.assembler.MethodTypeDescriptor;
+import com.github.anba.es6draft.compiler.assembler.MutableValue;
 import com.github.anba.es6draft.compiler.assembler.Type;
+import com.github.anba.es6draft.compiler.assembler.Value;
 import com.github.anba.es6draft.compiler.assembler.Variable;
 import com.github.anba.es6draft.parser.Parser;
 import com.github.anba.es6draft.runtime.DeclarativeEnvironmentRecord;
@@ -38,7 +42,6 @@ import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.internal.Bootstrap;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.NativeCalls;
-import com.github.anba.es6draft.runtime.internal.ResumptionPoint;
 import com.github.anba.es6draft.runtime.objects.Eval.EvalFlags;
 import com.github.anba.es6draft.runtime.objects.simd.SIMDType;
 import com.github.anba.es6draft.runtime.types.builtins.ArrayObject;
@@ -2858,6 +2861,63 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
         mv.mark(l1);
 
         return typeThen == typeOtherwise ? typeThen : ValType.Any;
+    }
+
+    /**
+     * Extension: 'do' expression
+     */
+    @Override
+    public ValType visit(DoExpression node, CodeVisitor mv) {
+        Entry<MethodName, LabelState> entry = codegen.compile(node, mv);
+        MethodName method = entry.getKey();
+        LabelState labelState = entry.getValue();
+        boolean hasCompletion = labelState.hasReturn() || node.hasCompletion();
+        boolean hasResume = node.hasYieldOrAwait();
+        boolean hasTarget = hasResume || labelState.size() > 0;
+
+        mv.enterVariableScope();
+        Value<Object[]> completion;
+        if (hasCompletion) {
+            Variable<Object[]> completionVar = mv.newVariable("completion", Object[].class);
+            mv.anewarray(1, Types.Object);
+            mv.store(completionVar);
+            if (node.hasCompletion()) {
+                mv.astore(completionVar, 0, mv.undefinedValue());
+            }
+            completion = completionVar;
+        } else {
+            completion = mv.anullValue();
+        }
+        MutableValue<Integer> target = hasTarget ? mv.newVariable("target", int.class) : new PopStoreValue<>();
+
+        // stack: [] -> []
+        mv.lineInfo(0); // 0 = hint for stacktraces to omit this frame
+        if (hasResume) {
+            mv.callWithSuspendInt(method, target, completion);
+        } else {
+            mv.callWithResult(method, target, completion);
+        }
+
+        Value<Object> completionValue = mv.arrayElement(completion, 0, Object.class);
+        mv.labelSwitch(labelState, target, completionValue, true);
+        if (node.hasCompletion()) {
+            mv.load(completionValue);
+        }
+        mv.exitVariableScope();
+
+        return node.hasCompletion() ? ValType.Any : ValType.Empty;
+    }
+
+    private static final class PopStoreValue<V> implements MutableValue<V> {
+        @Override
+        public void load(InstructionAssembler assembler) {
+            throw new AssertionError();
+        }
+
+        @Override
+        public void store(InstructionAssembler assembler) {
+            assembler.pop();
+        }
     }
 
     /**

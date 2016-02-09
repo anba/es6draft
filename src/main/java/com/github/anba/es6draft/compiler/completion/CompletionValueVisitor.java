@@ -122,16 +122,19 @@ public final class CompletionValueVisitor extends DefaultNodeVisitor<Completion,
 
     static final class State {
         final Context context;
+        final boolean defaultComputeValue;
         boolean computeValue;
         boolean writeValue;
 
-        State() {
+        State(boolean defaultValue) {
             context = new Context();
-            computeValue = true;
+            defaultComputeValue = defaultValue;
+            computeValue = defaultValue;
         }
 
         State(State state) {
             context = state.context;
+            defaultComputeValue = state.defaultComputeValue;
             computeValue = state.computeValue;
         }
 
@@ -140,7 +143,7 @@ public final class CompletionValueVisitor extends DefaultNodeVisitor<Completion,
         }
 
         void requestValue() {
-            computeValue = true;
+            computeValue = defaultComputeValue;
         }
 
         void apply(State otherState) {
@@ -196,9 +199,12 @@ public final class CompletionValueVisitor extends DefaultNodeVisitor<Completion,
     private static final CompletionValueVisitor INSTANCE = new CompletionValueVisitor();
 
     public static void performCompletion(Script script) {
-        script.accept(INSTANCE, new State());
+        script.accept(INSTANCE, new State(true));
     }
 
+    public static void performCompletion(DoExpression expression) {
+        expression.getStatement().accept(INSTANCE, new State(expression.hasCompletion()));
+    }
 
     @Override
     protected Completion visit(Node node, State state) {
@@ -260,8 +266,8 @@ public final class CompletionValueVisitor extends DefaultNodeVisitor<Completion,
         state.enter(node);
         Statement target = state.context.breakTarget(node);
         state.exit(node);
-        if (target.hasCompletionValue()) {
-            state.computeValue = true;
+        if (target == null || target.hasCompletionValue()) {
+            state.requestValue();
         }
         return Completion.Value;
     }
@@ -271,8 +277,8 @@ public final class CompletionValueVisitor extends DefaultNodeVisitor<Completion,
         state.enter(node);
         IterationStatement target = state.context.continueTarget(node);
         state.exit(node);
-        if (target.hasCompletionValue()) {
-            state.computeValue = true;
+        if (target == null || target.hasCompletionValue()) {
+            state.requestValue();
         }
         return Completion.Value;
     }
@@ -302,6 +308,12 @@ public final class CompletionValueVisitor extends DefaultNodeVisitor<Completion,
         state.enterValue(node);
         node.getStatement().accept(this, state);
         state.exitValue(node);
+        return Completion.Value;
+    }
+
+    @Override
+    public Completion visit(ReturnStatement node, State state) {
+        state.implicitValue();
         return Completion.Value;
     }
 
