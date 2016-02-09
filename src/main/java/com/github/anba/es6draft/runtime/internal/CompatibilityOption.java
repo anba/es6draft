@@ -274,6 +274,11 @@ public enum CompatibilityOption {
     DoExpression,
 
     /**
+     * Object.getOwnPropertyDescriptors function (Stage 3 proposal)
+     */
+    ObjectGetOwnPropertyDescriptors,
+
+    /**
      * Atomics.fence() function
      */
     AtomicsFence,
@@ -462,8 +467,8 @@ public enum CompatibilityOption {
         case Draft:
             return EnumSet.of(Atomics, FunctionSent, ObjectRestDestructuring, ObjectSpreadInitializer);
         case Candidate:
-            return EnumSet.of(AsyncFunction, Exponentiation, FunctionCallTrailingComma, ObjectValuesEntries, StringPad,
-                    SIMD);
+            return EnumSet.of(AsyncFunction, Exponentiation, FunctionCallTrailingComma, ObjectGetOwnPropertyDescriptors,
+                    ObjectValuesEntries, StringPad, SIMD);
         case Finished:
             return EnumSet.of(ArrayIncludes);
         default:

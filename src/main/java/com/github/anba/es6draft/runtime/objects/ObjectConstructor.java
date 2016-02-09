@@ -61,6 +61,7 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
     public void initialize(Realm realm) {
         createProperties(realm, this, Properties.class);
         createProperties(realm, this, ValuesEntriesFunctions.class);
+        createProperties(realm, this, GetOwnPropertyDescriptors.class);
     }
 
     @Override
@@ -613,6 +614,43 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
             List<Object> entryList = EnumerableOwnProperties(cx, obj, PropertyKind.KeyValue);
             /* step 5 */
             return CreateArrayFromList(cx, entryList);
+        }
+    }
+
+    @CompatibilityExtension(CompatibilityOption.ObjectGetOwnPropertyDescriptors)
+    public enum GetOwnPropertyDescriptors {
+        ;
+
+        /**
+         * Object.getOwnPropertyDescriptors( O )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param o
+         *            the script object
+         * @return the object property descriptors array
+         */
+        @Function(name = "getOwnPropertyDescriptors", arity = 1)
+        public static Object getOwnPropertyDescriptors(ExecutionContext cx, Object thisValue, Object o) {
+            /* step 1 */
+            ScriptObject obj = ToObject(cx, o);
+            /* step 2 */
+            List<?> ownKeys = obj.ownPropertyKeys(cx);
+            /* step 3 */
+            OrdinaryObject descriptors = ObjectCreate(cx, Intrinsics.ObjectPrototype);
+            /* step 4 */
+            for (Object key : ownKeys) {
+                /* step 4.a */
+                Property desc = obj.getOwnProperty(cx, key);
+                /* step 4.b */
+                Object descriptor = FromPropertyDescriptor(cx, desc);
+                /* step 4.c */
+                CreateDataProperty(cx, descriptors, key, descriptor);
+            }
+            /* step 5 */
+            return descriptors;
         }
     }
 
