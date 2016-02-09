@@ -5,7 +5,7 @@
  * <https://github.com/anba/es6draft>
  */
 const {
-  assertEquals,
+  assertEquals
 } = Assert;
 
 var runInner = true;
