@@ -23,13 +23,6 @@ const {
 } = Object;
 
 /*
- * Add @@toStringTag to global object
- */
-Object.defineProperty(global, Symbol.toStringTag, {
-  value: "global", writable: true, enumerable: false, configurable: true
-});
-
-/*
  * Add __define[GS]etter__ and __lookup[GS]etter__
  */
 Object.defineProperties(Object.assign(Object.prototype, {
@@ -71,27 +64,5 @@ Object.defineProperties(Object.assign(Object.prototype, {
   __lookupGetter__: {enumerable: false},
   __lookupSetter__: {enumerable: false},
 });
-
-if (!%IsCompatibilityOptionEnabled("StringTrim")) {
-  const {String} = global;
-  const trimLeftRE = /^\s+/, trimRightRE = /\s+$/;
-
-  /*
-   * Add 'trimLeft' and 'trimRight' to String.prototype
-   */
-  Object.defineProperties(Object.assign(String.prototype, {
-    trimLeft() {
-      if (this == null) throw TypeError();
-      return %RegExpReplace(trimLeftRE, %ToString(this), "");
-    },
-    trimRight() {
-      if (this == null) throw TypeError();
-      return %RegExpReplace(trimRightRE, %ToString(this), "");
-    },
-  }), {
-    trimLeft: {enumerable: false},
-    trimRight: {enumerable: false},
-  });
-}
 
 })();

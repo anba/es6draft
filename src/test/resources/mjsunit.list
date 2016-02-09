@@ -14,7 +14,6 @@ es6/typedarray.js
 
 # V8 does not implement %TypedArray% prototype object
 es6/typed-array-iterator.js
-es6/built-in-accessor-names.js
 
 # V8 generators: missing type checks in v8-implementation
 es6/generators-iteration.js
@@ -48,21 +47,14 @@ es6/block-non-strict-errors.js
 # v8 bug - \8 and \9 are not allowed in template literals
 es6/templates.js
 
-# invalid test, `function f({x}) { var x; }` is allowed
-harmony/destructuring.js
-
 # invalid test, `Object.defineProperty(new Int32Array(), 0, {get(){}})` doesn't throw in v8
 element-accessor.js
 
 # properties added in wrong order, see todo note in test file
 es6/computed-property-names-classes.js
 
-# v8 allows "let let", disallowed per 13.3.1.1
-harmony/block-let-contextual-sloppy.js
-
 # legacy function hoisting in global/eval code
 harmony/block-sloppy-function.js
-harmony/block-eval-var-over-legacy-const.js
 harmony/block-eval-var-over-let.js
 
 # Incomplete v8 implementation, see todo in test file.
@@ -85,6 +77,27 @@ harmony/reflect-construct.js
 
 # v8 legacy const allows const-declaration without initializer
 regress/regress-4576.js
+
+# Invalid test: Proxy revocation doesn't affect current proxy operation
+es6/object-tostring.js
+
+# Symbol.species not implemented in V8
+harmony/array-concat.js
+
+# Proxy not allowed on Object.prototype chain in V8
+harmony/proxies-global-reference.js
+
+# RegExp with lookbehind
+regress/regress-crbug-570241.js
+
+# Proxy enumerate trap doesn't support infinite prototype chain in V8
+harmony/proxies-prototype-target-stackoverflow.js
+
+# V8 does not implement inferred names for computed property names, see todo in test file
+harmony/function-name.js
+
+# `/\ud808\udf45{3}/u.test("\u{12345}\udf45\udf45")` returns true in v8
+harmony/unicode-escapes-in-regexps.js
 
 
 ###################
@@ -109,15 +122,10 @@ regress/regress-126412.js
 ############################################
 
 # old Proxy API not completly emulated
-harmony/proxies-json.js
-harmony/proxies-symbols.js
 harmony/proxies.js
 
 # enumerate() does not allow non-strings in V8
 harmony/proxies-enumerate.js
-
-# Object.p.hasOwnPrototype calls getOwnPropertyDescriptor(), but v8 calls has() trap
-harmony/proxies-has-own-property.js
 
 # Object.keys() calls getOwnPropertyDescriptor() even if ownKeys() is not present, v8 does not comply
 harmony/proxies-keys.js
@@ -161,6 +169,8 @@ newline-in-string.js
 date-parse.js
 json.js
 regress/regress-396.js
+regress/regress-4640.js
+regress/regress-crbug-422858.js
 
 # for-in order
 enumeration-order.js
@@ -199,6 +209,13 @@ regress/regress-3404.js
 # v8 restriction test
 regexp-not-sticky-yet.js
 
+# v8 restriction test for Unicode RegExp
+es6/no-unicode-regexp-flag.js
+
+# v8 restriction test for --noharmony-species
+es6/legacy-subclassing.js
+regress/regress-4665.js
+
 # Function.arguments and Function.caller non-writable in V8
 regress/regress-1530.js
 
@@ -218,10 +235,10 @@ arguments-indirect.js
 regress/regress-crbug-393988.js
 regress/regress-crbug-489597.js
 regress/regress-crbug-505370.js
+regress/regress-crbug-570651.js
 regress/regress-2564.js
 regress/regress-3718.js
 regress/regress-conditional-position.js
-regress/regress-function-constructor-receiver.js
 stack-traces.js
 stack-traces-2.js
 stack-traces-custom.js
@@ -233,8 +250,10 @@ array-constructor.js
 call-cross-realm.js
 contextual-calls.js
 cross-realm-filtering.js
+harmony/array-species.js
 harmony/proxies-accesschecks.js
 harmony/proxies-construct.js
+harmony/regress/regress-576662.js
 regress/regress-280531.js
 regress/regress-crbug-501711.js
 regress/regress-crbug-501808.js
@@ -258,6 +277,9 @@ regress/regress-crbug-501809.js
 # Promise.defer
 es6/promise-internal-setter.js
 
+# wasm
+regress/regress-575364.js
+
 
 #######################################
 # Test for syntax extensions          #
@@ -267,6 +289,10 @@ es6/promise-internal-setter.js
 harmony/module-linking.js
 harmony/module-recompile.js
 harmony/module-resolution.js
+
+# Legacy const declarations
+es6/block-eval-var-over-legacy-const.js
+es6/block-let-contextual-sloppy.js
 
 
 #######################################
@@ -279,9 +305,6 @@ fuzz-accessors.js
 # built-in functions not exposed in caller
 function-caller.js
 
-# Object.getPrototypeOf() wraps/ignores primitives
-get-prototype-of.js
-
 # RegExp.prototype.compile requires extensible object
 regress/regress-349870.js
 
@@ -293,7 +316,6 @@ object-literal.js
 
 # %TypedArray% intrinsic not available in V8
 es6/typedarray-of.js
-harmony/reflect-get-prototype-of.js
 
 # assignment to const binding is always a runtime error, regardless of strict mode
 const.js
@@ -316,9 +338,6 @@ regress/regress-542100.js
 # temp dead zone const, const redeclarations etc.
 const-declaration.js
 const-redecl.js
-
-# function declarations are block scoped
-regress/regress-91120.js
 
 # different scope for const
 declare-locally.js

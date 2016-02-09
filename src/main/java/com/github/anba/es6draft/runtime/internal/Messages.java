@@ -294,6 +294,8 @@ public final class Messages {
         InvalidByteOffset("binary.invalid_byteoffset"),
         InvalidBufferSize("binary.invalid_buffersize"),
         InvalidTypedArrayConstructor("binary.invalid_typed_array_constructor"),
+        InvalidTypedArrayLength("binary.invalid_typed_array_length"),
+        TypedArrayCreate("binary.typed_array_create"),
 
         // 25.3 Generator Objects
         GeneratorExecuting("generator.executing"),

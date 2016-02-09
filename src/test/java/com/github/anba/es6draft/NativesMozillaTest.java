@@ -111,14 +111,16 @@ public final class NativesMozillaTest {
         public void initializeScripted() throws IOException, URISyntaxException, ParserException, CompilationException {
             NativeCode.load(getRealm(), "arraybuffer.js");
             NativeCode.load(getRealm(), "collection.js");
-            NativeCode.load(getRealm(), "compat.js");
+            NativeCode.load(getRealm(), "global.js");
             NativeCode.load(getRealm(), "iterator.js");
             NativeCode.load(getRealm(), "legacy-generator.js");
+            NativeCode.load(getRealm(), "object.js");
             NativeCode.load(getRealm(), "proxy.js");
             NativeCode.load(getRealm(), "simd.js");
             NativeCode.load(getRealm(), "source.js");
             NativeCode.load(getRealm(), "statics.js");
             NativeCode.load(getRealm(), "string.js");
+            NativeCode.load(getRealm(), "stringtrim.js");
         }
     }
 }

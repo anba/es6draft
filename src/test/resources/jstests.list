@@ -47,9 +47,6 @@ ecma_6/Generators/syntax.js
 
 # Primitives always boxed, even in strict mode accessor (Bug 603201, Bug 869098)
 ecma_6/Symbol/as-base-value.js
-ecma_6/Reflect/get.js
-ecma_6/Array/toLocaleString.js
-ecma_6/Object/toLocaleString.js
 
 # Detached ArrayBuffer object issues, maybe request spec changes?
 ecma_6/extensions/DataView-construct-arguments-neutering.js
@@ -57,10 +54,6 @@ ecma_6/extensions/DataView-construct-arguments-neutering.js
 # Template string realm registry
 # https://bugzilla.mozilla.org/show_bug.cgi?id=1108941
 ecma_6/TemplateStrings/tagTempl.js
-
-# ES6: Negative RegExp.prototype.lastIndex coerced to 0
-# https://bugzilla.mozilla.org/show_bug.cgi?id=1123059
-ecma_3/RegExp/15.10.6.2-2.js
 
 # SM issue: Different property iteration order
 # https://bugzilla.mozilla.org/show_bug.cgi?id=1175111
@@ -78,21 +71,13 @@ ecma_6/TypedArray/from_string.js
 # https://bugzilla.mozilla.org/show_bug.cgi?id=883377
 ecma_6/Function/bound-length-and-name.js
 
-# ES6: RegExp unicode not implemented
-# https://bugzilla.mozilla.org/show_bug.cgi?id=1135377
-ecma_6/RegExp/descriptor.js
-
 # ES6: Support for classes is incomplete in SM.
-ecma_6/Class/outerBinding.js
 ecma_6/Class/superPropEvalInsideNested.js
 ecma_6/Class/superPropHomeObject.js
 
 # ES6: Symbol.species not implemented in SM
 # https://bugzilla.mozilla.org/show_bug.cgi?id=1165053
 ecma_6/TypedArray/slice.js
-
-# Invalid test (https://bugzilla.mozilla.org/show_bug.cgi?id=1138906)
-ecma_6/TypedArray/map-and-filter.js
 
 # ES6: access to `this` throws in new'ed generators (TODO: allow in legacy generators?)
 js1_7/geniter/yield-new.js
@@ -140,22 +125,17 @@ ecma_6/extensions/new-cross-compartment.js
 # SM: Object from wrong realm
 ecma_6/TypedArray/entries.js
 
-# Invalid test: export without local binding
-ecma_6/extensions/keyword-unescaped-requirement-modules.js
-
 # Invalid test: `new ArrayBuffer([1,2])` is not a valid call to ArrayBuffer
 ecma_6/DataView/detach-after-construction.js
 
-# Invalid test: AnnexB calls CreateGlobalFunctionBinding, CreateGlobalFunctionBinding redefines configurable properties
-ecma_6/LexicalEnvironment/block-scoped-functions-annex-b-property.js
-
-# SM: TypedArray subclassing not supported in SpiderMonkey
-ecma_6/TypedArray/from_basics.js
-ecma_6/TypedArray/from_iterable.js
-ecma_6/TypedArray/from_this.js
-
 # Invalid test: SharedArrayBuffer called as function
 js1_8_5/extensions/sharedtypedarray.js
+
+# Requires Unicode update (Unicode 7)
+ecma_6/RegExp/unicode-ignoreCase.js
+
+# Invalid test: Annex B calls CreateGlobalFunctionBinding which overrides accessor properties
+ecma_6/LexicalEnvironment/block-scoped-functions-annex-b-property.js
 
 
 ####################################
@@ -169,7 +149,6 @@ Intl/NumberFormat/StringBuffer.js
 # Non standard SIMD extensions #
 ################################
 
-ecma_7/SIMD/signmask.js
 ecma_7/SIMD/typedobjects.js
 ecma_7/SIMD/bug1023145.js
 
@@ -205,7 +184,6 @@ js1_7/extensions/iterator-ctor.js
 js1_7/extensions/regress-346021.js
 js1_7/extensions/regress-354945-01.js
 js1_7/extensions/regress-354945-02.js
-js1_8/genexps/regress-380237-01.js
 
 
 ############################################
@@ -271,14 +249,12 @@ js1_5/Regress/regress-420919.js
 js1_5/Scope/regress-446026-01.js
 js1_6/extensions/regress-470310.js
 js1_6/Array/regress-304828.js
-js1_6/Regress/regress-350417.js
 js1_6/Regress/regress-355002.js
 js1_7/geniter/regress-345855.js
 js1_7/geniter/regress-349012-05.js
 js1_7/regress/regress-363040-01.js
 js1_8/extensions/regress-353116.js
 js1_8/extensions/regress-469625.js
-js1_8/genexps/regress-634472.js
 js1_8/regress/regress-455981-01.js
 js1_8/regress/regress-455981-02.js
 js1_8/regress/regress-469625-03.js
@@ -488,7 +464,6 @@ js1_8/genexps/regress-683738.js
 
 # close() runs finally-blocks but skips catch
 js1_7/extensions/regress-350312.js
-js1_8/genexps/regress-349331.js
 
 # yield in finally during close() throws TypeError
 js1_8/regress/regress-384412.js
@@ -507,9 +482,6 @@ ecma_3/extensions/regress-368516.js
 
 # keywords and reserved words allowed as Identifier in Spidermonkey
 js1_7/lexical/regress-351515.js
-
-# any parenthesized expression can degenerate into a generator comprehension
-js1_8_1/regress/regress-452498-099-a.js
 
 
 #######################################
@@ -572,7 +544,6 @@ js1_5/Regress/regress-280769-2.js
 js1_5/Regress/regress-280769-4.js
 js1_5/Regress/regress-280769-5.js
 js1_5/Regress/regress-312588.js
-js1_8_5/regress/no-array-comprehension-length-limit.js
 
 # Timeout
 js1_5/Array/regress-330812.js

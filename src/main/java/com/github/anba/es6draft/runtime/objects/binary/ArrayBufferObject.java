@@ -19,7 +19,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>24.1.5 Properties of the ArrayBuffer Instances
  * </ul>
  */
-public final class ArrayBufferObject extends OrdinaryObject {
+public final class ArrayBufferObject extends OrdinaryObject implements ArrayBuffer {
     /** [[ArrayBufferData]] */
     private ByteBuffer data;
 
@@ -55,6 +55,7 @@ public final class ArrayBufferObject extends OrdinaryObject {
      * 
      * @return the underlying byte buffer or {@code null} if detached
      */
+    @Override
     public ByteBuffer getData() {
         return data;
     }
@@ -64,6 +65,7 @@ public final class ArrayBufferObject extends OrdinaryObject {
      * 
      * @return the array buffer length in bytes or {@code 0} if detached
      */
+    @Override
     public long getByteLength() {
         return byteLength;
     }
@@ -71,6 +73,7 @@ public final class ArrayBufferObject extends OrdinaryObject {
     /**
      * Detaches this array buffer object.
      */
+    @Override
     public void detach() {
         data = null;
         byteLength = 0;
@@ -82,6 +85,7 @@ public final class ArrayBufferObject extends OrdinaryObject {
      * 
      * @return {@code true} if this array buffer object is detached
      */
+    @Override
     public boolean isDetached() {
         return detached;
     }

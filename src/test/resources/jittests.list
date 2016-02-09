@@ -10,11 +10,6 @@
 tests/basic/typed-array-index-out-of-range.js
 tests/basic/typed-array-sealed-frozen.js
 
-# arguments object is iterable
-# https://bugzilla.mozilla.org/show_bug.cgi?id=1067049
-tests/for-of/non-iterable.js
-tests/collections/constructor-errors.js
-
 # ES6-change: assignment to function call is early error ReferenceError
 # https://bugzilla.mozilla.org/show_bug.cgi?id=609756 (?)
 tests/basic/spread-call-setcall.js
@@ -63,6 +58,10 @@ tests/basic/bug830049.js
 # SM: eval("-- /./") throws SyntaxError, expected is ReferenceError
 tests/parser/modifier-regexp-vs-div.js
 
+# SM: const not allowed in for-in head
+# https://bugzilla.mozilla.org/show_bug.cgi?id=449811
+tests/parser/letContextualKeyword.js
+
 
 ###################
 # Misc issues     #
@@ -76,8 +75,6 @@ tests/basic/testBug720695.js
 tests/basic/bug684922.js
 tests/basic/bug885648.js
 tests/basic/bug942390.js
-tests/basic/testArrayComp1.js
-tests/basic/testArrayComp2.js
 tests/basic/testCustomIterator.js
 
 
@@ -93,7 +90,6 @@ tests/basic/function-tosource-bug779694.js
 tests/basic/function-tosource-constructor.js
 tests/basic/function-tosource-exprbody.js
 tests/basic/function-tosource-func-proto.js
-tests/basic/function-tosource-genexpr.js
 tests/basic/function-tosource-getset.js
 tests/basic/function-tosource-strict.js
 tests/basic/testLet.js
@@ -105,6 +101,7 @@ tests/basic/bug934997.js
 tests/basic/bug1100623.js
 tests/basic/bug1147216.js
 tests/basic/bug1172503.js
+tests/basic/bug1237564.js
 tests/basic/expression-autopsy.js
 tests/basic/iterable-error-messages.js
 tests/basic/spread-call-maxarg.js
@@ -206,11 +203,6 @@ tests/arguments/defaults-with-rest.js
 tests/auto-regress/bug701248.js
 tests/basic/bug738841.js
 
-# let/const + function redeclaration in block/global scope
-tests/basic/functionRedeclConst.js
-tests/basic/functionRedeclGlobalConst.js
-tests/basic/functionRedeclLet.js
-
 # function declaration with same name as parameter in surrounding function not applicable for B.3.3
 tests/basic/testFunctionStatementAliasLocals.js
 
@@ -265,9 +257,10 @@ tests/basic/testBug552248.js
 tests/basic/testBug663789-2.js
 tests/basic/testBug895774.js
 tests/basic/testEvalInFrameEdgeCase.js
-tests/basic/testGCNewbornGenerator.js
 tests/basic/testGeneratorDieButScopeAlive.js
+tests/self-test/findPath-bug1234428.js
 tests/tracelogger/bug1174542.js
+tests/tracelogger/bug1231170.js
 tests/tracelogger/drainTraceLogger.js
 tests/tracelogger/setupTraceLogger.js
 
@@ -364,6 +357,7 @@ tests/basic/relazify.js
 tests/self-test/notInJit.js
 tests/self-test/inJit.js
 # inIon
+tests/basic/invokeFunctionMagic.js
 tests/self-test/notInIon.js
 tests/self-test/inIon.js
 # setLazyParsingEnabled
@@ -388,6 +382,13 @@ tests/basic/bug1208403.js
 tests/basic/bug1220766.js
 # enableLastWarning
 tests/parser/expr-closure-warn.js
+tests/basic/regexp-multiline-warning.js
+# isRelazifiableFunction
+tests/self-test/isRelazifiableFunction-0.js
+# os.file.redirect
+tests/basic/bug908915.js
+# GetBuiltinConstructor
+tests/self-hosting/getbuiltinconstructor.js
 
 
 #######################################

@@ -109,12 +109,14 @@ public final class NativesV8Test {
 
         @Override
         public void initializeScripted() throws IOException, URISyntaxException, ParserException, CompilationException {
-            NativeCode.load(getRealm(), "compat.js");
             NativeCode.load(getRealm(), "cyclic.js");
             NativeCode.load(getRealm(), "generator.js");
+            NativeCode.load(getRealm(), "global.js");
             NativeCode.load(getRealm(), "internal-error.js");
+            NativeCode.load(getRealm(), "object.js");
             NativeCode.load(getRealm(), "proxy.js");
             NativeCode.load(getRealm(), "stacktrace.js");
+            NativeCode.load(getRealm(), "stringtrim.js");
         }
     }
 }

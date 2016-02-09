@@ -28,7 +28,7 @@ import com.github.anba.es6draft.runtime.types.builtins.IntegerIndexedObject;
  */
 public final class TypedArrayObject extends IntegerIndexedObject implements ArrayBufferView {
     /** [[ViewedArrayBuffer]] */
-    private final ArrayBufferObject buffer;
+    private final ArrayBuffer buffer;
 
     /** [[ElementType]] */
     private final ElementType elementType;
@@ -61,8 +61,8 @@ public final class TypedArrayObject extends IntegerIndexedObject implements Arra
      * @param prototype
      *            the prototype object
      */
-    public TypedArrayObject(Realm realm, ElementType elementType, ArrayBufferObject buffer,
-            long byteLength, long byteOffset, long arrayLength, ScriptObject prototype) {
+    public TypedArrayObject(Realm realm, ElementType elementType, ArrayBuffer buffer, long byteLength, long byteOffset,
+            long arrayLength, ScriptObject prototype) {
         super(realm);
         assert elementType != null && buffer != null : "cannot initialize TypedArrayObject with null";
         assert byteLength >= 0 : "negative byte length: " + byteLength;
@@ -89,7 +89,7 @@ public final class TypedArrayObject extends IntegerIndexedObject implements Arra
         assert index >= 0;
         // 9.4.5.2 [[HasProperty]](P)
         /* step 3.c.i */
-        ArrayBufferObject buffer = getBuffer();
+        ArrayBuffer buffer = getBuffer();
         /* step 3.c.ii */
         if (IsDetachedBuffer(buffer)) {
             throw newTypeError(cx, Messages.Key.BufferDetached);
@@ -103,7 +103,7 @@ public final class TypedArrayObject extends IntegerIndexedObject implements Arra
         assert index >= 0;
         /* steps 1-2 (not applicable) */
         /* step 3 */
-        ArrayBufferObject buffer = getBuffer();
+        ArrayBuffer buffer = getBuffer();
         /* step 4 */
         if (IsDetachedBuffer(buffer)) {
             throw newTypeError(cx, Messages.Key.BufferDetached);
@@ -126,7 +126,7 @@ public final class TypedArrayObject extends IntegerIndexedObject implements Arra
         assert 0 <= index && index < getArrayLength();
         /* steps 1-2 (not applicable) */
         /* step 3 */
-        ArrayBufferObject buffer = getBuffer();
+        ArrayBuffer buffer = getBuffer();
         /* step 4 */
         if (IsDetachedBuffer(buffer)) {
             throw newTypeError(cx, Messages.Key.BufferDetached);
@@ -149,7 +149,7 @@ public final class TypedArrayObject extends IntegerIndexedObject implements Arra
         /* steps 3-4 */
         double numValue = ToNumber(cx, value);
         /* step 5 */
-        ArrayBufferObject buffer = getBuffer();
+        ArrayBuffer buffer = getBuffer();
         /* step 6 */
         if (IsDetachedBuffer(buffer)) {
             throw newTypeError(cx, Messages.Key.BufferDetached);
@@ -174,7 +174,7 @@ public final class TypedArrayObject extends IntegerIndexedObject implements Arra
         assert 0 <= index && index < getArrayLength();
         /* steps 1-4 (not applicable) */
         /* step 5 */
-        ArrayBufferObject buffer = getBuffer();
+        ArrayBuffer buffer = getBuffer();
         /* step 6 */
         if (IsDetachedBuffer(buffer)) {
             throw newTypeError(cx, Messages.Key.BufferDetached);
@@ -195,7 +195,7 @@ public final class TypedArrayObject extends IntegerIndexedObject implements Arra
      * [[ViewedArrayBuffer]]
      */
     @Override
-    public ArrayBufferObject getBuffer() {
+    public ArrayBuffer getBuffer() {
         return buffer;
     }
 

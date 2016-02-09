@@ -353,7 +353,7 @@ public final class Resources {
     /**
      * Reads the xml-structure from {@link Reader} and returns the corresponding {@link Document}.
      */
-    private static Document xml(Reader xml) throws IOException {
+    public static Document xml(Reader xml) throws IOException {
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
 
         // turn off any validation or namespace features

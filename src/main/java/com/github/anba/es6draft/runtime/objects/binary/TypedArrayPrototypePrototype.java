@@ -16,7 +16,7 @@ import static com.github.anba.es6draft.runtime.objects.binary.ArrayBufferConstru
 import static com.github.anba.es6draft.runtime.objects.binary.ArrayBufferConstructor.GetValueFromBuffer;
 import static com.github.anba.es6draft.runtime.objects.binary.ArrayBufferConstructor.IsDetachedBuffer;
 import static com.github.anba.es6draft.runtime.objects.binary.ArrayBufferConstructor.SetValueInBuffer;
-import static com.github.anba.es6draft.runtime.objects.binary.TypedArrayConstructorPrototype.AllocateTypedArray;
+import static com.github.anba.es6draft.runtime.objects.binary.TypedArrayConstructor.TypedArraySpeciesCreate;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import java.nio.ByteBuffer;
@@ -39,7 +39,6 @@ import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.objects.ArrayIteratorObject.ArrayIterationKind;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
-import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
@@ -94,17 +93,19 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
      * 22.2.3.5.1 Runtime Semantics: ValidateTypedArray ( O )
      * 
      * @param cx
+     *            the execution context
      * @param thisValue
-     * @return
+     *            the function this-value
+     * @return the validated typed array object
      */
-    private static TypedArrayObject ValidateTypedArray(ExecutionContext cx, Object thisValue) {
+    public static TypedArrayObject ValidateTypedArray(ExecutionContext cx, Object thisValue) {
         /* steps 1-3 */
         if (!(thisValue instanceof TypedArrayObject)) {
             throw newTypeError(cx, Messages.Key.IncompatibleObject);
         }
         TypedArrayObject typedArray = (TypedArrayObject) thisValue;
         /* step 4 */
-        ArrayBufferObject buffer = typedArray.getBuffer();
+        ArrayBuffer buffer = typedArray.getBuffer();
         /* step 5 */
         if (IsDetachedBuffer(buffer)) {
             throw newTypeError(cx, Messages.Key.BufferDetached);
@@ -260,7 +261,7 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
                     throw newRangeError(cx, Messages.Key.InvalidByteOffset);
                 }
                 /* step 9 */
-                ArrayBufferObject targetBuffer = target.getBuffer();
+                ArrayBuffer targetBuffer = target.getBuffer();
                 /* step 10 */
                 if (IsDetachedBuffer(targetBuffer)) {
                     throw newTypeError(cx, Messages.Key.BufferDetached);
@@ -290,7 +291,7 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
                 for (long k = 0; targetByteIndex < limit; ++k, targetByteIndex += targetElementSize) {
                     /* step 24.a */
                     long pk = k;
-                    /* step 24.b-c */
+                    /* steps 24.b-c */
                     double kNumber = ToNumber(cx, Get(cx, src, pk));
                     /* step 24.d */
                     if (IsDetachedBuffer(targetBuffer)) {
@@ -313,13 +314,13 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
                     throw newRangeError(cx, Messages.Key.InvalidByteOffset);
                 }
                 /* step 9 */
-                ArrayBufferObject targetBuffer = target.getBuffer();
+                ArrayBuffer targetBuffer = target.getBuffer();
                 /* step 10 */
                 if (IsDetachedBuffer(targetBuffer)) {
                     throw newTypeError(cx, Messages.Key.BufferDetached);
                 }
                 /* step 12 */
-                ArrayBufferObject srcBuffer = typedArray.getBuffer();
+                ArrayBuffer srcBuffer = typedArray.getBuffer();
                 /* step 13 */
                 if (IsDetachedBuffer(srcBuffer)) {
                     throw newTypeError(cx, Messages.Key.BufferDetached);
@@ -348,8 +349,7 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
                 /* steps 24-25 */
                 long srcByteIndex;
                 if (srcBuffer == targetBuffer) {
-                    srcBuffer = CloneArrayBuffer(cx, targetBuffer, srcByteOffset,
-                            Intrinsics.ArrayBuffer);
+                    srcBuffer = CloneArrayBuffer(cx, targetBuffer, srcByteOffset, Intrinsics.ArrayBuffer);
                     assert !IsDetachedBuffer(targetBuffer);
                     srcByteIndex = 0;
                 } else {
@@ -404,32 +404,27 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
          * @return the new typed array
          */
         @Function(name = "subarray", arity = 2)
-        public static Object subarray(ExecutionContext cx, Object thisValue, Object begin,
-                Object end) {
+        public static Object subarray(ExecutionContext cx, Object thisValue, Object begin, Object end) {
             /* steps 1-4 */
             TypedArrayObject array = thisTypedArrayObject(cx, thisValue);
             /* step 5 */
-            ArrayBufferObject buffer = array.getBuffer();
+            ArrayBuffer buffer = array.getBuffer();
             /* step 6 */
             long srcLength = array.getArrayLength();
-            /* steps 7-9 */
+            /* steps 7-8 */
             long beginIndex = ToArrayIndex(cx, begin, srcLength);
-            /* steps 10-12 */
+            /* steps 9-10 */
             long endIndex = Type.isUndefined(end) ? srcLength : ToArrayIndex(cx, end, srcLength);
-            /* step 13 */
+            /* step 11 */
             long newLength = Math.max(endIndex - beginIndex, 0);
-            /* steps 14-15 */
+            /* steps 12-13 */
             int elementSize = array.getElementType().size();
-            /* step 16 */
+            /* step 14 */
             long srcByteOffset = array.getByteOffset();
-            /* step 17 */
+            /* step 15 */
             long beginByteOffset = srcByteOffset + beginIndex * elementSize;
-            /* step 18 */
-            Intrinsics defaultConstructor = array.getElementType().getConstructor();
-            /* steps 19-20 */
-            Constructor constructor = SpeciesConstructor(cx, array, defaultConstructor);
-            /* steps 21-22 */
-            return constructor.construct(cx, constructor, buffer, beginByteOffset, newLength);
+            /* steps 16-17 */
+            return TypedArraySpeciesCreate(cx, array, buffer, beginByteOffset, newLength);
         }
 
         /**
@@ -577,58 +572,54 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
          */
         @Function(name = "slice", arity = 2)
         public static Object slice(ExecutionContext cx, Object thisValue, Object start, Object end) {
-            /* steps 1-3 */
+            /* steps 1-2 */
             TypedArrayObject o = ValidateTypedArray(cx, thisValue);
-            /* step 4 */
+            /* step 3 */
             long len = o.getArrayLength();
-            /* steps 5-7 */
+            /* steps 4-5 */
             long k = ToArrayIndex(cx, start, len);
-            /* steps 8-10 */
+            /* steps 6-7 */
             long finall = Type.isUndefined(end) ? len : ToArrayIndex(cx, end, len);
-            /* step 11 */
+            /* step 8 */
             long count = Math.max(finall - k, 0);
-            /* step 12 */
-            Intrinsics defaultConstructor = o.getElementType().getConstructor();
-            /* steps 13-14 */
-            Constructor c = SpeciesConstructor(cx, o, defaultConstructor);
-            /* steps 15-16 */
-            TypedArrayObject a = AllocateTypedArray(cx, c, count);
-            /* steps 17-18 */
+            /* step 9 */
+            TypedArrayObject a = TypedArraySpeciesCreate(cx, o, count);
+            /* steps 10-11 */
             ElementType srcType = o.getElementType();
-            /* steps 19-20 */
+            /* steps 12-13 */
             ElementType targetType = a.getElementType();
-            /* steps 21-22 */
+            /* steps 14-15 */
             if (srcType != targetType) {
-                /* step 21 */
-                /* steps 21.a-b */
+                /* step 14 */
+                /* steps 14.a-b */
                 for (long n = 0; k < finall; ++k, ++n) {
-                    /* step 21.b.i */
+                    /* step 14.b.i */
                     long pk = k;
-                    /* step 21.b.ii-iii */
+                    /* step 14.b.ii */
                     double kvalue = o.elementGetDirect(cx, pk);
-                    /* step 21.b.iv-v */
+                    /* step 14.b.iii */
                     a.elementSetDirect(cx, n, kvalue);
                 }
             } else if (count > 0) {
-                /* step 22 */
-                /* step 22.a */
-                ArrayBufferObject srcBuffer = o.getBuffer();
-                /* step 22.b */
+                /* step 15 */
+                /* step 15.a */
+                ArrayBuffer srcBuffer = o.getBuffer();
+                /* step 15.b */
                 if (IsDetachedBuffer(srcBuffer)) {
                     throw newTypeError(cx, Messages.Key.BufferDetached);
                 }
-                /* step 22.c */
-                ArrayBufferObject targetBuffer = a.getBuffer();
-                /* step 22.d */
+                /* step 15.c */
+                ArrayBuffer targetBuffer = a.getBuffer();
+                /* step 15.d */
                 int elementSize = srcType.size();
-                /* step 22.e (note) */
-                /* step 22.f */
+                /* step 15.e (note) */
+                /* step 15.f */
                 long srcByteOffset = o.getByteOffset();
-                /* step 22.g */
-                long targetByteIndex = 0;
-                /* step 22.h */
+                /* step 15.g */
+                long targetByteIndex = a.getByteOffset();
+                /* step 15.h */
                 long srcByteIndex = srcByteOffset + k * elementSize;
-                /* step 22.i */
+                /* steps 15.i-j */
                 ByteBuffer srcData = srcBuffer.getData();
                 ByteBuffer targetData = targetBuffer.getData();
                 long countByteLength = count * elementSize;
@@ -642,16 +633,16 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
                 srcData.clear();
                 targetData.clear();
             }
-            /* step 23 */
+            /* step 16 */
             return a;
         }
 
         private static final class FunctionComparator implements Comparator<Double> {
             private final ExecutionContext cx;
             private final Callable comparefn;
-            private final ArrayBufferObject buffer;
+            private final ArrayBuffer buffer;
 
-            FunctionComparator(ExecutionContext cx, Callable comparefn, ArrayBufferObject buffer) {
+            FunctionComparator(ExecutionContext cx, Callable comparefn, ArrayBuffer buffer) {
                 this.cx = cx;
                 this.comparefn = comparefn;
                 this.buffer = buffer;
@@ -704,8 +695,7 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
                     elements[i] = obj.elementGetDirect(cx, i);
                 }
 
-                Comparator<Double> comparator = new FunctionComparator(cx, (Callable) comparefn,
-                        obj.getBuffer());
+                Comparator<Double> comparator = new FunctionComparator(cx, (Callable) comparefn, obj.getBuffer());
                 try {
                     Arrays.sort(elements, comparator);
                 } catch (IllegalArgumentException e) {
@@ -983,32 +973,27 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
          * @return the mapped value
          */
         @Function(name = "map", arity = 1)
-        public static Object map(ExecutionContext cx, Object thisValue, Object callbackfn,
-                Object thisArg) {
-            /* steps 1-3 */
+        public static Object map(ExecutionContext cx, Object thisValue, Object callbackfn, Object thisArg) {
+            /* steps 1-2 */
             TypedArrayObject o = ValidateTypedArray(cx, thisValue);
-            /* step 4 */
+            /* step 3 */
             long len = o.getArrayLength();
-            /* step 5 */
+            /* step 4 */
             if (!IsCallable(callbackfn)) {
                 throw newTypeError(cx, Messages.Key.NotCallable);
             }
             Callable callback = (Callable) callbackfn;
-            /* step 6 (omitted) */
-            /* step 7 */
-            Intrinsics defaultConstructor = o.getElementType().getConstructor();
-            /* steps 8-9 */
-            Constructor c = SpeciesConstructor(cx, o, defaultConstructor);
-            /* steps 10-11 */
-            TypedArrayObject a = AllocateTypedArray(cx, c, len);
-            /* steps 12-13 */
+            /* step 5 (omitted) */
+            /* step 6 */
+            TypedArrayObject a = TypedArraySpeciesCreate(cx, o, len);
+            /* steps 7-8 */
             for (long k = 0; k < len; ++k) {
                 long pk = k;
                 Double kvalue = o.elementGetDirect(cx, pk);
                 Object mappedValue = callback.call(cx, thisArg, kvalue, k, o);
                 a.elementSetDirect(cx, pk, ToNumber(cx, mappedValue));
             }
-            /* step 14 */
+            /* step 9 */
             return a;
         }
 
@@ -1026,26 +1011,21 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
          * @return the filtered value
          */
         @Function(name = "filter", arity = 1)
-        public static Object filter(ExecutionContext cx, Object thisValue, Object callbackfn,
-                Object thisArg) {
-            /* steps 1-3 */
+        public static Object filter(ExecutionContext cx, Object thisValue, Object callbackfn, Object thisArg) {
+            /* steps 1-2 */
             TypedArrayObject o = ValidateTypedArray(cx, thisValue);
-            /* step 4 */
+            /* step 3 */
             long len = o.getArrayLength();
-            /* step 5 */
+            /* step 4 */
             if (!IsCallable(callbackfn)) {
                 throw newTypeError(cx, Messages.Key.NotCallable);
             }
             Callable callback = (Callable) callbackfn;
-            /* step 6 (omitted) */
-            /* step 7 */
-            Intrinsics defaultConstructor = o.getElementType().getConstructor();
-            /* steps 8-9 */
-            Constructor c = SpeciesConstructor(cx, o, defaultConstructor);
-            /* steps 10, 12 */
+            /* step 5 (omitted) */
+            /* steps 6, 8 */
             int captured = 0;
             double[] kept = new double[(int) Math.min(len, 1024)];
-            /* steps 11, 13 */
+            /* steps 7, 9 */
             for (long k = 0; k < len; ++k) {
                 long pk = k;
                 double kvalue = o.elementGetDirect(cx, pk);
@@ -1057,14 +1037,14 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
                     kept[captured++] = kvalue;
                 }
             }
-            /* steps 14-15 */
-            TypedArrayObject a = AllocateTypedArray(cx, c, captured);
-            /* steps 16-17 */
+            /* step 10 */
+            TypedArrayObject a = TypedArraySpeciesCreate(cx, o, captured);
+            /* steps 11-12 */
             for (int n = 0; n < captured; ++n) {
                 double e = kept[n];
                 a.elementSetDirect(cx, n, e);
             }
-            /* step 18 */
+            /* step 13 */
             return a;
         }
 
@@ -1315,7 +1295,7 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
             long count = Math.min(finall - from, len - to);
             /* steps 15-17 */
             if (count > 0) {
-                ArrayBufferObject buffer = o.getBuffer();
+                ArrayBuffer buffer = o.getBuffer();
                 if (IsDetachedBuffer(buffer)) {
                     throw newTypeError(cx, Messages.Key.BufferDetached);
                 }

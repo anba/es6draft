@@ -94,20 +94,20 @@ mvn test -P test262 -Dtest262.exclude="test/built-ins/**/*.js"
 
 ### External Tests ###
 
-Additional test suites are available to run tests from [Mozilla] [mozilla], [Traceur] [traceur],
-[V8] [v8] and [WebKit] [webkit] using the `external` Maven profile.
+Additional test suites are available to run tests from [ChakraCore] [chakra], [Mozilla] [mozilla], [Traceur] [traceur], [V8] [v8] and [WebKit] [webkit] using the `external` Maven profile.
 
 The following environment variables need to be set to run these tests:
+* `CHAKRA_PATH`: ChakraCore main directory
 * `MOZILLA_PATH`: Mozilla-Central main directory
 * `TRACEUR_PATH`: Traceur main directory
 * `V8_PATH`: V8 main directory
 * `WEBKIT_PATH`: WebKit main directory
 
-Alternatively, the `-Dmozilla.path=...`, `-Dtraceur.path=...`, `-Dv8.path=...` and `-Dwebkit.path=...` parameters can be used.
+Alternatively, the `-Dchakra.path=...`, `-Dmozilla.path=...`, `-Dtraceur.path=...`, `-Dv8.path=...` and `-Dwebkit.path=...` parameters can be used.
 
 To skip an external test, use `-D<name>.skip=true`. For example to run only the Traceur feature tests, use:
 ```
-mvn test -P external -Dtraceur.path=<...> -Dmozilla.skip=true -Dv8.skip=true -Dwebkit.skip=true
+mvn test -P external -Dtraceur.path=<...> -Dchakra.skip=true -Dmozilla.skip=true -Dv8.skip=true -Dwebkit.skip=true
 ```
 
 [es2015]: http://ecma-international.org/publications/standards/Ecma-262.htm "ECMAScript® 2015 Language Specification"
@@ -119,6 +119,7 @@ mvn test -P external -Dtraceur.path=<...> -Dmozilla.skip=true -Dv8.skip=true -Dw
 [java]: http://java.sun.com/
 [maven]: https://maven.apache.org/download.cgi
 [test262]: https://github.com/tc39/test262/
+[chakra]: https://github.com/Microsoft/ChakraCore/
 [mozilla]: https://github.com/mozilla/gecko-dev/
 [traceur]: https://github.com/google/traceur-compiler/
 [v8]: https://github.com/v8/v8/

@@ -20,7 +20,7 @@ public interface ArrayBufferView extends ScriptObject {
      *
      * @return the array buffer object
      */
-    ArrayBufferObject getBuffer();
+    ArrayBuffer getBuffer();
 
     /**
      * [[ByteLength]]

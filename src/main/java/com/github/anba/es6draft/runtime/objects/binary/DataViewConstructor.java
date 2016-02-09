@@ -93,7 +93,7 @@ public final class DataViewConstructor extends BuiltinConstructor implements Ini
         /* step 7 */
         boolean littleEndian = ToBoolean(isLittleEndian);
         /* step 8 */
-        ArrayBufferObject buffer = dataView.getBuffer();
+        ArrayBuffer buffer = dataView.getBuffer();
         /* step 9 */
         if (IsDetachedBuffer(buffer)) {
             throw newTypeError(cx, Messages.Key.BufferDetached);
@@ -150,7 +150,7 @@ public final class DataViewConstructor extends BuiltinConstructor implements Ini
         /* step 7 */
         boolean littleEndian = ToBoolean(isLittleEndian);
         /* step 8 */
-        ArrayBufferObject buffer = dataView.getBuffer();
+        ArrayBuffer buffer = dataView.getBuffer();
         /* step 9 */
         if (IsDetachedBuffer(buffer)) {
             throw newTypeError(cx, Messages.Key.BufferDetached);

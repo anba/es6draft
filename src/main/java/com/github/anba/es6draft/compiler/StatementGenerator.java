@@ -671,7 +671,6 @@ final class StatementGenerator extends
 
                 // stack: [TDZ] -> [TDZ]
                 for (Name name : tdzNames) {
-                    // FIXME: spec bug (CreateMutableBinding concrete method of `TDZ`)
                     BindingOp<DeclarativeEnvironmentRecord> op = BindingOp.of(envRec, name);
                     op.createMutableBinding(envRec, name, false, mv);
                 }
@@ -950,10 +949,8 @@ final class StatementGenerator extends
         for (Name name : BoundNames(forDeclarationBinding(declaration))) {
             BindingOp<DeclarativeEnvironmentRecord> op = BindingOp.of(envRec, name);
             if (isConst) {
-                // FIXME: spec bug (CreateImmutableBinding concrete method of `env`)
                 op.createImmutableBinding(envRec, name, true, mv);
             } else {
-                // FIXME: spec bug (CreateMutableBinding concrete method of `env`)
                 op.createMutableBinding(envRec, name, false, mv);
             }
         }
@@ -998,10 +995,8 @@ final class StatementGenerator extends
                 for (Name dn : boundNames) {
                     BindingOp<DeclarativeEnvironmentRecord> op = BindingOp.of(envRec, dn);
                     if (isConst) {
-                        // FIXME: spec bug (CreateImmutableBinding concrete method of `loopEnv`)
                         op.createImmutableBinding(envRec, dn, true, mv);
                     } else {
-                        // FIXME: spec bug (CreateMutableBinding concrete method of `loopEnv`)
                         op.createMutableBinding(envRec, dn, false, mv);
                     }
                 }
@@ -1912,7 +1907,6 @@ final class StatementGenerator extends
                 getEnvRec(envRec, mv);
 
                 /* step 3 */
-                // FIXME: spec bug (CreateMutableBinding concrete method of `catchEnv`)
                 for (Name name : BoundNames(catchParameter)) {
                     BindingOp<DeclarativeEnvironmentRecord> op = BindingOp.of(envRec, name);
                     op.createMutableBinding(envRec, name, false, mv);

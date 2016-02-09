@@ -158,7 +158,7 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
      *            the array buffer object
      * @return {@code true} if the array buffer is detached
      */
-    public static boolean IsDetachedBuffer(ArrayBufferObject arrayBuffer) {
+    public static boolean IsDetachedBuffer(ArrayBuffer arrayBuffer) {
         /* step 1 (not applicable) */
         /* steps 2-3 */
         return arrayBuffer.isDetached();
@@ -172,7 +172,7 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
      * @param arrayBuffer
      *            the array buffer object
      */
-    public static void DetachArrayBuffer(ExecutionContext cx, ArrayBufferObject arrayBuffer) {
+    public static void DetachArrayBuffer(ExecutionContext cx, ArrayBuffer arrayBuffer) {
         // TODO: Perform any checks here? E.g. already detached?
         /* step 1 (not applicable) */
         /* steps 2-3 */
@@ -191,8 +191,7 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
      *            the source offset
      * @return the new array buffer object
      */
-    public static ArrayBufferObject CloneArrayBuffer(ExecutionContext cx,
-            ArrayBufferObject srcBuffer, long srcByteOffset) {
+    public static ArrayBufferObject CloneArrayBuffer(ExecutionContext cx, ArrayBuffer srcBuffer, long srcByteOffset) {
         return CloneArrayBuffer(cx, srcBuffer, srcByteOffset, null);
     }
 
@@ -209,8 +208,8 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
      *            the intrinsic constructor function
      * @return the new array buffer object
      */
-    public static ArrayBufferObject CloneArrayBuffer(ExecutionContext cx,
-            ArrayBufferObject srcBuffer, long srcByteOffset, Intrinsics cloneConstructor) {
+    public static ArrayBufferObject CloneArrayBuffer(ExecutionContext cx, ArrayBuffer srcBuffer, long srcByteOffset,
+            Intrinsics cloneConstructor) {
         /* step 1 (implicit) */
         /* steps 2-3 */
         Constructor bufferConstructor;
@@ -259,8 +258,7 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
      *            the element type
      * @return the buffer value
      */
-    public static double GetValueFromBuffer(ArrayBufferObject arrayBuffer, long byteIndex,
-            ElementType type) {
+    public static double GetValueFromBuffer(ArrayBuffer arrayBuffer, long byteIndex, ElementType type) {
         return GetValueFromBuffer(arrayBuffer, byteIndex, type, IS_LITTLE_ENDIAN);
     }
 
@@ -277,8 +275,8 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
      *            the little endian flag
      * @return the buffer value
      */
-    public static double GetValueFromBuffer(ArrayBufferObject arrayBuffer, long byteIndex,
-            ElementType type, boolean isLittleEndian) {
+    public static double GetValueFromBuffer(ArrayBuffer arrayBuffer, long byteIndex, ElementType type,
+            boolean isLittleEndian) {
         /* step 1 */
         assert !IsDetachedBuffer(arrayBuffer) : "ArrayBuffer is detached";
         /* steps 2-3 */
@@ -338,8 +336,7 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
      * @param value
      *            the new element value
      */
-    public static void SetValueInBuffer(ArrayBufferObject arrayBuffer, long byteIndex,
-            ElementType type, double value) {
+    public static void SetValueInBuffer(ArrayBuffer arrayBuffer, long byteIndex, ElementType type, double value) {
         SetValueInBuffer(arrayBuffer, byteIndex, type, value, IS_LITTLE_ENDIAN);
     }
 
@@ -357,8 +354,8 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
      * @param isLittleEndian
      *            the little endian flag
      */
-    public static void SetValueInBuffer(ArrayBufferObject arrayBuffer, long byteIndex,
-            ElementType type, double value, boolean isLittleEndian) {
+    public static void SetValueInBuffer(ArrayBuffer arrayBuffer, long byteIndex, ElementType type, double value,
+            boolean isLittleEndian) {
         /* step 1 */
         assert !IsDetachedBuffer(arrayBuffer) : "ArrayBuffer is detached";
         /* steps 2-3 */

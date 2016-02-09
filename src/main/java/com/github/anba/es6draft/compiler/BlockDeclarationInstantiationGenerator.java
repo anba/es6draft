@@ -128,10 +128,8 @@ final class BlockDeclarationInstantiationGenerator extends DeclarationBindingIns
                 for (Name dn : BoundNames(d)) {
                     BindingOp<DeclarativeEnvironmentRecord> op = BindingOp.of(envRec, dn);
                     if (IsConstantDeclaration(d)) {
-                        // FIXME: spec bug (CreateImmutableBinding concrete method of `env`)
                         op.createImmutableBinding(envRec, dn, true, mv);
                     } else {
-                        // FIXME: spec bug (CreateMutableBinding concrete method of `env`)
                         op.createMutableBinding(envRec, dn, false, mv);
                     }
                 }

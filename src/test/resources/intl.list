@@ -36,6 +36,3 @@ number-format/parse-currency.js
 number-format/parse-decimal.js
 number-format/parse-invalid-input.js
 number-format/parse-percent.js
-
-# Requires Unicode 6 (Java8)
-general/smp-identifier.js

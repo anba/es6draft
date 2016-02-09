@@ -19,7 +19,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  */
 public final class DataViewObject extends OrdinaryObject implements ArrayBufferView {
     /** [[ViewedArrayBuffer]] */
-    private final ArrayBufferObject buffer;
+    private final ArrayBuffer buffer;
 
     /** [[ByteLength]] */
     private final long byteLength;
@@ -41,8 +41,7 @@ public final class DataViewObject extends OrdinaryObject implements ArrayBufferV
      * @param prototype
      *            the prototype object
      */
-    public DataViewObject(Realm realm, ArrayBufferObject buffer, long byteLength, long byteOffset,
-            ScriptObject prototype) {
+    public DataViewObject(Realm realm, ArrayBuffer buffer, long byteLength, long byteOffset, ScriptObject prototype) {
         super(realm);
         assert buffer != null : "cannot initialize DataView with null";
         assert byteLength >= 0 : "negative byte length: " + byteLength;
@@ -58,7 +57,7 @@ public final class DataViewObject extends OrdinaryObject implements ArrayBufferV
      * [[ViewedArrayBuffer]]
      */
     @Override
-    public ArrayBufferObject getBuffer() {
+    public ArrayBuffer getBuffer() {
         return buffer;
     }
 

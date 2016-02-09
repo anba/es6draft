@@ -32,6 +32,15 @@ stress/unscopables.js
 # Integer indexed property keys don't perform prototype lookup on typed arrays
 stress/float32array-out-of-bounds.js
 
+# invalid: super not nested in method
+stress/arrowfunction-lexical-bind-superproperty.js
+
+# Missing hasInstance or bind prototype changes
+stress/class-subclassing-function.js
+
+# Assignment to oob index should throw in strict mode
+stress/class-subclassing-typedarray.js
+
 
 ############################################
 # Implementation specific differences      #
@@ -73,6 +82,7 @@ stress/freeze-and-seal-should-prevent-extensions.js
 stress/ftl-library-inlining-exceptions-dataview.js
 stress/generator-class-methods-syntax.js
 stress/generator-class-methods.js
+stress/generator-is-not-constructible.js
 stress/generator-methods-with-non-generator.js
 stress/generator-syntax.js
 stress/generator-with-super.js
@@ -80,8 +90,6 @@ stress/generator-yield-star.js
 stress/global-lexical-redeclare-variable.js
 stress/global-lexical-redefine-const.js
 stress/global-lexical-var-injection.js
-stress/global-lexical-variable-tdz.js
-stress/global-lexical-variable-unresolved-property.js
 stress/global-lexical-variable-with-statement.js
 stress/make-large-string.js
 stress/make-large-string-jit-strcat.js
@@ -111,7 +119,6 @@ stress/reflect-is-extensible.js
 stress/reflect-own-keys.js
 stress/reflect-prevent-extensions.js
 stress/reflect-set-prototype-of.js
-stress/regress-151324.js
 stress/reserved-word-with-escape.js
 stress/rest-elements.js
 stress/set-constructor.js
@@ -218,6 +225,12 @@ stress/wasm-linear-memory.js
 stress/wasm-locals.js
 stress/wasm-relational.js
 stress/wasm-type-conversion.js
+
+# platformSupportsSamplingProfiler()
+stress/sampling-profiler-anonymous-function.js
+stress/sampling-profiler-basic.js
+stress/sampling-profiler-deep-stack.js
+stress/sampling-profiler-microtasks.js
 
 # Disables legacy Function#arguments property
 stress/disable-function-dot-arguments.js

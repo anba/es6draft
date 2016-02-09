@@ -194,6 +194,7 @@
                 <id>surefire-test</id>
                 <configuration>
                   <excludes>
+                    <exclude>**/chakra/*.java</exclude>
                     <exclude>**/mozilla/*</exclude>
                     <exclude>**/test262/*</exclude>
                     <exclude>**/traceur/*</exclude>
@@ -221,6 +222,7 @@
                 <configuration>
                   <testFailureIgnore>true</testFailureIgnore>
                   <includes>
+                    <include>**/chakra/*.java</include>
                     <include>**/mozilla/*.java</include>
                     <include>**/traceur/*.java</include>
                     <include>**/v8/*.java</include>
@@ -603,37 +605,51 @@
             <configuration>
               <exportAntProperties>true</exportAntProperties>
               <target>
+                <concat destfile="${project.build.outputDirectory}/scripts/chakralegacy.js"
+                  encoding="${project.build.sourceEncoding}" outputencoding="${project.build.sourceEncoding}">
+                  <fileset dir="${project.basedir}/src/main/scripts">
+                    <include name="cyclic.js" />
+                    <include name="object.js" />
+                    <include name="stringtrim.js" />
+                  </fileset>
+                </concat>
                 <concat destfile="${project.build.outputDirectory}/scripts/mozlegacy.js"
                   encoding="${project.build.sourceEncoding}" outputencoding="${project.build.sourceEncoding}">
                   <fileset dir="${project.basedir}/src/main/scripts">
                     <include name="arraybuffer.js" />
                     <include name="collection.js" />
-                    <include name="compat.js" />
+                    <include name="global.js" />
                     <include name="iterator.js" />
                     <include name="legacy-generator.js" />
+                    <include name="object.js" />
                     <include name="proxy.js" />
                     <include name="simd.js" />
                     <include name="source.js" />
                     <include name="statics.js" />
                     <include name="string.js" />
+                    <include name="stringtrim.js" />
                   </fileset>
                 </concat>
                 <concat destfile="${project.build.outputDirectory}/scripts/v8legacy.js"
                   encoding="${project.build.sourceEncoding}" outputencoding="${project.build.sourceEncoding}">
                   <fileset dir="${project.basedir}/src/main/scripts">
-                    <include name="compat.js" />
                     <include name="cyclic.js" />
                     <include name="generator.js" />
+                    <include name="global.js" />
                     <include name="internal-error.js" />
+                    <include name="object.js" />
                     <include name="proxy.js" />
                     <include name="stacktrace.js" />
+                    <include name="stringtrim.js" />
                   </fileset>
                 </concat>
                 <concat destfile="${project.build.outputDirectory}/scripts/webkitlegacy.js"
                   encoding="${project.build.sourceEncoding}" outputencoding="${project.build.sourceEncoding}">
                   <fileset dir="${project.basedir}/src/main/scripts">
-                    <include name="compat.js" />
                     <include name="cyclic.js" />
+                    <include name="global.js" />
+                    <include name="object.js" />
+                    <include name="stringtrim.js" />
                   </fileset>
                 </concat>
               </target>

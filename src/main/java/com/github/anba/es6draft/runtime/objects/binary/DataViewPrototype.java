@@ -178,9 +178,8 @@ public final class DataViewPrototype extends OrdinaryObject implements Initializ
          *            the little endian flag
          * @return the int16 value from the requested byte offset
          */
-        @Function(name = "getInt16", arity = 2)
-        public static Object getInt16(ExecutionContext cx, Object thisValue, Object byteOffset,
-                Object littleEndian) {
+        @Function(name = "getInt16", arity = 1)
+        public static Object getInt16(ExecutionContext cx, Object thisValue, Object byteOffset, Object littleEndian) {
             return GetViewValue(cx, thisValue, byteOffset, littleEndian, ElementType.Int16);
         }
 
@@ -197,9 +196,8 @@ public final class DataViewPrototype extends OrdinaryObject implements Initializ
          *            the little endian flag
          * @return the uint16 value from the requested byte offset
          */
-        @Function(name = "getUint16", arity = 2)
-        public static Object getUint16(ExecutionContext cx, Object thisValue, Object byteOffset,
-                Object littleEndian) {
+        @Function(name = "getUint16", arity = 1)
+        public static Object getUint16(ExecutionContext cx, Object thisValue, Object byteOffset, Object littleEndian) {
             return GetViewValue(cx, thisValue, byteOffset, littleEndian, ElementType.Uint16);
         }
 
@@ -216,9 +214,8 @@ public final class DataViewPrototype extends OrdinaryObject implements Initializ
          *            the little endian flag
          * @return the int32 value from the requested byte offset
          */
-        @Function(name = "getInt32", arity = 2)
-        public static Object getInt32(ExecutionContext cx, Object thisValue, Object byteOffset,
-                Object littleEndian) {
+        @Function(name = "getInt32", arity = 1)
+        public static Object getInt32(ExecutionContext cx, Object thisValue, Object byteOffset, Object littleEndian) {
             return GetViewValue(cx, thisValue, byteOffset, littleEndian, ElementType.Int32);
         }
 
@@ -235,9 +232,8 @@ public final class DataViewPrototype extends OrdinaryObject implements Initializ
          *            the little endian flag
          * @return the uint32 value from the requested byte offset
          */
-        @Function(name = "getUint32", arity = 2)
-        public static Object getUint32(ExecutionContext cx, Object thisValue, Object byteOffset,
-                Object littleEndian) {
+        @Function(name = "getUint32", arity = 1)
+        public static Object getUint32(ExecutionContext cx, Object thisValue, Object byteOffset, Object littleEndian) {
             return GetViewValue(cx, thisValue, byteOffset, littleEndian, ElementType.Uint32);
         }
 
@@ -254,9 +250,8 @@ public final class DataViewPrototype extends OrdinaryObject implements Initializ
          *            the little endian flag
          * @return the float32 value from the requested byte offset
          */
-        @Function(name = "getFloat32", arity = 2)
-        public static Object getFloat32(ExecutionContext cx, Object thisValue, Object byteOffset,
-                Object littleEndian) {
+        @Function(name = "getFloat32", arity = 1)
+        public static Object getFloat32(ExecutionContext cx, Object thisValue, Object byteOffset, Object littleEndian) {
             return GetViewValue(cx, thisValue, byteOffset, littleEndian, ElementType.Float32);
         }
 
@@ -273,9 +268,8 @@ public final class DataViewPrototype extends OrdinaryObject implements Initializ
          *            the little endian flag
          * @return the float64 value from the requested byte offset
          */
-        @Function(name = "getFloat64", arity = 2)
-        public static Object getFloat64(ExecutionContext cx, Object thisValue, Object byteOffset,
-                Object littleEndian) {
+        @Function(name = "getFloat64", arity = 1)
+        public static Object getFloat64(ExecutionContext cx, Object thisValue, Object byteOffset, Object littleEndian) {
             return GetViewValue(cx, thisValue, byteOffset, littleEndian, ElementType.Float64);
         }
 
@@ -293,8 +287,7 @@ public final class DataViewPrototype extends OrdinaryObject implements Initializ
          * @return the undefined value
          */
         @Function(name = "setInt8", arity = 2)
-        public static Object setInt8(ExecutionContext cx, Object thisValue, Object byteOffset,
-                Object value) {
+        public static Object setInt8(ExecutionContext cx, Object thisValue, Object byteOffset, Object value) {
             SetViewValue(cx, thisValue, byteOffset, true, ElementType.Int8, value);
             return UNDEFINED;
         }
@@ -313,8 +306,7 @@ public final class DataViewPrototype extends OrdinaryObject implements Initializ
          * @return the undefined value
          */
         @Function(name = "setUint8", arity = 2)
-        public static Object setUint8(ExecutionContext cx, Object thisValue, Object byteOffset,
-                Object value) {
+        public static Object setUint8(ExecutionContext cx, Object thisValue, Object byteOffset, Object value) {
             SetViewValue(cx, thisValue, byteOffset, true, ElementType.Uint8, value);
             return UNDEFINED;
         }
@@ -334,9 +326,9 @@ public final class DataViewPrototype extends OrdinaryObject implements Initializ
          *            the little endian flag
          * @return the undefined value
          */
-        @Function(name = "setInt16", arity = 3)
-        public static Object setInt16(ExecutionContext cx, Object thisValue, Object byteOffset,
-                Object value, Object littleEndian) {
+        @Function(name = "setInt16", arity = 2)
+        public static Object setInt16(ExecutionContext cx, Object thisValue, Object byteOffset, Object value,
+                Object littleEndian) {
             SetViewValue(cx, thisValue, byteOffset, littleEndian, ElementType.Int16, value);
             return UNDEFINED;
         }
@@ -356,9 +348,9 @@ public final class DataViewPrototype extends OrdinaryObject implements Initializ
          *            the little endian flag
          * @return the undefined value
          */
-        @Function(name = "setUint16", arity = 3)
-        public static Object setUint16(ExecutionContext cx, Object thisValue, Object byteOffset,
-                Object value, Object littleEndian) {
+        @Function(name = "setUint16", arity = 2)
+        public static Object setUint16(ExecutionContext cx, Object thisValue, Object byteOffset, Object value,
+                Object littleEndian) {
             SetViewValue(cx, thisValue, byteOffset, littleEndian, ElementType.Uint16, value);
             return UNDEFINED;
         }
@@ -378,9 +370,9 @@ public final class DataViewPrototype extends OrdinaryObject implements Initializ
          *            the little endian flag
          * @return the undefined value
          */
-        @Function(name = "setInt32", arity = 3)
-        public static Object setInt32(ExecutionContext cx, Object thisValue, Object byteOffset,
-                Object value, Object littleEndian) {
+        @Function(name = "setInt32", arity = 2)
+        public static Object setInt32(ExecutionContext cx, Object thisValue, Object byteOffset, Object value,
+                Object littleEndian) {
             SetViewValue(cx, thisValue, byteOffset, littleEndian, ElementType.Int32, value);
             return UNDEFINED;
         }
@@ -400,9 +392,9 @@ public final class DataViewPrototype extends OrdinaryObject implements Initializ
          *            the little endian flag
          * @return the undefined value
          */
-        @Function(name = "setUint32", arity = 3)
-        public static Object setUint32(ExecutionContext cx, Object thisValue, Object byteOffset,
-                Object value, Object littleEndian) {
+        @Function(name = "setUint32", arity = 2)
+        public static Object setUint32(ExecutionContext cx, Object thisValue, Object byteOffset, Object value,
+                Object littleEndian) {
             SetViewValue(cx, thisValue, byteOffset, littleEndian, ElementType.Uint32, value);
             return UNDEFINED;
         }
@@ -422,9 +414,9 @@ public final class DataViewPrototype extends OrdinaryObject implements Initializ
          *            the little endian flag
          * @return the undefined value
          */
-        @Function(name = "setFloat32", arity = 3)
-        public static Object setFloat32(ExecutionContext cx, Object thisValue, Object byteOffset,
-                Object value, Object littleEndian) {
+        @Function(name = "setFloat32", arity = 2)
+        public static Object setFloat32(ExecutionContext cx, Object thisValue, Object byteOffset, Object value,
+                Object littleEndian) {
             SetViewValue(cx, thisValue, byteOffset, littleEndian, ElementType.Float32, value);
             return UNDEFINED;
         }
@@ -444,9 +436,9 @@ public final class DataViewPrototype extends OrdinaryObject implements Initializ
          *            the little endian flag
          * @return the undefined value
          */
-        @Function(name = "setFloat64", arity = 3)
-        public static Object setFloat64(ExecutionContext cx, Object thisValue, Object byteOffset,
-                Object value, Object littleEndian) {
+        @Function(name = "setFloat64", arity = 2)
+        public static Object setFloat64(ExecutionContext cx, Object thisValue, Object byteOffset, Object value,
+                Object littleEndian) {
             SetViewValue(cx, thisValue, byteOffset, littleEndian, ElementType.Float64, value);
             return UNDEFINED;
         }

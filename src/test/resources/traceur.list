@@ -90,3 +90,4 @@ feature/Modules/ImportNoImportClause.module.js
 
 # Type declaration syntax
 feature/Classes/Types.js
+feature/Modules/ImportType.module.js
