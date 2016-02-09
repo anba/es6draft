@@ -19,16 +19,16 @@ matrix:
     - addons: {apt: {packages: oracle-java8-installer}}
       jdk: oraclejdk8
       env: PROFILE='skip-external' JAVA_VERSION=8
-    - addons: {apt: {packages: oracle-java9-installer}}
-      # jdk: oraclejdk9
-      env: PROFILE='skip-external' JAVA_VERSION=9
+    # - addons: {apt: {packages: oracle-java9-installer}}
+    #   # jdk: oraclejdk9
+    #   env: PROFILE='skip-external' JAVA_VERSION=9
     # Run test262 profile with Java 8-9
     - addons: {apt: {packages: oracle-java8-installer}}
       jdk: oraclejdk8
       env: PROFILE='test262-travisci' JAVA_VERSION=8
-    - addons: {apt: {packages: oracle-java9-installer}}
-      # jdk: oraclejdk9
-      env: PROFILE='test262-travisci' JAVA_VERSION=9
+    # - addons: {apt: {packages: oracle-java9-installer}}
+    #   # jdk: oraclejdk9
+    #   env: PROFILE='test262-travisci' JAVA_VERSION=9
 
 before_install:
   - remove_dir_from_path $JAVA_HOME/bin

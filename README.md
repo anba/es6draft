@@ -11,21 +11,23 @@ Complete implementation of [ECMAScript® 2015] [es2015].
 
 Complete implementation of [ECMAScript® 2015 Internationalization API, ECMA-402 2nd edition] [intl].
 
-Implements [ES2016 Draft 2015-12-01] [es2016].
+Implements [ES2016 Draft 2016-01-20] [es2016].
 
 Supports the following [ECMAScript proposals] [proposals]:
 * Stage 4:
   * Array.prototype.includes
+  * Exponentiation Operator
 * Stage 3:
   * Async Functions
-  * Exponentiation Operator
   * Object.values/Object.entries
+  * Object.getOwnPropertyDescriptors
   * SIMD.JS
   * String padding
   * Trailing commas in function parameter lists and calls
 * Stage 2:
   * function.sent metaproperty
   * Rest/Spread Properties
+  * Shared memory and atomics
 * Stage 1:
   * Additional export-from Statements
   * ArrayBuffer.transfer
@@ -33,10 +35,10 @@ Supports the following [ECMAScript proposals] [proposals]:
   * Class and Property Decorators
   * Class Property Declarations (Only class static properties are currently supported)
   * Observable
-  * Shared memory and atomics
   * String.prototype.{trimLeft,trimRight}
-  * String#matchAll
+  * String.prototype.matchAll
   * System.global
+  * Async Generator Functions
 
 ECMAScript proposals are not enabled by default. To enable them use the `--stage` command line parameter.
 
