@@ -1020,7 +1020,7 @@ public final class Realm {
             loaderPrototype.initialize(realm);
         }
 
-        if (realm.isEnabled(CompatibilityOption.System)) {
+        if (realm.isEnabled(CompatibilityOption.System) || realm.isEnabled(CompatibilityOption.SystemGlobal)) {
             SystemObject systemObject = new SystemObject(realm);
 
             intrinsics.put(Intrinsics.System, systemObject);

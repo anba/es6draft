@@ -254,6 +254,11 @@ public enum CompatibilityOption {
     Observable,
 
     /**
+     * System.global (Stage 1 proposal)
+     */
+    SystemGlobal,
+
+    /**
      * SIMD (Stage 3 proposal)
      */
     SIMD,
@@ -438,7 +443,7 @@ public enum CompatibilityOption {
             return EnumSet.noneOf(CompatibilityOption.class);
         case Proposal:
             return EnumSet.of(ArrayBufferTransfer, ExportFrom, Decorator, StringTrim, StringMatchAll,
-                    StaticClassProperties, CallConstructor, Observable);
+                    StaticClassProperties, CallConstructor, Observable, SystemGlobal);
         case Draft:
             return EnumSet.of(FunctionSent, ObjectRestDestructuring, ObjectSpreadInitializer);
         case Candidate:

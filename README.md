@@ -35,6 +35,7 @@ Supports the following [ECMAScript proposals] [proposals]:
   * Observable
   * String.prototype.{trimLeft,trimRight}
   * String#matchAll
+  * System.global
 
 ECMAScript proposals are not enabled by default. To enable them use the `--stage` command line parameter.
 

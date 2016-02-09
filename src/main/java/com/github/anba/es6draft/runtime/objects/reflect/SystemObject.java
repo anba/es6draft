@@ -24,8 +24,11 @@ import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.Initializable;
 import com.github.anba.es6draft.runtime.internal.Messages;
+import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
+import com.github.anba.es6draft.runtime.internal.Properties.CompatibilityExtension;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
+import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
 import com.github.anba.es6draft.runtime.modules.Loader;
 import com.github.anba.es6draft.runtime.modules.MalformedNameException;
@@ -36,7 +39,6 @@ import com.github.anba.es6draft.runtime.modules.ResolutionException;
 import com.github.anba.es6draft.runtime.modules.SourceIdentifier;
 import com.github.anba.es6draft.runtime.modules.loader.StringModuleSource;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
-import com.github.anba.es6draft.runtime.types.ScriptObject;
 
 /**
  * <h1>26 Reflection</h1><br>
@@ -58,6 +60,7 @@ public final class SystemObject extends LoaderObject implements Initializable {
         setLoader(new Loader(realm, this));
 
         createProperties(realm, this, Properties.class);
+        createProperties(realm, this, AdditionalProperties.class);
         if (realm.isEnabled(CompatibilityOption.Loader)) {
             setPrototype(realm.getIntrinsic(Intrinsics.LoaderPrototype));
         }
@@ -67,6 +70,29 @@ public final class SystemObject extends LoaderObject implements Initializable {
      * Properties of the System Object
      */
     public enum Properties {
+        ;
+
+        @Prototype
+        public static final Intrinsics __proto__ = Intrinsics.ObjectPrototype;
+
+        /**
+         * System.global
+         * 
+         * @param cx
+         *            the execution context
+         * @return the global object
+         */
+        @Value(name = "global", attributes = @Attributes(writable = false, enumerable = false, configurable = true))
+        public static Object global(ExecutionContext cx) {
+            return cx.getRealm().getGlobalThis();
+        }
+    }
+
+    /**
+     * Properties of the System Object
+     */
+    @CompatibilityExtension(CompatibilityOption.System)
+    public enum AdditionalProperties {
         ;
 
         /**
@@ -99,9 +125,6 @@ public final class SystemObject extends LoaderObject implements Initializable {
         private static ScriptException toScriptException(ExecutionContext cx, IOException e) {
             return newInternalError(cx, e, Messages.Key.ModulesIOException, Objects.toString(e.getMessage(), ""));
         }
-
-        @Prototype
-        public static final ScriptObject __proto__ = null;
 
         /**
          * System.define(moduleName, source)

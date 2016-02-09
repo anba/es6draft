@@ -63,7 +63,9 @@ public class GlobalObject extends OrdinaryObject implements Initializable {
         createProperties(realm, this, FunctionProperties.class);
         createProperties(realm, this, ConstructorProperties.class);
         createProperties(realm, this, OtherProperties.class);
-        createProperties(realm, this, SystemProperty.class);
+        if (realm.isEnabled(CompatibilityOption.System) || realm.isEnabled(CompatibilityOption.SystemGlobal)) {
+            createProperties(realm, this, SystemProperty.class);
+        }
         createProperties(realm, this, SIMDProperty.class);
         createProperties(realm, this, ObservableProperty.class);
         createProperties(realm, this, AdditionalProperties.class);
@@ -586,7 +588,6 @@ public class GlobalObject extends OrdinaryObject implements Initializable {
         public static final Intrinsics Intl = Intrinsics.Intl;
     }
 
-    @CompatibilityExtension(CompatibilityOption.System)
     public enum SystemProperty {
         ;
 
