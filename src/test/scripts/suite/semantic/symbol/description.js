@@ -14,6 +14,7 @@ const WellKnownSymbols = [
   "isConcatSpreadable",
   "iterator",
   "match",
+  "observable",
   "replace",
   "search",
   "species",

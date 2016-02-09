@@ -73,6 +73,11 @@ public enum BuiltinSymbol {
      */
     unscopables,
 
+    /**
+     * &#64;&#64;observable
+     */
+    observable,
+
     ;
 
     /**

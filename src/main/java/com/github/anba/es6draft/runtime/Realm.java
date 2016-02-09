@@ -63,6 +63,10 @@ import com.github.anba.es6draft.runtime.objects.iteration.IteratorPrototype;
 import com.github.anba.es6draft.runtime.objects.number.MathObject;
 import com.github.anba.es6draft.runtime.objects.number.NumberConstructor;
 import com.github.anba.es6draft.runtime.objects.number.NumberPrototype;
+import com.github.anba.es6draft.runtime.objects.observable.ObservableConstructor;
+import com.github.anba.es6draft.runtime.objects.observable.ObservablePrototype;
+import com.github.anba.es6draft.runtime.objects.observable.SubscriptionObserverPrototype;
+import com.github.anba.es6draft.runtime.objects.observable.SubscriptionPrototype;
 import com.github.anba.es6draft.runtime.objects.promise.PromiseConstructor;
 import com.github.anba.es6draft.runtime.objects.promise.PromisePrototype;
 import com.github.anba.es6draft.runtime.objects.reflect.LoaderConstructor;
@@ -726,6 +730,11 @@ public final class Realm {
             initializeSIMDModule(realm);
         }
 
+        // intrinsics: Observable
+        if (realm.isEnabled(CompatibilityOption.Observable)) {
+            initializeObservableModule(realm);
+        }
+
         // Initialized last because it accesses other intrinsics.
         initializeGlobalObject(realm);
     }
@@ -1330,6 +1339,34 @@ public final class Realm {
         bool16x8Prototype.initialize(realm);
         bool8x16Constructor.initialize(realm);
         bool8x16Prototype.initialize(realm);
+    }
+
+    /**
+     * <h1>Extension: Observable</h1>
+     * 
+     * @param realm
+     *            the realm instance
+     */
+    private static void initializeObservableModule(Realm realm) {
+        EnumMap<Intrinsics, OrdinaryObject> intrinsics = realm.intrinsics;
+
+        // allocation phase
+        ObservableConstructor observableConstructor = new ObservableConstructor(realm);
+        ObservablePrototype observablePrototype = new ObservablePrototype(realm);
+        SubscriptionPrototype subscriptionPrototype = new SubscriptionPrototype(realm);
+        SubscriptionObserverPrototype subscriptionObserverPrototype = new SubscriptionObserverPrototype(realm);
+
+        // registration phase
+        intrinsics.put(Intrinsics.Observable, observableConstructor);
+        intrinsics.put(Intrinsics.ObservablePrototype, observablePrototype);
+        intrinsics.put(Intrinsics.SubscriptionPrototype, subscriptionPrototype);
+        intrinsics.put(Intrinsics.SubscriptionObserverPrototype, subscriptionObserverPrototype);
+
+        // initialization phase
+        observableConstructor.initialize(realm);
+        observablePrototype.initialize(realm);
+        subscriptionPrototype.initialize(realm);
+        subscriptionObserverPrototype.initialize(realm);
     }
 
     /**

@@ -13,9 +13,11 @@ import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
+import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.Initializable;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
+import com.github.anba.es6draft.runtime.internal.Properties.CompatibilityExtension;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
@@ -49,6 +51,7 @@ public final class SymbolConstructor extends BuiltinConstructor implements Initi
     @Override
     public void initialize(Realm realm) {
         createProperties(realm, this, Properties.class);
+        createProperties(realm, this, ObservableProperty.class);
     }
 
     @Override
@@ -223,5 +226,20 @@ public final class SymbolConstructor extends BuiltinConstructor implements Initi
             /* step 4 */
             return key != null ? key : UNDEFINED;
         }
+    }
+
+    /**
+     * Extension: Observable
+     */
+    @CompatibilityExtension(CompatibilityOption.Observable)
+    public enum ObservableProperty {
+        ;
+
+        /**
+         * Symbol.observable
+         */
+        @Value(name = "observable",
+                attributes = @Attributes(writable = false, enumerable = false, configurable = false))
+        public static final Symbol observable = BuiltinSymbol.observable.get();
     }
 }

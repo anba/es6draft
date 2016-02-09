@@ -249,6 +249,11 @@ public enum CompatibilityOption {
     CallConstructor,
 
     /**
+     * Observable (Stage 1 proposal)
+     */
+    Observable,
+
+    /**
      * SIMD (Stage 3 proposal)
      */
     SIMD,
@@ -433,7 +438,7 @@ public enum CompatibilityOption {
             return EnumSet.noneOf(CompatibilityOption.class);
         case Proposal:
             return EnumSet.of(ArrayBufferTransfer, ExportFrom, Decorator, StringTrim, StringMatchAll,
-                    StaticClassProperties, CallConstructor);
+                    StaticClassProperties, CallConstructor, Observable);
         case Draft:
             return EnumSet.of(FunctionSent, ObjectRestDestructuring, ObjectSpreadInitializer);
         case Candidate:

@@ -305,6 +305,16 @@ public enum Intrinsics {/* @formatter:off */
     /** Intrinsic: %SIMD_Bool64x2Prototype% */
     SIMD_Bool64x2Prototype,
 
+    // Extension: Observable
+    /** Intrinsic: %Observable% */
+    Observable,
+    /** Intrinsic: %ObservablePrototype% */
+    ObservablePrototype,
+    /** Intrinsic: %SubscriptionPrototype% */
+    SubscriptionPrototype,
+    /** Intrinsic: %SubscriptionObserverPrototype% */
+    SubscriptionObserverPrototype,
+
     /* @formatter:on */
     ;
 

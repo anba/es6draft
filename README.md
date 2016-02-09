@@ -32,6 +32,7 @@ Supports the following [ECMAScript proposals] [proposals]:
   * Callable class constructors
   * Class and Property Decorators
   * Class Property Declarations (Only class static properties are currently supported)
+  * Observable
   * String.prototype.{trimLeft,trimRight}
   * String#matchAll
 

@@ -60,6 +60,7 @@ const standardProperties = [
 "System",
 "Intl",
 "SIMD",
+"Observable",
 "escape",
 "unescape",
 ];

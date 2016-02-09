@@ -112,6 +112,9 @@ function SymbolToSource(sym) {
   if (sym === Symbol.toPrimitive) return "Symbol.toPrimitive";
   if (sym === Symbol.toStringTag) return "Symbol.toStringTag";
   if (sym === Symbol.unscopables) return "Symbol.unscopables";
+  if (%IsCompatibilityOptionEnabled("Observable")) {
+    if (sym === Symbol.observable) return "Symbol.observable";
+  }
   // Registered symbols
   let key = Symbol_keyFor(sym);
   if (key !== void 0) {
