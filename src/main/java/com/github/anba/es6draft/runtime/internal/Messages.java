@@ -324,6 +324,13 @@ public final class Messages {
         IntlInvalidOption("intl.invalid_option"),
         IntlInvalidCurrency("intl.invalid_currency"),
         IntlInvalidLanguageTagType("intl.invalid_language_tag_type"),
+
+        // SIMD
+        SIMDCreate("simd.create"),
+        SIMDInvalidType("simd.invalid_type"),
+        SIMDInvalidLane("simd.invalid_lane"),
+        SIMDOutOfRange("simd.out_of_range"),
+        SIMDNumber("simd.number"),
         ;
         /* @formatter:on */
 

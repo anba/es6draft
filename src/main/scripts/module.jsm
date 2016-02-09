@@ -9,19 +9,12 @@ const defineProperty = Reflect.defineProperty;
 
 function isPrimitive(v) {
   switch (typeof v) {
-    case "undefined":
-    case "boolean":
-    case "number":
-    case "string":
-    case "symbol":
-      return true;
     case "object":
-      if (v === null) {
-        return true;
-      }
+      return v === null;
     case "function":
-    default:
       return false;
+    default:
+      return true;
   }
 }
 

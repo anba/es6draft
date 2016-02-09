@@ -35,6 +35,7 @@ final class TypeConverter {
             return value.toString();
         case Boolean:
         case Symbol:
+        case SIMD:
         case Object:
             return value;
         default:

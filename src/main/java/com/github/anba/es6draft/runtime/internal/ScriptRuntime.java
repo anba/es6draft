@@ -62,6 +62,7 @@ import com.github.anba.es6draft.runtime.objects.FunctionPrototype;
 import com.github.anba.es6draft.runtime.objects.binary.TypedArrayObject;
 import com.github.anba.es6draft.runtime.objects.binary.TypedArrayPrototypePrototype;
 import com.github.anba.es6draft.runtime.objects.iteration.GeneratorObject;
+import com.github.anba.es6draft.runtime.objects.simd.SIMDType;
 import com.github.anba.es6draft.runtime.types.*;
 import com.github.anba.es6draft.runtime.types.builtins.*;
 import com.github.anba.es6draft.runtime.types.builtins.FunctionObject.ConstructorKind;
@@ -1645,6 +1646,8 @@ public final class ScriptRuntime {
             return "string";
         case Symbol:
             return "symbol";
+        case SIMD:
+            return Type.simdValue(val).getType().typeof();
         case Object:
             if (IsCallable(val)) {
                 return "function";
@@ -1665,6 +1668,20 @@ public final class ScriptRuntime {
      */
     public static boolean isNonCallableObjectOrNull(Object val) {
         return Type.isNull(val) || (Type.isObject(val) && !IsCallable(val));
+    }
+
+    /**
+     * 12.5 Unary Operators<br>
+     * 12.5.6 The typeof Operator
+     * 
+     * @param val
+     *            the value
+     * @param type
+     *            the SIMD type
+     * @return {@code true} on success
+     */
+    public static boolean isSIMDType(Object val, SIMDType type) {
+        return Type.isSIMD(val) && Type.simdValue(val).getType() == type;
     }
 
     /**

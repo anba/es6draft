@@ -20,7 +20,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  */
 public final class MapObject extends OrdinaryObject {
     /** [[MapData]] */
-    private final LinkedMap<Object, Object> mapData = new LinkedMapImpl<Object>();
+    private final LinkedMap<Object, Object> mapData = new LinkedMapImpl<>();
 
     /**
      * Constructs a new Map object.

@@ -364,6 +364,7 @@ public final class JSONObject extends OrdinaryObject implements Initializable {
             return;
         case Undefined:
         case Symbol:
+        case SIMD:
         default:
             throw new AssertionError();
         }
@@ -400,6 +401,7 @@ public final class JSONObject extends OrdinaryObject implements Initializable {
             return !IsCallable(value);
         case Undefined:
         case Symbol:
+        case SIMD:
             return false;
         default:
             throw new AssertionError();

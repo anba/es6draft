@@ -29,6 +29,7 @@ import com.github.anba.es6draft.runtime.objects.async.AsyncAbstractOperations;
 import com.github.anba.es6draft.runtime.objects.iteration.GeneratorObject;
 import com.github.anba.es6draft.runtime.objects.promise.PromiseAbstractOperations;
 import com.github.anba.es6draft.runtime.objects.promise.PromiseObject;
+import com.github.anba.es6draft.runtime.objects.simd.SIMDType;
 import com.github.anba.es6draft.runtime.objects.text.RegExpConstructor;
 import com.github.anba.es6draft.runtime.objects.text.RegExpObject;
 import com.github.anba.es6draft.runtime.types.Callable;
@@ -128,6 +129,9 @@ final class Types {
 
     // runtime.objects.promise
     static final Type PromiseAbstractOperations = Type.of(PromiseAbstractOperations.class);
+
+    // runtime.objects.simd
+    static final Type SIMDType = Type.of(SIMDType.class);
 
     // runtime.types
     static final Type Callable = Type.of(Callable.class);

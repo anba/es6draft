@@ -72,6 +72,7 @@ import com.github.anba.es6draft.runtime.objects.reflect.RealmObject;
 import com.github.anba.es6draft.runtime.objects.reflect.RealmPrototype;
 import com.github.anba.es6draft.runtime.objects.reflect.ReflectObject;
 import com.github.anba.es6draft.runtime.objects.reflect.SystemObject;
+import com.github.anba.es6draft.runtime.objects.simd.*;
 import com.github.anba.es6draft.runtime.objects.text.RegExpConstructor;
 import com.github.anba.es6draft.runtime.objects.text.RegExpPrototype;
 import com.github.anba.es6draft.runtime.objects.text.RegExpStringIteratorPrototype;
@@ -709,6 +710,11 @@ public final class Realm {
             initializeAsyncModule(realm);
         }
 
+        // intrinsics: SIMD
+        if (realm.isEnabled(CompatibilityOption.SIMD)) {
+            initializeSIMDModule(realm);
+        }
+
         // Initialized last because it accesses other intrinsics.
         initializeGlobalObject(realm);
     }
@@ -1206,6 +1212,113 @@ public final class Realm {
         // initialization phase
         asyncFunctionConstructor.initialize(realm);
         asyncFunctionPrototype.initialize(realm);
+    }
+
+    /**
+     * <h1>Extension: SIMD</h1>
+     * 
+     * @param realm
+     *            the realm instance
+     */
+    private static void initializeSIMDModule(Realm realm) {
+        EnumMap<Intrinsics, OrdinaryObject> intrinsics = realm.intrinsics;
+
+        // allocation phase
+        SIMD simd = new SIMD(realm);
+        Float64x2Constructor float64x2Constructor = null;
+        Float64x2Prototype float64x2Prototype = null;
+        if (realm.isEnabled(CompatibilityOption.SIMD_Phase2)) {
+            float64x2Constructor = new Float64x2Constructor(realm);
+            float64x2Prototype = new Float64x2Prototype(realm);
+        }
+        Float32x4Constructor float32x4Constructor = new Float32x4Constructor(realm);
+        Float32x4Prototype float32x4Prototype = new Float32x4Prototype(realm);
+        Int32x4Constructor int32x4Constructor = new Int32x4Constructor(realm);
+        Int32x4Prototype int32x4Prototype = new Int32x4Prototype(realm);
+        Int16x8Constructor int16x8Constructor = new Int16x8Constructor(realm);
+        Int16x8Prototype int16x8Prototype = new Int16x8Prototype(realm);
+        Int8x16Constructor int8x16Constructor = new Int8x16Constructor(realm);
+        Int8x16Prototype int8x16Prototype = new Int8x16Prototype(realm);
+        Uint32x4Constructor uint32x4Constructor = new Uint32x4Constructor(realm);
+        Uint32x4Prototype uint32x4Prototype = new Uint32x4Prototype(realm);
+        Uint16x8Constructor uint16x8Constructor = new Uint16x8Constructor(realm);
+        Uint16x8Prototype uint16x8Prototype = new Uint16x8Prototype(realm);
+        Uint8x16Constructor uint8x16Constructor = new Uint8x16Constructor(realm);
+        Uint8x16Prototype uint8x16Prototype = new Uint8x16Prototype(realm);
+        Bool64x2Constructor bool64x2Constructor = null;
+        Bool64x2Prototype bool64x2Prototype = null;
+        if (realm.isEnabled(CompatibilityOption.SIMD_Phase2)) {
+            bool64x2Constructor = new Bool64x2Constructor(realm);
+            bool64x2Prototype = new Bool64x2Prototype(realm);
+        }
+        Bool32x4Constructor bool32x4Constructor = new Bool32x4Constructor(realm);
+        Bool32x4Prototype bool32x4Prototype = new Bool32x4Prototype(realm);
+        Bool16x8Constructor bool16x8Constructor = new Bool16x8Constructor(realm);
+        Bool16x8Prototype bool16x8Prototype = new Bool16x8Prototype(realm);
+        Bool8x16Constructor bool8x16Constructor = new Bool8x16Constructor(realm);
+        Bool8x16Prototype bool8x16Prototype = new Bool8x16Prototype(realm);
+
+        // registration phase
+        intrinsics.put(Intrinsics.SIMD, simd);
+        if (realm.isEnabled(CompatibilityOption.SIMD_Phase2)) {
+            intrinsics.put(Intrinsics.SIMD_Float64x2, float64x2Constructor);
+            intrinsics.put(Intrinsics.SIMD_Float64x2Prototype, float64x2Prototype);
+        }
+        intrinsics.put(Intrinsics.SIMD_Float32x4, float32x4Constructor);
+        intrinsics.put(Intrinsics.SIMD_Float32x4Prototype, float32x4Prototype);
+        intrinsics.put(Intrinsics.SIMD_Int32x4, int32x4Constructor);
+        intrinsics.put(Intrinsics.SIMD_Int32x4Prototype, int32x4Prototype);
+        intrinsics.put(Intrinsics.SIMD_Int16x8, int16x8Constructor);
+        intrinsics.put(Intrinsics.SIMD_Int16x8Prototype, int16x8Prototype);
+        intrinsics.put(Intrinsics.SIMD_Int8x16, int8x16Constructor);
+        intrinsics.put(Intrinsics.SIMD_Int8x16Prototype, int8x16Prototype);
+        intrinsics.put(Intrinsics.SIMD_Uint32x4, uint32x4Constructor);
+        intrinsics.put(Intrinsics.SIMD_Uint32x4Prototype, uint32x4Prototype);
+        intrinsics.put(Intrinsics.SIMD_Uint16x8, uint16x8Constructor);
+        intrinsics.put(Intrinsics.SIMD_Uint16x8Prototype, uint16x8Prototype);
+        intrinsics.put(Intrinsics.SIMD_Uint8x16, uint8x16Constructor);
+        intrinsics.put(Intrinsics.SIMD_Uint8x16Prototype, uint8x16Prototype);
+        if (realm.isEnabled(CompatibilityOption.SIMD_Phase2)) {
+            intrinsics.put(Intrinsics.SIMD_Bool64x2, bool64x2Constructor);
+            intrinsics.put(Intrinsics.SIMD_Bool64x2Prototype, bool64x2Prototype);
+        }
+        intrinsics.put(Intrinsics.SIMD_Bool32x4, bool32x4Constructor);
+        intrinsics.put(Intrinsics.SIMD_Bool32x4Prototype, bool32x4Prototype);
+        intrinsics.put(Intrinsics.SIMD_Bool16x8, bool16x8Constructor);
+        intrinsics.put(Intrinsics.SIMD_Bool16x8Prototype, bool16x8Prototype);
+        intrinsics.put(Intrinsics.SIMD_Bool8x16, bool8x16Constructor);
+        intrinsics.put(Intrinsics.SIMD_Bool8x16Prototype, bool8x16Prototype);
+
+        // initialization phase
+        simd.initialize(realm);
+        if (realm.isEnabled(CompatibilityOption.SIMD_Phase2)) {
+            float64x2Constructor.initialize(realm);
+            float64x2Prototype.initialize(realm);
+        }
+        float32x4Constructor.initialize(realm);
+        float32x4Prototype.initialize(realm);
+        int32x4Constructor.initialize(realm);
+        int32x4Prototype.initialize(realm);
+        int16x8Constructor.initialize(realm);
+        int16x8Prototype.initialize(realm);
+        int8x16Constructor.initialize(realm);
+        int8x16Prototype.initialize(realm);
+        uint32x4Constructor.initialize(realm);
+        uint32x4Prototype.initialize(realm);
+        uint16x8Constructor.initialize(realm);
+        uint16x8Prototype.initialize(realm);
+        uint8x16Constructor.initialize(realm);
+        uint8x16Prototype.initialize(realm);
+        if (realm.isEnabled(CompatibilityOption.SIMD_Phase2)) {
+            bool64x2Constructor.initialize(realm);
+            bool64x2Prototype.initialize(realm);
+        }
+        bool32x4Constructor.initialize(realm);
+        bool32x4Prototype.initialize(realm);
+        bool16x8Constructor.initialize(realm);
+        bool16x8Prototype.initialize(realm);
+        bool8x16Constructor.initialize(realm);
+        bool8x16Prototype.initialize(realm);
     }
 
     /**

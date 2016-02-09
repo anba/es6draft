@@ -70,6 +70,7 @@ public final class MiniJSUnitTest {
             EnumSet<CompatibilityOption> options = super.getOptions();
             options.add(CompatibilityOption.ArrayIncludes);
             options.add(CompatibilityOption.ArrayBufferMissingLength);
+            options.add(CompatibilityOption.SIMD);
             return options;
         }
     };

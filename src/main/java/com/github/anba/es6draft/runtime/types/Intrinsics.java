@@ -251,6 +251,60 @@ public enum Intrinsics {/* @formatter:off */
     // Extension: String.prototype.matchAll
     RegExpStringIteratorPrototype,
 
+    // Extension: SIMD
+    /** Intrinsic: %SIMD% */
+    SIMD,
+    /** Intrinsic: %SIMD_Float32x4% */
+    SIMD_Float32x4,
+    /** Intrinsic: %SIMD_Float32x4Prototype% */
+    SIMD_Float32x4Prototype,
+    /** Intrinsic: %SIMD_Int32x4% */
+    SIMD_Int32x4,
+    /** Intrinsic: %SIMD_Int32x4Prototype% */
+    SIMD_Int32x4Prototype,
+    /** Intrinsic: %SIMD_Int16x8% */
+    SIMD_Int16x8,
+    /** Intrinsic: %SIMD_Int16x8Prototype% */
+    SIMD_Int16x8Prototype,
+    /** Intrinsic: %SIMD_Int8x16% */
+    SIMD_Int8x16,
+    /** Intrinsic: %SIMD_Int8x16Prototype% */
+    SIMD_Int8x16Prototype,
+    /** Intrinsic: %SIMD_Uint32x4% */
+    SIMD_Uint32x4,
+    /** Intrinsic: %SIMD_Uint32x4Prototype% */
+    SIMD_Uint32x4Prototype,
+    /** Intrinsic: %SIMD_Uint16x8% */
+    SIMD_Uint16x8,
+    /** Intrinsic: %SIMD_Uint16x8Prototype% */
+    SIMD_Uint16x8Prototype,
+    /** Intrinsic: %SIMD_Uint8x16% */
+    SIMD_Uint8x16,
+    /** Intrinsic: %SIMD_Uint8x16Prototype% */
+    SIMD_Uint8x16Prototype,
+    /** Intrinsic: %SIMD_Bool32x4% */
+    SIMD_Bool32x4,
+    /** Intrinsic: %SIMD_Bool32x4Prototype% */
+    SIMD_Bool32x4Prototype,
+    /** Intrinsic: %SIMD_Bool16x8% */
+    SIMD_Bool16x8,
+    /** Intrinsic: %SIMD_Bool16x8Prototype% */
+    SIMD_Bool16x8Prototype,
+    /** Intrinsic: %SIMD_Bool8x16% */
+    SIMD_Bool8x16,
+    /** Intrinsic: %SIMD_Bool8x16Prototype% */
+    SIMD_Bool8x16Prototype,
+
+    // Extension: SIMD.Float64x2, SIMD.Bool64x2
+    /** Intrinsic: %SIMD_Float64x2% */
+    SIMD_Float64x2,
+    /** Intrinsic: %SIMD_Float64x2Prototype% */
+    SIMD_Float64x2Prototype,
+    /** Intrinsic: %SIMD_Bool64x2% */
+    SIMD_Bool64x2,
+    /** Intrinsic: %SIMD_Bool64x2Prototype% */
+    SIMD_Bool64x2Prototype,
+
     /* @formatter:on */
     ;
 

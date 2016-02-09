@@ -612,6 +612,7 @@
                     <include name="iterator.js" />
                     <include name="legacy-generator.js" />
                     <include name="proxy.js" />
+                    <include name="simd.js" />
                     <include name="source.js" />
                     <include name="statics.js" />
                     <include name="string.js" />
@@ -781,6 +782,7 @@
             <exclude>src/main/resources/version</exclude>
             <exclude>src/test/scripts/reflect/**</exclude>
             <exclude>src/test/scripts/promise/**</exclude>
+            <exclude>src/test/scripts/suite/simd/resources/*</exclude>
           </excludes>
           <includes>
             <include>src/**</include>

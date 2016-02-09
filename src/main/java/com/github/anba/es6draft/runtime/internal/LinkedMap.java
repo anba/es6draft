@@ -17,7 +17,7 @@ import java.util.NoSuchElementException;
  */
 public class LinkedMap<KEY, VALUE> implements Iterable<Map.Entry<KEY, VALUE>> {
     @SuppressWarnings("serial")
-    private static final class Entry<KEY, VALUE> extends SimpleEntry<KEY, VALUE> {
+    protected static final class Entry<KEY, VALUE> extends SimpleEntry<KEY, VALUE> {
         private Entry<KEY, VALUE> prev, next;
         private boolean removed = false;
 
@@ -39,13 +39,26 @@ public class LinkedMap<KEY, VALUE> implements Iterable<Map.Entry<KEY, VALUE>> {
         head.next = head;
     }
 
-    private void insert(KEY hashKey, VALUE value) {
-        Entry<KEY, VALUE> entry = new Entry<>(hashKey, value);
+    private void insert(KEY hashKey, KEY key, VALUE value) {
+        Entry<KEY, VALUE> entry = newEntry(key, value);
         map.put(hashKey, entry);
         entry.prev = head.prev;
         entry.next = head;
         head.prev.next = entry;
         head.prev = entry;
+    }
+
+    /**
+     * Creates a new entry object.
+     * 
+     * @param key
+     *            the entry key
+     * @param value
+     *            the entry value
+     * @return the new map entry
+     */
+    protected Entry<KEY, VALUE> newEntry(KEY key, VALUE value) {
+        return new Entry<>(key, value);
     }
 
     /**
@@ -141,7 +154,7 @@ public class LinkedMap<KEY, VALUE> implements Iterable<Map.Entry<KEY, VALUE>> {
         if (entry != null) {
             entry.setValue(value);
         } else {
-            insert(hashKey, value);
+            insert(hashKey, key, value);
         }
     }
 
@@ -157,7 +170,7 @@ public class LinkedMap<KEY, VALUE> implements Iterable<Map.Entry<KEY, VALUE>> {
             // empty map
             for (Entry<KEY, VALUE> e = map.head; e.next != map.head; e = e.next) {
                 KEY hashKey = hashKey(e.getKey());
-                insert(hashKey, e.getValue());
+                insert(hashKey, e.getKey(), e.getValue());
             }
         } else {
             for (Entry<KEY, VALUE> e = map.head; e.next != map.head; e = e.next) {

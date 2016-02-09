@@ -13,6 +13,7 @@ import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.Instanceof
 import static com.github.anba.es6draft.runtime.objects.BooleanObject.BooleanCreate;
 import static com.github.anba.es6draft.runtime.objects.SymbolObject.SymbolCreate;
 import static com.github.anba.es6draft.runtime.objects.number.NumberObject.NumberCreate;
+import static com.github.anba.es6draft.runtime.objects.simd.SIMDObject.SIMDCreate;
 import static com.github.anba.es6draft.runtime.types.builtins.ArrayObject.DenseArrayCreate;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject.ObjectCreate;
 import static com.github.anba.es6draft.runtime.types.builtins.StringObject.StringCreate;
@@ -40,6 +41,8 @@ import com.github.anba.es6draft.runtime.internal.ScriptRuntime;
 import com.github.anba.es6draft.runtime.internal.Strings;
 import com.github.anba.es6draft.runtime.objects.FunctionPrototype;
 import com.github.anba.es6draft.runtime.objects.iteration.ListIterator;
+import com.github.anba.es6draft.runtime.objects.simd.SIMD;
+import com.github.anba.es6draft.runtime.objects.simd.SIMDValue;
 import com.github.anba.es6draft.runtime.objects.text.RegExpObject;
 import com.github.anba.es6draft.runtime.types.*;
 import com.github.anba.es6draft.runtime.types.builtins.ArgumentsObject;
@@ -235,6 +238,8 @@ public final class AbstractOperations {
             return Type.stringValue(value).length() != 0;
         case Symbol:
             return true;
+        case SIMD:
+            return true;
         case Object:
             return true;
         default:
@@ -292,6 +297,8 @@ public final class AbstractOperations {
             return ToNumber(Type.stringValue(value));
         case Symbol:
             throw newTypeError(cx, Messages.Key.SymbolNumber);
+        case SIMD:
+            throw newTypeError(cx, Messages.Key.SIMDNumber);
         case Object:
             Object primValue = ToPrimitive(cx, Type.objectValue(value), ToPrimitiveHint.Number);
             return ToNumber(cx, primValue);
@@ -631,6 +638,8 @@ public final class AbstractOperations {
             return Type.stringValue(value);
         case Symbol:
             throw newTypeError(cx, Messages.Key.SymbolString);
+        case SIMD:
+            return SIMD.ToString(Type.simdValue(value));
         case Object:
             Object primValue = ToPrimitive(cx, Type.objectValue(value), ToPrimitiveHint.String);
             return ToString(cx, primValue);
@@ -742,6 +751,9 @@ public final class AbstractOperations {
             return StringCreate(cx, Type.stringValue(value));
         case Symbol:
             return SymbolCreate(cx, Type.symbolValue(value));
+        case SIMD:
+            // FIXME: spec bug - unclear/invalid description.
+            return SIMDCreate(cx, Type.simdValue(value));
         case Object:
             return Type.objectValue(value);
         default:
@@ -1052,6 +1064,10 @@ public final class AbstractOperations {
         if (tx == Type.Boolean) {
             return Type.booleanValue(x) == Type.booleanValue(y);
         }
+        /* Extension: SIMD */
+        if (tx == Type.SIMD) {
+            return SIMD.SameValue(Type.simdValue(x), Type.simdValue(y));
+        }
         /* steps 9-10 */
         assert tx == Type.Object || tx == Type.Symbol;
         return (x == y);
@@ -1116,6 +1132,10 @@ public final class AbstractOperations {
         /* step 8 */
         if (tx == Type.Boolean) {
             return Type.booleanValue(x) == Type.booleanValue(y);
+        }
+        /* Extension: SIMD */
+        if (tx == Type.SIMD) {
+            return SIMD.SameValueZero(Type.simdValue(x), Type.simdValue(y));
         }
         /* steps 9-10 */
         assert tx == Type.Object || tx == Type.Symbol;
@@ -1207,12 +1227,14 @@ public final class AbstractOperations {
      * @return the comparison result
      */
     public static boolean EqualityComparison(ExecutionContext cx, Object x, Object y) {
-        // fast path for same reference
+        // Fast path for same reference.
         if (x == y) {
             if (x instanceof Double) {
                 return !((Double) x).isNaN();
             }
-            return true;
+            if (!(x instanceof SIMDValue)) {
+                return true;
+            }
         }
         /* steps 1-2 (not applicable) */
         Type tx = Type.of(x);
@@ -1248,11 +1270,11 @@ public final class AbstractOperations {
             return EqualityComparison(cx, x, ToNumber(cx, y));
         }
         /* step 10 */
-        if ((tx == Type.String || tx == Type.Number || tx == Type.Symbol) && ty == Type.Object) {
+        if ((tx == Type.String || tx == Type.Number || tx == Type.Symbol || tx == Type.SIMD) && ty == Type.Object) {
             return EqualityComparison(cx, x, ToPrimitive(cx, Type.objectValue(y)));
         }
         /* step 11 */
-        if (tx == Type.Object && (ty == Type.String || ty == Type.Number || ty == Type.Symbol)) {
+        if (tx == Type.Object && (ty == Type.String || ty == Type.Number || ty == Type.Symbol || ty == Type.SIMD)) {
             return EqualityComparison(cx, ToPrimitive(cx, Type.objectValue(x)), y);
         }
         /* step 12 */
@@ -1269,12 +1291,14 @@ public final class AbstractOperations {
      * @return the comparison result
      */
     public static boolean StrictEqualityComparison(Object x, Object y) {
-        // fast path for same reference
+        // Fast path for same reference.
         if (x == y) {
             if (x instanceof Double) {
                 return !((Double) x).isNaN();
             }
-            return true;
+            if (!(x instanceof SIMDValue)) {
+                return true;
+            }
         }
         Type tx = Type.of(x);
         Type ty = Type.of(y);
@@ -1303,6 +1327,10 @@ public final class AbstractOperations {
         /* step 6 */
         if (tx == Type.Boolean) {
             return Type.booleanValue(x) == Type.booleanValue(y);
+        }
+        /* Extension: SIMD */
+        if (tx == Type.SIMD) {
+            return SIMD.StrictEquality(Type.simdValue(x), Type.simdValue(y));
         }
         assert tx == Type.Object || tx == Type.Symbol;
         /* steps 7-9 */

@@ -20,7 +20,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  */
 public final class SetObject extends OrdinaryObject {
     /** [[SetData]] */
-    private final LinkedMap<Object, Void> setData = new LinkedMapImpl<Void>();
+    private final LinkedMap<Object, Void> setData = new LinkedMapImpl<>();
 
     /**
      * Constructs a new Set object.

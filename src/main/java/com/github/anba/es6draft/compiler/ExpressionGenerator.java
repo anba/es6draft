@@ -39,6 +39,7 @@ import com.github.anba.es6draft.runtime.internal.Bootstrap;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.NativeCalls;
 import com.github.anba.es6draft.runtime.objects.Eval.EvalFlags;
+import com.github.anba.es6draft.runtime.objects.simd.SIMDType;
 
 /**
  *
@@ -1571,6 +1572,9 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
 
             static final MethodName ScriptRuntime_isNonCallableObjectOrNull = MethodName.findStatic(Types.ScriptRuntime,
                     "isNonCallableObjectOrNull", Type.methodType(Type.BOOLEAN_TYPE, Types.Object));
+
+            static final MethodName ScriptRuntime_isSIMDType = MethodName.findStatic(Types.ScriptRuntime, "isSIMDType",
+                    Type.methodType(Type.BOOLEAN_TYPE, Types.Object, Types.SIMDType));
         }
 
         static abstract class EqualityOp extends BinaryOp {
@@ -1819,6 +1823,9 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
 
             private void emitTypeCheckGeneric(String name, ExpressionVisitor mv) {
                 MethodName typeCheck = typeCheck(name);
+                if (typeCheck == EqMethods.ScriptRuntime_isSIMDType) {
+                    mv.getstatic(Types.SIMDType, SIMDType.from(name).name(), Types.SIMDType);
+                }
                 mv.invoke(typeCheck);
             }
 
@@ -1839,7 +1846,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
                 case "function":
                     return EqMethods.AbstractOperations_IsCallable;
                 default:
-                    throw new AssertionError();
+                    return EqMethods.ScriptRuntime_isSIMDType;
                 }
             }
 
@@ -1859,6 +1866,19 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
                 case "string":
                 case "symbol":
                 case "function":
+                    return true;
+                case "float64x2":
+                case "float32x4":
+                case "int32x4":
+                case "int16x8":
+                case "int8x16":
+                case "uint32x4":
+                case "uint16x8":
+                case "uint8x16":
+                case "bool64x2":
+                case "bool32x4":
+                case "bool16x8":
+                case "bool8x16":
                     return true;
                 default:
                     return false;

@@ -544,13 +544,15 @@ public abstract class Reference<BASE, NAME> {
                 return cx.getIntrinsic(Intrinsics.StringPrototype);
             case Symbol:
                 return cx.getIntrinsic(Intrinsics.SymbolPrototype);
+            case SIMD:
+                return cx.getIntrinsic(getSIMDBaseProto(base));
             default:
                 throw new AssertionError();
             }
         }
 
-        protected static final OrdinaryObject getPrimitiveBaseProto(ExecutionContext cx, Type type) {
-            switch (type) {
+        protected static final OrdinaryObject getPrimitiveBaseProto(ExecutionContext cx, Object base) {
+            switch (Type.of(base)) {
             case Boolean:
                 return cx.getIntrinsic(Intrinsics.BooleanPrototype);
             case Number:
@@ -559,6 +561,39 @@ public abstract class Reference<BASE, NAME> {
                 return cx.getIntrinsic(Intrinsics.StringPrototype);
             case Symbol:
                 return cx.getIntrinsic(Intrinsics.SymbolPrototype);
+            case SIMD:
+                return cx.getIntrinsic(getSIMDBaseProto(base));
+            default:
+                throw new AssertionError();
+            }
+        }
+
+        private static Intrinsics getSIMDBaseProto(Object base) {
+            switch (Type.simdValue(base).getType()) {
+            case Float64x2:
+                return Intrinsics.SIMD_Float64x2Prototype;
+            case Float32x4:
+                return Intrinsics.SIMD_Float32x4Prototype;
+            case Int32x4:
+                return Intrinsics.SIMD_Int32x4Prototype;
+            case Int16x8:
+                return Intrinsics.SIMD_Int16x8Prototype;
+            case Int8x16:
+                return Intrinsics.SIMD_Int8x16Prototype;
+            case Uint32x4:
+                return Intrinsics.SIMD_Uint32x4Prototype;
+            case Uint16x8:
+                return Intrinsics.SIMD_Uint16x8Prototype;
+            case Uint8x16:
+                return Intrinsics.SIMD_Uint8x16Prototype;
+            case Bool64x2:
+                return Intrinsics.SIMD_Bool64x2Prototype;
+            case Bool32x4:
+                return Intrinsics.SIMD_Bool32x4Prototype;
+            case Bool16x8:
+                return Intrinsics.SIMD_Bool16x8Prototype;
+            case Bool8x16:
+                return Intrinsics.SIMD_Bool8x16Prototype;
             default:
                 throw new AssertionError();
             }
@@ -655,7 +690,7 @@ public abstract class Reference<BASE, NAME> {
                     return String.valueOf(str.charAt(index));
                 }
             }
-            return getPrimitiveBaseProto(cx, Type.of(base)).get(cx, referencedName, base);
+            return getPrimitiveBaseProto(cx, base).get(cx, referencedName, base);
         }
 
         public static void PutValue(ExecutionContext cx, Object base, long referencedName, Object value,
@@ -774,7 +809,7 @@ public abstract class Reference<BASE, NAME> {
                     }
                 }
             }
-            return getPrimitiveBaseProto(cx, Type.of(base)).get(cx, referencedName, base);
+            return getPrimitiveBaseProto(cx, base).get(cx, referencedName, base);
         }
 
         public static void PutValue(ExecutionContext cx, Object base, String referencedName, Object value,
@@ -867,7 +902,7 @@ public abstract class Reference<BASE, NAME> {
         }
 
         private static Object GetValuePrimitive(ExecutionContext cx, Object base, Symbol referencedName) {
-            return getPrimitiveBaseProto(cx, Type.of(base)).get(cx, referencedName, base);
+            return getPrimitiveBaseProto(cx, base).get(cx, referencedName, base);
         }
 
         public static void PutValue(ExecutionContext cx, Object base, Symbol referencedName, Object value,

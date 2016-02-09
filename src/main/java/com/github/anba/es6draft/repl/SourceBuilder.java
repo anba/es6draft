@@ -89,6 +89,7 @@ public final class SourceBuilder {
         Null(AnsiAttribute.Bold, AnsiAttribute.NormalIntensity),
         String(AnsiAttribute.TextColor.color(AnsiColor.Green), AnsiAttribute.DefaultTextColor),
         Symbol(AnsiAttribute.TextColor.color(AnsiColor.Green), AnsiAttribute.DefaultTextColor),
+        SIMD(AnsiAttribute.TextColor.color(AnsiColor.Yellow), AnsiAttribute.DefaultTextColor),
         Date(AnsiAttribute.TextColor.color(AnsiColor.Magenta), AnsiAttribute.DefaultTextColor),
         RegExp(AnsiAttribute.TextColor.color(AnsiColor.Red), AnsiAttribute.DefaultTextColor),
         ;
@@ -169,6 +170,8 @@ public final class SourceBuilder {
             return Style.Number;
         case Symbol:
             return Style.Symbol;
+        case SIMD:
+            return Style.SIMD;
         case Object:
         default:
             if (IsCallable(value)) {
@@ -199,6 +202,8 @@ public final class SourceBuilder {
             return Type.symbolValue(value).toString();
         case Number:
             return ToFlatString(cx, value);
+        case SIMD:
+            return Type.simdValue(value).toString();
         case Object:
             ScriptObject objValue = Type.objectValue(value);
             if (IsCallable(objValue)) {

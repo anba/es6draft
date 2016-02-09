@@ -5,6 +5,11 @@
 # <https://github.com/anba/es6draft>
 #
 
+# SIMD issues (TODO: write bug reports)
+ecma_7/SIMD/load.js
+ecma_7/SIMD/replaceLane.js
+ecma_7/SIMD/swizzle-shuffle.js
+
 # unboxed yield* in SpiderMonkey
 # https://bugzilla.mozilla.org/show_bug.cgi?id=1016936
 ecma_6/Generators/delegating-yield-1.js
@@ -167,6 +172,15 @@ js1_8_5/extensions/sharedtypedarray.js
 ####################################
 
 Intl/NumberFormat/StringBuffer.js
+
+
+################################
+# Non standard SIMD extensions #
+################################
+
+ecma_7/SIMD/signmask.js
+ecma_7/SIMD/typedobjects.js
+ecma_7/SIMD/bug1023145.js
 
 
 ###############################################################

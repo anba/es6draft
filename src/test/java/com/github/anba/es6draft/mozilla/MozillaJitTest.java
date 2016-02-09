@@ -81,6 +81,7 @@ public final class MozillaJitTest {
             options.add(CompatibilityOption.ArrayBufferMissingLength);
             options.add(CompatibilityOption.ArrayIncludes);
             options.add(CompatibilityOption.Exponentiation);
+            options.add(CompatibilityOption.SIMD);
             return options;
         }
     };

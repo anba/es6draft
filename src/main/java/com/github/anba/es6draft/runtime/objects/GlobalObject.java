@@ -65,6 +65,7 @@ public class GlobalObject extends OrdinaryObject implements Initializable {
         createProperties(realm, this, ConstructorProperties.class);
         createProperties(realm, this, OtherProperties.class);
         createProperties(realm, this, SystemProperty.class);
+        createProperties(realm, this, SIMDProperty.class);
         createProperties(realm, this, AdditionalProperties.class);
     }
 
@@ -593,6 +594,14 @@ public class GlobalObject extends OrdinaryObject implements Initializable {
 
         @Value(name = "System")
         public static final Intrinsics System = Intrinsics.System;
+    }
+
+    @CompatibilityExtension(CompatibilityOption.SIMD)
+    public enum SIMDProperty {
+        ;
+
+        @Value(name = "SIMD")
+        public static final Intrinsics SIMD = Intrinsics.SIMD;
     }
 
     /**

@@ -11,6 +11,8 @@ import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import org.mozilla.javascript.ConsString;
 
+import com.github.anba.es6draft.runtime.objects.simd.SIMDValue;
+
 /**
  * <h1>6 ECMAScript Data Types and Values</h1><br>
  * <h2>6.1 ECMAScript Language Types</h2>
@@ -44,7 +46,11 @@ public enum Type {
     Number,
 
     /** 6.1.7 The Object Type */
-    Object;
+    Object,
+
+    /** Extension: SIMD */
+    SIMD,
+    ;
 
     @Override
     public String toString() {
@@ -62,8 +68,11 @@ public enum Type {
         case Symbol:
             return "symbol";
         case Object:
-        default:
             return "object";
+        case SIMD:
+            return "SIMD";
+        default:
+            throw new AssertionError();
         }
     }
 
@@ -93,6 +102,9 @@ public enum Type {
         if (value instanceof Double || value instanceof Integer || value instanceof Long) {
             return Number;
         }
+        if (value instanceof SIMDValue) {
+            return SIMD;
+        }
         assert value instanceof ScriptObject : (value != null ? value.getClass() : "<null>");
         return Object;
     }
@@ -121,6 +133,9 @@ public enum Type {
             return true;
         }
         if (value instanceof Double || value instanceof Integer || value instanceof Long) {
+            return true;
+        }
+        if (value instanceof SIMDValue) {
             return true;
         }
         if (value instanceof ScriptObject) {
@@ -238,6 +253,18 @@ public enum Type {
     }
 
     /**
+     * Short cut for:<br>
+     * <code>Type.of(value) == Type.SIMD</code>
+     * 
+     * @param value
+     *            the value object
+     * @return {@code true} if the value is a SIMD value
+     */
+    public static boolean isSIMD(Object value) {
+        return value instanceof SIMDValue;
+    }
+
+    /**
      * If {@code value} is a Boolean type, its value is returned. Otherwise a {@link ClassCastException} is thrown.
      * 
      * @param value
@@ -302,5 +329,16 @@ public enum Type {
      */
     public static ScriptObject objectValueOrNull(Object value) {
         return value == NULL ? null : (ScriptObject) value;
+    }
+
+    /**
+     * If {@code value} is a SIMD type, its value is returned. Otherwise a {@link ClassCastException} is thrown.
+     * 
+     * @param value
+     *            the value object
+     * @return the SIMD value
+     */
+    public static SIMDValue simdValue(Object value) {
+        return (SIMDValue) value;
     }
 }

@@ -24,6 +24,7 @@ import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.PropertyMap;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
 import com.github.anba.es6draft.runtime.internal.ScriptIterator;
+import com.github.anba.es6draft.runtime.objects.simd.SIMDValue;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
@@ -112,7 +113,11 @@ public class OrdinaryObject implements ScriptObject {
     }
 
     /**
-     * Returns {@code true} if arguments {@code x} and {@code y} are both NaN values and not the same object reference.
+     * Returns {@code true} if arguments {@code x} and {@code y} are not the same object reference and:
+     * <ol>
+     * <li>{@code x} and {@code y} are both NaN values
+     * <li>{@code x} and {@code y} are both equal SIMD values
+     * </ol>
      * 
      * @param x
      *            the first argument
@@ -120,9 +125,17 @@ public class OrdinaryObject implements ScriptObject {
      *            the second argument
      * @return {@code true} if x and y are both NaN values
      */
-    private static final boolean SameValueNaN(Object x, Object y) {
-        return x != y && x instanceof Double && y instanceof Double && Double.isNaN(((Double) x).doubleValue())
-                && Double.isNaN(((Double) y).doubleValue());
+    private static final boolean SameValueNaNorSIMD(Object x, Object y) {
+        if (x == y) {
+            return false;
+        }
+        if (x instanceof Double && y instanceof Double) {
+            return Double.isNaN(((Double) x).doubleValue()) && Double.isNaN(((Double) y).doubleValue());
+        }
+        if (x instanceof SIMDValue && y instanceof SIMDValue) {
+            return ((SIMDValue) x).equals(y);
+        }
+        return false;
     }
 
     /**
@@ -1455,7 +1468,7 @@ public class OrdinaryObject implements ScriptObject {
 
     protected boolean setPropertyValue(ExecutionContext cx, long propertyKey, Object value, Property current) {
         assert current.isDataDescriptor() && current.isWritable();
-        if (!SameValueNaN(current.getValue(), value)) {
+        if (!SameValueNaNorSIMD(current.getValue(), value)) {
             current.setValue(value);
         }
         return true;
@@ -1522,7 +1535,7 @@ public class OrdinaryObject implements ScriptObject {
 
     protected boolean setPropertyValue(ExecutionContext cx, String propertyKey, Object value, Property current) {
         assert current.isDataDescriptor() && current.isWritable();
-        if (!SameValueNaN(current.getValue(), value)) {
+        if (!SameValueNaNorSIMD(current.getValue(), value)) {
             current.setValue(value);
         }
         return true;
@@ -1589,7 +1602,7 @@ public class OrdinaryObject implements ScriptObject {
 
     protected boolean setPropertyValue(ExecutionContext cx, Symbol propertyKey, Object value, Property current) {
         assert current.isDataDescriptor() && current.isWritable();
-        if (!SameValueNaN(current.getValue(), value)) {
+        if (!SameValueNaNorSIMD(current.getValue(), value)) {
             current.setValue(value);
         }
         return true;

@@ -59,6 +59,7 @@ const standardProperties = [
 "Reflect",
 "System",
 "Intl",
+"SIMD",
 "escape",
 "unescape",
 ];

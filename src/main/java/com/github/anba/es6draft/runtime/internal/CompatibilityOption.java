@@ -244,6 +244,16 @@ public enum CompatibilityOption {
     StringMatchAll,
 
     /**
+     * SIMD (Stage 3 proposal)
+     */
+    SIMD,
+
+    /**
+     * SIMD (Float64x2, Bool64x2, selectBits)
+     */
+    SIMD_Phase2,
+
+    /**
      * Type annotations (limited parser support only).
      */
     TypeAnnotation,
@@ -314,7 +324,7 @@ public enum CompatibilityOption {
      * @return the options set for mozilla-compatibility
      */
     public static final Set<CompatibilityOption> MozCompatibility() {
-        return addAll(WebCompatibility(), MozExtensions(), EnumSet.of(Comprehension));
+        return addAll(WebCompatibility(), MozExtensions(), EnumSet.of(Comprehension), EnumSet.of(SIMD_Phase2));
     }
 
     /**
@@ -401,7 +411,8 @@ public enum CompatibilityOption {
         case Draft:
             return EnumSet.of(FunctionSent, ObjectRestDestructuring, ObjectSpreadInitializer);
         case Candidate:
-            return EnumSet.of(AsyncFunction, Exponentiation, FunctionCallTrailingComma, ObjectValuesEntries, StringPad);
+            return EnumSet.of(AsyncFunction, Exponentiation, FunctionCallTrailingComma, ObjectValuesEntries, StringPad,
+                    SIMD);
         case Finished:
             return EnumSet.of(ArrayIncludes);
         default:
@@ -441,7 +452,7 @@ public enum CompatibilityOption {
      * @return the options set for experimental features
      */
     public static final Set<CompatibilityOption> Experimental() {
-        return EnumSet.range(TypeAnnotation, System);
+        return EnumSet.range(SIMD_Phase2, System);
     }
 
     @SafeVarargs
