@@ -10,6 +10,7 @@ import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+import com.github.anba.es6draft.runtime.internal.RuntimeContext;
 import com.github.anba.es6draft.runtime.internal.ScriptLoader;
 import com.github.anba.es6draft.runtime.modules.MalformedNameException;
 import com.github.anba.es6draft.runtime.modules.SourceIdentifier;
@@ -20,8 +21,8 @@ import com.github.anba.es6draft.util.TestFileModuleLoader;
  * 
  */
 final class TraceurFileModuleLoader extends TestFileModuleLoader {
-    TraceurFileModuleLoader(ScriptLoader scriptLoader, Path baseDirectory) {
-        super(scriptLoader, baseDirectory);
+    public TraceurFileModuleLoader(RuntimeContext context, ScriptLoader scriptLoader) {
+        super(context, scriptLoader);
     }
 
     @Override

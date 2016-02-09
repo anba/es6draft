@@ -19,6 +19,7 @@ import static com.github.anba.es6draft.runtime.types.builtins.StringObject.Strin
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Iterator;
@@ -33,6 +34,7 @@ import com.github.anba.es6draft.parser.NumberParser;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
 import com.github.anba.es6draft.runtime.internal.ScriptIterator;
+import com.github.anba.es6draft.runtime.internal.ScriptIterators;
 import com.github.anba.es6draft.runtime.internal.ScriptRuntime;
 import com.github.anba.es6draft.runtime.internal.Strings;
 import com.github.anba.es6draft.runtime.objects.FunctionPrototype;
@@ -74,8 +76,9 @@ public final class AbstractOperations {
             case Number:
                 return "number";
             case Default:
-            default:
                 return "default";
+            default:
+                throw new AssertionError();
             }
         }
     }
@@ -232,8 +235,9 @@ public final class AbstractOperations {
         case Symbol:
             return true;
         case Object:
-        default:
             return true;
+        default:
+            throw new AssertionError();
         }
     }
 
@@ -273,7 +277,7 @@ public final class AbstractOperations {
      *            the argument value
      * @return the number result
      */
-    public static double ToNumberSlow(ExecutionContext cx, Object value) {
+    private static double ToNumberSlow(ExecutionContext cx, Object value) {
         switch (Type.of(value)) {
         case Undefined:
             return Double.NaN;
@@ -288,9 +292,10 @@ public final class AbstractOperations {
         case Symbol:
             throw newTypeError(cx, Messages.Key.SymbolNumber);
         case Object:
-        default:
             Object primValue = ToPrimitive(cx, Type.objectValue(value), ToPrimitiveHint.Number);
             return ToNumber(cx, primValue);
+        default:
+            throw new AssertionError();
         }
     }
 
@@ -324,7 +329,11 @@ public final class AbstractOperations {
         if (number == 0d || Double.isInfinite(number))
             return number;
         /* step 5 */
-        return Math.signum(number) * Math.floor(Math.abs(number));
+        // return Math.signum(number) * Math.floor(Math.abs(number));
+        if (number < 0) {
+            return Math.ceil(number);
+        }
+        return Math.floor(number);
     }
 
     /**
@@ -343,7 +352,11 @@ public final class AbstractOperations {
         if (number == 0d || Double.isInfinite(number))
             return number;
         /* step 5 */
-        return Math.signum(number) * Math.floor(Math.abs(number));
+        // return Math.signum(number) * Math.floor(Math.abs(number));
+        if (number < 0) {
+            return Math.ceil(number);
+        }
+        return Math.floor(number);
     }
 
     /**
@@ -532,8 +545,16 @@ public final class AbstractOperations {
     public static int ToUint8Clamp(ExecutionContext cx, Object value) {
         /* steps 1-2 */
         double number = ToNumber(cx, value);
-        /* steps 3-10 */
-        return number <= 0 ? +0 : number > 255 ? 255 : (int) Math.rint(number);
+        /* step 4 */
+        if (number <= 0) {
+            return 0;
+        }
+        /* step 5 */
+        if (number >= 255) {
+            return 255;
+        }
+        /* steps 3, 6-10 */
+        return (int) Math.rint(number);
     }
 
     /**
@@ -545,8 +566,16 @@ public final class AbstractOperations {
      */
     public static int ToUint8Clamp(double number) {
         /* steps 1-2 (not applicable) */
-        /* steps 3-10 */
-        return number <= 0 ? +0 : number > 255 ? 255 : (int) Math.rint(number);
+        /* step 4 */
+        if (number <= 0) {
+            return 0;
+        }
+        /* step 5 */
+        if (number >= 255) {
+            return 255;
+        }
+        /* steps 3, 6-10 */
+        return (int) Math.rint(number);
     }
 
     /**
@@ -587,7 +616,7 @@ public final class AbstractOperations {
      *            the argument value
      * @return the string result
      */
-    public static CharSequence ToStringSlow(ExecutionContext cx, Object value) {
+    private static CharSequence ToStringSlow(ExecutionContext cx, Object value) {
         switch (Type.of(value)) {
         case Undefined:
             return "undefined";
@@ -602,9 +631,10 @@ public final class AbstractOperations {
         case Symbol:
             throw newTypeError(cx, Messages.Key.SymbolString);
         case Object:
-        default:
             Object primValue = ToPrimitive(cx, Type.objectValue(value), ToPrimitiveHint.String);
             return ToString(cx, primValue);
+        default:
+            throw new AssertionError();
         }
     }
 
@@ -683,6 +713,22 @@ public final class AbstractOperations {
      * @return the object result
      */
     public static ScriptObject ToObject(ExecutionContext cx, Object value) {
+        if (Type.isObject(value)) {
+            return Type.objectValue(value);
+        }
+        return ToObjectSlow(cx, value);
+    }
+
+    /**
+     * 7.1.13 ToObject ( argument )
+     * 
+     * @param cx
+     *            the execution context
+     * @param value
+     *            the argument value
+     * @return the object result
+     */
+    private static ScriptObject ToObjectSlow(ExecutionContext cx, Object value) {
         switch (Type.of(value)) {
         case Undefined:
         case Null:
@@ -696,8 +742,9 @@ public final class AbstractOperations {
         case Symbol:
             return SymbolCreate(cx, Type.symbolValue(value));
         case Object:
-        default:
             return Type.objectValue(value);
+        default:
+            throw new AssertionError();
         }
     }
 
@@ -739,7 +786,7 @@ public final class AbstractOperations {
             return 0;
         }
         /* steps 5-6 */
-        return (long) Math.min(len, 0x1F_FFFF_FFFF_FFFFL);
+        return (long) Math.min(len, 0x1F_FFFF_FFFF_FFFFp0);
     }
 
     /**
@@ -756,7 +803,7 @@ public final class AbstractOperations {
             return 0;
         }
         /* steps 5-6 */
-        return (long) Math.min(value, 0x1F_FFFF_FFFF_FFFFL);
+        return (long) Math.min(value, 0x1F_FFFF_FFFF_FFFFp0);
     }
 
     /**
@@ -827,38 +874,7 @@ public final class AbstractOperations {
         }
         /* step 3 */
         if (value instanceof ProxyObject) {
-            ScriptObject target = ((ProxyObject) value).unwrap();
-            if (target == null) {
-                throw newTypeError(cx, Messages.Key.ProxyRevoked);
-            }
-            return target instanceof ArrayObject;
-        }
-        /* step 4 */
-        return false;
-    }
-
-    /**
-     * 7.2.2 IsArray ( argument )
-     * 
-     * @param cx
-     *            the execution context
-     * @param value
-     *            the argument value
-     * @return {@code true} if the argument is an Array object
-     */
-    public static boolean IsArray(ExecutionContext cx, ScriptObject value) {
-        /* step 1 (not applicable) */
-        /* step 2 */
-        if (value instanceof ArrayObject) {
-            return true;
-        }
-        /* step 3 */
-        if (value instanceof ProxyObject) {
-            ScriptObject target = ((ProxyObject) value).unwrap();
-            if (target == null) {
-                throw newTypeError(cx, Messages.Key.ProxyRevoked);
-            }
-            return target instanceof ArrayObject;
+            return ((ProxyObject) value).unwrap(cx) instanceof ArrayObject;
         }
         /* step 4 */
         return false;
@@ -1003,8 +1019,6 @@ public final class AbstractOperations {
         /* same reference shortcuts */
         if (x == y) {
             return true;
-        } else if (x == null || y == null) {
-            return false;
         }
         Type tx = Type.of(x);
         Type ty = Type.of(y);
@@ -1070,8 +1084,6 @@ public final class AbstractOperations {
         /* same reference shortcuts */
         if (x == y) {
             return true;
-        } else if (x == null || y == null) {
-            return false;
         }
         Type tx = Type.of(x);
         Type ty = Type.of(y);
@@ -1092,10 +1104,7 @@ public final class AbstractOperations {
         if (tx == Type.Number) {
             double dx = Type.numberValue(x);
             double dy = Type.numberValue(y);
-            if (dx == 0) {
-                return (dy == 0);
-            }
-            return Double.compare(dx, dy) == 0;
+            return dx == dy || (Double.isNaN(dx) && Double.isNaN(dy));
         }
         /* step 7 */
         if (tx == Type.String) {
@@ -1122,15 +1131,9 @@ public final class AbstractOperations {
      * @return {@code true} if both operands have the same value
      */
     public static boolean SameValueZero(double x, double y) {
-        /* steps 1-5 (not applicable) */
-        /* steps 7-10 (not applicable) */
+        /* steps 1-5, 7-10 (not applicable) */
         /* step 6 */
-        double dx = x;
-        double dy = y;
-        if (dx == 0) {
-            return (dy == 0);
-        }
-        return Double.compare(dx, dy) == 0;
+        return x == y || (Double.isNaN(x) && Double.isNaN(y));
     }
 
     /**
@@ -2485,6 +2488,20 @@ public final class AbstractOperations {
      *            the array elements
      * @return the array object
      */
+    public static ArrayObject CreateArrayFromList(ExecutionContext cx, Collection<?> elements) {
+        /* steps 1-5 */
+        return DenseArrayCreate(cx, elements);
+    }
+
+    /**
+     * 7.3.16 CreateArrayFromList (elements)
+     * 
+     * @param cx
+     *            the execution context
+     * @param elements
+     *            the array elements
+     * @return the array object
+     */
     public static ArrayObject CreateArrayFromList(ExecutionContext cx, List<?> elements) {
         /* steps 1-5 */
         return DenseArrayCreate(cx, elements);
@@ -2779,7 +2796,7 @@ public final class AbstractOperations {
         Object p = Get(cx, (ScriptObject) c, "prototype");
         /* step 6 */
         if (!Type.isObject(p)) {
-            throw newTypeError(cx, Messages.Key.NotObjectType);
+            throw newTypeError(cx, Messages.Key.PropertyNotObject, "prototype");
         }
         /* step 7 */
         for (ScriptObject obj = Type.objectValue(o), proto = Type.objectValue(p);;) {
@@ -2815,7 +2832,7 @@ public final class AbstractOperations {
         }
         /* step 5 */
         if (!Type.isObject(constructor)) {
-            throw newTypeError(cx, Messages.Key.NotObjectType);
+            throw newTypeError(cx, Messages.Key.PropertyNotObject, "constructor");
         }
         /* steps 6-7 */
         Object species = Get(cx, Type.objectValue(constructor), BuiltinSymbol.species.get());
@@ -2828,7 +2845,7 @@ public final class AbstractOperations {
             return (Constructor) species;
         }
         /* step 10 */
-        throw newTypeError(cx, Messages.Key.NotConstructor);
+        throw newTypeError(cx, Messages.Key.PropertyNotConstructor, "[Symbol.species]");
     }
 
     /**
@@ -2914,7 +2931,7 @@ public final class AbstractOperations {
         Object iterator = method.call(cx, obj);
         /* step 5 */
         if (!Type.isObject(iterator)) {
-            throw newTypeError(cx, Messages.Key.NotObjectType);
+            throw newTypeError(cx, Messages.Key.NotObjectTypeReturned, "[Symbol.iterator]");
         }
         /* step 6 */
         return Type.objectValue(iterator);
@@ -2934,7 +2951,7 @@ public final class AbstractOperations {
         Object result = Invoke(cx, iterator, "next");
         /* step 4 */
         if (!Type.isObject(result)) {
-            throw newTypeError(cx, Messages.Key.NotObjectType);
+            throw newTypeError(cx, Messages.Key.NotObjectTypeReturned, "next");
         }
         /* step 5 */
         return Type.objectValue(result);
@@ -2956,7 +2973,7 @@ public final class AbstractOperations {
         Object result = Invoke(cx, iterator, "next", value);
         /* step 4 */
         if (!Type.isObject(result)) {
-            throw newTypeError(cx, Messages.Key.NotObjectType);
+            throw newTypeError(cx, Messages.Key.NotObjectTypeReturned, "next");
         }
         /* step 5 */
         return Type.objectValue(result);
@@ -3033,7 +3050,7 @@ public final class AbstractOperations {
             /* step 7 (not applicable) */
             /* step 9 */
             if (!Type.isObject(innerResult)) {
-                throw newTypeError(cx, Messages.Key.NotObjectType);
+                throw newTypeError(cx, Messages.Key.NotObjectTypeReturned, "return");
             }
         }
         /* step 10 (not applicable) */
@@ -3132,7 +3149,7 @@ public final class AbstractOperations {
      * @return the iterator object
      */
     public static ScriptIterator<?> GetScriptIterator(ExecutionContext cx, Object iterable) {
-        return new ScriptIteratorImpl(cx, GetIterator(cx, iterable));
+        return ScriptIterators.GetScriptIterator(cx, iterable);
     }
 
     /**
@@ -3146,9 +3163,8 @@ public final class AbstractOperations {
      *            the iterator method
      * @return the iterator object
      */
-    public static ScriptIterator<?> GetScriptIterator(ExecutionContext cx, Object iterable,
-            Callable method) {
-        return new ScriptIteratorImpl(cx, GetIterator(cx, iterable, method));
+    public static ScriptIterator<?> GetScriptIterator(ExecutionContext cx, Object iterable, Callable method) {
+        return ScriptIterators.GetScriptIterator(cx, iterable, method);
     }
 
     /**
@@ -3162,61 +3178,14 @@ public final class AbstractOperations {
      * @return the iterator object
      */
     public static ScriptIterator<?> ToScriptIterator(ExecutionContext cx, ScriptObject iterator) {
-        return new ScriptIteratorImpl(cx, iterator);
-    }
-
-    private static final class ScriptIteratorImpl extends
-            com.github.anba.es6draft.runtime.internal.SimpleIterator<Object> implements
-            com.github.anba.es6draft.runtime.internal.ScriptIterator<Object> {
-        private final ExecutionContext cx;
-        private final ScriptObject iterator;
-        private boolean done = false;
-
-        ScriptIteratorImpl(ExecutionContext cx, ScriptObject iterator) {
-            this.cx = cx;
-            this.iterator = iterator;
-        }
-
-        @Override
-        protected Object findNext() throws ScriptException {
-            if (!done) {
-                try {
-                    ScriptObject next = IteratorStep(cx, iterator);
-                    if (next != null) {
-                        return IteratorValue(cx, next);
-                    }
-                } catch (ScriptException e) {
-                    done = true;
-                    throw e;
-                }
-                done = true;
-            }
-            return null;
-        }
-
-        @Override
-        public ScriptObject getScriptObject() {
-            return iterator;
-        }
-
-        @Override
-        public void close() throws ScriptException {
-            if (!done) {
-                IteratorClose(cx, iterator);
-            }
-        }
-
-        @Override
-        public void close(Throwable cause) throws ScriptException {
-            if (!done) {
-                IteratorClose(cx, iterator, cause);
-            }
-        }
+        return ScriptIterators.ToScriptIterator(cx, iterator);
     }
 
     /**
      * CopyDataProperties (target, source, excluded)
      * 
+     * @param <TARGET>
+     *            the target type
      * @param cx
      *            the execution context
      * @param target
@@ -3325,7 +3294,6 @@ public final class AbstractOperations {
 
         static double readDecimalLiteral(String s) {
             assert !s.isEmpty();
-            final int Infinity_length = "Infinity".length();
 
             outOfBounds: invalidChar: {
                 final int end = s.length();
@@ -3340,6 +3308,7 @@ public final class AbstractOperations {
                 }
                 if (c == 'I') {
                     // Infinity
+                    final int Infinity_length = "Infinity".length();
                     if (index - 1 + Infinity_length == end
                             && s.regionMatches(index - 1, "Infinity", 0, Infinity_length)) {
                         return isPos ? Double.POSITIVE_INFINITY : Double.NEGATIVE_INFINITY;

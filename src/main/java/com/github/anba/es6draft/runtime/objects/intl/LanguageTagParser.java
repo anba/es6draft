@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -19,14 +20,15 @@ import java.util.TreeMap;
  * @see <a href="http://tools.ietf.org/html/rfc5646">RFC-5646</a>
  */
 final class LanguageTagParser {
-    private static final HashSet<String> irregular = set("en-gb-oed", "i-ami", "i-bnn",
-            "i-default", "i-enochian", "i-hak", "i-klingon", "i-lux", "i-mingo", "i-navajo",
-            "i-pwn", "i-tao", "i-tay", "i-tsu", "sgn-be-fr", "sgn-be-nl", "sgn-ch-de");
+    private static final HashSet<String> irregular = set("en-gb-oed", "i-ami", "i-bnn", "i-default", "i-enochian",
+            "i-hak", "i-klingon", "i-lux", "i-mingo", "i-navajo", "i-pwn", "i-tao", "i-tay", "i-tsu", "sgn-be-fr",
+            "sgn-be-nl", "sgn-ch-de");
 
-    private static final HashSet<String> regular = set("art-lojban", "cel-gaulish", "no-bok",
-            "no-nyn", "zh-guoyu", "zh-hakka", "zh-min", "zh-min-nan", "zh-xiang");
+    private static final HashSet<String> regular = set("art-lojban", "cel-gaulish", "no-bok", "no-nyn", "zh-guoyu",
+            "zh-hakka", "zh-min", "zh-min-nan", "zh-xiang");
 
     private static final HashSet<String> grandfathered = new HashSet<>();
+
     static {
         grandfathered.addAll(irregular);
         grandfathered.addAll(regular);
@@ -46,8 +48,6 @@ final class LanguageTagParser {
     private final String input;
     private final int length;
     private int pos;
-    private boolean duplicateVariants = false;
-    private boolean duplicateExtensions = false;
 
     private LanguageTag tag;
 
@@ -59,7 +59,7 @@ final class LanguageTagParser {
         private String extLang1, extLang2, extLang3;
         private String script;
         private String region;
-        private HashSet<String> variants;
+        private LinkedHashSet<String> variants;
         private TreeMap<Character, String> extensions;
         private String privateuse;
 
@@ -111,15 +111,13 @@ final class LanguageTagParser {
             }
             if (script != null) {
                 // titlecase
-                sb.append('-').append((char) (script.charAt(0) & ~0x20))
-                        .append(script, 1, script.length());
+                sb.append('-').append((char) (script.charAt(0) & ~0x20)).append(script, 1, script.length());
             }
             if (region != null) {
                 if (region.length() == 2) {
                     // uppercase
                     String reg = LanguageSubtagRegistryData.region(region);
-                    sb.append('-').append((char) (reg.charAt(0) & ~0x20))
-                            .append((char) (reg.charAt(1) & ~0x20));
+                    sb.append('-').append((char) (reg.charAt(0) & ~0x20)).append((char) (reg.charAt(1) & ~0x20));
                 } else {
                     sb.append('-').append(region);
                 }
@@ -307,7 +305,7 @@ final class LanguageTagParser {
                 return null;
             }
         }
-        return String.valueOf(ca);
+        return new String(ca);
     }
 
     private static boolean isUpper(char c) {
@@ -397,15 +395,11 @@ final class LanguageTagParser {
         if (language()) {
             script();
             region();
-            while (variant()) {
-                if (duplicateVariants) {
-                    return false;
-                }
+            if (!variants()) {
+                return false;
             }
-            while (extension()) {
-                if (duplicateExtensions) {
-                    return false;
-                }
+            if (!extensions()) {
+                return false;
             }
             privateuse();
             return true;
@@ -443,10 +437,8 @@ final class LanguageTagParser {
      *  extlang       = 3ALPHA              ; selected ISO 639 codes
      *                  *2("-" 3ALPHA)      ; permanently reserved
      * </pre>
-     * 
-     * @return {@code true} if parsed successfully
      */
-    private boolean extlang() {
+    private void extlang() {
         if (token == ALPHA && tokenLength == 3) {
             tag.extLang1 = consumeTokenString();
             if (token == ALPHA && tokenLength == 3) {
@@ -455,24 +447,18 @@ final class LanguageTagParser {
                     tag.extLang3 = consumeTokenString();
                 }
             }
-            return true;
         }
-        return false;
     }
 
     /**
      * <pre>
      *  script        = 4ALPHA              ; ISO 15924 code
      * </pre>
-     * 
-     * @return {@code true} if parsed successfully
      */
-    private boolean script() {
+    private void script() {
         if (token == ALPHA && tokenLength == 4) {
             tag.script = consumeTokenString();
-            return true;
         }
-        return false;
     }
 
     /**
@@ -480,15 +466,11 @@ final class LanguageTagParser {
      *  region        = 2ALPHA              ; ISO 3166-1 code
      *                / 3DIGIT              ; UN M.49 code
      * </pre>
-     * 
-     * @return {@code true} if parsed successfully
      */
-    private boolean region() {
+    private void region() {
         if ((token == ALPHA && tokenLength == 2) || (token == DIGIT && tokenLength == 3)) {
             tag.region = consumeTokenString();
-            return true;
         }
-        return false;
     }
 
     /**
@@ -499,16 +481,23 @@ final class LanguageTagParser {
      * 
      * @return {@code true} if parsed successfully
      */
-    private boolean variant() {
-        if (alphanum() && tokenLength >= 5 && tokenLength <= 8) {
-            storeVariant(consumeTokenString());
-            return true;
+    private boolean variants() {
+        for (;;) {
+            String variant;
+            if (alphanum() && tokenLength >= 5 && tokenLength <= 8) {
+                variant = consumeTokenString();
+            } else if (alphanum() && tokenLength == 4 && isDigit(tokenStartChar())) {
+                variant = consumeTokenString();
+            } else {
+                return true;
+            }
+            if (tag.variants == null) {
+                tag.variants = new LinkedHashSet<>();
+            }
+            if (!tag.variants.add(variant)) {
+                return false;
+            }
         }
-        if (alphanum() && tokenLength == 4 && isDigit(tokenStartChar())) {
-            storeVariant(consumeTokenString());
-            return true;
-        }
-        return false;
     }
 
     /**
@@ -526,25 +515,33 @@ final class LanguageTagParser {
      * 
      * @return {@code true} if parsed successfully
      */
-    private boolean extension() {
-        int saved = tokenStart;
-        if (alphanum() && tokenLength == 1 && tokenStartChar() != 'x') {
-            char singleton = tokenStartChar();
-            consume();
-            if (alphanum() && tokenLength >= 2 && tokenLength <= 8) {
-                int startExtension = tokenStart;
-                int len = tokenLength;
+    private boolean extensions() {
+        for (;;) {
+            int saved = tokenStart;
+            if (alphanum() && tokenLength == 1 && tokenStartChar() != 'x') {
+                char singleton = tokenStartChar();
                 consume();
-                while (alphanum() && tokenLength >= 2 && tokenLength <= 8) {
-                    len += tokenLength + 1; // token + separator
+                if (alphanum() && tokenLength >= 2 && tokenLength <= 8) {
+                    int startExtension = tokenStart;
+                    int len = tokenLength;
                     consume();
+                    while (alphanum() && tokenLength >= 2 && tokenLength <= 8) {
+                        len += tokenLength + 1; // token + separator
+                        consume();
+                    }
+                    String value = input.substring(startExtension, startExtension + len);
+                    if (tag.extensions == null) {
+                        tag.extensions = new TreeMap<>();
+                    }
+                    if (tag.extensions.put(singleton, value) != null) {
+                        return false;
+                    }
+                    continue;
                 }
-                storeExtension(singleton, input.substring(startExtension, startExtension + len));
-                return true;
+                rollback(saved);
             }
-            rollback(saved);
+            return true;
         }
-        return false;
     }
 
     /**
@@ -582,22 +579,5 @@ final class LanguageTagParser {
      */
     private boolean alphanum() {
         return (token & ALPHA_DIGIT) != NONE;
-    }
-
-    private void storeVariant(String variant) {
-        if (tag.variants == null) {
-            tag.variants = new HashSet<>();
-        }
-        boolean changed = tag.variants.add(variant);
-        duplicateVariants |= !changed;
-    }
-
-    private void storeExtension(char singleton, String value) {
-        assert singleton != 'x';
-        if (tag.extensions == null) {
-            tag.extensions = new TreeMap<>();
-        }
-        boolean changed = tag.extensions.put(singleton, value) == null;
-        duplicateExtensions |= !changed;
     }
 }

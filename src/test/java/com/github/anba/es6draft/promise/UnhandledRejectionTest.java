@@ -15,7 +15,6 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.EnumSet;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.configuration.Configuration;
@@ -37,11 +36,11 @@ import com.github.anba.es6draft.repl.console.ShellConsole;
 import com.github.anba.es6draft.runtime.extensions.timer.Timers;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
-import com.github.anba.es6draft.runtime.internal.ScriptCache;
 import com.github.anba.es6draft.runtime.internal.UnhandledRejectionException;
 import com.github.anba.es6draft.util.Functional.BiFunction;
 import com.github.anba.es6draft.util.Parallelized;
 import com.github.anba.es6draft.util.ParameterizedRunnerFactory;
+import com.github.anba.es6draft.util.SystemConsole;
 import com.github.anba.es6draft.util.TestConfiguration;
 import com.github.anba.es6draft.util.TestGlobals;
 import com.github.anba.es6draft.util.TestInfo;
@@ -53,8 +52,7 @@ import com.github.anba.es6draft.util.rules.ExceptionHandlers.StandardErrorHandle
  */
 @RunWith(Parallelized.class)
 @UseParametersRunnerFactory(ParameterizedRunnerFactory.class)
-@TestConfiguration(name = "promise.test.rejection",
-        file = "resource:/test-configuration.properties")
+@TestConfiguration(name = "promise.test.rejection", file = "resource:/test-configuration.properties")
 public final class UnhandledRejectionTest {
     private static final Configuration configuration = loadConfiguration(UnhandledRejectionTest.class);
 
@@ -72,13 +70,12 @@ public final class UnhandledRejectionTest {
     public static TestGlobals<TestGlobalObject, TestInfo> globals = new TestGlobals<TestGlobalObject, TestInfo>(
             configuration) {
         @Override
-        protected ObjectAllocator<TestGlobalObject> newAllocator(ShellConsole console,
-                TestInfo test, ScriptCache scriptCache) {
-            return newGlobalObjectAllocator(console, test, scriptCache);
+        protected ObjectAllocator<TestGlobalObject> newAllocator(ShellConsole console) {
+            return newGlobalObjectAllocator(console);
         }
 
         @Override
-        protected Set<CompatibilityOption> getOptions() {
+        protected EnumSet<CompatibilityOption> getOptions() {
             EnumSet<CompatibilityOption> options = EnumSet.copyOf(super.getOptions());
             options.add(CompatibilityOption.PromiseRejection);
             return options;
@@ -121,9 +118,9 @@ public final class UnhandledRejectionTest {
     public void setUp() throws Throwable {
         assumeTrue("Test disabled", test.isEnabled());
 
-        global = globals.newGlobal(new PromiseTestConsole(), test);
+        global = globals.newGlobal(new SystemConsole(), test);
         exceptionHandler.setExecutionContext(global.getRealm().defaultContext());
-        timers = global.install(new Timers(), Timers.class);
+        timers = global.createGlobalProperties(new Timers(), Timers.class);
 
         if (test.negative) {
             expected.expect(Matchers.either(Matchers.instanceOf(UnhandledRejectionException.class))
@@ -136,9 +133,7 @@ public final class UnhandledRejectionTest {
 
     @After
     public void tearDown() throws InterruptedException {
-        if (global != null) {
-            global.getScriptLoader().getExecutor().shutdown();
-        }
+        globals.release(global);
     }
 
     @Test

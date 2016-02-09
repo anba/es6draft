@@ -46,8 +46,7 @@ public interface Callable extends ScriptObject {
      * @throws Throwable
      *             any error thrown by the underlying method implementation
      */
-    Object tailCall(ExecutionContext callerContext, Object thisValue, Object... args)
-            throws Throwable;
+    Object tailCall(ExecutionContext callerContext, Object thisValue, Object... args) throws Throwable;
 
     /**
      * Returns a copy of this function object with the same internal methods and internal slots.
@@ -56,7 +55,7 @@ public interface Callable extends ScriptObject {
      *            the execution context
      * @return the new function object
      */
-    Callable clone(ExecutionContext cx);
+    Callable clone(ExecutionContext cx); // TODO: Function.p.toMethod was removed, remove clone, too?
 
     /**
      * Returns the function's realm component.
@@ -65,26 +64,14 @@ public interface Callable extends ScriptObject {
      *            the execution context
      * @return the function's realm
      */
-    Realm getRealm(ExecutionContext cx); // TODO: add default implementation: return cx.getRealm();
-
-    enum SourceSelector {
-        /**
-         * Select the complete function.
-         */
-        Function,
-
-        /**
-         * Select only the function body.
-         */
-        Body
-    }
+    Realm getRealm(ExecutionContext cx);
 
     /**
      * Source representation of this callable.
      * 
-     * @param selector
-     *            selects which function part to return
+     * @param cx
+     *            the execution context
      * @return the function source
      */
-    String toSource(SourceSelector selector);
+    String toSource(ExecutionContext cx);
 }

@@ -19,7 +19,6 @@ import java.nio.file.Path;
 import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -28,6 +27,7 @@ import org.apache.commons.configuration.Configuration;
 import org.hamcrest.Matchers;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -44,11 +44,12 @@ import com.github.anba.es6draft.runtime.extensions.timer.Timers;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.Properties;
-import com.github.anba.es6draft.runtime.internal.ScriptCache;
+import com.github.anba.es6draft.runtime.internal.RuntimeContext;
 import com.github.anba.es6draft.runtime.internal.ScriptLoader;
 import com.github.anba.es6draft.runtime.modules.ResolutionException;
 import com.github.anba.es6draft.util.Functional.BiFunction;
 import com.github.anba.es6draft.util.Functional.Function;
+import com.github.anba.es6draft.util.NullConsole;
 import com.github.anba.es6draft.util.Parallelized;
 import com.github.anba.es6draft.util.ParameterizedRunnerFactory;
 import com.github.anba.es6draft.util.TestConfiguration;
@@ -68,20 +69,24 @@ public final class TraceurTest {
 
     @Parameters(name = "{0}")
     public static List<TraceurTestInfo> suiteValues() throws IOException {
-        return loadTests(configuration,
-                new Function<Path, BiFunction<Path, Iterator<String>, TraceurTestInfo>>() {
-                    @Override
-                    public TestInfos apply(Path basedir) {
-                        return new TestInfos(basedir);
-                    }
-                });
+        return loadTests(configuration, new Function<Path, BiFunction<Path, Iterator<String>, TraceurTestInfo>>() {
+            @Override
+            public TestInfos apply(Path basedir) {
+                return new TestInfos(basedir);
+            }
+        });
+    }
+
+    @BeforeClass
+    public static void setUpClass() throws IOException {
+        TraceurTestGlobalObject.testLoadInitializationScript();
     }
 
     @ClassRule
     public static TestGlobals<TraceurTestGlobalObject, TraceurTestInfo> globals = new TestGlobals<TraceurTestGlobalObject, TraceurTestInfo>(
             configuration) {
         @Override
-        protected Set<CompatibilityOption> getOptions() {
+        protected EnumSet<CompatibilityOption> getOptions() {
             EnumSet<CompatibilityOption> options = EnumSet.copyOf(super.getOptions());
             options.add(CompatibilityOption.AsyncFunction);
             options.add(CompatibilityOption.Exponentiation);
@@ -91,14 +96,22 @@ public final class TraceurTest {
         }
 
         @Override
-        protected ObjectAllocator<TraceurTestGlobalObject> newAllocator(ShellConsole console,
-                TraceurTestInfo test, ScriptCache scriptCache) {
-            return newGlobalObjectAllocator(console, test, scriptCache);
+        protected RuntimeContext createContext(ShellConsole console, TraceurTestInfo test) {
+            RuntimeContext context = super.createContext(console, test);
+            if (test.tailCall) {
+                context.getParserOptions().add(Parser.Option.Strict);
+            }
+            return context;
         }
 
         @Override
-        protected TraceurFileModuleLoader createModuleLoader(ScriptLoader scriptLoader) {
-            return new TraceurFileModuleLoader(scriptLoader, getBaseDirectory());
+        protected ObjectAllocator<TraceurTestGlobalObject> newAllocator(ShellConsole console) {
+            return newGlobalObjectAllocator(console);
+        }
+
+        @Override
+        protected TraceurFileModuleLoader createModuleLoader(RuntimeContext context, ScriptLoader scriptLoader) {
+            return new TraceurFileModuleLoader(context, scriptLoader);
         }
     };
 
@@ -147,36 +160,30 @@ public final class TraceurTest {
     public void setUp() throws Throwable {
         assumeTrue("Test disabled", test.isEnabled());
 
-        global = globals.newGlobal(new TraceurConsole(), test);
+        global = globals.newGlobal(new NullConsole(), test);
         exceptionHandler.setExecutionContext(global.getRealm().defaultContext());
         if (test.async) {
-            async = global.install(new AsyncHelper(), AsyncHelper.class);
-            timers = global.install(new Timers(), Timers.class);
+            async = global.createGlobalProperties(new AsyncHelper(), AsyncHelper.class);
+            timers = global.createGlobalProperties(new Timers(), Timers.class);
         }
         if (test.negative) {
             if (test.isModule()) {
                 expected.expect(Matchers.either(StandardErrorHandler.defaultMatcher())
-                        .or(ScriptExceptionHandler.defaultMatcher())
-                        .or(Matchers.instanceOf(ResolutionException.class))
+                        .or(ScriptExceptionHandler.defaultMatcher()).or(Matchers.instanceOf(ResolutionException.class))
                         .or(Matchers.instanceOf(NoSuchFileException.class)));
             } else {
-                expected.expect(Matchers.either(StandardErrorHandler.defaultMatcher()).or(
-                        ScriptExceptionHandler.defaultMatcher()));
+                expected.expect(Matchers.either(StandardErrorHandler.defaultMatcher())
+                        .or(ScriptExceptionHandler.defaultMatcher()));
             }
         } else {
             errorHandler.match(StandardErrorHandler.defaultMatcher());
             exceptionHandler.match(ScriptExceptionHandler.defaultMatcher());
         }
-        if (test.tailCall) {
-            global.getScriptLoader().getParserOptions().add(Parser.Option.Strict);
-        }
     }
 
     @After
     public void tearDown() throws InterruptedException {
-        if (global != null) {
-            global.getScriptLoader().getExecutor().shutdown();
-        }
+        globals.release(global);
     }
 
     @Test
@@ -208,8 +215,7 @@ public final class TraceurTest {
         }
     }
 
-    private static final class TestInfos implements
-            BiFunction<Path, Iterator<String>, TraceurTestInfo> {
+    private static final class TestInfos implements BiFunction<Path, Iterator<String>, TraceurTestInfo> {
         private static final Pattern FlagsPattern = Pattern.compile("\\s*//\\s*(.*)\\s*");
         private final Path basedir;
 

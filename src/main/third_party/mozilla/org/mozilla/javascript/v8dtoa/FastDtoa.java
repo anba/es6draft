@@ -30,7 +30,9 @@
 
 package org.mozilla.javascript.v8dtoa;
 
-public class FastDtoa {
+public final class FastDtoa {
+    private FastDtoa() {
+    }
 
     // FastDtoa will produce at most kFastDtoaMaximalLength digits.
     static final int kFastDtoaMaximalLength = 17;
@@ -382,7 +384,7 @@ public class FastDtoa {
             if (rest < unsafe_interval.f()) {
                 // Rounding down (by not emitting the remaining digits) yields a number
                 // that lies within the unsafe interval.
-                buffer.point = buffer.end - mk + kappa;
+                buffer.point = buffer.end() - mk + kappa;
                 return roundWeed(buffer, DiyFp.minus(too_high, w).f(),
                         unsafe_interval.f(), rest,
                         (long)divider << -one.e(), unit);
@@ -417,7 +419,7 @@ public class FastDtoa {
             fractionals &= one.f() - 1;  // Modulo by one.
             kappa--;
             if (fractionals < unsafe_interval.f()) {
-                buffer.point = buffer.end - mk + kappa;
+                buffer.point = buffer.end() - mk + kappa;
                 return roundWeed(buffer, DiyFp.minus(too_high, w).f() * unit,
                         unsafe_interval.f(), fractionals, one.f(), unit);
             }

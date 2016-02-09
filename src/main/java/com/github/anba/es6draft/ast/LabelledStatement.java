@@ -39,9 +39,9 @@ public final class LabelledStatement extends Statement implements AbruptNode {
     }
 
     /**
-     * Returns <code>true</code> if this node is the target of a <tt>BreakStatement</tt>.
+     * Returns <code>true</code> if this node is the target of a <code>BreakStatement</code>.
      * 
-     * @return <code>true</code> if this node is the target of a <tt>BreakStatement</tt>
+     * @return <code>true</code> if this node is the target of a <code>BreakStatement</code>
      */
     public boolean hasBreak() {
         return getAbrupt().contains(Abrupt.Break);

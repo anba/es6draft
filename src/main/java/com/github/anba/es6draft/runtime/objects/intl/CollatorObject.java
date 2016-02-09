@@ -20,12 +20,6 @@ import com.ibm.icu.util.ULocale;
  * </ul>
  */
 public class CollatorObject extends OrdinaryObject {
-    /** [[initializedIntlObject]] */
-    private boolean initializedIntlObject;
-
-    /** [[initializedCollator]] */
-    private boolean initializedCollator;
-
     /** [[usage]] */
     private String usage;
 
@@ -65,7 +59,7 @@ public class CollatorObject extends OrdinaryObject {
     /**
      * Returns the ICU {@link Collator} instance.
      * 
-     * @return the NumberFormat instance
+     * @return the Collator instance
      */
     public Collator getCollator() {
         if (collator == null) {
@@ -108,44 +102,6 @@ public class CollatorObject extends OrdinaryObject {
         }
         collator.setAlternateHandlingShifted(ignorePunctuation);
         return collator;
-    }
-
-    /**
-     * [[initializedIntlObject]]
-     * 
-     * @return {@code true} if the Intl object is initialized
-     */
-    public boolean isInitializedIntlObject() {
-        return initializedIntlObject;
-    }
-
-    /**
-     * [[initializedIntlObject]]
-     * 
-     * @param initializedIntlObject
-     *            the new initialization state
-     */
-    public void setInitializedIntlObject(boolean initializedIntlObject) {
-        this.initializedIntlObject = initializedIntlObject;
-    }
-
-    /**
-     * [[initializedCollator]]
-     * 
-     * @return {@code true} if the collator object is initialized
-     */
-    public boolean isInitializedCollator() {
-        return initializedCollator;
-    }
-
-    /**
-     * [[initializedCollator]]
-     * 
-     * @param initializedCollator
-     *            the new initialization state
-     */
-    public void setInitializedCollator(boolean initializedCollator) {
-        this.initializedCollator = initializedCollator;
     }
 
     /**

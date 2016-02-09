@@ -71,7 +71,7 @@ public final class RegExpObject extends OrdinaryObject {
             case 'y':
                 return Sticky;
             default:
-                return null;
+                throw new AssertionError();
             }
         }
 

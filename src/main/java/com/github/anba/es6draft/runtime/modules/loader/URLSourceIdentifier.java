@@ -30,8 +30,7 @@ public final class URLSourceIdentifier implements SourceIdentifier {
      * @throws MalformedNameException
      *             if the name cannot be normalized
      */
-    public URLSourceIdentifier(String unnormalizedName, SourceIdentifier referrerId)
-            throws MalformedNameException {
+    public URLSourceIdentifier(String unnormalizedName, SourceIdentifier referrerId) throws MalformedNameException {
         this.uri = SourceIdentifiers.normalize(unnormalizedName, referrerId);
     }
 

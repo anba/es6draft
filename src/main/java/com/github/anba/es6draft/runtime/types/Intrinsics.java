@@ -15,237 +15,237 @@ package com.github.anba.es6draft.runtime.types;
  * </ul>
  */
 public enum Intrinsics {/* @formatter:off */
-    /** Intrinsic: <tt>%Array%</tt> */
+    /** Intrinsic: <code>%Array%</code> */
     Array,
-    /** Intrinsic: <tt>%ArrayBuffer%</tt> */
+    /** Intrinsic: <code>%ArrayBuffer%</code> */
     ArrayBuffer,
-    /** Intrinsic: <tt>%ArrayBufferPrototype%</tt> */
+    /** Intrinsic: <code>%ArrayBufferPrototype%</code> */
     ArrayBufferPrototype,
-    /** Intrinsic: <tt>%ArrayIteratorPrototype%</tt> */
+    /** Intrinsic: <code>%ArrayIteratorPrototype%</code> */
     ArrayIteratorPrototype,
-    /** Intrinsic: <tt>%ArrayPrototype%</tt> */
+    /** Intrinsic: <code>%ArrayPrototype%</code> */
     ArrayPrototype,
-    /** Intrinsic: <tt>%ArrayProto_values%</tt> */
+    /** Intrinsic: <code>%ArrayProto_values%</code> */
     ArrayProto_values,
-    /** Intrinsic: <tt>%Boolean%</tt> */
+    /** Intrinsic: <code>%Boolean%</code> */
     Boolean,
-    /** Intrinsic: <tt>%BooleanPrototype%</tt> */
+    /** Intrinsic: <code>%BooleanPrototype%</code> */
     BooleanPrototype,
-    /** Intrinsic: <tt>%DataView%</tt> */
+    /** Intrinsic: <code>%DataView%</code> */
     DataView,
-    /** Intrinsic: <tt>%DataViewPrototype%</tt> */
+    /** Intrinsic: <code>%DataViewPrototype%</code> */
     DataViewPrototype,
-    /** Intrinsic: <tt>%Date%</tt> */
+    /** Intrinsic: <code>%Date%</code> */
     Date,
-    /** Intrinsic: <tt>%DatePrototype%</tt> */
+    /** Intrinsic: <code>%DatePrototype%</code> */
     DatePrototype,
-    /** Intrinsic: <tt>%decodeURI%</tt> */
+    /** Intrinsic: <code>%decodeURI%</code> */
     decodeURI,
-    /** Intrinsic: <tt>%decodeURIComponent%</tt> */
+    /** Intrinsic: <code>%decodeURIComponent%</code> */
     decodeURIComponent,
-    /** Intrinsic: <tt>%encodeURI%</tt> */
+    /** Intrinsic: <code>%encodeURI%</code> */
     encodeURI,
-    /** Intrinsic: <tt>%encodeURIComponent%</tt> */
+    /** Intrinsic: <code>%encodeURIComponent%</code> */
     encodeURIComponent,
-    /** Intrinsic: <tt>%Error%</tt> */
+    /** Intrinsic: <code>%Error%</code> */
     Error,
-    /** Intrinsic: <tt>%ErrorPrototype%</tt> */
+    /** Intrinsic: <code>%ErrorPrototype%</code> */
     ErrorPrototype,
-    /** Intrinsic: <tt>%escape%</tt> */
+    /** Intrinsic: <code>%escape%</code> */
     escape,
-    /** Intrinsic: <tt>%eval%</tt> */
+    /** Intrinsic: <code>%eval%</code> */
     eval,
-    /** Intrinsic: <tt>%EvalError%</tt> */
+    /** Intrinsic: <code>%EvalError%</code> */
     EvalError,
-    /** Intrinsic: <tt>%EvalErrorPrototype%</tt> */
+    /** Intrinsic: <code>%EvalErrorPrototype%</code> */
     EvalErrorPrototype,
-    /** Intrinsic: <tt>%Float32Array%</tt> */
+    /** Intrinsic: <code>%Float32Array%</code> */
     Float32Array,
-    /** Intrinsic: <tt>%Float32ArrayPrototype%</tt> */
+    /** Intrinsic: <code>%Float32ArrayPrototype%</code> */
     Float32ArrayPrototype,
-    /** Intrinsic: <tt>%Float64Array%</tt> */
+    /** Intrinsic: <code>%Float64Array%</code> */
     Float64Array,
-    /** Intrinsic: <tt>%Float64ArrayPrototype%</tt> */
+    /** Intrinsic: <code>%Float64ArrayPrototype%</code> */
     Float64ArrayPrototype,
-    /** Intrinsic: <tt>%Function%</tt> */
+    /** Intrinsic: <code>%Function%</code> */
     Function,
-    /** Intrinsic: <tt>%FunctionPrototype%</tt> */
+    /** Intrinsic: <code>%FunctionPrototype%</code> */
     FunctionPrototype,
-    /** Intrinsic: <tt>%Generator%</tt> */
+    /** Intrinsic: <code>%Generator%</code> */
     Generator,
-    /** Intrinsic: <tt>%GeneratorFunction%</tt> */
+    /** Intrinsic: <code>%GeneratorFunction%</code> */
     GeneratorFunction,
-    /** Intrinsic: <tt>%GeneratorPrototype%</tt> */
+    /** Intrinsic: <code>%GeneratorPrototype%</code> */
     GeneratorPrototype,
-    /** Intrinsic: <tt>%Int8Array%</tt> */
+    /** Intrinsic: <code>%Int8Array%</code> */
     Int8Array,
-    /** Intrinsic: <tt>%Int8ArrayPrototype%</tt> */
+    /** Intrinsic: <code>%Int8ArrayPrototype%</code> */
     Int8ArrayPrototype,
-    /** Intrinsic: <tt>%Int16Array%</tt> */
+    /** Intrinsic: <code>%Int16Array%</code> */
     Int16Array,
-    /** Intrinsic: <tt>%Int16ArrayPrototype%</tt> */
+    /** Intrinsic: <code>%Int16ArrayPrototype%</code> */
     Int16ArrayPrototype,
-    /** Intrinsic: <tt>%Int32Array%</tt> */
+    /** Intrinsic: <code>%Int32Array%</code> */
     Int32Array,
-    /** Intrinsic: <tt>%Int32ArrayPrototype%</tt> */
+    /** Intrinsic: <code>%Int32ArrayPrototype%</code> */
     Int32ArrayPrototype,
-    /** Intrinsic: <tt>%isFinite%</tt> */
+    /** Intrinsic: <code>%isFinite%</code> */
     isFinite,
-    /** Intrinsic: <tt>%isNaN%</tt> */
+    /** Intrinsic: <code>%isNaN%</code> */
     isNaN,
-    /** Intrinsic: <tt>%IteratorPrototype%</tt> */
+    /** Intrinsic: <code>%IteratorPrototype%</code> */
     IteratorPrototype,
-    /** Intrinsic: <tt>%JSON%</tt> */
+    /** Intrinsic: <code>%JSON%</code> */
     JSON,
-    /** Intrinsic: <tt>%Map%</tt> */
+    /** Intrinsic: <code>%Map%</code> */
     Map,
-    /** Intrinsic: <tt>%MapPrototype%</tt> */
+    /** Intrinsic: <code>%MapPrototype%</code> */
     MapPrototype,
-    /** Intrinsic: <tt>%MapIteratorPrototype%</tt> */
+    /** Intrinsic: <code>%MapIteratorPrototype%</code> */
     MapIteratorPrototype,
-    /** Intrinsic: <tt>%Math%</tt> */
+    /** Intrinsic: <code>%Math%</code> */
     Math,
-    /** Intrinsic: <tt>%Number%</tt> */
+    /** Intrinsic: <code>%Number%</code> */
     Number,
-    /** Intrinsic: <tt>%NumberPrototype%</tt> */
+    /** Intrinsic: <code>%NumberPrototype%</code> */
     NumberPrototype,
-    /** Intrinsic: <tt>%Object%</tt> */
+    /** Intrinsic: <code>%Object%</code> */
     Object,
-    /** Intrinsic: <tt>%ObjectPrototype%</tt> */
+    /** Intrinsic: <code>%ObjectPrototype%</code> */
     ObjectPrototype,
-    /** Intrinsic: <tt>%ObjProto_toString%</tt> */
+    /** Intrinsic: <code>%ObjProto_toString%</code> */
     ObjProto_toString,
-    /** Intrinsic: <tt>%parseFloat%</tt> */
+    /** Intrinsic: <code>%parseFloat%</code> */
     parseFloat,
-    /** Intrinsic: <tt>%parseInt%</tt> */
+    /** Intrinsic: <code>%parseInt%</code> */
     parseInt,
-    /** Intrinsic: <tt>%Promise%</tt> */
+    /** Intrinsic: <code>%Promise%</code> */
     Promise,
-    /** Intrinsic: <tt>%PromisePrototype%</tt> */
+    /** Intrinsic: <code>%PromisePrototype%</code> */
     PromisePrototype,
-    /** Intrinsic: <tt>%Proxy%</tt> */
+    /** Intrinsic: <code>%Proxy%</code> */
     Proxy,
-    /** Intrinsic: <tt>%RangeError%</tt> */
+    /** Intrinsic: <code>%RangeError%</code> */
     RangeError,
-    /** Intrinsic: <tt>%RangeErrorPrototype%</tt> */
+    /** Intrinsic: <code>%RangeErrorPrototype%</code> */
     RangeErrorPrototype,
-    /** Intrinsic: <tt>%ReferenceError%</tt> */
+    /** Intrinsic: <code>%ReferenceError%</code> */
     ReferenceError,
-    /** Intrinsic: <tt>%ReferenceErrorPrototype%</tt> */
+    /** Intrinsic: <code>%ReferenceErrorPrototype%</code> */
     ReferenceErrorPrototype,
-    /** Intrinsic: <tt>%Reflect%</tt> */
+    /** Intrinsic: <code>%Reflect%</code> */
     Reflect,
-    /** Intrinsic: <tt>%RegExp%</tt> */
+    /** Intrinsic: <code>%RegExp%</code> */
     RegExp,
-    /** Intrinsic: <tt>%RegExpPrototype%</tt> */
+    /** Intrinsic: <code>%RegExpPrototype%</code> */
     RegExpPrototype,
-    /** Intrinsic: <tt>%Set%</tt> */
+    /** Intrinsic: <code>%Set%</code> */
     Set,
-    /** Intrinsic: <tt>%SetIteratorPrototype%</tt> */
+    /** Intrinsic: <code>%SetIteratorPrototype%</code> */
     SetIteratorPrototype,
-    /** Intrinsic: <tt>%SetPrototype%</tt> */
+    /** Intrinsic: <code>%SetPrototype%</code> */
     SetPrototype,
-    /** Intrinsic: <tt>%String%</tt> */
+    /** Intrinsic: <code>%String%</code> */
     String,
-    /** Intrinsic: <tt>%StringIteratorPrototype%</tt> */
+    /** Intrinsic: <code>%StringIteratorPrototype%</code> */
     StringIteratorPrototype,
-    /** Intrinsic: <tt>%StringPrototype%</tt> */
+    /** Intrinsic: <code>%StringPrototype%</code> */
     StringPrototype,
-    /** Intrinsic: <tt>%Symbol%</tt> */
+    /** Intrinsic: <code>%Symbol%</code> */
     Symbol,
-    /** Intrinsic: <tt>%SymbolPrototype%</tt> */
+    /** Intrinsic: <code>%SymbolPrototype%</code> */
     SymbolPrototype,
-    /** Intrinsic: <tt>%SyntaxError%</tt> */
+    /** Intrinsic: <code>%SyntaxError%</code> */
     SyntaxError,
-    /** Intrinsic: <tt>%SyntaxErrorPrototype%</tt> */
+    /** Intrinsic: <code>%SyntaxErrorPrototype%</code> */
     SyntaxErrorPrototype,
-    /** Intrinsic: <tt>%ThrowTypeError%</tt> */
+    /** Intrinsic: <code>%ThrowTypeError%</code> */
     ThrowTypeError,
-    /** Intrinsic: <tt>%TypedArray%</tt> */
+    /** Intrinsic: <code>%TypedArray%</code> */
     TypedArray,
-    /** Intrinsic: <tt>%TypedArrayPrototype%</tt> */
+    /** Intrinsic: <code>%TypedArrayPrototype%</code> */
     TypedArrayPrototype,
-    /** Intrinsic: <tt>%TypeError%</tt> */
+    /** Intrinsic: <code>%TypeError%</code> */
     TypeError,
-    /** Intrinsic: <tt>%TypeErrorPrototype%</tt> */
+    /** Intrinsic: <code>%TypeErrorPrototype%</code> */
     TypeErrorPrototype,
-    /** Intrinsic: <tt>%Uint8Array%</tt> */
+    /** Intrinsic: <code>%Uint8Array%</code> */
     Uint8Array,
-    /** Intrinsic: <tt>%Uint8ArrayPrototype%</tt> */
+    /** Intrinsic: <code>%Uint8ArrayPrototype%</code> */
     Uint8ArrayPrototype,
-    /** Intrinsic: <tt>%Uint8ClampedArray%</tt> */
+    /** Intrinsic: <code>%Uint8ClampedArray%</code> */
     Uint8ClampedArray,
-    /** Intrinsic: <tt>%Uint8ClampedArrayPrototype%</tt> */
+    /** Intrinsic: <code>%Uint8ClampedArrayPrototype%</code> */
     Uint8ClampedArrayPrototype,
-    /** Intrinsic: <tt>%Uint16Array%</tt> */
+    /** Intrinsic: <code>%Uint16Array%</code> */
     Uint16Array,
-    /** Intrinsic: <tt>%Uint16ArrayPrototype%</tt> */
+    /** Intrinsic: <code>%Uint16ArrayPrototype%</code> */
     Uint16ArrayPrototype,
-    /** Intrinsic: <tt>%Uint32Array%</tt> */
+    /** Intrinsic: <code>%Uint32Array%</code> */
     Uint32Array,
-    /** Intrinsic: <tt>%Uint32ArrayPrototype%</tt> */
+    /** Intrinsic: <code>%Uint32ArrayPrototype%</code> */
     Uint32ArrayPrototype,
-    /** Intrinsic: <tt>%unescape%</tt> */
+    /** Intrinsic: <code>%unescape%</code> */
     unescape,
-    /** Intrinsic: <tt>%URIError%</tt> */
+    /** Intrinsic: <code>%URIError%</code> */
     URIError,
-    /** Intrinsic: <tt>%URIErrorPrototype%</tt> */
+    /** Intrinsic: <code>%URIErrorPrototype%</code> */
     URIErrorPrototype,
-    /** Intrinsic: <tt>%WeakMap%</tt> */
+    /** Intrinsic: <code>%WeakMap%</code> */
     WeakMap,
-    /** Intrinsic: <tt>%WeakMapPrototype%</tt> */
+    /** Intrinsic: <code>%WeakMapPrototype%</code> */
     WeakMapPrototype,
-    /** Intrinsic: <tt>%WeakSet%</tt> */
+    /** Intrinsic: <code>%WeakSet%</code> */
     WeakSet,
-    /** Intrinsic: <tt>%WeakSetPrototype%</tt> */
+    /** Intrinsic: <code>%WeakSetPrototype%</code> */
     WeakSetPrototype,
 
     // Internationalization API
-    /** Intrinsic: <tt>%Intl%</tt> */
+    /** Intrinsic: <code>%Intl%</code> */
     Intl,
-    /** Intrinsic: <tt>%Intl_Collator%</tt> */
+    /** Intrinsic: <code>%Intl_Collator%</code> */
     Intl_Collator,
-    /** Intrinsic: <tt>%Intl_CollatorPrototype%</tt> */
+    /** Intrinsic: <code>%Intl_CollatorPrototype%</code> */
     Intl_CollatorPrototype,
-    /** Intrinsic: <tt>%Intl_NumberFormat%</tt> */
+    /** Intrinsic: <code>%Intl_NumberFormat%</code> */
     Intl_NumberFormat,
-    /** Intrinsic: <tt>%Intl_NumberFormatPrototype%</tt> */
+    /** Intrinsic: <code>%Intl_NumberFormatPrototype%</code> */
     Intl_NumberFormatPrototype,
-    /** Intrinsic: <tt>%Intl_DateTimeFormat%</tt> */
+    /** Intrinsic: <code>%Intl_DateTimeFormat%</code> */
     Intl_DateTimeFormat,
-    /** Intrinsic: <tt>%Intl_DateTimeFormatPrototype%</tt> */
+    /** Intrinsic: <code>%Intl_DateTimeFormatPrototype%</code> */
     Intl_DateTimeFormatPrototype,
 
     // internal
-    /** Intrinsic: <tt>%InternalError%</tt> */
+    /** Intrinsic: <code>%InternalError%</code> */
     InternalError,
-    /** Intrinsic: <tt>%InternalErrorPrototype%</tt> */
+    /** Intrinsic: <code>%InternalErrorPrototype%</code> */
     InternalErrorPrototype,
 
     // legacy
-    /** Intrinsic: <tt>%LegacyGeneratorPrototype%</tt> */
+    /** Intrinsic: <code>%LegacyGeneratorPrototype%</code> */
     LegacyGeneratorPrototype,
 
-    // ES7 extension: Async Function Definitions
-    /** Intrinsic: <tt>%AsyncFunction%</tt> */
+    // Extension: Async Function Definitions
+    /** Intrinsic: <code>%AsyncFunction%</code> */
     AsyncFunction,
-    /** Intrinsic: <tt>%AsyncFunctionPrototype%</tt> */
+    /** Intrinsic: <code>%AsyncFunctionPrototype%</code> */
     AsyncFunctionPrototype,
 
-    // ES7 extension: Realm Objects
-    /** Intrinsic: <tt>%Realm%</tt> */
+    // Extension: Realm Objects
+    /** Intrinsic: <code>%Realm%</code> */
     Realm,
-    /** Intrinsic: <tt>%RealmPrototype%</tt> */
+    /** Intrinsic: <code>%RealmPrototype%</code> */
     RealmPrototype,
 
-    // ESx extension: Loader
-    /** Intrinsic: <tt>%Loader%</tt> */
+    // Extension: Loader
+    /** Intrinsic: <code>%Loader%</code> */
     Loader,
-    /** Intrinsic: <tt>%LoaderPrototype%</tt> */
+    /** Intrinsic: <code>%LoaderPrototype%</code> */
     LoaderPrototype,
-    /** Intrinsic: <tt>%LoaderIteratorPrototype%</tt> */
+    /** Intrinsic: <code>%LoaderIteratorPrototype%</code> */
     LoaderIteratorPrototype,
-    /** Intrinsic: <tt>%System%</tt> */
+    /** Intrinsic: <code>%System%</code> */
     System,
 
     // Extension: String.prototype.matchAll

@@ -45,8 +45,7 @@ public final class StringObject extends OrdinaryObject {
         // StringCreate - step 9
         setPrototype(prototype);
         // StringCreate - steps 11-13
-        infallibleDefineOwnProperty("length",
-                new Property(stringData.length(), false, false, false));
+        infallibleDefineOwnProperty("length", new Property(stringData.length(), false, false, false));
     }
 
     /**
@@ -162,8 +161,7 @@ public final class StringObject extends OrdinaryObject {
      */
     public static StringObject StringCreate(ExecutionContext cx, CharSequence stringData) {
         /* steps 1-14 */
-        return new StringObject(cx.getRealm(), stringData,
-                cx.getIntrinsic(Intrinsics.StringPrototype));
+        return new StringObject(cx.getRealm(), stringData, cx.getIntrinsic(Intrinsics.StringPrototype));
     }
 
     /**
@@ -177,8 +175,7 @@ public final class StringObject extends OrdinaryObject {
      *            the prototype object
      * @return the new string object
      */
-    public static StringObject StringCreate(ExecutionContext cx, CharSequence stringData,
-            ScriptObject prototype) {
+    public static StringObject StringCreate(ExecutionContext cx, CharSequence stringData, ScriptObject prototype) {
         /* steps 1-2 (not applicable) */
         /* steps 3-14 */
         return new StringObject(cx.getRealm(), stringData, prototype);

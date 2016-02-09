@@ -103,8 +103,7 @@ public final class GeneratorObject extends OrdinaryObject {
      * Proceeds to the "completed" generator state and releases internal resources.
      */
     private void close() {
-        assert state == GeneratorState.Executing || state == GeneratorState.SuspendedStart : "close from: "
-                + state;
+        assert state == GeneratorState.Executing || state == GeneratorState.SuspendedStart : "close from: " + state;
         this.state = GeneratorState.Completed;
         this.lastYieldValue = null;
         this.context = null;
@@ -113,15 +112,13 @@ public final class GeneratorObject extends OrdinaryObject {
     }
 
     /**
-     * Starts generator execution and sets {@link #state} to its initial value
-     * {@link GeneratorState#SuspendedStart}.
+     * Starts generator execution and sets {@link #state} to its initial value {@link GeneratorState#SuspendedStart}.
      * 
      * @param cx
      *            the execution context
      * @param code
      *            the runtime function code
-     * @see GeneratorAbstractOperations#GeneratorStart(ExecutionContext, GeneratorObject,
-     *      RuntimeInfo.Function)
+     * @see GeneratorAbstractOperations#GeneratorStart(ExecutionContext, GeneratorObject, RuntimeInfo.Function)
      */
     void start(ExecutionContext cx, RuntimeInfo.Function code) {
         assert state == null;
@@ -159,10 +156,11 @@ public final class GeneratorObject extends OrdinaryObject {
             this.lastYieldValue = value;
             return continuation.start(cx);
         case SuspendedYield:
-        default:
             this.state = GeneratorState.Executing;
             this.lastYieldValue = value;
             return continuation.resume(cx, value);
+        default:
+            throw new AssertionError();
         }
     }
 
@@ -186,9 +184,10 @@ public final class GeneratorObject extends OrdinaryObject {
         case Completed:
             return CreateIterResultObject(cx, value, true);
         case SuspendedYield:
-        default:
             this.state = GeneratorState.Executing;
             return continuation._return(cx, value);
+        default:
+            throw new AssertionError();
         }
     }
 
@@ -212,9 +211,10 @@ public final class GeneratorObject extends OrdinaryObject {
         case Completed:
             throw ScriptException.create(value);
         case SuspendedYield:
-        default:
             this.state = GeneratorState.Executing;
             return continuation._throw(cx, ScriptException.create(value));
+        default:
+            throw new AssertionError();
         }
     }
 

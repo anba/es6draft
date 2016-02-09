@@ -69,8 +69,7 @@ public final class NumberFormatConstructor extends BuiltinConstructor implements
     }
 
     private static Lazy<Set<String>> getAvailableLocalesLazy(ExecutionContext cx) {
-        NumberFormatConstructor numberFormat = (NumberFormatConstructor) cx
-                .getIntrinsic(Intrinsics.Intl_NumberFormat);
+        NumberFormatConstructor numberFormat = (NumberFormatConstructor) cx.getIntrinsic(Intrinsics.Intl_NumberFormat);
         return numberFormat.availableLocales;
     }
 
@@ -117,9 +116,9 @@ public final class NumberFormatConstructor extends BuiltinConstructor implements
             // ICU4J does not provide an API to retrieve the numbering systems per locale, go with
             // Spidermonkey instead and return default numbering system of locale + Table 2 entries
             String localeNumberingSystem = NumberingSystem.getInstance(locale).getName();
-            return asList(localeNumberingSystem, "arab", "arabtext", "bali", "beng", "deva",
-                    "fullwide", "gujr", "guru", "hanidec", "khmr", "knda", "laoo", "latn", "limb",
-                    "mlym", "mong", "mymr", "orya", "tamldec", "telu", "thai", "tibt");
+            return asList(localeNumberingSystem, "arab", "arabtext", "bali", "beng", "deva", "fullwide", "gujr", "guru",
+                    "hanidec", "khmr", "knda", "laoo", "latn", "limb", "mlym", "mong", "mymr", "orya", "tamldec",
+                    "telu", "thai", "tibt");
         }
     }
 
@@ -160,13 +159,9 @@ public final class NumberFormatConstructor extends BuiltinConstructor implements
      * @param opts
      *            the options object
      */
-    public static void InitializeNumberFormat(ExecutionContext cx, NumberFormatObject numberFormat,
-            Object locales, Object opts) {
-        /* steps 1-2 */
-        if (numberFormat.isInitializedIntlObject()) {
-            throw newTypeError(cx, Messages.Key.InitializedObject);
-        }
-        numberFormat.setInitializedIntlObject(true);
+    public static void InitializeNumberFormat(ExecutionContext cx, NumberFormatObject numberFormat, Object locales,
+            Object opts) {
+        /* steps 1-2 (FIXME: spec bug - unnecessary internal slot) */
         /* steps 3-4 */
         Set<String> requestedLocales = CanonicalizeLocaleList(cx, locales);
         /* steps 5-6 */
@@ -177,15 +172,14 @@ public final class NumberFormatConstructor extends BuiltinConstructor implements
             options = ToObject(cx, opts);
         }
         /* steps 8-9 */
-        String matcher = GetStringOption(cx, options, "localeMatcher", set("lookup", "best fit"),
-                "best fit");
+        String matcher = GetStringOption(cx, options, "localeMatcher", set("lookup", "best fit"), "best fit");
         /* step 7, 10 */
         OptionsRecord opt = new OptionsRecord(OptionsRecord.MatcherType.forName(matcher));
         /* step 11 */
         NumberFormatLocaleData localeData = new NumberFormatLocaleData();
         /* step 12 */
-        ResolvedLocale r = ResolveLocale(cx.getRealm(), getAvailableLocalesLazy(cx),
-                requestedLocales, opt, relevantExtensionKeys, localeData);
+        ResolvedLocale r = ResolveLocale(cx.getRealm(), getAvailableLocalesLazy(cx), requestedLocales, opt,
+                relevantExtensionKeys, localeData);
         /* step 13 */
         numberFormat.setLocale(r.getLocale());
         /* step 14 */
@@ -194,8 +188,7 @@ public final class NumberFormatConstructor extends BuiltinConstructor implements
         @SuppressWarnings("unused")
         String dataLocale = r.getDataLocale();
         /* steps 16-17 */
-        String s = GetStringOption(cx, options, "style", set("decimal", "percent", "currency"),
-                "decimal");
+        String s = GetStringOption(cx, options, "style", set("decimal", "percent", "currency"), "decimal");
         /* step 18 */
         numberFormat.setStyle(s);
         /* steps 19-20 */
@@ -216,8 +209,7 @@ public final class NumberFormatConstructor extends BuiltinConstructor implements
             cDigits = CurrencyDigits(c);
         }
         /* steps 24-25 */
-        String cd = GetStringOption(cx, options, "currencyDisplay", set("code", "symbol", "name"),
-                "symbol");
+        String cd = GetStringOption(cx, options, "currencyDisplay", set("code", "symbol", "name"), "symbol");
         /* step 26 */
         if ("currency".equals(s)) {
             numberFormat.setCurrencyDisplay(cd);
@@ -257,8 +249,7 @@ public final class NumberFormatConstructor extends BuiltinConstructor implements
         /* steps 46-51 (not applicable) */
         /* step 52 */
         numberFormat.setBoundFormat(null);
-        /* step 53 */
-        numberFormat.setInitializedNumberFormat(true);
+        /* step 53 (FIXME: spec bug - unnecessary internal slot) */
         /* step 54 (omitted) */
     }
 
@@ -271,9 +262,7 @@ public final class NumberFormatConstructor extends BuiltinConstructor implements
      *            the number format object
      */
     public static void InitializeDefaultNumberFormat(Realm realm, NumberFormatObject numberFormat) {
-        /* steps 1-2 */
-        assert !numberFormat.isInitializedIntlObject();
-        numberFormat.setInitializedIntlObject(true);
+        /* steps 1-2 (FIXME: spec bug - unnecessary internal slot) */
         /* steps 3-10 (not applicable) */
         /* step 11 */
         NumberFormatLocaleData localeData = new NumberFormatLocaleData();
@@ -299,8 +288,7 @@ public final class NumberFormatConstructor extends BuiltinConstructor implements
         /* steps 46-51 (not applicable) */
         /* step 52 */
         numberFormat.setBoundFormat(null);
-        /* step 53 */
-        numberFormat.setInitializedNumberFormat(true);
+        /* step 53 (FIXME: spec bug - unnecessary internal slot) */
         /* step 54 (omitted) */
     }
 
@@ -312,7 +300,7 @@ public final class NumberFormatConstructor extends BuiltinConstructor implements
      * @return the number of currency digits
      */
     private static int CurrencyDigits(String c) {
-        // http://www.currency-iso.org/dam/downloads/table_a1.xml
+        // http://www.currency-iso.org/dam/downloads/lists/list_one.xml
         // Last updated: 2015-06-19
         switch (c) {
         case "BIF":
@@ -354,26 +342,15 @@ public final class NumberFormatConstructor extends BuiltinConstructor implements
      */
     @Override
     public ScriptObject call(ExecutionContext callerContext, Object thisValue, Object... args) {
-        ExecutionContext calleeContext = calleeContext();
-        Object locales = argument(args, 0);
-        Object options = argument(args, 1);
-
-        /* step 1 */
-        Constructor newTarget = this;
-        /* steps 2-3 */
-        NumberFormatObject obj = OrdinaryCreateFromConstructor(calleeContext, newTarget,
-                Intrinsics.Intl_NumberFormatPrototype, NumberFormatObjectAllocator.INSTANCE);
-        /* step 4 */
-        InitializeNumberFormat(calleeContext, obj, locales, options);
-        return obj;
+        /* steps 1-4 */
+        return construct(callerContext, this, args);
     }
 
     /**
      * 11.1.2 Intl.NumberFormat([ locales [, options]])
      */
     @Override
-    public NumberFormatObject construct(ExecutionContext callerContext, Constructor newTarget,
-            Object... args) {
+    public NumberFormatObject construct(ExecutionContext callerContext, Constructor newTarget, Object... args) {
         ExecutionContext calleeContext = calleeContext();
         Object locales = argument(args, 0);
         Object options = argument(args, 1);
@@ -406,19 +383,17 @@ public final class NumberFormatConstructor extends BuiltinConstructor implements
         @Prototype
         public static final Intrinsics __proto__ = Intrinsics.FunctionPrototype;
 
-        @Value(name = "length", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = true))
+        @Value(name = "length", attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static final int length = 0;
 
-        @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = true))
+        @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static final String name = "NumberFormat";
 
         /**
          * 11.2.1 Intl.NumberFormat.prototype
          */
-        @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = false))
+        @Value(name = "prototype",
+                attributes = @Attributes(writable = false, enumerable = false, configurable = false))
         public static final Intrinsics prototype = Intrinsics.Intl_NumberFormatPrototype;
 
         /**
@@ -435,8 +410,7 @@ public final class NumberFormatConstructor extends BuiltinConstructor implements
          * @return the array of supported locales
          */
         @Function(name = "supportedLocalesOf", arity = 1)
-        public static Object supportedLocalesOf(ExecutionContext cx, Object thisValue,
-                Object locales, Object options) {
+        public static Object supportedLocalesOf(ExecutionContext cx, Object thisValue, Object locales, Object options) {
             /* step 1 */
             Set<String> availableLocales = getAvailableLocales(cx);
             /* step 2 */

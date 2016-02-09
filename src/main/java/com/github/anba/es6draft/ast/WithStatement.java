@@ -33,7 +33,7 @@ public final class WithStatement extends Statement implements ScopedNode {
     }
 
     /**
-     * Returns the <tt>with</tt>-statement's expression node.
+     * Returns the <code>with</code>-statement's expression node.
      * 
      * @return the expression node
      */
@@ -42,7 +42,7 @@ public final class WithStatement extends Statement implements ScopedNode {
     }
 
     /**
-     * Returns the <tt>with</tt>-statement's statement node.
+     * Returns the <code>with</code>-statement's statement node.
      * 
      * @return the statement node
      */
@@ -51,7 +51,7 @@ public final class WithStatement extends Statement implements ScopedNode {
     }
 
     /**
-     * Sets the <tt>with</tt>-statement's statement node.
+     * Sets the <code>with</code>-statement's statement node.
      * 
      * @param statement
      *            the new statement node

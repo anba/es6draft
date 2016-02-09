@@ -156,14 +156,14 @@ public final class NumberConstructor extends BuiltinConstructor implements Initi
          */
         @Value(name = "MAX_SAFE_INTEGER", attributes = @Attributes(writable = false,
                 enumerable = false, configurable = false))
-        public static final Double MAX_SAFE_INTEGER = (double) 0x1F_FFFF_FFFF_FFFFL;
+        public static final Double MAX_SAFE_INTEGER = 0x1F_FFFF_FFFF_FFFFp0;
 
         /**
          * 20.1.2.10 Number.MIN_SAFE_INTEGER
          */
         @Value(name = "MIN_SAFE_INTEGER", attributes = @Attributes(writable = false,
                 enumerable = false, configurable = false))
-        public static final Double MIN_SAFE_INTEGER = (double) -0x1F_FFFF_FFFF_FFFFL;
+        public static final Double MIN_SAFE_INTEGER = -0x1F_FFFF_FFFF_FFFFp0;
 
         /**
          * 20.1.2.13 Number.parseInt (string, radix)
@@ -215,7 +215,7 @@ public final class NumberConstructor extends BuiltinConstructor implements Initi
             }
             /* steps 13-15 */
             double number = StringToNumber.stringToNumber(s, index, r);
-            /* step 16-18 */
+            /* steps 16-18 */
             return isPos ? number : -number;
         }
 
@@ -344,7 +344,7 @@ public final class NumberConstructor extends BuiltinConstructor implements Initi
                 return false;
             }
             /* steps 5-6 */
-            return Math.abs(integer) <= 0x1F_FFFF_FFFF_FFFFL;
+            return Math.abs(integer) <= 0x1F_FFFF_FFFF_FFFFp0;
         }
     }
 

@@ -104,4 +104,33 @@ public final class NativeFunction extends BuiltinFunction {
     private static <E extends Throwable> E rethrow(Throwable e) throws E {
         throw (E) e;
     }
+
+    /**
+     * Returns {@code true} if <var>function</var> is a native function with the requested native identifier.
+     * 
+     * @param function
+     *            the function object
+     * @param nativeId
+     *            the native function id
+     * @return {@code true} if the function is a native function
+     */
+    public static boolean isNative(Object function, Class<?> nativeId) {
+        return function instanceof NativeFunction && ((NativeFunction) function).getId() == nativeId;
+    }
+
+    /**
+     * Returns {@code true} if <var>function</var> is a native function with the requested native identifier.
+     * 
+     * @param realm
+     *            the function realm
+     * @param function
+     *            the function object
+     * @param nativeId
+     *            the native function id
+     * @return {@code true} if the function is a native function
+     */
+    public static boolean isNative(Realm realm, Object function, Class<?> nativeId) {
+        return function instanceof NativeFunction && ((NativeFunction) function).getId() == nativeId
+                && ((NativeFunction) function).getRealm() == realm;
+    }
 }

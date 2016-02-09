@@ -9,7 +9,6 @@ package com.github.anba.es6draft.runtime.objects;
 import static com.github.anba.es6draft.runtime.AbstractOperations.Get;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToFlatString;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToNumber;
-import static com.github.anba.es6draft.runtime.Realm.SetDefaultGlobalBindings;
 import static com.github.anba.es6draft.runtime.internal.Errors.newURIError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.objects.Eval.indirectEval;
@@ -25,10 +24,13 @@ import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.Initializable;
 import com.github.anba.es6draft.runtime.internal.Messages;
+import com.github.anba.es6draft.runtime.internal.Properties;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.CompatibilityExtension;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
+import com.github.anba.es6draft.runtime.internal.RuntimeContext;
+import com.github.anba.es6draft.runtime.internal.Strings;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Undefined;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
@@ -67,13 +69,6 @@ public class GlobalObject extends OrdinaryObject implements Initializable {
     }
 
     /**
-     * Initializes implementation defined extensions.
-     */
-    protected void initializeExtensions() {
-        /* empty */
-    }
-
-    /**
      * Executes any initialization scripts which should be run for this global instance.
      * 
      * @throws IOException
@@ -85,35 +80,32 @@ public class GlobalObject extends OrdinaryObject implements Initializable {
      * @throws CompilationException
      *             if the parsed source could not be compiled
      */
-    public void initializeScripted() throws IOException, URISyntaxException, ParserException,
-            CompilationException {
+    public void initializeScripted() throws IOException, URISyntaxException, ParserException, CompilationException {
         /* empty */
     }
 
     /**
-     * 8.5.1 InitializeHostDefinedRealm ( realm )
-     * <p>
-     * Initializes the global this with the default properties of the Global Object.
-     * 
-     * @throws IOException
-     *             if there was any I/O error
-     * @throws URISyntaxException
-     *             the URL is not a valid URI
-     * @throws ParserException
-     *             if the source contains any syntax errors
-     * @throws CompilationException
-     *             if the parsed source could not be compiled
+     * Initializes implementation defined extensions.
      */
-    public final void initializeHostDefinedRealm() throws IOException, URISyntaxException,
-            ParserException, CompilationException {
-        ExecutionContext cx = getRealm().defaultContext();
-        // Execute initialization scripts
-        initializeScripted();
-        /* steps 1-2 (not applicable) */
-        /* steps 3-4 */
-        SetDefaultGlobalBindings(cx, getRealm());
-        /* step 5 */
-        initializeExtensions();
+    public void initializeExtensions() {
+        /* empty */
+    }
+
+    /**
+     * Creates user-defined native global functions.
+     * 
+     * @param <T>
+     *            the owner type
+     * @param object
+     *            the owner object instance
+     * @param clazz
+     *            the class which holds the properties
+     * @return the owner object
+     */
+    public final <T> T createGlobalProperties(T object, Class<T> clazz) {
+        Realm realm = getRealm();
+        Properties.createProperties(realm.defaultContext(), realm.getGlobalThis(), object, clazz);
+        return object;
     }
 
     /**
@@ -123,6 +115,15 @@ public class GlobalObject extends OrdinaryObject implements Initializable {
      */
     public final Realm getRealm() {
         return realm;
+    }
+
+    /**
+     * Returns the {@link RuntimeContext} of this global object.
+     * 
+     * @return the runtime context instance
+     */
+    public final RuntimeContext getRuntimeContext() {
+        return getRealm().getWorld().getContext();
     }
 
     /**
@@ -216,11 +217,11 @@ public class GlobalObject extends OrdinaryObject implements Initializable {
         public static Object isNaN(ExecutionContext cx, Object thisValue, Object number) {
             /* steps 1-2 */
             double num = ToNumber(cx, number);
-            /* steps 3 */
+            /* step 3 */
             if (Double.isNaN(num)) {
                 return true;
             }
-            /* steps 4 */
+            /* step 4 */
             return false;
         }
 
@@ -943,7 +944,7 @@ public class GlobalObject extends OrdinaryObject implements Initializable {
                 if (sb == null) {
                     if (i == 0 && k == length) {
                         // Single character escape
-                        return fromCodePoint(cp);
+                        return Strings.fromCodePoint(cp);
                     }
                     sb = new StringBuilder(length);
                 }
@@ -1020,13 +1021,6 @@ public class GlobalObject extends OrdinaryObject implements Initializable {
                 // illegal (cf. RFC-3629)
                 return -1;
             }
-        }
-
-        private static String fromCodePoint(int cp) {
-            if (Character.isBmpCodePoint(cp)) {
-                return String.valueOf((char) cp);
-            }
-            return String.valueOf(Character.toChars(cp));
         }
 
         /* embedded BitMaskUtil */

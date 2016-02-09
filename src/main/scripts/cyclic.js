@@ -13,9 +13,12 @@ const {
   Object, Array, Error, Set, WeakSet,
 } = global;
 
-const Array_prototype_join = Array.prototype.join,
-      Array_prototype_toLocaleString = Array.prototype.toLocaleString,
-      Error_prototype_toString = Error.prototype.toString;
+const {
+  join: Array_prototype_join,
+  toLocaleString: Array_prototype_toLocaleString,
+} = Array.prototype;
+
+const Error_prototype_toString = Error.prototype.toString;
 
 const {
   add: Set_prototype_add,

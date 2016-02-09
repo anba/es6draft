@@ -27,6 +27,7 @@ import com.github.anba.es6draft.compiler.assembler.Code;
 import com.github.anba.es6draft.compiler.assembler.Code.ClassCode;
 import com.github.anba.es6draft.compiler.assembler.Type;
 import com.github.anba.es6draft.compiler.completion.CompletionValueVisitor;
+import com.github.anba.es6draft.runtime.internal.RuntimeContext;
 import com.github.anba.es6draft.runtime.modules.SourceTextModuleRecord;
 
 /**
@@ -41,9 +42,9 @@ public final class Compiler {
     private final ExecutorService executor;
     private final EnumSet<Option> compilerOptions;
 
-    public Compiler(ExecutorService executor, EnumSet<Option> compilerOptions) {
+    public Compiler(RuntimeContext context, ExecutorService executor) {
         this.executor = executor;
-        this.compilerOptions = EnumSet.copyOf(compilerOptions);
+        this.compilerOptions = context.getCompilerOptions();
     }
 
     /**

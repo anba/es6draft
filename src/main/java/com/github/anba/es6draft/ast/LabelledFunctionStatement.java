@@ -20,10 +20,10 @@ import java.util.Set;
  */
 public final class LabelledFunctionStatement extends Statement implements AbruptNode {
     private final Set<String> labelSet;
-    private final Declaration function;
+    private final HoistableDeclaration function;
 
     public LabelledFunctionStatement(long beginPosition, long endPosition, Set<String> labelSet,
-            Declaration function) {
+            HoistableDeclaration function) {
         super(beginPosition, endPosition);
         this.labelSet = labelSet;
         this.function = function;
@@ -39,7 +39,7 @@ public final class LabelledFunctionStatement extends Statement implements Abrupt
         return EnumSet.noneOf(Abrupt.class);
     }
 
-    public Declaration getFunction() {
+    public HoistableDeclaration getFunction() {
         return function;
     }
 

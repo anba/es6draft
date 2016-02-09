@@ -20,7 +20,7 @@ for (const type of ["Int8", "Uint8", "Uint8Clamped", "Int16", "Uint16", "Int32",
   // Remove polymorphism from 'subarray'
   Object.defineProperty(ctor.prototype, "subarray", {
     value(begin, end) {
-      if (!(this instanceof ctor)) throw TypeError();
+      if (!%IsTypedArrayObject(`${type}Array`, this)) throw TypeError();
       return %CallFunction(subarray, this, begin, end);
     },
     writable: true, enumerable: false, configurable: true

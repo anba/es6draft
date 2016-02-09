@@ -76,7 +76,6 @@ public final class RealmConstructor extends BuiltinConstructor implements Initia
      * @return the evaluation result
      */
     public static Object IndirectEval(ExecutionContext caller, Realm realm, Object source) {
-        // TODO: not yet specified
         return Eval.globalEval(realm.defaultContext(), caller, source);
     }
 
@@ -115,15 +114,7 @@ public final class RealmConstructor extends BuiltinConstructor implements Initia
 
         /* steps 6-7 */
         Realm realm = CreateRealmAndSetRealmGlobalObject(calleeContext, realmObject, newGlobal);
-        /* steps 8-9 */
-        Callable translate = GetMethod(calleeContext, realmObject, "directEval");
-        /* steps 10-11 */
-        Callable fallback = GetMethod(calleeContext, realmObject, "nonEval");
-        /* steps 12-13 */
-        Callable indirectEval = GetMethod(calleeContext, realmObject, "indirectEval");
-        /* steps 14-16 */
-        realm.setExtensionHooks(translate, fallback, indirectEval);
-        /* step 17 */
+        /* step 17 (Moved before extracting extension hooks to avoid uninitialized object state) */
         realmObject.setRealm(realm);
 
         // Run any initialization scripts, if required. But do _not_ install extensions!
@@ -136,6 +127,15 @@ public final class RealmConstructor extends BuiltinConstructor implements Initia
         } catch (IOException | URISyntaxException e) {
             throw newError(calleeContext, e.getMessage());
         }
+
+        /* steps 8-9 */
+        Callable translate = GetMethod(calleeContext, realmObject, "directEval");
+        /* steps 10-11 */
+        Callable fallback = GetMethod(calleeContext, realmObject, "nonEval");
+        /* steps 12-13 */
+        Callable indirectEval = GetMethod(calleeContext, realmObject, "indirectEval");
+        /* steps 14-16 */
+        realm.setExtensionHooks(translate, fallback, indirectEval);
 
         /* steps 18-19 */
         Callable initGlobal = GetMethod(calleeContext, realmObject, "initGlobal");

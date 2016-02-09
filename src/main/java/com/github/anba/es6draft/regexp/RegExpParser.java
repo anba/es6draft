@@ -69,8 +69,8 @@ public final class RegExpParser {
     // map of groups created within negative lookahead
     private final BitSet negativeLAGroups = new BitSet();
 
-    private RegExpParser(String source, String flags, String sourceFile, int sourceLine,
-            int sourceColumn, boolean webRegExp) {
+    private RegExpParser(String source, String flags, String sourceFile, int sourceLine, int sourceColumn,
+            boolean webRegExp) {
         this.source = source;
         this.length = source.length();
         this.sourceFile = sourceFile;
@@ -83,10 +83,9 @@ public final class RegExpParser {
         this.out = new StringBuilder(length);
     }
 
-    public static RegExpMatcher parse(String pattern, String flags, String sourceFile,
-            int sourceLine, int sourceColumn, boolean webRegExp) throws ParserException {
-        RegExpParser parser = new RegExpParser(pattern, flags, sourceFile, sourceLine,
-                sourceColumn, webRegExp);
+    public static RegExpMatcher parse(String pattern, String flags, String sourceFile, int sourceLine, int sourceColumn,
+            boolean webRegExp) throws ParserException {
+        RegExpParser parser = new RegExpParser(pattern, flags, sourceFile, sourceLine, sourceColumn, webRegExp);
         parser.pattern();
 
         if (parser.useJoniRegExp()) {
@@ -96,21 +95,20 @@ public final class RegExpParser {
         return new JDKRegExpMatcher(parser.out.toString(), parser.flags, parser.negativeLAGroups);
     }
 
-    public static void syntaxParse(String pattern, String flags, String sourceFile, int sourceLine,
-            int sourceColumn, boolean webRegExp) throws ParserException {
-        RegExpParser parser = new RegExpParser(pattern, flags, sourceFile, sourceLine,
-                sourceColumn, webRegExp);
+    public static void syntaxParse(String pattern, String flags, String sourceFile, int sourceLine, int sourceColumn,
+            boolean webRegExp) throws ParserException {
+        RegExpParser parser = new RegExpParser(pattern, flags, sourceFile, sourceLine, sourceColumn, webRegExp);
         parser.pattern();
     }
 
     private ParserException error(Messages.Key messageKey, String... args) {
-        throw new ParserException(ExceptionType.SyntaxError, sourceFile, sourceLine, sourceColumn
-                + pos, messageKey, args);
+        throw new ParserException(ExceptionType.SyntaxError, sourceFile, sourceLine, sourceColumn + pos, messageKey,
+                args);
     }
 
     private ParserException error(Messages.Key messageKey, int offset, char offending) {
-        throw new ParserException(ExceptionType.SyntaxError, sourceFile, sourceLine, sourceColumn
-                + pos + offset, messageKey, String.valueOf(offending));
+        throw new ParserException(ExceptionType.SyntaxError, sourceFile, sourceLine, sourceColumn + pos + offset,
+                messageKey, String.valueOf(offending));
     }
 
     private int toFlags(String flags) {
@@ -497,16 +495,23 @@ public final class RegExpParser {
      *     <span><sub>[~U]</sub></span> CharacterClassEscape
      *     <span><sub>[~U]</sub></span> CharacterEscape
      * </pre>
-     * 
-     * @param negation
-     *            flag to mark negative character classes
      */
-    private void characterClass(boolean negation) {
+    private void characterClass() {
+        final StringBuilder out = this.out;
+        boolean negation = match('^');
+        if (match(']')) {
+            // empty character class
+            appendEmptyCharacterClass(negation);
+            return;
+        }
+        out.append('[');
+        if (negation) {
+            out.append('^');
+        }
+
         final boolean ignoreCase = isIgnoreCase();
         final boolean unicode = isUnicode();
         final boolean web = isWebRegularExpression();
-
-        final StringBuilder out = this.out;
         final int startLength = out.length();
         int rangeStartCV = 0, rangeStartPos = 0;
         boolean inrange = false;
@@ -552,6 +557,7 @@ public final class RegExpParser {
                         }
                     }
                 }
+                out.append(']');
                 return;
             case '\\': {
                 switch (peek(0)) {
@@ -736,8 +742,7 @@ public final class RegExpParser {
                     }
                     int d = get(unicode);
                     if (unicode ? !isSyntaxCharacterOrSlash(d) : !web && isUnicodeIDContinue(d)) {
-                        throw error(Messages.Key.RegExpInvalidEscape,
-                                new String(Character.toChars(d)));
+                        throw error(Messages.Key.RegExpInvalidEscape, new String(Character.toChars(d)));
                     }
                     appendIdentityEscape(d, true);
                     cv = d;
@@ -1271,18 +1276,7 @@ public final class RegExpParser {
 
             case '[': {
                 // CharacterClass
-                boolean negation = match('^');
-                if (!match(']')) {
-                    // non-empty character class
-                    out.append('[');
-                    if (negation) {
-                        out.append('^');
-                    }
-                    characterClass(negation);
-                    out.append(']');
-                } else {
-                    appendEmptyCharacterClass(negation);
-                }
+                characterClass();
                 break atom;
             }
 

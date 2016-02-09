@@ -6,12 +6,8 @@
  */
 package com.github.anba.es6draft.scripting;
 
-import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
-
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
-import com.github.anba.es6draft.runtime.internal.Properties.Function;
-import com.github.anba.es6draft.runtime.internal.Strings;
 import com.github.anba.es6draft.runtime.objects.GlobalObject;
 
 /**
@@ -23,11 +19,9 @@ public final class ScriptingGlobalObject extends GlobalObject {
     }
 
     @Override
-    protected void initializeExtensions() {
+    public void initializeExtensions() {
         super.initializeExtensions();
-        Realm realm = getRealm();
-        createProperties(realm.defaultContext(), realm.getGlobalThis(), this,
-                ScriptingGlobalObject.class);
+        createGlobalProperties(new ScriptingFunctions(), ScriptingFunctions.class);
     }
 
     /**
@@ -42,16 +36,5 @@ public final class ScriptingGlobalObject extends GlobalObject {
                 return new ScriptingGlobalObject(realm);
             }
         };
-    }
-
-    /**
-     * builtin-function: {@code print(message)}
-     *
-     * @param messages
-     *            the string to print
-     */
-    @Function(name = "print", arity = 1)
-    public void print(String... messages) {
-        System.out.println(Strings.concatWith(' ', messages));
     }
 }

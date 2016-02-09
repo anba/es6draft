@@ -117,6 +117,10 @@ final class JoniMatchState implements MatchState, IterableMatchResult {
         return r > Matcher.FAILED;
     }
 
+    private boolean isUnicode() {
+        return !(encoding instanceof UCS2Encoding);
+    }
+
     private int stringLength() {
         return string.length();
     }
@@ -151,6 +155,14 @@ final class JoniMatchState implements MatchState, IterableMatchResult {
             throw new IndexOutOfBoundsException("Invalid group: " + group);
     }
 
+    private int toValidStartIndex(int start) {
+        // Don't start matching in middle of a surrogate pair.
+        if (start > 0 && Character.isSupplementaryCodePoint(Character.codePointAt(string, start - 1)) && isUnicode()) {
+            return start - 1;
+        }
+        return start;
+    }
+
     @Override
     public String toString() {
         return String.format("%s: [string=%s, begin=%d, end=%d]", getClass().getSimpleName(),
@@ -169,21 +181,17 @@ final class JoniMatchState implements MatchState, IterableMatchResult {
     }
 
     @Override
-    public boolean find() {
-        int start = end != begin ? end : end + encoding.length(string, end);
-        return update(matcher.search(start, byteLength(), Option.NONE));
-    }
-
-    @Override
     public boolean find(int start) {
         ensureValidIndex(start);
-        return update(matcher.search(toByteIndex(start), byteLength(), Option.NONE));
+        int actualStart = toValidStartIndex(start);
+        return update(matcher.search(toByteIndex(actualStart), byteLength(), Option.NONE));
     }
 
     @Override
     public boolean matches(int start) {
         ensureValidIndex(start);
-        return update(matcher.match(toByteIndex(start), byteLength(), Option.NONE));
+        int actualStart = toValidStartIndex(start);
+        return update(matcher.match(toByteIndex(actualStart), byteLength(), Option.NONE));
     }
 
     @Override

@@ -31,6 +31,11 @@ import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.types.Undefined;
 import com.github.anba.es6draft.runtime.types.builtins.ArgumentsObject;
 import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
+import com.github.anba.es6draft.runtime.types.builtins.LegacyConstructorFunction;
+import com.github.anba.es6draft.runtime.types.builtins.OrdinaryAsyncFunction;
+import com.github.anba.es6draft.runtime.types.builtins.OrdinaryConstructorFunction;
+import com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction;
+import com.github.anba.es6draft.runtime.types.builtins.OrdinaryGenerator;
 
 /**
  * <h1>9 Ordinary and Exotic Objects Behaviours</h1><br>
@@ -87,8 +92,8 @@ final class FunctionDeclarationInstantiationGenerator extends
                                 Types.FunctionObject, Types.Object_));
 
         // FunctionObject
-        static final MethodName FunctionObject_setLegacyArguments = MethodName.findVirtual(
-                Types.FunctionObject, "setLegacyArguments",
+        static final MethodName LegacyFunction_setLegacyArguments = MethodName.findVirtual(
+                Types.LegacyConstructorFunction, "setLegacyArguments",
                 Type.methodType(Type.VOID_TYPE, Types.LegacyArgumentsObject));
 
         // class: LexicalEnvironment
@@ -106,15 +111,20 @@ final class FunctionDeclarationInstantiationGenerator extends
     private static final int ARGUMENTS = 2;
 
     private static final class FunctionDeclInitMethodGenerator extends ExpressionVisitor {
-        FunctionDeclInitMethodGenerator(MethodCode method, FunctionNode node) {
+        private final String name;
+        private final Type type;
+
+        FunctionDeclInitMethodGenerator(MethodCode method, FunctionNode node, Type type) {
             super(method, node, IsStrict(node));
+            this.name = targetName(node);
+            this.type = type;
         }
 
         @Override
         public void begin() {
             super.begin();
             setParameterName("cx", EXECUTION_CONTEXT, Types.ExecutionContext);
-            setParameterName("function", FUNCTION, Types.FunctionObject);
+            setParameterName(name, FUNCTION, type);
             setParameterName("arguments", ARGUMENTS, Types.Object_);
         }
     }
@@ -125,7 +135,7 @@ final class FunctionDeclarationInstantiationGenerator extends
 
     void generate(FunctionNode function) {
         MethodCode method = codegen.newMethod(function, FunctionName.Init);
-        ExpressionVisitor mv = new FunctionDeclInitMethodGenerator(method, function);
+        ExpressionVisitor mv = new FunctionDeclInitMethodGenerator(method, function, targetType(function));
 
         mv.lineInfo(function);
         mv.begin();
@@ -133,6 +143,42 @@ final class FunctionDeclarationInstantiationGenerator extends
         generate(function, mv);
         mv.exitScope();
         mv.end();
+    }
+
+    private Type targetType(FunctionNode node) {
+        if (node.isGenerator()) {
+            return Types.OrdinaryGenerator;
+        } else if (node.isAsync()) {
+            return Types.OrdinaryAsyncFunction;
+        } else if (isLegacy(node)) {
+            return Types.LegacyConstructorFunction;
+        } else if (node.isConstructor()) {
+            return Types.OrdinaryConstructorFunction;
+        } else {
+            return Types.OrdinaryFunction;
+        }
+    }
+
+    private Class<? extends FunctionObject> targetClass(FunctionNode node) {
+        if (node.isGenerator()) {
+            return OrdinaryGenerator.class;
+        } else if (node.isAsync()) {
+            return OrdinaryAsyncFunction.class;
+        } else if (isLegacy(node)) {
+            return LegacyConstructorFunction.class;
+        } else if (node.isConstructor()) {
+            return OrdinaryConstructorFunction.class;
+        } else {
+            return OrdinaryFunction.class;
+        }
+    }
+
+    private static String targetName(FunctionNode node) {
+        if (node.isGenerator()) {
+            return "generator";
+        } else {
+            return "function";
+        }
     }
 
     private void generate(FunctionNode function, ExpressionVisitor mv) {
@@ -167,7 +213,7 @@ final class FunctionDeclarationInstantiationGenerator extends
         // RuntimeInfo.Function code = func.getCode();
         /* step 5 */
         boolean strict = IsStrict(function);
-        boolean legacy = isLegacy(function);
+        boolean legacy = hasLegacyArguments(function);
         /* step 6 */
         FormalParameterList formals = function.getParameters();
         /* step 7 */
@@ -433,7 +479,7 @@ final class FunctionDeclarationInstantiationGenerator extends
     private void CreateMappedArgumentsObject(ExpressionVisitor mv) {
         // stack: [] -> [argsObj]
         mv.loadExecutionContext();
-        mv.loadParameter(FUNCTION, FunctionObject.class);
+        mv.loadParameter(FUNCTION, targetClass((FunctionNode) mv.getTopLevelNode()));
         mv.loadParameter(ARGUMENTS, Object[].class);
         mv.invoke(Methods.ArgumentsObject_CreateMappedArgumentsObject_Empty);
     }
@@ -443,7 +489,7 @@ final class FunctionDeclarationInstantiationGenerator extends
             FormalParameterList formals, ExpressionVisitor mv) {
         // stack: [] -> [argsObj]
         mv.loadExecutionContext();
-        mv.loadParameter(FUNCTION, FunctionObject.class);
+        mv.loadParameter(FUNCTION, targetClass((FunctionNode) mv.getTopLevelNode()));
         newStringArray(mv, mappedNames(formals));
         mv.loadParameter(ARGUMENTS, Object[].class);
         mv.load(env);
@@ -459,45 +505,45 @@ final class FunctionDeclarationInstantiationGenerator extends
 
     private void CreateLegacyArguments(ExpressionVisitor mv) {
         // function.setLegacyArguments(<legacy-arguments>)
-        mv.loadParameter(FUNCTION, FunctionObject.class);
+        mv.loadParameter(FUNCTION, LegacyConstructorFunction.class);
         {
             // CreateLegacyArgumentsObject(cx, function, arguments)
             mv.loadExecutionContext();
-            mv.loadParameter(FUNCTION, FunctionObject.class);
+            mv.loadParameter(FUNCTION, LegacyConstructorFunction.class);
             mv.loadParameter(ARGUMENTS, Object[].class);
             mv.invoke(Methods.LegacyArgumentsObject_CreateLegacyArgumentsObjectUnmapped);
         }
-        mv.invoke(Methods.FunctionObject_setLegacyArguments);
+        mv.invoke(Methods.LegacyFunction_setLegacyArguments);
     }
 
     private void CreateLegacyArguments(Variable<LexicalEnvironment<FunctionEnvironmentRecord>> env,
             FormalParameterList formals, ExpressionVisitor mv) {
         // function.setLegacyArguments(<legacy-arguments>)
-        mv.loadParameter(FUNCTION, FunctionObject.class);
+        mv.loadParameter(FUNCTION, LegacyConstructorFunction.class);
         {
             // CreateLegacyArgumentsObject(cx, function, arguments, formals, scope)
             mv.loadExecutionContext();
-            mv.loadParameter(FUNCTION, FunctionObject.class);
+            mv.loadParameter(FUNCTION, LegacyConstructorFunction.class);
             mv.loadParameter(ARGUMENTS, Object[].class);
             newStringArray(mv, mappedNames(formals));
             mv.load(env);
             mv.invoke(Methods.LegacyArgumentsObject_CreateLegacyArgumentsObject);
         }
-        mv.invoke(Methods.FunctionObject_setLegacyArguments);
+        mv.invoke(Methods.LegacyFunction_setLegacyArguments);
     }
 
     private void CreateLegacyArguments(Variable<ArgumentsObject> argumentsObj, ExpressionVisitor mv) {
         // function.setLegacyArguments(<legacy-arguments>)
-        mv.loadParameter(FUNCTION, FunctionObject.class);
+        mv.loadParameter(FUNCTION, LegacyConstructorFunction.class);
         {
             // CreateLegacyArgumentsObject(cx, function, arguments, argumentsObj)
             mv.loadExecutionContext();
-            mv.loadParameter(FUNCTION, FunctionObject.class);
+            mv.loadParameter(FUNCTION, LegacyConstructorFunction.class);
             mv.loadParameter(ARGUMENTS, Object[].class);
             mv.load(argumentsObj);
             mv.invoke(Methods.LegacyArgumentsObject_CreateLegacyArgumentsObjectFrom);
         }
-        mv.invoke(Methods.FunctionObject_setLegacyArguments);
+        mv.invoke(Methods.LegacyFunction_setLegacyArguments);
     }
 
     private String[] mappedNames(FormalParameterList formals) {
@@ -527,9 +573,24 @@ final class FunctionDeclarationInstantiationGenerator extends
         }
     }
 
+    private boolean hasLegacyArguments(FunctionNode node) {
+        if (IsStrict(node)) {
+            return false;
+        }
+        if (!(node instanceof FunctionDeclaration || node instanceof FunctionExpression)) {
+            return false;
+        }
+        return codegen.isEnabled(CompatibilityOption.FunctionArguments);
+    }
+
     private boolean isLegacy(FunctionNode node) {
-        return !IsStrict(node)
-                && (node instanceof FunctionDeclaration || node instanceof FunctionExpression)
-                && codegen.isEnabled(CompatibilityOption.FunctionPrototype);
+        if (IsStrict(node)) {
+            return false;
+        }
+        if (!(node instanceof FunctionDeclaration || node instanceof FunctionExpression)) {
+            return false;
+        }
+        return codegen.isEnabled(CompatibilityOption.FunctionArguments)
+                || codegen.isEnabled(CompatibilityOption.FunctionCaller);
     }
 }

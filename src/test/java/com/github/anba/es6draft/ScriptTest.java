@@ -14,7 +14,6 @@ import static org.junit.Assume.assumeTrue;
 import java.io.IOException;
 import java.util.EnumSet;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.configuration.Configuration;
@@ -32,9 +31,9 @@ import org.junit.runners.Parameterized.UseParametersRunnerFactory;
 import com.github.anba.es6draft.repl.console.ShellConsole;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
-import com.github.anba.es6draft.runtime.internal.ScriptCache;
 import com.github.anba.es6draft.util.Parallelized;
 import com.github.anba.es6draft.util.ParameterizedRunnerFactory;
+import com.github.anba.es6draft.util.SystemConsole;
 import com.github.anba.es6draft.util.TestConfiguration;
 import com.github.anba.es6draft.util.TestGlobals;
 import com.github.anba.es6draft.util.TestInfo;
@@ -59,16 +58,15 @@ public final class ScriptTest {
     public static TestGlobals<TestGlobalObject, TestInfo> globals = new TestGlobals<TestGlobalObject, TestInfo>(
             configuration) {
         @Override
-        protected ObjectAllocator<TestGlobalObject> newAllocator(ShellConsole console,
-                TestInfo test, ScriptCache scriptCache) {
-            return newGlobalObjectAllocator(console, test, scriptCache);
+        protected ObjectAllocator<TestGlobalObject> newAllocator(ShellConsole console) {
+            return newGlobalObjectAllocator(console);
         }
 
         @Override
-        protected Set<CompatibilityOption> getOptions() {
+        protected EnumSet<CompatibilityOption> getOptions() {
             EnumSet<CompatibilityOption> options = EnumSet.copyOf(super.getOptions());
-            // TODO: Replace/move tests which require es7 extensions
-            options.addAll(CompatibilityOption.ECMAScript7());
+            options.addAll(CompatibilityOption.required(CompatibilityOption.Stage.Strawman));
+            options.addAll(CompatibilityOption.Experimental());
             return options;
         }
     };
@@ -91,15 +89,13 @@ public final class ScriptTest {
     public void setUp() throws Throwable {
         assumeTrue("Test disabled", test.isEnabled());
 
-        global = globals.newGlobal(new ScriptTestConsole(), test);
+        global = globals.newGlobal(new SystemConsole(), test);
         exceptionHandler.setExecutionContext(global.getRealm().defaultContext());
     }
 
     @After
     public void tearDown() {
-        if (global != null) {
-            global.getScriptLoader().getExecutor().shutdown();
-        }
+        globals.release(global);
     }
 
     @Test

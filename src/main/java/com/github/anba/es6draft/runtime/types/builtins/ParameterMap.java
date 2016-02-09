@@ -25,8 +25,8 @@ final class ParameterMap {
     private final int length;
     private BitSet legacyUnmapped;
 
-    private ParameterMap(LexicalEnvironment<? extends DeclarativeEnvironmentRecord> env,
-            String[] parameterNames, int length) {
+    private ParameterMap(LexicalEnvironment<? extends DeclarativeEnvironmentRecord> env, String[] parameterNames,
+            int length) {
         this.env = env;
         this.parameters = parameterNames;
         this.length = length;
@@ -45,8 +45,7 @@ final class ParameterMap {
     }
 
     /**
-     * Returns a non-negative integer if {@code p} is a valid argument index, otherwise
-     * <code>-1</code>.
+     * Returns a non-negative integer if {@code p} is a valid argument index, otherwise <code>-1</code>.
      * 
      * @param p
      *            the property key
@@ -59,8 +58,7 @@ final class ParameterMap {
     /**
      * 9.4.4.7 CreateMappedArgumentsObject ( func, formals, argumentsList, env )
      * <p>
-     * Returns a new {@link ParameterMap} if there are any mapped arguments, otherwise
-     * <code>null</code>.
+     * Returns a new {@link ParameterMap} if there are any mapped arguments, otherwise <code>null</code>.
      * 
      * @param len
      *            the actual number of function arguments

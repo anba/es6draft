@@ -8,13 +8,14 @@ package org.mozilla.javascript.v8dtoa;
 
 import java.util.Arrays;
 
-public class FastDtoaBuilder {
+public final class FastDtoaBuilder {
 
     // allocate buffer for generated digits + extra notation + padding zeroes
-    final char[] chars = new char[FastDtoa.kFastDtoaMaximalLength + 8];
-    int end = 0;
+    private final char[] chars = new char[FastDtoa.kFastDtoaMaximalLength + 8];
+    private int end = 0;
+    int end() { return end; }
     int point;
-    boolean formatted = false;
+    private boolean formatted = false;
 
     void append(char c) {
         chars[end++] = c;
@@ -105,7 +106,7 @@ public class FastDtoaBuilder {
         }
     }
 
-    final static char[] digits = {
+    private final static char[] digits = {
         '0' , '1' , '2' , '3' , '4' , '5' , '6' , '7' , '8' , '9'
     };
 }

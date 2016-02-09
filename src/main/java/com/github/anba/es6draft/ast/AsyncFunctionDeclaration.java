@@ -128,7 +128,7 @@ public final class AsyncFunctionDeclaration extends HoistableDeclaration impleme
 
     @Override
     public boolean isConstructor() {
-        return true;
+        return false;
     }
 
     @Override

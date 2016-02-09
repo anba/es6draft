@@ -13,44 +13,4 @@
   <!ATTLIST test id CDATA #REQUIRED>
 ]>
 <excludeList>
-  <!-- Invalid regular expression pattern in web-mode -->
-  <test id="S7.8.5_A1.4_T1" />
-  <test id="S7.8.5_A1.4_T2" />
-  <test id="S7.8.5_A2.4_T1" />
-  <test id="S7.8.5_A2.4_T2" />
-  <test id="S15.10.2_A1_T1" />
-  <test id="S15.10.2.6_A4_T7" />
-  <test id="S15.10.2.9_A1_T4" />
-  <test id="S15.10.2.10_A2.1_T3" />
-  <test id="S15.10.2.10_A5.1_T1" />
-  <test id="S15.10.2.13_A1_T16" />
-
-  <!-- ES6: poisoned 'caller' inherited from Function.prototype -->
-  <test id="10.6-13-a-2" />
-  <test id="10.6-13-a-3" />
-  <test id="15.3.5.4_2-12gs" />
-  <test id="15.3.5.4_2-14gs" />
-  <test id="15.3.5.4_2-75gs" />
-  <test id="15.3.5.4_2-76gs" />
-  <test id="15.3.5.4_2-77gs" />
-  <test id="15.3.5.4_2-78gs" />
-  <test id="15.3.5.4_2-79gs" />
-  <test id="15.3.5.4_2-80gs" />
-  <test id="15.3.5.4_2-81gs" />
-  <test id="15.3.5.4_2-82gs" />
-  <test id="15.3.5.4_2-83gs" />
-  <test id="15.3.5.4_2-84gs" />
-  <test id="15.3.5.4_2-85gs" />
-  <test id="15.3.5.4_2-86gs" />
-  <test id="15.3.5.4_2-87gs" />
-  <test id="15.3.5.4_2-88gs" />
-  <test id="15.3.5.4_2-89gs" />
-  <test id="15.3.5.4_2-90gs" />
-  <test id="15.3.5.4_2-91gs" />
-  <test id="15.3.5.4_2-92gs" />
-  <test id="15.3.5.4_2-93gs" />
-
-  <!-- rev24 changes -->
-  <test id="12.14-1">'var' redeclaration in CatchBlock allowed [B.3.5]</test>
-  <test id="12.14-2">'var' redeclaration in CatchBlock allowed [B.3.5]</test>
 </excludeList>

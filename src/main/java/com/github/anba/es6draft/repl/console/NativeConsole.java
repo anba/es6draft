@@ -7,38 +7,19 @@
 package com.github.anba.es6draft.repl.console;
 
 import java.io.Console;
-
-import com.github.anba.es6draft.runtime.Realm;
+import java.io.PrintWriter;
+import java.io.Reader;
 
 /**
- * {@link ReplConsole} implementation for native consoles
+ * {@link ShellConsole} implementation for native consoles.
  */
-public final class NativeConsole implements ReplConsole {
+public final class NativeConsole implements ShellConsole {
     private final Console console;
+    private final PrintWriter errorWriter;
 
     public NativeConsole() {
-        this(System.console());
-    }
-
-    public NativeConsole(Console console) {
-        this.console = console;
-    }
-
-    @Override
-    public void addCompletion(Realm realm) {
-    }
-
-    @Override
-    public boolean isAnsiSupported() {
-        return false;
-    }
-
-    @Override
-    public String readLine(String prompt) {
-        if (!prompt.isEmpty()) {
-            putstr(prompt);
-        }
-        return readLine();
+        this.console = System.console();
+        this.errorWriter = new PrintWriter(System.err);
     }
 
     @Override
@@ -53,19 +34,34 @@ public final class NativeConsole implements ReplConsole {
     }
 
     @Override
-    public void putstr(String s) {
-        console.writer().print(s);
-        console.flush();
+    public String readLine(String prompt) {
+        if (!prompt.isEmpty()) {
+            console.writer().append(prompt).flush();
+        }
+        return readLine();
     }
 
     @Override
-    public void print(String s) {
-        console.writer().println(s);
-        console.flush();
+    public Reader reader() {
+        return console.reader();
     }
 
     @Override
-    public void printErr(String s) {
-        System.err.println(s);
+    public PrintWriter writer() {
+        return console.writer();
+    }
+
+    @Override
+    public PrintWriter errorWriter() {
+        return errorWriter;
+    }
+
+    @Override
+    public boolean isAnsiSupported() {
+        return false;
+    }
+
+    @Override
+    public void addCompleter(Completer completer) {
     }
 }

@@ -20,7 +20,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 
@@ -120,8 +119,8 @@ public class ProxyObject implements ScriptObject {
     }
 
     /**
-     * Revoke this proxy, that means set both, [[ProxyTarget]] and [[ProxyHandler]], to {@code null}
-     * and by that prevent further operations on this proxy object.
+     * Revoke this proxy, that means set both, [[ProxyTarget]] and [[ProxyHandler]], to {@code null} and by that prevent
+     * further operations on this proxy object.
      */
     public final void revoke() {
         assert !isRevoked() : "Proxy already revoked";
@@ -132,12 +131,17 @@ public class ProxyObject implements ScriptObject {
     /**
      * Repeatedly unwraps the proxy object and returns the underlying target object.
      * 
-     * @return the proxy target object or {@code null} if the proxy has been revoked
+     * @param cx
+     *            the execution context
+     * @return the proxy target object
      */
-    public final ScriptObject unwrap() {
+    public final ScriptObject unwrap(ExecutionContext cx) {
         ScriptObject target;
         for (ProxyObject proxy = this; (target = proxy.proxyTarget) instanceof ProxyObject;) {
             proxy = (ProxyObject) target;
+        }
+        if (target == null) {
+            throw newTypeError(cx, Messages.Key.ProxyRevoked);
         }
         return target;
     }
@@ -148,7 +152,7 @@ public class ProxyObject implements ScriptObject {
                 System.identityHashCode(this), proxyTarget, proxyHandler);
     }
 
-    private static class CallabeProxyObject extends ProxyObject implements Callable {
+    private static class CallableProxyObject extends ProxyObject implements Callable {
         /**
          * Constructs a new Proxy object.
          * 
@@ -157,7 +161,7 @@ public class ProxyObject implements ScriptObject {
          * @param handler
          *            the proxy handler object
          */
-        public CallabeProxyObject(ScriptObject target, ScriptObject handler) {
+        public CallableProxyObject(ScriptObject target, ScriptObject handler) {
             super(target, handler);
         }
 
@@ -186,8 +190,7 @@ public class ProxyObject implements ScriptObject {
          * 9.5.13 [[Call]] (thisArgument, argumentsList)
          */
         @Override
-        public Object tailCall(ExecutionContext callerContext, Object thisValue, Object... args)
-                throws Throwable {
+        public Object tailCall(ExecutionContext callerContext, Object thisValue, Object... args) throws Throwable {
             /* steps 1-3 */
             ScriptObject handler = getProxyHandler(callerContext);
             /* step 4 */
@@ -221,12 +224,12 @@ public class ProxyObject implements ScriptObject {
         }
 
         @Override
-        public String toSource(SourceSelector selector) {
-            return FunctionSource.nativeCode(selector, "");
+        public String toSource(ExecutionContext cx) {
+            throw newTypeError(cx, Messages.Key.IncompatibleObject);
         }
     }
 
-    private static class ConstructorProxyObject extends CallabeProxyObject implements Constructor {
+    private static class ConstructorProxyObject extends CallableProxyObject implements Constructor {
         /**
          * Constructs a new Proxy object.
          * 
@@ -243,8 +246,7 @@ public class ProxyObject implements ScriptObject {
          * 9.5.14 [[Construct]] Internal Method
          */
         @Override
-        public ScriptObject construct(ExecutionContext callerContext, Constructor newTarget,
-                Object... args) {
+        public ScriptObject construct(ExecutionContext callerContext, Constructor newTarget, Object... args) {
             /* steps 1-3 */
             ScriptObject handler = getProxyHandler(callerContext);
             /* step 4 */
@@ -261,35 +263,7 @@ public class ProxyObject implements ScriptObject {
             Object newObj = trap.call(callerContext, handler, target, argArray, newTarget);
             /* step 11 */
             if (!Type.isObject(newObj)) {
-                throw newTypeError(callerContext, Messages.Key.NotObjectType);
-            }
-            /* step 12 */
-            return Type.objectValue(newObj);
-        }
-
-        /**
-         * 9.5.14 [[Construct]] Internal Method
-         */
-        @Override
-        public Object tailConstruct(ExecutionContext callerContext, Constructor newTarget,
-                Object... args) throws Throwable {
-            /* steps 1-3 */
-            ScriptObject handler = getProxyHandler(callerContext);
-            /* step 4 */
-            ScriptObject target = getProxyTarget();
-            /* steps 5-6 */
-            Callable trap = GetMethod(callerContext, handler, "construct");
-            /* step 7 */
-            if (trap == null) {
-                return ((Constructor) target).tailConstruct(callerContext, newTarget, args);
-            }
-            /* step 8 */
-            ArrayObject argArray = CreateArrayFromList(callerContext, Arrays.asList(args));
-            /* steps 9-10 */
-            Object newObj = trap.call(callerContext, handler, target, argArray, newTarget);
-            /* step 11 */
-            if (!Type.isObject(newObj)) {
-                throw newTypeError(callerContext, Messages.Key.NotObjectType);
+                throw newTypeError(callerContext, Messages.Key.ProxyNotObject);
             }
             /* step 12 */
             return Type.objectValue(newObj);
@@ -332,7 +306,7 @@ public class ProxyObject implements ScriptObject {
             if (IsConstructor(proxyTarget)) {
                 proxy = new ConstructorProxyObject(proxyTarget, proxyHandler);
             } else {
-                proxy = new CallabeProxyObject(proxyTarget, proxyHandler);
+                proxy = new CallableProxyObject(proxyTarget, proxyHandler);
             }
         } else {
             proxy = new ProxyObject(proxyTarget, proxyHandler);
@@ -362,21 +336,21 @@ public class ProxyObject implements ScriptObject {
         if (!Type.isObjectOrNull(handlerProto)) {
             throw newTypeError(cx, Messages.Key.NotObjectOrNull);
         }
-        ScriptObject handlerProto_ = Type.objectValueOrNull(handlerProto);
+        ScriptObject handlerProtoObj = Type.objectValueOrNull(handlerProto);
         /* steps 11-12 */
         boolean extensibleTarget = IsExtensible(cx, target);
         /* step 13 */
         if (extensibleTarget) {
-            return handlerProto_;
+            return handlerProtoObj;
         }
         /* steps 14-15 */
         ScriptObject targetProto = target.getPrototypeOf(cx);
         /* step 16 */
-        if (handlerProto_ != targetProto) {
+        if (handlerProtoObj != targetProto) {
             throw newTypeError(cx, Messages.Key.ProxySamePrototype);
         }
         /* step 17 */
-        return handlerProto_;
+        return handlerProtoObj;
     }
 
     /**
@@ -533,8 +507,8 @@ public class ProxyObject implements ScriptObject {
         return validateGetOwnProperty(cx, target, trapResultObj, targetDesc);
     }
 
-    private Property validateGetOwnProperty(ExecutionContext cx, ScriptObject target,
-            Object trapResultObj, Property targetDesc) {
+    private Property validateGetOwnProperty(ExecutionContext cx, ScriptObject target, Object trapResultObj,
+            Property targetDesc) {
         /* step 14 */
         if (Type.isUndefined(trapResultObj)) {
             if (targetDesc == null) {
@@ -587,8 +561,7 @@ public class ProxyObject implements ScriptObject {
      * 9.5.6 [[DefineOwnProperty]] (P, Desc)
      */
     @Override
-    public boolean defineOwnProperty(ExecutionContext cx, String propertyKey,
-            PropertyDescriptor desc) {
+    public boolean defineOwnProperty(ExecutionContext cx, String propertyKey, PropertyDescriptor desc) {
         /* step 1 (implicit) */
         /* steps 2-4 */
         ScriptObject handler = getProxyHandler(cx);
@@ -618,8 +591,7 @@ public class ProxyObject implements ScriptObject {
      * 9.5.6 [[DefineOwnProperty]] (P, Desc)
      */
     @Override
-    public boolean defineOwnProperty(ExecutionContext cx, Symbol propertyKey,
-            PropertyDescriptor desc) {
+    public boolean defineOwnProperty(ExecutionContext cx, Symbol propertyKey, PropertyDescriptor desc) {
         /* step 1 (implicit) */
         /* steps 2-4 */
         ScriptObject handler = getProxyHandler(cx);
@@ -645,8 +617,8 @@ public class ProxyObject implements ScriptObject {
         return validateDefineOwnProperty(cx, desc, target, targetDesc);
     }
 
-    private boolean validateDefineOwnProperty(ExecutionContext cx, PropertyDescriptor desc,
-            ScriptObject target, Property targetDesc) {
+    private boolean validateDefineOwnProperty(ExecutionContext cx, PropertyDescriptor desc, ScriptObject target,
+            Property targetDesc) {
         if (targetDesc != null) {
             // need copy because of possible side-effects in IsExtensible()
             targetDesc = targetDesc.clone();
@@ -1053,8 +1025,7 @@ public class ProxyObject implements ScriptObject {
         /* step 8 */
         Object trapResultArray = trap.call(cx, handler, target);
         /* steps 9-10 */
-        List<Object> trapResult = CreateListFromArrayLike(cx, trapResultArray,
-                EnumSet.of(Type.String, Type.Symbol));
+        List<Object> trapResult = CreateListFromArrayLike(cx, trapResultArray, EnumSet.of(Type.String, Type.Symbol));
         /* steps 11-12 */
         boolean extensibleTarget = target.isExtensible(cx);
         /* steps 13-15 */
@@ -1082,26 +1053,22 @@ public class ProxyObject implements ScriptObject {
             return trapResult;
         }
         /* step 20 */
-        // TODO: Simply with Java 8 APIs.
-        HashSet<Object> uncheckedResultKeys = new HashSet<>();
-        HashMap<Object, Integer> uncheckedDuplicateKeys = null;
+        final Integer zero = Integer.valueOf(0);
+        HashMap<Object, Integer> uncheckedResultKeys = new HashMap<>();
         for (Object key : trapResult) {
-            if (!uncheckedResultKeys.add(key)) {
-                // Duplicate key in result set
-                if (uncheckedDuplicateKeys == null) {
-                    uncheckedDuplicateKeys = new HashMap<>();
-                }
-                Integer count = uncheckedDuplicateKeys.get(key);
-                uncheckedDuplicateKeys.put(key, (count != null ? count + 1 : 1));
+            Integer c = uncheckedResultKeys.put(key, zero);
+            if (c != null) {
+                uncheckedResultKeys.put(key, c + 1);
             }
         }
-        /* steps 21 */
+        /* step 21 */
         for (Object key : targetNonConfigurableKeys) {
-            if (!uncheckedResultKeys.remove(key)) {
+            Integer c = uncheckedResultKeys.remove(key);
+            if (c == null) {
                 throw newTypeError(cx, Messages.Key.ProxyNotConfigurable);
             }
-            if (uncheckedDuplicateKeys != null) {
-                updateUncheckedWithDuplicates(uncheckedResultKeys, uncheckedDuplicateKeys, key);
+            if (c > 0) {
+                uncheckedResultKeys.put(key, c - 1);
             }
         }
         /* step 22 */
@@ -1110,11 +1077,12 @@ public class ProxyObject implements ScriptObject {
         }
         /* step 23 */
         for (Object key : targetConfigurableKeys) {
-            if (!uncheckedResultKeys.remove(key)) {
+            Integer c = uncheckedResultKeys.remove(key);
+            if (c == null) {
                 throw newTypeError(cx, Messages.Key.ProxyNotExtensible);
             }
-            if (uncheckedDuplicateKeys != null) {
-                updateUncheckedWithDuplicates(uncheckedResultKeys, uncheckedDuplicateKeys, key);
+            if (c > 0) {
+                uncheckedResultKeys.put(key, c - 1);
             }
         }
         /* step 24 */
@@ -1123,20 +1091,6 @@ public class ProxyObject implements ScriptObject {
         }
         /* step 25 */
         return trapResult;
-    }
-
-    private static void updateUncheckedWithDuplicates(HashSet<Object> uncheckedResultKeys,
-            HashMap<Object, Integer> uncheckedDuplicateKeys, Object key) {
-        Integer count = uncheckedDuplicateKeys.get(key);
-        if (count != null) {
-            if (count == 1) {
-                uncheckedDuplicateKeys.remove(key);
-            } else {
-                assert count > 1;
-                uncheckedDuplicateKeys.put(key, count - 1);
-            }
-            uncheckedResultKeys.add(key);
-        }
     }
 
     /**

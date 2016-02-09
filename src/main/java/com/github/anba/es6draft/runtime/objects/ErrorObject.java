@@ -193,15 +193,12 @@ public final class ErrorObject extends OrdinaryObject {
      *            the default value
      * @return property string value
      */
-    private static String getErrorObjectProperty(ErrorObject error, String propertyName,
-            String defaultValue) {
+    private static String getErrorObjectProperty(ErrorObject error, String propertyName, String defaultValue) {
         Property property = error.lookupOwnProperty(propertyName);
         if (property == null) {
             ScriptObject proto = error.getPrototype();
-            if (proto instanceof ErrorPrototype) {
-                property = ((ErrorPrototype) proto).lookupOwnProperty(propertyName);
-            } else if (proto instanceof NativeErrorPrototype) {
-                property = ((NativeErrorPrototype) proto).lookupOwnProperty(propertyName);
+            if (proto instanceof ErrorPrototype || proto instanceof NativeErrorPrototype) {
+                property = ((OrdinaryObject) proto).lookupOwnProperty(propertyName);
             }
         }
         Object value = property != null && property.isDataDescriptor() ? property.getValue() : null;

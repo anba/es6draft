@@ -17,6 +17,7 @@
     <exclude name="CollapsibleIfStatements" />
   </rule>
   <rule ref="rulesets/java/braces.xml">
+    <exclude name="ForLoopsMustUseBraces" />
     <exclude name="IfElseStmtsMustUseBraces" />
     <exclude name="IfStmtsMustUseBraces" />
   </rule>
@@ -77,11 +78,13 @@
     <exclude name="MissingBreakInSwitch" />
     <exclude name="MissingStaticMethodInNonInstantiatableClass" />
     <exclude name="PreserveStackTrace" />
+    <exclude name="SimplifyBooleanExpressions" />
+    <exclude name="SimplifyBooleanReturns" />
     <exclude name="SwitchDensity" />
     <exclude name="SwitchStmtsShouldHaveDefault" />
     <exclude name="TooFewBranchesForASwitchStatement" />
     <exclude name="UncommentedEmptyConstructor" />
-    <exclude name="UncommentedEmptyMethod" />
+    <exclude name="UncommentedEmptyMethodBody" />
     <exclude name="UnnecessaryLocalBeforeReturn" />
     <exclude name="UseCollectionIsEmpty" />
     <exclude name="UseVarargs" />

@@ -10,7 +10,6 @@ import java.util.Objects;
 
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
-import com.github.anba.es6draft.runtime.types.Callable.SourceSelector;
 
 /**
  * Support class to retrieve source code of compiled function objects.
@@ -30,14 +29,12 @@ final class FunctionSource {
      * function "functionName"() { [native code] }
      * </pre>
      * 
-     * @param selector
-     *            the source selector
      * @param functionName
      *            the function name
      * @return the function source string
      */
-    public static String nativeCode(SourceSelector selector, String functionName) {
-        return sourceString(selector, functionName, NATIVE_CODE, DEFAULT_FLAGS);
+    public static String nativeCode(String functionName) {
+        return sourceString(functionName, NATIVE_CODE, DEFAULT_FLAGS);
     }
 
     /**
@@ -47,56 +44,44 @@ final class FunctionSource {
      * function "functionName"() { [no source] }
      * </pre>
      * 
-     * @param selector
-     *            the source selector
      * @param functionName
      *            the function name
      * @return the function source string
      */
-    public static String noSource(SourceSelector selector, String functionName) {
-        return sourceString(selector, functionName, NO_SOURCE, DEFAULT_FLAGS);
+    public static String noSource(String functionName) {
+        return sourceString(functionName, NO_SOURCE, DEFAULT_FLAGS);
     }
 
     /**
-     * Returns the function source string for an user-defined function object.
+     * Returns the function source string for a user-defined function object.
      * 
-     * @param selector
-     *            the source selector
      * @param function
      *            the function object
      * @return the function source string
      */
-    public static String toSourceString(SourceSelector selector, FunctionObject function) {
+    public static String toSourceString(FunctionObject function) {
         RuntimeInfo.Function code = function.getCode();
         String name = Objects.toString(code.functionName(), "");
         int flags = code.functionFlags();
         if (RuntimeInfo.FunctionFlags.Native.isSet(flags)) {
-            return sourceString(selector, name, NATIVE_CODE, flags);
+            return sourceString(name, NATIVE_CODE, flags);
         }
         RuntimeInfo.FunctionSource source = code.source();
         if (source == null) {
-            return sourceString(selector, name, NO_SOURCE, flags);
+            return sourceString(name, NO_SOURCE, flags);
         }
-        if (selector == SourceSelector.Body) {
-            return source.body();
-        }
-        return sourceString(name, source.parameters(), source.body(), flags, function.getRealm()
-                .isEnabled(CompatibilityOption.ImplicitStrictDirective));
+        return sourceString(name, source.parameters(), source.body(), flags,
+                function.getRealm().isEnabled(CompatibilityOption.ImplicitStrictDirective));
     }
 
-    private static String sourceString(SourceSelector selector, String name, String body, int flags) {
-        if (selector == SourceSelector.Body) {
-            return body;
-        }
+    private static String sourceString(String name, String body, int flags) {
         return sourceString(name, "() ", body, flags, false);
     }
 
-    private static String sourceString(String name, String parameters, String body, int flags,
-            boolean implicitStrict) {
+    private static String sourceString(String name, String parameters, String body, int flags, boolean implicitStrict) {
         boolean async = RuntimeInfo.FunctionFlags.Async.isSet(flags);
         boolean generator = RuntimeInfo.FunctionFlags.Generator.isSet(flags);
-        StringBuilder source = new StringBuilder(18 + name.length() + parameters.length()
-                + body.length());
+        StringBuilder source = new StringBuilder(32 + name.length() + parameters.length() + body.length());
         if (RuntimeInfo.FunctionFlags.Arrow.isSet(flags)) {
             // ArrowFunction, GeneratorComprehension, AsyncArrowFunction
             if (generator) {

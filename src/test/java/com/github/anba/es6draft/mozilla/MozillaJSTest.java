@@ -21,7 +21,6 @@ import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
 import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
@@ -31,6 +30,7 @@ import org.apache.commons.configuration.Configuration;
 import org.hamcrest.Matchers;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -44,15 +44,17 @@ import org.junit.runners.Parameterized.UseParametersRunnerFactory;
 import org.junit.runners.model.MultipleFailureException;
 
 import com.github.anba.es6draft.repl.console.ShellConsole;
-import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
-import com.github.anba.es6draft.runtime.internal.ScriptCache;
-import com.github.anba.es6draft.runtime.types.Undefined;
+import com.github.anba.es6draft.runtime.internal.Properties;
+import com.github.anba.es6draft.runtime.internal.Source;
+import com.github.anba.es6draft.runtime.internal.Strings;
 import com.github.anba.es6draft.util.Functional.BiFunction;
 import com.github.anba.es6draft.util.Functional.Function;
+import com.github.anba.es6draft.util.NullConsole;
 import com.github.anba.es6draft.util.Parallelized;
 import com.github.anba.es6draft.util.ParameterizedRunnerFactory;
+import com.github.anba.es6draft.util.TestAssertions;
 import com.github.anba.es6draft.util.TestConfiguration;
 import com.github.anba.es6draft.util.TestGlobals;
 import com.github.anba.es6draft.util.TestInfo;
@@ -72,28 +74,32 @@ public final class MozillaJSTest {
 
     @Parameters(name = "{0}")
     public static List<MozTest> suiteValues() throws IOException {
-        return loadTests(configuration,
-                new Function<Path, BiFunction<Path, Iterator<String>, MozTest>>() {
-                    @Override
-                    public TestInfos apply(Path basedir) {
-                        return new TestInfos(basedir);
-                    }
-                });
+        return loadTests(configuration, new Function<Path, BiFunction<Path, Iterator<String>, MozTest>>() {
+            @Override
+            public TestInfos apply(Path basedir) {
+                return new TestInfos(basedir);
+            }
+        });
+    }
+
+    @BeforeClass
+    public static void setUpClass() throws IOException {
+        MozTestGlobalObject.testLoadInitializationScript();
     }
 
     @ClassRule
     public static TestGlobals<MozTestGlobalObject, TestInfo> globals = new TestGlobals<MozTestGlobalObject, TestInfo>(
             configuration) {
         @Override
-        protected ObjectAllocator<MozTestGlobalObject> newAllocator(ShellConsole console,
-                TestInfo test, ScriptCache scriptCache) {
-            return newGlobalObjectAllocator(console, test, scriptCache);
+        protected ObjectAllocator<MozTestGlobalObject> newAllocator(ShellConsole console) {
+            return newGlobalObjectAllocator(console);
         }
 
         @Override
-        protected Set<CompatibilityOption> getOptions() {
+        protected EnumSet<CompatibilityOption> getOptions() {
             EnumSet<CompatibilityOption> options = EnumSet.copyOf(super.getOptions());
             options.add(CompatibilityOption.ArrayBufferMissingLength);
+            options.add(CompatibilityOption.ArrayIncludes);
             options.add(CompatibilityOption.Exponentiation);
             return options;
         }
@@ -155,7 +161,8 @@ public final class MozillaJSTest {
     public void setUp() throws Throwable {
         assumeTrue("Test disabled", moztest.isEnabled());
 
-        global = globals.newGlobal(new MozTestConsole(collector), moztest);
+        global = globals.newGlobal(new NullConsole(), moztest);
+        global.createGlobalProperties(new Print(), Print.class);
         exceptionHandler.setExecutionContext(global.getRealm().defaultContext());
 
         // Apply scripted conditions
@@ -168,9 +175,9 @@ public final class MozillaJSTest {
             // Results from random tests are simply ignored...
             ignoreHandler.match(IgnoreExceptionHandler.defaultMatcher());
         } else if (moztest.negative) {
-            expected.expect(Matchers.either(StandardErrorHandler.defaultMatcher())
-                    .or(ScriptExceptionHandler.defaultMatcher())
-                    .or(Matchers.instanceOf(MultipleFailureException.class)));
+            expected.expect(
+                    Matchers.either(StandardErrorHandler.defaultMatcher()).or(ScriptExceptionHandler.defaultMatcher())
+                            .or(Matchers.instanceOf(MultipleFailureException.class)));
         } else {
             errorHandler.match(StandardErrorHandler.defaultMatcher());
             exceptionHandler.match(ScriptExceptionHandler.defaultMatcher());
@@ -179,9 +186,7 @@ public final class MozillaJSTest {
 
     @After
     public void tearDown() {
-        if (global != null) {
-            global.getScriptLoader().getExecutor().shutdown();
-        }
+        globals.release(global);
     }
 
     @Test
@@ -206,8 +211,8 @@ public final class MozillaJSTest {
         List<Path> files = new ArrayList<>();
         Path testDir = test.getBaseDir();
         Path dir = Paths.get("");
-        for (Iterator<Path> iterator = test.getScript().iterator(); iterator.hasNext(); dir = dir
-                .resolve(iterator.next())) {
+        for (Iterator<Path> iterator = test.getScript().iterator(); iterator
+                .hasNext(); dir = dir.resolve(iterator.next())) {
             Path f = testDir.resolve(dir.resolve("shell.js"));
             if (Files.exists(f)) {
                 files.add(f);
@@ -217,11 +222,8 @@ public final class MozillaJSTest {
     }
 
     private void scriptConditions() {
-        ExecutionContext cx = global.getRealm().defaultContext();
         for (Entry<Condition, String> entry : moztest.conditions) {
-            String code = condition(entry.getValue());
-            boolean value = ToBoolean(global.evaluate(cx, cx, code, Undefined.UNDEFINED));
-            if (!value) {
+            if (!evaluateCondition(entry)) {
                 continue;
             }
             switch (entry.getKey()) {
@@ -240,6 +242,12 @@ public final class MozillaJSTest {
         }
     }
 
+    private boolean evaluateCondition(Entry<Condition, String> entry) {
+        String code = condition(entry.getValue());
+        Object value = global.eval(new Source("@evaluate", 1), code);
+        return ToBoolean(value);
+    }
+
     private static String condition(String c) {
         StringBuilder sb = new StringBuilder();
         sb.append("!!(function(){\n");
@@ -251,6 +259,17 @@ public final class MozillaJSTest {
         sb.append("})();");
 
         return sb.toString();
+    }
+
+    public final class Print {
+        @Properties.Function(name = "print", arity = 1)
+        public void print(String... messages) {
+            String message = Strings.concatWith(' ', messages);
+            if (message.startsWith(" FAILED! ")) {
+                // Collect all failures instead of calling fail() directly.
+                collector.addError(TestAssertions.newAssertionError(message));
+            }
+        }
     }
 
     private static final class TestInfos implements BiFunction<Path, Iterator<String>, MozTest> {

@@ -6,7 +6,12 @@
  */
 package com.github.anba.es6draft.ast;
 
-import com.github.anba.es6draft.ast.synthetic.*;
+import com.github.anba.es6draft.ast.synthetic.ExpressionMethod;
+import com.github.anba.es6draft.ast.synthetic.MethodDefinitionsMethod;
+import com.github.anba.es6draft.ast.synthetic.PropertyDefinitionsMethod;
+import com.github.anba.es6draft.ast.synthetic.SpreadArrayLiteral;
+import com.github.anba.es6draft.ast.synthetic.SpreadElementMethod;
+import com.github.anba.es6draft.ast.synthetic.StatementListMethod;
 
 /**
  * Visitor interface for {@link Node} subclasses
@@ -96,13 +101,13 @@ public interface VoidNodeVisitor<V> {
 
     void visit(EmptyStatement node, V value);
 
+    void visit(ExportClause node, V value);
+
     void visit(ExportDeclaration node, V value);
 
     void visit(ExportDefaultExpression node, V value);
 
     void visit(ExportSpecifier node, V value);
-
-    void visit(ExportClause node, V value);
 
     void visit(ExpressionMethod node, V value);
 
@@ -140,17 +145,11 @@ public interface VoidNodeVisitor<V> {
 
     void visit(IfStatement node, V value);
 
+    void visit(ImportClause node, V value);
+
     void visit(ImportDeclaration node, V value);
 
     void visit(ImportSpecifier node, V value);
-
-    void visit(ImportClause node, V value);
-
-    void visit(SpreadArrayLiteral node, V value);
-
-    void visit(SpreadElementMethod node, V value);
-
-    void visit(PropertyDefinitionsMethod node, V value);
 
     void visit(LabelledFunctionStatement node, V value);
 
@@ -196,6 +195,8 @@ public interface VoidNodeVisitor<V> {
 
     void visit(PropertyAccessor node, V value);
 
+    void visit(PropertyDefinitionsMethod node, V value);
+
     void visit(PropertyNameDefinition node, V value);
 
     void visit(PropertyValueDefinition node, V value);
@@ -206,7 +207,11 @@ public interface VoidNodeVisitor<V> {
 
     void visit(Script node, V value);
 
+    void visit(SpreadArrayLiteral node, V value);
+
     void visit(SpreadElement node, V value);
+
+    void visit(SpreadElementMethod node, V value);
 
     void visit(SpreadProperty node, V value);
 

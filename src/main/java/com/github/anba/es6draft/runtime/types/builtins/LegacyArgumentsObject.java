@@ -29,7 +29,7 @@ public final class LegacyArgumentsObject extends OrdinaryObject {
     private final ParameterMap parameterMap;
 
     /**
-     * Constructs a new legacy Arguments object.
+     * Constructs a new Legacy Arguments object.
      * 
      * @param realm
      *            the realm object
@@ -48,7 +48,7 @@ public final class LegacyArgumentsObject extends OrdinaryObject {
     }
 
     /**
-     * Creates a legacy {@link ArgumentsObject} object
+     * Creates a Legacy Arguments object
      * <p>
      * [Called from generated code]
      * 
@@ -64,15 +64,14 @@ public final class LegacyArgumentsObject extends OrdinaryObject {
      *            the current lexical environment
      * @return the legacy arguments object
      */
-    public static LegacyArgumentsObject CreateLegacyArgumentsObject(ExecutionContext cx,
-            FunctionObject func, Object[] args, String[] formals,
-            LexicalEnvironment<? extends DeclarativeEnvironmentRecord> env) {
+    public static LegacyArgumentsObject CreateLegacyArgumentsObject(ExecutionContext cx, FunctionObject func,
+            Object[] args, String[] formals, LexicalEnvironment<? extends DeclarativeEnvironmentRecord> env) {
         ParameterMap map = ParameterMap.create(args.length, formals, env);
         return createLegacyArguments(cx, func, args, map);
     }
 
     /**
-     * Creates a legacy {@link ArgumentsObject} object
+     * Creates a Legacy Arguments object
      * <p>
      * [Called from generated code]
      * 
@@ -86,13 +85,13 @@ public final class LegacyArgumentsObject extends OrdinaryObject {
      *            the arguments object
      * @return the legacy arguments object
      */
-    public static LegacyArgumentsObject CreateLegacyArgumentsObject(ExecutionContext cx,
-            FunctionObject func, Object[] args, ArgumentsObject arguments) {
+    public static LegacyArgumentsObject CreateLegacyArgumentsObject(ExecutionContext cx, FunctionObject func,
+            Object[] args, ArgumentsObject arguments) {
         return createLegacyArguments(cx, func, args, arguments.getParameterMap());
     }
 
     /**
-     * Creates a legacy {@link ArgumentsObject} object
+     * Creates a Legacy Arguments object
      * <p>
      * [Called from generated code]
      * 
@@ -104,13 +103,13 @@ public final class LegacyArgumentsObject extends OrdinaryObject {
      *            the function arguments
      * @return the legacy arguments object
      */
-    public static LegacyArgumentsObject CreateLegacyArgumentsObject(ExecutionContext cx,
-            FunctionObject func, Object[] args) {
+    public static LegacyArgumentsObject CreateLegacyArgumentsObject(ExecutionContext cx, FunctionObject func,
+            Object[] args) {
         return createLegacyArguments(cx, func, args, null);
     }
 
     /**
-     * Creates a legacy {@link ArgumentsObject} object
+     * Creates a Legacy Arguments object
      * 
      * @param cx
      *            the execution context
@@ -122,11 +121,16 @@ public final class LegacyArgumentsObject extends OrdinaryObject {
      *            the parameter map
      * @return the legacy arguments object
      */
-    private static LegacyArgumentsObject createLegacyArguments(ExecutionContext cx,
-            FunctionObject func, Object[] args, ParameterMap map) {
+    private static LegacyArgumentsObject createLegacyArguments(ExecutionContext cx, FunctionObject func, Object[] args,
+            ParameterMap map) {
         LegacyArgumentsObject obj = new LegacyArgumentsObject(cx.getRealm(), func, args, map);
         obj.setPrototype(cx.getIntrinsic(Intrinsics.ObjectPrototype));
         return obj;
+    }
+
+    @Override
+    public long getLength() {
+        return arguments.length;
     }
 
     @Override
@@ -135,22 +139,19 @@ public final class LegacyArgumentsObject extends OrdinaryObject {
     }
 
     @Override
-    protected boolean setPropertyValue(ExecutionContext cx, long propertyKey, Object value,
-            Property current) {
+    protected boolean setPropertyValue(ExecutionContext cx, long propertyKey, Object value, Property current) {
         // this object is effectively unmodifiable
         return true;
     }
 
     @Override
-    protected boolean setPropertyValue(ExecutionContext cx, String propertyKey, Object value,
-            Property current) {
+    protected boolean setPropertyValue(ExecutionContext cx, String propertyKey, Object value, Property current) {
         // this object is effectively unmodifiable
         return true;
     }
 
     @Override
-    protected boolean setPropertyValue(ExecutionContext cx, Symbol propertyKey, Object value,
-            Property current) {
+    protected boolean setPropertyValue(ExecutionContext cx, Symbol propertyKey, Object value, Property current) {
         // this object is effectively unmodifiable
         return true;
     }
@@ -309,15 +310,13 @@ public final class LegacyArgumentsObject extends OrdinaryObject {
     }
 
     @Override
-    protected boolean defineProperty(ExecutionContext cx, String propertyKey,
-            PropertyDescriptor desc) {
+    protected boolean defineProperty(ExecutionContext cx, String propertyKey, PropertyDescriptor desc) {
         // this object is effectively unmodifiable
         return true;
     }
 
     @Override
-    protected boolean defineProperty(ExecutionContext cx, Symbol propertyKey,
-            PropertyDescriptor desc) {
+    protected boolean defineProperty(ExecutionContext cx, Symbol propertyKey, PropertyDescriptor desc) {
         // this object is effectively unmodifiable
         return true;
     }

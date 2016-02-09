@@ -168,7 +168,7 @@ public final class WeakMapPrototype extends OrdinaryObject implements Initializa
             WeakHashMap<ScriptObject, Object> entries = m.getWeakMapData();
             /* step 5 */
             if (!Type.isObject(key)) {
-                throw newTypeError(cx, Messages.Key.NotObjectType);
+                throw newTypeError(cx, Messages.Key.WeakMapKeyNotObject);
             }
             /* steps 6-8 */
             entries.put(Type.objectValue(key), value);

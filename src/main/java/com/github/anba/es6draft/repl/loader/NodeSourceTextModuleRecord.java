@@ -86,15 +86,14 @@ public final class NodeSourceTextModuleRecord implements ModuleRecord, Cloneable
     }
 
     @Override
-    public Set<String> getExportedNames(Set<ModuleRecord> exportStarSet) throws IOException,
-            MalformedNameException, ResolutionException {
+    public Set<String> getExportedNames(Set<ModuleRecord> exportStarSet)
+            throws IOException, MalformedNameException, ResolutionException {
         return module.getExportedNames(exportStarSet);
     }
 
     @Override
     public ModuleExport resolveExport(String exportName, Map<ModuleRecord, Set<String>> resolveSet,
-            Set<ModuleRecord> exportStarSet) throws IOException, MalformedNameException,
-            ResolutionException {
+            Set<ModuleRecord> exportStarSet) throws IOException, MalformedNameException, ResolutionException {
         return module.resolveExport(exportName, resolveSet, exportStarSet);
     }
 
@@ -134,18 +133,16 @@ public final class NodeSourceTextModuleRecord implements ModuleRecord, Cloneable
      * @throws CompilationException
      *             if the parsed module source cannot be compiled
      */
-    public static NodeSourceTextModuleRecord ParseModule(ScriptLoader scriptLoader,
-            SourceIdentifier sourceCodeId, ModuleSource source) throws IOException,
-            ParserException, CompilationException {
+    public static NodeSourceTextModuleRecord ParseModule(ScriptLoader scriptLoader, SourceIdentifier sourceCodeId,
+            ModuleSource source) throws IOException, ParserException, CompilationException {
         // Add an implicit "require" binding to the lexical environment of the module.
-        com.github.anba.es6draft.ast.Module parsedBody = scriptLoader.parseModule(
-                source.toSource(), source.sourceCode());
+        com.github.anba.es6draft.ast.Module parsedBody = scriptLoader.parseModule(source.toSource(),
+                source.sourceCode());
         ModuleScope moduleScope = parsedBody.getScope();
         if (!moduleScope.isDeclared(new Name("require"))) {
             moduleScope.addImplicitBinding(new Name("require"));
         }
-        SourceTextModuleRecord sourceText = SourceTextModuleRecord.ParseModule(scriptLoader,
-                sourceCodeId, parsedBody);
+        SourceTextModuleRecord sourceText = SourceTextModuleRecord.ParseModule(scriptLoader, sourceCodeId, parsedBody);
         return new NodeSourceTextModuleRecord(sourceText);
     }
 }

@@ -24,7 +24,12 @@ import java.util.Iterator;
 import java.util.List;
 
 import com.github.anba.es6draft.ast.*;
-import com.github.anba.es6draft.ast.synthetic.*;
+import com.github.anba.es6draft.ast.synthetic.ExpressionMethod;
+import com.github.anba.es6draft.ast.synthetic.MethodDefinitionsMethod;
+import com.github.anba.es6draft.ast.synthetic.PropertyDefinitionsMethod;
+import com.github.anba.es6draft.ast.synthetic.SpreadArrayLiteral;
+import com.github.anba.es6draft.ast.synthetic.SpreadElementMethod;
+import com.github.anba.es6draft.ast.synthetic.StatementListMethod;
 import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
@@ -81,9 +86,9 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
         ComprehensionExpression("comprehensionExpression"),
         GeneratorExpression("generatorExpression"),
         YieldExpression("yieldExpression"),
-        LetExpression("letExpression"),
         ClassExpression("classExpression"),
-        NewTargetExpression("newTargetExpression"),
+        MetaProperty("metaProperty"),
+        Super("super"),
 
         // Statements
         EmptyStatement("emptyStatement"),
@@ -137,9 +142,10 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
         ClassMethod("classMethod"),
 
         // New node types
-        SuperExpression(),
         AwaitExpression(),
-        FunctionSent(),
+
+        // Removed node types
+        LetExpression("letExpression"),
 
         ;
         /* @formatter:on */
@@ -156,8 +162,17 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
         }
     }
 
-    private static EnumMap<Type, Callable> toBuilderMap(ExecutionContext cx,
-            ScriptObject builderObject) {
+    private enum GeneratorStyle {
+        ES6("es6"), Legacy("legacy");
+
+        final String name;
+
+        private GeneratorStyle(String name) {
+            this.name = name;
+        }
+    }
+
+    private static EnumMap<Type, Callable> toBuilderMap(ExecutionContext cx, ScriptObject builderObject) {
         EnumMap<Type, Callable> map = new EnumMap<>(Type.class);
         for (Type builder : Type.values()) {
             String methodName = builder.name;
@@ -189,8 +204,7 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
         return builder.get(type).call(cx, NULL, arguments);
     }
 
-    private ReflectParser(ExecutionContext cx, boolean location, String sourceInfo,
-            EnumMap<Type, Callable> builder) {
+    private ReflectParser(ExecutionContext cx, boolean location, String sourceInfo, EnumMap<Type, Callable> builder) {
         this.cx = cx;
         this.location = location;
         this.sourceInfo = sourceInfo;
@@ -250,8 +264,8 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
      *            map to customize AST node processing
      * @return the parsed node
      */
-    public static Object parse(ExecutionContext cx, String sourceCode, boolean location,
-            String sourceInfo, int line, EnumMap<Type, Callable> builder) {
+    public static Object parse(ExecutionContext cx, String sourceCode, boolean location, String sourceInfo, int line,
+            EnumMap<Type, Callable> builder) {
         Realm realm = cx.getRealm();
         ReflectParser reflect = new ReflectParser(cx, location, sourceInfo, builder);
         Source source = new Source("<parse>", line);
@@ -468,12 +482,11 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
         return null;
     }
 
-    private <STATEMENT extends Statement & AbruptNode> Object createLabelledStatement(
-            STATEMENT node, Object body) {
+    private <STATEMENT extends Statement & AbruptNode> Object createLabelledStatement(STATEMENT node, Object body) {
         if (node.getLabelSet().isEmpty()) {
             return body;
         }
-        Iterator<String> labels = new ArrayDeque<String>(node.getLabelSet()).descendingIterator();
+        Iterator<String> labels = new ArrayDeque<>(node.getLabelSet()).descendingIterator();
         while (labels.hasNext()) {
             Object label = createIdentifier(labels.next());
             if (hasBuilder(Type.LabeledStatement)) {
@@ -547,6 +560,9 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
         addProperty(function, "body", body);
         addProperty(function, "rest", rest);
         addProperty(function, "generator", generator);
+        if (generator) {
+            addProperty(function, "style", GeneratorStyle.ES6.name);
+        }
         addProperty(function, "expression", expression);
         return function;
     }
@@ -712,6 +728,7 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
         String kind = "init";
         boolean method = false;
         boolean shorthand = node.getPropertyName() == null;
+        boolean computed = node.getPropertyName() instanceof ComputedPropertyName;
         if (hasBuilder(Type.PropertyPattern)) {
             return call(Type.PropertyPattern, node, kind, key, _value);
         }
@@ -721,6 +738,7 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
         addProperty(property, "kind", kind);
         addProperty(property, "method", method);
         addProperty(property, "shorthand", shorthand);
+        addProperty(property, "computed", computed);
         return property;
     }
 
@@ -898,6 +916,7 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
         String kind = "init";
         boolean method = false;
         boolean shorthand = node.getPropertyName() == null;
+        boolean computed = node.getPropertyName() instanceof ComputedPropertyName;
         if (hasBuilder(Type.PropertyPattern)) {
             return call(Type.PropertyPattern, node, kind, key, _value);
         }
@@ -907,6 +926,7 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
         addProperty(property, "kind", kind);
         addProperty(property, "method", method);
         addProperty(property, "shorthand", shorthand);
+        addProperty(property, "computed", computed);
         return property;
     }
 
@@ -1000,24 +1020,24 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
 
     @Override
     public Object visit(ClassDeclaration node, Void value) {
-        Object name = acceptOrNull(node.getIdentifier(), value);
-        Object heritage = acceptOrNull(node.getHeritage(), value);
+        Object id = acceptOrNull(node.getIdentifier(), value);
+        Object superClass = acceptOrNull(node.getHeritage(), value);
         Object body = createClassBody(node, value);
         OrdinaryObject classDef = createClass(node, Type.ClassStatement);
-        addProperty(classDef, "name", name);
-        addProperty(classDef, "heritage", heritage);
+        addProperty(classDef, "id", id);
+        addProperty(classDef, "superClass", superClass);
         addProperty(classDef, "body", body);
         return classDef;
     }
 
     @Override
     public Object visit(ClassExpression node, Void value) {
-        Object name = acceptOrNull(node.getIdentifier(), value);
-        Object heritage = acceptOrNull(node.getHeritage(), value);
+        Object id = acceptOrNull(node.getIdentifier(), value);
+        Object superClass = acceptOrNull(node.getHeritage(), value);
         Object body = createClassBody(node, value);
         OrdinaryObject classDef = createClass(node, Type.ClassExpression);
-        addProperty(classDef, "name", name);
-        addProperty(classDef, "heritage", heritage);
+        addProperty(classDef, "id", id);
+        addProperty(classDef, "superClass", superClass);
         addProperty(classDef, "body", body);
         return classDef;
     }
@@ -1177,8 +1197,7 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
         Object source = NULL;
         switch (node.getType()) {
         case All:
-            specifiers = createListFromValues(Collections
-                    .singletonList(createNode(Type.ExportBatchSpecifier)));
+            specifiers = createListFromValues(Collections.singletonList(createNode(Type.ExportBatchSpecifier)));
             source = createLiteral(node.getModuleSpecifier());
             break;
         case External:
@@ -1388,7 +1407,16 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
 
     @Override
     public Object visit(FunctionSent node, Void value) {
-        return createExpression(node, Type.FunctionSent);
+        // TODO: Attach location information.
+        Object meta = createIdentifier("function");
+        Object property = createIdentifier("sent");
+        if (hasBuilder(Type.MetaProperty)) {
+            return call(Type.MetaProperty, node, meta, property);
+        }
+        OrdinaryObject expression = createExpression(node, Type.MetaProperty);
+        addProperty(expression, "meta", meta);
+        addProperty(expression, "property", property);
+        return expression;
     }
 
     @Override
@@ -1417,6 +1445,7 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
         if (hasBuilder(Type.FunctionDeclaration)) {
             return call(Type.FunctionDeclaration, node, id, params, body, generator, expression);
         }
+        GeneratorStyle style = node instanceof LegacyGeneratorDeclaration ? GeneratorStyle.Legacy : GeneratorStyle.ES6;
         OrdinaryObject function = createFunction(node, Type.FunctionDeclaration);
         addProperty(function, "id", id);
         addProperty(function, "params", params);
@@ -1424,6 +1453,7 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
         addProperty(function, "body", body);
         addProperty(function, "rest", rest);
         addProperty(function, "generator", generator);
+        addProperty(function, "style", style.name);
         addProperty(function, "expression", expression);
         return function;
     }
@@ -1440,6 +1470,7 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
         if (hasBuilder(Type.FunctionExpression)) {
             return call(Type.FunctionExpression, node, id, params, body, generator, expression);
         }
+        GeneratorStyle style = node instanceof LegacyGeneratorExpression ? GeneratorStyle.Legacy : GeneratorStyle.ES6;
         OrdinaryObject function = createFunction(node, Type.FunctionExpression);
         addProperty(function, "id", id);
         addProperty(function, "params", params);
@@ -1447,6 +1478,7 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
         addProperty(function, "body", body);
         addProperty(function, "rest", rest);
         addProperty(function, "generator", generator);
+        addProperty(function, "style", style.name);
         addProperty(function, "expression", expression);
         return function;
     }
@@ -1686,6 +1718,7 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
         String kind = methodKind(node, "init");
         boolean method = !isGetterOrSetter(node);
         boolean shorthand = false;
+        boolean computed = node.getPropertyName() instanceof ComputedPropertyName;
         if (hasBuilder(Type.Property)) {
             return call(Type.Property, node, kind, key, _value);
         }
@@ -1695,6 +1728,7 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
         addProperty(property, "kind", kind);
         addProperty(property, "method", method);
         addProperty(property, "shorthand", shorthand);
+        addProperty(property, "computed", computed);
         return property;
     }
 
@@ -1711,6 +1745,7 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
         }
         OrdinaryObject program = createNode(node, Type.Program);
         addProperty(program, "body", body);
+        addProperty(program, "sourceType", "module");
         return program;
     }
 
@@ -1743,7 +1778,16 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
 
     @Override
     public Object visit(NewTarget node, Void value) {
-        return createExpression(node, Type.NewTargetExpression);
+        // TODO: Attach location information.
+        Object meta = createIdentifier("new");
+        Object property = createIdentifier("target");
+        if (hasBuilder(Type.MetaProperty)) {
+            return call(Type.MetaProperty, node, meta, property);
+        }
+        OrdinaryObject expression = createExpression(node, Type.MetaProperty);
+        addProperty(expression, "meta", meta);
+        addProperty(expression, "property", property);
+        return expression;
     }
 
     @Override
@@ -1813,6 +1857,7 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
         String kind = "init";
         boolean method = false;
         boolean shorthand = true;
+        boolean computed = false;
         if (hasBuilder(Type.Property)) {
             return call(Type.Property, node, kind, key, _value);
         }
@@ -1822,6 +1867,7 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
         addProperty(property, "kind", kind);
         addProperty(property, "method", method);
         addProperty(property, "shorthand", shorthand);
+        addProperty(property, "computed", computed);
         return property;
     }
 
@@ -1842,6 +1888,7 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
         String kind = "init";
         boolean method = false;
         boolean shorthand = false;
+        boolean computed = node.getPropertyName() instanceof ComputedPropertyName;
         if (hasBuilder(Type.Property)) {
             return call(Type.Property, node, kind, key, _value);
         }
@@ -1851,6 +1898,7 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
         addProperty(property, "kind", kind);
         addProperty(property, "method", method);
         addProperty(property, "shorthand", shorthand);
+        addProperty(property, "computed", computed);
         return property;
     }
 
@@ -1884,6 +1932,7 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
         }
         OrdinaryObject program = createNode(node, Type.Program);
         addProperty(program, "body", body);
+        addProperty(program, "sourceType", "script");
         return program;
     }
 
@@ -1921,62 +1970,66 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
 
     @Override
     public Object visit(SuperCallExpression node, Void value) {
-        Object property = NULL;
-        boolean computed = false;
-        Object arguments = createList(node.getArguments(), value);
-        String kind = "call";
-
-        OrdinaryObject expression = createExpression(node, Type.SuperExpression);
-        addProperty(expression, "property", property);
-        addProperty(expression, "computed", computed);
+        Object callee = superNode(node);
+        ArrayObject arguments = createList(node.getArguments(), value);
+        if (hasBuilder(Type.CallExpression)) {
+            return call(Type.CallExpression, node, callee, arguments);
+        }
+        OrdinaryObject expression = createExpression(node, Type.CallExpression);
+        addProperty(expression, "callee", callee);
         addProperty(expression, "arguments", arguments);
-        addProperty(expression, "kind", kind);
         return expression;
     }
 
     @Override
     public Object visit(SuperElementAccessor node, Void value) {
-        Object property = node.getExpression().accept(this, value);
+        Object object = superNode(node);
+        Object property = node.getElement().accept(this, value);
         boolean computed = true;
-        Object arguments = NULL;
-        String kind = "property";
-
-        OrdinaryObject expression = createExpression(node, Type.SuperExpression);
+        if (hasBuilder(Type.MemberExpression)) {
+            return call(Type.MemberExpression, node, object, property, computed);
+        }
+        OrdinaryObject expression = createExpression(node, Type.MemberExpression);
+        addProperty(expression, "object", object);
         addProperty(expression, "property", property);
         addProperty(expression, "computed", computed);
-        addProperty(expression, "arguments", arguments);
-        addProperty(expression, "kind", kind);
         return expression;
     }
 
     @Override
     public Object visit(SuperNewExpression node, Void value) {
-        Object property = NULL;
-        boolean computed = false;
-        Object arguments = createList(node.getArguments(), value);
-        String kind = "new";
-
-        OrdinaryObject expression = createExpression(node, Type.SuperExpression);
-        addProperty(expression, "property", property);
-        addProperty(expression, "computed", computed);
+        Object callee = superNode(node);
+        ArrayObject arguments = createList(node.getArguments(), value);
+        if (hasBuilder(Type.NewExpression)) {
+            return call(Type.NewExpression, node, callee, arguments);
+        }
+        OrdinaryObject expression = createExpression(node, Type.NewExpression);
+        addProperty(expression, "callee", callee);
         addProperty(expression, "arguments", arguments);
-        addProperty(expression, "kind", kind);
         return expression;
     }
 
     @Override
     public Object visit(SuperPropertyAccessor node, Void value) {
+        Object object = superNode(node);
         Object property = createIdentifier(node.getName());
         boolean computed = false;
-        Object arguments = NULL;
-        String kind = "property";
-
-        OrdinaryObject expression = createExpression(node, Type.SuperExpression);
+        if (hasBuilder(Type.MemberExpression)) {
+            return call(Type.MemberExpression, node, object, property, computed);
+        }
+        OrdinaryObject expression = createExpression(node, Type.MemberExpression);
+        addProperty(expression, "object", object);
         addProperty(expression, "property", property);
         addProperty(expression, "computed", computed);
-        addProperty(expression, "arguments", arguments);
-        addProperty(expression, "kind", kind);
         return expression;
+    }
+
+    private Object superNode(Node node) {
+        // TODO: Attach correct source location.
+        if (hasBuilder(Type.Super)) {
+            return call(Type.Super, node);
+        }
+        return createNode(node, Type.Super);
     }
 
     @Override
@@ -2204,11 +2257,13 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
     @Override
     public Object visit(YieldExpression node, Void value) {
         Object argument = acceptOrNull(node.getExpression(), value);
+        boolean delegate = node.isDelegatedYield();
         if (hasBuilder(Type.YieldExpression)) {
-            return call(Type.YieldExpression, node, argument);
+            return call(Type.YieldExpression, node, argument, delegate);
         }
         OrdinaryObject expression = createExpression(node, Type.YieldExpression);
         addProperty(expression, "argument", argument);
+        addProperty(expression, "delegate", delegate);
         return expression;
     }
 }

@@ -30,19 +30,28 @@ public final class ListIterator<T> extends OrdinaryObject {
     /** [[IteratorNext]] */
     private final ListIteratorNext iteratorNext;
 
-    private ListIterator(Realm realm, Iterator<T> iterator, ListIteratorNext iteratorNext,
-            ScriptObject prototype) {
+    private ListIterator(Realm realm, Iterator<T> iterator, ListIteratorNext iteratorNext, ScriptObject prototype) {
         super(realm);
         this.iterator = iterator;
         this.iteratorNext = iteratorNext;
         setPrototype(prototype);
     }
 
-    Iterator<T> getIterator() {
+    /**
+     * [[IteratedList]] and [[ListIteratorNextIndex]]
+     * 
+     * @return the internal iterator
+     */
+    public Iterator<T> getIterator() {
         return iterator;
     }
 
-    ListIteratorNext getIteratorNext() {
+    /**
+     * [[IteratorNext]]
+     * 
+     * @return the iterator next function
+     */
+    public ListIteratorNext getIteratorNext() {
         return iteratorNext;
     }
 
@@ -61,10 +70,11 @@ public final class ListIterator<T> extends OrdinaryObject {
      */
     public static <T> ListIterator<T> CreateListIterator(ExecutionContext cx, Iterator<T> iter) {
         /* steps 1-5 */
-        ListIterator<T> iterator = new ListIterator<>(cx.getRealm(), iter, new ListIteratorNext(
-                cx.getRealm()), cx.getIntrinsic(Intrinsics.IteratorPrototype));
+        ListIteratorNext next = new ListIteratorNext(cx.getRealm());
+        ListIterator<T> iterator = new ListIterator<>(cx.getRealm(), iter, next,
+                cx.getIntrinsic(Intrinsics.IteratorPrototype));
         /* step 6 */
-        CreateMethodProperty(cx, iterator, "next", iterator.iteratorNext);
+        CreateMethodProperty(cx, iterator, "next", next);
         /* step 7 */
         return iterator;
     }

@@ -104,6 +104,7 @@ public final class ModuleEnvironmentRecord extends DeclarativeEnvironmentRecord 
     }
 
     private static boolean hasDirectBinding(ModuleRecord module, String name) {
+        // FIXME: spec bug - direct vs indirect binding?
         // Binding binding = module.getEnvironment().getEnvRec().getBinding(name);
         // return binding != null && !(binding instanceof IndirectBinding);
         return module.getEnvironment().getEnvRec().hasBinding(name);

@@ -16,17 +16,31 @@ import java.util.Set;
  * </ul>
  */
 public abstract class IterationStatement extends BreakableStatement {
-    protected IterationStatement(long beginPosition, long endPosition, EnumSet<Abrupt> abrupt,
-            Set<String> labelSet) {
+    protected IterationStatement(long beginPosition, long endPosition, EnumSet<Abrupt> abrupt, Set<String> labelSet) {
         super(beginPosition, endPosition, abrupt, labelSet);
     }
 
     /**
-     * Returns <code>true</code> if this node is the target of a <tt>ContinueStatement</tt>.
+     * Returns <code>true</code> if this node is the target of a <code>ContinueStatement</code>.
      * 
-     * @return <code>true</code> if this node is the target of a <tt>ContinueStatement</tt>
+     * @return <code>true</code> if this node is the target of a <code>ContinueStatement</code>
      */
     public final boolean hasContinue() {
         return getAbrupt().contains(Abrupt.Continue);
     }
+
+    /**
+     * Returns this {@code IterationStatement}'s statement node.
+     * 
+     * @return the statement node
+     */
+    public abstract Statement getStatement();
+
+    /**
+     * Sets this {@code IterationStatement}'s statement node.
+     * 
+     * @param statement
+     *            the new statement node
+     */
+    public abstract void setStatement(Statement statement);
 }

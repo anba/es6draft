@@ -18,6 +18,20 @@ public final class Strings {
     }
 
     /**
+     * Returns the string representation of a single code point.
+     * 
+     * @param codePoint
+     *            the code point
+     * @return the result string
+     */
+    public static String fromCodePoint(int codePoint) {
+        if (Character.isBmpCodePoint(codePoint)) {
+            return String.valueOf((char) codePoint);
+        }
+        return String.valueOf(Character.toChars(codePoint));
+    }
+
+    /**
      * Removes leading whitespace.
      * 
      * @param s

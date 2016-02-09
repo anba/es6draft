@@ -89,24 +89,24 @@ public enum CompatibilityOption {
     CatchVarStatement,
 
     /**
-     * Extension: RegExp statics
+     * Web-Extension: RegExp statics
      */
     RegExpStatics,
 
     /**
-     * Extension: Function.prototype.caller and Function.prototype.arguments
+     * Web-Extension: Function.prototype.arguments
      */
-    FunctionPrototype,
+    FunctionArguments,
 
     /**
-     * Extension: arguments.caller (not implemented)
+     * Web-Extension: Function.prototype.caller
+     */
+    FunctionCaller,
+
+    /**
+     * Web-Extension: arguments.caller (not implemented)
      */
     ArgumentsCaller,
-
-    /**
-     * Extension: Detect duplicate property definitions
-     */
-    DuplicateProperties,
 
     /**
      * Moz-Extension: for-each statement
@@ -124,19 +124,9 @@ public enum CompatibilityOption {
     ExpressionClosure,
 
     /**
-     * Moz-Extension: let statement
-     */
-    LetStatement,
-
-    /**
      * Moz-Extension: legacy (star-less) generators
      */
     LegacyGenerator,
-
-    /**
-     * Moz-Extension: legacy comprehension forms
-     */
-    LegacyComprehension,
 
     /**
      * Moz-Extension: Reflect.parse() function
@@ -149,7 +139,7 @@ public enum CompatibilityOption {
     ExtendedPrecision,
 
     /**
-     * Moz-Extension: Implicit strict functions include <tt>"use strict;"</tt> directive in source
+     * Moz-Extension: Implicit strict functions include {@code "use strict;"} directive in source
      */
     ImplicitStrictDirective,
 
@@ -164,134 +154,139 @@ public enum CompatibilityOption {
     ForInVarInitializer,
 
     /**
-     * Moz-Extension: RegExp.prototype.source returns the empty string instead of {@code (?:)}
+     * Moz-Extension: legacy comprehension forms (disabled)
      */
-    RegExpEmptySource,
+    LegacyComprehension,
 
     /**
-     * Moz-Extension: let expression
+     * Moz-Extension: let expression (disabled)
      */
     LetExpression,
 
     /**
-     * ES7-Extension: Async Function Definitions
+     * Moz-Extension: let statement (disabled)
      */
-    AsyncFunction,
+    LetStatement,
 
     /**
-     * ES7-Extension: Array and Generator Comprehension
-     */
-    Comprehension,
-
-    /**
-     * ES7-Extension: Exponentiation operator {@code **}
+     * Exponentiation operator {@code **} (Stage 3 proposal)
      */
     Exponentiation,
 
     /**
-     * ES7-Extension: Realm Objects
-     */
-    Realm,
-
-    /**
-     * ES7-Extension: Loader Objects
-     */
-    Loader,
-
-    /**
-     * ES7-Extension: System Object
-     */
-    System,
-
-    /**
-     * ES7-Extension: Array.prototype.includes
+     * Array.prototype.includes (Stage 4 proposal)
      */
     ArrayIncludes,
 
     /**
-     * ES7-Extension: function.sent
+     * {@code function.sent} meta property (Stage 2 proposal)
      */
     FunctionSent,
 
     /**
-     * ES7-Extension: Function.prototype.toMethod
+     * Async Function Definitions (Stage 3 proposal)
      */
-    FunctionToMethod,
+    AsyncFunction,
 
     /**
-     * ES7-Extension: new super()
-     */
-    NewSuper,
-
-    /**
-     * ES7-Extension: <tt>export from</tt> additions
+     * {@code export from} additions (Stage 1 proposal)
      */
     ExportFrom,
 
     /**
-     * ES7-Extension: ArrayBuffer.transfer
+     * ArrayBuffer.transfer (Stage 1 proposal)
      */
     ArrayBufferTransfer,
 
     /**
-     * ES7-Extension: Decorators
+     * Decorators (Stage 1 proposal)
      */
     Decorator,
 
     /**
-     * ES7-Extension: Object Rest Destructuring
+     * Object Rest Destructuring (Stage 2 proposal)
      */
     ObjectRestDestructuring,
 
     /**
-     * ES7-Extension: Object Spread Initializer
+     * Object Spread Initializer (Stage 2 proposal)
      */
     ObjectSpreadInitializer,
 
     /**
-     * ES7-Extension: Trailing comma in function calls
+     * Trailing comma in function calls (Stage 3 proposal)
      */
     FunctionCallTrailingComma,
 
     /**
-     * ES7-Extension: String.prototype.trimLeft and trimRight
+     * String.prototype.trimLeft and trimRight (Stage 1 proposal)
      */
     StringTrim,
 
     /**
-     * ES7-Extension: StaticClassProperties.
+     * Class Property Declarations (static properties) (Stage 1 proposal)
      */
     StaticClassProperties,
 
     /**
-     * ES7-Extension: Object.values and Object.entries functions
+     * Object.values and Object.entries functions (Stage 3 proposal)
      */
     ObjectValuesEntries,
 
     /**
-     * ES7-Extension: String.prototype.padStart and padEnd
+     * String.prototype.padStart and padEnd (Stage 3 proposal)
      */
     StringPad,
 
     /**
-     * ES7-Extension: String.prototype.matchAll
+     * String.prototype.matchAll (Stage 1 proposal)
      */
     StringMatchAll,
 
     /**
-     * Type annotations.
+     * Type annotations (limited parser support only).
      */
     TypeAnnotation,
 
     /**
-     * ArrayBuffer: Missing length parameter in constructor call
+     * Function.prototype.toMethod (deferred extension)
      */
-    ArrayBufferMissingLength,
+    FunctionToMethod,
+
+    /**
+     * Array and Generator Comprehension (deferred extension)
+     */
+    Comprehension,
+
+    /**
+     * new super() (deferred extension)
+     */
+    NewSuper,
+
+    /**
+     * Realm Objects (deferred extension)
+     */
+    Realm,
+
+    /**
+     * Loader Objects (deferred extension)
+     */
+    Loader,
+
+    /**
+     * System Object (deferred extension)
+     */
+    System,
 
     /**
      * Track unhandled rejected promise objects
      */
     PromiseRejection,
+
+    /**
+     * ArrayBuffer: Missing length parameter in constructor call
+     */
+    ArrayBufferMissingLength,
 
     ;
 
@@ -310,7 +305,7 @@ public enum CompatibilityOption {
      * @return the options set for web-compatibility
      */
     public static final Set<CompatibilityOption> WebCompatibility() {
-        return addAll(AnnexB(), EnumSet.range(RegExpStatics, FunctionPrototype));
+        return addAll(AnnexB(), EnumSet.range(RegExpStatics, FunctionCaller));
     }
 
     /**
@@ -341,12 +336,112 @@ public enum CompatibilityOption {
     }
 
     /**
-     * Returns a set of all options for proposed ES7 extensions.
+     * Staging level of ECMAScript proposals.
      * 
-     * @return the options set for proposed ES7 extensions
+     * @see <a href="https://tc39.github.io/process-document/">The TC39 Process</a>
      */
-    public static final Set<CompatibilityOption> ECMAScript7() {
-        return EnumSet.range(AsyncFunction, TypeAnnotation);
+    public enum Stage {
+        /**
+         * Stage 0 (Strawman)
+         */
+        Strawman(0),
+
+        /**
+         * Stage 1 (Proposal)
+         */
+        Proposal(1),
+
+        /**
+         * Stage 2 (Draft)
+         */
+        Draft(2),
+
+        /**
+         * Stage 3 (Candidate)
+         */
+        Candidate(3),
+
+        /**
+         * Stage 4 (Finished)
+         */
+        Finished(4)
+
+        ;
+
+        private final int level;
+
+        private Stage(int level) {
+            this.level = level;
+        }
+
+        /**
+         * Returns the staging level.
+         * 
+         * @return the staging level
+         */
+        public int getLevel() {
+            return level;
+        }
+    }
+
+    /**
+     * Returns a set of all options for proposed stage extensions.
+     * 
+     * @param stage
+     *            the requested staging level
+     * @return the options set for proposed stage extensions
+     */
+    public static final Set<CompatibilityOption> of(Stage stage) {
+        switch (stage) {
+        case Strawman:
+            return EnumSet.noneOf(CompatibilityOption.class);
+        case Proposal:
+            return EnumSet.of(ArrayBufferTransfer, ExportFrom, Decorator, StringTrim, StringMatchAll,
+                    StaticClassProperties);
+        case Draft:
+            return EnumSet.of(FunctionSent, ObjectRestDestructuring, ObjectSpreadInitializer);
+        case Candidate:
+            return EnumSet.of(AsyncFunction, Exponentiation, FunctionCallTrailingComma, ObjectValuesEntries, StringPad);
+        case Finished:
+            return EnumSet.of(ArrayIncludes);
+        default:
+            throw new AssertionError();
+        }
+    }
+
+    /**
+     * Returns a set of all options for proposed stage extensions.
+     * 
+     * @param stage
+     *            the required staging level
+     * @return the options set for proposed stage extensions
+     */
+    // TODO: Rename?
+    public static final Set<CompatibilityOption> required(Stage stage) {
+        EnumSet<CompatibilityOption> options = EnumSet.noneOf(CompatibilityOption.class);
+        switch (stage) {
+        case Strawman:
+            options.addAll(of(Stage.Strawman));
+        case Proposal:
+            options.addAll(of(Stage.Proposal));
+        case Draft:
+            options.addAll(of(Stage.Draft));
+        case Candidate:
+            options.addAll(of(Stage.Candidate));
+        case Finished:
+            options.addAll(of(Stage.Finished));
+        default:
+            return options;
+        }
+    }
+
+    /**
+     * Returns a set of all experimental options.
+     * 
+     * @return the options set for experimental features
+     */
+    public static final Set<CompatibilityOption> Experimental() {
+        return EnumSet.range(TypeAnnotation, System);
     }
 
     @SafeVarargs

@@ -85,8 +85,7 @@ public final class NativeConstructor extends BuiltinConstructor {
      * 9.3.2 [[Construct]] (argumentsList, newTarget)
      */
     @Override
-    public ScriptObject construct(ExecutionContext callerContext, Constructor newTarget,
-            Object... args) {
+    public ScriptObject construct(ExecutionContext callerContext, Constructor newTarget, Object... args) {
         try {
             return (ScriptObject) constructMethod.invokeExact(callerContext, newTarget, args);
         } catch (Throwable e) {

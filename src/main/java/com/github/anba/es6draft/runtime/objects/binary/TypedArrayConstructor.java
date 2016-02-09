@@ -58,37 +58,7 @@ public final class TypedArrayConstructor extends BuiltinConstructor implements I
 
     @Override
     public void initialize(Realm realm) {
-        switch (elementType) {
-        case Int8:
-            createProperties(realm, this, Properties_Int8Array.class);
-            break;
-        case Uint8:
-            createProperties(realm, this, Properties_Uint8Array.class);
-            break;
-        case Uint8C:
-            createProperties(realm, this, Properties_Uint8Clamped.class);
-            break;
-        case Int16:
-            createProperties(realm, this, Properties_Int16Array.class);
-            break;
-        case Uint16:
-            createProperties(realm, this, Properties_Uint16Array.class);
-            break;
-        case Int32:
-            createProperties(realm, this, Properties_Int32Array.class);
-            break;
-        case Uint32:
-            createProperties(realm, this, Properties_Uint32Array.class);
-            break;
-        case Float32:
-            createProperties(realm, this, Properties_Float32Array.class);
-            break;
-        case Float64:
-            createProperties(realm, this, Properties_Float64Array.class);
-            break;
-        default:
-            throw new AssertionError();
-        }
+        createProperties(realm, this, propertiesForType(elementType));
     }
 
     @Override
@@ -102,8 +72,7 @@ public final class TypedArrayConstructor extends BuiltinConstructor implements I
     @Override
     public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
         /* step 1 */
-        throw newTypeError(calleeContext(), Messages.Key.InvalidCall,
-                elementType.getConstructorName());
+        throw newTypeError(calleeContext(), Messages.Key.InvalidCall, elementType.getConstructorName());
     }
 
     /**
@@ -122,6 +91,31 @@ public final class TypedArrayConstructor extends BuiltinConstructor implements I
         }
         /* steps 6-7 */
         return ((Constructor) super_).construct(calleeContext, newTarget, args);
+    }
+
+    private static Class<?> propertiesForType(ElementType elementType) {
+        switch (elementType) {
+        case Int8:
+            return Properties_Int8Array.class;
+        case Uint8:
+            return Properties_Uint8Array.class;
+        case Uint8C:
+            return Properties_Uint8Clamped.class;
+        case Int16:
+            return Properties_Int16Array.class;
+        case Uint16:
+            return Properties_Uint16Array.class;
+        case Int32:
+            return Properties_Int32Array.class;
+        case Uint32:
+            return Properties_Uint32Array.class;
+        case Float32:
+            return Properties_Float32Array.class;
+        case Float64:
+            return Properties_Float64Array.class;
+        default:
+            throw new AssertionError();
+        }
     }
 
     /**

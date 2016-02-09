@@ -12,6 +12,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * {@link Future} with an immediate result
  */
+// TODO: Replace with CompletableFuture
 public class ImmediateFuture<V> implements Future<V> {
     private final V result;
 

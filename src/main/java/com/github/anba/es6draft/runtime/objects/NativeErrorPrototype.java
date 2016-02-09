@@ -44,28 +44,25 @@ public final class NativeErrorPrototype extends OrdinaryObject implements Initia
 
     @Override
     public void initialize(Realm realm) {
-        switch (type) {
+        createProperties(realm, this, propertiesForType(type));
+    }
+
+    private static Class<?> propertiesForType(ErrorType errorType) {
+        switch (errorType) {
         case EvalError:
-            createProperties(realm, this, EvalErrorPrototypeProperties.class);
-            break;
+            return EvalErrorPrototypeProperties.class;
         case RangeError:
-            createProperties(realm, this, RangeErrorPrototypeProperties.class);
-            break;
+            return RangeErrorPrototypeProperties.class;
         case ReferenceError:
-            createProperties(realm, this, ReferenceErrorPrototypeProperties.class);
-            break;
+            return ReferenceErrorPrototypeProperties.class;
         case SyntaxError:
-            createProperties(realm, this, SyntaxErrorPrototypeProperties.class);
-            break;
+            return SyntaxErrorPrototypeProperties.class;
         case TypeError:
-            createProperties(realm, this, TypeErrorPrototypeProperties.class);
-            break;
+            return TypeErrorPrototypeProperties.class;
         case URIError:
-            createProperties(realm, this, URIErrorPrototypeProperties.class);
-            break;
+            return URIErrorPrototypeProperties.class;
         case InternalError:
-            createProperties(realm, this, InternalErrorPrototypeProperties.class);
-            break;
+            return InternalErrorPrototypeProperties.class;
         default:
             throw new AssertionError();
         }

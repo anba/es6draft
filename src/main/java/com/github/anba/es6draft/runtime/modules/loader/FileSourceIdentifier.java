@@ -30,8 +30,7 @@ public final class FileSourceIdentifier implements SourceIdentifier {
      * @throws MalformedNameException
      *             if the name cannot be normalized
      */
-    public FileSourceIdentifier(String unnormalizedName, SourceIdentifier referrerId)
-            throws MalformedNameException {
+    public FileSourceIdentifier(String unnormalizedName, SourceIdentifier referrerId) throws MalformedNameException {
         URI normalized = SourceIdentifiers.normalize(unnormalizedName, referrerId);
         this.file = normalized.getPath();
     }

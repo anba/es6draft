@@ -12,9 +12,9 @@ import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
 
 /**
- * Abstract base class for compiled scripts.
+ * Base class for compiled scripts.
  */
-public abstract class CompiledScript extends CompiledObject implements Script {
+public class CompiledScript extends CompiledObject implements Script {
     protected CompiledScript(RuntimeInfo.ScriptBody scriptBody) {
         super(scriptBody);
     }

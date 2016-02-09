@@ -35,12 +35,12 @@ final class JDKRegExpMatcher implements RegExpMatcher {
 
     @Override
     public JDKMatchState matcher(String s) {
-        return new JDKMatchState(getPattern().matcher(s), negativeLAGroups);
+        return new JDKMatchState(getPattern().matcher(s), s, negativeLAGroups);
     }
 
     @Override
     public JDKMatchState matcher(CharSequence s) {
-        return new JDKMatchState(getPattern().matcher(s), negativeLAGroups);
+        return new JDKMatchState(getPattern().matcher(s), s, negativeLAGroups);
     }
 
     @Override

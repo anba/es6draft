@@ -212,16 +212,14 @@ public abstract class Reference<BASE, NAME> {
     /**
      * Reference specialization for binding references.
      */
-    public static final class BindingReference extends
-            Reference<DeclarativeEnvironmentRecord, String> {
+    public static final class BindingReference extends Reference<DeclarativeEnvironmentRecord, String> {
         private final DeclarativeEnvironmentRecord base;
         private final DeclarativeEnvironmentRecord.Binding binding;
         private final String referencedName;
         private final boolean strictReference;
 
-        public BindingReference(DeclarativeEnvironmentRecord base,
-                DeclarativeEnvironmentRecord.Binding binding, String referencedName,
-                boolean strictReference) {
+        public BindingReference(DeclarativeEnvironmentRecord base, DeclarativeEnvironmentRecord.Binding binding,
+                String referencedName, boolean strictReference) {
             this.base = base;
             this.binding = binding;
             this.referencedName = referencedName;
@@ -301,8 +299,7 @@ public abstract class Reference<BASE, NAME> {
     /**
      * Reference specialization for identifier references.
      */
-    public static final class IdentifierReference<RECORD extends EnvironmentRecord> extends
-            Reference<RECORD, String> {
+    public static final class IdentifierReference<RECORD extends EnvironmentRecord> extends Reference<RECORD, String> {
         private final RECORD base;
         private final String referencedName;
         private final boolean strictReference;
@@ -533,7 +530,7 @@ public abstract class Reference<BASE, NAME> {
         }
 
         @Override
-        public void initializeReferencedBinding(Object w) {
+        public final void initializeReferencedBinding(Object w) {
             throw new AssertionError();
         }
 
@@ -610,8 +607,7 @@ public abstract class Reference<BASE, NAME> {
         public void putValue(Object w, ExecutionContext cx) {
             assert Type.isType(w) : "invalid value type";
 
-            ScriptObject base = hasPrimitiveBase() ? ToObject(cx, getBase())
-                    : (ScriptObject) getBase();
+            ScriptObject base = hasPrimitiveBase() ? ToObject(cx, getBase()) : (ScriptObject) getBase();
             boolean succeeded = base.set(cx, referencedName, w, getThisValue());
             if (!succeeded && isStrictReference()) {
                 throw newTypeError(cx, Messages.Key.PropertyNotModifiable, getReferencedName());
@@ -623,8 +619,7 @@ public abstract class Reference<BASE, NAME> {
             /* steps 1-3 (generated code) */
             /* steps 4, 6 (not applicable) */
             /* step 5 */
-            ScriptObject base = hasPrimitiveBase() ? ToObject(cx, getBase())
-                    : (ScriptObject) getBase();
+            ScriptObject base = hasPrimitiveBase() ? ToObject(cx, getBase()) : (ScriptObject) getBase();
             boolean deleteStatus = base.delete(cx, referencedName);
             if (!deleteStatus && isStrictReference()) {
                 throw newTypeError(cx, Messages.Key.PropertyNotDeletable, getReferencedName());
@@ -652,8 +647,7 @@ public abstract class Reference<BASE, NAME> {
             return GetValuePrimitive(cx, base, referencedName);
         }
 
-        private static Object GetValuePrimitive(ExecutionContext cx, Object base,
-                long referencedName) {
+        private static Object GetValuePrimitive(ExecutionContext cx, Object base, long referencedName) {
             if (Type.isString(base) && 0 <= referencedName && referencedName < 0x7FFF_FFFFL) {
                 int index = (int) referencedName;
                 CharSequence str = Type.stringValue(base);
@@ -664,8 +658,8 @@ public abstract class Reference<BASE, NAME> {
             return getPrimitiveBaseProto(cx, Type.of(base)).get(cx, referencedName, base);
         }
 
-        public static void PutValue(ExecutionContext cx, Object base, long referencedName,
-                Object value, boolean strict) {
+        public static void PutValue(ExecutionContext cx, Object base, long referencedName, Object value,
+                boolean strict) {
             assert !Type.isUndefinedOrNull(base);
             boolean succeeded;
             if (base instanceof ScriptObject) {
@@ -721,8 +715,7 @@ public abstract class Reference<BASE, NAME> {
         public void putValue(Object w, ExecutionContext cx) {
             assert Type.isType(w) : "invalid value type";
 
-            ScriptObject base = hasPrimitiveBase() ? ToObject(cx, getBase())
-                    : (ScriptObject) getBase();
+            ScriptObject base = hasPrimitiveBase() ? ToObject(cx, getBase()) : (ScriptObject) getBase();
             boolean succeeded = base.set(cx, referencedName, w, getThisValue());
             if (!succeeded && isStrictReference()) {
                 throw newTypeError(cx, Messages.Key.PropertyNotModifiable, getReferencedName());
@@ -734,8 +727,7 @@ public abstract class Reference<BASE, NAME> {
             /* steps 1-3 (generated code) */
             /* steps 4, 6 (not applicable) */
             /* step 5 */
-            ScriptObject base = hasPrimitiveBase() ? ToObject(cx, getBase())
-                    : (ScriptObject) getBase();
+            ScriptObject base = hasPrimitiveBase() ? ToObject(cx, getBase()) : (ScriptObject) getBase();
             boolean deleteStatus = base.delete(cx, referencedName);
             if (!deleteStatus && isStrictReference()) {
                 throw newTypeError(cx, Messages.Key.PropertyNotDeletable, getReferencedName());
@@ -768,8 +760,7 @@ public abstract class Reference<BASE, NAME> {
             return GetValuePrimitive(cx, base, referencedName);
         }
 
-        private static Object GetValuePrimitive(ExecutionContext cx, Object base,
-                String referencedName) {
+        private static Object GetValuePrimitive(ExecutionContext cx, Object base, String referencedName) {
             if (Type.isString(base)) {
                 if ("length".equals(referencedName)) {
                     CharSequence str = Type.stringValue(base);
@@ -786,8 +777,8 @@ public abstract class Reference<BASE, NAME> {
             return getPrimitiveBaseProto(cx, Type.of(base)).get(cx, referencedName, base);
         }
 
-        public static void PutValue(ExecutionContext cx, Object base, String referencedName,
-                Object value, boolean strict) {
+        public static void PutValue(ExecutionContext cx, Object base, String referencedName, Object value,
+                boolean strict) {
             assert !Type.isUndefinedOrNull(base);
             boolean succeeded;
             if (base instanceof ScriptObject) {
@@ -843,12 +834,10 @@ public abstract class Reference<BASE, NAME> {
         public void putValue(Object w, ExecutionContext cx) {
             assert Type.isType(w) : "invalid value type";
 
-            ScriptObject base = hasPrimitiveBase() ? ToObject(cx, getBase())
-                    : (ScriptObject) getBase();
+            ScriptObject base = hasPrimitiveBase() ? ToObject(cx, getBase()) : (ScriptObject) getBase();
             boolean succeeded = base.set(cx, referencedName, w, getThisValue());
             if (!succeeded && isStrictReference()) {
-                throw newTypeError(cx, Messages.Key.PropertyNotModifiable, getReferencedName()
-                        .toString());
+                throw newTypeError(cx, Messages.Key.PropertyNotModifiable, getReferencedName().toString());
             }
         }
 
@@ -857,12 +846,10 @@ public abstract class Reference<BASE, NAME> {
             /* steps 1-3 (generated code) */
             /* steps 4, 6 (not applicable) */
             /* step 5 */
-            ScriptObject base = hasPrimitiveBase() ? ToObject(cx, getBase())
-                    : (ScriptObject) getBase();
+            ScriptObject base = hasPrimitiveBase() ? ToObject(cx, getBase()) : (ScriptObject) getBase();
             boolean deleteStatus = base.delete(cx, referencedName);
             if (!deleteStatus && isStrictReference()) {
-                throw newTypeError(cx, Messages.Key.PropertyNotDeletable, getReferencedName()
-                        .toString());
+                throw newTypeError(cx, Messages.Key.PropertyNotDeletable, getReferencedName().toString());
             }
             return deleteStatus;
         }
@@ -879,13 +866,12 @@ public abstract class Reference<BASE, NAME> {
             return GetValuePrimitive(cx, base, referencedName);
         }
 
-        private static Object GetValuePrimitive(ExecutionContext cx, Object base,
-                Symbol referencedName) {
+        private static Object GetValuePrimitive(ExecutionContext cx, Object base, Symbol referencedName) {
             return getPrimitiveBaseProto(cx, Type.of(base)).get(cx, referencedName, base);
         }
 
-        public static void PutValue(ExecutionContext cx, Object base, Symbol referencedName,
-                Object value, boolean strict) {
+        public static void PutValue(ExecutionContext cx, Object base, Symbol referencedName, Object value,
+                boolean strict) {
             assert !Type.isUndefinedOrNull(base);
             boolean succeeded;
             if (base instanceof ScriptObject) {
@@ -894,8 +880,7 @@ public abstract class Reference<BASE, NAME> {
                 succeeded = ToObject(cx, base).set(cx, referencedName, value, base);
             }
             if (!succeeded && strict) {
-                throw newTypeError(cx, Messages.Key.PropertyNotModifiable,
-                        referencedName.toString());
+                throw newTypeError(cx, Messages.Key.PropertyNotModifiable, referencedName.toString());
             }
         }
     }
@@ -970,7 +955,7 @@ public abstract class Reference<BASE, NAME> {
         }
 
         @Override
-        public void initializeReferencedBinding(Object w) {
+        public final void initializeReferencedBinding(Object w) {
             throw new AssertionError();
         }
     }
@@ -993,8 +978,7 @@ public abstract class Reference<BASE, NAME> {
          * @param thisValue
          *            the this-binding
          */
-        public SuperNameReference(ScriptObject base, String referencedName,
-                boolean strictReference, Object thisValue) {
+        public SuperNameReference(ScriptObject base, String referencedName, boolean strictReference, Object thisValue) {
             super(base, strictReference, thisValue);
             this.referencedName = referencedName;
         }
@@ -1038,8 +1022,8 @@ public abstract class Reference<BASE, NAME> {
          * @param thisValue
          *            the this-binding
          */
-        public SuperSymbolReference(ScriptObject base, Symbol referencedName,
-                boolean strictReference, Object thisValue) {
+        public SuperSymbolReference(ScriptObject base, Symbol referencedName, boolean strictReference,
+                Object thisValue) {
             super(base, strictReference, thisValue);
             this.referencedName = referencedName;
         }
@@ -1060,8 +1044,7 @@ public abstract class Reference<BASE, NAME> {
 
             boolean succeeded = getBase().set(cx, getReferencedName(), w, getThisValue());
             if (!succeeded && isStrictReference()) {
-                throw newTypeError(cx, Messages.Key.PropertyNotModifiable, getReferencedName()
-                        .toString());
+                throw newTypeError(cx, Messages.Key.PropertyNotModifiable, getReferencedName().toString());
             }
         }
     }

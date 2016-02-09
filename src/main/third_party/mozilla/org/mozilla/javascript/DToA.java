@@ -27,7 +27,9 @@ package org.mozilla.javascript;
 
 import java.math.BigInteger;
 
-public class DToA {
+public final class DToA {
+    private DToA() {
+    }
 
 
     private static char BASEDIGIT(int digit) {

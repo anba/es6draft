@@ -304,7 +304,7 @@ abstract class TimeZoneInfo {
             if (timeZone != null) {
                 return timeZone;
             }
-            timeZone = DateTimeZone.forID(id);
+            timeZone = DateTimeZone.forTimeZone(tz);
             lastTimeZone = new TimeZoneRef<>(id, timeZone);
             return timeZone;
         }

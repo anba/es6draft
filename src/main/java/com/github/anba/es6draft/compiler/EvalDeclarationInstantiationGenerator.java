@@ -190,7 +190,7 @@ final class EvalDeclarationInstantiationGenerator extends DeclarationBindingInst
             getEnvironmentRecord(lexEnv, lexEnvRec, mv);
             createLexicalDeclarations(lexDeclarations, lexEnvRec, mv);
         }
-        /* steps 14 */
+        /* step 14 */
         for (HoistableDeclaration f : functionsToInitialize) {
             Name fn = BoundName(f);
             InstantiateFunctionObject(context, lexEnv, f, mv);
@@ -259,7 +259,7 @@ final class EvalDeclarationInstantiationGenerator extends DeclarationBindingInst
             getEnvironmentRecord(lexEnv, lexEnvRec, mv);
             createLexicalDeclarations(lexDeclarations, lexEnvRec, mv);
         }
-        /* steps 14 */
+        /* step 14 */
         createFunctions(functionsToInitialize, strict, context, lexEnv, fo, varEnvRec, mv);
         /* step 15 */
         createVarDeclarations(declaredVarNames, varEnvRec, undef, mv);
@@ -316,7 +316,7 @@ final class EvalDeclarationInstantiationGenerator extends DeclarationBindingInst
             getEnvironmentRecord(lexEnv, lexEnvRec, mv);
             createLexicalDeclarations(lexDeclarations, lexEnvRec, mv);
         }
-        /* steps 14 */
+        /* step 14 */
         createFunctions(functionsToInitialize, strict, context, lexEnv, fo, varEnvRec, mv);
         /* step 15 */
         createVarDeclarations(declaredVarNames, varEnvRec, undef, mv);
@@ -370,7 +370,7 @@ final class EvalDeclarationInstantiationGenerator extends DeclarationBindingInst
         List<Declaration> lexDeclarations = LexicallyScopedDeclarations(evalScript);
         /* step 13 */
         createLexicalDeclarations(lexDeclarations, lexEnvRec, mv);
-        /* steps 14 */
+        /* step 14 */
         for (HoistableDeclaration f : functionsToInitialize) {
             Name fn = BoundName(f);
 

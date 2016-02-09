@@ -6,7 +6,12 @@
  */
 package com.github.anba.es6draft.ast;
 
-import com.github.anba.es6draft.ast.synthetic.*;
+import com.github.anba.es6draft.ast.synthetic.ExpressionMethod;
+import com.github.anba.es6draft.ast.synthetic.MethodDefinitionsMethod;
+import com.github.anba.es6draft.ast.synthetic.PropertyDefinitionsMethod;
+import com.github.anba.es6draft.ast.synthetic.SpreadArrayLiteral;
+import com.github.anba.es6draft.ast.synthetic.SpreadElementMethod;
+import com.github.anba.es6draft.ast.synthetic.StatementListMethod;
 
 /**
  * Default implementation for {@link VoidNodeVisitor}.
@@ -303,6 +308,11 @@ public abstract class DefaultVoidNodeVisitor<V> implements VoidNodeVisitor<V> {
     }
 
     @Override
+    public void visit(ExportClause node, V value) {
+        visit((Node) node, value);
+    }
+
+    @Override
     public void visit(ExportDeclaration node, V value) {
         visit((ModuleItem) node, value);
     }
@@ -314,11 +324,6 @@ public abstract class DefaultVoidNodeVisitor<V> implements VoidNodeVisitor<V> {
 
     @Override
     public void visit(ExportSpecifier node, V value) {
-        visit((Node) node, value);
-    }
-
-    @Override
-    public void visit(ExportClause node, V value) {
         visit((Node) node, value);
     }
 
@@ -343,11 +348,6 @@ public abstract class DefaultVoidNodeVisitor<V> implements VoidNodeVisitor<V> {
     }
 
     @Override
-    public void visit(ForOfStatement node, V value) {
-        visit((IterationStatement) node, value);
-    }
-
-    @Override
     public void visit(FormalParameter node, V value) {
         visit((Node) node, value);
     }
@@ -355,6 +355,11 @@ public abstract class DefaultVoidNodeVisitor<V> implements VoidNodeVisitor<V> {
     @Override
     public void visit(FormalParameterList node, V value) {
         visit((Node) node, value);
+    }
+
+    @Override
+    public void visit(ForOfStatement node, V value) {
+        visit((IterationStatement) node, value);
     }
 
     @Override
@@ -413,6 +418,11 @@ public abstract class DefaultVoidNodeVisitor<V> implements VoidNodeVisitor<V> {
     }
 
     @Override
+    public void visit(ImportClause node, V value) {
+        visit((Node) node, value);
+    }
+
+    @Override
     public void visit(ImportDeclaration node, V value) {
         visit((ModuleItem) node, value);
     }
@@ -420,26 +430,6 @@ public abstract class DefaultVoidNodeVisitor<V> implements VoidNodeVisitor<V> {
     @Override
     public void visit(ImportSpecifier node, V value) {
         visit((Node) node, value);
-    }
-
-    @Override
-    public void visit(ImportClause node, V value) {
-        visit((Node) node, value);
-    }
-
-    @Override
-    public void visit(SpreadArrayLiteral node, V value) {
-        visit((ArrayLiteral) node, value);
-    }
-
-    @Override
-    public void visit(SpreadElementMethod node, V value) {
-        visit((SpreadElement) node, value);
-    }
-
-    @Override
-    public void visit(PropertyDefinitionsMethod node, V value) {
-        visit((PropertyDefinition) node, value);
     }
 
     @Override
@@ -553,6 +543,11 @@ public abstract class DefaultVoidNodeVisitor<V> implements VoidNodeVisitor<V> {
     }
 
     @Override
+    public void visit(PropertyDefinitionsMethod node, V value) {
+        visit((PropertyDefinition) node, value);
+    }
+
+    @Override
     public void visit(PropertyNameDefinition node, V value) {
         visit((PropertyDefinition) node, value);
     }
@@ -578,8 +573,18 @@ public abstract class DefaultVoidNodeVisitor<V> implements VoidNodeVisitor<V> {
     }
 
     @Override
+    public void visit(SpreadArrayLiteral node, V value) {
+        visit((ArrayLiteral) node, value);
+    }
+
+    @Override
     public void visit(SpreadElement node, V value) {
         visit((Expression) node, value);
+    }
+
+    @Override
+    public void visit(SpreadElementMethod node, V value) {
+        visit((SpreadElement) node, value);
     }
 
     @Override

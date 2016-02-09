@@ -6,7 +6,12 @@
  */
 package com.github.anba.es6draft.ast;
 
-import com.github.anba.es6draft.ast.synthetic.*;
+import com.github.anba.es6draft.ast.synthetic.ExpressionMethod;
+import com.github.anba.es6draft.ast.synthetic.MethodDefinitionsMethod;
+import com.github.anba.es6draft.ast.synthetic.PropertyDefinitionsMethod;
+import com.github.anba.es6draft.ast.synthetic.SpreadArrayLiteral;
+import com.github.anba.es6draft.ast.synthetic.SpreadElementMethod;
+import com.github.anba.es6draft.ast.synthetic.StatementListMethod;
 
 /**
  * Default implementation for {@link IntNodeVisitor}.
@@ -294,8 +299,18 @@ public abstract class DefaultIntNodeVisitor<V> implements IntNodeVisitor<V> {
     }
 
     @Override
+    public int visit(EmptyExpression node, V value) {
+        return visit((Expression) node, value);
+    }
+
+    @Override
     public int visit(EmptyStatement node, V value) {
         return visit((Statement) node, value);
+    }
+
+    @Override
+    public int visit(ExportClause node, V value) {
+        return visit((Node) node, value);
     }
 
     @Override
@@ -314,17 +329,7 @@ public abstract class DefaultIntNodeVisitor<V> implements IntNodeVisitor<V> {
     }
 
     @Override
-    public int visit(ExportClause node, V value) {
-        return visit((Node) node, value);
-    }
-
-    @Override
     public int visit(ExpressionMethod node, V value) {
-        return visit((Expression) node, value);
-    }
-
-    @Override
-    public int visit(EmptyExpression node, V value) {
         return visit((Expression) node, value);
     }
 
@@ -344,11 +349,6 @@ public abstract class DefaultIntNodeVisitor<V> implements IntNodeVisitor<V> {
     }
 
     @Override
-    public int visit(ForOfStatement node, V value) {
-        return visit((IterationStatement) node, value);
-    }
-
-    @Override
     public int visit(FormalParameter node, V value) {
         return visit((Node) node, value);
     }
@@ -356,6 +356,11 @@ public abstract class DefaultIntNodeVisitor<V> implements IntNodeVisitor<V> {
     @Override
     public int visit(FormalParameterList node, V value) {
         return visit((Node) node, value);
+    }
+
+    @Override
+    public int visit(ForOfStatement node, V value) {
+        return visit((IterationStatement) node, value);
     }
 
     @Override
@@ -414,6 +419,11 @@ public abstract class DefaultIntNodeVisitor<V> implements IntNodeVisitor<V> {
     }
 
     @Override
+    public int visit(ImportClause node, V value) {
+        return visit((Node) node, value);
+    }
+
+    @Override
     public int visit(ImportDeclaration node, V value) {
         return visit((ModuleItem) node, value);
     }
@@ -421,26 +431,6 @@ public abstract class DefaultIntNodeVisitor<V> implements IntNodeVisitor<V> {
     @Override
     public int visit(ImportSpecifier node, V value) {
         return visit((Node) node, value);
-    }
-
-    @Override
-    public int visit(ImportClause node, V value) {
-        return visit((Node) node, value);
-    }
-
-    @Override
-    public int visit(SpreadArrayLiteral node, V value) {
-        return visit((ArrayLiteral) node, value);
-    }
-
-    @Override
-    public int visit(SpreadElementMethod node, V value) {
-        return visit((SpreadElement) node, value);
-    }
-
-    @Override
-    public int visit(PropertyDefinitionsMethod node, V value) {
-        return visit((PropertyDefinition) node, value);
     }
 
     @Override
@@ -554,6 +544,11 @@ public abstract class DefaultIntNodeVisitor<V> implements IntNodeVisitor<V> {
     }
 
     @Override
+    public int visit(PropertyDefinitionsMethod node, V value) {
+        return visit((PropertyDefinition) node, value);
+    }
+
+    @Override
     public int visit(PropertyNameDefinition node, V value) {
         return visit((PropertyDefinition) node, value);
     }
@@ -579,8 +574,18 @@ public abstract class DefaultIntNodeVisitor<V> implements IntNodeVisitor<V> {
     }
 
     @Override
+    public int visit(SpreadArrayLiteral node, V value) {
+        return visit((ArrayLiteral) node, value);
+    }
+
+    @Override
     public int visit(SpreadElement node, V value) {
         return visit((Expression) node, value);
+    }
+
+    @Override
+    public int visit(SpreadElementMethod node, V value) {
+        return visit((SpreadElement) node, value);
     }
 
     @Override

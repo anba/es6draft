@@ -5,17 +5,18 @@
 # <https://github.com/anba/es6draft>
 #
 
-# ES6 spec incomplete: integer indices beyond 2^53-1
+# OOB access on typed arrays
+# https://bugzilla.mozilla.org/show_bug.cgi?id=1129202
 tests/basic/typed-array-index-out-of-range.js
-
-# potential ES6 spec bug? for-of over undefined
-tests/for-of/non-iterable.js
-
-# ES6 spec incomplete for [[OwnPropertyKeys]] on indexed exotic objects
 tests/basic/typed-array-sealed-frozen.js
 
-# ES6-change: assignment to function call is early error
-# ES6: invalid destructuring is SyntaxError
+# arguments object is iterable
+# https://bugzilla.mozilla.org/show_bug.cgi?id=1067049
+tests/for-of/non-iterable.js
+tests/collections/constructor-errors.js
+
+# ES6-change: assignment to function call is early error ReferenceError
+# https://bugzilla.mozilla.org/show_bug.cgi?id=609756 (?)
 tests/basic/spread-call-setcall.js
 
 # ES6: SpiderMonkey bug (https://bugzilla.mozilla.org/show_bug.cgi?id=1022967)
@@ -25,26 +26,28 @@ tests/arguments/defaults-call-function.js
 tests/basic/destructuring-rest.js
 
 # ES6: IteratorPrototype object
+# https://bugzilla.mozilla.org/show_bug.cgi?id=1091945
 tests/for-of/string-iterator-surfaces.js
 
-# ES6: let TDZ in loops (https://bugzilla.mozilla.org/show_bug.cgi?id=1069480)
-tests/basic/letLegacyForOfOrInScope.js
-
-# ES6: spec bug - eval in default parameter initializer
+# ES6: eval in default parameter initializer
+# https://bugzilla.mozilla.org/show_bug.cgi?id=1022967
 tests/arguments/alias-function-not-closed.js
 
-# ES6: arguments object is iterable; new Map(null) and new Set(null) throws in SM
-tests/collections/constructor-errors.js
-
 # SM issue: destructuring and default parameters not supported in Function
+# https://bugzilla.mozilla.org/show_bug.cgi?id=755821
 tests/basic/destructuring-default.js
 
 # SM: toStringTag not implemented
+# https://bugzilla.mozilla.org/show_bug.cgi?id=1114580
+tests/collections/iterator-proto-surfaces.js
+tests/collections/Map-surfaces-1.js
+tests/collections/Set-surfaces-1.js
 tests/collections/WeakMap-surfaces.js
 tests/collections/WeakSet-surface.js
 tests/proxy/operations-on-revoked.js
 
 # ES6: array destructuring tracks completed iterators
+# https://bugzilla.mozilla.org/show_bug.cgi?id=1184922
 tests/basic/destructuring-iterator.js
 
 # ES6: Argument validation in DataView constructor
@@ -53,12 +56,16 @@ tests/basic/bug-1133377.js
 # ES6: Detached typed arrays have no indexed properties in SM
 tests/basic/typed-array-copyWithin.js
 
-# SM issue: bug 1032150
-tests/basic/destructuring-rest-identifiers.js
-
 # ES6: Access to uninitialized argument in default parameter expression
+# https://bugzilla.mozilla.org/show_bug.cgi?id=1187502
 tests/arguments/defaults-destructuring-with-rest.js
 tests/arguments/destructuring-after-defaults.js
+
+# SM: Symbol.toPrimitive not implemented
+tests/basic/bug830049.js
+
+# SM: eval("-- /./") throws SyntaxError, expected is ReferenceError
+tests/parser/modifier-regexp-vs-div.js
 
 
 ###################
@@ -68,10 +75,6 @@ tests/arguments/destructuring-after-defaults.js
 # invalid test case (relies on order in which elements are visited in Array.prototype.sort)
 # and its strcmp function is broken as well
 tests/basic/testBug720695.js
-
-# __noSuchMethod__ not supported
-tests/basic/bug717208.js
-tests/basic/bug732087.js
 
 # __iterator__ not supported
 tests/basic/bug684922.js
@@ -105,16 +108,17 @@ tests/basic/bug839420.js
 tests/basic/bug934997.js
 tests/basic/bug1100623.js
 tests/basic/bug1147216.js
+tests/basic/bug1172503.js
 tests/basic/expression-autopsy.js
+tests/basic/iterable-error-messages.js
 tests/basic/spread-call-maxarg.js
-tests/basic/syntax-error-illegal-character.js
 tests/basic/testBug566556.js
-tests/basic/testBug593559.js
 tests/basic/testBug604210.js
 tests/basic/testDontClobberScannerError.js
 tests/basic/testInitSingletons.js
 tests/generators/bug931414.js
 tests/generators/wrappers.js
+tests/parser/syntax-error-illegal-character.js
 tests/self-hosting/invoke-self-hosted-with-primitive-this.js
 
 # different error message with toString
@@ -124,15 +128,9 @@ tests/basic/bug1054243.js
 # Different realm change on function calls
 tests/collections/bug-743101.js
 
-# RegExp.prototype.replace resets RegExp statics after replacer function call
-tests/basic/testStaticsInRegExp.js
-
 # Different maximal stack depth
 tests/auto-regress/bug743094.js
 tests/basic/bug522136.js
-
-# rest-parameters vs. arguments object
-tests/arguments/bug844048.js
 
 # no dynamic access to arguments in generator comprehensions
 tests/basic/bug852016.js
@@ -145,6 +143,7 @@ tests/basic/error-stack-accessors.js
 
 # columnNumber in error stack trace
 tests/basic/exception-column-number.js
+tests/parser/arrow-rest.js
 
 
 ############################################
@@ -154,10 +153,10 @@ tests/basic/exception-column-number.js
 # Spidermonkey: Proxy vs. __proto__ on global
 tests/auto-regress/bug589103.js
 
-# missing [object Function] for proxied functions
+# missing [object Function] for proxied functions (and toStringTag)
 tests/basic/bug807623.js
 
-# Old Proxy API not completely emulated
+# Old Proxy API can violate object invariants
 tests/auto-regress/bug578015.js
 tests/proxy/testIndirectProxyGetOwnPropertyDescriptor.js
 
@@ -173,23 +172,6 @@ tests/auto-regress/bug698074.js
 tests/basic/bug699166.js
 
 
-############################################
-# Arrow functions tests don't match draft  #
-############################################
-
-# arguments allowed even with rest-parameters
-tests/arguments/rest-disallow-arguments.js
-tests/arrow-functions/arguments-4.js
-
-# arrow functions do not have arguments
-tests/arrow-functions/arguments-1.js
-tests/arrow-functions/arguments-2.js
-tests/arrow-functions/arguments-3.js
-tests/arrow-functions/bug-885067-2.js
-tests/arrow-functions/bug889158.js
-tests/basic/spread-call-length.js
-
-
 #######################################
 # ES6 related runtime changes         #
 #######################################
@@ -202,6 +184,7 @@ tests/auto-regress/bug678090.js
 
 # ToLength() moved array length restriction to 2^53-1
 tests/for-of/array-iterator-generic.js
+tests/basic/bug1200108.js
 
 # String.prototype.split changed to use ToLength instead of ToUint32
 tests/basic/bug943126.js
@@ -211,9 +194,6 @@ tests/self-test/assertDeepEq.js
 
 # formal parameter initializers are evaluated in extra scope
 tests/arguments/defaults-scoping.js
-
-# assignment to const binding is always a runtime error, regardless of strict mode
-tests/auto-regress/bug495962.js
 
 # RegExp.prototype.toString is generic
 tests/basic/testCrossCompartmentTransparency.js
@@ -230,17 +210,8 @@ tests/arguments/defaults-evaluation-order.js
 tests/basic/bug646968-4.js
 tests/basic/bug678087.js
 
-# throws early ReferenceError instead of SyntaxError
-tests/basic/function-tosource-exprbody-bug777834.js
-
-# ES6-change: let-block scope even in global scope
-tests/basic/bug646968-3.js
-
 # missing const initializer
 tests/basic/letTDZDelete.js
-
-# let variable must not be redeclared
-tests/basic/bug778268.js
 
 # ES6: parameter environment not supported in SM
 tests/arguments/alias-function-closed.js
@@ -249,11 +220,9 @@ tests/arguments/alias-function-closed.js
 tests/arguments/defaults-bound-to-function.js
 tests/arguments/defaults-with-rest.js
 
-# ES6-change: block-scoped function declaration
-tests/basic/bug-826124.js
-
 # Declaration directly nested in Statement
 tests/auto-regress/bug771027.js
+tests/basic/bug667504-syntax.js
 
 # Annex B extension B.3.3 is not applied for Script
 tests/basic/testDynamicLookup.js
@@ -262,9 +231,6 @@ tests/basic/testDynamicLookup.js
 tests/auto-regress/bug701248.js
 tests/basic/bug738841.js
 
-# re-assignement to 'const' is not an early error
-tests/basic/bug821470.js
-
 # let/const + function redeclaration in block/global scope
 tests/basic/functionRedeclConst.js
 tests/basic/functionRedeclGlobalConst.js
@@ -272,10 +238,6 @@ tests/basic/functionRedeclLet.js
 
 # function declaration with same name as parameter in surrounding function not applicable for B.3.3
 tests/basic/testFunctionStatementAliasLocals.js
-
-# Assignment to const, early SyntaxError vs. silently ignored in non-strict mode
-tests/basic/constGlobalAssignError.js
-tests/basic/constAssignError.js
 
 
 ############################################
@@ -351,6 +313,7 @@ tests/basic/testSetProtoRegeneratesObjectShape.js
 tests/pic/watch3b.js
 # objectEmulatingUndefined
 tests/basic/emulates-undefined.js
+tests/basic/bug1206265.js
 # FakeDOMObject
 tests/basic/testFakeDOMWeakmapKey.js
 tests/basic/test-jitinfo.js
@@ -405,6 +368,7 @@ tests/bug953337.js
 tests/basic/bug970643.js
 tests/basic/bug1135718.js
 tests/basic/bug1141154.js
+tests/basic/bug1196579.js
 tests/basic/testBug686274.js
 # enableTrackAllocations
 tests/basic/track-allocation-sites.js
@@ -432,10 +396,23 @@ tests/basic/eval-scopes.js
 tests/basic/function-gname.js
 # getJitCompilerOptions
 tests/arguments/arguments-on-proto.js
+tests/basic/testApplyArrayInline.js
 # getConstructorName
 tests/basic/constructor-name.js
 # bailout
 tests/basic/newTargetRectifier.js
+# assertJitStackInvariants
+tests/basic/bug1180054.js
+# getSelfHostedValue('outer')
+tests/basic/relazify-selfhosted.js
+# evalInWorker
+tests/basic/evalInWorker-stack-limit.js
+# byteSizeOfScript
+tests/basic/bug1208403.js
+# getSelfHostedValue('CreateListIterator')
+tests/basic/bug1220766.js
+# enableLastWarning
+tests/parser/expr-closure-warn.js
 
 
 #######################################

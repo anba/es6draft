@@ -10,12 +10,12 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.ToFlatString;
 import static com.github.anba.es6draft.runtime.internal.Errors.newInternalError;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
-import static com.github.anba.es6draft.runtime.modules.Loader.CreateLoader;
 import static com.github.anba.es6draft.runtime.modules.ModuleSemantics.GetModuleNamespace;
 import static com.github.anba.es6draft.runtime.objects.promise.PromiseAbstractOperations.PromiseOf;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import java.io.IOException;
+import java.util.Objects;
 
 import com.github.anba.es6draft.compiler.CompilationException;
 import com.github.anba.es6draft.parser.ParserException;
@@ -55,8 +55,7 @@ public final class SystemObject extends LoaderObject implements Initializable {
 
     @Override
     public void initialize(Realm realm) {
-        Loader loaderRecord = CreateLoader(realm, this);
-        setLoader(loaderRecord);
+        setLoader(new Loader(realm, this));
 
         createProperties(realm, this, Properties.class);
         if (realm.isEnabled(CompatibilityOption.Loader)) {
@@ -81,11 +80,7 @@ public final class SystemObject extends LoaderObject implements Initializable {
          */
         private static LoaderObject thisLoader(ExecutionContext cx, Object value) {
             if (value instanceof LoaderObject) {
-                LoaderObject loader = (LoaderObject) value;
-                if (loader.getLoader() != null) {
-                    return loader;
-                }
-                throw newTypeError(cx, Messages.Key.UninitializedObject);
+                return (LoaderObject) value;
             }
             throw newTypeError(cx, Messages.Key.IncompatibleObject);
         }
@@ -102,7 +97,7 @@ public final class SystemObject extends LoaderObject implements Initializable {
         }
 
         private static ScriptException toScriptException(ExecutionContext cx, IOException e) {
-            return newInternalError(cx, e, Messages.Key.ModulesIOException, e.getMessage());
+            return newInternalError(cx, e, Messages.Key.ModulesIOException, Objects.toString(e.getMessage(), ""));
         }
 
         @Prototype

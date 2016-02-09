@@ -43,10 +43,11 @@ import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.ArrayObject;
+import com.github.anba.es6draft.runtime.types.builtins.NativeFunction;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 import com.github.anba.es6draft.runtime.types.builtins.StringObject;
 import com.ibm.icu.lang.UCharacter;
-import com.ibm.icu.text.Normalizer;
+import com.ibm.icu.text.Normalizer2;
 import com.ibm.icu.util.ULocale;
 
 /**
@@ -75,6 +76,26 @@ public final class StringPrototype extends OrdinaryObject implements Initializab
         createProperties(realm, this, TrimFunctions.class);
         createProperties(realm, this, PadFunctions.class);
         createProperties(realm, this, MatchAllFunction.class);
+    }
+
+    /**
+     * Marker class for {@code String.prototype.iterator}.
+     */
+    private static final class StringPrototypeIterator {
+    }
+
+    /**
+     * Returns {@code true} if <var>iterator</var> is the built-in {@code %IteratorPrototype%[@@iterator]} function for
+     * the requested realm.
+     * 
+     * @param realm
+     *            the function realm
+     * @param iterator
+     *            the iterator function
+     * @return {@code true} if <var>iterator</var> is the built-in {@code %IteratorPrototype%[@@iterator]} function
+     */
+    public static boolean isBuiltinIterator(Realm realm, Object iterator) {
+        return NativeFunction.isNative(realm, iterator, StringPrototypeIterator.class);
     }
 
     /**
@@ -441,7 +462,7 @@ public final class StringPrototype extends OrdinaryObject implements Initializab
                     .getIntrinsic(Intrinsics.Intl_Collator);
             CollatorObject collator = ctor.construct(cx, ctor, locales, options);
             /* step 8 */
-            return CompareStrings(cx, collator, s, t);
+            return CompareStrings(collator, s, t);
         }
 
         /**
@@ -501,13 +522,13 @@ public final class StringPrototype extends OrdinaryObject implements Initializab
             /* steps 7-9 */
             switch (f) {
             case "NFC":
-                return Normalizer.normalize(s, Normalizer.NFC);
+                return Normalizer2.getNFCInstance().normalize(s);
             case "NFD":
-                return Normalizer.normalize(s, Normalizer.NFD);
+                return Normalizer2.getNFDInstance().normalize(s);
             case "NFKC":
-                return Normalizer.normalize(s, Normalizer.NFKC);
+                return Normalizer2.getNFKCInstance().normalize(s);
             case "NFKD":
-                return Normalizer.normalize(s, Normalizer.NFKD);
+                return Normalizer2.getNFKDInstance().normalize(s);
             default:
                 throw newRangeError(cx, Messages.Key.InvalidNormalizationForm, f);
             }
@@ -540,18 +561,30 @@ public final class StringPrototype extends OrdinaryObject implements Initializab
             if (n == 0 || s.length() == 0) {
                 return "";
             }
+            if (n == 1) {
+                return s;
+            }
             double capacity = s.length() * n;
             if (capacity > 1 << 27) {
                 // likely to exceed heap space, follow SpiderMonkey and throw RangeError
                 throw newRangeError(cx, Messages.Key.InvalidStringRepeat);
             }
             /* step 8 */
-            StringBuilder t = new StringBuilder((int) capacity);
-            for (int c = (int) n; c > 0; --c) {
-                t.append(s);
+            final int length = s.length();
+            char[] ca = new char[(int) capacity];
+            if (length == 1) {
+                Arrays.fill(ca, s.charAt(0));
+                return new String(ca);
             }
+            s.getChars(0, length, ca, 0);
+            final int N = (int) n;
+            final int limit = length * Integer.highestOneBit(N);
+            for (int k = length; k < limit; k <<= 1) {
+                System.arraycopy(ca, 0, ca, k, k);
+            }
+            System.arraycopy(ca, 0, ca, limit, (N * length - limit));
             /* step 9 */
-            return t.toString();
+            return new String(ca);
         }
 
         /**
@@ -629,8 +662,7 @@ public final class StringPrototype extends OrdinaryObject implements Initializab
          *            the replacement value
          * @return the replacement string
          */
-        private static String GetSubstitution(String matched, String string, int position,
-                String replacement) {
+        private static String GetSubstitution(String matched, String string, int position, String replacement) {
             /* step 1 (not applicable) */
             /* step 2 */
             int matchLength = matched.length();
@@ -645,21 +677,23 @@ public final class StringPrototype extends OrdinaryObject implements Initializab
             assert tailPos >= 0 && tailPos <= stringLength;
             /* step 10 (not applicable) */
             /* step 11 */
-            int i = replacement.indexOf('$');
-            if (i < 0) {
+            int cursor = replacement.indexOf('$');
+            if (cursor < 0) {
                 return replacement;
             }
             final int length = replacement.length();
-            int j = 0;
+            int lastCursor = 0;
             StringBuilder result = new StringBuilder();
-            do {
-                if (i + 1 >= length) {
+            for (;;) {
+                if (lastCursor < cursor) {
+                    result.append(replacement, lastCursor, cursor);
+                }
+                if (++cursor == length) {
+                    result.append('$');
                     break;
                 }
-                if (j < i) {
-                    result.append(replacement, j, i);
-                }
-                char c = replacement.charAt(i + 1);
+                assert cursor < length;
+                char c = replacement.charAt(cursor++);
                 switch (c) {
                 case '&':
                     result.append(matched);
@@ -677,11 +711,14 @@ public final class StringPrototype extends OrdinaryObject implements Initializab
                     result.append('$').append(c);
                     break;
                 }
-                j = i + 2;
-                i = replacement.indexOf('$', j);
-            } while (i >= 0);
-            if (j < length) {
-                result.append(replacement, j, length);
+                lastCursor = cursor;
+                cursor = replacement.indexOf('$', cursor);
+                if (cursor < 0) {
+                    if (lastCursor < length) {
+                        result.append(replacement, lastCursor, length);
+                    }
+                    break;
+                }
             }
             /* step 12 */
             return result.toString();
@@ -940,7 +977,7 @@ public final class StringPrototype extends OrdinaryObject implements Initializab
         }
 
         /**
-         * 21.1.3.20 String.prototype.toLocaleLowerCase ( )<br>
+         * 21.1.3.20 String.prototype.toLocaleLowerCase ( [ reserved1 [ , reserved2 ] ] )<br>
          * 13.1.2 String.prototype.toLocaleLowerCase ([locales])
          * 
          * @param cx
@@ -979,7 +1016,7 @@ public final class StringPrototype extends OrdinaryObject implements Initializab
         }
 
         /**
-         * 21.1.3.21 String.prototype.toLocaleUpperCase ( )<br>
+         * 21.1.3.21 String.prototype.toLocaleUpperCase ([ reserved1 [ , reserved2 ] ] )<br>
          * 13.1.3 String.prototype.toLocaleUpperCase ([locales ])
          * 
          * @param cx
@@ -1083,7 +1120,8 @@ public final class StringPrototype extends OrdinaryObject implements Initializab
          *            the function this-value
          * @return the string iterator
          */
-        @Function(name = "[Symbol.iterator]", symbol = BuiltinSymbol.iterator, arity = 0)
+        @Function(name = "[Symbol.iterator]", symbol = BuiltinSymbol.iterator, arity = 0,
+                nativeId = StringPrototypeIterator.class)
         public static Object iterator(ExecutionContext cx, Object thisValue) {
             /* step 1 */
             Object obj = RequireObjectCoercible(cx, thisValue);
@@ -1120,12 +1158,11 @@ public final class StringPrototype extends OrdinaryObject implements Initializab
             /* step 1 */
             Object obj = RequireObjectCoercible(cx, thisValue);
             /* steps 2-3 */
-            String s = ToFlatString(cx, obj);
+            CharSequence s = ToString(cx, obj);
             /* steps 4-5 */
             double intStart = ToInteger(cx, start);
             /* steps 6-7 */
-            double end = Type.isUndefined(length) ? Double.POSITIVE_INFINITY
-                    : ToInteger(cx, length);
+            double end = Type.isUndefined(length) ? Double.POSITIVE_INFINITY : ToInteger(cx, length);
             /* step 8 */
             int size = s.length();
             /* step 9 */
@@ -1140,7 +1177,7 @@ public final class StringPrototype extends OrdinaryObject implements Initializab
             }
             assert 0 <= intStart && intStart + resultLength <= size;
             /* step 12 */
-            return s.substring((int) intStart, (int) (intStart + resultLength));
+            return s.subSequence((int) intStart, (int) (intStart + resultLength));
         }
 
         /**
@@ -1648,7 +1685,7 @@ public final class StringPrototype extends OrdinaryObject implements Initializab
                     newChars[offset + index + 1] = '\u0307';
                     offset += 1;
                 } else if (cp == '\u03A3') {
-                    // Workaround for: https://bugs.openjdk.java.net/browse/JDK-xxxxxxx
+                    // Workaround for: https://bugs.openjdk.java.net/browse/JDK-8133167
                     newChars[offset + index] = isFinalSigma(s, index) ? '\u03C2' : '\u03C3';
                 } else {
                     int lower = Character.toLowerCase(cp);

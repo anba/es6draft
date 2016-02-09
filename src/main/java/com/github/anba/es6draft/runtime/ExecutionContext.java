@@ -9,6 +9,7 @@ package com.github.anba.es6draft.runtime;
 import com.github.anba.es6draft.Executable;
 import com.github.anba.es6draft.Module;
 import com.github.anba.es6draft.Script;
+import com.github.anba.es6draft.runtime.internal.RuntimeContext;
 import com.github.anba.es6draft.runtime.internal.RuntimeInfo.SourceObject;
 import com.github.anba.es6draft.runtime.modules.SourceTextModuleRecord;
 import com.github.anba.es6draft.runtime.objects.async.AsyncObject;
@@ -54,6 +55,15 @@ public final class ExecutionContext {
      */
     public Realm getRealm() {
         return realm;
+    }
+
+    /**
+     * Returns the runtime context of this execution context.
+     * 
+     * @return the runtime context
+     */
+    public RuntimeContext getRuntimeContext() {
+        return realm.getWorld().getContext();
     }
 
     /**

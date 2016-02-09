@@ -10,6 +10,7 @@ import java.net.URI;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+import com.github.anba.es6draft.runtime.internal.RuntimeContext;
 import com.github.anba.es6draft.runtime.modules.MalformedNameException;
 import com.github.anba.es6draft.runtime.modules.ModuleRecord;
 import com.github.anba.es6draft.runtime.modules.SourceIdentifier;
@@ -17,14 +18,14 @@ import com.github.anba.es6draft.runtime.modules.SourceIdentifier;
 /**
  * 
  */
-public abstract class AbstractFileModuleLoader<MODULE extends ModuleRecord> extends
-        AbstractModuleLoader<MODULE> {
+public abstract class AbstractFileModuleLoader<MODULE extends ModuleRecord> extends AbstractModuleLoader<MODULE> {
     private final Path baseDirectory;
     private final URI baseDirectoryURI;
 
-    public AbstractFileModuleLoader(Path baseDirectory) {
-        this.baseDirectory = baseDirectory;
-        this.baseDirectoryURI = baseDirectory.toUri();
+    protected AbstractFileModuleLoader(RuntimeContext context) {
+        super(context);
+        this.baseDirectory = context.getBaseDirectory();
+        this.baseDirectoryURI = context.getBaseDirectory().toUri();
     }
 
     public final Path getBaseDirectory() {

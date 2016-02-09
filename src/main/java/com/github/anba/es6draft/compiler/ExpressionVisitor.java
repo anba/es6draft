@@ -24,7 +24,6 @@ import com.github.anba.es6draft.ast.ScopedNode;
 import com.github.anba.es6draft.ast.Script;
 import com.github.anba.es6draft.ast.TopLevelNode;
 import com.github.anba.es6draft.ast.scope.Scope;
-import com.github.anba.es6draft.compiler.Labels.ReturnLabel;
 import com.github.anba.es6draft.compiler.Labels.TempLabel;
 import com.github.anba.es6draft.compiler.assembler.Code.MethodCode;
 import com.github.anba.es6draft.compiler.assembler.Handle;
@@ -244,13 +243,12 @@ abstract class ExpressionVisitor extends InstructionVisitor {
      *            the variable which holds the current completion value
      */
     void goTo(TempLabel label, Variable<Object> completion) {
-        Jump wrapped = label.getWrapped();
-        if (wrapped instanceof ReturnLabel) {
-            // specialize return label to emit direct return instruction
+        if (label.isReturn()) {
+            // Specialize return label to emit return completion.
             load(completion);
-            _return();
+            returnCompletion();
         } else {
-            goTo(wrapped);
+            goTo(label.getWrapped());
         }
     }
 

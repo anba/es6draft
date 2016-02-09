@@ -19,7 +19,7 @@ final class StackImpl extends Stack {
     }
 
     @Override
-    protected Type commonType(Type left, Type right) {
+    protected Type intersectionType(Type left, Type right) {
         // Hard coded type relationships to avoid dynamic class loading.
         // TODO: Change to a less brittle approach.
         Type commonType = Types.Object;
@@ -82,7 +82,7 @@ final class StackImpl extends Stack {
         return Types.OrdinaryFunction.equals(type)
                 || Types.OrdinaryConstructorFunction.equals(type)
                 || Types.OrdinaryGenerator.equals(type) || Types.OrdinaryAsyncFunction.equals(type)
-                || Types.FunctionObject.equals(type);
+                || Types.LegacyConstructorFunction.equals(type) || Types.FunctionObject.equals(type);
     }
 
     private static boolean isOrdinaryObject(Type type) {

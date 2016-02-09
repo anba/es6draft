@@ -30,15 +30,16 @@
 
 package org.mozilla.javascript.v8dtoa;
 
-public class CachedPowers {
-
+public final class CachedPowers {
+    private CachedPowers() {
+    }
 
     static final double kD_1_LOG2_10 = 0.30102999566398114;  //  1 / lg(10)
 
-    static class CachedPower {
-        long significand;
-        short binaryExponent;
-        short decimalExponent;
+    static final class CachedPower {
+        final long significand;
+        final short binaryExponent;
+        final short decimalExponent;
 
         CachedPower(long significand, short binaryExponent, short decimalExponent) {
             this.significand = significand;

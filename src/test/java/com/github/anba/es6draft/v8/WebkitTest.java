@@ -19,6 +19,7 @@ import java.util.concurrent.TimeUnit;
 import org.apache.commons.configuration.Configuration;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -31,9 +32,12 @@ import org.junit.runners.Parameterized.UseParametersRunnerFactory;
 
 import com.github.anba.es6draft.repl.console.ShellConsole;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
-import com.github.anba.es6draft.runtime.internal.ScriptCache;
+import com.github.anba.es6draft.runtime.internal.Properties.Function;
+import com.github.anba.es6draft.runtime.internal.Strings;
+import com.github.anba.es6draft.util.NullConsole;
 import com.github.anba.es6draft.util.Parallelized;
 import com.github.anba.es6draft.util.ParameterizedRunnerFactory;
+import com.github.anba.es6draft.util.TestAssertions;
 import com.github.anba.es6draft.util.TestConfiguration;
 import com.github.anba.es6draft.util.TestGlobals;
 import com.github.anba.es6draft.util.TestInfo;
@@ -54,13 +58,17 @@ public final class WebkitTest {
         return loadTests(configuration);
     }
 
+    @BeforeClass
+    public static void setUpClass() throws IOException {
+        V8TestGlobalObject.testLoadInitializationScript();
+    }
+
     @ClassRule
     public static TestGlobals<V8TestGlobalObject, TestInfo> globals = new TestGlobals<V8TestGlobalObject, TestInfo>(
             configuration) {
         @Override
-        protected ObjectAllocator<V8TestGlobalObject> newAllocator(ShellConsole console,
-                TestInfo test, ScriptCache scriptCache) {
-            return newGlobalObjectAllocator(console, test, scriptCache);
+        protected ObjectAllocator<V8TestGlobalObject> newAllocator(ShellConsole console) {
+            return newGlobalObjectAllocator(console);
         }
     };
 
@@ -85,15 +93,14 @@ public final class WebkitTest {
     public void setUp() throws Throwable {
         assumeTrue("Test disabled", test.isEnabled());
 
-        global = globals.newGlobal(new V8TestConsole(collector), test);
+        global = globals.newGlobal(new NullConsole(), test);
+        global.createGlobalProperties(new Print(), Print.class);
         exceptionHandler.setExecutionContext(global.getRealm().defaultContext());
     }
 
     @After
     public void tearDown() {
-        if (global != null) {
-            global.getScriptLoader().getExecutor().shutdown();
-        }
+        globals.release(global);
     }
 
     @Test
@@ -106,5 +113,16 @@ public final class WebkitTest {
 
         // Wait for pending tasks to finish
         global.getRealm().getWorld().runEventLoop();
+    }
+
+    public final class Print {
+        @Function(name = "print", arity = 1)
+        public void print(String... messages) {
+            String message = Strings.concatWith(' ', messages);
+            if (message.startsWith("FAIL ")) {
+                // Collect all failures instead of calling fail() directly.
+                collector.addError(TestAssertions.newAssertionError(message));
+            }
+        }
     }
 }

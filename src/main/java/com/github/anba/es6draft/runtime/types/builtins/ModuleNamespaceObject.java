@@ -189,16 +189,14 @@ public final class ModuleNamespaceObject extends OrdinaryObject {
 
     /** 9.4.6.6 [[DefineOwnProperty]] (P, Desc) */
     @Override
-    protected boolean defineProperty(ExecutionContext cx, String propertyKey,
-            PropertyDescriptor desc) {
+    protected boolean defineProperty(ExecutionContext cx, String propertyKey, PropertyDescriptor desc) {
         /* step 1 */
         return false;
     }
 
     /** 9.4.6.6 [[DefineOwnProperty]] (P, Desc) */
     @Override
-    protected boolean defineProperty(ExecutionContext cx, Symbol propertyKey,
-            PropertyDescriptor desc) {
+    protected boolean defineProperty(ExecutionContext cx, Symbol propertyKey, PropertyDescriptor desc) {
         /* step 1 */
         return false;
     }
@@ -248,8 +246,7 @@ public final class ModuleNamespaceObject extends OrdinaryObject {
         ModuleExport binding;
         try {
             /* steps 6, 8 */
-            binding = m.resolveExport(propertyKey, new HashMap<ModuleRecord, Set<String>>(),
-                    new HashSet<ModuleRecord>());
+            binding = m.resolveExport(propertyKey, new HashMap<>(), new HashSet<>());
         } catch (IOException e) {
             /* step 7 */
             throw Errors.newInternalError(cx, e, Messages.Key.ModulesIOException, e.getMessage());
@@ -306,16 +303,14 @@ public final class ModuleNamespaceObject extends OrdinaryObject {
 
     /** 9.4.6.9 [[Set]] ( P, V, Receiver) */
     @Override
-    protected boolean setValue(ExecutionContext cx, String propertyKey, Object value,
-            Object receiver) {
+    protected boolean setValue(ExecutionContext cx, String propertyKey, Object value, Object receiver) {
         /* step 1 */
         return false;
     }
 
     /** 9.4.6.9 [[Set]] ( P, V, Receiver) */
     @Override
-    protected boolean setValue(ExecutionContext cx, Symbol propertyKey, Object value,
-            Object receiver) {
+    protected boolean setValue(ExecutionContext cx, Symbol propertyKey, Object value, Object receiver) {
         /* step 1 */
         return false;
     }
@@ -348,8 +343,7 @@ public final class ModuleNamespaceObject extends OrdinaryObject {
 
     @Override
     protected Enumerability isEnumerableOwnProperty(String propertyKey) {
-        assert exports.contains(propertyKey) : String.format("'%s' is not an exported binding",
-                propertyKey);
+        assert exports.contains(propertyKey) : String.format("'%s' is not an exported binding", propertyKey);
         return Enumerability.Enumerable;
     }
 
@@ -377,8 +371,8 @@ public final class ModuleNamespaceObject extends OrdinaryObject {
      *            the exported bindings
      * @return the new module namespace object
      */
-    public static ModuleNamespaceObject ModuleNamespaceCreate(ExecutionContext cx,
-            ModuleRecord module, Set<String> exports) {
+    public static ModuleNamespaceObject ModuleNamespaceCreate(ExecutionContext cx, ModuleRecord module,
+            Set<String> exports) {
         /* step 1 (not applicable) */
         /* step 2 */
         assert module.getNamespace() == null;
@@ -387,11 +381,10 @@ public final class ModuleNamespaceObject extends OrdinaryObject {
         ModuleNamespaceObject m = new ModuleNamespaceObject(cx.getRealm(), module, exports);
         /* step 8 */
         // 26.3.1 @@toStringTag
-        m.infallibleDefineOwnProperty(BuiltinSymbol.toStringTag.get(), new Property("Module",
-                false, false, true));
+        m.infallibleDefineOwnProperty(BuiltinSymbol.toStringTag.get(), new Property("Module", false, false, true));
         // 26.3.2 [ @@iterator ] ( )
-        m.infallibleDefineOwnProperty(BuiltinSymbol.iterator.get(), new Property(
-                new ModuleIteratorFunction(cx.getRealm()), true, false, true));
+        m.infallibleDefineOwnProperty(BuiltinSymbol.iterator.get(),
+                new Property(new ModuleIteratorFunction(cx.getRealm()), true, false, true));
         /* step 9 */
         module.setNamespace(m);
         /* step 10 */

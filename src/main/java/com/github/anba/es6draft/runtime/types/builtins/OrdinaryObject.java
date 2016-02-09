@@ -43,6 +43,9 @@ public class OrdinaryObject implements ScriptObject {
     private static final int STRING_PROPERTIES_DEFAULT_INITIAL_CAPACITY = 16;
     private static final int SYMBOL_PROPERTIES_DEFAULT_INITIAL_CAPACITY = 4;
     private static final Object[] EMPTY_GETTER_ARGS = new Object[0];
+    private static final PropertyMap<?, Property> SHARED_PROPERTIES = new PropertyMap<>(0);
+    private static final IndexedMap<Property> SHARED_INDEXED = new IndexedMap<>(0);
+
     // Maps for String and Symbol valued property keys
     private final PropertyMap<String, Property> properties;
     private final PropertyMap<Symbol, Property> symbolProperties;
@@ -93,23 +96,23 @@ public class OrdinaryObject implements ScriptObject {
      * @param empty
      *            unused placeholder
      */
-    /* package */OrdinaryObject(Realm realm, Void empty) {
+    @SuppressWarnings("unchecked")
+    /* package */ OrdinaryObject(Realm realm, Void empty) {
         this.realm = realm;
-        this.properties = null;
-        this.symbolProperties = null;
-        this.indexedProperties = null;
+        this.properties = (PropertyMap<String, Property>) SHARED_PROPERTIES;
+        this.symbolProperties = (PropertyMap<Symbol, Property>) SHARED_PROPERTIES;
+        this.indexedProperties = SHARED_INDEXED;
     }
 
     @Override
     public String toString() {
-        return String.format("%s@%x: indexed=%s, strings=%s, symbols=%s, extensible=%b", getClass()
-                .getSimpleName(), System.identityHashCode(this), indexedProperties, properties
-                .keySet(), symbolProperties.keySet(), extensible);
+        return String.format("%s@%x: indexed=%s, strings=%s, symbols=%s, extensible=%b", getClass().getSimpleName(),
+                System.identityHashCode(this), indexedProperties, properties.keySet(), symbolProperties.keySet(),
+                extensible);
     }
 
     /**
-     * Returns {@code true} if arguments {@code x} and {@code y} are both NaN values and not the
-     * same object reference.
+     * Returns {@code true} if arguments {@code x} and {@code y} are both NaN values and not the same object reference.
      * 
      * @param x
      *            the first argument
@@ -118,8 +121,7 @@ public class OrdinaryObject implements ScriptObject {
      * @return {@code true} if x and y are both NaN values
      */
     private static final boolean SameValueNaN(Object x, Object y) {
-        return x != y && x instanceof Double && y instanceof Double
-                && Double.isNaN(((Double) x).doubleValue())
+        return x != y && x instanceof Double && y instanceof Double && Double.isNaN(((Double) x).doubleValue())
                 && Double.isNaN(((Double) y).doubleValue());
     }
 
@@ -131,8 +133,7 @@ public class OrdinaryObject implements ScriptObject {
      * @return the number of properties
      */
     final int countProperties(boolean withSymbols) {
-        return properties.size() + indexedProperties.size()
-                + (withSymbols ? symbolProperties.size() : 0);
+        return properties.size() + indexedProperties.size() + (withSymbols ? symbolProperties.size() : 0);
     }
 
     /**
@@ -216,7 +217,7 @@ public class OrdinaryObject implements ScriptObject {
      *            the indexed property key
      * @return the property value
      */
-    Object getIndexed(int propertyKey) {
+    Object getIndexed(long propertyKey) {
         return indexedProperties.get(propertyKey).getValue();
     }
 
@@ -228,20 +229,20 @@ public class OrdinaryObject implements ScriptObject {
      * @param value
      *            the property value
      */
-    final void setIndexed(int propertyKey, Object value) {
+    final void setIndexed(long propertyKey, Object value) {
         indexedProperties.put(propertyKey, new Property(value, true, true, true));
     }
 
     /**
-     * Deletes all indexed properties within the range {@code [startIndex, endIndex)} in reverse
-     * order, i.e. starting from index {@code endIndex - 1}. The range must not be empty.
+     * Deletes all indexed properties within the range {@code [startIndex, endIndex)} in reverse order, i.e. starting
+     * from index {@code endIndex - 1}. The range must not be empty.
      * 
      * @param startIndex
      *            the start index (inclusive)
      * @param endIndex
      *            the end index (exclusive)
-     * @return {@code -1} if all indexed properties over the requested range have been removed
-     *         successfully; otherwise the index of the first property which is not deletable.
+     * @return {@code -1} if all indexed properties over the requested range have been removed successfully; otherwise
+     *         the index of the first property which is not deletable.
      */
     final long deleteRange(long startIndex, long endIndex) {
         assert startIndex < endIndex;
@@ -273,8 +274,8 @@ public class OrdinaryObject implements ScriptObject {
     }
 
     private long deleteRangeSparse(long startIndex, long endIndex) {
-        for (Iterator<Map.Entry<Long, Property>> iter = indexedProperties.descendingIterator(
-                startIndex, endIndex); iter.hasNext();) {
+        Iterator<Map.Entry<Long, Property>> iter = indexedProperties.descendingIterator(startIndex, endIndex);
+        while (iter.hasNext()) {
             Map.Entry<Long, Property> entry = iter.next();
             if (!entry.getValue().isConfigurable()) {
                 return entry.getKey();
@@ -347,6 +348,15 @@ public class OrdinaryObject implements ScriptObject {
     }
 
     /**
+     * Returns the number of indexed properties.
+     * 
+     * @return the number of indexed properties
+     */
+    public int getIndexedSize() {
+        return indexedProperties.size();
+    }
+
+    /**
      * Returns {@code true} if the array is dense and has no indexed accessors.
      * 
      * @return {@code true} if the array is dense
@@ -365,8 +375,7 @@ public class OrdinaryObject implements ScriptObject {
     public final boolean isDenseArray(long length) {
         assert !hasSpecialIndexedProperties() : "cannot report dense if special indexed present";
         IndexedMap<Property> ix = indexedProperties;
-        return !hasIndexedAccessors() && ix.getLength() == length && !ix.isSparse()
-                && !ix.hasHoles();
+        return !hasIndexedAccessors() && ix.getLength() == length && !ix.isSparse() && !ix.hasHoles();
     }
 
     /**
@@ -675,8 +684,7 @@ public class OrdinaryObject implements ScriptObject {
 
     /** 9.1.6 [[DefineOwnProperty]] (P, Desc) */
     @Override
-    public final boolean defineOwnProperty(ExecutionContext cx, long propertyKey,
-            PropertyDescriptor desc) {
+    public final boolean defineOwnProperty(ExecutionContext cx, long propertyKey, PropertyDescriptor desc) {
         if (IndexedMap.isIndex(propertyKey)) {
             return defineProperty(cx, propertyKey, desc);
         }
@@ -685,8 +693,7 @@ public class OrdinaryObject implements ScriptObject {
 
     /** 9.1.6 [[DefineOwnProperty]] (P, Desc) */
     @Override
-    public final boolean defineOwnProperty(ExecutionContext cx, String propertyKey,
-            PropertyDescriptor desc) {
+    public final boolean defineOwnProperty(ExecutionContext cx, String propertyKey, PropertyDescriptor desc) {
         long index = IndexedMap.toIndex(propertyKey);
         if (IndexedMap.isIndex(index)) {
             return defineProperty(cx, index, desc);
@@ -696,8 +703,7 @@ public class OrdinaryObject implements ScriptObject {
 
     /** 9.1.6 [[DefineOwnProperty]] (P, Desc) */
     @Override
-    public final boolean defineOwnProperty(ExecutionContext cx, Symbol propertyKey,
-            PropertyDescriptor desc) {
+    public final boolean defineOwnProperty(ExecutionContext cx, Symbol propertyKey, PropertyDescriptor desc) {
         return defineProperty(cx, propertyKey, desc);
     }
 
@@ -727,8 +733,7 @@ public class OrdinaryObject implements ScriptObject {
      *            the property descriptor
      * @return {@code true} if the property was successfully defined
      */
-    protected boolean defineProperty(ExecutionContext cx, String propertyKey,
-            PropertyDescriptor desc) {
+    protected boolean defineProperty(ExecutionContext cx, String propertyKey, PropertyDescriptor desc) {
         return ordinaryDefineOwnProperty(cx, propertyKey, desc);
     }
 
@@ -743,8 +748,7 @@ public class OrdinaryObject implements ScriptObject {
      *            the property descriptor
      * @return {@code true} if the property was successfully defined
      */
-    protected boolean defineProperty(ExecutionContext cx, Symbol propertyKey,
-            PropertyDescriptor desc) {
+    protected boolean defineProperty(ExecutionContext cx, Symbol propertyKey, PropertyDescriptor desc) {
         return ordinaryDefineOwnProperty(cx, propertyKey, desc);
     }
 
@@ -759,15 +763,13 @@ public class OrdinaryObject implements ScriptObject {
      *            the property descriptor
      * @return {@code true} on success
      */
-    protected final boolean ordinaryDefineOwnProperty(ExecutionContext cx, long propertyKey,
-            PropertyDescriptor desc) {
+    protected final boolean ordinaryDefineOwnProperty(ExecutionContext cx, long propertyKey, PropertyDescriptor desc) {
         /* steps 1-2 */
         Property current = getProperty(cx, propertyKey);
         /* step 3 */
         boolean extensible = isExtensible();
         /* step 4 */
-        return validateAndApplyPropertyDescriptor(indexedProperties, propertyKey, extensible, desc,
-                current);
+        return validateAndApplyPropertyDescriptor(indexedProperties, propertyKey, extensible, desc, current);
     }
 
     /**
@@ -788,8 +790,7 @@ public class OrdinaryObject implements ScriptObject {
         /* step 3 */
         boolean extensible = isExtensible();
         /* step 4 */
-        return validateAndApplyPropertyDescriptor(properties, propertyKey, extensible, desc,
-                current);
+        return validateAndApplyPropertyDescriptor(properties, propertyKey, extensible, desc, current);
     }
 
     /**
@@ -810,8 +811,7 @@ public class OrdinaryObject implements ScriptObject {
         /* step 3 */
         boolean extensible = isExtensible();
         /* step 4 */
-        return validateAndApplyPropertyDescriptor(symbolProperties, propertyKey, extensible, desc,
-                current);
+        return validateAndApplyPropertyDescriptor(symbolProperties, propertyKey, extensible, desc, current);
     }
 
     /**
@@ -825,8 +825,8 @@ public class OrdinaryObject implements ScriptObject {
      *            the current property
      * @return {@code true} if <var>desc</var> is compatible
      */
-    protected static final boolean IsCompatiblePropertyDescriptor(boolean extensible,
-            PropertyDescriptor desc, Property current) {
+    protected static final boolean IsCompatiblePropertyDescriptor(boolean extensible, PropertyDescriptor desc,
+            Property current) {
         /* step 1 */
         return validateAndApplyPropertyDescriptor(null, null, extensible, desc, current);
     }
@@ -846,10 +846,9 @@ public class OrdinaryObject implements ScriptObject {
      *            the current property
      * @return {@code true} on success
      */
-    protected static final boolean ValidateAndApplyPropertyDescriptor(OrdinaryObject object,
-            long propertyKey, boolean extensible, PropertyDescriptor desc, Property current) {
-        return validateAndApplyPropertyDescriptor(object.indexedProperties, propertyKey,
-                extensible, desc, current);
+    protected static final boolean ValidateAndApplyPropertyDescriptor(OrdinaryObject object, long propertyKey,
+            boolean extensible, PropertyDescriptor desc, Property current) {
+        return validateAndApplyPropertyDescriptor(object.indexedProperties, propertyKey, extensible, desc, current);
     }
 
     /**
@@ -867,10 +866,9 @@ public class OrdinaryObject implements ScriptObject {
      *            the current property
      * @return {@code true} on success
      */
-    protected static final boolean ValidateAndApplyPropertyDescriptor(OrdinaryObject object,
-            String propertyKey, boolean extensible, PropertyDescriptor desc, Property current) {
-        return validateAndApplyPropertyDescriptor(object.properties, propertyKey, extensible, desc,
-                current);
+    protected static final boolean ValidateAndApplyPropertyDescriptor(OrdinaryObject object, String propertyKey,
+            boolean extensible, PropertyDescriptor desc, Property current) {
+        return validateAndApplyPropertyDescriptor(object.properties, propertyKey, extensible, desc, current);
     }
 
     /**
@@ -888,10 +886,9 @@ public class OrdinaryObject implements ScriptObject {
      *            the current property
      * @return {@code true} on success
      */
-    protected static final boolean ValidateAndApplyPropertyDescriptor(OrdinaryObject object,
-            Symbol propertyKey, boolean extensible, PropertyDescriptor desc, Property current) {
-        return validateAndApplyPropertyDescriptor(object.symbolProperties, propertyKey, extensible,
-                desc, current);
+    protected static final boolean ValidateAndApplyPropertyDescriptor(OrdinaryObject object, Symbol propertyKey,
+            boolean extensible, PropertyDescriptor desc, Property current) {
+        return validateAndApplyPropertyDescriptor(object.symbolProperties, propertyKey, extensible, desc, current);
     }
 
     /**
@@ -909,9 +906,8 @@ public class OrdinaryObject implements ScriptObject {
      *            the current property
      * @return {@code true} on success
      */
-    private static final <KEY> boolean validateAndApplyPropertyDescriptor(
-            PropertyMap<KEY, Property> object, KEY propertyKey, boolean extensible,
-            PropertyDescriptor desc, Property current) {
+    private static final <KEY> boolean validateAndApplyPropertyDescriptor(PropertyMap<KEY, Property> object,
+            KEY propertyKey, boolean extensible, PropertyDescriptor desc, Property current) {
         /* step 1 */
         assert (object == null || propertyKey != null);
         /* step 2 */
@@ -919,15 +915,8 @@ public class OrdinaryObject implements ScriptObject {
             if (!extensible) {
                 return false;
             }
-            if (desc.isGenericDescriptor() || desc.isDataDescriptor()) {
-                if (object != null) {
-                    object.put(propertyKey, desc.toProperty());
-                }
-            } else {
-                assert desc.isAccessorDescriptor();
-                if (object != null) {
-                    object.put(propertyKey, desc.toProperty());
-                }
+            if (object != null) {
+                object.put(propertyKey, desc.toProperty());
             }
             return true;
         }
@@ -965,16 +954,15 @@ public class OrdinaryObject implements ScriptObject {
                     object.get(propertyKey).toDataProperty();
                 }
             }
-        } else if (desc.isDataDescriptor() && current.isDataDescriptor()) {
+        } else if (desc.isDataDescriptor()) {
             /* step 8 */
-            if (!current.isConfigurable()) {
-                if (!current.isWritable() && desc.isWritable()) {
+            assert current.isDataDescriptor();
+            if (!current.isConfigurable() && !current.isWritable()) {
+                if (desc.isWritable()) {
                     return false;
                 }
-                if (!current.isWritable()) {
-                    if (desc.hasValue() && !SameValue(desc.getValue(), current.getValue())) {
-                        return false;
-                    }
+                if (desc.hasValue() && !SameValue(desc.getValue(), current.getValue())) {
+                    return false;
                 }
             }
         } else {
@@ -1012,8 +1000,8 @@ public class OrdinaryObject implements ScriptObject {
      *            the current property
      * @return {@code true} on success
      */
-    private static final boolean validateAndApplyPropertyDescriptor(IndexedMap<Property> object,
-            long propertyKey, boolean extensible, PropertyDescriptor desc, Property current) {
+    private static final boolean validateAndApplyPropertyDescriptor(IndexedMap<Property> object, long propertyKey,
+            boolean extensible, PropertyDescriptor desc, Property current) {
         /* step 1 */
         assert (object == null || IndexedMap.isIndex(propertyKey));
         /* step 2 */
@@ -1021,15 +1009,8 @@ public class OrdinaryObject implements ScriptObject {
             if (!extensible) {
                 return false;
             }
-            if (desc.isGenericDescriptor() || desc.isDataDescriptor()) {
-                if (object != null) {
-                    object.put(propertyKey, desc.toProperty());
-                }
-            } else {
-                assert desc.isAccessorDescriptor();
-                if (object != null) {
-                    object.put(propertyKey, desc.toProperty());
-                }
+            if (object != null) {
+                object.put(propertyKey, desc.toProperty());
             }
             return true;
         }
@@ -1067,16 +1048,15 @@ public class OrdinaryObject implements ScriptObject {
                     object.get(propertyKey).toDataProperty();
                 }
             }
-        } else if (desc.isDataDescriptor() && current.isDataDescriptor()) {
+        } else if (desc.isDataDescriptor()) {
             /* step 8 */
-            if (!current.isConfigurable()) {
-                if (!current.isWritable() && desc.isWritable()) {
+            assert current.isDataDescriptor();
+            if (!current.isConfigurable() && !current.isWritable()) {
+                if (desc.isWritable()) {
                     return false;
                 }
-                if (!current.isWritable()) {
-                    if (desc.hasValue() && !SameValue(desc.getValue(), current.getValue())) {
-                        return false;
-                    }
+                if (desc.hasValue() && !SameValue(desc.getValue(), current.getValue())) {
+                    return false;
                 }
             }
         } else {
@@ -1473,8 +1453,7 @@ public class OrdinaryObject implements ScriptObject {
         return true;
     }
 
-    protected boolean setPropertyValue(ExecutionContext cx, long propertyKey, Object value,
-            Property current) {
+    protected boolean setPropertyValue(ExecutionContext cx, long propertyKey, Object value, Property current) {
         assert current.isDataDescriptor() && current.isWritable();
         if (!SameValueNaN(current.getValue(), value)) {
             current.setValue(value);
@@ -1495,8 +1474,7 @@ public class OrdinaryObject implements ScriptObject {
      *            the receiver object
      * @return {@code true} on success
      */
-    protected boolean setValue(ExecutionContext cx, String propertyKey, Object value,
-            Object receiver) {
+    protected boolean setValue(ExecutionContext cx, String propertyKey, Object value, Object receiver) {
         /* step 1 (implicit) */
         /* steps 2-3 */
         Property ownDesc = getProperty(cx, propertyKey);
@@ -1542,8 +1520,7 @@ public class OrdinaryObject implements ScriptObject {
         return true;
     }
 
-    protected boolean setPropertyValue(ExecutionContext cx, String propertyKey, Object value,
-            Property current) {
+    protected boolean setPropertyValue(ExecutionContext cx, String propertyKey, Object value, Property current) {
         assert current.isDataDescriptor() && current.isWritable();
         if (!SameValueNaN(current.getValue(), value)) {
             current.setValue(value);
@@ -1564,8 +1541,7 @@ public class OrdinaryObject implements ScriptObject {
      *            the receiver object
      * @return {@code true} on success
      */
-    protected boolean setValue(ExecutionContext cx, Symbol propertyKey, Object value,
-            Object receiver) {
+    protected boolean setValue(ExecutionContext cx, Symbol propertyKey, Object value, Object receiver) {
         /* step 1 (implicit) */
         /* steps 2-3 */
         Property ownDesc = getProperty(cx, propertyKey);
@@ -1611,8 +1587,7 @@ public class OrdinaryObject implements ScriptObject {
         return true;
     }
 
-    protected boolean setPropertyValue(ExecutionContext cx, Symbol propertyKey, Object value,
-            Property current) {
+    protected boolean setPropertyValue(ExecutionContext cx, Symbol propertyKey, Object value, Property current) {
         assert current.isDataDescriptor() && current.isWritable();
         if (!SameValueNaN(current.getValue(), value)) {
             current.setValue(value);
@@ -1801,9 +1776,8 @@ public class OrdinaryObject implements ScriptObject {
         }
     }
 
-    private static final class EnumKeysIterator extends
-            com.github.anba.es6draft.runtime.internal.SimpleIterator<Object> implements
-            com.github.anba.es6draft.runtime.internal.ScriptIterator<Object> {
+    private static final class EnumKeysIterator extends com.github.anba.es6draft.runtime.internal.SimpleIterator<Object>
+            implements com.github.anba.es6draft.runtime.internal.ScriptIterator<Object> {
         private final ExecutionContext cx;
         private OrdinaryObject obj;
         private final HashSet<Object> visitedKeys = new HashSet<>();
@@ -1897,6 +1871,27 @@ public class OrdinaryObject implements ScriptObject {
             }
         }
 
+        @Override
+        public void close() throws ScriptException {
+            if (!isDone() && hasReturn()) {
+                IteratorClose(cx, getScriptObject());
+            }
+        }
+
+        @Override
+        public void close(Throwable cause) throws ScriptException {
+            if (!isDone() && hasReturn()) {
+                IteratorClose(cx, getScriptObject(), cause);
+            }
+        }
+
+        private ScriptObject getScriptObject() {
+            if (scriptIter == null) {
+                scriptIter = CreateListIterator(cx, this);
+            }
+            return scriptIter;
+        }
+
         private boolean isDone() {
             return obj == null && keys == null && protoKeys == null;
         }
@@ -1918,28 +1913,6 @@ public class OrdinaryObject implements ScriptObject {
                     return true;
                 }
                 iterProto = (OrdinaryObject) proto;
-            }
-        }
-
-        @Override
-        public ScriptObject getScriptObject() {
-            if (scriptIter == null) {
-                scriptIter = CreateListIterator(cx, this);
-            }
-            return scriptIter;
-        }
-
-        @Override
-        public void close() throws ScriptException {
-            if (!isDone() && hasReturn()) {
-                IteratorClose(cx, getScriptObject());
-            }
-        }
-
-        @Override
-        public void close(Throwable cause) throws ScriptException {
-            if (!isDone() && hasReturn()) {
-                IteratorClose(cx, getScriptObject(), cause);
             }
         }
     }
@@ -2019,8 +1992,8 @@ public class OrdinaryObject implements ScriptObject {
      *            the object allocator
      * @return the new object
      */
-    public static final <OBJECT extends OrdinaryObject> OBJECT ObjectCreate(ExecutionContext cx,
-            ScriptObject proto, ObjectAllocator<OBJECT> allocator) {
+    public static final <OBJECT extends OrdinaryObject> OBJECT ObjectCreate(ExecutionContext cx, ScriptObject proto,
+            ObjectAllocator<OBJECT> allocator) {
         OBJECT obj = allocator.newInstance(cx.getRealm());
         obj.setPrototype(proto);
         return obj;
@@ -2039,8 +2012,8 @@ public class OrdinaryObject implements ScriptObject {
      *            the object allocator
      * @return the new object
      */
-    public static final <OBJECT extends OrdinaryObject> OBJECT ObjectCreate(ExecutionContext cx,
-            Intrinsics proto, ObjectAllocator<OBJECT> allocator) {
+    public static final <OBJECT extends OrdinaryObject> OBJECT ObjectCreate(ExecutionContext cx, Intrinsics proto,
+            ObjectAllocator<OBJECT> allocator) {
         OBJECT obj = allocator.newInstance(cx.getRealm());
         obj.setPrototype(cx.getIntrinsic(proto));
         return obj;
@@ -2085,8 +2058,8 @@ public class OrdinaryObject implements ScriptObject {
      *            the object allocator
      * @return the new object
      */
-    public static final <OBJECT extends OrdinaryObject> OBJECT ObjectCreate(Realm realm,
-            ScriptObject proto, ObjectAllocator<OBJECT> allocator) {
+    public static final <OBJECT extends OrdinaryObject> OBJECT ObjectCreate(Realm realm, ScriptObject proto,
+            ObjectAllocator<OBJECT> allocator) {
         OBJECT obj = allocator.newInstance(realm);
         obj.setPrototype(proto);
         return obj;
@@ -2105,8 +2078,8 @@ public class OrdinaryObject implements ScriptObject {
      *            the object allocator
      * @return the new object
      */
-    public static final <OBJECT extends OrdinaryObject> OBJECT ObjectCreate(Realm realm,
-            Intrinsics proto, ObjectAllocator<OBJECT> allocator) {
+    public static final <OBJECT extends OrdinaryObject> OBJECT ObjectCreate(Realm realm, Intrinsics proto,
+            ObjectAllocator<OBJECT> allocator) {
         OBJECT obj = allocator.newInstance(realm);
         obj.setPrototype(realm.getIntrinsic(proto));
         return obj;
@@ -2123,8 +2096,8 @@ public class OrdinaryObject implements ScriptObject {
      *            the default prototype
      * @return the new object
      */
-    public static final OrdinaryObject OrdinaryCreateFromConstructor(ExecutionContext cx,
-            Constructor constructor, Intrinsics intrinsicDefaultProto) {
+    public static final OrdinaryObject OrdinaryCreateFromConstructor(ExecutionContext cx, Constructor constructor,
+            Intrinsics intrinsicDefaultProto) {
         /* step 1 (not applicable) */
         /* steps 2-3 */
         ScriptObject proto = GetPrototypeFromConstructor(cx, constructor, intrinsicDefaultProto);
@@ -2147,9 +2120,8 @@ public class OrdinaryObject implements ScriptObject {
      *            the object allocator
      * @return the new object
      */
-    public static final <OBJECT extends OrdinaryObject> OBJECT OrdinaryCreateFromConstructor(
-            ExecutionContext cx, Constructor constructor, Intrinsics intrinsicDefaultProto,
-            ObjectAllocator<OBJECT> allocator) {
+    public static final <OBJECT extends OrdinaryObject> OBJECT OrdinaryCreateFromConstructor(ExecutionContext cx,
+            Constructor constructor, Intrinsics intrinsicDefaultProto, ObjectAllocator<OBJECT> allocator) {
         /* step 1 (not applicable) */
         /* steps 2-3 */
         ScriptObject proto = GetPrototypeFromConstructor(cx, constructor, intrinsicDefaultProto);
@@ -2168,8 +2140,8 @@ public class OrdinaryObject implements ScriptObject {
      *            the default prototype
      * @return the prototype object
      */
-    public static ScriptObject GetPrototypeFromConstructor(ExecutionContext cx,
-            Constructor constructor, Intrinsics intrinsicDefaultProto) {
+    public static final ScriptObject GetPrototypeFromConstructor(ExecutionContext cx, Constructor constructor,
+            Intrinsics intrinsicDefaultProto) {
         /* steps 1-2 (not applicable) */
         /* steps 3-4 */
         Object proto = Get(cx, constructor, "prototype");

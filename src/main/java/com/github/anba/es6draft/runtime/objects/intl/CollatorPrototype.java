@@ -61,11 +61,7 @@ public final class CollatorPrototype extends CollatorObject implements Initializ
 
         private static CollatorObject thisCollatorObject(ExecutionContext cx, Object object) {
             if (object instanceof CollatorObject) {
-                CollatorObject collator = (CollatorObject) object;
-                if (collator.isInitializedCollator()) {
-                    return collator;
-                }
-                throw newTypeError(cx, Messages.Key.UninitializedObject);
+                return (CollatorObject) object;
             }
             throw newTypeError(cx, Messages.Key.IncompatibleObject);
         }
@@ -143,8 +139,6 @@ public final class CollatorPrototype extends CollatorObject implements Initializ
     /**
      * Abstract Operation: CompareStrings
      * 
-     * @param cx
-     *            the execution context
      * @param collator
      *            the collator object
      * @param x
@@ -153,8 +147,7 @@ public final class CollatorPrototype extends CollatorObject implements Initializ
      *            the second string
      * @return the locale specific string comparison result
      */
-    public static int CompareStrings(ExecutionContext cx, CollatorObject collator, String x,
-            String y) {
+    public static int CompareStrings(CollatorObject collator, String x, String y) {
         return collator.getCollator().compare(x, y);
     }
 
@@ -191,7 +184,7 @@ public final class CollatorPrototype extends CollatorObject implements Initializ
             /* steps 7-8 */
             String sy = ToFlatString(calleeContext, y);
             /* step 9 */
-            return CompareStrings(calleeContext, collator, sx, sy);
+            return CompareStrings(collator, sx, sy);
         }
     }
 }

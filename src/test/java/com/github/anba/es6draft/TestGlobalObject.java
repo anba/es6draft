@@ -7,19 +7,24 @@
 package com.github.anba.es6draft;
 
 import com.github.anba.es6draft.repl.console.ShellConsole;
-import com.github.anba.es6draft.repl.global.SimpleShellGlobalObject;
+import com.github.anba.es6draft.repl.global.BaseShellFunctions;
+import com.github.anba.es6draft.repl.global.ShellFunctions;
+import com.github.anba.es6draft.repl.global.ShellGlobalObject;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
-import com.github.anba.es6draft.runtime.internal.ScriptCache;
-import com.github.anba.es6draft.util.TestInfo;
 
 /**
  *
  */
-public final class TestGlobalObject extends SimpleShellGlobalObject {
-    public TestGlobalObject(Realm realm, ShellConsole console, TestInfo test,
-            ScriptCache scriptCache) {
-        super(realm, console, test.getBaseDir(), test.getScript(), scriptCache);
+public final class TestGlobalObject extends ShellGlobalObject {
+    TestGlobalObject(Realm realm, ShellConsole console) {
+        super(realm, console);
+    }
+
+    @Override
+    public void initializeExtensions() {
+        createGlobalProperties(new BaseShellFunctions(getConsole()), BaseShellFunctions.class);
+        createGlobalProperties(new ShellFunctions(), ShellFunctions.class);
     }
 
     /**
@@ -27,18 +32,13 @@ public final class TestGlobalObject extends SimpleShellGlobalObject {
      * 
      * @param console
      *            the console object
-     * @param test
-     *            the test descriptor
-     * @param scriptCache
-     *            the script cache
      * @return the object allocator to construct new global object instances
      */
-    public static ObjectAllocator<TestGlobalObject> newGlobalObjectAllocator(
-            final ShellConsole console, final TestInfo test, final ScriptCache scriptCache) {
+    public static ObjectAllocator<TestGlobalObject> newGlobalObjectAllocator(final ShellConsole console) {
         return new ObjectAllocator<TestGlobalObject>() {
             @Override
             public TestGlobalObject newInstance(Realm realm) {
-                return new TestGlobalObject(realm, console, test, scriptCache);
+                return new TestGlobalObject(realm, console);
             }
         };
     }

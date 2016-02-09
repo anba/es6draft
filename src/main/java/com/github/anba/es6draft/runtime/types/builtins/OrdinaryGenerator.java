@@ -38,8 +38,7 @@ public final class OrdinaryGenerator extends FunctionObject implements Construct
 
     @Override
     protected OrdinaryGenerator allocateNew() {
-        return FunctionAllocate(getRealm().defaultContext(), getPrototype(), isStrict(),
-                getFunctionKind());
+        return FunctionAllocate(getRealm().defaultContext(), getPrototype(), isStrict(), getFunctionKind());
     }
 
     /**
@@ -48,8 +47,7 @@ public final class OrdinaryGenerator extends FunctionObject implements Construct
     @Override
     public GeneratorObject call(ExecutionContext callerContext, Object thisValue, Object... args) {
         try {
-            return (GeneratorObject) getCallMethod().invokeExact(this, callerContext, thisValue,
-                    args);
+            return (GeneratorObject) getCallMethod().invokeExact(this, callerContext, thisValue, args);
         } catch (Throwable e) {
             throw FunctionObject.<RuntimeException> rethrow(e);
         }
@@ -59,34 +57,20 @@ public final class OrdinaryGenerator extends FunctionObject implements Construct
      * 9.2.1 [[Call]] (thisArgument, argumentsList)
      */
     @Override
-    public GeneratorObject tailCall(ExecutionContext callerContext, Object thisValue,
-            Object... args) throws Throwable {
-        return (GeneratorObject) getTailCallMethod().invokeExact(this, callerContext, thisValue,
-                args);
+    public GeneratorObject tailCall(ExecutionContext callerContext, Object thisValue, Object... args) throws Throwable {
+        return (GeneratorObject) getTailCallMethod().invokeExact(this, callerContext, thisValue, args);
     }
 
     /**
      * 9.2.2 [[Construct]] ( argumentsList, newTarget)
      */
     @Override
-    public GeneratorObject construct(ExecutionContext callerContext, Constructor newTarget,
-            Object... argumentsList) {
+    public GeneratorObject construct(ExecutionContext callerContext, Constructor newTarget, Object... argumentsList) {
         try {
-            return (GeneratorObject) getConstructMethod().invokeExact(this, callerContext,
-                    newTarget, argumentsList);
+            return (GeneratorObject) getConstructMethod().invokeExact(this, callerContext, newTarget, argumentsList);
         } catch (Throwable e) {
             throw FunctionObject.<RuntimeException> rethrow(e);
         }
-    }
-
-    /**
-     * 9.2.2 [[Construct]] ( argumentsList, newTarget)
-     */
-    @Override
-    public GeneratorObject tailConstruct(ExecutionContext callerContext, Constructor newTarget,
-            Object... argumentsList) throws Throwable {
-        return (GeneratorObject) getTailConstructMethod().invokeExact(this, callerContext,
-                newTarget, argumentsList);
     }
 
     /**
@@ -106,8 +90,8 @@ public final class OrdinaryGenerator extends FunctionObject implements Construct
      */
     public static GeneratorObject EvaluateBody(ExecutionContext cx, OrdinaryGenerator functionObject) {
         /* steps 1-2 */
-        GeneratorObject gen = OrdinaryCreateFromConstructor(cx, functionObject,
-                Intrinsics.GeneratorPrototype, GeneratorObjectAllocator.INSTANCE);
+        GeneratorObject gen = OrdinaryCreateFromConstructor(cx, functionObject, Intrinsics.GeneratorPrototype,
+                GeneratorObjectAllocator.INSTANCE);
         /* step 3 */
         GeneratorStart(cx, gen, functionObject.getCode());
         /* step 4 */
@@ -138,8 +122,8 @@ public final class OrdinaryGenerator extends FunctionObject implements Construct
      *            the function kind
      * @return the new generator function object
      */
-    public static OrdinaryGenerator FunctionAllocate(ExecutionContext cx,
-            ScriptObject functionPrototype, boolean strict, FunctionKind kind) {
+    public static OrdinaryGenerator FunctionAllocate(ExecutionContext cx, ScriptObject functionPrototype,
+            boolean strict, FunctionKind kind) {
         assert kind != FunctionKind.ClassConstructor;
         Realm realm = cx.getRealm();
         /* steps 1-5 (implicit) */

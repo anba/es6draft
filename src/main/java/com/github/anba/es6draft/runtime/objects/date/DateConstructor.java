@@ -6,10 +6,10 @@
  */
 package com.github.anba.es6draft.runtime.objects.date;
 
+import static com.github.anba.es6draft.runtime.AbstractOperations.ToFlatString;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToInteger;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToNumber;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToPrimitive;
-import static com.github.anba.es6draft.runtime.AbstractOperations.ToString;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.objects.date.DateAbstractOperations.*;
@@ -189,7 +189,7 @@ public final class DateConstructor extends BuiltinConstructor implements Initial
          */
         @Function(name = "parse", arity = 1)
         public static Object parse(ExecutionContext cx, Object thisValue, Object string) {
-            CharSequence s = ToString(cx, string);
+            String s = ToFlatString(cx, string);
             double d = parseISOString(cx.getRealm(), s, true);
             if (Double.isNaN(d)) {
                 d = parseDateString(cx.getRealm(), s);

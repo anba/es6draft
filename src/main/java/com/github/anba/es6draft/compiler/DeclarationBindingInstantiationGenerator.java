@@ -6,18 +6,13 @@
  */
 package com.github.anba.es6draft.compiler;
 
+import static com.github.anba.es6draft.semantics.StaticSemantics.IsStrict;
+
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 
-import com.github.anba.es6draft.ast.AsyncFunctionDeclaration;
-import com.github.anba.es6draft.ast.Declaration;
-import com.github.anba.es6draft.ast.FunctionDeclaration;
-import com.github.anba.es6draft.ast.GeneratorDeclaration;
-import com.github.anba.es6draft.ast.HoistableDeclaration;
-import com.github.anba.es6draft.ast.LegacyGeneratorDeclaration;
-import com.github.anba.es6draft.ast.Node;
-import com.github.anba.es6draft.ast.VariableDeclaration;
+import com.github.anba.es6draft.ast.*;
 import com.github.anba.es6draft.ast.scope.Name;
 import com.github.anba.es6draft.compiler.CodeGenerator.FunctionName;
 import com.github.anba.es6draft.compiler.assembler.MethodName;
@@ -27,6 +22,7 @@ import com.github.anba.es6draft.runtime.EnvironmentRecord;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.GlobalEnvironmentRecord;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
+import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
 import com.github.anba.es6draft.runtime.internal.ScriptRuntime;
 import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
@@ -86,6 +82,10 @@ class DeclarationBindingInstantiationGenerator {
                 Types.ScriptRuntime, "InstantiateFunctionObject", Type.methodType(
                         Types.OrdinaryConstructorFunction, Types.LexicalEnvironment,
                         Types.ExecutionContext, Types.RuntimeInfo$Function));
+
+        static final MethodName ScriptRuntime_InstantiateLegacyFunctionObject = MethodName.findStatic(
+                Types.ScriptRuntime, "InstantiateLegacyFunctionObject", Type.methodType(Types.LegacyConstructorFunction,
+                        Types.LexicalEnvironment, Types.ExecutionContext, Types.RuntimeInfo$Function));
 
         static final MethodName ScriptRuntime_InstantiateGeneratorObject = MethodName.findStatic(
                 Types.ScriptRuntime, "InstantiateGeneratorObject", Type.methodType(
@@ -320,7 +320,11 @@ class DeclarationBindingInstantiationGenerator {
     protected final void InstantiateFunctionObject(Variable<ExecutionContext> context,
             Variable<? extends LexicalEnvironment<?>> env, Declaration f, InstructionVisitor mv) {
         if (f instanceof FunctionDeclaration) {
-            InstantiateFunctionObject(context, env, (FunctionDeclaration) f, mv);
+            if (isLegacy((FunctionDeclaration) f)) {
+                InstantiateLegacyFunctionObject(context, env, (FunctionDeclaration) f, mv);
+            } else {
+                InstantiateFunctionObject(context, env, (FunctionDeclaration) f, mv);
+            }
         } else if (f instanceof GeneratorDeclaration) {
             InstantiateGeneratorObject(context, env, (GeneratorDeclaration) f, mv);
         } else {
@@ -382,6 +386,31 @@ class DeclarationBindingInstantiationGenerator {
 
     /**
      * Emit function call for:
+     * {@link ScriptRuntime#InstantiateLegacyFunctionObject(LexicalEnvironment, ExecutionContext, RuntimeInfo.Function)}
+     * <p>
+     * stack: [] {@literal ->} [fo]
+     * 
+     * @param context
+     *            the variable which holds the execution context
+     * @param env
+     *            the variable which holds the lexical environment
+     * @param f
+     *            the function declaration to instantiate
+     * @param mv
+     *            the instruction visitor
+     */
+    private void InstantiateLegacyFunctionObject(Variable<ExecutionContext> context,
+            Variable<? extends LexicalEnvironment<?>> env, FunctionDeclaration f, InstructionVisitor mv) {
+        codegen.compile(f);
+
+        mv.load(env);
+        mv.load(context);
+        mv.invoke(codegen.methodDesc(f, FunctionName.RTI));
+        mv.invoke(Methods.ScriptRuntime_InstantiateLegacyFunctionObject);
+    }
+
+    /**
+     * Emit function call for:
      * {@link ScriptRuntime#InstantiateGeneratorObject(LexicalEnvironment, ExecutionContext, RuntimeInfo.Function)}
      * <p>
      * stack: [] {@literal ->} [fo]
@@ -408,6 +437,14 @@ class DeclarationBindingInstantiationGenerator {
         } else {
             mv.invoke(Methods.ScriptRuntime_InstantiateLegacyGeneratorObject);
         }
+    }
+
+    private boolean isLegacy(FunctionDeclaration node) {
+        if (IsStrict(node)) {
+            return false;
+        }
+        return codegen.isEnabled(CompatibilityOption.FunctionArguments)
+                || codegen.isEnabled(CompatibilityOption.FunctionCaller);
     }
 
     protected static final <T> Iterable<T> reverse(final List<T> list) {

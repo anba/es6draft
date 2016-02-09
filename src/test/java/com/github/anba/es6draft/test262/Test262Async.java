@@ -18,7 +18,11 @@ import com.github.anba.es6draft.util.TestAssertions;
  * {@code $DONE} test helper function, replaces the definition from "doneprintHandle.js".
  */
 public final class Test262Async {
-    boolean doneCalled = false;
+    private boolean doneCalled = false;
+
+    public boolean isDone() {
+        return doneCalled;
+    }
 
     @Properties.Function(name = "$DONE", arity = 0)
     public void done(ExecutionContext cx, Object argument) {

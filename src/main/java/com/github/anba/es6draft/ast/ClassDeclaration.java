@@ -96,10 +96,7 @@ public final class ClassDeclaration extends Declaration implements ClassDefiniti
     }
 
     @Override
-    public List<? extends PropertyDefinition> getProperties() {
-        if (properties == null) {
-            return methods;
-        }
+    public List<PropertyDefinition> getProperties() {
         return properties;
     }
 

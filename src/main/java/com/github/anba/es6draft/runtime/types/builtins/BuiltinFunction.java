@@ -100,8 +100,8 @@ public abstract class BuiltinFunction extends OrdinaryObject implements Callable
     }
 
     /**
-     * Creates the default function properties, i.e. 'name' and 'length', and initializes the
-     * [[Prototype]] slot to the <code>%FunctionPrototype%</code> object.
+     * Creates the default function properties, i.e. 'name' and 'length', and initializes the [[Prototype]] slot to the
+     * <code>%FunctionPrototype%</code> object.
      */
     protected final void createDefaultFunctionProperties() {
         // Function.prototype is the [[Prototype]] for built-in functions, cf. 17
@@ -125,8 +125,8 @@ public abstract class BuiltinFunction extends OrdinaryObject implements Callable
     }
 
     @Override
-    public final String toSource(SourceSelector selector) {
-        return FunctionSource.nativeCode(selector, name);
+    public final String toSource(ExecutionContext cx) {
+        return FunctionSource.nativeCode(name);
     }
 
     /**
@@ -167,16 +167,15 @@ public abstract class BuiltinFunction extends OrdinaryObject implements Callable
     }
 
     /**
-     * Returns `(? extends BuiltinFunction, ExecutionContext, Object, Object[]) {@literal ->}
-     * Object` method-handle.
+     * Returns `(? extends BuiltinFunction, ExecutionContext, Object, Object[]) {@literal ->} Object` method-handle.
      * 
      * @return the call method handle
      */
     public MethodHandle getCallMethod() {
         if (callMethod == null) {
             try {
-                Method method = getClass().getDeclaredMethod("call", ExecutionContext.class,
-                        Object.class, Object[].class);
+                Method method = getClass().getDeclaredMethod("call", ExecutionContext.class, Object.class,
+                        Object[].class);
                 callMethod = lookup().unreflect(method);
             } catch (ReflectiveOperationException e) {
                 throw new RuntimeException(e);
@@ -201,8 +200,7 @@ public abstract class BuiltinFunction extends OrdinaryObject implements Callable
      * 9.3.1 [[Call]] (thisArgument, argumentsList)
      */
     @Override
-    public Object tailCall(ExecutionContext callerContext, Object thisValue, Object... args)
-            throws Throwable {
+    public Object tailCall(ExecutionContext callerContext, Object thisValue, Object... args) throws Throwable {
         return call(callerContext, thisValue, args);
     }
 
@@ -212,8 +210,15 @@ public abstract class BuiltinFunction extends OrdinaryObject implements Callable
     }
 
     @Override
-    protected boolean setPropertyValue(ExecutionContext cx, String propertyKey, Object value,
-            Property current) {
+    public long getLength() {
+        if (hasDefaultLength) {
+            return arity;
+        }
+        return super.getLength();
+    }
+
+    @Override
+    protected boolean setPropertyValue(ExecutionContext cx, String propertyKey, Object value, Property current) {
         assert !(hasDefaultName && "name".equals(propertyKey));
         assert !(hasDefaultLength && "length".equals(propertyKey));
         return super.setPropertyValue(cx, propertyKey, value, current);
@@ -253,8 +258,7 @@ public abstract class BuiltinFunction extends OrdinaryObject implements Callable
     }
 
     @Override
-    protected boolean defineProperty(ExecutionContext cx, String propertyKey,
-            PropertyDescriptor desc) {
+    protected boolean defineProperty(ExecutionContext cx, String propertyKey, PropertyDescriptor desc) {
         if (hasDefaultName && "name".equals(propertyKey)) {
             hasDefaultName = false;
             defineOwnPropertyUnchecked(propertyKey, new Property(name, false, false, true));

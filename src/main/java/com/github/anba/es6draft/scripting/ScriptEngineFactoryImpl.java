@@ -41,14 +41,13 @@ public final class ScriptEngineFactoryImpl implements ScriptEngineFactory {
     @Override
     public List<String> getMimeTypes() {
         // http://www.ietf.org/rfc/rfc4329.txt
-        return unmodifiableList(asList("application/javascript", "text/javascript",
-                "application/ecmascript", "text/ecmascript"));
+        return unmodifiableList(
+                asList("application/javascript", "text/javascript", "application/ecmascript", "text/ecmascript"));
     }
 
     @Override
     public List<String> getNames() {
-        return unmodifiableList(asList("es6draft", "ES6Draft", "JavaScript", "javascript",
-                "ECMAScript", "ecmascript"));
+        return unmodifiableList(asList("es6draft", "ES6Draft", "JavaScript", "javascript", "ECMAScript", "ecmascript"));
     }
 
     @Override
@@ -117,8 +116,7 @@ public final class ScriptEngineFactoryImpl implements ScriptEngineFactory {
 
     private static String getResourceInfo(String resourceName, String defaultValue) {
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(
-                ScriptEngineFactoryImpl.class.getResourceAsStream(resourceName),
-                StandardCharsets.UTF_8))) {
+                ScriptEngineFactoryImpl.class.getResourceAsStream(resourceName), StandardCharsets.UTF_8))) {
             return reader.readLine();
         } catch (IOException e) {
             return defaultValue;

@@ -69,7 +69,7 @@ function caseClause(test, stmts) Pattern({ type: "SwitchCase", test: test, conse
 function defaultClause(stmts) Pattern({ type: "SwitchCase", test: null, consequent: stmts })
 function catchClause(id, guard, body) Pattern({ type: "CatchClause", param: id, guard: guard, body: body })
 function tryStmt(body, guarded, unguarded, fin) Pattern({ type: "TryStatement", block: body, guardedHandlers: guarded, handler: unguarded, finalizer: fin })
-function letStmt(head, body) Pattern({ type: "LetStatement", head: head, body: body })
+// function letStmt(head, body) Pattern({ type: "LetStatement", head: head, body: body })
 function funExpr(id, args, body, gen) Pattern({ type: "FunctionExpression",
                                                 id: id,
                                                 params: args,
@@ -383,7 +383,7 @@ assertExpr("2 + 3", binExpr("+", lit(2), lit(3)));
 assertExpr("typeof(0?0:a)", unExpr("typeof", condExpr(lit(0), lit(0), ident("a"))));
 
 // Bug 632029: constant-folding
-assertExpr("[x for each (x in y) if (false)]", compExpr(ident("x"), [compEachBlock(ident("x"), ident("y"))], lit(false)));
+// assertExpr("[x for each (x in y) if (false)]", compExpr(ident("x"), [compEachBlock(ident("x"), ident("y"))], lit(false)));
 
 // Bug 632056: constant-folding
 // #disable: Implicit BlockStatement not created in SpiderMonkey
@@ -827,140 +827,140 @@ assertExpr("({ set x(v) { return 42 } })",
 
 // comprehensions
 
-assertExpr("[ x         for (x in foo)]",
-           compExpr(ident("x"), [compBlock(ident("x"), ident("foo"))], null));
-assertExpr("[ [x,y]     for (x in foo) for (y in bar)]",
-           compExpr(arrExpr([ident("x"), ident("y")]), [compBlock(ident("x"), ident("foo")), compBlock(ident("y"), ident("bar"))], null));
-assertExpr("[ [x,y,z] for (x in foo) for (y in bar) for (z in baz)]",
-           compExpr(arrExpr([ident("x"), ident("y"), ident("z")]),
-                    [compBlock(ident("x"), ident("foo")), compBlock(ident("y"), ident("bar")), compBlock(ident("z"), ident("baz"))],
-                    null));
-
-assertExpr("[ x         for (x in foo) if (p)]",
-           compExpr(ident("x"), [compBlock(ident("x"), ident("foo"))], ident("p")));
-assertExpr("[ [x,y]     for (x in foo) for (y in bar) if (p)]",
-           compExpr(arrExpr([ident("x"), ident("y")]), [compBlock(ident("x"), ident("foo")), compBlock(ident("y"), ident("bar"))], ident("p")));
-assertExpr("[ [x,y,z] for (x in foo) for (y in bar) for (z in baz) if (p) ]",
-           compExpr(arrExpr([ident("x"), ident("y"), ident("z")]),
-                    [compBlock(ident("x"), ident("foo")), compBlock(ident("y"), ident("bar")), compBlock(ident("z"), ident("baz"))],
-                    ident("p")));
-
-assertExpr("[ x         for each (x in foo)]",
-           compExpr(ident("x"), [compEachBlock(ident("x"), ident("foo"))], null));
-assertExpr("[ [x,y]     for each (x in foo) for each (y in bar)]",
-           compExpr(arrExpr([ident("x"), ident("y")]), [compEachBlock(ident("x"), ident("foo")), compEachBlock(ident("y"), ident("bar"))], null));
-assertExpr("[ [x,y,z] for each (x in foo) for each (y in bar) for each (z in baz)]",
-           compExpr(arrExpr([ident("x"), ident("y"), ident("z")]),
-                    [compEachBlock(ident("x"), ident("foo")), compEachBlock(ident("y"), ident("bar")), compEachBlock(ident("z"), ident("baz"))],
-                    null));
-
-assertExpr("[ x         for each (x in foo) if (p)]",
-           compExpr(ident("x"), [compEachBlock(ident("x"), ident("foo"))], ident("p")));
-assertExpr("[ [x,y]     for each (x in foo) for each (y in bar) if (p)]",
-           compExpr(arrExpr([ident("x"), ident("y")]), [compEachBlock(ident("x"), ident("foo")), compEachBlock(ident("y"), ident("bar"))], ident("p")));
-assertExpr("[ [x,y,z] for each (x in foo) for each (y in bar) for each (z in baz) if (p) ]",
-           compExpr(arrExpr([ident("x"), ident("y"), ident("z")]),
-                    [compEachBlock(ident("x"), ident("foo")), compEachBlock(ident("y"), ident("bar")), compEachBlock(ident("z"), ident("baz"))],
-                    ident("p")));
-
-assertExpr("[ x         for (x of foo)]",
-           compExpr(ident("x"), [compOfBlock(ident("x"), ident("foo"))], null));
-assertExpr("[ [x,y]     for (x of foo) for (y of bar)]",
-           compExpr(arrExpr([ident("x"), ident("y")]), [compOfBlock(ident("x"), ident("foo")), compOfBlock(ident("y"), ident("bar"))], null));
-assertExpr("[ [x,y,z] for (x of foo) for (y of bar) for (z of baz)]",
-           compExpr(arrExpr([ident("x"), ident("y"), ident("z")]),
-                    [compOfBlock(ident("x"), ident("foo")), compOfBlock(ident("y"), ident("bar")), compOfBlock(ident("z"), ident("baz"))],
-                    null));
-
-assertExpr("[ x         for (x of foo) if (p)]",
-           compExpr(ident("x"), [compOfBlock(ident("x"), ident("foo"))], ident("p")));
-assertExpr("[ [x,y]     for (x of foo) for (y of bar) if (p)]",
-           compExpr(arrExpr([ident("x"), ident("y")]), [compOfBlock(ident("x"), ident("foo")), compOfBlock(ident("y"), ident("bar"))], ident("p")));
-assertExpr("[ [x,y,z] for (x of foo) for (y of bar) for (z of baz) if (p) ]",
-           compExpr(arrExpr([ident("x"), ident("y"), ident("z")]),
-                    [compOfBlock(ident("x"), ident("foo")), compOfBlock(ident("y"), ident("bar")), compOfBlock(ident("z"), ident("baz"))],
-                    ident("p")));
+// assertExpr("[ x         for (x in foo)]",
+//            compExpr(ident("x"), [compBlock(ident("x"), ident("foo"))], null));
+// assertExpr("[ [x,y]     for (x in foo) for (y in bar)]",
+//            compExpr(arrExpr([ident("x"), ident("y")]), [compBlock(ident("x"), ident("foo")), compBlock(ident("y"), ident("bar"))], null));
+// assertExpr("[ [x,y,z] for (x in foo) for (y in bar) for (z in baz)]",
+//            compExpr(arrExpr([ident("x"), ident("y"), ident("z")]),
+//                     [compBlock(ident("x"), ident("foo")), compBlock(ident("y"), ident("bar")), compBlock(ident("z"), ident("baz"))],
+//                     null));
+// 
+// assertExpr("[ x         for (x in foo) if (p)]",
+//            compExpr(ident("x"), [compBlock(ident("x"), ident("foo"))], ident("p")));
+// assertExpr("[ [x,y]     for (x in foo) for (y in bar) if (p)]",
+//            compExpr(arrExpr([ident("x"), ident("y")]), [compBlock(ident("x"), ident("foo")), compBlock(ident("y"), ident("bar"))], ident("p")));
+// assertExpr("[ [x,y,z] for (x in foo) for (y in bar) for (z in baz) if (p) ]",
+//            compExpr(arrExpr([ident("x"), ident("y"), ident("z")]),
+//                     [compBlock(ident("x"), ident("foo")), compBlock(ident("y"), ident("bar")), compBlock(ident("z"), ident("baz"))],
+//                     ident("p")));
+// 
+// assertExpr("[ x         for each (x in foo)]",
+//            compExpr(ident("x"), [compEachBlock(ident("x"), ident("foo"))], null));
+// assertExpr("[ [x,y]     for each (x in foo) for each (y in bar)]",
+//            compExpr(arrExpr([ident("x"), ident("y")]), [compEachBlock(ident("x"), ident("foo")), compEachBlock(ident("y"), ident("bar"))], null));
+// assertExpr("[ [x,y,z] for each (x in foo) for each (y in bar) for each (z in baz)]",
+//            compExpr(arrExpr([ident("x"), ident("y"), ident("z")]),
+//                     [compEachBlock(ident("x"), ident("foo")), compEachBlock(ident("y"), ident("bar")), compEachBlock(ident("z"), ident("baz"))],
+//                     null));
+// 
+// assertExpr("[ x         for each (x in foo) if (p)]",
+//            compExpr(ident("x"), [compEachBlock(ident("x"), ident("foo"))], ident("p")));
+// assertExpr("[ [x,y]     for each (x in foo) for each (y in bar) if (p)]",
+//            compExpr(arrExpr([ident("x"), ident("y")]), [compEachBlock(ident("x"), ident("foo")), compEachBlock(ident("y"), ident("bar"))], ident("p")));
+// assertExpr("[ [x,y,z] for each (x in foo) for each (y in bar) for each (z in baz) if (p) ]",
+//            compExpr(arrExpr([ident("x"), ident("y"), ident("z")]),
+//                     [compEachBlock(ident("x"), ident("foo")), compEachBlock(ident("y"), ident("bar")), compEachBlock(ident("z"), ident("baz"))],
+//                     ident("p")));
+// 
+// assertExpr("[ x         for (x of foo)]",
+//            compExpr(ident("x"), [compOfBlock(ident("x"), ident("foo"))], null));
+// assertExpr("[ [x,y]     for (x of foo) for (y of bar)]",
+//            compExpr(arrExpr([ident("x"), ident("y")]), [compOfBlock(ident("x"), ident("foo")), compOfBlock(ident("y"), ident("bar"))], null));
+// assertExpr("[ [x,y,z] for (x of foo) for (y of bar) for (z of baz)]",
+//            compExpr(arrExpr([ident("x"), ident("y"), ident("z")]),
+//                     [compOfBlock(ident("x"), ident("foo")), compOfBlock(ident("y"), ident("bar")), compOfBlock(ident("z"), ident("baz"))],
+//                     null));
+// 
+// assertExpr("[ x         for (x of foo) if (p)]",
+//            compExpr(ident("x"), [compOfBlock(ident("x"), ident("foo"))], ident("p")));
+// assertExpr("[ [x,y]     for (x of foo) for (y of bar) if (p)]",
+//            compExpr(arrExpr([ident("x"), ident("y")]), [compOfBlock(ident("x"), ident("foo")), compOfBlock(ident("y"), ident("bar"))], ident("p")));
+// assertExpr("[ [x,y,z] for (x of foo) for (y of bar) for (z of baz) if (p) ]",
+//            compExpr(arrExpr([ident("x"), ident("y"), ident("z")]),
+//                     [compOfBlock(ident("x"), ident("foo")), compOfBlock(ident("y"), ident("bar")), compOfBlock(ident("z"), ident("baz"))],
+//                     ident("p")));
 
 // generator expressions
 
-assertExpr("( x         for (x in foo))",
-           genExpr(ident("x"), [compBlock(ident("x"), ident("foo"))], null));
-assertExpr("( [x,y]     for (x in foo) for (y in bar))",
-           genExpr(arrExpr([ident("x"), ident("y")]), [compBlock(ident("x"), ident("foo")), compBlock(ident("y"), ident("bar"))], null));
-assertExpr("( [x,y,z] for (x in foo) for (y in bar) for (z in baz))",
-           genExpr(arrExpr([ident("x"), ident("y"), ident("z")]),
-                   [compBlock(ident("x"), ident("foo")), compBlock(ident("y"), ident("bar")), compBlock(ident("z"), ident("baz"))],
-                   null));
-
-assertExpr("( x         for (x in foo) if (p))",
-           genExpr(ident("x"), [compBlock(ident("x"), ident("foo"))], ident("p")));
-assertExpr("( [x,y]     for (x in foo) for (y in bar) if (p))",
-           genExpr(arrExpr([ident("x"), ident("y")]), [compBlock(ident("x"), ident("foo")), compBlock(ident("y"), ident("bar"))], ident("p")));
-assertExpr("( [x,y,z] for (x in foo) for (y in bar) for (z in baz) if (p) )",
-           genExpr(arrExpr([ident("x"), ident("y"), ident("z")]),
-                   [compBlock(ident("x"), ident("foo")), compBlock(ident("y"), ident("bar")), compBlock(ident("z"), ident("baz"))],
-                   ident("p")));
-
-assertExpr("( x         for each (x in foo))",
-           genExpr(ident("x"), [compEachBlock(ident("x"), ident("foo"))], null));
-assertExpr("( [x,y]     for each (x in foo) for each (y in bar))",
-           genExpr(arrExpr([ident("x"), ident("y")]), [compEachBlock(ident("x"), ident("foo")), compEachBlock(ident("y"), ident("bar"))], null));
-assertExpr("( [x,y,z] for each (x in foo) for each (y in bar) for each (z in baz))",
-           genExpr(arrExpr([ident("x"), ident("y"), ident("z")]),
-                   [compEachBlock(ident("x"), ident("foo")), compEachBlock(ident("y"), ident("bar")), compEachBlock(ident("z"), ident("baz"))],
-                   null));
-
-assertExpr("( x         for each (x in foo) if (p))",
-           genExpr(ident("x"), [compEachBlock(ident("x"), ident("foo"))], ident("p")));
-assertExpr("( [x,y]     for each (x in foo) for each (y in bar) if (p))",
-           genExpr(arrExpr([ident("x"), ident("y")]), [compEachBlock(ident("x"), ident("foo")), compEachBlock(ident("y"), ident("bar"))], ident("p")));
-assertExpr("( [x,y,z] for each (x in foo) for each (y in bar) for each (z in baz) if (p) )",
-           genExpr(arrExpr([ident("x"), ident("y"), ident("z")]),
-                   [compEachBlock(ident("x"), ident("foo")), compEachBlock(ident("y"), ident("bar")), compEachBlock(ident("z"), ident("baz"))],
-                   ident("p")));
-
-assertExpr("( x         for (x of foo))",
-           genExpr(ident("x"), [compOfBlock(ident("x"), ident("foo"))], null));
-assertExpr("( [x,y]     for (x of foo) for (y of bar))",
-           genExpr(arrExpr([ident("x"), ident("y")]), [compOfBlock(ident("x"), ident("foo")), compOfBlock(ident("y"), ident("bar"))], null));
-assertExpr("( [x,y,z] for (x of foo) for (y of bar) for (z of baz))",
-           genExpr(arrExpr([ident("x"), ident("y"), ident("z")]),
-                   [compOfBlock(ident("x"), ident("foo")), compOfBlock(ident("y"), ident("bar")), compOfBlock(ident("z"), ident("baz"))],
-                   null));
-
-assertExpr("( x         for (x of foo) if (p))",
-           genExpr(ident("x"), [compOfBlock(ident("x"), ident("foo"))], ident("p")));
-assertExpr("( [x,y]     for (x of foo) for (y of bar) if (p))",
-           genExpr(arrExpr([ident("x"), ident("y")]), [compOfBlock(ident("x"), ident("foo")), compOfBlock(ident("y"), ident("bar"))], ident("p")));
-assertExpr("( [x,y,z] for (x of foo) for (y of bar) for (z of baz) if (p) )",
-           genExpr(arrExpr([ident("x"), ident("y"), ident("z")]),
-                   [compOfBlock(ident("x"), ident("foo")), compOfBlock(ident("y"), ident("bar")), compOfBlock(ident("z"), ident("baz"))],
-                   ident("p")));
+// assertExpr("( x         for (x in foo))",
+//            genExpr(ident("x"), [compBlock(ident("x"), ident("foo"))], null));
+// assertExpr("( [x,y]     for (x in foo) for (y in bar))",
+//            genExpr(arrExpr([ident("x"), ident("y")]), [compBlock(ident("x"), ident("foo")), compBlock(ident("y"), ident("bar"))], null));
+// assertExpr("( [x,y,z] for (x in foo) for (y in bar) for (z in baz))",
+//            genExpr(arrExpr([ident("x"), ident("y"), ident("z")]),
+//                    [compBlock(ident("x"), ident("foo")), compBlock(ident("y"), ident("bar")), compBlock(ident("z"), ident("baz"))],
+//                    null));
+// 
+// assertExpr("( x         for (x in foo) if (p))",
+//            genExpr(ident("x"), [compBlock(ident("x"), ident("foo"))], ident("p")));
+// assertExpr("( [x,y]     for (x in foo) for (y in bar) if (p))",
+//            genExpr(arrExpr([ident("x"), ident("y")]), [compBlock(ident("x"), ident("foo")), compBlock(ident("y"), ident("bar"))], ident("p")));
+// assertExpr("( [x,y,z] for (x in foo) for (y in bar) for (z in baz) if (p) )",
+//            genExpr(arrExpr([ident("x"), ident("y"), ident("z")]),
+//                    [compBlock(ident("x"), ident("foo")), compBlock(ident("y"), ident("bar")), compBlock(ident("z"), ident("baz"))],
+//                    ident("p")));
+// 
+// assertExpr("( x         for each (x in foo))",
+//            genExpr(ident("x"), [compEachBlock(ident("x"), ident("foo"))], null));
+// assertExpr("( [x,y]     for each (x in foo) for each (y in bar))",
+//            genExpr(arrExpr([ident("x"), ident("y")]), [compEachBlock(ident("x"), ident("foo")), compEachBlock(ident("y"), ident("bar"))], null));
+// assertExpr("( [x,y,z] for each (x in foo) for each (y in bar) for each (z in baz))",
+//            genExpr(arrExpr([ident("x"), ident("y"), ident("z")]),
+//                    [compEachBlock(ident("x"), ident("foo")), compEachBlock(ident("y"), ident("bar")), compEachBlock(ident("z"), ident("baz"))],
+//                    null));
+// 
+// assertExpr("( x         for each (x in foo) if (p))",
+//            genExpr(ident("x"), [compEachBlock(ident("x"), ident("foo"))], ident("p")));
+// assertExpr("( [x,y]     for each (x in foo) for each (y in bar) if (p))",
+//            genExpr(arrExpr([ident("x"), ident("y")]), [compEachBlock(ident("x"), ident("foo")), compEachBlock(ident("y"), ident("bar"))], ident("p")));
+// assertExpr("( [x,y,z] for each (x in foo) for each (y in bar) for each (z in baz) if (p) )",
+//            genExpr(arrExpr([ident("x"), ident("y"), ident("z")]),
+//                    [compEachBlock(ident("x"), ident("foo")), compEachBlock(ident("y"), ident("bar")), compEachBlock(ident("z"), ident("baz"))],
+//                    ident("p")));
+// 
+// assertExpr("( x         for (x of foo))",
+//            genExpr(ident("x"), [compOfBlock(ident("x"), ident("foo"))], null));
+// assertExpr("( [x,y]     for (x of foo) for (y of bar))",
+//            genExpr(arrExpr([ident("x"), ident("y")]), [compOfBlock(ident("x"), ident("foo")), compOfBlock(ident("y"), ident("bar"))], null));
+// assertExpr("( [x,y,z] for (x of foo) for (y of bar) for (z of baz))",
+//            genExpr(arrExpr([ident("x"), ident("y"), ident("z")]),
+//                    [compOfBlock(ident("x"), ident("foo")), compOfBlock(ident("y"), ident("bar")), compOfBlock(ident("z"), ident("baz"))],
+//                    null));
+// 
+// assertExpr("( x         for (x of foo) if (p))",
+//            genExpr(ident("x"), [compOfBlock(ident("x"), ident("foo"))], ident("p")));
+// assertExpr("( [x,y]     for (x of foo) for (y of bar) if (p))",
+//            genExpr(arrExpr([ident("x"), ident("y")]), [compOfBlock(ident("x"), ident("foo")), compOfBlock(ident("y"), ident("bar"))], ident("p")));
+// assertExpr("( [x,y,z] for (x of foo) for (y of bar) for (z of baz) if (p) )",
+//            genExpr(arrExpr([ident("x"), ident("y"), ident("z")]),
+//                    [compOfBlock(ident("x"), ident("foo")), compOfBlock(ident("y"), ident("bar")), compOfBlock(ident("z"), ident("baz"))],
+//                    ident("p")));
 
 // NOTE: it would be good to test generator expressions both with and without upvars, just like functions above.
 
 
 // let statements
-
-assertStmt("let (x=1) { }", letStmt([{ id: ident("x"), init: lit(1) }], blockStmt([])));
-assertStmt("let (x=1,y=2) { }", letStmt([{ id: ident("x"), init: lit(1) },
-                                         { id: ident("y"), init: lit(2) }],
-                                        blockStmt([])));
-assertStmt("let (x=1,y=2,z=3) { }", letStmt([{ id: ident("x"), init: lit(1) },
-                                             { id: ident("y"), init: lit(2) },
-                                             { id: ident("z"), init: lit(3) }],
-                                            blockStmt([])));
-assertStmt("let (x) { }", letStmt([{ id: ident("x"), init: null }], blockStmt([])));
-assertStmt("let (x,y) { }", letStmt([{ id: ident("x"), init: null },
-                                     { id: ident("y"), init: null }],
-                                    blockStmt([])));
-assertStmt("let (x,y,z) { }", letStmt([{ id: ident("x"), init: null },
-                                       { id: ident("y"), init: null },
-                                       { id: ident("z"), init: null }],
-                                      blockStmt([])));
-assertStmt("let (x = 1, y = x) { }", letStmt([{ id: ident("x"), init: lit(1) },
-                                              { id: ident("y"), init: ident("x") }],
-                                             blockStmt([])));
+// #disable: Let statements
+// assertStmt("let (x=1) { }", letStmt([{ id: ident("x"), init: lit(1) }], blockStmt([])));
+// assertStmt("let (x=1,y=2) { }", letStmt([{ id: ident("x"), init: lit(1) },
+//                                          { id: ident("y"), init: lit(2) }],
+//                                         blockStmt([])));
+// assertStmt("let (x=1,y=2,z=3) { }", letStmt([{ id: ident("x"), init: lit(1) },
+//                                              { id: ident("y"), init: lit(2) },
+//                                              { id: ident("z"), init: lit(3) }],
+//                                             blockStmt([])));
+// assertStmt("let (x) { }", letStmt([{ id: ident("x"), init: null }], blockStmt([])));
+// assertStmt("let (x,y) { }", letStmt([{ id: ident("x"), init: null },
+//                                      { id: ident("y"), init: null }],
+//                                     blockStmt([])));
+// assertStmt("let (x,y,z) { }", letStmt([{ id: ident("x"), init: null },
+//                                        { id: ident("y"), init: null },
+//                                        { id: ident("z"), init: null }],
+//                                       blockStmt([])));
+// assertStmt("let (x = 1, y = x) { }", letStmt([{ id: ident("x"), init: lit(1) },
+//                                               { id: ident("y"), init: ident("x") }],
+//                                              blockStmt([])));
 // #disable: SyntaxError instead of TypeError
 // assertError("let (x = 1, x = 2) { }", TypeError);
 
@@ -1042,8 +1042,8 @@ assertGlobalExpr("(function() { })", 11, { functionExpression: function() 11 });
 assertGlobalExpr("[1,2,3]", 12, { arrayExpression: function() 12 });
 assertGlobalExpr("({ x: y })", 13, { objectExpression: function() 13 });
 assertGlobalExpr("this", 14, { thisExpression: function() 14 });
-assertGlobalExpr("[x for (x in y)]", 17, { comprehensionExpression: function() 17 });
-assertGlobalExpr("(x for (x in y))", 18, { generatorExpression: function() 18 });
+// assertGlobalExpr("[x for (x in y)]", 17, { comprehensionExpression: function() 17 });
+// assertGlobalExpr("(x for (x in y))", 18, { generatorExpression: function() 18 });
 assertGlobalExpr("(function() { yield 42 })", genFunExpr(null, [], blockStmt([exprStmt(19)])), { yieldExpression: function() 19 });
 
 assertGlobalStmt("switch (x) { case y: }", switchStmt(ident("x"), [1]), { switchCase: function() 1 });
@@ -1053,7 +1053,7 @@ assertGlobalStmt("try { } catch (e) { }", tryStmt(blockStmt([]), [], 2, null), {
 assertGlobalStmt("try { } catch (e if e instanceof A) { } catch (e if e instanceof B) { }",
                  tryStmt(blockStmt([]), [2, 2], null, null),
                  { catchClause: function() 2 });
-assertGlobalExpr("[x for (y in z) for (x in y)]", compExpr(ident("x"), [3, 3], null), { comprehensionBlock: function() 3 });
+// assertGlobalExpr("[x for (y in z) for (x in y)]", compExpr(ident("x"), [3, 3], null), { comprehensionBlock: function() 3 });
 
 assertGlobalExpr("({ x: y } = z)", aExpr("=", 1, ident("z")), { objectPattern: function() 1 });
 assertGlobalExpr("({ x: y } = z)", aExpr("=", objPatt([2]), ident("z")), { propertyPattern: function() 2 });

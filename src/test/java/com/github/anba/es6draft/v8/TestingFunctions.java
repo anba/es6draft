@@ -14,7 +14,6 @@ import com.github.anba.es6draft.runtime.objects.intl.IntlAbstractOperations;
  * Stub functions for tests.
  */
 public final class TestingFunctions {
-
     /** shell-function: {@code gc()} */
     @Function(name = "gc", arity = 0)
     public void gc() {

@@ -35,8 +35,7 @@ public final class OrdinaryAsyncFunction extends FunctionObject {
 
     @Override
     protected OrdinaryAsyncFunction allocateNew() {
-        return FunctionAllocate(getRealm().defaultContext(), getPrototype(), isStrict(),
-                getFunctionKind());
+        return FunctionAllocate(getRealm().defaultContext(), getPrototype(), isStrict(), getFunctionKind());
     }
 
     /**
@@ -45,8 +44,7 @@ public final class OrdinaryAsyncFunction extends FunctionObject {
     @Override
     public PromiseObject call(ExecutionContext callerContext, Object thisValue, Object... args) {
         try {
-            return (PromiseObject) getCallMethod()
-                    .invokeExact(this, callerContext, thisValue, args);
+            return (PromiseObject) getCallMethod().invokeExact(this, callerContext, thisValue, args);
         } catch (Throwable e) {
             throw FunctionObject.<RuntimeException> rethrow(e);
         }
@@ -56,10 +54,8 @@ public final class OrdinaryAsyncFunction extends FunctionObject {
      * 9.2.1 [[Call]] ( thisArgument, argumentsList)
      */
     @Override
-    public PromiseObject tailCall(ExecutionContext callerContext, Object thisValue, Object... args)
-            throws Throwable {
-        return (PromiseObject) getTailCallMethod()
-                .invokeExact(this, callerContext, thisValue, args);
+    public PromiseObject tailCall(ExecutionContext callerContext, Object thisValue, Object... args) throws Throwable {
+        return (PromiseObject) getTailCallMethod().invokeExact(this, callerContext, thisValue, args);
     }
 
     /**
@@ -71,8 +67,7 @@ public final class OrdinaryAsyncFunction extends FunctionObject {
      *            the async function object
      * @return the function promise result value
      */
-    public static PromiseObject EvaluateBody(ExecutionContext cx,
-            OrdinaryAsyncFunction functionObject) {
+    public static PromiseObject EvaluateBody(ExecutionContext cx, OrdinaryAsyncFunction functionObject) {
         /* step 1 */
         PromiseCapability<PromiseObject> promiseCapability = PromiseBuiltinCapability(cx);
         /* steps 2-3 */
@@ -96,8 +91,8 @@ public final class OrdinaryAsyncFunction extends FunctionObject {
      *            the function kind
      * @return the new async function object
      */
-    public static OrdinaryAsyncFunction FunctionAllocate(ExecutionContext cx,
-            ScriptObject functionPrototype, boolean strict, FunctionKind kind) {
+    public static OrdinaryAsyncFunction FunctionAllocate(ExecutionContext cx, ScriptObject functionPrototype,
+            boolean strict, FunctionKind kind) {
         assert kind != FunctionKind.ClassConstructor;
         Realm realm = cx.getRealm();
         /* steps 1-5 (implicit) */

@@ -124,7 +124,6 @@ abstract class StatementVisitor extends ExpressionVisitor {
     private final boolean isGeneratorOrAsync;
     private Variable<Object> completionValue;
     private Labels labels = new Labels(null, null);
-    private int finallyDepth = 0;
 
     // tail-call support
     private int wrapped = 0;
@@ -135,7 +134,6 @@ abstract class StatementVisitor extends ExpressionVisitor {
         this.isGeneratorOrAsync = parent.isGeneratorOrAsync;
         // no return in script/module code
         this.labels.returnLabel = isFunction ? new ReturnLabel() : null;
-        this.finallyDepth = parent.finallyDepth;
         this.wrapped = parent.wrapped;
     }
 
@@ -182,7 +180,7 @@ abstract class StatementVisitor extends ExpressionVisitor {
      * Pushes the completion value onto the stack.
      */
     final void loadCompletionValue() {
-        if (!isFunction) {
+        if (hasCompletion()) {
             load(completionVariable());
         } else {
             aconst(null);
@@ -241,28 +239,23 @@ abstract class StatementVisitor extends ExpressionVisitor {
 
     private Variable<Object> enterAbruptRegion(boolean statementCompletion) {
         assert labels != null;
-        Variable<Object> completion = labels.completion;
-        if (completion == null) {
-            if (hasCompletion() && !statementCompletion) {
-                completion = completionVariable();
-            } else {
-                completion = newVariable("completion", Object.class);
-                if (hasCompletion()) {
-                    loadCompletionValue();
-                } else {
-                    aconst(null);
-                }
-                store(completion);
-            }
+        Variable<Object> completion;
+        if (hasCompletion() && !statementCompletion) {
+            // Re-use the existing completion variable if the statement doesn't track its completion state.
+            completion = completionVariable();
+        } else {
+            completion = newVariable("completion", Object.class);
+            loadCompletionValue();
+            store(completion);
         }
         labels = new Labels(labels, completion);
         return completion;
     }
 
     private List<TempLabel> exitAbruptRegion() {
+        assert isAbruptRegion();
         ArrayList<TempLabel> tempLabels = labels.tempLabels;
         labels = labels.parent;
-        assert labels != null;
         return tempLabels != null ? tempLabels : Collections.<TempLabel> emptyList();
     }
 
@@ -364,20 +357,6 @@ abstract class StatementVisitor extends ExpressionVisitor {
      */
     void exitWrapped() {
         --wrapped;
-    }
-
-    /**
-     * Enter a finally block.
-     */
-    void enterFinally() {
-        ++finallyDepth;
-    }
-
-    /**
-     * Exit a finally block.
-     */
-    void exitFinally() {
-        --finallyDepth;
     }
 
     /**

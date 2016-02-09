@@ -44,15 +44,11 @@
     <Bug pattern="NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE" />
     <Or>
       <And>
-        <Class name="com.github.anba.es6draft.repl.global.ShellGlobalObject" />
-        <Method name="relativePath" />
-      </And>
-      <And>
-        <Class name="com.github.anba.es6draft.repl.global.ShellGlobalObject" />
+        <Class name="com.github.anba.es6draft.repl.global.SharedFunctions" />
         <Method name="relativePathToScript" />
       </And>
       <And>
-        <Class name="com.github.anba.es6draft.runtime.internal.NativeCalls" />
+        <Class name="com.github.anba.es6draft.runtime.internal.RuntimeFunctions" />
         <Method name="Include" />
       </And>
       <And>
@@ -75,18 +71,6 @@
   <Match>
     <Bug pattern="DLS_DEAD_LOCAL_STORE" />
     <Or>
-      <And>
-        <Class name="com.github.anba.es6draft.compiler.EvalDeclarationInstantiationGenerator" />
-        <Method name="generate" />
-      </And>
-      <And>
-        <Class name="com.github.anba.es6draft.compiler.EvalDeclarationInstantiationGenerator" />
-        <Method name="generateGlobal" />
-      </And>
-      <And>
-        <Class name="com.github.anba.es6draft.runtime.objects.intl.NumberFormatConstructor" />
-        <Method name="InitializeDefaultNumberFormat" />
-      </And>
       <And>
         <Class name="com.github.anba.es6draft.runtime.objects.intl.NumberFormatConstructor" />
         <Method name="InitializeNumberFormat" />
@@ -178,8 +162,13 @@
         <Method name="trace" />
       </And>
       <And>
+        <Class name="com.github.anba.es6draft.repl.console.JLineConsole" />
+      </And>
+      <And>
         <Class name="com.github.anba.es6draft.repl.console.LegacyConsole" />
-        <!-- <Method name="LegacyConsole" /> -->
+      </And>
+      <And>
+        <Class name="com.github.anba.es6draft.repl.console.NativeConsole" />
       </And>
     </Or>
   </Match>
@@ -188,6 +177,12 @@
     <Bug pattern="AT_OPERATION_SEQUENCE_ON_CONCURRENT_ABSTRACTION" />
     <Class name="com.github.anba.es6draft.runtime.objects.intl.IntlAbstractOperations" />
     <Method name="GetMaximizedLocale" />
+  </Match>
+
+  <!-- System.gc() called to reclaim memory after OOM. -->
+  <Match>
+    <Bug pattern="DM_GC" />
+    <Class name="com.github.anba.es6draft.repl.Repl" />
   </Match>
 
   <Match>

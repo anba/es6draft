@@ -36,7 +36,7 @@ public final class BindingProperty extends AstNode {
     }
 
     /**
-     * Returns the binding property name or {@code null} for <tt>SingleNameBinding</tt> nodes.
+     * Returns the binding property name or {@code null} for <code>SingleNameBinding</code> nodes.
      * 
      * @return the property name or {@code null}
      */

@@ -12,6 +12,7 @@ import com.github.anba.es6draft.ast.ElementAccessor;
 import com.github.anba.es6draft.ast.Expression;
 import com.github.anba.es6draft.ast.IdentifierReference;
 import com.github.anba.es6draft.ast.LeftHandSideExpression;
+import com.github.anba.es6draft.ast.Literal;
 import com.github.anba.es6draft.ast.PropertyAccessor;
 import com.github.anba.es6draft.ast.StringLiteral;
 import com.github.anba.es6draft.ast.SuperElementAccessor;
@@ -310,25 +311,34 @@ abstract class ReferenceOp<NODE extends LeftHandSideExpression> {
         static final MethodName Reference_getBase = MethodName.findVirtual(Types.Reference,
                 "getBase", Type.methodType(Types.Object));
 
-        static final MethodName Reference_getThisValue = MethodName.findVirtual(Types.Reference,
-                "getThisValue", Type.methodType(Types.Object));
-
         // class: ScriptRuntime
-        static final MethodName ScriptRuntime_MakeSuperPropertyReference = MethodName.findStatic(
-                Types.ScriptRuntime, "MakeSuperPropertyReference", Type.methodType(Types.Reference,
-                        Types.ExecutionContext, Types.Object, Type.BOOLEAN_TYPE));
+        static final MethodName ScriptRuntime_GetSuperEnvironmentRecord = MethodName.findStatic(Types.ScriptRuntime,
+                "GetSuperEnvironmentRecord", Type.methodType(Types.FunctionEnvironmentRecord, Types.ExecutionContext));
 
-        static final MethodName ScriptRuntime_MakeSuperPropertyReference_String = MethodName
-                .findStatic(Types.ScriptRuntime, "MakeSuperPropertyReference", Type.methodType(
-                        Types.Reference, Types.ExecutionContext, Types.String, Type.BOOLEAN_TYPE));
+        static final MethodName ScriptRuntime_GetSuperThis = MethodName.findStatic(Types.ScriptRuntime, "GetSuperThis",
+                Type.methodType(Types.Object, Types.FunctionEnvironmentRecord, Types.ExecutionContext));
 
-        static final MethodName ScriptRuntime_getSuperPropertyValue = MethodName.findStatic(
-                Types.ScriptRuntime, "getSuperPropertyValue", Type.methodType(Types.Object,
-                        Types.ExecutionContext, Types.Object, Type.BOOLEAN_TYPE));
+        static final MethodName ScriptRuntime_GetSuperBase = MethodName.findStatic(Types.ScriptRuntime, "GetSuperBase",
+                Type.methodType(Types.ScriptObject, Types.FunctionEnvironmentRecord, Types.ExecutionContext));
 
-        static final MethodName ScriptRuntime_getSuperPropertyValue_String = MethodName.findStatic(
-                Types.ScriptRuntime, "getSuperPropertyValue", Type.methodType(Types.Object,
-                        Types.ExecutionContext, Types.String, Type.BOOLEAN_TYPE));
+        static final MethodName ScriptRuntime_getSuperProperty = MethodName.findStatic(Types.ScriptRuntime,
+                "getSuperProperty",
+                Type.methodType(Types.Object, Types.Object, Types.Object, Types.ScriptObject, Types.ExecutionContext));
+
+        static final MethodName ScriptRuntime_getSuperProperty_String = MethodName.findStatic(Types.ScriptRuntime,
+                "getSuperProperty",
+                Type.methodType(Types.Object, Types.String, Types.Object, Types.ScriptObject, Types.ExecutionContext));
+
+        static final MethodName ScriptRuntime_setSuperProperty = MethodName.findStatic(Types.ScriptRuntime,
+                "setSuperProperty", Type.methodType(Type.VOID_TYPE, Types.Object, Types.Object, Types.ScriptObject,
+                        Types.Object, Types.ExecutionContext, Type.BOOLEAN_TYPE));
+
+        static final MethodName ScriptRuntime_setSuperProperty_String = MethodName.findStatic(Types.ScriptRuntime,
+                "setSuperProperty", Type.methodType(Type.VOID_TYPE, Types.String, Types.Object, Types.ScriptObject,
+                        Types.Object, Types.ExecutionContext, Type.BOOLEAN_TYPE));
+
+        static final MethodName ScriptRuntime_deleteSuperProperty = MethodName.findStatic(Types.ScriptRuntime,
+                "deleteSuperProperty", Type.methodType(Type.BOOLEAN_TYPE, Types.ExecutionContext));
 
         // ScriptRuntime#checkAccessProperty
         static final MethodName ScriptRuntime_checkAccessElement = MethodName.findStatic(
@@ -360,7 +370,7 @@ abstract class ReferenceOp<NODE extends LeftHandSideExpression> {
                 Types.ScriptRuntime, "getElementValue",
                 Type.methodType(Types.Object, Types.Object, Types.Object, Types.ExecutionContext));
 
-        static final MethodName ScriptRuntime_getPropertyValue = MethodName.findStatic(
+        static final MethodName ScriptRuntime_getPropertyValue_String = MethodName.findStatic(
                 Types.ScriptRuntime, "getPropertyValue",
                 Type.methodType(Types.Object, Types.Object, Types.String, Types.ExecutionContext));
 
@@ -382,7 +392,7 @@ abstract class ReferenceOp<NODE extends LeftHandSideExpression> {
                 Type.methodType(Type.VOID_TYPE, Types.Object, Types.Object, Types.Object,
                         Types.ExecutionContext, Type.BOOLEAN_TYPE));
 
-        static final MethodName ScriptRuntime_setPropertyValue = MethodName.findStatic(
+        static final MethodName ScriptRuntime_setPropertyValue_String = MethodName.findStatic(
                 Types.ScriptRuntime, "setPropertyValue",
                 Type.methodType(Type.VOID_TYPE, Types.Object, Types.String, Types.Object,
                         Types.ExecutionContext, Type.BOOLEAN_TYPE));
@@ -407,7 +417,7 @@ abstract class ReferenceOp<NODE extends LeftHandSideExpression> {
                 .findStatic(Types.ScriptRuntime, "deleteElement", Type.methodType(Type.BOOLEAN_TYPE,
                         Types.Object, Types.Object, Types.ExecutionContext, Type.BOOLEAN_TYPE));
 
-        static final MethodName ScriptRuntime_deleteProperty = MethodName.findStatic(
+        static final MethodName ScriptRuntime_deleteProperty_String = MethodName.findStatic(
                 Types.ScriptRuntime, "deleteProperty", Type.methodType(Type.BOOLEAN_TYPE,
                         Types.Object, Types.String, Types.ExecutionContext, Type.BOOLEAN_TYPE));
 
@@ -482,6 +492,8 @@ abstract class ReferenceOp<NODE extends LeftHandSideExpression> {
 
     private static MethodName checkAccessMethod(ValType elementType) {
         switch (elementType) {
+        case Empty:
+            return Methods.ScriptRuntime_checkAccessProperty;
         case Number:
             return Methods.ScriptRuntime_checkAccessProperty_double;
         case Number_int:
@@ -507,7 +519,7 @@ abstract class ReferenceOp<NODE extends LeftHandSideExpression> {
         case Number_uint:
             return Methods.ScriptRuntime_getPropertyValue_long;
         case String:
-            return Methods.ScriptRuntime_getPropertyValue;
+            return Methods.ScriptRuntime_getPropertyValue_String;
         case Any:
         case Object:
             return Methods.ScriptRuntime_getElementValue;
@@ -525,7 +537,7 @@ abstract class ReferenceOp<NODE extends LeftHandSideExpression> {
         case Number_uint:
             return Methods.ScriptRuntime_setPropertyValue_long;
         case String:
-            return Methods.ScriptRuntime_setPropertyValue;
+            return Methods.ScriptRuntime_setPropertyValue_String;
         case Any:
         case Object:
             return Methods.ScriptRuntime_setElementValue;
@@ -543,13 +555,82 @@ abstract class ReferenceOp<NODE extends LeftHandSideExpression> {
         case Number_uint:
             return Methods.ScriptRuntime_deleteProperty_long;
         case String:
-            return Methods.ScriptRuntime_deleteProperty;
+            return Methods.ScriptRuntime_deleteProperty_String;
         case Any:
         case Object:
             return Methods.ScriptRuntime_deleteElement;
         default:
             throw new AssertionError();
         }
+    }
+
+    private static void GetSuperEnvironment(LeftHandSideExpression node, ExpressionVisitor mv) {
+        mv.loadExecutionContext();
+        mv.lineInfo(node);
+        mv.invoke(Methods.ScriptRuntime_GetSuperEnvironmentRecord);
+        mv.dup();
+    }
+
+    private static void GetSuperThis(ExpressionVisitor mv) {
+        // stack: [env] -> [thisValue]
+        mv.loadExecutionContext();
+        mv.invoke(Methods.ScriptRuntime_GetSuperThis);
+    }
+
+    private static void GetSuperBase(ExpressionVisitor mv) {
+        // stack: [env, thisValue] -> [thisValue, baseValue]
+        mv.swap();
+        mv.loadExecutionContext();
+        mv.invoke(Methods.ScriptRuntime_GetSuperBase);
+    }
+
+    private static ValType GetSuperElement(LeftHandSideExpression node, ValType elementType, ExpressionVisitor mv) {
+        // stack: [pk, thisValue, baseValue] -> [value]
+        mv.loadExecutionContext();
+        mv.lineInfo(node);
+        if (elementType == ValType.String) {
+            mv.invoke(Methods.ScriptRuntime_getSuperProperty_String);
+        } else {
+            assert elementType == ValType.Any;
+            mv.invoke(Methods.ScriptRuntime_getSuperProperty);
+        }
+        return ValType.Any;
+    }
+
+    private static ValType GetSuperElement(LeftHandSideExpression node, ValType elementType, ValType value,
+            ExpressionVisitor mv) {
+        // stack: [pk, thisValue, baseValue, value] -> []
+        mv.toBoxed(value);
+        mv.loadExecutionContext();
+        mv.iconst(mv.isStrict());
+        mv.lineInfo(node);
+        if (elementType == ValType.String) {
+            mv.invoke(Methods.ScriptRuntime_setSuperProperty_String);
+        } else {
+            assert elementType == ValType.Any;
+            mv.invoke(Methods.ScriptRuntime_setSuperProperty);
+        }
+        return ValType.Empty;
+    }
+
+    private static ValType DeleteSuperElement(LeftHandSideExpression node, ValType elementType, ExpressionVisitor mv) {
+        mv.pop(elementType);
+        mv.loadExecutionContext();
+        mv.lineInfo(node);
+        mv.invoke(Methods.ScriptRuntime_deleteSuperProperty);
+        return ValType.Boolean;
+    }
+
+    private static Variable<?> saveToVariable(ValType value, ExpressionVisitor mv) {
+        Variable<?> result = mv.newScratchVariable(value.toClass());
+        mv.dup(value);
+        mv.store(result);
+        return result;
+    }
+
+    private static void loadFromVariable(Variable<?> variable, ExpressionVisitor mv) {
+        mv.load(variable);
+        mv.freeVariable(variable);
     }
 
     /**
@@ -645,7 +726,7 @@ abstract class ReferenceOp<NODE extends LeftHandSideExpression> {
             /* steps 7-8 */
             mv.loadExecutionContext();
             mv.lineInfo(node);
-            mv.invoke(Methods.ScriptRuntime_checkAccessProperty);
+            mv.invoke(checkAccessMethod(ValType.Empty));
             /* steps 9-10 */
             mv.aconst(node.getName());
             /* steps 11-12 (not applicable) */
@@ -688,7 +769,7 @@ abstract class ReferenceOp<NODE extends LeftHandSideExpression> {
             mv.aconst(node.getName());
             mv.loadExecutionContext();
             mv.lineInfo(node);
-            mv.invoke(Methods.ScriptRuntime_getPropertyValue);
+            mv.invoke(elementGetMethod(ValType.String));
             if (withThis) {
                 // stack: [thisValue, func] -> [func, thisValue]
                 mv.swap();
@@ -738,22 +819,32 @@ abstract class ReferenceOp<NODE extends LeftHandSideExpression> {
         @Override
         protected ValType reference(ElementAccessor node, boolean update, ExpressionVisitor mv,
                 CodeGenerator gen) {
-            // stack: [] -> [base, key]
+            // stack: [] -> [base, base?, key]
             /* steps 1-3 */
             gen.expressionBoxed(node.getBase(), mv);
-            mv.dup();
+            boolean isLiteral = node.getElement() instanceof Literal;
+            if (isLiteral) {
+                /* steps 7-10 */
+                mv.loadExecutionContext();
+                mv.lineInfo(node);
+                mv.invoke(checkAccessMethod(ValType.Empty));
+            } else {
+                mv.dup();
+            }
             if (update) {
                 mv.dup();
             }
             /* steps 4-6 */
             ValType elementType = evalPropertyKey(node.getElement(), mv, gen);
-            /* steps 7-10 */
-            mv.loadExecutionContext();
-            mv.lineInfo(node);
-            mv.invoke(checkAccessMethod(elementType));
+            if (!isLiteral) {
+                /* steps 7-10 */
+                mv.loadExecutionContext();
+                mv.lineInfo(node);
+                mv.invoke(checkAccessMethod(elementType));
+            }
             /* steps 11-12 (not applicable) */
             if (update) {
-                // stack: [base, key] -> [base, key, base, key]
+                // stack: [base, base, key] -> [base, key, base, key]
                 mv.dupX(ValType.Any, elementType);
             }
             return elementType;
@@ -806,17 +897,13 @@ abstract class ReferenceOp<NODE extends LeftHandSideExpression> {
                 mv.dupX(ValType.Number, value);
                 return null;
             }
-            Variable<?> result = mv.newScratchVariable(value.toClass());
-            mv.dup(value);
-            mv.store(result);
-            return result;
+            return saveToVariable(value, mv);
         }
 
         @Override
         void restoreValue(Variable<?> variable, ExpressionVisitor mv) {
             if (variable != null) {
-                mv.load(variable);
-                mv.freeVariable(variable);
+                loadFromVariable(variable, mv);
             }
         }
     };
@@ -826,72 +913,79 @@ abstract class ReferenceOp<NODE extends LeftHandSideExpression> {
      */
     static final ReferenceOp<SuperPropertyAccessor> SUPER_PROPERTY = new ReferenceOp<SuperPropertyAccessor>() {
         @Override
-        protected ValType reference(SuperPropertyAccessor node, boolean update,
-                ExpressionVisitor mv, CodeGenerator gen) {
-            /* steps 1-3 */
-            mv.loadExecutionContext();
+        protected ValType reference(SuperPropertyAccessor node, boolean update, ExpressionVisitor mv,
+                CodeGenerator gen) {
+            // stack: [] -> [pk, pk?]
             mv.aconst(node.getName());
-            mv.iconst(mv.isStrict());
-            mv.lineInfo(node);
-            mv.invoke(Methods.ScriptRuntime_MakeSuperPropertyReference_String);
             if (update) {
                 mv.dup();
             }
-            return ValType.Reference;
+
+            // stack: [pk, pk?] -> [pk, pk?, env, env]
+            GetSuperEnvironment(node, mv);
+
+            // stack: [pk, pk?, env, env] -> [pk, pk?, thisValue, baseValue]
+            GetSuperThis(mv);
+            GetSuperBase(mv);
+            if (update) {
+                // stack: [pk, pk, thisValue, baseValue] -> [pk, thisValue, baseValue, pk, thisValue, baseValue]
+                mv.dup2X1();
+            }
+            return ValType.String;
         }
 
         @Override
         ValType getValue(SuperPropertyAccessor node, ValType ref, ExpressionVisitor mv) {
-            // stack: [ref] -> [value]
-            return GetValue(node, ref, mv);
+            // stack: [pk, thisValue, baseValue] -> [value]
+            return GetSuperElement(node, ref, mv);
         }
 
         @Override
-        void putValue(SuperPropertyAccessor node, ValType ref, ValType value,
-                ExpressionVisitor mv) {
-            // stack: [ref, value] -> []
-            PutValue(node, ref, value, mv);
+        void putValue(SuperPropertyAccessor node, ValType ref, ValType value, ExpressionVisitor mv) {
+            // stack: [pk, thisValue, baseValue, value] -> []
+            GetSuperElement(node, ref, value, mv);
         }
 
         @Override
         ValType delete(SuperPropertyAccessor node, ExpressionVisitor mv, CodeGenerator gen) {
-            ValType ref = reference(node, false, mv, gen);
-            return Delete(node, ref, mv);
+            return DeleteSuperElement(node, ValType.Empty, mv);
         }
 
         @Override
-        protected ValType referenceValue(SuperPropertyAccessor node, boolean withThis,
-                ExpressionVisitor mv, CodeGenerator gen) {
+        protected ValType referenceValue(SuperPropertyAccessor node, boolean withThis, ExpressionVisitor mv,
+                CodeGenerator gen) {
+            // stack: [] -> [pk]
+            mv.aconst(node.getName());
+
+            // stack: [pk] -> [pk, env, env]
+            GetSuperEnvironment(node, mv);
+
+            // stack: [pk, env, env] -> [thisValue?, pk, thisValue, baseValue]
+            GetSuperThis(mv);
             if (withThis) {
-                // stack: [] -> [ref, ref]
-                ValType type = reference(node, false, mv, gen);
-                mv.dup();
-                // stack: [ref, ref] -> [func, ref]
-                GetValue(node, type, mv);
+                mv.dupX2();
+            }
+            GetSuperBase(mv);
+
+            // stack: [thisValue?, pk, thisValue, baseValue] -> [thisValue?, value]
+            GetSuperElement(node, ValType.String, mv);
+            if (withThis) {
+                // stack: [thisValue, value] -> [value, thisValue]
                 mv.swap();
-                // stack: [func, ref] -> [func, thisValue]
-                mv.invoke(Methods.Reference_getThisValue);
-            } else {
-                // stack: [] -> [value]
-                mv.loadExecutionContext();
-                mv.aconst(node.getName());
-                mv.iconst(mv.isStrict());
-                mv.lineInfo(node);
-                mv.invoke(Methods.ScriptRuntime_getSuperPropertyValue_String);
             }
             return ValType.Any;
         }
 
         @Override
         Variable<?> saveValue(ValType ref, ValType value, ExpressionVisitor mv) {
-            // stack: [ref, value] -> [value, ref, value]
-            mv.dupX(ref, value);
-            return null;
+            // stack: [pk, thisValue, baseValue, value] -> [pk, thisValue, baseValue, value]
+            return saveToVariable(value, mv);
         }
 
         @Override
         void restoreValue(Variable<?> variable, ExpressionVisitor mv) {
-            // stack: [] -> []
+            // stack: [] -> [value]
+            loadFromVariable(variable, mv);
         }
     };
 
@@ -902,71 +996,80 @@ abstract class ReferenceOp<NODE extends LeftHandSideExpression> {
         @Override
         protected ValType reference(SuperElementAccessor node, boolean update, ExpressionVisitor mv,
                 CodeGenerator gen) {
-            /* steps 1-5 */
-            mv.loadExecutionContext();
-            ValType type = gen.expression(node.getExpression(), mv);
-            ToPropertyKey(type, mv);
-            mv.iconst(mv.isStrict());
-            mv.lineInfo(node);
-            mv.invoke(Methods.ScriptRuntime_MakeSuperPropertyReference);
+            // stack: [] -> [pk, pk?]
+            ValType type = gen.expression(node.getElement(), mv);
+            type = ToPropertyKey(type, mv);
             if (update) {
                 mv.dup();
             }
-            return ValType.Reference;
+
+            // stack: [pk, pk?] -> [pk, pk?, env, env]
+            GetSuperEnvironment(node, mv);
+
+            // stack: [pk, pk?, env, env] -> [pk, pk?, thisValue, baseValue]
+            GetSuperThis(mv);
+            GetSuperBase(mv);
+            if (update) {
+                // stack: [pk, pk, thisValue, baseValue] -> [pk, thisValue, baseValue, pk, thisValue, baseValue]
+                mv.dup2X1();
+            }
+            return type;
         }
 
         @Override
         ValType getValue(SuperElementAccessor node, ValType ref, ExpressionVisitor mv) {
-            // stack: [ref] -> [value]
-            return GetValue(node, ref, mv);
+            // stack: [pk, thisValue, baseValue] -> [value]
+            return GetSuperElement(node, ref, mv);
         }
 
         @Override
         void putValue(SuperElementAccessor node, ValType ref, ValType value, ExpressionVisitor mv) {
-            // stack: [ref, value] -> []
-            PutValue(node, ref, value, mv);
+            // stack: [pk, thisValue, baseValue, value] -> []
+            GetSuperElement(node, ref, value, mv);
         }
 
         @Override
         ValType delete(SuperElementAccessor node, ExpressionVisitor mv, CodeGenerator gen) {
-            ValType ref = reference(node, false, mv, gen);
-            return Delete(node, ref, mv);
+            ValType type = gen.expression(node.getElement().emptyCompletion(), mv);
+            return DeleteSuperElement(node, type, mv);
         }
 
         @Override
-        protected ValType referenceValue(SuperElementAccessor node, boolean withThis,
-                ExpressionVisitor mv, CodeGenerator gen) {
+        protected ValType referenceValue(SuperElementAccessor node, boolean withThis, ExpressionVisitor mv,
+                CodeGenerator gen) {
+            // stack: [] -> [pk]
+            ValType type = gen.expression(node.getElement(), mv);
+            type = ToPropertyKey(type, mv);
+
+            // stack: [pk] -> [pk, env, env]
+            GetSuperEnvironment(node, mv);
+
+            // stack: [pk, env, env] -> [thisValue?, pk, thisValue, baseValue]
+            GetSuperThis(mv);
             if (withThis) {
-                // stack: [] -> [ref, ref]
-                ValType type = reference(node, false, mv, gen);
-                mv.dup();
-                // stack: [ref, ref] -> [func, ref]
-                GetValue(node, type, mv);
+                mv.dupX2();
+            }
+            GetSuperBase(mv);
+
+            // stack: [thisValue?, pk, thisValue, baseValue] -> [thisValue?, value]
+            GetSuperElement(node, type, mv);
+            if (withThis) {
+                // stack: [thisValue, value] -> [value, thisValue]
                 mv.swap();
-                // stack: [func, ref] -> [func, thisValue]
-                mv.invoke(Methods.Reference_getThisValue);
-            } else {
-                // stack: [] -> [value]
-                mv.loadExecutionContext();
-                ValType type = gen.expression(node.getExpression(), mv);
-                ToPropertyKey(type, mv);
-                mv.iconst(mv.isStrict());
-                mv.lineInfo(node);
-                mv.invoke(Methods.ScriptRuntime_getSuperPropertyValue);
             }
             return ValType.Any;
         }
 
         @Override
         Variable<?> saveValue(ValType ref, ValType value, ExpressionVisitor mv) {
-            // stack: [ref, value] -> [value, ref, value]
-            mv.dupX(ref, value);
-            return null;
+            // stack: [pk, thisValue, baseValue, value] -> [pk, thisValue, baseValue, value]
+            return saveToVariable(value, mv);
         }
 
         @Override
         void restoreValue(Variable<?> variable, ExpressionVisitor mv) {
-            // stack: [] -> []
+            // stack: [] -> [value]
+            loadFromVariable(variable, mv);
         }
     };
 }

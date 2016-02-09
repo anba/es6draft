@@ -55,7 +55,7 @@ Object.defineProperties(Object.assign(String.prototype, {
 });
 
 /*
- * Make String.prototype.contains an alias for String.prototype.contains
+ * Make String.prototype.contains an alias for String.prototype.includes
  */
 Object.defineProperties(Object.assign(String.prototype, {
   contains(searchString, position = 0) {

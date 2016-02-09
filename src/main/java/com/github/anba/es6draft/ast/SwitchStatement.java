@@ -47,9 +47,9 @@ public final class SwitchStatement extends BreakableStatement implements ScopedN
     }
 
     /**
-     * Returns the list of <tt>CaseClause</tt> nodes.
+     * Returns the list of <code>CaseClause</code> nodes.
      * 
-     * @return the list of <tt>CaseClause</tt> nodes
+     * @return the list of <code>CaseClause</code> nodes
      */
     public List<SwitchClause> getClauses() {
         return clauses;

@@ -118,8 +118,8 @@ final class IntlDataTools {
         System.out.println("--- [LanguageSubtagRegistryData#scriptData] ---");
         for (Record record : script) {
             assert record.has(Field.Prefix);
-            System.out.printf("%s -> %s [%s]%n", record.get(Field.Subtag),
-                    record.get(Field.PreferredValue), record.get(Field.Prefix));
+            System.out.printf("%s -> %s [%s]%n", record.get(Field.Subtag), record.get(Field.PreferredValue),
+                    record.get(Field.Prefix));
         }
         System.out.println();
         assert script.isEmpty() : "no preferred values for 'script' expected";
@@ -128,10 +128,8 @@ final class IntlDataTools {
         System.out.println("--- [LanguageSubtagRegistryData#extlangData] ---");
         for (Record record : extlang) {
             assert record.has(Field.Prefix);
-            assert record.get(Field.Subtag).equals(record.get(Field.PreferredValue)) : record
-                    .get(Field.Subtag);
-            System.out.printf("map.put(\"%s\", \"%s\");%n", record.get(Field.Subtag),
-                    record.get(Field.Prefix));
+            assert record.get(Field.Subtag).equals(record.get(Field.PreferredValue)) : record.get(Field.Subtag);
+            System.out.printf("map.put(\"%s\", \"%s\");%n", record.get(Field.Subtag), record.get(Field.Prefix));
         }
         System.out.println();
 
@@ -139,10 +137,9 @@ final class IntlDataTools {
         System.out.println("--- [LanguageSubtagRegistryData#variantData] ---");
         for (Record record : variant) {
             assert record.has(Field.Prefix);
-            System.out.printf("%s -> %s [%s]%n", record.get(Field.Subtag),
-                    record.get(Field.PreferredValue), record.get(Field.Prefix));
-            System.out.printf("map.put(\"%s\", \"%s\");%n", record.get(Field.Subtag),
-                    record.get(Field.PreferredValue));
+            System.out.printf("%s -> %s [%s]%n", record.get(Field.Subtag), record.get(Field.PreferredValue),
+                    record.get(Field.Prefix));
+            System.out.printf("map.put(\"%s\", \"%s\");%n", record.get(Field.Subtag), record.get(Field.PreferredValue));
         }
         System.out.println();
         assert variant.size() == 1 : "Only one variant entry expected";
@@ -153,8 +150,7 @@ final class IntlDataTools {
         System.out.println("--- [LanguageSubtagRegistryData#regionData] ---");
         for (Record record : region) {
             assert !record.has(Field.Prefix);
-            System.out.printf("map.put(\"%s\", \"%s\");%n",
-                    record.get(Field.Subtag).toLowerCase(Locale.ROOT),
+            System.out.printf("map.put(\"%s\", \"%s\");%n", record.get(Field.Subtag).toLowerCase(Locale.ROOT),
                     record.get(Field.PreferredValue));
         }
         System.out.println();
@@ -163,8 +159,7 @@ final class IntlDataTools {
         System.out.println("--- [LanguageSubtagRegistryData#languageData] ---");
         for (Record record : language) {
             assert !record.has(Field.Prefix);
-            System.out.printf("map.put(\"%s\", \"%s\");%n", record.get(Field.Subtag),
-                    record.get(Field.PreferredValue));
+            System.out.printf("map.put(\"%s\", \"%s\");%n", record.get(Field.Subtag), record.get(Field.PreferredValue));
         }
         System.out.println();
 
@@ -173,12 +168,11 @@ final class IntlDataTools {
         for (Record record : grandfathered) {
             assert !record.has(Field.Prefix);
             if (record.has(Field.PreferredValue)) {
-                System.out.printf("map.put(\"%s\", \"%s\");%n",
-                        record.get(Field.Tag).toLowerCase(Locale.ROOT),
+                System.out.printf("map.put(\"%s\", \"%s\");%n", record.get(Field.Tag).toLowerCase(Locale.ROOT),
                         record.get(Field.PreferredValue));
             } else {
-                System.out.printf("map.put(\"%s\", \"%s\");%n",
-                        record.get(Field.Tag).toLowerCase(Locale.ROOT), record.get(Field.Tag));
+                System.out.printf("map.put(\"%s\", \"%s\");%n", record.get(Field.Tag).toLowerCase(Locale.ROOT),
+                        record.get(Field.Tag));
             }
         }
         System.out.println();
@@ -187,8 +181,7 @@ final class IntlDataTools {
         System.out.println("--- [LanguageSubtagRegistryData#redundantData] ---");
         for (Record record : redundant) {
             assert !record.has(Field.Prefix);
-            System.out.printf("map.put(\"%s\", \"%s\");%n",
-                    record.get(Field.Tag).toLowerCase(Locale.ROOT),
+            System.out.printf("map.put(\"%s\", \"%s\");%n", record.get(Field.Tag).toLowerCase(Locale.ROOT),
                     record.get(Field.PreferredValue));
         }
         System.out.println();
@@ -196,9 +189,8 @@ final class IntlDataTools {
 
     private enum Field {
         Type("Type"), Tag("Tag"), Subtag("Subtag"), Description("Description"), Added("Added"),
-        Deprecated("Deprecated"), PreferredValue("Preferred-Value"), Prefix("Prefix"),
-        SupressScript("Suppress-Script"), Macrolanguage("Macrolanguage"), Scope("Scope"), Comments(
-                "Comments");
+        Deprecated("Deprecated"), PreferredValue("Preferred-Value"), Prefix("Prefix"), SupressScript("Suppress-Script"),
+        Macrolanguage("Macrolanguage"), Scope("Scope"), Comments("Comments");
 
         private final String name;
 
@@ -211,6 +203,7 @@ final class IntlDataTools {
         }
 
         static final HashMap<String, Field> byName;
+
         static {
             HashMap<String, Field> map = new HashMap<>();
             for (Field field : Field.values()) {
@@ -288,8 +281,7 @@ final class IntlDataTools {
      */
     static void jdkTimezoneNames(Path tzdataDir) throws IOException {
         Pattern pZone = Pattern.compile("Zone\\s+([a-zA-Z0-9_+\\-/]+)\\s+.*");
-        Pattern pLink = Pattern
-                .compile("Link\\s+([a-zA-Z0-9_+\\-/]+)\\s+([a-zA-Z0-9_+\\-/]+)(?:\\s+#.*)?");
+        Pattern pLink = Pattern.compile("Link\\s+([a-zA-Z0-9_+\\-/]+)\\s+([a-zA-Z0-9_+\\-/]+)(?:\\s+#.*)?");
         Pattern pFileName = Pattern.compile("[a-z0-9]+");
 
         HashSet<String> ignoreFiles = new HashSet<>(Arrays.asList("backzone"));
@@ -300,8 +292,7 @@ final class IntlDataTools {
             for (Path path : stream) {
                 String filename = Objects.requireNonNull(path.getFileName()).toString();
                 if (pFileName.matcher(filename).matches() && !ignoreFiles.contains(filename)) {
-                    try (BufferedReader reader = Files.newBufferedReader(path,
-                            StandardCharsets.UTF_8)) {
+                    try (BufferedReader reader = Files.newBufferedReader(path, StandardCharsets.UTF_8)) {
                         for (String line; (line = reader.readLine()) != null;) {
                             if (line.startsWith("Zone")) {
                                 Matcher m = pZone.matcher(line);
@@ -335,8 +326,7 @@ final class IntlDataTools {
             assert changed : link;
         }
 
-        Set<String> ids = TimeZone.getAvailableIDs(SystemTimeZoneType.ANY, null, null);
-        ids = new TreeSet<String>(ids);
+        TreeSet<String> ids = new TreeSet<>(TimeZone.getAvailableIDs(SystemTimeZoneType.ANY, null, null));
         for (String id : new HashSet<>(ids)) {
             if (id.startsWith("SystemV/")) {
                 ids.remove(id);
@@ -462,8 +452,7 @@ final class IntlDataTools {
             }
 
             for (Map.Entry<String, String> entry : result.entrySet()) {
-                System.out.printf("map.put(\"%s\", new String[]{%s});%n", entry.getKey(),
-                        entry.getValue());
+                System.out.printf("map.put(\"%s\", new String[]{%s});%n", entry.getKey(), entry.getValue());
             }
         }
     }

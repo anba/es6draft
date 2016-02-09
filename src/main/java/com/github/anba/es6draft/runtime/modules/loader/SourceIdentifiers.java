@@ -30,8 +30,7 @@ final class SourceIdentifiers {
      * @throws MalformedNameException
      *             if the name cannot be normalized
      */
-    static URI normalize(String unnormalizedName, SourceIdentifier referrerId)
-            throws MalformedNameException {
+    static URI normalize(String unnormalizedName, SourceIdentifier referrerId) throws MalformedNameException {
         URI moduleName = parse(unnormalizedName);
         if (referrerId != null && isRelative(moduleName)) {
             moduleName = referrerId.toUri().resolve(moduleName);
@@ -69,8 +68,7 @@ final class SourceIdentifiers {
     }
 
     private static boolean isRelative(URI moduleName) {
-        return moduleName.getRawPath().startsWith("./")
-                || moduleName.getRawPath().startsWith("../");
+        return moduleName.getRawPath().startsWith("./") || moduleName.getRawPath().startsWith("../");
     }
 
     private static boolean hasEmptyPath(URI moduleName) {

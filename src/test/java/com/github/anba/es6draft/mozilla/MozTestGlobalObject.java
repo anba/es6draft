@@ -6,26 +6,40 @@
  */
 package com.github.anba.es6draft.mozilla;
 
+import java.io.IOException;
+import java.net.URISyntaxException;
+
+import com.github.anba.es6draft.compiler.CompilationException;
+import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.repl.console.ShellConsole;
-import com.github.anba.es6draft.repl.global.MozShellGlobalObject;
+import com.github.anba.es6draft.repl.global.BaseShellFunctions;
+import com.github.anba.es6draft.repl.global.MozShellFunctions;
+import com.github.anba.es6draft.repl.global.ShellGlobalObject;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
-import com.github.anba.es6draft.runtime.internal.ScriptCache;
-import com.github.anba.es6draft.util.TestInfo;
 
 /**
  *
  */
-final class MozTestGlobalObject extends MozShellGlobalObject {
-    protected MozTestGlobalObject(Realm realm, ShellConsole console, TestInfo test,
-            ScriptCache scriptCache) {
-        super(realm, console, test.getBaseDir(), test.getScript(), scriptCache);
+final class MozTestGlobalObject extends ShellGlobalObject {
+    MozTestGlobalObject(Realm realm, ShellConsole console) {
+        super(realm, console);
+    }
+
+    static void testLoadInitializationScript() throws IOException {
+        getScriptURL("mozlegacy.js");
     }
 
     @Override
-    protected void initializeExtensions() {
-        super.initializeExtensions();
-        install(new TestingFunctions(), TestingFunctions.class);
+    public void initializeScripted() throws IOException, URISyntaxException, ParserException, CompilationException {
+        includeNative("mozlegacy.js");
+    }
+
+    @Override
+    public void initializeExtensions() {
+        createGlobalProperties(new BaseShellFunctions(getConsole()), BaseShellFunctions.class);
+        createGlobalProperties(new MozShellFunctions(), MozShellFunctions.class);
+        createGlobalProperties(new TestingFunctions(), TestingFunctions.class);
     }
 
     /**
@@ -33,18 +47,13 @@ final class MozTestGlobalObject extends MozShellGlobalObject {
      * 
      * @param console
      *            the console object
-     * @param test
-     *            the test descriptor
-     * @param scriptCache
-     *            the script cache
      * @return the object allocator to construct new global object instances
      */
-    static ObjectAllocator<MozTestGlobalObject> newGlobalObjectAllocator(
-            final ShellConsole console, final TestInfo test, final ScriptCache scriptCache) {
+    static ObjectAllocator<MozTestGlobalObject> newGlobalObjectAllocator(final ShellConsole console) {
         return new ObjectAllocator<MozTestGlobalObject>() {
             @Override
             public MozTestGlobalObject newInstance(Realm realm) {
-                return new MozTestGlobalObject(realm, console, test, scriptCache);
+                return new MozTestGlobalObject(realm, console);
             }
         };
     }

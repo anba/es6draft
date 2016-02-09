@@ -39,8 +39,7 @@ public final class Timers implements TaskSource {
     private static final int MAX_TIMEOUT = Integer.MAX_VALUE;
     private final AtomicInteger timerIds = new AtomicInteger();
     private final DelayQueue<TimerTask> queue = new DelayQueue<>();
-    private final ConcurrentHashMap<Integer, TimerTask> activeTimers = new ConcurrentHashMap<>(16,
-            0.75f, 2);
+    private final ConcurrentHashMap<Integer, TimerTask> activeTimers = new ConcurrentHashMap<>(16, 0.75f, 2);
     private int nestingLevel = 0;
 
     private abstract class TimerTask implements Task, Delayed {
@@ -120,8 +119,7 @@ public final class Timers implements TaskSource {
         private final Callable f;
         private final Object[] args;
 
-        CallableTimerTask(long delay, boolean interval, ExecutionContext cx, Callable f,
-                Object... args) {
+        CallableTimerTask(long delay, boolean interval, ExecutionContext cx, Callable f, Object... args) {
             super(delay, interval);
             this.cx = cx;
             this.f = f;
@@ -157,8 +155,7 @@ public final class Timers implements TaskSource {
         }
     }
 
-    private TimerTask scheduleTimer(long delay, boolean interval, ExecutionContext cx, Object f,
-            Object... args) {
+    private TimerTask scheduleTimer(long delay, boolean interval, ExecutionContext cx, Object f, Object... args) {
         TimerTask task;
         if (IsCallable(f)) {
             task = new CallableTimerTask(delay, interval, cx, (Callable) f, args);

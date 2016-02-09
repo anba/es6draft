@@ -6,12 +6,8 @@
  */
 package com.github.anba.es6draft.runtime.types.builtins;
 
-import static com.github.anba.es6draft.runtime.types.Null.NULL;
-
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
-import java.util.ArrayList;
-import java.util.List;
 
 import com.github.anba.es6draft.Executable;
 import com.github.anba.es6draft.runtime.ExecutionContext;
@@ -22,8 +18,6 @@ import com.github.anba.es6draft.runtime.internal.Source;
 import com.github.anba.es6draft.runtime.internal.TailCallInvocation;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Constructor;
-import com.github.anba.es6draft.runtime.types.Property;
-import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 
 /**
@@ -56,10 +50,6 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
     private MethodHandle callMethod;
     private MethodHandle tailCallMethod;
     private MethodHandle constructMethod;
-    private MethodHandle tailConstructMethod;
-
-    private final Property caller = new Property(NULL, true, false, false);
-    private final Property arguments = new Property(NULL, true, false, false);
 
     /**
      * Constructs a new Function object.
@@ -86,20 +76,6 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
     @SuppressWarnings("unchecked")
     protected static final <E extends Throwable> E rethrow(Throwable e) throws E {
         throw (E) e;
-    }
-
-    private static boolean isNonStrictFunctionOrNull(Object v) {
-        return v == NULL || (v instanceof FunctionObject && !((FunctionObject) v).isStrict());
-    }
-
-    /**
-     * Returns {@code true} if legacy .caller and .arguments properties are available for this
-     * function object.
-     * 
-     * @return {@code true} if legacy properties are supported
-     */
-    private final boolean isLegacy() {
-        return !isClone && function.is(RuntimeInfo.FunctionFlags.Legacy);
     }
 
     /**
@@ -129,172 +105,13 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
         return constructMethod;
     }
 
-    /**
-     * Returns the {@link MethodHandle} for the function tail-construct entry method.
-     * 
-     * @return the tail-call method handle
-     */
-    public final MethodHandle getTailConstructMethod() {
-        return tailConstructMethod;
-    }
-
-    /**
-     * [Called from generated code]
-     * 
-     * @return the legacy caller value
-     */
-    public final Object getLegacyCaller() {
-        return caller.getValue();
-    }
-
-    /**
-     * [Called from generated code]
-     * 
-     * @return the legacy arguments value
-     */
-    public final Object getLegacyArguments() {
-        return arguments.getValue();
-    }
-
-    /**
-     * [Called from generated code]
-     * 
-     * @param caller
-     *            the new caller value
-     */
-    public final void setLegacyCaller(FunctionObject caller) {
-        if (caller == null || caller.isStrict()) {
-            setPropertyValueIfWritable(this.caller, NULL);
-        } else {
-            setPropertyValueIfWritable(this.caller, caller);
-        }
-    }
-
-    /**
-     * [Called from generated code]
-     * 
-     * @param arguments
-     *            the new arguments value
-     */
-    public final void setLegacyArguments(LegacyArgumentsObject arguments) {
-        setPropertyValueIfWritable(this.arguments, arguments);
-    }
-
-    /**
-     * [Called from generated code]
-     * 
-     * @param oldCaller
-     *            the old caller value
-     * @param oldArguments
-     *            the old arguments value
-     */
-    public final void restoreLegacyProperties(Object oldCaller, Object oldArguments) {
-        setPropertyValueIfWritable(this.caller, oldCaller);
-        setPropertyValueIfWritable(this.arguments, oldArguments);
-    }
-
-    private void setPropertyValueIfWritable(Property property, Object value) {
-        if (property.isWritable()) {
-            property.setValue(value);
-        }
-    }
-
     @Override
-    public final String toSource(SourceSelector selector) {
-        if (selector == SourceSelector.Body) {
-            return FunctionSource.toSourceString(selector, this);
-        }
-        // Complete source string is cached
+    public final String toSource(ExecutionContext cx) {
         String source = this.source;
         if (source == null) {
-            this.source = source = FunctionSource.toSourceString(selector, this);
+            this.source = source = FunctionSource.toSourceString(this);
         }
         return source;
-    }
-
-    @Override
-    protected final boolean has(ExecutionContext cx, String propertyKey) {
-        if (isLegacy() && ("arguments".equals(propertyKey) || "caller".equals(propertyKey))) {
-            return true;
-        }
-        return super.has(cx, propertyKey);
-    }
-
-    @Override
-    protected final boolean hasOwnProperty(ExecutionContext cx, String propertyKey) {
-        if (isLegacy() && ("arguments".equals(propertyKey) || "caller".equals(propertyKey))) {
-            return true;
-        }
-        return super.hasOwnProperty(cx, propertyKey);
-    }
-
-    @Override
-    protected final Property getProperty(ExecutionContext cx, String propertyKey) {
-        if (isLegacy()) {
-            if ("arguments".equals(propertyKey)) {
-                return arguments;
-            }
-            if ("caller".equals(propertyKey)) {
-                assert isNonStrictFunctionOrNull(caller.getValue());
-                return caller;
-            }
-        }
-        return ordinaryGetOwnProperty(propertyKey);
-    }
-
-    @Override
-    protected boolean defineProperty(ExecutionContext cx, String propertyKey,
-            PropertyDescriptor desc) {
-        if (isLegacy()) {
-            if ("arguments".equals(propertyKey)) {
-                return defineLegacyProperty(arguments, desc);
-            }
-            if ("caller".equals(propertyKey)) {
-                return defineLegacyProperty(caller, desc);
-            }
-        }
-        return super.defineProperty(cx, propertyKey, desc);
-    }
-
-    private boolean defineLegacyProperty(Property property, PropertyDescriptor desc) {
-        // If the property descriptor is compatible and the [[Writable]] field is present, assume
-        // this call to [[DefineOwnProperty]] is meant to freeze the property value. Also reset the
-        // property value by setting its value to `null`, so we won't leak previous .arguments or
-        // .caller objects.
-        boolean compatible = IsCompatiblePropertyDescriptor(isExtensible(), desc, property);
-        if (compatible && desc.hasWritable() && !desc.isWritable()) {
-            property.apply(new PropertyDescriptor(NULL, false, false, false));
-        }
-        return compatible;
-    }
-
-    @Override
-    protected boolean setPropertyValue(ExecutionContext cx, String propertyKey, Object value,
-            Property current) {
-        if (isLegacy()) {
-            // Disallow direct [[Set]] on .arguments and .caller, but still return `true` so the
-            // result value is consistent with [[DefineOwnProperty]].
-            if ("arguments".equals(propertyKey) || "caller".equals(propertyKey)) {
-                return true;
-            }
-        }
-        return super.setPropertyValue(cx, propertyKey, value, current);
-    }
-
-    @Override
-    protected final List<Object> getOwnPropertyKeys(ExecutionContext cx) {
-        boolean isLegacy = isLegacy();
-        int totalSize = countProperties(true) + (isLegacy ? 2 : 0);
-        ArrayList<Object> ownKeys = new ArrayList<>(totalSize);
-        appendIndexedProperties(ownKeys);
-        if (isLegacy) {
-            // TODO: add test case for property order
-            ownKeys.add("arguments");
-            ownKeys.add("caller");
-        }
-        appendProperties(ownKeys);
-        appendSymbolProperties(ownKeys);
-        return ownKeys;
     }
 
     @Override
@@ -372,8 +189,8 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
      * @param executable
      *            the source executable
      */
-    protected final void initialize(FunctionKind kind, RuntimeInfo.Function function,
-            LexicalEnvironment<?> scope, Executable executable) {
+    protected final void initialize(FunctionKind kind, RuntimeInfo.Function function, LexicalEnvironment<?> scope,
+            Executable executable) {
         assert this.function == null && function != null : "function object already initialized";
         assert this.functionKind == kind : String.format("%s != %s", functionKind, kind);
         /* step 5 */
@@ -382,10 +199,9 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
         this.environment = scope;
         /* steps 7-8 */
         this.function = function;
-        this.callMethod = tailCallAdapter(function);
+        this.callMethod = tailCallAdapter(function, this);
         this.tailCallMethod = function.callMethod();
         this.constructMethod = tailConstructAdapter(function);
-        this.tailConstructMethod = dropConstructReturnType(function);
         /* steps 9-11 */
         if (kind == FunctionKind.Arrow) {
             this.thisMode = ThisMode.Lexical;
@@ -409,12 +225,12 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
         this.homeObject = homeObject;
     }
 
-    private static MethodHandle tailCallAdapter(RuntimeInfo.Function function) {
+    private static MethodHandle tailCallAdapter(RuntimeInfo.Function function, FunctionObject functionObject) {
         MethodHandle mh = function.callMethod();
         if (function.is(RuntimeInfo.FunctionFlags.TailCall)) {
             assert !function.isGenerator() && !function.isAsync() && function.isStrict();
             MethodHandle result = TailCallInvocation.getTailCallHandler();
-            result = MethodHandles.dropArguments(result, 1, OrdinaryFunction.class);
+            result = MethodHandles.dropArguments(result, 1, functionObject.getClass());
             result = MethodHandles.dropArguments(result, 3, Object.class, Object[].class);
             result = MethodHandles.foldArguments(result, mh);
             return result;
@@ -431,17 +247,6 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
             result = MethodHandles.dropArguments(result, 3, Constructor.class, Object[].class);
             result = MethodHandles.foldArguments(result, mh);
             return result;
-        }
-        return mh;
-    }
-
-    private static MethodHandle dropConstructReturnType(RuntimeInfo.Function function) {
-        MethodHandle mh = function.constructMethod();
-        if (mh != null && !function.isGenerator() && !function.isAsync()
-                && !function.is(RuntimeInfo.FunctionFlags.TailCall)) {
-            // Non-tail-call constructor functions return ScriptObject, but in order to use
-            // invokeExact() the return-type needs to be changed from ScriptObject to Object.
-            return mh.asType(mh.type().changeReturnType(Object.class));
         }
         return mh;
     }
@@ -489,6 +294,15 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
      */
     public final Executable getExecutable() {
         return executable;
+    }
+
+    /**
+     * Returns {@code true} if this is a cloned function object.
+     * 
+     * @return {@code true} if cloned function
+     */
+    public boolean isClone() {
+        return isClone;
     }
 
     /**
@@ -545,8 +359,7 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
     @Override
     public String toString() {
         Source source = executable.getSourceObject().toSource();
-        return String.format(
-                "%s, functionKind=%s, constructorKind=%s, thisMode=%s, cloned=%b, source=%s",
+        return String.format("%s, functionKind=%s, constructorKind=%s, thisMode=%s, cloned=%b, source=%s",
                 super.toString(), functionKind, constructorKind, thisMode, isClone, source);
     }
 }

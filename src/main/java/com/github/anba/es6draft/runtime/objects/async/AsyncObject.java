@@ -106,9 +106,10 @@ public final class AsyncObject {
         case Completed:
             throw new AssertionError();
         case SuspendedAwait:
-        default:
             this.state = AsyncState.Executing;
             return continuation.resume(cx, value);
+        default:
+            throw new AssertionError();
         }
     }
 
@@ -127,9 +128,10 @@ public final class AsyncObject {
         case Completed:
             throw new AssertionError();
         case SuspendedAwait:
-        default:
             this.state = AsyncState.Executing;
             return continuation._throw(cx, ScriptException.create(value));
+        default:
+            throw new AssertionError();
         }
     }
 

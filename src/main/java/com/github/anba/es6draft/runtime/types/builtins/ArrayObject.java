@@ -12,6 +12,7 @@ import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
@@ -67,6 +68,18 @@ public class ArrayObject extends OrdinaryObject {
     public final void setLengthUnchecked(long length) {
         assert this.length <= length && lengthWritable;
         this.length = length;
+    }
+
+    /**
+     * Returns the own, dense element from the requested index.
+     * 
+     * @param propertyKey
+     *            the indexed property key
+     * @return the property value
+     */
+    public final Object getDenseElement(long propertyKey) {
+        assert isDenseArray() && propertyKey < length;
+        return getIndexed(propertyKey);
     }
 
     /**
@@ -133,8 +146,7 @@ public class ArrayObject extends OrdinaryObject {
     }
 
     @Override
-    protected final boolean setPropertyValue(ExecutionContext cx, String propertyKey, Object value,
-            Property current) {
+    protected final boolean setPropertyValue(ExecutionContext cx, String propertyKey, Object value, Property current) {
         if ("length".equals(propertyKey)) {
             return ArraySetLength(cx, this, value);
         }
@@ -193,8 +205,7 @@ public class ArrayObject extends OrdinaryObject {
      * 9.4.2.1 [[DefineOwnProperty]] (P, Desc)
      */
     @Override
-    protected final boolean defineProperty(ExecutionContext cx, long propertyKey,
-            PropertyDescriptor desc) {
+    protected final boolean defineProperty(ExecutionContext cx, long propertyKey, PropertyDescriptor desc) {
         /* steps 1-2 (not applicable) */
         /* step 3 */
         if (isArrayIndex(propertyKey)) {
@@ -228,8 +239,7 @@ public class ArrayObject extends OrdinaryObject {
      * 9.4.2.1 [[DefineOwnProperty]] (P, Desc)
      */
     @Override
-    protected final boolean defineProperty(ExecutionContext cx, String propertyKey,
-            PropertyDescriptor desc) {
+    protected final boolean defineProperty(ExecutionContext cx, String propertyKey, PropertyDescriptor desc) {
         /* steps 1, 3 (not applicable) */
         /* step 2 */
         if ("length".equals(propertyKey)) {
@@ -333,11 +343,28 @@ public class ArrayObject extends OrdinaryObject {
      *            the element values
      * @return the new array object
      */
-    public static ArrayObject DenseArrayCreate(ExecutionContext cx, ScriptObject proto,
-            Object... values) {
+    public static ArrayObject DenseArrayCreate(ExecutionContext cx, ScriptObject proto, Object... values) {
         ArrayObject array = ArrayCreate(cx, values.length, proto);
         for (int i = 0, len = values.length; i < len; ++i) {
             array.setIndexed(i, values[i]);
+        }
+        return array;
+    }
+
+    /**
+     * Helper method to create dense arrays.
+     * 
+     * @param cx
+     *            the execution context
+     * @param values
+     *            the element values
+     * @return the new array object
+     */
+    public static ArrayObject DenseArrayCreate(ExecutionContext cx, Collection<?> values) {
+        ArrayObject array = ArrayCreate(cx, values.size());
+        int i = 0;
+        for (Object value : values) {
+            array.setIndexed(i++, value);
         }
         return array;
     }
@@ -411,8 +438,7 @@ public class ArrayObject extends OrdinaryObject {
      *            the array length
      * @return the new array object
      */
-    public static ScriptObject ArraySpeciesCreate(ExecutionContext cx, ScriptObject orginalArray,
-            long length) {
+    public static ScriptObject ArraySpeciesCreate(ExecutionContext cx, ScriptObject orginalArray, long length) {
         /* step 1 */
         assert length >= 0;
         /* step 2 (not applicable) */
@@ -465,8 +491,7 @@ public class ArrayObject extends OrdinaryObject {
      *            the property descriptor
      * @return {@code true} on success
      */
-    public static boolean ArraySetLength(ExecutionContext cx, ArrayObject array,
-            PropertyDescriptor desc) {
+    public static boolean ArraySetLength(ExecutionContext cx, ArrayObject array, PropertyDescriptor desc) {
         /* step 1 */
         if (!desc.hasValue()) {
             return array.defineLength(desc, -1);

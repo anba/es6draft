@@ -222,8 +222,8 @@ final class StatementGenerator extends
                 Types.ScriptRuntime, "enumerateValues",
                 Type.methodType(Types.ScriptIterator, Types.Object, Types.ExecutionContext));
 
-        static final MethodName ScriptRuntime_getStackOverflowError = MethodName.findStatic(
-                Types.ScriptRuntime, "getStackOverflowError",
+        static final MethodName ScriptRuntime_stackOverflowError = MethodName.findStatic(
+                Types.ScriptRuntime, "stackOverflowError",
                 Type.methodType(Types.StackOverflowError, Types.Error));
 
         static final MethodName ScriptRuntime_iterate = MethodName.findStatic(Types.ScriptRuntime,
@@ -1688,7 +1688,7 @@ final class StatementGenerator extends
 
         // StackOverflowError -> ScriptException
         mv.catchHandler(handlerCatchStackOverflow, Types.Error);
-        mv.invoke(Methods.ScriptRuntime_getStackOverflowError);
+        mv.invoke(Methods.ScriptRuntime_stackOverflowError);
         mv.loadExecutionContext();
         mv.invoke(Methods.ScriptRuntime_toInternalError);
 
@@ -1750,14 +1750,14 @@ final class StatementGenerator extends
         mv.enterVariableScope();
         Variable<Throwable> throwable = mv.newVariable("throwable", Throwable.class);
         mv.catchHandler(handlerFinallyStackOverflow, Types.Error);
-        mv.invoke(Methods.ScriptRuntime_getStackOverflowError);
+        mv.invoke(Methods.ScriptRuntime_stackOverflowError);
         mv.catchHandler(handlerFinally, Types.ScriptException);
         if (handlerReturn != null) {
             mv.catchHandler(handlerReturn, Types.ReturnValue);
         }
         mv.store(throwable);
         restoreEnvironment(savedEnv, mv);
-        Completion finallyResult = emitFinallyBlock(finallyBlock, mv);
+        Completion finallyResult = finallyBlock.accept(this, mv);
         if (!finallyResult.isAbrupt()) {
             mv.load(throwable);
             mv.athrow();
@@ -1769,7 +1769,7 @@ final class StatementGenerator extends
         Jump exceptionHandled = null;
         if (!tryResult.isAbrupt() || !catchResult.isAbrupt()) {
             mv.mark(noException);
-            emitFinallyBlock(finallyBlock, mv);
+            finallyBlock.accept(this, mv);
             if (!finallyResult.isAbrupt()) {
                 if (node.hasCompletionValue()) {
                     mv.storeCompletionValue(completion);
@@ -1786,7 +1786,7 @@ final class StatementGenerator extends
             if (temp.isTarget()) {
                 mv.mark(temp);
                 restoreEnvironment(savedEnv, mv);
-                emitFinallyBlock(finallyBlock, mv);
+                finallyBlock.accept(this, mv);
                 if (!finallyResult.isAbrupt()) {
                     if (node.hasCompletionValue()) {
                         mv.storeCompletionValue(completion);
@@ -1801,13 +1801,6 @@ final class StatementGenerator extends
         }
 
         return finallyResult.nonEmpty();
-    }
-
-    private Completion emitFinallyBlock(BlockStatement finallyBlock, StatementVisitor mv) {
-        mv.enterFinally();
-        Completion finallyResult = finallyBlock.accept(this, mv);
-        mv.exitFinally();
-        return finallyResult;
     }
 
     /**

@@ -725,7 +725,7 @@ final class CodeSizeVisitor implements IntNodeVisitor<CodeSizeHandler> {
 
     @Override
     public int visit(SuperElementAccessor node, CodeSizeHandler handler) {
-        return analyze(node, node.getExpression(), 15, handler);
+        return analyze(node, node.getElement(), 15, handler);
     }
 
     @Override

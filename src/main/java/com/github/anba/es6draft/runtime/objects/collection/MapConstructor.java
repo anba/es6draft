@@ -23,6 +23,7 @@ import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
 import com.github.anba.es6draft.runtime.internal.ScriptIterator;
+import com.github.anba.es6draft.runtime.internal.ScriptIterators;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Constructor;
@@ -92,18 +93,30 @@ public final class MapConstructor extends BuiltinConstructor implements Initiali
             throw newTypeError(calleeContext, Messages.Key.PropertyNotCallable, "set");
         }
         Callable adder = (Callable) _adder;
+        boolean isBuiltin = MapPrototype.isBuiltinSet(_adder);
+        if (isBuiltin && iterable instanceof MapObject) {
+            MapObject other = (MapObject) iterable;
+            if (ScriptIterators.isBuiltinIterator(calleeContext, other)) {
+                map.getMapData().setAll(other.getMapData());
+                return map;
+            }
+        }
         ScriptIterator<?> iter = GetScriptIterator(calleeContext, iterable);
         /* step 9 */
         try {
             while (iter.hasNext()) {
                 Object nextItem = iter.next();
                 if (!Type.isObject(nextItem)) {
-                    throw newTypeError(calleeContext, Messages.Key.NotObjectType);
+                    throw newTypeError(calleeContext, Messages.Key.MapPairNotObject);
                 }
                 ScriptObject item = Type.objectValue(nextItem);
                 Object k = Get(calleeContext, item, 0);
                 Object v = Get(calleeContext, item, 1);
-                adder.call(calleeContext, map, k, v);
+                if (isBuiltin) {
+                    map.getMapData().set(k, v);
+                } else {
+                    adder.call(calleeContext, map, k, v);
+                }
             }
             return map;
         } catch (ScriptException e) {

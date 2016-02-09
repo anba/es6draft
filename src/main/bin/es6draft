@@ -41,22 +41,46 @@ fi
 # Fully qualified name to main class
 MAINCLASS="@mainClass@"
 
-# distribution, shaded, development
+# Executable script.
+EXEC="$0"
+
+# Resolve symlinks.
+if [[ -L "${EXEC}" ]] ; then
+  # echo "readlink -f=$(readlink -f "$EXEC")"
+  function readlink_f() {
+    FILE="$1"
+    while true; do
+      cd "$(dirname "${FILE}")"
+      FILE="$(basename "${FILE}")"
+      if [[ -L "${FILE}" ]] ; then
+        FILE="$(readlink "${FILE}")"
+      else
+        break
+      fi
+    done
+    echo "$(pwd -P)/${FILE}"
+  }
+  EXEC="$(readlink_f "${EXEC}")"
+fi
+
+# Determine base directory.
+EXEC_PATH="$( dirname "${EXEC}" )"
+
+# Mode: distribution, shaded, development.
 EXEC_MODE="@exec.mode@"
 
-# Determine base directory and compute classpath
-REL_PATH="$( dirname "$0" )"
+# Compute classpath.
 case "$EXEC_MODE" in
   distribution)
-    BASE_DIR="${REL_PATH}/.."
+    BASE_DIR="${EXEC_PATH}/.."
     CLASSPATH="${BASE_DIR}/@exec.name@.jar"
   ;;
   shaded)
-    BASE_DIR="${REL_PATH}/../target"
+    BASE_DIR="${EXEC_PATH}/../target"
     CLASSPATH="${BASE_DIR}/@exec.name@.jar"
   ;;
   development)
-    BASE_DIR="${REL_PATH}/../target"
+    BASE_DIR="${EXEC_PATH}/../target"
     CLASSES="${BASE_DIR}/classes"
     if $USE_BOOTCP ; then
       DEP_DIR="${BASE_DIR}/dependencies"
@@ -121,30 +145,20 @@ if $IS_CYGWIN ; then
 fi
 JAVA_OPTS="${JAVA_OPTS} -Djline.terminal=${JLINE_TERMINAL}"
 
-JAVA_OPTS_EXTRA=""
-function configureTerminal() {
-  if [[ $CYGWIN_TERM == "true" && $JLINE_ENABLED == "true" ]] ; then
-    # see JLine UnixTerminal
-    stty -icanon min 1 -icrnl -inlcr -ixon -echo > /dev/null 2>&1
-    JAVA_OPTS_EXTRA="-Djline.terminal.settings=\"$(stty -a < /dev/tty)\""
-    trap restoreTerminal INT
-  fi
-}
-
-function restoreTerminal() {
-  EXIT_STATUS=$?
-  if [[ $CYGWIN_TERM == "true" && $JLINE_ENABLED == "true" ]] ; then
-    stty sane > /dev/null 2>&1
-  fi
-  exit $EXIT_STATUS
-}
-
-function collectOptions() {
-  JAVA_OPTS=("$@")
-}
-
 # Start application
-configureTerminal
-eval collectOptions "$JAVA_OPTS" "$JAVA_OPTS_EXTRA"
-"${JAVA_CMD}" "${JAVA_OPTS[@]}" ${JAVA_CLASSPATH} "${MAINCLASS}" "$@"
-restoreTerminal
+if [[ $CYGWIN_TERM == "true" && $JLINE_ENABLED == "true" ]] ; then
+  # see JLine UnixTerminal
+  stty -icanon min 1 -icrnl -inlcr -ixon -echo > /dev/null 2>&1
+
+  function restoreTerminal() {
+    EXIT_STATUS=$?
+    stty sane > /dev/null 2>&1
+    exit $EXIT_STATUS
+  }
+
+  trap restoreTerminal TERM INT
+  "${JAVA_CMD}" ${JAVA_OPTS} -Djline.terminal.settings="$(stty -a < /dev/tty)" ${JAVA_CLASSPATH} "${MAINCLASS}" "$@"
+  restoreTerminal
+else
+  "${JAVA_CMD}" ${JAVA_OPTS} ${JAVA_CLASSPATH} "${MAINCLASS}" "$@"
+fi

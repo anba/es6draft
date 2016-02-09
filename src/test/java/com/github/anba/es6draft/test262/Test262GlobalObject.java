@@ -10,14 +10,13 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import com.github.anba.es6draft.Script;
 import com.github.anba.es6draft.compiler.CompilationException;
 import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.repl.console.ShellConsole;
+import com.github.anba.es6draft.repl.global.BaseShellFunctions;
 import com.github.anba.es6draft.repl.global.ShellGlobalObject;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
-import com.github.anba.es6draft.runtime.internal.ScriptCache;
 import com.github.anba.es6draft.runtime.internal.Source;
 import com.github.anba.es6draft.runtime.modules.MalformedNameException;
 import com.github.anba.es6draft.runtime.modules.ModuleLoader;
@@ -31,21 +30,8 @@ import com.github.anba.es6draft.runtime.modules.loader.StringModuleSource;
  * Global object for test262 tests, includes all necessary global function definitions.
  */
 public final class Test262GlobalObject extends ShellGlobalObject {
-    private final Test262Info test;
-
-    public Test262GlobalObject(Realm realm, ShellConsole console, Test262Info test,
-            ScriptCache scriptCache) {
-        super(realm, console, test.getBaseDir(), test.getScript(), scriptCache);
-        this.test = test;
-    }
-
-    /**
-     * Returns the test info object.
-     * 
-     * @return the test object
-     */
-    public Test262Info getTest() {
-        return test;
+    Test262GlobalObject(Realm realm, ShellConsole console) {
+        super(realm, console);
     }
 
     /**
@@ -53,20 +39,20 @@ public final class Test262GlobalObject extends ShellGlobalObject {
      * 
      * @param console
      *            the console object
-     * @param test
-     *            the test descriptor
-     * @param scriptCache
-     *            the script cache
      * @return the object allocator to construct new global object instances
      */
-    public static ObjectAllocator<Test262GlobalObject> newGlobalObjectAllocator(
-            final ShellConsole console, final Test262Info test, final ScriptCache scriptCache) {
+    public static ObjectAllocator<Test262GlobalObject> newGlobalObjectAllocator(final ShellConsole console) {
         return new ObjectAllocator<Test262GlobalObject>() {
             @Override
             public Test262GlobalObject newInstance(Realm realm) {
-                return new Test262GlobalObject(realm, console, test, scriptCache);
+                return new Test262GlobalObject(realm, console);
             }
         };
+    }
+
+    @Override
+    public void initializeExtensions() {
+        createGlobalProperties(new BaseShellFunctions(), BaseShellFunctions.class);
     }
 
     /**
@@ -99,8 +85,7 @@ public final class Test262GlobalObject extends ShellGlobalObject {
     void eval(Path file, String sourceCode, int sourceLine) throws ParserException,
             CompilationException {
         Source source = new Source(file, file.getFileName().toString(), sourceLine);
-        Script script = getScriptLoader().script(source, sourceCode);
-        eval(script);
+        super.eval(source, sourceCode);
     }
 
     /**

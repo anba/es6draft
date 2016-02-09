@@ -444,7 +444,7 @@ final class BindingInitializationGenerator {
 
         @Override
         public void visit(ArrayBindingPattern node, Void value) {
-            // step 1-3:
+            // steps 1-3:
             // stack: [value] -> []
             mv.enterVariableScope();
             Variable<ScriptIterator<?>> iterator = mv.newVariable("iterator", ScriptIterator.class)

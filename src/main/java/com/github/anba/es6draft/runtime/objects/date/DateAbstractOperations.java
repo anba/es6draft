@@ -243,8 +243,9 @@ final class DateAbstractOperations {
             return DayWithinYear(t) - 303 - leap;
         case 11:
             return DayWithinYear(t) - 333 - leap;
+        default:
+            throw new AssertionError();
         }
-        return Double.NaN;
     }
 
     /**
@@ -493,7 +494,7 @@ final class DateAbstractOperations {
      *            the lenient flag
      * @return the date in milli-seconds or {@code NaN} if not parsed successfully
      */
-    public static double parseISOString(Realm realm, CharSequence s, boolean lenient) {
+    public static double parseISOString(Realm realm, String s, boolean lenient) {
         // use a simple state machine to parse the input string
         final int ERROR = -1;
         final int YEAR = 0, MONTH = 1, DAY = 2;
@@ -730,7 +731,7 @@ final class DateAbstractOperations {
      *            the string
      * @return the date in milli-seconds or {@code NaN} if not parsed successfully
      */
-    public static double parseDateString(Realm realm, CharSequence s) {
+    public static double parseDateString(Realm realm, String s) {
         Matcher matcher;
         if ((matcher = utcDateTimePattern.matcher(s)).matches()) {
             assert matcher.groupCount() == 11;

@@ -65,11 +65,7 @@ public final class LoaderPrototype extends OrdinaryObject implements Initializab
          */
         private static LoaderObject thisLoader(ExecutionContext cx, Object value) {
             if (value instanceof LoaderObject) {
-                LoaderObject loader = (LoaderObject) value;
-                if (loader.getLoader() != null) {
-                    return loader;
-                }
-                throw newTypeError(cx, Messages.Key.UninitializedObject);
+                return (LoaderObject) value;
             }
             throw newTypeError(cx, Messages.Key.IncompatibleObject);
         }
@@ -128,11 +124,7 @@ public final class LoaderPrototype extends OrdinaryObject implements Initializab
          */
         private static LoaderObject thisLoader(ExecutionContext cx, Object value) {
             if (value instanceof LoaderObject) {
-                LoaderObject loader = (LoaderObject) value;
-                if (loader.getLoader() != null) {
-                    return loader;
-                }
-                throw newTypeError(cx, Messages.Key.UninitializedObject);
+                return (LoaderObject) value;
             }
             throw newTypeError(cx, Messages.Key.IncompatibleObject);
         }

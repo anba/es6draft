@@ -33,19 +33,17 @@ public final class FunctionEnvironmentRecord extends DeclarativeEnvironmentRecor
         Lexical, Initialized, Uninitialized
     }
 
-    public FunctionEnvironmentRecord(ExecutionContext cx, FunctionObject functionObject,
-            Constructor newTarget, Object thisValue) {
+    public FunctionEnvironmentRecord(ExecutionContext cx, FunctionObject functionObject, Constructor newTarget,
+            Object thisValue) {
         super(cx, false);
         this.functionObject = functionObject;
         this.newTarget = newTarget;
         this.homeObject = functionObject.getHomeObject();
         this.thisValue = thisValue;
-        this.thisBindingStatus = thisValue != null ? ThisBindingStatus.Initialized
-                : ThisBindingStatus.Lexical;
+        this.thisBindingStatus = thisValue != null ? ThisBindingStatus.Initialized : ThisBindingStatus.Lexical;
     }
 
-    public FunctionEnvironmentRecord(ExecutionContext cx, FunctionObject functionObject,
-            Constructor newTarget) {
+    public FunctionEnvironmentRecord(ExecutionContext cx, FunctionObject functionObject, Constructor newTarget) {
         super(cx, false);
         this.functionObject = functionObject;
         this.newTarget = newTarget;

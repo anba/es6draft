@@ -8,6 +8,7 @@ package com.github.anba.es6draft.runtime.modules.loader;
 
 import java.net.URI;
 
+import com.github.anba.es6draft.runtime.internal.RuntimeContext;
 import com.github.anba.es6draft.runtime.modules.MalformedNameException;
 import com.github.anba.es6draft.runtime.modules.ModuleRecord;
 import com.github.anba.es6draft.runtime.modules.SourceIdentifier;
@@ -15,12 +16,12 @@ import com.github.anba.es6draft.runtime.modules.SourceIdentifier;
 /**
  * 
  */
-public abstract class AbstractURLModuleLoader<MODULE extends ModuleRecord> extends
-        AbstractModuleLoader<MODULE> {
+public abstract class AbstractURLModuleLoader<MODULE extends ModuleRecord> extends AbstractModuleLoader<MODULE> {
     private final URI baseDirectory;
 
-    public AbstractURLModuleLoader(URI baseDirectory) {
-        this.baseDirectory = baseDirectory;
+    protected AbstractURLModuleLoader(RuntimeContext context) {
+        super(context);
+        this.baseDirectory = context.getBaseDirectory().toUri();
     }
 
     protected final URI getBaseDirectory() {

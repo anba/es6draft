@@ -9,63 +9,31 @@ package com.github.anba.es6draft.repl.console;
 import java.io.BufferedReader;
 import java.io.IOError;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.io.Reader;
-import java.io.Writer;
 import java.nio.charset.Charset;
 import java.util.Formatter;
 
-import com.github.anba.es6draft.runtime.Realm;
-
 /**
- * {@link ReplConsole} implementation for legacy consoles
+ * {@link ShellConsole} implementation for legacy consoles.
  */
-public final class LegacyConsole implements ReplConsole {
-    private final PrintWriter out;
+public final class LegacyConsole implements ShellConsole {
     private final BufferedReader reader;
+    private final PrintWriter writer;
+    private final PrintWriter errorWriter;
     private final Formatter formatter;
 
     public LegacyConsole() {
-        this(System.out, System.in);
-    }
-
-    public LegacyConsole(PrintStream out, InputStream in) {
-        this(new PrintWriter(out), new InputStreamReader(in, Charset.defaultCharset()));
-    }
-
-    public LegacyConsole(Writer out, Reader in) {
-        this(new PrintWriter(out), in);
-    }
-
-    public LegacyConsole(PrintWriter out, Reader in) {
-        this.out = out;
-        this.reader = new BufferedReader(in);
-        this.formatter = new Formatter(out);
-    }
-
-    @Override
-    public void addCompletion(Realm realm) {
-    }
-
-    @Override
-    public boolean isAnsiSupported() {
-        return false;
+        this.reader = new BufferedReader(new InputStreamReader(System.in, Charset.defaultCharset()));
+        this.writer = new PrintWriter(System.out, true);
+        this.errorWriter = new PrintWriter(System.err, true);
+        this.formatter = new Formatter(writer);
     }
 
     @Override
     public void printf(String format, Object... args) {
         formatter.format(format, args).flush();
-    }
-
-    @Override
-    public String readLine(String prompt) {
-        if (!prompt.isEmpty()) {
-            putstr(prompt);
-        }
-        return readLine();
     }
 
     @Override
@@ -78,19 +46,34 @@ public final class LegacyConsole implements ReplConsole {
     }
 
     @Override
-    public void putstr(String s) {
-        out.print(s);
-        out.flush();
+    public String readLine(String prompt) {
+        if (!prompt.isEmpty()) {
+            writer.append(prompt).flush();
+        }
+        return readLine();
     }
 
     @Override
-    public void print(String s) {
-        out.println(s);
-        out.flush();
+    public Reader reader() {
+        return reader;
     }
 
     @Override
-    public void printErr(String s) {
-        System.err.println(s);
+    public PrintWriter writer() {
+        return writer;
+    }
+
+    @Override
+    public PrintWriter errorWriter() {
+        return errorWriter;
+    }
+
+    @Override
+    public boolean isAnsiSupported() {
+        return false;
+    }
+
+    @Override
+    public void addCompleter(Completer completer) {
     }
 }

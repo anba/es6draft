@@ -10,7 +10,9 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.IsCallable;
 import static com.github.anba.es6draft.runtime.ExecutionContext.newScriptingExecutionContext;
 
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.io.Reader;
+import java.io.Writer;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
@@ -38,7 +40,7 @@ import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.World;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
-import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
+import com.github.anba.es6draft.runtime.internal.RuntimeContext;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
 import com.github.anba.es6draft.runtime.internal.ScriptLoader;
 import com.github.anba.es6draft.runtime.internal.Source;
@@ -50,29 +52,46 @@ import com.github.anba.es6draft.runtime.types.ScriptObject;
 /**
  * Concrete implementation of the {@link AbstractScriptEngine} abstract class.
  */
-final class ScriptEngineImpl extends AbstractScriptEngine implements ScriptEngine, Compilable,
-        Invocable {
+final class ScriptEngineImpl extends AbstractScriptEngine implements ScriptEngine, Compilable, Invocable {
     private final ScriptEngineFactoryImpl factory;
+    // Scripting sources have an extra scope object before the global environment record, the
+    // ScriptContext object. To ensure this extra scope is properly handled, we use the
+    // 'scripting' parser-option when evaluating the source code.
     private final ScriptLoader scriptingLoader;
-    private final World<ScriptingGlobalObject> world;
+    private final World world;
 
     ScriptEngineImpl(ScriptEngineFactoryImpl factory) {
         this.factory = factory;
 
-        // Scripting sources have an extra scope object before the global environment record, the
-        // ScriptContext object. To ensure this extra scope is properly handled, we use the
-        // 'scripting' parser-option when evaluating the source code.
-        this.scriptingLoader = new ScriptLoader(CompatibilityOption.WebCompatibility(),
-                EnumSet.of(Parser.Option.Scripting), EnumSet.noneOf(Compiler.Option.class));
+        /* @formatter:off */
+        RuntimeContext context = new RuntimeContext.Builder()
+                                                   .setBaseDirectory(Paths.get("").toAbsolutePath())
+                                                   .setGlobalAllocator(ScriptingGlobalObject.newGlobalObjectAllocator())
+                                                   .setReader(this.context.getReader())
+                                                   .setWriter(printWriter(this.context.getWriter()))
+                                                   .setErrorWriter(printWriter(this.context.getErrorWriter()))
+                                                   .setOptions(CompatibilityOption.WebCompatibility())
+                                                   .setParserOptions(EnumSet.noneOf(Parser.Option.class))
+                                                   .setCompilerOptions(EnumSet.noneOf(Compiler.Option.class))
+                                                   .build();
+        RuntimeContext scriptingContext = new RuntimeContext.Builder(context)
+                                                            .setParserOptions(EnumSet.of(Parser.Option.Scripting))
+                                                            .build();
+        /* @formatter:on */
 
-        ObjectAllocator<ScriptingGlobalObject> allocator = ScriptingGlobalObject
-                .newGlobalObjectAllocator();
-        ScriptLoader scriptLoader = new ScriptLoader(CompatibilityOption.WebCompatibility(),
-                EnumSet.noneOf(Parser.Option.class), EnumSet.noneOf(Compiler.Option.class));
-        ModuleLoader moduleLoader = new FileModuleLoader(scriptLoader, Paths.get("")
-                .toAbsolutePath());
-        this.world = new World<>(allocator, moduleLoader, scriptLoader);
-        context.setBindings(createBindings(), ScriptContext.ENGINE_SCOPE);
+        ScriptLoader scriptLoader = new ScriptLoader(context);
+        ModuleLoader moduleLoader = new FileModuleLoader(context, scriptLoader);
+        this.world = new World(context, moduleLoader, scriptLoader);
+        this.scriptingLoader = new ScriptLoader(scriptingContext);
+        this.context.setBindings(createBindings(), ScriptContext.ENGINE_SCOPE);
+    }
+
+    private Realm newScriptingRealm() {
+        try {
+            return world.newInitializedRealm();
+        } catch (ParserException | CompilationException | IOException | URISyntaxException e) {
+            throw new IllegalStateException(e);
+        }
     }
 
     @Override
@@ -81,14 +100,8 @@ final class ScriptEngineImpl extends AbstractScriptEngine implements ScriptEngin
     }
 
     @Override
-    public GlobalBindings createBindings() {
-        ScriptingGlobalObject global;
-        try {
-            global = world.newInitializedGlobal();
-        } catch (ParserException | CompilationException | IOException | URISyntaxException e) {
-            throw new IllegalStateException(e);
-        }
-        return new GlobalBindings(global);
+    public Bindings createBindings() {
+        return new GlobalBindings(newScriptingRealm());
     }
 
     @Override
@@ -112,8 +125,8 @@ final class ScriptEngineImpl extends AbstractScriptEngine implements ScriptEngin
     }
 
     @Override
-    public Object invokeFunction(String name, Object... args) throws javax.script.ScriptException,
-            NoSuchMethodException {
+    public Object invokeFunction(String name, Object... args)
+            throws javax.script.ScriptException, NoSuchMethodException {
         return invoke(null, Objects.requireNonNull(name), args);
     }
 
@@ -144,14 +157,12 @@ final class ScriptEngineImpl extends AbstractScriptEngine implements ScriptEngin
         return new Source(sourceName, 1);
     }
 
-    private Script script(String sourceCode, ScriptContext context)
-            throws javax.script.ScriptException {
+    private Script script(String sourceCode, ScriptContext context) throws javax.script.ScriptException {
         Source source = createSource(context);
         try {
             return scriptingLoader.script(source, sourceCode);
         } catch (ParserException e) {
-            throw new javax.script.ScriptException(e.getMessage(), e.getFile(), e.getLine(),
-                    e.getColumn());
+            throw new javax.script.ScriptException(e.getMessage(), e.getFile(), e.getLine(), e.getColumn());
         } catch (CompilationException e) {
             throw new javax.script.ScriptException(e);
         }
@@ -162,36 +173,52 @@ final class ScriptEngineImpl extends AbstractScriptEngine implements ScriptEngin
         try {
             return scriptingLoader.script(source, reader);
         } catch (ParserException e) {
-            throw new javax.script.ScriptException(e.getMessage(), e.getFile(), e.getLine(),
-                    e.getColumn());
+            throw new javax.script.ScriptException(e.getMessage(), e.getFile(), e.getLine(), e.getColumn());
         } catch (CompilationException | IOException e) {
             throw new javax.script.ScriptException(e);
         }
     }
 
     Object eval(Script script, ScriptContext context) throws javax.script.ScriptException {
+        Realm realm = getEvalRealm(context);
+        RuntimeContext runtimeContext = realm.getWorld().getContext();
+        Reader reader = runtimeContext.getReader();
+        Writer writer = runtimeContext.getWriter();
+        Writer errorWriter = runtimeContext.getErrorWriter();
+        runtimeContext.setReader(context.getReader());
+        runtimeContext.setWriter(printWriter(context.getWriter()));
+        runtimeContext.setErrorWriter(printWriter(context.getErrorWriter()));
         try {
-            Realm realm = getEvalRealm(context);
             // Prepare a new execution context before calling the generated code.
-            ExecutionContext evalCxt = newScriptingExecutionContext(realm, script,
-                    new LexicalEnvironment<>(realm.getGlobalEnv(),
-                            new ScriptContextEnvironmentRecord(realm.defaultContext(), context)));
+            ExecutionContext evalCxt = newScriptingExecutionContext(realm, script, new LexicalEnvironment<>(
+                    realm.getGlobalEnv(), new ScriptContextEnvironmentRecord(realm.defaultContext(), context)));
             Object result = script.evaluate(evalCxt);
             realm.getWorld().runEventLoop();
             return TypeConverter.toJava(result);
         } catch (ScriptException e) {
             throw new javax.script.ScriptException(e);
+        } finally {
+            runtimeContext.setReader(reader);
+            runtimeContext.setWriter(printWriter(writer));
+            runtimeContext.setErrorWriter(printWriter(errorWriter));
         }
     }
 
     private Object invoke(ScriptObject thisValue, String name, Object... args)
             throws javax.script.ScriptException, NoSuchMethodException {
-        Object[] arguments = TypeConverter.fromJava(args);
         Realm realm = getEvalRealm(context);
-        if (thisValue == null) {
-            thisValue = realm.getGlobalThis();
-        }
+        RuntimeContext runtimeContext = realm.getWorld().getContext();
+        Reader reader = runtimeContext.getReader();
+        Writer writer = runtimeContext.getWriter();
+        Writer errorWriter = runtimeContext.getErrorWriter();
+        runtimeContext.setReader(context.getReader());
+        runtimeContext.setWriter(printWriter(context.getWriter()));
+        runtimeContext.setErrorWriter(printWriter(context.getErrorWriter()));
         try {
+            Object[] arguments = TypeConverter.fromJava(args);
+            if (thisValue == null) {
+                thisValue = realm.getGlobalThis();
+            }
             ExecutionContext cx = realm.defaultContext();
             Object func = thisValue.get(cx, name, thisValue);
             if (!IsCallable(func)) {
@@ -202,6 +229,10 @@ final class ScriptEngineImpl extends AbstractScriptEngine implements ScriptEngin
             return TypeConverter.toJava(result);
         } catch (ScriptException e) {
             throw new javax.script.ScriptException(e);
+        } finally {
+            runtimeContext.setReader(reader);
+            runtimeContext.setWriter(printWriter(writer));
+            runtimeContext.setErrorWriter(printWriter(errorWriter));
         }
     }
 
@@ -212,8 +243,7 @@ final class ScriptEngineImpl extends AbstractScriptEngine implements ScriptEngin
         Object instance = Proxy.newProxyInstance(clazz.getClassLoader(), new Class[] { clazz },
                 new InvocationHandler() {
                     @Override
-                    public Object invoke(Object proxy, Method method, Object[] args)
-                            throws Throwable {
+                    public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
                         Object[] arguments = args != null ? args : new Object[] {};
                         return ScriptEngineImpl.this.invoke(thisValue, method.getName(), arguments);
                     }
@@ -222,19 +252,22 @@ final class ScriptEngineImpl extends AbstractScriptEngine implements ScriptEngin
     }
 
     private Realm getEvalRealm(ScriptContext context) {
-        return getBindings(context).getGlobalObject().getRealm();
-    }
-
-    private GlobalBindings getBindings(ScriptContext context) {
         Bindings bindings = context.getBindings(ScriptContext.ENGINE_SCOPE);
         if (bindings instanceof GlobalBindings) {
-            // Return engine scope bindings as-is if compatible, i.e. from the same world instance
-            GlobalBindings globalBindings = (GlobalBindings) bindings;
-            if (globalBindings.getGlobalObject().getRealm().getWorld() == world) {
-                return globalBindings;
+            // Return realm from engine scope bindings if compatible, i.e. from the same world instance.
+            Realm realm = ((GlobalBindings) bindings).getRealm();
+            if (realm.getWorld() == world) {
+                return realm;
             }
         }
-        // Otherwise create a fresh binding instance
-        return createBindings();
+        // Otherwise create a new realm.
+        return newScriptingRealm();
+    }
+
+    private static PrintWriter printWriter(Writer writer) {
+        if (writer instanceof PrintWriter) {
+            return (PrintWriter) writer;
+        }
+        return new PrintWriter(writer, true);
     }
 }

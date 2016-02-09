@@ -240,8 +240,8 @@ final class BoundNames extends DefaultNodeVisitor<List<Name>, List<Name>> {
      */
     @Override
     public List<Name> visit(LegacyGeneratorDeclaration node, List<Name> names) {
-        assert node.getIdentifier() != null;
-        return node.getIdentifier().accept(this, names);
+        names.add(node.getName());
+        return names;
     }
 
     /**

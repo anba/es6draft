@@ -18,10 +18,10 @@ import java.util.concurrent.TimeUnit;
 import org.apache.commons.configuration.Configuration;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ErrorCollector;
 import org.junit.rules.Timeout;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized.Parameter;
@@ -30,7 +30,7 @@ import org.junit.runners.Parameterized.UseParametersRunnerFactory;
 
 import com.github.anba.es6draft.repl.console.ShellConsole;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
-import com.github.anba.es6draft.runtime.internal.ScriptCache;
+import com.github.anba.es6draft.util.NullConsole;
 import com.github.anba.es6draft.util.Parallelized;
 import com.github.anba.es6draft.util.ParameterizedRunnerFactory;
 import com.github.anba.es6draft.util.TestConfiguration;
@@ -53,21 +53,22 @@ public final class IntlTest {
         return loadTests(configuration);
     }
 
+    @BeforeClass
+    public static void setUpClass() throws IOException {
+        V8TestGlobalObject.testLoadInitializationScript();
+    }
+
     @ClassRule
     public static TestGlobals<V8TestGlobalObject, TestInfo> globals = new TestGlobals<V8TestGlobalObject, TestInfo>(
             configuration) {
         @Override
-        protected ObjectAllocator<V8TestGlobalObject> newAllocator(ShellConsole console,
-                TestInfo test, ScriptCache scriptCache) {
-            return newGlobalObjectAllocator(console, test, scriptCache);
+        protected ObjectAllocator<V8TestGlobalObject> newAllocator(ShellConsole console) {
+            return newGlobalObjectAllocator(console);
         }
     };
 
     @Rule
     public Timeout maxTime = new Timeout(120, TimeUnit.SECONDS);
-
-    @Rule
-    public ErrorCollector collector = new ErrorCollector();
 
     @Rule
     public StandardErrorHandler errorHandler = new StandardErrorHandler();
@@ -84,15 +85,13 @@ public final class IntlTest {
     public void setUp() throws Throwable {
         assumeTrue("Test disabled", test.isEnabled());
 
-        global = globals.newGlobal(new V8TestConsole(collector), test);
+        global = globals.newGlobal(new NullConsole(), test);
         exceptionHandler.setExecutionContext(global.getRealm().defaultContext());
     }
 
     @After
     public void tearDown() {
-        if (global != null) {
-            global.getScriptLoader().getExecutor().shutdown();
-        }
+        globals.release(global);
     }
 
     @Test

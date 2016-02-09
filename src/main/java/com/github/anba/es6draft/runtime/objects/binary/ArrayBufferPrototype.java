@@ -160,7 +160,7 @@ public final class ArrayBufferPrototype extends OrdinaryObject implements Initia
             ByteBuffer fromBuf = obj.getData();
             /* step 24 */
             ByteBuffer toBuf = _new.getData();
-            /* steps 25 */
+            /* step 25 */
             CopyDataBlockBytes(toBuf, 0, fromBuf, first, newLen);
             /* step 26 */
             return _new;

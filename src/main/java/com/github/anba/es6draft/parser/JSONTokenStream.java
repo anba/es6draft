@@ -9,6 +9,7 @@ package com.github.anba.es6draft.parser;
 import static com.github.anba.es6draft.parser.Characters.hexDigit;
 import static com.github.anba.es6draft.parser.Characters.isDecimalDigit;
 import static com.github.anba.es6draft.parser.NumberParser.parseDecimal;
+import static com.github.anba.es6draft.parser.NumberParser.parseSignedInteger;
 
 import com.github.anba.es6draft.parser.ParserException.ExceptionType;
 import com.github.anba.es6draft.runtime.internal.Messages;
@@ -389,15 +390,19 @@ final class JSONTokenStream {
         } else {
             c = input.getChar();
         }
+        if (!(c == '.' || c == 'e' || c == 'E')) {
+            // Integer-only case
+            input.ungetChar(c);
+            return parseSignedInteger(buffer.array(), buffer.length());
+        }
         if (c == '.') {
             buffer.append(c);
             if (!isDecimalDigit(c = input.getChar())) {
                 throw error(Messages.Key.JSONInvalidNumberLiteral);
             }
-            buffer.append(c);
-            while (isDecimalDigit(c = input.getChar())) {
+            do {
                 buffer.append(c);
-            }
+            } while (isDecimalDigit(c = input.getChar()));
         }
         if (c == 'e' || c == 'E') {
             buffer.append(c);
@@ -409,10 +414,9 @@ final class JSONTokenStream {
             if (!isDecimalDigit(c)) {
                 throw error(Messages.Key.JSONInvalidNumberLiteral);
             }
-            buffer.append(c);
-            while (isDecimalDigit(c = input.getChar())) {
+            do {
                 buffer.append(c);
-            }
+            } while (isDecimalDigit(c = input.getChar()));
         }
         input.ungetChar(c);
         return parseDecimal(buffer.array(), buffer.length());

@@ -13,25 +13,18 @@ import java.util.regex.MatchResult;
  */
 public interface MatchState extends MatchResult {
     /**
-     * Returns {@link MatchResult} object.
+     * Returns a {@link MatchResult} object.
      * 
      * @return the match result object
      */
     MatchResult toMatchResult();
 
     /**
-     * Attempts to find the next match.
-     * 
-     * @return {@code true} if a new pattern match was found
-     */
-    boolean find();
-
-    /**
      * Attempts to find the next match starting at {@code start}.
      * 
      * @param start
      *            the start position in the input string
-     * @return {@code true} if a new pattern match was found
+     * @return {@code true} if a new match was found
      */
     boolean find(int start);
 

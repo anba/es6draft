@@ -13,7 +13,6 @@ import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.ReturnValue;
 import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
-import com.github.anba.es6draft.runtime.types.Type;
 
 /**
  * <h1>25 Control Abstraction Objects</h1><br>
@@ -53,11 +52,7 @@ public final class GeneratorAbstractOperations {
      * @return the generator object
      */
     public static GeneratorObject GeneratorValidate(ExecutionContext cx, Object generator) {
-        /* step 1 */
-        if (!Type.isObject(generator)) {
-            throw newTypeError(cx, Messages.Key.NotObjectType);
-        }
-        /* step 2 */
+        /* steps 1-2 */
         if (!(generator instanceof GeneratorObject)) {
             throw newTypeError(cx, Messages.Key.IncompatibleObject);
         }
@@ -116,8 +111,7 @@ public final class GeneratorAbstractOperations {
      *            the exception value
      * @return the iterator result object
      */
-    public static ScriptObject GeneratorThrow(ExecutionContext cx, Object generator,
-            Object exception) {
+    public static ScriptObject GeneratorThrow(ExecutionContext cx, Object generator, Object exception) {
         /* steps 1-2 */
         GeneratorObject gen = GeneratorValidate(cx, generator);
         /* steps 4-13 */
@@ -135,8 +129,7 @@ public final class GeneratorAbstractOperations {
      * @throws ReturnValue
      *             to signal an abrupt Return completion
      */
-    public static Object GeneratorYield(ExecutionContext genContext, ScriptObject iterNextObj)
-            throws ReturnValue {
+    public static Object GeneratorYield(ExecutionContext genContext, ScriptObject iterNextObj) throws ReturnValue {
         /* step 1 (?) */
         /* steps 2-4 */
         GeneratorObject generator = genContext.getCurrentGenerator();

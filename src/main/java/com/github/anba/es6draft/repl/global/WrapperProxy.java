@@ -30,8 +30,7 @@ import com.github.anba.es6draft.runtime.types.Type;
 /**
  * Wrapper-Proxy for shell tests
  * 
- * @see MozShellGlobalObject#wrap(ExecutionContext, Object)
- * @see MozShellGlobalObject#wrapWithProto(ExecutionContext, Object, Object)
+ * @see MozShellFunctions#wrapWithProto(ExecutionContext, Object, Object)
  */
 class WrapperProxy implements ScriptObject {
     /** [[ProxyTarget]] */
@@ -46,12 +45,12 @@ class WrapperProxy implements ScriptObject {
 
     @Override
     public String toString() {
-        return String.format("%s@%x {{%n\tTarget=%s%n}}", getClass().getSimpleName(),
-                System.identityHashCode(this), proxyTarget);
+        return String.format("%s@%x {{%n\tTarget=%s%n}}", getClass().getSimpleName(), System.identityHashCode(this),
+                proxyTarget);
     }
 
-    private static final class CallabeWrapperProxy extends WrapperProxy implements Callable {
-        public CallabeWrapperProxy(ScriptObject target, ScriptObject prototype) {
+    static final class CallableWrapperProxy extends WrapperProxy implements Callable {
+        public CallableWrapperProxy(Callable target, ScriptObject prototype) {
             super(target, prototype);
         }
 
@@ -66,12 +65,12 @@ class WrapperProxy implements ScriptObject {
         }
 
         @Override
-        public String toSource(SourceSelector selector) {
-            return ((Callable) proxyTarget).toSource(selector);
+        public String toSource(ExecutionContext cx) {
+            return ((Callable) proxyTarget).toSource(cx);
         }
 
         @Override
-        public CallabeWrapperProxy clone(ExecutionContext cx) {
+        public CallableWrapperProxy clone(ExecutionContext cx) {
             throw newTypeError(cx, Messages.Key.FunctionNotCloneable);
         }
 
@@ -103,7 +102,7 @@ class WrapperProxy implements ScriptObject {
         ScriptObject prototype = Type.objectValueOrNull(proto);
         WrapperProxy proxy;
         if (IsCallable(proxyTarget)) {
-            proxy = new CallabeWrapperProxy(proxyTarget, prototype);
+            proxy = new CallableWrapperProxy((Callable) proxyTarget, prototype);
         } else {
             proxy = new WrapperProxy(proxyTarget, prototype);
         }
@@ -156,59 +155,60 @@ class WrapperProxy implements ScriptObject {
     }
 
     @Override
-    public boolean defineOwnProperty(ExecutionContext cx, String propertyKey,
-            PropertyDescriptor desc) {
+    public boolean defineOwnProperty(ExecutionContext cx, String propertyKey, PropertyDescriptor desc) {
         return proxyTarget.defineOwnProperty(cx, propertyKey, desc);
     }
 
     @Override
-    public boolean defineOwnProperty(ExecutionContext cx, Symbol propertyKey,
-            PropertyDescriptor desc) {
+    public boolean defineOwnProperty(ExecutionContext cx, Symbol propertyKey, PropertyDescriptor desc) {
         return proxyTarget.defineOwnProperty(cx, propertyKey, desc);
     }
 
     @Override
     public boolean hasProperty(ExecutionContext cx, long propertyKey) {
-        /* modified 8.3.8 [[HasProperty]](P) */
+        /* modified 9.1.7 [[HasProperty]](P) */
         boolean hasOwn = HasOwnProperty(cx, proxyTarget, propertyKey);
-        if (!hasOwn) {
-            ScriptObject parent = getPrototype(); // modified
-            if (parent != null) {
-                return parent.hasProperty(cx, propertyKey);
-            }
+        if (hasOwn) {
+            return true;
         }
-        return hasOwn;
+        ScriptObject parent = getPrototype(); // modified
+        if (parent != null) {
+            return parent.hasProperty(cx, propertyKey);
+        }
+        return false;
     }
 
     @Override
     public boolean hasProperty(ExecutionContext cx, String propertyKey) {
-        /* modified 8.3.8 [[HasProperty]](P) */
+        /* modified 9.1.7 [[HasProperty]](P) */
         boolean hasOwn = HasOwnProperty(cx, proxyTarget, propertyKey);
-        if (!hasOwn) {
-            ScriptObject parent = getPrototype(); // modified
-            if (parent != null) {
-                return parent.hasProperty(cx, propertyKey);
-            }
+        if (hasOwn) {
+            return true;
         }
-        return hasOwn;
+        ScriptObject parent = getPrototype(); // modified
+        if (parent != null) {
+            return parent.hasProperty(cx, propertyKey);
+        }
+        return false;
     }
 
     @Override
     public boolean hasProperty(ExecutionContext cx, Symbol propertyKey) {
-        /* modified 8.3.8 [[HasProperty]](P) */
+        /* modified 9.1.7 [[HasProperty]](P) */
         boolean hasOwn = HasOwnProperty(cx, proxyTarget, propertyKey);
-        if (!hasOwn) {
-            ScriptObject parent = getPrototype();// modified
-            if (parent != null) {
-                return parent.hasProperty(cx, propertyKey);
-            }
+        if (hasOwn) {
+            return true;
         }
-        return hasOwn;
+        ScriptObject parent = getPrototype(); // modified
+        if (parent != null) {
+            return parent.hasProperty(cx, propertyKey);
+        }
+        return false;
     }
 
     @Override
     public Object get(ExecutionContext cx, long propertyKey, Object receiver) {
-        /* modified 8.3.9 [[Get]] (P, Receiver) */
+        /* modified 9.1.8 [[Get]] (P, Receiver) */
         Property desc = proxyTarget.getOwnProperty(cx, propertyKey);
         if (desc == null) {
             ScriptObject parent = getPrototype();// modified
@@ -230,7 +230,7 @@ class WrapperProxy implements ScriptObject {
 
     @Override
     public Object get(ExecutionContext cx, String propertyKey, Object receiver) {
-        /* modified 8.3.9 [[Get]] (P, Receiver) */
+        /* modified 9.1.8 [[Get]] (P, Receiver) */
         Property desc = proxyTarget.getOwnProperty(cx, propertyKey);
         if (desc == null) {
             ScriptObject parent = getPrototype();// modified
@@ -252,7 +252,7 @@ class WrapperProxy implements ScriptObject {
 
     @Override
     public Object get(ExecutionContext cx, Symbol propertyKey, Object receiver) {
-        /* modified 8.3.9 [[Get]] (P, Receiver) */
+        /* modified 9.1.8 [[Get]] (P, Receiver) */
         Property desc = proxyTarget.getOwnProperty(cx, propertyKey);
         if (desc == null) {
             ScriptObject parent = getPrototype();// modified
@@ -274,17 +274,14 @@ class WrapperProxy implements ScriptObject {
 
     @Override
     public boolean set(ExecutionContext cx, long propertyKey, Object value, Object receiver) {
-        /* modified 8.3.10 [[Set] (P, V, Receiver) */
+        /* modified 9.1.9 [[Set] (P, V, Receiver) */
         Property ownDesc = proxyTarget.getOwnProperty(cx, propertyKey);
         if (ownDesc == null) {
             ScriptObject parent = getPrototype();// modified
             if (parent != null) {
                 return parent.set(cx, propertyKey, value, receiver);
             } else {
-                if (!Type.isObject(receiver)) {
-                    return false;
-                }
-                return CreateDataProperty(cx, Type.objectValue(receiver), propertyKey, value);
+                ownDesc = new Property(UNDEFINED, true, true, true);
             }
         }
         if (ownDesc.isDataDescriptor()) {
@@ -314,17 +311,14 @@ class WrapperProxy implements ScriptObject {
 
     @Override
     public boolean set(ExecutionContext cx, String propertyKey, Object value, Object receiver) {
-        /* modified 8.3.10 [[Set] (P, V, Receiver) */
+        /* modified 9.1.9 [[Set] (P, V, Receiver) */
         Property ownDesc = proxyTarget.getOwnProperty(cx, propertyKey);
         if (ownDesc == null) {
             ScriptObject parent = getPrototype();// modified
             if (parent != null) {
                 return parent.set(cx, propertyKey, value, receiver);
             } else {
-                if (!Type.isObject(receiver)) {
-                    return false;
-                }
-                return CreateDataProperty(cx, Type.objectValue(receiver), propertyKey, value);
+                ownDesc = new Property(UNDEFINED, true, true, true);
             }
         }
         if (ownDesc.isDataDescriptor()) {
@@ -354,17 +348,14 @@ class WrapperProxy implements ScriptObject {
 
     @Override
     public boolean set(ExecutionContext cx, Symbol propertyKey, Object value, Object receiver) {
-        /* modified 8.3.10 [[Set] (P, V, Receiver) */
+        /* modified 9.1.9 [[Set] (P, V, Receiver) */
         Property ownDesc = proxyTarget.getOwnProperty(cx, propertyKey);
         if (ownDesc == null) {
             ScriptObject parent = getPrototype();// modified
             if (parent != null) {
                 return parent.set(cx, propertyKey, value, receiver);
             } else {
-                if (!Type.isObject(receiver)) {
-                    return false;
-                }
-                return CreateDataProperty(cx, Type.objectValue(receiver), propertyKey, value);
+                ownDesc = new Property(UNDEFINED, true, true, true);
             }
         }
         if (ownDesc.isDataDescriptor()) {

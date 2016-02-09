@@ -96,7 +96,7 @@ public final class WeakMapConstructor extends BuiltinConstructor implements Init
             while (iter.hasNext()) {
                 Object nextItem = iter.next();
                 if (!Type.isObject(nextItem)) {
-                    throw newTypeError(calleeContext, Messages.Key.NotObjectType);
+                    throw newTypeError(calleeContext, Messages.Key.WeakMapPairNotObject);
                 }
                 ScriptObject item = Type.objectValue(nextItem);
                 Object k = Get(calleeContext, item, 0);

@@ -61,11 +61,7 @@ public final class NumberFormatPrototype extends NumberFormatObject implements I
 
         private static NumberFormatObject thisNumberFormatObject(ExecutionContext cx, Object object) {
             if (object instanceof NumberFormatObject) {
-                NumberFormatObject numberFormat = (NumberFormatObject) object;
-                if (numberFormat.isInitializedNumberFormat()) {
-                    return numberFormat;
-                }
-                throw newTypeError(cx, Messages.Key.UninitializedObject);
+                return (NumberFormatObject) object;
             }
             throw newTypeError(cx, Messages.Key.IncompatibleObject);
         }
@@ -138,19 +134,14 @@ public final class NumberFormatPrototype extends NumberFormatObject implements I
             if (numberFormat.getCurrencyDisplay() != null) {
                 CreateDataProperty(cx, object, "currencyDisplay", numberFormat.getCurrencyDisplay());
             }
-            CreateDataProperty(cx, object, "minimumIntegerDigits",
-                    numberFormat.getMinimumIntegerDigits());
-            CreateDataProperty(cx, object, "minimumFractionDigits",
-                    numberFormat.getMinimumFractionDigits());
-            CreateDataProperty(cx, object, "maximumFractionDigits",
-                    numberFormat.getMaximumFractionDigits());
+            CreateDataProperty(cx, object, "minimumIntegerDigits", numberFormat.getMinimumIntegerDigits());
+            CreateDataProperty(cx, object, "minimumFractionDigits", numberFormat.getMinimumFractionDigits());
+            CreateDataProperty(cx, object, "maximumFractionDigits", numberFormat.getMaximumFractionDigits());
             if (numberFormat.getMinimumSignificantDigits() != 0) {
-                CreateDataProperty(cx, object, "minimumSignificantDigits",
-                        numberFormat.getMinimumSignificantDigits());
+                CreateDataProperty(cx, object, "minimumSignificantDigits", numberFormat.getMinimumSignificantDigits());
             }
             if (numberFormat.getMaximumSignificantDigits() != 0) {
-                CreateDataProperty(cx, object, "maximumSignificantDigits",
-                        numberFormat.getMaximumSignificantDigits());
+                CreateDataProperty(cx, object, "maximumSignificantDigits", numberFormat.getMaximumSignificantDigits());
             }
             CreateDataProperty(cx, object, "useGrouping", numberFormat.isUseGrouping());
             return object;
@@ -160,15 +151,13 @@ public final class NumberFormatPrototype extends NumberFormatObject implements I
     /**
      * Abstract Operation: FormatNumber
      * 
-     * @param cx
-     *            the execution context
      * @param numberFormat
      *            the number format object
      * @param x
      *            the number value
      * @return the formatted number string
      */
-    public static String FormatNumber(ExecutionContext cx, NumberFormatObject numberFormat, double x) {
+    public static String FormatNumber(NumberFormatObject numberFormat, double x) {
         if (x == -0.0) {
             // -0 is not considered to be negative, cf. step 3a
             x = +0.0;
@@ -206,7 +195,7 @@ public final class NumberFormatPrototype extends NumberFormatObject implements I
             /* steps 4-5 */
             double x = ToNumber(calleeContext, value);
             /* step 6 */
-            return FormatNumber(calleeContext, nf, x);
+            return FormatNumber(nf, x);
         }
     }
 }

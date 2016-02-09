@@ -22,11 +22,11 @@ import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
+import com.github.anba.es6draft.runtime.objects.ArrayIteratorObject.ArrayIterationKind;
 import com.github.anba.es6draft.runtime.objects.binary.TypedArrayObject;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
-import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.NativeFunction;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
@@ -54,35 +54,6 @@ public final class ArrayIteratorPrototype extends OrdinaryObject implements Init
     }
 
     /**
-     * 22.1.5.3 Properties of Array Iterator Instances
-     */
-    public enum ArrayIterationKind {
-        Key, Value, KeyValue
-    }
-
-    /**
-     * 22.1.5.3 Properties of Array Iterator Instances
-     */
-    private static final class ArrayIterator extends OrdinaryObject {
-        /** [[IteratedObject]] */
-        ScriptObject iteratedObject;
-
-        /** [[ArrayIteratorNextIndex]] */
-        long nextIndex;
-
-        /** [[ArrayIterationKind]] */
-        final ArrayIterationKind kind;
-
-        ArrayIterator(Realm realm, ScriptObject array, ArrayIterationKind kind,
-                ScriptObject prototype) {
-            super(realm);
-            this.iteratedObject = array;
-            this.kind = kind;
-            setPrototype(prototype);
-        }
-    }
-
-    /**
      * 22.1.5.1 CreateArrayIterator Abstract Operation
      * 
      * @param cx
@@ -93,11 +64,30 @@ public final class ArrayIteratorPrototype extends OrdinaryObject implements Init
      *            the array iteration kind
      * @return the new array iterator
      */
-    public static OrdinaryObject CreateArrayIterator(ExecutionContext cx, ScriptObject array,
+    public static OrdinaryObject CreateArrayIterator(ExecutionContext cx, ScriptObject array, ArrayIterationKind kind) {
+        /* step 1 (not applicable) */
+        /* steps 2-6 */
+        return new ArrayIteratorObject(cx.getRealm(), array, kind, cx.getIntrinsic(Intrinsics.ArrayIteratorPrototype));
+    }
+
+    /**
+     * 22.1.5.1 CreateArrayIterator Abstract Operation
+     * 
+     * @param cx
+     *            the execution context
+     * @param array
+     *            the array-like object
+     * @param index
+     *            the start index
+     * @param kind
+     *            the array iteration kind
+     * @return the new array iterator
+     */
+    public static OrdinaryObject CreateArrayIterator(ExecutionContext cx, ScriptObject array, long index,
             ArrayIterationKind kind) {
         /* step 1 (not applicable) */
         /* steps 2-6 */
-        return new ArrayIterator(cx.getRealm(), array, kind,
+        return new ArrayIteratorObject(cx.getRealm(), array, index, kind,
                 cx.getIntrinsic(Intrinsics.ArrayIteratorPrototype));
     }
 
@@ -107,9 +97,18 @@ public final class ArrayIteratorPrototype extends OrdinaryObject implements Init
     private static final class ArrayIteratorPrototypeNext {
     }
 
-    public static boolean isBuiltinNext(Object next) {
-        return next instanceof NativeFunction
-                && ((NativeFunction) next).getId() == ArrayIteratorPrototypeNext.class;
+    /**
+     * Returns {@code true} if <var>next</var> is the built-in {@code %ArrayIteratorPrototype%.next} function for the
+     * requested realm.
+     * 
+     * @param realm
+     *            the function realm
+     * @param next
+     *            the next function
+     * @return {@code true} if <var>next</var> is the built-in {@code %ArrayIteratorPrototype%.next} function
+     */
+    public static boolean isBuiltinNext(Realm realm, Object next) {
+        return NativeFunction.isNative(realm, next, ArrayIteratorPrototypeNext.class);
     }
 
     /**
@@ -132,25 +131,21 @@ public final class ArrayIteratorPrototype extends OrdinaryObject implements Init
          */
         @Function(name = "next", arity = 0, nativeId = ArrayIteratorPrototypeNext.class)
         public static Object next(ExecutionContext cx, Object thisValue) {
-            /* steps 1-2 */
-            if (!Type.isObject(thisValue)) {
-                throw newTypeError(cx, Messages.Key.NotObjectType);
-            }
-            /* step 3 */
-            if (!(thisValue instanceof ArrayIterator)) {
+            /* steps 1-3 */
+            if (!(thisValue instanceof ArrayIteratorObject)) {
                 throw newTypeError(cx, Messages.Key.IncompatibleObject);
             }
-            ArrayIterator iter = (ArrayIterator) thisValue;
+            ArrayIteratorObject iter = (ArrayIteratorObject) thisValue;
             /* step 4 */
-            ScriptObject array = iter.iteratedObject;
+            ScriptObject array = iter.getIteratedObject();
             /* step 5 */
             if (array == null) {
                 return CreateIterResultObject(cx, UNDEFINED, true);
             }
             /* step 6 */
-            long index = iter.nextIndex;
+            long index = iter.getNextIndex();
             /* step 7 */
-            ArrayIterationKind itemKind = iter.kind;
+            ArrayIterationKind itemKind = iter.getIterationKind();
             /* steps 8-9 */
             long len;
             if (array instanceof TypedArrayObject) {
@@ -160,11 +155,11 @@ public final class ArrayIteratorPrototype extends OrdinaryObject implements Init
             }
             /* step 10 */
             if (index >= len) {
-                iter.iteratedObject = null;
+                iter.setIteratedObject(null);
                 return CreateIterResultObject(cx, UNDEFINED, true);
             }
             /* step 11 */
-            iter.nextIndex = index + 1;
+            iter.setNextIndex(index + 1);
             /* steps 12-17 */
             Object result;
             if (itemKind == ArrayIterationKind.Key) {

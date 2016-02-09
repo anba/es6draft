@@ -6,8 +6,6 @@
  */
 package com.github.anba.es6draft.runtime.internal;
 
-import static com.github.anba.es6draft.runtime.internal.RuntimeWorkerThreadFactory.createThreadPoolExecutor;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -18,7 +16,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.EnumSet;
-import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -45,11 +42,7 @@ import com.github.anba.es6draft.runtime.objects.iteration.GeneratorFunctionConst
  * 
  */
 public final class ScriptLoader {
-    private final boolean shutdownExecutorOnFinalization;
-    private final ExecutorService executor;
-    private final EnumSet<CompatibilityOption> options;
-    private final EnumSet<Parser.Option> parserOptions;
-    private final EnumSet<Compiler.Option> compilerOptions;
+    private final RuntimeContext context;
     private final AtomicInteger scriptCounter = new AtomicInteger(0);
     private final AtomicInteger moduleCounter = new AtomicInteger(0);
     private final AtomicInteger evalCounter = new AtomicInteger(0);
@@ -94,61 +87,14 @@ public final class ScriptLoader {
         return "#Script_" + scriptCounter.incrementAndGet();
     }
 
-    public ScriptLoader(Set<CompatibilityOption> options, Set<Parser.Option> parserOptions,
-            Set<Compiler.Option> compilerOptions) {
-        this(null, options, parserOptions, compilerOptions);
-    }
-
-    public ScriptLoader(ExecutorService executor, Set<CompatibilityOption> options,
-            Set<Parser.Option> parserOptions, Set<Compiler.Option> compilerOptions) {
-        this.shutdownExecutorOnFinalization = executor == null;
-        this.executor = executor != null ? executor : createThreadPoolExecutor();
-        this.options = EnumSet.copyOf(options);
-        this.parserOptions = EnumSet.copyOf(parserOptions);
-        this.compilerOptions = EnumSet.copyOf(compilerOptions);
-    }
-
-    @Override
-    protected void finalize() throws Throwable {
-        if (shutdownExecutorOnFinalization)
-            executor.shutdown();
-        super.finalize();
-    }
-
     /**
-     * Returns the executor service for parallel compilation.
+     * Constructs a new script loader.
      * 
-     * @return the executor service
+     * @param context
+     *            the runtime context
      */
-    public ExecutorService getExecutor() {
-        return executor;
-    }
-
-    /**
-     * Returns the compatibility options for this instance.
-     * 
-     * @return the compatibility options
-     */
-    public EnumSet<CompatibilityOption> getOptions() {
-        return options;
-    }
-
-    /**
-     * Returns the parser options for this instance.
-     * 
-     * @return the parser options
-     */
-    public EnumSet<Parser.Option> getParserOptions() {
-        return parserOptions;
-    }
-
-    /**
-     * Returns the compiler options for this instance.
-     * 
-     * @return the compiler options
-     */
-    public EnumSet<Compiler.Option> getCompilerOptions() {
-        return compilerOptions;
+    public ScriptLoader(RuntimeContext context) {
+        this.context = context;
     }
 
     /**
@@ -162,9 +108,8 @@ public final class ScriptLoader {
      * @throws ParserException
      *             if the source contains any syntax errors
      */
-    public com.github.anba.es6draft.ast.Script parseScript(Source source, String sourceCode)
-            throws ParserException {
-        Parser parser = new Parser(source, options, parserOptions);
+    public com.github.anba.es6draft.ast.Script parseScript(Source source, String sourceCode) throws ParserException {
+        Parser parser = new Parser(context, source);
         return parser.parseScript(sourceCode);
     }
 
@@ -179,9 +124,8 @@ public final class ScriptLoader {
      * @throws ParserException
      *             if the source contains any syntax errors
      */
-    public com.github.anba.es6draft.ast.Module parseModule(Source source, String sourceCode)
-            throws ParserException {
-        Parser parser = new Parser(source, options, parserOptions);
+    public com.github.anba.es6draft.ast.Module parseModule(Source source, String sourceCode) throws ParserException {
+        Parser parser = new Parser(context, source);
         return parser.parseModule(sourceCode);
     }
 
@@ -202,7 +146,7 @@ public final class ScriptLoader {
      */
     public Script evalScript(Source source, String sourceCode, EnumSet<Parser.Option> evalOptions)
             throws ParserException, CompilationException {
-        Parser parser = new Parser(source, options, evalOptions);
+        Parser parser = new Parser(source, context.getOptions(), evalOptions);
         com.github.anba.es6draft.ast.Script parsedScript = parser.parseScript(sourceCode);
         if (parsedScript.getStatements().isEmpty()) {
             return null;
@@ -227,7 +171,7 @@ public final class ScriptLoader {
      */
     public CompiledFunction function(Source source, String formals, String bodyText)
             throws ParserException, CompilationException {
-        Parser parser = new Parser(source, options, parserOptions);
+        Parser parser = new Parser(context, source);
         FunctionDefinition functionDef = parser.parseFunction(formals, bodyText);
         return compile(functionDef, nextFunctionName());
     }
@@ -249,7 +193,7 @@ public final class ScriptLoader {
      */
     public CompiledFunction generator(Source source, String formals, String bodyText)
             throws ParserException, CompilationException {
-        Parser parser = new Parser(source, options, parserOptions);
+        Parser parser = new Parser(context, source);
         GeneratorDefinition generatorDef = parser.parseGenerator(formals, bodyText);
         return compile(generatorDef, nextFunctionName());
     }
@@ -271,7 +215,7 @@ public final class ScriptLoader {
      */
     public CompiledFunction asyncFunction(Source source, String formals, String bodyText)
             throws ParserException, CompilationException {
-        Parser parser = new Parser(source, options, parserOptions);
+        Parser parser = new Parser(context, source);
         AsyncFunctionDefinition asyncDef = parser.parseAsyncFunction(formals, bodyText);
         return compile(asyncDef, nextFunctionName());
     }
@@ -291,8 +235,7 @@ public final class ScriptLoader {
      * @throws CompilationException
      *             if the parsed source could not be compiled
      */
-    public Script script(Source source, URL file) throws IOException, ParserException,
-            CompilationException {
+    public Script script(Source source, URL file) throws IOException, ParserException, CompilationException {
         return script(source, newReader(file.openStream()));
     }
 
@@ -311,8 +254,7 @@ public final class ScriptLoader {
      * @throws CompilationException
      *             if the parsed source could not be compiled
      */
-    public Script script(Source source, InputStream stream) throws IOException, ParserException,
-            CompilationException {
+    public Script script(Source source, InputStream stream) throws IOException, ParserException, CompilationException {
         return script(source, newReader(stream));
     }
 
@@ -331,8 +273,7 @@ public final class ScriptLoader {
      * @throws CompilationException
      *             if the parsed source could not be compiled
      */
-    public Script script(Source source, Reader reader) throws IOException, ParserException,
-            CompilationException {
+    public Script script(Source source, Reader reader) throws IOException, ParserException, CompilationException {
         return script(source, readFully(reader));
     }
 
@@ -351,8 +292,7 @@ public final class ScriptLoader {
      * @throws CompilationException
      *             if the parsed source could not be compiled
      */
-    public Script script(Source source, Path file) throws IOException, ParserException,
-            CompilationException {
+    public Script script(Source source, Path file) throws IOException, ParserException, CompilationException {
         if (!file.isAbsolute()) {
             throw new IllegalArgumentException(String.format("'%s' is not an absolute path", file));
         }
@@ -374,15 +314,13 @@ public final class ScriptLoader {
      * @throws CompilationException
      *             if the parsed source could not be compiled
      */
-    public Script script(Source source, String sourceCode) throws ParserException,
-            CompilationException {
+    public Script script(Source source, String sourceCode) throws ParserException, CompilationException {
         com.github.anba.es6draft.ast.Script parsedScript = parseScript(source, sourceCode);
         return load(parsedScript, nextScriptName());
     }
 
     /**
-     * Returns an executable {@link Script} object for the
-     * {@link com.github.anba.es6draft.ast.Script Script} AST-node.
+     * Returns an executable {@link Script} object for the {@link com.github.anba.es6draft.ast.Script Script} AST-node.
      * 
      * @param parsedScript
      *            the script node
@@ -390,8 +328,7 @@ public final class ScriptLoader {
      *            the class name
      * @return the script object
      */
-    public Script load(com.github.anba.es6draft.ast.Script parsedScript, String className)
-            throws CompilationException {
+    public Script load(com.github.anba.es6draft.ast.Script parsedScript, String className) throws CompilationException {
         Script script = Interpreter.script(parsedScript);
         if (script == null) {
             script = compile(parsedScript, className);
@@ -400,8 +337,7 @@ public final class ScriptLoader {
     }
 
     /**
-     * Returns an executable {@link Module} object for the
-     * {@link com.github.anba.es6draft.ast.Module Module} AST-node.
+     * Returns an executable {@link Module} object for the {@link com.github.anba.es6draft.ast.Module Module} AST-node.
      * 
      * @param parsedModule
      *            the module node
@@ -409,14 +345,13 @@ public final class ScriptLoader {
      *            the module record
      * @return the module object
      */
-    public Module load(com.github.anba.es6draft.ast.Module parsedModule,
-            SourceTextModuleRecord moduleRecord) throws CompilationException {
+    public Module load(com.github.anba.es6draft.ast.Module parsedModule, SourceTextModuleRecord moduleRecord)
+            throws CompilationException {
         return compile(parsedModule, moduleRecord, nextModuleName());
     }
 
     /**
-     * Returns an executable {@link Module} object for the
-     * {@link com.github.anba.es6draft.ast.Module Module} AST-node.
+     * Returns an executable {@link Module} object for the {@link com.github.anba.es6draft.ast.Module Module} AST-node.
      * 
      * @param parsedModule
      *            the module node
@@ -426,14 +361,14 @@ public final class ScriptLoader {
      *            the class name
      * @return the module object
      */
-    public Module load(com.github.anba.es6draft.ast.Module parsedModule,
-            SourceTextModuleRecord moduleRecord, String className) throws CompilationException {
+    public Module load(com.github.anba.es6draft.ast.Module parsedModule, SourceTextModuleRecord moduleRecord,
+            String className) throws CompilationException {
         return compile(parsedModule, moduleRecord, className);
     }
 
     /**
-     * Compiles the {@link com.github.anba.es6draft.ast.Script Script} AST-node to an executable
-     * {@link CompiledScript} object.
+     * Compiles the {@link com.github.anba.es6draft.ast.Script Script} AST-node to an executable {@link CompiledScript}
+     * object.
      * 
      * @param parsedScript
      *            the script node
@@ -443,12 +378,15 @@ public final class ScriptLoader {
      */
     public CompiledScript compile(com.github.anba.es6draft.ast.Script parsedScript, String className)
             throws CompilationException {
-        return tryCompile(parsedScript, className, executor, compilerOptions);
+        try (CloseableExecutor t = executor()) {
+            Compiler compiler = new Compiler(context, t.executor());
+            return compiler.compile(parsedScript, className);
+        }
     }
 
     /**
-     * Compiles the {@link com.github.anba.es6draft.ast.Module Module} AST-node to an executable
-     * {@link CompiledModule} object.
+     * Compiles the {@link com.github.anba.es6draft.ast.Module Module} AST-node to an executable {@link CompiledModule}
+     * object.
      * 
      * @param parsedModule
      *            the module node
@@ -458,9 +396,12 @@ public final class ScriptLoader {
      *            the class name
      * @return the module object
      */
-    public CompiledModule compile(com.github.anba.es6draft.ast.Module parsedModule,
-            SourceTextModuleRecord moduleRecord, String className) throws CompilationException {
-        return tryCompile(parsedModule, moduleRecord, className, executor, compilerOptions);
+    public CompiledModule compile(com.github.anba.es6draft.ast.Module parsedModule, SourceTextModuleRecord moduleRecord,
+            String className) throws CompilationException {
+        try (CloseableExecutor t = executor()) {
+            Compiler compiler = new Compiler(context, t.executor());
+            return compiler.compile(parsedModule, moduleRecord, className);
+        }
     }
 
     /**
@@ -472,9 +413,11 @@ public final class ScriptLoader {
      *            the class name
      * @return the compiled function
      */
-    public CompiledFunction compile(FunctionDefinition function, String className)
-            throws CompilationException {
-        return tryCompile(function, className, executor, compilerOptions);
+    public CompiledFunction compile(FunctionDefinition function, String className) throws CompilationException {
+        try (CloseableExecutor t = executor()) {
+            Compiler compiler = new Compiler(context, t.executor());
+            return compiler.compile(function, className);
+        }
     }
 
     /**
@@ -486,9 +429,11 @@ public final class ScriptLoader {
      *            the class name
      * @return the compiled generator function
      */
-    public CompiledFunction compile(GeneratorDefinition generator, String className)
-            throws CompilationException {
-        return tryCompile(generator, className, executor, compilerOptions);
+    public CompiledFunction compile(GeneratorDefinition generator, String className) throws CompilationException {
+        try (CloseableExecutor t = executor()) {
+            Compiler compiler = new Compiler(context, t.executor());
+            return compiler.compile(generator, className);
+        }
     }
 
     /**
@@ -502,130 +447,50 @@ public final class ScriptLoader {
      */
     public CompiledFunction compile(AsyncFunctionDefinition asyncFunction, String className)
             throws CompilationException {
-        return tryCompile(asyncFunction, className, executor, compilerOptions);
-    }
-
-    private static CompiledScript tryCompile(com.github.anba.es6draft.ast.Script parsedScript,
-            String className, ExecutorService executor, EnumSet<Compiler.Option> options) {
-        if (executor.isShutdown()) {
-            return compileWithNew(parsedScript, className, options);
+        try (CloseableExecutor t = executor()) {
+            Compiler compiler = new Compiler(context, t.executor());
+            return compiler.compile(asyncFunction, className);
         }
-        return compileWith(parsedScript, className, executor, options);
     }
 
-    private static CompiledModule tryCompile(com.github.anba.es6draft.ast.Module parsedModule,
-            SourceTextModuleRecord moduleRecord, String className, ExecutorService executor,
-            EnumSet<Compiler.Option> options) {
-        if (executor.isShutdown()) {
-            return compileWithNew(parsedModule, moduleRecord, className, options);
+    private CloseableExecutor executor() {
+        if (context.getExecutor().isShutdown()) {
+            return new TempExecutor();
         }
-        return compileWith(parsedModule, moduleRecord, className, executor, options);
+        return new ContextExecutor();
     }
 
-    private static CompiledFunction tryCompile(FunctionDefinition function, String className,
-            ExecutorService executor, EnumSet<Compiler.Option> options) {
-        if (executor.isShutdown()) {
-            return compileWithNew(function, className, options);
+    interface CloseableExecutor extends AutoCloseable {
+        ExecutorService executor();
+
+        @Override
+        void close();
+    }
+
+    static final class TempExecutor implements CloseableExecutor {
+        final ExecutorService executor = Executors.newFixedThreadPool(2);
+
+        @Override
+        public ExecutorService executor() {
+            return executor;
         }
-        return compileWith(function, className, executor, options);
-    }
 
-    private static CompiledFunction tryCompile(GeneratorDefinition generator, String className,
-            ExecutorService executor, EnumSet<Compiler.Option> options) {
-        if (executor.isShutdown()) {
-            return compileWithNew(generator, className, options);
-        }
-        return compileWith(generator, className, executor, options);
-    }
-
-    private static CompiledFunction tryCompile(AsyncFunctionDefinition asyncFunction,
-            String className, ExecutorService executor, EnumSet<Compiler.Option> options) {
-        if (executor.isShutdown()) {
-            return compileWithNew(asyncFunction, className, options);
-        }
-        return compileWith(asyncFunction, className, executor, options);
-    }
-
-    private static CompiledScript compileWithNew(com.github.anba.es6draft.ast.Script parsedScript,
-            String className, EnumSet<Compiler.Option> options) throws CompilationException {
-        ExecutorService executor = Executors.newFixedThreadPool(2);
-        try {
-            return compileWith(parsedScript, className, executor, options);
-        } finally {
+        @Override
+        public void close() {
             executor.shutdown();
         }
     }
 
-    private static CompiledModule compileWithNew(com.github.anba.es6draft.ast.Module parsedModule,
-            SourceTextModuleRecord moduleRecord, String className, EnumSet<Compiler.Option> options)
-            throws CompilationException {
-        ExecutorService executor = Executors.newFixedThreadPool(2);
-        try {
-            return compileWith(parsedModule, moduleRecord, className, executor, options);
-        } finally {
-            executor.shutdown();
+    final class ContextExecutor implements CloseableExecutor {
+        @Override
+        public ExecutorService executor() {
+            return context.getExecutor();
         }
-    }
 
-    private static CompiledFunction compileWithNew(FunctionDefinition function, String className,
-            EnumSet<Compiler.Option> options) throws CompilationException {
-        ExecutorService executor = Executors.newFixedThreadPool(2);
-        try {
-            return compileWith(function, className, executor, options);
-        } finally {
-            executor.shutdown();
+        @Override
+        public void close() {
+            // empty
         }
-    }
-
-    private static CompiledFunction compileWithNew(GeneratorDefinition generator, String className,
-            EnumSet<Compiler.Option> options) throws CompilationException {
-        ExecutorService executor = Executors.newFixedThreadPool(2);
-        try {
-            return compileWith(generator, className, executor, options);
-        } finally {
-            executor.shutdown();
-        }
-    }
-
-    private static CompiledFunction compileWithNew(AsyncFunctionDefinition asyncFunction,
-            String className, EnumSet<Compiler.Option> options) throws CompilationException {
-        ExecutorService executor = Executors.newFixedThreadPool(2);
-        try {
-            return compileWith(asyncFunction, className, executor, options);
-        } finally {
-            executor.shutdown();
-        }
-    }
-
-    private static CompiledScript compileWith(com.github.anba.es6draft.ast.Script parsedScript,
-            String className, ExecutorService executor, EnumSet<Compiler.Option> options) {
-        Compiler compiler = new Compiler(executor, options);
-        return compiler.compile(parsedScript, className);
-    }
-
-    private static CompiledModule compileWith(com.github.anba.es6draft.ast.Module parsedModule,
-            SourceTextModuleRecord moduleRecord, String className, ExecutorService executor,
-            EnumSet<Compiler.Option> options) {
-        Compiler compiler = new Compiler(executor, options);
-        return compiler.compile(parsedModule, moduleRecord, className);
-    }
-
-    private static CompiledFunction compileWith(FunctionDefinition function, String className,
-            ExecutorService executor, EnumSet<Compiler.Option> options) throws CompilationException {
-        Compiler compiler = new Compiler(executor, options);
-        return compiler.compile(function, className);
-    }
-
-    private static CompiledFunction compileWith(GeneratorDefinition generator, String className,
-            ExecutorService executor, EnumSet<Compiler.Option> options) {
-        Compiler compiler = new Compiler(executor, options);
-        return compiler.compile(generator, className);
-    }
-
-    private static CompiledFunction compileWith(AsyncFunctionDefinition asyncFunction,
-            String className, ExecutorService executor, EnumSet<Compiler.Option> options) {
-        Compiler compiler = new Compiler(executor, options);
-        return compiler.compile(asyncFunction, className);
     }
 
     private static Reader newReader(InputStream stream) {

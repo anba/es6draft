@@ -130,7 +130,7 @@ public class Stack {
                 } else if (t0.getSort() <= Type.Sort.DOUBLE) {
                     stack[i] = Type.DOUBLE_TYPE;
                 } else {
-                    stack[i] = commonType(t0, t1);
+                    stack[i] = intersectionType(t0, t1);
                 }
             }
         }
@@ -141,7 +141,7 @@ public class Stack {
                 && left.getSort() < Type.Sort.ARRAY == right.getSort() < Type.Sort.ARRAY;
     }
 
-    protected Type commonType(Type left, Type right) {
+    protected Type intersectionType(Type left, Type right) {
         return OBJECT_TYPE;
     }
 

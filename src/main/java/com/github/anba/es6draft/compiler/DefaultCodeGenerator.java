@@ -460,6 +460,9 @@ abstract class DefaultCodeGenerator<RETURN, VISITOR extends ExpressionVisitor> e
     protected final Class<? extends EnvironmentRecord> getEnvironmentRecordClass(
             ExpressionVisitor mv) {
         Scope scope = mv.getScope();
+        while (!scope.isPresent()) {
+            scope = scope.getParent();
+        }
         if (scope instanceof ScriptScope) {
             Script script = ((ScriptScope) scope).getNode();
             if (!(script.isEvalScript() || script.isScripting())) {
@@ -773,6 +776,52 @@ abstract class DefaultCodeGenerator<RETURN, VISITOR extends ExpressionVisitor> e
             default:
                 throw new AssertionError();
             }
+        }
+
+        public static ValType of(Type type) {
+            if (type.isPrimitive()) {
+                if (Type.BOOLEAN_TYPE.equals(type)) {
+                    return ValType.Boolean;
+                }
+                if (Type.INT_TYPE.equals(type)) {
+                    return ValType.Number_int;
+                }
+                if (Type.LONG_TYPE.equals(type)) {
+                    return ValType.Number_uint;
+                }
+                if (Type.DOUBLE_TYPE.equals(type)) {
+                    return ValType.Number;
+                }
+                return ValType.Any;
+            }
+            if (Types.Boolean.equals(type)) {
+                return ValType.Boolean;
+            }
+            if (Types.Integer.equals(type)) {
+                return ValType.Number_int;
+            }
+            if (Types.Long.equals(type)) {
+                return ValType.Number_uint;
+            }
+            if (Types.Double.equals(type)) {
+                return ValType.Number;
+            }
+            if (Types.Null.equals(type)) {
+                return ValType.Null;
+            }
+            if (Types.Undefined.equals(type)) {
+                return ValType.Undefined;
+            }
+            if (Types.String.equals(type) || Types.CharSequence.equals(type)) {
+                return ValType.String;
+            }
+            if (Types.ScriptObject.equals(type)) {
+                return ValType.Object;
+            }
+            if (Types.OrdinaryObject.equals(type)) {
+                return ValType.Object;
+            }
+            return ValType.Any;
         }
     }
 
@@ -1216,19 +1265,16 @@ abstract class DefaultCodeGenerator<RETURN, VISITOR extends ExpressionVisitor> e
      *            the expression visitor
      */
     protected static void SetFunctionName(Node node, ValType propertyKeyType, ExpressionVisitor mv) {
-        assert node instanceof ClassDefinition || node instanceof FunctionNode : node.getClass();
-
         Jump hasOwnName = null;
-        if (node instanceof ClassDefinition && hasOwnNameProperty((ClassDefinition) node)) {
+        switch (hasOwnNameProperty(node)) {
+        case HasOwn:
+            return;
+        case HasComputed:
+            emitHasOwnNameProperty(mv);
+
             hasOwnName = new Jump();
-            // stack: [propertyKey, function] -> [propertyKey, function, cx, function, "name"]
-            mv.dup();
-            mv.loadExecutionContext();
-            mv.swap();
-            mv.aconst("name");
-            // stack: [propertyKey, function, cx, function, "name"] -> [propertyKey, function]
-            mv.invoke(Methods.AbstractOperations_HasOwnProperty);
             mv.ifne(hasOwnName);
+        default:
         }
 
         // stack: [propertyKey, function] -> [propertyKey, function, function, propertyKey]
@@ -1287,20 +1333,16 @@ abstract class DefaultCodeGenerator<RETURN, VISITOR extends ExpressionVisitor> e
      *            the expression visitor
      */
     protected static void SetFunctionName(Node node, String name, ExpressionVisitor mv) {
-        assert node instanceof ClassDefinition || node instanceof FunctionNode : node.getClass();
-
         Jump hasOwnName = null;
-        if (node instanceof ClassDefinition && hasOwnNameProperty((ClassDefinition) node)) {
-            hasOwnName = new Jump();
+        switch (hasOwnNameProperty(node)) {
+        case HasOwn:
+            return;
+        case HasComputed:
+            emitHasOwnNameProperty(mv);
 
-            // stack: [function] -> [function, cx, function, "name"]
-            mv.dup();
-            mv.loadExecutionContext();
-            mv.swap();
-            mv.aconst("name");
-            // stack: [function, cx, function, "name"] -> [function]
-            mv.invoke(Methods.AbstractOperations_HasOwnProperty);
+            hasOwnName = new Jump();
             mv.ifne(hasOwnName);
+        default:
         }
 
         // stack: [function] -> [function, function, name]
@@ -1314,32 +1356,55 @@ abstract class DefaultCodeGenerator<RETURN, VISITOR extends ExpressionVisitor> e
         }
     }
 
-    private static boolean hasOwnNameProperty(ClassDefinition node) {
-        for (PropertyDefinition property : node.getProperties()) {
+    private static void emitHasOwnNameProperty(ExpressionVisitor mv) {
+        // stack: [function] -> [function, cx, function, "name"]
+        mv.dup();
+        mv.loadExecutionContext();
+        mv.swap();
+        mv.aconst("name");
+        // stack: [function, cx, function, "name"] -> [function, hasOwn]
+        mv.invoke(Methods.AbstractOperations_HasOwnProperty);
+    }
+
+    private enum NameProperty {
+        HasOwn, HasComputed, None
+    }
+
+    private static NameProperty hasOwnNameProperty(Node node) {
+        if (node instanceof FunctionNode) {
+            return NameProperty.None;
+        }
+
+        assert node instanceof ClassDefinition : node.getClass();
+        for (PropertyDefinition property : ((ClassDefinition) node).getProperties()) {
             if (property instanceof MethodDefinition) {
                 MethodDefinition methodDefinition = (MethodDefinition) property;
                 if (methodDefinition.isStatic()) {
                     String methodName = methodDefinition.getPropertyName().getName();
-                    if (methodName == null || "name".equals(methodName)) {
-                        // Computed property name or method name is "name"
-                        return true;
+                    if (methodName == null) {
+                        return NameProperty.HasComputed;
+                    }
+                    if ("name".equals(methodName)) {
+                        return NameProperty.HasOwn;
                     }
                 }
                 if (!methodDefinition.getDecorators().isEmpty()) {
-                    // user-defined decorator expression
-                    return true;
+                    // Decorator expressions are like computed names.
+                    return NameProperty.HasComputed;
                 }
             } else if (property instanceof PropertyValueDefinition) {
                 // Only static class properties are supported.
                 PropertyValueDefinition valueDefinition = (PropertyValueDefinition) property;
                 String methodName = valueDefinition.getPropertyName().getName();
-                if (methodName == null || "name".equals(methodName)) {
-                    // Computed property name or property name is "name"
-                    return true;
+                if (methodName == null) {
+                    return NameProperty.HasComputed;
+                }
+                if ("name".equals(methodName)) {
+                    return NameProperty.HasOwn;
                 }
             }
         }
-        return false;
+        return NameProperty.None;
     }
 
     /**
@@ -1485,32 +1550,29 @@ abstract class DefaultCodeGenerator<RETURN, VISITOR extends ExpressionVisitor> e
         mv.exitClassDefinition();
     }
 
-    protected final <T> Variable<ArrayList<T>> newDecoratorVariable(String name,
-            ExpressionVisitor mv) {
+    protected final <T> Variable<ArrayList<T>> newDecoratorVariable(String name, ExpressionVisitor mv) {
         Variable<ArrayList<T>> var = mv.newVariable(name, ArrayList.class).uncheckedCast();
         mv.anew(Types.ArrayList, Methods.ArrayList_init);
         mv.store(var);
         return var;
     }
 
-    protected final <T> void addDecoratorObject(Variable<ArrayList<T>> var,
-            Variable<? extends ScriptObject> object, ExpressionVisitor mv) {
+    protected final void addDecoratorObject(Variable<ArrayList<Object>> var, Variable<? extends ScriptObject> object,
+            ExpressionVisitor mv) {
         mv.load(var);
         mv.load(object);
         mv.invoke(Methods.ArrayList_add);
         mv.pop();
     }
 
-    protected final <T> void addDecoratorKey(Variable<ArrayList<T>> var, String propertyKey,
-            ExpressionVisitor mv) {
+    protected final void addDecoratorKey(Variable<ArrayList<Object>> var, String propertyKey, ExpressionVisitor mv) {
         mv.load(var);
         mv.aconst(propertyKey);
         mv.invoke(Methods.ArrayList_add);
         mv.pop();
     }
 
-    protected final <T> void addDecoratorKey(Variable<ArrayList<T>> var, ValType type,
-            ExpressionVisitor mv) {
+    protected final void addDecoratorKey(Variable<ArrayList<Object>> var, ValType type, ExpressionVisitor mv) {
         mv.dup(type);
         mv.load(var);
         mv.swap(type.toType(), Types.ArrayList);
@@ -1518,8 +1580,8 @@ abstract class DefaultCodeGenerator<RETURN, VISITOR extends ExpressionVisitor> e
         mv.pop();
     }
 
-    protected final <T> void evaluateDecorators(Variable<ArrayList<T>> var,
-            List<Expression> decorators, ExpressionVisitor mv) {
+    protected final <T> void evaluateDecorators(Variable<ArrayList<T>> var, List<Expression> decorators,
+            ExpressionVisitor mv) {
         for (Expression decorator : decorators) {
             mv.load(var);
             expressionBoxed(decorator, mv);

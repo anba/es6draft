@@ -47,8 +47,7 @@ final class ScriptContextEnvironmentRecord implements EnvironmentRecord {
     }
 
     @Override
-    public Reference<ScriptContextEnvironmentRecord, String> getReferenceOrNull(String name,
-            boolean strict) {
+    public Reference<ScriptContextEnvironmentRecord, String> getReferenceOrNull(String name, boolean strict) {
         if (hasBinding(name)) {
             return new Reference.IdentifierReference<>(this, name, strict);
         }

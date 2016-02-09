@@ -166,7 +166,7 @@ final class GlobalDeclarationInstantiationGenerator extends
                 }
             }
         }
-        /* steps 16 */
+        /* step 16 */
         for (HoistableDeclaration f : functionsToInitialize) {
             Name fn = BoundName(f);
             InstantiateFunctionObject(context, env, f, mv);

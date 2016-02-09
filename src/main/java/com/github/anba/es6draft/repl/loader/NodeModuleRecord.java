@@ -227,9 +227,8 @@ public final class NodeModuleRecord implements ModuleRecord {
      * @throws CompilationException
      *             if the parsed module source cannot be compiled
      */
-    public static NodeModuleRecord ParseModule(ScriptLoader scriptLoader,
-            SourceIdentifier identifier, ModuleSource moduleSource) throws IOException,
-            ParserException, CompilationException {
+    public static NodeModuleRecord ParseModule(ScriptLoader scriptLoader, SourceIdentifier identifier,
+            ModuleSource moduleSource) throws IOException, ParserException, CompilationException {
         Source source = moduleSource.toSource();
         String sourceCode = moduleSource.sourceCode();
         if (identifier.toUri().toString().endsWith(".json")) {

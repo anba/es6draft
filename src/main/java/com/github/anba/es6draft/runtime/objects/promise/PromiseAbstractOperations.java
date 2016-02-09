@@ -332,7 +332,7 @@ public final class PromiseAbstractOperations {
         private final MutRef<Object> reject;
 
         public GetCapabilitiesExecutor(Realm realm) {
-            this(realm, new MutRef<Object>(UNDEFINED), new MutRef<Object>(UNDEFINED));
+            this(realm, new MutRef<>(UNDEFINED), new MutRef<>(UNDEFINED));
             createDefaultFunctionProperties();
         }
 

@@ -31,7 +31,9 @@
 package org.mozilla.javascript.v8dtoa;
 
 // Helper functions for doubles.
-public class DoubleHelper {
+public final class DoubleHelper {
+    private DoubleHelper() {
+    }
 
     static final long kSignMask = 0x8000000000000000L;
     static final long kExponentMask = 0x7FF0000000000000L;

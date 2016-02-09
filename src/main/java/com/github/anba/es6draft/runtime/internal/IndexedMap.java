@@ -11,7 +11,7 @@ import java.util.*;
 /**
  * 
  */
-public final class IndexedMap<VALUE> {
+public final class IndexedMap<VALUE> implements Iterable<Map.Entry<Long, VALUE>> {
     private static final long MAX_LENGTH = 0x1F_FFFF_FFFF_FFFFL;
     private static final long MAX_DENSE_LENGTH = 0x7FFF_FFFF >> 4;
     private static final int MIN_SPARSE_LENGTH = 32;
@@ -962,9 +962,9 @@ public final class IndexedMap<VALUE> {
 
     private static <VALUE> Elements<VALUE> createElements(int propertyKey) {
         if (propertyKey < MIN_SPARSE_LENGTH) {
-            return new DenseElements<VALUE>(propertyKey);
+            return new DenseElements<>(propertyKey);
         } else {
-            return new SparseElements<VALUE>();
+            return new SparseElements<>();
         }
     }
 
@@ -1137,6 +1137,7 @@ public final class IndexedMap<VALUE> {
      * 
      * @return the range iterator
      */
+    @Override
     public Iterator<Map.Entry<Long, VALUE>> iterator() {
         return elements.iterator();
     }

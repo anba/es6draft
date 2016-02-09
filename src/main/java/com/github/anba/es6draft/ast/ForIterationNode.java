@@ -20,7 +20,7 @@ public interface ForIterationNode extends ScopedNode {
     BlockScope getScope();
 
     /**
-     * Returns the <tt>for in/of/each</tt>-statement's head node. The head node is one of the
+     * Returns the <code>for in/of/each</code>-statement's head node. The head node is one of the
      * following types:
      * <ul>
      * <li>{@link VariableStatement}:&emsp;{@code for (var decl in/of expr)}
@@ -33,21 +33,21 @@ public interface ForIterationNode extends ScopedNode {
     Node getHead();
 
     /**
-     * Returns the <tt>for in/of/each</tt>-statement's expression node.
+     * Returns the <code>for in/of/each</code>-statement's expression node.
      * 
      * @return the expression node
      */
     Expression getExpression();
 
     /**
-     * Returns the <tt>for in/of/each</tt>-statement's statement node.
+     * Returns the <code>for in/of/each</code>-statement's statement node.
      * 
      * @return the statement node
      */
     Statement getStatement();
 
     /**
-     * Sets the <tt>for for in/of/each</tt>-statement's statement node.
+     * Sets the <code>for for in/of/each</code>-statement's statement node.
      * 
      * @param statement
      *            the new statement node

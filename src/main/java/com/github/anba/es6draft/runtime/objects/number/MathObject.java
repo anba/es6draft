@@ -180,7 +180,7 @@ public final class MathObject extends OrdinaryObject implements Initializable {
                 return Double.POSITIVE_INFINITY;
             }
             // return Math.log(d + Math.sqrt(d * d - 1.0));
-            return org.mozilla.javascript.MathImpl.acosh(d);
+            return MathImpl.acosh(d);
         }
 
         /**
@@ -217,7 +217,7 @@ public final class MathObject extends OrdinaryObject implements Initializable {
                 return d;
             }
             // return Math.log(d + Math.sqrt(d * d + 1.0));
-            return org.mozilla.javascript.MathImpl.asinh(d);
+            return MathImpl.asinh(d);
         }
 
         /**
@@ -263,7 +263,7 @@ public final class MathObject extends OrdinaryObject implements Initializable {
                 return d;
             }
             // return (Math.log(1.0 + d) - Math.log(1.0 - d)) / 2.0;
-            return org.mozilla.javascript.MathImpl.atanh(d);
+            return MathImpl.atanh(d);
         }
 
         /**

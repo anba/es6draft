@@ -18,7 +18,7 @@ public final class AwaitExpression extends Expression {
     }
 
     /**
-     * Returns the expression part of this <tt>AwaitExpression</tt> node.
+     * Returns the expression part of this <code>AwaitExpression</code> node.
      * 
      * @return the expression
      */

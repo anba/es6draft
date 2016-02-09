@@ -14,12 +14,12 @@ package com.github.anba.es6draft.runtime.objects.intl;
  * <li>Date Field Symbol Table
  * </ul>
  * <p>
- * Version: 27
+ * Version: 28
  * 
- * @see <a
- *      href="http://unicode.org/reports/tr35/tr35-dates.html#Date_Format_Patterns">Date&nbsp;Format&nbsp;Patterns</a>
- * @see <a
- *      href="http://unicode.org/reports/tr35/tr35-dates.html#Date_Field_Symbol_Table">Date&nbsp;Field&nbsp;Symbol&nbsp;Table</a>
+ * @see <a href="http://unicode.org/reports/tr35/tr35-dates.html#Date_Format_Patterns">Date&nbsp;Format&nbsp;Patterns
+ *      </a>
+ * @see <a href="http://unicode.org/reports/tr35/tr35-dates.html#Date_Field_Symbol_Table">Date&nbsp;Field&nbsp;Symbol&
+ *      nbsp;Table</a>
  */
 final class DateFieldSymbolTable {
     private DateFieldSymbolTable() {
@@ -33,11 +33,18 @@ final class DateFieldSymbolTable {
         public Skeleton(String skeleton) {
             char[] symbols = new char[DateField.LENGTH];
             FieldWeight[] weights = new FieldWeight[DateField.LENGTH];
-            boolean hour12 = false;
+            boolean hour12 = false, quote = false;
             for (int i = 0, len = skeleton.length(); i < len;) {
                 char sym = skeleton.charAt(i++);
-                if (sym == ':') {
-                    // Skip time separator.
+                if (sym == '\'') {
+                    if (i < len && skeleton.charAt(i) == '\'') {
+                        i += 1;
+                    } else {
+                        quote = !quote;
+                    }
+                    continue;
+                }
+                if (quote || !(('A' <= sym && sym <= 'Z') || ('a' <= sym && sym <= 'z'))) {
                     continue;
                 }
                 int length = 1;
@@ -46,8 +53,12 @@ final class DateFieldSymbolTable {
                 }
                 DateField field = DateField.forSymbol(sym);
                 FieldWeight weight = field.getWeight(sym, length);
-                symbols[field.ordinal()] = sym;
-                weights[field.ordinal()] = weight;
+                int index = field.ordinal();
+                if (symbols[index] != 0) {
+                    throw new IllegalArgumentException();
+                }
+                symbols[index] = sym;
+                weights[index] = weight;
                 if (field == DateField.Hour) {
                     hour12 = (sym == 'h' || sym == 'K');
                 }
@@ -232,8 +243,11 @@ final class DateFieldSymbolTable {
             @Override
             public FieldWeight getWeight(char symbol, int count) {
                 if (symbol == 'w') {
-                    if (count >= 1 && count <= 2) {
+                    if (count == 1) {
                         return FieldWeight.Numeric;
+                    }
+                    if (count == 2) {
+                        return FieldWeight.TwoDigit;
                     }
                 } else if (symbol == 'W') {
                     if (count == 1) {
@@ -315,7 +329,7 @@ final class DateFieldSymbolTable {
         Period('a') {
             @Override
             public FieldWeight getWeight(char symbol, int count) {
-                if (symbol == 'a') {
+                if (symbol == 'a' || symbol == 'b' || symbol == 'B') {
                     if (count >= 1 && count <= 3) {
                         return FieldWeight.Short;
                     }
@@ -491,6 +505,7 @@ final class DateFieldSymbolTable {
             case 'Y':
             case 'u':
             case 'U':
+            case 'r':
                 return Year;
             case 'Q':
             case 'q':
@@ -511,6 +526,8 @@ final class DateFieldSymbolTable {
             case 'c':
                 return Weekday;
             case 'a':
+            case 'b':
+            case 'B':
                 return Period;
             case 'h':
             case 'H':
@@ -534,6 +551,7 @@ final class DateFieldSymbolTable {
             case 'l':
             case 'j':
             case 'J':
+            case 'C':
             default:
                 throw new IllegalArgumentException(Character.toString(symbol));
             }

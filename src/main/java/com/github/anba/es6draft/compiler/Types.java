@@ -27,6 +27,7 @@ import com.github.anba.es6draft.runtime.modules.SourceTextModuleRecord;
 import com.github.anba.es6draft.runtime.objects.Eval;
 import com.github.anba.es6draft.runtime.objects.async.AsyncAbstractOperations;
 import com.github.anba.es6draft.runtime.objects.iteration.GeneratorObject;
+import com.github.anba.es6draft.runtime.objects.promise.PromiseAbstractOperations;
 import com.github.anba.es6draft.runtime.objects.promise.PromiseObject;
 import com.github.anba.es6draft.runtime.objects.text.RegExpConstructor;
 import com.github.anba.es6draft.runtime.objects.text.RegExpObject;
@@ -125,6 +126,9 @@ final class Types {
     // runtime.objects.iteration
     static final Type GeneratorObject = Type.of(GeneratorObject.class);
 
+    // runtime.objects.promise
+    static final Type PromiseAbstractOperations = Type.of(PromiseAbstractOperations.class);
+
     // runtime.types
     static final Type Callable = Type.of(Callable.class);
     static final Type Constructor = Type.of(Constructor.class);
@@ -144,6 +148,7 @@ final class Types {
     static final Type FunctionObject$ConstructorKind = Type
             .of(FunctionObject.ConstructorKind.class);
     static final Type LegacyArgumentsObject = Type.of(LegacyArgumentsObject.class);
+    static final Type LegacyConstructorFunction = Type.of(LegacyConstructorFunction.class);
     static final Type ModuleNamespaceObject = Type.of(ModuleNamespaceObject.class);
     static final Type OrdinaryAsyncFunction = Type.of(OrdinaryAsyncFunction.class);
     static final Type OrdinaryConstructorFunction = Type.of(OrdinaryConstructorFunction.class);

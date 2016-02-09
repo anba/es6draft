@@ -18,6 +18,7 @@ import java.util.Set;
 
 import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.runtime.Realm;
+import com.github.anba.es6draft.runtime.internal.RuntimeContext;
 import com.github.anba.es6draft.runtime.internal.ScriptLoader;
 import com.github.anba.es6draft.runtime.modules.MalformedNameException;
 import com.github.anba.es6draft.runtime.modules.ModuleRecord;
@@ -36,8 +37,8 @@ public class NodeModuleLoader extends AbstractFileModuleLoader<ModuleRecord> {
     private final ScriptLoader scriptLoader;
     private Constructor moduleConstructor;
 
-    public NodeModuleLoader(ScriptLoader scriptLoader, Path baseDirectory) {
-        super(baseDirectory);
+    public NodeModuleLoader(RuntimeContext context, ScriptLoader scriptLoader) {
+        super(context);
         this.scriptLoader = scriptLoader;
     }
 
@@ -67,8 +68,7 @@ public class NodeModuleLoader extends AbstractFileModuleLoader<ModuleRecord> {
     }
 
     @Override
-    protected ModuleRecord parseModule(SourceIdentifier identifier, ModuleSource source)
-            throws IOException {
+    protected ModuleRecord parseModule(SourceIdentifier identifier, ModuleSource source) throws IOException {
         try {
             return NodeModuleRecord.ParseModule(scriptLoader, identifier, source);
         } catch (ParserException e) {
@@ -105,7 +105,7 @@ public class NodeModuleLoader extends AbstractFileModuleLoader<ModuleRecord> {
     @Override
     public FileSourceIdentifier normalizeName(String unnormalizedName, SourceIdentifier referrerId)
             throws MalformedNameException {
-        return NodeModuleResolution.resolve(getBaseDirectory(),
-                super.normalizeName(unnormalizedName, referrerId), unnormalizedName, referrerId);
+        return NodeModuleResolution.resolve(getBaseDirectory(), super.normalizeName(unnormalizedName, referrerId),
+                unnormalizedName, referrerId);
     }
 }

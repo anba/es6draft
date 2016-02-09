@@ -26,12 +26,6 @@ import com.ibm.icu.util.ULocale;
  * </ul>
  */
 public class DateTimeFormatObject extends OrdinaryObject {
-    /** [[initializedIntlObject]] */
-    private boolean initializedIntlObject;
-
-    /** [[initializedDateTimeFormat]] */
-    private boolean initializedDateTimeFormat;
-
     /** [[locale]] */
     private String locale;
 
@@ -64,7 +58,7 @@ public class DateTimeFormatObject extends OrdinaryObject {
     /**
      * Returns the ICU {@link DateFormat} instance.
      * 
-     * @return the NumberFormat instance
+     * @return the DateFormat instance
      */
     public DateFormat getDateFormat() {
         if (dateFormat == null) {
@@ -89,44 +83,6 @@ public class DateTimeFormatObject extends OrdinaryObject {
             gregorian.setGregorianChange(new Date(Long.MIN_VALUE));
         }
         return dateFormat;
-    }
-
-    /**
-     * [[initializedIntlObject]]
-     * 
-     * @return {@code true} if the Intl object is initialized
-     */
-    public boolean isInitializedIntlObject() {
-        return initializedIntlObject;
-    }
-
-    /**
-     * [[initializedIntlObject]]
-     * 
-     * @param initializedIntlObject
-     *            the new initialization state
-     */
-    public void setInitializedIntlObject(boolean initializedIntlObject) {
-        this.initializedIntlObject = initializedIntlObject;
-    }
-
-    /**
-     * [[initializedDateTimeFormat]]
-     * 
-     * @return {@code true} if the date format object is initialized
-     */
-    public boolean isInitializedDateTimeFormat() {
-        return initializedDateTimeFormat;
-    }
-
-    /**
-     * [[initializedDateTimeFormat]]
-     * 
-     * @param initializedDateTimeFormat
-     *            the new initialization state
-     */
-    public void setInitializedDateTimeFormat(boolean initializedDateTimeFormat) {
-        this.initializedDateTimeFormat = initializedDateTimeFormat;
     }
 
     /**

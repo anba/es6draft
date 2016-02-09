@@ -18,7 +18,6 @@ import java.nio.file.Path;
 import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -27,10 +26,10 @@ import org.apache.commons.configuration.Configuration;
 import org.hamcrest.Matchers;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ErrorCollector;
 import org.junit.rules.ExpectedException;
 import org.junit.rules.Timeout;
 import org.junit.runner.RunWith;
@@ -43,12 +42,12 @@ import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.Properties;
-import com.github.anba.es6draft.runtime.internal.ScriptCache;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 import com.github.anba.es6draft.util.Functional.BiFunction;
 import com.github.anba.es6draft.util.Functional.Function;
+import com.github.anba.es6draft.util.NullConsole;
 import com.github.anba.es6draft.util.Parallelized;
 import com.github.anba.es6draft.util.ParameterizedRunnerFactory;
 import com.github.anba.es6draft.util.TestConfiguration;
@@ -69,28 +68,32 @@ public final class MozillaJitTest {
 
     @Parameters(name = "{0}")
     public static List<MozTest> suiteValues() throws IOException {
-        return loadTests(configuration,
-                new Function<Path, BiFunction<Path, Iterator<String>, MozTest>>() {
-                    @Override
-                    public TestInfos apply(Path basedir) {
-                        return new TestInfos(basedir);
-                    }
-                });
+        return loadTests(configuration, new Function<Path, BiFunction<Path, Iterator<String>, MozTest>>() {
+            @Override
+            public TestInfos apply(Path basedir) {
+                return new TestInfos(basedir);
+            }
+        });
+    }
+
+    @BeforeClass
+    public static void setUpClass() throws IOException {
+        MozTestGlobalObject.testLoadInitializationScript();
     }
 
     @ClassRule
     public static TestGlobals<MozTestGlobalObject, MozTest> globals = new TestGlobals<MozTestGlobalObject, MozTest>(
             configuration) {
         @Override
-        protected ObjectAllocator<MozTestGlobalObject> newAllocator(ShellConsole console,
-                MozTest test, ScriptCache scriptCache) {
-            return newGlobalObjectAllocator(console, test, scriptCache);
+        protected ObjectAllocator<MozTestGlobalObject> newAllocator(ShellConsole console) {
+            return newGlobalObjectAllocator(console);
         }
 
         @Override
-        protected Set<CompatibilityOption> getOptions() {
+        protected EnumSet<CompatibilityOption> getOptions() {
             EnumSet<CompatibilityOption> options = EnumSet.copyOf(super.getOptions());
             options.add(CompatibilityOption.ArrayBufferMissingLength);
+            options.add(CompatibilityOption.ArrayIncludes);
             options.add(CompatibilityOption.Exponentiation);
             return options;
         }
@@ -98,9 +101,6 @@ public final class MozillaJitTest {
 
     @Rule
     public Timeout maxTime = new Timeout(120, TimeUnit.SECONDS);
-
-    @Rule
-    public ErrorCollector collector = new ErrorCollector();
 
     @Rule
     public StandardErrorHandler errorHandler = StandardErrorHandler.none();
@@ -131,26 +131,24 @@ public final class MozillaJitTest {
     public void setUp() throws Throwable {
         assumeTrue("Test disabled", moztest.isEnabled());
 
-        global = globals.newGlobal(new MozTestConsole(collector), moztest);
+        global = globals.newGlobal(new NullConsole(), moztest);
         exceptionHandler.setExecutionContext(global.getRealm().defaultContext());
-        global.install(new TestEnvironment(), TestEnvironment.class);
+        global.createGlobalProperties(new TestEnvironment(), TestEnvironment.class);
 
         if (moztest.error == null) {
             errorHandler.match(StandardErrorHandler.defaultMatcher());
             exceptionHandler.match(ScriptExceptionHandler.defaultMatcher());
         } else {
             ExecutionContext cx = global.getRealm().defaultContext();
-            expected.expect(Matchers.either(StandardErrorHandler.defaultMatcher()).or(
-                    ScriptExceptionHandler.defaultMatcher()));
+            expected.expect(
+                    Matchers.either(StandardErrorHandler.defaultMatcher()).or(ScriptExceptionHandler.defaultMatcher()));
             expected.expect(hasErrorMessage(cx, containsString(moztest.error)));
         }
     }
 
     @After
     public void tearDown() {
-        if (global != null) {
-            global.getScriptLoader().getExecutor().shutdown();
-        }
+        globals.release(global);
     }
 
     @Test
@@ -238,6 +236,7 @@ public final class MozillaJitTest {
                         break;
                     case "allow-oom":
                     case "allow-overrecursed":
+                    case "allow-unhandlable-oom":
                     case "valgrind":
                     case "tz-pacific":
                     case "mjitalways":
@@ -256,8 +255,7 @@ public final class MozillaJitTest {
                         // Ignore empty string
                         break;
                     default:
-                        System.err.printf("unknown option '%s' in line: %s [%s]\n", name, content,
-                                file);
+                        System.err.printf("unknown option '%s' in line: %s [%s]\n", name, content, file);
                     }
                 }
             }

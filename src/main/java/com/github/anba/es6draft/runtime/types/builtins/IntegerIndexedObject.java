@@ -94,13 +94,13 @@ public abstract class IntegerIndexedObject extends OrdinaryObject {
 
     /** 9.4.5.2 [[HasProperty]](P) */
     @Override
-    protected boolean has(ExecutionContext cx, long propertyKey) {
+    protected final boolean has(ExecutionContext cx, long propertyKey) {
         return elementHas(cx, propertyKey);
     }
 
     /** 9.4.5.2 [[HasProperty]](P) */
     @Override
-    protected boolean has(ExecutionContext cx, String propertyKey) {
+    protected final boolean has(ExecutionContext cx, String propertyKey) {
         long numericIndex = CanonicalNumericIndexString(propertyKey);
         if (isCanonicalNumericIndex(numericIndex)) {
             return elementHas(cx, numericIndex);
@@ -110,8 +110,7 @@ public abstract class IntegerIndexedObject extends OrdinaryObject {
 
     /** 9.4.5.3 [[DefineOwnProperty]] (P, Desc) */
     @Override
-    protected final boolean defineProperty(ExecutionContext cx, long propertyKey,
-            PropertyDescriptor desc) {
+    protected final boolean defineProperty(ExecutionContext cx, long propertyKey, PropertyDescriptor desc) {
         /* steps 3.c.i-3.c.vi */
         if (propertyKey >= getLength()) {
             return false;
@@ -143,8 +142,7 @@ public abstract class IntegerIndexedObject extends OrdinaryObject {
 
     /** 9.4.5.3 [[DefineOwnProperty]] (P, Desc) */
     @Override
-    protected final boolean defineProperty(ExecutionContext cx, String propertyKey,
-            PropertyDescriptor desc) {
+    protected final boolean defineProperty(ExecutionContext cx, String propertyKey, PropertyDescriptor desc) {
         /* steps 1-2 (not applicable) */
         /* step 3 */
         long numericIndex = CanonicalNumericIndexString(propertyKey);
@@ -184,8 +182,7 @@ public abstract class IntegerIndexedObject extends OrdinaryObject {
 
     /** 9.4.5.5 [[Set]] (P, V, Receiver) */
     @Override
-    protected final boolean setValue(ExecutionContext cx, long propertyKey, Object value,
-            Object receiver) {
+    protected final boolean setValue(ExecutionContext cx, long propertyKey, Object value, Object receiver) {
         /* step 1 (not applicable) */
         /* step 2 */
         if (this == receiver) { // SameValue(this, receiver)
@@ -197,8 +194,7 @@ public abstract class IntegerIndexedObject extends OrdinaryObject {
 
     /** 9.4.5.5 [[Set]] (P, V, Receiver) */
     @Override
-    protected final boolean setValue(ExecutionContext cx, String propertyKey, Object value,
-            Object receiver) {
+    protected final boolean setValue(ExecutionContext cx, String propertyKey, Object value, Object receiver) {
         /* step 1 (not applicable) */
         /* step 2 */
         if (this == receiver) { // SameValue(this, receiver)
@@ -215,14 +211,12 @@ public abstract class IntegerIndexedObject extends OrdinaryObject {
     @Override
     protected final List<Object> getOwnPropertyKeys(ExecutionContext cx) {
         /* steps 1-7 */
-        return new CompoundList<>(new IndexedPropertyKeyList(getLength()),
-                super.getOwnPropertyKeys(cx));
+        return new CompoundList<>(new IndexedPropertyKeyList(getLength()), super.getOwnPropertyKeys(cx));
     }
 
     @Override
     protected final List<String> getEnumerableKeys(ExecutionContext cx) {
-        return new CompoundList<>(new IndexedPropertyKeyList(getLength()),
-                super.getEnumerableKeys(cx));
+        return new CompoundList<>(new IndexedPropertyKeyList(getLength()), super.getEnumerableKeys(cx));
     }
 
     @Override
@@ -243,8 +237,7 @@ public abstract class IntegerIndexedObject extends OrdinaryObject {
      *            the prototype object
      * @return the new integer indexed object
      */
-    public static ScriptObject IntegerIndexedObjectCreate(ExecutionContext cx,
-            ScriptObject prototype) {
+    public static ScriptObject IntegerIndexedObjectCreate(ExecutionContext cx, ScriptObject prototype) {
         // the operation is not supported in this implementation
         throw new UnsupportedOperationException();
     }

@@ -51,6 +51,38 @@ public final class NumberParser {
     /**
      * Parse a decimal integer literal.
      * 
+     * @param cbuf
+     *            the characters to parse
+     * @param length
+     *            the length of the characters
+     * @return the parsed integer
+     */
+    static double parseSignedInteger(char[] cbuf, int length) {
+        final char sign = cbuf[0];
+        final int start = (sign == '-' || sign == '+') ? 1 : 0;
+        if (length - start < 10) {
+            // integer [0, 9999_99999]
+            int num = 0;
+            for (int i = start; i < length; ++i) {
+                num = (num * 10) + digit(cbuf[i]);
+            }
+            return (sign == '-') ? -num : num;
+        } else if (length - start < 19) {
+            // integer [0, 999_99999_99999_99999]
+            long num = 0;
+            for (int i = start; i < length; ++i) {
+                num = (num * 10) + digit(cbuf[i]);
+            }
+            return (sign == '-') ? -num : num;
+        } else {
+            // integer ]999_99999_99999_99999, ...]
+            return parseDecimal(cbuf, length);
+        }
+    }
+
+    /**
+     * Parse a decimal integer literal.
+     * 
      * @param s
      *            the string to parse
      * @return the parsed integer

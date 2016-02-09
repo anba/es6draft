@@ -14,11 +14,11 @@ package com.github.anba.es6draft.ast;
  * </ul>
  */
 public final class SuperElementAccessor extends LeftHandSideExpression {
-    private final Expression expression;
+    private final Expression element;
 
-    public SuperElementAccessor(long beginPosition, long endPosition, Expression expression) {
+    public SuperElementAccessor(long beginPosition, long endPosition, Expression element) {
         super(beginPosition, endPosition);
-        this.expression = expression;
+        this.element = element;
     }
 
     /**
@@ -26,8 +26,8 @@ public final class SuperElementAccessor extends LeftHandSideExpression {
      * 
      * @return the element expression
      */
-    public Expression getExpression() {
-        return expression;
+    public Expression getElement() {
+        return element;
     }
 
     @Override

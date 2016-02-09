@@ -33,8 +33,8 @@ abstract class IterationGenerator<NODE extends Node, VISITOR extends ExpressionV
                 Types.ScriptIterator, "close", Type.methodType(Type.VOID_TYPE, Types.Throwable));
 
         // class: ScriptRuntime
-        static final MethodName ScriptRuntime_getStackOverflowError = MethodName.findStatic(
-                Types.ScriptRuntime, "getStackOverflowError",
+        static final MethodName ScriptRuntime_stackOverflowError = MethodName.findStatic(
+                Types.ScriptRuntime, "stackOverflowError",
                 Type.methodType(Types.StackOverflowError, Types.Error));
     }
 
@@ -196,7 +196,7 @@ abstract class IterationGenerator<NODE extends Node, VISITOR extends ExpressionV
 
         if (handlerCatchStackOverflow != null) {
             mv.catchHandler(handlerCatchStackOverflow, Types.Error);
-            mv.invoke(Methods.ScriptRuntime_getStackOverflowError);
+            mv.invoke(Methods.ScriptRuntime_stackOverflowError);
         }
         mv.catchHandler(handlerCatch, Types.ScriptException);
         mv.store(throwable);

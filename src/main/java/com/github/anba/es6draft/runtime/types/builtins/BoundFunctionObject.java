@@ -28,6 +28,7 @@ import com.github.anba.es6draft.runtime.types.ScriptObject;
 public class BoundFunctionObject extends OrdinaryObject implements Callable {
     /** [[BoundTargetFunction]] */
     private Callable boundTargetFunction;
+    private Callable flattenedTargetFunction;
 
     /** [[BoundThis]] */
     private Object boundThis;
@@ -35,10 +36,7 @@ public class BoundFunctionObject extends OrdinaryObject implements Callable {
     /** [[BoundArguments]] */
     private Object[] boundArguments;
 
-    private Callable flattenedTargetFunction;
-
-    private static final class ConstructorBoundFunctionObject extends BoundFunctionObject implements
-            Constructor {
+    private static final class ConstructorBoundFunctionObject extends BoundFunctionObject implements Constructor {
         /**
          * Constructs a new Bound Function object.
          * 
@@ -53,8 +51,7 @@ public class BoundFunctionObject extends OrdinaryObject implements Callable {
          * 9.4.1.2 [[Construct]] (argumentsList, newTarget)
          */
         @Override
-        public ScriptObject construct(ExecutionContext callerContext, Constructor newTarget,
-                Object... argumentsList) {
+        public ScriptObject construct(ExecutionContext callerContext, Constructor newTarget, Object... argumentsList) {
             /* step 1 */
             Callable target = getFlattenedTargetFunction();
             /* step 2 */
@@ -69,28 +66,6 @@ public class BoundFunctionObject extends OrdinaryObject implements Callable {
             }
             /* step 6 */
             return ((Constructor) target).construct(callerContext, newTarget, args);
-        }
-
-        /**
-         * 9.4.1.2 [[Construct]] (argumentsList, newTarget)
-         */
-        @Override
-        public Object tailConstruct(ExecutionContext callerContext, Constructor newTarget,
-                Object... argumentsList) throws Throwable {
-            /* step 1 */
-            Callable target = getFlattenedTargetFunction();
-            /* step 2 */
-            assert IsConstructor(target);
-            /* step 3 */
-            Object[] boundArgs = getBoundArguments();
-            /* step 4 */
-            Object[] args = concatArguments(callerContext, boundArgs, argumentsList);
-            /* step 5 */
-            if (this == newTarget) {
-                newTarget = (Constructor) target;
-            }
-            /* step 6 */
-            return ((Constructor) target).tailConstruct(callerContext, newTarget, args);
         }
     }
 
@@ -136,16 +111,15 @@ public class BoundFunctionObject extends OrdinaryObject implements Callable {
     }
 
     @Override
-    public final String toSource(SourceSelector selector) {
-        return FunctionSource.nativeCode(selector, "BoundFunction");
+    public final String toSource(ExecutionContext cx) {
+        return FunctionSource.nativeCode("BoundFunction");
     }
 
     /**
      * 9.4.1.1 [[Call]] (thisArgument, argumentsList)
      */
     @Override
-    public final Object call(ExecutionContext callerContext, Object thisValue,
-            Object... argumentsList) {
+    public final Object call(ExecutionContext callerContext, Object thisValue, Object... argumentsList) {
         /* step 1 */
         Callable target = getFlattenedTargetFunction();
         /* step 2 */
@@ -162,8 +136,8 @@ public class BoundFunctionObject extends OrdinaryObject implements Callable {
      * 9.4.1.1 [[Call]] (thisArgument, argumentsList)
      */
     @Override
-    public final Object tailCall(ExecutionContext callerContext, Object thisValue,
-            Object... argumentsList) throws Throwable {
+    public final Object tailCall(ExecutionContext callerContext, Object thisValue, Object... argumentsList)
+            throws Throwable {
         /* step 1 */
         Callable target = getFlattenedTargetFunction();
         /* step 2 */
@@ -214,8 +188,8 @@ public class BoundFunctionObject extends OrdinaryObject implements Callable {
      *            the bound function arguments
      * @return the new bound function object
      */
-    public static BoundFunctionObject BoundFunctionCreate(ExecutionContext cx,
-            Callable targetFunction, Object boundThis, Object... boundArgs) {
+    public static BoundFunctionObject BoundFunctionCreate(ExecutionContext cx, Callable targetFunction,
+            Object boundThis, Object... boundArgs) {
         /* step 1 (not applicable) */
         /* steps 2-3 */
         ScriptObject proto = targetFunction.getPrototypeOf(cx);
@@ -252,11 +226,10 @@ public class BoundFunctionObject extends OrdinaryObject implements Callable {
         return obj;
     }
 
-    private static Object[] concatArguments(ExecutionContext callerContext, Object[] boundArgs,
-            Object[] argumentsList) {
+    private static Object[] concatArguments(ExecutionContext cx, Object[] boundArgs, Object[] argumentsList) {
         int argsLen = boundArgs.length + argumentsList.length;
         if (argsLen > FunctionPrototype.getMaxArguments()) {
-            throw newRangeError(callerContext, Messages.Key.FunctionTooManyArguments);
+            throw newRangeError(cx, Messages.Key.FunctionTooManyArguments);
         }
         if (boundArgs.length == 0) {
             return argumentsList;

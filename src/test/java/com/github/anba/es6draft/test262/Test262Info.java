@@ -323,6 +323,7 @@ final class Test262Info extends TestInfo {
         private String negative;
         private String es5id;
         private String es6id;
+        private String es7id;
         private String id;
         private String bestPractice;
         private String author;
@@ -389,6 +390,14 @@ final class Test262Info extends TestInfo {
 
         public void setEs6id(String es6id) {
             this.es6id = es6id;
+        }
+
+        public String getEs7id() {
+            return es7id;
+        }
+
+        public void setEs7id(String es7id) {
+            this.es7id = es7id;
         }
 
         public String getId() {

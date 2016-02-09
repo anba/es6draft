@@ -20,7 +20,7 @@ public abstract class Declaration extends StatementListItem {
     /**
      * Returns {@code true} if this declaration creates an immutable binding.
      * 
-     * @return {@code true} if a <tt>const</tt> declaration
+     * @return {@code true} if a <code>const</code> declaration
      */
     public abstract boolean isConstDeclaration();
 }

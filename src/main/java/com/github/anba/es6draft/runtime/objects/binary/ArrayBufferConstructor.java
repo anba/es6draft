@@ -42,12 +42,7 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
  * </ul>
  */
 public final class ArrayBufferConstructor extends BuiltinConstructor implements Initializable {
-    // set default byte-order to little-endian - implementation specific choice
-    private static final ByteOrder DEFAULT_BYTE_ORDER = ByteOrder.LITTLE_ENDIAN;
-    private static final boolean IS_LITTLE_ENDIAN = true;
-    static {
-        assert IS_LITTLE_ENDIAN == (DEFAULT_BYTE_ORDER == ByteOrder.LITTLE_ENDIAN);
-    }
+    private static final boolean IS_LITTLE_ENDIAN = ByteOrder.nativeOrder() == ByteOrder.LITTLE_ENDIAN;
 
     /**
      * Constructs a new ArrayBuffer constructor function.
@@ -89,7 +84,7 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
         try {
             /* step 3 */
             // TODO: Call allocateDirect() if size exceeds predefined limit?
-            return ByteBuffer.allocate((int) size).order(DEFAULT_BYTE_ORDER);
+            return ByteBuffer.allocate((int) size).order(ByteOrder.nativeOrder());
         } catch (OutOfMemoryError e) {
             /* step 2 */
             throw newRangeError(cx, Messages.Key.OutOfMemoryVM);
@@ -309,19 +304,19 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
         /* steps 5-6, 11, 13 */
         case Uint8:
         case Uint8C:
-            return block.get(index) & 0xffL;
+            return block.get(index) & 0xff;
         case Uint16:
-            return block.getShort(index) & 0xffffL;
+            return block.getShort(index) & 0xffff;
         case Uint32:
-            return block.getInt(index) & 0xffffffffL;
+            return block.getInt(index) & 0xffff_ffffL;
 
             /* steps 5-6, 12-13 */
         case Int8:
-            return (long) block.get(index);
+            return block.get(index);
         case Int16:
-            return (long) block.getShort(index);
+            return block.getShort(index);
         case Int32:
-            return (long) block.getInt(index);
+            return block.getInt(index);
 
         default:
             throw new AssertionError();
@@ -461,19 +456,16 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
         @Prototype
         public static final Intrinsics __proto__ = Intrinsics.FunctionPrototype;
 
-        @Value(name = "length", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = true))
+        @Value(name = "length", attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static final int length = 1;
 
-        @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = true))
+        @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static final String name = "ArrayBuffer";
 
         /**
          * 24.1.3.2 ArrayBuffer.prototype
          */
-        @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = false))
+        @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false, configurable = false))
         public static final Intrinsics prototype = Intrinsics.ArrayBufferPrototype;
 
         /**
@@ -502,8 +494,7 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
          *            the function this-value
          * @return the species object
          */
-        @Accessor(name = "get [Symbol.species]", symbol = BuiltinSymbol.species,
-                type = Accessor.Type.Getter)
+        @Accessor(name = "get [Symbol.species]", symbol = BuiltinSymbol.species, type = Accessor.Type.Getter)
         public static Object species(ExecutionContext cx, Object thisValue) {
             /* step 1 */
             return thisValue;
@@ -542,23 +533,24 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
          * @return the result index
          */
         @Function(name = "transfer", arity = 1)
-        public static Object transfer(ExecutionContext cx, Object thisValue, Object oldBuffer,
-                Object newByteLength) {
+        public static Object transfer(ExecutionContext cx, Object thisValue, Object oldBuffer, Object newByteLength) {
             ArrayBufferObject oldArrayBuffer = thisArrayBufferObjectChecked(cx, oldBuffer);
-            // newByteLength defaults to oldBuffer.byteLength
-            if (Type.isUndefined(newByteLength)) {
-                newByteLength = oldArrayBuffer.getByteLength();
-            }
-            // Perform length same validation as in new ArrayBuffer(length).
-            double numberLength = ToNumber(cx, newByteLength);
-            long byteLength = ToLength(numberLength);
-            if (numberLength != byteLength) { // SameValueZero
-                throw newRangeError(cx, Messages.Key.InvalidBufferSize);
+            long byteLength;
+            if (!Type.isUndefined(newByteLength)) {
+                // Perform same length validation as in new ArrayBuffer(length).
+                double numberLength = ToNumber(cx, newByteLength);
+                byteLength = ToLength(numberLength);
+                if (numberLength != byteLength) { // SameValueZero
+                    throw newRangeError(cx, Messages.Key.InvalidBufferSize);
+                }
+            } else {
+                // newByteLength defaults to oldBuffer.byteLength
+                byteLength = oldArrayBuffer.getByteLength();
             }
             // Create new array buffer from @@species like in CloneArrayBuffer().
+            // TODO: Don't use @@species for static methods?
             Constructor ctor = SpeciesConstructor(cx, oldArrayBuffer, Intrinsics.ArrayBuffer);
-            ScriptObject proto = GetPrototypeFromConstructor(cx, ctor,
-                    Intrinsics.ArrayBufferPrototype);
+            ScriptObject proto = GetPrototypeFromConstructor(cx, ctor, Intrinsics.ArrayBufferPrototype);
             if (IsDetachedBuffer(oldArrayBuffer)) {
                 throw newTypeError(cx, Messages.Key.BufferDetached);
             }

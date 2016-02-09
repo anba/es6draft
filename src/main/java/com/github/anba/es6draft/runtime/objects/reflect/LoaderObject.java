@@ -27,7 +27,7 @@ public class LoaderObject extends OrdinaryObject {
      * @param realm
      *            the realm object
      */
-    public LoaderObject(Realm realm) {
+    protected LoaderObject(Realm realm) {
         super(realm);
     }
 
@@ -36,7 +36,7 @@ public class LoaderObject extends OrdinaryObject {
      *
      * @return the loader record
      */
-    public Loader getLoader() {
+    public final Loader getLoader() {
         return loader;
     }
 
@@ -46,7 +46,7 @@ public class LoaderObject extends OrdinaryObject {
      * @param loader
      *            the new loader record
      */
-    public void setLoader(Loader loader) {
+    protected final void setLoader(Loader loader) {
         assert this.loader == null && loader != null : "LoaderObject already initialized";
         this.loader = loader;
     }

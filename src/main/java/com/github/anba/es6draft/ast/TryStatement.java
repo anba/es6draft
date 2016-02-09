@@ -40,27 +40,27 @@ public final class TryStatement extends Statement {
     }
 
     /**
-     * Returns the optional <tt>Catch</tt> block.
+     * Returns the optional <code>Catch</code> block.
      * 
-     * @return the <tt>Catch</tt> block or {@code null}
+     * @return the <code>Catch</code> block or {@code null}
      */
     public CatchNode getCatchNode() {
         return catchNode;
     }
 
     /**
-     * Returns the list of guarded <tt>Catch</tt> blocks.
+     * Returns the list of guarded <code>Catch</code> blocks.
      * 
-     * @return the list of guarded <tt>Catch</tt> blocks
+     * @return the list of guarded <code>Catch</code> blocks
      */
     public List<GuardedCatchNode> getGuardedCatchNodes() {
         return guardedCatchNodes;
     }
 
     /**
-     * Returns the optional <tt>Finally</tt> block.
+     * Returns the optional <code>Finally</code> block.
      * 
-     * @return the <tt>Finally</tt> block or {@code null}
+     * @return the <code>Finally</code> block or {@code null}
      */
     public BlockStatement getFinallyBlock() {
         return finallyBlock;

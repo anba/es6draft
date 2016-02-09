@@ -158,7 +158,7 @@ public final class NumberPrototype extends OrdinaryObject implements Initializab
                     .getIntrinsic(Intrinsics.Intl_NumberFormat);
             NumberFormatObject numberFormat = ctor.construct(cx, ctor, locales, options);
             /* step 5 */
-            return FormatNumber(cx, numberFormat, x);
+            return FormatNumber(numberFormat, x);
         }
 
         /**
@@ -265,7 +265,7 @@ public final class NumberPrototype extends OrdinaryObject implements Initializab
         public static Object toPrecision(ExecutionContext cx, Object thisValue, Object precision) {
             /* steps 1-2 */
             double x = thisNumberValue(cx, thisValue);
-            /* steps 3 */
+            /* step 3 */
             if (precision == UNDEFINED) {
                 return ToString(x);
             }

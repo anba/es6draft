@@ -169,7 +169,7 @@ function ToSource(o) {
     case 'function':
     case 'object':
       if (o !== null) {
-        return typeof o.toSource == 'function' ? String(o.toSource()) : ObjectToSource(o);
+        return typeof o.toSource == 'function' ? %ToString(o.toSource()) : ObjectToSource(o);
       }
     default:
       return "null";

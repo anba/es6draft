@@ -34,14 +34,29 @@ public final class AssignmentProperty extends AstNode {
         this.initializer = initializer;
     }
 
+    /**
+     * Returns the optional property name.
+     * 
+     * @return the property name or {@code null}
+     */
     public PropertyName getPropertyName() {
         return propertyName;
     }
 
+    /**
+     * Returns the left-hand side expression target.
+     * 
+     * @return the target expression
+     */
     public LeftHandSideExpression getTarget() {
         return target;
     }
 
+    /**
+     * Returns the optional initializer expression.
+     * 
+     * @return the initializer or {@code null}
+     */
     public Expression getInitializer() {
         return initializer;
     }

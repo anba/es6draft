@@ -7,7 +7,7 @@
 package com.github.anba.es6draft.repl.global;
 
 /**
- * Exception class to propagate {@link ShellGlobalObject#quit()}.
+ * Exception class to propagate {@link BaseShellFunctions#quit()}.
  */
 @SuppressWarnings("serial")
 public final class StopExecutionException extends RuntimeException {

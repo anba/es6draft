@@ -34,9 +34,9 @@ public abstract class BreakableStatement extends Statement implements AbruptNode
     }
 
     /**
-     * Returns {@code true} if this node is the target of a <tt>BreakStatement</tt>.
+     * Returns {@code true} if this node is the target of a <code>BreakStatement</code>.
      * 
-     * @return {@code true} if this node is the target of a <tt>BreakStatement</tt>
+     * @return {@code true} if this node is the target of a <code>BreakStatement</code>
      */
     public final boolean hasBreak() {
         return getAbrupt().contains(Abrupt.Break);

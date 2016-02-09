@@ -24,51 +24,46 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * </ul>
  */
 public final class TypedArrayPrototype extends OrdinaryObject implements Initializable {
-    private final ElementType elementKind;
+    private final ElementType elementType;
 
     /**
      * Constructs a new TypedArray prototype object.
      * 
      * @param realm
      *            the realm object
-     * @param elementKind
+     * @param elementType
      *            the typed array element type
      */
-    public TypedArrayPrototype(Realm realm, ElementType elementKind) {
+    public TypedArrayPrototype(Realm realm, ElementType elementType) {
         super(realm);
-        this.elementKind = elementKind;
+        this.elementType = elementType;
     }
 
     @Override
     public void initialize(Realm realm) {
-        switch (elementKind) {
+        createProperties(realm, this, propertiesForType(elementType));
+    }
+
+    private static Class<?> propertiesForType(ElementType elementType) {
+        switch (elementType) {
         case Int8:
-            createProperties(realm, this, Properties_Int8Array.class);
-            break;
+            return Properties_Int8Array.class;
         case Uint8:
-            createProperties(realm, this, Properties_Uint8Array.class);
-            break;
+            return Properties_Uint8Array.class;
         case Uint8C:
-            createProperties(realm, this, Properties_Uint8Clamped.class);
-            break;
+            return Properties_Uint8Clamped.class;
         case Int16:
-            createProperties(realm, this, Properties_Int16Array.class);
-            break;
+            return Properties_Int16Array.class;
         case Uint16:
-            createProperties(realm, this, Properties_Uint16Array.class);
-            break;
+            return Properties_Uint16Array.class;
         case Int32:
-            createProperties(realm, this, Properties_Int32Array.class);
-            break;
+            return Properties_Int32Array.class;
         case Uint32:
-            createProperties(realm, this, Properties_Uint32Array.class);
-            break;
+            return Properties_Uint32Array.class;
         case Float32:
-            createProperties(realm, this, Properties_Float32Array.class);
-            break;
+            return Properties_Float32Array.class;
         case Float64:
-            createProperties(realm, this, Properties_Float64Array.class);
-            break;
+            return Properties_Float64Array.class;
         default:
             throw new AssertionError();
         }

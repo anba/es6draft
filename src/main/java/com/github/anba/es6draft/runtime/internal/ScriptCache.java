@@ -63,8 +63,7 @@ public final class ScriptCache {
                 return false;
             }
             CacheKey other = (CacheKey) obj;
-            return size == other.size && lastModified == other.lastModified
-                    && uri.equals(other.uri);
+            return size == other.size && lastModified == other.lastModified && uri.equals(other.uri);
         }
 
         @Override
@@ -80,8 +79,7 @@ public final class ScriptCache {
 
     private CacheKey keyFor(Path path) throws IOException {
         BasicFileAttributes attributes = Files.readAttributes(path, BasicFileAttributes.class);
-        return new CacheKey(path.toUri(), attributes.size(), attributes.lastModifiedTime()
-                .toMillis());
+        return new CacheKey(path.toUri(), attributes.size(), attributes.lastModifiedTime().toMillis());
     }
 
     private CacheKey keyFor(URL url) throws URISyntaxException {
@@ -134,8 +132,8 @@ public final class ScriptCache {
      * @throws CompilationException
      *             if the parsed source could not be compiled
      */
-    public Script get(ScriptLoader scriptLoader, Path file) throws IOException, ParserException,
-            CompilationException {
+    public Script get(ScriptLoader scriptLoader, Path file) throws IOException, ParserException, CompilationException {
+        // TODO: Replace with computeIfAbsent
         CacheKey cacheKey = keyFor(file);
         if (cache.containsKey(cacheKey)) {
             return cache.get(cacheKey);
@@ -163,8 +161,9 @@ public final class ScriptCache {
      * @throws CompilationException
      *             if the parsed source could not be compiled
      */
-    public Script get(ScriptLoader scriptLoader, URL file) throws IOException, URISyntaxException,
-            ParserException, CompilationException {
+    public Script get(ScriptLoader scriptLoader, URL file)
+            throws IOException, URISyntaxException, ParserException, CompilationException {
+        // TODO: Replace with computeIfAbsent
         CacheKey cacheKey = keyFor(file);
         if (cache.containsKey(cacheKey)) {
             return cache.get(cacheKey);

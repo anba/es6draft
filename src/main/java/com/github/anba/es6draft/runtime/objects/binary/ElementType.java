@@ -6,6 +6,7 @@
  */
 package com.github.anba.es6draft.runtime.objects.binary;
 
+import com.github.anba.es6draft.runtime.AbstractOperations;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.google.doubleconversion.DoubleConversion;
 
@@ -65,6 +66,7 @@ public enum ElementType {
     private int size;
 
     private ElementType(int size) {
+        assert (size & (size - 1)) == 0;
         this.size = size;
     }
 
@@ -167,8 +169,7 @@ public enum ElementType {
      * @return the unsigned 8-bit integer (clamped)
      */
     public static byte ToUint8Clamp(double v) {
-        v = Math.rint(v);
-        return (byte) (v >= 0 ? v <= 255 ? v : 255 : 0);
+        return (byte) AbstractOperations.ToUint8Clamp(v);
     }
 
     /**

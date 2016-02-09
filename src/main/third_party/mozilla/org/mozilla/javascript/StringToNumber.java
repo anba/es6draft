@@ -10,6 +10,9 @@ package org.mozilla.javascript;
  * stringToNumber() from org.mozilla.javascript.ScriptRuntime 
  */
 public final class StringToNumber {
+    private StringToNumber() {
+    }
+
     /*
      * Helper function for toNumber, parseInt, and TokenStream.getToken.
      */

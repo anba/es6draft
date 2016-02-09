@@ -45,18 +45,4 @@ public final class Loader {
     public LoaderObject getLoaderObj() {
         return loaderObj;
     }
-
-    /**
-     * CreateLoaderRecord(realm, object)
-     * 
-     * @param realm
-     *            the realm instance
-     * @param object
-     *            the loader script object
-     * @return the new loader record
-     */
-    public static Loader CreateLoader(Realm realm, LoaderObject object) {
-        /* steps 1-6 */
-        return new Loader(realm, object);
-    }
 }

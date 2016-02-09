@@ -146,6 +146,8 @@ public final class DataViewConstructor extends BuiltinConstructor implements Ini
         if (numberIndex != getIndex || getIndex < 0) {
             throw newRangeError(cx, Messages.Key.InvalidByteOffset);
         }
+        // FIXME: spec bug - missing call to ToNumber (https://bugs.ecmascript.org/show_bug.cgi?id=4536)
+        double numberValue = ToNumber(cx, value);
         /* step 7 */
         boolean littleEndian = ToBoolean(isLittleEndian);
         /* step 8 */
@@ -167,7 +169,7 @@ public final class DataViewConstructor extends BuiltinConstructor implements Ini
         /* step 14 */
         long bufferIndex = (long) getIndex + viewOffset;
         /* step 15 */
-        SetValueInBuffer(buffer, bufferIndex, type, ToNumber(cx, value), littleEndian);
+        SetValueInBuffer(buffer, bufferIndex, type, numberValue, littleEndian);
     }
 
     /**
@@ -188,6 +190,7 @@ public final class DataViewConstructor extends BuiltinConstructor implements Ini
         ExecutionContext calleeContext = calleeContext();
         Object buffer = argument(args, 0);
         // FIXME: spec bug - missing/undefined byteOffset parameter not handled.
+        // https://bugs.ecmascript.org/show_bug.cgi?id=4516
         Object byteOffset = argument(args, 1, 0);
         Object byteLength = argument(args, 2);
         /* step 1 (not applicable)*/

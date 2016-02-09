@@ -52,13 +52,11 @@ final class NodeModuleResolution {
      * @throws MalformedNameException
      *             if the name cannot be normalized
      */
-    public static FileSourceIdentifier resolve(Path baseDirectory,
-            FileSourceIdentifier normalizedName, String unnormalizedName,
-            SourceIdentifier referrerId) throws MalformedNameException {
+    public static FileSourceIdentifier resolve(Path baseDirectory, FileSourceIdentifier normalizedName,
+            String unnormalizedName, SourceIdentifier referrerId) throws MalformedNameException {
         try {
             Path normalizedPath = normalizedName.getPath();
-            boolean isRelative = unnormalizedName.startsWith("./")
-                    || unnormalizedName.startsWith("../");
+            boolean isRelative = unnormalizedName.startsWith("./") || unnormalizedName.startsWith("../");
             if (isRelative) {
                 Path file = findModuleFile(baseDirectory, normalizedPath, true);
                 if (file != null) {
@@ -188,8 +186,7 @@ final class NodeModuleResolution {
         }
 
         @Override
-        public void finishProperty(Void object, String name, String rawName, long index,
-                String value) {
+        public void finishProperty(Void object, String name, String rawName, long index, String value) {
             if (depth == 1 && EXECUTABLE_NAME.equals(name)) {
                 executablePath = value;
             }

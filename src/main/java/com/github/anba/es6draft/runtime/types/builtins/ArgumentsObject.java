@@ -65,7 +65,7 @@ public final class ArgumentsObject extends OrdinaryObject {
     }
 
     @Override
-    Object getIndexed(int propertyKey) {
+    Object getIndexed(long propertyKey) {
         if (isMapped(propertyKey)) {
             return parameterMap.get(propertyKey);
         }
@@ -87,9 +87,11 @@ public final class ArgumentsObject extends OrdinaryObject {
         /* step 4 */
         ParameterMap map = this.parameterMap;
         /* steps 5-6 */
-        boolean isMapped = map != null ? map.hasOwnProperty(propertyKey, false) : false;
+        boolean isMapped = map != null && map.hasOwnProperty(propertyKey, false);
         /* step 7 */
         if (isMapped) {
+            // FIXME: spec issue - maybe add assertion: IsDataDescriptor(desc)?
+            assert desc.isDataDescriptor();
             PropertyDescriptor d = desc.toPropertyDescriptor();
             d.setValue(map.get(propertyKey));
             desc = d.toProperty();
@@ -113,8 +115,7 @@ public final class ArgumentsObject extends OrdinaryObject {
         }
         /* steps 4-7 (not applicable) */
         /* step 8 */
-        if (desc.isDataDescriptor() && "caller".equals(propertyKey)
-                && isStrictFunction(desc.getValue())
+        if (desc.isDataDescriptor() && "caller".equals(propertyKey) && isStrictFunction(desc.getValue())
                 && cx.getRealm().isEnabled(CompatibilityOption.ArgumentsCaller)) {
             throw newTypeError(cx, Messages.Key.StrictModePoisonPill);
         }
@@ -131,7 +132,7 @@ public final class ArgumentsObject extends OrdinaryObject {
         /* step 2 */
         ParameterMap map = this.parameterMap;
         /* step 3 */
-        boolean isMapped = map != null ? map.hasOwnProperty(propertyKey, false) : false;
+        boolean isMapped = map != null && map.hasOwnProperty(propertyKey, false);
         // FIXME: spec bug - https://bugs.ecmascript.org/show_bug.cgi?id=4371
         // Proposed change: https://github.com/tc39/test262/pull/274#issuecomment-103415105
         PropertyDescriptor newArgDesc = desc;
@@ -173,7 +174,7 @@ public final class ArgumentsObject extends OrdinaryObject {
         /* steps 1-2 */
         ParameterMap map = this.parameterMap;
         /* steps 3-4 */
-        boolean isMapped = map != null ? map.hasOwnProperty(propertyKey, false) : false;
+        boolean isMapped = map != null && map.hasOwnProperty(propertyKey, false);
         /* step 5 */
         if (!isMapped) {
             return super.getValue(cx, propertyKey, receiver);
@@ -196,25 +197,29 @@ public final class ArgumentsObject extends OrdinaryObject {
             isMapped = false;
         } else {
             /* step 3 */
-            isMapped = map != null ? map.hasOwnProperty(propertyKey, false) : false;
+            isMapped = map != null && map.hasOwnProperty(propertyKey, false);
         }
         /* step 4 */
         if (isMapped) {
             map.put(propertyKey, value);
+
+            // Mapped parameter implies own, writable property on the arguments object. It is not necessary to update
+            // the underlying property in this case!
+            // 1. Ordinary [[Set]] calls [[DefineOwnProperty]].
+            // 2. [[DefineOwnProperty]] for argument objects calls OrdinaryDefineOwnProperty.
+            // 3. OrdinaryDefineOwnProperty calls [[GetOwnProperty]].
+            // 4. [[GetOwnProperty]] for argument objects calls OrdinaryGetOwnProperty, but updates [[Value]] from map.
+            // 5. OrdinaryDefineOwnProperty calls ValidateAndApplyPropertyDescriptor.
+            // 6. ValidateAndApplyPropertyDescriptor returns in step 4 if no property attribute changes are detected.
+            return true;
         }
         /* step 5 */
         return super.setValue(cx, propertyKey, value, receiver);
     }
 
     @Override
-    protected boolean setPropertyValue(ExecutionContext cx, long propertyKey, Object value,
-            Property current) {
-        if (isMapped(propertyKey)) {
-            // NB: `current` is the temporary Property object created in `getProperty()`, but we
-            // need the actual Property instance to update its value.
-            ordinaryGetOwnProperty(propertyKey).setValue(value);
-            return true;
-        }
+    protected boolean setPropertyValue(ExecutionContext cx, long propertyKey, Object value, Property current) {
+        assert !isMapped(propertyKey);
         return super.setPropertyValue(cx, propertyKey, value, current);
     }
 
@@ -226,7 +231,7 @@ public final class ArgumentsObject extends OrdinaryObject {
         /* step 1 */
         ParameterMap map = this.parameterMap;
         /* steps 2-3 */
-        boolean isMapped = map != null ? map.hasOwnProperty(propertyKey, false) : false;
+        boolean isMapped = map != null && map.hasOwnProperty(propertyKey, false);
         /* steps 4-5 */
         boolean result = super.deleteProperty(cx, propertyKey);
         /* step 6 */
@@ -248,8 +253,7 @@ public final class ArgumentsObject extends OrdinaryObject {
      *            the function arguments
      * @return the strict mode arguments object
      */
-    public static ArgumentsObject CreateUnmappedArgumentsObject(ExecutionContext cx,
-            Object[] argumentsList) {
+    public static ArgumentsObject CreateUnmappedArgumentsObject(ExecutionContext cx, Object[] argumentsList) {
         /* step 1 */
         int len = argumentsList.length;
         /* steps 2-3 */
@@ -291,9 +295,8 @@ public final class ArgumentsObject extends OrdinaryObject {
      *            the current lexical environment
      * @return the mapped arguments object
      */
-    public static ArgumentsObject CreateMappedArgumentsObject(ExecutionContext cx,
-            FunctionObject func, String[] formals, Object[] argumentsList,
-            LexicalEnvironment<? extends DeclarativeEnvironmentRecord> env) {
+    public static ArgumentsObject CreateMappedArgumentsObject(ExecutionContext cx, FunctionObject func,
+            String[] formals, Object[] argumentsList, LexicalEnvironment<? extends DeclarativeEnvironmentRecord> env) {
         ParameterMap map = ParameterMap.create(argumentsList.length, formals, env);
         return CreateMappedArgumentsObject(cx, func, argumentsList, map);
     }
@@ -311,8 +314,8 @@ public final class ArgumentsObject extends OrdinaryObject {
      *            the function arguments
      * @return the mapped arguments object
      */
-    public static ArgumentsObject CreateMappedArgumentsObject(ExecutionContext cx,
-            FunctionObject func, Object[] argumentsList) {
+    public static ArgumentsObject CreateMappedArgumentsObject(ExecutionContext cx, FunctionObject func,
+            Object[] argumentsList) {
         return CreateMappedArgumentsObject(cx, func, argumentsList, null);
     }
 
@@ -331,8 +334,8 @@ public final class ArgumentsObject extends OrdinaryObject {
      *            the parameter map
      * @return the mapped arguments object
      */
-    private static ArgumentsObject CreateMappedArgumentsObject(ExecutionContext cx,
-            FunctionObject func, Object[] argumentsList, ParameterMap map) {
+    private static ArgumentsObject CreateMappedArgumentsObject(ExecutionContext cx, FunctionObject func,
+            Object[] argumentsList, ParameterMap map) {
         /* step 1 (not applicable) */
         /* step 2 */
         int len = argumentsList.length;

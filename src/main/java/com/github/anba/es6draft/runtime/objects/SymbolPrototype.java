@@ -143,7 +143,7 @@ public final class SymbolPrototype extends OrdinaryObject implements Initializab
          *            the ToPrimitive hint string
          * @return always throws a TypeError
          */
-        @Function(name = "[Symbol.toPrimitive]", symbol = BuiltinSymbol.toPrimitive, arity = 0,
+        @Function(name = "[Symbol.toPrimitive]", symbol = BuiltinSymbol.toPrimitive, arity = 1,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static Object toPrimitive(ExecutionContext cx, Object thisValue, Object hint) {
             /* steps 1-5 */

@@ -20,6 +20,7 @@ import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
+import com.github.anba.es6draft.runtime.internal.Strings;
 import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
@@ -168,20 +169,12 @@ public final class StringConstructor extends BuiltinConstructor implements Initi
                 /* steps 5.a-c */
                 double nextCP = ToNumber(cx, codePoints[0]);
                 int cp = (int) nextCP;
-                /* step 5.e */
-                if (cp < 0 || cp > 0x10FFFF) {
-                    throw newRangeError(cx, Messages.Key.InvalidCodePoint);
-                }
-                /* step 5.d */
-                assert !SameValue(nextCP, ToInteger(nextCP)) == (nextCP != (double) cp);
-                if (nextCP != (double) cp) {
+                /* steps 5.d-e */
+                if (cp < 0 || cp > 0x10FFFF || nextCP != (double) cp) {
                     throw newRangeError(cx, Messages.Key.InvalidCodePoint);
                 }
                 /* steps 5.f, 6 */
-                if (Character.isBmpCodePoint(cp)) {
-                    return String.valueOf((char) cp);
-                }
-                return String.valueOf(Character.toChars(cp));
+                return Strings.fromCodePoint(cp);
             }
             /* step 3 */
             int elements[] = new int[length];
@@ -190,13 +183,8 @@ public final class StringConstructor extends BuiltinConstructor implements Initi
                 /* steps 5.a-c */
                 double nextCP = ToNumber(cx, codePoints[nextIndex]);
                 int cp = (int) nextCP;
-                /* step 5.e */
-                if (cp < 0 || cp > 0x10FFFF) {
-                    throw newRangeError(cx, Messages.Key.InvalidCodePoint);
-                }
-                /* step 5.d */
-                assert !SameValue(nextCP, ToInteger(nextCP)) == (nextCP != (double) cp);
-                if (nextCP != (double) cp) {
+                /* steps 5.d-e */
+                if (cp < 0 || cp > 0x10FFFF || nextCP != (double) cp) {
                     throw newRangeError(cx, Messages.Key.InvalidCodePoint);
                 }
                 /* step 5.f */

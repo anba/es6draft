@@ -47,12 +47,12 @@ import org.junit.runners.Parameterized.UseParametersRunnerFactory;
 
 import com.github.anba.es6draft.repl.console.ShellConsole;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
-import com.github.anba.es6draft.runtime.internal.ScriptCache;
 import com.github.anba.es6draft.runtime.internal.Strings;
 import com.github.anba.es6draft.util.Functional.BiFunction;
 import com.github.anba.es6draft.util.Parallelized;
 import com.github.anba.es6draft.util.ParameterizedRunnerFactory;
 import com.github.anba.es6draft.util.Resources;
+import com.github.anba.es6draft.util.SystemConsole;
 import com.github.anba.es6draft.util.TestConfiguration;
 import com.github.anba.es6draft.util.TestGlobals;
 import com.github.anba.es6draft.util.rules.ExceptionHandlers.ScriptExceptionHandler;
@@ -65,10 +65,8 @@ import com.github.anba.es6draft.util.rules.ExceptionHandlers.StandardErrorHandle
 @UseParametersRunnerFactory(ParameterizedRunnerFactory.class)
 @TestConfiguration(name = "test262.test.web", file = "resource:/test-configuration.properties")
 public final class Test262Web {
-    private static final boolean USE_SHARED_EXECUTOR = false;
     private static final Configuration configuration = loadConfiguration(Test262Web.class);
-    private static final DefaultMode unmarkedDefault = DefaultMode.forName(configuration
-            .getString("unmarked_default"));
+    private static final DefaultMode unmarkedDefault = DefaultMode.forName(configuration.getString("unmarked_default"));
     private static final Set<String> includeFeatures = intoCollection(
             toStrings(configuration.getList("include.features")), new HashSet<String>());
     private static final Set<String> excludeFeatures = intoCollection(
@@ -87,12 +85,19 @@ public final class Test262Web {
     @ClassRule
     public static TestGlobals<Test262GlobalObject, Test262Info> globals = new TestGlobals<Test262GlobalObject, Test262Info>(
             configuration) {
+        static final boolean USE_SHARED_EXECUTOR = false;
         final ExecutorService shared = USE_SHARED_EXECUTOR ? createDefaultSharedExecutor() : null;
 
         @Override
-        protected ObjectAllocator<Test262GlobalObject> newAllocator(ShellConsole console,
-                Test262Info test, ScriptCache scriptCache) {
-            return newGlobalObjectAllocator(console, test, scriptCache);
+        protected ObjectAllocator<Test262GlobalObject> newAllocator(ShellConsole console) {
+            return newGlobalObjectAllocator(console);
+        }
+
+        @Override
+        public void release(Test262GlobalObject global) {
+            if (!USE_SHARED_EXECUTOR) {
+                super.release(global);
+            }
         }
 
         @Override
@@ -157,15 +162,15 @@ public final class Test262Web {
         }
         sourceCode = Strings.concat(preamble, fileContent);
 
-        global = globals.newGlobal(new Test262Console(), test);
+        global = globals.newGlobal(new SystemConsole(), test);
         exceptionHandler.setExecutionContext(global.getRealm().defaultContext());
 
         if (!test.isNegative()) {
             errorHandler.match(StandardErrorHandler.defaultMatcher());
             exceptionHandler.match(ScriptExceptionHandler.defaultMatcher());
         } else {
-            expected.expect(Matchers.either(StandardErrorHandler.defaultMatcher())
-                    .or(ScriptExceptionHandler.defaultMatcher()));
+            expected.expect(
+                    Matchers.either(StandardErrorHandler.defaultMatcher()).or(ScriptExceptionHandler.defaultMatcher()));
             String errorType = test.getErrorType();
             if (errorType != null) {
                 expected.expect(hasErrorMessage(global.getRealm().defaultContext(),
@@ -179,17 +184,13 @@ public final class Test262Web {
         }
 
         if (test.isAsync()) {
-            async = global.install(new Test262Async(), Test262Async.class);
+            async = global.createGlobalProperties(new Test262Async(), Test262Async.class);
         }
     }
 
     @After
     public void tearDown() {
-        if (!USE_SHARED_EXECUTOR) {
-            if (global != null) {
-                global.getScriptLoader().getExecutor().shutdown();
-            }
-        }
+        globals.release(global);
     }
 
     @Test
@@ -207,9 +208,9 @@ public final class Test262Web {
 
         // Wait for pending tasks to finish
         if (test.isAsync()) {
-            assertFalse(async.doneCalled);
+            assertFalse(async.isDone());
             global.getRealm().getWorld().runEventLoop();
-            assertTrue(async.doneCalled);
+            assertTrue(async.isDone());
         } else {
             global.getRealm().getWorld().runEventLoop();
         }
@@ -231,9 +232,9 @@ public final class Test262Web {
 
         // Wait for pending tasks to finish
         if (test.isAsync()) {
-            assertFalse(async.doneCalled);
+            assertFalse(async.isDone());
             global.getRealm().getWorld().runEventLoop();
-            assertTrue(async.doneCalled);
+            assertTrue(async.isDone());
         } else {
             global.getRealm().getWorld().runEventLoop();
         }

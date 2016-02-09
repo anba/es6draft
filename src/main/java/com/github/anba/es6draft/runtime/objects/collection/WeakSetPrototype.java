@@ -82,12 +82,12 @@ public final class WeakSetPrototype extends OrdinaryObject implements Initializa
          * @return this weak set object
          */
         @Function(name = "add", arity = 1)
-        public static Object set(ExecutionContext cx, Object thisValue, Object value) {
+        public static Object add(ExecutionContext cx, Object thisValue, Object value) {
             /* steps 1-3 */
             WeakSetObject s = thisWeakSetObject(cx, thisValue);
             /* step 4 */
             if (!Type.isObject(value)) {
-                throw newTypeError(cx, Messages.Key.NotObjectType);
+                throw newTypeError(cx, Messages.Key.WeakSetKeyNotObject);
             }
             /* step 5 */
             WeakHashMap<ScriptObject, Boolean> entries = s.getWeakSetData();

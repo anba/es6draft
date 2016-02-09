@@ -11,9 +11,9 @@ import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
 
 /**
- * Abstract base class for compiled modules.
+ * Base class for compiled modules.
  */
-public abstract class CompiledModule extends CompiledObject implements Module {
+public class CompiledModule extends CompiledObject implements Module {
     protected CompiledModule(RuntimeInfo.ModuleBody module) {
         super(module);
     }

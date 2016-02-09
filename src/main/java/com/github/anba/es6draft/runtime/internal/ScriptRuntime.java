@@ -18,6 +18,7 @@ import static com.github.anba.es6draft.runtime.types.PropertyDescriptor.FromProp
 import static com.github.anba.es6draft.runtime.types.PropertyDescriptor.ToPropertyDescriptor;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.ArrayObject.ArrayCreate;
+import static com.github.anba.es6draft.runtime.types.builtins.LegacyConstructorFunction.LegacyFunctionCreate;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryAsyncFunction.AsyncFunctionCreate;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryConstructorFunction.ConstructorFunctionCreate;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.*;
@@ -62,16 +63,9 @@ import com.github.anba.es6draft.runtime.objects.binary.TypedArrayObject;
 import com.github.anba.es6draft.runtime.objects.binary.TypedArrayPrototypePrototype;
 import com.github.anba.es6draft.runtime.objects.iteration.GeneratorObject;
 import com.github.anba.es6draft.runtime.types.*;
-import com.github.anba.es6draft.runtime.types.builtins.ArrayObject;
-import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
+import com.github.anba.es6draft.runtime.types.builtins.*;
 import com.github.anba.es6draft.runtime.types.builtins.FunctionObject.ConstructorKind;
 import com.github.anba.es6draft.runtime.types.builtins.FunctionObject.FunctionKind;
-import com.github.anba.es6draft.runtime.types.builtins.NativeFunction;
-import com.github.anba.es6draft.runtime.types.builtins.OrdinaryAsyncFunction;
-import com.github.anba.es6draft.runtime.types.builtins.OrdinaryConstructorFunction;
-import com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction;
-import com.github.anba.es6draft.runtime.types.builtins.OrdinaryGenerator;
-import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
  * Runtime support methods
@@ -109,8 +103,7 @@ public final class ScriptRuntime {
      * @param name
      *            the binding name
      */
-    public static void bindingNotPresentOrThrow(ExecutionContext cx, EnvironmentRecord envRec,
-            String name) {
+    public static void bindingNotPresentOrThrow(ExecutionContext cx, EnvironmentRecord envRec, String name) {
         if (envRec.hasBinding(name)) {
             throw newSyntaxError(cx, Messages.Key.VariableRedeclaration, name);
         }
@@ -126,8 +119,8 @@ public final class ScriptRuntime {
      * @param name
      *            the binding name
      */
-    public static void canDeclareLexicalScopedOrThrow(ExecutionContext cx,
-            GlobalEnvironmentRecord envRec, String name) {
+    public static void canDeclareLexicalScopedOrThrow(ExecutionContext cx, GlobalEnvironmentRecord envRec,
+            String name) {
         /* step 5.a */
         if (envRec.hasVarDeclaration(name)) {
             throw newSyntaxError(cx, Messages.Key.VariableRedeclaration, name);
@@ -152,8 +145,7 @@ public final class ScriptRuntime {
      * @param name
      *            the binding name
      */
-    public static void canDeclareVarScopedOrThrow(ExecutionContext cx,
-            GlobalEnvironmentRecord envRec, String name) {
+    public static void canDeclareVarScopedOrThrow(ExecutionContext cx, GlobalEnvironmentRecord envRec, String name) {
         /* step 6.a */
         if (envRec.hasLexicalDeclaration(name)) {
             throw newSyntaxError(cx, Messages.Key.VariableRedeclaration, name);
@@ -170,8 +162,7 @@ public final class ScriptRuntime {
      * @param fn
      *            the function name
      */
-    public static void canDeclareGlobalFunctionOrThrow(ExecutionContext cx,
-            GlobalEnvironmentRecord envRec, String fn) {
+    public static void canDeclareGlobalFunctionOrThrow(ExecutionContext cx, GlobalEnvironmentRecord envRec, String fn) {
         /* steps 10.a.iv.1-2 */
         boolean fnDefinable = envRec.canDeclareGlobalFunction(fn);
         if (!fnDefinable) {
@@ -189,8 +180,7 @@ public final class ScriptRuntime {
      * @param vn
      *            the variable name
      */
-    public static void canDeclareGlobalVarOrThrow(ExecutionContext cx,
-            GlobalEnvironmentRecord envRec, String vn) {
+    public static void canDeclareGlobalVarOrThrow(ExecutionContext cx, GlobalEnvironmentRecord envRec, String vn) {
         /* steps 12.a.i.1.a-c */
         boolean vnDefinable = envRec.canDeclareGlobalVar(vn);
         if (!vnDefinable) {
@@ -210,8 +200,8 @@ public final class ScriptRuntime {
      * @param catchVar
      *            {@code true} if variable redeclarations are allowed in catch clauses
      */
-    public static void canDeclareVarOrThrow(ExecutionContext cx,
-            DeclarativeEnvironmentRecord envRec, String name, boolean catchVar) {
+    public static void canDeclareVarOrThrow(ExecutionContext cx, DeclarativeEnvironmentRecord envRec, String name,
+            boolean catchVar) {
         /* steps 6.b.ii.2 - 6.b.ii.3 */
         if (envRec.hasBinding(name) && !(catchVar && envRec.isCatchEnvironment())) {
             throw newSyntaxError(cx, Messages.Key.VariableRedeclaration, name);
@@ -235,8 +225,7 @@ public final class ScriptRuntime {
     public static void resolveExportOrThrow(SourceTextModuleRecord module, String exportName)
             throws IOException, MalformedNameException, ResolutionException {
         /* steps 6.a-b */
-        ModuleExport resolution = module.resolveExport(exportName,
-                new HashMap<ModuleRecord, Set<String>>(), new HashSet<ModuleRecord>());
+        ModuleExport resolution = module.resolveExport(exportName, new HashMap<>(), new HashSet<>());
         /* step 6.c */
         if (resolution == null) {
             throw new ResolutionException(Messages.Key.ModulesUnresolvedExport, exportName);
@@ -263,14 +252,12 @@ public final class ScriptRuntime {
      * @throws ResolutionException
      *             if the export cannot be resolved
      */
-    public static ModuleExport resolveImportOrThrow(SourceTextModuleRecord module,
-            String moduleRequest, String importName) throws IOException, MalformedNameException,
-            ResolutionException {
+    public static ModuleExport resolveImportOrThrow(SourceTextModuleRecord module, String moduleRequest,
+            String importName) throws IOException, MalformedNameException, ResolutionException {
         /* steps 10.a-b */
         ModuleRecord importedModule = HostResolveImportedModule(module, moduleRequest);
         /* steps 10.d.i-ii */
-        ModuleExport resolution = importedModule.resolveExport(importName,
-                new HashMap<ModuleRecord, Set<String>>(), new HashSet<ModuleRecord>());
+        ModuleExport resolution = importedModule.resolveExport(importName, new HashMap<>(), new HashSet<>());
         /* step 10.d.iii */
         if (resolution == null) {
             throw new ResolutionException(Messages.Key.ModulesUnresolvedImport, importName,
@@ -300,9 +287,8 @@ public final class ScriptRuntime {
      * @throws ResolutionException
      *             if the export cannot be resolved
      */
-    public static ScriptObject getModuleNamespace(ExecutionContext cx,
-            SourceTextModuleRecord module, String moduleRequest) throws IOException,
-            MalformedNameException, ResolutionException {
+    public static ScriptObject getModuleNamespace(ExecutionContext cx, SourceTextModuleRecord module,
+            String moduleRequest) throws IOException, MalformedNameException, ResolutionException {
         /* steps 10.a-b */
         ModuleRecord importedModule = HostResolveImportedModule(module, moduleRequest);
         /* steps 10.c.i-ii */
@@ -327,9 +313,8 @@ public final class ScriptRuntime {
      * @throws ResolutionException
      *             if the export cannot be resolved
      */
-    public static void createImportBinding(ExecutionContext cx, ModuleEnvironmentRecord envRec,
-            String name, ModuleExport resolved) throws IOException, MalformedNameException,
-            ResolutionException {
+    public static void createImportBinding(ExecutionContext cx, ModuleEnvironmentRecord envRec, String name,
+            ModuleExport resolved) throws IOException, MalformedNameException, ResolutionException {
         assert !resolved.isAmbiguous();
         if (resolved.isNameSpaceExport()) {
             envRec.createImmutableBinding(name, true);
@@ -395,8 +380,8 @@ public final class ScriptRuntime {
      *            the execution context
      * @return the next array index
      */
-    public static int ArrayAccumulationSpreadElement(ArrayObject array, int nextIndex,
-            Object spreadObj, ExecutionContext cx) {
+    public static int ArrayAccumulationSpreadElement(ArrayObject array, int nextIndex, Object spreadObj,
+            ExecutionContext cx) {
         if (spreadObj instanceof OrdinaryObject) {
             OrdinaryObject object = (OrdinaryObject) spreadObj;
             long length = object.getLength();
@@ -406,8 +391,7 @@ public final class ScriptRuntime {
                     array.insertFrom(nextIndex, object, length);
                     return (int) newLength;
                 }
-                if (object instanceof TypedArrayObject
-                        && isSpreadable(cx, (TypedArrayObject) object)) {
+                if (object instanceof TypedArrayObject && isSpreadable(cx, (TypedArrayObject) object)) {
                     array.insertFrom(cx, nextIndex, (TypedArrayObject) object);
                     return (int) newLength;
                 }
@@ -415,36 +399,31 @@ public final class ScriptRuntime {
         }
         /* steps 1-2 (cf. generated code) */
         /* steps 3-4 */
-        ScriptObject iterator = GetIterator(cx, spreadObj);
+        ScriptIterator<?> iterator = GetScriptIterator(cx, spreadObj);
         /* step 5 */
-        for (;;) {
-            ScriptObject next = IteratorStep(cx, iterator);
-            if (next == null) {
-                return nextIndex;
-            }
-            Object nextValue = IteratorValue(cx, next);
-            defineProperty(array, nextIndex, nextValue);
+        while (iterator.hasNext()) {
+            defineProperty(array, nextIndex, iterator.next());
             nextIndex += 1;
         }
+        return nextIndex;
     }
 
     private static boolean isSpreadable(ExecutionContext cx, OrdinaryObject object, long length) {
-        if (object.hasSpecialIndexedProperties() || !object.isDenseArray(length)) {
+        if (!(object instanceof ArrayObject || object instanceof ArgumentsObject
+                || object.getClass() == OrdinaryObject.class)) {
+            return false;
+        }
+        if (!object.isDenseArray(length)) {
             return false;
         }
         Property iterProp = findIterator(cx, object);
         // Test 1: Is object[Symbol.iterator] == %ArrayPrototype%.values?
-        if (iterProp == null || !ArrayPrototype.isBuiltinValues(iterProp.getValue())) {
+        if (iterProp == null || !ArrayPrototype.isBuiltinValues(cx.getRealm(), iterProp.getValue())) {
             return false;
         }
         // Test 2: Is %ArrayIteratorPrototype%.next the built-in next method?
-        OrdinaryObject arrayIterProto = ((NativeFunction) iterProp.getValue()).getRealm()
-                .getIntrinsic(Intrinsics.ArrayIteratorPrototype);
-        Property iterNextProp = arrayIterProto.getOwnProperty(cx, "next");
-        if (iterNextProp == null || !ArrayIteratorPrototype.isBuiltinNext(iterNextProp.getValue())) {
-            return false;
-        }
-        return true;
+        Property iterNextProp = cx.getIntrinsic(Intrinsics.ArrayIteratorPrototype).getOwnProperty(cx, "next");
+        return iterNextProp != null && ArrayIteratorPrototype.isBuiltinNext(cx.getRealm(), iterNextProp.getValue());
     }
 
     private static boolean isSpreadable(ExecutionContext cx, TypedArrayObject array) {
@@ -453,17 +432,12 @@ public final class ScriptRuntime {
         }
         Property iterProp = findIterator(cx, array);
         // Test 1: Is object[Symbol.iterator] == %ArrayPrototype%.values?
-        if (iterProp == null || !TypedArrayPrototypePrototype.isBuiltinValues(iterProp.getValue())) {
+        if (iterProp == null || !TypedArrayPrototypePrototype.isBuiltinValues(cx.getRealm(), iterProp.getValue())) {
             return false;
         }
         // Test 2: Is %ArrayIteratorPrototype%.next the built-in next method?
-        OrdinaryObject arrayIterProto = ((NativeFunction) iterProp.getValue()).getRealm()
-                .getIntrinsic(Intrinsics.ArrayIteratorPrototype);
-        Property iterNextProp = arrayIterProto.getOwnProperty(cx, "next");
-        if (iterNextProp == null || !ArrayIteratorPrototype.isBuiltinNext(iterNextProp.getValue())) {
-            return false;
-        }
-        return true;
+        Property iterNextProp = cx.getIntrinsic(Intrinsics.ArrayIteratorPrototype).getOwnProperty(cx, "next");
+        return iterNextProp != null && ArrayIteratorPrototype.isBuiltinNext(cx.getRealm(), iterNextProp.getValue());
     }
 
     private static Property findIterator(ExecutionContext cx, OrdinaryObject object) {
@@ -496,8 +470,7 @@ public final class ScriptRuntime {
      * @param cx
      *            the execution context
      */
-    public static void defineProperty(OrdinaryObject object, Object propertyName, Object value,
-            ExecutionContext cx) {
+    public static void defineProperty(OrdinaryObject object, Object propertyName, Object value, ExecutionContext cx) {
         CreateDataPropertyOrThrow(cx, object, propertyName, value);
     }
 
@@ -515,8 +488,7 @@ public final class ScriptRuntime {
      * @param cx
      *            the execution context
      */
-    public static void defineProperty(OrdinaryObject object, String propertyName, Object value,
-            ExecutionContext cx) {
+    public static void defineProperty(OrdinaryObject object, String propertyName, Object value, ExecutionContext cx) {
         CreateDataPropertyOrThrow(cx, object, propertyName, value);
     }
 
@@ -534,8 +506,7 @@ public final class ScriptRuntime {
      * @param cx
      *            the execution context
      */
-    public static void defineProperty(OrdinaryObject object, long propertyName, Object value,
-            ExecutionContext cx) {
+    public static void defineProperty(OrdinaryObject object, long propertyName, Object value, ExecutionContext cx) {
         CreateDataPropertyOrThrow(cx, object, propertyName, value);
     }
 
@@ -550,8 +521,7 @@ public final class ScriptRuntime {
      *            the execution context
      * @return the generator object
      */
-    public static GeneratorObject EvaluateGeneratorComprehension(RuntimeInfo.Function fd,
-            ExecutionContext cx) {
+    public static GeneratorObject EvaluateGeneratorComprehension(RuntimeInfo.Function fd, ExecutionContext cx) {
         /* step 1 (omitted) */
         /* step 2 */
         LexicalEnvironment<?> scope = cx.getLexicalEnvironment();
@@ -579,8 +549,7 @@ public final class ScriptRuntime {
      *            the execution context
      * @return the generator object
      */
-    public static GeneratorObject EvaluateLegacyGeneratorComprehension(RuntimeInfo.Function fd,
-            ExecutionContext cx) {
+    public static GeneratorObject EvaluateLegacyGeneratorComprehension(RuntimeInfo.Function fd, ExecutionContext cx) {
         /* step 1 (omitted) */
         /* step 2 */
         LexicalEnvironment<?> scope = cx.getLexicalEnvironment();
@@ -653,8 +622,7 @@ public final class ScriptRuntime {
             int index = i >>> 1;
             int prop = index;
             String cookedValue = strings[i];
-            template.defineOwnProperty(cx, prop, new PropertyDescriptor(cookedValue, false, true,
-                    false));
+            template.defineOwnProperty(cx, prop, new PropertyDescriptor(cookedValue, false, true, false));
             String rawValue = strings[i + 1];
             rawObj.defineOwnProperty(cx, prop, new PropertyDescriptor(rawValue, false, true, false));
         }
@@ -693,23 +661,25 @@ public final class ScriptRuntime {
         throw (E) e;
     }
 
-    public static Object checkAccessElement(Object baseValue, Object propertyName,
-            ExecutionContext cx) {
+    private static Object toPropertyKey(double propertyKey) {
+        long index = (long) propertyKey;
+        if (index == propertyKey) {
+            return index;
+        }
+        return ToString(propertyKey);
+    }
+
+    public static Object checkAccessElement(Object baseValue, Object propertyName, ExecutionContext cx) {
         /* steps 1-6 (generated code) */
         /* steps 7-8 */
         RequireObjectCoercible(cx, baseValue);
         /* step 9 */
         if (Type.isString(propertyName)) {
-            // flat-string
+            // Convert to flat-string.
             return Type.stringValue(propertyName).toString();
         }
         if (Type.isNumber(propertyName)) {
-            double propertyKey = Type.numberValue(propertyName);
-            long index = (long) propertyKey;
-            if (index == propertyKey) {
-                return index;
-            }
-            return ToString(propertyKey);
+            return toPropertyKey(Type.numberValue(propertyName));
         }
         return ToPropertyKey(cx, propertyName);
     }
@@ -728,16 +698,14 @@ public final class ScriptRuntime {
         return propertyName;
     }
 
-    public static double checkAccessProperty(Object baseValue, double propertyName,
-            ExecutionContext cx) {
+    public static double checkAccessProperty(Object baseValue, double propertyName, ExecutionContext cx) {
         /* steps 1-6 (generated code) */
         /* steps 7-8 */
         RequireObjectCoercible(cx, baseValue);
         return propertyName;
     }
 
-    public static String checkAccessProperty(Object baseValue, String propertyName,
-            ExecutionContext cx) {
+    public static String checkAccessProperty(Object baseValue, String propertyName, ExecutionContext cx) {
         /* steps 1-6 (generated code) */
         /* steps 7-8 */
         RequireObjectCoercible(cx, baseValue);
@@ -750,28 +718,23 @@ public final class ScriptRuntime {
         return RequireObjectCoercible(cx, baseValue);
     }
 
-    public static boolean deleteElement(Object baseValue, Object propertyName, ExecutionContext cx,
-            boolean strict) {
+    public static boolean deleteElement(Object baseValue, Object propertyName, ExecutionContext cx, boolean strict) {
         return getElement(baseValue, propertyName, cx, strict).delete(cx);
     }
 
-    public static boolean deleteProperty(Object baseValue, int propertyName, ExecutionContext cx,
-            boolean strict) {
+    public static boolean deleteProperty(Object baseValue, int propertyName, ExecutionContext cx, boolean strict) {
         return getProperty(baseValue, propertyName, cx, strict).delete(cx);
     }
 
-    public static boolean deleteProperty(Object baseValue, long propertyName, ExecutionContext cx,
-            boolean strict) {
+    public static boolean deleteProperty(Object baseValue, long propertyName, ExecutionContext cx, boolean strict) {
         return getProperty(baseValue, propertyName, cx, strict).delete(cx);
     }
 
-    public static boolean deleteProperty(Object baseValue, double propertyName,
-            ExecutionContext cx, boolean strict) {
+    public static boolean deleteProperty(Object baseValue, double propertyName, ExecutionContext cx, boolean strict) {
         return getProperty(baseValue, propertyName, cx, strict).delete(cx);
     }
 
-    public static boolean deleteProperty(Object baseValue, String propertyName,
-            ExecutionContext cx, boolean strict) {
+    public static boolean deleteProperty(Object baseValue, String propertyName, ExecutionContext cx, boolean strict) {
         return getProperty(baseValue, propertyName, cx, strict).delete(cx);
     }
 
@@ -794,8 +757,8 @@ public final class ScriptRuntime {
      *            the strict mode flag
      * @return the property reference
      */
-    public static Reference<Object, String> getProperty(Object baseValue, int propertyNameString,
-            ExecutionContext cx, boolean strict) {
+    public static Reference<Object, String> getProperty(Object baseValue, int propertyNameString, ExecutionContext cx,
+            boolean strict) {
         return getProperty(baseValue, (long) propertyNameString, cx, strict);
     }
 
@@ -818,8 +781,8 @@ public final class ScriptRuntime {
      *            the strict mode flag
      * @return the property reference
      */
-    public static Reference<Object, String> getProperty(Object baseValue, long propertyNameString,
-            ExecutionContext cx, boolean strict) {
+    public static Reference<Object, String> getProperty(Object baseValue, long propertyNameString, ExecutionContext cx,
+            boolean strict) {
         /* steps 1-6 (generated code) */
         /* steps 7-8 */
         RequireObjectCoercible(cx, baseValue);
@@ -846,8 +809,8 @@ public final class ScriptRuntime {
      *            the strict mode flag
      * @return the property reference
      */
-    public static Reference<Object, String> getProperty(Object baseValue,
-            double propertyNameString, ExecutionContext cx, boolean strict) {
+    public static Reference<Object, String> getProperty(Object baseValue, double propertyNameString,
+            ExecutionContext cx, boolean strict) {
         long index = (long) propertyNameString;
         if (index == propertyNameString) {
             return getProperty(baseValue, index, cx, strict);
@@ -874,8 +837,8 @@ public final class ScriptRuntime {
      *            the strict mode flag
      * @return the property reference
      */
-    public static Reference<Object, String> getProperty(Object baseValue,
-            String propertyNameString, ExecutionContext cx, boolean strict) {
+    public static Reference<Object, String> getProperty(Object baseValue, String propertyNameString,
+            ExecutionContext cx, boolean strict) {
         /* steps 1-6 (generated code) */
         /* steps 7-8 */
         RequireObjectCoercible(cx, baseValue);
@@ -900,8 +863,7 @@ public final class ScriptRuntime {
      *            the execution context
      * @return the property value
      */
-    public static Object getPropertyValue(Object baseValue, int propertyNameString,
-            ExecutionContext cx) {
+    public static Object getPropertyValue(Object baseValue, int propertyNameString, ExecutionContext cx) {
         return getPropertyValue(baseValue, (long) propertyNameString, cx);
     }
 
@@ -922,8 +884,7 @@ public final class ScriptRuntime {
      *            the execution context
      * @return the property value
      */
-    public static Object getPropertyValue(Object baseValue, long propertyNameString,
-            ExecutionContext cx) {
+    public static Object getPropertyValue(Object baseValue, long propertyNameString, ExecutionContext cx) {
         /* steps 1-6 (generated code) */
         /* steps 7-8 */
         RequireObjectCoercible(cx, baseValue);
@@ -948,8 +909,7 @@ public final class ScriptRuntime {
      *            the execution context
      * @return the property value
      */
-    public static Object getPropertyValue(Object baseValue, double propertyNameString,
-            ExecutionContext cx) {
+    public static Object getPropertyValue(Object baseValue, double propertyNameString, ExecutionContext cx) {
         long index = (long) propertyNameString;
         if (index == propertyNameString) {
             return getPropertyValue(baseValue, index, cx);
@@ -974,8 +934,7 @@ public final class ScriptRuntime {
      *            the execution context
      * @return the property value
      */
-    public static Object getPropertyValue(Object baseValue, String propertyNameString,
-            ExecutionContext cx) {
+    public static Object getPropertyValue(Object baseValue, String propertyNameString, ExecutionContext cx) {
         /* steps 1-6 (generated code) */
         /* steps 7-8 */
         RequireObjectCoercible(cx, baseValue);
@@ -1002,11 +961,10 @@ public final class ScriptRuntime {
      *            the strict mode flag
      * @return the property reference
      */
-    public static Reference<Object, ?> getElement(Object baseValue, Object propertyNameValue,
-            ExecutionContext cx, boolean strict) {
+    public static Reference<Object, ?> getElement(Object baseValue, Object propertyNameValue, ExecutionContext cx,
+            boolean strict) {
         if (Type.isString(propertyNameValue)) {
-            return getProperty(baseValue, Type.stringValue(propertyNameValue).toString(), cx,
-                    strict);
+            return getProperty(baseValue, Type.stringValue(propertyNameValue).toString(), cx, strict);
         }
         if (Type.isNumber(propertyNameValue)) {
             return getProperty(baseValue, Type.numberValue(propertyNameValue), cx, strict);
@@ -1040,8 +998,7 @@ public final class ScriptRuntime {
      *            the execution context
      * @return the property value
      */
-    public static Object getElementValue(Object baseValue, Object propertyNameValue,
-            ExecutionContext cx) {
+    public static Object getElementValue(Object baseValue, Object propertyNameValue, ExecutionContext cx) {
         if (Type.isString(propertyNameValue)) {
             return getPropertyValue(baseValue, Type.stringValue(propertyNameValue).toString(), cx);
         }
@@ -1060,18 +1017,18 @@ public final class ScriptRuntime {
         return Reference.PropertySymbolReference.GetValue(cx, baseValue, (Symbol) propertyKey);
     }
 
-    public static void setPropertyValue(Object base, int propertyKey, Object value,
-            ExecutionContext cx, boolean strict) {
-        setPropertyValue(base, (long) propertyKey, value, cx, strict);
+    public static void setPropertyValue(Object base, int propertyKey, Object value, ExecutionContext cx,
+            boolean strict) {
+        Reference.PropertyIndexReference.PutValue(cx, base, (long) propertyKey, value, strict);
     }
 
-    public static void setPropertyValue(Object base, long propertyKey, Object value,
-            ExecutionContext cx, boolean strict) {
+    public static void setPropertyValue(Object base, long propertyKey, Object value, ExecutionContext cx,
+            boolean strict) {
         Reference.PropertyIndexReference.PutValue(cx, base, propertyKey, value, strict);
     }
 
-    public static void setPropertyValue(Object base, double propertyKey, Object value,
-            ExecutionContext cx, boolean strict) {
+    public static void setPropertyValue(Object base, double propertyKey, Object value, ExecutionContext cx,
+            boolean strict) {
         long index = (long) propertyKey;
         if (index == propertyKey) {
             setPropertyValue(base, index, value, cx, strict);
@@ -1080,18 +1037,18 @@ public final class ScriptRuntime {
         }
     }
 
-    public static void setPropertyValue(Object base, String propertyKey, Object value,
-            ExecutionContext cx, boolean strict) {
+    public static void setPropertyValue(Object base, String propertyKey, Object value, ExecutionContext cx,
+            boolean strict) {
         Reference.PropertyNameReference.PutValue(cx, base, propertyKey, value, strict);
     }
 
-    public static void setPropertyValue(Object base, Symbol propertyKey, Object value,
-            ExecutionContext cx, boolean strict) {
+    public static void setPropertyValue(Object base, Symbol propertyKey, Object value, ExecutionContext cx,
+            boolean strict) {
         Reference.PropertySymbolReference.PutValue(cx, base, propertyKey, value, strict);
     }
 
-    public static void setElementValue(Object base, Object propertyKey, Object value,
-            ExecutionContext cx, boolean strict) {
+    public static void setElementValue(Object base, Object propertyKey, Object value, ExecutionContext cx,
+            boolean strict) {
         if (propertyKey instanceof String) {
             setPropertyValue(base, (String) propertyKey, value, cx, strict);
         } else if (propertyKey instanceof Long) {
@@ -1120,8 +1077,7 @@ public final class ScriptRuntime {
      * @throws ScriptException
      *             if <var>constructor</var> is not a constructor function
      */
-    public static Constructor CheckConstructor(Object constructor, ExecutionContext cx)
-            throws ScriptException {
+    public static Constructor CheckConstructor(Object constructor, ExecutionContext cx) throws ScriptException {
         /* steps 4/6/5 */
         if (!IsConstructor(constructor)) {
             throw newTypeError(cx, Messages.Key.NotConstructor);
@@ -1143,11 +1099,7 @@ public final class ScriptRuntime {
      *             if <var>func</var> is not a function
      */
     public static Callable CheckCallable(Object func, ExecutionContext cx) throws ScriptException {
-        /* step 3 */
-        if (!Type.isObject(func)) {
-            throw newTypeError(cx, Messages.Key.NotObjectType);
-        }
-        /* step 4 */
+        /* steps 3-4 */
         if (!IsCallable(func)) {
             throw newTypeError(cx, Messages.Key.NotCallable);
         }
@@ -1219,8 +1171,8 @@ public final class ScriptRuntime {
      *            the function call arguments
      * @return the direct eval fallback arguments
      */
-    public static Object[] directEvalFallbackArguments(Callable callee, ExecutionContext cx,
-            Object thisValue, Object[] args) {
+    public static Object[] directEvalFallbackArguments(Callable callee, ExecutionContext cx, Object thisValue,
+            Object[] args) {
         Object[] fallbackArgs = new Object[3];
         fallbackArgs[0] = callee;
         fallbackArgs[1] = thisValue;
@@ -1315,20 +1267,20 @@ public final class ScriptRuntime {
      * <p>
      * 12.3.5.3 Runtime Semantics: MakeSuperPropertyReference(propertyKey, strict)
      * 
-     * @param cx
-     *            the execution context
      * @param propertyKey
      *            the property key
+     * @param cx
+     *            the execution context
      * @param strict
      *            the strict mode flag
      * @return the super reference
      */
-    public static Reference<ScriptObject, ?> MakeSuperPropertyReference(ExecutionContext cx,
-            Object propertyKey, boolean strict) {
+    public static Reference<ScriptObject, ?> MakeSuperPropertyReference(Object propertyKey, ExecutionContext cx,
+            boolean strict) {
         if (propertyKey instanceof String) {
-            return MakeSuperPropertyReference(cx, (String) propertyKey, strict);
+            return MakeSuperPropertyReference((String) propertyKey, cx, strict);
         } else {
-            return MakeSuperPropertyReference(cx, (Symbol) propertyKey, strict);
+            return MakeSuperPropertyReference((Symbol) propertyKey, cx, strict);
         }
     }
 
@@ -1337,33 +1289,22 @@ public final class ScriptRuntime {
      * <p>
      * 12.3.5.3 Runtime Semantics: MakeSuperPropertyReference(propertyKey, strict)
      * 
-     * @param cx
-     *            the execution context
      * @param propertyKey
      *            the property key
+     * @param cx
+     *            the execution context
      * @param strict
      *            the strict mode flag
      * @return the super reference
      */
-    public static Reference<ScriptObject, String> MakeSuperPropertyReference(ExecutionContext cx,
-            String propertyKey, boolean strict) {
-        /* step 1 */
-        EnvironmentRecord envRec = cx.getThisEnvironment();
-        /* step 2 */
-        if (!envRec.hasSuperBinding()) {
-            throw newReferenceError(cx, Messages.Key.MissingSuperBinding);
-        }
-        assert envRec instanceof FunctionEnvironmentRecord;
-        FunctionEnvironmentRecord fEnvRec = (FunctionEnvironmentRecord) envRec;
+    public static Reference<ScriptObject, String> MakeSuperPropertyReference(String propertyKey, ExecutionContext cx,
+            boolean strict) {
+        /* steps 1-2 */
+        FunctionEnvironmentRecord envRec = GetSuperEnvironmentRecord(cx);
         /* steps 3-4 */
-        Object actualThis = fEnvRec.getThisBinding(cx);
-        /* step 5 */
-        ScriptObject baseValue = fEnvRec.getSuperBase(cx);
-        /* steps 6-7 */
-        // RequireObjectCoercible(cx.getRealm(), baseValue);
-        if (baseValue == null) {
-            throw newTypeError(cx, Messages.Key.UndefinedOrNull);
-        }
+        Object actualThis = GetSuperThis(envRec, cx);
+        /* steps 5-7 */
+        ScriptObject baseValue = GetSuperBase(envRec, cx);
         /* step 8 */
         return new Reference.SuperNameReference(baseValue, propertyKey, strict, actualThis);
     }
@@ -1373,35 +1314,152 @@ public final class ScriptRuntime {
      * <p>
      * 12.3.5.3 Runtime Semantics: MakeSuperPropertyReference(propertyKey, strict)
      * 
-     * @param cx
-     *            the execution context
      * @param propertyKey
      *            the property key
+     * @param cx
+     *            the execution context
      * @param strict
      *            the strict mode flag
      * @return the super reference
      */
-    public static Reference<ScriptObject, Symbol> MakeSuperPropertyReference(ExecutionContext cx,
-            Symbol propertyKey, boolean strict) {
+    public static Reference<ScriptObject, Symbol> MakeSuperPropertyReference(Symbol propertyKey, ExecutionContext cx,
+            boolean strict) {
+        /* steps 1-2 */
+        FunctionEnvironmentRecord envRec = GetSuperEnvironmentRecord(cx);
+        /* steps 3-4 */
+        Object actualThis = GetSuperThis(envRec, cx);
+        /* steps 5-7 */
+        ScriptObject baseValue = GetSuperBase(envRec, cx);
+        /* step 8 */
+        return new Reference.SuperSymbolReference(baseValue, propertyKey, strict, actualThis);
+    }
+
+    public static FunctionEnvironmentRecord GetSuperEnvironmentRecord(ExecutionContext cx) {
         /* step 1 */
         EnvironmentRecord envRec = cx.getThisEnvironment();
         /* step 2 */
         if (!envRec.hasSuperBinding()) {
             throw newReferenceError(cx, Messages.Key.MissingSuperBinding);
         }
-        assert envRec instanceof FunctionEnvironmentRecord;
-        FunctionEnvironmentRecord fEnvRec = (FunctionEnvironmentRecord) envRec;
+        assert envRec instanceof FunctionEnvironmentRecord : envRec.getClass().toString();
+        return (FunctionEnvironmentRecord) envRec;
+    }
+
+    public static Object GetSuperThis(FunctionEnvironmentRecord envRec, ExecutionContext cx) {
         /* steps 3-4 */
-        Object actualThis = fEnvRec.getThisBinding(cx);
+        return envRec.getThisBinding(cx);
+    }
+
+    public static ScriptObject GetSuperBase(FunctionEnvironmentRecord envRec, ExecutionContext cx) {
         /* step 5 */
-        ScriptObject baseValue = fEnvRec.getSuperBase(cx);
+        ScriptObject baseValue = envRec.getSuperBase(cx);
         /* steps 6-7 */
-        // RequireObjectCoercible(cx.getRealm(), baseValue);
+        // RequireObjectCoercible(cx, baseValue);
         if (baseValue == null) {
             throw newTypeError(cx, Messages.Key.UndefinedOrNull);
         }
-        /* step 8 */
-        return new Reference.SuperSymbolReference(baseValue, propertyKey, strict, actualThis);
+        return baseValue;
+    }
+
+    /**
+     * 12.3.5 The super Keyword
+     * <p>
+     * 12.3.5.3 Runtime Semantics: MakeSuperPropertyReference(propertyKey, strict)
+     * 
+     * @param propertyKey
+     *            the property key
+     * @param actualThis
+     *            the actual {@code this} value
+     * @param baseValue
+     *            the reference base value
+     * @param cx
+     *            the execution context
+     * @return the super reference value
+     */
+    public static Object getSuperProperty(Object propertyKey, Object actualThis, ScriptObject baseValue,
+            ExecutionContext cx) {
+        if (propertyKey instanceof String) {
+            return baseValue.get(cx, (String) propertyKey, actualThis);
+        } else {
+            return baseValue.get(cx, (Symbol) propertyKey, actualThis);
+        }
+    }
+
+    /**
+     * 12.3.5 The super Keyword
+     * <p>
+     * 12.3.5.3 Runtime Semantics: MakeSuperPropertyReference(propertyKey, strict)
+     * 
+     * @param propertyKey
+     *            the property key
+     * @param actualThis
+     *            the actual {@code this} value
+     * @param baseValue
+     *            the reference base value
+     * @param cx
+     *            the execution context
+     * @return the super reference value
+     */
+    public static Object getSuperProperty(String propertyKey, Object actualThis, ScriptObject baseValue,
+            ExecutionContext cx) {
+        return baseValue.get(cx, propertyKey, actualThis);
+    }
+
+    /**
+     * 12.3.5 The super Keyword
+     * <p>
+     * 12.3.5.3 Runtime Semantics: MakeSuperPropertyReference(propertyKey, strict)
+     * 
+     * @param propertyKey
+     *            the property key
+     * @param actualThis
+     *            the actual {@code this} value
+     * @param baseValue
+     *            the reference base value
+     * @param value
+     *            the new property value
+     * @param cx
+     *            the execution context
+     * @param strict
+     *            the strict mode flag
+     */
+    public static void setSuperProperty(Object propertyKey, Object actualThis, ScriptObject baseValue, Object value,
+            ExecutionContext cx, boolean strict) {
+        boolean succeeded;
+        if (propertyKey instanceof String) {
+            succeeded = baseValue.set(cx, (String) propertyKey, value, actualThis);
+        } else {
+            succeeded = baseValue.set(cx, (Symbol) propertyKey, value, actualThis);
+        }
+        if (!succeeded && strict) {
+            throw newTypeError(cx, Messages.Key.PropertyNotModifiable, propertyKey.toString());
+        }
+    }
+
+    /**
+     * 12.3.5 The super Keyword
+     * <p>
+     * 12.3.5.3 Runtime Semantics: MakeSuperPropertyReference(propertyKey, strict)
+     * 
+     * @param propertyKey
+     *            the property key
+     * @param actualThis
+     *            the actual {@code this} value
+     * @param baseValue
+     *            the reference base value
+     * @param value
+     *            the new property value
+     * @param cx
+     *            the execution context
+     * @param strict
+     *            the strict mode flag
+     */
+    public static void setSuperProperty(String propertyKey, Object actualThis, ScriptObject baseValue, Object value,
+            ExecutionContext cx, boolean strict) {
+        boolean succeeded = baseValue.set(cx, (String) propertyKey, value, actualThis);
+        if (!succeeded && strict) {
+            throw newTypeError(cx, Messages.Key.PropertyNotModifiable, propertyKey);
+        }
     }
 
     /**
@@ -1411,33 +1469,18 @@ public final class ScriptRuntime {
      * 
      * @param cx
      *            the execution context
-     * @param propertyKey
-     *            the property key
-     * @param strict
-     *            the strict mode flag
-     * @return the super reference value
+     * @return no value
      */
-    public static Object getSuperPropertyValue(ExecutionContext cx, Object propertyKey,
-            boolean strict) {
-        return MakeSuperPropertyReference(cx, propertyKey, strict).getValue(cx);
-    }
-
-    /**
-     * 12.3.5 The super Keyword
-     * <p>
-     * 12.3.5.3 Runtime Semantics: MakeSuperPropertyReference(propertyKey, strict)
-     * 
-     * @param cx
-     *            the execution context
-     * @param propertyKey
-     *            the property key
-     * @param strict
-     *            the strict mode flag
-     * @return the super reference value
-     */
-    public static Object getSuperPropertyValue(ExecutionContext cx, String propertyKey,
-            boolean strict) {
-        return MakeSuperPropertyReference(cx, propertyKey, strict).getValue(cx);
+    public static boolean deleteSuperProperty(ExecutionContext cx) {
+        /* steps 1-2 */
+        FunctionEnvironmentRecord envRec = GetSuperEnvironmentRecord(cx);
+        /* steps 3-4 */
+        GetSuperThis(envRec, cx);
+        /* steps 5-7 */
+        GetSuperBase(envRec, cx);
+        /* step 8 (omitted) */
+        /* 12.5.4.2, step 5.a */
+        throw newReferenceError(cx, Messages.Key.SuperDelete);
     }
 
     /**
@@ -1465,18 +1508,42 @@ public final class ScriptRuntime {
         }
         /* steps 1-3 (cf. generated code) */
         /* steps 4-5 */
-        ScriptObject iterator = GetIterator(cx, spreadObj);
+        ScriptIterator<?> iterator = GetScriptIterator(cx, spreadObj);
         /* step 6 */
         ArrayList<Object> list = new ArrayList<>();
         for (int n = 0; n <= MAX_ARGS; ++n) {
-            ScriptObject next = IteratorStep(cx, iterator);
-            if (next == null) {
+            if (!iterator.hasNext()) {
                 return list.toArray(new Object[n]);
             }
-            Object nextArg = IteratorValue(cx, next);
-            list.add(nextArg);
+            list.add(iterator.next());
         }
         throw newRangeError(cx, Messages.Key.FunctionTooManyArguments);
+    }
+
+    /**
+     * 12.3.6 Argument Lists
+     * <p>
+     * 12.3.6.1 Runtime Semantics: ArgumentListEvaluation
+     * 
+     * @param spreadObj
+     *            the spread object
+     * @param cx
+     *            the execution context
+     * @return the spread object elements
+     */
+    public static Object[] NativeCallSpreadArray(Object spreadObj, ExecutionContext cx) {
+        final int MAX_ARGS = FunctionPrototype.getMaxArguments();
+        if (spreadObj instanceof ArrayObject) {
+            ArrayObject array = (ArrayObject) spreadObj;
+            long length = array.getLength();
+            if (array.isDenseArray() && length <= MAX_ARGS) {
+                if (length == 0) {
+                    return EMPTY_ARRAY;
+                }
+                return array.toArray(length);
+            }
+        }
+        throw newInternalError(cx, Messages.Key.InternalError, "Invalid native call");
     }
 
     /**
@@ -1579,12 +1646,25 @@ public final class ScriptRuntime {
         case Symbol:
             return "symbol";
         case Object:
-        default:
             if (IsCallable(val)) {
                 return "function";
             }
             return "object";
+        default:
+            throw new AssertionError();
         }
+    }
+
+    /**
+     * 12.5 Unary Operators<br>
+     * 12.5.6 The typeof Operator
+     * 
+     * @param val
+     *            the value
+     * @return {@code true} on success
+     */
+    public static boolean isNonCallableObjectOrNull(Object val) {
+        return Type.isNull(val) || (Type.isObject(val) && !IsCallable(val));
     }
 
     /**
@@ -1683,7 +1763,7 @@ public final class ScriptRuntime {
         /* steps 1-6 (generated code) */
         /* step 7 */
         if (!Type.isObject(rval)) {
-            throw newTypeError(cx, Messages.Key.NotObjectType);
+            throw newTypeError(cx, Messages.Key.InNotObject);
         }
         /* step 8 */
         return HasProperty(cx, Type.objectValue(rval), ToPropertyKey(cx, lval));
@@ -1704,7 +1784,7 @@ public final class ScriptRuntime {
     public static boolean InstanceofOperator(Object obj, Object constructor, ExecutionContext cx) {
         /* step 1 */
         if (!Type.isObject(constructor)) {
-            throw newTypeError(cx, Messages.Key.NotObjectType);
+            throw newTypeError(cx, Messages.Key.InstanceofNotObject);
         }
         /* steps 2-3 */
         Callable instOfHandler = GetMethod(cx, Type.objectValue(constructor),
@@ -1715,10 +1795,23 @@ public final class ScriptRuntime {
         }
         /* step 5 */
         if (!IsCallable(constructor)) {
-            throw newTypeError(cx, Messages.Key.NotCallable);
+            throw newTypeError(cx, Messages.Key.InstanceofNotCallable);
         }
         /* step 6 */
         return OrdinaryHasInstance(cx, constructor, obj);
+    }
+
+    /**
+     * 12.10 Equality Operators
+     * 
+     * @param lval
+     *            the first string
+     * @param rval
+     *            the second string
+     * @return the operation result
+     */
+    public static boolean compare(CharSequence lval, CharSequence rval) {
+        return lval.length() == rval.length() && lval.toString().equals(rval.toString());
     }
 
     /**
@@ -1773,8 +1866,7 @@ public final class ScriptRuntime {
     /**
      * 13.6.4 The for-in and for-of Statements
      * <ul>
-     * <li>13.6.4.12 Runtime Semantics: ForIn/OfHeadEvaluation ( TDZnames, expr, iterationKind,
-     * labelSet)
+     * <li>13.6.4.12 Runtime Semantics: ForIn/OfHeadEvaluation ( TDZnames, expr, iterationKind, labelSet)
      * </ul>
      * 
      * @param value
@@ -1793,8 +1885,7 @@ public final class ScriptRuntime {
     /**
      * 13.6.4 The for-in and for-of Statements
      * <ul>
-     * <li>13.6.4.12 Runtime Semantics: ForIn/OfHeadEvaluation ( TDZnames, expr, iterationKind,
-     * labelSet)
+     * <li>13.6.4.12 Runtime Semantics: ForIn/OfHeadEvaluation ( TDZnames, expr, iterationKind, labelSet)
      * </ul>
      * <p>
      * 12.14.5.3 Runtime Semantics: IteratorDestructuringAssignmentEvaluation
@@ -1816,8 +1907,7 @@ public final class ScriptRuntime {
      * 13.6.4 The for-in and for-of Statements<br>
      * Extension: 'for-each' statement
      * <p>
-     * 13.6.4.12 Runtime Semantics: ForIn/OfHeadEvaluation ( TDZnames, expr, iterationKind,
-     * labelSet)
+     * 13.6.4.12 Runtime Semantics: ForIn/OfHeadEvaluation ( TDZnames, expr, iterationKind, labelSet)
      * 
      * @param value
      *            the object to enumerate
@@ -1832,8 +1922,7 @@ public final class ScriptRuntime {
         return new ValuesIterator(cx, obj, obj.enumerateKeys(cx));
     }
 
-    private static final class ValuesIterator extends SimpleIterator<Object> implements
-            ScriptIterator<Object> {
+    private static final class ValuesIterator extends SimpleIterator<Object>implements ScriptIterator<Object> {
         private final ExecutionContext cx;
         private final ScriptObject object;
         private final ScriptIterator<?> keysIterator;
@@ -1851,11 +1940,6 @@ public final class ScriptRuntime {
                 return Get(cx, object, pk);
             }
             return null;
-        }
-
-        @Override
-        public ScriptObject getScriptObject() {
-            return keysIterator.getScriptObject();
         }
 
         @Override
@@ -1878,7 +1962,7 @@ public final class ScriptRuntime {
      * @throws Error
      *             if neither the error nor its cause is a stack overflow error
      */
-    public static StackOverflowError getStackOverflowError(Error e) throws Error {
+    public static StackOverflowError stackOverflowError(Error e) throws Error {
         if (e instanceof StackOverflowError) {
             return (StackOverflowError) e;
         }
@@ -1899,8 +1983,7 @@ public final class ScriptRuntime {
      * @return the new script exception
      */
     public static ScriptException toInternalError(StackOverflowError e, ExecutionContext cx) {
-        ScriptException exception = newInternalError(cx, Messages.Key.StackOverflow,
-                "StackOverflow");
+        ScriptException exception = newInternalError(cx, Messages.Key.StackOverflow);
         // use stacktrace from original error
         exception.setStackTrace(e.getStackTrace());
         return exception;
@@ -1928,14 +2011,41 @@ public final class ScriptRuntime {
      *            the function runtime info object
      * @return the new function instance
      */
-    public static OrdinaryConstructorFunction InstantiateFunctionObject(
-            LexicalEnvironment<?> scope, ExecutionContext cx, RuntimeInfo.Function fd) {
+    public static OrdinaryConstructorFunction InstantiateFunctionObject(LexicalEnvironment<?> scope,
+            ExecutionContext cx, RuntimeInfo.Function fd) {
         /* step 1 (not applicable) */
         /* step 2 */
         String name = fd.functionName();
         /* step 3 */
-        OrdinaryConstructorFunction f = ConstructorFunctionCreate(cx, FunctionKind.Normal, fd,
-                scope);
+        OrdinaryConstructorFunction f = ConstructorFunctionCreate(cx, FunctionKind.Normal, fd, scope);
+        /* step 4 */
+        MakeConstructor(cx, f);
+        /* step 4 */
+        SetFunctionName(f, name);
+        /* step 6 */
+        return f;
+    }
+
+    /**
+     * 14.1 Function Definitions
+     * <p>
+     * 14.1.20 Runtime Semantics: InstantiateFunctionObject
+     * 
+     * @param scope
+     *            the current lexical scope
+     * @param cx
+     *            the execution context
+     * @param fd
+     *            the function runtime info object
+     * @return the new function instance
+     */
+    public static LegacyConstructorFunction InstantiateLegacyFunctionObject(LexicalEnvironment<?> scope,
+            ExecutionContext cx, RuntimeInfo.Function fd) {
+        /* step 1 (not applicable) */
+        /* step 2 */
+        String name = fd.functionName();
+        /* step 3 */
+        LegacyConstructorFunction f = LegacyFunctionCreate(cx, fd, scope);
         /* step 4 */
         MakeConstructor(cx, f);
         /* step 4 */
@@ -1959,8 +2069,7 @@ public final class ScriptRuntime {
      *            the execution context
      * @return the new function instance
      */
-    public static OrdinaryConstructorFunction EvaluateFunctionExpression(RuntimeInfo.Function fd,
-            ExecutionContext cx) {
+    public static OrdinaryConstructorFunction EvaluateFunctionExpression(RuntimeInfo.Function fd, ExecutionContext cx) {
         OrdinaryConstructorFunction closure;
         if (!fd.is(RuntimeInfo.FunctionFlags.ScopedName)) {
             /* step 1 (not applicable) */
@@ -1996,6 +2105,57 @@ public final class ScriptRuntime {
     }
 
     /**
+     * 14.1 Function Definitions
+     * <p>
+     * 14.1.21 Runtime Semantics: Evaluation
+     * <ul>
+     * <li>FunctionExpression : function ( FormalParameters ) { FunctionBody }
+     * <li>FunctionExpression : function BindingIdentifier ( FormalParameters ) { FunctionBody }
+     * </ul>
+     * 
+     * @param fd
+     *            the function runtime info object
+     * @param cx
+     *            the execution context
+     * @return the new function instance
+     */
+    public static LegacyConstructorFunction EvaluateLegacyFunctionExpression(RuntimeInfo.Function fd,
+            ExecutionContext cx) {
+        LegacyConstructorFunction closure;
+        if (!fd.is(RuntimeInfo.FunctionFlags.ScopedName)) {
+            /* step 1 (not applicable) */
+            /* step 2 */
+            LexicalEnvironment<?> scope = cx.getLexicalEnvironment();
+            /* step 3 */
+            closure = LegacyFunctionCreate(cx, fd, scope);
+            /* step 4 */
+            MakeConstructor(cx, closure);
+        } else {
+            /* step 1 (not applicable) */
+            /* step 2 */
+            LexicalEnvironment<?> runningContext = cx.getLexicalEnvironment();
+            /* step 3 */
+            LexicalEnvironment<DeclarativeEnvironmentRecord> funcEnv = newDeclarativeEnvironment(runningContext);
+            /* step 4 */
+            DeclarativeEnvironmentRecord envRec = funcEnv.getEnvRec();
+            /* step 5 */
+            String name = fd.functionName();
+            /* step 6 */
+            envRec.createImmutableBinding(name, false);
+            /* step 7 */
+            closure = LegacyFunctionCreate(cx, fd, funcEnv);
+            /* step 8 */
+            MakeConstructor(cx, closure);
+            /* step 9 */
+            SetFunctionName(closure, name);
+            /* step 10 */
+            envRec.initializeBinding(name, closure);
+        }
+        /* step 5/11 */
+        return closure;
+    }
+
+    /**
      * 14.2 Arrow Function Definitions
      * <p>
      * 14.2.17 Runtime Semantics: Evaluation
@@ -2009,8 +2169,7 @@ public final class ScriptRuntime {
      *            the execution context
      * @return the new function instance
      */
-    public static OrdinaryFunction EvaluateArrowFunction(RuntimeInfo.Function fd,
-            ExecutionContext cx) {
+    public static OrdinaryFunction EvaluateArrowFunction(RuntimeInfo.Function fd, ExecutionContext cx) {
         /* step 1 (not applicable) */
         /* step 2 */
         LexicalEnvironment<?> scope = cx.getLexicalEnvironment();
@@ -2038,15 +2197,13 @@ public final class ScriptRuntime {
      *            the execution context
      * @return the new function instance
      */
-    public static OrdinaryConstructorFunction EvaluateConstructorMethod(
-            ScriptObject constructorParent, OrdinaryObject proto, RuntimeInfo.Function fd,
-            boolean isDerived, ExecutionContext cx) {
+    public static OrdinaryConstructorFunction EvaluateConstructorMethod(ScriptObject constructorParent,
+            OrdinaryObject proto, RuntimeInfo.Function fd, boolean isDerived, ExecutionContext cx) {
         // ClassDefinitionEvaluation - steps 11-13 (call DefineMethod)
         LexicalEnvironment<?> scope = cx.getLexicalEnvironment();
-        ConstructorKind constructorKind = isDerived ? ConstructorKind.Derived
-                : ConstructorKind.Base;
-        OrdinaryConstructorFunction constructor = ConstructorFunctionCreate(cx,
-                FunctionKind.ClassConstructor, constructorKind, fd, scope, constructorParent);
+        ConstructorKind constructorKind = isDerived ? ConstructorKind.Derived : ConstructorKind.Base;
+        OrdinaryConstructorFunction constructor = ConstructorFunctionCreate(cx, FunctionKind.ClassConstructor,
+                constructorKind, fd, scope, constructorParent);
         MakeMethod(constructor, proto);
 
         // ClassDefinitionEvaluation - step 14 (not applicable, cf. ConstructorFunctionCreate)
@@ -2058,8 +2215,7 @@ public final class ScriptRuntime {
         MakeClassConstructor(constructor);
 
         // ClassDefinitionEvaluation - step 17
-        proto.defineOwnProperty(cx, "constructor", new PropertyDescriptor(constructor, true, false,
-                true));
+        proto.defineOwnProperty(cx, "constructor", new PropertyDescriptor(constructor, true, false, true));
 
         return constructor;
     }
@@ -2083,8 +2239,8 @@ public final class ScriptRuntime {
      * @param cx
      *            the execution context
      */
-    public static void EvaluatePropertyDefinition(OrdinaryObject object, Object propKey,
-            boolean enumerable, RuntimeInfo.Function fd, ExecutionContext cx) {
+    public static void EvaluatePropertyDefinition(OrdinaryObject object, Object propKey, boolean enumerable,
+            RuntimeInfo.Function fd, ExecutionContext cx) {
         if (propKey instanceof String) {
             EvaluatePropertyDefinition(object, (String) propKey, enumerable, fd, cx);
         } else {
@@ -2111,8 +2267,8 @@ public final class ScriptRuntime {
      * @param cx
      *            the execution context
      */
-    public static void EvaluatePropertyDefinition(OrdinaryObject object, String propKey,
-            boolean enumerable, RuntimeInfo.Function fd, ExecutionContext cx) {
+    public static void EvaluatePropertyDefinition(OrdinaryObject object, String propKey, boolean enumerable,
+            RuntimeInfo.Function fd, ExecutionContext cx) {
         /* steps 1-2 (DefineMethod) */
         /* DefineMethod: steps 1-3 (generated code) */
         /* DefineMethod: step 4 */
@@ -2148,8 +2304,8 @@ public final class ScriptRuntime {
      * @param cx
      *            the execution context
      */
-    public static void EvaluatePropertyDefinition(OrdinaryObject object, Symbol propKey,
-            boolean enumerable, RuntimeInfo.Function fd, ExecutionContext cx) {
+    public static void EvaluatePropertyDefinition(OrdinaryObject object, Symbol propKey, boolean enumerable,
+            RuntimeInfo.Function fd, ExecutionContext cx) {
         /* steps 1-2 (Call DefineMethod) */
         /* DefineMethod: steps 1-3 (generated code) */
         /* DefineMethod: step 4 */
@@ -2185,8 +2341,8 @@ public final class ScriptRuntime {
      * @param cx
      *            the execution context
      */
-    public static void EvaluatePropertyDefinitionGetter(OrdinaryObject object, Object propKey,
-            boolean enumerable, RuntimeInfo.Function fd, ExecutionContext cx) {
+    public static void EvaluatePropertyDefinitionGetter(OrdinaryObject object, Object propKey, boolean enumerable,
+            RuntimeInfo.Function fd, ExecutionContext cx) {
         if (propKey instanceof String) {
             EvaluatePropertyDefinitionGetter(object, (String) propKey, enumerable, fd, cx);
         } else {
@@ -2213,8 +2369,8 @@ public final class ScriptRuntime {
      * @param cx
      *            the execution context
      */
-    public static void EvaluatePropertyDefinitionGetter(OrdinaryObject object, String propKey,
-            boolean enumerable, RuntimeInfo.Function fd, ExecutionContext cx) {
+    public static void EvaluatePropertyDefinitionGetter(OrdinaryObject object, String propKey, boolean enumerable,
+            RuntimeInfo.Function fd, ExecutionContext cx) {
         /* steps 1-3 (generated code) */
         /* step 4 */
         LexicalEnvironment<?> scope = cx.getLexicalEnvironment();
@@ -2249,8 +2405,8 @@ public final class ScriptRuntime {
      * @param cx
      *            the execution context
      */
-    public static void EvaluatePropertyDefinitionGetter(OrdinaryObject object, Symbol propKey,
-            boolean enumerable, RuntimeInfo.Function fd, ExecutionContext cx) {
+    public static void EvaluatePropertyDefinitionGetter(OrdinaryObject object, Symbol propKey, boolean enumerable,
+            RuntimeInfo.Function fd, ExecutionContext cx) {
         /* steps 1-3 (generated code) */
         /* step 4 */
         LexicalEnvironment<?> scope = cx.getLexicalEnvironment();
@@ -2285,8 +2441,8 @@ public final class ScriptRuntime {
      * @param cx
      *            the execution context
      */
-    public static void EvaluatePropertyDefinitionSetter(OrdinaryObject object, Object propKey,
-            boolean enumerable, RuntimeInfo.Function fd, ExecutionContext cx) {
+    public static void EvaluatePropertyDefinitionSetter(OrdinaryObject object, Object propKey, boolean enumerable,
+            RuntimeInfo.Function fd, ExecutionContext cx) {
         if (propKey instanceof String) {
             EvaluatePropertyDefinitionSetter(object, (String) propKey, enumerable, fd, cx);
         } else {
@@ -2313,8 +2469,8 @@ public final class ScriptRuntime {
      * @param cx
      *            the execution context
      */
-    public static void EvaluatePropertyDefinitionSetter(OrdinaryObject object, String propKey,
-            boolean enumerable, RuntimeInfo.Function fd, ExecutionContext cx) {
+    public static void EvaluatePropertyDefinitionSetter(OrdinaryObject object, String propKey, boolean enumerable,
+            RuntimeInfo.Function fd, ExecutionContext cx) {
         /* steps 1-3 (generated code) */
         /* step 4 */
         LexicalEnvironment<?> scope = cx.getLexicalEnvironment();
@@ -2349,8 +2505,8 @@ public final class ScriptRuntime {
      * @param cx
      *            the execution context
      */
-    public static void EvaluatePropertyDefinitionSetter(OrdinaryObject object, Symbol propKey,
-            boolean enumerable, RuntimeInfo.Function fd, ExecutionContext cx) {
+    public static void EvaluatePropertyDefinitionSetter(OrdinaryObject object, Symbol propKey, boolean enumerable,
+            RuntimeInfo.Function fd, ExecutionContext cx) {
         /* steps 1-3 (generated code) */
         /* step 4 */
         LexicalEnvironment<?> scope = cx.getLexicalEnvironment();
@@ -2379,8 +2535,8 @@ public final class ScriptRuntime {
      *            the function runtime info object
      * @return the new generator function instance
      */
-    public static OrdinaryGenerator InstantiateGeneratorObject(LexicalEnvironment<?> scope,
-            ExecutionContext cx, RuntimeInfo.Function fd) {
+    public static OrdinaryGenerator InstantiateGeneratorObject(LexicalEnvironment<?> scope, ExecutionContext cx,
+            RuntimeInfo.Function fd) {
         /* step 1 (not applicable) */
         /* step 2 */
         String name = fd.functionName();
@@ -2409,8 +2565,8 @@ public final class ScriptRuntime {
      *            the function runtime info object
      * @return the new generator function instance
      */
-    public static OrdinaryGenerator InstantiateLegacyGeneratorObject(LexicalEnvironment<?> scope,
-            ExecutionContext cx, RuntimeInfo.Function fd) {
+    public static OrdinaryGenerator InstantiateLegacyGeneratorObject(LexicalEnvironment<?> scope, ExecutionContext cx,
+            RuntimeInfo.Function fd) {
         /* step 1 (not applicable) */
         /* step 2 */
         String name = fd.functionName();
@@ -2445,8 +2601,8 @@ public final class ScriptRuntime {
      * @param cx
      *            the execution context
      */
-    public static void EvaluatePropertyDefinitionGenerator(OrdinaryObject object, Object propKey,
-            boolean enumerable, RuntimeInfo.Function fd, ExecutionContext cx) {
+    public static void EvaluatePropertyDefinitionGenerator(OrdinaryObject object, Object propKey, boolean enumerable,
+            RuntimeInfo.Function fd, ExecutionContext cx) {
         if (propKey instanceof String) {
             EvaluatePropertyDefinitionGenerator(object, (String) propKey, enumerable, fd, cx);
         } else {
@@ -2473,8 +2629,8 @@ public final class ScriptRuntime {
      * @param cx
      *            the execution context
      */
-    public static void EvaluatePropertyDefinitionGenerator(OrdinaryObject object, String propKey,
-            boolean enumerable, RuntimeInfo.Function fd, ExecutionContext cx) {
+    public static void EvaluatePropertyDefinitionGenerator(OrdinaryObject object, String propKey, boolean enumerable,
+            RuntimeInfo.Function fd, ExecutionContext cx) {
         /* steps 1-2 (bytecode) */
         /* step 3 (not applicable) */
         /* step 4 */
@@ -2514,8 +2670,8 @@ public final class ScriptRuntime {
      * @param cx
      *            the execution context
      */
-    public static void EvaluatePropertyDefinitionGenerator(OrdinaryObject object, Symbol propKey,
-            boolean enumerable, RuntimeInfo.Function fd, ExecutionContext cx) {
+    public static void EvaluatePropertyDefinitionGenerator(OrdinaryObject object, Symbol propKey, boolean enumerable,
+            RuntimeInfo.Function fd, ExecutionContext cx) {
         /* steps 1-2 (bytecode) */
         /* step 3 (not applicable) */
         /* step 4 */
@@ -2551,8 +2707,7 @@ public final class ScriptRuntime {
      *            the execution context
      * @return the new generator function instance
      */
-    public static OrdinaryGenerator EvaluateGeneratorExpression(RuntimeInfo.Function fd,
-            ExecutionContext cx) {
+    public static OrdinaryGenerator EvaluateGeneratorExpression(RuntimeInfo.Function fd, ExecutionContext cx) {
         OrdinaryGenerator closure;
         if (!fd.is(RuntimeInfo.FunctionFlags.ScopedName)) {
             /* step 1 (not applicable) */
@@ -2606,8 +2761,7 @@ public final class ScriptRuntime {
      *            the execution context
      * @return the new generator function instance
      */
-    public static OrdinaryGenerator EvaluateLegacyGeneratorExpression(RuntimeInfo.Function fd,
-            ExecutionContext cx) {
+    public static OrdinaryGenerator EvaluateLegacyGeneratorExpression(RuntimeInfo.Function fd, ExecutionContext cx) {
         OrdinaryGenerator closure;
         if (!fd.is(RuntimeInfo.FunctionFlags.ScopedName)) {
             /* step 1 (not applicable) */
@@ -2706,63 +2860,39 @@ public final class ScriptRuntime {
                     continue outer;
                 } catch (ScriptException e) {
                     /* step 6.b */
-                    /* steps 6.b.i-6.b.ii */
-                    Callable throwMethod = GetMethod(cx, iterator, "throw");
-                    /* steps 6.b.iii-iv */
-                    if (throwMethod != null) {
-                        /* step 6.b.iii */
-                        /* steps 6.b.iii.1-3 */
-                        Object innerThrowResult = throwMethod.call(cx, iterator, e.getValue());
-                        /* step 6.b.iii.4 */
-                        if (!Type.isObject(innerThrowResult)) {
-                            throw newTypeError(cx, Messages.Key.NotObjectType);
-                        }
-                        ScriptObject innerThrowResultObj = Type.objectValue(innerThrowResult);
-                        /* steps 6.b.iii.5-6 */
-                        boolean doneThrow = IteratorComplete(cx, innerThrowResultObj);
-                        /* step 6.b.iii.7 */
-                        if (doneThrow) {
-                            /* step 6.b.iii.7.a */
-                            Object innerResultValue = IteratorValue(cx, innerThrowResultObj);
-                            throw new ReturnValue(innerResultValue);
-                        }
-                        /* step 6.b.iii.8 */
-                        // GeneratorYield
-                        innerResult = innerThrowResultObj;
-                        continue inner;
-                    } else {
-                        /* step 6.b.iv */
-                        /* steps 6.b.iv.1-3 */
-                        IteratorClose(cx, iterator);
-                        /* steps 6.b.iv.4-5 */
-                        throw newTypeError(cx, Messages.Key.PropertyNotCallable, "throw");
+                    /* steps 6.b.i-ii, 6.b.iii.1-4, 6.b.iv */
+                    ScriptObject innerThrowResult = yieldThrowCompletion(cx, iterator, e);
+                    /* steps 6.b.iii.5-6 */
+                    boolean doneThrow = IteratorComplete(cx, innerThrowResult);
+                    /* step 6.b.iii.7 */
+                    if (doneThrow) {
+                        /* step 6.b.iii.7.a */
+                        Object innerResultValue = IteratorValue(cx, innerThrowResult);
+                        throw new ReturnValue(innerResultValue);
                     }
+                    /* step 6.b.iii.8 */
+                    // GeneratorYield
+                    innerResult = innerThrowResult;
+                    continue inner;
                 } catch (ReturnValue e) {
                     /* step 6.c */
-                    /* steps 6.c.i-iii */
-                    Callable returnMethod = GetMethod(cx, iterator, "return");
+                    /* steps 6.c.i-iii, 6.c.v-vii */
+                    ScriptObject innerReturnResult = yieldReturnCompletion(cx, iterator, e);
                     /* step 6.c.iv */
-                    if (returnMethod == null) {
+                    if (innerReturnResult == null) {
                         throw e;
                     }
-                    /* steps 6.c.v-vi */
-                    Object innerReturnResult = returnMethod.call(cx, iterator, e.getValue());
-                    /* step 6.c.vii */
-                    if (!Type.isObject(innerReturnResult)) {
-                        throw newTypeError(cx, Messages.Key.NotObjectType);
-                    }
-                    ScriptObject innerReturnResultObj = Type.objectValue(innerReturnResult);
                     /* steps 6.c.viii-ix */
-                    boolean doneReturn = IteratorComplete(cx, innerReturnResultObj);
+                    boolean doneReturn = IteratorComplete(cx, innerReturnResult);
                     /* step 6.c.x */
                     if (doneReturn) {
                         /* step 6.c.x.1 */
-                        Object innerResultValue = IteratorValue(cx, innerReturnResultObj);
+                        Object innerResultValue = IteratorValue(cx, innerReturnResult);
                         throw new ReturnValue(innerResultValue);
                     }
                     /* step 6.c.xi */
                     // GeneratorYield
-                    innerResult = innerReturnResultObj;
+                    innerResult = innerReturnResult;
                     continue inner;
                 }
             }
@@ -2785,10 +2915,9 @@ public final class ScriptRuntime {
      *            the script exception
      * @return the {@code throw} method result value
      */
-    public static ScriptObject yieldThrowCompletion(ExecutionContext cx, ScriptObject iterator,
-            ScriptException e) {
+    public static ScriptObject yieldThrowCompletion(ExecutionContext cx, ScriptObject iterator, ScriptException e) {
         /* step 6.b */
-        /* steps 6.b.i-6.b.ii */
+        /* steps 6.b.i-ii */
         Callable throwMethod = GetMethod(cx, iterator, "throw");
         /* steps 6.b.iii-iv */
         if (throwMethod != null) {
@@ -2797,7 +2926,7 @@ public final class ScriptRuntime {
             Object innerThrowResult = throwMethod.call(cx, iterator, e.getValue());
             /* step 6.b.iii.4 */
             if (!Type.isObject(innerThrowResult)) {
-                throw newTypeError(cx, Messages.Key.NotObjectType);
+                throw newTypeError(cx, Messages.Key.NotObjectTypeReturned, "throw");
             }
             return Type.objectValue(innerThrowResult);
         } else {
@@ -2825,8 +2954,7 @@ public final class ScriptRuntime {
      *            the return value wrapper
      * @return the {@code return} method result value or {@code null}
      */
-    public static ScriptObject yieldReturnCompletion(ExecutionContext cx, ScriptObject iterator,
-            ReturnValue e) {
+    public static ScriptObject yieldReturnCompletion(ExecutionContext cx, ScriptObject iterator, ReturnValue e) {
         /* step 6.c */
         /* steps 6.c.i-iii */
         Callable returnMethod = GetMethod(cx, iterator, "return");
@@ -2838,13 +2966,12 @@ public final class ScriptRuntime {
         Object innerReturnResult = returnMethod.call(cx, iterator, e.getValue());
         /* step 6.c.vii */
         if (!Type.isObject(innerReturnResult)) {
-            throw newTypeError(cx, Messages.Key.NotObjectType);
+            throw newTypeError(cx, Messages.Key.NotObjectTypeReturned, "return");
         }
         return Type.objectValue(innerReturnResult);
     }
 
-    public static CallSite runtimeBootstrap(MethodHandles.Lookup caller, String name,
-            MethodType type) {
+    public static CallSite runtimeBootstrap(MethodHandles.Lookup caller, String name, MethodType type) {
         assert "rt:stack".equals(name) || "rt:locals".equals(name);
         MethodHandle mh = MethodHandles.identity(Object[].class);
         mh = mh.asCollector(Object[].class, type.parameterCount());
@@ -2854,6 +2981,10 @@ public final class ScriptRuntime {
 
     /**
      * Extension: 'function.sent' meta property
+     * 
+     * @param cx
+     *            the execution context
+     * @return the last yield value
      */
     public static Object functionSent(ExecutionContext cx) {
         return cx.getCurrentGenerator().getLastYieldValue();
@@ -2943,8 +3074,8 @@ public final class ScriptRuntime {
      *            the function runtime info object
      * @return the new async function instance
      */
-    public static OrdinaryAsyncFunction InstantiateAsyncFunctionObject(LexicalEnvironment<?> scope,
-            ExecutionContext cx, RuntimeInfo.Function fd) {
+    public static OrdinaryAsyncFunction InstantiateAsyncFunctionObject(LexicalEnvironment<?> scope, ExecutionContext cx,
+            RuntimeInfo.Function fd) {
         /* step 1 (not applicable) */
         /* step 2 */
         String name = fd.functionName();
@@ -2965,8 +3096,7 @@ public final class ScriptRuntime {
      *            the execution context
      * @return the new async function instance
      */
-    public static OrdinaryAsyncFunction EvaluateAsyncFunctionExpression(RuntimeInfo.Function fd,
-            ExecutionContext cx) {
+    public static OrdinaryAsyncFunction EvaluateAsyncFunctionExpression(RuntimeInfo.Function fd, ExecutionContext cx) {
         OrdinaryAsyncFunction closure;
         if (!fd.is(RuntimeInfo.FunctionFlags.ScopedName)) {
             /* step 1 (not applicable) */
@@ -3006,8 +3136,7 @@ public final class ScriptRuntime {
      *            the execution context
      * @return the new async function instance
      */
-    public static OrdinaryAsyncFunction EvaluateAsyncArrowFunction(RuntimeInfo.Function fd,
-            ExecutionContext cx) {
+    public static OrdinaryAsyncFunction EvaluateAsyncArrowFunction(RuntimeInfo.Function fd, ExecutionContext cx) {
         /* step 1 (not applicable) */
         /* step 2 */
         LexicalEnvironment<?> scope = cx.getLexicalEnvironment();
@@ -3031,8 +3160,8 @@ public final class ScriptRuntime {
      * @param fd
      *            the function runtime info object
      */
-    public static void EvaluatePropertyDefinitionAsync(OrdinaryObject object, Object propKey,
-            boolean enumerable, RuntimeInfo.Function fd, ExecutionContext cx) {
+    public static void EvaluatePropertyDefinitionAsync(OrdinaryObject object, Object propKey, boolean enumerable,
+            RuntimeInfo.Function fd, ExecutionContext cx) {
         if (propKey instanceof String) {
             EvaluatePropertyDefinitionAsync(object, (String) propKey, enumerable, fd, cx);
         } else {
@@ -3054,8 +3183,8 @@ public final class ScriptRuntime {
      * @param fd
      *            the function runtime info object
      */
-    public static void EvaluatePropertyDefinitionAsync(OrdinaryObject object, String propKey,
-            boolean enumerable, RuntimeInfo.Function fd, ExecutionContext cx) {
+    public static void EvaluatePropertyDefinitionAsync(OrdinaryObject object, String propKey, boolean enumerable,
+            RuntimeInfo.Function fd, ExecutionContext cx) {
         /* steps 1-2 (bytecode) */
         /* step 3 (not applicable) */
         /* step 4 */
@@ -3086,8 +3215,8 @@ public final class ScriptRuntime {
      * @param cx
      *            the execution context
      */
-    public static void EvaluatePropertyDefinitionAsync(OrdinaryObject object, Symbol propKey,
-            boolean enumerable, RuntimeInfo.Function fd, ExecutionContext cx) {
+    public static void EvaluatePropertyDefinitionAsync(OrdinaryObject object, Symbol propKey, boolean enumerable,
+            RuntimeInfo.Function fd, ExecutionContext cx) {
         /* steps 1-2 (bytecode) */
         /* step 3 (not applicable) */
         /* step 4 */
@@ -3114,8 +3243,8 @@ public final class ScriptRuntime {
      * @param cx
      *            the execution context
      */
-    public static void EvaluateClassDecorators(OrdinaryConstructorFunction f,
-            ArrayList<Callable> decorators, ExecutionContext cx) {
+    public static void EvaluateClassDecorators(OrdinaryConstructorFunction f, ArrayList<Callable> decorators,
+            ExecutionContext cx) {
         for (Callable decorator : decorators) {
             decorator.call(cx, UNDEFINED, f);
         }
@@ -3131,8 +3260,8 @@ public final class ScriptRuntime {
      * @param cx
      *            the execution context
      */
-    public static void EvaluateMethodDecorators(OrdinaryObject object,
-            ArrayList<Object> decorators, ExecutionContext cx) {
+    public static void EvaluateMethodDecorators(OrdinaryObject object, ArrayList<Object> decorators,
+            ExecutionContext cx) {
         // TODO: Deserves clean-up when proper evaluation semantics are specified.
         // decorators = object, list of <1..n callable, property key>
         for (int i = 0, size = decorators.size(); i < size;) {
@@ -3149,8 +3278,7 @@ public final class ScriptRuntime {
      * @param cx
      *            the execution context
      */
-    public static void EvaluateClassMethodDecorators(ArrayList<Object> decorators,
-            ExecutionContext cx) {
+    public static void EvaluateClassMethodDecorators(ArrayList<Object> decorators, ExecutionContext cx) {
         // TODO: Deserves clean-up when proper evaluation semantics are specified.
         // decorators = list of <object, 1..n callable, property key>
         for (int i = 0, size = decorators.size(); i < size;) {
@@ -3160,8 +3288,8 @@ public final class ScriptRuntime {
         }
     }
 
-    private static int evaluateMethodDecorators(OrdinaryObject object,
-            ArrayList<Object> decorators, int start, ExecutionContext cx) {
+    private static int evaluateMethodDecorators(OrdinaryObject object, ArrayList<Object> decorators, int start,
+            ExecutionContext cx) {
         int count = 0;
         for (int i = start, size = decorators.size(); i < size; ++i, ++count) {
             if (!(decorators.get(i) instanceof Callable))
@@ -3252,14 +3380,12 @@ public final class ScriptRuntime {
     }
 
     // Called from generated code
-    public static Object PrepareForTailCall(Callable function, ExecutionContext cx,
-            Object thisValue, Object[] args) {
+    public static Object PrepareForTailCall(Callable function, ExecutionContext cx, Object thisValue, Object[] args) {
         return newTailCallInvocation(function, thisValue, args);
     }
 
     // Called from generated code
-    public static Object PrepareForTailCall(Object function, ExecutionContext cx, Object thisValue,
-            Object[] args) {
+    public static Object PrepareForTailCall(Object function, ExecutionContext cx, Object thisValue, Object[] args) {
         return newTailCallInvocation(CheckCallable(function, cx), thisValue, args);
     }
 

@@ -9,13 +9,13 @@ package com.github.anba.es6draft.runtime.modules.loader;
 import static com.github.anba.es6draft.runtime.modules.SourceTextModuleRecord.ParseModule;
 
 import java.io.IOException;
-import java.net.URI;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Set;
 
 import com.github.anba.es6draft.runtime.Realm;
+import com.github.anba.es6draft.runtime.internal.RuntimeContext;
 import com.github.anba.es6draft.runtime.internal.ScriptLoader;
 import com.github.anba.es6draft.runtime.modules.ModuleSource;
 import com.github.anba.es6draft.runtime.modules.SourceIdentifier;
@@ -25,11 +25,11 @@ import com.github.anba.es6draft.runtime.modules.SourceTextModuleRecord;
  * 
  */
 public class URLModuleLoader extends AbstractURLModuleLoader<SourceTextModuleRecord> {
-    private final HashMap<SourceIdentifier, SourceTextModuleRecord> modules = new HashMap<>();
     private final ScriptLoader scriptLoader;
+    private final HashMap<SourceIdentifier, SourceTextModuleRecord> modules = new HashMap<>();
 
-    public URLModuleLoader(ScriptLoader scriptLoader, URI baseDirectory) {
-        super(baseDirectory);
+    public URLModuleLoader(RuntimeContext context, ScriptLoader scriptLoader) {
+        super(context);
         this.scriptLoader = scriptLoader;
     }
 
@@ -48,8 +48,7 @@ public class URLModuleLoader extends AbstractURLModuleLoader<SourceTextModuleRec
     }
 
     @Override
-    protected SourceTextModuleRecord parseModule(SourceIdentifier identifier, ModuleSource source)
-            throws IOException {
+    protected SourceTextModuleRecord parseModule(SourceIdentifier identifier, ModuleSource source) throws IOException {
         return ParseModule(scriptLoader, identifier, source);
     }
 

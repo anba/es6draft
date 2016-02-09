@@ -91,6 +91,7 @@ public enum BuiltinSymbol {
     }
 
     private static final EnumMap<BuiltinSymbol, Symbol> symbols;
+
     static {
         EnumMap<BuiltinSymbol, Symbol> map = new EnumMap<>(BuiltinSymbol.class);
         for (BuiltinSymbol builtin : values()) {

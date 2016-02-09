@@ -68,14 +68,9 @@ public final class DateTimeFormatPrototype extends DateTimeFormatObject implemen
     public enum Properties {
         ;
 
-        private static DateTimeFormatObject thisDateTimeFormatObject(ExecutionContext cx,
-                Object object) {
+        private static DateTimeFormatObject thisDateTimeFormatObject(ExecutionContext cx, Object object) {
             if (object instanceof DateTimeFormatObject) {
-                DateTimeFormatObject dateTimeFormat = (DateTimeFormatObject) object;
-                if (dateTimeFormat.isInitializedDateTimeFormat()) {
-                    return dateTimeFormat;
-                }
-                throw newTypeError(cx, Messages.Key.UninitializedObject);
+                return (DateTimeFormatObject) object;
             }
             throw newTypeError(cx, Messages.Key.IncompatibleObject);
         }
@@ -149,8 +144,7 @@ public final class DateTimeFormatPrototype extends DateTimeFormatObject implemen
             DateTimePatternGenerator generator = DateTimePatternGenerator.getEmptyInstance();
             Skeleton skeleton = new Skeleton(generator.getSkeleton(dateTimeFormat.getPattern()));
             for (DateField field : DateField.values()) {
-                if (field == DateField.Quarter || field == DateField.Week
-                        || field == DateField.Period) {
+                if (field == DateField.Quarter || field == DateField.Week || field == DateField.Period) {
                     continue;
                 }
                 FieldWeight weight = skeleton.getWeight(field);
@@ -176,8 +170,7 @@ public final class DateTimeFormatPrototype extends DateTimeFormatObject implemen
      *            the number value
      * @return the formatted date-time string
      */
-    public static String FormatDateTime(ExecutionContext cx, DateTimeFormatObject dateTimeFormat,
-            double x) {
+    public static String FormatDateTime(ExecutionContext cx, DateTimeFormatObject dateTimeFormat, double x) {
         /* step 1 */
         if (Double.isInfinite(x) || Double.isNaN(x)) {
             throw newRangeError(cx, Messages.Key.InvalidDateValue);
@@ -191,12 +184,12 @@ public final class DateTimeFormatPrototype extends DateTimeFormatObject implemen
      */
     public static final class FormatFunction extends BuiltinFunction {
         public FormatFunction(Realm realm) {
-            super(realm, "format", 0);
+            super(realm, "format", 1);
             createDefaultFunctionProperties();
         }
 
         private FormatFunction(Realm realm, Void ignore) {
-            super(realm, "format", 0);
+            super(realm, "format", 1);
         }
 
         @Override

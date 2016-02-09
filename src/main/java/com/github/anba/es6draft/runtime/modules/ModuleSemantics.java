@@ -90,13 +90,12 @@ public final class ModuleSemantics {
         /* step 3 */
         if (namespace == null) {
             /* steps 3.a-b */
-            Set<String> exportedNames = module.getExportedNames(new HashSet<ModuleRecord>());
+            Set<String> exportedNames = module.getExportedNames(new HashSet<>());
             /* step 3.c */
             Set<String> unambiguousNames = new HashSet<>();
             /* step 3.d */
             for (String name : exportedNames) {
-                ModuleExport resolution = module.resolveExport(name,
-                        new HashMap<ModuleRecord, Set<String>>(), new HashSet<ModuleRecord>());
+                ModuleExport resolution = module.resolveExport(name, new HashMap<>(), new HashSet<>());
                 if (resolution == null) {
                     throw new ResolutionException(Messages.Key.ModulesUnresolvedExport, name);
                 }

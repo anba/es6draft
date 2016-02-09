@@ -11,10 +11,9 @@ import java.util.HashMap;
 /**
  * Supplemental data for canonicalization of language tags.
  * <p>
- * Data generated from: language-subtag-registry, 2015-06-08
+ * Data generated from: language-subtag-registry, 2015-08-04
  * 
- * @see <a
- *      href="http://www.iana.org/assignments/language-subtag-registry">language-subtag-registry</a>
+ * @see <a href="http://www.iana.org/assignments/language-subtag-registry">language-subtag-registry</a>
  */
 final class LanguageSubtagRegistryData {
     private LanguageSubtagRegistryData() {
@@ -109,6 +108,7 @@ final class LanguageSubtagRegistryData {
     }
 
     private static final HashMap<String, String> grandfatheredData;
+
     static {
         // preferred-values for grandfathered language tags
         HashMap<String, String> map = new HashMap<>();
@@ -142,6 +142,7 @@ final class LanguageSubtagRegistryData {
     }
 
     private static final HashMap<String, String> redundantData;
+
     static {
         // preferred-values for redundant language tags
         HashMap<String, String> map = new HashMap<>();
@@ -174,6 +175,7 @@ final class LanguageSubtagRegistryData {
     }
 
     private static final HashMap<String, String> languageData;
+
     static {
         // preferred-values for language subtag
         HashMap<String, String> map = new HashMap<>();
@@ -234,6 +236,7 @@ final class LanguageSubtagRegistryData {
     }
 
     private static final HashMap<String, String> regionData;
+
     static {
         // preferred-values for region subtag
         HashMap<String, String> map = new HashMap<>();
@@ -247,6 +250,7 @@ final class LanguageSubtagRegistryData {
     }
 
     private static final HashMap<String, String> extlangData;
+
     static {
         // preferred-value is equal to extlang, therefore only store [extlang, prefix] pairs, where
         // prefix is the language subtag

@@ -63,24 +63,24 @@ public interface FunctionScope extends TopLevelScope {
     boolean isDynamic();
 
     /**
-     * Returns {@code true} if <tt>eval()</tt> is used within this function.
+     * Returns {@code true} if <code>eval()</code> is used within this function.
      * 
-     * @return {@code true} if the function contains a direct <tt>eval</tt> call
+     * @return {@code true} if the function contains a direct <code>eval</code> call
      */
     boolean hasEval();
 
     /**
-     * Returns {@code true} if the <tt>super</tt> keyword is used within this function.
+     * Returns {@code true} if the <code>super</code> keyword is used within this function.
      * 
-     * @return {@code true} if this function contains a <tt>super</tt> reference
+     * @return {@code true} if this function contains a <code>super</code> reference
      */
     boolean hasSuperReference();
 
     /**
-     * Returns {@code true} if the <tt>arguments</tt> object needs to be allocated for this
+     * Returns {@code true} if the <code>arguments</code> object needs to be allocated for this
      * function.
      * 
-     * @return {@code true} if the <tt>arguments</tt> object needs to be allocated
+     * @return {@code true} if the <code>arguments</code> object needs to be allocated
      */
     boolean needsArguments();
 

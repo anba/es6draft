@@ -6,6 +6,7 @@
 #
 
 # unboxed yield* in SpiderMonkey
+# https://bugzilla.mozilla.org/show_bug.cgi?id=1016936
 ecma_6/Generators/delegating-yield-1.js
 ecma_6/Generators/delegating-yield-2.js
 ecma_6/Generators/delegating-yield-3.js
@@ -13,10 +14,12 @@ ecma_6/Generators/delegating-yield-5.js
 ecma_6/Generators/delegating-yield-7.js
 
 # Invalid test: Number.NaN.to{Exponential,Precision}(-3) should _not_ throw a RangeError
+# https://bugzilla.mozilla.org/show_bug.cgi?id=818617
 ecma_3/Number/15.7.4.6-1.js
 ecma_3/Number/15.7.4.7-1.js
 
 # Invalid test: RegExec sets lastIndex to 0 if no match found
+# https://bugzilla.mozilla.org/show_bug.cgi?id=817351
 ecma_5/RegExp/exec.js
 
 # ES6 spec incomplete for DataView
@@ -27,89 +30,63 @@ ecma_5/RegExp/exec.js
 js1_8_5/extensions/dataview.js
 
 # ArrayBuffer constructor requires `new`
+# https://bugzilla.mozilla.org/show_bug.cgi?id=1062075
 ecma_6/Proxy/regress-bug950407.js
 
 # Various issues:
 # - yield without rhs not supported in SpiderMonkey
 # - `function*g(){ (function yield(){}) }` SyntaxError in SpiderMonkey
 # - need to implement version() function...
+# https://bugzilla.mozilla.org/show_bug.cgi?id=1100441
 ecma_6/Generators/syntax.js
 
 # Primitives always boxed, even in strict mode accessor (Bug 603201, Bug 869098)
 ecma_6/Symbol/as-base-value.js
 ecma_6/Reflect/get.js
-
-# @@toPrimitive not supported in SM
-ecma_6/Symbol/conversions.js
-ecma_6/Reflect/propertyKeys.js
+ecma_6/Array/toLocaleString.js
+ecma_6/Object/toLocaleString.js
 
 # Detached ArrayBuffer object issues, maybe request spec changes?
 ecma_6/extensions/DataView-construct-arguments-neutering.js
-ecma_6/extensions/DataView-set-arguments-neutering.js
 
 # Template string realm registry
+# https://bugzilla.mozilla.org/show_bug.cgi?id=1108941
 ecma_6/TemplateStrings/tagTempl.js
 
-# SM bug (https://bugzilla.mozilla.org/show_bug.cgi?id=1115361)
-ecma_6/TypedArray/keys.js
-ecma_6/TypedArray/values.js
-
 # ES6: Negative RegExp.prototype.lastIndex coerced to 0
+# https://bugzilla.mozilla.org/show_bug.cgi?id=1123059
 ecma_3/RegExp/15.10.6.2-2.js
 
-# SM issue: __proto__ not listed in Object.getOwnPropertyNames
-ecma_6/TypedArray/entries.js
-
-# ES6: multiline etc. properties on RegExp.prototype
-ecma_6/TypedArray/from_constructor.js
-
-# SM issue: Missing return value in [[Set]] proxy trap
-ecma_6/TypedArray/from_proxy.js
-
 # SM issue: Different property iteration order
+# https://bugzilla.mozilla.org/show_bug.cgi?id=1175111
 ecma_6/TypedArray/of.js
 
 # ES6: TypedArray.from only works on TypedArray objects
+# https://bugzilla.mozilla.org/show_bug.cgi?id=1122396
+ecma_6/TypedArray/from_constructor.js
 ecma_6/TypedArray/from_errors.js
 ecma_6/TypedArray/from_mapping.js
+ecma_6/TypedArray/from_proxy.js
 ecma_6/TypedArray/from_string.js
 
-# ES6: IsArray(revoked proxy) throws
-ecma_6/Array/isArray.js
-
-# ES6: lexical redeclaration checks in eval
+# ES6: lexical redeclaration (block scoped function) checks in eval
 js1_5/extensions/regress-245795.js
-js1_7/regress/regress-406477.js
 
 # ES6: "bound " prefix not implemented
+# https://bugzilla.mozilla.org/show_bug.cgi?id=883377
 ecma_6/Function/bound-length-and-name.js
 
 # ES6: RegExp unicode not implemented
+# https://bugzilla.mozilla.org/show_bug.cgi?id=1135377
 ecma_6/RegExp/descriptor.js
 
-# ES6: Symbol.length changed to 0
-ecma_6/Symbol/surfaces.js
-
 # ES6: Support for classes is incomplete in SM.
-ecma_6/Class/classHeritage.js
-ecma_6/Class/derivedConstructorDisabled.js
-ecma_6/Class/innerBinding.js
-ecma_6/Class/methodInstallation.js
 ecma_6/Class/outerBinding.js
-ecma_6/Class/superPropBasicNew.js
-ecma_6/Class/superPropBasicGetter.js
-ecma_6/Class/superPropChains.js
-ecma_6/Class/superPropDelete.js
-ecma_6/Class/superPropDerivedCalls.js
-ecma_6/Class/superPropDestructuring.js
 ecma_6/Class/superPropEvalInsideNested.js
 ecma_6/Class/superPropHomeObject.js
-ecma_6/Class/superPropOrdering.js
-ecma_6/Class/superPropProtoChanges.js
-ecma_6/Class/superPropProxies.js
-ecma_6/Class/superPropSkips.js
 
 # ES6: Symbol.species not implemented in SM
+# https://bugzilla.mozilla.org/show_bug.cgi?id=1165053
 ecma_6/TypedArray/slice.js
 
 # Invalid test (https://bugzilla.mozilla.org/show_bug.cgi?id=1138906)
@@ -117,9 +94,6 @@ ecma_6/TypedArray/map-and-filter.js
 
 # ES6: access to `this` throws in new'ed generators (TODO: allow in legacy generators?)
 js1_7/geniter/yield-new.js
-
-# SM: https://bugzilla.mozilla.org/show_bug.cgi?id=1141865
-ecma_6/Proxy/revoke-as-side-effect.js
 
 # ES6: duplicate lexical declarations check not implemented in SM
 ecma_6/LexicalEnvironment/for-loop.js
@@ -138,20 +112,11 @@ js1_8_5/reflect-parse/declarations.js
 js1_8_5/reflect-parse/destructuring-function-parameters.js
 js1_8_5/reflect-parse/expressionClosures.js
 
-# SM: for-loop with let
-js1_8_5/reflect-parse/destructuring-variable-declarations.js
-
-# SM: global let
-js1_8_5/reflect-parse/lexicals.js
-
 # ES6: RegExp.prototype[Symbol.match] not implemented in SM
 ecma_6/RegExp/constructor-constructor.js
 
 # ES6: completion reform
 ecma/Statements/12.6.3-2.js
-
-# ES6: invalid test - Date.prototype.toString.call(null) throws TypeError
-ecma_6/Date/toString-generic.js
 
 # super() not implemented
 ecma_6/Reflect/construct.js
@@ -163,8 +128,38 @@ ecma_6/Reflect/getPrototypeOf.js
 ecma_6/Reflect/setPrototypeOf.js
 
 # Reflect.enumerate not supported
+# https://bugzilla.mozilla.org/show_bug.cgi?id=1185493
 ecma_6/Reflect/surfaces.js
 ecma_6/Reflect/target.js
+
+# ES6: Inferred function/class names
+ecma_6/Class/className.js
+
+# ES6 errata: generators no longer constructors
+ecma_6/Class/methDefnGen.js
+
+# SM: TypeError from wrong realm
+ecma_6/extensions/new-cross-compartment.js
+
+# SM: Object from wrong realm
+ecma_6/TypedArray/entries.js
+
+# Invalid test: export without local binding
+ecma_6/extensions/keyword-unescaped-requirement-modules.js
+
+# Invalid test: `new ArrayBuffer([1,2])` is not a valid call to ArrayBuffer
+ecma_6/DataView/detach-after-construction.js
+
+# Invalid test: AnnexB calls CreateGlobalFunctionBinding, CreateGlobalFunctionBinding redefines configurable properties
+ecma_6/LexicalEnvironment/block-scoped-functions-annex-b-property.js
+
+# SM: TypedArray subclassing not supported in SpiderMonkey
+ecma_6/TypedArray/from_basics.js
+ecma_6/TypedArray/from_iterable.js
+ecma_6/TypedArray/from_this.js
+
+# Invalid test: SharedArrayBuffer called as function
+js1_8_5/extensions/sharedtypedarray.js
 
 
 ####################################
@@ -220,13 +215,6 @@ ecma_3/RegExp/perlstress-001.js
 ecma_3/RegExp/regress-209919.js
 ecma_5/RegExp/regress-613820-2.js
 ecma_5/RegExp/regress-613820-3.js
-ecma_5/String/split-xregexp.js
-
-# __noSuchMethod__ not supported
-js1_5/extensions/no-such-method.js
-js1_5/extensions/regress-429739.js
-js1_5/extensions/regress-564577.js
-js1_8_5/extensions/noSuchMethod-symbols.js
 
 # __iterator__ not supported
 js1_7/extensions/basic-for-each.js
@@ -278,7 +266,6 @@ ecma_5/extensions/error-tostring-function.js
 
 # different error message
 ecma_3/Array/15.4.5.1-01.js
-ecma_3/Exceptions/15.11.5.js
 ecma_3/extensions/7.9.1.js
 ecma_3/extensions/regress-274152.js
 ecma_3/LexicalConventions/7.8.3-01.js
@@ -287,8 +274,14 @@ ecma_3/RegExp/15.10.4.1-6.js
 ecma_3/Unicode/regress-352044-01.js
 ecma_3_1/Object/regress-444787.js
 ecma_5/Function/builtin-no-construct.js
+ecma_6/Array/iterator_edge_cases.js
+ecma_6/Class/derivedConstructorInlining.js
+ecma_6/Class/derivedConstructorTDZExplicitThis.js
+ecma_6/Class/derivedConstructorTDZOffEdge.js
+ecma_6/Class/derivedConstructorTDZReturnUndefined.js
 ecma_6/Class/newTargetDVG.js
 ecma_6/Class/superPropDVG.js
+ecma_6/String/iterator_edge_cases.js
 js1_5/extensions/regress-352291.js
 js1_5/extensions/regress-352372.js
 js1_5/LexicalConventions/regress-469940.js
@@ -302,13 +295,8 @@ js1_6/extensions/regress-470310.js
 js1_6/Array/regress-304828.js
 js1_6/Regress/regress-350417.js
 js1_6/Regress/regress-355002.js
-js1_7/block/regress-348685.js
-js1_7/extensions/regress-355052-01.js
-js1_7/extensions/regress-355052-02.js
-js1_7/extensions/regress-355052-03.js
 js1_7/geniter/regress-345855.js
 js1_7/geniter/regress-349012-05.js
-js1_7/geniter/regress-351120.js
 js1_7/regress/regress-363040-01.js
 js1_8/extensions/regress-353116.js
 js1_8/extensions/regress-469625.js
@@ -342,7 +330,6 @@ js1_8_5/regress/regress-665355.js
 
 # specific js-version related tests
 js1_5/Regress/regress-351515.js
-js1_6/extensions/regress-352392.js
 
 # Iterator + for-each returns [key,value] pairs
 js1_7/iterable/regress-568056.js
@@ -379,9 +366,6 @@ ecma_5/String/split-undefined-separator.js
 # Generator.prototype.return
 ecma_6/Generators/runtime.js
 
-# assignment to const binding is always a runtime error, regardless of strict mode
-js1_5/Regress/regress-321874.js
-
 # Array length no longer limited to 2^32-1
 ecma_5/Array/unshift-01.js
 
@@ -390,14 +374,7 @@ ecma_5/Array/unshift-01.js
 # ES6 related syntax changes          #
 #######################################
 
-# ES6: const not in object-env of global
-js1_5/extensions/scope-001.js
-
-# ES6-change: Future Reserved Words now used
-ecma_5/misc/future-reserved-words.js
-
 # lexical declared variables must not be redeclared
-js1_8_1/regress/regress-452498-054.js
 js1_8_5/extensions/clone-complex-object.js
 
 # ES6-change: function declaration in block allowed
@@ -414,20 +391,12 @@ js1_8_5/regress/regress-609617.js
 ecma_6/Expressions/destructuring-pattern-parenthesized.js
 
 # FunctionDeclaration directly nested in Statement not allowed
-ecma_3/FunExpr/fe-001.js
 ecma_5/extensions/function-definition-with.js
 ecma_6/extensions/for-loop-with-lexical-declaration-and-nested-function-statement.js
-js1_5/Regress/regress-326453.js
 js1_8/regress/regress-384758.js
 
 # re-assignement to 'const' is not an early error
 js1_6/extensions/regress-465443.js
-js1_8_1/extensions/regress-437288-01.js
-js1_8_1/regress/regress-452498-187.js
-js1_8_5/regress/regress-383902.js
-
-# script code, but not global scope(!), eval() does not add lexical declarations to global object
-js1_5/Regress/regress-103602.js
 
 # function declaration with same name as parameter in surrounding function not applicable for B.3.3
 js1_8/regress/regress-467495-05.js

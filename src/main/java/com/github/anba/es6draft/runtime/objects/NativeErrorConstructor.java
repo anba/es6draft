@@ -88,31 +88,7 @@ public final class NativeErrorConstructor extends BuiltinConstructor implements 
 
     @Override
     public void initialize(Realm realm) {
-        switch (type) {
-        case EvalError:
-            createProperties(realm, this, EvalErrorConstructorProperties.class);
-            break;
-        case RangeError:
-            createProperties(realm, this, RangeErrorConstructorProperties.class);
-            break;
-        case ReferenceError:
-            createProperties(realm, this, ReferenceErrorConstructorProperties.class);
-            break;
-        case SyntaxError:
-            createProperties(realm, this, SyntaxErrorConstructorProperties.class);
-            break;
-        case TypeError:
-            createProperties(realm, this, TypeErrorConstructorProperties.class);
-            break;
-        case URIError:
-            createProperties(realm, this, URIErrorConstructorProperties.class);
-            break;
-        case InternalError:
-            createProperties(realm, this, InternalErrorConstructorProperties.class);
-            break;
-        default:
-            throw new AssertionError();
-        }
+        createProperties(realm, this, propertiesForType(type));
     }
 
     @Override
@@ -175,6 +151,27 @@ public final class NativeErrorConstructor extends BuiltinConstructor implements 
         @Override
         public ErrorObject newInstance(Realm realm) {
             return new ErrorObject(realm);
+        }
+    }
+
+    private static Class<?> propertiesForType(ErrorType errorType) {
+        switch (errorType) {
+        case EvalError:
+            return EvalErrorConstructorProperties.class;
+        case RangeError:
+            return RangeErrorConstructorProperties.class;
+        case ReferenceError:
+            return ReferenceErrorConstructorProperties.class;
+        case SyntaxError:
+            return SyntaxErrorConstructorProperties.class;
+        case TypeError:
+            return TypeErrorConstructorProperties.class;
+        case URIError:
+            return URIErrorConstructorProperties.class;
+        case InternalError:
+            return InternalErrorConstructorProperties.class;
+        default:
+            throw new AssertionError();
         }
     }
 

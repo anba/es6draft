@@ -29,6 +29,7 @@ import com.github.anba.es6draft.compiler.DefaultCodeGenerator.ValType;
 import com.github.anba.es6draft.compiler.assembler.FieldName;
 import com.github.anba.es6draft.compiler.assembler.Jump;
 import com.github.anba.es6draft.compiler.assembler.MethodName;
+import com.github.anba.es6draft.compiler.assembler.MethodTypeDescriptor;
 import com.github.anba.es6draft.compiler.assembler.Type;
 import com.github.anba.es6draft.compiler.assembler.Variable;
 import com.github.anba.es6draft.parser.Parser;
@@ -159,6 +160,10 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
                         Types.OrdinaryConstructorFunction, Types.RuntimeInfo$Function,
                         Types.ExecutionContext));
 
+        static final MethodName ScriptRuntime_EvaluateLegacyFunctionExpression = MethodName.findStatic(
+                Types.ScriptRuntime, "EvaluateLegacyFunctionExpression", Type.methodType(
+                        Types.LegacyConstructorFunction, Types.RuntimeInfo$Function, Types.ExecutionContext));
+
         static final MethodName ScriptRuntime_EvaluateGeneratorComprehension = MethodName
                 .findStatic(Types.ScriptRuntime, "EvaluateGeneratorComprehension", Type.methodType(
                         Types.GeneratorObject, Types.RuntimeInfo$Function, Types.ExecutionContext));
@@ -214,6 +219,10 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
                 Types.ScriptRuntime, "SpreadArray",
                 Type.methodType(Types.Object_, Types.Object, Types.ExecutionContext));
 
+        static final MethodName ScriptRuntime_NativeCallSpreadArray = MethodName.findStatic(
+                Types.ScriptRuntime, "NativeCallSpreadArray",
+                Type.methodType(Types.Object_, Types.Object, Types.ExecutionContext));
+
         static final MethodName ScriptRuntime_toFlatArray = MethodName.findStatic(
                 Types.ScriptRuntime, "toFlatArray",
                 Type.methodType(Types.Object_, Types.Object_, Types.ExecutionContext));
@@ -265,10 +274,11 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
                 Bootstrap.getSuperBootstrap());
     }
 
-    private static void invokeDynamicNativeCall(String name, ExpressionVisitor mv) {
-        // stack: [args, cx] -> [result]
-        mv.invokedynamic(NativeCalls.getNativeCallName(name),
-                NativeCalls.getNativeCallMethodDescriptor(), NativeCalls.getNativeCallBootstrap());
+    private static ValType invokeDynamicNativeCall(String name, Type[] arguments, ExpressionVisitor mv) {
+        // stack: [cx, ...args] -> [result]
+        MethodTypeDescriptor desc = MethodTypeDescriptor.methodType(Types.Object, arguments);
+        mv.invokedynamic(NativeCalls.getNativeCallName(name), desc, NativeCalls.getNativeCallBootstrap());
+        return ValType.of(desc.returnType());
     }
 
     private static void invokeDynamicOperator(BinaryExpression.Operator operator,
@@ -292,7 +302,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
      * [12.3.3.1.1 Runtime Semantics: EvaluateNew(thisCall, constructProduction, arguments)]
      * 
      * @param node
-     *            the <tt>NewExpression</tt> node
+     *            the <code>NewExpression</code> node
      * @param mv
      *            the expression visitor
      * @return the returned value type
@@ -1524,16 +1534,335 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
             }
         }
 
-        static abstract class EqualityOp extends BinaryOp {
-            abstract void operation(ExpressionVisitor mv);
+        static final class EqMethods {
+            // class: AbstractOperations
+            static final MethodName AbstractOperations_IsCallable = MethodName.findStatic(Types.AbstractOperations,
+                    "IsCallable", Type.methodType(Type.BOOLEAN_TYPE, Types.Object));
 
+            // class: Type
+            static final MethodName Type_isBoolean = MethodName.findStatic(Types._Type, "isBoolean",
+                    Type.methodType(Type.BOOLEAN_TYPE, Types.Object));
+
+            static final MethodName Type_isNull = MethodName.findStatic(Types._Type, "isNull",
+                    Type.methodType(Type.BOOLEAN_TYPE, Types.Object));
+
+            static final MethodName Type_isNumber = MethodName.findStatic(Types._Type, "isNumber",
+                    Type.methodType(Type.BOOLEAN_TYPE, Types.Object));
+
+            static final MethodName Type_isString = MethodName.findStatic(Types._Type, "isString",
+                    Type.methodType(Type.BOOLEAN_TYPE, Types.Object));
+
+            static final MethodName Type_isSymbol = MethodName.findStatic(Types._Type, "isSymbol",
+                    Type.methodType(Type.BOOLEAN_TYPE, Types.Object));
+
+            static final MethodName Type_isUndefinedOrNull = MethodName.findStatic(Types._Type, "isUndefinedOrNull",
+                    Type.methodType(Type.BOOLEAN_TYPE, Types.Object));
+
+            static final MethodName Type_isUndefined = MethodName.findStatic(Types._Type, "isUndefined",
+                    Type.methodType(Type.BOOLEAN_TYPE, Types.Object));
+
+            // class: Reference
+            static final MethodName Reference_isUnresolvableReference = MethodName.findVirtual(Types.Reference,
+                    "isUnresolvableReference", Type.methodType(Type.BOOLEAN_TYPE));
+
+            // class: ScriptRuntime
+            static final MethodName ScriptRuntime_compare = MethodName.findStatic(Types.ScriptRuntime, "compare",
+                    Type.methodType(Type.BOOLEAN_TYPE, Types.CharSequence, Types.CharSequence));
+
+            static final MethodName ScriptRuntime_isNonCallableObjectOrNull = MethodName.findStatic(Types.ScriptRuntime,
+                    "isNonCallableObjectOrNull", Type.methodType(Type.BOOLEAN_TYPE, Types.Object));
+        }
+
+        static abstract class EqualityOp extends BinaryOp {
             @Override
             final ValType emit(BinaryExpression node, ExpressionVisitor mv, ExpressionGenerator gen) {
-                mv.toBoxed(node.getLeft().accept(gen, mv));
-                mv.toBoxed(node.getRight().accept(gen, mv));
-                mv.lineInfo(node);
-                operation(mv);
+                Expression left = node.getLeft();
+                Expression right = node.getRight();
+                if (left instanceof Literal) {
+                    emitLiteral(node, (Literal) left, right, mv, gen);
+                } else if (right instanceof Literal) {
+                    emitLiteral(node, (Literal) right, left, mv, gen);
+                } else {
+                    ValType ltype = left.accept(gen, mv);
+                    if (ltype.isPrimitive()) {
+                        emitPrimitive(node, ltype, right, mv, gen);
+                    } else {
+                        emitGeneric(node, ltype, right, mv, gen);
+                    }
+                }
                 return ValType.Boolean;
+            }
+
+            protected abstract void emitGeneric(BinaryExpression node, ValType ltype, Expression right,
+                    ExpressionVisitor mv, ExpressionGenerator gen);
+
+            protected abstract void emitLiteral(BinaryExpression node, ValType type, NullLiteral literal,
+                    ExpressionVisitor mv, ExpressionGenerator gen);
+
+            protected abstract void emitLiteral(BinaryExpression node, ValType type, BooleanLiteral literal,
+                    ExpressionVisitor mv, ExpressionGenerator gen);
+
+            protected abstract void emitLiteral(BinaryExpression node, ValType type, NumericLiteral literal,
+                    ExpressionVisitor mv, ExpressionGenerator gen);
+
+            protected abstract void emitLiteral(BinaryExpression node, ValType type, StringLiteral literal,
+                    ExpressionVisitor mv, ExpressionGenerator gen);
+
+            private void emitLiteral(BinaryExpression node, Literal literal, Expression expr, ExpressionVisitor mv,
+                    ExpressionGenerator gen) {
+                if (literal instanceof NullLiteral) {
+                    ValType type = expr.accept(gen, mv);
+                    emitLiteral(node, type, (NullLiteral) literal, mv, gen);
+                } else if (literal instanceof BooleanLiteral) {
+                    BooleanLiteral bool = (BooleanLiteral) literal;
+                    ValType type = expr.accept(gen, mv);
+                    if (type == ValType.Boolean) {
+                        if (bool.getValue() == false) {
+                            mv.not();
+                        }
+                    } else {
+                        emitLiteral(node, type, bool, mv, gen);
+                    }
+                } else if (literal instanceof NumericLiteral) {
+                    NumericLiteral numeric = (NumericLiteral) literal;
+                    ValType type = expr.accept(gen, mv);
+                    if (type.isNumeric()) {
+                        if (type == ValType.Number_int && numeric.isInt()) {
+                            if (numeric.intValue() == 0) {
+                                compareInt0(mv);
+                            } else {
+                                mv.iconst(numeric.intValue());
+                                compareInt(mv);
+                            }
+                        } else if (type == ValType.Number_uint && numeric.isInt()) {
+                            mv.lconst(numeric.intValue());
+                            compareLong(mv);
+                        } else {
+                            ToNumber(type, mv);
+                            mv.dconst(numeric.doubleValue());
+                            compareDouble(mv);
+                        }
+                    } else {
+                        emitLiteral(node, type, numeric, mv, gen);
+                    }
+                } else {
+                    assert literal instanceof StringLiteral;
+                    StringLiteral string = (StringLiteral) literal;
+                    if (isTypeof(expr) && isTypeString(string.getValue())) {
+                        emitTypeCheck(string.getValue(), ((UnaryExpression) expr).getOperand(), mv, gen);
+                    } else {
+                        ValType type = expr.accept(gen, mv);
+                        if (type == ValType.String) {
+                            mv.aconst(string.getValue());
+                            compareString(mv);
+                        } else {
+                            emitLiteral(node, type, string, mv, gen);
+                        }
+                    }
+                }
+            }
+
+            private void emitPrimitive(BinaryExpression node, ValType ltype, Expression right, ExpressionVisitor mv,
+                    ExpressionGenerator gen) {
+                ValType expected = expressionType(right);
+                if (ltype == expected) {
+                    ValType rtype = right.accept(gen, mv);
+                    assert rtype == expected;
+                    switch (ltype) {
+                    case Boolean:
+                    case Number_int:
+                        compareInt(mv);
+                        break;
+                    case Number_uint:
+                        compareLong(mv);
+                        break;
+                    case Number:
+                        compareDouble(mv);
+                        break;
+                    case String:
+                        compareString(mv);
+                        break;
+                    case Undefined:
+                    case Null:
+                        compareReference(mv);
+                        break;
+                    default:
+                        throw new AssertionError();
+                    }
+                } else if (ltype.isNumeric() && expected.isNumeric()) {
+                    ToNumber(ltype, mv);
+                    ValType rtype = right.accept(gen, mv);
+                    assert rtype == expected;
+                    ToNumber(rtype, mv);
+                    compareDouble(mv);
+                } else {
+                    emitGeneric(node, ltype, right, mv, gen);
+                }
+            }
+
+            private void compareString(ExpressionVisitor mv) {
+                mv.invoke(EqMethods.ScriptRuntime_compare);
+            }
+
+            private void compareReference(ExpressionVisitor mv) {
+                Jump notSame = new Jump(), end = new Jump();
+                mv.ifacmpne(notSame);
+                compareTail(end, notSame, mv);
+            }
+
+            private void compareInt0(ExpressionVisitor mv) {
+                Jump notSame = new Jump(), end = new Jump();
+                mv.ifne(notSame);
+                compareTail(end, notSame, mv);
+            }
+
+            private void compareInt(ExpressionVisitor mv) {
+                Jump notSame = new Jump(), end = new Jump();
+                mv.ificmpne(notSame);
+                compareTail(end, notSame, mv);
+            }
+
+            private void compareLong(ExpressionVisitor mv) {
+                Jump notSame = new Jump(), end = new Jump();
+                mv.lcmp();
+                mv.ifne(notSame);
+                compareTail(end, notSame, mv);
+            }
+
+            private void compareDouble(ExpressionVisitor mv) {
+                Jump notSame = new Jump(), end = new Jump();
+                mv.dcmpl();
+                mv.ifne(notSame);
+                compareTail(end, notSame, mv);
+            }
+
+            private void compareTail(Jump end, Jump notSame, ExpressionVisitor mv) {
+                mv.iconst(true);
+                mv.goTo(end);
+                mv.mark(notSame);
+                mv.iconst(false);
+                mv.mark(end);
+            }
+
+            private void emitTypeCheck(String name, Expression operand, ExpressionVisitor mv, ExpressionGenerator gen) {
+                if (operand instanceof IdentifierReference) {
+                    IdentifierReference ident = (IdentifierReference) operand;
+                    Name resolvedName = ident.getResolvedName();
+                    if (resolvedName == null || !resolvedName.isLocal()) {
+                        // stack: [] -> [ref, ref]
+                        ValType reference = ReferenceOp.LOOKUP.reference(ident, mv, gen.codegen);
+                        mv.dup(reference);
+
+                        // stack: [ref, ref] -> [ref, unresolvable]
+                        Jump unresolvable = new Jump(), end = new Jump();
+                        mv.invoke(EqMethods.Reference_isUnresolvableReference);
+                        mv.ifeq(unresolvable);
+                        {
+                            mv.pop(reference);
+                            mv.iconst("undefined".equals(name));
+                            mv.goTo(end);
+                        }
+                        mv.mark(unresolvable);
+                        // stack: [ref] -> [val]
+                        ReferenceOp.LOOKUP.getValue(ident, reference, mv);
+                        emitTypeCheckGeneric(name, mv);
+                        mv.mark(end);
+                        return;
+                    }
+                }
+                ValType type = operand.accept(gen, mv);
+                if (type != ValType.Any) {
+                    emitTypeCheckConst(name, type, mv);
+                } else {
+                    emitTypeCheckGeneric(name, mv);
+                }
+            }
+
+            private void emitTypeCheckConst(String name, ValType type, ExpressionVisitor mv) {
+                assert type != ValType.Any;
+                boolean result;
+                switch (name) {
+                case "undefined":
+                    result = type == ValType.Undefined;
+                    break;
+                case "object":
+                    if (type == ValType.Object) {
+                        emitTypeCheckGeneric(name, mv);
+                        return;
+                    }
+                    result = type == ValType.Null;
+                    break;
+                case "boolean":
+                    result = type == ValType.Boolean;
+                    break;
+                case "number":
+                    result = type.isNumeric();
+                    break;
+                case "string":
+                    result = type == ValType.String;
+                    break;
+                case "function": {
+                    if (type == ValType.Object) {
+                        emitTypeCheckGeneric(name, mv);
+                        return;
+                    }
+                    result = false;
+                    break;
+                }
+                default:
+                    result = false;
+                    break;
+                }
+                mv.pop(type);
+                mv.iconst(result);
+            }
+
+            private void emitTypeCheckGeneric(String name, ExpressionVisitor mv) {
+                MethodName typeCheck = typeCheck(name);
+                mv.invoke(typeCheck);
+            }
+
+            private MethodName typeCheck(String name) {
+                switch (name) {
+                case "undefined":
+                    return EqMethods.Type_isUndefined;
+                case "object":
+                    return EqMethods.ScriptRuntime_isNonCallableObjectOrNull;
+                case "boolean":
+                    return EqMethods.Type_isBoolean;
+                case "number":
+                    return EqMethods.Type_isNumber;
+                case "string":
+                    return EqMethods.Type_isString;
+                case "symbol":
+                    return EqMethods.Type_isSymbol;
+                case "function":
+                    return EqMethods.AbstractOperations_IsCallable;
+                default:
+                    throw new AssertionError();
+                }
+            }
+
+            private boolean isTypeof(Expression expr) {
+                if (!(expr instanceof UnaryExpression)) {
+                    return false;
+                }
+                return ((UnaryExpression) expr).getOperator() == UnaryExpression.Operator.TYPEOF;
+            }
+
+            private boolean isTypeString(String s) {
+                switch (s) {
+                case "undefined":
+                case "object":
+                case "boolean":
+                case "number":
+                case "string":
+                case "symbol":
+                case "function":
+                    return true;
+                default:
+                    return false;
+                }
             }
         }
 
@@ -1651,6 +1980,20 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
                     ValType ltype = left.accept(gen, mv);
                     ValType rtype = evalToString(right, mv, gen);
                     return addStrings(ltype, rtype, mv);
+                } else if (right instanceof TemplateLiteral) {
+                    // x + `...`
+                    assert !((TemplateLiteral) right).isTagged();
+                    ValType ltype = left.accept(gen, mv);
+                    if (ltype.isPrimitive()) {
+                        ToString(ltype, mv);
+                    }
+                    ValType rtype = right.accept(gen, mv);
+                    if (!ltype.isPrimitive()) {
+                        mv.swap(ltype, rtype);
+                        toStringForConcat(left, ltype, mv);
+                        mv.swap(rtype, ValType.String);
+                    }
+                    return addStrings(ValType.String, rtype, mv);
                 }
 
                 ValType ltype = left.accept(gen, mv);
@@ -1962,33 +2305,121 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
         // 12.10 Equality Operators ( == )
         static final EqualityOp EQ = new EqualityOp() {
             @Override
-            void operation(ExpressionVisitor mv) {
+            protected void emitGeneric(BinaryExpression node, ValType ltype, Expression right, ExpressionVisitor mv,
+                    ExpressionGenerator gen) {
+                mv.toBoxed(ltype);
+                mv.toBoxed(right.accept(gen, mv));
+                mv.lineInfo(node);
                 mv.loadExecutionContext();
                 invokeDynamicOperator(BinaryExpression.Operator.EQ, mv);
             }
+
+            @Override
+            protected void emitLiteral(BinaryExpression node, ValType type, NullLiteral literal, ExpressionVisitor mv,
+                    ExpressionGenerator gen) {
+                if (type == ValType.Any) {
+                    mv.invoke(EqMethods.Type_isUndefinedOrNull);
+                } else {
+                    mv.pop(type);
+                    mv.iconst(type == ValType.Undefined || type == ValType.Null);
+                }
+            }
+
+            @Override
+            protected void emitLiteral(BinaryExpression node, ValType type, BooleanLiteral literal,
+                    ExpressionVisitor mv, ExpressionGenerator gen) {
+                assert type != ValType.Boolean;
+                emitGeneric(node, type, literal, mv, gen);
+            }
+
+            @Override
+            protected void emitLiteral(BinaryExpression node, ValType type, NumericLiteral literal,
+                    ExpressionVisitor mv, ExpressionGenerator gen) {
+                assert !type.isNumeric();
+                emitGeneric(node, type, literal, mv, gen);
+            }
+
+            @Override
+            protected void emitLiteral(BinaryExpression node, ValType type, StringLiteral literal, ExpressionVisitor mv,
+                    ExpressionGenerator gen) {
+                assert type != ValType.String;
+                emitGeneric(node, type, literal, mv, gen);
+            }
         };
         // 12.10 Equality Operators ( != )
-        static final EqualityOp NE = new EqualityOp() {
+        static final BinaryOp NE = new BinaryOp() {
             @Override
-            void operation(ExpressionVisitor mv) {
-                mv.loadExecutionContext();
-                invokeDynamicOperator(BinaryExpression.Operator.EQ, mv);
+            ValType emit(BinaryExpression node, ExpressionVisitor mv, ExpressionGenerator gen) {
+                BinaryOp.EQ.emit(node, mv, gen);
                 mv.not();
+                return ValType.Boolean;
             }
         };
         // 12.10 Equality Operators ( === )
         static final EqualityOp SHEQ = new EqualityOp() {
             @Override
-            void operation(ExpressionVisitor mv) {
+            protected void emitGeneric(BinaryExpression node, ValType ltype, Expression right, ExpressionVisitor mv,
+                    ExpressionGenerator gen) {
+                mv.toBoxed(ltype);
+                mv.toBoxed(right.accept(gen, mv));
+                mv.lineInfo(node);
                 invokeDynamicOperator(BinaryExpression.Operator.SHEQ, mv);
+            }
+
+            @Override
+            protected void emitLiteral(BinaryExpression node, ValType type, NullLiteral literal, ExpressionVisitor mv,
+                    ExpressionGenerator gen) {
+                if (type == ValType.Any) {
+                    mv.invoke(EqMethods.Type_isNull);
+                } else {
+                    mv.pop(type);
+                    mv.iconst(type == ValType.Null);
+                }
+            }
+
+            @Override
+            protected void emitLiteral(BinaryExpression node, ValType type, BooleanLiteral literal,
+                    ExpressionVisitor mv, ExpressionGenerator gen) {
+                assert type != ValType.Boolean;
+                if (type == ValType.Any) {
+                    emitGeneric(node, type, literal, mv, gen);
+                } else {
+                    mv.pop(type);
+                    mv.iconst(false);
+                }
+            }
+
+            @Override
+            protected void emitLiteral(BinaryExpression node, ValType type, NumericLiteral literal,
+                    ExpressionVisitor mv, ExpressionGenerator gen) {
+                assert !type.isNumeric();
+                if (type == ValType.Any) {
+                    emitGeneric(node, type, literal, mv, gen);
+                } else {
+                    mv.pop(type);
+                    mv.iconst(false);
+                }
+            }
+
+            @Override
+            protected void emitLiteral(BinaryExpression node, ValType type, StringLiteral literal, ExpressionVisitor mv,
+                    ExpressionGenerator gen) {
+                assert type != ValType.String;
+                if (type == ValType.Any) {
+                    emitGeneric(node, type, literal, mv, gen);
+                } else {
+                    mv.pop(type);
+                    mv.iconst(false);
+                }
             }
         };
         // 12.10 Equality Operators ( !== )
-        static final EqualityOp SHNE = new EqualityOp() {
+        static final BinaryOp SHNE = new BinaryOp() {
             @Override
-            void operation(ExpressionVisitor mv) {
-                invokeDynamicOperator(BinaryExpression.Operator.SHEQ, mv);
+            ValType emit(BinaryExpression node, ExpressionVisitor mv, ExpressionGenerator gen) {
+                BinaryOp.SHEQ.emit(node, mv, gen);
                 mv.not();
+                return ValType.Boolean;
             }
         };
         // 12.11 Binary Bitwise Operators ( & )
@@ -2152,7 +2583,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
                 ValType rtype = expressionType(node.getRight());
                 if (ltype == ValType.String || rtype == ValType.String) {
                     return ValType.String;
-                } else if (ltype.isNumeric() && rtype.isPrimitive() && rtype != ValType.String) {
+                } else if (ltype.isNumeric() && rtype.isPrimitive()) {
                     return ValType.Number;
                 }
                 // Pessimistically assume any-type
@@ -2186,9 +2617,8 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
 
         @Override
         public ValType visit(ConditionalExpression node, Void value) {
-            ConditionalExpression conditional = (ConditionalExpression) node;
-            ValType ltype = expressionType(conditional.getThen());
-            ValType rtype = expressionType(conditional.getOtherwise());
+            ValType ltype = expressionType(node.getThen());
+            ValType rtype = expressionType(node.getOtherwise());
             if (ltype != rtype && ltype.isNumeric() && rtype.isNumeric()) {
                 return ValType.Number;
             }
@@ -2227,7 +2657,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
 
         @Override
         public ValType visit(NumericLiteral node, Void value) {
-            return ((NumericLiteral) node).isInt() ? ValType.Number_int : ValType.Number;
+            return node.isInt() ? ValType.Number_int : ValType.Number;
         }
 
         @Override
@@ -2438,10 +2868,22 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
         /* steps 1-5/10 */
         mv.invoke(codegen.methodDesc(node, FunctionName.RTI));
         mv.loadExecutionContext();
-        mv.invoke(Methods.ScriptRuntime_EvaluateFunctionExpression);
+        if (isLegacy(node)) {
+            mv.invoke(Methods.ScriptRuntime_EvaluateLegacyFunctionExpression);
+        } else {
+            mv.invoke(Methods.ScriptRuntime_EvaluateFunctionExpression);
+        }
 
         /* step 6/11 */
         return ValType.Object;
+    }
+
+    private boolean isLegacy(FunctionExpression node) {
+        if (IsStrict(node)) {
+            return false;
+        }
+        return codegen.isEnabled(CompatibilityOption.FunctionArguments)
+                || codegen.isEnabled(CompatibilityOption.FunctionCaller);
     }
 
     /**
@@ -2586,11 +3028,29 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
     @Override
     public ValType visit(NativeCallExpression node, ExpressionVisitor mv) {
         String nativeName = node.getBase().getName();
-        ArgumentListEvaluation(node, node.getArguments(), mv);
+        List<Expression> arguments = node.getArguments();
+        Type[] parameters = new Type[1 + arguments.size()];
         mv.loadExecutionContext();
+        parameters[0] = Types.ExecutionContext;
+        for (int i = 0; i < arguments.size(); ++i) {
+            parameters[i + 1] = nativeCallArgument(arguments.get(i), mv);
+        }
         mv.lineInfo(node);
-        invokeDynamicNativeCall(nativeName, mv);
-        return ValType.Any;
+        return invokeDynamicNativeCall(nativeName, parameters, mv);
+    }
+
+    private Type nativeCallArgument(Expression argument, ExpressionVisitor mv) {
+        if (argument instanceof CallSpreadElement) {
+            CallSpreadElement spread = (CallSpreadElement) argument;
+            ValType type = spread.getExpression().accept(this, mv);
+            mv.toBoxed(type);
+            mv.loadExecutionContext();
+            mv.lineInfo(spread);
+            mv.invoke(Methods.ScriptRuntime_NativeCallSpreadArray);
+
+            return Types.Object_;
+        }
+        return argument.accept(this, mv).toType();
     }
 
     /**

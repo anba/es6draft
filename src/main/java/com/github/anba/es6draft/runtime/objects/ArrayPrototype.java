@@ -20,7 +20,9 @@ import java.util.Comparator;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.internal.*;
+import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
+import com.github.anba.es6draft.runtime.internal.Initializable;
+import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.Properties.AliasFunction;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.CompatibilityExtension;
@@ -28,7 +30,7 @@ import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Optional;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
-import com.github.anba.es6draft.runtime.objects.ArrayIteratorPrototype.ArrayIterationKind;
+import com.github.anba.es6draft.runtime.objects.ArrayIteratorObject.ArrayIterationKind;
 import com.github.anba.es6draft.runtime.objects.binary.TypedArrayObject;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
@@ -70,9 +72,18 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
     private static final class ArrayPrototypeValues {
     }
 
-    public static boolean isBuiltinValues(Object next) {
-        return next instanceof NativeFunction
-                && ((NativeFunction) next).getId() == ArrayPrototypeValues.class;
+    /**
+     * Returns {@code true} if <var>values</var> is the built-in {@code Array.prototype.values} function for the
+     * requested realm.
+     * 
+     * @param realm
+     *            the function realm
+     * @param values
+     *            the values function
+     * @return {@code true} if <var>values</var> is the built-in {@code Array.prototype.values} function
+     */
+    public static boolean isBuiltinValues(Realm realm, Object values) {
+        return NativeFunction.isNative(realm, values, ArrayPrototypeValues.class);
     }
 
     private static final long ARRAY_LENGTH_LIMIT = 0x1F_FFFF_FFFF_FFFFL;
@@ -103,12 +114,11 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
         if (length < MIN_SPARSE_LENGTH) {
             return IterationKind.Slow;
         }
-        if (!(target instanceof OrdinaryObject)
-                || ((OrdinaryObject) target).hasSpecialIndexedProperties()) {
+        if (!(target instanceof OrdinaryObject) || ((OrdinaryObject) target).hasSpecialIndexedProperties()) {
             return IterationKind.Slow;
         }
         if (source instanceof ArrayObject) {
-            return iterationKind((ArrayObject) source);
+            return iterationKind((ArrayObject) source, length);
         }
         if (source instanceof TypedArrayObject) {
             return iterationKind((TypedArrayObject) source);
@@ -119,25 +129,27 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
         return IterationKind.Slow;
     }
 
-    private static IterationKind iterationKind(ArrayObject array) {
+    private static IterationKind iterationKind(ArrayObject array, long length) {
         if (array.isDenseArray()) {
             return IterationKind.DenseOwnKeys;
         }
         if (array.hasIndexedAccessors()) {
             return IterationKind.Slow;
         }
-        return iterationKindForSparse(array);
+        return iterationKindForSparse(array, length);
     }
 
     private static IterationKind iterationKind(OrdinaryObject arrayLike, long length) {
-        assert !arrayLike.hasSpecialIndexedProperties();
+        if (arrayLike.hasSpecialIndexedProperties()) {
+            return IterationKind.Slow;
+        }
         if (arrayLike.isDenseArray(length)) {
             return IterationKind.DenseOwnKeys;
         }
         if (arrayLike.hasIndexedAccessors()) {
             return IterationKind.Slow;
         }
-        return iterationKindForSparse(arrayLike);
+        return iterationKindForSparse(arrayLike, length);
     }
 
     private static IterationKind iterationKind(TypedArrayObject typedArray) {
@@ -147,10 +159,12 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
         return IterationKind.TypedArray;
     }
 
-    private static IterationKind iterationKindForSparse(OrdinaryObject arrayLike) {
+    private static IterationKind iterationKindForSparse(OrdinaryObject arrayLike, long length) {
         IterationKind iteration = IterationKind.SparseOwnKeys;
         int protoDepth = 0;
+        long indexed = 0;
         for (OrdinaryObject object = arrayLike;;) {
+            indexed += object.getIndexedSize();
             ScriptObject prototype = object.getPrototype();
             if (prototype == null) {
                 break;
@@ -171,6 +185,10 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
             if (++protoDepth == MAX_PROTO_DEPTH) {
                 return IterationKind.Slow;
             }
+        }
+        double density = indexed / (double) length;
+        if (density > 0.75) {
+            return IterationKind.Slow;
         }
         return iteration;
     }
@@ -200,13 +218,11 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
         return indices;
     }
 
-    private static ForwardIter forwardIter(OrdinaryObject array, long from, long to,
-            boolean inherited) {
+    private static ForwardIter forwardIter(OrdinaryObject array, long from, long to, boolean inherited) {
         return new ForwardIter(from, to, arrayKeys(array, from, to, inherited), inherited);
     }
 
-    private static ReverseIter reverseIterator(OrdinaryObject array, long from, long to,
-            boolean inherited) {
+    private static ReverseIter reverseIterator(OrdinaryObject array, long from, long to, boolean inherited) {
         return new ReverseIter(from, to, arrayKeys(array, from, to, inherited), inherited);
     }
 
@@ -325,13 +341,6 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
 
         @Prototype
         public static final Intrinsics __proto__ = Intrinsics.ObjectPrototype;
-
-        /**
-         * Array.prototype.length
-         */
-        @Value(name = "length", attributes = @Attributes(writable = true, enumerable = false,
-                configurable = false))
-        public static final int length = 0;
 
         /**
          * 22.1.3.2 Array.prototype.constructor
@@ -1089,7 +1098,7 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
         private static void sortSparse(ExecutionContext cx, OrdinaryObject obj, long length,
                 Object comparefn, boolean inherited) {
             // collect elements
-            ForwardIter collectIter = forwardIter((OrdinaryObject) obj, 0, length, inherited);
+            ForwardIter collectIter = forwardIter(obj, 0, length, inherited);
             int undefCount = 0;
             ArrayList<Object> elements = new ArrayList<>(Math.min(collectIter.size(), 1024));
             while (collectIter.hasNext()) {
@@ -1120,8 +1129,8 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
             // User-defined actions in comparefn may have invalidated sparse-array property
             IterationKind iterationDelete = iterationKind(obj, length);
             if (iterationDelete.isSparse()) {
-                for (ForwardIter deleteIter = forwardIter((OrdinaryObject) obj, count + undefCount,
-                        length, iterationDelete.isInherited()); deleteIter.hasNext();) {
+                ForwardIter deleteIter = forwardIter(obj, count + undefCount, length, iterationDelete.isInherited());
+                while (deleteIter.hasNext()) {
                     long p = deleteIter.next();
                     DeletePropertyOrThrow(cx, obj, p);
                 }
@@ -2101,6 +2110,9 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
             status &= CreateDataProperty(cx, blackList, "fill", true);
             status &= CreateDataProperty(cx, blackList, "find", true);
             status &= CreateDataProperty(cx, blackList, "findIndex", true);
+            if (cx.getRealm().isEnabled(CompatibilityOption.ArrayIncludes)) {
+                status &= CreateDataProperty(cx, blackList, "includes", true);
+            }
             status &= CreateDataProperty(cx, blackList, "keys", true);
             status &= CreateDataProperty(cx, blackList, "values", true);
             /* step 9 */
@@ -2231,17 +2243,17 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
         @Function(name = "includes", arity = 1)
         public static Object includes(ExecutionContext cx, Object thisValue, Object searchElement,
                 Object fromIndex) {
-            /* steps 1-2 */
+            /* step 1 */
             ScriptObject o = ToObject(cx, thisValue);
-            /* steps 3-4 */
+            /* step 2 */
             long len = ToLength(cx, Get(cx, o, "length"));
-            /* step 5 */
+            /* step 3 */
             if (len == 0) {
                 return false;
             }
-            /* steps 6-7 */
+            /* step 4 */
             long n = (long) ToInteger(cx, fromIndex);
-            /* steps 8-9 */
+            /* steps 5-6 */
             long k;
             if (n >= 0) {
                 k = n;
@@ -2251,16 +2263,16 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
                     k = 0;
                 }
             }
-            /* step 10 */
+            /* step 7 */
             for (; k < len; ++k) {
-                /* steps 10.a-b */
+                /* step 7.a */
                 Object element = Get(cx, o, k);
-                /* step 10.c */
+                /* step 10.b */
                 if (SameValueZero(searchElement, element)) {
                     return true;
                 }
             }
-            /* step 11 */
+            /* step 8 */
             return false;
         }
     }

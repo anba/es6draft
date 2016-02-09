@@ -314,8 +314,9 @@ public final class Properties {
                 case String:
                     return optional.stringValue();
                 case NONE:
-                default:
                     return null;
+                default:
+                    throw new AssertionError();
                 }
             }
         }
@@ -328,6 +329,7 @@ public final class Properties {
         }
     };
 
+    // TODO: Consider adding SoftReference to avoid mem-leaks
     private static ClassValue<ObjectLayout> externalLayouts = new ClassValue<ObjectLayout>() {
         @Override
         protected ObjectLayout computeValue(Class<?> type) {

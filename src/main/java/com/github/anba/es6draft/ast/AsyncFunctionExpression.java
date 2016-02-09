@@ -123,7 +123,7 @@ public final class AsyncFunctionExpression extends Expression implements AsyncFu
 
     @Override
     public boolean isConstructor() {
-        return true;
+        return false;
     }
 
     @Override

@@ -12,10 +12,8 @@ import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
-import java.util.Set;
 
 import com.github.anba.es6draft.parser.JSONParser;
 import com.github.anba.es6draft.parser.ParserException;
@@ -81,8 +79,7 @@ public final class JSONObject extends OrdinaryObject implements Initializable {
          * @return the parsed JSON value
          */
         @Function(name = "parse", arity = 2)
-        public static Object parse(ExecutionContext cx, Object thisValue, Object text,
-                Object reviver) {
+        public static Object parse(ExecutionContext cx, Object thisValue, Object text, Object reviver) {
             /* steps 1-2 */
             String jtext = ToFlatString(cx, text);
             /* steps 3-7 */
@@ -90,9 +87,8 @@ public final class JSONObject extends OrdinaryObject implements Initializable {
             try {
                 unfiltered = JSONParser.parse(cx, jtext);
             } catch (ParserException e) {
-                throw newSyntaxError(cx, e, Messages.Key.JSONInvalidLiteral,
-                        e.getFormattedMessage(cx.getRealm()), Integer.toString(e.getLine()),
-                        Integer.toString(e.getColumn()));
+                throw newSyntaxError(cx, e, Messages.Key.JSONInvalidLiteral, e.getFormattedMessage(cx.getRealm()),
+                        Integer.toString(e.getLine()), Integer.toString(e.getColumn()));
             }
             /* step 8 */
             if (IsCallable(reviver)) {
@@ -122,12 +118,9 @@ public final class JSONObject extends OrdinaryObject implements Initializable {
          * @return the JSON string
          */
         @Function(name = "stringify", arity = 3)
-        public static Object stringify(ExecutionContext cx, Object thisValue, Object value,
-                Object replacer, Object space) {
-            /* step 1 */
-            HashSet<ScriptObject> stack = new HashSet<>();
-            /* step 2 */
-            String indent = "";
+        public static Object stringify(ExecutionContext cx, Object thisValue, Object value, Object replacer,
+                Object space) {
+            /* steps 1-2 (not applicable) */
             /* step 3 */
             LinkedHashSet<String> propertyList = null;
             Callable replacerFunction = null;
@@ -184,12 +177,13 @@ public final class JSONObject extends OrdinaryObject implements Initializable {
             boolean status = CreateDataProperty(cx, wrapper, "", value);
             assert status;
             /* step 12 */
-            String result = SerializeJSONProperty(cx, stack, propertyList, replacerFunction,
-                    indent, gap, "", wrapper);
-            if (result == null) {
+            JSONSerializer serializer = new JSONSerializer(propertyList, replacerFunction, gap);
+            value = TransformJSONValue(cx, serializer, wrapper, "", value);
+            if (!IsJSONSerializable(value)) {
                 return UNDEFINED;
             }
-            return result;
+            SerializeJSONValue(cx, serializer, value);
+            return serializer.result.toString();
         }
 
         /**
@@ -213,18 +207,13 @@ public final class JSONObject extends OrdinaryObject implements Initializable {
      *            the property key
      * @return the result value
      */
-    public static Object InternalizeJSONProperty(ExecutionContext cx, Callable reviver,
-            ScriptObject holder, String name) {
+    private static Object InternalizeJSONProperty(ExecutionContext cx, Callable reviver, ScriptObject holder,
+            String name) {
         /* steps 1-2 */
         Object val = Get(cx, holder, name);
         /* step 3 */
         if (Type.isObject(val)) {
-            ScriptObject objVal = Type.objectValue(val);
-            if (IsArray(cx, objVal)) {
-                internalizeArray(cx, reviver, objVal);
-            } else {
-                internalizeObject(cx, reviver, objVal);
-            }
+            InternalizeJSONValue(cx, reviver, Type.objectValue(val));
         }
         /* step 4 */
         return reviver.call(cx, holder, name, val);
@@ -243,45 +232,60 @@ public final class JSONObject extends OrdinaryObject implements Initializable {
      *            the property key
      * @return the result value
      */
-    public static Object InternalizeJSONProperty(ExecutionContext cx, Callable reviver,
-            ScriptObject holder, long name) {
+    private static Object InternalizeJSONProperty(ExecutionContext cx, Callable reviver, ScriptObject holder,
+            long name) {
         /* steps 1-2 */
         Object val = Get(cx, holder, name);
         /* step 3 */
         if (Type.isObject(val)) {
-            ScriptObject objVal = Type.objectValue(val);
-            if (IsArray(cx, objVal)) {
-                internalizeArray(cx, reviver, objVal);
-            } else {
-                internalizeObject(cx, reviver, objVal);
-            }
+            InternalizeJSONValue(cx, reviver, Type.objectValue(val));
         }
         /* step 4 */
         return reviver.call(cx, holder, ToString(name), val);
     }
 
-    private static void internalizeArray(ExecutionContext cx, Callable reviver, ScriptObject val) {
-        /* step 3.c */
-        long len = ToLength(cx, Get(cx, val, "length"));
-        for (long i = 0; i < len; ++i) {
-            Object newElement = InternalizeJSONProperty(cx, reviver, val, i);
-            if (Type.isUndefined(newElement)) {
-                val.delete(cx, i);
-            } else {
-                CreateDataProperty(cx, val, i, newElement);
+    private static void InternalizeJSONValue(ExecutionContext cx, Callable reviver, ScriptObject val) {
+        /* InternalizeJSONProperty, step 3 */
+        /* steps 3.a-b */
+        boolean isArray = IsArray(cx, val);
+        /* steps 3.c-d */
+        if (isArray) {
+            /* step 3.c */
+            long len = ToLength(cx, Get(cx, val, "length"));
+            for (long i = 0; i < len; ++i) {
+                Object newElement = InternalizeJSONProperty(cx, reviver, val, i);
+                if (Type.isUndefined(newElement)) {
+                    val.delete(cx, i);
+                } else {
+                    CreateDataProperty(cx, val, i, newElement);
+                }
+            }
+        } else {
+            /* step 3.d */
+            for (String p : EnumerableOwnNames(cx, val)) {
+                Object newElement = InternalizeJSONProperty(cx, reviver, val, p);
+                if (Type.isUndefined(newElement)) {
+                    val.delete(cx, p);
+                } else {
+                    CreateDataProperty(cx, val, p, newElement);
+                }
             }
         }
     }
 
-    private static void internalizeObject(ExecutionContext cx, Callable reviver, ScriptObject val) {
-        /* step 3.d */
-        for (String p : EnumerableOwnNames(cx, val)) {
-            Object newElement = InternalizeJSONProperty(cx, reviver, val, p);
-            if (Type.isUndefined(newElement)) {
-                val.delete(cx, p);
-            } else {
-                CreateDataProperty(cx, val, p, newElement);
-            }
+    private static final class JSONSerializer {
+        final HashSet<ScriptObject> stack;
+        final HashSet<String> propertyList;
+        final Callable replacerFunction;
+        final String gap;
+        final StringBuilder result = new StringBuilder();
+        int level = 0;
+
+        JSONSerializer(HashSet<String> propertyList, Callable replacerFunction, String gap) {
+            this.stack = new HashSet<>();
+            this.propertyList = propertyList;
+            this.replacerFunction = replacerFunction;
+            this.gap = gap;
         }
     }
 
@@ -290,27 +294,19 @@ public final class JSONObject extends OrdinaryObject implements Initializable {
      * 
      * @param cx
      *            the execution context
-     * @param stack
-     *            the current stack
-     * @param propertyList
-     *            the set of property keys to visit
-     * @param replacerFunction
-     *            the replacer function
-     * @param indent
-     *            the current indentation
-     * @param gap
-     *            the string gap
-     * @param key
-     *            the property key
+     * @param serializer
+     *            the serializer state
      * @param holder
      *            the script object
-     * @return the JSON string
+     * @param key
+     *            the property key
+     * @param value
+     *            the property value
+     * @return the transformed property value
      */
-    public static String SerializeJSONProperty(ExecutionContext cx, Set<ScriptObject> stack,
-            Set<String> propertyList, Callable replacerFunction, String indent, String gap,
-            String key, ScriptObject holder) {
-        /* steps 1-2 */
-        Object value = Get(cx, holder, key);
+    private static Object TransformJSONValue(ExecutionContext cx, JSONSerializer serializer, ScriptObject holder,
+            String key, Object value) {
+        /* steps 1-2 (not applicable) */
         /* step 3 */
         if (Type.isObject(value)) {
             Object toJSON = Get(cx, Type.objectValue(value), "toJSON");
@@ -319,67 +315,113 @@ public final class JSONObject extends OrdinaryObject implements Initializable {
             }
         }
         /* step 4 */
-        if (replacerFunction != null) {
-            value = replacerFunction.call(cx, holder, key, value);
+        if (serializer.replacerFunction != null) {
+            value = serializer.replacerFunction.call(cx, holder, key, value);
         }
-        /* step 5 */
-        if (Type.isObject(value)) {
-            ScriptObject o = Type.objectValue(value);
-            if (o instanceof NumberObject) {
-                value = ToNumber(cx, value);
-            } else if (o instanceof StringObject) {
-                value = ToString(cx, value);
-            } else if (o instanceof BooleanObject) {
-                value = ((BooleanObject) o).getBooleanData();
-            }
-        }
-        /* steps 6-12 */
+        return value;
+    }
+
+    /**
+     * 24.3.2.1 Runtime Semantics: SerializeJSONProperty (key, holder )
+     * 
+     * @param cx
+     *            the execution context
+     * @param serializer
+     *            the serializer state
+     * @param value
+     *            the property value
+     */
+    private static void SerializeJSONValue(ExecutionContext cx, JSONSerializer serializer, Object value) {
+        /* steps 1-4 (not applicable) */
+        /* steps 5-12 */
         switch (Type.of(value)) {
         case Null:
-            return "null";
+            SerializeJSONNull(serializer);
+            return;
         case Boolean:
-            return Type.booleanValue(value) ? "true" : "false";
+            SerializeJSONBoolean(serializer, Type.booleanValue(value));
+            return;
         case String:
-            return QuoteJSONString(Type.stringValue(value));
+            SerializeJSONString(serializer, Type.stringValue(value));
+            return;
         case Number:
-            double d = Type.numberValue(value);
-            return isFinite(d) ? ToString(d) : "null";
+            SerializeJSONNumber(serializer, Type.numberValue(value));
+            return;
         case Object:
-            if (!IsCallable(value)) {
-                ScriptObject valueObj = Type.objectValue(value);
-                if (IsArray(cx, valueObj)) {
-                    return SerializeJSONArray(cx, stack, propertyList, replacerFunction, indent,
-                            gap, valueObj);
-                } else {
-                    return SerializeJSONObject(cx, stack, propertyList, replacerFunction, indent,
-                            gap, valueObj);
-                }
+            assert !IsCallable(value);
+            ScriptObject valueObj = Type.objectValue(value);
+            if (valueObj instanceof NumberObject) {
+                SerializeJSONNumber(serializer, ToNumber(cx, value));
+            } else if (valueObj instanceof StringObject) {
+                SerializeJSONString(serializer, ToString(cx, value));
+            } else if (valueObj instanceof BooleanObject) {
+                SerializeJSONBoolean(serializer, ((BooleanObject) valueObj).getBooleanData());
+            } else if (IsArray(cx, valueObj)) {
+                SerializeJSONArray(cx, serializer, valueObj);
             } else {
-                return null;
+                SerializeJSONObject(cx, serializer, valueObj);
             }
+            return;
         case Undefined:
         case Symbol:
         default:
-            return null;
+            throw new AssertionError();
         }
     }
 
-    private static boolean isFinite(double v) {
-        return !(Double.isNaN(v) || Double.isInfinite(v));
+    private static void SerializeJSONNull(JSONSerializer serializer) {
+        serializer.result.append("null");
     }
 
-    private static final char[] HEXDIGITS = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-            'a', 'b', 'c', 'd', 'e', 'f' };
+    private static void SerializeJSONBoolean(JSONSerializer serializer, boolean b) {
+        serializer.result.append(b);
+    }
+
+    private static void SerializeJSONNumber(JSONSerializer serializer, double v) {
+        if (Double.isNaN(v) || Double.isInfinite(v)) {
+            serializer.result.append("null");
+        } else {
+            serializer.result.append(ToString(v));
+        }
+    }
+
+    private static void SerializeJSONString(JSONSerializer serializer, CharSequence string) {
+        QuoteJSONString(serializer.result, string.toString());
+    }
+
+    private static boolean IsJSONSerializable(Object value) {
+        switch (Type.of(value)) {
+        case Boolean:
+        case Null:
+        case String:
+        case Number:
+            return true;
+        case Object:
+            return !IsCallable(value);
+        case Undefined:
+        case Symbol:
+            return false;
+        default:
+            throw new AssertionError();
+        }
+    }
+
+    /* @formatter:off */
+    private static final char[] HEXDIGITS = {
+            '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'
+    };
+    /* @formatter:on */
 
     /**
      * 24.3.2.2 Runtime Semantics: QuoteJSONString ( value )
      * 
+     * @param product
+     *            the output string builder
      * @param value
      *            the string
-     * @return the quoted string
      */
-    public static String QuoteJSONString(CharSequence value) {
-        StringBuilder product = new StringBuilder(value.length() + 2);
+    private static void QuoteJSONString(StringBuilder product, String value) {
+        product.ensureCapacity(value.length() + 2);
         /* step 1 */
         product.append('"');
         /* step 2 */
@@ -407,11 +449,13 @@ public final class JSONObject extends OrdinaryObject implements Initializable {
                 break;
             default:
                 if (c < ' ') {
-                    product.append('\\').append('u')//
-                            .append(HEXDIGITS[(c >> 12) & 0xf])//
-                            .append(HEXDIGITS[(c >> 8) & 0xf])//
-                            .append(HEXDIGITS[(c >> 4) & 0xf])//
+                    /* @formatter:off */
+                    product.append('\\').append('u')
+                            .append(HEXDIGITS[(c >> 12) & 0xf])
+                            .append(HEXDIGITS[(c >> 8) & 0xf])
+                            .append(HEXDIGITS[(c >> 4) & 0xf])
                             .append(HEXDIGITS[(c >> 0) & 0xf]);
+                    /* @formatter:on */
                 } else {
                     product.append(c);
                 }
@@ -419,8 +463,7 @@ public final class JSONObject extends OrdinaryObject implements Initializable {
         }
         /* step 3 */
         product.append('"');
-        /* step 4 */
-        return product.toString();
+        /* step 4 (not applicable) */
     }
 
     /**
@@ -428,81 +471,60 @@ public final class JSONObject extends OrdinaryObject implements Initializable {
      * 
      * @param cx
      *            the execution context
-     * @param stack
-     *            the current stack
-     * @param propertyList
-     *            the set of property keys to visit
-     * @param replacerFunction
-     *            the replacer function
-     * @param indent
-     *            the current indentation
-     * @param gap
-     *            the string gap
+     * @param serializer
+     *            the serializer state
      * @param value
      *            the script object
-     * @return the JSON string
      */
-    public static String SerializeJSONObject(ExecutionContext cx, Set<ScriptObject> stack,
-            Set<String> propertyList, Callable replacerFunction, String indent, String gap,
-            ScriptObject value) {
+    private static void SerializeJSONObject(ExecutionContext cx, JSONSerializer serializer, ScriptObject value) {
         /* steps 1-2 */
-        if (!stack.add(value)) {
+        if (!serializer.stack.add(value)) {
             throw newTypeError(cx, Messages.Key.JSONCyclicValue);
         }
-        /* step 3 */
-        String stepback = indent;
-        /* step 4 */
-        indent = indent + gap;
+        /* steps 3-4 (not applicable) */
         /* steps 5-6 */
         Iterable<String> k;
-        if (propertyList != null) {
-            k = propertyList;
+        if (serializer.propertyList != null) {
+            k = serializer.propertyList;
         } else {
             k = EnumerableOwnNames(cx, value);
         }
-        /* step 7 */
-        ArrayList<String> partial = new ArrayList<>();
-        /* step 8 */
+        /* step 7 (not applicable) */
+        /* steps 8-10 */
+        boolean isEmpty = true;
+        String gap = serializer.gap;
+        StringBuilder result = serializer.result;
+        result.append('{');
+        serializer.level += 1;
         for (String p : k) {
-            String strP = SerializeJSONProperty(cx, stack, propertyList, replacerFunction, indent,
-                    gap, p, value);
-            if (strP != null) {
-                StringBuilder member = new StringBuilder(p.length() + strP.length() + 4);
-                member.append(QuoteJSONString(p)).append(':');
-                if (!gap.isEmpty()) {
-                    member.append(' ');
-                }
-                member.append(strP);
-                partial.add(member.toString());
+            // Inlined: SerializeJSONProperty
+            Object v = Get(cx, value, p);
+            v = TransformJSONValue(cx, serializer, value, p, v);
+            if (!IsJSONSerializable(v)) {
+                continue;
             }
-        }
-        /* steps 9-10 */
-        String _final;
-        if (partial.isEmpty()) {
-            _final = "{}";
-        } else {
-            if (gap.isEmpty()) {
-                StringBuilder properties = new StringBuilder();
-                for (String p : partial) {
-                    properties.append(',').append(p);
-                }
-                properties.append('}').setCharAt(0, '{');
-                _final = properties.toString();
-            } else {
-                StringBuilder properties = new StringBuilder();
-                String separator = ",\n" + indent;
-                for (String p : partial) {
-                    properties.append(separator).append(p);
-                }
-                properties.append('\n').append(stepback).append('}').setCharAt(0, '{');
-                _final = properties.toString();
+            if (!isEmpty) {
+                result.append(',');
             }
+            isEmpty = false;
+            if (!gap.isEmpty()) {
+                indent(serializer, result);
+            }
+            QuoteJSONString(result, p);
+            result.append(':');
+            if (!gap.isEmpty()) {
+                result.append(' ');
+            }
+            SerializeJSONValue(cx, serializer, v);
         }
+        serializer.level -= 1;
+        if (!isEmpty && !gap.isEmpty()) {
+            indent(serializer, result);
+        }
+        result.append('}');
         /* step 11 */
-        stack.remove(value);
-        /* step 12 (not applicable) */
-        /* step 13 */
-        return _final;
+        serializer.stack.remove(value);
+        /* steps 12-13 (not applicable) */
     }
 
     /**
@@ -510,71 +532,61 @@ public final class JSONObject extends OrdinaryObject implements Initializable {
      * 
      * @param cx
      *            the execution context
-     * @param stack
-     *            the current stack
-     * @param propertyList
-     *            the set of property keys to visit
-     * @param replacerFunction
-     *            the replacer function
-     * @param indent
-     *            the current indentation
-     * @param gap
-     *            the string gap
+     * @param serializer
+     *            the serializer state
      * @param value
      *            the script array object
-     * @return the JSON string
+     * @param stack
+     *            the current stack
      */
-    public static String SerializeJSONArray(ExecutionContext cx, Set<ScriptObject> stack,
-            Set<String> propertyList, Callable replacerFunction, String indent, String gap,
-            ScriptObject value) {
+    private static void SerializeJSONArray(ExecutionContext cx, JSONSerializer serializer, ScriptObject value) {
         /* steps 1-2 */
-        if (!stack.add(value)) {
+        if (!serializer.stack.add(value)) {
             throw newTypeError(cx, Messages.Key.JSONCyclicValue);
         }
-        /* step 3 */
-        String stepback = indent;
-        /* step 4 */
-        indent = indent + gap;
-        /* step 5 */
-        ArrayList<String> partial = new ArrayList<>();
+        /* steps 3-5 (not applicable) */
         /* steps 6-7 */
         long len = ToLength(cx, Get(cx, value, "length"));
-        /* steps 8-9 */
-        for (long index = 0; index < len; ++index) {
-            String strP = SerializeJSONProperty(cx, stack, propertyList, replacerFunction, indent,
-                    gap, ToString(index), value);
-            if (strP == null) {
-                partial.add("null");
-            } else {
-                partial.add(strP);
+        /* steps 8-11 */
+        String gap = serializer.gap;
+        StringBuilder result = serializer.result;
+        result.append('[');
+        if (len > 0) {
+            serializer.level += 1;
+            for (long index = 0; index < len; ++index) {
+                if (!gap.isEmpty()) {
+                    indent(serializer, result);
+                }
+                // Inlined: SerializeJSONProperty
+                Object v = Get(cx, value, index);
+                v = TransformJSONValue(cx, serializer, value, ToString(index), v);
+                if (!IsJSONSerializable(v)) {
+                    result.append("null");
+                } else {
+                    SerializeJSONValue(cx, serializer, v);
+                }
+                if (index + 1 < len) {
+                    result.append(',');
+                }
+            }
+            serializer.level -= 1;
+            if (!gap.isEmpty()) {
+                indent(serializer, result);
             }
         }
-        /* steps 10-11 */
-        String _final;
-        if (partial.isEmpty()) {
-            _final = "[]";
-        } else {
-            if (gap.isEmpty()) {
-                StringBuilder properties = new StringBuilder();
-                for (String p : partial) {
-                    properties.append(',').append(p);
-                }
-                properties.append(']').setCharAt(0, '[');
-                _final = properties.toString();
-            } else {
-                StringBuilder properties = new StringBuilder();
-                String separator = ",\n" + indent;
-                for (String p : partial) {
-                    properties.append(separator).append(p);
-                }
-                properties.append('\n').append(stepback).append(']').setCharAt(0, '[');
-                _final = properties.toString();
-            }
-        }
+        result.append(']');
         /* step 12 */
-        stack.remove(value);
-        /* step 13 (not applicable) */
-        /* step 14 */
-        return _final;
+        serializer.stack.remove(value);
+        /* steps 13-14 (not applicable) */
+    }
+
+    private static void indent(JSONSerializer serializer, StringBuilder sb) {
+        int level = serializer.level;
+        String gap = serializer.gap;
+        sb.ensureCapacity(1 + level * gap.length());
+        sb.append('\n');
+        for (int i = 0; i < level; ++i) {
+            sb.append(gap);
+        }
     }
 }

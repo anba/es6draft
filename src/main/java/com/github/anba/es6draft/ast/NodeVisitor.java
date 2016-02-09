@@ -101,13 +101,13 @@ public interface NodeVisitor<R, V> {
 
     R visit(EmptyStatement node, V value);
 
+    R visit(ExportClause node, V value);
+
     R visit(ExportDeclaration node, V value);
 
     R visit(ExportDefaultExpression node, V value);
 
     R visit(ExportSpecifier node, V value);
-
-    R visit(ExportClause node, V value);
 
     R visit(ExpressionMethod node, V value);
 
@@ -145,17 +145,11 @@ public interface NodeVisitor<R, V> {
 
     R visit(IfStatement node, V value);
 
+    R visit(ImportClause node, V value);
+
     R visit(ImportDeclaration node, V value);
 
     R visit(ImportSpecifier node, V value);
-
-    R visit(ImportClause node, V value);
-
-    R visit(SpreadArrayLiteral node, V value);
-
-    R visit(SpreadElementMethod node, V value);
-
-    R visit(PropertyDefinitionsMethod node, V value);
 
     R visit(LabelledFunctionStatement node, V value);
 
@@ -201,6 +195,8 @@ public interface NodeVisitor<R, V> {
 
     R visit(PropertyAccessor node, V value);
 
+    R visit(PropertyDefinitionsMethod node, V value);
+
     R visit(PropertyNameDefinition node, V value);
 
     R visit(PropertyValueDefinition node, V value);
@@ -211,7 +207,11 @@ public interface NodeVisitor<R, V> {
 
     R visit(Script node, V value);
 
+    R visit(SpreadArrayLiteral node, V value);
+
     R visit(SpreadElement node, V value);
+
+    R visit(SpreadElementMethod node, V value);
 
     R visit(SpreadProperty node, V value);
 

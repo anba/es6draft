@@ -33,10 +33,10 @@ import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
+import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
 import com.github.anba.es6draft.runtime.types.builtins.FunctionObject.ConstructorKind;
 import com.github.anba.es6draft.runtime.types.builtins.FunctionObject.FunctionKind;
-import com.github.anba.es6draft.runtime.types.builtins.OrdinaryConstructorFunction;
-import com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction;
+import com.github.anba.es6draft.runtime.types.builtins.LegacyConstructorFunction;
 
 /**
  * <h1>19 Fundamental Objects</h1><br>
@@ -71,7 +71,7 @@ public final class FunctionConstructor extends BuiltinConstructor implements Ini
      * 19.2.1.1 Function (p1, p2, ... , pn, body)
      */
     @Override
-    public OrdinaryFunction call(ExecutionContext callerContext, Object thisValue, Object... args) {
+    public FunctionObject call(ExecutionContext callerContext, Object thisValue, Object... args) {
         /* steps 1-3 */
         return CreateDynamicFunction(callerContext, calleeContext(), this, args);
     }
@@ -80,7 +80,7 @@ public final class FunctionConstructor extends BuiltinConstructor implements Ini
      * 19.2.1.1 Function (p1, p2, ... , pn, body)
      */
     @Override
-    public OrdinaryFunction construct(ExecutionContext callerContext, Constructor newTarget,
+    public FunctionObject construct(ExecutionContext callerContext, Constructor newTarget,
             Object... args) {
         /* steps 1-3 */
         return CreateDynamicFunction(callerContext, calleeContext(), newTarget, args);
@@ -99,7 +99,7 @@ public final class FunctionConstructor extends BuiltinConstructor implements Ini
      *            the function arguments
      * @return the new function object
      */
-    private static OrdinaryConstructorFunction CreateDynamicFunction(
+    private static FunctionObject CreateDynamicFunction(
             ExecutionContext callerContext, ExecutionContext cx, Constructor newTarget,
             Object... args) {
         /* step 1 (not applicable) */
@@ -136,7 +136,7 @@ public final class FunctionConstructor extends BuiltinConstructor implements Ini
      *            the compiled function
      * @return the new function object
      */
-    public static OrdinaryConstructorFunction CreateDynamicFunction(ExecutionContext cx,
+    public static FunctionObject CreateDynamicFunction(ExecutionContext cx,
             Source source, RuntimeInfo.Function function) {
         return CreateDynamicFunction(cx, source, function,
                 (Constructor) cx.getIntrinsic(Intrinsics.Function), Intrinsics.FunctionPrototype);
@@ -157,7 +157,7 @@ public final class FunctionConstructor extends BuiltinConstructor implements Ini
      *            the fallback prototype
      * @return the new function object
      */
-    private static OrdinaryConstructorFunction CreateDynamicFunction(ExecutionContext cx,
+    private static FunctionObject CreateDynamicFunction(ExecutionContext cx,
             Source source, RuntimeInfo.Function function, Constructor newTarget,
             Intrinsics fallbackProto) {
         /* steps 1-11, 13-20 (not applicable) */
@@ -166,19 +166,29 @@ public final class FunctionConstructor extends BuiltinConstructor implements Ini
         /* steps 21-22 */
         ScriptObject proto = GetPrototypeFromConstructor(cx, newTarget, fallbackProto);
         /* step 23 */
-        OrdinaryConstructorFunction f = FunctionAllocate(cx, proto, strict, FunctionKind.Normal,
-                ConstructorKind.Base);
+        FunctionObject f;
+        if (function.is(RuntimeInfo.FunctionFlags.Legacy)) {
+            assert !strict;
+            f = LegacyConstructorFunction.FunctionAllocate(cx, proto);
+        } else {
+            f = FunctionAllocate(cx, proto, strict, FunctionKind.Normal, ConstructorKind.Base);
+        }
         /* steps 24-25 */
         LexicalEnvironment<GlobalEnvironmentRecord> scope = f.getRealm().getGlobalEnv();
         /* step 26 */
         FunctionInitialize(f, FunctionKind.Normal, function, scope, newFunctionExecutable(source));
         /* step 27 (not applicable) */
-        /* steps 28 */
-        MakeConstructor(cx, f);
+        /* step 28 */
+        MakeConstructor(cx, uncheckedCast(f));
         /* step 29 */
         SetFunctionName(f, "anonymous");
         /* step 30 */
         return f;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static <T extends FunctionObject & Constructor> T uncheckedCast(FunctionObject f) {
+        return (T) f;
     }
 
     /**
@@ -237,7 +247,7 @@ public final class FunctionConstructor extends BuiltinConstructor implements Ini
         if (baseSource != null) {
             sourceName = String.format("<%s> (%s)", kind.name(), baseSource.getName());
         } else {
-            sourceName = "<%s>";
+            sourceName = String.format("<%s>", kind.name());
         }
         return new Source(baseSource, sourceName, 1);
     }
@@ -287,13 +297,6 @@ public final class FunctionConstructor extends BuiltinConstructor implements Ini
         public static final Intrinsics __proto__ = Intrinsics.FunctionPrototype;
 
         /**
-         * 19.2.2.2 Function.prototype
-         */
-        @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = false))
-        public static final Intrinsics prototype = Intrinsics.FunctionPrototype;
-
-        /**
          * 19.2.2.1 Function.length
          */
         @Value(name = "length", attributes = @Attributes(writable = false, enumerable = false,
@@ -303,5 +306,12 @@ public final class FunctionConstructor extends BuiltinConstructor implements Ini
         @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = true))
         public static final String name = "Function";
+
+        /**
+         * 19.2.2.2 Function.prototype
+         */
+        @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
+                configurable = false))
+        public static final Intrinsics prototype = Intrinsics.FunctionPrototype;
     }
 }

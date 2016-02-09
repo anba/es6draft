@@ -22,12 +22,6 @@ import com.ibm.icu.util.ULocale;
  * </ul>
  */
 public class NumberFormatObject extends OrdinaryObject {
-    /** [[initializedIntlObject]] */
-    private boolean initializedIntlObject;
-
-    /** [[initializedNumberFormat]] */
-    private boolean initializedNumberFormat;
-
     /** [[locale]] */
     private String locale;
 
@@ -127,44 +121,6 @@ public class NumberFormatObject extends OrdinaryObject {
         // returns "111111111111111.02"
         numberFormat.setRoundingMode(BigDecimal.ROUND_HALF_UP);
         return numberFormat;
-    }
-
-    /**
-     * [[initializedIntlObject]]
-     * 
-     * @return {@code true} if the Intl object is initialized
-     */
-    public boolean isInitializedIntlObject() {
-        return initializedIntlObject;
-    }
-
-    /**
-     * [[initializedIntlObject]]
-     * 
-     * @param initializedIntlObject
-     *            the new initialization state
-     */
-    public void setInitializedIntlObject(boolean initializedIntlObject) {
-        this.initializedIntlObject = initializedIntlObject;
-    }
-
-    /**
-     * [[initializedNumberFormat]]
-     * 
-     * @return {@code true} if the number format object is initialized
-     */
-    public boolean isInitializedNumberFormat() {
-        return initializedNumberFormat;
-    }
-
-    /**
-     * [[initializedNumberFormat]]
-     * 
-     * @param initializedNumberFormat
-     *            the new initialization state
-     */
-    public void setInitializedNumberFormat(boolean initializedNumberFormat) {
-        this.initializedNumberFormat = initializedNumberFormat;
     }
 
     /**

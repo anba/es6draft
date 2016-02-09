@@ -24,7 +24,7 @@ import com.github.anba.es6draft.runtime.types.Symbol;
  * <li>9.2 ECMAScript Function Objects
  * </ul>
  */
-public class OrdinaryFunction extends FunctionObject {
+public final class OrdinaryFunction extends FunctionObject {
     /**
      * Constructs a new Function object.
      * 
@@ -37,8 +37,7 @@ public class OrdinaryFunction extends FunctionObject {
 
     @Override
     protected OrdinaryFunction allocateNew() {
-        return FunctionAllocate(getRealm().defaultContext(), getPrototype(), isStrict(),
-                getFunctionKind());
+        return FunctionAllocate(getRealm().defaultContext(), getPrototype(), isStrict(), getFunctionKind());
     }
 
     /**
@@ -57,8 +56,7 @@ public class OrdinaryFunction extends FunctionObject {
      * 9.2.1 [[Call]] (thisArgument, argumentsList)
      */
     @Override
-    public Object tailCall(ExecutionContext callerContext, Object thisValue,
-            Object... argumentsList) throws Throwable {
+    public Object tailCall(ExecutionContext callerContext, Object thisValue, Object... argumentsList) throws Throwable {
         return getTailCallMethod().invokeExact(this, callerContext, thisValue, argumentsList);
     }
 
@@ -77,8 +75,8 @@ public class OrdinaryFunction extends FunctionObject {
      *            the function kind
      * @return the new function object
      */
-    public static OrdinaryFunction FunctionAllocate(ExecutionContext cx,
-            ScriptObject functionPrototype, boolean strict, FunctionKind functionKind) {
+    public static OrdinaryFunction FunctionAllocate(ExecutionContext cx, ScriptObject functionPrototype, boolean strict,
+            FunctionKind functionKind) {
         assert !(functionKind == FunctionKind.Normal || functionKind == FunctionKind.ClassConstructor);
         Realm realm = cx.getRealm();
         /* steps 1-5 (implicit) */
@@ -104,8 +102,8 @@ public class OrdinaryFunction extends FunctionObject {
      * @param executable
      *            the executable object
      */
-    public static void FunctionInitialize(FunctionObject f, FunctionKind kind,
-            RuntimeInfo.Function function, LexicalEnvironment<?> scope, Executable executable) {
+    public static void FunctionInitialize(FunctionObject f, FunctionKind kind, RuntimeInfo.Function function,
+            LexicalEnvironment<?> scope, Executable executable) {
         /* step 1 */
         assert f.isExtensible() && !f.ordinaryHasOwnProperty("length");
         /* step 2 */
@@ -130,8 +128,8 @@ public class OrdinaryFunction extends FunctionObject {
      *            the lexical environment
      * @return the new function object
      */
-    public static OrdinaryFunction FunctionCreate(ExecutionContext cx, FunctionKind kind,
-            RuntimeInfo.Function function, LexicalEnvironment<?> scope) {
+    public static OrdinaryFunction FunctionCreate(ExecutionContext cx, FunctionKind kind, RuntimeInfo.Function function,
+            LexicalEnvironment<?> scope) {
         assert !function.isGenerator() && !function.isAsync();
         /* step 1 */
         ScriptObject functionPrototype = cx.getIntrinsic(Intrinsics.FunctionPrototype);
@@ -153,8 +151,8 @@ public class OrdinaryFunction extends FunctionObject {
      * @param realm
      *            the realm object
      */
-    public static <FUNCTION extends OrdinaryObject & Callable> void AddRestrictedFunctionProperties(
-            FUNCTION f, Realm realm) {
+    public static <FUNCTION extends OrdinaryObject & Callable> void AddRestrictedFunctionProperties(FUNCTION f,
+            Realm realm) {
         /* steps 1-2 */
         Callable thrower = realm.getThrowTypeError();
         /* steps 3-4 */
@@ -173,8 +171,8 @@ public class OrdinaryFunction extends FunctionObject {
      * @param f
      *            the function object
      */
-    public static <CONSTRUCTOR extends FunctionObject & Constructor> void MakeConstructor(
-            ExecutionContext cx, CONSTRUCTOR f) {
+    public static <CONSTRUCTOR extends FunctionObject & Constructor> void MakeConstructor(ExecutionContext cx,
+            CONSTRUCTOR f) {
         /* steps 1-2 (not applicable) */
         /* step 3 */
         assert f.isExtensible() && !f.ordinaryHasOwnProperty("prototype");
@@ -183,11 +181,9 @@ public class OrdinaryFunction extends FunctionObject {
         /* step 5.a */
         OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.ObjectPrototype);
         /* step 5.b-c */
-        prototype.infallibleDefineOwnProperty("constructor", new Property(f, writablePrototype,
-                false, true));
+        prototype.infallibleDefineOwnProperty("constructor", new Property(f, writablePrototype, false, true));
         /* steps 6-7 */
-        f.infallibleDefineOwnProperty("prototype", new Property(prototype, writablePrototype,
-                false, false));
+        f.infallibleDefineOwnProperty("prototype", new Property(prototype, writablePrototype, false, false));
         /* step 8 (return) */
     }
 
@@ -203,15 +199,14 @@ public class OrdinaryFunction extends FunctionObject {
      * @param prototype
      *            the prototype object
      */
-    public static <CONSTRUCTOR extends FunctionObject & Constructor> void MakeConstructor(
-            CONSTRUCTOR f, boolean writablePrototype, ScriptObject prototype) {
+    public static <CONSTRUCTOR extends FunctionObject & Constructor> void MakeConstructor(CONSTRUCTOR f,
+            boolean writablePrototype, ScriptObject prototype) {
         /* steps 1-2 (not applicable) */
         /* step 3 */
         assert f.isExtensible() && !f.ordinaryHasOwnProperty("prototype");
         /* steps 4-5 (not applicable) */
         /* steps 6-7 */
-        f.infallibleDefineOwnProperty("prototype", new Property(prototype, writablePrototype,
-                false, false));
+        f.infallibleDefineOwnProperty("prototype", new Property(prototype, writablePrototype, false, false));
         /* step 8 (return) */
     }
 
@@ -244,6 +239,21 @@ public class OrdinaryFunction extends FunctionObject {
     }
 
     /**
+     * 9.2.10 MakeMethod (F, homeObject)
+     * 
+     * @param f
+     *            the function object
+     * @param homeObject
+     *            the home object
+     */
+    public static void MakeMethod(FunctionObject f, OrdinaryObject homeObject) {
+        /* steps 1-2 (not applicable) */
+        /* step 3 */
+        f.toMethod(homeObject);
+        /* step 4 (return) */
+    }
+
+    /**
      * 9.2.11 SetFunctionName (F, name, prefix)
      * 
      * @param <FUNCTION>
@@ -253,8 +263,7 @@ public class OrdinaryFunction extends FunctionObject {
      * @param name
      *            the function name
      */
-    public static <FUNCTION extends OrdinaryObject & Callable> void SetFunctionName(FUNCTION f,
-            String name) {
+    public static <FUNCTION extends OrdinaryObject & Callable> void SetFunctionName(FUNCTION f, String name) {
         SetFunctionName(f, name, null);
     }
 
@@ -270,8 +279,8 @@ public class OrdinaryFunction extends FunctionObject {
      * @param prefix
      *            the function name prefix
      */
-    public static <FUNCTION extends OrdinaryObject & Callable> void SetFunctionName(FUNCTION f,
-            String name, String prefix) {
+    public static <FUNCTION extends OrdinaryObject & Callable> void SetFunctionName(FUNCTION f, String name,
+            String prefix) {
         /* step 1 */
         assert f.isExtensible() && !f.ordinaryHasOwnProperty("name");
         /* steps 2-4 (not applicable) */
@@ -293,8 +302,7 @@ public class OrdinaryFunction extends FunctionObject {
      * @param name
      *            the function name
      */
-    public static <FUNCTION extends OrdinaryObject & Callable> void SetFunctionName(FUNCTION f,
-            Symbol name) {
+    public static <FUNCTION extends OrdinaryObject & Callable> void SetFunctionName(FUNCTION f, Symbol name) {
         SetFunctionName(f, name, null);
     }
 
@@ -310,8 +318,8 @@ public class OrdinaryFunction extends FunctionObject {
      * @param prefix
      *            the function name prefix
      */
-    public static <FUNCTION extends OrdinaryObject & Callable> void SetFunctionName(FUNCTION f,
-            Symbol name, String prefix) {
+    public static <FUNCTION extends OrdinaryObject & Callable> void SetFunctionName(FUNCTION f, Symbol name,
+            String prefix) {
         /* step 1 */
         assert f.isExtensible() && !f.ordinaryHasOwnProperty("name");
         /* steps 2-3 (not applicable) */

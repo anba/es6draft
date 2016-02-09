@@ -17,11 +17,25 @@ import java.util.regex.Pattern;
  */
 final class JDKMatchState implements MatchState, IterableMatchResult {
     private final Matcher matcher;
+    private final CharSequence string;
     private final BitSet negativeLAGroups;
 
-    public JDKMatchState(Matcher matcher, BitSet negativeLAGroups) {
+    public JDKMatchState(Matcher matcher, CharSequence string, BitSet negativeLAGroups) {
         this.matcher = matcher;
+        this.string = string;
         this.negativeLAGroups = negativeLAGroups;
+    }
+
+    private boolean isUnicode() {
+        return (matcher.pattern().flags() & Pattern.UNICODE_CASE) != 0;
+    }
+
+    private int toValidStartIndex(int start) {
+        // Don't start matching in middle of a surrogate pair.
+        if (start > 0 && Character.isSupplementaryCodePoint(Character.codePointAt(string, start - 1)) && isUnicode()) {
+            return start - 1;
+        }
+        return start;
     }
 
     @Override
@@ -38,22 +52,19 @@ final class JDKMatchState implements MatchState, IterableMatchResult {
     public MatchResult toMatchResult() {
         MatchResult matchResult = matcher.toMatchResult();
         assert matchResult instanceof Matcher;
-        return new JDKMatchState((Matcher) matchResult, negativeLAGroups);
-    }
-
-    @Override
-    public boolean find() {
-        return matcher.find();
+        return new JDKMatchState((Matcher) matchResult, string, negativeLAGroups);
     }
 
     @Override
     public boolean find(int start) {
-        return matcher.find(start);
+        int actualStart = toValidStartIndex(start);
+        return matcher.find(actualStart);
     }
 
     @Override
     public boolean matches(int start) {
-        return matcher.region(start, matcher.regionEnd()).lookingAt();
+        int actualStart = toValidStartIndex(start);
+        return matcher.region(actualStart, matcher.regionEnd()).lookingAt();
     }
 
     @Override

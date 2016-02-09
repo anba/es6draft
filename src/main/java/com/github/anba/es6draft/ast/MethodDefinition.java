@@ -82,18 +82,18 @@ public final class MethodDefinition extends PropertyDefinition implements Functi
     }
 
     /**
-     * Returns {@code true} if this method is a <tt>static</tt> class method definition.
+     * Returns {@code true} if this method is a <code>static</code> class method definition.
      * 
-     * @return {@code true} if this method is a <tt>static</tt> method definition
+     * @return {@code true} if this method is a <code>static</code> method definition
      */
     public boolean isStatic() {
         return allocation == MethodAllocation.Class;
     }
 
     /**
-     * Returns {@code true} if this method is a <tt>class constructor</tt> method definition.
+     * Returns {@code true} if this method is a <code>class constructor</code> method definition.
      * 
-     * @return {@code true} if this method is a <tt>class constructor</tt> method definition
+     * @return {@code true} if this method is a <code>class constructor</code> method definition
      */
     public boolean isClassConstructor() {
         switch (type) {
@@ -266,11 +266,11 @@ public final class MethodDefinition extends PropertyDefinition implements Functi
     @Override
     public boolean isConstructor() {
         switch (getType()) {
-        case AsyncFunction:
         case BaseConstructor:
         case DerivedConstructor:
         case Generator:
             return true;
+        case AsyncFunction:
         case Function:
         case Getter:
         case Setter:

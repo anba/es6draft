@@ -76,10 +76,7 @@ public final class ClassExpression extends Expression implements ClassDefinition
     }
 
     @Override
-    public List<? extends PropertyDefinition> getProperties() {
-        if (properties == null) {
-            return methods;
-        }
+    public List<PropertyDefinition> getProperties() {
         return properties;
     }
 

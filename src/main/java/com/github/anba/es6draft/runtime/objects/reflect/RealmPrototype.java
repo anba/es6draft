@@ -74,11 +74,7 @@ public final class RealmPrototype extends OrdinaryObject implements Initializabl
          */
         private static RealmObject thisRealmObject(ExecutionContext cx, Object value) {
             if (value instanceof RealmObject) {
-                RealmObject realmObject = (RealmObject) value;
-                if (realmObject.getRealm() != null) {
-                    return realmObject;
-                }
-                throw newTypeError(cx, Messages.Key.UninitializedObject);
+                return (RealmObject) value;
             }
             throw newTypeError(cx, Messages.Key.IncompatibleObject);
         }

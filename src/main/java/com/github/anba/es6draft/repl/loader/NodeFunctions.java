@@ -39,10 +39,8 @@ final class NodeFunctions {
     public static Callable createRequireFunction(ModuleRecord module) {
         ExecutionContext cx = module.getRealm().defaultContext();
         SourceIdentifier sourceId = module.getSourceCodeId();
-        Callable requireFn = createFunction(cx, new RequireFunction(sourceId),
-                RequireFunction.class);
-        Callable resolveFn = createFunction(cx, new ResolveFunction(sourceId),
-                ResolveFunction.class);
+        Callable requireFn = createFunction(cx, new RequireFunction(sourceId), RequireFunction.class);
+        Callable resolveFn = createFunction(cx, new ResolveFunction(sourceId), ResolveFunction.class);
         CreateDataProperty(cx, requireFn, "resolve", resolveFn);
         return requireFn;
     }
@@ -55,8 +53,8 @@ final class NodeFunctions {
         }
 
         @Function(name = "require", arity = 1)
-        public Object require(ExecutionContext cx, String moduleName) throws IOException,
-                ResolutionException, MalformedNameException {
+        public Object require(ExecutionContext cx, String moduleName)
+                throws IOException, ResolutionException, MalformedNameException {
             Realm realm = cx.getRealm();
             ModuleLoader moduleLoader = realm.getModuleLoader();
             SourceIdentifier normalizedName = moduleLoader.normalizeName(moduleName, identifier);

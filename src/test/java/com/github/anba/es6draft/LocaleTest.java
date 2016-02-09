@@ -8,11 +8,9 @@ package com.github.anba.es6draft;
 
 import static org.junit.Assert.assertEquals;
 
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.EnumSet;
 import java.util.Locale;
-import java.util.Set;
 import java.util.TimeZone;
 
 import org.junit.Test;
@@ -22,31 +20,37 @@ import com.github.anba.es6draft.parser.Parser;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.World;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
+import com.github.anba.es6draft.runtime.internal.RuntimeContext;
 import com.github.anba.es6draft.runtime.internal.ScriptLoader;
 import com.github.anba.es6draft.runtime.internal.Source;
 import com.github.anba.es6draft.runtime.modules.ModuleLoader;
 import com.github.anba.es6draft.runtime.modules.loader.FileModuleLoader;
-import com.github.anba.es6draft.runtime.objects.GlobalObject;
 
 /**
  *
  */
 public final class LocaleTest {
-    private static World<GlobalObject> newWorld(Locale locale) {
-        Set<CompatibilityOption> options = CompatibilityOption.StrictCompatibility();
-        Set<Parser.Option> parserOptions = EnumSet.noneOf(Parser.Option.class);
-        Set<Compiler.Option> compilerOptions = EnumSet.noneOf(Compiler.Option.class);
-        Path baseDir = Paths.get("").toAbsolutePath();
-        ScriptLoader scriptLoader = new ScriptLoader(options, parserOptions, compilerOptions);
-        ModuleLoader moduleLoader = new FileModuleLoader(scriptLoader, baseDir);
-        World<GlobalObject> world = new World<>(World.getDefaultGlobalObjectAllocator(),
-                moduleLoader, scriptLoader, locale, TimeZone.getDefault());
+    private static World newWorld(Locale locale) {
+        /* @formatter:off */
+        RuntimeContext context = new RuntimeContext.Builder()
+                                                   .setBaseDirectory(Paths.get("").toAbsolutePath())
+                                                   .setTimeZone(TimeZone.getDefault())
+                                                   .setLocale(locale)
+                                                   .setOptions(CompatibilityOption.StrictCompatibility())
+                                                   .setParserOptions(EnumSet.noneOf(Parser.Option.class))
+                                                   .setCompilerOptions(EnumSet.noneOf(Compiler.Option.class))
+                                                   .build();
+        /* @formatter:on */
+
+        ScriptLoader scriptLoader = new ScriptLoader(context);
+        ModuleLoader moduleLoader = new FileModuleLoader(context, scriptLoader);
+        World world = new World(context, moduleLoader, scriptLoader);
         return world;
     }
 
     private static Realm newRealm(String languageTag) throws Exception {
         Locale locale = new Locale.Builder().setLanguageTag(languageTag).build();
-        return newWorld(locale).newInitializedGlobal().getRealm();
+        return newWorld(locale).newInitializedRealm();
     }
 
     private static Object eval(Realm realm, String sourceCode) {
@@ -64,8 +68,8 @@ public final class LocaleTest {
     }
 
     private static String resolvedLocaleLookup(Realm realm, Intl constructor) {
-        String sourceCode = String.format(
-                "new Intl.%s({localeMatcher: 'lookup'}).resolvedOptions().locale", constructor);
+        String sourceCode = String.format("new Intl.%s({localeMatcher: 'lookup'}).resolvedOptions().locale",
+                constructor);
         return (String) eval(realm, sourceCode);
     }
 

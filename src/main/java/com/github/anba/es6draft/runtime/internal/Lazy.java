@@ -25,7 +25,7 @@ public abstract class Lazy<VALUE> {
      * 
      * @return the computed value
      */
-    public VALUE get() {
+    public final VALUE get() {
         if (value == null) {
             value = computeValue();
         }

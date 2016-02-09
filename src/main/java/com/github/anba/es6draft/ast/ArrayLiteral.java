@@ -46,7 +46,7 @@ public class ArrayLiteral extends ArrayInitializer {
     }
 
     /**
-     * Returns {@code true} if the <tt>ArrayLiteral</tt> has a trailing comma.
+     * Returns {@code true} if the <code>ArrayLiteral</code> has a trailing comma.
      * 
      * @return {@code true} if the array literal has a trailing comma
      */

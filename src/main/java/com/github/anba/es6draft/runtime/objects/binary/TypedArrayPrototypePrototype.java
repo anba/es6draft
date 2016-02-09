@@ -25,7 +25,9 @@ import java.util.Comparator;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.internal.*;
+import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
+import com.github.anba.es6draft.runtime.internal.Initializable;
+import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.Properties.Accessor;
 import com.github.anba.es6draft.runtime.internal.Properties.AliasFunction;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
@@ -34,7 +36,7 @@ import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Optional;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
-import com.github.anba.es6draft.runtime.objects.ArrayIteratorPrototype.ArrayIterationKind;
+import com.github.anba.es6draft.runtime.objects.ArrayIteratorObject.ArrayIterationKind;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Constructor;
@@ -74,9 +76,18 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
     private static final class TypedArrayPrototypeValues {
     }
 
-    public static boolean isBuiltinValues(Object next) {
-        return next instanceof NativeFunction
-                && ((NativeFunction) next).getId() == TypedArrayPrototypeValues.class;
+    /**
+     * Returns {@code true} if <var>values</var> is the built-in {@code %TypedArray%.prototype.values} function for the
+     * requested realm.
+     * 
+     * @param realm
+     *            the function realm
+     * @param values
+     *            the values function
+     * @return {@code true} if <var>values</var> is the built-in {@code %TypedArray%.prototype.values} function
+     */
+    public static boolean isBuiltinValues(Realm realm, Object values) {
+        return NativeFunction.isNative(realm, values, TypedArrayPrototypeValues.class);
     }
 
     /**
@@ -236,7 +247,7 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
          *            the target offset
          * @return the undefined value
          */
-        @Function(name = "set", arity = 2)
+        @Function(name = "set", arity = 1)
         public static Object set(ExecutionContext cx, Object thisValue, Object array, Object offset) {
             if (!(array instanceof TypedArrayObject)) {
                 // 22.2.3.22.1
@@ -1424,17 +1435,17 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
         @Function(name = "includes", arity = 1)
         public static Object includes(ExecutionContext cx, Object thisValue, Object searchElement,
                 Object fromIndex) {
-            /* steps 1-3 */
+            /* step 1 */
             TypedArrayObject o = ValidateTypedArray(cx, thisValue);
-            /* step 4 */
+            /* step 2 */
             long len = o.getArrayLength();
-            /* step 5 */
+            /* step 3 */
             if (len == 0) {
                 return false;
             }
-            /* steps 6-7 */
+            /* step 4 */
             long n = (long) ToInteger(cx, fromIndex);
-            /* steps 8-9 */
+            /* steps 5-6 */
             long k;
             if (n >= 0) {
                 k = n;
@@ -1444,16 +1455,21 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
                     k = 0;
                 }
             }
-            /* step 10 */
-            for (; k < len; ++k) {
-                /* steps 10.a-b */
-                Object element = o.elementGetDirect(cx, k);
-                /* step 10.c */
-                if (SameValueZero(searchElement, element)) {
-                    return true;
+            /* step 7 */
+            if (Type.isNumber(searchElement)) {
+                double needle = Type.numberValue(searchElement);
+                for (; k < len; ++k) {
+                    /* step 7.a */
+                    double element = o.elementGetDirect(cx, k);
+                    /* step 7.b */
+                    if (SameValueZero(needle, element)) {
+                        return true;
+                    }
                 }
+            } else if (k < len && IsDetachedBuffer(o.getBuffer())) {
+                throw newTypeError(cx, Messages.Key.BufferDetached);
             }
-            /* step 11 */
+            /* step 8 */
             return false;
         }
     }

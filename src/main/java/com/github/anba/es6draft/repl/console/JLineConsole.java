@@ -6,67 +6,54 @@
  */
 package com.github.anba.es6draft.repl.console;
 
-import static com.github.anba.es6draft.runtime.AbstractOperations.Get;
-import static com.github.anba.es6draft.runtime.AbstractOperations.HasProperty;
-import static com.github.anba.es6draft.runtime.AbstractOperations.ToObject;
-
 import java.io.FileDescriptor;
 import java.io.FileInputStream;
 import java.io.IOError;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.Reader;
+import java.io.Writer;
 import java.nio.charset.Charset;
-import java.util.ArrayList;
 import java.util.Formatter;
-import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import jline.Terminal;
 import jline.TerminalFactory;
 import jline.TerminalSupport;
 import jline.UnsupportedTerminal;
 import jline.console.ConsoleReader;
-import jline.console.completer.Completer;
-
-import com.github.anba.es6draft.runtime.ExecutionContext;
-import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.types.ScriptObject;
-import com.github.anba.es6draft.runtime.types.Type;
+import jline.console.completer.CandidateListCompletionHandler;
 
 /**
- * {@link ReplConsole} implementation for JLine based consoles
+ * {@link ShellConsole} implementation for JLine consoles.
  */
-public final class JLineConsole implements ReplConsole {
+public final class JLineConsole implements ShellConsole {
     private final ConsoleReader console;
     private final Formatter formatter;
+    private final JLineReader reader = new JLineReader();
+    private final PrintWriter writer = new PrintWriter(new JLineWriter(), true);
+    private final PrintWriter errorWriter = new PrintWriter(System.err);
 
     public JLineConsole(String programName) throws IOException {
-        this(newConsoleReader(programName));
-    }
-
-    public JLineConsole(ConsoleReader console) {
-        this.console = console;
+        this.console = newConsoleReader(programName);
         this.formatter = new Formatter(console.getOutput());
     }
 
     private static ConsoleReader newConsoleReader(String programName) throws IOException {
-        configureTerminalFlavors();
-        ConsoleReader consoleReader = new ConsoleReader(programName, new FileInputStream(
-                FileDescriptor.in), System.out, TerminalFactory.get(), getDefaultEncoding());
-        consoleReader.setExpandEvents(false);
-        return consoleReader;
-    }
-
-    private static void configureTerminalFlavors() {
         final boolean isWindows = isWindows();
         final String type = System.getProperty(TerminalFactory.JLINE_TERMINAL);
         if (isWindows && type == null) {
-            TerminalFactory.registerFlavor(TerminalFactory.Flavor.WINDOWS,
-                    UnsupportedTerminal.class);
+            TerminalFactory.registerFlavor(TerminalFactory.Flavor.WINDOWS, UnsupportedTerminal.class);
         } else if (isWindows && type.equalsIgnoreCase(TerminalFactory.UNIX)) {
             TerminalFactory.registerFlavor(TerminalFactory.Flavor.UNIX, CygwinTerminal.class);
         }
+        FileInputStream in = new FileInputStream(FileDescriptor.in);
+        Terminal terminal = TerminalFactory.get();
+        ConsoleReader consoleReader = new ConsoleReader(programName, in, System.out, terminal, getDefaultEncoding());
+        consoleReader.setExpandEvents(false);
+        return consoleReader;
     }
 
     private static boolean isWindows() {
@@ -77,8 +64,11 @@ public final class JLineConsole implements ReplConsole {
         return Charset.defaultCharset().name();
     }
 
-    public static final class CygwinTerminal extends TerminalSupport {
+    public static final class CygwinTerminal extends TerminalSupport /* implements Terminal2 */ {
         private final int width, height;
+        // private final HashSet<String> bools = new HashSet<>();
+        // private final HashMap<String, Integer> ints = new HashMap<>();
+        // private final HashMap<String, String> strings = new HashMap<>();
 
         public CygwinTerminal() {
             super(true);
@@ -97,6 +87,8 @@ public final class JLineConsole implements ReplConsole {
             super.init();
             setEchoEnabled(false);
             setAnsiSupported(true);
+
+            // InfoCmp.parseInfoCmp(InfoCmp.getAnsiCaps(), bools, ints, strings);
         }
 
         @Override
@@ -108,30 +100,85 @@ public final class JLineConsole implements ReplConsole {
         public int getHeight() {
             return height;
         }
+
+        // @Override
+        // public boolean getBooleanCapability(String capability) {
+        // return bools.contains(capability);
+        // }
+        //
+        // @Override
+        // public Integer getNumericCapability(String capability) {
+        // return ints.get(capability);
+        // }
+        //
+        // @Override
+        // public String getStringCapability(String capability) {
+        // return strings.get(capability);
+        // }
     }
 
-    @Override
-    public void addCompletion(Realm realm) {
-        console.addCompleter(new ShellCompleter(realm));
+    private final class JLineReader extends Reader {
+        private final StringBuilder buffer = new StringBuilder(2048);
+        private int pos;
+
+        @Override
+        public int read(char[] cbuf, int off, int len) throws IOException {
+            if (cbuf == null || off < 0 || len < 0 || off + len > cbuf.length) {
+                throw new IllegalArgumentException();
+            }
+            int n = 0;
+            while (n < len) {
+                int buffered = buffer.length() - pos;
+                if (buffered == 0) {
+                    pos = 0;
+                    buffer.setLength(0);
+                    buffer.append(console.readLine()).append(System.lineSeparator());
+                    buffered = buffer.length();
+                }
+                int r = Math.min(buffered, len - n);
+                buffer.getChars(pos, pos + r, cbuf, off + n);
+                pos += r;
+                n += r;
+            }
+            return n;
+        }
+
+        @Override
+        public void close() throws IOException {
+            // not applicable
+        }
     }
 
-    @Override
-    public boolean isAnsiSupported() {
-        return console.getTerminal().isAnsiSupported();
+    private final class JLineWriter extends Writer {
+        @Override
+        public void write(int c) throws IOException {
+            console.print(String.valueOf((char) c));
+        }
+
+        @Override
+        public void write(char[] cbuf, int off, int len) throws IOException {
+            console.print(new String(cbuf, off, len));
+        }
+
+        @Override
+        public void write(String str, int off, int len) throws IOException {
+            console.print(str.substring(off, off + len));
+        }
+
+        @Override
+        public void flush() throws IOException {
+            console.flush();
+        }
+
+        @Override
+        public void close() throws IOException {
+            // not applicable
+        }
     }
 
     @Override
     public void printf(String format, Object... args) {
         formatter.format(format, args).flush();
-    }
-
-    @Override
-    public String readLine(String prompt) {
-        try {
-            return console.readLine(prompt);
-        } catch (IOException e) {
-            throw new IOError(e);
-        }
     }
 
     @Override
@@ -144,120 +191,57 @@ public final class JLineConsole implements ReplConsole {
     }
 
     @Override
-    public void putstr(String s) {
+    public String readLine(String prompt) {
         try {
-            console.print(s);
-            console.flush();
+            return console.readLine(prompt);
         } catch (IOException e) {
             throw new IOError(e);
         }
     }
 
     @Override
-    public void print(String s) {
-        try {
-            console.println(s);
-            console.flush();
-        } catch (IOException e) {
-            throw new IOError(e);
-        }
+    public Reader reader() {
+        return reader;
     }
 
     @Override
-    public void printErr(String s) {
-        System.err.println(s);
+    public PrintWriter writer() {
+        return writer;
     }
 
-    private static final class ShellCompleter implements Completer {
-        private static final Pattern hierarchyPattern, namePattern;
-        static {
-            final String space = "\\s*";
-            final String name = "\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*";
-            final String spacedName = space + name + space;
-            final String hierarchy = "(?:" + spacedName + "\\.)*" + spacedName + "\\.?";
-            hierarchyPattern = Pattern.compile(space + "(" + hierarchy + ")" + space + "$");
-            namePattern = Pattern.compile(name);
-        }
-        private final Realm realm;
+    @Override
+    public PrintWriter errorWriter() {
+        return errorWriter;
+    }
 
-        ShellCompleter(Realm realm) {
-            this.realm = realm;
+    @Override
+    public boolean isAnsiSupported() {
+        return console.getTerminal().isAnsiSupported();
+    }
+
+    @Override
+    public void addCompleter(Completer completer) {
+        CandidateListCompletionHandler handler = new CandidateListCompletionHandler();
+        // handler.setPrintSpaceAfterFullCompletion(false);
+        console.setCompletionHandler(handler);
+        console.addCompleter(new JLineCompleter(completer));
+    }
+
+    private static final class JLineCompleter implements jline.console.completer.Completer {
+        private final Completer completer;
+
+        JLineCompleter(Completer completer) {
+            this.completer = completer;
         }
 
         @Override
         public int complete(String buffer, int cursor, List<CharSequence> candidates) {
-            ExecutionContext cx = realm.defaultContext();
-            ScriptObject object = realm.getGlobalThis();
-            String leftContext = Objects.toString(buffer, "").substring(0, cursor);
-            if (leftContext.isEmpty()) {
-                addCandidates(candidates, getPropertyNames(cx, object), "", "");
-                return candidates.isEmpty() ? -1 : 0;
+            Completion c = completer.complete(buffer, cursor);
+            if (c.result().isEmpty()) {
+                return -1;
             }
-            Matcher m = hierarchyPattern.matcher(leftContext);
-            lookupFailure: if (m.find()) {
-                ArrayList<String> segments = segments(m.group(1));
-                StringBuilder prefix = new StringBuilder();
-                List<String> properties = segments.subList(0, segments.size() - 1);
-                if (!properties.isEmpty() && "this".equals(properties.get(0))) {
-                    // skip leading `this` segment in property traversal
-                    properties = properties.subList(1, properties.size());
-                    prefix.append("this.");
-                }
-                for (String property : properties) {
-                    if (!HasProperty(cx, object, property)) {
-                        break lookupFailure;
-                    }
-                    Object value = Get(cx, object, property);
-                    if (Type.isObject(value)) {
-                        object = Type.objectValue(value);
-                    } else if (!Type.isUndefinedOrNull(value)) {
-                        object = ToObject(cx, value);
-                    } else {
-                        break lookupFailure;
-                    }
-                    prefix.append(property).append('.');
-                }
-                String partial = segments.get(segments.size() - 1);
-                addCandidates(candidates, getPropertyNames(cx, object), partial, prefix.toString());
-                return candidates.isEmpty() ? -1 : m.start(1);
-            }
-            return -1;
-        }
-
-        private void addCandidates(List<CharSequence> candidates, Iterable<String> names,
-                String partial, String prefix) {
-            for (String name : names) {
-                if (name.startsWith(partial) && namePattern.matcher(name).matches()) {
-                    candidates.add(prefix + name);
-                }
-            }
-        }
-
-        private LinkedHashSet<String> getPropertyNames(ExecutionContext cx, ScriptObject object) {
-            LinkedHashSet<String> names = new LinkedHashSet<>();
-            while (object != null) {
-                for (Object key : object.ownPropertyKeys(cx)) {
-                    if (key instanceof String) {
-                        names.add((String) key);
-                    }
-                }
-                object = object.getPrototypeOf(cx);
-            }
-            return names;
-        }
-
-        private ArrayList<String> segments(String hierarchy) {
-            ArrayList<String> segments = new ArrayList<>();
-            Matcher m = namePattern.matcher(hierarchy);
-            while (m.find()) {
-                segments.add(m.group());
-            }
-            if (hierarchy.charAt(hierarchy.length() - 1) == '.') {
-                // add empty segment for trailing dot
-                segments.add("");
-            }
-            assert !segments.isEmpty();
-            return segments;
+            candidates.addAll(c.result());
+            return c.start();
         }
     }
 }

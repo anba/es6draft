@@ -34,7 +34,7 @@ public class LinkedMap<KEY, VALUE> implements Iterable<Map.Entry<KEY, VALUE>> {
      */
     public LinkedMap() {
         map = new HashMap<>();
-        head = new Entry<KEY, VALUE>(null, null);
+        head = new Entry<>(null, null);
         head.prev = head;
         head.next = head;
     }
@@ -46,17 +46,6 @@ public class LinkedMap<KEY, VALUE> implements Iterable<Map.Entry<KEY, VALUE>> {
         entry.next = head;
         head.prev.next = entry;
         head.prev = entry;
-    }
-
-    private Entry<KEY, VALUE> del(KEY key) {
-        KEY hashKey = hashKey(key);
-        Entry<KEY, VALUE> entry = map.remove(hashKey);
-        if (entry != null) {
-            entry.removed = true;
-            entry.prev.next = entry.next;
-            entry.next.prev = entry.prev;
-        }
-        return entry;
     }
 
     /**
@@ -99,7 +88,15 @@ public class LinkedMap<KEY, VALUE> implements Iterable<Map.Entry<KEY, VALUE>> {
      * @return {@code true} if <var>key</var> was mapped to a value
      */
     public boolean delete(KEY key) {
-        return del(key) != null;
+        KEY hashKey = hashKey(key);
+        Entry<KEY, VALUE> entry = map.remove(hashKey);
+        if (entry != null) {
+            entry.removed = true;
+            entry.prev.next = entry.next;
+            entry.next.prev = entry.prev;
+            return true;
+        }
+        return false;
     }
 
     /**
@@ -149,6 +146,27 @@ public class LinkedMap<KEY, VALUE> implements Iterable<Map.Entry<KEY, VALUE>> {
     }
 
     /**
+     * Inserts or updates the mappings from <var>map</var>. (Bulk operation)
+     * 
+     * @param map
+     *            the source map
+     * @see #set(Object, Object)
+     */
+    public void setAll(LinkedMap<KEY, VALUE> map) {
+        if (head == head.next) {
+            // empty map
+            for (Entry<KEY, VALUE> e = map.head; e.next != map.head; e = e.next) {
+                KEY hashKey = hashKey(e.getKey());
+                insert(hashKey, e.getValue());
+            }
+        } else {
+            for (Entry<KEY, VALUE> e = map.head; e.next != map.head; e = e.next) {
+                set(e.getKey(), e.getValue());
+            }
+        }
+    }
+
+    /**
      * Returns a new {@link Iterator} over this map.
      * 
      * @return an iterator over this map
@@ -168,7 +186,7 @@ public class LinkedMap<KEY, VALUE> implements Iterable<Map.Entry<KEY, VALUE>> {
 
             @Override
             public boolean hasNext() {
-                return (find() != head);
+                return find() != head;
             }
 
             @Override
@@ -186,45 +204,5 @@ public class LinkedMap<KEY, VALUE> implements Iterable<Map.Entry<KEY, VALUE>> {
                 throw new UnsupportedOperationException();
             }
         };
-    }
-
-    /* java.util.Map compatibility extensions */
-
-    /**
-     * Removes the mapping for <var>key</var>.
-     * 
-     * @param key
-     *            the key
-     * @return the previously mapped value or {@code null}
-     * @see #delete(Object)
-     */
-    public VALUE remove(KEY key) {
-        Entry<KEY, VALUE> entry = del(key);
-        return entry != null ? entry.getValue() : null;
-    }
-
-    /**
-     * Returns {@code true} if a mapping for <var>key</var> is present.
-     * 
-     * @param key
-     *            the key
-     * @return {@code true} if <var>key</var> is mapped to a value
-     * @see #has(Object)
-     */
-    public boolean containsKey(KEY key) {
-        return has(key);
-    }
-
-    /**
-     * Inserts or updates the mapping <var>key</var> &rarr; <var>value</var>.
-     * 
-     * @param key
-     *            the key
-     * @param value
-     *            the mapped value
-     * @see #set(Object, Object)
-     */
-    public void put(KEY key, VALUE value) {
-        set(key, value);
     }
 }

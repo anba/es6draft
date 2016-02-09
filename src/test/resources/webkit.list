@@ -5,22 +5,13 @@
 # <https://github.com/anba/es6draft>
 #
 
-# computed property names are defined after literal property names in WebKit?
-js/script-tests/basic-computed-property-name.js
 
-# no iteration support in WebKit
-js/script-tests/basic-map.js
-
-# Add custom jsclegacy.js file?
-js/script-tests/basic-set.js
+# Spread does not use Symbol.iterator in WebKit
 js/script-tests/basic-spread.js
 
 # invalid tests
 js/script-tests/JSON-parse-reviver.js
 js/script-tests/typedarray-set-overlapping-elements-of-same-size.js
-
-# invalid test, `(new Array(1)).findIndex(function(){return true})` is -1
-js/script-tests/array-findIndex.js
 
 # ES6: SetFunctionName not implemented in WebKit
 js/script-tests/object-literal-computed-methods.js
@@ -40,10 +31,7 @@ js/script-tests/const.js
 # invalid test, https://webkit.org/b/142934
 js/script-tests/object-literal-duplicate-properties.js
 
-# default values in function parameters not supported in WebKit
-js/script-tests/destructuring-assignment-default-values.js
-
-# invalid test
+# invalid test, various issues
 js/script-tests/regexp-toString.js
 
 # invalid test, `(class { super(){} })` is valid syntax
@@ -54,6 +42,13 @@ js/script-tests/intl.js
 
 # invalid test, `for (let; ; ) {}` is valid
 js/script-tests/let-syntax.js
+
+# invalid test, `this` only referenced but no accessed
+js/script-tests/arrowfunction-tdz.js
+
+# invalid test, all parts of a class declaration are strict mode: assignment to unresolved reference
+# invalid test, getter and setter definitions are not collapsed in classes
+js/script-tests/class-syntax-method-names.js
 
 
 ###################
@@ -111,6 +106,11 @@ js/script-tests/symbol-tostring.js
 js/script-tests/intl-collator.js
 js/script-tests/intl-datetimeformat.js
 js/script-tests/intl-numberformat.js
+js/script-tests/Promise-types.js
+js/script-tests/array-findIndex.js
+js/script-tests/number-toLocaleString.js
+js/script-tests/string-toLocaleLowerCase.js
+js/script-tests/string-toLocaleUpperCase.js
 
 # Date.parse incompatibility
 js/script-tests/date-constructor.js

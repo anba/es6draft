@@ -28,7 +28,7 @@ public final class WhileStatement extends IterationStatement {
     }
 
     /**
-     * Returns the <tt>while</tt>-statement's test expression node.
+     * Returns the <code>while</code>-statement's test expression node.
      * 
      * @return the expression node
      */
@@ -37,20 +37,22 @@ public final class WhileStatement extends IterationStatement {
     }
 
     /**
-     * Returns the <tt>while</tt>-statement's statement node.
+     * Returns the <code>while</code>-statement's statement node.
      * 
      * @return the statement node
      */
+    @Override
     public Statement getStatement() {
         return statement;
     }
 
     /**
-     * Sets the <tt>while</tt>-statement's statement node.
+     * Sets the <code>while</code>-statement's statement node.
      * 
      * @param statement
      *            the new statement node
      */
+    @Override
     public void setStatement(Statement statement) {
         this.statement = statement;
     }

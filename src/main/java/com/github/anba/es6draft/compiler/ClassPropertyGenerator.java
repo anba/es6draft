@@ -25,26 +25,24 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * </ul>
  */
 final class ClassPropertyGenerator extends DefaultCodeGenerator<Void, ExpressionVisitor> {
-    private final Variable<OrdinaryConstructorFunction> F;
-    private final Variable<OrdinaryObject> proto;
+    private final Variable<OrdinaryConstructorFunction> constructor;
+    private final Variable<OrdinaryObject> prototype;
     private final Variable<ArrayList<Object>> decorators;
     private final PropertyGenerator propgen;
 
-    private ClassPropertyGenerator(CodeGenerator codegen, Variable<OrdinaryConstructorFunction> F,
-            Variable<OrdinaryObject> proto, Variable<ArrayList<Object>> decorators) {
+    private ClassPropertyGenerator(CodeGenerator codegen, Variable<OrdinaryConstructorFunction> constructor,
+            Variable<OrdinaryObject> prototype, Variable<ArrayList<Object>> decorators) {
         super(codegen);
-        this.F = F;
-        this.proto = proto;
+        this.constructor = constructor;
+        this.prototype = prototype;
         this.decorators = decorators;
         this.propgen = codegen.propertyGenerator(decorators);
     }
 
-    static void ClassPropertyEvaluation(CodeGenerator codegen,
-            List<? extends PropertyDefinition> properties,
-            Variable<OrdinaryConstructorFunction> function, Variable<OrdinaryObject> proto,
+    static void ClassPropertyEvaluation(CodeGenerator codegen, List<? extends PropertyDefinition> properties,
+            Variable<OrdinaryConstructorFunction> constructor, Variable<OrdinaryObject> prototype,
             Variable<ArrayList<Object>> decorators, ExpressionVisitor mv) {
-        ClassPropertyGenerator classgen = new ClassPropertyGenerator(codegen, function, proto,
-                decorators);
+        ClassPropertyGenerator classgen = new ClassPropertyGenerator(codegen, constructor, prototype, decorators);
         for (PropertyDefinition property : properties) {
             property.accept(classgen, mv);
         }
@@ -58,7 +56,7 @@ final class ClassPropertyGenerator extends DefaultCodeGenerator<Void, Expression
     @Override
     public Void visit(MethodDefinition node, ExpressionVisitor mv) {
         if (!node.isClassConstructor()) {
-            Variable<? extends OrdinaryObject> obj = node.isStatic() ? F : proto;
+            Variable<? extends OrdinaryObject> obj = node.isStatic() ? constructor : prototype;
             if (!node.getDecorators().isEmpty()) {
                 addDecoratorObject(decorators, obj, mv);
             }
@@ -72,7 +70,7 @@ final class ClassPropertyGenerator extends DefaultCodeGenerator<Void, Expression
     @Override
     public Void visit(PropertyValueDefinition node, ExpressionVisitor mv) {
         // stack: [] -> []
-        mv.load(F);
+        mv.load(constructor);
         node.accept(propgen, mv);
         return null;
     }
@@ -83,8 +81,8 @@ final class ClassPropertyGenerator extends DefaultCodeGenerator<Void, Expression
 
         // stack: [] -> []
         mv.loadExecutionContext();
-        mv.load(F);
-        mv.load(proto);
+        mv.load(constructor);
+        mv.load(prototype);
         if (decorators != null) {
             mv.load(decorators);
         } else {

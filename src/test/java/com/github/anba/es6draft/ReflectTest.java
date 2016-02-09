@@ -30,9 +30,9 @@ import org.junit.runners.Parameterized.UseParametersRunnerFactory;
 import com.github.anba.es6draft.repl.console.ShellConsole;
 import com.github.anba.es6draft.repl.global.MozShellGlobalObject;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
-import com.github.anba.es6draft.runtime.internal.ScriptCache;
 import com.github.anba.es6draft.util.Parallelized;
 import com.github.anba.es6draft.util.ParameterizedRunnerFactory;
+import com.github.anba.es6draft.util.SystemConsole;
 import com.github.anba.es6draft.util.TestConfiguration;
 import com.github.anba.es6draft.util.TestGlobals;
 import com.github.anba.es6draft.util.TestInfo;
@@ -57,10 +57,8 @@ public final class ReflectTest {
     public static TestGlobals<MozShellGlobalObject, TestInfo> globals = new TestGlobals<MozShellGlobalObject, TestInfo>(
             configuration) {
         @Override
-        protected ObjectAllocator<MozShellGlobalObject> newAllocator(ShellConsole console,
-                TestInfo test, ScriptCache scriptCache) {
-            return newGlobalObjectAllocator(console, test.getBaseDir(), test.getScript(),
-                    scriptCache);
+        protected ObjectAllocator<MozShellGlobalObject> newAllocator(ShellConsole console) {
+            return newGlobalObjectAllocator(console);
         }
     };
 
@@ -82,15 +80,13 @@ public final class ReflectTest {
     public void setUp() throws Throwable {
         assumeTrue("Test disabled", test.isEnabled());
 
-        global = globals.newGlobal(new ScriptTestConsole(), test);
+        global = globals.newGlobal(new SystemConsole(), test);
         exceptionHandler.setExecutionContext(global.getRealm().defaultContext());
     }
 
     @After
     public void tearDown() {
-        if (global != null) {
-            global.getScriptLoader().getExecutor().shutdown();
-        }
+        globals.release(global);
     }
 
     @Test

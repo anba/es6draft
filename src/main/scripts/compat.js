@@ -10,7 +10,7 @@
 const global = %GlobalObject();
 
 const {
-  Object, String, Symbol, TypeError
+  Object, Symbol, TypeError
 } = global;
 
 const {
@@ -72,23 +72,26 @@ Object.defineProperties(Object.assign(Object.prototype, {
   __lookupSetter__: {enumerable: false},
 });
 
-const trimLeftRE = /^\s+/, trimRightRE = /\s+$/;
+if (!%IsCompatibilityOptionEnabled("StringTrim")) {
+  const {String} = global;
+  const trimLeftRE = /^\s+/, trimRightRE = /\s+$/;
 
-/*
- * Add 'trimLeft' and 'trimRight' to String.prototype
- */
-Object.defineProperties(Object.assign(String.prototype, {
-  trimLeft() {
-    if (this == null) throw TypeError();
-    return %RegExpReplace(trimLeftRE, String(this), "");
-  },
-  trimRight() {
-    if (this == null) throw TypeError();
-    return %RegExpReplace(trimRightRE, String(this), "");
-  },
-}), {
-  trimLeft: {enumerable: false},
-  trimRight: {enumerable: false},
-});
+  /*
+   * Add 'trimLeft' and 'trimRight' to String.prototype
+   */
+  Object.defineProperties(Object.assign(String.prototype, {
+    trimLeft() {
+      if (this == null) throw TypeError();
+      return %RegExpReplace(trimLeftRE, %ToString(this), "");
+    },
+    trimRight() {
+      if (this == null) throw TypeError();
+      return %RegExpReplace(trimRightRE, %ToString(this), "");
+    },
+  }), {
+    trimLeft: {enumerable: false},
+    trimRight: {enumerable: false},
+  });
+}
 
 })();

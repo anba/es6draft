@@ -317,3 +317,45 @@ function assertIterDone(value, actual) {
   assertIterDone(3, gen.return(-1));
   assertIterDone(void 0, gen.next());
 }
+
+// finally with return and break
+{
+  function* g() {
+    try {
+      return 0;
+    } finally {
+      L: try {
+        return 1;
+      } finally {
+        break L;
+      }
+    }
+  }
+
+  let gen = g();
+  assertIterDone(0, gen.next());
+  assertIterDone(void 0, gen.next());
+}
+
+// finally with return and break nested in try-block
+{
+  function* g() {
+    try {
+      try {
+        return 0;
+      } finally {
+        L: try {
+          return 1;
+        } finally {
+          break L;
+        }
+      }
+    } finally {
+      // empty
+    }
+  }
+
+  let gen = g();
+  assertIterDone(0, gen.next());
+  assertIterDone(void 0, gen.next());
+}

@@ -51,5 +51,18 @@ final class Labels {
         Jump getWrapped() {
             return wrapped;
         }
+
+        /**
+         * Returns {@code true} if the wrapped label is a {@code return} label.
+         * 
+         * @return {@code true} if {@code return} label
+         */
+        boolean isReturn() {
+            Jump w = wrapped;
+            while (w instanceof TempLabel) {
+                w = ((TempLabel) w).wrapped;
+            }
+            return w instanceof ReturnLabel;
+        }
     }
 }

@@ -14,7 +14,6 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.EnumSet;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.configuration.Configuration;
@@ -33,13 +32,13 @@ import com.github.anba.es6draft.compiler.CompilationException;
 import com.github.anba.es6draft.parser.Parser;
 import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.repl.console.ShellConsole;
-import com.github.anba.es6draft.repl.global.MozShellGlobalObject;
+import com.github.anba.es6draft.repl.global.ShellGlobalObject;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
-import com.github.anba.es6draft.runtime.internal.ScriptCache;
 import com.github.anba.es6draft.util.Parallelized;
 import com.github.anba.es6draft.util.ParameterizedRunnerFactory;
+import com.github.anba.es6draft.util.SystemConsole;
 import com.github.anba.es6draft.util.TestConfiguration;
 import com.github.anba.es6draft.util.TestGlobals;
 import com.github.anba.es6draft.util.TestInfo;
@@ -64,13 +63,12 @@ public final class NativesMozillaTest {
     public static TestGlobals<MozNativeTestGlobalObject, TestInfo> globals = new TestGlobals<MozNativeTestGlobalObject, TestInfo>(
             configuration) {
         @Override
-        protected ObjectAllocator<MozNativeTestGlobalObject> newAllocator(ShellConsole console,
-                TestInfo test, ScriptCache scriptCache) {
-            return MozNativeTestGlobalObject.newGlobalObjectAllocator(console, test, scriptCache);
+        protected ObjectAllocator<MozNativeTestGlobalObject> newAllocator(ShellConsole console) {
+            return MozNativeTestGlobalObject.newGlobalObjectAllocator(console);
         }
 
         @Override
-        protected Set<CompatibilityOption> getOptions() {
+        protected EnumSet<CompatibilityOption> getOptions() {
             EnumSet<CompatibilityOption> options = EnumSet.copyOf(super.getOptions());
             options.add(CompatibilityOption.Comprehension);
             options.add(CompatibilityOption.Realm);
@@ -102,15 +100,13 @@ public final class NativesMozillaTest {
     public void setUp() throws Throwable {
         assumeTrue("Test disabled", test.isEnabled());
 
-        global = globals.newGlobal(new ScriptTestConsole(), test);
+        global = globals.newGlobal(new SystemConsole(), test);
         exceptionHandler.setExecutionContext(global.getRealm().defaultContext());
     }
 
     @After
     public void tearDown() {
-        if (global != null) {
-            global.getScriptLoader().getExecutor().shutdown();
-        }
+        globals.release(global);
     }
 
     @Test
@@ -122,16 +118,13 @@ public final class NativesMozillaTest {
         global.getRealm().getWorld().runEventLoop();
     }
 
-    public static final class MozNativeTestGlobalObject extends MozShellGlobalObject {
-        protected MozNativeTestGlobalObject(Realm realm, ShellConsole console, TestInfo test,
-                ScriptCache scriptCache) {
-            super(realm, console, test.getBaseDir(), test.getScript(), scriptCache);
+    public static final class MozNativeTestGlobalObject extends ShellGlobalObject {
+        MozNativeTestGlobalObject(Realm realm, ShellConsole console) {
+            super(realm, console);
         }
 
         @Override
-        public void initializeScripted() throws IOException, URISyntaxException, ParserException,
-                CompilationException {
-            // super.initializeScripted();
+        public void initializeScripted() throws IOException, URISyntaxException, ParserException, CompilationException {
             includeNative("arraybuffer.js");
             includeNative("collection.js");
             includeNative("compat.js");
@@ -143,12 +136,11 @@ public final class NativesMozillaTest {
             includeNative("string.js");
         }
 
-        public static ObjectAllocator<MozNativeTestGlobalObject> newGlobalObjectAllocator(
-                final ShellConsole console, final TestInfo test, final ScriptCache scriptCache) {
+        public static ObjectAllocator<MozNativeTestGlobalObject> newGlobalObjectAllocator(final ShellConsole console) {
             return new ObjectAllocator<MozNativeTestGlobalObject>() {
                 @Override
                 public MozNativeTestGlobalObject newInstance(Realm realm) {
-                    return new MozNativeTestGlobalObject(realm, console, test, scriptCache);
+                    return new MozNativeTestGlobalObject(realm, console);
                 }
             };
         }

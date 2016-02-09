@@ -7,13 +7,11 @@
 package com.github.anba.es6draft.runtime.types.builtins;
 
 import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Method;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.types.Constructor;
-import com.github.anba.es6draft.runtime.types.ScriptObject;
 
 /**
  * <h1>9 Ordinary and Exotic Objects Behaviours</h1>
@@ -39,27 +37,21 @@ public abstract class BuiltinConstructor extends BuiltinFunction implements Cons
     }
 
     /**
-     * Returns `(? extends BuiltinConstructor, ExecutionContext, Constructor, Object[])
-     * {@literal ->} ScriptObject` method-handle.
+     * Returns `(? extends BuiltinConstructor, ExecutionContext, Constructor, Object[]) {@literal ->} ScriptObject`
+     * method-handle.
      * 
      * @return the call method handle
      */
     public MethodHandle getConstructMethod() {
         if (constructMethod == null) {
             try {
-                Method method = getClass().getDeclaredMethod("construct", ExecutionContext.class,
-                        Constructor.class, Object[].class);
-                constructMethod = MethodHandles.publicLookup().unreflect(method);
+                Method method = getClass().getDeclaredMethod("construct", ExecutionContext.class, Constructor.class,
+                        Object[].class);
+                constructMethod = lookup().unreflect(method);
             } catch (ReflectiveOperationException e) {
                 throw new RuntimeException(e);
             }
         }
         return constructMethod;
-    }
-
-    @Override
-    public final ScriptObject tailConstruct(ExecutionContext callerContext, Constructor newTarget,
-            Object... args) {
-        return construct(callerContext, newTarget, args);
     }
 }

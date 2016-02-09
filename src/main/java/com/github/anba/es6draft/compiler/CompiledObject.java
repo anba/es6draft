@@ -13,9 +13,9 @@ import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
 import com.github.anba.es6draft.runtime.types.builtins.ArrayObject;
 
 /**
- * Abstract base class for compiled objects.
+ * Base class for compiled objects.
  */
-public abstract class CompiledObject implements Executable {
+public class CompiledObject implements Executable {
     private final RuntimeInfo.SourceObject sourceObject;
     private HashMap<Integer, ArrayObject> templateObjects;
 

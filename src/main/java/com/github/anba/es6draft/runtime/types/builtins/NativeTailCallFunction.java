@@ -78,8 +78,7 @@ public final class NativeTailCallFunction extends BuiltinFunction {
      * 9.3.1 [[Call]] (thisArgument, argumentsList)
      */
     @Override
-    public Object tailCall(ExecutionContext callerContext, Object thisValue, Object... args)
-            throws Throwable {
+    public Object tailCall(ExecutionContext callerContext, Object thisValue, Object... args) throws Throwable {
         return tmh.invokeExact(getRealm().defaultContext(), callerContext, thisValue, args);
     }
 

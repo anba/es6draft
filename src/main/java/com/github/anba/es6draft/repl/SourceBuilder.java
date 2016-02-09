@@ -48,8 +48,7 @@ public final class SourceBuilder {
         this(colored, MAX_STACK_DEPTH, MAX_OBJECT_PROPERTIES, MAX_ARRAY_PROPERTIES);
     }
 
-    SourceBuilder(boolean colored, int maxStackDepth, int maxObjectProperties,
-            int maxArrayProperties) {
+    SourceBuilder(boolean colored, int maxStackDepth, int maxObjectProperties, int maxArrayProperties) {
         this.colored = colored;
         this.maxStackDepth = maxStackDepth;
         this.maxObjectProperties = maxObjectProperties;
@@ -57,9 +56,9 @@ public final class SourceBuilder {
     }
 
     private enum AnsiAttribute {
-        Reset(0), Bold(1), Underline(4), Negative(7), NormalIntensity(22), UnderlineNone(24),
-        Positive(27), TextColor(30), DefaultTextColor(39), BackgroundColor(40),
-        DefaultBackgroundColor(49), TextColorHi(90), BackgroundColorHi(100);
+        Reset(0), Bold(1), Underline(4), Negative(7), NormalIntensity(22), UnderlineNone(24), Positive(27),
+        TextColor(30), DefaultTextColor(39), BackgroundColor(40), DefaultBackgroundColor(49), TextColorHi(90),
+        BackgroundColorHi(100);
 
         final int code;
 
@@ -153,8 +152,7 @@ public final class SourceBuilder {
         if (!colored || style == null) {
             return source;
         }
-        return String.format("\u001B[%dm%s\u001B[%d;%dm", style.on, source,
-                AnsiAttribute.Reset.code, style.off);
+        return String.format("\u001B[%dm%s\u001B[%d;%dm", style.on, source, AnsiAttribute.Reset.code, style.off);
     }
 
     private static Style style(HashSet<ScriptObject> stack, Object value) {
@@ -204,7 +202,7 @@ public final class SourceBuilder {
         case Object:
             ScriptObject objValue = Type.objectValue(value);
             if (IsCallable(objValue)) {
-                return ((Callable) objValue).toSource(Callable.SourceSelector.Function);
+                return ((Callable) objValue).toSource(cx);
             }
             if (stack.contains(objValue) || stack.size() > maxStackDepth) {
                 return "« ... »";
@@ -226,6 +224,65 @@ public final class SourceBuilder {
         case Undefined:
         default:
             return "(void 0)";
+        }
+    }
+
+    private String arrayToSource(ExecutionContext cx, HashSet<ScriptObject> stack, ScriptObject array) {
+        long len = ToUint32(cx, Get(cx, array, "length"));
+        if (len <= 0) {
+            return "[]";
+        }
+        int viewLen = (int) Math.min(len, maxArrayProperties);
+        StringBuilder properties = new StringBuilder();
+        for (int index = 0; index < viewLen; ++index) {
+            String value = toSource(cx, stack, Get(cx, array, index));
+            properties.append(", ").append(value);
+        }
+        if (viewLen < len) {
+            properties.append(", [...]");
+        }
+        properties.append(" ]").setCharAt(0, '[');
+        return properties.toString();
+    }
+
+    private String objectToSource(ExecutionContext cx, HashSet<ScriptObject> stack, ScriptObject object) {
+        Iterator<?> keys = object.ownKeys(cx);
+        if (!keys.hasNext()) {
+            return "{}";
+        }
+        StringBuilder properties = new StringBuilder();
+        for (int i = 0; keys.hasNext() && i < maxObjectProperties;) {
+            Object k = keys.next();
+            String key = propertyKeyToSource(cx, k);
+            Property prop = getOwnProperty(cx, object, k);
+            if (prop == null || !prop.isEnumerable()) {
+                continue;
+            }
+            String value;
+            if (prop.isDataDescriptor()) {
+                value = toSource(cx, stack, prop.getValue());
+            } else {
+                value = accessorToSource(prop);
+            }
+            properties.append(", ").append(key).append(": ").append(value);
+            i += 1;
+        }
+        if (keys.hasNext()) {
+            properties.append(", [...]");
+        }
+        properties.append(" }").setCharAt(0, '{');
+        return properties.toString();
+    }
+
+    private static Property getOwnProperty(ExecutionContext cx, ScriptObject object, Object key) {
+        try {
+            if (key instanceof String) {
+                return object.getOwnProperty(cx, (String) key);
+            } else {
+                return object.getOwnProperty(cx, (Symbol) key);
+            }
+        } catch (ScriptException e) {
+            return null;
         }
     }
 
@@ -261,18 +318,6 @@ public final class SourceBuilder {
         return "Symbol()";
     }
 
-    private static Property getOwnProperty(ExecutionContext cx, ScriptObject object, Object key) {
-        try {
-            if (key instanceof String) {
-                return object.getOwnProperty(cx, (String) key);
-            } else {
-                return object.getOwnProperty(cx, (Symbol) key);
-            }
-        } catch (ScriptException e) {
-            return null;
-        }
-    }
-
     private String accessorToSource(Property accessor) {
         String description;
         if (accessor.getGetter() != null && accessor.getSetter() != null) {
@@ -285,54 +330,5 @@ public final class SourceBuilder {
             description = "[]";
         }
         return format(description, Style.Special);
-    }
-
-    private String objectToSource(ExecutionContext cx, HashSet<ScriptObject> stack,
-            ScriptObject object) {
-        Iterator<?> keys = object.ownKeys(cx);
-        if (!keys.hasNext()) {
-            return "{}";
-        }
-        StringBuilder properties = new StringBuilder();
-        for (int i = 0; keys.hasNext() && i < maxObjectProperties;) {
-            Object k = keys.next();
-            String key = propertyKeyToSource(cx, k);
-            Property prop = getOwnProperty(cx, object, k);
-            if (prop == null || !prop.isEnumerable()) {
-                continue;
-            }
-            String value;
-            if (prop.isDataDescriptor()) {
-                value = toSource(cx, stack, prop.getValue());
-            } else {
-                value = accessorToSource(prop);
-            }
-            properties.append(", ").append(key).append(": ").append(value);
-            i += 1;
-        }
-        if (keys.hasNext()) {
-            properties.append(", [...]");
-        }
-        properties.append(" }").setCharAt(0, '{');
-        return properties.toString();
-    }
-
-    private String arrayToSource(ExecutionContext cx, HashSet<ScriptObject> stack,
-            ScriptObject array) {
-        long len = ToUint32(cx, Get(cx, array, "length"));
-        if (len <= 0) {
-            return "[]";
-        }
-        int viewLen = (int) Math.min(len, maxArrayProperties);
-        StringBuilder properties = new StringBuilder();
-        for (int index = 0; index < viewLen; ++index) {
-            String value = toSource(cx, stack, Get(cx, array, index));
-            properties.append(", ").append(value);
-        }
-        if (viewLen < len) {
-            properties.append(", [...]");
-        }
-        properties.append(" ]").setCharAt(0, '[');
-        return properties.toString();
     }
 }

@@ -42,7 +42,7 @@ public final class ForStatement extends IterationStatement implements ScopedNode
     }
 
     /**
-     * Returns the <tt>for</tt>-statement's head node. The head node is one of the following types:
+     * Returns the <code>for</code>-statement's head node. The head node is one of the following types:
      * <ul>
      * <li>{@link VariableStatement}:&emsp;{@code for (var decl; ...)}
      * <li>{@link LexicalDeclaration}:&emsp;{@code for (let/const decl; ...)}
@@ -57,7 +57,7 @@ public final class ForStatement extends IterationStatement implements ScopedNode
     }
 
     /**
-     * Returns the <tt>for</tt>-statement's test expression node.
+     * Returns the <code>for</code>-statement's test expression node.
      * 
      * @return the expression node or {@code null} if not present
      */
@@ -66,7 +66,7 @@ public final class ForStatement extends IterationStatement implements ScopedNode
     }
 
     /**
-     * Returns the <tt>for</tt>-statement's step expression node.
+     * Returns the <code>for</code>-statement's step expression node.
      * 
      * @return the expression node or {@code null} if not present
      */
@@ -75,20 +75,22 @@ public final class ForStatement extends IterationStatement implements ScopedNode
     }
 
     /**
-     * Returns the <tt>for</tt>-statement's statement node.
+     * Returns the <code>for</code>-statement's statement node.
      * 
      * @return the statement node
      */
+    @Override
     public Statement getStatement() {
         return statement;
     }
 
     /**
-     * Sets the <tt>for</tt>-statement's statement node.
+     * Sets the <code>for</code>-statement's statement node.
      * 
      * @param statement
      *            the new statement node
      */
+    @Override
     public void setStatement(Statement statement) {
         this.statement = statement;
     }

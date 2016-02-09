@@ -23,10 +23,10 @@ import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
+import com.github.anba.es6draft.runtime.objects.collection.MapIteratorObject.MapIterationKind;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
-import com.github.anba.es6draft.runtime.types.ScriptObject;
-import com.github.anba.es6draft.runtime.types.Type;
+import com.github.anba.es6draft.runtime.types.builtins.NativeFunction;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
@@ -52,28 +52,6 @@ public final class MapIteratorPrototype extends OrdinaryObject implements Initia
         createProperties(realm, this, Properties.class);
     }
 
-    public enum MapIterationKind {
-        Key, Value, KeyValue
-    }
-
-    /**
-     * 23.1.5.3 Properties of Map Iterator Instances
-     */
-    private static final class MapIterator extends OrdinaryObject {
-        /** [[Map]] / [[MapNextIndex]] */
-        Iterator<Entry<Object, Object>> iterator;
-
-        /** [[MapIterationKind]] */
-        final MapIterationKind iterationKind;
-
-        MapIterator(Realm realm, MapObject map, MapIterationKind kind, ScriptObject prototype) {
-            super(realm);
-            this.iterator = map.getMapData().iterator();
-            this.iterationKind = kind;
-            setPrototype(prototype);
-        }
-    }
-
     /**
      * 23.1.5.1 CreateMapIterator Abstract Operation
      * 
@@ -85,16 +63,51 @@ public final class MapIteratorPrototype extends OrdinaryObject implements Initia
      *            the map iteration kind
      * @return the new map iterator
      */
-    public static OrdinaryObject CreateMapIterator(ExecutionContext cx, Object obj,
-            MapIterationKind kind) {
+    public static OrdinaryObject CreateMapIterator(ExecutionContext cx, Object obj, MapIterationKind kind) {
         /* steps 1-2 */
         if (!(obj instanceof MapObject)) {
             throw newTypeError(cx, Messages.Key.IncompatibleObject);
         }
         MapObject map = (MapObject) obj;
         /* steps 3-7 */
-        return new MapIterator(cx.getRealm(), map, kind,
-                cx.getIntrinsic(Intrinsics.MapIteratorPrototype));
+        return new MapIteratorObject(cx.getRealm(), map, kind, cx.getIntrinsic(Intrinsics.MapIteratorPrototype));
+    }
+
+    /**
+     * 23.1.5.1 CreateMapIterator Abstract Operation
+     * 
+     * @param cx
+     *            the execution context
+     * @param iterator
+     *            the iterator
+     * @param kind
+     *            the map iteration kind
+     * @return the new map iterator
+     */
+    public static OrdinaryObject CreateMapIterator(ExecutionContext cx, Iterator<Entry<Object, Object>> iterator,
+            MapIterationKind kind) {
+        /* steps 1-7 */
+        return new MapIteratorObject(cx.getRealm(), iterator, kind, cx.getIntrinsic(Intrinsics.MapIteratorPrototype));
+    }
+
+    /**
+     * Marker class for {@code %MapIteratorPrototype%.next}.
+     */
+    private static final class MapIteratorPrototypeNext {
+    }
+
+    /**
+     * Returns {@code true} if <var>next</var> is the built-in {@code %MapIteratorPrototype%.next} function for the
+     * requested realm.
+     * 
+     * @param realm
+     *            the function realm
+     * @param next
+     *            the next function
+     * @return {@code true} if <var>next</var> is the built-in {@code %MapIteratorPrototype%.next} function
+     */
+    public static boolean isBuiltinNext(Realm realm, Object next) {
+        return NativeFunction.isNative(realm, next, MapIteratorPrototypeNext.class);
     }
 
     /**
@@ -115,22 +128,17 @@ public final class MapIteratorPrototype extends OrdinaryObject implements Initia
          *            the function this-value
          * @return the next iterator result object
          */
-        @Function(name = "next", arity = 0)
+        @Function(name = "next", arity = 0, nativeId = MapIteratorPrototypeNext.class)
         public static Object next(ExecutionContext cx, Object thisValue) {
-            /* step 2 */
-            if (!Type.isObject(thisValue)) {
-                throw newTypeError(cx, Messages.Key.NotObjectType);
-            }
-            /* step 3 */
-            if (!(thisValue instanceof MapIterator)) {
+            /* steps 1-3 */
+            if (!(thisValue instanceof MapIteratorObject)) {
                 throw newTypeError(cx, Messages.Key.IncompatibleObject);
             }
-            /* step 1 */
-            MapIterator o = (MapIterator) thisValue;
+            MapIteratorObject o = (MapIteratorObject) thisValue;
             /* steps 4-5 */
-            Iterator<Entry<Object, Object>> iter = o.iterator;
+            Iterator<Entry<Object, Object>> iter = o.getIterator();
             /* step 6 */
-            MapIterationKind itemKind = o.iterationKind;
+            MapIterationKind itemKind = o.getIterationKind();
             /* step 7 */
             if (iter == null) {
                 return CreateIterResultObject(cx, UNDEFINED, true);
@@ -151,7 +159,7 @@ public final class MapIteratorPrototype extends OrdinaryObject implements Initia
                 return CreateIterResultObject(cx, result, false);
             }
             /* step 11 */
-            o.iterator = null;
+            o.setIterator(null);
             /* step 12 */
             return CreateIterResultObject(cx, UNDEFINED, true);
         }

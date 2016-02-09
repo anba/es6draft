@@ -6,6 +6,8 @@
  */
 package com.github.anba.es6draft.runtime.types.builtins;
 
+import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.FunctionInitialize;
+
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.Realm;
@@ -20,7 +22,7 @@ import com.github.anba.es6draft.runtime.types.ScriptObject;
  * <li>9.2 ECMAScript Function Objects
  * </ul>
  */
-public final class OrdinaryConstructorFunction extends OrdinaryFunction implements Constructor {
+public final class OrdinaryConstructorFunction extends FunctionObject implements Constructor {
     /**
      * Constructs a new Constructor Function object.
      * 
@@ -33,31 +35,40 @@ public final class OrdinaryConstructorFunction extends OrdinaryFunction implemen
 
     @Override
     protected OrdinaryConstructorFunction allocateNew() {
-        return FunctionAllocate(getRealm().defaultContext(), getPrototype(), isStrict(),
-                getFunctionKind(), getConstructorKind());
+        return FunctionAllocate(getRealm().defaultContext(), getPrototype(), isStrict(), getFunctionKind(),
+                getConstructorKind());
     }
 
     /**
-     * 9.2.2 [[Construct]] (argumentsList)
+     * 9.2.1 [[Call]] (thisArgument, argumentsList)
      */
     @Override
-    public ScriptObject construct(ExecutionContext callerContext, Constructor newTarget,
-            Object... argumentsList) {
+    public Object call(ExecutionContext callerContext, Object thisValue, Object... argumentsList) {
         try {
-            return (ScriptObject) getConstructMethod().invokeExact(this, callerContext, newTarget,
-                    argumentsList);
+            return getCallMethod().invokeExact(this, callerContext, thisValue, argumentsList);
         } catch (Throwable e) {
             throw FunctionObject.<RuntimeException> rethrow(e);
         }
     }
 
     /**
+     * 9.2.1 [[Call]] (thisArgument, argumentsList)
+     */
+    @Override
+    public Object tailCall(ExecutionContext callerContext, Object thisValue, Object... argumentsList) throws Throwable {
+        return getTailCallMethod().invokeExact(this, callerContext, thisValue, argumentsList);
+    }
+
+    /**
      * 9.2.2 [[Construct]] (argumentsList)
      */
     @Override
-    public Object tailConstruct(ExecutionContext callerContext, Constructor newTarget,
-            Object... argumentsList) throws Throwable {
-        return getTailConstructMethod().invokeExact(this, callerContext, newTarget, argumentsList);
+    public ScriptObject construct(ExecutionContext callerContext, Constructor newTarget, Object... argumentsList) {
+        try {
+            return (ScriptObject) getConstructMethod().invokeExact(this, callerContext, newTarget, argumentsList);
+        } catch (Throwable e) {
+            throw FunctionObject.<RuntimeException> rethrow(e);
+        }
     }
 
     /* ***************************************************************************************** */
@@ -77,9 +88,8 @@ public final class OrdinaryConstructorFunction extends OrdinaryFunction implemen
      *            the constructor kind
      * @return the new function object
      */
-    public static OrdinaryConstructorFunction FunctionAllocate(ExecutionContext cx,
-            ScriptObject functionPrototype, boolean strict, FunctionKind functionKind,
-            ConstructorKind constructorKind) {
+    public static OrdinaryConstructorFunction FunctionAllocate(ExecutionContext cx, ScriptObject functionPrototype,
+            boolean strict, FunctionKind functionKind, ConstructorKind constructorKind) {
         assert (functionKind == FunctionKind.Normal || functionKind == FunctionKind.ClassConstructor);
         Realm realm = cx.getRealm();
         /* steps 1-5 (implicit) */
@@ -104,11 +114,11 @@ public final class OrdinaryConstructorFunction extends OrdinaryFunction implemen
      *            the lexical environment
      * @return the new function object
      */
-    public static OrdinaryConstructorFunction ConstructorFunctionCreate(ExecutionContext cx,
-            FunctionKind kind, RuntimeInfo.Function function, LexicalEnvironment<?> scope) {
+    public static OrdinaryConstructorFunction ConstructorFunctionCreate(ExecutionContext cx, FunctionKind kind,
+            RuntimeInfo.Function function, LexicalEnvironment<?> scope) {
         /* step 1 */
         ScriptObject prototype = cx.getIntrinsic(Intrinsics.FunctionPrototype);
-        /* steps 2-3 */
+        /* steps 2-5 */
         return ConstructorFunctionCreate(cx, kind, ConstructorKind.Base, function, scope, prototype);
     }
 
@@ -129,14 +139,13 @@ public final class OrdinaryConstructorFunction extends OrdinaryFunction implemen
      *            the function prototype
      * @return the new function object
      */
-    public static OrdinaryConstructorFunction ConstructorFunctionCreate(ExecutionContext cx,
-            FunctionKind kind, ConstructorKind constructorKind, RuntimeInfo.Function function,
-            LexicalEnvironment<?> scope, ScriptObject prototype) {
+    public static OrdinaryConstructorFunction ConstructorFunctionCreate(ExecutionContext cx, FunctionKind kind,
+            ConstructorKind constructorKind, RuntimeInfo.Function function, LexicalEnvironment<?> scope,
+            ScriptObject prototype) {
         assert !function.isGenerator() && !function.isAsync();
         /* steps 1-3 (not applicable) */
         /* step 4 */
-        OrdinaryConstructorFunction f = FunctionAllocate(cx, prototype, function.isStrict(), kind,
-                constructorKind);
+        OrdinaryConstructorFunction f = FunctionAllocate(cx, prototype, function.isStrict(), kind, constructorKind);
         /* step 5 */
         FunctionInitialize(f, kind, function, scope, cx.getCurrentExecutable());
         return f;

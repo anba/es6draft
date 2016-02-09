@@ -6,7 +6,12 @@
  */
 package com.github.anba.es6draft.ast;
 
-import com.github.anba.es6draft.ast.synthetic.*;
+import com.github.anba.es6draft.ast.synthetic.ExpressionMethod;
+import com.github.anba.es6draft.ast.synthetic.MethodDefinitionsMethod;
+import com.github.anba.es6draft.ast.synthetic.PropertyDefinitionsMethod;
+import com.github.anba.es6draft.ast.synthetic.SpreadArrayLiteral;
+import com.github.anba.es6draft.ast.synthetic.SpreadElementMethod;
+import com.github.anba.es6draft.ast.synthetic.StatementListMethod;
 
 /**
  * Visitor interface for {@link Node} subclasses
@@ -96,13 +101,13 @@ public interface IntNodeVisitor<V> {
 
     int visit(EmptyStatement node, V value);
 
+    int visit(ExportClause node, V value);
+
     int visit(ExportDeclaration node, V value);
 
     int visit(ExportDefaultExpression node, V value);
 
     int visit(ExportSpecifier node, V value);
-
-    int visit(ExportClause node, V value);
 
     int visit(ExpressionMethod node, V value);
 
@@ -140,17 +145,11 @@ public interface IntNodeVisitor<V> {
 
     int visit(IfStatement node, V value);
 
+    int visit(ImportClause node, V value);
+
     int visit(ImportDeclaration node, V value);
 
     int visit(ImportSpecifier node, V value);
-
-    int visit(ImportClause node, V value);
-
-    int visit(SpreadArrayLiteral node, V value);
-
-    int visit(SpreadElementMethod node, V value);
-
-    int visit(PropertyDefinitionsMethod node, V value);
 
     int visit(LabelledFunctionStatement node, V value);
 
@@ -196,6 +195,8 @@ public interface IntNodeVisitor<V> {
 
     int visit(PropertyAccessor node, V value);
 
+    int visit(PropertyDefinitionsMethod node, V value);
+
     int visit(PropertyNameDefinition node, V value);
 
     int visit(PropertyValueDefinition node, V value);
@@ -206,7 +207,11 @@ public interface IntNodeVisitor<V> {
 
     int visit(Script node, V value);
 
+    int visit(SpreadArrayLiteral node, V value);
+
     int visit(SpreadElement node, V value);
+
+    int visit(SpreadElementMethod node, V value);
 
     int visit(SpreadProperty node, V value);
 

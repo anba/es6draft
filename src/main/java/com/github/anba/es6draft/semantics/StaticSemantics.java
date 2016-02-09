@@ -111,6 +111,21 @@ public final class StaticSemantics {
      *            the binding node
      * @return the bound names
      */
+    public static List<Name> BoundNames(BindingIdentifier node) {
+        return singletonList(node.getName());
+    }
+
+    /**
+     * Static Semantics: BoundNames
+     * <ul>
+     * <li>12.1.2 Static Semantics: BoundNames
+     * <li>13.3.3.1 Static Semantics: BoundNames
+     * </ul>
+     * 
+     * @param node
+     *            the binding node
+     * @return the bound names
+     */
     public static List<Name> BoundNames(Binding node) {
         if (node instanceof BindingIdentifier) {
             return singletonList(((BindingIdentifier) node).getName());
@@ -191,6 +206,16 @@ public final class StaticSemantics {
      * @return the bound names
      */
     public static List<Name> BoundNames(Declaration node) {
+        if (node instanceof HoistableDeclaration) {
+            return singletonList(BoundName((HoistableDeclaration) node));
+        }
+        if (node instanceof ClassDeclaration) {
+            return singletonList(BoundName((ClassDeclaration) node));
+        }
+        if (node instanceof ExportDefaultExpression) {
+            return BoundNames(((ExportDefaultExpression) node).getBinding());
+        }
+        assert node instanceof LexicalDeclaration;
         return node.accept(BoundNames.INSTANCE, new InlineArrayList<Name>());
     }
 

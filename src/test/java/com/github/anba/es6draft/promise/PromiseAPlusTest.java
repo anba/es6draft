@@ -31,16 +31,11 @@ import org.junit.runners.Parameterized.UseParametersRunnerFactory;
 
 import com.github.anba.es6draft.TestGlobalObject;
 import com.github.anba.es6draft.repl.console.ShellConsole;
-import com.github.anba.es6draft.runtime.ExecutionContext;
-import com.github.anba.es6draft.runtime.Task;
 import com.github.anba.es6draft.runtime.extensions.timer.Timers;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
-import com.github.anba.es6draft.runtime.internal.Properties;
-import com.github.anba.es6draft.runtime.internal.ScriptCache;
-import com.github.anba.es6draft.runtime.types.Callable;
-import com.github.anba.es6draft.runtime.types.Undefined;
 import com.github.anba.es6draft.util.Parallelized;
 import com.github.anba.es6draft.util.ParameterizedRunnerFactory;
+import com.github.anba.es6draft.util.SystemConsole;
 import com.github.anba.es6draft.util.TestConfiguration;
 import com.github.anba.es6draft.util.TestGlobals;
 import com.github.anba.es6draft.util.TestInfo;
@@ -65,9 +60,8 @@ public final class PromiseAPlusTest {
     public static TestGlobals<TestGlobalObject, TestInfo> globals = new TestGlobals<TestGlobalObject, TestInfo>(
             configuration) {
         @Override
-        protected ObjectAllocator<TestGlobalObject> newAllocator(ShellConsole console,
-                TestInfo test, ScriptCache scriptCache) {
-            return newGlobalObjectAllocator(console, test, scriptCache);
+        protected ObjectAllocator<TestGlobalObject> newAllocator(ShellConsole console) {
+            return newGlobalObjectAllocator(console);
         }
     };
 
@@ -84,24 +78,22 @@ public final class PromiseAPlusTest {
     public TestInfo test;
 
     private TestGlobalObject global;
-    private AsyncHelper async;
+    private PromiseAsync async;
     private Timers timers;
 
     @Before
     public void setUp() throws Throwable {
         assumeTrue("Test disabled", test.isEnabled());
 
-        global = globals.newGlobal(new PromiseTestConsole(), test);
+        global = globals.newGlobal(new SystemConsole(), test);
         exceptionHandler.setExecutionContext(global.getRealm().defaultContext());
-        async = global.install(new AsyncHelper(), AsyncHelper.class);
-        timers = global.install(new Timers(), Timers.class);
+        async = global.createGlobalProperties(new PromiseAsync(), PromiseAsync.class);
+        timers = global.createGlobalProperties(new Timers(), Timers.class);
     }
 
     @After
     public void tearDown() throws InterruptedException {
-        if (global != null) {
-            global.getScriptLoader().getExecutor().shutdown();
-        }
+        globals.release(global);
     }
 
     @Test
@@ -110,28 +102,8 @@ public final class PromiseAPlusTest {
         global.eval(test.getScript(), test.toFile());
 
         // Wait for pending tasks to finish
-        assertFalse(async.doneCalled);
+        assertFalse(async.isDone());
         global.getRealm().getWorld().runEventLoop(timers);
-        assertTrue(async.doneCalled);
-    }
-
-    public static final class AsyncHelper {
-        boolean doneCalled = false;
-
-        @Properties.Function(name = "$async_done", arity = 0)
-        public void done() {
-            assertFalse(doneCalled);
-            doneCalled = true;
-        }
-
-        @Properties.Function(name = "$async_enqueueTask", arity = 1)
-        public void enqueueTask(final ExecutionContext cx, final Callable task) {
-            cx.getRealm().enqueuePromiseTask(new Task() {
-                @Override
-                public void execute() {
-                    task.call(cx, Undefined.UNDEFINED);
-                }
-            });
-        }
+        assertTrue(async.isDone());
     }
 }

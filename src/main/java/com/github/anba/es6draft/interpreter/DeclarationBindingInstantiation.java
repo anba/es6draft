@@ -75,7 +75,7 @@ final class DeclarationBindingInstantiation {
             }
         }
         /* step 13 (NOTE) */
-        /* step 14-16 (not applicable) */
+        /* steps 14-16 (not applicable) */
         /* step 17 */
         for (Name vn : declaredVarNames) {
             envRec.createGlobalVarBinding(vn.getIdentifier(), false);

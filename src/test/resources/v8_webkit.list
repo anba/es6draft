@@ -53,9 +53,6 @@ fast/regex/toString.js
 # - SpiderMonkey treats both the same, JSC/V8 treat .compile(undefined) as .compile('undefined')
 regexp-compile.js
 
-# different completion result with try-finally
-eval-throw-return.js
-
 # different html-comments parser
 # Function("1/*\n*/-->")
 # Allowed in SpiderMonkey, not allowed in V8/JSC
@@ -132,14 +129,8 @@ fast/js/kde/RegExp.js
 # ES6 related runtime changes         #
 #######################################
 
-# various new built-in properties
-fast/js/Object-getOwnPropertyNames.js
-
 # `RegExp(/a/, "g")` no longer throws
 fast/regex/constructor.js
-
-# completion reform
-fast/js/kde/completion.js
 
 
 #######################################

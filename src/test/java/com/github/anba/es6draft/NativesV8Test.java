@@ -14,7 +14,6 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.EnumSet;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.configuration.Configuration;
@@ -33,13 +32,13 @@ import com.github.anba.es6draft.compiler.CompilationException;
 import com.github.anba.es6draft.parser.Parser;
 import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.repl.console.ShellConsole;
-import com.github.anba.es6draft.repl.global.V8ShellGlobalObject;
+import com.github.anba.es6draft.repl.global.ShellGlobalObject;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
-import com.github.anba.es6draft.runtime.internal.ScriptCache;
 import com.github.anba.es6draft.util.Parallelized;
 import com.github.anba.es6draft.util.ParameterizedRunnerFactory;
+import com.github.anba.es6draft.util.SystemConsole;
 import com.github.anba.es6draft.util.TestConfiguration;
 import com.github.anba.es6draft.util.TestGlobals;
 import com.github.anba.es6draft.util.TestInfo;
@@ -64,13 +63,12 @@ public final class NativesV8Test {
     public static TestGlobals<V8NativeTestGlobalObject, TestInfo> globals = new TestGlobals<V8NativeTestGlobalObject, TestInfo>(
             configuration) {
         @Override
-        protected ObjectAllocator<V8NativeTestGlobalObject> newAllocator(ShellConsole console,
-                TestInfo test, ScriptCache scriptCache) {
-            return V8NativeTestGlobalObject.newGlobalObjectAllocator(console, test, scriptCache);
+        protected ObjectAllocator<V8NativeTestGlobalObject> newAllocator(ShellConsole console) {
+            return V8NativeTestGlobalObject.newGlobalObjectAllocator(console);
         }
 
         @Override
-        protected Set<CompatibilityOption> getOptions() {
+        protected EnumSet<CompatibilityOption> getOptions() {
             EnumSet<CompatibilityOption> options = EnumSet.copyOf(super.getOptions());
             options.add(CompatibilityOption.Comprehension);
             options.add(CompatibilityOption.Realm);
@@ -102,15 +100,13 @@ public final class NativesV8Test {
     public void setUp() throws Throwable {
         assumeTrue("Test disabled", test.isEnabled());
 
-        global = globals.newGlobal(new ScriptTestConsole(), test);
+        global = globals.newGlobal(new SystemConsole(), test);
         exceptionHandler.setExecutionContext(global.getRealm().defaultContext());
     }
 
     @After
     public void tearDown() {
-        if (global != null) {
-            global.getScriptLoader().getExecutor().shutdown();
-        }
+        globals.release(global);
     }
 
     @Test
@@ -122,16 +118,13 @@ public final class NativesV8Test {
         global.getRealm().getWorld().runEventLoop();
     }
 
-    public static final class V8NativeTestGlobalObject extends V8ShellGlobalObject {
-        protected V8NativeTestGlobalObject(Realm realm, ShellConsole console, TestInfo test,
-                ScriptCache scriptCache) {
-            super(realm, console, test.getBaseDir(), test.getScript(), scriptCache);
+    public static final class V8NativeTestGlobalObject extends ShellGlobalObject {
+        V8NativeTestGlobalObject(Realm realm, ShellConsole console) {
+            super(realm, console);
         }
 
         @Override
-        public void initializeScripted() throws IOException, URISyntaxException, ParserException,
-                CompilationException {
-            // super.initializeScripted();
+        public void initializeScripted() throws IOException, URISyntaxException, ParserException, CompilationException {
             includeNative("compat.js");
             includeNative("cyclic.js");
             includeNative("generator.js");
@@ -141,12 +134,11 @@ public final class NativesV8Test {
             includeNative("typed-array.js");
         }
 
-        public static ObjectAllocator<V8NativeTestGlobalObject> newGlobalObjectAllocator(
-                final ShellConsole console, final TestInfo test, final ScriptCache scriptCache) {
+        public static ObjectAllocator<V8NativeTestGlobalObject> newGlobalObjectAllocator(final ShellConsole console) {
             return new ObjectAllocator<V8NativeTestGlobalObject>() {
                 @Override
                 public V8NativeTestGlobalObject newInstance(Realm realm) {
-                    return new V8NativeTestGlobalObject(realm, console, test, scriptCache);
+                    return new V8NativeTestGlobalObject(realm, console);
                 }
             };
         }

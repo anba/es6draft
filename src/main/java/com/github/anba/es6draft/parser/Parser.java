@@ -29,6 +29,7 @@ import com.github.anba.es6draft.regexp.RegExpParser;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.InlineArrayList;
 import com.github.anba.es6draft.runtime.internal.Messages;
+import com.github.anba.es6draft.runtime.internal.RuntimeContext;
 import com.github.anba.es6draft.runtime.internal.Source;
 
 /**
@@ -44,6 +45,7 @@ public final class Parser {
     private static final boolean DEBUG = false;
 
     private static final int MAX_ARGUMENTS = 0x4000;
+    private static final int NATIVE_CALL_MAX_ARGUMENTS = 250;
     private static final String DEFAULT_EXPORT_BINDING_NAME = "*default*";
     private static final String DEFAULT_EXPORT_NAME = "default";
     private static final List<Binding> NO_INHERITED_BINDING = Collections.emptyList();
@@ -238,7 +240,8 @@ public final class Parser {
         }
 
         void removeLiteral(ObjectLiteral object) {
-            objectLiterals.removeFirstOccurrence(object);
+            boolean removed = objectLiterals.removeFirstOccurrence(object);
+            assert removed;
         }
 
         boolean assertLiteralsUnchecked(int expected) {
@@ -585,7 +588,14 @@ public final class Parser {
         }
 
         private boolean isVarScope() {
-            return functionContext().variableScope == this;
+            // NB: (node == null) handles the case when isVarScope() is called in FunctionContext#setBlockFunctions().
+            return node == null || functionContext().variableScope == this;
+        }
+
+        private Name blockFunctionName(Name name) {
+            // See the comment in isVarScope() for (node == null).
+            assert node == null || functionContext() == parent;
+            return ((FunctionContext) parent).blockFunctionName(name);
         }
 
         @Override
@@ -607,7 +617,7 @@ public final class Parser {
         protected Name getDeclaredName(Name name) {
             Name declaredName = super.getDeclaredName(name);
             if (declaredName == null && isVarScope()) {
-                return functionContext().blockFunctionName(name);
+                return blockFunctionName(name);
             }
             return declaredName;
         }
@@ -1082,6 +1092,10 @@ public final class Parser {
          * Parse functions as native.
          */
         NativeFunction,
+    }
+
+    public Parser(RuntimeContext context, Source source) {
+        this(source, context.getOptions(), context.getParserOptions());
     }
 
     public Parser(Source source, EnumSet<CompatibilityOption> options, EnumSet<Option> parserOptions) {
@@ -1677,6 +1691,21 @@ public final class Parser {
             Messages.Key messageKey, String... args) {
         int line = toLine(sourcePosition), column = toColumn(sourcePosition);
         throw new ParserException(type, getSourceName(), line, column, messageKey, args);
+    }
+
+    /**
+     * Report reference error from the given position.
+     * 
+     * @param sourcePosition
+     *            the source position for the error
+     * @param messageKey
+     *            the error message key
+     * @param args
+     *            the error message arguments
+     * @return the parser exception
+     */
+    private ParserException reportReferenceError(long sourcePosition, Messages.Key messageKey, String... args) {
+        throw reportError(ExceptionType.ReferenceError, sourcePosition, messageKey, args);
     }
 
     /**
@@ -2326,7 +2355,7 @@ public final class Parser {
         if (isEnabled(CompatibilityOption.TypeAnnotation)) {
             // import typeof <ImportClause> from "module";
             // import type <ImportClause> from "module";
-            if (token() == Token.TYPEOF || (isName("type") && !(peek() == Token.COMMA || isNextName("from")))) {
+            if (token() == Token.TYPEOF || (isName("type") && !(LOOKAHEAD(Token.COMMA) || isNextName("from")))) {
                 consume(token());
             }
         }
@@ -2433,7 +2462,7 @@ public final class Parser {
     }
 
     /**
-     * Returns FOLLOW(ImportSpecifier): « <tt>,</tt> , <tt>}</tt> »
+     * Returns FOLLOW(ImportSpecifier): « <code>,</code> , <code>}</code> »
      *
      * @param token
      *            the token to test
@@ -2536,7 +2565,7 @@ public final class Parser {
                 for (ExportSpecifier export : exportClause.getExports()) {
                     String sourceName = export.getSourceName();
                     if (isModuleReservedName(sourceName)) {
-                        throw reportSyntaxError(Messages.Key.InvalidIdentifier, sourceName);
+                        reportSyntaxError(Messages.Key.InvalidIdentifier, sourceName);
                     }
                     addExportBinding(export.getBeginPosition(), export.getSourceName());
                 }
@@ -3300,8 +3329,7 @@ public final class Parser {
         throw new AssertionError(String.format("no duplicate: %s - %s", set, list));
     }
 
-    private void checkFormalParameterDuplication(FunctionNode node, List<Name> boundNames,
-            NameSet names) {
+    private void checkFormalParameterDuplication(FunctionNode node, List<Name> boundNames, NameSet names) {
         boolean hasDuplicates = (boundNames.size() != names.size());
         if (hasDuplicates) {
             Name duplicate = findDuplicate(names, boundNames);
@@ -3310,8 +3338,7 @@ public final class Parser {
         }
     }
 
-    private void checkFormalParameterDuplicationStrict(FunctionNode node, List<Name> boundNames,
-            NameSet names) {
+    private void checkFormalParameterDuplicationStrict(FunctionNode node, List<Name> boundNames, NameSet names) {
         boolean hasDuplicates = (boundNames.size() != names.size());
         if (hasDuplicates) {
             Name duplicate = findDuplicate(names, boundNames);
@@ -3381,6 +3408,7 @@ public final class Parser {
     }
 
     private void computeBlockFunctions() {
+        // TODO: Consider moving computeBlockFunctions() after node is assigned to funscope.
         assert context.kind.isFunction();
         if (!isEnabled(CompatibilityOption.BlockFunctionDeclaration)) {
             return;
@@ -3729,6 +3757,9 @@ public final class Parser {
             List<StatementListItem> statements;
             String header, body;
             if (token() != Token.LC && isEnabled(CompatibilityOption.ExpressionClosure)) {
+                if (allocation != MethodAllocation.Object) {
+                    reportTokenMismatch(Token.LC, token());
+                }
                 int startBody = ts.position();
                 statements = expressionClosureBody(parameters);
                 int endFunction = ts.position();
@@ -3790,6 +3821,9 @@ public final class Parser {
             List<StatementListItem> statements;
             String header, body;
             if (token() != Token.LC && isEnabled(CompatibilityOption.ExpressionClosure)) {
+                if (allocation != MethodAllocation.Object) {
+                    reportTokenMismatch(Token.LC, token());
+                }
                 int startBody = ts.position();
                 statements = expressionClosureBody(parameters);
                 int endFunction = ts.position();
@@ -4418,8 +4452,7 @@ public final class Parser {
             properties.add(property);
         }
 
-        classBody_EarlyErrors(staticMethods, true);
-        classBody_EarlyErrors(prototypeMethods, false);
+        classBody_EarlyErrors(staticMethods, prototypeMethods);
 
         if (ConstructorMethod(prototypeMethods) == null) {
             MethodDefinition constructor = createSyntheticClassConstructor(beginLine, hasExtends);
@@ -4454,63 +4487,37 @@ public final class Parser {
     /**
      * 14.5.1 Static Semantics: Early Errors
      * 
-     * @param defs
-     *            the method definitions to validate
-     * @param isStatic
-     *            the flag to select whether to perform static or prototype method error detection
+     * @param staticMethods
+     *            the list of static method definitions
+     * @param prototypeMethods
+     *            the list of prototype method definitions
      */
-    private void classBody_EarlyErrors(List<MethodDefinition> defs, boolean isStatic) {
-        boolean hasConstructor = false;
-        HashMap<String, Integer> values = null;
-        if (isEnabled(CompatibilityOption.DuplicateProperties)) {
-            values = new HashMap<>();
-        }
-        for (MethodDefinition def : defs) {
+    private void classBody_EarlyErrors(List<MethodDefinition> staticMethods, List<MethodDefinition> prototypeMethods) {
+        for (MethodDefinition def : staticMethods) {
             String key = def.getPropertyName().getName();
             if (key == null) {
                 assert def.getPropertyName() instanceof ComputedPropertyName;
                 continue;
             }
-            if (isStatic) {
-                if ("prototype".equals(key)) {
-                    reportSyntaxError(def, Messages.Key.InvalidPrototypeMethod);
-                }
-            } else {
-                if ("constructor".equals(key)) {
-                    if (hasConstructor) {
-                        reportSyntaxError(def, Messages.Key.DuplicatePropertyDefinition, key);
-                    } else if (SpecialMethod(def)) {
-                        reportSyntaxError(def, Messages.Key.InvalidConstructorMethod);
-                    }
-                    hasConstructor = true;
-                }
-            }
-            if (values != null) {
-                checkDuplicateMethod(def, values);
+            if ("prototype".equals(key)) {
+                reportSyntaxError(def, Messages.Key.InvalidPrototypeMethod);
             }
         }
-    }
-
-    private void checkDuplicateMethod(MethodDefinition def, HashMap<String, Integer> values) {
-        final int VALUE = 0, GETTER = 1, SETTER = 2;
-        MethodDefinition.MethodType type = def.getType();
-        final int kind = type == MethodType.Getter ? GETTER : type == MethodType.Setter ? SETTER
-                : VALUE;
-        String key = def.getPropertyName().getName();
-        if (values.containsKey(key)) {
-            int prev = values.get(key);
-            if (kind == VALUE) {
-                reportSyntaxError(def, Messages.Key.DuplicatePropertyDefinition, key);
+        boolean hasConstructor = false;
+        for (MethodDefinition def : prototypeMethods) {
+            String key = def.getPropertyName().getName();
+            if (key == null) {
+                assert def.getPropertyName() instanceof ComputedPropertyName;
+                continue;
             }
-            if (kind == GETTER && prev != SETTER) {
-                reportSyntaxError(def, Messages.Key.DuplicatePropertyDefinition, key);
+            if ("constructor".equals(key)) {
+                if (hasConstructor) {
+                    reportSyntaxError(def, Messages.Key.DuplicatePropertyDefinition, key);
+                } else if (SpecialMethod(def)) {
+                    reportSyntaxError(def, Messages.Key.InvalidConstructorMethod);
+                }
+                hasConstructor = true;
             }
-            if (kind == SETTER && prev != GETTER) {
-                reportSyntaxError(def, Messages.Key.DuplicatePropertyDefinition, key);
-            }
-            values.put(key, prev | kind);
-        } else {
-            values.put(key, kind);
         }
     }
 
@@ -4665,7 +4672,7 @@ public final class Parser {
      *     async [no <i>LineTerminator</i> here] AsyncArrowBindingIdentifier<span><sub>[?Yield]</sub></span> [no <i>LineTerminator</i> here] {@literal =>} AsyncConciseBody<span><sub>[?In]</sub></span>
      *     CoverCallExpressionAndAsyncArrowHead<span><sub>[?Yield, ?Await]</sub></span> [no <i>LineTerminator</i> here] {@literal =>} AsyncConciseBody<span><sub>[?In]</sub></span>
      * AsyncConciseBody<span><sub>[In]</sub></span> :
-     *     [lookahead &#x2260; <b>{</b>] AssignmentExpression<span><sub>[?In]</sub></span>
+     *     [lookahead &#x2260; <b>{</b>] AssignmentExpression<span><sub>[?In, Await]</sub></span>
      *     { AsyncFunctionBody }
      * AsyncArrowBindingIdentifier<span><sub>[Yield]</sub></span> :
      *     BindingIdentifier<span><sub>[?Yield, Await]</sub></span>
@@ -4770,7 +4777,7 @@ public final class Parser {
      * 
      * <pre>
      * AsyncMethod<span><sub>[Yield]</sub></span> :
-     *     async [no <i>LineTerminator</i> here] PropertyName<span><sub>[?Yield]</sub></span> ( StrictFormalParameters<span><sub>[Await]</sub></span> ) { AsyncFunctionBody }
+     *     async [no <i>LineTerminator</i> here] PropertyName<span><sub>[?Yield, ?Await]</sub></span> ( StrictFormalParameters<span><sub>[Await]</sub></span> ) { AsyncFunctionBody }
      * </pre>
      * 
      * @param allocation
@@ -4836,7 +4843,7 @@ public final class Parser {
         assert context.kind.isAsync() && context.awaitAllowed;
         long begin = ts.beginPosition();
         consume(Token.AWAIT);
-        Expression expr = unaryExpression();
+        Expression expr = unaryExpression(false);
         return new AwaitExpression(begin, ts.endPosition(), expr);
     }
 
@@ -5874,8 +5881,7 @@ public final class Parser {
                 }
             } else {
                 // ForInStatement or ForOfStatement, check assignment target
-                head = validateAssignment(expr, ExceptionType.SyntaxError,
-                        Messages.Key.InvalidAssignmentTarget);
+                head = validateAssignment(expr, ExceptionType.SyntaxError, Messages.Key.InvalidAssignmentTarget);
                 // Apply early error checks for remaining object literals
                 objectLiteral_EarlyErrors(count);
             }
@@ -6333,7 +6339,7 @@ public final class Parser {
             reportStrictModeSyntaxError(Messages.Key.InvalidToken, token().toString());
         }
         long begin = ts.beginPosition();
-        Declaration function = functionDeclarationWithRetry(false);
+        HoistableDeclaration function = functionDeclarationWithRetry(false);
         return new LabelledFunctionStatement(begin, ts.endPosition(), labelSet, function);
     }
 
@@ -6495,7 +6501,8 @@ public final class Parser {
 
         if (token() != Token.LC && isEnabled(CompatibilityOption.LetExpression)) {
             // let expression disguised as let statement - also error in strict mode(!)
-            reportStrictModeSyntaxError(begin, Messages.Key.UnexpectedToken, token().toString());
+            reportStrictModeSyntaxError(ts.sourcePosition(), Messages.Key.UnexpectedToken, token().toString(),
+                    Token.LC.toString());
 
             BlockContext scope = enterBlockContext(bindings);
             Expression expression = assignmentExpression(true);
@@ -6990,6 +6997,8 @@ public final class Parser {
      */
     private Expression coverParenthesizedExpressionAndArrowParameterList() {
         long position = ts.position(), lineinfo = ts.lineinfo();
+        boolean hasAnnotation = false;
+        long annotationPosition = 0;
         consume(Token.LP);
         Expression expr;
         if (token() == Token.RP) {
@@ -7009,6 +7018,10 @@ public final class Parser {
                 return legacyGeneratorComprehension();
             }
             if (token() == Token.COLON && isEnabled(CompatibilityOption.TypeAnnotation)) {
+                if (!hasAnnotation) {
+                    hasAnnotation = true;
+                    annotationPosition = ts.sourcePosition();
+                }
                 typeAnnotation();
             }
             if (token() == Token.COMMA) {
@@ -7026,6 +7039,10 @@ public final class Parser {
                     }
                     expr = assignmentExpressionNoValidation(true);
                     if (token() == Token.COLON && isEnabled(CompatibilityOption.TypeAnnotation)) {
+                        if (!hasAnnotation) {
+                            hasAnnotation = true;
+                            annotationPosition = ts.sourcePosition();
+                        }
                         typeAnnotation();
                     }
                     list.add(expr);
@@ -7035,6 +7052,10 @@ public final class Parser {
         }
         expr.addParentheses();
         consume(Token.RP);
+        if (hasAnnotation && token() != Token.ARROW) {
+            reportSyntaxError(annotationPosition, Messages.Key.UnexpectedToken, Token.COLON.toString(),
+                    Token.COMMA.toString());
+        }
         return expr;
     }
 
@@ -7081,9 +7102,7 @@ public final class Parser {
             case TRIPLE_DOT:
                 break;
             default:
-                // TODO: report eclipse formatter bug
-                long position = ts.position(),
-                lineinfo = ts.lineinfo();
+                long position = ts.position(), lineinfo = ts.lineinfo();
                 consume(Token.LB);
                 Expression expression = assignmentExpressionNoValidation(true);
                 if (token() == Token.FOR) {
@@ -7436,89 +7455,28 @@ public final class Parser {
      */
     private void objectLiteral_EarlyErrors(ObjectLiteral object) {
         boolean hasProto = false, checkProto = isEnabled(CompatibilityOption.ProtoInitializer);
-        HashMap<String, Integer> values = null;
-        if (isEnabled(CompatibilityOption.DuplicateProperties)) {
-            values = new HashMap<String, Integer>();
-        }
         for (PropertyDefinition def : object.getProperties()) {
             if (def instanceof CoverInitializedName) {
                 // Always throw a Syntax Error if this production is present
                 String key = def.getPropertyName().getName();
-                throw reportSyntaxError(def, Messages.Key.MissingColonAfterPropertyId, key);
+                reportSyntaxError(def, Messages.Key.MissingColonAfterPropertyId, key);
             }
-            if (def instanceof SpreadProperty
-                    && !isEnabled(CompatibilityOption.ObjectSpreadInitializer)) {
+            if (def instanceof SpreadProperty && !isEnabled(CompatibilityOption.ObjectSpreadInitializer)) {
                 reportSyntaxError(def, Messages.Key.InvalidDestructuring);
             }
-            if (checkProto) {
-                hasProto = checkDuplicateProtoInitializer(def, hasProto);
+            if (def instanceof PropertyValueDefinition && checkProto) {
+                String key = def.getPropertyName().getName();
+                if (key == null) {
+                    assert def.getPropertyName() instanceof ComputedPropertyName;
+                    continue;
+                }
+                if ("__proto__".equals(key)) {
+                    if (hasProto) {
+                        reportSyntaxError(def, Messages.Key.DuplicatePropertyDefinition, key);
+                    }
+                    hasProto = true;
+                }
             }
-            if (values != null) {
-                checkDuplicateProperty(def, values);
-            }
-        }
-    }
-
-    private boolean checkDuplicateProtoInitializer(PropertyDefinition def, boolean hasProto) {
-        if (!(def instanceof PropertyValueDefinition)) {
-            return hasProto;
-        }
-        PropertyName propertyName = def.getPropertyName();
-        String key = propertyName.getName();
-        if (key == null) {
-            assert propertyName instanceof ComputedPropertyName;
-            return hasProto;
-        }
-        if (!"__proto__".equals(key)) {
-            return hasProto;
-        }
-        if (hasProto) {
-            reportSyntaxError(def, Messages.Key.DuplicatePropertyDefinition, key);
-        }
-        return true;
-    }
-
-    private void checkDuplicateProperty(PropertyDefinition def, HashMap<String, Integer> values) {
-        final int VALUE = 0, GETTER = 1, SETTER = 2, SPECIAL = 4;
-        PropertyName propertyName = def.getPropertyName();
-        String key = propertyName.getName();
-        if (key == null) {
-            assert propertyName instanceof ComputedPropertyName;
-            return;
-        }
-        final int kind;
-        if (def instanceof PropertyValueDefinition) {
-            kind = VALUE;
-        } else if (def instanceof PropertyNameDefinition) {
-            kind = SPECIAL;
-        } else {
-            assert def instanceof MethodDefinition;
-            MethodDefinition.MethodType type = ((MethodDefinition) def).getType();
-            kind = type == MethodType.Getter ? GETTER : type == MethodType.Setter ? SETTER
-                    : SPECIAL;
-        }
-        // It is a Syntax Error if PropertyNameList of PropertyDefinitionList contains any
-        // duplicate entries [...]
-        if (values.containsKey(key)) {
-            int prev = values.get(key);
-            if (kind == VALUE && prev != VALUE) {
-                reportSyntaxError(def, Messages.Key.DuplicatePropertyDefinition, key);
-            }
-            if (kind == VALUE && prev == VALUE) {
-                reportStrictModeSyntaxError(def, Messages.Key.DuplicatePropertyDefinition, key);
-            }
-            if (kind == GETTER && prev != SETTER) {
-                reportSyntaxError(def, Messages.Key.DuplicatePropertyDefinition, key);
-            }
-            if (kind == SETTER && prev != GETTER) {
-                reportSyntaxError(def, Messages.Key.DuplicatePropertyDefinition, key);
-            }
-            if (kind == SPECIAL) {
-                reportSyntaxError(def, Messages.Key.DuplicatePropertyDefinition, key);
-            }
-            values.put(key, prev | kind);
-        } else {
-            values.put(key, kind);
         }
     }
 
@@ -7550,13 +7508,12 @@ public final class Parser {
                 if (IsAnonymousFunctionDefinition(propertyValue)) {
                     setFunctionName(propertyValue, propertyName);
                 }
-                return new PropertyValueDefinition(begin, ts.endPosition(), propertyName,
-                        propertyValue);
+                return new PropertyValueDefinition(begin, ts.endPosition(), propertyName, propertyValue);
             }
             return normalMethod(MethodAllocation.Object, false, NO_DECORATORS, begin, propertyName);
         }
-        if (token() == Token.TRIPLE_DOT
-                && (isEnabled(CompatibilityOption.ObjectSpreadInitializer) || isEnabled(CompatibilityOption.ObjectRestDestructuring))) {
+        if (token() == Token.TRIPLE_DOT && (isEnabled(CompatibilityOption.ObjectSpreadInitializer)
+                || isEnabled(CompatibilityOption.ObjectRestDestructuring))) {
             consume(Token.TRIPLE_DOT);
             Expression expression = assignmentExpressionNoValidation(true);
             return new SpreadProperty(begin, ts.endPosition(), expression);
@@ -7769,25 +7726,11 @@ public final class Parser {
         long begin = ts.beginPosition();
         String pattern = ts.readRegularExpression(tok);
         String flags = ts.readRegularExpressionFlags();
-        regularExpressionLiteral_EarlyErrors(begin, pattern, flags);
+        // Validate regular expression syntax. (12.2.8.1 Static Semantics: Early Errors)
+        RegExpParser.syntaxParse(pattern, flags, getSourceName(), toLine(begin), toColumn(begin),
+                isEnabled(CompatibilityOption.WebRegularExpressions));
         consume(tok);
         return new RegularExpressionLiteral(begin, ts.endPosition(), pattern, flags);
-    }
-
-    /**
-     * 12.2.8.1 Static Semantics: Early Errors
-     * 
-     * @param sourcePos
-     *            the source position where the regular expression literal starts
-     * @param pattern
-     *            the regular expression literal's pattern part
-     * @param flags
-     *            the regular expression literal's flags part
-     */
-    private void regularExpressionLiteral_EarlyErrors(long sourcePos, String pattern, String flags) {
-        // parse to validate regular expression
-        RegExpParser.syntaxParse(pattern, flags, getSourceName(), toLine(sourcePos),
-                toColumn(sourcePos), isEnabled(CompatibilityOption.WebRegularExpressions));
     }
 
     /**
@@ -7840,15 +7783,64 @@ public final class Parser {
      * 
      * <pre>
      * NativeCallExpression :
-     *     % Identifier ( Arguments )
+     *     % Identifier ( NativeCallArguments )
      * </pre>
      */
     private NativeCallExpression nativeCallExpression() {
         long begin = ts.beginPosition();
         consume(Token.MOD);
         IdentifierReference name = identifierReference();
-        List<Expression> args = arguments();
+        List<Expression> args = nativeCallArguments();
         return new NativeCallExpression(begin, ts.endPosition(), name, args);
+    }
+
+    /**
+     * <strong>[Extension] Native call expression</strong>
+     * 
+     * <pre>
+     * NativeCallArguments<span><sub>[Yield]</sub></span> :
+     *     ()
+     *     ( NativeCallArgumentList<span><sub>[?Yield]</sub></span> )
+     *     ( NativeCallArgumentList<span><sub>[?Yield]</sub></span> , ... AssignmentExpression<span><sub>[In, ?Yield]</sub></span> )
+     *     ( ... AssignmentExpression<span><sub>[In, ?Yield]</sub></span> )
+     * NativeCallArgumentList<span><sub>[Yield]</sub></span> :
+     *     AssignmentExpression<span><sub>[In, ?Yield]</sub></span>
+     *     NativeCallArgumentList<span><sub>[?Yield]</sub></span> , AssignmentExpression<span><sub>[In, ?Yield]</sub></span>
+     * </pre>
+     * 
+     * @return the list of parsed function call arguments
+     */
+    private List<Expression> nativeCallArguments() {
+        consume(Token.LP);
+        if (token() == Token.RP) {
+            consume(Token.RP);
+            return Collections.emptyList();
+        }
+        InlineArrayList<Expression> args = newList();
+        for (;;) {
+            // Allow only trailing ...spread arguments.
+            if (token() == Token.TRIPLE_DOT) {
+                long begin = ts.beginPosition();
+                consume(Token.TRIPLE_DOT);
+                Expression e = assignmentExpression(true);
+                args.add(new CallSpreadElement(begin, ts.endPosition(), e));
+                break;
+            }
+            args.add(assignmentExpression(true));
+            if (token() == Token.COMMA) {
+                consume(Token.COMMA);
+                if (token() == Token.RP && isEnabled(CompatibilityOption.FunctionCallTrailingComma)) {
+                    break;
+                }
+            } else {
+                break;
+            }
+        }
+        if (args.size() > NATIVE_CALL_MAX_ARGUMENTS) {
+            reportSyntaxError(Messages.Key.FunctionTooManyArguments);
+        }
+        consume(Token.RP);
+        return args;
     }
 
     /**
@@ -8220,37 +8212,76 @@ public final class Parser {
      *     ! UnaryExpression<span><sub>[?Yield]</sub></span>
      * </pre>
      * 
+     * Exponentation operator extension:
+     * 
+     * <pre>
+     * ExponentiationExpression<span><sub>[Yield]</sub></span> :
+     *     UnaryExpression<span><sub>[?Yield]</sub></span>
+     *     IncrementExpression<span><sub>[?Yield]</sub></span> ** ExponentiationExpression<span><sub>[?Yield]</sub></span>
+     * UnaryExpression<span><sub>[Yield]</sub></span> :
+     *     IncrementExpression<span><sub>[?Yield]</sub></span>
+     *     delete UnaryExpression<span><sub>[?Yield]</sub></span>
+     *     void UnaryExpression<span><sub>[?Yield]</sub></span>
+     *     typeof UnaryExpression<span><sub>[?Yield]</sub></span>
+     *     + UnaryExpression<span><sub>[?Yield]</sub></span>
+     *     - UnaryExpression<span><sub>[?Yield]</sub></span>
+     *     ~ UnaryExpression<span><sub>[?Yield]</sub></span>
+     *     ! UnaryExpression<span><sub>[?Yield]</sub></span>
+     * IncrementExpression<span><sub>[Yield]</sub></span> :
+     *     LeftHandSideExpression<span><sub>[?Yield]</sub></span>
+     *     LeftHandSideExpression<span><sub>[?Yield]</sub></span> [no <i>LineTerminator</i> here] ++
+     *     LeftHandSideExpression<span><sub>[?Yield]</sub></span> [no <i>LineTerminator</i> here] --
+     *     ++ LeftHandSideExpression<span><sub>[?Yield]</sub></span>
+     *     -- LeftHandSideExpression<span><sub>[?Yield]</sub></span>
+     * </pre>
+     * 
+     * @param allowExponentiation
+     *            the flag to select whether or not exponentiation expressions are allowed
      * @return the parsed unary expression
      */
-    private Expression unaryExpression() {
+    private Expression unaryExpression(boolean allowExponentiation) {
         long begin = ts.beginPosition();
+        Expression lhs;
         Token tok = token();
         switch (tok) {
-        case DELETE:
+        case DELETE: {
+            consume(tok);
+            Expression operand = unaryExpression(false);
+            // 12.5.4.1 Static Semantics: Early Errors
+            if (operand instanceof IdentifierReference) {
+                reportStrictModeSyntaxError(operand, Messages.Key.StrictModeInvalidDeleteOperand);
+            }
+            return new UnaryExpression(begin, ts.endPosition(), unaryOp(tok), operand);
+        }
         case VOID:
         case TYPEOF:
-        case INC:
-        case DEC:
         case ADD:
         case SUB:
         case BITNOT:
         case NOT: {
             consume(tok);
-            Expression operand = unaryExpression();
-            UnaryExpression unary = new UnaryExpression(begin, ts.endPosition(),
-                    unaryOp(tok, false), operand);
-            if (tok == Token.INC || tok == Token.DEC) {
-                // 12.5.1 Static Semantics: Early Errors
-                validateSimpleAssignment(operand, ExceptionType.ReferenceError,
-                        Messages.Key.InvalidIncDecTarget);
-            }
-            if (tok == Token.DELETE) {
-                // 12.5.4.1 Static Semantics: Early Errors
-                if (operand instanceof IdentifierReference) {
-                    reportStrictModeSyntaxError(unary, Messages.Key.StrictModeInvalidDeleteOperand);
+            Expression operand = unaryExpression(false);
+            return new UnaryExpression(begin, ts.endPosition(), unaryOp(tok), operand);
+        }
+        case INC:
+        case DEC: {
+            consume(tok);
+            if (isUnaryOrIncrement(token())) {
+                if (!isEnabled(CompatibilityOption.Exponentiation)) {
+                    reportReferenceError(ts.sourcePosition(), Messages.Key.InvalidIncDecTarget);
                 }
             }
-            return unary;
+            Expression operand = leftHandSideExpression(true, true);
+            // 12.5.1 Static Semantics: Early Errors
+            validateSimpleAssignment(operand, ExceptionType.ReferenceError, Messages.Key.InvalidIncDecTarget);
+            lhs = new UnaryExpression(begin, ts.endPosition(), incrementOp(tok, false), operand);
+            Token next = token();
+            if ((next == Token.INC || next == Token.DEC) && noLineTerminator()) {
+                if (!isEnabled(CompatibilityOption.Exponentiation)) {
+                    reportReferenceError(operand.getBeginPosition(), Messages.Key.InvalidIncDecTarget);
+                }
+            }
+            break;
         }
         case AWAIT:
             if (isEnabled(CompatibilityOption.AsyncFunction)) {
@@ -8278,23 +8309,27 @@ public final class Parser {
             }
             // fall-through
         default: {
-            Expression lhs = leftHandSideExpression(true, true);
-            if (noLineTerminator()) {
-                tok = token();
-                if (tok == Token.INC || tok == Token.DEC) {
-                    // 12.4.1 Static Semantics: Early Errors
-                    validateSimpleAssignment(lhs, ExceptionType.ReferenceError,
-                            Messages.Key.InvalidIncDecTarget);
-                    consume(tok);
-                    return new UnaryExpression(begin, ts.endPosition(), unaryOp(tok, true), lhs);
-                }
+            lhs = leftHandSideExpression(true, true);
+            Token next = token();
+            if ((next == Token.INC || next == Token.DEC) && noLineTerminator()) {
+                consume(next);
+                // 12.4.1 Static Semantics: Early Errors
+                validateSimpleAssignment(lhs, ExceptionType.ReferenceError, Messages.Key.InvalidIncDecTarget);
+                lhs = new UnaryExpression(begin, ts.endPosition(), incrementOp(next, true), lhs);
             }
-            return lhs;
+            break;
         }
         }
+        // TODO: Better error message
+        if (allowExponentiation && token() == Token.EXP) {
+            consume(Token.EXP);
+            Expression exponent = unaryExpression(true);
+            return new BinaryExpression(BinaryExpression.Operator.EXP, lhs, exponent);
+        }
+        return lhs;
     }
 
-    private static UnaryExpression.Operator unaryOp(Token tok, boolean postfix) {
+    private static UnaryExpression.Operator unaryOp(Token tok) {
         switch (tok) {
         case DELETE:
             return UnaryExpression.Operator.DELETE;
@@ -8302,10 +8337,6 @@ public final class Parser {
             return UnaryExpression.Operator.VOID;
         case TYPEOF:
             return UnaryExpression.Operator.TYPEOF;
-        case INC:
-            return postfix ? UnaryExpression.Operator.POST_INC : UnaryExpression.Operator.PRE_INC;
-        case DEC:
-            return postfix ? UnaryExpression.Operator.POST_DEC : UnaryExpression.Operator.PRE_DEC;
         case ADD:
             return UnaryExpression.Operator.POS;
         case SUB:
@@ -8316,6 +8347,57 @@ public final class Parser {
             return UnaryExpression.Operator.NOT;
         default:
             throw new AssertionError();
+        }
+    }
+
+    private static UnaryExpression.Operator incrementOp(Token tok, boolean postfix) {
+        if (tok == Token.INC) {
+            return postfix ? UnaryExpression.Operator.POST_INC : UnaryExpression.Operator.PRE_INC;
+        }
+        assert tok == Token.DEC;
+        return postfix ? UnaryExpression.Operator.POST_DEC : UnaryExpression.Operator.PRE_DEC;
+    }
+
+    private boolean isUnaryOrIncrement(Token tok) {
+        switch (tok) {
+        case DELETE:
+        case VOID:
+        case TYPEOF:
+        case ADD:
+        case SUB:
+        case BITNOT:
+        case NOT:
+        case INC:
+        case DEC:
+            return true;
+        case AWAIT: {
+            if (isEnabled(CompatibilityOption.AsyncFunction)) {
+                switch (context.kind) {
+                case AsyncArrowFunction:
+                case AsyncFunction:
+                case AsyncMethod:
+                    if (!context.awaitAllowed) {
+                        // await in async function parameters
+                        reportSyntaxError(Messages.Key.InvalidAwaitExpression);
+                    }
+                    return true;
+                case ArrowFunction:
+                case GeneratorComprehension:
+                    if (context.awaitAllowed) {
+                        // One of:
+                        // - await in arrow function parameters, nested in async function
+                        // - await in generator comprehension, nested in async function
+                        reportSyntaxError(Messages.Key.InvalidAwaitExpression);
+                    }
+                    break;
+                default:
+                    assert !context.awaitAllowed;
+                }
+            }
+            // fall-through
+        }
+        default:
+            return false;
         }
     }
 
@@ -8379,7 +8461,7 @@ public final class Parser {
      * @return the parsed binary expression
      */
     private Expression binaryExpression(boolean allowIn) {
-        Expression lhs = unaryExpression();
+        Expression lhs = unaryExpression(true);
         return binaryExpression(allowIn, lhs, BinaryExpression.Operator.OR.getPrecedence());
     }
 
@@ -8397,10 +8479,10 @@ public final class Parser {
                 break;
             }
             consume(tok);
-            Expression rhs = unaryExpression();
+            Expression rhs = unaryExpression(true);
             for (BinaryExpression.Operator op2; (op2 = binaryOp(token())) != null;) {
                 int pred2 = op2.getPrecedence();
-                if (pred2 < pred || pred2 == pred && !op2.isRightAssociative()) {
+                if (pred2 < pred || pred2 == pred) {
                     break;
                 }
                 rhs = binaryExpression(allowIn, rhs, pred2);
@@ -8458,8 +8540,6 @@ public final class Parser {
             return BinaryExpression.Operator.DIV;
         case MOD:
             return BinaryExpression.Operator.MOD;
-        case EXP:
-            return BinaryExpression.Operator.EXP;
         default:
             return null;
         }
@@ -8591,8 +8671,8 @@ public final class Parser {
             }
             return new AssignmentExpression(assignmentOp(tok), lhs, right);
         } else if (isAssignmentOperator(tok)) {
-            LeftHandSideExpression lhs = validateSimpleAssignment(left,
-                    ExceptionType.ReferenceError, Messages.Key.InvalidAssignmentTarget);
+            LeftHandSideExpression lhs = validateSimpleAssignment(left, ExceptionType.ReferenceError,
+                    Messages.Key.InvalidAssignmentTarget);
             consume(tok);
             Expression right = assignmentExpression(allowIn);
             return new AssignmentExpression(assignmentOp(tok), lhs, right);
@@ -8713,8 +8793,7 @@ public final class Parser {
                 if ("eval".equals(name) || "arguments".equals(name)) {
                     // FIXME: spec issue - early SyntaxError in ES5, but ReferenceError in ES6.
                     // https://bugs.ecmascript.org/show_bug.cgi?id=4375
-                    reportStrictModeSyntaxError(ident,
-                            Messages.Key.StrictModeInvalidAssignmentTarget);
+                    reportStrictModeSyntaxError(ident, Messages.Key.StrictModeInvalidAssignmentTarget);
                 }
             }
             return ident;
@@ -8743,8 +8822,7 @@ public final class Parser {
      *            the message key for errors
      * @return the {@code lhs} parameter as a left-hand side expression node
      */
-    private LeftHandSideExpression validateAssignment(Expression lhs, ExceptionType type,
-            Messages.Key messageKey) {
+    private LeftHandSideExpression validateAssignment(Expression lhs, ExceptionType type, Messages.Key messageKey) {
         // rewrite object/array literal to destructuring form
         if (lhs instanceof ObjectLiteral) {
             if (!lhs.isParenthesized()) {

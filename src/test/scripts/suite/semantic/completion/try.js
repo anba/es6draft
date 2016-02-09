@@ -69,11 +69,15 @@ assertSame("try", eval(`"init"; try { "try"; } finally { "finally"; }`));
 assertSame("try", eval(`"init"; L: try { "try"; break L; } finally { "finally"; }`));
 assertSame("try", eval(`"init"; while (True()) try { "try"; break; } finally { "finally"; }`));
 assertSame("try", eval(`"init"; do try { "try"; continue; } finally { "finally"; } while(False());`));
+assertSame("try", eval(`"init"; try { "try"; } finally { L: try { "finally"; } finally { break L; } }`));
+assertSame("try", eval(`"init"; try { try { "try"; } finally { L: try { "finally"; } finally { break L; } } } finally { }`));
 // (B) finally completes with empty
 assertSame("try", eval(`"init"; try { "try"; } finally { }`));
 assertSame("try", eval(`"init"; L: try { "try"; break L; } finally { }`));
 assertSame("try", eval(`"init"; while (True()) try { "try"; break; } finally { }`));
 assertSame("try", eval(`"init"; do try { "try"; continue; } finally { } while(False());`));
+assertSame("try", eval(`"init"; try { "try"; } finally { L: try { } finally { break L; } }`));
+assertSame("try", eval(`"init"; try { try { "try"; } finally { L: try { } finally { break L; } } } finally { }`));
 
 // (2) finally completes with abrupt completion
 // (A) finally completes with value

@@ -36,8 +36,9 @@ final class TypeConverter {
         case Boolean:
         case Symbol:
         case Object:
-        default:
             return value;
+        default:
+            throw new AssertionError();
         }
     }
 

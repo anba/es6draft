@@ -75,8 +75,14 @@ public final class SimpleTypeTextifier extends Textifier {
     public void visitLdcInsn(Object cst) {
         if (cst instanceof Handle) {
             Handle handle = (Handle) cst;
-            cst = new Handle(handle.getTag(), handle.getOwner(), handle.getName(),
+            handle = new Handle(handle.getTag(), handle.getOwner(), handle.getName(),
                     getMethodDescriptor(handle.getDesc()));
+            buf.setLength(0);
+            buf.append(tab2).append("LDC ");
+            buf.append(handle.getOwner()).append('.').append(handle.getName()).append(handle.getDesc());
+            buf.append('\n');
+            text.add(buf.toString());
+            return;
         }
         super.visitLdcInsn(cst);
     }

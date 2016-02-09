@@ -6,26 +6,40 @@
  */
 package com.github.anba.es6draft.v8;
 
+import java.io.IOException;
+import java.net.URISyntaxException;
+
+import com.github.anba.es6draft.compiler.CompilationException;
+import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.repl.console.ShellConsole;
-import com.github.anba.es6draft.repl.global.V8ShellGlobalObject;
+import com.github.anba.es6draft.repl.global.BaseShellFunctions;
+import com.github.anba.es6draft.repl.global.ShellGlobalObject;
+import com.github.anba.es6draft.repl.global.V8ShellFunctions;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
-import com.github.anba.es6draft.runtime.internal.ScriptCache;
-import com.github.anba.es6draft.util.TestInfo;
 
 /**
  * 
  */
-final class V8TestGlobalObject extends V8ShellGlobalObject {
-    protected V8TestGlobalObject(Realm realm, ShellConsole console, TestInfo test,
-            ScriptCache scriptCache) {
-        super(realm, console, test.getBaseDir(), test.getScript(), scriptCache);
+final class V8TestGlobalObject extends ShellGlobalObject {
+    V8TestGlobalObject(Realm realm, ShellConsole console) {
+        super(realm, console);
+    }
+
+    static void testLoadInitializationScript() throws IOException {
+        getScriptURL("v8legacy.js");
     }
 
     @Override
-    protected void initializeExtensions() {
-        super.initializeExtensions();
-        install(new TestingFunctions(), TestingFunctions.class);
+    public void initializeScripted() throws IOException, URISyntaxException, ParserException, CompilationException {
+        includeNative("v8legacy.js");
+    }
+
+    @Override
+    public void initializeExtensions() {
+        createGlobalProperties(new BaseShellFunctions(getConsole()), BaseShellFunctions.class);
+        createGlobalProperties(new V8ShellFunctions(), V8ShellFunctions.class);
+        createGlobalProperties(new TestingFunctions(), TestingFunctions.class);
     }
 
     /**
@@ -33,18 +47,13 @@ final class V8TestGlobalObject extends V8ShellGlobalObject {
      * 
      * @param console
      *            the console object
-     * @param test
-     *            the test descriptor
-     * @param scriptCache
-     *            the script cache
      * @return the object allocator to construct new global object instances
      */
-    static ObjectAllocator<V8TestGlobalObject> newGlobalObjectAllocator(final ShellConsole console,
-            final TestInfo test, final ScriptCache scriptCache) {
+    static ObjectAllocator<V8TestGlobalObject> newGlobalObjectAllocator(final ShellConsole console) {
         return new ObjectAllocator<V8TestGlobalObject>() {
             @Override
             public V8TestGlobalObject newInstance(Realm realm) {
-                return new V8TestGlobalObject(realm, console, test, scriptCache);
+                return new V8TestGlobalObject(realm, console);
             }
         };
     }

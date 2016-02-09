@@ -8,16 +8,16 @@ package com.github.anba.es6draft.repl;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.CreateArrayFromList;
 import static com.github.anba.es6draft.runtime.AbstractOperations.CreateMethodProperty;
+import static com.github.anba.es6draft.runtime.Realm.InitializeHostDefinedRealm;
+import static com.github.anba.es6draft.runtime.internal.Errors.newInternalError;
 import static com.github.anba.es6draft.runtime.modules.ModuleSemantics.ModuleEvaluationJob;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
-import java.io.BufferedReader;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.io.StringWriter;
+import java.io.*;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.Charset;
@@ -40,6 +40,7 @@ import org.kohsuke.args4j.Option;
 import org.kohsuke.args4j.OptionDef;
 import org.kohsuke.args4j.OptionHandlerFilter;
 import org.kohsuke.args4j.ParserProperties;
+import org.kohsuke.args4j.spi.OneArgumentOptionHandler;
 import org.kohsuke.args4j.spi.OptionHandler;
 import org.kohsuke.args4j.spi.Parameters;
 import org.kohsuke.args4j.spi.RestOfArgumentsHandler;
@@ -55,7 +56,7 @@ import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.repl.console.JLineConsole;
 import com.github.anba.es6draft.repl.console.LegacyConsole;
 import com.github.anba.es6draft.repl.console.NativeConsole;
-import com.github.anba.es6draft.repl.console.ReplConsole;
+import com.github.anba.es6draft.repl.console.ShellConsole;
 import com.github.anba.es6draft.repl.global.MozShellGlobalObject;
 import com.github.anba.es6draft.repl.global.ShellGlobalObject;
 import com.github.anba.es6draft.repl.global.SimpleShellGlobalObject;
@@ -70,8 +71,8 @@ import com.github.anba.es6draft.runtime.Task;
 import com.github.anba.es6draft.runtime.World;
 import com.github.anba.es6draft.runtime.extensions.timer.Timers;
 import com.github.anba.es6draft.runtime.internal.*;
-import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties;
+import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.modules.MalformedNameException;
 import com.github.anba.es6draft.runtime.modules.ModuleLoader;
 import com.github.anba.es6draft.runtime.modules.ModuleRecord;
@@ -96,16 +97,16 @@ public final class Repl {
         Options options = new Options();
         try {
             parseOptions(options, args);
-            ReplConsole console = createConsole(options);
+            ShellConsole console = createConsole(options);
             new Repl(console, options).loop();
         } catch (Throwable e) {
-            printStackTrace(e, options.stacktraceDepth);
+            printStackTrace(System.err, e, options.stacktraceDepth);
             System.exit(1);
         }
     }
 
-    private static ReplConsole createConsole(Options options) throws IOException {
-        ReplConsole console;
+    private static ShellConsole createConsole(Options options) throws IOException {
+        ShellConsole console;
         if (!options.noJLine) {
             console = new JLineConsole(PROGRAM_NAME);
         } else if (System.console() != null) {
@@ -118,17 +119,24 @@ public final class Repl {
 
     private void printStackTrace(Throwable e) {
         if (options.stacktrace) {
-            printStackTrace(e, options.stacktraceDepth);
+            printStackTrace(console.writer(), e, options.stacktraceDepth);
         }
     }
 
-    private static void printStackTrace(Throwable e, int maxDepth) {
+    private static void printStackTrace(PrintStream stream, Throwable e, int maxDepth) {
         final int depth = Math.max(maxDepth, 0);
-        new TruncatedThrowable(e, depth).printStackTrace(System.err);
+        new TruncatedThrowable(e, depth).printStackTrace(stream);
+    }
+
+    private static void printStackTrace(PrintWriter writer, Throwable e, int maxDepth) {
+        final int depth = Math.max(maxDepth, 0);
+        new TruncatedThrowable(e, depth).printStackTrace(writer);
     }
 
     @SuppressWarnings("serial")
     private static final class TruncatedThrowable extends Throwable {
+        private static final boolean REMOVE_PACKAGE_NAME = System.console() != null;
+        private static final String PACKAGE_NAME = "com.github.anba.es6draft.";
         private final Throwable throwable;
 
         TruncatedThrowable(Throwable throwable, int depth) {
@@ -149,6 +157,16 @@ public final class Repl {
                 int omitted = stackTrace.length - depth;
                 stackTrace = Arrays.copyOf(stackTrace, depth + 1);
                 stackTrace[depth] = new StackTraceElement("..", "", "Frames omitted", omitted);
+            }
+            if (REMOVE_PACKAGE_NAME) {
+                for (int i = 0; i < stackTrace.length; ++i) {
+                    StackTraceElement element = stackTrace[i];
+                    String className = element.getClassName();
+                    if (className.startsWith(PACKAGE_NAME)) {
+                        stackTrace[i] = new StackTraceElement(className.substring(PACKAGE_NAME.length()),
+                                element.getMethodName(), element.getFileName(), element.getLineNumber());
+                    }
+                }
             }
             return stackTrace;
         }
@@ -172,7 +190,7 @@ public final class Repl {
             if (sb.length() == 0 && e.getCause() != null) {
                 printScriptFrames(sb, realm, e.getCause(), 1);
             }
-            System.err.print(sb.toString());
+            console.writer().print(sb.toString());
         }
     }
 
@@ -186,8 +204,8 @@ public final class Repl {
             String methodName = StackTraces.getMethodName(element);
             String fileName = element.getFileName();
             int lineNumber = element.getLineNumber();
-            sb.append(indent).append("at ").append(methodName).append(" (").append(fileName)
-                    .append(':').append(lineNumber).append(")\n");
+            sb.append(indent).append("at ").append(methodName).append(" (").append(fileName).append(':')
+                    .append(lineNumber).append(")\n");
         }
         if (depth == maxDepth && iterator.hasNext()) {
             int skipped = 0;
@@ -202,8 +220,7 @@ public final class Repl {
             if (suppressed instanceof ScriptException) {
                 message = ((ScriptException) suppressed).getMessage(realm.defaultContext());
             } else {
-                message = Objects.toString(suppressed.getMessage(), suppressed.getClass()
-                        .getSimpleName());
+                message = Objects.toString(suppressed.getMessage(), suppressed.getClass().getSimpleName());
             }
             sb.append(indent).append(formatMessage("suppressed_exception", message)).append('\n');
             printScriptFrames(sb, realm, suppressed, level + 1);
@@ -259,6 +276,9 @@ public final class Repl {
                 System.err.println(formatMessage("module_no_files"));
             }
         }
+        if (options.ecmascript7) {
+            System.err.println(formatMessage("deprecated.es7"));
+        }
     }
 
     private interface EvalScript {
@@ -291,8 +311,7 @@ public final class Repl {
 
         @Override
         public SourceIdentifier getModuleName() {
-            return new EvalSourceIdentifier("eval-module-" + moduleIds.incrementAndGet(),
-                    URI.create(""));
+            return new EvalSourceIdentifier("eval-module-" + moduleIds.incrementAndGet(), URI.create(""));
         }
 
         @Override
@@ -420,8 +439,7 @@ public final class Repl {
         @Option(name = "-h", aliases = { "--help" }, help = true, usage = "options.help")
         boolean showHelp;
 
-        @Option(name = "-e", aliases = { "--eval", "--execute" }, metaVar = "meta.string",
-                usage = "options.eval")
+        @Option(name = "-e", aliases = { "--eval", "--execute" }, metaVar = "meta.string", usage = "options.eval")
         void setEvalExpression(String expression) {
             evalScripts.add(new EvalString(expression));
         }
@@ -446,11 +464,18 @@ public final class Repl {
         @Option(name = "--shell", usage = "options.shell")
         ShellMode shellMode = ShellMode.Simple;
 
-        @Option(name = "--async", usage = "options.async")
-        boolean asyncFunctions;
-
         @Option(name = "--es7", usage = "options.es7")
         boolean ecmascript7;
+
+        @Option(name = "--stage", usage = "options.stage", handler = RangeIntOptionHandler.class)
+        @RangeIntOptionHandler.Range(min = 0, max = 4)
+        int stage = -1;
+
+        @Option(name = "--experimental", usage = "options.experimental")
+        boolean experimental;
+
+        @Option(name = "--async", usage = "options.async")
+        boolean asyncFunctions;
 
         @Option(name = "--parser", usage = "options.parser")
         boolean parser;
@@ -467,8 +492,7 @@ public final class Repl {
         @Option(name = "--no-color", usage = "options.no_color")
         boolean noColor;
 
-        @Option(name = "--no-interpreter", aliases = { "--compile-only" },
-                usage = "options.no_interpreter")
+        @Option(name = "--no-interpreter", aliases = { "--compile-only" }, usage = "options.no_interpreter")
         boolean noInterpreter;
 
         @Option(name = "--stacktrace", usage = "options.stacktrace")
@@ -509,17 +533,40 @@ public final class Repl {
         Path fileName = null;
 
         @Option(name = "--", handler = StopOptionAndConsumeRestHandler.class)
-        @Argument(index = 1, multiValued = true, metaVar = "meta.arguments",
-                usage = "options.arguments", handler = RestOfArgumentsHandler.class)
+        @Argument(index = 1, multiValued = true, metaVar = "meta.arguments", usage = "options.arguments",
+                handler = RestOfArgumentsHandler.class)
         List<String> arguments = new ArrayList<>();
+    }
+
+    public static final class RangeIntOptionHandler extends OneArgumentOptionHandler<Integer> {
+        public RangeIntOptionHandler(CmdLineParser parser, OptionDef option, Setter<? super Integer> setter) {
+            super(parser, option, setter);
+        }
+
+        @Target(value = { ElementType.FIELD })
+        @Retention(RetentionPolicy.RUNTIME)
+        public @interface Range {
+            int min() default Integer.MIN_VALUE;
+
+            int max() default Integer.MAX_VALUE;
+        }
+
+        @Override
+        protected Integer parse(String argument) throws NumberFormatException, CmdLineException {
+            int value = Integer.parseInt(argument);
+            Range range = setter.asAnnotatedElement().getAnnotation(Range.class);
+            if (range != null && value != Math.min(Math.max(value, range.min()), range.max())) {
+                throw new NumberFormatException();
+            }
+            return value;
+        }
     }
 
     public static final class StopOptionAndConsumeRestHandler extends OptionHandler<String> {
         private final StopOptionHandler stopOptionHandler;
         private final RestOfArgumentsHandler restOfArgumentsHandler;
 
-        public StopOptionAndConsumeRestHandler(CmdLineParser parser, OptionDef option,
-                Setter<String> setter) {
+        public StopOptionAndConsumeRestHandler(CmdLineParser parser, OptionDef option, Setter<String> setter) {
             super(parser, option, setter);
             this.stopOptionHandler = new StopOptionHandler(parser, option, setter);
             this.restOfArgumentsHandler = new RestOfArgumentsHandler(parser, option, setter);
@@ -527,8 +574,7 @@ public final class Repl {
 
         @Override
         public int parseArguments(Parameters params) throws CmdLineException {
-            return stopOptionHandler.parseArguments(params)
-                    + restOfArgumentsHandler.parseArguments(params);
+            return stopOptionHandler.parseArguments(params) + restOfArgumentsHandler.parseArguments(params);
         }
 
         @Override
@@ -540,8 +586,7 @@ public final class Repl {
     public static final class StopOptionAndRepeatHandler extends OptionHandler<String> {
         private final StopOptionHandler stopOptionHandler;
 
-        public StopOptionAndRepeatHandler(CmdLineParser parser, OptionDef option,
-                Setter<String> setter) {
+        public StopOptionAndRepeatHandler(CmdLineParser parser, OptionDef option, Setter<String> setter) {
             super(parser, option, setter);
             this.stopOptionHandler = new StopOptionHandler(parser, option, setter);
         }
@@ -562,15 +607,13 @@ public final class Repl {
         ResourceBundle rb = getResourceBundle();
         StringWriter writer = new StringWriter();
         writer.write(formatMessage(rb, "usage", getVersionString(), PROGRAM_NAME));
-        parser.printUsage(writer, rb, showAll ? OptionHandlerFilter.ALL
-                : OptionHandlerFilter.PUBLIC);
+        parser.printUsage(writer, rb, showAll ? OptionHandlerFilter.ALL : OptionHandlerFilter.PUBLIC);
         return writer.toString();
     }
 
     private static ResourceBundle getResourceBundle() {
         ResourceBundle.Control control = new PropertiesReaderControl(StandardCharsets.UTF_8);
-        return new XResourceBundle(ResourceBundle.getBundle(BUNDLE_NAME, Locale.getDefault(),
-                control));
+        return new XResourceBundle(ResourceBundle.getBundle(BUNDLE_NAME, Locale.getDefault(), control));
     }
 
     private static final class XResourceBundle extends ResourceBundle {
@@ -638,8 +681,8 @@ public final class Repl {
     }
 
     private static String getResourceInfo(String resourceName, String defaultValue) {
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(
-                Repl.class.getResourceAsStream(resourceName), StandardCharsets.UTF_8))) {
+        try (BufferedReader reader = new BufferedReader(
+                new InputStreamReader(Repl.class.getResourceAsStream(resourceName), StandardCharsets.UTF_8))) {
             return reader.readLine();
         } catch (IOException e) {
             return defaultValue;
@@ -671,16 +714,15 @@ public final class Repl {
         }
     }
 
-    private final ReplConsole console;
+    private final ShellConsole console;
     private final Options options;
     private final SourceBuilder sourceBuilder;
     private final AtomicInteger scriptCounter = new AtomicInteger(0);
 
-    private Repl(ReplConsole console, Options options) {
+    private Repl(ShellConsole console, Options options) {
         this.console = console;
         this.options = options;
-        this.sourceBuilder = new SourceBuilder(console.isAnsiSupported() && !options.noColor, 10,
-                30, 80);
+        this.sourceBuilder = new SourceBuilder(console.isAnsiSupported() && !options.noColor, 10, 30, 80);
     }
 
     private void handleException(Throwable e) {
@@ -693,6 +735,29 @@ public final class Repl {
         String message = Objects.toString(e.getMessage(), "");
         console.printf("%s: %s%n", e.getClass().getSimpleName(), message);
         printStackTrace(e);
+    }
+
+    private void handleException(Realm realm, OutOfMemoryError e) {
+        // Try to recover after OOM.
+        Runtime rt = Runtime.getRuntime();
+        long beforeGc = rt.freeMemory();
+        rt.gc();
+        long afterGc = rt.freeMemory();
+        if (afterGc > beforeGc && (afterGc - beforeGc) < 50_000_000) {
+            // Calling gc() cleared less than 50MB, assume unrecoverable OOM and rethrow error.
+            throw e;
+        }
+        // Create script exception with stacktrace from oom-error.
+        ScriptException exception = newInternalError(realm.defaultContext(), Messages.Key.OutOfMemoryVM);
+        exception.setStackTrace(e.getStackTrace());
+        handleException(realm, exception);
+    }
+
+    private void handleException(Realm realm, StackOverflowError e) {
+        // Create script exception with stacktrace from stackoverflow-error.
+        ScriptException exception = newInternalError(realm.defaultContext(), Messages.Key.StackOverflow);
+        exception.setStackTrace(e.getStackTrace());
+        handleException(realm, exception);
     }
 
     private void handleException(Realm realm, ScriptException e) {
@@ -739,14 +804,13 @@ public final class Repl {
     }
 
     private static int nextLineTerminator(String s, int index) {
-        for (int length = s.length(); index < length
-                && !Characters.isLineTerminator(s.charAt(index)); ++index) {
-        }
+        for (int length = s.length(); index < length && !Characters.isLineTerminator(s.charAt(index)); ++index)
+            ;
         return index;
     }
 
-    private static com.github.anba.es6draft.ast.Script parse(Realm realm, Source source,
-            String sourceCode) throws ParserException {
+    private static com.github.anba.es6draft.ast.Script parse(Realm realm, Source source, String sourceCode)
+            throws ParserException {
         return realm.getScriptLoader().parseScript(source, sourceCode);
     }
 
@@ -820,7 +884,7 @@ public final class Repl {
      */
     private void loop() throws InterruptedException {
         Realm realm = newRealm();
-        World<?> world = realm.getWorld();
+        World world = realm.getWorld();
         TaskSource taskSource = createTaskSource(realm);
         for (;;) {
             try {
@@ -836,7 +900,11 @@ public final class Repl {
                 handleException(realm, e);
             } catch (UnhandledRejectionException e) {
                 handleException(realm, e);
-            } catch (InternalException | StackOverflowError e) {
+            } catch (StackOverflowError e) {
+                handleException(realm, e);
+            } catch (OutOfMemoryError e) {
+                handleException(realm, e);
+            } catch (InternalException e) {
                 handleException(e);
             } catch (BootstrapMethodError e) {
                 handleException(e.getCause());
@@ -865,10 +933,7 @@ public final class Repl {
     }
 
     private static Timers createTimersTaskSource(Realm realm) {
-        Timers timers = new Timers();
-        Properties.createProperties(realm.defaultContext(), realm.getGlobalThis(), timers,
-                Timers.class);
-        return timers;
+        return realm.getGlobalObject().createGlobalProperties(new Timers(), Timers.class);
     }
 
     private static final class EmptyTaskSource implements TaskSource {
@@ -1009,61 +1074,63 @@ public final class Repl {
     }
 
     private Realm newRealm() {
-        final Path baseDir = Paths.get("").toAbsolutePath();
-        final Path script = Paths.get("./.");
-        Set<CompatibilityOption> compatibilityOptions = compatibilityOptions(options);
-        EnumSet<Parser.Option> parserOptions = parserOptions(options);
-        EnumSet<Compiler.Option> compilerOptions = compilerOptions(options);
-
-        ScriptCache scriptCache = new ScriptCache();
         ObjectAllocator<? extends ShellGlobalObject> allocator;
         if (options.shellMode == ShellMode.Mozilla) {
-            allocator = MozShellGlobalObject.newGlobalObjectAllocator(console, baseDir, script,
-                    scriptCache);
+            allocator = MozShellGlobalObject.newGlobalObjectAllocator(console);
         } else if (options.shellMode == ShellMode.V8) {
-            allocator = V8ShellGlobalObject.newGlobalObjectAllocator(console, baseDir, script,
-                    scriptCache);
+            allocator = V8ShellGlobalObject.newGlobalObjectAllocator(console);
         } else {
-            allocator = SimpleShellGlobalObject.newGlobalObjectAllocator(console, baseDir, script,
-                    scriptCache);
+            allocator = SimpleShellGlobalObject.newGlobalObjectAllocator(console);
         }
-        ScriptLoader scriptLoader = new ScriptLoader(compatibilityOptions, parserOptions,
-                compilerOptions);
+
+        /* @formatter:off */
+        RuntimeContext context = new RuntimeContext.Builder()
+                                                   .setBaseDirectory(Paths.get("").toAbsolutePath())
+                                                   .setGlobalAllocator(allocator)
+                                                   .setReader(console.reader())
+                                                   .setWriter(console.writer())
+                                                   .setErrorWriter(console.errorWriter())
+                                                   .setOptions(compatibilityOptions(options))
+                                                   .setParserOptions(parserOptions(options))
+                                                   .setCompilerOptions(compilerOptions(options))
+                                                   .build();
+        /* @formatter:on */
+
+        ScriptLoader scriptLoader = new ScriptLoader(context);
         ModuleLoader moduleLoader;
         switch (options.moduleLoaderMode) {
         case Default:
-            moduleLoader = new FileModuleLoader(scriptLoader, baseDir);
+            moduleLoader = new FileModuleLoader(context, scriptLoader);
             break;
         case Node:
-            moduleLoader = new NodeModuleLoader(scriptLoader, baseDir);
+            moduleLoader = new NodeModuleLoader(context, scriptLoader);
             break;
         case NodeStandard:
-            moduleLoader = new NodeStandardModuleLoader(scriptLoader, baseDir);
+            moduleLoader = new NodeStandardModuleLoader(context, scriptLoader);
             break;
         default:
             throw new AssertionError();
         }
 
-        World<? extends ShellGlobalObject> world = new World<>(allocator, moduleLoader,
-                scriptLoader);
-        final ShellGlobalObject global = world.newGlobal();
-        final Realm realm = global.getRealm();
+        World world = new World(context, moduleLoader, scriptLoader);
+        final Realm realm = world.newRealm();
+        final ShellGlobalObject global = (ShellGlobalObject) realm.getGlobalObject();
         final ExecutionContext cx = realm.defaultContext();
         final ScriptObject globalThis = realm.getGlobalThis();
 
         // Add completion to console
-        console.addCompletion(realm);
-
-        // Add global "arguments" property
-        ScriptObject arguments = CreateArrayFromList(cx, options.arguments);
-        CreateMethodProperty(cx, globalThis, "arguments", arguments);
+        console.addCompleter(new ShellCompleter(realm));
 
         // Execute any global specific initialization
         realm.enqueueScriptTask(new Task() {
             @Override
             public void execute() {
                 try {
-                    global.initializeHostDefinedRealm();
+                    InitializeHostDefinedRealm(realm);
+
+                    // Add global "arguments" property
+                    ScriptObject arguments = CreateArrayFromList(cx, options.arguments);
+                    CreateMethodProperty(cx, globalThis, "arguments", arguments);
                 } catch (IOException e) {
                     throw new UncheckedIOException(e);
                 } catch (URISyntaxException e) {
@@ -1078,8 +1145,7 @@ public final class Repl {
                 public void execute() {
                     try {
                         ModuleRecord module = global.loadNativeModule("console.jsm");
-                        ScriptObject console = global.getModuleExport(module, "default",
-                                ScriptObject.class);
+                        ScriptObject console = global.getModuleExport(module, "default", ScriptObject.class);
                         Callable inspectFn = Properties.createFunction(cx, new InspectFunction(),
                                 InspectFunction.class);
                         CreateMethodProperty(cx, console, "_inspect", inspectFn);
@@ -1102,8 +1168,7 @@ public final class Repl {
                 public void execute() {
                     try {
                         ModuleRecord module = global.loadNativeModule("module.jsm");
-                        Constructor moduleConstructor = global.getModuleExport(module, "default",
-                                Constructor.class);
+                        Constructor moduleConstructor = global.getModuleExport(module, "default", Constructor.class);
                         nodeLoader.setModuleConstructor(moduleConstructor);
                     } catch (IOException e) {
                         throw new UncheckedIOException(e);
@@ -1201,7 +1266,14 @@ public final class Repl {
             compatibilityOptions.add(CompatibilityOption.AsyncFunction);
         }
         if (options.ecmascript7) {
-            compatibilityOptions.addAll(CompatibilityOption.ECMAScript7());
+            compatibilityOptions.addAll(CompatibilityOption.required(CompatibilityOption.Stage.Strawman));
+            compatibilityOptions.addAll(CompatibilityOption.Experimental());
+        }
+        if (options.experimental) {
+            compatibilityOptions.addAll(CompatibilityOption.Experimental());
+        }
+        if (options.stage >= 0) {
+            compatibilityOptions.addAll(CompatibilityOption.required(stageForLevel(options.stage)));
         }
         if (options.parser) {
             compatibilityOptions.add(CompatibilityOption.ReflectParse);
@@ -1210,6 +1282,23 @@ public final class Repl {
             compatibilityOptions.add(CompatibilityOption.PromiseRejection);
         }
         return compatibilityOptions;
+    }
+
+    private static CompatibilityOption.Stage stageForLevel(int level) {
+        switch (level) {
+        case 0:
+            return CompatibilityOption.Stage.Strawman;
+        case 1:
+            return CompatibilityOption.Stage.Proposal;
+        case 2:
+            return CompatibilityOption.Stage.Draft;
+        case 3:
+            return CompatibilityOption.Stage.Candidate;
+        case 4:
+            return CompatibilityOption.Stage.Finished;
+        default:
+            throw new AssertionError();
+        }
     }
 
     private static EnumSet<Parser.Option> parserOptions(Options options) {

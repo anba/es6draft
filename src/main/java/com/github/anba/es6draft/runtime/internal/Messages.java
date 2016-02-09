@@ -191,25 +191,24 @@ public final class Messages {
         NotString("type.not_string"),
         NotExtensible("type.not_extensible"),
         IncompatibleObject("type.incompatible_object"),
-        InitializedObject("type.initialized_object"),
-        UninitializedObject("type.uninitialized_object"),
-        SymbolPrimitive("type.symbol_primitive"),
         SymbolString("type.symbol_string"),
         SymbolNumber("type.symbol_number"),
         SymbolCreate("type.symbol_create"),
         CyclicProto("type.cyclic_proto"),
         FunctionNotCloneable("type.function_not_cloneable"),
+        PropertyNotObject("type.property_not_object"),
         PropertyNotCallable("type.property_not_callable"),
+        PropertyNotConstructor("type.property_not_constructor"),
         InvalidSuperClass("type.invalid_super_class"),
         InvalidCall("type.invalid_call"),
         InvalidCallClass("type.invalid_call_class"),
         MissingNewTarget("type.missing_new_target"),
         NotObjectTypeFromConstructor("type.not_object_type_from_constructor"),
         InitializedThis("type.initialized_this"),
-
-        // TODO: unused
-        MethodNotFound("type.method_not_found"),
-        PropertyNotFound("type.property_not_found"),
+        NotObjectTypeReturned("type.not_object_type_returned"),
+        InstanceofNotObject("type.instanceof_not_object"),
+        InstanceofNotCallable("type.instanceof_not_callable"),
+        InNotObject("type.in_not_object"),
 
         // 6.2.4 The Property Descriptor Specification Type
         InvalidGetter("propertydescriptor.invalid_getter"),
@@ -295,7 +294,6 @@ public final class Messages {
 
         // 25.4 Promise Objects
         PromiseSelfResolution("promise.self_resolution"),
-        PromiseConstructorSameObject("promise.constructor_same_object"),
 
         // 26.5 Proxy Objects
         ProxyRevoked("proxy.revoked"),
@@ -315,8 +313,11 @@ public final class Messages {
         ProxyAbsentNotExtensible("proxy.absent_not_extensible"),
         ProxyPropertyKey("proxy.property_key"),
 
-        // # 26.2 Loader Objects
-        LoaderFetchNotImplemented("loader.fetch_not_implemented"),
+        // 23 Keyed Collection
+        MapPairNotObject("collection.map_pair_not_object"),
+        WeakMapPairNotObject("collection.weakmap_pair_not_object"),
+        WeakMapKeyNotObject("collection.weakmap_key_not_object"),
+        WeakSetKeyNotObject("collection.weakset_key_not_object"),
 
         // Intl
         IntlStructurallyInvalidLanguageTag("intl.structurally_invalid_language_tag"),

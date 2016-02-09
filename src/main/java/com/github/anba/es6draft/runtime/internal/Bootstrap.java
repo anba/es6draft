@@ -398,101 +398,169 @@ public final class Bootstrap {
 
     @SuppressWarnings("unused")
     private static boolean testConcat(CharSequence s1, CharSequence s2) {
-        return (s1.length() + s2.length()) <= (2 * MAX_STRING_SEGMENT_SIZE);
+        /* @formatter:off */
+        int n = s1.length() + s2.length();
+        if (n < 0) return false;
+        return n <= (2 * MAX_STRING_SEGMENT_SIZE);
+        /* @formatter:on */
     }
 
     @SuppressWarnings("unused")
     private static boolean testConcat(CharSequence s1, CharSequence s2, CharSequence s3) {
-        return (s1.length() + s2.length() + s3.length()) <= (3 * MAX_STRING_SEGMENT_SIZE);
-    }
-
-    @SuppressWarnings("unused")
-    private static boolean testConcat(CharSequence s1, CharSequence s2, CharSequence s3,
-            CharSequence s4) {
-        return (s1.length() + s2.length() + s3.length() + s4.length()) <= (4 * MAX_STRING_SEGMENT_SIZE);
-    }
-
-    @SuppressWarnings("unused")
-    private static boolean testConcat(CharSequence s1, CharSequence s2, CharSequence s3,
-            CharSequence s4, CharSequence s5) {
+        /* @formatter:off */
         int n = s1.length();
         n += s2.length();
+        if (n < 0) return false;
         n += s3.length();
+        if (n < 0) return false;
+        return n <= (3 * MAX_STRING_SEGMENT_SIZE);
+        /* @formatter:on */
+    }
+
+    @SuppressWarnings("unused")
+    private static boolean testConcat(CharSequence s1, CharSequence s2, CharSequence s3, CharSequence s4) {
+        /* @formatter:off */
+        int n = s1.length();
+        n += s2.length();
+        if (n < 0) return false;
+        n += s3.length();
+        if (n < 0) return false;
         n += s4.length();
+        if (n < 0) return false;
+        return n <= (4 * MAX_STRING_SEGMENT_SIZE);
+        /* @formatter:on */
+    }
+
+    @SuppressWarnings("unused")
+    private static boolean testConcat(CharSequence s1, CharSequence s2, CharSequence s3, CharSequence s4,
+            CharSequence s5) {
+        /* @formatter:off */
+        int n = s1.length();
+        n += s2.length();
+        if (n < 0) return false;
+        n += s3.length();
+        if (n < 0) return false;
+        n += s4.length();
+        if (n < 0) return false;
         n += s5.length();
+        if (n < 0) return false;
         return n <= (5 * MAX_STRING_SEGMENT_SIZE);
+        /* @formatter:on */
     }
 
     @SuppressWarnings("unused")
-    private static boolean testConcat(CharSequence s1, CharSequence s2, CharSequence s3,
-            CharSequence s4, CharSequence s5, CharSequence s6) {
+    private static boolean testConcat(CharSequence s1, CharSequence s2, CharSequence s3, CharSequence s4,
+            CharSequence s5, CharSequence s6) {
+        /* @formatter:off */
         int n = s1.length();
         n += s2.length();
+        if (n < 0) return false;
         n += s3.length();
+        if (n < 0) return false;
         n += s4.length();
+        if (n < 0) return false;
         n += s5.length();
+        if (n < 0) return false;
         n += s6.length();
+        if (n < 0) return false;
         return n <= (6 * MAX_STRING_SEGMENT_SIZE);
+        /* @formatter:on */
     }
 
     @SuppressWarnings("unused")
-    private static boolean testConcat(CharSequence s1, CharSequence s2, CharSequence s3,
-            CharSequence s4, CharSequence s5, CharSequence s6, CharSequence s7) {
+    private static boolean testConcat(CharSequence s1, CharSequence s2, CharSequence s3, CharSequence s4,
+            CharSequence s5, CharSequence s6, CharSequence s7) {
+        /* @formatter:off */
         int n = s1.length();
         n += s2.length();
+        if (n < 0) return false;
         n += s3.length();
+        if (n < 0) return false;
         n += s4.length();
+        if (n < 0) return false;
         n += s5.length();
+        if (n < 0) return false;
         n += s6.length();
+        if (n < 0) return false;
         n += s7.length();
+        if (n < 0) return false;
         return n <= (7 * MAX_STRING_SEGMENT_SIZE);
+        /* @formatter:on */
     }
 
     @SuppressWarnings("unused")
-    private static boolean testConcat(CharSequence s1, CharSequence s2, CharSequence s3,
-            CharSequence s4, CharSequence s5, CharSequence s6, CharSequence s7, CharSequence s8) {
+    private static boolean testConcat(CharSequence s1, CharSequence s2, CharSequence s3, CharSequence s4,
+            CharSequence s5, CharSequence s6, CharSequence s7, CharSequence s8) {
+        /* @formatter:off */
         int n = s1.length();
         n += s2.length();
+        if (n < 0) return false;
         n += s3.length();
+        if (n < 0) return false;
         n += s4.length();
+        if (n < 0) return false;
         n += s5.length();
+        if (n < 0) return false;
         n += s6.length();
+        if (n < 0) return false;
         n += s7.length();
+        if (n < 0) return false;
         n += s8.length();
+        if (n < 0) return false;
         return n <= (8 * MAX_STRING_SEGMENT_SIZE);
+        /* @formatter:on */
     }
 
     @SuppressWarnings("unused")
-    private static boolean testConcat(CharSequence s1, CharSequence s2, CharSequence s3,
-            CharSequence s4, CharSequence s5, CharSequence s6, CharSequence s7, CharSequence s8,
-            CharSequence s9) {
+    private static boolean testConcat(CharSequence s1, CharSequence s2, CharSequence s3, CharSequence s4,
+            CharSequence s5, CharSequence s6, CharSequence s7, CharSequence s8, CharSequence s9) {
+        /* @formatter:off */
         int n = s1.length();
         n += s2.length();
+        if (n < 0) return false;
         n += s3.length();
+        if (n < 0) return false;
         n += s4.length();
+        if (n < 0) return false;
         n += s5.length();
+        if (n < 0) return false;
         n += s6.length();
+        if (n < 0) return false;
         n += s7.length();
+        if (n < 0) return false;
         n += s8.length();
+        if (n < 0) return false;
         n += s9.length();
+        if (n < 0) return false;
         return n <= (9 * MAX_STRING_SEGMENT_SIZE);
+        /* @formatter:on */
     }
 
     @SuppressWarnings("unused")
-    private static boolean testConcat(CharSequence s1, CharSequence s2, CharSequence s3,
-            CharSequence s4, CharSequence s5, CharSequence s6, CharSequence s7, CharSequence s8,
-            CharSequence s9, CharSequence s10) {
+    private static boolean testConcat(CharSequence s1, CharSequence s2, CharSequence s3, CharSequence s4,
+            CharSequence s5, CharSequence s6, CharSequence s7, CharSequence s8, CharSequence s9, CharSequence s10) {
+        /* @formatter:off */
         int n = s1.length();
         n += s2.length();
+        if (n < 0) return false;
         n += s3.length();
+        if (n < 0) return false;
         n += s4.length();
+        if (n < 0) return false;
         n += s5.length();
+        if (n < 0) return false;
         n += s6.length();
+        if (n < 0) return false;
         n += s7.length();
+        if (n < 0) return false;
         n += s8.length();
+        if (n < 0) return false;
         n += s9.length();
+        if (n < 0) return false;
         n += s10.length();
+        if (n < 0) return false;
         return n <= (10 * MAX_STRING_SEGMENT_SIZE);
+        /* @formatter:on */
     }
 
     @SuppressWarnings("unused")
@@ -500,6 +568,9 @@ public final class Bootstrap {
         int n = 0;
         for (CharSequence charSequence : strings) {
             n += charSequence.length();
+            if (n < 0) {
+                return false;
+            }
         }
         return n <= (strings.length * MAX_STRING_SEGMENT_SIZE);
     }
@@ -1046,7 +1117,7 @@ public final class Bootstrap {
 
     @SuppressWarnings("unused")
     private static boolean eqCmpString(CharSequence arg1, CharSequence arg2) {
-        return arg1.toString().equals(arg2.toString());
+        return arg1.length() == arg2.length() && arg1.toString().equals(arg2.toString());
     }
 
     @SuppressWarnings("unused")

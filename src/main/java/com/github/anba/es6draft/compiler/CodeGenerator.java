@@ -104,33 +104,44 @@ final class CodeGenerator {
 
         static final MethodTypeDescriptor AsyncFunction_Call = Type.methodType(Types.PromiseObject,
                 Types.OrdinaryAsyncFunction, Types.ExecutionContext, Types.Object, Types.Object_);
-        static final MethodTypeDescriptor Function_Call = Type.methodType(Types.Object,
-                Types.OrdinaryFunction, Types.ExecutionContext, Types.Object, Types.Object_);
+        static final MethodTypeDescriptor AsyncFunction_Init = Type.methodType(Type.VOID_TYPE, Types.ExecutionContext,
+                Types.OrdinaryAsyncFunction, Types.Object_);
+        static final MethodTypeDescriptor AsyncFunction_Code = Type.methodType(Types.Object, Types.ExecutionContext,
+                Types.ResumptionPoint);
+
+        static final MethodTypeDescriptor Function_Call = Type.methodType(Types.Object, Types.OrdinaryFunction,
+                Types.ExecutionContext, Types.Object, Types.Object_);
+        static final MethodTypeDescriptor Function_Init = Type.methodType(Type.VOID_TYPE, Types.ExecutionContext,
+                Types.OrdinaryFunction, Types.Object_);
+        static final MethodTypeDescriptor Function_Code = Type.methodType(Types.Object, Types.ExecutionContext);
+
+        static final MethodTypeDescriptor ConstructorFunction_Call = Type.methodType(Types.Object,
+                Types.OrdinaryConstructorFunction, Types.ExecutionContext, Types.Object, Types.Object_);
+        static final MethodTypeDescriptor ConstructorFunction_Construct = Type.methodType(Types.ScriptObject,
+                Types.OrdinaryConstructorFunction, Types.ExecutionContext, Types.Constructor, Types.Object_);
+        static final MethodTypeDescriptor ConstructorFunction_ConstructTailCall = Type.methodType(Types.Object,
+                Types.OrdinaryConstructorFunction, Types.ExecutionContext, Types.Constructor, Types.Object_);
+        static final MethodTypeDescriptor ConstructorFunction_Init = Type.methodType(Type.VOID_TYPE,
+                Types.ExecutionContext, Types.OrdinaryConstructorFunction, Types.Object_);
+        static final MethodTypeDescriptor ConstructorFunction_Code = Function_Code;
+
+        static final MethodTypeDescriptor LegacyFunction_Call = Type.methodType(Types.Object,
+                Types.LegacyConstructorFunction, Types.ExecutionContext, Types.Object, Types.Object_);
+        static final MethodTypeDescriptor LegacyFunction_Construct = Type.methodType(Types.ScriptObject,
+                Types.LegacyConstructorFunction, Types.ExecutionContext, Types.Constructor, Types.Object_);
+        static final MethodTypeDescriptor LegacyFunction_Init = Type.methodType(Type.VOID_TYPE, Types.ExecutionContext,
+                Types.LegacyConstructorFunction, Types.Object_);
+        static final MethodTypeDescriptor LegacyFunction_Code = Function_Code;
+
         static final MethodTypeDescriptor Generator_Call = Type.methodType(Types.GeneratorObject,
                 Types.OrdinaryGenerator, Types.ExecutionContext, Types.Object, Types.Object_);
+        static final MethodTypeDescriptor Generator_Construct = Type.methodType(Types.GeneratorObject,
+                Types.OrdinaryGenerator, Types.ExecutionContext, Types.Constructor, Types.Object_);
+        static final MethodTypeDescriptor Generator_Init = Type.methodType(Type.VOID_TYPE, Types.ExecutionContext,
+                Types.OrdinaryGenerator, Types.Object_);
+        static final MethodTypeDescriptor Generator_Code = Type.methodType(Types.Object, Types.ExecutionContext,
+                Types.ResumptionPoint);
 
-        static final MethodTypeDescriptor AsyncFunction_Construct = Type.methodType(
-                Types.PromiseObject, Types.OrdinaryAsyncFunction, Types.ExecutionContext,
-                Types.Constructor, Types.Object_);
-        static final MethodTypeDescriptor Function_Construct = Type.methodType(Types.ScriptObject,
-                Types.OrdinaryConstructorFunction, Types.ExecutionContext, Types.Constructor,
-                Types.Object_);
-        static final MethodTypeDescriptor Function_ConstructTailCall = Type.methodType(
-                Types.Object, Types.OrdinaryConstructorFunction, Types.ExecutionContext,
-                Types.Constructor, Types.Object_);
-        static final MethodTypeDescriptor Generator_Construct = Type.methodType(
-                Types.GeneratorObject, Types.OrdinaryGenerator, Types.ExecutionContext,
-                Types.Constructor, Types.Object_);
-
-        static final MethodTypeDescriptor AsyncFunction_Code = Type.methodType(Types.Object,
-                Types.ExecutionContext, Types.ResumptionPoint);
-        static final MethodTypeDescriptor FunctionNode_Code = Type.methodType(Types.Object,
-                Types.ExecutionContext);
-        static final MethodTypeDescriptor Generator_Code = Type.methodType(Types.Object,
-                Types.ExecutionContext, Types.ResumptionPoint);
-
-        static final MethodTypeDescriptor FunctionNode_Init = Type.methodType(Type.VOID_TYPE,
-                Types.ExecutionContext, Types.FunctionObject, Types.Object_);
         static final MethodTypeDescriptor FunctionNode_RTI = Type
                 .methodType(Types.RuntimeInfo$Function);
         static final MethodTypeDescriptor FunctionNode_DebugInfo = Type.methodType(Types.DebugInfo);
@@ -278,6 +289,8 @@ final class CodeGenerator {
         String baseName;
         if (topLevel instanceof FunctionNode) {
             baseName = methodName((FunctionNode) topLevel, FunctionName.Code);
+        } else if (topLevel instanceof Module) {
+            baseName = methodName((Module) topLevel, ModuleName.Code);
         } else {
             assert topLevel instanceof Script;
             baseName = methodName((Script) topLevel, ScriptName.Code);
@@ -403,35 +416,59 @@ final class CodeGenerator {
     private MethodTypeDescriptor methodDescriptor(FunctionNode node, FunctionName name) {
         switch (name) {
         case Call:
-            if (node.isGenerator()) {
-                return MethodDescriptors.Generator_Call;
-            }
             if (node.isAsync()) {
                 return MethodDescriptors.AsyncFunction_Call;
             }
+            if (node.isGenerator()) {
+                return MethodDescriptors.Generator_Call;
+            }
+            if (isLegacy(node)) {
+                return MethodDescriptors.LegacyFunction_Call;
+            }
+            if (node.isConstructor()) {
+                return MethodDescriptors.ConstructorFunction_Call;
+            }
             return MethodDescriptors.Function_Call;
         case ConstructTailCall:
-            assert node.isConstructor() && !node.isGenerator() && !node.isAsync();
-            return MethodDescriptors.Function_ConstructTailCall;
+            assert node.isConstructor() && !isLegacy(node) && !node.isGenerator() && !node.isAsync();
+            return MethodDescriptors.ConstructorFunction_ConstructTailCall;
         case Construct:
             assert node.isConstructor();
             if (node.isGenerator()) {
                 return MethodDescriptors.Generator_Construct;
             }
-            if (node.isAsync()) {
-                return MethodDescriptors.AsyncFunction_Construct;
+            if (isLegacy(node)) {
+                return MethodDescriptors.LegacyFunction_Construct;
             }
-            return MethodDescriptors.Function_Construct;
+            return MethodDescriptors.ConstructorFunction_Construct;
         case Code:
-            if (node.isGenerator()) {
-                return MethodDescriptors.Generator_Code;
-            }
             if (node.isAsync()) {
                 return MethodDescriptors.AsyncFunction_Code;
             }
-            return MethodDescriptors.FunctionNode_Code;
+            if (node.isGenerator()) {
+                return MethodDescriptors.Generator_Code;
+            }
+            if (isLegacy(node)) {
+                return MethodDescriptors.LegacyFunction_Code;
+            }
+            if (node.isConstructor()) {
+                return MethodDescriptors.ConstructorFunction_Code;
+            }
+            return MethodDescriptors.Function_Code;
         case Init:
-            return MethodDescriptors.FunctionNode_Init;
+            if (node.isAsync()) {
+                return MethodDescriptors.AsyncFunction_Init;
+            }
+            if (node.isGenerator()) {
+                return MethodDescriptors.Generator_Init;
+            }
+            if (isLegacy(node)) {
+                return MethodDescriptors.LegacyFunction_Init;
+            }
+            if (node.isConstructor()) {
+                return MethodDescriptors.ConstructorFunction_Init;
+            }
+            return MethodDescriptors.Function_Init;
         case RTI:
             return MethodDescriptors.FunctionNode_RTI;
         case DebugInfo:
@@ -439,6 +476,16 @@ final class CodeGenerator {
         default:
             throw new AssertionError();
         }
+    }
+
+    private boolean isLegacy(FunctionNode node) {
+        if (IsStrict(node)) {
+            return false;
+        }
+        if (!(node instanceof FunctionDeclaration || node instanceof FunctionExpression)) {
+            return false;
+        }
+        return isEnabled(CompatibilityOption.FunctionArguments) || isEnabled(CompatibilityOption.FunctionCaller);
     }
 
     private MethodTypeDescriptor methodDescriptor(Script node, ScriptName name) {

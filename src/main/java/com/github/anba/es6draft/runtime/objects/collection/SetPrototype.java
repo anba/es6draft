@@ -16,7 +16,9 @@ import java.util.Map.Entry;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.internal.*;
+import com.github.anba.es6draft.runtime.internal.Initializable;
+import com.github.anba.es6draft.runtime.internal.LinkedMap;
+import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.Properties.Accessor;
 import com.github.anba.es6draft.runtime.internal.Properties.AliasFunction;
 import com.github.anba.es6draft.runtime.internal.Properties.AliasFunctions;
@@ -24,10 +26,11 @@ import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
-import com.github.anba.es6draft.runtime.objects.collection.SetIteratorPrototype.SetIterationKind;
+import com.github.anba.es6draft.runtime.objects.collection.SetIteratorObject.SetIterationKind;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
+import com.github.anba.es6draft.runtime.types.builtins.NativeFunction;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
@@ -51,6 +54,43 @@ public final class SetPrototype extends OrdinaryObject implements Initializable 
     @Override
     public void initialize(Realm realm) {
         createProperties(realm, this, Properties.class);
+    }
+
+    /**
+     * Marker class for {@code Set.prototype.add}.
+     */
+    private static final class SetPrototypeAdd {
+    }
+
+    /**
+     * Returns {@code true} if <var>add</var> is the built-in {@code Set.prototype.add} function.
+     * 
+     * @param add
+     *            the add function
+     * @return {@code true} if <var>add</var> is the built-in {@code Set.prototype.add} function
+     */
+    static boolean isBuiltinAdd(Object add) {
+        return NativeFunction.isNative(add, SetPrototypeAdd.class);
+    }
+
+    /**
+     * Marker class for {@code Set.prototype.values}.
+     */
+    private static final class SetPrototypeValues {
+    }
+
+    /**
+     * Returns {@code true} if <var>values</var> is the built-in {@code Set.prototype.values} function for the requested
+     * realm.
+     * 
+     * @param realm
+     *            the function realm
+     * @param values
+     *            the values function
+     * @return {@code true} if <var>values</var> is the built-in {@code Set.prototype.values} function
+     */
+    public static boolean isBuiltinValues(Realm realm, Object values) {
+        return NativeFunction.isNative(realm, values, SetPrototypeValues.class);
     }
 
     /**
@@ -86,7 +126,7 @@ public final class SetPrototype extends OrdinaryObject implements Initializable 
          *            the new value
          * @return this set object
          */
-        @Function(name = "add", arity = 1)
+        @Function(name = "add", arity = 1, nativeId = SetPrototypeAdd.class)
         public static Object add(ExecutionContext cx, Object thisValue, Object value) {
             /* steps 1-3 */
             SetObject s = thisSetObject(cx, thisValue);
@@ -240,7 +280,7 @@ public final class SetPrototype extends OrdinaryObject implements Initializable 
          *            the function this-value
          * @return the values iterator
          */
-        @Function(name = "values", arity = 0)
+        @Function(name = "values", arity = 0, nativeId = SetPrototypeValues.class)
         @AliasFunctions({ @AliasFunction(name = "keys"),
                 @AliasFunction(name = "[Symbol.iterator]", symbol = BuiltinSymbol.iterator) })
         public static Object values(ExecutionContext cx, Object thisValue) {

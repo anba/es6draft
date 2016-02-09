@@ -6,8 +6,7 @@
  */
 package com.github.anba.es6draft.repl.loader;
 
-import java.nio.file.Path;
-
+import com.github.anba.es6draft.runtime.internal.RuntimeContext;
 import com.github.anba.es6draft.runtime.internal.ScriptLoader;
 import com.github.anba.es6draft.runtime.modules.MalformedNameException;
 import com.github.anba.es6draft.runtime.modules.SourceIdentifier;
@@ -18,14 +17,14 @@ import com.github.anba.es6draft.runtime.modules.loader.FileSourceIdentifier;
  * 
  */
 public class NodeStandardModuleLoader extends FileModuleLoader {
-    public NodeStandardModuleLoader(ScriptLoader scriptLoader, Path baseDirectory) {
-        super(scriptLoader, baseDirectory);
+    public NodeStandardModuleLoader(RuntimeContext context, ScriptLoader scriptLoader) {
+        super(context, scriptLoader);
     }
 
     @Override
     public FileSourceIdentifier normalizeName(String unnormalizedName, SourceIdentifier referrerId)
             throws MalformedNameException {
-        return NodeModuleResolution.resolve(getBaseDirectory(),
-                super.normalizeName(unnormalizedName, referrerId), unnormalizedName, referrerId);
+        FileSourceIdentifier normalizedName = super.normalizeName(unnormalizedName, referrerId);
+        return NodeModuleResolution.resolve(getBaseDirectory(), normalizedName, unnormalizedName, referrerId);
     }
 }

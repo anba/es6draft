@@ -26,32 +26,32 @@ abstract class AstNode implements Node {
     }
 
     @Override
-    public int getBeginLine() {
+    public final int getBeginLine() {
         return (int) beginPosition;
     }
 
     @Override
-    public int getBeginColumn() {
+    public final int getBeginColumn() {
         return (int) (beginPosition >>> 32);
     }
 
     @Override
-    public long getBeginPosition() {
+    public final long getBeginPosition() {
         return beginPosition;
     }
 
     @Override
-    public int getEndLine() {
+    public final int getEndLine() {
         return (int) endPosition;
     }
 
     @Override
-    public int getEndColumn() {
+    public final int getEndColumn() {
         return (int) (endPosition >>> 32);
     }
 
     @Override
-    public long getEndPosition() {
+    public final long getEndPosition() {
         return endPosition;
     }
 

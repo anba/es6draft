@@ -103,7 +103,7 @@ public final class RegExpConstructor extends BuiltinConstructor implements Initi
         /* steps 1-2 */
         boolean patternIsRegExp = IsRegExp(calleeContext, pattern);
         /* step 3 (omitted) */
-        /* steps 4 (not applicable) */
+        /* step 4 (not applicable) */
         /* steps 5-10 */
         return RegExpCreate(calleeContext, newTarget, pattern, flags, patternIsRegExp);
     }
@@ -196,7 +196,7 @@ public final class RegExpConstructor extends BuiltinConstructor implements Initi
         /* steps 4-6 */
         String f = Type.isUndefined(flags) ? "" : ToFlatString(cx, flags);
 
-        /* RegExp statics extension */
+        // RegExp statics extension
         if (isDefaultMultiline(cx) && f.indexOf('m') == -1) {
             f = f + 'm';
         }
@@ -228,7 +228,7 @@ public final class RegExpConstructor extends BuiltinConstructor implements Initi
         /* steps 4-6 */
         String f = flags;
 
-        /* RegExp statics extension */
+        // RegExp statics extension
         if (defaultMultiline && f.indexOf('m') == -1) {
             f = f + 'm';
         }
@@ -288,9 +288,6 @@ public final class RegExpConstructor extends BuiltinConstructor implements Initi
      */
     public static String EscapeRegExpPattern(Realm realm, String p, String f) {
         if (p.isEmpty()) {
-            if (realm.isEnabled(CompatibilityOption.RegExpEmptySource)) {
-                return "";
-            }
             return "(?:)";
         }
         boolean inClass = false;
@@ -339,7 +336,7 @@ public final class RegExpConstructor extends BuiltinConstructor implements Initi
                     sb.append("\\u2029");
                     break;
                 default:
-                    assert false : "unknown line terminator";
+                    throw new AssertionError();
                 }
             } else {
                 sb.append(c);

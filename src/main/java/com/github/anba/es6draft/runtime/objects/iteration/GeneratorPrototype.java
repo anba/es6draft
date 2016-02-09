@@ -20,6 +20,7 @@ import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
+import com.github.anba.es6draft.runtime.types.builtins.NativeFunction;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
@@ -43,6 +44,26 @@ public final class GeneratorPrototype extends OrdinaryObject implements Initiali
     @Override
     public void initialize(Realm realm) {
         createProperties(realm, this, Properties.class);
+    }
+
+    /**
+     * Marker class for {@code %GeneratorPrototype%.next}.
+     */
+    private static final class GeneratorPrototypeNext {
+    }
+
+    /**
+     * Returns {@code true} if <var>next</var> is the built-in {@code %GeneratorPrototype%.next} function for the
+     * requested realm.
+     * 
+     * @param realm
+     *            the function realm
+     * @param next
+     *            the next function
+     * @return {@code true} if <var>next</var> is the built-in {@code %GeneratorPrototype%.next} function
+     */
+    public static boolean isBuiltinNext(Realm realm, Object next) {
+        return NativeFunction.isNative(realm, next, GeneratorPrototypeNext.class);
     }
 
     /**
@@ -72,7 +93,7 @@ public final class GeneratorPrototype extends OrdinaryObject implements Initiali
          *            the value object
          * @return the iterator result object
          */
-        @Function(name = "next", arity = 1)
+        @Function(name = "next", arity = 1, nativeId = GeneratorPrototypeNext.class)
         public static Object next(ExecutionContext cx, Object thisValue, Object value) {
             return GeneratorResume(cx, thisValue, value);
         }

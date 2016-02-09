@@ -144,9 +144,14 @@ final class RuntimeInfoGenerator {
     }
 
     private boolean isLegacy(FunctionNode node) {
-        return !IsStrict(node)
-                && (node instanceof FunctionDeclaration || node instanceof FunctionExpression)
-                && codegen.isEnabled(CompatibilityOption.FunctionPrototype);
+        if (IsStrict(node)) {
+            return false;
+        }
+        if (!(node instanceof FunctionDeclaration || node instanceof FunctionExpression)) {
+            return false;
+        }
+        return codegen.isEnabled(CompatibilityOption.FunctionArguments)
+                || codegen.isEnabled(CompatibilityOption.FunctionCaller);
     }
 
     private static boolean hasScopedName(FunctionNode node) {

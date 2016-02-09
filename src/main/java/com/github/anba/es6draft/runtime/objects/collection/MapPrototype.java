@@ -25,10 +25,11 @@ import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
-import com.github.anba.es6draft.runtime.objects.collection.MapIteratorPrototype.MapIterationKind;
+import com.github.anba.es6draft.runtime.objects.collection.MapIteratorObject.MapIterationKind;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
+import com.github.anba.es6draft.runtime.types.builtins.NativeFunction;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
@@ -52,6 +53,43 @@ public final class MapPrototype extends OrdinaryObject implements Initializable 
     @Override
     public void initialize(Realm realm) {
         createProperties(realm, this, Properties.class);
+    }
+
+    /**
+     * Marker class for {@code Map.prototype.set}.
+     */
+    private static final class MapPrototypeSet {
+    }
+
+    /**
+     * Returns {@code true} if <var>set</var> is the built-in {@code Map.prototype.set} function.
+     * 
+     * @param set
+     *            the set function
+     * @return {@code true} if <var>set</var> is the built-in {@code Map.prototype.set} function
+     */
+    static boolean isBuiltinSet(Object set) {
+        return NativeFunction.isNative(set, MapPrototypeSet.class);
+    }
+
+    /**
+     * Marker class for {@code Map.prototype.entries}.
+     */
+    private static final class MapPrototypeEntries {
+    }
+
+    /**
+     * Returns {@code true} if <var>entries</var> is the built-in {@code Map.prototype.entries} function for the
+     * requested realm.
+     * 
+     * @param realm
+     *            the function realm
+     * @param entries
+     *            the entries function
+     * @return {@code true} if <var>entries</var> is the built-in {@code Map.prototype.entries} function
+     */
+    public static boolean isBuiltinEntries(Realm realm, Object entries) {
+        return NativeFunction.isNative(realm, entries, MapPrototypeEntries.class);
     }
 
     /**
@@ -128,7 +166,7 @@ public final class MapPrototype extends OrdinaryObject implements Initializable 
          *            the function this-value
          * @return the entries iterator
          */
-        @Function(name = "entries", arity = 0)
+        @Function(name = "entries", arity = 0, nativeId = MapPrototypeEntries.class)
         @AliasFunction(name = "[Symbol.iterator]", symbol = BuiltinSymbol.iterator)
         public static Object entries(ExecutionContext cx, Object thisValue) {
             /* steps 1-2 */
@@ -240,7 +278,7 @@ public final class MapPrototype extends OrdinaryObject implements Initializable 
          *            the value
          * @return this map object
          */
-        @Function(name = "set", arity = 2)
+        @Function(name = "set", arity = 2, nativeId = MapPrototypeSet.class)
         public static Object set(ExecutionContext cx, Object thisValue, Object key, Object value) {
             /* steps 1-3 */
             MapObject m = thisMapObject(cx, thisValue);

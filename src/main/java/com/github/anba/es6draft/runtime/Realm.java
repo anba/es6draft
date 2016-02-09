@@ -12,6 +12,8 @@ import static com.github.anba.es6draft.runtime.LexicalEnvironment.newGlobalEnvir
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.AddRestrictedFunctionProperties;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject.ObjectCreate;
 
+import java.io.IOException;
+import java.net.URISyntaxException;
 import java.security.SecureRandom;
 import java.text.Collator;
 import java.text.DecimalFormatSymbols;
@@ -23,6 +25,8 @@ import java.util.Random;
 import java.util.TimeZone;
 
 import com.github.anba.es6draft.Executable;
+import com.github.anba.es6draft.compiler.CompilationException;
+import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.ScriptLoader;
@@ -140,7 +144,7 @@ public final class Realm {
 
     private ExecutionContext scriptContext;
 
-    private final World<? extends GlobalObject> world;
+    private final World world;
 
     private final ExecutionContext defaultContext;
 
@@ -148,11 +152,11 @@ public final class Realm {
 
     private final SecureRandom random = new SecureRandom();
 
-    private Realm(World<? extends GlobalObject> world) {
+    private Realm(World world) {
         this.world = world;
         this.defaultContext = newDefaultExecutionContext(this);
-        this.globalObject = world.newGlobal(this);
-        this.globalThis = world.newGlobal(this); // TODO: yuk...
+        this.globalObject = newGlobal(world, this);
+        this.globalThis = newGlobal(world, this); // TODO: yuk...
         this.globalEnv = newGlobalEnvironment(defaultContext, globalThis);
         this.realmObject = new RealmObject(this);
 
@@ -170,10 +174,10 @@ public final class Realm {
         realmObject.setRealm(this);
     }
 
-    private Realm(World<? extends GlobalObject> world, RealmObject realmObject) {
+    private Realm(World world, RealmObject realmObject) {
         this.world = world;
         this.defaultContext = newDefaultExecutionContext(this);
-        this.globalObject = world.newGlobal(this);
+        this.globalObject = newGlobal(world, this);
         this.globalThis = ObjectCreate(defaultContext, (ScriptObject) null);
         this.globalEnv = newGlobalEnvironment(defaultContext, globalThis);
         this.realmObject = realmObject;
@@ -188,11 +192,10 @@ public final class Realm {
         globalThis.setPrototypeOf(defaultContext, getIntrinsic(Intrinsics.ObjectPrototype));
     }
 
-    private Realm(World<? extends GlobalObject> world, RealmObject realmObject,
-            ScriptObject globalThis) {
+    private Realm(World world, RealmObject realmObject, ScriptObject globalThis) {
         this.world = world;
         this.defaultContext = newDefaultExecutionContext(this);
-        this.globalObject = world.newGlobal(this);
+        this.globalObject = newGlobal(world, this);
         this.globalThis = globalThis;
         this.globalEnv = newGlobalEnvironment(defaultContext, globalThis);
         this.realmObject = realmObject;
@@ -205,9 +208,19 @@ public final class Realm {
     }
 
     /**
-     * Returns the source info from the caller execution context. If no applicable source is
-     * attached to the caller context, the source from the most recent script execution on this
-     * realm is returned.
+     * Creates a new global object.
+     * 
+     * @param realm
+     *            the realm instance
+     * @return the new global object
+     */
+    private static GlobalObject newGlobal(World world, Realm realm) {
+        return world.getContext().getGlobalAllocator().newInstance(realm);
+    }
+
+    /**
+     * Returns the source info from the caller execution context. If no applicable source is attached to the caller
+     * context, the source from the most recent script execution on this realm is returned.
      * 
      * @param caller
      *            the caller context
@@ -230,8 +243,7 @@ public final class Realm {
     }
 
     private boolean hasSourceInfo(Executable exec) {
-        assert exec == null || exec.getSourceObject() != null
-                || exec == defaultContext.getCurrentExecutable();
+        assert exec == null || exec.getSourceObject() != null || exec == defaultContext.getCurrentExecutable();
         return exec != null && exec.getSourceObject() != null;
     }
 
@@ -345,7 +357,7 @@ public final class Realm {
      * 
      * @return the world instance
      */
-    public World<? extends GlobalObject> getWorld() {
+    public World getWorld() {
         return world;
     }
 
@@ -392,7 +404,7 @@ public final class Realm {
      * @return the locale
      */
     public Locale getLocale() {
-        return world.getLocale();
+        return world.getContext().getLocale();
     }
 
     /**
@@ -401,7 +413,7 @@ public final class Realm {
      * @return the timezone
      */
     public TimeZone getTimeZone() {
-        return world.getTimeZone();
+        return world.getContext().getTimeZone();
     }
 
     /**
@@ -499,6 +511,12 @@ public final class Realm {
         world.enqueuePromiseTask(task);
     }
 
+    /**
+     * Enqueue a promise rejection reason to the global rejection list.
+     * 
+     * @param reason
+     *            the promise rejection reason
+     */
     public void enqueueUnhandledPromiseRejection(Object reason) {
         world.enqueueUnhandledPromiseRejection(reason);
     }
@@ -514,7 +532,8 @@ public final class Realm {
         Collator collator = Collator.getInstance(getLocale());
         // Use Normalized Form D for comparison (cf. 21.1.3.10, Note 2)
         collator.setDecomposition(Collator.CANONICAL_DECOMPOSITION);
-        // `"\u0001".localeCompare("\u0002") == -1` should yield true
+        // Multi-line comments to workaround: https://bugs.eclipse.org/bugs/show_bug.cgi?id=471090
+        /* `"\u0001".localeCompare("\u0002") == -1` should yield true */
         collator.setStrength(Collator.IDENTICAL);
         return collator;
     }
@@ -539,8 +558,7 @@ public final class Realm {
      * @param indirectEval
      *            the user hook for indirect eval calls
      */
-    public void setExtensionHooks(Callable directEvalTranslate, Callable nonEvalFallback,
-            Callable indirectEval) {
+    public void setExtensionHooks(Callable directEvalTranslate, Callable nonEvalFallback, Callable indirectEval) {
         this.directEvalTranslate = directEvalTranslate;
         this.nonEvalFallback = nonEvalFallback;
         this.indirectEval = indirectEval;
@@ -549,14 +567,42 @@ public final class Realm {
     /**
      * Creates a new {@link Realm} object.
      * 
-     * @param <GLOBAL>
-     *            the global object type
      * @param world
      *            the world instance
      * @return the new realm instance
      */
-    static <GLOBAL extends GlobalObject> Realm newRealm(World<GLOBAL> world) {
+    static Realm newRealm(World world) {
         return new Realm(world);
+    }
+
+    /**
+     * 8.2.1 CreateRealm ( )
+     * <p>
+     * Creates a new {@link Realm} object.
+     * 
+     * @param cx
+     *            the execution context
+     * @return the new realm instance
+     */
+    public static Realm CreateRealm(ExecutionContext cx) {
+        // The operation is not supported in this implementation.
+        throw new UnsupportedOperationException();
+    }
+
+    /**
+     * 8.2.3 SetRealmGlobalObject ( realmRec, globalObj )
+     * 
+     * @param cx
+     *            the execution context
+     * @param realm
+     *            the realm instance
+     * @param globalObj
+     *            the global this object or {@code null}
+     * @return the new realm instance
+     */
+    public static Realm SetRealmGlobalObject(ExecutionContext cx, Realm realm, ScriptObject globalObj) {
+        // The operation is not supported in this implementation.
+        throw new UnsupportedOperationException();
     }
 
     /**
@@ -573,9 +619,9 @@ public final class Realm {
      *            the global this object or {@code null}
      * @return the new realm instance
      */
-    public static Realm CreateRealmAndSetRealmGlobalObject(ExecutionContext cx,
-            RealmObject realmObject, ScriptObject globalObj) {
-        World<? extends GlobalObject> world = cx.getRealm().getWorld();
+    public static Realm CreateRealmAndSetRealmGlobalObject(ExecutionContext cx, RealmObject realmObject,
+            ScriptObject globalObj) {
+        World world = cx.getRealm().getWorld();
         if (globalObj == null) {
             return new Realm(world, realmObject);
         } else {
@@ -622,34 +668,31 @@ public final class Realm {
     }
 
     /**
-     * 8.2.1 CreateRealm ( )
+     * 8.5.1 InitializeHostDefinedRealm ( realm )
      * <p>
-     * Creates a new {@link Realm} object.
+     * Initializes the global this with the default properties of the Global Object.
      * 
-     * @param cx
-     *            the execution context
-     * @return the new realm instance
-     */
-    public static Realm CreateRealm(ExecutionContext cx) {
-        // The operation is not supported in this implementation.
-        throw new UnsupportedOperationException();
-    }
-
-    /**
-     * 8.2.3 SetRealmGlobalObject ( realmRec, globalObj )
-     * 
-     * @param cx
-     *            the execution context
      * @param realm
      *            the realm instance
-     * @param globalObj
-     *            the global this object or {@code null}
-     * @return the new realm instance
+     * @throws IOException
+     *             if there was any I/O error
+     * @throws URISyntaxException
+     *             the URL is not a valid URI
+     * @throws ParserException
+     *             if the source contains any syntax errors
+     * @throws CompilationException
+     *             if the parsed source could not be compiled
      */
-    public static Realm SetRealmGlobalObject(ExecutionContext cx, Realm realm,
-            ScriptObject globalObj) {
-        // The operation is not supported in this implementation.
-        throw new UnsupportedOperationException();
+    public static void InitializeHostDefinedRealm(Realm realm)
+            throws IOException, URISyntaxException, ParserException, CompilationException {
+        /* steps 1-2 (not applicable) */
+        GlobalObject global = realm.getGlobalObject();
+        // Run initialization scripts before installing global bindings and extensions.
+        global.initializeScripted();
+        /* steps 3-4 */
+        SetDefaultGlobalBindings(realm.defaultContext(), realm);
+        /* step 5 */
+        global.initializeExtensions();
     }
 
     /**
@@ -826,33 +869,20 @@ public final class Realm {
         EnumMap<Intrinsics, OrdinaryObject> intrinsics = realm.intrinsics;
 
         // allocation phase
-        NativeErrorConstructor evalErrorConstructor = new NativeErrorConstructor(realm,
-                ErrorType.EvalError);
-        NativeErrorPrototype evalErrorPrototype = new NativeErrorPrototype(realm,
-                ErrorType.EvalError);
-        NativeErrorConstructor rangeErrorConstructor = new NativeErrorConstructor(realm,
-                ErrorType.RangeError);
-        NativeErrorPrototype rangeErrorPrototype = new NativeErrorPrototype(realm,
-                ErrorType.RangeError);
-        NativeErrorConstructor referenceErrorConstructor = new NativeErrorConstructor(realm,
-                ErrorType.ReferenceError);
-        NativeErrorPrototype referenceErrorPrototype = new NativeErrorPrototype(realm,
-                ErrorType.ReferenceError);
-        NativeErrorConstructor syntaxErrorConstructor = new NativeErrorConstructor(realm,
-                ErrorType.SyntaxError);
-        NativeErrorPrototype syntaxErrorPrototype = new NativeErrorPrototype(realm,
-                ErrorType.SyntaxError);
-        NativeErrorConstructor typeErrorConstructor = new NativeErrorConstructor(realm,
-                ErrorType.TypeError);
-        NativeErrorPrototype typeErrorPrototype = new NativeErrorPrototype(realm,
-                ErrorType.TypeError);
-        NativeErrorConstructor uriErrorConstructor = new NativeErrorConstructor(realm,
-                ErrorType.URIError);
+        NativeErrorConstructor evalErrorConstructor = new NativeErrorConstructor(realm, ErrorType.EvalError);
+        NativeErrorPrototype evalErrorPrototype = new NativeErrorPrototype(realm, ErrorType.EvalError);
+        NativeErrorConstructor rangeErrorConstructor = new NativeErrorConstructor(realm, ErrorType.RangeError);
+        NativeErrorPrototype rangeErrorPrototype = new NativeErrorPrototype(realm, ErrorType.RangeError);
+        NativeErrorConstructor referenceErrorConstructor = new NativeErrorConstructor(realm, ErrorType.ReferenceError);
+        NativeErrorPrototype referenceErrorPrototype = new NativeErrorPrototype(realm, ErrorType.ReferenceError);
+        NativeErrorConstructor syntaxErrorConstructor = new NativeErrorConstructor(realm, ErrorType.SyntaxError);
+        NativeErrorPrototype syntaxErrorPrototype = new NativeErrorPrototype(realm, ErrorType.SyntaxError);
+        NativeErrorConstructor typeErrorConstructor = new NativeErrorConstructor(realm, ErrorType.TypeError);
+        NativeErrorPrototype typeErrorPrototype = new NativeErrorPrototype(realm, ErrorType.TypeError);
+        NativeErrorConstructor uriErrorConstructor = new NativeErrorConstructor(realm, ErrorType.URIError);
         NativeErrorPrototype uriErrorPrototype = new NativeErrorPrototype(realm, ErrorType.URIError);
-        NativeErrorConstructor internalErrorConstructor = new NativeErrorConstructor(realm,
-                ErrorType.InternalError);
-        NativeErrorPrototype internalErrorPrototype = new NativeErrorPrototype(realm,
-                ErrorType.InternalError);
+        NativeErrorConstructor internalErrorConstructor = new NativeErrorConstructor(realm, ErrorType.InternalError);
+        NativeErrorPrototype internalErrorPrototype = new NativeErrorPrototype(realm, ErrorType.InternalError);
 
         // registration phase
         intrinsics.put(Intrinsics.EvalError, evalErrorConstructor);
@@ -996,8 +1026,7 @@ public final class Realm {
         EnumMap<Intrinsics, OrdinaryObject> intrinsics = realm.intrinsics;
 
         // allocation phase
-        GeneratorFunctionConstructor generatorFunctionConstructor = new GeneratorFunctionConstructor(
-                realm);
+        GeneratorFunctionConstructor generatorFunctionConstructor = new GeneratorFunctionConstructor(realm);
         GeneratorPrototype generatorPrototype = new GeneratorPrototype(realm);
         GeneratorFunctionPrototype generator = new GeneratorFunctionPrototype(realm);
 
@@ -1012,8 +1041,7 @@ public final class Realm {
         generator.initialize(realm);
 
         if (realm.isEnabled(CompatibilityOption.LegacyGenerator)) {
-            OrdinaryObject legacyGeneratorPrototype = ObjectCreate(realm,
-                    Intrinsics.ObjectPrototype);
+            OrdinaryObject legacyGeneratorPrototype = ObjectCreate(realm, Intrinsics.ObjectPrototype);
             intrinsics.put(Intrinsics.LegacyGeneratorPrototype, legacyGeneratorPrototype);
         }
     }
@@ -1030,41 +1058,26 @@ public final class Realm {
         // allocation phase
         ArrayBufferConstructor arrayBufferConstructor = new ArrayBufferConstructor(realm);
         ArrayBufferPrototype arrayBufferPrototype = new ArrayBufferPrototype(realm);
-        TypedArrayConstructorPrototype typedArrayConstructor = new TypedArrayConstructorPrototype(
-                realm);
+        TypedArrayConstructorPrototype typedArrayConstructor = new TypedArrayConstructorPrototype(realm);
         TypedArrayPrototypePrototype typedArrayPrototype = new TypedArrayPrototypePrototype(realm);
-        TypedArrayConstructor int8ArrayConstructor = new TypedArrayConstructor(realm,
-                ElementType.Int8);
+        TypedArrayConstructor int8ArrayConstructor = new TypedArrayConstructor(realm, ElementType.Int8);
         TypedArrayPrototype int8ArrayPrototype = new TypedArrayPrototype(realm, ElementType.Int8);
-        TypedArrayConstructor uint8ArrayConstructor = new TypedArrayConstructor(realm,
-                ElementType.Uint8);
+        TypedArrayConstructor uint8ArrayConstructor = new TypedArrayConstructor(realm, ElementType.Uint8);
         TypedArrayPrototype uint8ArrayPrototype = new TypedArrayPrototype(realm, ElementType.Uint8);
-        TypedArrayConstructor uint8CArrayConstructor = new TypedArrayConstructor(realm,
-                ElementType.Uint8C);
-        TypedArrayPrototype uint8CArrayPrototype = new TypedArrayPrototype(realm,
-                ElementType.Uint8C);
-        TypedArrayConstructor int16ArrayConstructor = new TypedArrayConstructor(realm,
-                ElementType.Int16);
+        TypedArrayConstructor uint8CArrayConstructor = new TypedArrayConstructor(realm, ElementType.Uint8C);
+        TypedArrayPrototype uint8CArrayPrototype = new TypedArrayPrototype(realm, ElementType.Uint8C);
+        TypedArrayConstructor int16ArrayConstructor = new TypedArrayConstructor(realm, ElementType.Int16);
         TypedArrayPrototype int16ArrayPrototype = new TypedArrayPrototype(realm, ElementType.Int16);
-        TypedArrayConstructor uint16ArrayConstructor = new TypedArrayConstructor(realm,
-                ElementType.Uint16);
-        TypedArrayPrototype uint16ArrayPrototype = new TypedArrayPrototype(realm,
-                ElementType.Uint16);
-        TypedArrayConstructor int32ArrayConstructor = new TypedArrayConstructor(realm,
-                ElementType.Int32);
+        TypedArrayConstructor uint16ArrayConstructor = new TypedArrayConstructor(realm, ElementType.Uint16);
+        TypedArrayPrototype uint16ArrayPrototype = new TypedArrayPrototype(realm, ElementType.Uint16);
+        TypedArrayConstructor int32ArrayConstructor = new TypedArrayConstructor(realm, ElementType.Int32);
         TypedArrayPrototype int32ArrayPrototype = new TypedArrayPrototype(realm, ElementType.Int32);
-        TypedArrayConstructor uint32ArrayConstructor = new TypedArrayConstructor(realm,
-                ElementType.Uint32);
-        TypedArrayPrototype uint32ArrayPrototype = new TypedArrayPrototype(realm,
-                ElementType.Uint32);
-        TypedArrayConstructor float32ArrayConstructor = new TypedArrayConstructor(realm,
-                ElementType.Float32);
-        TypedArrayPrototype float32ArrayPrototype = new TypedArrayPrototype(realm,
-                ElementType.Float32);
-        TypedArrayConstructor float64ArrayConstructor = new TypedArrayConstructor(realm,
-                ElementType.Float64);
-        TypedArrayPrototype float64ArrayPrototype = new TypedArrayPrototype(realm,
-                ElementType.Float64);
+        TypedArrayConstructor uint32ArrayConstructor = new TypedArrayConstructor(realm, ElementType.Uint32);
+        TypedArrayPrototype uint32ArrayPrototype = new TypedArrayPrototype(realm, ElementType.Uint32);
+        TypedArrayConstructor float32ArrayConstructor = new TypedArrayConstructor(realm, ElementType.Float32);
+        TypedArrayPrototype float32ArrayPrototype = new TypedArrayPrototype(realm, ElementType.Float32);
+        TypedArrayConstructor float64ArrayConstructor = new TypedArrayConstructor(realm, ElementType.Float64);
+        TypedArrayPrototype float64ArrayPrototype = new TypedArrayPrototype(realm, ElementType.Float64);
         DataViewConstructor dataViewConstructor = new DataViewConstructor(realm);
         DataViewPrototype dataViewPrototype = new DataViewPrototype(realm);
 

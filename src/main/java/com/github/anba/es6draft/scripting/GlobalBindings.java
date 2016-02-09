@@ -20,18 +20,19 @@ import java.util.Set;
 import javax.script.Bindings;
 
 import com.github.anba.es6draft.runtime.GlobalEnvironmentRecord;
-import com.github.anba.es6draft.runtime.objects.GlobalObject;
+import com.github.anba.es6draft.runtime.Realm;
 
 /**
  * Concrete implementation of the {@link Bindings} interface.
  */
+// TODO: Handle ScriptException when calling globalEnvRec methods?
 final class GlobalBindings implements Bindings {
-    private final GlobalObject globalObject;
+    private final Realm realm;
     private final GlobalEnvironmentRecord globalEnvRec;
 
-    public GlobalBindings(GlobalObject globalObject) {
-        this.globalObject = globalObject;
-        this.globalEnvRec = globalObject.getRealm().getGlobalEnv().getEnvRec();
+    public GlobalBindings(Realm realm) {
+        this.realm = realm;
+        this.globalEnvRec = realm.getGlobalEnv().getEnvRec();
     }
 
     /**
@@ -60,12 +61,12 @@ final class GlobalBindings implements Bindings {
     }
 
     /**
-     * Returns the global object this {@link Bindings} instance is bound to.
+     * Returns the realm object this {@link Bindings} instance is bound to.
      * 
-     * @return the global object
+     * @return the realm object
      */
-    GlobalObject getGlobalObject() {
-        return globalObject;
+    Realm getRealm() {
+        return realm;
     }
 
     @Override

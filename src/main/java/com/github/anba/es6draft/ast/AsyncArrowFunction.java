@@ -145,7 +145,7 @@ public final class AsyncArrowFunction extends Expression implements FunctionNode
 
     @Override
     public boolean isConstructor() {
-        return true;
+        return false;
     }
 
     @Override

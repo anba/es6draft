@@ -16,13 +16,13 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.EnumSet;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.configuration.Configuration;
 import org.hamcrest.Matchers;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -38,10 +38,13 @@ import org.junit.runners.model.MultipleFailureException;
 import com.github.anba.es6draft.repl.console.ShellConsole;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
-import com.github.anba.es6draft.runtime.internal.ScriptCache;
+import com.github.anba.es6draft.runtime.internal.Properties.Function;
+import com.github.anba.es6draft.runtime.internal.Strings;
 import com.github.anba.es6draft.util.Functional.BiFunction;
+import com.github.anba.es6draft.util.NullConsole;
 import com.github.anba.es6draft.util.Parallelized;
 import com.github.anba.es6draft.util.ParameterizedRunnerFactory;
+import com.github.anba.es6draft.util.TestAssertions;
 import com.github.anba.es6draft.util.TestConfiguration;
 import com.github.anba.es6draft.util.TestGlobals;
 import com.github.anba.es6draft.util.TestInfo;
@@ -67,17 +70,21 @@ public final class WebKitTest {
         });
     }
 
+    @BeforeClass
+    public static void setUpClass() throws IOException {
+        WebKitTestGlobalObject.testLoadInitializationScript();
+    }
+
     @ClassRule
     public static TestGlobals<WebKitTestGlobalObject, TestInfo> globals = new TestGlobals<WebKitTestGlobalObject, TestInfo>(
             configuration) {
         @Override
-        protected ObjectAllocator<WebKitTestGlobalObject> newAllocator(ShellConsole console,
-                TestInfo test, ScriptCache scriptCache) {
-            return newGlobalObjectAllocator(console, test, scriptCache);
+        protected ObjectAllocator<WebKitTestGlobalObject> newAllocator(ShellConsole console) {
+            return newGlobalObjectAllocator(console);
         }
 
         @Override
-        protected Set<CompatibilityOption> getOptions() {
+        protected EnumSet<CompatibilityOption> getOptions() {
             EnumSet<CompatibilityOption> options = EnumSet.copyOf(super.getOptions());
             options.add(CompatibilityOption.ArrayIncludes);
             options.add(CompatibilityOption.ArrayBufferMissingLength);
@@ -119,13 +126,14 @@ public final class WebKitTest {
     public void setUp() throws Throwable {
         assumeTrue("Test disabled", test.isEnabled());
 
-        global = globals.newGlobal(new WebKitTestConsole(collector), test);
+        global = globals.newGlobal(new NullConsole(), test);
+        global.createGlobalProperties(new Print(), Print.class);
         exceptionHandler.setExecutionContext(global.getRealm().defaultContext());
 
         if (test.negative) {
-            expected.expect(Matchers.either(StandardErrorHandler.defaultMatcher())
-                    .or(ScriptExceptionHandler.defaultMatcher())
-                    .or(Matchers.instanceOf(MultipleFailureException.class)));
+            expected.expect(
+                    Matchers.either(StandardErrorHandler.defaultMatcher()).or(ScriptExceptionHandler.defaultMatcher())
+                            .or(Matchers.instanceOf(MultipleFailureException.class)));
         } else {
             errorHandler.match(StandardErrorHandler.defaultMatcher());
             exceptionHandler.match(ScriptExceptionHandler.defaultMatcher());
@@ -134,9 +142,7 @@ public final class WebKitTest {
 
     @After
     public void tearDown() {
-        if (global != null) {
-            global.getScriptLoader().getExecutor().shutdown();
-        }
+        globals.release(global);
     }
 
     @Test
@@ -149,5 +155,16 @@ public final class WebKitTest {
 
         // Wait for pending tasks to finish
         global.getRealm().getWorld().runEventLoop();
+    }
+
+    public final class Print {
+        @Function(name = "print", arity = 1)
+        public void print(String... messages) {
+            String message = Strings.concatWith(' ', messages);
+            if (message.startsWith("FAIL ")) {
+                // Collect all failures instead of calling fail() directly.
+                collector.addError(TestAssertions.newAssertionError(message));
+            }
+        }
     }
 }

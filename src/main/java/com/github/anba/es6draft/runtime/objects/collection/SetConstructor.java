@@ -23,6 +23,7 @@ import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
 import com.github.anba.es6draft.runtime.internal.ScriptIterator;
+import com.github.anba.es6draft.runtime.internal.ScriptIterators;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Constructor;
@@ -91,12 +92,24 @@ public final class SetConstructor extends BuiltinConstructor implements Initiali
             throw newTypeError(calleeContext, Messages.Key.PropertyNotCallable, "add");
         }
         Callable adder = (Callable) _adder;
+        boolean isBuiltin = SetPrototype.isBuiltinAdd(_adder);
+        if (isBuiltin && iterable instanceof SetObject) {
+            SetObject other = (SetObject) iterable;
+            if (ScriptIterators.isBuiltinIterator(calleeContext, other)) {
+                set.getSetData().setAll(other.getSetData());
+                return set;
+            }
+        }
         ScriptIterator<?> iter = GetScriptIterator(calleeContext, iterable);
         /* step 9 */
         try {
             while (iter.hasNext()) {
                 Object nextValue = iter.next();
-                adder.call(calleeContext, set, nextValue);
+                if (isBuiltin) {
+                    set.getSetData().set(nextValue, null);
+                } else {
+                    adder.call(calleeContext, set, nextValue);
+                }
             }
             return set;
         } catch (ScriptException e) {

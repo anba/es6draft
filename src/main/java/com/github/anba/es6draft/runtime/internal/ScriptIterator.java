@@ -13,14 +13,7 @@ import com.github.anba.es6draft.runtime.types.ScriptObject;
 /**
  * {@link Iterator} providing access to an underlying {@link ScriptObject}.
  */
-public interface ScriptIterator<E> extends Iterator<E>, AutoCloseable {
-    /**
-     * Returns the script iterator object.
-     * 
-     * @return the script iterator object
-     */
-    ScriptObject getScriptObject();
-
+public interface ScriptIterator<E> extends Iterator<E> {
     /**
      * {@inheritDoc}
      * 
@@ -45,7 +38,6 @@ public interface ScriptIterator<E> extends Iterator<E>, AutoCloseable {
      * @throws ScriptException
      *             if an execution error occurs in the scripted iterator
      */
-    @Override
     void close() throws ScriptException;
 
     /**

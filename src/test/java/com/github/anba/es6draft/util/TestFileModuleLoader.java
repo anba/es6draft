@@ -6,10 +6,10 @@
  */
 package com.github.anba.es6draft.util;
 
-import java.nio.file.Path;
 import java.util.Collection;
 
 import com.github.anba.es6draft.runtime.Realm;
+import com.github.anba.es6draft.runtime.internal.RuntimeContext;
 import com.github.anba.es6draft.runtime.internal.ScriptLoader;
 import com.github.anba.es6draft.runtime.modules.ModuleRecord;
 import com.github.anba.es6draft.runtime.modules.SourceTextModuleRecord;
@@ -18,10 +18,9 @@ import com.github.anba.es6draft.runtime.modules.loader.FileModuleLoader;
 /**
  *
  */
-public class TestFileModuleLoader extends FileModuleLoader implements
-        TestModuleLoader<SourceTextModuleRecord> {
-    public TestFileModuleLoader(ScriptLoader scriptLoader, Path baseDirectory) {
-        super(scriptLoader, baseDirectory);
+public class TestFileModuleLoader extends FileModuleLoader implements TestModuleLoader<SourceTextModuleRecord> {
+    public TestFileModuleLoader(RuntimeContext context, ScriptLoader scriptLoader) {
+        super(context, scriptLoader);
     }
 
     @Override

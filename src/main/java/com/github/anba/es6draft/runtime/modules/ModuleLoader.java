@@ -27,11 +27,12 @@ public interface ModuleLoader {
      * @throws MalformedNameException
      *             if the name cannot be normalized
      */
-    SourceIdentifier normalizeName(String unnormalizedName, SourceIdentifier referrerId)
-            throws MalformedNameException;
+    SourceIdentifier normalizeName(String unnormalizedName, SourceIdentifier referrerId) throws MalformedNameException;
 
     /**
      * Retrieves the requested module record.
+     * <p>
+     * If the module record is not linked, it will be linked against <var>realm</var>.
      * 
      * @param identifier
      *            the module source identifier
@@ -43,6 +44,8 @@ public interface ModuleLoader {
 
     /**
      * Defines a new module record in this module loader.
+     * <p>
+     * If the module record is not linked, it will be linked against <var>realm</var>.
      * 
      * @param identifier
      *            the module source identifier
@@ -65,6 +68,8 @@ public interface ModuleLoader {
 
     /**
      * Resolves and links the requested module record.
+     * <p>
+     * If the module record is not linked, it will be linked against <var>realm</var>.
      * 
      * @param identifier
      *            the module source identifier
@@ -80,8 +85,8 @@ public interface ModuleLoader {
      * @throws CompilationException
      *             if the parsed module source cannot be compiled
      */
-    ModuleRecord resolve(SourceIdentifier identifier, Realm realm) throws IOException,
-            IllegalArgumentException, ParserException, CompilationException;
+    ModuleRecord resolve(SourceIdentifier identifier, Realm realm)
+            throws IOException, IllegalArgumentException, ParserException, CompilationException;
 
     /**
      * Loads a module and all of its dependencies.
@@ -96,6 +101,5 @@ public interface ModuleLoader {
      * @throws MalformedNameException
      *             if the module specifier cannot be normalized
      */
-    ModuleRecord load(SourceIdentifier identifier) throws IOException, IllegalArgumentException,
-            MalformedNameException;
+    ModuleRecord load(SourceIdentifier identifier) throws IOException, IllegalArgumentException, MalformedNameException;
 }

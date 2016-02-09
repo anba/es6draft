@@ -13,6 +13,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import com.github.anba.es6draft.runtime.Realm;
+import com.github.anba.es6draft.runtime.internal.RuntimeContext;
 import com.github.anba.es6draft.runtime.modules.MalformedNameException;
 import com.github.anba.es6draft.runtime.modules.ModuleLoader;
 import com.github.anba.es6draft.runtime.modules.ModuleRecord;
@@ -23,6 +24,21 @@ import com.github.anba.es6draft.runtime.modules.SourceIdentifier;
  * 
  */
 public abstract class AbstractModuleLoader<MODULE extends ModuleRecord> implements ModuleLoader {
+    private final RuntimeContext context;
+
+    protected AbstractModuleLoader(RuntimeContext context) {
+        this.context = context;
+    }
+
+    /**
+     * Returns the runtime context for this loader.
+     * 
+     * @return the runtime context
+     */
+    protected RuntimeContext getContext() {
+        return context;
+    }
+
     /**
      * Loads the module source.
      * 
@@ -62,8 +78,7 @@ public abstract class AbstractModuleLoader<MODULE extends ModuleRecord> implemen
      * @throws IOException
      *             if there was any I/O error
      */
-    protected abstract MODULE parseModule(SourceIdentifier identifier, ModuleSource source)
-            throws IOException;
+    protected abstract MODULE parseModule(SourceIdentifier identifier, ModuleSource source) throws IOException;
 
     /**
      * Links the module against the realm instance.
@@ -105,8 +120,7 @@ public abstract class AbstractModuleLoader<MODULE extends ModuleRecord> implemen
     }
 
     @Override
-    public MODULE define(SourceIdentifier identifier, ModuleSource source, Realm realm)
-            throws IOException {
+    public MODULE define(SourceIdentifier identifier, ModuleSource source, Realm realm) throws IOException {
         MODULE module = getModule(identifier);
         if (module == null) {
             module = parseModule(identifier, source);
@@ -126,7 +140,7 @@ public abstract class AbstractModuleLoader<MODULE extends ModuleRecord> implemen
     @Override
     public MODULE load(SourceIdentifier identifier) throws MalformedNameException, IOException {
         MODULE module = loadIfAbsent(identifier);
-        loadRequested(module, new HashSet<ModuleRecord>());
+        loadRequested(module, new HashSet<>());
         return module;
     }
 

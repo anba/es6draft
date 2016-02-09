@@ -73,7 +73,7 @@ public interface ClassDefinition extends ScopedNode {
      * 
      * @return the list of class properties
      */
-    List<? extends PropertyDefinition> getProperties();
+    List<PropertyDefinition> getProperties();
 
     /**
      * Sets the list of class properties.

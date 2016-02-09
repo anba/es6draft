@@ -222,7 +222,7 @@ public final class Characters {
      */
     public static boolean isUnicodeIDStart(int c) {
         if (c <= 127) {
-            return ('a' <= (c | 0x20) && (c | 0x20) <= 'z') || c == '_';
+            return ('a' <= (c | 0x20) && (c | 0x20) <= 'z');
         }
         return isUnicodeIDStartUnlikely(c);
     }

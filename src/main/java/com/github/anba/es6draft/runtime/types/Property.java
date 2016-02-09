@@ -163,8 +163,7 @@ public final class Property implements Cloneable {
     }
 
     /**
-     * Updates the [[Value]] field of this {@link Property} object. Only applicable for writable
-     * data-properties.
+     * Updates the [[Value]] field of this {@link Property} object. Only applicable for writable data-properties.
      * 
      * @param value
      *            the new value
@@ -228,9 +227,8 @@ public final class Property implements Cloneable {
     }
 
     /**
-     * Returns {@code true} if every field of {@code desc} also occurs in this property descriptor
-     * and every present field has the same value. That means {@code true} is returned iff
-     * {@code desc} &#8838; {@code this} holds.
+     * Returns {@code true} if every field of {@code desc} also occurs in this property descriptor and every present
+     * field has the same value. That means {@code true} is returned iff {@code desc} &#8838; {@code this} holds.
      * 
      * @param desc
      *            the property descriptor
@@ -268,7 +266,7 @@ public final class Property implements Cloneable {
     }
 
     /**
-     * Returns the <tt>[[Value]]</tt> field.
+     * Returns the <code>[[Value]]</code> field.
      * 
      * @return the value field
      */
@@ -277,7 +275,7 @@ public final class Property implements Cloneable {
     }
 
     /**
-     * Returns the <tt>[[Get]]</tt> field.
+     * Returns the <code>[[Get]]</code> field.
      * 
      * @return the getter field
      */
@@ -286,7 +284,7 @@ public final class Property implements Cloneable {
     }
 
     /**
-     * Returns the <tt>[[Set]]</tt> field.
+     * Returns the <code>[[Set]]</code> field.
      * 
      * @return the setter field
      */
@@ -295,7 +293,7 @@ public final class Property implements Cloneable {
     }
 
     /**
-     * Returns the <tt>[[Writable]]</tt> field.
+     * Returns the <code>[[Writable]]</code> field.
      * 
      * @return the writable flag
      */
@@ -304,7 +302,7 @@ public final class Property implements Cloneable {
     }
 
     /**
-     * Returns the <tt>[[Enumerable]]</tt> field.
+     * Returns the <code>[[Enumerable]]</code> field.
      * 
      * @return the enumerable flag
      */
@@ -313,7 +311,7 @@ public final class Property implements Cloneable {
     }
 
     /**
-     * Returns the <tt>[[Configurable]]</tt> field.
+     * Returns the <code>[[Configurable]]</code> field.
      * 
      * @return the configurable flag
      */

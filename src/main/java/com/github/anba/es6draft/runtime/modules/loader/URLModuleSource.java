@@ -37,8 +37,7 @@ public final class URLModuleSource implements ModuleSource {
     }
 
     private static String readFully(URL url) throws IOException {
-        try (Reader reader = new BufferedReader(new InputStreamReader(url.openStream(),
-                StandardCharsets.UTF_8))) {
+        try (Reader reader = new BufferedReader(new InputStreamReader(url.openStream(), StandardCharsets.UTF_8))) {
             StringBuilder sb = new StringBuilder(4096);
             char cbuf[] = new char[4096];
             for (int len; (len = reader.read(cbuf)) != -1;) {

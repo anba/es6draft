@@ -73,6 +73,15 @@ public final class ConsString implements CharSequence {
 
     @Override
     public CharSequence subSequence(int start, int end) {
+        if (start < 0 || end < start || end > length) {
+            throw new IndexOutOfBoundsException();
+        }
+        if (start == end) {
+            return "";
+        }
+        if (start == 0 && end == length) {
+            return this;
+        }
         return toString().substring(start, end);
     }
 

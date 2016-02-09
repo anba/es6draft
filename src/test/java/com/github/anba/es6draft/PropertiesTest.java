@@ -20,16 +20,16 @@ import org.junit.Test;
 import com.github.anba.es6draft.compiler.Compiler;
 import com.github.anba.es6draft.parser.Parser;
 import com.github.anba.es6draft.runtime.ExecutionContext;
+import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.World;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
-import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.Properties;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
+import com.github.anba.es6draft.runtime.internal.RuntimeContext;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
 import com.github.anba.es6draft.runtime.internal.ScriptLoader;
 import com.github.anba.es6draft.runtime.modules.ModuleLoader;
 import com.github.anba.es6draft.runtime.modules.loader.FileModuleLoader;
-import com.github.anba.es6draft.runtime.objects.GlobalObject;
 import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Null;
@@ -40,20 +40,25 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  *
  */
 public final class PropertiesTest {
-    private GlobalObject global;
+    private Realm realm;
     private ExecutionContext cx;
 
     @Before
     public void setUp() throws Throwable {
-        ObjectAllocator<GlobalObject> allocator = World.getDefaultGlobalObjectAllocator();
-        ScriptLoader scriptLoader = new ScriptLoader(CompatibilityOption.WebCompatibility(),
-                EnumSet.noneOf(Parser.Option.class), EnumSet.noneOf(Compiler.Option.class));
-        ModuleLoader moduleLoader = new FileModuleLoader(scriptLoader, Paths.get("")
-                .toAbsolutePath());
+        /* @formatter:off */
+        RuntimeContext context = new RuntimeContext.Builder()
+                                                   .setBaseDirectory(Paths.get("").toAbsolutePath())
+                                                   .setOptions(CompatibilityOption.WebCompatibility())
+                                                   .setParserOptions(EnumSet.noneOf(Parser.Option.class))
+                                                   .setCompilerOptions(EnumSet.noneOf(Compiler.Option.class))
+                                                   .build();
+        /* @formatter:on */
 
-        World<GlobalObject> world = new World<>(allocator, moduleLoader, scriptLoader);
-        global = world.newInitializedGlobal();
-        cx = global.getRealm().defaultContext();
+        ScriptLoader scriptLoader = new ScriptLoader(context);
+        ModuleLoader moduleLoader = new FileModuleLoader(context, scriptLoader);
+        World world = new World(context, moduleLoader, scriptLoader);
+        realm = world.newInitializedRealm();
+        cx = realm.defaultContext();
     }
 
     @Test

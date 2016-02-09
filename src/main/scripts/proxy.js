@@ -25,6 +25,7 @@ const {
   isExtensible: Reflect_isExtensible,
   defineProperty: Reflect_defineProperty,
   apply: Reflect_apply,
+  construct: Reflect_construct,
 } = Reflect;
 
 function toArray(obj) {
@@ -206,7 +207,7 @@ function toProxyHandler(handler, callTrap = void 0, constructTrap = void 0) {
         var names = Reflect_apply(trapGetPropertyNames, handler, []);
         var result = [];
         for (var i = 0, j = 0, len = names.length >>> 0; i < len; ++i) {
-          var name = String(names[i]);
+          var name = %ToString(names[i]);
           var desc = handler['getPropertyDescriptor'](name);
           desc = NormalizeAndCompletePropertyDescriptor(desc);
           if (desc && desc.enumerable) {
@@ -231,7 +232,7 @@ function toProxyHandler(handler, callTrap = void 0, constructTrap = void 0) {
       var names = handler['getOwnPropertyNames']();
       var result = [];
       for (var i = 0, j = 0, len = names.length >>> 0; i < len; ++i) {
-        var name = String(names[i]);
+        var name = %ToString(names[i]);
         var desc = handler['getOwnPropertyDescriptor'](name);
         desc = NormalizeAndCompletePropertyDescriptor(desc);
         if (desc && desc.enumerable) {
@@ -250,8 +251,8 @@ function toProxyHandler(handler, callTrap = void 0, constructTrap = void 0) {
     apply(target, thisValue, args) {
       return Reflect_apply(callTrap, thisValue, args);
     },
-    construct(target, args) {
-      return new constructTrap(...args);
+    construct(target, args, newTarget) {
+      return Reflect_construct(constructTrap, args, newTarget);
     },
   };
 }

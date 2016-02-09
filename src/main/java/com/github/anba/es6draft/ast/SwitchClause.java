@@ -26,7 +26,7 @@ public final class SwitchClause extends AstNode {
     }
 
     /**
-     * Returns the <tt>CaseClause</tt> expression or {@code null} for <tt>DefaultClause</tt> nodes.
+     * Returns the <code>CaseClause</code> expression or {@code null} for <code>DefaultClause</code> nodes.
      * 
      * @return the expression or {@code null}
      */
@@ -55,9 +55,9 @@ public final class SwitchClause extends AstNode {
     }
 
     /**
-     * Returns {@code true} if this node is a <tt>DefaultClause</tt>.
+     * Returns {@code true} if this node is a <code>DefaultClause</code>.
      * 
-     * @return {@code true} if <tt>DefaultClause</tt>
+     * @return {@code true} if <code>DefaultClause</code>
      */
     public boolean isDefaultClause() {
         return expression == null;

@@ -6,22 +6,21 @@
  */
 package com.github.anba.es6draft.runtime;
 
+import static com.github.anba.es6draft.runtime.Realm.InitializeHostDefinedRealm;
+
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.ArrayDeque;
-import java.util.Locale;
-import java.util.TimeZone;
 
 import com.github.anba.es6draft.compiler.CompilationException;
 import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.Messages;
-import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
+import com.github.anba.es6draft.runtime.internal.RuntimeContext;
 import com.github.anba.es6draft.runtime.internal.ScriptLoader;
 import com.github.anba.es6draft.runtime.internal.TaskSource;
 import com.github.anba.es6draft.runtime.internal.UnhandledRejectionException;
 import com.github.anba.es6draft.runtime.modules.ModuleLoader;
-import com.github.anba.es6draft.runtime.objects.GlobalObject;
 
 /**
  * <h1>8 Executable Code and Execution Contexts</h1>
@@ -30,16 +29,13 @@ import com.github.anba.es6draft.runtime.objects.GlobalObject;
  * <li>8.4 Tasks and Task Queues
  * </ul>
  */
-public final class World<GLOBAL extends GlobalObject> {
-    private final ObjectAllocator<GLOBAL> allocator;
+public final class World {
+    private final RuntimeContext context;
     private final ModuleLoader moduleLoader;
     private final ScriptLoader scriptLoader;
-    private final Locale locale;
-    private final TimeZone timeZone;
     private final Messages messages;
-    private final GlobalSymbolRegistry symbolRegistry = new GlobalSymbolRegistry();
 
-    // TODO: move to custom class
+    private final GlobalSymbolRegistry symbolRegistry = new GlobalSymbolRegistry();
     private final ArrayDeque<Task> scriptTasks = new ArrayDeque<>();
     private final ArrayDeque<Task> promiseTasks = new ArrayDeque<>();
     private final ArrayDeque<Object> unhandledRejections = new ArrayDeque<>();
@@ -56,59 +52,30 @@ public final class World<GLOBAL extends GlobalObject> {
         }
     };
 
-    private static final ObjectAllocator<GlobalObject> DEFAULT_GLOBAL_OBJECT = new ObjectAllocator<GlobalObject>() {
-        @Override
-        public GlobalObject newInstance(Realm realm) {
-            return new GlobalObject(realm);
-        }
-    };
-
-    /**
-     * Returns an {@link ObjectAllocator} which creates standard {@link GlobalObject} instances.
-     * 
-     * @return the default global object allocator
-     */
-    public static ObjectAllocator<GlobalObject> getDefaultGlobalObjectAllocator() {
-        return DEFAULT_GLOBAL_OBJECT;
-    }
-
     /**
      * Creates a new {@link World} object.
      * 
-     * @param allocator
-     *            the global object allocator
+     * @param context
+     *            the runtime context
      * @param moduleLoader
      *            the module loader
      * @param scriptLoader
      *            the script loader
      */
-    public World(ObjectAllocator<GLOBAL> allocator, ModuleLoader moduleLoader,
-            ScriptLoader scriptLoader) {
-        this(allocator, moduleLoader, scriptLoader, Locale.getDefault(), TimeZone.getDefault());
-    }
-
-    /**
-     * Creates a new {@link World} object.
-     * 
-     * @param allocator
-     *            the global object allocator
-     * @param moduleLoader
-     *            the module loader
-     * @param scriptLoader
-     *            the script loader
-     * @param locale
-     *            the default locale
-     * @param timeZone
-     *            the default timezone
-     */
-    public World(ObjectAllocator<GLOBAL> allocator, ModuleLoader moduleLoader,
-            ScriptLoader scriptLoader, Locale locale, TimeZone timeZone) {
-        this.allocator = allocator;
+    public World(RuntimeContext context, ModuleLoader moduleLoader, ScriptLoader scriptLoader) {
+        this.context = context;
         this.moduleLoader = moduleLoader;
         this.scriptLoader = scriptLoader;
-        this.locale = locale;
-        this.timeZone = timeZone;
-        this.messages = Messages.create(locale);
+        this.messages = Messages.create(context.getLocale());
+    }
+
+    /**
+     * Returns the runtime context.
+     * 
+     * @return the runtime context
+     */
+    public RuntimeContext getContext() {
+        return context;
     }
 
     /**
@@ -225,24 +192,6 @@ public final class World<GLOBAL extends GlobalObject> {
     }
 
     /**
-     * Returns this world's locale.
-     * 
-     * @return the locale
-     */
-    public Locale getLocale() {
-        return locale;
-    }
-
-    /**
-     * Returns this world's timezone.
-     * 
-     * @return the timezone
-     */
-    public TimeZone getTimeZone() {
-        return timeZone;
-    }
-
-    /**
      * Returns the localised message for {@code key}.
      * 
      * @param key
@@ -267,15 +216,6 @@ public final class World<GLOBAL extends GlobalObject> {
     }
 
     /**
-     * Returns the global object allocator for this instance.
-     * 
-     * @return the global object allocator
-     */
-    public ObjectAllocator<GLOBAL> getAllocator() {
-        return allocator;
-    }
-
-    /**
      * Tests whether the requested compatibility option is enabled for this instance.
      * 
      * @param option
@@ -283,7 +223,7 @@ public final class World<GLOBAL extends GlobalObject> {
      * @return {@code true} if the compatibility option is enabled
      */
     public boolean isEnabled(CompatibilityOption option) {
-        return scriptLoader.getOptions().contains(option);
+        return context.getOptions().contains(option);
     }
 
     /**
@@ -296,21 +236,18 @@ public final class World<GLOBAL extends GlobalObject> {
     }
 
     /**
-     * Creates a new {@link Realm} object and returns its {@link GlobalObject}.
+     * Creates a new {@link Realm} object.
      * 
-     * @return the new global object
+     * @return the new realm object
      */
-    public GLOBAL newGlobal() {
-        Realm realm = Realm.newRealm(this);
-        @SuppressWarnings("unchecked")
-        GLOBAL global = (GLOBAL) realm.getGlobalObject();
-        return global;
+    public Realm newRealm() {
+        return Realm.newRealm(this);
     }
 
     /**
-     * Creates a new, initialized {@link Realm} object and returns its {@link GlobalObject}.
+     * Creates a new, initialized {@link Realm} object.
      * 
-     * @return the new global object
+     * @return the new realm object
      * @throws IOException
      *             if there was any I/O error
      * @throws URISyntaxException
@@ -320,21 +257,9 @@ public final class World<GLOBAL extends GlobalObject> {
      * @throws CompilationException
      *             if the parsed source could not be compiled
      */
-    public GLOBAL newInitializedGlobal() throws ParserException, CompilationException, IOException,
-            URISyntaxException {
-        GLOBAL global = newGlobal();
-        global.initializeHostDefinedRealm();
-        return global;
-    }
-
-    /**
-     * Creates a new global object.
-     * 
-     * @param realm
-     *            the realm instance
-     * @return the new global object
-     */
-    /*package*/GLOBAL newGlobal(Realm realm) {
-        return getAllocator().newInstance(realm);
+    public Realm newInitializedRealm() throws ParserException, CompilationException, IOException, URISyntaxException {
+        Realm realm = Realm.newRealm(this);
+        InitializeHostDefinedRealm(realm);
+        return realm;
     }
 }
