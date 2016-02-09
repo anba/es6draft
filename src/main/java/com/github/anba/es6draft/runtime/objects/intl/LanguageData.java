@@ -14,6 +14,7 @@ import java.util.Set;
 import com.ibm.icu.text.Collator;
 import com.ibm.icu.text.DateFormat;
 import com.ibm.icu.text.NumberFormat;
+import com.ibm.icu.text.PluralRules;
 import com.ibm.icu.util.ULocale;
 
 /**
@@ -51,6 +52,16 @@ final class LanguageData {
      */
     static List<String> getAvailableNumberFormatLocales() {
         return toLanguageTags(NumberFormat.getAvailableULocales());
+    }
+
+    /**
+     * Returns the set of available locales supported by the {@link PluralRules} class.
+     * 
+     * @return the set of available locales
+     * @see PluralRules#getAvailableULocales()
+     */
+    static List<String> getAvailablePluralRulesLocales() {
+        return toLanguageTags(PluralRules.getAvailableULocales());
     }
 
     /**

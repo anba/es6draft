@@ -279,6 +279,21 @@ public enum CompatibilityOption {
     ObjectGetOwnPropertyDescriptors,
 
     /**
+     * Intl.PluralRules (Stage 2 proposal)
+     */
+    PluralRules,
+
+    /**
+     * Intl.DateTimeFormat.prototype.formatToParts (Stage 2 proposal)
+     */
+    FormatToParts,
+
+    /**
+     * Locale Operations (Stage 2 proposal)
+     */
+    Locale,
+
+    /**
      * Atomics.fence() function
      */
     AtomicsFence,
@@ -465,7 +480,8 @@ public enum CompatibilityOption {
             return EnumSet.of(ArrayBufferTransfer, ExportFrom, Decorator, StringTrim, StringMatchAll,
                     StaticClassProperties, CallConstructor, Observable, SystemGlobal);
         case Draft:
-            return EnumSet.of(Atomics, FunctionSent, ObjectRestDestructuring, ObjectSpreadInitializer);
+            return EnumSet.of(Atomics, FormatToParts, FunctionSent, Locale, ObjectRestDestructuring,
+                    ObjectSpreadInitializer, PluralRules);
         case Candidate:
             return EnumSet.of(AsyncFunction, Exponentiation, FunctionCallTrailingComma, ObjectGetOwnPropertyDescriptors,
                     ObjectValuesEntries, StringPad, SIMD);

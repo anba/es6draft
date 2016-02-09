@@ -41,6 +41,9 @@ public class DateTimeFormatObject extends OrdinaryObject {
     /** [[boundFormat]] */
     private Callable boundFormat;
 
+    /** [[boundFormatToParts]] */
+    private Callable boundFormatToParts;
+
     private Lazy<String> pattern;
 
     private DateFormat dateFormat;
@@ -178,6 +181,25 @@ public class DateTimeFormatObject extends OrdinaryObject {
      */
     public void setBoundFormat(Callable boundFormat) {
         this.boundFormat = boundFormat;
+    }
+
+    /**
+     * [[boundFormatToParts]]
+     * 
+     * @return the bound formatToParts function
+     */
+    public Callable getBoundFormatToParts() {
+        return boundFormatToParts;
+    }
+
+    /**
+     * [[boundFormatToParts]]
+     * 
+     * @param boundFormatToParts
+     *            the bound formatToParts function
+     */
+    public void setBoundFormatToParts(Callable boundFormatToParts) {
+        this.boundFormatToParts = boundFormatToParts;
     }
 
     public String getPattern() {

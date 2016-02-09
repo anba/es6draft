@@ -59,6 +59,8 @@ import com.github.anba.es6draft.runtime.objects.intl.DateTimeFormatPrototype;
 import com.github.anba.es6draft.runtime.objects.intl.IntlObject;
 import com.github.anba.es6draft.runtime.objects.intl.NumberFormatConstructor;
 import com.github.anba.es6draft.runtime.objects.intl.NumberFormatPrototype;
+import com.github.anba.es6draft.runtime.objects.intl.PluralRulesConstructor;
+import com.github.anba.es6draft.runtime.objects.intl.PluralRulesPrototype;
 import com.github.anba.es6draft.runtime.objects.iteration.GeneratorFunctionConstructor;
 import com.github.anba.es6draft.runtime.objects.iteration.GeneratorFunctionPrototype;
 import com.github.anba.es6draft.runtime.objects.iteration.GeneratorPrototype;
@@ -1200,6 +1202,12 @@ public final class Realm {
         NumberFormatPrototype numberFormatPrototype = new NumberFormatPrototype(realm);
         DateTimeFormatConstructor dateTimeFormatConstructor = new DateTimeFormatConstructor(realm);
         DateTimeFormatPrototype dateTimeFormatPrototype = new DateTimeFormatPrototype(realm);
+        PluralRulesConstructor pluralRulesConstructor = null;
+        PluralRulesPrototype pluralRulesPrototype = null;
+        if (realm.isEnabled(CompatibilityOption.PluralRules)) {
+            pluralRulesConstructor = new PluralRulesConstructor(realm);
+            pluralRulesPrototype = new PluralRulesPrototype(realm);
+        }
 
         // registration phase
         intrinsics.put(Intrinsics.Intl, intlObject);
@@ -1209,6 +1217,10 @@ public final class Realm {
         intrinsics.put(Intrinsics.Intl_NumberFormatPrototype, numberFormatPrototype);
         intrinsics.put(Intrinsics.Intl_DateTimeFormat, dateTimeFormatConstructor);
         intrinsics.put(Intrinsics.Intl_DateTimeFormatPrototype, dateTimeFormatPrototype);
+        if (pluralRulesConstructor != null) {
+            intrinsics.put(Intrinsics.Intl_PluralRules, pluralRulesConstructor);
+            intrinsics.put(Intrinsics.Intl_PluralRulesPrototype, pluralRulesPrototype);
+        }
 
         // initialization phase
         intlObject.initialize(realm);
@@ -1218,6 +1230,10 @@ public final class Realm {
         numberFormatPrototype.initialize(realm);
         dateTimeFormatConstructor.initialize(realm);
         dateTimeFormatPrototype.initialize(realm);
+        if (pluralRulesConstructor != null) {
+            pluralRulesConstructor.initialize(realm);
+            pluralRulesPrototype.initialize(realm);
+        }
     }
 
     /**

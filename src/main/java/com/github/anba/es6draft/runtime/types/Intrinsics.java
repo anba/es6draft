@@ -215,6 +215,10 @@ public enum Intrinsics {/* @formatter:off */
     Intl_DateTimeFormat,
     /** Intrinsic: <code>%Intl_DateTimeFormatPrototype%</code> */
     Intl_DateTimeFormatPrototype,
+    /** Intrinsic: <code>%Intl_PluralRules%</code> */
+    Intl_PluralRules,
+    /** Intrinsic: <code>%Intl_PluralRulesPrototype%</code> */
+    Intl_PluralRulesPrototype,
 
     // internal
     /** Intrinsic: <code>%InternalError%</code> */
