@@ -234,7 +234,7 @@ public final class FunctionConstructor extends BuiltinConstructor implements Ini
     }
 
     public enum SourceKind {
-        Function, Generator, AsyncFunction
+        Function, Generator, AsyncFunction, AsyncGenerator
     }
 
     /**

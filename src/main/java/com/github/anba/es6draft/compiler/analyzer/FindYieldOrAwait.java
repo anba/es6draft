@@ -96,6 +96,16 @@ final class FindYieldOrAwait implements VoidNodeVisitor<Consumer<Expression>> {
     }
 
     @Override
+    public void visit(AsyncGeneratorDeclaration node, Consumer<Expression> value) {
+        // Don't visit nested function nodes.
+    }
+
+    @Override
+    public void visit(AsyncGeneratorExpression node, Consumer<Expression> value) {
+        // Don't visit nested function nodes.
+    }
+
+    @Override
     public void visit(AwaitExpression node, Consumer<Expression> value) {
         node.getExpression().accept(this, value);
     }
@@ -280,6 +290,13 @@ final class FindYieldOrAwait implements VoidNodeVisitor<Consumer<Expression>> {
     @Override
     public void visit(ExpressionStatement node, Consumer<Expression> value) {
         node.getExpression().accept(this, value);
+    }
+
+    @Override
+    public void visit(ForAwaitStatement node, Consumer<Expression> value) {
+        node.getHead().accept(this, value);
+        node.getExpression().accept(this, value);
+        node.getStatement().accept(this, value);
     }
 
     @Override

@@ -10,6 +10,7 @@ const {
 
 // 6.1.5.1 Well-Known Symbols
 const WellKnownSymbols = [
+  "asyncIterator",
   "hasInstance",
   "isConcatSpreadable",
   "iterator",

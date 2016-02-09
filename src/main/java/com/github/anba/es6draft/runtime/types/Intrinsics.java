@@ -236,6 +236,16 @@ public enum Intrinsics {/* @formatter:off */
     /** Intrinsic: <code>%AsyncFunctionPrototype%</code> */
     AsyncFunctionPrototype,
 
+    // Extension: Async Generator Function Definitions
+    /** Intrinsic: <code>%AsyncGenerator%</code> */
+    AsyncGenerator,
+    /** Intrinsic: <code>%AsyncGeneratorFunction%</code> */
+    AsyncGeneratorFunction,
+    /** Intrinsic: <code>%AsyncGeneratorPrototype%</code> */
+    AsyncGeneratorPrototype,
+    /** Intrinsic: <code>%AsyncIteratorPrototype%</code> */
+    AsyncIteratorPrototype,
+
     // Extension: Realm Objects
     /** Intrinsic: <code>%Realm%</code> */
     Realm,

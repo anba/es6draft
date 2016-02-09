@@ -164,6 +164,16 @@ public abstract class DefaultNodeVisitor<R, V> implements NodeVisitor<R, V> {
     }
 
     @Override
+    public R visit(AsyncGeneratorDeclaration node, V value) {
+        return visit((HoistableDeclaration) node, value);
+    }
+
+    @Override
+    public R visit(AsyncGeneratorExpression node, V value) {
+        return visit((Expression) node, value);
+    }
+
+    @Override
     public R visit(AwaitExpression node, V value) {
         return visit((Expression) node, value);
     }
@@ -341,6 +351,11 @@ public abstract class DefaultNodeVisitor<R, V> implements NodeVisitor<R, V> {
     @Override
     public R visit(ExpressionStatement node, V value) {
         return visit((Statement) node, value);
+    }
+
+    @Override
+    public R visit(ForAwaitStatement node, V value) {
+        return visit((IterationStatement) node, value);
     }
 
     @Override

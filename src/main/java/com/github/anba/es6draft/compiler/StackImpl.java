@@ -88,7 +88,7 @@ final class StackImpl extends Stack {
     private static boolean isOrdinaryObject(Type type) {
         return Types.OrdinaryObject.equals(type) || Types.ArrayObject.equals(type) || Types.ArgumentsObject.equals(type)
                 || Types.RegExpObject.equals(type) || Types.GeneratorObject.equals(type)
-                || Types.ModuleNamespaceObject.equals(type);
+                || Types.AsyncGeneratorObject.equals(type) || Types.ModuleNamespaceObject.equals(type);
     }
 
     private static boolean isConstructor(Type type) {

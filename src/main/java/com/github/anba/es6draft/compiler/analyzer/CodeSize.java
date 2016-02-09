@@ -368,6 +368,18 @@ public final class CodeSize implements IntNodeVisitor<CodeSize.State> {
     }
 
     @Override
+    public int visit(AsyncGeneratorDeclaration node, State state) {
+        visitFunction(node, state);
+        return 0;
+    }
+
+    @Override
+    public int visit(AsyncGeneratorExpression node, State state) {
+        visitFunction(node, state);
+        return 10;
+    }
+
+    @Override
     public int visit(AwaitExpression node, State state) {
         int expression = accept(node.getExpression(), state);
         return 150 + expression;
@@ -614,6 +626,11 @@ public final class CodeSize implements IntNodeVisitor<CodeSize.State> {
     public int visit(ExpressionStatement node, State state) {
         int expression = accept(node.getExpression(), state);
         return 5 + expression;
+    }
+
+    @Override
+    public int visit(ForAwaitStatement node, State state) {
+        return visitForIteration(node, state);
     }
 
     @Override

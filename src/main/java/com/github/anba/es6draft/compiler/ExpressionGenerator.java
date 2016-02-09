@@ -161,6 +161,11 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
                         .methodType(Types.OrdinaryAsyncFunction, Types.RuntimeInfo$Function,
                                 Types.ExecutionContext));
 
+        static final MethodName ScriptRuntime_EvaluateAsyncGeneratorExpression = MethodName
+                .findStatic(Types.ScriptRuntime, "EvaluateAsyncGeneratorExpression", Type
+                        .methodType(Types.OrdinaryAsyncGenerator, Types.RuntimeInfo$Function,
+                                Types.ExecutionContext));
+
         static final MethodName ScriptRuntime_EvaluateFunctionExpression = MethodName.findStatic(
                 Types.ScriptRuntime, "EvaluateFunctionExpression", Type.methodType(
                         Types.OrdinaryConstructorFunction, Types.RuntimeInfo$Function,
@@ -1389,6 +1394,22 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
         mv.invoke(method);
         mv.loadExecutionContext();
         mv.invoke(Methods.ScriptRuntime_EvaluateAsyncFunctionExpression);
+
+        /* step 6/11 */
+        return ValType.Object;
+    }
+
+    /**
+     * Extension: Async Generator Function Definitions
+     */
+    @Override
+    public ValType visit(AsyncGeneratorExpression node, CodeVisitor mv) {
+        MethodName method = codegen.compile(node);
+
+        /* steps 1-5/10 */
+        mv.invoke(method);
+        mv.loadExecutionContext();
+        mv.invoke(Methods.ScriptRuntime_EvaluateAsyncGeneratorExpression);
 
         /* step 6/11 */
         return ValType.Object;

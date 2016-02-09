@@ -246,7 +246,7 @@ abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void> {
 
         /* step 6.k */
         mv.enterScope(node);
-        new IterationGenerator<ComprehensionFor, CodeVisitor>(codegen) {
+        new IterationGenerator<ComprehensionFor>(codegen) {
             @Override
             protected Completion iterationBody(ComprehensionFor node, Variable<ScriptIterator<?>> iterator,
                     CodeVisitor mv) {
@@ -342,7 +342,7 @@ abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void> {
         mv.lineInfo(node);
         mv.invoke(Methods.Iterator_next);
 
-        new IterationGenerator<LegacyComprehensionFor, CodeVisitor>(codegen) {
+        new IterationGenerator<LegacyComprehensionFor>(codegen) {
             @Override
             protected Completion iterationBody(LegacyComprehensionFor node, Variable<ScriptIterator<?>> iterator,
                     CodeVisitor mv) {

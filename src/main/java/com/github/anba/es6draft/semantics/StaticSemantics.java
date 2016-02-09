@@ -1095,6 +1095,7 @@ public final class StaticSemantics {
     public static boolean SpecialMethod(MethodDefinition node) {
         switch (node.getType()) {
         case AsyncFunction:
+        case AsyncGenerator:
         case ConstructorGenerator:
         case Generator:
         case Getter:

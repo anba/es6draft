@@ -440,7 +440,7 @@ final class BindingInitializationGenerator {
             mv.invoke(Methods.ScriptRuntime_iterate);
             mv.store(iterator);
 
-            new IterationGenerator<ArrayBindingPattern, CodeVisitor>(codegen) {
+            new IterationGenerator<ArrayBindingPattern>(codegen) {
                 @Override
                 protected Completion iterationBody(ArrayBindingPattern node, Variable<ScriptIterator<?>> iterator,
                         CodeVisitor mv) {

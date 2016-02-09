@@ -78,6 +78,11 @@ public enum BuiltinSymbol {
      */
     observable,
 
+    /**
+     * &#64;&#64;asyncIterator
+     */
+    asyncIterator,
+
     ;
 
     /**

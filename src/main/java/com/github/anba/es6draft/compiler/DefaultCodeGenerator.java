@@ -13,6 +13,8 @@ import static com.github.anba.es6draft.semantics.StaticSemantics.HasDecorators;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 import com.github.anba.es6draft.ast.*;
 import com.github.anba.es6draft.ast.AbruptNode.Abrupt;
@@ -25,6 +27,7 @@ import com.github.anba.es6draft.ast.scope.WithScope;
 import com.github.anba.es6draft.compiler.assembler.FieldName;
 import com.github.anba.es6draft.compiler.assembler.Jump;
 import com.github.anba.es6draft.compiler.assembler.MethodName;
+import com.github.anba.es6draft.compiler.assembler.TryCatchLabel;
 import com.github.anba.es6draft.compiler.assembler.Type;
 import com.github.anba.es6draft.compiler.assembler.Value;
 import com.github.anba.es6draft.compiler.assembler.Variable;
@@ -34,6 +37,8 @@ import com.github.anba.es6draft.runtime.GlobalEnvironmentRecord;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.ModuleEnvironmentRecord;
 import com.github.anba.es6draft.runtime.ObjectEnvironmentRecord;
+import com.github.anba.es6draft.runtime.internal.Bootstrap;
+import com.github.anba.es6draft.runtime.internal.ScriptException;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Null;
 import com.github.anba.es6draft.runtime.types.Reference;
@@ -47,8 +52,10 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  */
 abstract class DefaultCodeGenerator<RETURN> extends DefaultNodeVisitor<RETURN, CodeVisitor> {
     private static final class Fields {
-        static final FieldName Double_NaN = FieldName.findStatic(Types.Double, "NaN",
-                Type.DOUBLE_TYPE);
+        static final FieldName Double_NaN = FieldName.findStatic(Types.Double, "NaN", Type.DOUBLE_TYPE);
+
+        static final FieldName ScriptRuntime_EMPTY_ARRAY = FieldName.findStatic(Types.ScriptRuntime, "EMPTY_ARRAY",
+                Types.Object_);
     }
 
     private static final class Methods {
@@ -66,11 +73,18 @@ abstract class DefaultCodeGenerator<RETURN> extends DefaultNodeVisitor<RETURN, C
                 Types.AbstractOperations, "GetIterator",
                 Type.methodType(Types.ScriptObject, Types.ExecutionContext, Types.Object));
 
+        static final MethodName AbstractOperations_GetMethod = MethodName.findStatic(Types.AbstractOperations,
+                "GetMethod", Type.methodType(Types.Callable, Types.ExecutionContext, Types.ScriptObject, Types.String));
+
         static final MethodName AbstractOperations_IteratorComplete = MethodName.findStatic(
                 Types.AbstractOperations, "IteratorComplete",
                 Type.methodType(Type.BOOLEAN_TYPE, Types.ExecutionContext, Types.ScriptObject));
 
         static final MethodName AbstractOperations_IteratorNext = MethodName.findStatic(
+                Types.AbstractOperations, "IteratorNext", Type.methodType(Types.ScriptObject,
+                        Types.ExecutionContext, Types.ScriptObject));
+
+        static final MethodName AbstractOperations_IteratorNext_Object = MethodName.findStatic(
                 Types.AbstractOperations, "IteratorNext", Type.methodType(Types.ScriptObject,
                         Types.ExecutionContext, Types.ScriptObject, Types.Object));
 
@@ -146,6 +160,11 @@ abstract class DefaultCodeGenerator<RETURN> extends DefaultNodeVisitor<RETURN, C
                 Types.AsyncAbstractOperations, "AsyncFunctionAwait",
                 Type.methodType(Type.VOID_TYPE, Types.ExecutionContext, Types.Object));
 
+        // class: AsyncGeneratorAbstractOperations
+        static final MethodName AsyncGeneratorAbstractOperations_AsyncFunctionAwait = MethodName.findStatic(
+                Types.AsyncGeneratorAbstractOperations, "AsyncFunctionAwait",
+                Type.methodType(Type.VOID_TYPE, Types.ExecutionContext, Types.Object));
+
         // class: Boolean
         static final MethodName Boolean_toString = MethodName.findStatic(Types.Boolean, "toString",
                 Type.methodType(Types.String, Type.BOOLEAN_TYPE));
@@ -218,6 +237,10 @@ abstract class DefaultCodeGenerator<RETURN> extends DefaultNodeVisitor<RETURN, C
         static final MethodName ReturnValue_getValue = MethodName.findVirtual(Types.ReturnValue,
                 "getValue", Type.methodType(Types.Object));
 
+        // class: ScriptException
+        static final MethodName ScriptException_getValue = MethodName.findVirtual(Types.ScriptException,
+                "getValue", Type.methodType(Types.Object));
+
         // class: ScriptRuntime
         static final MethodName ScriptRuntime_CheckCallable = MethodName.findStatic(
                 Types.ScriptRuntime, "CheckCallable",
@@ -258,6 +281,14 @@ abstract class DefaultCodeGenerator<RETURN> extends DefaultNodeVisitor<RETURN, C
                 Types.ScriptRuntime, "yieldReturnCompletion", Type.methodType(Types.ScriptObject,
                         Types.ExecutionContext, Types.ScriptObject, Types.ReturnValue));
 
+        static final MethodName ScriptRuntime_reportPropertyNotCallable = MethodName.findStatic(Types.ScriptRuntime,
+                "reportPropertyNotCallable",
+                Type.methodType(Types.ScriptException, Types.String, Types.ExecutionContext));
+
+        static final MethodName ScriptRuntime_requireObjectResult = MethodName.findStatic(Types.ScriptRuntime,
+                "requireObjectResult",
+                Type.methodType(Types.ScriptObject, Types.Object, Types.String, Types.ExecutionContext));
+
         // class: Type
         static final MethodName Type_isUndefinedOrNull = MethodName.findStatic(Types._Type,
                 "isUndefinedOrNull", Type.methodType(Type.BOOLEAN_TYPE, Types.Object));
@@ -268,6 +299,10 @@ abstract class DefaultCodeGenerator<RETURN> extends DefaultNodeVisitor<RETURN, C
 
         static final MethodName ArrayList_add = MethodName.findVirtual(Types.ArrayList, "add",
                 Type.methodType(Type.BOOLEAN_TYPE, Types.Object));
+
+        // class: Throwable
+        static final MethodName Throwable_addSuppressed = MethodName.findVirtual(Types.Throwable, "addSuppressed",
+                Type.methodType(Type.VOID_TYPE, Types.Throwable));
     }
 
     protected final CodeGenerator codegen;
@@ -1606,6 +1641,92 @@ abstract class DefaultCodeGenerator<RETURN> extends DefaultNodeVisitor<RETURN, C
      *            the code visitor
      */
     protected final void delegatedYield(Expression node, CodeVisitor mv) {
+        if (!mv.isAsync()) {
+            delegatedYield(node, (iterator, received) -> {
+                IteratorNext(node, iterator, received, mv);
+            } , (iterator, received) -> {
+                mv.loadExecutionContext();
+                mv.load(iterator);
+                mv.load(received);
+                mv.checkcast(Types.ScriptException);
+                mv.invoke(Methods.ScriptRuntime_yieldThrowCompletion);
+            } , (iterator, received) -> {
+                mv.loadExecutionContext();
+                mv.load(iterator);
+                mv.load(received);
+                mv.checkcast(Types.ReturnValue);
+                mv.invoke(Methods.ScriptRuntime_yieldReturnCompletion);
+            } , mv);
+        } else {
+            delegatedYield(node, (iterator, received) -> {
+                IteratorNext(node, iterator, received, mv);
+                await(node, mv);
+                // FIXME: spec bug - missing type check
+                requireObjectResult(node, "next", mv);
+            } , (iterator, received) -> {
+                mv.enterVariableScope();
+                Variable<Callable> throwMethod = mv.newVariable("throwMethod", Callable.class);
+
+                GetMethod(node, iterator, "throw", mv);
+                mv.store(throwMethod);
+
+                Jump noThrow = new Jump(), nextYield = new Jump();
+                mv.load(throwMethod);
+                mv.ifnull(noThrow);
+                {
+                    InvokeMethod(node, mv, throwMethod, iterator, __ -> {
+                        mv.load(received);
+                        mv.checkcast(Types.ScriptException);
+                        mv.invoke(Methods.ScriptException_getValue);
+                    });
+                    await(node, mv);
+                    requireObjectResult(node, "throw", mv);
+                    mv.goTo(nextYield);
+                }
+                mv.mark(noThrow);
+                {
+                    asyncIteratorClose(node, iterator, mv);
+
+                    reportPropertyNotCallable(node, "throw", mv);
+                    mv.athrow();
+                }
+                mv.mark(nextYield);
+
+                mv.exitVariableScope();
+            } , (iterator, received) -> {
+                mv.enterVariableScope();
+                Variable<Callable> returnMethod = mv.newVariable("returnMethod", Callable.class);
+
+                GetMethod(node, iterator, "return", mv);
+                mv.store(returnMethod);
+
+                Jump noReturn = new Jump(), nextYield = new Jump();
+                mv.load(returnMethod);
+                mv.ifnull(noReturn);
+                {
+                    InvokeMethod(node, mv, returnMethod, iterator, __ -> {
+                        mv.load(received);
+                        mv.checkcast(Types.ReturnValue);
+                        mv.invoke(Methods.ReturnValue_getValue);
+                    });
+                    await(node, mv);
+                    requireObjectResult(node, "return", mv);
+                    mv.goTo(nextYield);
+                }
+                mv.mark(noReturn);
+                {
+                    mv.anull();
+                }
+                mv.mark(nextYield);
+
+                mv.exitVariableScope();
+            } , mv);
+        }
+    }
+
+    private void delegatedYield(Expression node, BiConsumer<Variable<ScriptObject>, Variable<Object>> iterNext,
+            BiConsumer<Variable<ScriptObject>, Variable<Object>> iterThrow,
+            BiConsumer<Variable<ScriptObject>, Variable<Object>> iterReturn, CodeVisitor mv) {
         Jump iteratorNext = new Jump();
         Jump generatorYield = new Jump();
         Jump generatorYieldOrReturn = new Jump();
@@ -1632,17 +1753,12 @@ abstract class DefaultCodeGenerator<RETURN> extends DefaultNodeVisitor<RETURN, C
         /* step 6.a.i-6.a.ii */
         // stack: [] -> []
         mv.mark(iteratorNext);
-        mv.loadExecutionContext();
-        mv.load(iterator);
-        mv.load(received);
-        mv.invoke(Methods.AbstractOperations_IteratorNext);
+        iterNext.accept(iterator, received);
         mv.store(innerResult);
 
         /* steps 6.a.iii-6.a.v */
         // stack: [] -> []
-        mv.loadExecutionContext();
-        mv.load(innerResult);
-        mv.invoke(Methods.AbstractOperations_IteratorComplete);
+        IteratorComplete(node, innerResult, mv);
         mv.ifne(done);
 
         /* step 6.a.vi */
@@ -1661,11 +1777,7 @@ abstract class DefaultCodeGenerator<RETURN> extends DefaultNodeVisitor<RETURN, C
         mv.ifeq(isException);
         {
             /* steps 6.b.iii.1-4, 6.b.iv */
-            mv.loadExecutionContext();
-            mv.load(iterator);
-            mv.load(received);
-            mv.checkcast(Types.ScriptException);
-            mv.invoke(Methods.ScriptRuntime_yieldThrowCompletion);
+            iterThrow.accept(iterator, received);
             mv.store(innerResult);
 
             mv.goTo(generatorYieldOrReturn);
@@ -1678,11 +1790,7 @@ abstract class DefaultCodeGenerator<RETURN> extends DefaultNodeVisitor<RETURN, C
         mv.ifeq(iteratorNext);
         {
             /* steps 6.c.i-vii */
-            mv.loadExecutionContext();
-            mv.load(iterator);
-            mv.load(received);
-            mv.checkcast(Types.ReturnValue);
-            mv.invoke(Methods.ScriptRuntime_yieldReturnCompletion);
+            iterReturn.accept(iterator, received);
             mv.store(innerResult);
 
             mv.load(innerResult);
@@ -1701,24 +1809,18 @@ abstract class DefaultCodeGenerator<RETURN> extends DefaultNodeVisitor<RETURN, C
         mv.mark(generatorYieldOrReturn);
 
         /* steps 6.b.iii.5-6, 6.c.viii-ix */
-        mv.loadExecutionContext();
-        mv.load(innerResult);
-        mv.invoke(Methods.AbstractOperations_IteratorComplete);
+        IteratorComplete(node, innerResult, mv);
         mv.ifeq(generatorYield);
 
         /* step 6.b.iii.7, 6.c.x */
         mv.popStack();
         mv.returnCompletion(__ -> {
-            mv.loadExecutionContext();
-            mv.load(innerResult);
-            mv.invoke(Methods.AbstractOperations_IteratorValue);
+            IteratorValue(node, innerResult, mv);
         });
 
         /* step 6.a.v */
         mv.mark(done);
-        mv.loadExecutionContext();
-        mv.load(innerResult);
-        mv.invoke(Methods.AbstractOperations_IteratorValue);
+        IteratorValue(node, innerResult, mv);
 
         mv.exitVariableScope();
     }
@@ -1751,6 +1853,49 @@ abstract class DefaultCodeGenerator<RETURN> extends DefaultNodeVisitor<RETURN, C
         mv.suspend();
 
         // check for exception
+        throwAfterResume(mv);
+
+        // check for return value
+        returnAfterResume(mv);
+    }
+
+    /**
+     * Extension: Async Function Definitions
+     * <p>
+     * stack: [value] {@literal ->} [value']
+     * 
+     * @param node
+     *            the expression node
+     * @param mv
+     *            the code visitor
+     */
+    protected final void await(Node node, CodeVisitor mv) {
+        boolean asyncGenerator = mv.isGenerator();
+
+        // stack: [value] -> [value']
+        mv.loadExecutionContext();
+        mv.swap();
+        mv.lineInfo(node);
+        if (!asyncGenerator) {
+            mv.invoke(Methods.AsyncAbstractOperations_AsyncFunctionAwait);
+        } else {
+            mv.invoke(Methods.AsyncGeneratorAbstractOperations_AsyncFunctionAwait);
+        }
+
+        // Reserve stack space for await return value.
+        mv.anull();
+        mv.suspend();
+
+        // check for exception
+        throwAfterResume(mv);
+
+        // check for return value
+        if (asyncGenerator) {
+            returnAfterResume(mv);
+        }
+    }
+
+    private void throwAfterResume(CodeVisitor mv) {
         Jump isException = new Jump();
         mv.dup();
         mv.instanceOf(Types.ScriptException);
@@ -1760,8 +1905,9 @@ abstract class DefaultCodeGenerator<RETURN> extends DefaultNodeVisitor<RETURN, C
             mv.athrow();
         }
         mv.mark(isException);
+    }
 
-        // check for return value
+    private void returnAfterResume(CodeVisitor mv) {
         Jump isReturn = new Jump();
         mv.dup();
         mv.instanceOf(Types.ReturnValue);
@@ -1784,35 +1930,276 @@ abstract class DefaultCodeGenerator<RETURN> extends DefaultNodeVisitor<RETURN, C
     }
 
     /**
-     * Extension: Async Function Definitions
-     * <p>
-     * stack: [value] {@literal ->} [value']
+     * IteratorNext ( iterator, value )
      * 
      * @param node
-     *            the expression node
+     *            the ast node
+     * @param iterator
+     *            the script iterator object
      * @param mv
      *            the code visitor
      */
-    protected final void await(Expression node, CodeVisitor mv) {
-        // stack: [value] -> [value']
+    protected final void IteratorNext(Node node, Variable<ScriptObject> iterator, CodeVisitor mv) {
         mv.loadExecutionContext();
-        mv.swap();
+        mv.load(iterator);
         mv.lineInfo(node);
-        mv.invoke(Methods.AsyncAbstractOperations_AsyncFunctionAwait);
+        mv.invoke(Methods.AbstractOperations_IteratorNext);
+    }
 
-        // Reserve stack space for await return value.
-        mv.anull();
-        mv.suspend();
+    /**
+     * IteratorNext ( iterator, value )
+     * 
+     * @param node
+     *            the ast node
+     * @param iterator
+     *            the script iterator object
+     * @param value
+     *            the value to pass to the next() function
+     * @param mv
+     *            the code visitor
+     */
+    protected final void IteratorNext(Node node, Variable<ScriptObject> iterator, Value<Object> value, CodeVisitor mv) {
+        mv.loadExecutionContext();
+        mv.load(iterator);
+        mv.load(value);
+        mv.lineInfo(node);
+        mv.invoke(Methods.AbstractOperations_IteratorNext_Object);
+    }
 
-        // check for exception
-        Jump isException = new Jump();
-        mv.dup();
-        mv.instanceOf(Types.ScriptException);
-        mv.ifeq(isException);
-        {
-            mv.checkcast(Types.ScriptException);
-            mv.athrow();
+    /**
+     * IteratorComplete (iterResult)
+     * 
+     * @param node
+     *            the ast node
+     * @param iterResult
+     *            the iterator result object
+     * @param mv
+     *            the code visitor
+     */
+    protected final void IteratorComplete(Node node, Variable<ScriptObject> iterResult, CodeVisitor mv) {
+        mv.loadExecutionContext();
+        mv.load(iterResult);
+        mv.lineInfo(node);
+        mv.invoke(Methods.AbstractOperations_IteratorComplete);
+    }
+
+    /**
+     * IteratorValue (iterResult)
+     * 
+     * @param node
+     *            the ast node
+     * @param iterResult
+     *            the iterator result object
+     * @param mv
+     *            the code visitor
+     */
+    protected final void IteratorValue(Node node, Variable<ScriptObject> iterResult, CodeVisitor mv) {
+        mv.loadExecutionContext();
+        mv.load(iterResult);
+        mv.lineInfo(node);
+        mv.invoke(Methods.AbstractOperations_IteratorValue);
+    }
+
+    /**
+     * GetMethod (O, P)
+     * 
+     * @param node
+     *            the ast node
+     * @param object
+     *            the script object
+     * @param methodName
+     *            the method name
+     * @param mv
+     *            the code visitor
+     */
+    final void GetMethod(Node node, Variable<ScriptObject> object, String methodName, CodeVisitor mv) {
+        mv.loadExecutionContext();
+        mv.load(object);
+        mv.aconst(methodName);
+        mv.lineInfo(node);
+        mv.invoke(Methods.AbstractOperations_GetMethod);
+    }
+
+    /**
+     * Emit: {@code method.call(cx, thisValue, arguments)}
+     * 
+     * @param node
+     *            the ast node
+     * @param mv
+     *            the code visitor
+     * @param method
+     *            the callable object
+     * @param thisValue
+     *            the call this-value
+     * @param arguments
+     *            the method call arguments
+     */
+    final void InvokeMethod(Node node, CodeVisitor mv, Value<Callable> method, Value<?> thisValue,
+            Value<?>... arguments) {
+        mv.load(method);
+        mv.loadExecutionContext();
+        mv.load(thisValue);
+        if (arguments.length == 0) {
+            mv.get(Fields.ScriptRuntime_EMPTY_ARRAY);
+        } else {
+            mv.anewarray(Types.Object, arguments);
         }
-        mv.mark(isException);
+        mv.lineInfo(node);
+        mv.invokedynamic(Bootstrap.getCallName(), Bootstrap.getCallMethodDescriptor(), Bootstrap.getCallBootstrap());
+    }
+
+    /**
+     * Emit:
+     * 
+     * <pre>
+     * Callable returnMethod = GetMethod(cx, iterator, "return");
+     * if (returnMethod != null) {
+     *   Object innerResult = returnMethod.call(cx, iterator);
+     *   await;
+     *   if (!(innerResult instanceof ScriptObject)) {
+     *     throw newTypeError(cx, Messages.Key.NotObjectTypeReturned, "return");
+     *   }
+     * }
+     * </pre>
+     * 
+     * @param node
+     *            the ast node
+     * @param iterator
+     *            the script iterator object
+     * @param mv
+     *            the code visitor
+     */
+    final void asyncIteratorClose(Node node, Variable<ScriptObject> iterator, CodeVisitor mv) {
+        IteratorClose(node, iterator, returnMethod -> {
+            InvokeMethod(node, mv, returnMethod, iterator);
+            await(node, mv);
+            requireObjectResult(node, "return", mv);
+            mv.pop();
+        } , mv);
+    }
+
+    /**
+     * Emit:
+     * 
+     * <pre>
+     * Callable returnMethod = GetMethod(cx, iterator, "return");
+     * if (returnMethod != null) {
+     *   try {
+     *     returnMethod.call(cx, iterator);
+     *     await;
+     *   } catch (ScriptException e) {
+     *     if (throwable != e) {
+     *       throwable.addSuppressed(e);
+     *     }
+     *   }
+     * }
+     * </pre>
+     * 
+     * @param node
+     *            the ast node
+     * @param iterator
+     *            the script iterator object
+     * @param mv
+     *            the code visitor
+     */
+    final void asyncIteratorClose(Node node, Variable<ScriptObject> iterator, Variable<? extends Throwable> throwable,
+            CodeVisitor mv) {
+        IteratorClose(node, iterator, returnMethod -> {
+            TryCatchLabel startCatch = new TryCatchLabel();
+            TryCatchLabel endCatch = new TryCatchLabel(), handlerCatch = new TryCatchLabel();
+            Jump noException = new Jump();
+
+            mv.mark(startCatch);
+            {
+                InvokeMethod(node, mv, returnMethod, iterator);
+                await(node, mv);
+                mv.pop();
+
+                mv.goTo(noException);
+            }
+            mv.mark(endCatch);
+
+            mv.catchHandler(handlerCatch, Types.ScriptException);
+            {
+                mv.enterVariableScope();
+                Variable<ScriptException> exception = mv.newVariable("exception", ScriptException.class);
+                mv.store(exception);
+
+                mv.load(throwable);
+                mv.load(exception);
+                mv.ifacmpeq(noException);
+                {
+                    mv.load(throwable);
+                    mv.load(exception);
+                    mv.invoke(Methods.Throwable_addSuppressed);
+                }
+
+                mv.exitVariableScope();
+            }
+            mv.tryCatch(startCatch, endCatch, handlerCatch, Types.ScriptException);
+            mv.mark(noException);
+        } , mv);
+    }
+
+    /**
+     * <pre>
+     * Callable returnMethod = GetMethod(cx, iterator, "return");
+     * if (returnMethod != null) {
+     *   &lt;invoke return&gt;
+     * }
+     * </pre>
+     * 
+     * @param node
+     *            the ast node
+     * @param iterator
+     *            the script iterator object
+     * @param invokeReturn
+     *            the code snippet to invoke return()
+     * @param mv
+     *            the code visitor
+     */
+    final void IteratorClose(Node node, Variable<ScriptObject> iterator, Consumer<Variable<Callable>> invokeReturn,
+            CodeVisitor mv) {
+        mv.enterVariableScope();
+        Variable<Callable> returnMethod = mv.newVariable("returnMethod", Callable.class);
+
+        GetMethod(node, iterator, "return", mv);
+        mv.store(returnMethod);
+
+        Jump done = new Jump();
+        mv.load(returnMethod);
+        mv.ifnull(done);
+        {
+            invokeReturn.accept(returnMethod);
+        }
+        mv.mark(done);
+
+        mv.exitVariableScope();
+    }
+
+    /**
+     * Extension: Async Generator Function Definitions
+     * <p>
+     * stack: [value] {@literal ->} []
+     * 
+     * @param node
+     *            the ast node
+     * @param methodName
+     *            the method name
+     * @param mv
+     *            the code visitor
+     */
+    protected final void requireObjectResult(Node node, String methodName, CodeVisitor mv) {
+        mv.aconst(methodName);
+        mv.loadExecutionContext();
+        mv.lineInfo(node);
+        mv.invoke(Methods.ScriptRuntime_requireObjectResult);
+    }
+
+    private void reportPropertyNotCallable(Node node, String methodName, CodeVisitor mv) {
+        mv.aconst(methodName);
+        mv.loadExecutionContext();
+        mv.lineInfo(node);
+        mv.invoke(Methods.ScriptRuntime_reportPropertyNotCallable);
     }
 }

@@ -294,6 +294,11 @@ public enum CompatibilityOption {
     Locale,
 
     /**
+     * Async Generators Functions (Stage 1 proposal)
+     */
+    AsyncGenerator,
+
+    /**
      * Atomics.fence() function
      */
     AtomicsFence,
@@ -477,7 +482,7 @@ public enum CompatibilityOption {
         case Strawman:
             return EnumSet.of(DoExpression);
         case Proposal:
-            return EnumSet.of(ArrayBufferTransfer, ExportFrom, Decorator, StringTrim, StringMatchAll,
+            return EnumSet.of(ArrayBufferTransfer, AsyncGenerator, ExportFrom, Decorator, StringTrim, StringMatchAll,
                     StaticClassProperties, CallConstructor, Observable, SystemGlobal);
         case Draft:
             return EnumSet.of(Atomics, FormatToParts, FunctionSent, Locale, ObjectRestDestructuring,

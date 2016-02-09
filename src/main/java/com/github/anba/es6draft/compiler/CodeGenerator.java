@@ -128,6 +128,13 @@ final class CodeGenerator {
         static final MethodTypeDescriptor AsyncFunction_Code = Type.methodType(Types.Object, Types.ExecutionContext,
                 Types.ResumptionPoint);
 
+        static final MethodTypeDescriptor AsyncGenerator_Call = Type.methodType(Types.AsyncGeneratorObject,
+                Types.OrdinaryAsyncGenerator, Types.ExecutionContext, Types.Object, Types.Object_);
+        static final MethodTypeDescriptor AsyncGenerator_Init = Type.methodType(Type.VOID_TYPE, Types.ExecutionContext,
+                Types.OrdinaryAsyncGenerator, Types.Object_);
+        static final MethodTypeDescriptor AsyncGenerator_Code = Type.methodType(Types.Object, Types.ExecutionContext,
+                Types.ResumptionPoint);
+
         static final MethodTypeDescriptor Function_Call = Type.methodType(Types.Object, Types.OrdinaryFunction,
                 Types.ExecutionContext, Types.Object, Types.Object_);
         static final MethodTypeDescriptor Function_Init = Type.methodType(Type.VOID_TYPE, Types.ExecutionContext,
@@ -475,6 +482,9 @@ final class CodeGenerator {
     private MethodTypeDescriptor methodDescriptor(FunctionNode node, FunctionName name) {
         switch (name) {
         case Call:
+            if (node.isAsync() && node.isGenerator()) {
+                return MethodDescriptors.AsyncGenerator_Call;
+            }
             if (node.isAsync()) {
                 return MethodDescriptors.AsyncFunction_Call;
             }
@@ -505,6 +515,9 @@ final class CodeGenerator {
             }
             return MethodDescriptors.ConstructorFunction_Construct;
         case Code:
+            if (node.isAsync() && node.isGenerator()) {
+                return MethodDescriptors.AsyncGenerator_Code;
+            }
             if (node.isAsync()) {
                 return MethodDescriptors.AsyncFunction_Code;
             }
@@ -522,6 +535,9 @@ final class CodeGenerator {
             }
             return MethodDescriptors.Function_Code;
         case Init:
+            if (node.isAsync() && node.isGenerator()) {
+                return MethodDescriptors.AsyncGenerator_Init;
+            }
             if (node.isAsync()) {
                 return MethodDescriptors.AsyncFunction_Init;
             }
@@ -880,15 +896,7 @@ final class CodeGenerator {
     }
 
     void compileFunction(FunctionNode function) {
-        MethodName method;
-        if (function instanceof FunctionDefinition) {
-            method = compile((FunctionDefinition) function);
-        } else if (function instanceof GeneratorDefinition) {
-            method = compile((GeneratorDefinition) function);
-        } else {
-            assert function instanceof AsyncFunctionDefinition;
-            method = compile((AsyncFunctionDefinition) function);
-        }
+        MethodName method = compile(function);
 
         // add default constructor
         defaultFunctionConstructor(function, method);
@@ -961,6 +969,10 @@ final class CodeGenerator {
         return compile((FunctionNode) node);
     }
 
+    MethodName compile(AsyncGeneratorDefinition node) {
+        return compile((FunctionNode) node);
+    }
+
     private MethodName compile(FunctionNode node) {
         if (!isCompiled(node)) {
             Future<String> source = getSource(node);
@@ -976,10 +988,8 @@ final class CodeGenerator {
                 tailCall = conciseAsyncFunctionBody((AsyncArrowFunction) node);
             } else if (node instanceof GeneratorComprehension) {
                 tailCall = generatorComprehensionBody((GeneratorComprehension) node);
-            } else if (node.isGenerator()) {
+            } else if (node.isAsync() || node.isGenerator()) {
                 tailCall = generatorBody(node);
-            } else if (node.isAsync()) {
-                tailCall = asyncFunctionBody(node);
             } else {
                 tailCall = functionBody(node);
             }
@@ -1096,11 +1106,6 @@ final class CodeGenerator {
         body.end();
 
         return body.hasTailCalls();
-    }
-
-    private boolean asyncFunctionBody(FunctionNode node) {
-        // Create the same function body as for generator functions
-        return generatorBody(node);
     }
 
     private boolean generatorBody(FunctionNode node) {

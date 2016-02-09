@@ -33,6 +33,7 @@ import com.github.anba.es6draft.runtime.types.builtins.ArgumentsObject;
 import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
 import com.github.anba.es6draft.runtime.types.builtins.LegacyConstructorFunction;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryAsyncFunction;
+import com.github.anba.es6draft.runtime.types.builtins.OrdinaryAsyncGenerator;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryConstructorFunction;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryConstructorGenerator;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction;
@@ -122,7 +123,9 @@ final class FunctionDeclarationInstantiationGenerator extends
     }
 
     private Type targetType(FunctionNode node) {
-        if (node.isGenerator()) {
+        if (node.isAsync() && node.isGenerator()) {
+            return Types.OrdinaryAsyncGenerator;
+        } else if (node.isGenerator()) {
             if (node.isConstructor()) {
                 return Types.OrdinaryConstructorGenerator;
             }
@@ -139,7 +142,9 @@ final class FunctionDeclarationInstantiationGenerator extends
     }
 
     private Class<? extends FunctionObject> targetClass(FunctionNode node) {
-        if (node.isGenerator()) {
+        if (node.isAsync() && node.isGenerator()) {
+            return OrdinaryAsyncGenerator.class;
+        } else if (node.isGenerator()) {
             if (node.isConstructor()) {
                 return OrdinaryConstructorGenerator.class;
             }

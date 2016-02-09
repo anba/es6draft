@@ -164,6 +164,16 @@ public abstract class DefaultIntNodeVisitor<V> implements IntNodeVisitor<V> {
     }
 
     @Override
+    public int visit(AsyncGeneratorDeclaration node, V value) {
+        return visit((HoistableDeclaration) node, value);
+    }
+
+    @Override
+    public int visit(AsyncGeneratorExpression node, V value) {
+        return visit((Expression) node, value);
+    }
+
+    @Override
     public int visit(AwaitExpression node, V value) {
         return visit((Expression) node, value);
     }
@@ -341,6 +351,11 @@ public abstract class DefaultIntNodeVisitor<V> implements IntNodeVisitor<V> {
     @Override
     public int visit(ExpressionStatement node, V value) {
         return visit((Statement) node, value);
+    }
+
+    @Override
+    public int visit(ForAwaitStatement node, V value) {
+        return visit((IterationStatement) node, value);
     }
 
     @Override

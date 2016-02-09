@@ -37,6 +37,10 @@ import com.github.anba.es6draft.runtime.objects.*;
 import com.github.anba.es6draft.runtime.objects.NativeErrorConstructor.ErrorType;
 import com.github.anba.es6draft.runtime.objects.async.AsyncFunctionConstructor;
 import com.github.anba.es6draft.runtime.objects.async.AsyncFunctionPrototype;
+import com.github.anba.es6draft.runtime.objects.async.iteration.AsyncGeneratorFunctionConstructor;
+import com.github.anba.es6draft.runtime.objects.async.iteration.AsyncGeneratorFunctionPrototype;
+import com.github.anba.es6draft.runtime.objects.async.iteration.AsyncGeneratorPrototype;
+import com.github.anba.es6draft.runtime.objects.async.iteration.AsyncIteratorPrototype;
 import com.github.anba.es6draft.runtime.objects.atomics.AtomicsObject;
 import com.github.anba.es6draft.runtime.objects.atomics.SharedArrayBufferConstructor;
 import com.github.anba.es6draft.runtime.objects.atomics.SharedArrayBufferPrototype;
@@ -730,6 +734,11 @@ public final class Realm {
             initializeAsyncModule(realm);
         }
 
+        // intrinsics: Async generators
+        if (realm.isEnabled(CompatibilityOption.AsyncGenerator)) {
+            initializeAsyncIterationModule(realm);
+        }
+
         // intrinsics: SIMD
         if (realm.isEnabled(CompatibilityOption.SIMD)) {
             initializeSIMDModule(realm);
@@ -1256,6 +1265,34 @@ public final class Realm {
         // initialization phase
         asyncFunctionConstructor.initialize(realm);
         asyncFunctionPrototype.initialize(realm);
+    }
+
+    /**
+     * <h1>Extension: Async Generator Function Declaration</h1>
+     * 
+     * @param realm
+     *            the realm instance
+     */
+    private static void initializeAsyncIterationModule(Realm realm) {
+        EnumMap<Intrinsics, OrdinaryObject> intrinsics = realm.intrinsics;
+
+        // allocation phase
+        AsyncGeneratorFunctionConstructor asyncGenFunctionConstructor = new AsyncGeneratorFunctionConstructor(realm);
+        AsyncGeneratorPrototype asyncGeneratorPrototype = new AsyncGeneratorPrototype(realm);
+        AsyncGeneratorFunctionPrototype asyncGenerator = new AsyncGeneratorFunctionPrototype(realm);
+        AsyncIteratorPrototype asyncIteratorPrototype = new AsyncIteratorPrototype(realm);
+
+        // registration phase
+        intrinsics.put(Intrinsics.AsyncGeneratorFunction, asyncGenFunctionConstructor);
+        intrinsics.put(Intrinsics.AsyncGeneratorPrototype, asyncGeneratorPrototype);
+        intrinsics.put(Intrinsics.AsyncGenerator, asyncGenerator);
+        intrinsics.put(Intrinsics.AsyncIteratorPrototype, asyncIteratorPrototype);
+
+        // initialization phase
+        asyncGenFunctionConstructor.initialize(realm);
+        asyncGeneratorPrototype.initialize(realm);
+        asyncGenerator.initialize(realm);
+        asyncIteratorPrototype.initialize(realm);
     }
 
     /**

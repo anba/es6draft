@@ -163,6 +163,16 @@ public abstract class DefaultVoidNodeVisitor<V> implements VoidNodeVisitor<V> {
     }
 
     @Override
+    public void visit(AsyncGeneratorDeclaration node, V value) {
+        visit((HoistableDeclaration) node, value);
+    }
+
+    @Override
+    public void visit(AsyncGeneratorExpression node, V value) {
+        visit((Expression) node, value);
+    }
+
+    @Override
     public void visit(AwaitExpression node, V value) {
         visit((Expression) node, value);
     }
@@ -340,6 +350,11 @@ public abstract class DefaultVoidNodeVisitor<V> implements VoidNodeVisitor<V> {
     @Override
     public void visit(ExpressionStatement node, V value) {
         visit((Statement) node, value);
+    }
+
+    @Override
+    public void visit(ForAwaitStatement node, V value) {
+        visit((IterationStatement) node, value);
     }
 
     @Override

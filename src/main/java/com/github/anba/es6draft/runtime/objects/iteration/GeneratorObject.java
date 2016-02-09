@@ -88,6 +88,11 @@ public final class GeneratorObject extends OrdinaryObject {
         return code != null && code.is(RuntimeInfo.FunctionFlags.LegacyGenerator);
     }
 
+    @Override
+    public String toString() {
+        return String.format("%s, state=%s, lastYieldValue=%s", super.toString(), state, lastYieldValue);
+    }
+
     /**
      * Proceeds to the "suspendedYield" generator state.
      */

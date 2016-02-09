@@ -904,6 +904,21 @@ public class InstructionAssembler {
     }
 
     /**
+     * array → array
+     * 
+     * @param index
+     *            the array index
+     * @param element
+     *            the element to store
+     */
+    public final void astore(int index, Value<?> element) {
+        dup();
+        iconst(index);
+        load(element);
+        astore(Types.Object);
+    }
+
+    /**
      * &#x2205; → &#x2205;
      * 
      * @param array
@@ -2202,6 +2217,25 @@ public class InstructionAssembler {
         assert length >= 0;
         iconst(length);
         anewarray(type);
+    }
+
+    /**
+     * &#x2205; → array
+     * 
+     * @param type
+     *            the array component type
+     * @param elements
+     *            the array elements
+     */
+    public final void anewarray(Type type, Value<?>... elements) {
+        anewarray(elements.length, type);
+        int index = 0;
+        for (Value<?> element : elements) {
+            dup();
+            iconst(index++);
+            load(element);
+            astore(type);
+        }
     }
 
     public void anewarray(Type type) {

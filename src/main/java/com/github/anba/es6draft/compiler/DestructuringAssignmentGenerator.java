@@ -156,7 +156,7 @@ final class DestructuringAssignmentGenerator {
             mv.invoke(Methods.ScriptRuntime_iterate);
             mv.store(iterator);
 
-            new IterationGenerator<ArrayAssignmentPattern, CodeVisitor>(codegen) {
+            new IterationGenerator<ArrayAssignmentPattern>(codegen) {
                 @Override
                 protected Completion iterationBody(ArrayAssignmentPattern node, Variable<ScriptIterator<?>> iterator,
                         CodeVisitor mv) {

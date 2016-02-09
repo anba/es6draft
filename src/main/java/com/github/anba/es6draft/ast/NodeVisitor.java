@@ -43,6 +43,10 @@ public interface NodeVisitor<R, V> {
 
     R visit(AsyncFunctionExpression node, V value);
 
+    R visit(AsyncGeneratorDeclaration node, V value);
+
+    R visit(AsyncGeneratorExpression node, V value);
+
     R visit(AwaitExpression node, V value);
 
     R visit(BinaryExpression node, V value);
@@ -114,6 +118,8 @@ public interface NodeVisitor<R, V> {
     R visit(ExpressionMethod node, V value);
 
     R visit(ExpressionStatement node, V value);
+
+    R visit(ForAwaitStatement node, V value);
 
     R visit(ForEachStatement node, V value);
 

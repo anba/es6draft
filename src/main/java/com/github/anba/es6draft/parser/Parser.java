@@ -70,8 +70,8 @@ public final class Parser {
     }
 
     private enum ContextKind {
-        Script, Module, Function, Method, Generator, GeneratorMethod, AsyncFunction, AsyncMethod,
-        ArrowFunction, GeneratorComprehension, AsyncArrowFunction;
+        Script, Module, Function, Method, Generator, GeneratorMethod, AsyncFunction, AsyncMethod, AsyncGenerator,
+        AsyncGeneratorMethod, ArrowFunction, GeneratorComprehension, AsyncArrowFunction;
 
         final boolean isScript() {
             return this == Script;
@@ -86,11 +86,13 @@ public final class Parser {
             case ArrowFunction:
             case AsyncArrowFunction:
             case AsyncFunction:
+            case AsyncGenerator:
+            case AsyncGeneratorMethod:
             case AsyncMethod:
             case Function:
             case Generator:
-            case GeneratorMethod:
             case GeneratorComprehension:
+            case GeneratorMethod:
             case Method:
                 return true;
             default:
@@ -100,6 +102,8 @@ public final class Parser {
 
         final boolean isGenerator() {
             switch (this) {
+            case AsyncGenerator:
+            case AsyncGeneratorMethod:
             case Generator:
             case GeneratorMethod:
                 return true;
@@ -112,6 +116,8 @@ public final class Parser {
             switch (this) {
             case AsyncArrowFunction:
             case AsyncFunction:
+            case AsyncGenerator:
+            case AsyncGeneratorMethod:
             case AsyncMethod:
                 return true;
             default:
@@ -132,9 +138,10 @@ public final class Parser {
 
         public boolean isMethod() {
             switch (this) {
-            case Method:
-            case GeneratorMethod:
+            case AsyncGeneratorMethod:
             case AsyncMethod:
+            case GeneratorMethod:
+            case Method:
                 return true;
             default:
                 return false;
@@ -2156,6 +2163,65 @@ public final class Parser {
         }
     }
 
+    /**
+     * Parses the input source as async generator code.
+     * 
+     * @param formals
+     *            the function formal parameters source
+     * @param bodyText
+     *            the function body source text
+     * @return the parsed async generator
+     * @throws ParserException
+     *             if the input source could not be parsed successfully
+     */
+    public AsyncGeneratorDefinition parseAsyncGenerator(String formals, String bodyText) throws ParserException {
+        if (ts != null)
+            throw new IllegalStateException();
+
+        newContext(ContextKind.Script);
+        try {
+            applyStrictMode(false);
+
+            AsyncGeneratorDeclaration asyncFunction;
+            newContext(ContextKind.AsyncGenerator);
+            try {
+                ts = new TokenStream(this, new TokenStreamInput(formals)).initialize();
+                FormalParameterList parameters = formalParameters(Token.EOF);
+                if (token() != Token.EOF) {
+                    reportSyntaxError(Messages.Key.InvalidFormalParameterList);
+                }
+                String header = formatParameters(formals, ts.position());
+
+                ts = new TokenStream(this, new TokenStreamInput(bodyText)).initialize();
+                List<StatementListItem> statements = functionBody(parameters, Token.EOF);
+                if (token() != Token.EOF) {
+                    reportSyntaxError(Messages.Key.InvalidFunctionBody);
+                }
+                String body = formatBody(bodyText);
+
+                String functionName = "anonymous";
+                BindingIdentifier identifier = new BindingIdentifier(beginSource(), beginSource(), functionName);
+
+                FunctionContext scope = context.funContext;
+                asyncFunction = new AsyncGeneratorDeclaration(beginSource(), ts.endPosition(), scope, identifier,
+                        parameters, statements, functionName, header, body);
+                scope.setNode(asyncFunction);
+
+                asyncGenerator_EarlyErrors(asyncFunction);
+
+                asyncFunction = inheritStrictness(asyncFunction);
+            } finally {
+                restoreContext();
+            }
+
+            createScript(asyncFunction);
+
+            return asyncFunction;
+        } finally {
+            restoreContext();
+        }
+    }
+
     private <FUNDECL extends Declaration & FunctionNode> Script createScript(FUNDECL funDeclaration) {
         List<StatementListItem> statements = singletonList((StatementListItem) funDeclaration);
         boolean strict = (context.strictMode == StrictMode.Strict);
@@ -2626,7 +2692,8 @@ public final class Parser {
         }
 
         case ASYNC:
-            if (!(isEnabled(CompatibilityOption.AsyncFunction) && LOOKAHEAD(Token.FUNCTION) && noNextLineTerminator())) {
+            if (!((isEnabled(CompatibilityOption.AsyncFunction) || isEnabled(CompatibilityOption.AsyncGenerator))
+                    && LOOKAHEAD(Token.FUNCTION) && noNextLineTerminator())) {
                 break;
             }
             // fall-through
@@ -2696,19 +2763,20 @@ public final class Parser {
                 return new ExportDeclaration(begin, ts.endPosition(), declaration);
             }
             case ASYNC:
-                if (isEnabled(CompatibilityOption.AsyncFunction) && LOOKAHEAD(Token.FUNCTION)
-                        && noNextLineTerminator()) {
-                    HoistableDeclaration declaration = asyncFunctionDeclaration(true);
+                if (isEnabled(CompatibilityOption.AsyncFunction) || isEnabled(CompatibilityOption.AsyncGenerator)) {
+                    if (LOOKAHEAD(Token.FUNCTION) && noNextLineTerminator()) {
+                        HoistableDeclaration declaration = asyncFunctionOrGeneratorDeclaration(true);
 
-                    // 15.2.3.2 Static Semantics: BoundNames
-                    // 15.2.3.3 Static Semantics: ExportedBindings
-                    addExportBinding(begin, declaration.getName());
-                    if (declaration.getIdentifier() != null) {
-                        addExportBinding(begin, DEFAULT_EXPORT_BINDING_NAME);
+                        // 15.2.3.2 Static Semantics: BoundNames
+                        // 15.2.3.3 Static Semantics: ExportedBindings
+                        addExportBinding(begin, declaration.getName());
+                        if (declaration.getIdentifier() != null) {
+                            addExportBinding(begin, DEFAULT_EXPORT_BINDING_NAME);
+                        }
+                        addExportName(begin, DEFAULT_EXPORT_NAME);
+
+                        return new ExportDeclaration(begin, ts.endPosition(), declaration);
                     }
-                    addExportName(begin, DEFAULT_EXPORT_NAME);
-
-                    return new ExportDeclaration(begin, ts.endPosition(), declaration);
                 }
                 // fall-through
             default: {
@@ -3739,6 +3807,8 @@ public final class Parser {
         switch (methodType()) {
         case AsyncFunction:
             return asyncMethod(allocation, decorators);
+        case AsyncGenerator:
+            return asyncGeneratorMethod(allocation, decorators);
         case Generator:
             return generatorMethod(allocation, decorators);
         case Getter:
@@ -3976,19 +4046,31 @@ public final class Parser {
     }
 
     private MethodType methodType() {
-        if (token() == Token.MUL) {
+        switch (token()) {
+        case MUL:
             return MethodType.Generator;
-        }
-        if (token() == Token.NAME) {
+        case NAME:
             String name = getName(Token.NAME);
-            if (("get".equals(name) || "set".equals(name)) && isPropertyName(peek())) {
-                return "get".equals(name) ? MethodType.Getter : MethodType.Setter;
+            if ("get".equals(name) && isPropertyName(peek())) {
+                return MethodType.Getter;
             }
-        }
-        if (token() == Token.ASYNC) {
-            if (isEnabled(CompatibilityOption.AsyncFunction) && isPropertyName(peek()) && noNextLineTerminator()) {
-                return MethodType.AsyncFunction;
+            if ("set".equals(name) && isPropertyName(peek())) {
+                return MethodType.Setter;
             }
+            break;
+        case ASYNC:
+            if (isEnabled(CompatibilityOption.AsyncFunction)) {
+                if (isPropertyName(peek()) && noNextLineTerminator()) {
+                    return MethodType.AsyncFunction;
+                }
+            }
+            if (isEnabled(CompatibilityOption.AsyncGenerator)) {
+                if (LOOKAHEAD(Token.MUL) && noNextLineTerminator()) {
+                    return MethodType.AsyncGenerator;
+                }
+            }
+            break;
+        default:
         }
         return MethodType.Function; // or Constructor, or Property
     }
@@ -4337,8 +4419,12 @@ public final class Parser {
         case ASSIGN_DIV:
             // FIRST(RegularExpressionLiteral)
             return true;
-        case ASYNC:
         case AWAIT:
+            if (context.kind.isAsync()) {
+                return true;
+            }
+            // fall-through
+        case ASYNC:
         case LET:
         case IMPLEMENTS:
         case INTERFACE:
@@ -4689,6 +4775,32 @@ public final class Parser {
         }
     }
 
+    private HoistableDeclaration asyncFunctionOrGeneratorDeclaration(boolean isDefault) {
+        long begin = ts.beginPosition();
+        consume(Token.ASYNC);
+        if (!noLineTerminator()) {
+            reportSyntaxError(Messages.Key.UnexpectedEndOfLine);
+        }
+        consume(Token.FUNCTION);
+        if (token() == Token.MUL && isEnabled(CompatibilityOption.AsyncGenerator)) {
+            return asyncGeneratorDeclaration(isDefault, begin);
+        }
+        return asyncFunctionDeclaration(isDefault, begin);
+    }
+
+    private Expression asyncFunctionOrGeneratorExpression() {
+        long begin = ts.beginPosition();
+        consume(Token.ASYNC);
+        if (!noLineTerminator()) {
+            reportSyntaxError(Messages.Key.UnexpectedEndOfLine);
+        }
+        consume(Token.FUNCTION);
+        if (token() == Token.MUL && isEnabled(CompatibilityOption.AsyncGenerator)) {
+            return asyncGeneratorExpression(begin);
+        }
+        return asyncFunctionExpression(begin);
+    }
+
     /**
      * <strong>[Extension] <code>async</code> Function Definitions</strong>
      * 
@@ -4702,17 +4814,14 @@ public final class Parser {
      * 
      * @param isDefault
      *            the flag to select whether or not the declaration is part of a default export
+     * @param begin
+     *            the begin position
      * @return the parsed async function declaration
      */
-    private AsyncFunctionDeclaration asyncFunctionDeclaration(boolean isDefault) {
+    private AsyncFunctionDeclaration asyncFunctionDeclaration(boolean isDefault, long begin) {
         newContext(ContextKind.AsyncFunction);
         try {
-            long begin = ts.beginPosition();
-            consume(Token.ASYNC);
-            if (!noLineTerminator()) {
-                reportSyntaxError(Messages.Key.UnexpectedEndOfLine);
-            }
-            consume(Token.FUNCTION);
+            // `async function` already parsed in caller.
             boolean hasName = !isDefault || token() != Token.LP;
             BindingIdentifier identifier;
             String functionName;
@@ -4764,15 +4873,12 @@ public final class Parser {
      *     async [no <i>LineTerminator</i> here] function BindingIdentifier<span><sub>opt</sub></span> ( FormalParameters<span><sub>[Await]</sub></span> ) { AsyncFunctionBody }
      * </pre>
      * 
+     * @param begin
+     *            the begin position
      * @return the parsed async function expression
      */
-    private AsyncFunctionExpression asyncFunctionExpression() {
-        long begin = ts.beginPosition();
-        consume(Token.ASYNC);
-        if (!noLineTerminator()) {
-            reportSyntaxError(Messages.Key.UnexpectedEndOfLine);
-        }
-        consume(Token.FUNCTION);
+    private AsyncFunctionExpression asyncFunctionExpression(long begin) {
+        // `async function` already parsed in caller.
         boolean hasName = token() != Token.LP;
         if (hasName) {
             enterBlockContext();
@@ -5015,6 +5121,202 @@ public final class Parser {
         consume(Token.AWAIT);
         Expression expr = unaryExpression(false);
         return new AwaitExpression(begin, ts.endPosition(), expr);
+    }
+
+    /**
+     * <strong>[Extension] <code>async</code> Generator Function Definitions</strong>
+     * 
+     * <pre>
+     * AsyncGeneratorDeclaration<span><sub>[Yield, Await, Default]</sub></span> :
+     *     async [no <i>LineTerminator</i> here] function * BindingIdentifier<span><sub>[?Yield, ?Await]</sub></span> ( FormalParameters<span><sub>[Yield, Await]</sub></span> ) { AsyncGeneratorBody }
+     *     <span><sub>[+Default]</sub></span> async [no <i>LineTerminator</i> here] function * ( FormalParameters<span><sub>[Yield, Await]</sub></span> ) { AsyncGeneratorBody }
+     * AsyncGeneratorBody :
+     *     FunctionBody<span><sub>[Yield, Await]</sub></span>
+     * </pre>
+     * 
+     * @param isDefault
+     *            the flag to select whether or not the declaration is part of a default export
+     * @param begin
+     *            the begin position
+     * @return the parsed async generator declaration
+     */
+    private AsyncGeneratorDeclaration asyncGeneratorDeclaration(boolean isDefault, long begin) {
+        newContext(ContextKind.AsyncGenerator);
+        try {
+            // `async function` already parsed in caller.
+            consume(Token.MUL);
+            boolean hasName = !isDefault || token() != Token.LP;
+            BindingIdentifier identifier;
+            String functionName;
+            if (hasName) {
+                identifier = bindingIdentifierFunctionName(true);
+                functionName = identifier.getName().getIdentifier();
+            } else {
+                identifier = null;
+                functionName = DEFAULT_EXPORT_NAME;
+            }
+            consume(Token.LP);
+            int startFunction = ts.position() - 1;
+            FormalParameterList parameters = formalParameters(Token.RP);
+            consume(Token.RP);
+
+            if (token() == Token.COLON && isEnabled(CompatibilityOption.TypeAnnotation)) {
+                returnTypeAnnotation();
+            }
+
+            consume(Token.LC);
+            int startBody = ts.position();
+            List<StatementListItem> statements = functionBody(parameters, Token.RC);
+            consume(Token.RC);
+            int endFunction = ts.position() - 1;
+
+            String header = ts.range(startFunction, startBody - 1);
+            String body = ts.range(startBody, endFunction);
+
+            FunctionContext scope = context.funContext;
+            AsyncGeneratorDeclaration function = new AsyncGeneratorDeclaration(begin, ts.endPosition(), scope,
+                    identifier, parameters, statements, functionName, header, body);
+            scope.setNode(function);
+
+            asyncGenerator_EarlyErrors(function);
+            addDeclaration(function, hasName && isDefault);
+
+            return inheritStrictness(function);
+        } finally {
+            restoreContext();
+        }
+    }
+
+    /**
+     * <strong>[Extension] <code>async</code> Generator Function Definitions</strong>
+     * 
+     * <pre>
+     * AsyncGeneratorExpression :
+     *     async [no <i>LineTerminator</i> here] function * BindingIdentifier<span><sub>[Yield, Await]opt</sub></span> ( FormalParameters<span><sub>[Yield, Await]</sub></span> ) { AsyncGeneratorBody }
+     * </pre>
+     * 
+     * @param begin
+     *            the begin position
+     * @return the parsed async generator expression
+     */
+    private AsyncGeneratorExpression asyncGeneratorExpression(long begin) {
+        // `async function` already parsed in caller.
+        consume(Token.MUL);
+        boolean hasName = token() != Token.LP;
+        if (hasName) {
+            enterBlockContext();
+        }
+
+        newContext(ContextKind.AsyncGenerator);
+        try {
+            BindingIdentifier identifier = null;
+            if (hasName) {
+                identifier = bindingIdentifierFunctionName(false);
+                addLexDeclaredName(identifier, context.parent, BoundName(identifier));
+            }
+            consume(Token.LP);
+            int startFunction = ts.position() - 1;
+            FormalParameterList parameters = formalParameters(Token.RP);
+            consume(Token.RP);
+
+            if (token() == Token.COLON && isEnabled(CompatibilityOption.TypeAnnotation)) {
+                returnTypeAnnotation();
+            }
+
+            consume(Token.LC);
+            int startBody = ts.position();
+            List<StatementListItem> statements = functionBody(parameters, Token.RC);
+            consume(Token.RC);
+            int endFunction = ts.position() - 1;
+
+            String header = ts.range(startFunction, startBody - 1);
+            String body = ts.range(startBody, endFunction);
+
+            FunctionContext scope = context.funContext;
+            AsyncGeneratorExpression function = new AsyncGeneratorExpression(begin, ts.endPosition(), scope, identifier,
+                    parameters, statements, header, body);
+            scope.setNode(function);
+
+            asyncGenerator_EarlyErrors(function);
+
+            return inheritStrictness(function);
+        } finally {
+            restoreContext();
+            if (hasName) {
+                exitBlockContext();
+            }
+        }
+    }
+
+    private void asyncGenerator_EarlyErrors(AsyncGeneratorDefinition function) {
+        assert context.scopeContext == context.funContext;
+        FunctionContext scope = context.funContext;
+        FormalParameterList parameters = function.getParameters();
+        List<Name> boundNames = BoundNames(parameters);
+        if (!IsSimpleParameterList(parameters)) {
+            checkFormalParameterDuplication(function, boundNames, scope.parameterNames);
+        } else if (context.strictMode != StrictMode.NonStrict) {
+            checkFormalParameterDuplicationStrict(function, boundNames, scope.parameterNames);
+        }
+        checkFormalParameterRedeclaration(function, boundNames, scope.lexDeclaredNames);
+    }
+
+    /**
+     * <strong>[Extension] <code>async</code> Generator Function Definitions</strong>
+     * 
+     * <pre>
+     * AsyncGeneratorMethod<span><sub>[Yield, Await]</sub></span> :
+     *     async [no <i>LineTerminator</i> here] * PropertyName<span><sub>[?Yield, ?Await]</sub></span> ( StrictFormalParameters<span><sub>[Yield, Await]</sub></span> ) { AsyncGeneratorBody }
+     * </pre>
+     * 
+     * @param allocation
+     *            the method allocation kind
+     * @param decorators
+     *            the list of method decorators
+     * @return the parsed async method
+     */
+    private MethodDefinition asyncGeneratorMethod(MethodAllocation allocation, List<Expression> decorators) {
+        long begin = ts.beginPosition();
+
+        consume(Token.ASYNC);
+        if (!noLineTerminator()) {
+            reportSyntaxError(Messages.Key.UnexpectedEndOfLine);
+        }
+        consume(Token.MUL);
+        PropertyName propertyName = propertyName();
+
+        newContext(ContextKind.AsyncGeneratorMethod);
+        try {
+            consume(Token.LP);
+            int startFunction = ts.position() - 1;
+            FormalParameterList parameters = strictFormalParameters(Token.RP);
+            consume(Token.RP);
+
+            if (token() == Token.COLON && isEnabled(CompatibilityOption.TypeAnnotation)) {
+                returnTypeAnnotation();
+            }
+
+            consume(Token.LC);
+            int startBody = ts.position();
+            List<StatementListItem> statements = functionBody(parameters, Token.RC);
+            consume(Token.RC);
+            int endFunction = ts.position() - 1;
+
+            String header = ts.range(startFunction, startBody - 1);
+            String body = ts.range(startBody, endFunction);
+
+            FunctionContext scope = context.funContext;
+            MethodType type = MethodType.AsyncGenerator;
+            MethodDefinition method = new MethodDefinition(begin, ts.endPosition(), scope, type,
+                    allocation, decorators, propertyName, parameters, statements, header, body);
+            scope.setNode(method);
+
+            methodDefinition_EarlyErrors(method);
+
+            return inheritStrictness(method);
+        } finally {
+            restoreContext();
+        }
     }
 
     /**
@@ -5264,9 +5566,10 @@ public final class Parser {
         case AT:
             return declaration();
         case ASYNC:
-            if (isEnabled(CompatibilityOption.AsyncFunction) && LOOKAHEAD(Token.FUNCTION)
-                    && noNextLineTerminator()) {
-                return declaration();
+            if (isEnabled(CompatibilityOption.AsyncFunction) || isEnabled(CompatibilityOption.AsyncGenerator)) {
+                if (LOOKAHEAD(Token.FUNCTION) && noNextLineTerminator()) {
+                    return declaration();
+                }
             }
             break;
         case LET:
@@ -5304,8 +5607,8 @@ public final class Parser {
         case CONST:
             return lexicalDeclaration(true);
         case ASYNC:
-            if (isEnabled(CompatibilityOption.AsyncFunction)) {
-                return asyncFunctionDeclaration(false);
+            if (isEnabled(CompatibilityOption.AsyncFunction) || isEnabled(CompatibilityOption.AsyncGenerator)) {
+                return asyncFunctionOrGeneratorDeclaration(false);
             }
             // fall-through
         default:
@@ -5843,8 +6146,10 @@ public final class Parser {
             }
             break;
         case ASYNC:
-            if (isEnabled(CompatibilityOption.AsyncFunction) && LOOKAHEAD(Token.FUNCTION) && noNextLineTerminator()) {
-                throw reportSyntaxError(Messages.Key.InvalidToken, token().toString());
+            if (isEnabled(CompatibilityOption.AsyncFunction) || isEnabled(CompatibilityOption.AsyncGenerator)) {
+                if (LOOKAHEAD(Token.FUNCTION) && noNextLineTerminator()) {
+                    throw reportSyntaxError(Messages.Key.InvalidToken, token().toString());
+                }
             }
             break;
         case DO:
@@ -5980,7 +6285,7 @@ public final class Parser {
     }
 
     private enum ForType {
-        Each, In, Of
+        Await, Each, In, Of
     }
 
     /**
@@ -6011,11 +6316,18 @@ public final class Parser {
      */
     private IterationStatement forStatementOrForInOfStatement(Set<String> labelSet) {
         long begin = ts.beginPosition();
-        boolean forEach = false;
+        boolean forAwait = false, forEach = false;
 
         consume(Token.FOR);
-        if (token() != Token.LP && isName("each")
-                && isEnabled(CompatibilityOption.ForEachStatement)) {
+        if (token() == Token.AWAIT && isEnabled(CompatibilityOption.AsyncGenerator)) {
+            if (context.kind.isAsync() && context.awaitAllowed) {
+                context.yieldOrAwaitExpression |= true;
+            } else {
+                reportSyntaxError(Messages.Key.InvalidAwaitExpression);
+            }
+            consume(Token.AWAIT);
+            forAwait = true;
+        } else if (isName("each") && isEnabled(CompatibilityOption.ForEachStatement)) {
             consume("each");
             forEach = true;
         }
@@ -6037,7 +6349,7 @@ public final class Parser {
             head = lexicalDeclaration(false);
             break;
         case LET:
-            if (lexicalBindingFirstSet(peek())) {
+            if (forAwait || lexicalBindingFirstSet(peek())) {
                 lexBlockContext = enterBlockContext();
                 head = lexicalDeclaration(false);
                 break;
@@ -6067,7 +6379,9 @@ public final class Parser {
             break;
         }
 
-        if (forEach) {
+        if (forAwait) {
+            return forInOfStatement(labelSet, begin, head, lexBlockContext, ForType.Await);
+        } else if (forEach) {
             return forInOfStatement(labelSet, begin, head, lexBlockContext, ForType.Each);
         } else if (token() == Token.IN) {
             return forInOfStatement(labelSet, begin, head, lexBlockContext, ForType.In);
@@ -6083,8 +6397,8 @@ public final class Parser {
         // Only allow single binding without initializer in for-in/of head.
         if (head == null) {
             // for-each loop without head: `for each (;`
-            assert type == ForType.Each;
-            reportSyntaxError(begin, Messages.Key.InvalidForEachStatement);
+            assert type == ForType.Await || type == ForType.Each;
+            reportSyntaxError(begin, Messages.Key.InvalidForStatementLeftHandSide);
         } else if (head instanceof VariableStatement) {
             VariableStatement varStmt = (VariableStatement) head;
             if (varStmt.getElements().size() != 1) {
@@ -6114,12 +6428,12 @@ public final class Parser {
             }
         } else if (!(head instanceof LeftHandSideExpression)) {
             // Handle: `for (a, b in ...` and `for each (false; ...`
-            assert head instanceof CommaExpression || type == ForType.Each;
+            assert head instanceof CommaExpression || type == ForType.Await || type == ForType.Each;
             reportSyntaxError(head, Messages.Key.InvalidForStatementLeftHandSide);
         }
 
         Expression expr;
-        if (type != ForType.Of) {
+        if (type == ForType.Each || type == ForType.In) {
             consume(Token.IN);
             expr = expression(true);
         } else {
@@ -6136,7 +6450,14 @@ public final class Parser {
             exitBlockContext();
         }
 
-        if (type == ForType.Each) {
+        if (type == ForType.Await) {
+            ForAwaitStatement iteration = new ForAwaitStatement(begin, ts.endPosition(),
+                    lexBlockContext, labelCx.abrupts, labelCx.labelSet, head, expr, stmt);
+            if (lexBlockContext != null) {
+                lexBlockContext.node = iteration;
+            }
+            return iteration;
+        } else if (type == ForType.Each) {
             ForEachStatement iteration = new ForEachStatement(begin, ts.endPosition(),
                     lexBlockContext, labelCx.abrupts, labelCx.labelSet, head, expr, stmt);
             if (lexBlockContext != null) {
@@ -7017,6 +7338,8 @@ public final class Parser {
      */
     private boolean isYieldName(ParseContext yieldContext) {
         switch (yieldContext.kind) {
+        case AsyncGenerator:
+        case AsyncGeneratorMethod:
         case Generator:
         case GeneratorMethod:
             // 'yield' is always a keyword in generator functions
@@ -7056,6 +7379,8 @@ public final class Parser {
         switch (awaitContext.kind) {
         case AsyncArrowFunction:
         case AsyncFunction:
+        case AsyncGenerator:
+        case AsyncGeneratorMethod:
         case AsyncMethod:
             // 'await' is always a keyword in async functions
             reportSyntaxError(Messages.Key.InvalidIdentifier, getName(Token.AWAIT));
@@ -7158,9 +7483,10 @@ public final class Parser {
             }
             break;
         case ASYNC:
-            if (isEnabled(CompatibilityOption.AsyncFunction) && LOOKAHEAD(Token.FUNCTION)
-                    && noNextLineTerminator()) {
-                return asyncFunctionExpression();
+            if (isEnabled(CompatibilityOption.AsyncFunction) || isEnabled(CompatibilityOption.AsyncGenerator)) {
+                if (LOOKAHEAD(Token.FUNCTION) && noNextLineTerminator()) {
+                    return asyncFunctionOrGeneratorExpression();
+                }
             }
             break;
         case DO:
@@ -8229,6 +8555,7 @@ public final class Parser {
                 consume(Token.DOT);
                 consume("sent");
 
+                // TODO: function.sent available in async generators?
                 switch (context.kind) {
                 case Generator:
                 case GeneratorMethod:
@@ -8295,7 +8622,8 @@ public final class Parser {
                 || superContext.kind == ContextKind.Module
                 || superContext.kind == ContextKind.Function
                 || superContext.kind == ContextKind.Generator
-                || superContext.kind == ContextKind.AsyncFunction) {
+                || superContext.kind == ContextKind.AsyncFunction
+                || superContext.kind == ContextKind.AsyncGenerator) {
             reportSyntaxError(Messages.Key.InvalidSuperExpression);
         }
         superContext.setNeedsSuperBinding();
@@ -8314,6 +8642,7 @@ public final class Parser {
                 || superContext.kind == ContextKind.Function
                 || superContext.kind == ContextKind.Generator
                 || superContext.kind == ContextKind.AsyncFunction
+                || superContext.kind == ContextKind.AsyncGenerator
                 || (superContext.kind.isMethod() && !superContext.isDerivedClassConstructor)) {
             reportSyntaxError(Messages.Key.InvalidSuperCallExpression);
         }
@@ -8332,6 +8661,7 @@ public final class Parser {
                 || superContext.kind == ContextKind.Function
                 || superContext.kind == ContextKind.Generator
                 || superContext.kind == ContextKind.AsyncFunction
+                || superContext.kind == ContextKind.AsyncGenerator
                 || (superContext.kind.isMethod() && !superContext.isDerivedClassConstructor)) {
             reportSyntaxError(Messages.Key.InvalidNewSuperExpression);
         }
@@ -8526,10 +8856,12 @@ public final class Parser {
             break;
         }
         case AWAIT:
-            if (isEnabled(CompatibilityOption.AsyncFunction)) {
+            if (isEnabled(CompatibilityOption.AsyncFunction) || isEnabled(CompatibilityOption.AsyncGenerator)) {
                 switch (context.kind) {
                 case AsyncArrowFunction:
                 case AsyncFunction:
+                case AsyncGenerator:
+                case AsyncGeneratorMethod:
                 case AsyncMethod:
                     if (!context.awaitAllowed) {
                         // await in async function parameters
@@ -8613,10 +8945,12 @@ public final class Parser {
         case DEC:
             return true;
         case AWAIT: {
-            if (isEnabled(CompatibilityOption.AsyncFunction)) {
+            if (isEnabled(CompatibilityOption.AsyncFunction) || isEnabled(CompatibilityOption.AsyncGenerator)) {
                 switch (context.kind) {
                 case AsyncArrowFunction:
                 case AsyncFunction:
+                case AsyncGenerator:
+                case AsyncGeneratorMethod:
                 case AsyncMethod:
                     if (!context.awaitAllowed) {
                         // await in async function parameters
@@ -8830,6 +9164,8 @@ public final class Parser {
     private Expression assignmentExpression(boolean allowIn, int oldCount) {
         if (token() == Token.YIELD) {
             switch (context.kind) {
+            case AsyncGenerator:
+            case AsyncGeneratorMethod:
             case Generator:
             case GeneratorMethod:
                 if (!context.yieldAllowed) {

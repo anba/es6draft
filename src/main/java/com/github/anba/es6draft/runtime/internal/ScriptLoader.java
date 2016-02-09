@@ -23,6 +23,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import com.github.anba.es6draft.Module;
 import com.github.anba.es6draft.Script;
 import com.github.anba.es6draft.ast.AsyncFunctionDefinition;
+import com.github.anba.es6draft.ast.AsyncGeneratorDefinition;
 import com.github.anba.es6draft.ast.FunctionDefinition;
 import com.github.anba.es6draft.ast.GeneratorDefinition;
 import com.github.anba.es6draft.compiler.CompilationException;
@@ -217,6 +218,28 @@ public final class ScriptLoader {
             throws ParserException, CompilationException {
         Parser parser = new Parser(context, source);
         AsyncFunctionDefinition asyncDef = parser.parseAsyncFunction(formals, bodyText);
+        return compile(asyncDef, nextFunctionName());
+    }
+
+    /**
+     * Parses and compiles the javascript async generator.
+     * 
+     * @param source
+     *            the script source descriptor
+     * @param formals
+     *            the formal parameters
+     * @param bodyText
+     *            the async generator body
+     * @return the compiled async generator
+     * @throws ParserException
+     *             if the source contains any syntax errors
+     * @throws CompilationException
+     *             if the parsed source could not be compiled
+     */
+    public CompiledFunction asyncGenerator(Source source, String formals, String bodyText)
+            throws ParserException, CompilationException {
+        Parser parser = new Parser(context, source);
+        AsyncGeneratorDefinition asyncDef = parser.parseAsyncGenerator(formals, bodyText);
         return compile(asyncDef, nextFunctionName());
     }
 
@@ -450,6 +473,23 @@ public final class ScriptLoader {
         try (CloseableExecutor t = executor()) {
             Compiler compiler = new Compiler(context, t.executor());
             return compiler.compile(asyncFunction, className);
+        }
+    }
+
+    /**
+     * Compiles the {@link AsyncGeneratorDefinition} AST-node to a {@link CompiledFunction} object.
+     * 
+     * @param asyncGenerator
+     *            the async generator node
+     * @param className
+     *            the class name
+     * @return the compiled async generator
+     */
+    public CompiledFunction compile(AsyncGeneratorDefinition asyncGenerator, String className)
+            throws CompilationException {
+        try (CloseableExecutor t = executor()) {
+            Compiler compiler = new Compiler(context, t.executor());
+            return compiler.compile(asyncGenerator, className);
         }
     }
 

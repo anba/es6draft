@@ -59,6 +59,18 @@ final class PropertyGenerator extends DefaultCodeGenerator<DefaultCodeGenerator.
                                 Type.BOOLEAN_TYPE, Types.RuntimeInfo$Function,
                                 Types.ExecutionContext));
 
+        static final MethodName ScriptRuntime_EvaluatePropertyDefinitionAsyncGenerator = MethodName
+                .findStatic(Types.ScriptRuntime, "EvaluatePropertyDefinitionAsyncGenerator", Type
+                        .methodType(Type.VOID_TYPE, Types.OrdinaryObject, Types.Object,
+                                Type.BOOLEAN_TYPE, Types.RuntimeInfo$Function,
+                                Types.ExecutionContext));
+
+        static final MethodName ScriptRuntime_EvaluatePropertyDefinitionAsyncGenerator_String = MethodName
+                .findStatic(Types.ScriptRuntime, "EvaluatePropertyDefinitionAsyncGenerator", Type
+                        .methodType(Type.VOID_TYPE, Types.OrdinaryObject, Types.String,
+                                Type.BOOLEAN_TYPE, Types.RuntimeInfo$Function,
+                                Types.ExecutionContext));
+
         static final MethodName ScriptRuntime_EvaluatePropertyDefinitionConstructorGenerator = MethodName
                 .findStatic(Types.ScriptRuntime, "EvaluatePropertyDefinitionConstructorGenerator", Type
                         .methodType(Type.VOID_TYPE, Types.OrdinaryObject, Types.Object,
@@ -213,6 +225,9 @@ final class PropertyGenerator extends DefaultCodeGenerator<DefaultCodeGenerator.
             case AsyncFunction:
                 mv.invoke(Methods.ScriptRuntime_EvaluatePropertyDefinitionAsync);
                 break;
+            case AsyncGenerator:
+                mv.invoke(Methods.ScriptRuntime_EvaluatePropertyDefinitionAsyncGenerator);
+                break;
             case Function:
                 mv.invoke(Methods.ScriptRuntime_EvaluatePropertyDefinition);
                 break;
@@ -247,6 +262,9 @@ final class PropertyGenerator extends DefaultCodeGenerator<DefaultCodeGenerator.
             switch (node.getType()) {
             case AsyncFunction:
                 mv.invoke(Methods.ScriptRuntime_EvaluatePropertyDefinitionAsync_String);
+                break;
+            case AsyncGenerator:
+                mv.invoke(Methods.ScriptRuntime_EvaluatePropertyDefinitionAsyncGenerator_String);
                 break;
             case Function:
                 mv.invoke(Methods.ScriptRuntime_EvaluatePropertyDefinition_String);

@@ -29,6 +29,7 @@ import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
 import com.github.anba.es6draft.runtime.types.builtins.LegacyConstructorFunction;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryAsyncFunction;
+import com.github.anba.es6draft.runtime.types.builtins.OrdinaryAsyncGenerator;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryConstructorFunction;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryConstructorGenerator;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction;
@@ -100,6 +101,11 @@ final class FunctionCodeGenerator {
                 "EvaluateBody",
                 Type.methodType(Types.PromiseObject, Types.ExecutionContext, Types.OrdinaryAsyncFunction));
 
+        // OrdinaryAsyncGenerator
+        static final MethodName OrdinaryAsyncGenerator_EvaluateBody = MethodName.findStatic(
+                Types.OrdinaryAsyncGenerator, "EvaluateBody",
+                Type.methodType(Types.AsyncGeneratorObject, Types.ExecutionContext, Types.OrdinaryAsyncGenerator));
+
         // OrdinaryConstructorGenerator
         static final MethodName OrdinaryConstructorGenerator_EvaluateBody = MethodName.findStatic(
                 Types.OrdinaryConstructorGenerator, "EvaluateBody",
@@ -139,7 +145,6 @@ final class FunctionCodeGenerator {
     }
 
     private static final int FUNCTION = 0;
-    private static final int GENERATOR = 0;
     private static final int EXECUTION_CONTEXT = 1;
     private static final int THIS_VALUE = 2;
     private static final int NEW_TARGET = 2;
@@ -215,7 +220,9 @@ final class FunctionCodeGenerator {
         mv.lineInfo(node);
         mv.begin();
 
-        if (node.isAsync()) {
+        if (node.isAsync() && node.isGenerator()) {
+            generateAsyncGeneratorCall(node, mv);
+        } else if (node.isAsync()) {
             generateAsyncFunctionCall(node, mv);
         } else if (node.isGenerator()) {
             if (node.isConstructor()) {
@@ -269,7 +276,9 @@ final class FunctionCodeGenerator {
     }
 
     private Type targetType(FunctionNode node) {
-        if (node.isGenerator()) {
+        if (node.isAsync() && node.isGenerator()) {
+            return Types.OrdinaryAsyncGenerator;
+        } else if (node.isGenerator()) {
             if (node.isConstructor()) {
                 return Types.OrdinaryConstructorGenerator;
             }
@@ -683,8 +692,44 @@ final class FunctionCodeGenerator {
      * @param mv
      *            the instruction visitor
      */
+    private void generateAsyncGeneratorCall(FunctionNode node, InstructionVisitor mv) {
+        Variable<OrdinaryAsyncGenerator> generator = mv.getParameter(FUNCTION, OrdinaryAsyncGenerator.class);
+        Variable<Object> thisValue = mv.getParameter(THIS_VALUE, Object.class);
+        Variable<Object[]> arguments = mv.getParameter(ARGUMENTS, Object[].class);
+
+        Variable<ExecutionContext> calleeContext = mv.newVariable("calleeContext", ExecutionContext.class);
+
+        // (1) Create a new ExecutionContext
+        prepareCallAndBindThis(node, calleeContext, generator, thisValue, mv);
+
+        // (2) Perform OrdinaryCallEvaluateBody - FunctionDeclarationInstantiation
+        functionDeclarationInstantiation(node, calleeContext, generator, arguments, mv);
+
+        // (3) Perform OrdinaryCallEvaluateBody - EvaluateBody
+        mv.load(calleeContext);
+        mv.load(generator);
+        mv.invoke(Methods.OrdinaryAsyncGenerator_EvaluateBody);
+
+        // (4) Return result value
+        mv._return();
+    }
+
+    /**
+     * Generate bytecode for:
+     * 
+     * <pre>
+     * calleeContext = newFunctionExecutionContext(generator, null, thisValue)
+     * function_init(calleeContext, generator, arguments)
+     * return EvaluateBody(calleeContext, generator)
+     * </pre>
+     * 
+     * @param node
+     *            the function node
+     * @param mv
+     *            the instruction visitor
+     */
     private void generateConstructorGeneratorCall(FunctionNode node, InstructionVisitor mv) {
-        Variable<OrdinaryConstructorGenerator> generator = mv.getParameter(GENERATOR,
+        Variable<OrdinaryConstructorGenerator> generator = mv.getParameter(FUNCTION,
                 OrdinaryConstructorGenerator.class);
         Variable<Object> thisValue = mv.getParameter(THIS_VALUE, Object.class);
         Variable<Object[]> arguments = mv.getParameter(ARGUMENTS, Object[].class);
@@ -721,7 +766,7 @@ final class FunctionCodeGenerator {
      *            the instruction visitor
      */
     private void generateGeneratorCall(FunctionNode node, InstructionVisitor mv) {
-        Variable<OrdinaryGenerator> generator = mv.getParameter(GENERATOR, OrdinaryGenerator.class);
+        Variable<OrdinaryGenerator> generator = mv.getParameter(FUNCTION, OrdinaryGenerator.class);
         Variable<Object> thisValue = mv.getParameter(THIS_VALUE, Object.class);
         Variable<Object[]> arguments = mv.getParameter(ARGUMENTS, Object[].class);
 
@@ -759,7 +804,7 @@ final class FunctionCodeGenerator {
      *            the instruction visitor
      */
     private void generateGeneratorConstruct(FunctionNode node, InstructionVisitor mv) {
-        Variable<OrdinaryConstructorGenerator> generator = mv.getParameter(GENERATOR,
+        Variable<OrdinaryConstructorGenerator> generator = mv.getParameter(FUNCTION,
                 OrdinaryConstructorGenerator.class);
         Variable<Constructor> newTarget = mv.getParameter(NEW_TARGET, Constructor.class);
         Variable<Object[]> arguments = mv.getParameter(ARGUMENTS, Object[].class);

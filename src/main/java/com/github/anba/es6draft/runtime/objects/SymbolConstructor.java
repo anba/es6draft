@@ -52,6 +52,7 @@ public final class SymbolConstructor extends BuiltinConstructor implements Initi
     public void initialize(Realm realm) {
         createProperties(realm, this, Properties.class);
         createProperties(realm, this, ObservableProperty.class);
+        createProperties(realm, this, AsyncIteratorProperty.class);
     }
 
     @Override
@@ -241,5 +242,20 @@ public final class SymbolConstructor extends BuiltinConstructor implements Initi
         @Value(name = "observable",
                 attributes = @Attributes(writable = false, enumerable = false, configurable = false))
         public static final Symbol observable = BuiltinSymbol.observable.get();
+    }
+
+    /**
+     * Extension: Async Generator Functions
+     */
+    @CompatibilityExtension(CompatibilityOption.AsyncGenerator)
+    public enum AsyncIteratorProperty {
+        ;
+
+        /**
+         * Symbol.asyncIterator
+         */
+        @Value(name = "asyncIterator",
+                attributes = @Attributes(writable = false, enumerable = false, configurable = false))
+        public static final Symbol asyncIterator = BuiltinSymbol.asyncIterator.get();
     }
 }

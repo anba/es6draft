@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.ListIterator;
 
 import com.github.anba.es6draft.ast.AsyncFunctionDeclaration;
+import com.github.anba.es6draft.ast.AsyncGeneratorDeclaration;
 import com.github.anba.es6draft.ast.Declaration;
 import com.github.anba.es6draft.ast.FunctionDeclaration;
 import com.github.anba.es6draft.ast.GeneratorDeclaration;
@@ -99,6 +100,11 @@ class DeclarationBindingInstantiationGenerator {
         static final MethodName ScriptRuntime_InstantiateAsyncFunctionObject = MethodName
                 .findStatic(Types.ScriptRuntime, "InstantiateAsyncFunctionObject", Type.methodType(
                         Types.OrdinaryAsyncFunction, Types.LexicalEnvironment,
+                        Types.ExecutionContext, Types.RuntimeInfo$Function));
+
+        static final MethodName ScriptRuntime_InstantiateAsyncGeneratorObject = MethodName
+                .findStatic(Types.ScriptRuntime, "InstantiateAsyncGeneratorObject", Type.methodType(
+                        Types.OrdinaryAsyncGenerator, Types.LexicalEnvironment,
                         Types.ExecutionContext, Types.RuntimeInfo$Function));
 
         static final MethodName ScriptRuntime_InstantiateFunctionObject = MethodName.findStatic(
@@ -451,8 +457,10 @@ class DeclarationBindingInstantiationGenerator {
             }
         } else if (f instanceof GeneratorDeclaration) {
             InstantiateGeneratorObject(context, env, (GeneratorDeclaration) f, mv);
-        } else {
+        } else if (f instanceof AsyncFunctionDeclaration) {
             InstantiateAsyncFunctionObject(context, env, (AsyncFunctionDeclaration) f, mv);
+        } else {
+            InstantiateAsyncGeneratorObject(context, env, (AsyncGeneratorDeclaration) f, mv);
         }
     }
 
@@ -480,6 +488,31 @@ class DeclarationBindingInstantiationGenerator {
         mv.load(context);
         mv.invoke(method);
         mv.invoke(Methods.ScriptRuntime_InstantiateAsyncFunctionObject);
+    }
+
+    /**
+     * Emit function call for:
+     * {@link ScriptRuntime#InstantiateAsyncGeneratorObject(LexicalEnvironment, ExecutionContext, RuntimeInfo.Function)}
+     * <p>
+     * stack: [] {@literal ->} [fo]
+     * 
+     * @param context
+     *            the variable which holds the execution context
+     * @param env
+     *            the variable which holds the lexical environment
+     * @param f
+     *            the function declaration to instantiate
+     * @param mv
+     *            the instruction visitor
+     */
+    private void InstantiateAsyncGeneratorObject(Variable<ExecutionContext> context,
+            Variable<? extends LexicalEnvironment<?>> env, AsyncGeneratorDeclaration f, InstructionVisitor mv) {
+        MethodName method = codegen.compile(f);
+
+        mv.load(env);
+        mv.load(context);
+        mv.invoke(method);
+        mv.invoke(Methods.ScriptRuntime_InstantiateAsyncGeneratorObject);
     }
 
     /**

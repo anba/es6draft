@@ -93,7 +93,9 @@ final class FunctionSource {
             source.append(parameters);
         } else if (RuntimeInfo.FunctionFlags.Declaration.isSet(flags)) {
             // FunctionDeclaration, (Legacy)GeneratorDeclaration, AsyncFunctionDeclaration
-            if (async) {
+            if (async && generator) {
+                source.append("async function* ");
+            } else if (async) {
                 source.append("async function ");
             } else if (generator && !RuntimeInfo.FunctionFlags.LegacyGenerator.isSet(flags)) {
                 source.append("function* ");
@@ -103,7 +105,9 @@ final class FunctionSource {
             source.append(name).append(parameters);
         } else if (RuntimeInfo.FunctionFlags.Expression.isSet(flags)) {
             // FunctionExpression, (Legacy)GeneratorExpression, AsyncFunctionExpression
-            if (async) {
+            if (async && generator) {
+                source.append("async function* ");
+            } else if (async) {
                 source.append("async function ");
             } else if (generator && !RuntimeInfo.FunctionFlags.LegacyGenerator.isSet(flags)) {
                 source.append("function* ");
@@ -119,7 +123,9 @@ final class FunctionSource {
             if (RuntimeInfo.FunctionFlags.Static.isSet(flags)) {
                 source.append("static ");
             }
-            if (async) {
+            if (async && generator) {
+                source.append("async* ");
+            } else if (async) {
                 source.append("async ");
             } else if (generator) {
                 source.append('*');

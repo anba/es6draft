@@ -43,6 +43,7 @@ import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
 import com.github.anba.es6draft.runtime.internal.ScriptIterator;
+import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
 
 /**
@@ -233,6 +234,9 @@ final class StatementGenerator extends DefaultCodeGenerator<StatementGenerator.C
                 "iterate",
                 Type.methodType(Types.ScriptIterator, Types.Object, Types.ExecutionContext));
 
+        static final MethodName ScriptRuntime_asyncIterate = MethodName.findStatic(Types.ScriptRuntime, "asyncIterate",
+                Type.methodType(Types.ScriptObject, Types.Object, Types.ExecutionContext));
+
         static final MethodName ScriptRuntime_toInternalError = MethodName.findStatic(
                 Types.ScriptRuntime, "toInternalError", Type.methodType(Types.ScriptException,
                         Types.StackOverflowError, Types.ExecutionContext));
@@ -282,6 +286,15 @@ final class StatementGenerator extends DefaultCodeGenerator<StatementGenerator.C
      */
     @Override
     public Completion visit(AsyncFunctionDeclaration node, CodeVisitor mv) {
+        /* step 1 */
+        return Completion.Empty;
+    }
+
+    /**
+     * Extension: Async Generator Function Definitions
+     */
+    @Override
+    public Completion visit(AsyncGeneratorDeclaration node, CodeVisitor mv) {
         /* step 1 */
         return Completion.Empty;
     }
@@ -570,7 +583,15 @@ final class StatementGenerator extends DefaultCodeGenerator<StatementGenerator.C
     }
 
     private enum IterationKind {
-        Enumerate, Iterate, EnumerateValues
+        AsyncIterate, Enumerate, EnumerateValues, Iterate
+    }
+
+    /**
+     * Extension: 'for-await' statement
+     */
+    @Override
+    public Completion visit(ForAwaitStatement node, CodeVisitor mv) {
+        return visitForInOfLoop(node, IterationKind.AsyncIterate, mv);
     }
 
     /**
@@ -633,7 +654,12 @@ final class StatementGenerator extends DefaultCodeGenerator<StatementGenerator.C
         ValType type = ForInOfHeadEvaluation(node, iterationKind, lblFail, mv);
 
         /* step 3 */
-        Completion result = ForInOfBodyEvaluation(node, mv);
+        Completion result;
+        if (iterationKind != IterationKind.AsyncIterate) {
+            result = ForInOfBodyEvaluation(node, mv);
+        } else {
+            result = AsyncForInOfBodyEvaluation(node, mv);
+        }
 
         if (type != ValType.Object) {
             mv.mark(lblFail);
@@ -746,6 +772,10 @@ final class StatementGenerator extends DefaultCodeGenerator<StatementGenerator.C
                 mv.lineInfo(expr);
                 mv.invoke(Methods.ScriptRuntime_enumerateValues);
             }
+        } else if (iterationKind == IterationKind.AsyncIterate) {
+            mv.loadExecutionContext();
+            mv.lineInfo(expr);
+            mv.invoke(Methods.ScriptRuntime_asyncIterate);
         } else {
             /* step 8 */
             assert iterationKind == IterationKind.Iterate;
@@ -778,11 +808,10 @@ final class StatementGenerator extends DefaultCodeGenerator<StatementGenerator.C
         Jump enter = new Jump(), test = new Jump();
 
         mv.enterVariableScope();
-        Variable<ScriptIterator<?>> iterator = mv.newVariable("iter", ScriptIterator.class)
-                .uncheckedCast();
+        Variable<ScriptIterator<?>> iterator = mv.newVariable("iter", ScriptIterator.class).uncheckedCast();
         // stack: [Iterator] -> []
         mv.store(iterator);
-        final Variable<Object> nextValue = mv.newVariable("nextValue", Object.class);
+        Variable<Object> nextValue = mv.newVariable("nextValue", Object.class);
         Variable<LexicalEnvironment<?>> savedEnv = saveEnvironment(node, mv);
 
         /* step 1 (not applicable) */
@@ -805,7 +834,7 @@ final class StatementGenerator extends DefaultCodeGenerator<StatementGenerator.C
         {
             mv.enterIteration(node, lblBreak, lblContinue);
             mv.enterWrapped();
-            new IterationGenerator<FORSTATEMENT, CodeVisitor>(codegen) {
+            new IterationGenerator<FORSTATEMENT>(codegen) {
                 @Override
                 protected Completion iterationBody(FORSTATEMENT node, Variable<ScriptIterator<?>> iterator,
                         CodeVisitor mv) {
@@ -838,6 +867,116 @@ final class StatementGenerator extends DefaultCodeGenerator<StatementGenerator.C
         mv.lineInfo(node);
         mv.invoke(Methods.Iterator_hasNext);
         mv.ifne(enter);
+
+        /* steps 5.m-n */
+        if (lblBreak.isTarget()) {
+            mv.mark(lblBreak);
+            restoreEnvironment(savedEnv, mv);
+        }
+        mv.exitVariableScope();
+
+        return Completion.Normal;
+    }
+
+    /**
+     * 13.7.5.13 Runtime Semantics: ForIn/OfBodyEvaluation (lhs, stmt, iterator, lhsKind, labelSet)
+     * <p>
+     * stack: [Iterator] {@literal ->} []
+     * 
+     * @param <FORSTATEMENT>
+     *            the for-statement node type
+     * @param node
+     *            the for-statement node
+     * @param mv
+     *            the code visitor
+     * @return the completion value
+     */
+    private <FORSTATEMENT extends IterationStatement & ForIterationNode> Completion AsyncForInOfBodyEvaluation(
+            FORSTATEMENT node, CodeVisitor mv) {
+        assert mv.getStackSize() == 1;
+        ContinueLabel lblContinue = new ContinueLabel();
+        BreakLabel lblBreak = new BreakLabel();
+        Jump enter = new Jump(), test = new Jump();
+
+        mv.enterVariableScope();
+        Variable<ScriptObject> iterator = mv.newVariable("iter", ScriptObject.class);
+        // stack: [Iterator] -> []
+        mv.store(iterator);
+        Variable<ScriptObject> nextResult = mv.newVariable("nextResult", ScriptObject.class);
+        mv.anull();
+        mv.store(nextResult);
+        Variable<Object> nextValue = mv.newVariable("nextValue", Object.class);
+        mv.anull();
+        mv.store(nextValue);
+        Variable<LexicalEnvironment<?>> savedEnv = saveEnvironment(node, mv);
+
+        /* step 1 (not applicable) */
+        /* step 2 */
+        if (node.hasCompletionValue()) {
+            mv.storeUndefinedAsCompletionValue();
+        }
+        /* steps 3-4 (not applicable) */
+        /* step 5 (repeat loop) */
+        mv.nonDestructiveGoTo(test);
+
+        /* steps 5.d-e */
+        mv.mark(enter);
+        IteratorValue(node, nextResult, mv);
+        await(node, mv);
+        mv.store(nextValue);
+
+        /* steps 5.f-l */
+        {
+            mv.enterIteration(node, lblBreak, lblContinue);
+            mv.enterWrapped();
+            new AbstractIterationGenerator<FORSTATEMENT, ScriptObject>(codegen) {
+                @Override
+                protected Completion iterationBody(FORSTATEMENT node, Variable<ScriptObject> iterator, CodeVisitor mv) {
+                    return ForInOfBodyEvaluationInner(node, nextValue, mv);
+                }
+
+                @Override
+                protected MutableValue<Object> enterIteration(FORSTATEMENT node, CodeVisitor mv) {
+                    return mv.enterIterationBody(node);
+                }
+
+                @Override
+                protected List<TempLabel> exitIteration(FORSTATEMENT node, CodeVisitor mv) {
+                    return mv.exitIterationBody(node);
+                }
+
+                @Override
+                protected void IteratorClose(FORSTATEMENT node, Variable<ScriptObject> iterator,
+                        Variable<? extends Throwable> throwable, CodeVisitor mv) {
+                    asyncIteratorClose(node, iterator, throwable, mv);
+                }
+
+                @Override
+                protected void IteratorClose(FORSTATEMENT node, Variable<ScriptObject> iterator, CodeVisitor mv) {
+                    asyncIteratorClose(node, iterator, mv);
+                }
+            }.generate(node, iterator, test, mv);
+            mv.exitWrapped();
+            mv.exitIteration(node);
+        }
+
+        /* steps 5.m-n */
+        if (lblContinue.isTarget()) {
+            mv.mark(lblContinue);
+            restoreEnvironment(savedEnv, mv);
+        }
+
+        /* steps 5.a-c */
+        mv.mark(test);
+        IteratorNext(node, iterator, mv);
+        await(node, mv);
+
+        // FIXME: spec bug - missing type check after await
+        requireObjectResult(node, "next", mv);
+        mv.store(nextResult);
+
+        IteratorComplete(node, nextResult, mv);
+        mv.ifeq(enter);
 
         /* steps 5.m-n */
         if (lblBreak.isTarget()) {

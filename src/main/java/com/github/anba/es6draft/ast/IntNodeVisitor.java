@@ -43,6 +43,10 @@ public interface IntNodeVisitor<V> {
 
     int visit(AsyncFunctionExpression node, V value);
 
+    int visit(AsyncGeneratorDeclaration node, V value);
+
+    int visit(AsyncGeneratorExpression node, V value);
+
     int visit(AwaitExpression node, V value);
 
     int visit(BinaryExpression node, V value);
@@ -114,6 +118,8 @@ public interface IntNodeVisitor<V> {
     int visit(ExpressionMethod node, V value);
 
     int visit(ExpressionStatement node, V value);
+
+    int visit(ForAwaitStatement node, V value);
 
     int visit(ForEachStatement node, V value);
 

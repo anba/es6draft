@@ -30,4 +30,9 @@ public final class ReturnValue {
     public Object getValue() {
         return value;
     }
+
+    @Override
+    public String toString() {
+        return String.format("Return<%s>", value);
+    }
 }

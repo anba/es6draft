@@ -144,6 +144,7 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
         // New node types
         AwaitExpression(),
         DoExpression(),
+        ForAwaitStatement(),
 
         // Removed node types
         LetExpression("letExpression"),
@@ -541,6 +542,7 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
         boolean generator = false;
         switch (node.getType()) {
         case AsyncFunction:
+        case AsyncGenerator:
             // TODO: async functions
             break;
         case ConstructorGenerator:
@@ -574,6 +576,7 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
         case Setter:
             return "set";
         case AsyncFunction:
+        case AsyncGenerator:
         case BaseConstructor:
         case DerivedConstructor:
         case CallConstructor:
@@ -591,6 +594,7 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
         case Setter:
             return true;
         case AsyncFunction:
+        case AsyncGenerator:
         case BaseConstructor:
         case DerivedConstructor:
         case CallConstructor:
@@ -829,6 +833,54 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
         Object rest = acceptOrNull(getRestParameter(node.getParameters()), value);
         Object body = createFunctionBody(node, value);
         // TODO: flag for async
+        boolean generator = false;
+        boolean expression = false;
+        if (hasBuilder(Type.FunctionExpression)) {
+            return call(Type.FunctionExpression, node, id, params, body, generator, expression);
+        }
+        OrdinaryObject function = createFunction(node, Type.FunctionExpression);
+        addProperty(function, "id", id);
+        addProperty(function, "params", params);
+        addProperty(function, "defaults", defaults);
+        addProperty(function, "body", body);
+        addProperty(function, "rest", rest);
+        addProperty(function, "generator", generator);
+        addProperty(function, "expression", expression);
+        return function;
+    }
+
+    @Override
+    public Object visit(AsyncGeneratorDeclaration node, Void value) {
+        Object id = acceptOrNull(node.getIdentifier(), value);
+        ArrayObject params = createList(getParameterBindings(node.getParameters()), value);
+        ArrayObject defaults = createListWithNull(getParameterDefaults(node.getParameters()), value);
+        Object rest = acceptOrNull(getRestParameter(node.getParameters()), value);
+        Object body = createFunctionBody(node, value);
+        // TODO: flag for async generator
+        boolean generator = false;
+        boolean expression = false;
+        if (hasBuilder(Type.FunctionDeclaration)) {
+            return call(Type.FunctionDeclaration, node, id, params, body, generator, expression);
+        }
+        OrdinaryObject function = createFunction(node, Type.FunctionDeclaration);
+        addProperty(function, "id", id);
+        addProperty(function, "params", params);
+        addProperty(function, "defaults", defaults);
+        addProperty(function, "body", body);
+        addProperty(function, "rest", rest);
+        addProperty(function, "generator", generator);
+        addProperty(function, "expression", expression);
+        return function;
+    }
+
+    @Override
+    public Object visit(AsyncGeneratorExpression node, Void value) {
+        Object id = acceptOrNull(node.getIdentifier(), value);
+        ArrayObject params = createList(getParameterBindings(node.getParameters()), value);
+        ArrayObject defaults = createListWithNull(getParameterDefaults(node.getParameters()), value);
+        Object rest = acceptOrNull(getRestParameter(node.getParameters()), value);
+        Object body = createFunctionBody(node, value);
+        // TODO: flag for async generator
         boolean generator = false;
         boolean expression = false;
         if (hasBuilder(Type.FunctionExpression)) {
@@ -1280,6 +1332,24 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
         OrdinaryObject statement = createStatement(node, Type.ExpressionStatement);
         addProperty(statement, "expression", expression);
         return statement;
+    }
+
+    @Override
+    public Object visit(ForAwaitStatement node, Void value) {
+        Object forAwaitStatement;
+        Object left = node.getHead().accept(this, value);
+        Object right = node.getExpression().accept(this, value);
+        Object body = node.getStatement().accept(this, value);
+        if (hasBuilder(Type.ForAwaitStatement)) {
+            forAwaitStatement = call(Type.ForAwaitStatement, node, left, right, body);
+        } else {
+            OrdinaryObject statement = createStatement(node, Type.ForAwaitStatement);
+            addProperty(statement, "left", left);
+            addProperty(statement, "right", right);
+            addProperty(statement, "body", body);
+            forAwaitStatement = statement;
+        }
+        return createLabelledStatement(node, forAwaitStatement);
     }
 
     @Override

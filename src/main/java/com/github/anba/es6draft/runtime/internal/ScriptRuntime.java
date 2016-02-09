@@ -19,6 +19,7 @@ import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.ArrayObject.ArrayCreate;
 import static com.github.anba.es6draft.runtime.types.builtins.LegacyConstructorFunction.LegacyFunctionCreate;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryAsyncFunction.AsyncFunctionCreate;
+import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryAsyncGenerator.AsyncGeneratorFunctionCreate;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryConstructorFunction.ConstructorFunctionCreate;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryConstructorGenerator.ConstructorGeneratorFunctionCreate;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.*;
@@ -62,6 +63,7 @@ import com.github.anba.es6draft.runtime.modules.SourceTextModuleRecord;
 import com.github.anba.es6draft.runtime.objects.ArrayIteratorPrototype;
 import com.github.anba.es6draft.runtime.objects.ArrayPrototype;
 import com.github.anba.es6draft.runtime.objects.FunctionPrototype;
+import com.github.anba.es6draft.runtime.objects.async.iteration.AsyncGeneratorAbstractOperations;
 import com.github.anba.es6draft.runtime.objects.binary.TypedArrayObject;
 import com.github.anba.es6draft.runtime.objects.binary.TypedArrayPrototypePrototype;
 import com.github.anba.es6draft.runtime.objects.iteration.GeneratorObject;
@@ -2009,6 +2011,22 @@ public final class ScriptRuntime {
 
     /**
      * 13.6.4 The for-in and for-of Statements<br>
+     * Extension: 'for-await' statement
+     * <p>
+     * 13.6.4.12 Runtime Semantics: ForIn/OfHeadEvaluation ( TDZnames, expr, iterationKind, labelSet)
+     * 
+     * @param value
+     *            the object to enumerate
+     * @param cx
+     *            the execution context
+     * @return the async iterator
+     */
+    public static ScriptObject asyncIterate(Object value, ExecutionContext cx) {
+        return AsyncGeneratorAbstractOperations.GetAsyncIterator(cx, value);
+    }
+
+    /**
+     * 13.6.4 The for-in and for-of Statements<br>
      * Extension: 'for-each' statement
      * <p>
      * 13.6.4.12 Runtime Semantics: ForIn/OfHeadEvaluation ( TDZnames, expr, iterationKind, labelSet)
@@ -3126,16 +3144,13 @@ public final class ScriptRuntime {
             /* steps 6.b.iii.1-3 */
             Object innerThrowResult = throwMethod.call(cx, iterator, e.getValue());
             /* step 6.b.iii.4 */
-            if (!Type.isObject(innerThrowResult)) {
-                throw newTypeError(cx, Messages.Key.NotObjectTypeReturned, "throw");
-            }
-            return Type.objectValue(innerThrowResult);
+            return requireObjectResult(innerThrowResult, "throw", cx);
         } else {
             /* step 6.b.iv */
             /* steps 6.b.iv.1-3 */
             IteratorClose(cx, iterator);
             /* steps 6.b.iv.4-5 */
-            throw newTypeError(cx, Messages.Key.PropertyNotCallable, "throw");
+            throw reportPropertyNotCallable("throw", cx);
         }
     }
 
@@ -3166,10 +3181,18 @@ public final class ScriptRuntime {
         /* steps 6.c.v-vi */
         Object innerReturnResult = returnMethod.call(cx, iterator, e.getValue());
         /* step 6.c.vii */
-        if (!Type.isObject(innerReturnResult)) {
-            throw newTypeError(cx, Messages.Key.NotObjectTypeReturned, "return");
+        return requireObjectResult(innerReturnResult, "return", cx);
+    }
+
+    public static ScriptObject requireObjectResult(Object resultValue, String methodName, ExecutionContext cx) {
+        if (!Type.isObject(resultValue)) {
+            throw newTypeError(cx, Messages.Key.NotObjectTypeReturned, methodName);
         }
-        return Type.objectValue(innerReturnResult);
+        return Type.objectValue(resultValue);
+    }
+
+    public static ScriptException reportPropertyNotCallable(String methodName, ExecutionContext cx) {
+        throw newTypeError(cx, Messages.Key.PropertyNotCallable, methodName);
     }
 
     public static CallSite runtimeBootstrap(MethodHandles.Lookup caller, String name, MethodType type) {
@@ -3431,6 +3454,178 @@ public final class ScriptRuntime {
         /* step 8 */
         PropertyDescriptor desc = new PropertyDescriptor(closure, true, enumerable, true);
         /* step 9 */
+        DefinePropertyOrThrow(cx, object, propKey, desc);
+    }
+
+    /**
+     * Extension: Async Generator Function Definitions
+     * 
+     * @param scope
+     *            the current lexical scope
+     * @param cx
+     *            the execution context
+     * @param fd
+     *            the function runtime info object
+     * @return the new async generator instance
+     */
+    public static OrdinaryAsyncGenerator InstantiateAsyncGeneratorObject(LexicalEnvironment<?> scope,
+            ExecutionContext cx, RuntimeInfo.Function fd) {
+        /* step 1 (not applicable) */
+        /* step 2 */
+        String name = fd.functionName();
+        /* step 3 */
+        OrdinaryAsyncGenerator f = AsyncGeneratorFunctionCreate(cx, FunctionKind.Normal, fd, scope);
+        /* step 4 */
+        OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.AsyncGeneratorPrototype);
+        /* step 5 */
+        f.infallibleDefineOwnProperty("prototype", new Property(prototype, true, false, false));
+        /* step 6 */
+        SetFunctionName(f, name);
+        /* step 7 */
+        return f;
+    }
+
+    /**
+     * Extension: Async Generator Function Definitions
+     * 
+     * @param fd
+     *            the function runtime info object
+     * @param cx
+     *            the execution context
+     * @return the new async generator instance
+     */
+    public static OrdinaryAsyncGenerator EvaluateAsyncGeneratorExpression(RuntimeInfo.Function fd,
+            ExecutionContext cx) {
+        OrdinaryAsyncGenerator closure;
+        if (!fd.is(RuntimeInfo.FunctionFlags.ScopedName)) {
+            /* step 1 (not applicable) */
+            /* step 2 */
+            LexicalEnvironment<?> scope = cx.getLexicalEnvironment();
+            /* step 3 */
+            closure = AsyncGeneratorFunctionCreate(cx, FunctionKind.Normal, fd, scope);
+            /* step 4 */
+            OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.AsyncGeneratorPrototype);
+            /* step 5 */
+            closure.infallibleDefineOwnProperty("prototype", new Property(prototype, true, false, false));
+        } else {
+            /* step 1 (not applicable) */
+            /* step 2 */
+            LexicalEnvironment<?> scope = cx.getLexicalEnvironment();
+            /* step 3 */
+            LexicalEnvironment<DeclarativeEnvironmentRecord> funcEnv = newDeclarativeEnvironment(scope);
+            /* step 4 */
+            DeclarativeEnvironmentRecord envRec = funcEnv.getEnvRec();
+            /* step 5 */
+            String name = fd.functionName();
+            /* step 6 */
+            envRec.createImmutableBinding(name, false);
+            /* step 7 */
+            closure = AsyncGeneratorFunctionCreate(cx, FunctionKind.Normal, fd, funcEnv);
+            /* step 8 */
+            OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.AsyncGeneratorPrototype);
+            /* step 9 */
+            closure.infallibleDefineOwnProperty("prototype", new Property(prototype, true, false, false));
+            /* step 10 */
+            SetFunctionName(closure, name);
+            /* step 11 */
+            envRec.initializeBinding(name, closure);
+        }
+        /* step 6/12 */
+        return closure;
+    }
+
+    /**
+     * Extension: Async Generator Function Definitions
+     * 
+     * @param object
+     *            the script object
+     * @param propKey
+     *            the property key
+     * @param enumerable
+     *            the enumerable property attribute
+     * @param cx
+     *            the execution context
+     * @param fd
+     *            the function runtime info object
+     */
+    public static void EvaluatePropertyDefinitionAsyncGenerator(OrdinaryObject object, Object propKey,
+            boolean enumerable, RuntimeInfo.Function fd, ExecutionContext cx) {
+        if (propKey instanceof String) {
+            EvaluatePropertyDefinitionAsyncGenerator(object, (String) propKey, enumerable, fd, cx);
+        } else {
+            EvaluatePropertyDefinitionAsyncGenerator(object, (Symbol) propKey, enumerable, fd, cx);
+        }
+    }
+
+    /**
+     * Extension: Async Generator Function Definitions
+     * 
+     * @param object
+     *            the script object
+     * @param propKey
+     *            the property key
+     * @param enumerable
+     *            the enumerable property attribute
+     * @param cx
+     *            the execution context
+     * @param fd
+     *            the function runtime info object
+     */
+    public static void EvaluatePropertyDefinitionAsyncGenerator(OrdinaryObject object, String propKey,
+            boolean enumerable, RuntimeInfo.Function fd, ExecutionContext cx) {
+        /* steps 1-2 (bytecode) */
+        /* step 3 (not applicable) */
+        /* step 4 */
+        LexicalEnvironment<?> scope = cx.getLexicalEnvironment();
+        /* step 5 */
+        OrdinaryAsyncGenerator closure = AsyncGeneratorFunctionCreate(cx, FunctionKind.Method, fd, scope);
+        /* step 6 */
+        MakeMethod(closure, object);
+        /* step 7 */
+        OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.AsyncGeneratorPrototype);
+        /* step 8 */
+        closure.infallibleDefineOwnProperty("prototype", new Property(prototype, true, false, false));
+        /* step 9 */
+        SetFunctionName(closure, propKey);
+        /* step 10 */
+        PropertyDescriptor desc = new PropertyDescriptor(closure, true, enumerable, true);
+        /* step 11 */
+        DefinePropertyOrThrow(cx, object, propKey, desc);
+    }
+
+    /**
+     * Extension: Async Generator Function Definitions
+     * 
+     * @param object
+     *            the script object
+     * @param propKey
+     *            the property key
+     * @param enumerable
+     *            the enumerable property attribute
+     * @param fd
+     *            the function runtime info object
+     * @param cx
+     *            the execution context
+     */
+    public static void EvaluatePropertyDefinitionAsyncGenerator(OrdinaryObject object, Symbol propKey,
+            boolean enumerable, RuntimeInfo.Function fd, ExecutionContext cx) {
+        /* steps 1-2 (bytecode) */
+        /* step 3 (not applicable) */
+        /* step 4 */
+        LexicalEnvironment<?> scope = cx.getLexicalEnvironment();
+        /* step 5 */
+        OrdinaryAsyncGenerator closure = AsyncGeneratorFunctionCreate(cx, FunctionKind.Method, fd, scope);
+        /* step 6 */
+        MakeMethod(closure, object);
+        /* step 7 */
+        OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.AsyncGeneratorPrototype);
+        /* step 8 */
+        closure.infallibleDefineOwnProperty("prototype", new Property(prototype, true, false, false));
+        /* step 9 */
+        SetFunctionName(closure, propKey);
+        /* step 10 */
+        PropertyDescriptor desc = new PropertyDescriptor(closure, true, enumerable, true);
+        /* step 11 */
         DefinePropertyOrThrow(cx, object, propKey, desc);
     }
 

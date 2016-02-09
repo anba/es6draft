@@ -29,8 +29,8 @@ public final class MethodDefinition extends PropertyDefinition implements Functi
     private StrictMode strictMode;
 
     public enum MethodType {
-        AsyncFunction, BaseConstructor, DerivedConstructor, CallConstructor, Function, Generator, ConstructorGenerator,
-        Getter, Setter
+        AsyncFunction, AsyncGenerator, BaseConstructor, DerivedConstructor, CallConstructor, Function, Generator,
+        ConstructorGenerator, Getter, Setter
     }
 
     public enum MethodAllocation {
@@ -183,13 +183,6 @@ public final class MethodDefinition extends PropertyDefinition implements Functi
             return "get " + fname;
         case Setter:
             return "set " + fname;
-        case AsyncFunction:
-        case BaseConstructor:
-        case DerivedConstructor:
-        case CallConstructor:
-        case Function:
-        case Generator:
-        case ConstructorGenerator:
         default:
             return fname;
         }
@@ -215,13 +208,6 @@ public final class MethodDefinition extends PropertyDefinition implements Functi
             return "get " + fname;
         case Setter:
             return "set " + fname;
-        case AsyncFunction:
-        case BaseConstructor:
-        case DerivedConstructor:
-        case CallConstructor:
-        case Function:
-        case Generator:
-        case ConstructorGenerator:
         default:
             return fname;
         }
@@ -274,12 +260,25 @@ public final class MethodDefinition extends PropertyDefinition implements Functi
 
     @Override
     public boolean isGenerator() {
-        return type == MethodType.Generator || type == MethodType.ConstructorGenerator;
+        switch (type) {
+        case AsyncGenerator:
+        case Generator:
+        case ConstructorGenerator:
+            return true;
+        default:
+            return false;
+        }
     }
 
     @Override
     public boolean isAsync() {
-        return type == MethodType.AsyncFunction;
+        switch (type) {
+        case AsyncFunction:
+        case AsyncGenerator:
+            return true;
+        default:
+            return false;
+        }
     }
 
     @Override
@@ -289,12 +288,6 @@ public final class MethodDefinition extends PropertyDefinition implements Functi
         case DerivedConstructor:
         case ConstructorGenerator:
             return true;
-        case AsyncFunction:
-        case CallConstructor:
-        case Function:
-        case Generator:
-        case Getter:
-        case Setter:
         default:
             return false;
         }

@@ -43,6 +43,10 @@ public interface VoidNodeVisitor<V> {
 
     void visit(AsyncFunctionExpression node, V value);
 
+    void visit(AsyncGeneratorDeclaration node, V value);
+
+    void visit(AsyncGeneratorExpression node, V value);
+
     void visit(AwaitExpression node, V value);
 
     void visit(BinaryExpression node, V value);
@@ -114,6 +118,8 @@ public interface VoidNodeVisitor<V> {
     void visit(ExpressionMethod node, V value);
 
     void visit(ExpressionStatement node, V value);
+
+    void visit(ForAwaitStatement node, V value);
 
     void visit(ForEachStatement node, V value);
 

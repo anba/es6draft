@@ -319,6 +319,30 @@ abstract class CodeVisitor extends InstructionVisitor {
     }
 
     /**
+     * Returns {@code true} if compiling async function code.
+     * 
+     * @return {@code true} if compiling async function code
+     */
+    final boolean isAsync() {
+        if (topLevelNode instanceof FunctionNode) {
+            return ((FunctionNode) topLevelNode).isAsync();
+        }
+        return false;
+    }
+
+    /**
+     * Returns {@code true} if compiling generator function code.
+     * 
+     * @return {@code true} if compiling generator function code
+     */
+    final boolean isGenerator() {
+        if (topLevelNode instanceof FunctionNode) {
+            return ((FunctionNode) topLevelNode).isGenerator();
+        }
+        return false;
+    }
+
+    /**
      * Returns {@code true} if compiling generator or async function code.
      * 
      * @return {@code true} if compiling generator or async function code
