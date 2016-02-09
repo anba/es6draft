@@ -207,6 +207,7 @@ final class PropertyGenerator extends
                 break;
             case BaseConstructor:
             case DerivedConstructor:
+            case CallConstructor:
             default:
                 throw new AssertionError("invalid method type");
             }
@@ -238,6 +239,7 @@ final class PropertyGenerator extends
                 break;
             case BaseConstructor:
             case DerivedConstructor:
+            case CallConstructor:
             default:
                 throw new AssertionError("invalid method type");
             }

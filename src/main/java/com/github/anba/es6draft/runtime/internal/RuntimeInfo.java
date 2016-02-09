@@ -431,6 +431,16 @@ public final class RuntimeInfo {
          */
         Eval(0x20000),
 
+        /**
+         * Flag for tail-call functions.
+         */
+        TailConstruct(0x40000),
+
+        /**
+         * Flag for class functions.
+         */
+        Class(0x80000),
+
         ;
 
         private final int value;

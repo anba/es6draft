@@ -12,8 +12,7 @@ import static com.github.anba.es6draft.semantics.StaticSemantics.IsStrict;
 import java.lang.invoke.CallSite;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
+import java.util.function.BiConsumer;
 
 import com.github.anba.es6draft.ast.*;
 import com.github.anba.es6draft.compiler.CodeGenerator.FunctionName;
@@ -76,7 +75,7 @@ final class RuntimeInfoGenerator {
         this.codegen = codegen;
     }
 
-    private int functionFlags(FunctionNode node, boolean tailCall) {
+    private int functionFlags(FunctionNode node, boolean tailCall, boolean tailConstruct) {
         boolean strict = IsStrict(node);
         int functionFlags = 0;
         if (strict) {
@@ -100,22 +99,21 @@ final class RuntimeInfoGenerator {
         if (node instanceof Expression) {
             functionFlags |= FunctionFlags.Expression.getValue();
         }
-        if (node instanceof ArrowFunction && ((ArrowFunction) node).getExpression() != null) {
-            functionFlags |= FunctionFlags.ConciseBody.getValue();
-        } else if (node instanceof AsyncArrowFunction
-                && ((AsyncArrowFunction) node).getExpression() != null) {
+        if (hasConciseBody(node)) {
             functionFlags |= FunctionFlags.ConciseBody.getValue();
         }
         if (node instanceof MethodDefinition) {
-            functionFlags |= FunctionFlags.Method.getValue();
-            if (((MethodDefinition) node).isStatic()) {
-                functionFlags |= FunctionFlags.Static.getValue();
+            MethodDefinition method = (MethodDefinition) node;
+            if (method.isClassConstructor()) {
+                functionFlags |= FunctionFlags.Class.getValue();
+            } else {
+                functionFlags |= FunctionFlags.Method.getValue();
+                if (method.isStatic()) {
+                    functionFlags |= FunctionFlags.Static.getValue();
+                }
             }
         }
-        if (node instanceof LegacyGeneratorDeclaration
-                || node instanceof LegacyGeneratorExpression
-                || (node instanceof GeneratorComprehension && ((GeneratorComprehension) node)
-                        .getComprehension() instanceof LegacyComprehension)) {
+        if (isLegacyGenerator(node)) {
             functionFlags |= FunctionFlags.LegacyGenerator.getValue();
         }
         if (isLegacy(node)) {
@@ -134,6 +132,10 @@ final class RuntimeInfoGenerator {
             assert !node.isGenerator() && !node.isAsync() && strict;
             functionFlags |= FunctionFlags.TailCall.getValue();
         }
+        if (tailConstruct) {
+            assert !node.isGenerator() && !node.isAsync() && strict;
+            functionFlags |= FunctionFlags.TailConstruct.getValue();
+        }
         if (codegen.isEnabled(Parser.Option.NativeFunction)) {
             functionFlags |= FunctionFlags.Native.getValue();
         }
@@ -141,6 +143,16 @@ final class RuntimeInfoGenerator {
             functionFlags |= FunctionFlags.Eval.getValue();
         }
         return functionFlags;
+    }
+
+    private boolean hasConciseBody(FunctionNode node) {
+        if (node instanceof ArrowFunction) {
+            return ((ArrowFunction) node).getExpression() != null;
+        }
+        if (node instanceof AsyncArrowFunction) {
+            return ((AsyncArrowFunction) node).getExpression() != null;
+        }
+        return false;
     }
 
     private boolean isLegacy(FunctionNode node) {
@@ -154,46 +166,62 @@ final class RuntimeInfoGenerator {
                 || codegen.isEnabled(CompatibilityOption.FunctionCaller);
     }
 
+    private boolean isLegacyGenerator(FunctionNode node) {
+        if (node instanceof LegacyGeneratorDeclaration || node instanceof LegacyGeneratorExpression) {
+            return true;
+        }
+        if (node instanceof GeneratorComprehension) {
+            return ((GeneratorComprehension) node).getComprehension() instanceof LegacyComprehension;
+        }
+        return false;
+    }
+
     private static boolean hasScopedName(FunctionNode node) {
         return node instanceof Expression && node.getIdentifier() != null;
     }
 
-    private static <T> T get(Future<T> future) {
-        try {
-            return future.get();
-        } catch (InterruptedException | ExecutionException e) {
-            throw new RuntimeException(e);
-        }
+    private static final Handle RUNTIME_INFO_BOOTSTRAP = MethodName
+            .findStatic(RuntimeInfo.class, "bootstrap",
+                    MethodType.methodType(CallSite.class, MethodHandles.Lookup.class, String.class, MethodType.class))
+            .toHandle();
+
+    void runtimeInfo(ClassDefinition node, boolean tailCall, boolean tailConstruct, String source) {
+        MethodDefinition constructor = node.getConstructor();
+        // Cf. CodeGenerator#getSource(ClassDefinition)
+        int split = "constructor{}".length() + constructor.getHeaderSource().length()
+                + constructor.getBodySource().length();
+        runtimeInfo(node, constructor, tailCall, tailConstruct, source, split, this::debugInfo);
     }
 
-    private static final Handle RUNTIME_INFO_BOOTSTRAP = MethodName.findStatic(
-            RuntimeInfo.class,
-            "bootstrap",
-            MethodType.methodType(CallSite.class, MethodHandles.Lookup.class, String.class,
-                    MethodType.class)).toHandle();
+    void runtimeInfo(FunctionNode node, boolean tailCall, String source) {
+        runtimeInfo(node, node, tailCall, tailCall, source, node.getHeaderSource().length(), this::debugInfo);
+    }
 
-    void runtimeInfo(FunctionNode node, boolean tailCall, Future<String> source) {
-        InstructionAssembler asm = new InstructionAssembler(codegen.newMethod(node,
-                FunctionName.RTI));
+    private <T extends Node> void runtimeInfo(T def, FunctionNode node, boolean tailCall, boolean tailConstruct,
+            String source, int sourceSplit, BiConsumer<T, FunctionName> debugInfo) {
+        FunctionName constructName = tailConstruct ? FunctionName.ConstructTailCall : FunctionName.Construct;
+        InstructionAssembler asm = new InstructionAssembler(codegen.newMethod(node, FunctionName.RTI));
         asm.begin();
 
         asm.invokedynamic("methodInfo", Type.methodType(Types.Object), RUNTIME_INFO_BOOTSTRAP);
         asm.aconst(node.getFunctionName());
-        asm.iconst(functionFlags(node, tailCall));
+        asm.iconst(functionFlags(node, tailCall, tailConstruct));
         asm.iconst(ExpectedArgumentCount(node.getParameters()));
-        asm.aconst(get(source));
-        asm.iconst(node.getHeaderSource().length());
-        asm.handle(codegen.methodDesc(node, FunctionName.Code));
+        asm.aconst(source);
+        asm.iconst(sourceSplit);
+        if (node.isAsync() || node.isGenerator()) {
+            asm.handle(codegen.methodDesc(node, FunctionName.Code));
+        } else {
+            asm.anull();
+        }
         asm.handle(codegen.methodDesc(node, FunctionName.Call));
         if (node.isConstructor()) {
-            FunctionName constructName = tailCall ? FunctionName.ConstructTailCall
-                    : FunctionName.Construct;
             asm.handle(codegen.methodDesc(node, constructName));
         } else {
             asm.anull();
         }
         if (codegen.isEnabled(Compiler.Option.DebugInfo)) {
-            debugInfo(node, tailCall);
+            debugInfo.accept(def, constructName);
             asm.handle(codegen.methodDesc(node, FunctionName.DebugInfo));
             asm.invoke(Methods.RTI_newFunctionDebug);
         } else {
@@ -243,10 +271,8 @@ final class RuntimeInfoGenerator {
         asm.end();
     }
 
-    private void debugInfo(FunctionNode node, boolean tailCall) {
+    private void debugInfo(FunctionNode node, FunctionName constructName) {
         if (node.isConstructor()) {
-            FunctionName constructName = tailCall ? FunctionName.ConstructTailCall
-                    : FunctionName.Construct;
             debugInfo(codegen.newMethod(node, FunctionName.DebugInfo),
                     codegen.methodDesc(node, FunctionName.RTI),
                     codegen.methodDesc(node, FunctionName.Call),
@@ -259,6 +285,28 @@ final class RuntimeInfoGenerator {
                     codegen.methodDesc(node, FunctionName.Call),
                     codegen.methodDesc(node, FunctionName.Init),
                     codegen.methodDesc(node, FunctionName.Code));
+        }
+    }
+
+    private void debugInfo(ClassDefinition node, FunctionName constructName) {
+        MethodDefinition constructor = node.getConstructor();
+        MethodDefinition callConstructor = node.getCallConstructor();
+        if (callConstructor == null) {
+            debugInfo(codegen.newMethod(constructor, FunctionName.DebugInfo),
+                    codegen.methodDesc(constructor, FunctionName.RTI),
+                    codegen.methodDesc(constructor, FunctionName.Call),
+                    codegen.methodDesc(constructor, constructName),
+                    codegen.methodDesc(constructor, FunctionName.Init),
+                    codegen.methodDesc(constructor, FunctionName.Code));
+        } else {
+            debugInfo(codegen.newMethod(constructor, FunctionName.DebugInfo),
+                    codegen.methodDesc(constructor, FunctionName.RTI),
+                    codegen.methodDesc(constructor, FunctionName.Call),
+                    codegen.methodDesc(callConstructor, FunctionName.Init),
+                    codegen.methodDesc(callConstructor, FunctionName.Code),
+                    codegen.methodDesc(constructor, constructName),
+                    codegen.methodDesc(constructor, FunctionName.Init),
+                    codegen.methodDesc(constructor, FunctionName.Code));
         }
     }
 

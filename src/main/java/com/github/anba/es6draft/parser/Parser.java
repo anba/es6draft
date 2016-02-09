@@ -3681,16 +3681,29 @@ public final class Parser {
             Expression propertyValue = assignmentExpression(true);
             return new PropertyValueDefinition(begin, ts.endPosition(), propertyName, propertyValue);
         }
-        return normalMethod(allocation, hasExtends, decorators, begin, propertyName);
+        return normalMethod(allocation, hasExtends, decorators, begin, propertyName, false);
     }
 
-    private MethodDefinition normalMethod(MethodAllocation allocation, boolean hasExtends,
-            List<Expression> decorators, long begin, PropertyName propertyName) {
+    private MethodDefinition callConstructor(boolean hasExtends, List<Expression> decorators) {
+        // FIXME: spec issue - decorators on call constructors?
+        if (!decorators.isEmpty()) {
+            reportSyntaxError(decorators.get(0), Messages.Key.InvalidCallConstructorDecorator);
+        }
+        long beginPosition = ts.beginPosition();
+        consume("call");
+        assert isName("constructor");
+        PropertyName propertyName = propertyName();
+        return normalMethod(MethodAllocation.Prototype, hasExtends, decorators, beginPosition, propertyName, true);
+    }
+
+    private MethodDefinition normalMethod(MethodAllocation allocation, boolean hasExtends, List<Expression> decorators,
+            long begin, PropertyName propertyName, boolean callConstructor) {
         newContext(ContextKind.Method);
         try {
             MethodType type;
-            if (allocation == MethodAllocation.Prototype
-                    && "constructor".equals(propertyName.getName())) {
+            if (callConstructor) {
+                type = MethodType.CallConstructor;
+            } else if (allocation == MethodAllocation.Prototype && "constructor".equals(propertyName.getName())) {
                 context.isDerivedClassConstructor = hasExtends;
                 type = hasExtends ? MethodType.DerivedConstructor : MethodType.BaseConstructor;
             } else {
@@ -4440,6 +4453,11 @@ public final class Parser {
                     staticMethods.add(method);
                     methods.add(method);
                 }
+            } else if (isName("call") && isNextName("constructor") && isEnabled(CompatibilityOption.CallConstructor)) {
+                property = callConstructor(hasExtends, decorators);
+                method = (MethodDefinition) property;
+                prototypeMethods.add(method);
+                methods.add(method);
             } else {
                 property = methodDefinition(MethodAllocation.Prototype, hasExtends, decorators);
                 method = (MethodDefinition) property;
@@ -4503,20 +4521,33 @@ public final class Parser {
                 reportSyntaxError(def, Messages.Key.InvalidPrototypeMethod);
             }
         }
-        boolean hasConstructor = false;
+        boolean hasConstructor = false, hasCallConstructor = false;
         for (MethodDefinition def : prototypeMethods) {
             String key = def.getPropertyName().getName();
             if (key == null) {
                 assert def.getPropertyName() instanceof ComputedPropertyName;
                 continue;
             }
-            if ("constructor".equals(key)) {
+            if (!"constructor".equals(key)) {
+                continue;
+            }
+            switch (def.getType()) {
+            case BaseConstructor:
+            case DerivedConstructor:
                 if (hasConstructor) {
-                    reportSyntaxError(def, Messages.Key.DuplicatePropertyDefinition, key);
-                } else if (SpecialMethod(def)) {
-                    reportSyntaxError(def, Messages.Key.InvalidConstructorMethod);
+                    reportSyntaxError(def, Messages.Key.DuplicateConstructor, key);
                 }
                 hasConstructor = true;
+                break;
+            case CallConstructor:
+                if (hasCallConstructor) {
+                    reportSyntaxError(def, Messages.Key.DuplicateCallConstructor, key);
+                }
+                hasCallConstructor = true;
+                break;
+            default:
+                assert SpecialMethod(def);
+                throw reportSyntaxError(def, Messages.Key.InvalidConstructorMethod);
             }
         }
     }
@@ -4856,6 +4887,7 @@ public final class Parser {
             // FIXME: bug in spec proposal, AssignmentExpression not valid, cf. `{ @ F * G () {} }`.
             // And: `{ @ D ["m"] () {} }`.
             // https://github.com/wycats/javascript-decorators/issues/10
+            // TODO: Add new ast node for decorator to include @ sign?
             consume(Token.AT);
             decorators.add(leftHandSideExpressionWithValidation(false));
         } while (token() == Token.AT);
@@ -7510,7 +7542,7 @@ public final class Parser {
                 }
                 return new PropertyValueDefinition(begin, ts.endPosition(), propertyName, propertyValue);
             }
-            return normalMethod(MethodAllocation.Object, false, NO_DECORATORS, begin, propertyName);
+            return normalMethod(MethodAllocation.Object, false, NO_DECORATORS, begin, propertyName, false);
         }
         if (token() == Token.TRIPLE_DOT && (isEnabled(CompatibilityOption.ObjectSpreadInitializer)
                 || isEnabled(CompatibilityOption.ObjectRestDestructuring))) {

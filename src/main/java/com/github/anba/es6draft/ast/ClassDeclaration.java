@@ -6,6 +6,7 @@
  */
 package com.github.anba.es6draft.ast;
 
+import static com.github.anba.es6draft.semantics.StaticSemantics.CallConstructorMethod;
 import static com.github.anba.es6draft.semantics.StaticSemantics.ConstructorMethod;
 
 import java.util.List;
@@ -27,6 +28,7 @@ public final class ClassDeclaration extends Declaration implements ClassDefiniti
     private final Expression heritage;
     private final List<MethodDefinition> methods;
     private final MethodDefinition constructor;
+    private final MethodDefinition callConstructor;
     private final String className;
     private List<PropertyDefinition> properties;
 
@@ -42,6 +44,7 @@ public final class ClassDeclaration extends Declaration implements ClassDefiniti
         this.methods = methods;
         this.properties = properties;
         this.constructor = ConstructorMethod(methods);
+        this.callConstructor = CallConstructorMethod(methods);
         this.className = className;
     }
 
@@ -93,6 +96,11 @@ public final class ClassDeclaration extends Declaration implements ClassDefiniti
     @Override
     public MethodDefinition getConstructor() {
         return constructor;
+    }
+
+    @Override
+    public MethodDefinition getCallConstructor() {
+        return callConstructor;
     }
 
     @Override

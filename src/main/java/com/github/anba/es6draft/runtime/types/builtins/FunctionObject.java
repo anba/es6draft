@@ -240,7 +240,7 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
 
     private static MethodHandle tailConstructAdapter(RuntimeInfo.Function function) {
         MethodHandle mh = function.constructMethod();
-        if (mh != null && function.is(RuntimeInfo.FunctionFlags.TailCall)) {
+        if (mh != null && function.is(RuntimeInfo.FunctionFlags.TailConstruct)) {
             assert !function.isGenerator() && !function.isAsync() && function.isStrict();
             MethodHandle result = TailCallInvocation.getTailConstructHandler();
             result = MethodHandles.dropArguments(result, 1, OrdinaryConstructorFunction.class);

@@ -18,6 +18,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -428,6 +429,7 @@ final class CodeGenerator {
             if (node.isConstructor()) {
                 return MethodDescriptors.ConstructorFunction_Call;
             }
+            assert !isCallConstructor(node);
             return MethodDescriptors.Function_Call;
         case ConstructTailCall:
             assert node.isConstructor() && !isLegacy(node) && !node.isGenerator() && !node.isAsync();
@@ -451,7 +453,7 @@ final class CodeGenerator {
             if (isLegacy(node)) {
                 return MethodDescriptors.LegacyFunction_Code;
             }
-            if (node.isConstructor()) {
+            if (node.isConstructor()|| isCallConstructor(node)) {
                 return MethodDescriptors.ConstructorFunction_Code;
             }
             return MethodDescriptors.Function_Code;
@@ -465,7 +467,7 @@ final class CodeGenerator {
             if (isLegacy(node)) {
                 return MethodDescriptors.LegacyFunction_Init;
             }
-            if (node.isConstructor()) {
+            if (node.isConstructor() || isCallConstructor(node)) {
                 return MethodDescriptors.ConstructorFunction_Init;
             }
             return MethodDescriptors.Function_Init;
@@ -486,6 +488,13 @@ final class CodeGenerator {
             return false;
         }
         return isEnabled(CompatibilityOption.FunctionArguments) || isEnabled(CompatibilityOption.FunctionCaller);
+    }
+
+    private boolean isCallConstructor(FunctionNode node) {
+        if (node instanceof MethodDefinition) {
+            return ((MethodDefinition) node).isCallConstructor();
+        }
+        return false;
     }
 
     private MethodTypeDescriptor methodDescriptor(Script node, ScriptName name) {
@@ -806,6 +815,32 @@ final class CodeGenerator {
         mv.end();
     }
 
+    void compile(ClassDefinition node) {
+        MethodDefinition constructor = node.getConstructor();
+        MethodDefinition callConstructor = node.getCallConstructor();
+        if (!isCompiled(constructor)) {
+            assert callConstructor == null || !isCompiled(callConstructor);
+
+            Future<String> source = getSource(node);
+
+            // initialization method
+            new FunctionDeclarationInstantiationGenerator(this).generate(constructor);
+            if (callConstructor != null) {
+                new FunctionDeclarationInstantiationGenerator(this).generate(callConstructor);
+            }
+
+            // runtime method
+            boolean tailConstruct = functionBody(constructor);
+            boolean tailCall = callConstructor != null ? functionBody(callConstructor) : false;
+
+            // call method
+            new FunctionCodeGenerator(this).generate(node, tailCall, tailConstruct);
+
+            // runtime-info method
+            new RuntimeInfoGenerator(this).runtimeInfo(node, tailCall, tailConstruct, result(source));
+        }
+    }
+
     void compile(GeneratorComprehension node) {
         compile((FunctionNode) node);
     }
@@ -823,6 +858,7 @@ final class CodeGenerator {
     }
 
     void compile(MethodDefinition node) {
+        assert !(node.isClassConstructor() || node.isCallConstructor());
         compile((FunctionNode) node);
     }
 
@@ -862,8 +898,26 @@ final class CodeGenerator {
             new FunctionCodeGenerator(this).generate(node, tailCall);
 
             // runtime-info method
-            new RuntimeInfoGenerator(this).runtimeInfo(node, tailCall, source);
+            new RuntimeInfoGenerator(this).runtimeInfo(node, tailCall, result(source));
         }
+    }
+
+    private Future<String> getSource(ClassDefinition node) {
+        if (INCLUDE_SOURCE && !isEnabled(Parser.Option.NativeFunction)) {
+            StringBuilder sb = new StringBuilder();
+            appendMethodSource(sb, "constructor", node.getConstructor());
+            if (node.getCallConstructor() != null) {
+                sb.append('\n');
+                appendMethodSource(sb, "call constructor", node.getCallConstructor());
+            }
+            return executor.submit(new CompressSourceTask(sb.toString()));
+        }
+        return NO_SOURCE;
+    }
+
+    private static void appendMethodSource(StringBuilder sb, String methodName, MethodDefinition method) {
+        // Ignores implicit-strict compatibility option.
+        sb.append(methodName).append(method.getHeaderSource()).append('{').append(method.getBodySource()).append('}');
     }
 
     private Future<String> getSource(FunctionNode node) {
@@ -872,6 +926,14 @@ final class CodeGenerator {
             return executor.submit(new CompressSourceTask(source));
         }
         return NO_SOURCE;
+    }
+
+    private static <T> T result(Future<T> future) {
+        try {
+            return future.get();
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private static final class CompressSourceTask implements Callable<String> {

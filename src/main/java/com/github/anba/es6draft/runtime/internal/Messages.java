@@ -133,6 +133,8 @@ public final class Messages {
         InvalidNewTarget("parser.invalid_new_target"),
         MissingColonAfterPropertyId("parser.missing_colon_after_property_id"),
         DuplicatePropertyDefinition("parser.duplicate_property_definition"),
+        DuplicateConstructor("parser.duplicate_constructor"),
+        DuplicateCallConstructor("parser.duplicate_call_constructor"),
         InvalidReturnStatement("parser.invalid_return_statement"),
         InvalidYieldExpression("parser.invalid_yield_expression"),
         InvalidAwaitExpression("parser.invalid_await_expression"),
@@ -152,6 +154,7 @@ public final class Messages {
         InvalidForStatementLeftHandSide("parser.invalid_for_statement_lhs"),
         InvalidForEachStatement("parser.invalid_for_each_statement"),
         InvalidFunctionSent("parser.invalid_function_sent"),
+        InvalidCallConstructorDecorator("parser.invalid_call_constructor_decorator"),
 
         // strict mode TokenStream/Parser errors
         StrictModeRestrictedIdentifier("parser.strict.restricted_identifier"),

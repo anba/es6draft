@@ -69,6 +69,13 @@ public interface ClassDefinition extends ScopedNode {
     MethodDefinition getConstructor();
 
     /**
+     * Returns the call constructor method.
+     * 
+     * @return the call constructor method
+     */
+    MethodDefinition getCallConstructor();
+
+    /**
      * Returns the list of class properties.
      * 
      * @return the list of class properties

@@ -152,7 +152,7 @@ final class FunctionDeclarationInstantiationGenerator extends
             return Types.OrdinaryAsyncFunction;
         } else if (isLegacy(node)) {
             return Types.LegacyConstructorFunction;
-        } else if (node.isConstructor()) {
+        } else if (node.isConstructor() || isCallConstructor(node)) {
             return Types.OrdinaryConstructorFunction;
         } else {
             return Types.OrdinaryFunction;
@@ -166,7 +166,7 @@ final class FunctionDeclarationInstantiationGenerator extends
             return OrdinaryAsyncFunction.class;
         } else if (isLegacy(node)) {
             return LegacyConstructorFunction.class;
-        } else if (node.isConstructor()) {
+        } else if (node.isConstructor() || isCallConstructor(node)) {
             return OrdinaryConstructorFunction.class;
         } else {
             return OrdinaryFunction.class;
@@ -592,5 +592,12 @@ final class FunctionDeclarationInstantiationGenerator extends
         }
         return codegen.isEnabled(CompatibilityOption.FunctionArguments)
                 || codegen.isEnabled(CompatibilityOption.FunctionCaller);
+    }
+
+    private boolean isCallConstructor(FunctionNode node) {
+        if (node instanceof MethodDefinition) {
+            return ((MethodDefinition) node).isCallConstructor();
+        }
+        return false;
     }
 }

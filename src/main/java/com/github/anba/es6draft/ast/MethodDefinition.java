@@ -30,7 +30,7 @@ public final class MethodDefinition extends PropertyDefinition implements Functi
     private boolean syntheticNodes;
 
     public enum MethodType {
-        AsyncFunction, BaseConstructor, DerivedConstructor, Function, Generator, Getter, Setter
+        AsyncFunction, BaseConstructor, DerivedConstructor, CallConstructor, Function, Generator, Getter, Setter
     }
 
     public enum MethodAllocation {
@@ -106,6 +106,15 @@ public final class MethodDefinition extends PropertyDefinition implements Functi
     }
 
     /**
+     * Returns {@code true} if this method is a <code>call constructor</code> method definition.
+     * 
+     * @return {@code true} if this method is a <code>call constructor</code> method definition
+     */
+    public boolean isCallConstructor() {
+        return type == MethodType.CallConstructor;
+    }
+
+    /**
      * Returns the list of method decorators.
      * 
      * @return the list of decorators
@@ -148,9 +157,15 @@ public final class MethodDefinition extends PropertyDefinition implements Functi
             if (allocation == MethodAllocation.Prototype && className != null) {
                 if (isClassConstructor()) {
                     fname = className;
+                } else if (isCallConstructor()) {
+                    assert "constructor".equals(pname);
+                    fname = className + '.' + "call constructor";
                 } else {
                     fname = className + '.' + pname;
                 }
+            } else if (isCallConstructor()) {
+                assert "constructor".equals(pname);
+                fname = "call constructor";
             } else {
                 fname = pname;
             }
@@ -171,6 +186,7 @@ public final class MethodDefinition extends PropertyDefinition implements Functi
         case AsyncFunction:
         case BaseConstructor:
         case DerivedConstructor:
+        case CallConstructor:
         case Function:
         case Generator:
         default:
@@ -201,6 +217,7 @@ public final class MethodDefinition extends PropertyDefinition implements Functi
         case AsyncFunction:
         case BaseConstructor:
         case DerivedConstructor:
+        case CallConstructor:
         case Function:
         case Generator:
         default:
@@ -255,22 +272,23 @@ public final class MethodDefinition extends PropertyDefinition implements Functi
 
     @Override
     public boolean isGenerator() {
-        return getType() == MethodType.Generator;
+        return type == MethodType.Generator;
     }
 
     @Override
     public boolean isAsync() {
-        return getType() == MethodType.AsyncFunction;
+        return type == MethodType.AsyncFunction;
     }
 
     @Override
     public boolean isConstructor() {
-        switch (getType()) {
+        switch (type) {
         case BaseConstructor:
         case DerivedConstructor:
         case Generator:
             return true;
         case AsyncFunction:
+        case CallConstructor:
         case Function:
         case Getter:
         case Setter:

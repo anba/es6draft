@@ -6,6 +6,7 @@
  */
 package com.github.anba.es6draft.ast;
 
+import static com.github.anba.es6draft.semantics.StaticSemantics.CallConstructorMethod;
 import static com.github.anba.es6draft.semantics.StaticSemantics.ConstructorMethod;
 
 import java.util.List;
@@ -25,6 +26,7 @@ public final class ClassExpression extends Expression implements ClassDefinition
     private final Expression heritage;
     private final List<MethodDefinition> methods;
     private final MethodDefinition constructor;
+    private final MethodDefinition callConstructor;
     private List<PropertyDefinition> properties;
 
     public ClassExpression(long beginPosition, long endPosition, BlockScope scope,
@@ -38,6 +40,7 @@ public final class ClassExpression extends Expression implements ClassDefinition
         this.methods = methods;
         this.properties = properties;
         this.constructor = ConstructorMethod(methods);
+        this.callConstructor = CallConstructorMethod(methods);
     }
 
     @Override
@@ -73,6 +76,11 @@ public final class ClassExpression extends Expression implements ClassDefinition
     @Override
     public MethodDefinition getConstructor() {
         return constructor;
+    }
+
+    @Override
+    public MethodDefinition getCallConstructor() {
+        return callConstructor;
     }
 
     @Override

@@ -55,7 +55,7 @@ final class ClassPropertyGenerator extends DefaultCodeGenerator<Void, Expression
 
     @Override
     public Void visit(MethodDefinition node, ExpressionVisitor mv) {
-        if (!node.isClassConstructor()) {
+        if (!(node.isClassConstructor() || node.isCallConstructor())) {
             Variable<? extends OrdinaryObject> obj = node.isStatic() ? constructor : prototype;
             if (!node.getDecorators().isEmpty()) {
                 addDecoratorObject(decorators, obj, mv);

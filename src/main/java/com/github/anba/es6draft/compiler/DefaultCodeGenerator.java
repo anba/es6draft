@@ -1483,7 +1483,7 @@ abstract class DefaultCodeGenerator<RETURN, VISITOR extends ExpressionVisitor> e
         // stack: [constructorParent, proto] -> [constructorParent, proto, <rti>]
         MethodDefinition constructor = ConstructorMethod(def);
         assert constructor != null;
-        codegen.compile(constructor);
+        codegen.compile(def);
         // Runtime Semantics: Evaluation -> MethodDefinition
         mv.invoke(codegen.methodDesc(constructor, FunctionName.RTI));
 

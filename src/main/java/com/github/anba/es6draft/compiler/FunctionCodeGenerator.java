@@ -8,6 +8,7 @@ package com.github.anba.es6draft.compiler;
 
 import static com.github.anba.es6draft.semantics.StaticSemantics.IsStrict;
 
+import com.github.anba.es6draft.ast.ClassDefinition;
 import com.github.anba.es6draft.ast.FunctionDeclaration;
 import com.github.anba.es6draft.ast.FunctionExpression;
 import com.github.anba.es6draft.ast.FunctionNode;
@@ -185,6 +186,17 @@ final class FunctionCodeGenerator {
         this.codegen = codegen;
     }
 
+    void generate(ClassDefinition node, boolean tailCall, boolean tailConstruct) {
+        MethodDefinition constructor = node.getConstructor();
+        MethodDefinition callConstructor = node.getCallConstructor();
+        if (callConstructor == null) {
+            generateCall(constructor);
+        } else {
+            generateClassCall(node);
+        }
+        generateConstruct(constructor, tailConstruct);
+    }
+
     void generate(FunctionNode node, boolean tailCall) {
         generateCall(node);
         if (node.isConstructor()) {
@@ -230,6 +242,19 @@ final class FunctionCodeGenerator {
         } else {
             generateFunctionConstruct(node, tailCall, mv);
         }
+
+        mv.end();
+    }
+
+    private void generateClassCall(ClassDefinition node) {
+        MethodDefinition constructor = node.getConstructor();
+        MethodDefinition callConstructor = node.getCallConstructor();
+        MethodCode method = codegen.newMethod(constructor, FunctionName.Call);
+        InstructionVisitor mv = new CallMethodGenerator(method, targetName(constructor), targetType(constructor));
+        mv.lineInfo(callConstructor);
+        mv.begin();
+
+        generateFunctionCall(callConstructor, OrdinaryConstructorFunction.class, mv);
 
         mv.end();
     }

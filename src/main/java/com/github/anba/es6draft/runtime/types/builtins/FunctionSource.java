@@ -114,9 +114,8 @@ final class FunctionSource {
                 source.append(name);
             }
             source.append(parameters);
-        } else {
+        } else if (RuntimeInfo.FunctionFlags.Method.isSet(flags)) {
             // MethodDefinition
-            assert RuntimeInfo.FunctionFlags.Method.isSet(flags);
             if (RuntimeInfo.FunctionFlags.Static.isSet(flags)) {
                 source.append("static ");
             }
@@ -126,6 +125,11 @@ final class FunctionSource {
                 source.append('*');
             }
             source.append(name).append(parameters);
+        } else {
+            // ClassDefinition
+            assert RuntimeInfo.FunctionFlags.Class.isSet(flags);
+            // parameters = constructor method, body = optional call constructor method
+            return source.append(parameters).append(body).toString();
         }
         if (RuntimeInfo.FunctionFlags.ConciseBody.isSet(flags)) {
             source.append(body);

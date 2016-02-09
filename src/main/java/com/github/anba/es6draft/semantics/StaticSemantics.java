@@ -291,6 +291,22 @@ public final class StaticSemantics {
     }
 
     /**
+     * Static Semantics: CallConstructorMethod
+     * 
+     * @param methods
+     *            the methods list
+     * @return the call constructor method if found, otherwise {@code null}
+     */
+    public static MethodDefinition CallConstructorMethod(List<MethodDefinition> methods) {
+        for (MethodDefinition m : methods) {
+            if (m.isCallConstructor()) {
+                return m;
+            }
+        }
+        return null;
+    }
+
+    /**
      * Static Semantics: ContainsExpression
      * <ul>
      * <li>13.3.3.2 Static Semantics: ContainsExpression
@@ -1089,6 +1105,7 @@ public final class StaticSemantics {
             return true;
         case BaseConstructor:
         case DerivedConstructor:
+        case CallConstructor:
         case Function:
             return false;
         default:

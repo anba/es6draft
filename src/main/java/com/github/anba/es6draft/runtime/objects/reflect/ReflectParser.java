@@ -566,6 +566,7 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
         case AsyncFunction:
         case BaseConstructor:
         case DerivedConstructor:
+        case CallConstructor:
         case Function:
         case Generator:
         default:
@@ -581,6 +582,7 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
         case AsyncFunction:
         case BaseConstructor:
         case DerivedConstructor:
+        case CallConstructor:
         case Function:
         case Generator:
         default:
