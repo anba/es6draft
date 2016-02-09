@@ -155,6 +155,9 @@ public final class Messages {
         InvalidForEachStatement("parser.invalid_for_each_statement"),
         InvalidFunctionSent("parser.invalid_function_sent"),
         InvalidCallConstructorDecorator("parser.invalid_call_constructor_decorator"),
+        InvalidPropertyDecorator("parser.invalid_property_decorator"),
+        InvalidPrototypeProperty("parser.invalid_prototype_property"),
+        InvalidUseStrictDirective("parser.invalid_use_strict_directive"),
 
         // strict mode TokenStream/Parser errors
         StrictModeRestrictedIdentifier("parser.strict.restricted_identifier"),

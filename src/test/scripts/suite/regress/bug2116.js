@@ -27,7 +27,7 @@ function IsConstructor(o) {
 
 assertTrue(IsConstructor(Object));
 assertTrue(IsConstructor(function(){}));
-assertTrue(IsConstructor(function*(){}));
+assertFalse(IsConstructor(function*(){}));
 
 assertFalse(IsConstructor(Object.prototype));
 assertFalse(IsConstructor(Object.prototype.toString));

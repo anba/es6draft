@@ -298,8 +298,7 @@ public final class GlobalEnvironmentRecord implements EnvironmentRecord {
             return true;
         }
         /* step 8 */
-        if (existingProp.isDataDescriptor() && existingProp.isWritable()
-                && existingProp.isEnumerable()) {
+        if (existingProp.isDataDescriptor() && existingProp.isWritable() && existingProp.isEnumerable()) {
             return true;
         }
         /* step 9 */

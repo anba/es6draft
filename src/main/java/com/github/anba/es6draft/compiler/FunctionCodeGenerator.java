@@ -30,6 +30,7 @@ import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
 import com.github.anba.es6draft.runtime.types.builtins.LegacyConstructorFunction;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryAsyncFunction;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryConstructorFunction;
+import com.github.anba.es6draft.runtime.types.builtins.OrdinaryConstructorGenerator;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryGenerator;
 
@@ -97,15 +98,20 @@ final class FunctionCodeGenerator {
                 Types.OrdinaryAsyncFunction, "EvaluateBody", Type.methodType(Types.PromiseObject,
                         Types.ExecutionContext, Types.OrdinaryAsyncFunction));
 
+        // OrdinaryConstructorGenerator
+        static final MethodName OrdinaryConstructorGenerator_EvaluateBody = MethodName.findStatic(
+                Types.OrdinaryConstructorGenerator, "EvaluateBody", Type.methodType(Types.GeneratorObject,
+                        Types.ExecutionContext, Types.OrdinaryConstructorGenerator));
+
         // OrdinaryGenerator
-        static final MethodName OrdinaryGenerator_EvaluateBody = MethodName.findStatic(
-                Types.OrdinaryGenerator, "EvaluateBody", Type.methodType(Types.GeneratorObject,
-                        Types.ExecutionContext, Types.OrdinaryGenerator));
+        static final MethodName OrdinaryGenerator_EvaluateBody = MethodName.findStatic(Types.OrdinaryGenerator,
+                "EvaluateBody",
+                Type.methodType(Types.GeneratorObject, Types.ExecutionContext, Types.OrdinaryGenerator));
 
         // OrdinaryObject
         static final MethodName OrdinaryObject_OrdinaryCreateFromConstructor = MethodName
                 .findStatic(Types.OrdinaryObject, "OrdinaryCreateFromConstructor", Type.methodType(
-                        Types.OrdinaryObject, Types.ExecutionContext, Types.Constructor,
+                        Types.OrdinaryObject, Types.ExecutionContext, Types.Callable,
                         Types.Intrinsics));
 
         // class: Errors
@@ -213,7 +219,11 @@ final class FunctionCodeGenerator {
         if (node.isAsync()) {
             generateAsyncFunctionCall(node, mv);
         } else if (node.isGenerator()) {
-            generateGeneratorCall(node, mv);
+            if (node.isConstructor()) {
+                generateConstructorGeneratorCall(node, mv);
+            } else {
+                generateGeneratorCall(node, mv);
+            }
         } else if (isClassConstructor(node)) {
             generateClassConstructorCall(mv);
         } else if (isLegacy(node)) {
@@ -261,6 +271,9 @@ final class FunctionCodeGenerator {
 
     private Type targetType(FunctionNode node) {
         if (node.isGenerator()) {
+            if (node.isConstructor()) {
+                return Types.OrdinaryConstructorGenerator;
+            }
             return Types.OrdinaryGenerator;
         } else if (node.isAsync()) {
             return Types.OrdinaryAsyncFunction;
@@ -678,13 +691,49 @@ final class FunctionCodeGenerator {
      * @param mv
      *            the instruction visitor
      */
+    private void generateConstructorGeneratorCall(FunctionNode node, InstructionVisitor mv) {
+        Variable<OrdinaryConstructorGenerator> generator = mv.getParameter(GENERATOR,
+                OrdinaryConstructorGenerator.class);
+        Variable<Object> thisValue = mv.getParameter(THIS_VALUE, Object.class);
+        Variable<Object[]> arguments = mv.getParameter(ARGUMENTS, Object[].class);
+
+        Variable<ExecutionContext> calleeContext = mv.newVariable("calleeContext", ExecutionContext.class);
+
+        // (1) Create a new ExecutionContext
+        prepareCallAndBindThis(node, calleeContext, generator, thisValue, mv);
+
+        // (2) Perform OrdinaryCallEvaluateBody - FunctionDeclarationInstantiation
+        functionDeclarationInstantiation(node, calleeContext, generator, arguments, mv);
+
+        // (3) Perform OrdinaryCallEvaluateBody - EvaluateBody
+        mv.load(calleeContext);
+        mv.load(generator);
+        mv.invoke(Methods.OrdinaryConstructorGenerator_EvaluateBody);
+
+        // (4) Return result value
+        mv._return();
+    }
+
+    /**
+     * Generate bytecode for:
+     * 
+     * <pre>
+     * calleeContext = newFunctionExecutionContext(generator, null, thisValue)
+     * function_init(calleeContext, generator, arguments)
+     * return EvaluateBody(calleeContext, generator)
+     * </pre>
+     * 
+     * @param node
+     *            the function node
+     * @param mv
+     *            the instruction visitor
+     */
     private void generateGeneratorCall(FunctionNode node, InstructionVisitor mv) {
         Variable<OrdinaryGenerator> generator = mv.getParameter(GENERATOR, OrdinaryGenerator.class);
         Variable<Object> thisValue = mv.getParameter(THIS_VALUE, Object.class);
         Variable<Object[]> arguments = mv.getParameter(ARGUMENTS, Object[].class);
 
-        Variable<ExecutionContext> calleeContext = mv.newVariable("calleeContext",
-                ExecutionContext.class);
+        Variable<ExecutionContext> calleeContext = mv.newVariable("calleeContext", ExecutionContext.class);
 
         // (1) Create a new ExecutionContext
         prepareCallAndBindThis(node, calleeContext, generator, thisValue, mv);
@@ -718,12 +767,12 @@ final class FunctionCodeGenerator {
      *            the instruction visitor
      */
     private void generateGeneratorConstruct(FunctionNode node, InstructionVisitor mv) {
-        Variable<OrdinaryGenerator> generator = mv.getParameter(GENERATOR, OrdinaryGenerator.class);
+        Variable<OrdinaryConstructorGenerator> generator = mv.getParameter(GENERATOR,
+                OrdinaryConstructorGenerator.class);
         Variable<Constructor> newTarget = mv.getParameter(NEW_TARGET, Constructor.class);
         Variable<Object[]> arguments = mv.getParameter(ARGUMENTS, Object[].class);
 
-        Variable<ExecutionContext> calleeContext = mv.newVariable("calleeContext",
-                ExecutionContext.class);
+        Variable<ExecutionContext> calleeContext = mv.newVariable("calleeContext", ExecutionContext.class);
 
         // 9.2.4 FunctionAllocate - Generator functions are always derived constructor kinds.
 
@@ -736,7 +785,7 @@ final class FunctionCodeGenerator {
         // (3) Perform OrdinaryCallEvaluateBody - EvaluateBody
         mv.load(calleeContext);
         mv.load(generator);
-        mv.invoke(Methods.OrdinaryGenerator_EvaluateBody);
+        mv.invoke(Methods.OrdinaryConstructorGenerator_EvaluateBody);
 
         // (4) Return result value
         mv._return();

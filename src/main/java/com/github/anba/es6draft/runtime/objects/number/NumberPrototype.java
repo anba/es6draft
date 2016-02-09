@@ -28,7 +28,6 @@ import com.github.anba.es6draft.runtime.objects.intl.NumberFormatConstructor;
 import com.github.anba.es6draft.runtime.objects.intl.NumberFormatObject;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Type;
-import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
  * <h1>20 Numbers and Dates</h1><br>
@@ -37,7 +36,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>20.1.3 Properties of the Number Prototype Object
  * </ul>
  */
-public final class NumberPrototype extends OrdinaryObject implements Initializable {
+public final class NumberPrototype extends NumberObject implements Initializable {
     /**
      * Constructs a new Number prototype object.
      * 
@@ -45,7 +44,7 @@ public final class NumberPrototype extends OrdinaryObject implements Initializab
      *            the realm object
      */
     public NumberPrototype(Realm realm) {
-        super(realm);
+        super(realm, 0);
     }
 
     @Override

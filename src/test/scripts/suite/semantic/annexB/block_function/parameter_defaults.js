@@ -23,12 +23,12 @@ const {
   nonStrict();
 
   function strict() {
+    "use strict";
     var b = 0;
     function g(a = function() {
       { function b(){} }
       return b;
     }) {
-      "use strict";
       return a();
     }
     assertSame(0, g());

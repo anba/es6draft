@@ -14,10 +14,10 @@ try { throw []; } catch (e) { eval(`function* e(){}`); }
 
 
 // Catch variable is ArrayBindingPattern
-try { throw []; } catch ([e]) { eval(`function e(){}`); }
-try { throw []; } catch ([e]) { eval(`function* e(){}`); }
+assertThrows(SyntaxError, () => { try { throw []; } catch ([e]) { eval(`function e(){}`); } });
+assertThrows(SyntaxError, () => { try { throw []; } catch ([e]) { eval(`function* e(){}`); } });
 
 
 // Catch variable is ObjectBindingPattern
-try { throw []; } catch ({e}) { eval(`function e(){}`); }
-try { throw []; } catch ({e}) { eval(`function* e(){}`); }
+assertThrows(SyntaxError, () => { try { throw []; } catch ({e}) { eval(`function e(){}`); } });
+assertThrows(SyntaxError, () => { try { throw []; } catch ({e}) { eval(`function* e(){}`); } });

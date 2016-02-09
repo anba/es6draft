@@ -165,23 +165,30 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
                 Types.ScriptRuntime, "EvaluateLegacyFunctionExpression", Type.methodType(
                         Types.LegacyConstructorFunction, Types.RuntimeInfo$Function, Types.ExecutionContext));
 
-        static final MethodName ScriptRuntime_EvaluateGeneratorComprehension = MethodName
-                .findStatic(Types.ScriptRuntime, "EvaluateGeneratorComprehension", Type.methodType(
-                        Types.GeneratorObject, Types.RuntimeInfo$Function, Types.ExecutionContext));
+        static final MethodName ScriptRuntime_EvaluateConstructorGeneratorComprehension = MethodName.findStatic(
+                Types.ScriptRuntime, "EvaluateConstructorGeneratorComprehension",
+                Type.methodType(Types.GeneratorObject, Types.RuntimeInfo$Function, Types.ExecutionContext));
+
+        static final MethodName ScriptRuntime_EvaluateGeneratorComprehension = MethodName.findStatic(
+                Types.ScriptRuntime, "EvaluateGeneratorComprehension",
+                Type.methodType(Types.GeneratorObject, Types.RuntimeInfo$Function, Types.ExecutionContext));
 
         static final MethodName ScriptRuntime_EvaluateLegacyGeneratorComprehension = MethodName
                 .findStatic(Types.ScriptRuntime, "EvaluateLegacyGeneratorComprehension", Type
                         .methodType(Types.GeneratorObject, Types.RuntimeInfo$Function,
                                 Types.ExecutionContext));
 
+        static final MethodName ScriptRuntime_EvaluateConstructorGeneratorExpression = MethodName.findStatic(
+                Types.ScriptRuntime, "EvaluateConstructorGeneratorExpression",
+                Type.methodType(Types.OrdinaryConstructorGenerator, Types.RuntimeInfo$Function, Types.ExecutionContext));
+
         static final MethodName ScriptRuntime_EvaluateGeneratorExpression = MethodName.findStatic(
-                Types.ScriptRuntime, "EvaluateGeneratorExpression", Type
-                        .methodType(Types.OrdinaryGenerator, Types.RuntimeInfo$Function,
-                                Types.ExecutionContext));
+                Types.ScriptRuntime, "EvaluateGeneratorExpression",
+                Type.methodType(Types.OrdinaryGenerator, Types.RuntimeInfo$Function, Types.ExecutionContext));
 
         static final MethodName ScriptRuntime_EvaluateLegacyGeneratorExpression = MethodName
                 .findStatic(Types.ScriptRuntime, "EvaluateLegacyGeneratorExpression", Type
-                        .methodType(Types.OrdinaryGenerator, Types.RuntimeInfo$Function,
+                        .methodType(Types.OrdinaryConstructorGenerator, Types.RuntimeInfo$Function,
                                 Types.ExecutionContext));
 
         static final MethodName ScriptRuntime_EvaluateMethodDecorators = MethodName.findStatic(
@@ -345,13 +352,16 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
 
     private boolean isEnclosedByLexicalDeclaration(Scope currentScope) {
         final boolean catchVar = codegen.isEnabled(CompatibilityOption.CatchVarStatement);
+        final boolean catchPattern = codegen.isEnabled(CompatibilityOption.CatchVarPattern);
         TopLevelScope top = currentScope.getTop();
         for (Scope scope : currentScope) {
             if (scope instanceof BlockScope) {
                 if (catchVar) {
                     ScopedNode node = scope.getNode();
                     if (node instanceof CatchNode || node instanceof GuardedCatchNode) {
-                        continue;
+                        if (!catchPattern || catchParameter(node) instanceof BindingIdentifier) {
+                            continue;
+                        }
                     }
                 }
                 if (!((BlockScope) scope).lexicallyDeclaredNames().isEmpty()) {
@@ -369,6 +379,13 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
             return true;
         }
         return codegen.isEnabled(Parser.Option.EnclosedByLexicalDeclaration);
+    }
+
+    private static Binding catchParameter(ScopedNode node) {
+        if (node instanceof CatchNode) {
+            return ((CatchNode) node).getCatchParameter();
+        }
+        return ((GuardedCatchNode) node).getCatchParameter();
     }
 
     private static boolean isGlobalScope(Scope currentScope) {
@@ -2928,10 +2945,12 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
         /* steps 1-8 */
         mv.invoke(codegen.methodDesc(node, FunctionName.RTI));
         mv.loadExecutionContext();
-        if (!(node.getComprehension() instanceof LegacyComprehension)) {
-            mv.invoke(Methods.ScriptRuntime_EvaluateGeneratorComprehension);
-        } else {
+        if (node.getComprehension() instanceof LegacyComprehension) {
             mv.invoke(Methods.ScriptRuntime_EvaluateLegacyGeneratorComprehension);
+        } else if (node.isConstructor()) {
+            mv.invoke(Methods.ScriptRuntime_EvaluateConstructorGeneratorComprehension);
+        } else {
+            mv.invoke(Methods.ScriptRuntime_EvaluateGeneratorComprehension);
         }
 
         /* step 9 */
@@ -2948,7 +2967,11 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
         /* steps 1-7/11 */
         mv.invoke(codegen.methodDesc(node, FunctionName.RTI));
         mv.loadExecutionContext();
-        mv.invoke(Methods.ScriptRuntime_EvaluateGeneratorExpression);
+        if (node.isConstructor()) {
+            mv.invoke(Methods.ScriptRuntime_EvaluateConstructorGeneratorExpression);
+        } else {
+            mv.invoke(Methods.ScriptRuntime_EvaluateGeneratorExpression);
+        }
 
         /* step 8/12 */
         return ValType.Object;

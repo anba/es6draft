@@ -18,7 +18,6 @@ import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Type;
-import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
  * <h1>19 Fundamental Objects</h1><br>
@@ -27,7 +26,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>19.3.3 Properties of the Boolean Prototype Object
  * </ul>
  */
-public final class BooleanPrototype extends OrdinaryObject implements Initializable {
+public final class BooleanPrototype extends BooleanObject implements Initializable {
     /**
      * Constructs a new Boolean prototype object.
      * 
@@ -35,7 +34,7 @@ public final class BooleanPrototype extends OrdinaryObject implements Initializa
      *            the realm object
      */
     public BooleanPrototype(Realm realm) {
-        super(realm);
+        super(realm, false);
     }
 
     @Override

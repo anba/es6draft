@@ -6,7 +6,10 @@
  */
 package com.github.anba.es6draft.runtime.objects.binary;
 
-import static com.github.anba.es6draft.runtime.AbstractOperations.*;
+import static com.github.anba.es6draft.runtime.AbstractOperations.IsConstructor;
+import static com.github.anba.es6draft.runtime.AbstractOperations.SpeciesConstructor;
+import static com.github.anba.es6draft.runtime.AbstractOperations.ToLength;
+import static com.github.anba.es6draft.runtime.AbstractOperations.ToNumber;
 import static com.github.anba.es6draft.runtime.internal.Errors.newRangeError;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
@@ -547,9 +550,12 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
                 // newByteLength defaults to oldBuffer.byteLength
                 byteLength = oldArrayBuffer.getByteLength();
             }
-            // Create new array buffer from @@species like in CloneArrayBuffer().
-            // TODO: Don't use @@species for static methods?
-            Constructor ctor = SpeciesConstructor(cx, oldArrayBuffer, Intrinsics.ArrayBuffer);
+            Constructor ctor;
+            if (IsConstructor(thisValue)) {
+                ctor = (Constructor) thisValue;
+            } else {
+                ctor = (Constructor) cx.getIntrinsic(Intrinsics.ArrayBuffer);
+            }
             ScriptObject proto = GetPrototypeFromConstructor(cx, ctor, Intrinsics.ArrayBufferPrototype);
             if (IsDetachedBuffer(oldArrayBuffer)) {
                 throw newTypeError(cx, Messages.Key.BufferDetached);

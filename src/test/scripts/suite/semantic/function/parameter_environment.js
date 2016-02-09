@@ -56,11 +56,15 @@ const {
 
   assertThrows(ReferenceError, function f8(a = b, b = 0) { });
 
-  assertThrows(ReferenceError, function f9(a = b, b = 0) { "use strict" });
+  (function() { "use strict";
+  assertThrows(ReferenceError, function f9(a = b, b = 0) { });
+  })();
 
   assertThrows(ReferenceError, function f10(a = (b = 1), b = 0) { });
 
-  assertThrows(ReferenceError, function f11(a = (b = 1), b = 0) { "use strict" });
+  (function() { "use strict";
+  assertThrows(ReferenceError, function f11(a = (b = 1), b = 0) { });
+  })();
 
   function f12(a = 0, f = () => a) {
     assertSame(0, f());

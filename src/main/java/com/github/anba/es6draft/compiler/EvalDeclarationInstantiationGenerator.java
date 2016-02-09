@@ -17,6 +17,7 @@ import java.util.Map;
 import java.util.Set;
 
 import com.github.anba.es6draft.ast.Declaration;
+import com.github.anba.es6draft.ast.FunctionDeclaration;
 import com.github.anba.es6draft.ast.HoistableDeclaration;
 import com.github.anba.es6draft.ast.Script;
 import com.github.anba.es6draft.ast.StatementListItem;
@@ -84,7 +85,8 @@ final class EvalDeclarationInstantiationGenerator extends DeclarationBindingInst
 
         mv.lineInfo(evalScript);
         mv.begin();
-        if (VarDeclaredNames(evalScript).isEmpty() && LexicallyDeclaredNames(evalScript).isEmpty()) {
+        if (VarDeclaredNames(evalScript).isEmpty() && LexicallyDeclaredNames(evalScript).isEmpty()
+                && !hasBlockFunctions(evalScript)) {
             mv._return();
         } else if (evalScript.isScripting()) {
             generateScripting(evalScript, mv);
@@ -183,6 +185,34 @@ final class EvalDeclarationInstantiationGenerator extends DeclarationBindingInst
             }
         }
         /* step 11 (note) */
+        // ES2016: Block-scoped global function declarations
+        if (hasBlockFunctions(evalScript)) {
+            final boolean catchVar = codegen.isEnabled(CompatibilityOption.CatchVarStatement);
+            int idCounter = 0;
+            List<FunctionDeclaration> blockFunctions = evalScript.getScope().blockFunctions();
+
+            HashSet<Name> declaredFunctionOrVarNames = new HashSet<>();
+            declaredFunctionOrVarNames.addAll(declaredFunctionNames);
+            declaredFunctionOrVarNames.addAll(declaredVarNames.keySet());
+            for (FunctionDeclaration f : blockFunctions) {
+                Name fn = f.getName();
+                Jump next = new Jump();
+
+                // Runtime check always required for global block-level function declarations.
+                f.setLegacyBlockScopeId(++idCounter);
+                if (isEnclosedByLexical(evalScript)) {
+                    canDeclareVarBinding(varEnv, lexEnv, fn, catchVar, next, mv);
+                }
+                // FIXME: spec issue - avoid (observable!) duplicate checks for same name?
+                // FIXME: spec issue - property creation order important?
+                canDeclareGlobalFunction(varEnvRec, f, fn, next, mv);
+                setLegacyBlockFunction(context, f, mv);
+                if (declaredFunctionOrVarNames.add(fn)) {
+                    createGlobalFunctionBinding(varEnvRec, f, fn, true, mv);
+                }
+                mv.mark(next);
+            }
+        }
         /* step 12 */
         List<Declaration> lexDeclarations = LexicallyScopedDeclarations(evalScript);
         /* step 13 */
@@ -252,6 +282,13 @@ final class EvalDeclarationInstantiationGenerator extends DeclarationBindingInst
         /* step 10 */
         declaredVarNames.removeAll(declaredFunctionNames);
         /* step 11 (note) */
+        // ES2016: Block-scoped global function declarations
+        if (hasBlockFunctions(evalScript)) {
+            HashSet<Name> declaredNames = new HashSet<>();
+            declaredNames.addAll(declaredFunctionNames);
+            declaredNames.addAll(declaredVarNames);
+            declareBlockFunctions(evalScript, declaredNames, context, varEnv, lexEnv, varEnvRec, undef, mv);
+        }
         /* step 12 */
         List<Declaration> lexDeclarations = LexicallyScopedDeclarations(evalScript);
         /* step 13 */
@@ -309,6 +346,13 @@ final class EvalDeclarationInstantiationGenerator extends DeclarationBindingInst
         /* step 10 */
         declaredVarNames.removeAll(declaredFunctionNames);
         /* step 11 (note) */
+        // ES2016: Block-scoped global function declarations
+        if (hasBlockFunctions(evalScript)) {
+            HashSet<Name> declaredNames = new HashSet<>();
+            declaredNames.addAll(declaredFunctionNames);
+            declaredNames.addAll(declaredVarNames);
+            declareBlockFunctions(evalScript, declaredNames, context, varEnv, lexEnv, varEnvRec, undef, mv);
+        }
         /* step 12 */
         List<Declaration> lexDeclarations = LexicallyScopedDeclarations(evalScript);
         /* step 13 */
@@ -366,6 +410,8 @@ final class EvalDeclarationInstantiationGenerator extends DeclarationBindingInst
         /* step 10 */
         declaredVarNames.removeAll(declaredFunctionNames);
         /* step 11 (note) */
+        // ES2016: Block-scoped global function declarations
+        assert !hasBlockFunctions(evalScript);
         /* step 12 */
         List<Declaration> lexDeclarations = LexicallyScopedDeclarations(evalScript);
         /* step 13 */
@@ -483,10 +529,56 @@ final class EvalDeclarationInstantiationGenerator extends DeclarationBindingInst
         }
     }
 
+    private <ENVREC extends EnvironmentRecord> void declareBlockFunctions(Script evalScript,
+            HashSet<Name> declaredFunctionOrVarNames, Variable<ExecutionContext> context,
+            Variable<LexicalEnvironment<ENVREC>> varEnv,
+            Variable<LexicalEnvironment<DeclarativeEnvironmentRecord>> lexEnv, Variable<ENVREC> varEnvRec,
+            Variable<Undefined> undef, InstructionVisitor mv) {
+        final boolean catchVar = codegen.isEnabled(CompatibilityOption.CatchVarStatement);
+        int idCounter = 0;
+        List<FunctionDeclaration> blockFunctions = evalScript.getScope().blockFunctions();
+
+        for (FunctionDeclaration f : blockFunctions) {
+            Name fn = f.getName();
+            Jump next = null;
+            if (isEnclosedByLexical(evalScript)) {
+                // Runtime check only necessary when enclosed by lexical declarations.
+                f.setLegacyBlockScopeId(++idCounter);
+
+                next = new Jump();
+                canDeclareVarBinding(varEnv, lexEnv, fn, catchVar, next, mv);
+                setLegacyBlockFunction(context, f, mv);
+            }
+            if (declaredFunctionOrVarNames.add(fn)) {
+                BindingOp<EnvironmentRecord> op = BindingOp.LOOKUP;
+                Jump varAlreadyDeclared = new Jump();
+
+                op.hasBinding(varEnvRec, fn, mv);
+                mv.ifne(varAlreadyDeclared);
+                {
+                    op.createMutableBinding(varEnvRec, fn, true, mv);
+                    op.initializeBinding(varEnvRec, fn, undef, mv);
+                }
+                mv.mark(varAlreadyDeclared);
+            }
+            if (next != null) {
+                mv.mark(next);
+            }
+        }
+    }
+
+    private boolean isEnclosedByLexical(Script evalScript) {
+        return codegen.isEnabled(Parser.Option.EnclosedByLexicalDeclaration);
+    }
+
     private boolean isEnclosedByLexicalOrHasVarForOf(Script evalScript) {
         return codegen.isEnabled(Parser.Option.EnclosedByLexicalDeclaration)
-                || (codegen.isEnabled(CompatibilityOption.CatchVarStatement) && !evalScript
-                        .getScope().varForOfDeclaredNames().isEmpty());
+                || (codegen.isEnabled(CompatibilityOption.CatchVarStatement)
+                        && !evalScript.getScope().varForOfDeclaredNames().isEmpty());
+    }
+
+    private static boolean hasBlockFunctions(Script evalScript) {
+        return !evalScript.getScope().blockFunctions().isEmpty();
     }
 
     /**

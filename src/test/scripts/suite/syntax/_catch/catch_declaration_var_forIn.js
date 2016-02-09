@@ -5,6 +5,7 @@
  * <https://github.com/anba/es6draft>
  */
 const {
+  assertSyntaxError
 } = Assert;
 
 // Catch variable is BindingIdentifier
@@ -14,12 +15,12 @@ Function(`try {} catch (e) { for(var {e} in []) ; }`);
 
 
 // Catch variable is ArrayBindingPattern
-Function(`try {} catch ([e]) { for(var e in []) ; }`);
-Function(`try {} catch ([e]) { for(var [e] in []) ; }`);
-Function(`try {} catch ([e]) { for(var {e} in []) ; }`);
+assertSyntaxError(`try {} catch ([e]) { for(var e in []) ; }`);
+assertSyntaxError(`try {} catch ([e]) { for(var [e] in []) ; }`);
+assertSyntaxError(`try {} catch ([e]) { for(var {e} in []) ; }`);
 
 
 // Catch variable is ObjectBindingPattern
-Function(`try {} catch ({e}) { for(var e in []) ; }`);
-Function(`try {} catch ({e}) { for(var [e] in []) ; }`);
-Function(`try {} catch ({e}) { for(var {e} in []) ; }`);
+assertSyntaxError(`try {} catch ({e}) { for(var e in []) ; }`);
+assertSyntaxError(`try {} catch ({e}) { for(var [e] in []) ; }`);
+assertSyntaxError(`try {} catch ({e}) { for(var {e} in []) ; }`);

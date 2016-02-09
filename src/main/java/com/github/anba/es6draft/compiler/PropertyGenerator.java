@@ -59,17 +59,27 @@ final class PropertyGenerator extends
                                 Type.BOOLEAN_TYPE, Types.RuntimeInfo$Function,
                                 Types.ExecutionContext));
 
-        static final MethodName ScriptRuntime_EvaluatePropertyDefinitionGenerator = MethodName
-                .findStatic(Types.ScriptRuntime, "EvaluatePropertyDefinitionGenerator", Type
+        static final MethodName ScriptRuntime_EvaluatePropertyDefinitionConstructorGenerator = MethodName
+                .findStatic(Types.ScriptRuntime, "EvaluatePropertyDefinitionConstructorGenerator", Type
                         .methodType(Type.VOID_TYPE, Types.OrdinaryObject, Types.Object,
                                 Type.BOOLEAN_TYPE, Types.RuntimeInfo$Function,
                                 Types.ExecutionContext));
 
-        static final MethodName ScriptRuntime_EvaluatePropertyDefinitionGenerator_String = MethodName
-                .findStatic(Types.ScriptRuntime, "EvaluatePropertyDefinitionGenerator", Type
+        static final MethodName ScriptRuntime_EvaluatePropertyDefinitionConstructorGenerator_String = MethodName
+                .findStatic(Types.ScriptRuntime, "EvaluatePropertyDefinitionConstructorGenerator", Type
                         .methodType(Type.VOID_TYPE, Types.OrdinaryObject, Types.String,
                                 Type.BOOLEAN_TYPE, Types.RuntimeInfo$Function,
                                 Types.ExecutionContext));
+
+        static final MethodName ScriptRuntime_EvaluatePropertyDefinitionGenerator = MethodName.findStatic(
+                Types.ScriptRuntime, "EvaluatePropertyDefinitionGenerator",
+                Type.methodType(Type.VOID_TYPE, Types.OrdinaryObject, Types.Object, Type.BOOLEAN_TYPE,
+                        Types.RuntimeInfo$Function, Types.ExecutionContext));
+
+        static final MethodName ScriptRuntime_EvaluatePropertyDefinitionGenerator_String = MethodName.findStatic(
+                Types.ScriptRuntime, "EvaluatePropertyDefinitionGenerator",
+                Type.methodType(Type.VOID_TYPE, Types.OrdinaryObject, Types.String, Type.BOOLEAN_TYPE,
+                        Types.RuntimeInfo$Function, Types.ExecutionContext));
 
         static final MethodName ScriptRuntime_EvaluatePropertyDefinitionGetter = MethodName
                 .findStatic(Types.ScriptRuntime, "EvaluatePropertyDefinitionGetter", Type
@@ -196,6 +206,9 @@ final class PropertyGenerator extends
             case Function:
                 mv.invoke(Methods.ScriptRuntime_EvaluatePropertyDefinition);
                 break;
+            case ConstructorGenerator:
+                mv.invoke(Methods.ScriptRuntime_EvaluatePropertyDefinitionConstructorGenerator);
+                break;
             case Generator:
                 mv.invoke(Methods.ScriptRuntime_EvaluatePropertyDefinitionGenerator);
                 break;
@@ -227,6 +240,9 @@ final class PropertyGenerator extends
                 break;
             case Function:
                 mv.invoke(Methods.ScriptRuntime_EvaluatePropertyDefinition_String);
+                break;
+            case ConstructorGenerator:
+                mv.invoke(Methods.ScriptRuntime_EvaluatePropertyDefinitionConstructorGenerator_String);
                 break;
             case Generator:
                 mv.invoke(Methods.ScriptRuntime_EvaluatePropertyDefinitionGenerator_String);

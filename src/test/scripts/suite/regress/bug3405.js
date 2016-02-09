@@ -21,5 +21,4 @@ Object.defineProperty(GClone, "prototype", {
 let g = new GClone("yield this");
 assertSame(Array, Object.getPrototypeOf(g));
 
-let gen = new g();
-assertThrows(ReferenceError, () => gen.next());
+assertThrows(TypeError, () => new g());

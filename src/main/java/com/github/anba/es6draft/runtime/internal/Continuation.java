@@ -11,7 +11,6 @@ import com.github.anba.es6draft.runtime.ExecutionContext;
 /**
  * 
  */
-// FIXME: Rename, 'Continuation' sounds too much like call/cc continuation.
 public interface Continuation<VALUE> {
     /**
      * 

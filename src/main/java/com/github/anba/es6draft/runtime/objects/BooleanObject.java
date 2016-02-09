@@ -19,9 +19,22 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>19.3.4 Properties of Boolean Instances
  * </ul>
  */
-public final class BooleanObject extends OrdinaryObject {
+public class BooleanObject extends OrdinaryObject {
     /** [[BooleanData]] */
     private final boolean booleanData;
+
+    /**
+     * Constructs a new Boolean object.
+     * 
+     * @param realm
+     *            the realm object
+     * @param booleanData
+     *            the boolean data
+     */
+    BooleanObject(Realm realm, boolean booleanData) {
+        super(realm);
+        this.booleanData = booleanData;
+    }
 
     /**
      * Constructs a new Boolean object.

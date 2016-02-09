@@ -12,7 +12,6 @@
 fast/regex/lastIndex.js
 
 # invalid tests
-fast/js/JSON-parse-reviver.js
 fast/js/toString-overrides.js
 
 # invalid test, `JSON.stringify(Object.assign(new Boolean(true), {valueOf(){ return 2 }}))` is "true"
@@ -25,7 +24,6 @@ run-json-stringify.js
 
 # RegExp differences Java<->JavaScript (resp. V8)
 fast/js/regexp-non-capturing-groups.js
-fast/js/string-split-conformance.js
 fast/regex/ecma-regex-examples.js
 fast/regex/parentheses.js
 fast/regex/repeat-match-waldemar.js
@@ -47,11 +45,6 @@ fast/js/Object-defineProperty.js
 # RegExp.prototype.toString(): escape single / in character class
 # - SpiderMonkeys escapes it, JSC/V8 don't escape it
 fast/regex/toString.js
-
-# RegExp.prototype.compile
-# - .compile(undefined) vs. .compile()
-# - SpiderMonkey treats both the same, JSC/V8 treat .compile(undefined) as .compile('undefined')
-regexp-compile.js
 
 # different html-comments parser
 # Function("1/*\n*/-->")
@@ -115,22 +108,8 @@ fast/js/function-apply.js
 # ES6 <Object>.prototype no longer instance of <Type>         #
 ###############################################################
 
-# (String|Number|Boolean).prototype no longer instanceof (String|Number|Boolean)
-fast/js/kde/prototype_length.js
-
-# Error.prototype no longer instanceof Error
-fast/js/native-error-prototype.js
-
 # RegExp.prototype no longer instanceof RegExp
 fast/js/kde/RegExp.js
-
-
-#######################################
-# ES6 related runtime changes         #
-#######################################
-
-# `RegExp(/a/, "g")` no longer throws
-fast/regex/constructor.js
 
 
 #######################################

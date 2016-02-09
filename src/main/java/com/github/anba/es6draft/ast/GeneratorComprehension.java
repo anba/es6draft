@@ -8,6 +8,7 @@ package com.github.anba.es6draft.ast;
 
 import java.util.List;
 
+import com.github.anba.es6draft.ast.GeneratorDefinition.GeneratorKind;
 import com.github.anba.es6draft.ast.scope.FunctionScope;
 
 /**
@@ -15,17 +16,19 @@ import com.github.anba.es6draft.ast.scope.FunctionScope;
  */
 public final class GeneratorComprehension extends Expression implements FunctionNode {
     private final FunctionScope scope;
+    private final GeneratorKind kind;
     private final FormalParameterList parameters;
     private final Comprehension comprehension;
     private String functionName, methodName;
     private StrictMode strictMode;
     private boolean syntheticNodes;
 
-    public GeneratorComprehension(long beginPosition, long endPosition, FunctionScope scope,
+    public GeneratorComprehension(long beginPosition, long endPosition, FunctionScope scope, GeneratorKind kind,
             FormalParameterList parameters, Comprehension comprehension) {
         super(beginPosition, endPosition);
         assert parameters.getFormals().isEmpty() : "Non-empty parameter list in comprehension";
         this.scope = scope;
+        this.kind = kind;
         this.parameters = parameters;
         this.comprehension = comprehension;
     }
@@ -127,7 +130,7 @@ public final class GeneratorComprehension extends Expression implements Function
 
     @Override
     public boolean isConstructor() {
-        return true;
+        return kind == GeneratorKind.Constructor;
     }
 
     @Override

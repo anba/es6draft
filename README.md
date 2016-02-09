@@ -1,16 +1,43 @@
 es6draft
 ========
 
-ECMAScript 2015 (ECMA-262 6th Edition) compiler and runtime written in Java.
+ECMAScript 2015/2016 compiler and runtime written in Java.
 
 [![Build Status](https://travis-ci.org/anba/es6draft.png?branch=master)](https://travis-ci.org/anba/es6draft)
 
 ## Implementation Status ##
 
-Full support of [ECMAScript® 2015] [es2015].
+Complete implementation of [ECMAScript® 2015] [es2015].
 
-Full support of [ECMAScript® 2015 Internationalization API, ECMA-402 2nd edition] [intl].
+Complete implementation of [ECMAScript® 2015 Internationalization API, ECMA-402 2nd edition] [intl].
 
+Implements [ES2016 Draft 2015-12-01] [es2016].
+
+Supports the following [ECMAScript proposals] [proposals]:
+* Stage 4:
+  * Array.prototype.includes
+* Stage 3:
+  * Async Functions
+  * Exponentiation Operator
+  * Object.values/Object.entries
+  * SIMD.JS
+  * String padding
+  * Trailing commas in function parameter lists and calls
+* Stage 2:
+  * function.sent metaproperty
+  * Rest/Spread Properties
+* Stage 1:
+  * Additional export-from Statements
+  * ArrayBuffer.transfer
+  * Callable class constructors
+  * Class and Property Decorators
+  * Class Property Declarations (Only class static properties are currently supported)
+  * String.prototype.{trimLeft,trimRight}
+  * String#matchAll
+
+ECMAScript proposals are not enabled by default. To enable them use the `--stage` command line parameter.
+
+Note: Support of stage 2 (or below) proposals is highly experimental (cf. [TC39 Process] [process]), implementation incompatibilities are to be expected.
 
 ## Build Instructions and Shell ##
 
@@ -84,7 +111,10 @@ mvn test -P external -Dtraceur.path=<...> -Dmozilla.skip=true -Dv8.skip=true -Dw
 ```
 
 [es2015]: http://ecma-international.org/publications/standards/Ecma-262.htm "ECMAScript® 2015 Language Specification"
+[es2016]: https://github.com/tc39/ecma262/releases
 [intl]: http://ecma-international.org/publications/standards/Ecma-402.htm "ECMAScript® 2015 Internationalization API Specification"
+[proposals]: https://github.com/tc39/ecma262#current-proposals
+[process]: https://tc39.github.io/process-document/
 [icu]: http://site.icu-project.org/
 [java]: http://java.sun.com/
 [maven]: https://maven.apache.org/download.cgi

@@ -464,10 +464,10 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
         return hasDefault ? defaults : Collections.<Expression> emptyList();
     }
 
-    private BindingIdentifier getRestParameter(FormalParameterList formals) {
+    private Binding getRestParameter(FormalParameterList formals) {
         FormalParameter last = lastElement(formals.getFormals());
         if (last != null && last.getElement() instanceof BindingRestElement) {
-            return ((BindingRestElement) last.getElement()).getBindingIdentifier();
+            return ((BindingRestElement) last.getElement()).getBinding();
         }
         return null;
     }
@@ -537,8 +537,17 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
         ArrayObject defaults = createListWithNull(getParameterDefaults(node.getParameters()), value);
         Object rest = acceptOrNull(getRestParameter(node.getParameters()), value);
         Object body = createFunctionBody(node, value);
-        // TODO: async functions
-        boolean generator = node.getType() == MethodDefinition.MethodType.Generator;
+        boolean generator = false;
+        switch (node.getType()) {
+        case AsyncFunction:
+            // TODO: async functions
+            break;
+        case ConstructorGenerator:
+        case Generator:
+            generator = true;
+            break;
+        default:
+        }
         boolean expression = false;
         if (hasBuilder(Type.FunctionExpression)) {
             return call(Type.FunctionExpression, node, id, params, body, generator, expression);
@@ -569,6 +578,7 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
         case CallConstructor:
         case Function:
         case Generator:
+        case ConstructorGenerator:
         default:
             return defaultKind;
         }
@@ -585,6 +595,7 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
         case CallConstructor:
         case Function:
         case Generator:
+        case ConstructorGenerator:
         default:
             return false;
         }
@@ -924,7 +935,7 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
 
     @Override
     public Object visit(BindingRestElement node, Void value) {
-        Object expr = node.getBindingIdentifier().accept(this, value);
+        Object expr = node.getBinding().accept(this, value);
         if (hasBuilder(Type.SpreadExpression)) {
             return call(Type.SpreadExpression, node, expr);
         }

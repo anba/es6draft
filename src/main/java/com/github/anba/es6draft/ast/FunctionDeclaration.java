@@ -28,6 +28,7 @@ public final class FunctionDeclaration extends HoistableDeclaration implements F
     private StrictMode strictMode;
     private boolean syntheticNodes;
     private boolean legacyBlockScoped;
+    private int legacyBlockScopeId;
 
     public FunctionDeclaration(long beginPosition, long endPosition, FunctionScope scope,
             BindingIdentifier identifier, FormalParameterList parameters,
@@ -149,12 +150,43 @@ public final class FunctionDeclaration extends HoistableDeclaration implements F
         this.syntheticNodes = syntheticNodes;
     }
 
+    /**
+     * Returns {@code true} if this function is legacy block-level scoped function declaration.
+     * 
+     * @return {@code true} if legacy block-level scoped function declaration
+     */
     public boolean isLegacyBlockScoped() {
         return legacyBlockScoped;
     }
 
+    /**
+     * Enables or disables legacy block-level scoped function declaration behavior for this function.
+     * 
+     * @param legacyBlockScoped
+     *            {@code true} for legacy block scoped functions
+     */
     public void setLegacyBlockScoped(boolean legacyBlockScoped) {
         this.legacyBlockScoped = legacyBlockScoped;
+    }
+
+    /**
+     * Returns the function identifier for a legacy block-level scoped function declaration.
+     * 
+     * @return the legacy block scope identifier
+     */
+    public int getLegacyBlockScopeId() {
+        return legacyBlockScopeId;
+    }
+
+    /**
+     * Sets the function identifier for a legacy block-level scoped function declaration.
+     * 
+     * @param legacyBlockScopeId
+     *            the legacy block scope identifier (positive integer)
+     */
+    public void setLegacyBlockScopeId(int legacyBlockScopeId) {
+        assert legacyBlockScopeId > 0;
+        this.legacyBlockScopeId = legacyBlockScopeId;
     }
 
     @Override

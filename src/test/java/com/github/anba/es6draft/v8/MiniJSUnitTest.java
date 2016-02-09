@@ -12,7 +12,6 @@ import static org.junit.Assume.assumeTrue;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -33,7 +32,6 @@ import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
 import org.junit.runners.Parameterized.UseParametersRunnerFactory;
 
-import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.util.NullConsole;
 import com.github.anba.es6draft.util.Parallelized;
 import com.github.anba.es6draft.util.ParameterizedRunnerFactory;
@@ -63,17 +61,8 @@ public final class MiniJSUnitTest {
     }
 
     @ClassRule
-    public static TestGlobals<V8TestGlobalObject, TestInfo> globals = new TestGlobals<V8TestGlobalObject, TestInfo>(
-            configuration, V8TestGlobalObject::new) {
-        @Override
-        protected EnumSet<CompatibilityOption> getOptions() {
-            EnumSet<CompatibilityOption> options = super.getOptions();
-            options.add(CompatibilityOption.ArrayIncludes);
-            options.add(CompatibilityOption.ArrayBufferMissingLength);
-            options.add(CompatibilityOption.SIMD);
-            return options;
-        }
-    };
+    public static TestGlobals<V8TestGlobalObject, TestInfo> globals = new TestGlobals<>(configuration,
+            V8TestGlobalObject::new);
 
     @Rule
     public Timeout maxTime = new Timeout(120, TimeUnit.SECONDS);

@@ -14,7 +14,6 @@ import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
 import com.github.anba.es6draft.runtime.objects.iteration.GeneratorObject;
-import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 
@@ -24,7 +23,7 @@ import com.github.anba.es6draft.runtime.types.ScriptObject;
  * <li>9.2 ECMAScript Function Objects
  * </ul>
  */
-public final class OrdinaryGenerator extends FunctionObject implements Constructor {
+public final class OrdinaryGenerator extends FunctionObject {
     /**
      * Constructs a new Generator Function object.
      * 
@@ -58,18 +57,6 @@ public final class OrdinaryGenerator extends FunctionObject implements Construct
     @Override
     public GeneratorObject tailCall(ExecutionContext callerContext, Object thisValue, Object... args) throws Throwable {
         return (GeneratorObject) getTailCallMethod().invokeExact(this, callerContext, thisValue, args);
-    }
-
-    /**
-     * 9.2.2 [[Construct]] ( argumentsList, newTarget)
-     */
-    @Override
-    public GeneratorObject construct(ExecutionContext callerContext, Constructor newTarget, Object... argumentsList) {
-        try {
-            return (GeneratorObject) getConstructMethod().invokeExact(this, callerContext, newTarget, argumentsList);
-        } catch (Throwable e) {
-            throw FunctionObject.<RuntimeException> rethrow(e);
-        }
     }
 
     /**
@@ -120,7 +107,7 @@ public final class OrdinaryGenerator extends FunctionObject implements Construct
         /* steps 6-9 */
         OrdinaryGenerator f = new OrdinaryGenerator(realm);
         /* steps 10-14 */
-        f.allocate(realm, functionPrototype, strict, kind, ConstructorKind.Derived);
+        f.allocate(realm, functionPrototype, strict, kind, ConstructorKind.Base);
         /* step 15 */
         return f;
     }

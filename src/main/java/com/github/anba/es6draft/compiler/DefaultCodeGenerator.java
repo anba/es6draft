@@ -27,6 +27,7 @@ import com.github.anba.es6draft.compiler.assembler.FieldName;
 import com.github.anba.es6draft.compiler.assembler.Jump;
 import com.github.anba.es6draft.compiler.assembler.MethodName;
 import com.github.anba.es6draft.compiler.assembler.Type;
+import com.github.anba.es6draft.compiler.assembler.Value;
 import com.github.anba.es6draft.compiler.assembler.Variable;
 import com.github.anba.es6draft.runtime.DeclarativeEnvironmentRecord;
 import com.github.anba.es6draft.runtime.EnvironmentRecord;
@@ -403,19 +404,24 @@ abstract class DefaultCodeGenerator<RETURN, VISITOR extends ExpressionVisitor> e
     }
 
     /**
-     * stack: [] {@literal ->} [envRec]
+     * stack: [] {@literal ->} []
      * 
-     * @param envRec
-     *            the variable which holds the lexical environment record
+     * @param <R>
+     *            the environment record type
+     * @param type
+     *            the environment record type
      * @param mv
      *            the expression visitor
      */
-    protected final void getLexicalEnvironmentRecord(Type type, ExpressionVisitor mv) {
-        mv.loadExecutionContext();
-        mv.invoke(Methods.ExecutionContext_getLexicalEnvironmentRecord);
-        if (type != Types.EnvironmentRecord) {
-            mv.checkcast(type);
-        }
+    protected final <R extends EnvironmentRecord> Value<R> getLexicalEnvironmentRecord(Type type,
+            ExpressionVisitor mv) {
+        return asm -> {
+            mv.loadExecutionContext();
+            mv.invoke(Methods.ExecutionContext_getLexicalEnvironmentRecord);
+            if (type != Types.EnvironmentRecord) {
+                mv.checkcast(type);
+            }
+        };
     }
 
     /**
@@ -437,17 +443,24 @@ abstract class DefaultCodeGenerator<RETURN, VISITOR extends ExpressionVisitor> e
     }
 
     /**
-     * stack: [] {@literal ->} [envRec]
+     * stack: [] {@literal ->} []
      * 
+     * @param <R>
+     *            the environment record type
+     * @param type
+     *            the environment record type
      * @param mv
      *            the expression visitor
      */
-    protected final void getVariableEnvironmentRecord(Type type, ExpressionVisitor mv) {
-        mv.loadExecutionContext();
-        mv.invoke(Methods.ExecutionContext_getVariableEnvironmentRecord);
-        if (type != Types.EnvironmentRecord) {
-            mv.checkcast(type);
-        }
+    protected final <R extends EnvironmentRecord> Value<R> getVariableEnvironmentRecord(Type type,
+            ExpressionVisitor mv) {
+        return asm -> {
+            mv.loadExecutionContext();
+            mv.invoke(Methods.ExecutionContext_getVariableEnvironmentRecord);
+            if (type != Types.EnvironmentRecord) {
+                mv.checkcast(type);
+            }
+        };
     }
 
     /**

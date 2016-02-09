@@ -5,6 +5,7 @@
  * <https://github.com/anba/es6draft>
  */
 const {
+  assertThrows
 } = Assert;
 
 // Catch variable is BindingIdentifier
@@ -14,12 +15,12 @@ try { throw []; } catch (e) { eval(`var {e} = []`); }
 
 
 // Catch variable is ArrayBindingPattern
-try { throw []; } catch ([e]) { eval(`var e = []`); }
-try { throw []; } catch ([e]) { eval(`var [e] = []`); }
-try { throw []; } catch ([e]) { eval(`var {e} = []`); }
+assertThrows(SyntaxError, () => { try { throw []; } catch ([e]) { eval(`var e = []`); } });
+assertThrows(SyntaxError, () => { try { throw []; } catch ([e]) { eval(`var [e] = []`); } });
+assertThrows(SyntaxError, () => { try { throw []; } catch ([e]) { eval(`var {e} = []`); } });
 
 
 // Catch variable is ObjectBindingPattern
-try { throw []; } catch ({e}) { eval(`var e = []`); }
-try { throw []; } catch ({e}) { eval(`var [e] = []`); }
-try { throw []; } catch ({e}) { eval(`var {e} = []`); }
+assertThrows(SyntaxError, () => { try { throw []; } catch ({e}) { eval(`var e = []`); } });
+assertThrows(SyntaxError, () => { try { throw []; } catch ({e}) { eval(`var [e] = []`); } });
+assertThrows(SyntaxError, () => { try { throw []; } catch ({e}) { eval(`var {e} = []`); } });

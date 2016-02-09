@@ -30,7 +30,8 @@ public final class MethodDefinition extends PropertyDefinition implements Functi
     private boolean syntheticNodes;
 
     public enum MethodType {
-        AsyncFunction, BaseConstructor, DerivedConstructor, CallConstructor, Function, Generator, Getter, Setter
+        AsyncFunction, BaseConstructor, DerivedConstructor, CallConstructor, Function, Generator, ConstructorGenerator,
+        Getter, Setter
     }
 
     public enum MethodAllocation {
@@ -189,6 +190,7 @@ public final class MethodDefinition extends PropertyDefinition implements Functi
         case CallConstructor:
         case Function:
         case Generator:
+        case ConstructorGenerator:
         default:
             return fname;
         }
@@ -220,6 +222,7 @@ public final class MethodDefinition extends PropertyDefinition implements Functi
         case CallConstructor:
         case Function:
         case Generator:
+        case ConstructorGenerator:
         default:
             return fname;
         }
@@ -272,7 +275,7 @@ public final class MethodDefinition extends PropertyDefinition implements Functi
 
     @Override
     public boolean isGenerator() {
-        return type == MethodType.Generator;
+        return type == MethodType.Generator || type == MethodType.ConstructorGenerator;
     }
 
     @Override
@@ -285,11 +288,12 @@ public final class MethodDefinition extends PropertyDefinition implements Functi
         switch (type) {
         case BaseConstructor:
         case DerivedConstructor:
-        case Generator:
+        case ConstructorGenerator:
             return true;
         case AsyncFunction:
         case CallConstructor:
         case Function:
+        case Generator:
         case Getter:
         case Setter:
         default:

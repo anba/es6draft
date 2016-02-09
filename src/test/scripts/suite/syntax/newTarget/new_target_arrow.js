@@ -154,7 +154,7 @@ function* gdecl() {
 })();
 }
 gdecl().next();
-new gdecl().next();
+assertThrows(TypeError, () => new gdecl());
 
 // 14.4 GeneratorExpression
 var gexpr = function*() {
@@ -163,7 +163,7 @@ var gexpr = function*() {
 })();
 };
 gexpr().next();
-new gexpr().next();
+assertThrows(TypeError, () => new gexpr());
 
 // 14.4 GeneratorMethod
 var obj = {
@@ -174,7 +174,7 @@ var obj = {
   }
 };
 obj.m().next();
-new obj.m().next();
+assertThrows(TypeError, () => new obj.m());
 
 var obj = class {
   *m() {
@@ -184,7 +184,7 @@ var obj = class {
   }
 };
 obj.prototype.m().next();
-new obj.prototype.m().next();
+assertThrows(TypeError, () => new obj.prototype.m());
 
 var obj = class {
   static *m() {
@@ -194,7 +194,7 @@ var obj = class {
   }
 };
 () => obj.m().next();
-new obj.m().next();
+assertThrows(TypeError, () => new obj.m());
 
 // 15.1 Scripts
 assertThrows(SyntaxError, () => evalScript(`

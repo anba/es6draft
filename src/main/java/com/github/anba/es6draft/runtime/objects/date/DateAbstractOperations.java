@@ -647,8 +647,10 @@ final class DateAbstractOperations {
             double date = MakeDate(MakeDay(year * yearmod, month - 1, day),
                     MakeTime(hour, min, sec, msec));
             if (tzhour == -1) {
-                // if time zone offset absent, interpret date-time as a local time
-                date = UTC(realm, date);
+                if (!(state == YEAR || state == MONTH || state == DAY)) {
+                    // if time zone offset absent, interpret date-time as a local time
+                    date = UTC(realm, date);
+                }
             } else {
                 date -= (tzhour * 60 + tzmin) * msPerMinute * tzmod;
             }

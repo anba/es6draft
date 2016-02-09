@@ -43,9 +43,6 @@ js/script-tests/intl.js
 # invalid test, `for (let; ; ) {}` is valid
 js/script-tests/let-syntax.js
 
-# invalid test, `this` only referenced but no accessed
-js/script-tests/arrowfunction-tdz.js
-
 # invalid test, all parts of a class declaration are strict mode: assignment to unresolved reference
 # invalid test, getter and setter definitions are not collapsed in classes
 js/script-tests/class-syntax-method-names.js

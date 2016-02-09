@@ -33,6 +33,14 @@ public final class LexicalEnvironment<RECORD extends EnvironmentRecord> {
         this.envRec = envRec;
     }
 
+    /**
+     * Creates a new lexical environment.
+     * 
+     * @param outer
+     *            the outer lexical environment
+     * @param envRec
+     *            the environment record
+     */
     public LexicalEnvironment(LexicalEnvironment<?> outer, RECORD envRec) {
         this.cx = outer.cx;
         this.outer = outer;

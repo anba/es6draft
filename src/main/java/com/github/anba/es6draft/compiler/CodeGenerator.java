@@ -134,10 +134,17 @@ final class CodeGenerator {
                 Types.LegacyConstructorFunction, Types.Object_);
         static final MethodTypeDescriptor LegacyFunction_Code = Function_Code;
 
+        static final MethodTypeDescriptor ConstructorGenerator_Call = Type.methodType(Types.GeneratorObject,
+                Types.OrdinaryConstructorGenerator, Types.ExecutionContext, Types.Object, Types.Object_);
+        static final MethodTypeDescriptor ConstructorGenerator_Construct = Type.methodType(Types.GeneratorObject,
+                Types.OrdinaryConstructorGenerator, Types.ExecutionContext, Types.Constructor, Types.Object_);
+        static final MethodTypeDescriptor ConstructorGenerator_Init = Type.methodType(Type.VOID_TYPE,
+                Types.ExecutionContext, Types.OrdinaryConstructorGenerator, Types.Object_);
+        static final MethodTypeDescriptor ConstructorGenerator_Code = Type.methodType(Types.Object,
+                Types.ExecutionContext, Types.ResumptionPoint);
+
         static final MethodTypeDescriptor Generator_Call = Type.methodType(Types.GeneratorObject,
                 Types.OrdinaryGenerator, Types.ExecutionContext, Types.Object, Types.Object_);
-        static final MethodTypeDescriptor Generator_Construct = Type.methodType(Types.GeneratorObject,
-                Types.OrdinaryGenerator, Types.ExecutionContext, Types.Constructor, Types.Object_);
         static final MethodTypeDescriptor Generator_Init = Type.methodType(Type.VOID_TYPE, Types.ExecutionContext,
                 Types.OrdinaryGenerator, Types.Object_);
         static final MethodTypeDescriptor Generator_Code = Type.methodType(Types.Object, Types.ExecutionContext,
@@ -421,6 +428,9 @@ final class CodeGenerator {
                 return MethodDescriptors.AsyncFunction_Call;
             }
             if (node.isGenerator()) {
+                if (node.isConstructor()) {
+                    return MethodDescriptors.ConstructorGenerator_Call;
+                }
                 return MethodDescriptors.Generator_Call;
             }
             if (isLegacy(node)) {
@@ -437,7 +447,7 @@ final class CodeGenerator {
         case Construct:
             assert node.isConstructor();
             if (node.isGenerator()) {
-                return MethodDescriptors.Generator_Construct;
+                return MethodDescriptors.ConstructorGenerator_Construct;
             }
             if (isLegacy(node)) {
                 return MethodDescriptors.LegacyFunction_Construct;
@@ -448,6 +458,9 @@ final class CodeGenerator {
                 return MethodDescriptors.AsyncFunction_Code;
             }
             if (node.isGenerator()) {
+                if (node.isConstructor()) {
+                    return MethodDescriptors.ConstructorGenerator_Code;
+                }
                 return MethodDescriptors.Generator_Code;
             }
             if (isLegacy(node)) {
@@ -462,6 +475,9 @@ final class CodeGenerator {
                 return MethodDescriptors.AsyncFunction_Init;
             }
             if (node.isGenerator()) {
+                if (node.isConstructor()) {
+                    return MethodDescriptors.ConstructorGenerator_Init;
+                }
                 return MethodDescriptors.Generator_Init;
             }
             if (isLegacy(node)) {

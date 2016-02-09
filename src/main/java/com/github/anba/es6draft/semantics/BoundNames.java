@@ -153,7 +153,7 @@ final class BoundNames extends DefaultNodeVisitor<List<Name>, List<Name>> {
      */
     @Override
     public List<Name> visit(BindingRestElement node, List<Name> names) {
-        return node.getBindingIdentifier().accept(this, names);
+        return node.getBinding().accept(this, names);
     }
 
     /**

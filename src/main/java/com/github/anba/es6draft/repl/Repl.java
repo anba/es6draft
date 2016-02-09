@@ -466,7 +466,7 @@ public final class Repl {
 
         @Option(name = "--stage", usage = "options.stage", handler = RangeIntOptionHandler.class)
         @RangeIntOptionHandler.Range(min = 0, max = 4)
-        int stage = -1;
+        int stage = 3;
 
         @Option(name = "--experimental", usage = "options.experimental")
         boolean experimental;
@@ -1200,18 +1200,19 @@ public final class Repl {
         } else {
             compatibilityOptions = CompatibilityOption.WebCompatibility();
         }
+        compatibilityOptions.addAll(CompatibilityOption.Version(CompatibilityOption.Version.ECMAScript2016));
         if (options.asyncFunctions) {
             compatibilityOptions.add(CompatibilityOption.AsyncFunction);
         }
         if (options.ecmascript7) {
-            compatibilityOptions.addAll(CompatibilityOption.required(CompatibilityOption.Stage.Strawman));
+            compatibilityOptions.addAll(CompatibilityOption.Stage(CompatibilityOption.Stage.Strawman));
             compatibilityOptions.addAll(CompatibilityOption.Experimental());
         }
         if (options.experimental) {
             compatibilityOptions.addAll(CompatibilityOption.Experimental());
         }
         if (options.stage >= 0) {
-            compatibilityOptions.addAll(CompatibilityOption.required(stageForLevel(options.stage)));
+            compatibilityOptions.addAll(CompatibilityOption.Stage(stageForLevel(options.stage)));
         }
         if (options.parser) {
             compatibilityOptions.add(CompatibilityOption.ReflectParse);

@@ -21,6 +21,7 @@ import static com.github.anba.es6draft.runtime.types.builtins.ArrayObject.ArrayC
 import static com.github.anba.es6draft.runtime.types.builtins.LegacyConstructorFunction.LegacyFunctionCreate;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryAsyncFunction.AsyncFunctionCreate;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryConstructorFunction.ConstructorFunctionCreate;
+import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryConstructorGenerator.ConstructorGeneratorFunctionCreate;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.*;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryGenerator.GeneratorFunctionCreate;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject.ObjectCreate;
@@ -42,7 +43,9 @@ import java.util.Set;
 
 import org.mozilla.javascript.ConsString;
 
+import com.github.anba.es6draft.Executable;
 import com.github.anba.es6draft.compiler.CompiledObject;
+import com.github.anba.es6draft.compiler.CompiledScript;
 import com.github.anba.es6draft.runtime.DeclarativeEnvironmentRecord;
 import com.github.anba.es6draft.runtime.EnvironmentRecord;
 import com.github.anba.es6draft.runtime.ExecutionContext;
@@ -50,6 +53,7 @@ import com.github.anba.es6draft.runtime.FunctionEnvironmentRecord;
 import com.github.anba.es6draft.runtime.GlobalEnvironmentRecord;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.ModuleEnvironmentRecord;
+import com.github.anba.es6draft.runtime.ObjectEnvironmentRecord;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.modules.MalformedNameException;
 import com.github.anba.es6draft.runtime.modules.ModuleExport;
@@ -207,6 +211,61 @@ public final class ScriptRuntime {
         if (envRec.hasBinding(name) && !(catchVar && envRec.isCatchEnvironment())) {
             throw newSyntaxError(cx, Messages.Key.VariableRedeclaration, name);
         }
+    }
+
+    /**
+     * 18.2.1.2 Runtime Semantics: EvalDeclarationInstantiation( body, varEnv, lexEnv, strict)
+     * 
+     * @param varEnv
+     *            the variable environment
+     * @param lexEnv
+     *            the lexical environment
+     * @param name
+     *            the function name
+     * @param catchVar
+     *            {@code true} if variable redeclarations are allowed in catch clauses
+     * @return {@code true} if the name can be declared
+     */
+    public static boolean canDeclareVarBinding(LexicalEnvironment<?> varEnv,
+            LexicalEnvironment<DeclarativeEnvironmentRecord> lexEnv, String name, boolean catchVar) {
+        for (LexicalEnvironment<?> thisEnv = lexEnv; thisEnv != varEnv; thisEnv = thisEnv.getOuter()) {
+            EnvironmentRecord thisEnvRec = thisEnv.getEnvRec();
+            if (thisEnvRec instanceof ObjectEnvironmentRecord) {
+                continue;
+            }
+            DeclarativeEnvironmentRecord declEnvRec = (DeclarativeEnvironmentRecord) thisEnvRec;
+            if (declEnvRec.hasBinding(name) && !(catchVar && declEnvRec.isCatchEnvironment())) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * 18.2.1.2 Runtime Semantics: EvalDeclarationInstantiation( body, varEnv, lexEnv, strict)
+     * 
+     * @param cx
+     *            the execution context
+     * @param functionId
+     *            the function id
+     */
+    public static void setLegacyBlockFunction(ExecutionContext cx, int functionId) {
+        Executable executable = cx.getCurrentExecutable();
+        ((CompiledScript) executable).setLegacyBlockFunction(functionId);
+    }
+
+    /**
+     * 18.2.1.2 Runtime Semantics: EvalDeclarationInstantiation( body, varEnv, lexEnv, strict)
+     * 
+     * @param cx
+     *            the execution context
+     * @param functionId
+     *            the function id
+     * @return {@code true} if the funciton is legacy block-level scoped
+     */
+    public static boolean isLegacyBlockFunction(ExecutionContext cx, int functionId) {
+        Executable executable = cx.getCurrentExecutable();
+        return ((CompiledScript) executable).isLegacyBlockFunction(functionId);
     }
 
     /**
@@ -522,6 +581,35 @@ public final class ScriptRuntime {
      *            the execution context
      * @return the generator object
      */
+    public static GeneratorObject EvaluateConstructorGeneratorComprehension(RuntimeInfo.Function fd,
+            ExecutionContext cx) {
+        /* step 1 (omitted) */
+        /* step 2 */
+        LexicalEnvironment<?> scope = cx.getLexicalEnvironment();
+        /* steps 3-4 (not applicable) */
+        /* step 5 */
+        OrdinaryConstructorGenerator closure = ConstructorGeneratorFunctionCreate(cx, FunctionKind.Arrow, fd, scope);
+        /* step 6 */
+        OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.GeneratorPrototype);
+        /* step 7 */
+        MakeConstructor(closure, true, prototype);
+        /* step 8 */
+        GeneratorObject iterator = (GeneratorObject) closure.call(cx, UNDEFINED);
+        /* step 9 */
+        return iterator;
+    }
+
+    /**
+     * 12.2.? Generator Comprehensions
+     * <p>
+     * 12.2.?.2 Runtime Semantics: Evaluation
+     * 
+     * @param fd
+     *            the function runtime info object
+     * @param cx
+     *            the execution context
+     * @return the generator object
+     */
     public static GeneratorObject EvaluateGeneratorComprehension(RuntimeInfo.Function fd, ExecutionContext cx) {
         /* step 1 (omitted) */
         /* step 2 */
@@ -532,7 +620,7 @@ public final class ScriptRuntime {
         /* step 6 */
         OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.GeneratorPrototype);
         /* step 7 */
-        MakeConstructor(closure, true, prototype);
+        closure.infallibleDefineOwnProperty("prototype", new Property(prototype, true, false, false));
         /* step 8 */
         GeneratorObject iterator = (GeneratorObject) closure.call(cx, UNDEFINED);
         /* step 9 */
@@ -556,7 +644,7 @@ public final class ScriptRuntime {
         LexicalEnvironment<?> scope = cx.getLexicalEnvironment();
         /* steps 3-4 (not applicable) */
         /* step 5 */
-        OrdinaryGenerator closure = GeneratorFunctionCreate(cx, FunctionKind.Arrow, fd, scope);
+        OrdinaryConstructorGenerator closure = ConstructorGeneratorFunctionCreate(cx, FunctionKind.Arrow, fd, scope);
         /* step 6 */
         OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.LegacyGeneratorPrototype);
         /* step 7 */
@@ -2099,9 +2187,9 @@ public final class ScriptRuntime {
         } else {
             /* step 1 (not applicable) */
             /* step 2 */
-            LexicalEnvironment<?> runningContext = cx.getLexicalEnvironment();
+            LexicalEnvironment<?> scope = cx.getLexicalEnvironment();
             /* step 3 */
-            LexicalEnvironment<DeclarativeEnvironmentRecord> funcEnv = newDeclarativeEnvironment(runningContext);
+            LexicalEnvironment<DeclarativeEnvironmentRecord> funcEnv = newDeclarativeEnvironment(scope);
             /* step 4 */
             DeclarativeEnvironmentRecord envRec = funcEnv.getEnvRec();
             /* step 5 */
@@ -2150,9 +2238,9 @@ public final class ScriptRuntime {
         } else {
             /* step 1 (not applicable) */
             /* step 2 */
-            LexicalEnvironment<?> runningContext = cx.getLexicalEnvironment();
+            LexicalEnvironment<?> scope = cx.getLexicalEnvironment();
             /* step 3 */
-            LexicalEnvironment<DeclarativeEnvironmentRecord> funcEnv = newDeclarativeEnvironment(runningContext);
+            LexicalEnvironment<DeclarativeEnvironmentRecord> funcEnv = newDeclarativeEnvironment(scope);
             /* step 4 */
             DeclarativeEnvironmentRecord envRec = funcEnv.getEnvRec();
             /* step 5 */
@@ -2552,13 +2640,13 @@ public final class ScriptRuntime {
      *            the function runtime info object
      * @return the new generator function instance
      */
-    public static OrdinaryGenerator InstantiateGeneratorObject(LexicalEnvironment<?> scope, ExecutionContext cx,
-            RuntimeInfo.Function fd) {
+    public static OrdinaryConstructorGenerator InstantiateConstructorGeneratorObject(LexicalEnvironment<?> scope,
+            ExecutionContext cx, RuntimeInfo.Function fd) {
         /* step 1 (not applicable) */
         /* step 2 */
         String name = fd.functionName();
         /* step 3 */
-        OrdinaryGenerator f = GeneratorFunctionCreate(cx, FunctionKind.Normal, fd, scope);
+        OrdinaryConstructorGenerator f = ConstructorGeneratorFunctionCreate(cx, FunctionKind.Normal, fd, scope);
         /* step 4 */
         OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.GeneratorPrototype);
         /* step 5 */
@@ -2582,13 +2670,43 @@ public final class ScriptRuntime {
      *            the function runtime info object
      * @return the new generator function instance
      */
-    public static OrdinaryGenerator InstantiateLegacyGeneratorObject(LexicalEnvironment<?> scope, ExecutionContext cx,
+    public static OrdinaryGenerator InstantiateGeneratorObject(LexicalEnvironment<?> scope, ExecutionContext cx,
             RuntimeInfo.Function fd) {
         /* step 1 (not applicable) */
         /* step 2 */
         String name = fd.functionName();
         /* step 3 */
         OrdinaryGenerator f = GeneratorFunctionCreate(cx, FunctionKind.Normal, fd, scope);
+        /* step 4 */
+        OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.GeneratorPrototype);
+        /* step 5 */
+        f.infallibleDefineOwnProperty("prototype", new Property(prototype, true, false, false));
+        /* step 6 */
+        SetFunctionName(f, name);
+        /* step 7 */
+        return f;
+    }
+
+    /**
+     * 14.4 Generator Function Definitions
+     * <p>
+     * 14.4.12 Runtime Semantics: InstantiateFunctionObject
+     * 
+     * @param scope
+     *            the current lexical scope
+     * @param cx
+     *            the execution context
+     * @param fd
+     *            the function runtime info object
+     * @return the new generator function instance
+     */
+    public static OrdinaryConstructorGenerator InstantiateLegacyGeneratorObject(LexicalEnvironment<?> scope,
+            ExecutionContext cx, RuntimeInfo.Function fd) {
+        /* step 1 (not applicable) */
+        /* step 2 */
+        String name = fd.functionName();
+        /* step 3 */
+        OrdinaryConstructorGenerator f = ConstructorGeneratorFunctionCreate(cx, FunctionKind.Normal, fd, scope);
         /* step 4 */
         OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.LegacyGeneratorPrototype);
         /* step 5 */
@@ -2597,6 +2715,116 @@ public final class ScriptRuntime {
         SetFunctionName(f, name);
         /* step 7 */
         return f;
+    }
+
+    /**
+     * 14.4 Generator Function Definitions
+     * <p>
+     * 14.4.13 Runtime Semantics: PropertyDefinitionEvaluation
+     * <ul>
+     * <li>GeneratorMethod : * PropertyName ( StrictFormalParameters ) { FunctionBody }
+     * </ul>
+     * 
+     * @param object
+     *            the script object
+     * @param propKey
+     *            the property key
+     * @param enumerable
+     *            the enumerable property attribute
+     * @param fd
+     *            the function runtime info object
+     * @param cx
+     *            the execution context
+     */
+    public static void EvaluatePropertyDefinitionConstructorGenerator(OrdinaryObject object, Object propKey,
+            boolean enumerable, RuntimeInfo.Function fd, ExecutionContext cx) {
+        if (propKey instanceof String) {
+            EvaluatePropertyDefinitionConstructorGenerator(object, (String) propKey, enumerable, fd, cx);
+        } else {
+            EvaluatePropertyDefinitionConstructorGenerator(object, (Symbol) propKey, enumerable, fd, cx);
+        }
+    }
+
+    /**
+     * 14.4 Generator Function Definitions
+     * <p>
+     * 14.4.13 Runtime Semantics: PropertyDefinitionEvaluation
+     * <ul>
+     * <li>GeneratorMethod : * PropertyName ( StrictFormalParameters ) { FunctionBody }
+     * </ul>
+     * 
+     * @param object
+     *            the script object
+     * @param propKey
+     *            the property key
+     * @param enumerable
+     *            the enumerable property attribute
+     * @param fd
+     *            the function runtime info object
+     * @param cx
+     *            the execution context
+     */
+    public static void EvaluatePropertyDefinitionConstructorGenerator(OrdinaryObject object, String propKey,
+            boolean enumerable, RuntimeInfo.Function fd, ExecutionContext cx) {
+        /* steps 1-2 (bytecode) */
+        /* step 3 (not applicable) */
+        /* step 4 */
+        LexicalEnvironment<?> scope = cx.getLexicalEnvironment();
+        /* step 5 */
+        OrdinaryConstructorGenerator closure = ConstructorGeneratorFunctionCreate(cx, FunctionKind.Method, fd, scope);
+        /* step 6 */
+        MakeMethod(closure, object);
+        /* step 7 */
+        OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.GeneratorPrototype);
+        /* step 8 */
+        MakeConstructor(closure, true, prototype);
+        /* step 9 */
+        SetFunctionName(closure, propKey);
+        /* step 10 */
+        PropertyDescriptor desc = new PropertyDescriptor(closure, true, enumerable, true);
+        /* step 11 */
+        DefinePropertyOrThrow(cx, object, propKey, desc);
+    }
+
+    /**
+     * 14.4 Generator Function Definitions
+     * <p>
+     * 14.4.13 Runtime Semantics: PropertyDefinitionEvaluation
+     * <ul>
+     * <li>GeneratorMethod : * PropertyName ( StrictFormalParameters ) { FunctionBody }
+     * </ul>
+     * 
+     * @param object
+     *            the script object
+     * @param propKey
+     *            the property key
+     * @param enumerable
+     *            the enumerable property attribute
+     * @param fd
+     *            the function runtime info object
+     * @param cx
+     *            the execution context
+     */
+    public static void EvaluatePropertyDefinitionConstructorGenerator(OrdinaryObject object, Symbol propKey,
+            boolean enumerable, RuntimeInfo.Function fd, ExecutionContext cx) {
+        /* steps 1-2 (bytecode) */
+        /* step 3 (not applicable) */
+        /* step 4 */
+        LexicalEnvironment<?> scope = cx.getLexicalEnvironment();
+        /* step 5 */
+        OrdinaryConstructorGenerator closure = ConstructorGeneratorFunctionCreate(cx, FunctionKind.Method, fd, scope);
+        /* step 6 */
+        MakeMethod(closure, object);
+        /* step 7 */
+        OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.GeneratorPrototype);
+        /* step 8 */
+        MakeConstructor(closure, true, prototype);
+        /* step 9 */
+        SetFunctionName(closure, propKey);
+        /* step 10 */
+        PropertyDescriptor desc = new PropertyDescriptor(closure, true, enumerable, true);
+        /* step 11 */
+        DefinePropertyOrThrow(cx, object, propKey, desc);
     }
 
     /**
@@ -2659,7 +2887,7 @@ public final class ScriptRuntime {
         /* step 7 */
         OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.GeneratorPrototype);
         /* step 8 */
-        MakeConstructor(closure, true, prototype);
+        closure.infallibleDefineOwnProperty("prototype", new Property(prototype, true, false, false));
         /* step 9 */
         SetFunctionName(closure, propKey);
         /* step 10 */
@@ -2700,7 +2928,7 @@ public final class ScriptRuntime {
         /* step 7 */
         OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.GeneratorPrototype);
         /* step 8 */
-        MakeConstructor(closure, true, prototype);
+        closure.infallibleDefineOwnProperty("prototype", new Property(prototype, true, false, false));
         /* step 9 */
         SetFunctionName(closure, propKey);
         /* step 10 */
@@ -2724,14 +2952,15 @@ public final class ScriptRuntime {
      *            the execution context
      * @return the new generator function instance
      */
-    public static OrdinaryGenerator EvaluateGeneratorExpression(RuntimeInfo.Function fd, ExecutionContext cx) {
-        OrdinaryGenerator closure;
+    public static OrdinaryConstructorGenerator EvaluateConstructorGeneratorExpression(RuntimeInfo.Function fd,
+            ExecutionContext cx) {
+        OrdinaryConstructorGenerator closure;
         if (!fd.is(RuntimeInfo.FunctionFlags.ScopedName)) {
             /* step 1 (not applicable) */
             /* step 2 */
             LexicalEnvironment<?> scope = cx.getLexicalEnvironment();
             /* step 3 */
-            closure = GeneratorFunctionCreate(cx, FunctionKind.Normal, fd, scope);
+            closure = ConstructorGeneratorFunctionCreate(cx, FunctionKind.Normal, fd, scope);
             /* step 4 */
             OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.GeneratorPrototype);
             /* step 5 */
@@ -2739,9 +2968,9 @@ public final class ScriptRuntime {
         } else {
             /* step 1 (not applicable) */
             /* step 2 */
-            LexicalEnvironment<?> runningContext = cx.getLexicalEnvironment();
+            LexicalEnvironment<?> scope = cx.getLexicalEnvironment();
             /* step 3 */
-            LexicalEnvironment<DeclarativeEnvironmentRecord> funcEnv = newDeclarativeEnvironment(runningContext);
+            LexicalEnvironment<DeclarativeEnvironmentRecord> funcEnv = newDeclarativeEnvironment(scope);
             /* step 4 */
             DeclarativeEnvironmentRecord envRec = funcEnv.getEnvRec();
             /* step 5 */
@@ -2749,7 +2978,7 @@ public final class ScriptRuntime {
             /* step 6 */
             envRec.createImmutableBinding(name, false);
             /* step 7 */
-            closure = GeneratorFunctionCreate(cx, FunctionKind.Normal, fd, funcEnv);
+            closure = ConstructorGeneratorFunctionCreate(cx, FunctionKind.Normal, fd, funcEnv);
             /* step 8 */
             OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.GeneratorPrototype);
             /* step 9 */
@@ -2778,7 +3007,7 @@ public final class ScriptRuntime {
      *            the execution context
      * @return the new generator function instance
      */
-    public static OrdinaryGenerator EvaluateLegacyGeneratorExpression(RuntimeInfo.Function fd, ExecutionContext cx) {
+    public static OrdinaryGenerator EvaluateGeneratorExpression(RuntimeInfo.Function fd, ExecutionContext cx) {
         OrdinaryGenerator closure;
         if (!fd.is(RuntimeInfo.FunctionFlags.ScopedName)) {
             /* step 1 (not applicable) */
@@ -2787,15 +3016,15 @@ public final class ScriptRuntime {
             /* step 3 */
             closure = GeneratorFunctionCreate(cx, FunctionKind.Normal, fd, scope);
             /* step 4 */
-            OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.LegacyGeneratorPrototype);
+            OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.GeneratorPrototype);
             /* step 5 */
-            MakeConstructor(closure, true, prototype);
+            closure.infallibleDefineOwnProperty("prototype", new Property(prototype, true, false, false));
         } else {
             /* step 1 (not applicable) */
             /* step 2 */
-            LexicalEnvironment<?> runningContext = cx.getLexicalEnvironment();
-            /* step 2 */
-            LexicalEnvironment<DeclarativeEnvironmentRecord> funcEnv = newDeclarativeEnvironment(runningContext);
+            LexicalEnvironment<?> scope = cx.getLexicalEnvironment();
+            /* step 3 */
+            LexicalEnvironment<DeclarativeEnvironmentRecord> funcEnv = newDeclarativeEnvironment(scope);
             /* step 4 */
             DeclarativeEnvironmentRecord envRec = funcEnv.getEnvRec();
             /* step 5 */
@@ -2804,6 +3033,61 @@ public final class ScriptRuntime {
             envRec.createImmutableBinding(name, false);
             /* step 7 */
             closure = GeneratorFunctionCreate(cx, FunctionKind.Normal, fd, funcEnv);
+            /* step 8 */
+            OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.GeneratorPrototype);
+            /* step 9 */
+            closure.infallibleDefineOwnProperty("prototype", new Property(prototype, true, false, false));
+            /* step 10 */
+            SetFunctionName(closure, name);
+            /* step 11 */
+            envRec.initializeBinding(name, closure);
+        }
+        /* step 6/12 */
+        return closure;
+    }
+
+    /**
+     * 14.4 Generator Function Definitions
+     * <p>
+     * 14.4.14 Runtime Semantics: Evaluation
+     * <ul>
+     * <li>GeneratorExpression: function* ( FormalParameters ) { FunctionBody }
+     * <li>GeneratorExpression: function* BindingIdentifier ( FormalParameters ) { FunctionBody }
+     * </ul>
+     * 
+     * @param fd
+     *            the function runtime info object
+     * @param cx
+     *            the execution context
+     * @return the new generator function instance
+     */
+    public static OrdinaryConstructorGenerator EvaluateLegacyGeneratorExpression(RuntimeInfo.Function fd,
+            ExecutionContext cx) {
+        OrdinaryConstructorGenerator closure;
+        if (!fd.is(RuntimeInfo.FunctionFlags.ScopedName)) {
+            /* step 1 (not applicable) */
+            /* step 2 */
+            LexicalEnvironment<?> scope = cx.getLexicalEnvironment();
+            /* step 3 */
+            closure = ConstructorGeneratorFunctionCreate(cx, FunctionKind.Normal, fd, scope);
+            /* step 4 */
+            OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.LegacyGeneratorPrototype);
+            /* step 5 */
+            MakeConstructor(closure, true, prototype);
+        } else {
+            /* step 1 (not applicable) */
+            /* step 2 */
+            LexicalEnvironment<?> scope = cx.getLexicalEnvironment();
+            /* step 2 */
+            LexicalEnvironment<DeclarativeEnvironmentRecord> funcEnv = newDeclarativeEnvironment(scope);
+            /* step 4 */
+            DeclarativeEnvironmentRecord envRec = funcEnv.getEnvRec();
+            /* step 5 */
+            String name = fd.functionName();
+            /* step 6 */
+            envRec.createImmutableBinding(name, false);
+            /* step 7 */
+            closure = ConstructorGeneratorFunctionCreate(cx, FunctionKind.Normal, fd, funcEnv);
             /* step 8 */
             OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.LegacyGeneratorPrototype);
             /* step 9 */
@@ -3065,7 +3349,7 @@ public final class ScriptRuntime {
             throw newTypeError(cx, Messages.Key.NotConstructor);
         } else {
             Constructor superClassObj = (Constructor) superClass;
-            if (superClassObj instanceof OrdinaryGenerator) {
+            if (superClassObj instanceof OrdinaryConstructorGenerator) {
                 throw newTypeError(cx, Messages.Key.InvalidSuperClass);
             }
             Object p = Get(cx, superClassObj, "prototype");
@@ -3124,9 +3408,9 @@ public final class ScriptRuntime {
         } else {
             /* step 1 (not applicable) */
             /* step 2 */
-            LexicalEnvironment<?> runningContext = cx.getLexicalEnvironment();
+            LexicalEnvironment<?> scope = cx.getLexicalEnvironment();
             /* step 3 */
-            LexicalEnvironment<DeclarativeEnvironmentRecord> funcEnv = newDeclarativeEnvironment(runningContext);
+            LexicalEnvironment<DeclarativeEnvironmentRecord> funcEnv = newDeclarativeEnvironment(scope);
             /* step 4 */
             DeclarativeEnvironmentRecord envRec = funcEnv.getEnvRec();
             /* step 5 */

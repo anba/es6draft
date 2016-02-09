@@ -6,8 +6,10 @@
  */
 package com.github.anba.es6draft.ast.scope;
 
+import java.util.List;
 import java.util.Set;
 
+import com.github.anba.es6draft.ast.FunctionDeclaration;
 import com.github.anba.es6draft.ast.Script;
 
 /**
@@ -24,4 +26,11 @@ public interface ScriptScope extends TopLevelScope {
      * @return the variable declared names
      */
     Set<Name> varForOfDeclaredNames();
+
+    /**
+     * Returns the script's web legacy block-level function declarations.
+     * 
+     * @return the function declarations
+     */
+    List<FunctionDeclaration> blockFunctions();
 }

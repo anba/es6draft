@@ -19,9 +19,22 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>20.1.4 Properties of Number Instances
  * </ul>
  */
-public final class NumberObject extends OrdinaryObject {
+public class NumberObject extends OrdinaryObject {
     /** [[NumberData]] */
     private final double numberData;
+
+    /**
+     * Constructs a new Number object.
+     * 
+     * @param realm
+     *            the realm object
+     * @param numberData
+     *            the number data
+     */
+    NumberObject(Realm realm, double numberData) {
+        super(realm);
+        this.numberData = numberData;
+    }
 
     /**
      * Constructs a new Number object.

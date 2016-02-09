@@ -17,7 +17,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
-import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
@@ -43,7 +42,6 @@ import org.junit.runners.Parameterized.Parameters;
 import org.junit.runners.Parameterized.UseParametersRunnerFactory;
 import org.junit.runners.model.MultipleFailureException;
 
-import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.Properties;
 import com.github.anba.es6draft.runtime.internal.Source;
 import com.github.anba.es6draft.runtime.internal.Strings;
@@ -79,18 +77,8 @@ public final class MozillaJSTest {
     }
 
     @ClassRule
-    public static TestGlobals<MozTestGlobalObject, TestInfo> globals = new TestGlobals<MozTestGlobalObject, TestInfo>(
-            configuration, MozTestGlobalObject::new) {
-        @Override
-        protected EnumSet<CompatibilityOption> getOptions() {
-            EnumSet<CompatibilityOption> options = super.getOptions();
-            options.add(CompatibilityOption.ArrayBufferMissingLength);
-            options.add(CompatibilityOption.ArrayIncludes);
-            options.add(CompatibilityOption.Exponentiation);
-            options.add(CompatibilityOption.SIMD);
-            return options;
-        }
-    };
+    public static TestGlobals<MozTestGlobalObject, TestInfo> globals = new TestGlobals<>(configuration,
+            MozTestGlobalObject::new);
 
     @Rule
     public Timeout maxTime = new Timeout(120, TimeUnit.SECONDS);

@@ -18,10 +18,10 @@ import com.github.anba.es6draft.ast.scope.FunctionScope;
  */
 public final class LegacyGeneratorExpression extends GeneratorExpression {
     public LegacyGeneratorExpression(long beginPosition, long endPosition, FunctionScope scope,
-            BindingIdentifier identifier, FormalParameterList parameters,
-            List<StatementListItem> statements, String headerSource, String bodySource) {
-        super(beginPosition, endPosition, scope, identifier, parameters, statements, headerSource,
-                bodySource);
+            BindingIdentifier identifier, FormalParameterList parameters, List<StatementListItem> statements,
+            String headerSource, String bodySource) {
+        super(beginPosition, endPosition, scope, GeneratorKind.Constructor, identifier, parameters, statements,
+                headerSource, bodySource);
     }
 
     @Override

@@ -6,6 +6,9 @@
  */
 package com.github.anba.es6draft.parser;
 
+import java.util.Objects;
+import java.util.function.BiPredicate;
+
 import com.github.anba.es6draft.ast.*;
 import com.github.anba.es6draft.ast.scope.Name;
 
@@ -13,11 +16,20 @@ import com.github.anba.es6draft.ast.scope.Name;
  * 
  */
 final class FindParameter extends DefaultNodeVisitor<BindingIdentifier, Name> {
-    private static final FindParameter INSTANCE = new FindParameter();
+    private static final FindParameter INSTANCE = new FindParameter(Objects::equals);
+    private static final FindParameter INSTANCE_EXACT = new FindParameter((x, y) -> x == y);
+
+    private final BiPredicate<Name, Name> predicate;
+
+    private FindParameter(BiPredicate<Name, Name> predicate) {
+        this.predicate = predicate;
+    }
 
     /**
      * Returns the named parameter node.
      * 
+     * @param function
+     *            the function node
      * @param name
      *            the parameter name
      * @return the parameter node
@@ -26,6 +38,21 @@ final class FindParameter extends DefaultNodeVisitor<BindingIdentifier, Name> {
         BindingIdentifier parameter = function.getParameters().accept(INSTANCE, name);
         assert parameter != null : "Parameter not found: " + name;
         return parameter;
+    }
+
+    /**
+     * Returns the named binding node.
+     * 
+     * @param pattern
+     *            the binding pattern
+     * @param name
+     *            the binding name
+     * @return the binding node
+     */
+    static BindingIdentifier findExact(BindingPattern pattern, Name name) {
+        BindingIdentifier identifier = pattern.accept(INSTANCE_EXACT, name);
+        assert identifier != null : "Name not found: " + name;
+        return identifier;
     }
 
     private BindingIdentifier forEach(Iterable<? extends Node> list, Name name) {
@@ -45,7 +72,7 @@ final class FindParameter extends DefaultNodeVisitor<BindingIdentifier, Name> {
 
     @Override
     public BindingIdentifier visit(BindingIdentifier node, Name value) {
-        return node.getName().equals(value) ? node : null;
+        return predicate.test(node.getName(), value) ? node : null;
     }
 
     @Override
@@ -70,7 +97,7 @@ final class FindParameter extends DefaultNodeVisitor<BindingIdentifier, Name> {
 
     @Override
     public BindingIdentifier visit(BindingRestElement node, Name value) {
-        return node.getBindingIdentifier().accept(this, value);
+        return node.getBinding().accept(this, value);
     }
 
     @Override

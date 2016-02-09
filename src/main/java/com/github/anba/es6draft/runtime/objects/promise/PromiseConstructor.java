@@ -118,22 +118,6 @@ public final class PromiseConstructor extends BuiltinConstructor implements Init
     public enum Properties {
         ;
 
-        private static Constructor promiseConstructorFromSpecies(ExecutionContext cx, Object c) {
-            /* step 1 */
-            if (!Type.isObject(c)) {
-                throw newTypeError(cx, Messages.Key.NotObjectType);
-            }
-            /* steps 2-3 */
-            Object species = Get(cx, Type.objectValue(c), BuiltinSymbol.species.get());
-            /* step 4 */
-            Object constructor = !Type.isUndefinedOrNull(species) ? species : c;
-            /* (type check from NewPromiseCapability) */
-            if (!IsConstructor(constructor)) {
-                throw newTypeError(cx, Messages.Key.NotConstructor);
-            }
-            return (Constructor) constructor;
-        }
-
         @Prototype
         public static final Intrinsics __proto__ = Intrinsics.FunctionPrototype;
 
@@ -166,7 +150,10 @@ public final class PromiseConstructor extends BuiltinConstructor implements Init
         @Function(name = "all", arity = 1)
         public static Object all(ExecutionContext cx, Object thisValue, Object iterable) {
             /* steps 1-5 */
-            Constructor c = promiseConstructorFromSpecies(cx, thisValue);
+            if (!Type.isObject(thisValue)) {
+                throw newTypeError(cx, Messages.Key.NotObjectType);
+            }
+            ScriptObject c = Type.objectValue(thisValue);
             /* steps 6-7 */
             PromiseCapability<?> promiseCapability = NewPromiseCapability(cx, c);
             /* step 8 */
@@ -205,7 +192,10 @@ public final class PromiseConstructor extends BuiltinConstructor implements Init
         @Function(name = "race", arity = 1)
         public static Object race(ExecutionContext cx, Object thisValue, Object iterable) {
             /* steps 1-5 */
-            Constructor c = promiseConstructorFromSpecies(cx, thisValue);
+            if (!Type.isObject(thisValue)) {
+                throw newTypeError(cx, Messages.Key.NotObjectType);
+            }
+            ScriptObject c = Type.objectValue(thisValue);
             /* steps 6-7 */
             PromiseCapability<?> promiseCapability = NewPromiseCapability(cx, c);
             /* step 8 */
@@ -321,8 +311,7 @@ public final class PromiseConstructor extends BuiltinConstructor implements Init
      * @return the new promise object
      */
     public static <PROMISE extends ScriptObject> PROMISE PerformPromiseAll(ExecutionContext cx,
-            ScriptIterator<?> iterator, Constructor constructor,
-            PromiseCapability<PROMISE> resultCapability) {
+            ScriptIterator<?> iterator, ScriptObject constructor, PromiseCapability<PROMISE> resultCapability) {
         /* steps 1-2 (not applicable) */
         /* step 3 */
         ArrayList<Object> values = new ArrayList<>();
@@ -340,9 +329,8 @@ public final class PromiseConstructor extends BuiltinConstructor implements Init
             /* steps 6.i-j */
             Object nextPromise = Invoke(cx, constructor, "resolve", nextValue);
             /* steps 6.k-p */
-            PromiseAllResolveElementFunction resolveElement = new PromiseAllResolveElementFunction(
-                    cx.getRealm(), new AtomicBoolean(false), index, values, resultCapability,
-                    remainingElementsCount);
+            PromiseAllResolveElementFunction resolveElement = new PromiseAllResolveElementFunction(cx.getRealm(),
+                    new AtomicBoolean(false), index, values, resultCapability, remainingElementsCount);
             /* step 6.q */
             remainingElementsCount.incrementAndGet();
             /* steps 6.r-s */
@@ -447,8 +435,7 @@ public final class PromiseConstructor extends BuiltinConstructor implements Init
      * @return the new promise object
      */
     public static <PROMISE extends ScriptObject> PROMISE PerformPromiseRace(ExecutionContext cx,
-            ScriptIterator<?> iterator, Constructor constructor,
-            PromiseCapability<PROMISE> promiseCapability) {
+            ScriptIterator<?> iterator, ScriptObject constructor, PromiseCapability<PROMISE> promiseCapability) {
         /* step 1 */
         while (iterator.hasNext()) {
             /* steps 1.a-c, 1.e-g */
@@ -456,8 +443,7 @@ public final class PromiseConstructor extends BuiltinConstructor implements Init
             /* steps 1.f-g */
             Object nextPromise = Invoke(cx, constructor, "resolve", nextValue);
             /* steps 1.h-i */
-            Invoke(cx, nextPromise, "then", promiseCapability.getResolve(),
-                    promiseCapability.getReject());
+            Invoke(cx, nextPromise, "then", promiseCapability.getResolve(), promiseCapability.getReject());
         }
         /* step 1.d */
         return promiseCapability.getPromise();

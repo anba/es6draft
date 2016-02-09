@@ -14,21 +14,20 @@ package com.github.anba.es6draft.ast;
  * </ul>
  */
 public final class BindingRestElement extends BindingElementItem {
-    private final BindingIdentifier bindingIdentifier;
+    private final Binding binding;
 
-    public BindingRestElement(long beginPosition, long endPosition,
-            BindingIdentifier bindingIdentifier) {
+    public BindingRestElement(long beginPosition, long endPosition, Binding binding) {
         super(beginPosition, endPosition);
-        this.bindingIdentifier = bindingIdentifier;
+        this.binding = binding;
     }
 
     /**
-     * Returns the target binding identifier.
+     * Returns the target binding.
      * 
      * @return the binding node
      */
-    public BindingIdentifier getBindingIdentifier() {
-        return bindingIdentifier;
+    public Binding getBinding() {
+        return binding;
     }
 
     @Override

@@ -32,6 +32,9 @@ feature/ObjectInitializerShorthand/StrictKeyword.js
 # async function have own prototype
 feature/AsyncFunctions/Prototype.js
 
+# legacy block function semantics
+feature/Scope/BlockBinding8.js
+
 
 ############################################
 # Implementation specific differences      #

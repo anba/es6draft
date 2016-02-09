@@ -156,7 +156,6 @@ final class ModuleDeclarationInstantiationGenerator extends
             }
         }
         /* step 13 */
-        // FIXME: spec bug - check for duplicate var-declared names!
         List<StatementListItem> varDeclarations = VarScopedDeclarations(module);
         HashSet<Name> declaredVarNames = new HashSet<>();
         /* step 14 */

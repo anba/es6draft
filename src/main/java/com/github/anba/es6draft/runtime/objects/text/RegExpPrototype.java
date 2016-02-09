@@ -576,7 +576,7 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
                 String pattern = re.getOriginalSource();
                 boolean defaultMultiline = RegExpConstructor.isDefaultMultiline(cx);
                 /* steps 17-18 */
-                lim = Type.isUndefined(limit) ? 0x1F_FFFF_FFFF_FFFFL : ToLength(cx, limit);
+                lim = Type.isUndefined(limit) ? 0xFFFF_FFFFL : ToUint32(cx, limit);
                 // Test if required RegExp.prototype methods are still the default values.
                 // Also test if pattern/flags match the original pattern/flags. Side-effects in
                 // IsRegExp or ToLength may have called RegExp.prototype.compile.
@@ -591,7 +591,7 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
                 /* steps 13-14 */
                 splitter = c.construct(cx, c, rx, newFlags);
                 /* steps 17-18 */
-                lim = Type.isUndefined(limit) ? 0x1F_FFFF_FFFF_FFFFL : ToLength(cx, limit);
+                lim = Type.isUndefined(limit) ? 0xFFFF_FFFFL : ToUint32(cx, limit);
             }
 
             /* step 15 */
@@ -633,7 +633,6 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
                 }
                 /* step 24.f */
                 /* step 24.f.i-ii */
-                // FIXME: spec bug - https://bugs.ecmascript.org/show_bug.cgi?id=4434
                 int e = Math.min((int) ToLength(cx, Get(cx, splitter, "lastIndex")), size);
                 /* step 24.f.iii */
                 if (e == p) {

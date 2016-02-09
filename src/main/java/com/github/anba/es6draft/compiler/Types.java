@@ -157,6 +157,7 @@ final class Types {
     static final Type OrdinaryAsyncFunction = Type.of(OrdinaryAsyncFunction.class);
     static final Type OrdinaryConstructorFunction = Type.of(OrdinaryConstructorFunction.class);
     static final Type OrdinaryFunction = Type.of(OrdinaryFunction.class);
+    static final Type OrdinaryConstructorGenerator = Type.of(OrdinaryConstructorGenerator.class);
     static final Type OrdinaryGenerator = Type.of(OrdinaryGenerator.class);
     static final Type OrdinaryObject = Type.of(OrdinaryObject.class);
 

@@ -131,7 +131,7 @@ public final class StaticSemantics {
             return singletonList(((BindingIdentifier) node).getName());
         }
         assert node instanceof BindingPattern;
-        return node.accept(BoundNames.INSTANCE, new InlineArrayList<Name>());
+        return node.accept(BoundNames.INSTANCE, new InlineArrayList<>());
     }
 
     /**
@@ -162,7 +162,7 @@ public final class StaticSemantics {
      */
     public static List<Name> BoundNames(List<FormalParameter> formals) {
         // TODO: Some callers expect the returned list to be mutable.
-        InlineArrayList<Name> list = new InlineArrayList<Name>();
+        InlineArrayList<Name> list = new InlineArrayList<>();
         for (FormalParameter formalParameter : formals) {
             formalParameter.accept(BoundNames.INSTANCE, list);
         }
@@ -185,11 +185,7 @@ public final class StaticSemantics {
         if (element instanceof BindingElement) {
             return BoundNames(((BindingElement) element).getBinding());
         }
-        if (element instanceof BindingRestElement) {
-            return BoundNames(((BindingRestElement) element).getBindingIdentifier());
-        }
-        assert element instanceof BindingElision;
-        return node.accept(BoundNames.INSTANCE, new InlineArrayList<Name>());
+        return BoundNames(((BindingRestElement) element).getBinding());
     }
 
     /**
@@ -216,7 +212,7 @@ public final class StaticSemantics {
             return BoundNames(((ExportDefaultExpression) node).getBinding());
         }
         assert node instanceof LexicalDeclaration;
-        return node.accept(BoundNames.INSTANCE, new InlineArrayList<Name>());
+        return node.accept(BoundNames.INSTANCE, new InlineArrayList<>());
     }
 
     /**
@@ -227,7 +223,7 @@ public final class StaticSemantics {
      * @return the bound names
      */
     public static List<Name> BoundNames(VariableStatement node) {
-        return node.accept(BoundNames.INSTANCE, new InlineArrayList<Name>());
+        return node.accept(BoundNames.INSTANCE, new InlineArrayList<>());
     }
 
     /**
@@ -249,7 +245,7 @@ public final class StaticSemantics {
      * @return the bound names
      */
     public static List<Name> BoundNames(ImportDeclaration node) {
-        return node.accept(BoundNames.INSTANCE, new InlineArrayList<Name>());
+        return node.accept(BoundNames.INSTANCE, new InlineArrayList<>());
     }
 
     /**
@@ -260,7 +256,7 @@ public final class StaticSemantics {
      * @return the bound names
      */
     public static List<Name> BoundNames(ExportDeclaration node) {
-        return node.accept(BoundNames.INSTANCE, new InlineArrayList<Name>());
+        return node.accept(BoundNames.INSTANCE, new InlineArrayList<>());
     }
 
     /**
@@ -1099,6 +1095,7 @@ public final class StaticSemantics {
     public static boolean SpecialMethod(MethodDefinition node) {
         switch (node.getType()) {
         case AsyncFunction:
+        case ConstructorGenerator:
         case Generator:
         case Getter:
         case Setter:

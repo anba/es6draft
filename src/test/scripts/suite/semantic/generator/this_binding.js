@@ -27,12 +27,10 @@ const global = this;
 // non-strict and strict generators, generator called with `new`
 {
   function* nonStrictGenerator() { yield this; }
-  let g1 = new nonStrictGenerator();
-  assertThrows(ReferenceError, () => g1.next());
+  assertThrows(TypeError, () => new nonStrictGenerator());
 
   function* strictGenerator() { "use strict"; yield this; }
-  let g2 = new strictGenerator();
-  assertThrows(ReferenceError, () => g2.next());
+  assertThrows(TypeError, () => new strictGenerator());
 }
 
 // GeneratorFunction subclass, generator called with `new`
@@ -42,8 +40,7 @@ const global = this;
   class G extends GeneratorFunction { }
 
   let g = new G("yield this");
-  let gen = new g();
-  assertThrows(ReferenceError, () => gen.next());
+  assertThrows(TypeError, () => new g());
 }
 
 // GeneratorFunction subclass+cloned, clone .prototype set to %Generator%, generator called with `new`
@@ -57,8 +54,7 @@ const global = this;
   class G extends GeneratorFunctionClone { }
 
   let g = new G("yield this");
-  let gen = new g();
-  assertThrows(ReferenceError, () => gen.next());
+  assertThrows(TypeError, () => new g());
 }
 
 // GeneratorFunction subclass+cloned, clone .prototype set to %Array%, generator called with `new`
@@ -72,8 +68,7 @@ const global = this;
   class G extends GeneratorFunctionClone { }
 
   let g = new G("yield this");
-  let gen = new g();
-  assertThrows(ReferenceError, () => gen.next());
+  assertThrows(TypeError, () => new g());
 }
 
 // GeneratorFunction subclass+cloned, clone .prototype set to %Generator%, generator called with `new`
@@ -88,8 +83,7 @@ const global = this;
   let GClone = G.toMethod({});
 
   let g = new GClone("yield this");
-  let gen = new g();
-  assertThrows(ReferenceError, () => gen.next());
+  assertThrows(TypeError, () => new g());
 }
 
 // GeneratorFunction subclass+cloned, clone .prototype set to %Array%, generator called with `new`
@@ -107,8 +101,7 @@ const global = this;
   });
 
   let g = new GClone("yield this");
-  let gen = new g();
-  assertThrows(ReferenceError, () => gen.next());
+  assertThrows(TypeError, () => new g());
 }
 
 // GeneratorFunction subclass+cloned, clone .prototype set to %Array%, generator called with `new`
@@ -123,8 +116,7 @@ const global = this;
   let GClone = G.toMethod({});
 
   let g = new GClone("yield this");
-  let gen = new g();
-  assertThrows(ReferenceError, () => gen.next());
+  assertThrows(TypeError, () => new g());
 }
 
 {
@@ -137,8 +129,7 @@ const global = this;
   });
 
   let g = new GClone("yield this");
-  let gen = new g();
-  assertThrows(ReferenceError, () => gen.next());
+  assertThrows(TypeError, () => new g());
 }
 
 {
@@ -152,6 +143,5 @@ const global = this;
   });
 
   let g = new GClone("yield this");
-  let gen = new g();
-  assertThrows(ReferenceError, () => gen.next());
+  assertThrows(TypeError, () => new g());
 }

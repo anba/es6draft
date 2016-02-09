@@ -11,7 +11,6 @@ import static com.github.anba.es6draft.util.Resources.loadTests;
 import static org.junit.Assume.assumeTrue;
 
 import java.io.IOException;
-import java.util.EnumSet;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -27,7 +26,6 @@ import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
 import org.junit.runners.Parameterized.UseParametersRunnerFactory;
 
-import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.util.Parallelized;
 import com.github.anba.es6draft.util.ParameterizedRunnerFactory;
 import com.github.anba.es6draft.util.SystemConsole;
@@ -54,15 +52,7 @@ public final class NodeLoaderTest {
 
     @ClassRule
     public static TestGlobals<TestGlobalObject, TestInfo> globals = new TestGlobals<TestGlobalObject, TestInfo>(
-            configuration, TestGlobalObject::new, TestNodeModuleLoader::new) {
-        @Override
-        protected EnumSet<CompatibilityOption> getOptions() {
-            EnumSet<CompatibilityOption> options = super.getOptions();
-            options.add(CompatibilityOption.Loader);
-            options.add(CompatibilityOption.System);
-            return options;
-        }
-    };
+            configuration, TestGlobalObject::new, TestNodeModuleLoader::new);
 
     @Rule
     public Timeout maxTime = new Timeout(120, TimeUnit.SECONDS);

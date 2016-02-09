@@ -24,9 +24,22 @@ import com.github.anba.es6draft.runtime.types.ScriptObject;
  * <li>9.4.3 String Exotic Objects
  * </ul>
  */
-public final class StringObject extends OrdinaryObject {
+public class StringObject extends OrdinaryObject {
     /** [[StringData]] */
     private final CharSequence stringData;
+
+    /**
+     * Constructs a new String object.
+     * 
+     * @param realm
+     *            the realm object
+     * @param stringData
+     *            the string data
+     */
+    public StringObject(Realm realm, CharSequence stringData) {
+        super(realm);
+        this.stringData = stringData;
+    }
 
     /**
      * Constructs a new String object.

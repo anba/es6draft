@@ -271,7 +271,7 @@ final class CodeSizeVisitor implements IntNodeVisitor<CodeSizeHandler> {
 
     @Override
     public int visit(BindingRestElement node, CodeSizeHandler handler) {
-        return analyze(node, node.getBindingIdentifier(), 25, handler);
+        return analyze(node, node.getBinding(), 25, handler);
     }
 
     @Override

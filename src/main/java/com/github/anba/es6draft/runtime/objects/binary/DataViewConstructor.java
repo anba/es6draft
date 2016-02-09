@@ -146,7 +146,6 @@ public final class DataViewConstructor extends BuiltinConstructor implements Ini
         if (numberIndex != getIndex || getIndex < 0) {
             throw newRangeError(cx, Messages.Key.InvalidByteOffset);
         }
-        // FIXME: spec bug - missing call to ToNumber (https://bugs.ecmascript.org/show_bug.cgi?id=4536)
         double numberValue = ToNumber(cx, value);
         /* step 7 */
         boolean littleEndian = ToBoolean(isLittleEndian);

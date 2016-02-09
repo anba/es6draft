@@ -79,10 +79,10 @@ final class StackImpl extends Stack {
     }
 
     private static boolean isFunctionObject(Type type) {
-        return Types.OrdinaryFunction.equals(type)
-                || Types.OrdinaryConstructorFunction.equals(type)
-                || Types.OrdinaryGenerator.equals(type) || Types.OrdinaryAsyncFunction.equals(type)
-                || Types.LegacyConstructorFunction.equals(type) || Types.FunctionObject.equals(type);
+        return Types.OrdinaryFunction.equals(type) || Types.OrdinaryConstructorFunction.equals(type)
+                || Types.OrdinaryGenerator.equals(type) || Types.OrdinaryConstructorGenerator.equals(type)
+                || Types.OrdinaryAsyncFunction.equals(type) || Types.LegacyConstructorFunction.equals(type)
+                || Types.FunctionObject.equals(type);
     }
 
     private static boolean isOrdinaryObject(Type type) {

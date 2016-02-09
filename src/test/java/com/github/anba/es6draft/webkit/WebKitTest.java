@@ -13,7 +13,6 @@ import static org.junit.Assume.assumeTrue;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.EnumSet;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -34,7 +33,6 @@ import org.junit.runners.Parameterized.Parameters;
 import org.junit.runners.Parameterized.UseParametersRunnerFactory;
 import org.junit.runners.model.MultipleFailureException;
 
-import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Strings;
 import com.github.anba.es6draft.util.NullConsole;
@@ -67,16 +65,8 @@ public final class WebKitTest {
     }
 
     @ClassRule
-    public static TestGlobals<WebKitTestGlobalObject, TestInfo> globals = new TestGlobals<WebKitTestGlobalObject, TestInfo>(
-            configuration, WebKitTestGlobalObject::new) {
-        @Override
-        protected EnumSet<CompatibilityOption> getOptions() {
-            EnumSet<CompatibilityOption> options = super.getOptions();
-            options.add(CompatibilityOption.ArrayIncludes);
-            options.add(CompatibilityOption.ArrayBufferMissingLength);
-            return options;
-        }
-    };
+    public static TestGlobals<WebKitTestGlobalObject, TestInfo> globals = new TestGlobals<>(configuration,
+            WebKitTestGlobalObject::new);
 
     @Rule
     public Timeout maxTime = new Timeout(120, TimeUnit.SECONDS);

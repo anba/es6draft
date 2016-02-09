@@ -15,5 +15,4 @@ function* g() {
   yield this;
 }
 
-var it = new g();
-assertThrows(ReferenceError, () => it.next());
+assertThrows(TypeError, () => new g());

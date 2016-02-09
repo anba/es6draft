@@ -56,14 +56,15 @@ assertSame(1, eval(`0; do { 1; break; } while (False());`));
 assertSame(1, eval(`0; do { 1; continue; } while (False());`));
 
 // Do-while, If, Break/Continue
-assertSame(1, eval(`var c = 0; 0; do if (c) break; else c = 1; while (True());`));
-assertSame(1, eval(`var c = 0; 0; do if (c++) continue; else c = 1; while (c < 2);`));
+assertSame(void 0, eval(`var c = 0; 0; do if (c) break; else c = 1; while (True());`));
+assertSame(void 0, eval(`var c = 0; 0; do if (c++) continue; else c = 1; while (c < 2);`));
 
 // With-Statement
 assertSame(void 0, eval(`0; with ({}) ;`));
 assertSame(1, eval(`0; with ({}) 1;`));
-assertSame(0, eval(`0; L: with ({}) break L;`));
-assertSame(1, eval(`0; L: { 1; with ({}) break L; }`));
+assertSame(void 0, eval(`0; L: with ({}) break L;`));
+assertSame(void 0, eval(`0; L: { 1; with ({}) break L; }`));
+assertSame(2, eval(`0; L: { 1; with ({}) { 2; break L; } }`));
 
 // Switch-Statement
 assertSame(void 0, eval(`0; switch (Value()) { }`));
@@ -82,13 +83,13 @@ assertSame(1, eval(`0; switch (Value(1)) { default: 2; case Value(0): 1; }`));
 // Labelled-Statement
 assertSame(0, eval(`0; L: ;`));
 assertSame(0, eval(`0; L: break L;`));
-assertSame(0, eval(`0; L: if (True()) break L;`));
+assertSame(void 0, eval(`0; L: if (True()) break L;`));
 assertSame(void 0, eval(`0; L: if (False()) break L;`));
-assertSame(0, eval(`0; L: if (True()) break L; else 1;`));
+assertSame(void 0, eval(`0; L: if (True()) break L; else 1;`));
 assertSame(1, eval(`0; L: if (False()) break L; else 1;`));
 assertSame(1, eval(`0; L: { if (False()) break L; if (True()) 1; else 2; break L; }`));
 assertSame(2, eval(`0; L: { if (False()) break L; if (False()) 1; else 2; break L; }`));
-assertSame(0, eval(`0; L: { if (True()) break L; if (True()) 1; else 2; break L; }`));
-assertSame(0, eval(`0; L: { if (True()) break L; if (False()) 1; else 2; break L; }`));
-assertSame(1, eval(`K: { 1; L: if (True()) break L; else break K; }`));
-assertSame(1, eval(`K: { 1; L: if (False()) break L; else break K; }`));
+assertSame(void 0, eval(`0; L: { if (True()) break L; if (True()) 1; else 2; break L; }`));
+assertSame(void 0, eval(`0; L: { if (True()) break L; if (False()) 1; else 2; break L; }`));
+assertSame(void 0, eval(`K: { 1; L: if (True()) break L; else break K; }`));
+assertSame(void 0, eval(`K: { 1; L: if (False()) break L; else break K; }`));

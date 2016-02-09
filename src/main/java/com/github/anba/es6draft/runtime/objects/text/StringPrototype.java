@@ -31,6 +31,7 @@ import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.Initializable;
 import com.github.anba.es6draft.runtime.internal.Messages;
+import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.CompatibilityExtension;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
@@ -44,7 +45,6 @@ import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.ArrayObject;
 import com.github.anba.es6draft.runtime.types.builtins.NativeFunction;
-import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 import com.github.anba.es6draft.runtime.types.builtins.StringObject;
 import com.ibm.icu.lang.UCharacter;
 import com.ibm.icu.text.Normalizer2;
@@ -58,7 +58,7 @@ import com.ibm.icu.util.ULocale;
  * <li>21.1.4 Properties of String Instances
  * </ul>
  */
-public final class StringPrototype extends OrdinaryObject implements Initializable {
+public final class StringPrototype extends StringObject implements Initializable {
     /**
      * Constructs a new String prototype object.
      * 
@@ -66,7 +66,7 @@ public final class StringPrototype extends OrdinaryObject implements Initializab
      *            the realm object
      */
     public StringPrototype(Realm realm) {
-        super(realm);
+        super(realm, "");
     }
 
     @Override
@@ -128,6 +128,13 @@ public final class StringPrototype extends OrdinaryObject implements Initializab
 
         @Prototype
         public static final Intrinsics __proto__ = Intrinsics.ObjectPrototype;
+
+        /**
+         * String.prototype.length
+         */
+        // FIXME: spec issue - explicitly define length for String.prototype in 21.1.3?
+        @Value(name = "length", attributes = @Attributes(writable = false, enumerable = false, configurable = false))
+        public static final int length = 0;
 
         /**
          * 21.1.3.5 String.prototype.constructor
@@ -825,7 +832,7 @@ public final class StringPrototype extends OrdinaryObject implements Initializab
             /* step 7 */
             int lengthA = 0;
             /* steps 8-9 */
-            long lim = Type.isUndefined(limit) ? 0x1F_FFFF_FFFF_FFFFL : ToLength(cx, limit);
+            long lim = Type.isUndefined(limit) ? 0xFFFF_FFFFL : ToUint32(cx, limit);
             /* step 10 */
             int size = s.length();
             /* step 11 */

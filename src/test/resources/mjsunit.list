@@ -19,9 +19,6 @@ es6/built-in-accessor-names.js
 # V8 generators: missing type checks in v8-implementation
 es6/generators-iteration.js
 
-# v8 rejects `function* g() { (function yield() {}); }`
-es6/generators-parsing.js
-
 # non-strict equality fails when comparing symbols and primitive values against each other
 es6/iteration-semantics.js
 
@@ -48,17 +45,11 @@ es6/classes.js
 es6/block-early-errors.js
 es6/block-non-strict-errors.js
 
-# Object environment records HasBinding/GetBindingValue not spec compliant in v8
-harmony/regress/regress-crbug-461520.js
-
 # v8 bug - \8 and \9 are not allowed in template literals
 es6/templates.js
 
 # invalid test, `function f({x}) { var x; }` is allowed
 harmony/destructuring.js
-
-# v8 does not implement Annex B, B.3.3
-harmony/block-let-semantics-sloppy.js
 
 # invalid test, `Object.defineProperty(new Int32Array(), 0, {get(){}})` doesn't throw in v8
 element-accessor.js
@@ -69,21 +60,10 @@ es6/computed-property-names-classes.js
 # v8 allows "let let", disallowed per 13.3.1.1
 harmony/block-let-contextual-sloppy.js
 
-# v8 disallows directive in non-simple parameter lists; exact ES6 errata unclear
-harmony/default-parameters.js
-harmony/rest-params.js
-
-# invalid test, Reflect.get.length is 2
-harmony/reflect.js
-
 # legacy function hoisting in global/eval code
 harmony/block-sloppy-function.js
 harmony/block-eval-var-over-legacy-const.js
 harmony/block-eval-var-over-let.js
-
-# Completion value in if-statements (https://bugs.ecmascript.org/show_bug.cgi?id=4540)
-harmony/completion.js
-es6/block-for.js
 
 # Incomplete v8 implementation, see todo in test file.
 regress/regress-544991.js
@@ -97,11 +77,14 @@ es6/regexp-constructor.js
 # invalid test, ends up calling new Proxy(null, x)
 harmony/proxies-example-membrane.js
 
-# invalid test, [[HasProperty]] trap not called in WithStatement in V8?
-harmony/proxies-with.js
-
 # lookbehind not supported
 harmony/regexp-lookbehind.js
+
+# ES2016: generators are no longer constructors
+harmony/reflect-construct.js
+
+# v8 legacy const allows const-declaration without initializer
+regress/regress-4576.js
 
 
 ###################
@@ -126,15 +109,18 @@ regress/regress-126412.js
 ############################################
 
 # old Proxy API not completly emulated
-es6/regress/regress-cr493566.js
-harmony/proxies-for.js
-harmony/proxies-hash.js
 harmony/proxies-json.js
 harmony/proxies-symbols.js
 harmony/proxies.js
-harmony/regress/regress-2219.js
-harmony/regress/regress-2225.js
-harmony/regress/regress-lookup-transition.js
+
+# enumerate() does not allow non-strings in V8
+harmony/proxies-enumerate.js
+
+# Object.p.hasOwnPrototype calls getOwnPropertyDescriptor(), but v8 calls has() trap
+harmony/proxies-has-own-property.js
+
+# Object.keys() calls getOwnPropertyDescriptor() even if ownKeys() is not present, v8 does not comply
+harmony/proxies-keys.js
 
 
 ############################################
@@ -243,6 +229,7 @@ eval-stack-trace.js
 callsite.js
 
 # V8 Realm API
+array-constructor.js
 call-cross-realm.js
 contextual-calls.js
 cross-realm-filtering.js
@@ -282,14 +269,6 @@ harmony/module-recompile.js
 harmony/module-resolution.js
 
 
-###############################################################
-# ES6 (rev14) <Object>.prototype no longer instance of <Type> #
-###############################################################
-
-# String.prototype no longer instanceof String
-regress/regress-1062422.js
-
-
 #######################################
 # ES6 related runtime changes         #
 #######################################
@@ -302,9 +281,6 @@ function-caller.js
 
 # Object.getPrototypeOf() wraps/ignores primitives
 get-prototype-of.js
-
-# String.prototype.split changed to call ToLength instead of ToUint32 on limit argument
-string-split.js
 
 # RegExp.prototype.compile requires extensible object
 regress/regress-349870.js

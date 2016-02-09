@@ -15,7 +15,6 @@ import static org.junit.Assume.assumeTrue;
 import java.io.IOException;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
-import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -40,7 +39,6 @@ import org.junit.runners.Parameterized.UseParametersRunnerFactory;
 
 import com.github.anba.es6draft.parser.Parser;
 import com.github.anba.es6draft.runtime.extensions.timer.Timers;
-import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.Console;
 import com.github.anba.es6draft.runtime.internal.Properties;
 import com.github.anba.es6draft.runtime.internal.RuntimeContext;
@@ -76,16 +74,6 @@ public final class TraceurTest {
     @ClassRule
     public static TestGlobals<TraceurTestGlobalObject, TraceurTestInfo> globals = new TestGlobals<TraceurTestGlobalObject, TraceurTestInfo>(
             configuration, TraceurTestGlobalObject::new, TraceurFileModuleLoader::new) {
-        @Override
-        protected EnumSet<CompatibilityOption> getOptions() {
-            EnumSet<CompatibilityOption> options = super.getOptions();
-            options.add(CompatibilityOption.AsyncFunction);
-            options.add(CompatibilityOption.Exponentiation);
-            options.add(CompatibilityOption.Comprehension);
-            options.add(CompatibilityOption.ExportFrom);
-            return options;
-        }
-
         @Override
         protected RuntimeContext createContext(Console console, TraceurTestInfo test) {
             RuntimeContext context = super.createContext(console, test);

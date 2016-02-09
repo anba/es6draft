@@ -294,6 +294,26 @@ public enum CompatibilityOption {
     System,
 
     /**
+     * ES2016: 'use strict' directive only allowed for functions with simple parameter lists.
+     */
+    StrictDirectiveSimpleParameterList,
+
+    /**
+     * ES2016: BindingPattern in rest position
+     */
+    RestBindingPattern,
+
+    /**
+     * ES2016: Report error for variable redeclaration if CatchParameter is a binding pattern.
+     */
+    CatchVarPattern,
+
+    /**
+     * ES2016: Don't assign [[Construct]] for generator functions.
+     */
+    GeneratorNonConstructor,
+
+    /**
      * Track unhandled rejected promise objects
      */
     PromiseRejection,
@@ -329,7 +349,8 @@ public enum CompatibilityOption {
      * @return the options set for mozilla-compatibility
      */
     public static final Set<CompatibilityOption> MozCompatibility() {
-        return addAll(WebCompatibility(), MozExtensions(), EnumSet.of(Comprehension), EnumSet.of(SIMD_Phase2));
+        return addAll(WebCompatibility(), MozExtensions(),
+                EnumSet.of(ArrayIncludes, Comprehension, Exponentiation, GeneratorNonConstructor, SIMD, SIMD_Phase2));
     }
 
     /**
@@ -432,8 +453,7 @@ public enum CompatibilityOption {
      *            the required staging level
      * @return the options set for proposed stage extensions
      */
-    // TODO: Rename?
-    public static final Set<CompatibilityOption> required(Stage stage) {
+    public static final Set<CompatibilityOption> Stage(Stage stage) {
         EnumSet<CompatibilityOption> options = EnumSet.noneOf(CompatibilityOption.class);
         switch (stage) {
         case Strawman:
@@ -448,6 +468,42 @@ public enum CompatibilityOption {
             options.addAll(of(Stage.Finished));
         default:
             return options;
+        }
+    }
+
+    /**
+     * ECMAScript version.
+     */
+    public enum Version {
+        /**
+         * ECMAScript 2015
+         */
+        ECMAScript2015,
+
+        /**
+         * ECMAScript 2016
+         */
+        ECMAScript2016,
+
+        ;
+    }
+
+    /**
+     * Returns a set of all options for the requested language version.
+     * 
+     * @param version
+     *            the language version
+     * @return the options set for the language version
+     */
+    public static final Set<CompatibilityOption> Version(Version version) {
+        switch (version) {
+        case ECMAScript2015:
+            return EnumSet.noneOf(CompatibilityOption.class);
+        case ECMAScript2016:
+            return EnumSet.of(StrictDirectiveSimpleParameterList, RestBindingPattern, CatchVarPattern,
+                    GeneratorNonConstructor);
+        default:
+            throw new AssertionError();
         }
     }
 

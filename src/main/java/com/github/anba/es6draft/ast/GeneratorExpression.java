@@ -18,6 +18,7 @@ import com.github.anba.es6draft.ast.scope.FunctionScope;
  */
 public class GeneratorExpression extends Expression implements GeneratorDefinition {
     private final FunctionScope scope;
+    private final GeneratorKind kind;
     private final BindingIdentifier identifier;
     private final FormalParameterList parameters;
     private List<StatementListItem> statements;
@@ -26,11 +27,12 @@ public class GeneratorExpression extends Expression implements GeneratorDefiniti
     private StrictMode strictMode;
     private boolean syntheticNodes;
 
-    public GeneratorExpression(long beginPosition, long endPosition, FunctionScope scope,
-            BindingIdentifier identifier, FormalParameterList parameters,
-            List<StatementListItem> statements, String headerSource, String bodySource) {
+    public GeneratorExpression(long beginPosition, long endPosition, FunctionScope scope, GeneratorKind kind,
+            BindingIdentifier identifier, FormalParameterList parameters, List<StatementListItem> statements,
+            String headerSource, String bodySource) {
         super(beginPosition, endPosition);
         this.scope = scope;
+        this.kind = kind;
         this.identifier = identifier;
         this.parameters = parameters;
         this.statements = statements;
@@ -126,7 +128,7 @@ public class GeneratorExpression extends Expression implements GeneratorDefiniti
 
     @Override
     public boolean isConstructor() {
-        return true;
+        return kind == GeneratorKind.Constructor;
     }
 
     @Override

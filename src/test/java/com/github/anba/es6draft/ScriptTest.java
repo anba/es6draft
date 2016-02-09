@@ -57,7 +57,6 @@ public final class ScriptTest {
         @Override
         protected EnumSet<CompatibilityOption> getOptions() {
             EnumSet<CompatibilityOption> options = super.getOptions();
-            options.addAll(CompatibilityOption.required(CompatibilityOption.Stage.Strawman));
             options.addAll(CompatibilityOption.Experimental());
             return options;
         }

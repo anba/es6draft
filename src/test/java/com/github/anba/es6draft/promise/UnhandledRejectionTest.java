@@ -12,7 +12,6 @@ import static org.junit.Assume.assumeTrue;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.EnumSet;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -32,7 +31,6 @@ import org.junit.runners.Parameterized.UseParametersRunnerFactory;
 
 import com.github.anba.es6draft.TestGlobalObject;
 import com.github.anba.es6draft.runtime.extensions.timer.Timers;
-import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.UnhandledRejectionException;
 import com.github.anba.es6draft.util.Parallelized;
 import com.github.anba.es6draft.util.ParameterizedRunnerFactory;
@@ -58,15 +56,8 @@ public final class UnhandledRejectionTest {
     }
 
     @ClassRule
-    public static TestGlobals<TestGlobalObject, TestInfo> globals = new TestGlobals<TestGlobalObject, TestInfo>(
-            configuration, TestGlobalObject::new) {
-        @Override
-        protected EnumSet<CompatibilityOption> getOptions() {
-            EnumSet<CompatibilityOption> options = super.getOptions();
-            options.add(CompatibilityOption.PromiseRejection);
-            return options;
-        }
-    };
+    public static TestGlobals<TestGlobalObject, TestInfo> globals = new TestGlobals<>(configuration,
+            TestGlobalObject::new);
 
     @Rule
     public Timeout maxTime = new Timeout(120, TimeUnit.SECONDS);

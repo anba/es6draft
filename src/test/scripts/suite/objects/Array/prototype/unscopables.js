@@ -17,6 +17,7 @@ const ArrayPrototypeUnscopablesNames = [
   "entries",
   "keys",
   "values",
+  "includes",
 ];
 
 const ArrayPrototypeUnscopables = Array.prototype[Symbol.unscopables];

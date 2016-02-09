@@ -74,9 +74,6 @@ ecma_6/TypedArray/from_mapping.js
 ecma_6/TypedArray/from_proxy.js
 ecma_6/TypedArray/from_string.js
 
-# ES6: lexical redeclaration (block scoped function) checks in eval
-js1_5/extensions/regress-245795.js
-
 # ES6: "bound " prefix not implemented
 # https://bugzilla.mozilla.org/show_bug.cgi?id=883377
 ecma_6/Function/bound-length-and-name.js
@@ -123,9 +120,6 @@ ecma_6/RegExp/constructor-constructor.js
 # ES6: completion reform
 ecma/Statements/12.6.3-2.js
 
-# super() not implemented
-ecma_6/Reflect/construct.js
-
 # bug 888969
 ecma_6/Reflect/getPrototypeOf.js
 
@@ -139,9 +133,6 @@ ecma_6/Reflect/target.js
 
 # ES6: Inferred function/class names
 ecma_6/Class/className.js
-
-# ES6 errata: generators no longer constructors
-ecma_6/Class/methDefnGen.js
 
 # SM: TypeError from wrong realm
 ecma_6/extensions/new-cross-compartment.js
@@ -187,26 +178,6 @@ ecma_7/SIMD/bug1023145.js
 # ES6 (rev14) <Object>.prototype no longer instance of <Type> #
 ###############################################################
 
-# Boolean.prototype
-ecma/Boolean/15.6.3.1.js
-ecma/Boolean/15.6.4.js
-ecma/Boolean/15.6.4-1.js
-ecma_2/FunctionObjects/call-1.js
-
-# Number.prototype
-ecma/extensions/15.7.4.js
-ecma/Number/15.7.4-1.js
-ecma/Number/15.7.4.2-1.js
-ecma/Number/15.7.4.3-1.js
-
-# String.prototype
-ecma/String/15.5.3.1-1.js
-ecma/String/15.5.4.2-1.js
-ecma/String/15.5.4.2.js
-ecma/String/15.5.4.3-1.js
-ecma/String/15.5.4.js
-ecma/Expressions/11.2.1-1.js
-
 # RegExp.prototype
 ecma_5/RegExp/instance-property-storage-introspection.js
 ecma_6/RegExp/flags.js
@@ -218,10 +189,6 @@ ecma_6/RegExp/toString.js
 ###################
 # Misc issues     #
 ###################
-
-# BlockScope and WithStatement issue
-js1_5/Scope/regress-184107.js
-js1_5/Scope/regress-185485.js
 
 # Java-Pattern vs ECMAScript-RegExp issues
 ecma_3/RegExp/15.10.2-1.js
@@ -261,9 +228,6 @@ js1_8/extensions/regress-385729.js
 ecma_3/Date/15.9.3.2-1.js
 js1_5/Date/regress-301738-01.js
 js1_5/Date/regress-301738-02.js
-
-# ES6-change: Date without timezone interpreted as local time
-ecma_5/Date/15.9.4.2.js
 
 # Spidermonkey embraces bad DST
 js1_5/Regress/regress-58116.js
@@ -373,10 +337,6 @@ js1_8_5/regress/regress-591846.js
 # strict 'caller' no longer throws TypeError, returns null instead
 js1_8_5/extensions/censor-strict-caller.js
 
-# String.prototype.split changed to use ToLength instead of ToUint32
-ecma_2/String/split-002.js
-ecma_5/String/split-undefined-separator.js
-
 # Generator.prototype.return
 ecma_6/Generators/runtime.js
 
@@ -391,12 +351,6 @@ ecma_5/Array/unshift-01.js
 # lexical declared variables must not be redeclared
 js1_8_5/extensions/clone-complex-object.js
 
-# ES6-change: function declaration in block allowed
-ecma_5/extensions/strict-function-statements.js
-
-# ES6-change: block-scoped function declaration
-ecma_3/Function/scope-001.js
-
 # ES6-change: CallExpression no longer valid LHS
 js1_5/Regress/regress-319391.js
 js1_5/Regress/regress-350253.js
@@ -405,8 +359,6 @@ js1_8_5/regress/regress-609617.js
 ecma_6/Expressions/destructuring-pattern-parenthesized.js
 
 # FunctionDeclaration directly nested in Statement not allowed
-ecma_5/extensions/function-definition-with.js
-ecma_6/extensions/for-loop-with-lexical-declaration-and-nested-function-statement.js
 js1_8/regress/regress-384758.js
 
 # re-assignement to 'const' is not an early error

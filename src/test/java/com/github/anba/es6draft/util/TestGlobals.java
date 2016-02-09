@@ -12,18 +12,21 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Locale;
-import java.util.Set;
+import java.util.Objects;
 import java.util.TimeZone;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
+import java.util.function.Predicate;
+import java.util.stream.Stream;
 
 import org.apache.commons.configuration.Configuration;
 import org.junit.rules.ExternalResource;
@@ -50,6 +53,11 @@ import com.github.anba.es6draft.runtime.objects.GlobalObject;
  * {@link ExternalResource} sub-class to facilitate creation of {@link GlobalObject} instances
  */
 public class TestGlobals<GLOBAL extends GlobalObject, TEST extends TestInfo> extends ExternalResource {
+    private static final String DEFAULT_MODE = "web-compatibility";
+    private static final String DEFAULT_VERSION = CompatibilityOption.Version.ECMAScript2016.name();
+    private static final String DEFAULT_STAGE = CompatibilityOption.Stage.Finished.name();
+    private static final List<String> DEFAULT_FEATURES = emptyList();
+
     private final Configuration configuration;
     private final ObjectAllocator<GLOBAL> allocator;
     private final BiFunction<RuntimeContext, ScriptLoader, TestModuleLoader<?>> moduleLoader;
@@ -143,10 +151,15 @@ public class TestGlobals<GLOBAL extends GlobalObject, TEST extends TestInfo> ext
             // skip initialization if test suite not enabled
             return;
         }
+        scriptCache = new ScriptCache();
 
         // read options ...
-        options = enumSet(CompatibilityOption.class, compatibilityOptions(configuration.getString("mode", "")));
-        scriptCache = new ScriptCache();
+        EnumSet<CompatibilityOption> compatibilityOptions = EnumSet.noneOf(CompatibilityOption.class);
+        optionsFromMode(compatibilityOptions, configuration.getString("mode", DEFAULT_MODE));
+        optionsFromVersion(compatibilityOptions, configuration.getString("version", DEFAULT_VERSION));
+        optionsFromStage(compatibilityOptions, configuration.getString("stage", DEFAULT_STAGE));
+        optionsFromFeatures(compatibilityOptions, configuration.getList("features", DEFAULT_FEATURES));
+        options = compatibilityOptions;
 
         // pre-compile initialization scripts and modules
         scripts = compileScripts();
@@ -184,22 +197,46 @@ public class TestGlobals<GLOBAL extends GlobalObject, TEST extends TestInfo> ext
         }
     }
 
-    private static <T extends Enum<T>> EnumSet<T> enumSet(Class<T> clazz, Set<? extends T> elements) {
-        EnumSet<T> set = EnumSet.noneOf(clazz);
-        set.addAll(elements);
-        return set;
-    }
-
-    private static Set<CompatibilityOption> compatibilityOptions(String mode) {
+    private static void optionsFromMode(EnumSet<CompatibilityOption> options, String mode) {
         switch (mode) {
         case "moz-compatibility":
-            return CompatibilityOption.MozCompatibility();
+            options.addAll(CompatibilityOption.MozCompatibility());
+            break;
         case "web-compatibility":
-            return CompatibilityOption.WebCompatibility();
+            options.addAll(CompatibilityOption.WebCompatibility());
+            break;
         case "strict-compatibility":
+            options.addAll(CompatibilityOption.StrictCompatibility());
+            break;
         default:
-            return CompatibilityOption.StrictCompatibility();
+            throw new IllegalArgumentException(String.format("Unsupported mode: '%s'", mode));
         }
+    }
+
+    private static void optionsFromVersion(EnumSet<CompatibilityOption> options, String version) {
+        options.addAll(Arrays.stream(CompatibilityOption.Version.values()).filter(v -> {
+            return v.name().equalsIgnoreCase(version);
+        }).findAny().map(CompatibilityOption::Version).orElseThrow(IllegalArgumentException::new));
+    }
+
+    private static void optionsFromStage(EnumSet<CompatibilityOption> options, String stage) {
+        options.addAll(Arrays.stream(CompatibilityOption.Stage.values()).filter(s -> {
+            if (stage.length() == 1 && Character.isDigit(stage.charAt(0))) {
+                return s.getLevel() == Character.digit(stage.charAt(0), 10);
+            } else {
+                return s.name().equalsIgnoreCase(stage);
+            }
+        }).findAny().map(CompatibilityOption::Stage).orElseThrow(IllegalArgumentException::new));
+    }
+
+    private static void optionsFromFeatures(EnumSet<CompatibilityOption> options, List<Object> features) {
+        streamNonEmpty(features).map(TestGlobals::optionFromFeature).forEach(options::add);
+    }
+
+    private static CompatibilityOption optionFromFeature(String feature) {
+        return Arrays.stream(CompatibilityOption.values()).filter(o -> {
+            return o.name().equalsIgnoreCase(feature);
+        }).findAny().orElseThrow(IllegalArgumentException::new);
     }
 
     private List<Script> compileScripts() throws IOException {
@@ -247,6 +284,14 @@ public class TestGlobals<GLOBAL extends GlobalObject, TEST extends TestInfo> ext
     }
 
     private static Iterable<String> nonEmpty(List<?> c) {
-        return () -> c.stream().filter(x -> (x != null && !x.toString().isEmpty())).map(Object::toString).iterator();
+        return () -> streamNonEmpty(c).iterator();
+    }
+
+    private static Stream<String> streamNonEmpty(List<?> c) {
+        return c.stream().filter(Objects::nonNull).map(Object::toString).filter(not(String::isEmpty));
+    }
+
+    private static <T> Predicate<T> not(Predicate<T> p) {
+        return p.negate();
     }
 }

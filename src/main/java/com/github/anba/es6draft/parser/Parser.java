@@ -11,9 +11,11 @@ import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 
 import java.util.*;
+import java.util.function.BiFunction;
 
-import com.github.anba.es6draft.ast.AbruptNode.Abrupt;
 import com.github.anba.es6draft.ast.*;
+import com.github.anba.es6draft.ast.AbruptNode.Abrupt;
+import com.github.anba.es6draft.ast.GeneratorDefinition.GeneratorKind;
 import com.github.anba.es6draft.ast.MethodDefinition.MethodAllocation;
 import com.github.anba.es6draft.ast.MethodDefinition.MethodType;
 import com.github.anba.es6draft.ast.scope.BlockScope;
@@ -363,7 +365,6 @@ public final class Parser {
         ScopeContext lexicalScope = this;
         Name arguments;
         NameSet parameterNames;
-        InlineArrayList<FunctionDeclaration> blockFunctions;
         NameSet blockFunctionNames;
         final boolean isLexical;
         boolean needsArguments;
@@ -373,13 +374,6 @@ public final class Parser {
         FunctionContext(ScopeContext enclosing, boolean isLexical) {
             super(enclosing);
             this.isLexical = isLexical;
-        }
-
-        void addBlockFunction(FunctionDeclaration function) {
-            if (blockFunctions == null) {
-                blockFunctions = newList();
-            }
-            blockFunctions.add(function);
         }
 
         void setBlockFunctions(InlineArrayList<FunctionDeclaration> blockFunctions) {
@@ -631,6 +625,17 @@ public final class Parser {
             super(enclosing);
         }
 
+        void addVarForOfDeclaredName(Name name) {
+            if (varForOfDeclaredNames == null) {
+                varForOfDeclaredNames = new NameSet();
+            }
+            varForOfDeclaredNames.add(name);
+        }
+
+        void setBlockFunctions(InlineArrayList<FunctionDeclaration> blockFunctions) {
+            this.blockFunctions = blockFunctions;
+        }
+
         @Override
         protected Name getDeclaredName(Name name) {
             if (node.isEvalScript() && node.isStrict() && varDeclaredNames != null) {
@@ -652,11 +657,9 @@ public final class Parser {
             return emptyIfNull(varForOfDeclaredNames);
         }
 
-        void addVarForOfDeclaredName(Name name) {
-            if (varForOfDeclaredNames == null) {
-                varForOfDeclaredNames = new NameSet();
-            }
-            varForOfDeclaredNames.add(name);
+        @Override
+        public List<FunctionDeclaration> blockFunctions() {
+            return emptyIfNull(blockFunctions);
         }
     }
 
@@ -668,6 +671,20 @@ public final class Parser {
 
         ModuleContext(ScopeContext enclosing) {
             super(enclosing);
+        }
+
+        void addUndeclaredExportBinding(long position, Name name) {
+            if (!undeclaredExportBindings.containsKey(name)) {
+                undeclaredExportBindings.put(name, position);
+            }
+        }
+
+        boolean addExportName(String exportName) {
+            return exportNames.add(exportName);
+        }
+
+        boolean addImportBinding(Name name) {
+            return importBindings.add(name);
         }
 
         @Override
@@ -690,25 +707,12 @@ public final class Parser {
         public void addImplicitBinding(Name name) {
             addLexDeclaredName(name);
         }
-
-        void addUndeclaredExportBinding(long position, Name name) {
-            if (!undeclaredExportBindings.containsKey(name)) {
-                undeclaredExportBindings.put(name, position);
-            }
-        }
-
-        boolean addExportName(String exportName) {
-            return exportNames.add(exportName);
-        }
-
-        boolean addImportBinding(Name name) {
-            return importBindings.add(name);
-        }
     }
 
     private static abstract class TopContext extends ScopeContext implements TopLevelScope {
         final ScopeContext enclosing;
         InlineArrayList<StatementListItem> varScopedDeclarations;
+        InlineArrayList<FunctionDeclaration> blockFunctions;
 
         TopContext(ScopeContext enclosing) {
             super();
@@ -720,6 +724,13 @@ public final class Parser {
                 varScopedDeclarations = newList();
             }
             varScopedDeclarations.add(decl);
+        }
+
+        final void addBlockFunction(FunctionDeclaration function) {
+            if (blockFunctions == null) {
+                blockFunctions = newList();
+            }
+            blockFunctions.add(function);
         }
 
         @Override
@@ -1223,7 +1234,7 @@ public final class Parser {
     private void addFunctionDeclaration(FunctionDeclaration decl, boolean isNamedDefault) {
         addDeclaration(decl, isNamedDefault);
         if (isBlockScopedFunction()) {
-            context.parent.funContext.addBlockFunction(decl);
+            context.parent.topContext.addBlockFunction(decl);
         }
     }
 
@@ -1252,10 +1263,14 @@ public final class Parser {
 
     private boolean isBlockScopedFunction() {
         ParseContext parentContext = context.parent;
-        return parentContext.kind.isFunction()
-                && (parentContext.funContext.lexicalScope != parentContext.scopeContext)
-                && parentContext.strictMode != StrictMode.Strict
-                && isEnabled(CompatibilityOption.BlockFunctionDeclaration);
+        if (parentContext.strictMode == StrictMode.Strict || !isEnabled(CompatibilityOption.BlockFunctionDeclaration)) {
+            return false;
+        }
+        if (parentContext.kind.isFunction()) {
+            return parentContext.funContext.lexicalScope != parentContext.scopeContext;
+        }
+        assert parentContext.kind.isScript();
+        return parentContext.scriptContext != parentContext.scopeContext;
     }
 
     private void addDeclaration(ClassDeclaration decl, boolean isNamedDefault) {
@@ -1283,12 +1298,12 @@ public final class Parser {
     }
     private void addVarDeclaredName(BindingIdentifier bindingIdentifier) {
         Name name = BoundName(bindingIdentifier);
-        addVarDeclaredName(bindingIdentifier, name);
+        addVarDeclaredName(bindingIdentifier, name, Parser::redeclarationNode);
     }
 
     private void addVarDeclaredName(BindingPattern bindingPattern) {
         for (Name name : BoundNames(bindingPattern)) {
-            addVarDeclaredName(bindingPattern, name);
+            addVarDeclaredName(bindingPattern, name, Parser::redeclarationBindingPattern);
         }
     }
 
@@ -1306,22 +1321,27 @@ public final class Parser {
      * @param name
      *            the var declared name
      */
-    private void addVarDeclaredName(Binding binding, Name name) {
-        addVarDeclaredName(binding, context, name);
+    private <NODE extends Binding> void addVarDeclaredName(NODE binding, Name name, BiFunction<NODE, Name, Node> f) {
+        addVarDeclaredName(binding, context, name, f);
         for (ScopeContext next = context.scopeContext.parent; next != null; next = next.parent) {
             if (!next.allowVarDeclaredName(name)) {
-                if (isEnabled(CompatibilityOption.CatchVarStatement)
-                        && next instanceof CatchContext) {
+                if (next instanceof CatchContext) {
                     continue;
                 }
-                reportSyntaxError(binding, Messages.Key.VariableRedeclaration, name);
+                Node errorNode = f.apply(binding, name);
+                reportSyntaxError(errorNode, Messages.Key.VariableRedeclaration, name);
             }
         }
     }
 
     private void addVarDeclaredName(Node node, ParseContext context, Name name) {
+        addVarDeclaredName(node, context, name, Parser::redeclarationNode);
+    }
+
+    private <NODE> void addVarDeclaredName(NODE node, ParseContext context, Name name, BiFunction<NODE, Name, Node> f) {
         if (!context.scopeContext.addVarDeclaredName(name)) {
-            reportSyntaxError(node, Messages.Key.VariableRedeclaration, name);
+            Node errorNode = f.apply(node, name);
+            reportSyntaxError(errorNode, Messages.Key.VariableRedeclaration, name);
         }
     }
 
@@ -1336,20 +1356,21 @@ public final class Parser {
 
     private void checkVarDeclaredName(BindingIdentifier bindingIdentifier) {
         Name name = BoundName(bindingIdentifier);
-        checkVarDeclaredName(bindingIdentifier, name);
+        checkVarDeclaredName(bindingIdentifier, name, Parser::redeclarationNode);
     }
 
     private void checkVarDeclaredName(BindingPattern bindingPattern) {
         for (Name name : BoundNames(bindingPattern)) {
-            checkVarDeclaredName(bindingPattern, name);
+            checkVarDeclaredName(bindingPattern, name, Parser::redeclarationBindingPattern);
         }
     }
 
-    private void checkVarDeclaredName(Binding binding, Name name) {
+    private <NODE extends Binding> void checkVarDeclaredName(NODE binding, Name name, BiFunction<NODE, Name, Node> f) {
         ScopeContext scope = context.scopeContext;
         for (ScopeContext parent; (parent = scope.parent) != null; scope = parent) {
             if (!parent.allowVarDeclaredName(name)) {
-                reportSyntaxError(binding, Messages.Key.VariableRedeclaration, name);
+                Node errorNode = f.apply(binding, name);
+                reportSyntaxError(errorNode, Messages.Key.VariableRedeclaration, name);
             }
         }
         if (context.kind.isScript() && isEnabled(Option.EvalScript)) {
@@ -1387,13 +1408,18 @@ public final class Parser {
 
     private void addLexDeclaredName(BindingPattern bindingPattern) {
         for (Name name : BoundNames(bindingPattern)) {
-            addLexDeclaredName(bindingPattern, context, name);
+            addLexDeclaredName(bindingPattern, context, name, Parser::redeclarationBindingPattern);
         }
     }
 
     private void addLexDeclaredName(Node node, ParseContext context, Name name) {
+        addLexDeclaredName(node, context, name, Parser::redeclarationNode);
+    }
+
+    private <NODE> void addLexDeclaredName(NODE node, ParseContext context, Name name, BiFunction<NODE, Name, Node> f) {
         if (context.isIllegalName(name) || !context.scopeContext.addLexDeclaredName(name)) {
-            reportSyntaxError(node, Messages.Key.VariableRedeclaration, name);
+            Node errorNode = f.apply(node, name);
+            reportSyntaxError(errorNode, Messages.Key.VariableRedeclaration, name);
         }
     }
 
@@ -1401,6 +1427,14 @@ public final class Parser {
         for (Binding binding : bindings) {
             addLexDeclaredName(binding);
         }
+    }
+
+    private static Node redeclarationNode(Node node, Name name) {
+        return node;
+    }
+
+    private static Node redeclarationBindingPattern(BindingPattern node, Name name) {
+        return FindParameter.findExact(node, name);
     }
 
     private NameSet lexicalNames(List<Binding> bindings) {
@@ -1473,8 +1507,7 @@ public final class Parser {
     }
 
     private void addLabel(long sourcePosition, LinkedHashSet<String> labelSet, String label) {
-        if ((context.labelSet != null && context.labelSet.containsKey(label))
-                || !labelSet.add(label)) {
+        if ((context.labelSet != null && context.labelSet.containsKey(label)) || !labelSet.add(label)) {
             reportSyntaxError(sourcePosition, Messages.Key.DuplicateLabel, label);
         }
     }
@@ -2043,7 +2076,7 @@ public final class Parser {
                         functionName);
 
                 FunctionContext scope = context.funContext;
-                generator = new GeneratorDeclaration(beginSource(), ts.endPosition(), scope,
+                generator = new GeneratorDeclaration(beginSource(), ts.endPosition(), scope, generatorKind(),
                         identifier, parameters, statements, functionName, header, body);
                 scope.setNode(generator);
 
@@ -2185,10 +2218,12 @@ public final class Parser {
         newContext(ContextKind.Script);
         try {
             ts.initialize();
-            List<StatementListItem> prologue = directivePrologue();
+            List<StatementListItem> prologue = directivePrologue(true);
             List<StatementListItem> body = statementList(Token.EOF);
-            List<StatementListItem> statements = merge(prologue, body);
             assert context.assertLiteralsUnchecked(0);
+            computeBlockFunctionsForScript();
+
+            List<StatementListItem> statements = merge(prologue, body);
             boolean strict = (context.strictMode == StrictMode.Strict);
 
             ScriptContext scope = context.scriptContext;
@@ -2898,9 +2933,11 @@ public final class Parser {
      *   Directive StringLiteral ;
      * </pre>
      * 
+     * @param allowUseStrict
+     *            {@code true} if 'use strict' directives are allowed
      * @return the parsed list of directives
      */
-    private List<StatementListItem> directivePrologue() {
+    private List<StatementListItem> directivePrologue(boolean allowUseStrict) {
         if (token() != Token.STRING) {
             applyStrictMode(false);
             return emptyList();
@@ -2925,6 +2962,9 @@ public final class Parser {
             // found a directive
             String string = stringLiteral();
             if (!hasEscape && "use strict".equals(string)) {
+                if (!allowUseStrict) {
+                    reportSyntaxError(begin, Messages.Key.InvalidUseStrictDirective);
+                }
                 strict = true;
             }
             StringLiteral stringLiteral = new StringLiteral(begin, ts.endPosition(), string);
@@ -3169,8 +3209,8 @@ public final class Parser {
      * <strong>[14.1] Function Definitions</strong>
      * 
      * <pre>
-     * StrictFormalParameters<span><sub>[Yield, GeneratorParameter]</sub></span> :
-     *     FormalParameters<span><sub>[?Yield, ?GeneratorParameter]</sub></span>
+     * StrictFormalParameters<span><sub>[Yield]</sub></span> :
+     *     FormalParameters<span><sub>[?Yield]</sub></span>
      * </pre>
      * 
      * @param end
@@ -3185,9 +3225,9 @@ public final class Parser {
      * <strong>[14.1] Function Definitions</strong>
      * 
      * <pre>
-     * FormalParameters<span><sub>[Yield, GeneratorParameter]</sub></span> :
+     * FormalParameters<span><sub>[Yield]</sub></span> :
      *     [empty]
-     *     FormalParameterList<span><sub>[?Yield, ?GeneratorParameter]</sub></span>
+     *     FormalParameterList<span><sub>[?Yield]</sub></span>
      * </pre>
      * 
      * @param end
@@ -3219,13 +3259,13 @@ public final class Parser {
      * <strong>[14.1] Function Definitions</strong>
      * 
      * <pre>
-     * FormalParameterList<span><sub>[Yield, GeneratorParameter]</sub></span> :
+     * FormalParameterList<span><sub>[Yield]</sub></span> :
      *     FunctionRestParameter<span><sub>[?Yield]</sub></span>
-     *     FormalsList<span><sub>[?Yield, ?GeneratorParameter]</sub></span>
-     *     FormalsList<span><sub>[?Yield, ?GeneratorParameter]</sub></span>, FunctionRestParameter<span><sub>[?Yield]</sub></span>
-     * FormalsList<span><sub>[Yield, GeneratorParameter]</sub></span> :
-     *     FormalParameter<span><sub>[?Yield, ?GeneratorParameter]</sub></span>
-     *     FormalsList<span><sub>[?Yield, ?GeneratorParameter]</sub></span>, FormalParameter<span><sub>[?Yield, ?GeneratorParameter]</sub></span>
+     *     FormalsList<span><sub>[?Yield]</sub></span>
+     *     FormalsList<span><sub>[?Yield]</sub></span>, FunctionRestParameter<span><sub>[?Yield]</sub></span>
+     * FormalsList<span><sub>[Yield]</sub></span> :
+     *     FormalParameter<span><sub>[?Yield]</sub></span>
+     *     FormalsList<span><sub>[?Yield]</sub></span>, FormalParameter<span><sub>[?Yield]</sub></span>
      * </pre>
      * 
      * @param end
@@ -3266,17 +3306,27 @@ public final class Parser {
      * @return the parsed formal parameter
      */
     private FormalParameter functionRestParameter() {
+        boolean nonSimple = token() == Token.LB || token() == Token.LC;
+        FormalParameterContext scope = null;
+        if (nonSimple) {
+            scope = enterFormalParameterContext();
+        }
         long begin = ts.beginPosition();
         BindingRestElement restElement = bindingRestElement(true);
-        return new FormalParameter(begin, ts.endPosition(), restElement);
+        FormalParameter parameter = new FormalParameter(begin, ts.endPosition(), restElement);
+        if (nonSimple) {
+            scope.node = parameter;
+            exitFormalParameterContext();
+        }
+        return parameter;
     }
 
     /**
      * <strong>[14.1] Function Definitions</strong>
      * 
      * <pre>
-     * FormalParameter<span><sub>[Yield, GeneratorParameter]</sub></span> :
-     *     BindingElement<span><sub>[?Yield, ?GeneratorParameter]</sub></span>
+     * FormalParameter<span><sub>[Yield]</sub></span> :
+     *     BindingElement<span><sub>[?Yield]</sub></span>
      * </pre>
      * 
      * @return the parsed formal parameter
@@ -3387,7 +3437,11 @@ public final class Parser {
         context.yieldAllowed = context.kind.isGenerator();
         // enable 'await' if in async function
         context.awaitAllowed = context.kind.isAsync();
-        List<StatementListItem> prologue = directivePrologue();
+        boolean allowUseStrict = true;
+        if (isEnabled(CompatibilityOption.StrictDirectiveSimpleParameterList)) {
+            allowUseStrict = IsSimpleParameterList(parameters);
+        }
+        List<StatementListItem> prologue = directivePrologue(allowUseStrict);
         if (parameters.containsExpression()) {
             context.funContext.variableScope = enterFunctionBodyContext();
             context.funContext.lexicalScope = context.funContext.variableScope;
@@ -3421,26 +3475,12 @@ public final class Parser {
         }
         assert context.strictMode != StrictMode.Strict : "block functions in strict mode";
         InlineArrayList<FunctionDeclaration> blockFunctions = new InlineArrayList<>();
-        outer: for (FunctionDeclaration function : functions) {
-            Name name = function.getIdentifier().getName();
-            ScopeContext enclosingScope = (ScopeContext) function.getScope().getEnclosingScope();
-            // Top-level function declarations are not applicable for legacy semantics.
-            assert enclosingScope != topScope : "top-level function declaration";
-            assert enclosingScope.isDeclared(name) : "undeclared block scoped function: " + name;
-            for (ScopeContext scope = enclosingScope; (scope = scope.parent) != topScope;) {
-                // See 13.2.1 Static Semantics: Early Errors
-                // See 13.12.1 Static Semantics: Early Errors
-                if (scope.isDeclared(name)) {
-                    // Found a block scoped, lexical declaration - cannot declare function as var.
-                    if (isEnabled(CompatibilityOption.CatchVarStatement)
-                            && scope instanceof CatchContext) {
-                        // Unless "B.3.5 VariableStatements in Catch blocks" applies.
-                        continue;
-                    }
-                    continue outer;
-                }
+        for (FunctionDeclaration function : functions) {
+            if (hasEnclosingLexicalDeclaration(function, topScope)) {
+                continue;
             }
             // See 14.1.2 Static Semantics: Early Errors
+            Name name = function.getIdentifier().getName();
             if (topScope.allowVarDeclaredName(name) && !funScope.parameterNames.contains(name)) {
                 // Function declaration is applicable for legacy semantics, iff
                 // (1) Adding a VariableStatement with the same name would not produce an error.
@@ -3450,6 +3490,55 @@ public final class Parser {
             }
         }
         funScope.setBlockFunctions(blockFunctions);
+    }
+
+    private void computeBlockFunctionsForScript() {
+        assert context.kind.isScript();
+        if (!isEnabled(CompatibilityOption.BlockFunctionDeclaration)) {
+            return;
+        }
+        ScriptContext scriptScope = context.scriptContext;
+        InlineArrayList<FunctionDeclaration> functions = scriptScope.blockFunctions;
+        if (functions == null) {
+            return;
+        }
+        assert context.strictMode != StrictMode.Strict : "block functions in strict mode";
+        InlineArrayList<FunctionDeclaration> blockFunctions = new InlineArrayList<>();
+        for (FunctionDeclaration function : functions) {
+            if (hasEnclosingLexicalDeclaration(function, scriptScope)) {
+                continue;
+            }
+            // See 15.1.1 Static Semantics: Early Errors
+            Name name = function.getIdentifier().getName();
+            if (scriptScope.allowVarDeclaredName(name)) {
+                // Function declaration is applicable for legacy semantics, iff
+                // (1) Adding a VariableStatement with the same name would not produce an error.
+                function.setLegacyBlockScoped(true);
+                blockFunctions.add(function);
+            }
+        }
+        scriptScope.setBlockFunctions(blockFunctions);
+    }
+
+    private boolean hasEnclosingLexicalDeclaration(FunctionDeclaration function, ScopeContext topScope) {
+        Name name = function.getIdentifier().getName();
+        ScopeContext enclosingScope = (ScopeContext) function.getScope().getEnclosingScope();
+        // Top-level function declarations are not applicable for legacy semantics.
+        assert enclosingScope != topScope : "top-level function declaration";
+        assert enclosingScope.isDeclared(name) : "undeclared block scoped function: " + name;
+        for (ScopeContext scope = enclosingScope; (scope = scope.parent) != topScope;) {
+            // See 13.2.1 Static Semantics: Early Errors
+            // See 13.12.1 Static Semantics: Early Errors
+            if (scope.isDeclared(name)) {
+                // Found a block scoped, lexical declaration - cannot declare function as var.
+                if (scope instanceof CatchContext) {
+                    // Unless "B.3.5 VariableStatements in Catch blocks" applies.
+                    continue;
+                }
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -3639,7 +3728,7 @@ public final class Parser {
      *            the list of method decorators
      * @return the parsed method definition
      */
-    private PropertyDefinition methodDefinition(MethodAllocation allocation, boolean hasExtends,
+    private MethodDefinition methodDefinition(MethodAllocation allocation, boolean hasExtends,
             List<Expression> decorators) {
         switch (methodType()) {
         case AsyncFunction:
@@ -3671,16 +3760,10 @@ public final class Parser {
      *            the list of method decorators
      * @return the parsed method definition
      */
-    private PropertyDefinition normalMethod(MethodAllocation allocation, boolean hasExtends,
+    private MethodDefinition normalMethod(MethodAllocation allocation, boolean hasExtends,
             List<Expression> decorators) {
         long begin = ts.beginPosition();
         PropertyName propertyName = propertyName();
-        if (token() == Token.ASSIGN && allocation == MethodAllocation.Class && decorators.isEmpty()
-                && isEnabled(CompatibilityOption.StaticClassProperties)) {
-            consume(Token.ASSIGN);
-            Expression propertyValue = assignmentExpression(true);
-            return new PropertyValueDefinition(begin, ts.endPosition(), propertyName, propertyValue);
-        }
         return normalMethod(allocation, hasExtends, decorators, begin, propertyName, false);
     }
 
@@ -3702,6 +3785,7 @@ public final class Parser {
         try {
             MethodType type;
             if (callConstructor) {
+                assert allocation == MethodAllocation.Prototype;
                 type = MethodType.CallConstructor;
             } else if (allocation == MethodAllocation.Prototype && "constructor".equals(propertyName.getName())) {
                 context.isDerivedClassConstructor = hasExtends;
@@ -3933,7 +4017,7 @@ public final class Parser {
      * 
      * <pre>
      * GeneratorMethod<span><sub>[Yield]</sub></span> :
-     *     * PropertyName<span><sub>[?Yield]</sub></span> ( StrictFormalParameters<span><sub>[Yield, GeneratorParameter]</sub></span> ) { FunctionBody<span><sub>[Yield]</sub></span> }
+     *     * PropertyName<span><sub>[?Yield]</sub></span> ( StrictFormalParameters<span><sub>[Yield]</sub></span> ) { FunctionBody<span><sub>[Yield]</sub></span> }
      * </pre>
      * 
      * @param allocation
@@ -3942,8 +4026,7 @@ public final class Parser {
      *            the list of method decorators
      * @return the parsed generator method definition
      */
-    private MethodDefinition generatorMethod(MethodAllocation allocation,
-            List<Expression> decorators) {
+    private MethodDefinition generatorMethod(MethodAllocation allocation, List<Expression> decorators) {
         long begin = ts.beginPosition();
         consume(Token.MUL);
         PropertyName propertyName = propertyName();
@@ -3969,7 +4052,12 @@ public final class Parser {
             String body = ts.range(startBody, endFunction);
 
             FunctionContext scope = context.funContext;
-            MethodType type = MethodType.Generator;
+            MethodType type;
+            if (isEnabled(CompatibilityOption.GeneratorNonConstructor)) {
+                type = MethodType.Generator;
+            } else {
+                type = MethodType.ConstructorGenerator;
+            }
             MethodDefinition method = new MethodDefinition(begin, ts.endPosition(), scope, type,
                     allocation, decorators, propertyName, parameters, statements, header, body);
             scope.setNode(method);
@@ -3987,8 +4075,8 @@ public final class Parser {
      * 
      * <pre>
      * GeneratorDeclaration<span><sub>[Yield, Default]</sub></span> :
-     *     function * BindingIdentifier<span><sub>[?Yield]</sub></span> ( FormalParameters<span><sub>[Yield, GeneratorParameter]</sub></span> ) { GeneratorBody<span><sub>[Yield]</sub></span> }
-     *     <span><sub>[+Default]</sub></span> function * ( FormalParameters<span><sub>[Yield, GeneratorParameter]</sub></span> ) { GeneratorBody<span><sub>[Yield]</sub></span> }
+     *     function * BindingIdentifier<span><sub>[?Yield]</sub></span> ( FormalParameters<span><sub>[Yield]</sub></span> ) { GeneratorBody<span><sub>[Yield]</sub></span> }
+     *     <span><sub>[+Default]</sub></span> function * ( FormalParameters<span><sub>[Yield]</sub></span> ) { GeneratorBody<span><sub>[Yield]</sub></span> }
      * GeneratorBody<span><sub>[Yield]</sub></span> :
      *     FunctionBody<span><sub>[?Yield]</sub></span>
      * </pre>
@@ -4040,7 +4128,7 @@ public final class Parser {
             FunctionContext scope = context.funContext;
             GeneratorDeclaration generator;
             if (!isLegacy) {
-                generator = new GeneratorDeclaration(begin, ts.endPosition(), scope, identifier,
+                generator = new GeneratorDeclaration(begin, ts.endPosition(), scope, generatorKind(), identifier,
                         parameters, statements, functionName, header, body);
             } else {
                 generator = new LegacyGeneratorDeclaration(begin, ts.endPosition(), scope,
@@ -4062,7 +4150,7 @@ public final class Parser {
      * 
      * <pre>
      * GeneratorExpression :
-     *     function * BindingIdentifier<span><sub>[Yield]opt</sub></span> ( FormalParameters<span><sub>[Yield, GeneratorParameter]</sub></span> ) { FunctionBody<span><sub>[Yield]</sub></span> }
+     *     function * BindingIdentifier<span><sub>[Yield]opt</sub></span> ( FormalParameters<span><sub>[Yield]</sub></span> ) { FunctionBody<span><sub>[Yield]</sub></span> }
      * </pre>
      * 
      * @param isLegacy
@@ -4110,7 +4198,7 @@ public final class Parser {
             FunctionContext scope = context.funContext;
             GeneratorExpression generator;
             if (!isLegacy) {
-                generator = new GeneratorExpression(begin, ts.endPosition(), scope, identifier,
+                generator = new GeneratorExpression(begin, ts.endPosition(), scope, generatorKind(), identifier,
                         parameters, statements, header, body);
             } else {
                 generator = new LegacyGeneratorExpression(begin, ts.endPosition(), scope,
@@ -4146,6 +4234,13 @@ public final class Parser {
             checkFormalParameterDuplicationStrict(generator, boundNames, scope.parameterNames);
         }
         checkFormalParameterRedeclaration(generator, boundNames, scope.lexDeclaredNames);
+    }
+
+    private GeneratorKind generatorKind() {
+        if (isEnabled(CompatibilityOption.GeneratorNonConstructor)) {
+            return GeneratorKind.NonConstructor;
+        }
+        return GeneratorKind.Constructor;
     }
 
     /**
@@ -4418,10 +4513,6 @@ public final class Parser {
      * ClassElementList<span><sub>[Yield]</sub></span> :
      *     ClassElement<span><sub>[?Yield]</sub></span>
      *     ClassElementList<span><sub>[?Yield]</sub></span> ClassElement<span><sub>[?Yield]</sub></span>
-     * ClassElement<span><sub>[Yield]</sub></span> :
-     *     MethodDefinition<span><sub>[?Yield]</sub></span>
-     *     static MethodDefinition<span><sub>[?Yield]</sub></span>
-     *     ;
      * </pre>
      * 
      * @param className
@@ -4434,45 +4525,17 @@ public final class Parser {
             InlineArrayList<MethodDefinition> methods) {
         int beginLine = ts.getLine();
         InlineArrayList<PropertyDefinition> properties = newList();
-        InlineArrayList<MethodDefinition> staticMethods = newList();
-        InlineArrayList<MethodDefinition> prototypeMethods = newList();
         while (token() != Token.RC) {
             if (token() == Token.SEMI) {
                 consume(Token.SEMI);
                 continue;
             }
-            List<Expression> decorators = token() == Token.AT ? decorators() : NO_DECORATORS;
-            PropertyDefinition property;
-            MethodDefinition method = null;
-            if (token() == Token.STATIC && !LOOKAHEAD(Token.LP)) {
-                // TODO: Add "static" start position to node?
-                consume(Token.STATIC);
-                property = methodDefinition(MethodAllocation.Class, hasExtends, decorators);
-                if (property instanceof MethodDefinition) {
-                    method = (MethodDefinition) property;
-                    staticMethods.add(method);
-                    methods.add(method);
-                }
-            } else if (isName("call") && isNextName("constructor") && isEnabled(CompatibilityOption.CallConstructor)) {
-                property = callConstructor(hasExtends, decorators);
-                method = (MethodDefinition) property;
-                prototypeMethods.add(method);
-                methods.add(method);
-            } else {
-                property = methodDefinition(MethodAllocation.Prototype, hasExtends, decorators);
-                method = (MethodDefinition) property;
-                prototypeMethods.add(method);
-                methods.add(method);
-            }
-            if (className != null && method != null) {
-                method.setClassName(className.getName().getIdentifier());
-            }
-            properties.add(property);
+            properties.add(classElement(className, hasExtends, methods));
         }
 
-        classBody_EarlyErrors(staticMethods, prototypeMethods);
+        classBody_EarlyErrors(methods);
 
-        if (ConstructorMethod(prototypeMethods) == null) {
+        if (ConstructorMethod(methods) == null) {
             MethodDefinition constructor = createSyntheticClassConstructor(beginLine, hasExtends);
             if (className != null) {
                 constructor.setClassName(className.getName().getIdentifier());
@@ -4482,6 +4545,75 @@ public final class Parser {
         }
 
         return properties;
+    }
+
+    /**
+     * <strong>[14.5] Class Definitions</strong>
+     * 
+     * <pre>
+     * ClassElement<span><sub>[Yield]</sub></span> :
+     *     MethodDefinition<span><sub>[?Yield]</sub></span>
+     *     static MethodDefinition<span><sub>[?Yield]</sub></span>
+     *     ;
+     * </pre>
+     * 
+     * @param className
+     *            the class name if present, otherwise {@code null}
+     * @param hasExtends
+     *            {@code true} if the ClassHeritage expression is present
+     * @param methods
+     *            the list of method definitions
+     * @return the parsed class element
+     */
+    private PropertyDefinition classElement(BindingIdentifier className, boolean hasExtends,
+            InlineArrayList<MethodDefinition> methods) {
+        List<Expression> decorators = token() == Token.AT ? decorators() : NO_DECORATORS;
+        MethodDefinition method;
+        if (token() == Token.STATIC && !LOOKAHEAD(Token.LP)) {
+            consume(Token.STATIC);
+            // TODO: Add "static" start position to node?
+            long begin = ts.beginPosition();
+            if (token() == Token.LB) {
+                // either `PropertyName = AssignmentExpression` or MethodDefinition (normal)
+                ComputedPropertyName propertyName = computedPropertyName();
+                if (token() == Token.ASSIGN && isEnabled(CompatibilityOption.StaticClassProperties)) {
+                    return classProperty(begin, propertyName, decorators);
+                }
+                method = normalMethod(MethodAllocation.Class, hasExtends, decorators, begin, propertyName, false);
+            } else if (LOOKAHEAD(Token.ASSIGN) && isEnabled(CompatibilityOption.StaticClassProperties)) {
+                return classProperty(begin, literalPropertyName(), decorators);
+            } else {
+                method = methodDefinition(MethodAllocation.Class, hasExtends, decorators);
+            }
+        } else if (isName("call") && isNextName("constructor") && isEnabled(CompatibilityOption.CallConstructor)) {
+            method = callConstructor(hasExtends, decorators);
+        } else {
+            method = methodDefinition(MethodAllocation.Prototype, hasExtends, decorators);
+        }
+        methods.add(method);
+        if (className != null) {
+            method.setClassName(className.getName().getIdentifier());
+        }
+        return method;
+    }
+
+    private PropertyDefinition classProperty(long begin, PropertyName propertyName, List<Expression> decorators) {
+        if (!decorators.isEmpty()) {
+            reportSyntaxError(Messages.Key.InvalidPropertyDecorator);
+        }
+        if ("prototype".equals(propertyName.getName())) {
+            reportSyntaxError(begin, Messages.Key.InvalidPrototypeProperty);
+        }
+        consume(Token.ASSIGN);
+        Expression propertyValue = assignmentExpression(true);
+        if (IsAnonymousFunctionDefinition(propertyValue)) {
+            if (propertyName instanceof ComputedPropertyName) {
+                setFunctionName(propertyValue, (ComputedPropertyName) propertyName);
+            } else {
+                setFunctionName(propertyValue, propertyName);
+            }
+        }
+        return new PropertyValueDefinition(begin, ts.endPosition(), propertyName, propertyValue);
     }
 
     private MethodDefinition createSyntheticClassConstructor(int beginLine, boolean hasExtends) {
@@ -4495,8 +4627,7 @@ public final class Parser {
         TokenStream syntheticStream = new TokenStream(this, new TokenStreamInput(sourceText));
         try {
             ts = syntheticStream.initialize(beginLine);
-            return (MethodDefinition) methodDefinition(MethodAllocation.Prototype, hasExtends,
-                    NO_DECORATORS);
+            return methodDefinition(MethodAllocation.Prototype, hasExtends, NO_DECORATORS);
         } finally {
             ts = tokenStream;
         }
@@ -4505,49 +4636,44 @@ public final class Parser {
     /**
      * 14.5.1 Static Semantics: Early Errors
      * 
-     * @param staticMethods
-     *            the list of static method definitions
-     * @param prototypeMethods
-     *            the list of prototype method definitions
+     * @param methods
+     *            the list of method definitions
      */
-    private void classBody_EarlyErrors(List<MethodDefinition> staticMethods, List<MethodDefinition> prototypeMethods) {
-        for (MethodDefinition def : staticMethods) {
-            String key = def.getPropertyName().getName();
-            if (key == null) {
-                assert def.getPropertyName() instanceof ComputedPropertyName;
-                continue;
-            }
-            if ("prototype".equals(key)) {
-                reportSyntaxError(def, Messages.Key.InvalidPrototypeMethod);
-            }
-        }
+    private void classBody_EarlyErrors(List<MethodDefinition> methods) {
         boolean hasConstructor = false, hasCallConstructor = false;
-        for (MethodDefinition def : prototypeMethods) {
+        for (MethodDefinition def : methods) {
             String key = def.getPropertyName().getName();
             if (key == null) {
                 assert def.getPropertyName() instanceof ComputedPropertyName;
                 continue;
             }
-            if (!"constructor".equals(key)) {
-                continue;
-            }
-            switch (def.getType()) {
-            case BaseConstructor:
-            case DerivedConstructor:
-                if (hasConstructor) {
-                    reportSyntaxError(def, Messages.Key.DuplicateConstructor, key);
+            if (def.getAllocation() == MethodAllocation.Class) {
+                if ("prototype".equals(key)) {
+                    reportSyntaxError(def, Messages.Key.InvalidPrototypeMethod);
                 }
-                hasConstructor = true;
-                break;
-            case CallConstructor:
-                if (hasCallConstructor) {
-                    reportSyntaxError(def, Messages.Key.DuplicateCallConstructor, key);
+            } else {
+                assert def.getAllocation() == MethodAllocation.Prototype;
+                if (!"constructor".equals(key)) {
+                    continue;
                 }
-                hasCallConstructor = true;
-                break;
-            default:
-                assert SpecialMethod(def);
-                throw reportSyntaxError(def, Messages.Key.InvalidConstructorMethod);
+                switch (def.getType()) {
+                case BaseConstructor:
+                case DerivedConstructor:
+                    if (hasConstructor) {
+                        reportSyntaxError(def, Messages.Key.DuplicateConstructor, key);
+                    }
+                    hasConstructor = true;
+                    break;
+                case CallConstructor:
+                    if (hasCallConstructor) {
+                        reportSyntaxError(def, Messages.Key.DuplicateCallConstructor, key);
+                    }
+                    hasCallConstructor = true;
+                    break;
+                default:
+                    assert SpecialMethod(def);
+                    throw reportSyntaxError(def, Messages.Key.InvalidConstructorMethod);
+                }
             }
         }
     }
@@ -5437,9 +5563,9 @@ public final class Parser {
      * <strong>[13.3.3] Destructuring Binding Patterns</strong>
      * 
      * <pre>
-     * BindingPattern<span><sub>[Yield, GeneratorParameter]</sub></span> :
-     *     ObjectBindingPattern<span><sub>[?Yield, ?GeneratorParameter]</sub></span>
-     *     ArrayBindingPattern<span><sub>[?Yield, ?GeneratorParameter]</sub></span>
+     * BindingPattern<span><sub>[Yield]</sub></span> :
+     *     ObjectBindingPattern<span><sub>[?Yield]</sub></span>
+     *     ArrayBindingPattern<span><sub>[?Yield]</sub></span>
      * </pre>
      * 
      * @param allowLet
@@ -5458,13 +5584,13 @@ public final class Parser {
      * <strong>[13.3.3] Destructuring Binding Patterns</strong>
      * 
      * <pre>
-     * ObjectBindingPattern<span><sub>[Yield, GeneratorParameter]</sub></span> :
+     * ObjectBindingPattern<span><sub>[Yield]</sub></span> :
      *     { }
-     *     { BindingPropertyList<span><sub>[?Yield, ?GeneratorParameter]</sub></span> }
-     *     { BindingPropertyList<span><sub>[?Yield, ?GeneratorParameter]</sub></span> , }
-     * BindingPropertyList<span><sub>[Yield, GeneratorParameter]</sub></span> :
-     *     BindingProperty<span><sub>[?Yield, ?GeneratorParameter]</sub></span>
-     *     BindingPropertyList<span><sub>[?Yield, ?GeneratorParameter]</sub></span> , BindingProperty<span><sub>[?Yield, ?GeneratorParameter]</sub></span>
+     *     { BindingPropertyList<span><sub>[?Yield]</sub></span> }
+     *     { BindingPropertyList<span><sub>[?Yield]</sub></span> , }
+     * BindingPropertyList<span><sub>[Yield]</sub></span> :
+     *     BindingProperty<span><sub>[?Yield]</sub></span>
+     *     BindingPropertyList<span><sub>[?Yield]</sub></span> , BindingProperty<span><sub>[?Yield]</sub></span>
      * </pre>
      * 
      * @param allowLet
@@ -5497,12 +5623,11 @@ public final class Parser {
      * <strong>[13.3.3] Destructuring Binding Patterns</strong>
      * 
      * <pre>
-     * BindingProperty<span><sub>[Yield, GeneratorParameter]</sub></span> :
-     *     SingleNameBinding<span><sub>[?Yield, ?GeneratorParameter]</sub></span>
-     *     PropertyName<span><sub>[?Yield, ?GeneratorParameter]</sub></span> : BindingElement<span><sub>[?Yield, ?GeneratorParameter]</sub></span>
-     * SingleNameBinding<span><sub>[Yield, GeneratorParameter]</sub></span> :
-     *     <span><sub>[+GeneratorParameter]</sub></span>BindingIdentifier<span><sub>[Yield]</sub></span> Initializer<span><sub>[In]opt</sub></span>
-     *     <span><sub>[~GeneratorParameter]</sub></span>BindingIdentifier<span><sub>[?Yield]</sub></span> Initializer<span><sub>[In, ?Yield]opt</sub></span>
+     * BindingProperty<span><sub>[Yield]</sub></span> :
+     *     SingleNameBinding<span><sub>[?Yield]</sub></span>
+     *     PropertyName<span><sub>[?Yield]</sub></span> : BindingElement<span><sub>[?Yield]</sub></span>
+     * SingleNameBinding<span><sub>[Yield]</sub></span> :
+     *     BindingIdentifier<span><sub>[?Yield]</sub></span> Initializer<span><sub>[In, ?Yield]opt</sub></span>
      * </pre>
      * 
      * @param allowLet
@@ -5547,15 +5672,15 @@ public final class Parser {
      * <strong>[13.3.3] Destructuring Binding Patterns</strong>
      * 
      * <pre>
-     * ArrayBindingPattern<span><sub>[Yield, GeneratorParameter]</sub></span> :
-     *     [ Elision<span><sub>opt</sub></span> BindingRestElement<span><sub>[?Yield, ?GeneratorParameter]opt</sub></span> ]
-     *     [ BindingElementList<span><sub>[?Yield, ?GeneratorParameter]</sub></span> ]
-     *     [ BindingElementList<span><sub>[?Yield, ?GeneratorParameter]</sub></span> , Elision<span><sub>opt</sub></span> BindingRestElement<span><sub>[?Yield, ?GeneratorParameter]opt</sub></span> ]
-     * BindingElementList<span><sub>[Yield, GeneratorParameter]</sub></span> :
-     *     BindingElisionElement<span><sub>[?Yield, ?GeneratorParameter]</sub></span>
-     *     BindingElementList<span><sub>[?Yield, ?GeneratorParameter]</sub></span> , BindingElisionElement<span><sub>[?Yield, ?GeneratorParameter]</sub></span>
-     * BindingElisionElement<span><sub>[Yield, GeneratorParameter]</sub></span>:
-     *     Elision<span><sub>opt</sub></span> BindingElement<span><sub>[?Yield, ?GeneratorParameter]</sub></span>
+     * ArrayBindingPattern<span><sub>[Yield]</sub></span> :
+     *     [ Elision<span><sub>opt</sub></span> BindingRestElement<span><sub>[?Yield]opt</sub></span> ]
+     *     [ BindingElementList<span><sub>[?Yield]</sub></span> ]
+     *     [ BindingElementList<span><sub>[?Yield]</sub></span> , Elision<span><sub>opt</sub></span> BindingRestElement<span><sub>[?Yield]opt</sub></span> ]
+     * BindingElementList<span><sub>[Yield]</sub></span> :
+     *     BindingElisionElement<span><sub>[?Yield]</sub></span>
+     *     BindingElementList<span><sub>[?Yield]</sub></span> , BindingElisionElement<span><sub>[?Yield]</sub></span>
+     * BindingElisionElement<span><sub>[Yield]</sub></span>:
+     *     Elision<span><sub>opt</sub></span> BindingElement<span><sub>[?Yield]</sub></span>
      * </pre>
      * 
      * @param allowLet
@@ -5588,9 +5713,9 @@ public final class Parser {
 
     /**
      * <pre>
-     * Binding<span><sub>[Yield, GeneratorParameter]</sub></span> :
-     *     BindingIdentifier<span><sub>[?Yield, ?GeneratorParameter]</sub></span>
-     *     BindingPattern<span><sub>[?Yield, ?GeneratorParameter]</sub></span>
+     * Binding<span><sub>[Yield]</sub></span> :
+     *     BindingIdentifier<span><sub>[?Yield]</sub></span>
+     *     BindingPattern<span><sub>[?Yield]</sub></span>
      * </pre>
      * 
      * @param allowLet
@@ -5612,10 +5737,9 @@ public final class Parser {
      * <strong>[13.3.3] Destructuring Binding Patterns</strong>
      * 
      * <pre>
-     * BindingElement<span><sub>[Yield, GeneratorParameter]</sub></span> :
-     *     SingleNameBinding<span><sub>[?Yield, ?GeneratorParameter]</sub></span>
-     *     <span><sub>[+GeneratorParameter]</sub></span>BindingPattern<span><sub>[?Yield, GeneratorParameter]</sub></span> Initializer<span><sub>[In]opt</sub></span>
-     *     <span><sub>[~GeneratorParameter]</sub></span>BindingPattern<span><sub>[?Yield]</sub></span> Initializer<span><sub>[In, ?Yield]opt</sub></span>
+     * BindingElement<span><sub>[Yield]</sub></span> :
+     *     SingleNameBinding<span><sub>[?Yield]</sub></span>
+     *     BindingPattern<span><sub>[?Yield]</sub></span> Initializer<span><sub>[In, ?Yield]opt</sub></span>
      * </pre>
      * 
      * @param allowLet
@@ -5646,9 +5770,9 @@ public final class Parser {
      * <strong>[13.3.3] Destructuring Binding Patterns</strong>
      * 
      * <pre>
-     * BindingRestElement<span><sub>[Yield, GeneratorParameter]</sub></span> :
-     *     <span><sub>[+GeneratorParameter]</sub></span>... BindingIdentifier<span><sub>[Yield]</sub></span>
-     *     <span><sub>[~GeneratorParameter]</sub></span>... BindingIdentifier<span><sub>[?Yield]</sub></span>
+     * BindingRestElement<span><sub>[Yield]</sub></span> :
+     *     ... BindingIdentifier<span><sub>[?Yield]</sub></span>
+     *     ... BindingPattern<span><sub>[?Yield]</sub></span>
      * </pre>
      * 
      * @param allowLet
@@ -5658,8 +5782,13 @@ public final class Parser {
     private BindingRestElement bindingRestElement(boolean allowLet) {
         long begin = ts.beginPosition();
         consume(Token.TRIPLE_DOT);
-        BindingIdentifier identifier = bindingIdentifier(allowLet);
-        return new BindingRestElement(begin, ts.endPosition(), identifier);
+        Binding binding;
+        if (isEnabled(CompatibilityOption.RestBindingPattern)) {
+            binding = binding(allowLet);
+        } else {
+            binding = bindingIdentifier(allowLet);
+        }
+        return new BindingRestElement(begin, ts.endPosition(), binding);
     }
 
     /**
@@ -6430,7 +6559,7 @@ public final class Parser {
                     long beginCatch = ts.beginPosition();
                     consume(Token.CATCH);
                     consume(Token.LP);
-                    CatchContext catchScope = enterCatchContext();
+                    BlockScope catchScope = enterCatchScope();
                     Binding catchParameter = binding(true);
                     addLexDeclaredName(catchParameter);
 
@@ -6454,19 +6583,19 @@ public final class Parser {
                     if (guard != null) {
                         GuardedCatchNode guardedCatchNode = new GuardedCatchNode(beginCatch,
                                 ts.endPosition(), catchScope, catchParameter, guard, catchBlock);
-                        catchScope.node = guardedCatchNode;
+                        assignCatchScopeNode(catchScope, guardedCatchNode);
                         guardedCatchNodes.add(guardedCatchNode);
                     } else {
                         catchNode = new CatchNode(beginCatch, ts.endPosition(), catchScope,
                                 catchParameter, catchBlock);
-                        catchScope.node = catchNode;
+                        assignCatchScopeNode(catchScope, catchNode);
                     }
                 }
             } else {
                 long beginCatch = ts.beginPosition();
                 consume(Token.CATCH);
                 consume(Token.LP);
-                CatchContext catchScope = enterCatchContext();
+                BlockScope catchScope = enterCatchScope();
                 Binding catchParameter = binding(true);
                 addLexDeclaredName(catchParameter);
                 consume(Token.RP);
@@ -6480,7 +6609,7 @@ public final class Parser {
                 exitCatchContext();
                 catchNode = new CatchNode(beginCatch, ts.endPosition(), catchScope, catchParameter,
                         catchBlock);
-                catchScope.node = catchNode;
+                assignCatchScopeNode(catchScope, catchNode);
             }
 
             if (token() == Token.FINALLY) {
@@ -6493,6 +6622,26 @@ public final class Parser {
         }
         return new TryStatement(begin, ts.endPosition(), tryBlock, catchNode, guardedCatchNodes,
                 finallyBlock);
+    }
+
+    private BlockScope enterCatchScope() {
+        if (isEnabled(CompatibilityOption.CatchVarPattern)) {
+            if (token() == Token.LB || token() == Token.LC) {
+                return enterBlockContext();
+            }
+        }
+        if (isEnabled(CompatibilityOption.CatchVarStatement)) {
+            return enterCatchContext();
+        }
+        return enterBlockContext();
+    }
+
+    private void assignCatchScopeNode(BlockScope scope, ScopedNode node) {
+        if (scope instanceof BlockContext) {
+            ((BlockContext) scope).node = node;
+        } else {
+            ((CatchContext) scope).node = node;
+        }
     }
 
     /**
@@ -7101,9 +7250,19 @@ public final class Parser {
     private SpreadElement arrowFunctionRestParameter() {
         long begin = ts.beginPosition();
         consume(Token.TRIPLE_DOT);
-        String ident = bindingIdentifier().getName().getIdentifier();
-        IdentifierReference identifier = new IdentifierReference(ts.beginPosition(),
-                ts.endPosition(), ident);
+        Binding binding;
+        if (isEnabled(CompatibilityOption.RestBindingPattern)) {
+            binding = binding(true);
+        } else {
+            binding = bindingIdentifier(true);
+        }
+        String ident;
+        if (binding instanceof BindingIdentifier) {
+            ident = ((BindingIdentifier) binding).getName().getIdentifier();
+        } else {
+            ident = "<binding-pattern>";
+        }
+        IdentifierReference identifier = new IdentifierReference(ts.beginPosition(), ts.endPosition(), ident);
         SpreadElement spread = new SpreadElement(begin, ts.endPosition(), identifier);
         if (!(token() == Token.RP && LOOKAHEAD(Token.ARROW))) {
             reportSyntaxError(spread, Messages.Key.InvalidSpreadExpression);
@@ -7580,10 +7739,9 @@ public final class Parser {
      * <strong>[12.2.6] Object Initializer</strong>
      * 
      * <pre>
-     * PropertyName<span><sub>[Yield, GeneratorParameter]</sub></span> :
+     * PropertyName<span><sub>[Yield]</sub></span> :
      *   LiteralPropertyName
-     *   <span><sub>[+GeneratorParameter]</sub></span>ComputedPropertyName
-     *   <span><sub>[~GeneratorParameter]</sub></span>ComputedPropertyName<span><sub>[?Yield]</sub></span>
+     *   ComputedPropertyName<span><sub>[?Yield]</sub></span>
      * </pre>
      * 
      * @return the parsed property name
@@ -7660,8 +7818,8 @@ public final class Parser {
             Comprehension comprehension = generatorComprehensionBody();
 
             FunctionContext scope = context.funContext;
-            GeneratorComprehension generator = new GeneratorComprehension(begin, ts.endPosition(),
-                    scope, parameters, comprehension);
+            GeneratorComprehension generator = new GeneratorComprehension(begin, ts.endPosition(), scope,
+                    generatorKind(), parameters, comprehension);
             scope.setNode(generator);
 
             return inheritStrictness(generator);
@@ -7710,8 +7868,8 @@ public final class Parser {
             LegacyComprehension comprehension = legacyGeneratorComprehensionBody();
 
             FunctionContext scope = context.funContext;
-            GeneratorComprehension generator = new GeneratorComprehension(begin, ts.endPosition(),
-                    scope, parameters, comprehension);
+            GeneratorComprehension generator = new GeneratorComprehension(begin, ts.endPosition(), scope,
+                    GeneratorKind.Constructor, parameters, comprehension);
             scope.setNode(generator);
 
             return inheritStrictness(generator);

@@ -5,3 +5,5 @@
 # <https://github.com/anba/es6draft>
 #
 
+# Expected change from early reference to syntax error b/c of exponentiation operator
+test/language/asi/S7.9_A5.7_T1.js

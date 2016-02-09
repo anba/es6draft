@@ -1,0 +1,366 @@
+#
+# Copyright (c) 2012-2015 André Bargull
+# Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
+#
+# <https://github.com/anba/es6draft>
+#
+
+
+# JSC bug
+stress/arguments-bizarre-behaviour-disable-enumerability.js
+
+# invalid test: delete ignores uninitialized bindings (`function foo(){ delete x; let x }`)
+stress/lexical-let-not-strict-mode.js
+
+# invalid: assignment to new.target is early error
+stress/new-target.js
+
+# ES2016: UseStrict directive with non-simple parameters list
+stress/es6-default-parameters.js
+
+# ES2016: generators are no longer constructors
+stress/generator-eval-this.js
+stress/generator-this.js
+stress/generator-with-new-target.js
+
+# RegExp.prototype still RegExp in JSC
+stress/static-getter-in-names.js
+
+# 'includes' missing in Array.prototype[Symbol.unscopables]
+stress/unscopables.js
+
+# Integer indexed property keys don't perform prototype lookup on typed arrays
+stress/float32array-out-of-bounds.js
+
+
+############################################
+# Implementation specific differences      #
+############################################
+
+# Different precision for Math.pow(2.1, 42)
+stress/math-pow-with-constants.js
+
+# symbol valued property key on global object fails test
+stress/object-get-own-property-symbols.js
+
+# JSC uses .line instead of .lineNumber
+stress/template-literal-line-terminators.js
+
+# Throws TypeError on .caller access to strict function
+stress/tail-call-recognize.js
+
+# different error message
+stress/array-copywithin.js
+stress/array-from-with-iterator.js
+stress/array-iterators-next-with-call.js
+stress/arrow-function-token-is-not-keyword.js
+stress/builtin-function-is-construct-type-none.js
+stress/class-expression-generates-environment.js
+stress/class-expression-should-be-tdz-in-heritage.js
+stress/const-and-with-statement.js
+stress/const-loop-semantics.js
+stress/const-not-strict-mode.js
+stress/const-semantics.js
+stress/custom-iterators.js
+stress/destructuring-assignment-accepts-iterables.js
+stress/destructuring-assignment-require-object-coercible.js
+stress/destructuring-assignment-syntax.js
+stress/dfg-to-primitive-pass-symbol.js
+stress/es6-for-of-loop-exception.js
+stress/exception-in-to-property-key-should-be-handled-early-in-object-methods.js
+stress/exception-in-to-property-key-should-be-handled-early.js
+stress/freeze-and-seal-should-prevent-extensions.js
+stress/ftl-library-inlining-exceptions-dataview.js
+stress/generator-class-methods-syntax.js
+stress/generator-class-methods.js
+stress/generator-methods-with-non-generator.js
+stress/generator-syntax.js
+stress/generator-with-super.js
+stress/generator-yield-star.js
+stress/global-lexical-redeclare-variable.js
+stress/global-lexical-redefine-const.js
+stress/global-lexical-var-injection.js
+stress/global-lexical-variable-tdz.js
+stress/global-lexical-variable-unresolved-property.js
+stress/global-lexical-variable-with-statement.js
+stress/make-large-string.js
+stress/make-large-string-jit-strcat.js
+stress/make-large-string-jit.js
+stress/make-large-string-strcat.js
+stress/map-constructor.js
+stress/modules-syntax-error-with-names.js
+stress/modules-syntax-error.js
+stress/mutual-tail-call-no-stack-overflow.js
+stress/non-constructors.js
+stress/object-get-own-property-descriptor-perform-to-object.js
+stress/object-get-own-property-names-perform-to-object.js
+stress/object-get-own-property-symbols-perform-to-object.js
+stress/object-get-prototype-of-perform-to-object.js
+stress/object-keys-perform-to-object.js
+stress/promise-cannot-be-called.js
+stress/recurse-infinitely-on-getter.js
+stress/reflect-apply.js
+stress/reflect-define-property.js
+stress/reflect-delete-property.js
+stress/reflect-enumerate.js
+stress/reflect-get-own-property.js
+stress/reflect-get-prototype-of.js
+stress/reflect-get.js
+stress/reflect-has.js
+stress/reflect-is-extensible.js
+stress/reflect-own-keys.js
+stress/reflect-prevent-extensions.js
+stress/reflect-set-prototype-of.js
+stress/regress-151324.js
+stress/reserved-word-with-escape.js
+stress/rest-elements.js
+stress/set-constructor.js
+stress/set-same-prototype.js
+stress/static-getter-delete.js
+stress/static-getter-put.js
+stress/string-from-code-point.js
+stress/string-iterators.js
+stress/string-normalize.js
+stress/string-raw.js
+stress/super-in-lexical-scope.js
+stress/symbol-registry.js
+stress/tagged-templates-syntax.js
+stress/tail-call-no-stack-overflow.js
+stress/tail-call-varargs-no-stack-overflow.js
+stress/template-literal-syntax.js
+stress/throw-from-ftl-call-ic-slow-path.js
+stress/throw-from-ftl-call-ic-slow-path-cells.js
+stress/throw-from-ftl-call-ic-slow-path-undefined.js
+stress/trailing-comma-in-patterns.js
+stress/typedarray-every.js
+stress/typedarray-filter.js
+stress/typedarray-find.js
+stress/typedarray-findIndex.js
+stress/typedarray-forEach.js
+stress/typedarray-map.js
+stress/typedarray-reduce.js
+stress/typedarray-reduceRight.js
+stress/typedarray-some.js
+stress/typedarray-sort.js
+stress/weak-map-constructor.js
+stress/weak-set-constructor.js
+stress/yield-and-line-terminator.js
+stress/yield-label-generator.js
+stress/yield-label.js
+stress/yield-named-variable.js
+stress/yield-named-variable-generator.js
+stress/yield-out-of-generator.js
+
+
+#######################################
+# Unsupported shell functions         #
+#######################################
+
+# addressOf()
+stress/equality-type-checking.js
+
+# reoptimizationRetryCount()
+stress/float32-repeat-out-of-bounds.js
+stress/fold-multi-get-by-offset-to-get-by-offset.js
+stress/fold-multi-get-by-offset-to-get-by-offset-with-watchpoint.js
+stress/int8-repeat-out-of-bounds.js
+
+# makeMasquerader()
+stress/branch-may-exit-due-to-object-or-other-use-kind.js
+stress/equals-masquerader.js
+stress/is-undefined-exit-on-masquerader.js
+stress/is-undefined-jettison-on-masquerader.js
+stress/is-undefined-masquerader.js
+stress/logical-not-masquerades.js
+
+# isFinalTier()
+stress/fold-multi-get-by-offset-to-get-by-offset-without-folding-the-structure-check-new.js
+stress/fold-to-double-constant-then-exit.js
+stress/fold-to-int52-constant-then-exit.js
+stress/math-pow-coherency.js
+stress/prop-type-struct-then-object-opt-fold.js
+stress/sink-multigetbyoffset.js
+
+# createProxy()
+stress/for-in-proxy.js
+stress/for-in-proxy-target-changed-structure.js
+stress/proxy-inline-cache.js
+
+# createImpureGetter()
+stress/impure-get-own-property-slot-inline-cache.js
+
+# createCustomGetterObject()
+stress/regress-150532.js
+stress/try-catch-custom-getter-as-get-by-id.js
+
+# Root()
+stress/generational-opaque-roots.js
+
+# gcHeapSize()
+stress/new-largeish-contiguous-array-with-size.js
+
+# Loader()
+stress/pathname-resolve.js
+
+# DFGTrue()
+stress/fiat-value-to-int52-then-exit-not-double.js
+stress/tricky-array-bounds-checks.js
+
+# loadWebAssembly()
+stress/wasm-arithmetic-float32.js
+stress/wasm-arithmetic-float64.js
+stress/wasm-arithmetic-int32.js
+stress/wasm-calls.js
+stress/wasm-comma.js
+stress/wasm-control-flow.js
+stress/wasm-globals.js
+stress/wasm-linear-memory.js
+stress/wasm-locals.js
+stress/wasm-relational.js
+stress/wasm-type-conversion.js
+
+# Disables legacy Function#arguments property
+stress/disable-function-dot-arguments.js
+
+
+#######################################
+# Compilation or runtime issues       #
+#######################################
+
+# Too many local variables
+stress/heap-allocator-allocates-incorrect-size-for-activation.js
+
+# Too many function arguments
+stress/tagged-templates-raw-strings.js
+
+# Timeout
+stress/op_add.js
+stress/op_bitand.js
+stress/op_bitor.js
+stress/op_bitxor.js
+stress/op_div.js
+stress/op_lshift.js
+stress/op_mod.js
+stress/op_mul.js
+stress/op_rshift.js
+stress/op_sub.js
+stress/op_urshift.js
+
+# Timeout (slow - Disable most tests with runtime > 3s to keep the overall time at a reasonable level.)
+stress/arrayify-fires-watchpoint.js
+stress/activation-sink.js
+stress/activation-sink-default-value.js
+stress/activation-sink-default-value-tdz-error.js
+stress/activation-sink-osrexit.js
+stress/activation-sink-osrexit-default-value.js
+stress/activation-sink-osrexit-default-value-tdz-error.js
+stress/arguments-custom-properties-gc.js
+stress/arrowfunction-activation-sink.js
+stress/arrowfunction-lexical-bind-this-1.js
+stress/arrowfunction-lexical-bind-supercall-1.js
+stress/arrowfunction-lexical-bind-supercall-2.js
+stress/arrowfunction-lexical-bind-supercall-3.js
+stress/arrowfunction-lexical-bind-supercall-4.js
+stress/arrowfunction-lexical-this-activation-sink.js
+stress/arrowfunction-lexical-this-activation-sink-osrexit.js
+stress/elidable-new-object-roflcopter-then-exit.js
+stress/elide-new-object-dag-then-exit.js
+stress/materialize-past-butterfly-allocation.js
+stress/materialize-past-put-structure.js
+stress/obviously-elidable-new-object-then-exit.js
+stress/typed-array-get-by-val-profiling.js
+stress/array-push.js
+stress/array-push-contiguous.js
+stress/array-push-double.js
+stress/array-push-double-then-nan.js
+stress/eval-script-contains-null-character.js
+stress/ftl-try-catch-patchpoint-with-volatile-registers.js
+stress/object-escapes-in-loop.js
+stress/op-push-name-scope-crashes-profiler.js
+stress/poly-call-exit-this.js
+stress/redundant-array-bounds-checks-addition-skip-first.js
+stress/redundant-array-bounds-checks-unchecked-addition.js
+stress/regress-148564.js
+stress/string-rope-with-custom-valueof.js
+stress/typed-array-put-by-val-profiling.js
+stress/tier-up-in-loop-with-cfg-simplification.js
+stress/ftl-library-inlining-loops.js
+stress/ftl-try-catch-oom-error-lazy-slow-path.js
+stress/array-pop-int32.js
+stress/arrowfunction-activation-sink-osrexit.js
+stress/arrowfunction-activation-sink-osrexit-default-value.js
+stress/arrowfunction-activation-sink-osrexit-default-value-tdz-error.js
+stress/compare-eq-object-to-object-or-other.js
+stress/compare-eq-object-or-other-to-object.js
+stress/dead-fiat-double-to-int52.js
+stress/dead-fiat-int32-to-int52.js
+stress/dead-fiat-value-to-int52.js
+stress/dead-fiat-value-to-int52-then-exit-not-double.js
+stress/dead-fiat-double-to-int52-then-exit-not-int52.js
+stress/dead-osr-entry-value.js
+stress/dfg-put-by-val-direct-with-edge-numbers.js
+stress/dfg-tail-calls.js
+stress/fiat-double-to-int52.js
+stress/fiat-double-to-int52-then-exit-not-int52.js
+stress/fiat-double-to-int52-then-fail-to-fold.js
+stress/fiat-int32-to-int52.js
+stress/fiat-value-to-int52.js
+stress/fiat-value-to-int52-double-path.js
+stress/fiat-value-to-int52-then-exit-not-int52.js
+stress/fiat-value-to-int52-then-fail-to-fold.js
+stress/fiat-value-to-int52-then-fold.js
+stress/fold-multi-get-by-offset-to-get-by-offset-without-folding-the-structure-check.js
+stress/fold-multi-put-by-offset-to-put-by-offset-without-folding-the-structure-check.js
+stress/fold-typed-array-properties.js
+stress/for-in-array-mode.js
+stress/ftl-checkin.js
+stress/ftl-checkin-variable.js
+stress/function-name-scope.js
+stress/get-by-val-on-undecided-array-type.js
+stress/get-by-val-on-undecided-trivial.js
+stress/get-by-val-double-predicted-int.js
+stress/multi-put-by-offset-reallocation-butterfly-cse.js
+stress/new-double-array-with-size.js
+stress/new-undecided-array-with-size.js
+stress/poly-chain-getter.js
+stress/poly-chain-setter.js
+stress/poly-setter-then-self.js
+stress/try-catch-stub-routine-replaced.js
+stress/uint32-to-number-fold-constant-with-do-overflow.js
+stress/untyped-less-than.js
+stress/inline-call-varargs-and-call.js
+stress/multi-put-by-offset-multiple-transitions.js
+stress/poly-chain-then-getter.js
+stress/poly-chain-then-setter.js
+stress/put-by-id-build-list-order-recurse.js
+stress/put-local-conservative.js
+stress/prune-multi-put-by-offset-replace-or-transition-variant.js
+stress/redundant-array-bounds-checks-addition.js
+stress/arith-add-with-constants.js
+stress/dead-fiat-value-to-int52-then-exit-not-int52.js
+stress/fiat-double-to-int52-then-fold.js
+stress/ftl-library-inlining-random.js
+stress/new-int32-array-with-size.js
+stress/poly-getter-combo.js
+stress/poly-setter-combo.js
+stress/array-pop-contiguous.js
+stress/array-pop-double.js
+stress/dead-fiat-value-to-int52-double-path.js
+stress/poly-self-then-getter.js
+stress/repeated-put-by-id-reallocating-transition.js
+stress/rest-parameter-inlined.js
+stress/multi-put-by-offset-reallocation-cases.js
+stress/new-contiguous-array-with-size.js
+stress/sink_checkstructure.js
+stress/poly-self-getter.js
+stress/int16-put-by-val-in-and-out-of-bounds.js
+stress/ftl-library-inline-gettimezoneoffset.js
+
+# No reason to run v8-tests
+stress/v8-crypto-strict.js
+stress/v8-deltablue-strict.js
+stress/v8-earley-boyer-strict.js
+stress/v8-raytrace-strict.js
+stress/v8-regexp-strict.js
+stress/v8-richards-strict.js
+stress/v8-splay-strict.js

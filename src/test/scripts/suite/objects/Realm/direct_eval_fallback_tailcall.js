@@ -14,7 +14,7 @@ const {
 
 let realm = new class extends Reflect.Realm {
   nonEval(callee, thisArgument, ...args) {
-    "use strict";
+    // "use strict";
     return callee(...args);
   }
 };

@@ -138,22 +138,23 @@ public final class ArgumentsObject extends OrdinaryObject {
         ParameterMap map = this.parameterMap;
         /* step 3 */
         boolean isMapped = map != null && map.hasOwnProperty(propertyKey, false);
-        // FIXME: spec bug - https://bugs.ecmascript.org/show_bug.cgi?id=4371
-        // Proposed change: https://github.com/tc39/test262/pull/274#issuecomment-103415105
+        /* step 4 */
         PropertyDescriptor newArgDesc = desc;
+        /* step 5 */
         if (isMapped && desc.isDataDescriptor()) {
+            /* step 5.a */
             if (!desc.hasValue() && desc.hasWritable() && !desc.isWritable()) {
                 newArgDesc = desc.clone();
                 newArgDesc.setValue(map.get(propertyKey));
             }
         }
-        /* steps 4-5 */
-        boolean allowed = ordinaryDefineOwnProperty(cx, propertyKey, newArgDesc);
         /* step 6 */
+        boolean allowed = ordinaryDefineOwnProperty(cx, propertyKey, newArgDesc);
+        /* step 7 */
         if (!allowed) {
             return false;
         }
-        /* step 7 */
+        /* step 8 */
         if (isMapped) {
             if (desc.isAccessorDescriptor()) {
                 map.delete(propertyKey);
@@ -167,7 +168,7 @@ public final class ArgumentsObject extends OrdinaryObject {
             }
         }
         hasIndexedAccessors |= desc.isAccessorDescriptor();
-        /* step 8 */
+        /* step 9 */
         return true;
     }
 

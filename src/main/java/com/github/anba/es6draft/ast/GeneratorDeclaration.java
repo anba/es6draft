@@ -19,6 +19,7 @@ import com.github.anba.es6draft.ast.scope.Name;
  */
 public class GeneratorDeclaration extends HoistableDeclaration implements GeneratorDefinition {
     private final FunctionScope scope;
+    private final GeneratorKind kind;
     private final BindingIdentifier identifier;
     private final Name name;
     private final FormalParameterList parameters;
@@ -28,12 +29,12 @@ public class GeneratorDeclaration extends HoistableDeclaration implements Genera
     private StrictMode strictMode;
     private boolean syntheticNodes;
 
-    public GeneratorDeclaration(long beginPosition, long endPosition, FunctionScope scope,
-            BindingIdentifier identifier, FormalParameterList parameters,
-            List<StatementListItem> statements, String functionName, String headerSource,
-            String bodySource) {
+    public GeneratorDeclaration(long beginPosition, long endPosition, FunctionScope scope, GeneratorKind kind,
+            BindingIdentifier identifier, FormalParameterList parameters, List<StatementListItem> statements,
+            String functionName, String headerSource, String bodySource) {
         super(beginPosition, endPosition);
         this.scope = scope;
+        this.kind = kind;
         this.identifier = identifier;
         this.name = identifier != null ? identifier.getName() : new Name(Name.DEFAULT_EXPORT);
         this.parameters = parameters;
@@ -130,7 +131,7 @@ public class GeneratorDeclaration extends HoistableDeclaration implements Genera
 
     @Override
     public boolean isConstructor() {
-        return true;
+        return kind == GeneratorKind.Constructor;
     }
 
     @Override

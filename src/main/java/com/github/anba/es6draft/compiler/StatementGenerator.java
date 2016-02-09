@@ -21,6 +21,7 @@ import com.github.anba.es6draft.ast.*;
 import com.github.anba.es6draft.ast.scope.BlockScope;
 import com.github.anba.es6draft.ast.scope.FunctionScope;
 import com.github.anba.es6draft.ast.scope.Name;
+import com.github.anba.es6draft.ast.scope.ScriptScope;
 import com.github.anba.es6draft.ast.scope.TopLevelScope;
 import com.github.anba.es6draft.ast.synthetic.StatementListMethod;
 import com.github.anba.es6draft.compiler.Labels.BreakLabel;
@@ -232,6 +233,9 @@ final class StatementGenerator extends
         static final MethodName ScriptRuntime_toInternalError = MethodName.findStatic(
                 Types.ScriptRuntime, "toInternalError", Type.methodType(Types.ScriptException,
                         Types.StackOverflowError, Types.ExecutionContext));
+
+        static final MethodName ScriptRuntime_isLegacyBlockFunction = MethodName.findStatic(Types.ScriptRuntime,
+                "isLegacyBlockFunction", Type.methodType(Type.BOOLEAN_TYPE, Types.ExecutionContext, Type.INT_TYPE));
     }
 
     public StatementGenerator(CodeGenerator codegen) {
@@ -1128,22 +1132,52 @@ final class StatementGenerator extends
 
         /* B.3.3 Block-Level Function Declarations Web Legacy Compatibility Semantics */
         if (node.isLegacyBlockScoped()) {
-            final Name name = node.getIdentifier().getName();
+            Name name = node.getIdentifier().getName();
             TopLevelScope top = mv.getScope().getTop();
-            assert top instanceof FunctionScope;
-            Name varName = ((FunctionScope) top).variableScope().resolveName(name, false);
-            assert varName != null && name != varName;
-            /* step 1.a.ii.3.1 */
-            Value<DeclarativeEnvironmentRecord> fenv = asm -> getVariableEnvironmentRecord(
-                    Types.DeclarativeEnvironmentRecord, mv);
-            /* steps 1.a.ii.3.5-6 */
-            BindingOp.of(fenv, varName).setMutableBinding(fenv, varName, asm -> {
-                /* step 1.a.ii.3.2 */
-                Value<DeclarativeEnvironmentRecord> benv = asm2 -> getLexicalEnvironmentRecord(
+            if (mv.isFunction()) {
+                assert top instanceof FunctionScope;
+                Name varName = ((FunctionScope) top).variableScope().resolveName(name, false);
+                assert varName != null && name != varName;
+                /* step 1.a.ii.3.1 */
+                Value<DeclarativeEnvironmentRecord> fenv = getVariableEnvironmentRecord(
                         Types.DeclarativeEnvironmentRecord, mv);
-                /* steps 1.a.ii.3.3-4 */
-                BindingOp.of(benv, name).getBindingValue(benv, name, false, mv);
-            }, false, mv);
+                /* steps 1.a.ii.3.5-6 */
+                BindingOp.of(fenv, varName).setMutableBinding(fenv, varName, asm -> {
+                    /* step 1.a.ii.3.2 */
+                    Value<DeclarativeEnvironmentRecord> benv = getLexicalEnvironmentRecord(
+                            Types.DeclarativeEnvironmentRecord, mv);
+                    /* steps 1.a.ii.3.3-4 */
+                    BindingOp.of(benv, name).getBindingValue(benv, name, false, mv);
+                }, false, mv);
+            } else {
+                assert top instanceof ScriptScope;
+                Name varName = name;
+                int functionId = node.getLegacyBlockScopeId();
+
+                Jump isLegacyScoped = null;
+                if (functionId > 0) {
+                    isLegacyScoped = new Jump();
+                    mv.loadExecutionContext();
+                    mv.iconst(functionId);
+                    mv.invoke(Methods.ScriptRuntime_isLegacyBlockFunction);
+                    mv.ifeq(isLegacyScoped);
+                }
+
+                // The variable environment record is either:
+                // 1. The global environment record for global (eval) scripts.
+                // 2. Or a (function) declarative environment record for eval in functions.
+                // 3. Or a script-context environment record for eval in JSR-223 scripting.
+                Value<EnvironmentRecord> genv = getVariableEnvironmentRecord(Types.EnvironmentRecord, mv);
+                BindingOp.of(genv, varName).setMutableBinding(genv, varName, asm -> {
+                    Value<DeclarativeEnvironmentRecord> benv = getLexicalEnvironmentRecord(
+                            Types.DeclarativeEnvironmentRecord, mv);
+                    BindingOp.of(benv, name).getBindingValue(benv, name, false, mv);
+                }, false, mv);
+
+                if (isLegacyScoped != null) {
+                    mv.mark(isLegacyScoped);
+                }
+            }
         }
 
         /* step 1 */
@@ -1169,22 +1203,16 @@ final class StatementGenerator extends
     public Completion visit(IfStatement node, StatementVisitor mv) {
         Bool btest = Bool.evaluate(node.getTest());
         if (btest != Bool.Any) {
+            if (node.hasCompletionValue()) {
+                mv.storeUndefinedAsCompletionValue();
+            }
             if (btest == Bool.True) {
                 Completion resultThen = node.getThen().accept(this, mv);
-                if (node.hasCompletionValue() && resultThen == Completion.Empty) {
-                    mv.storeUndefinedAsCompletionValue();
-                }
                 return resultThen.nonEmpty();
             }
             if (node.getOtherwise() != null) {
                 Completion resultOtherwise = node.getOtherwise().accept(this, mv);
-                if (node.hasCompletionValue() && resultOtherwise == Completion.Empty) {
-                    mv.storeUndefinedAsCompletionValue();
-                }
                 return resultOtherwise.nonEmpty();
-            }
-            if (node.hasCompletionValue()) {
-                mv.storeUndefinedAsCompletionValue();
             }
             return Completion.Normal;
         }
@@ -1198,20 +1226,22 @@ final class StatementGenerator extends
 
             /* step 4 */
             mv.ifeq(l0);
-            Completion resultThen = node.getThen().accept(this, mv);
-            if (node.hasCompletionValue() && resultThen == Completion.Empty) {
+            if (node.hasCompletionValue()) {
+                // TODO: Emit only when necessary, i.e. 'then' branch does not return a completion value.
                 mv.storeUndefinedAsCompletionValue();
             }
+            Completion resultThen = node.getThen().accept(this, mv);
             if (!resultThen.isAbrupt()) {
                 mv.goTo(l1);
             }
 
             /* step 5 */
             mv.mark(l0);
-            Completion resultOtherwise = node.getOtherwise().accept(this, mv);
-            if (node.hasCompletionValue() && resultOtherwise == Completion.Empty) {
+            if (node.hasCompletionValue()) {
+                // TODO: Emit only when necessary, i.e. 'otherwise' branch does not return a completion value.
                 mv.storeUndefinedAsCompletionValue();
             }
+            Completion resultOtherwise = node.getOtherwise().accept(this, mv);
             if (!resultThen.isAbrupt()) {
                 mv.mark(l1);
             }
@@ -1224,9 +1254,12 @@ final class StatementGenerator extends
 
             /* step 5 */
             mv.ifeq(l0);
+            if (node.hasCompletionValue()) {
+                mv.storeUndefinedAsCompletionValue();
+            }
             Completion resultThen = node.getThen().accept(this, mv);
             if (node.hasCompletionValue() && mv.hasCompletion()) {
-                if (resultThen == Completion.Normal) {
+                if (!resultThen.isAbrupt()) {
                     Jump l1 = new Jump();
                     mv.goTo(l1);
                     mv.mark(l0);
@@ -1483,10 +1516,10 @@ final class StatementGenerator extends
      */
     @Override
     public Completion visit(TryStatement node, StatementVisitor mv) {
-        boolean hasCatch = node.getCatchNode() != null || !node.getGuardedCatchNodes().isEmpty();
         if (node.hasCompletionValue()) {
             mv.storeUndefinedAsCompletionValue();
         }
+        boolean hasCatch = node.getCatchNode() != null || !node.getGuardedCatchNodes().isEmpty();
         if (hasCatch && node.getFinallyBlock() != null) {
             return visitTryCatchFinally(node, mv);
         } else if (hasCatch) {
@@ -1798,6 +1831,7 @@ final class StatementGenerator extends
     public Completion visit(CatchNode node, StatementVisitor mv) {
         Binding catchParameter = node.getCatchParameter();
         BlockStatement catchBlock = node.getCatchBlock();
+        BlockScope scope = node.getScope();
 
         /* steps 1-6 */
         // stack: [e] -> []
@@ -1808,24 +1842,26 @@ final class StatementGenerator extends
             mv.store(exception);
 
             /* step 1 (not applicable) */
-            /* step 2 */
-            // stack: [] -> [catchEnv]
-            BlockScope scope = node.getScope();
-            newCatchDeclarativeEnvironment(scope, mv);
-            Variable<DeclarativeEnvironmentRecord> envRec = mv.newVariable("envRec",
-                    DeclarativeEnvironmentRecord.class);
-            getEnvRec(envRec, mv);
+            /* steps 2-4 */
+            Variable<DeclarativeEnvironmentRecord> envRec = null;
+            if (scope.isPresent()) {
+                /* step 2 */
+                // stack: [] -> [catchEnv]
+                newCatchEnvironment(node.getCatchParameter(), scope, mv);
+                envRec = mv.newVariable("envRec", DeclarativeEnvironmentRecord.class);
+                getEnvRec(envRec, mv);
 
-            /* step 3 */
-            // FIXME: spec bug (CreateMutableBinding concrete method of `catchEnv`)
-            for (Name name : BoundNames(catchParameter)) {
-                BindingOp<DeclarativeEnvironmentRecord> op = BindingOp.of(envRec, name);
-                op.createMutableBinding(envRec, name, false, mv);
+                /* step 3 */
+                // FIXME: spec bug (CreateMutableBinding concrete method of `catchEnv`)
+                for (Name name : BoundNames(catchParameter)) {
+                    BindingOp<DeclarativeEnvironmentRecord> op = BindingOp.of(envRec, name);
+                    op.createMutableBinding(envRec, name, false, mv);
+                }
+
+                /* step 4 */
+                // stack: [catchEnv] -> []
+                pushLexicalEnvironment(mv);
             }
-
-            /* step 4 */
-            // stack: [catchEnv] -> []
-            pushLexicalEnvironment(mv);
             mv.enterScope(node);
 
             /* steps 5-6 */
@@ -1839,7 +1875,7 @@ final class StatementGenerator extends
 
         /* step 8 */
         mv.exitScope();
-        if (!result.isAbrupt()) {
+        if (scope.isPresent() && !result.isAbrupt()) {
             popLexicalEnvironment(mv);
         }
 
@@ -1854,6 +1890,7 @@ final class StatementGenerator extends
     public Completion visit(GuardedCatchNode node, StatementVisitor mv) {
         Binding catchParameter = node.getCatchParameter();
         BlockStatement catchBlock = node.getCatchBlock();
+        BlockScope scope = node.getScope();
         Jump l0 = new Jump();
 
         /* steps 1-6 */
@@ -1865,24 +1902,26 @@ final class StatementGenerator extends
             mv.store(exception);
 
             /* step 1 (not applicable) */
-            /* step 2 */
-            // stack: [] -> [catchEnv]
-            BlockScope scope = node.getScope();
-            newCatchDeclarativeEnvironment(scope, mv);
-            Variable<DeclarativeEnvironmentRecord> envRec = mv.newVariable("envRec",
-                    DeclarativeEnvironmentRecord.class);
-            getEnvRec(envRec, mv);
+            /* steps 2-4 */
+            Variable<DeclarativeEnvironmentRecord> envRec = null;
+            if (scope.isPresent()) {
+                /* step 2 */
+                // stack: [] -> [catchEnv]
+                newCatchEnvironment(node.getCatchParameter(), scope, mv);
+                envRec = mv.newVariable("envRec", DeclarativeEnvironmentRecord.class);
+                getEnvRec(envRec, mv);
 
-            /* step 3 */
-            // FIXME: spec bug (CreateMutableBinding concrete method of `catchEnv`)
-            for (Name name : BoundNames(catchParameter)) {
-                BindingOp<DeclarativeEnvironmentRecord> op = BindingOp.of(envRec, name);
-                op.createMutableBinding(envRec, name, false, mv);
+                /* step 3 */
+                // FIXME: spec bug (CreateMutableBinding concrete method of `catchEnv`)
+                for (Name name : BoundNames(catchParameter)) {
+                    BindingOp<DeclarativeEnvironmentRecord> op = BindingOp.of(envRec, name);
+                    op.createMutableBinding(envRec, name, false, mv);
+                }
+
+                /* step 4 */
+                // stack: [catchEnv] -> []
+                pushLexicalEnvironment(mv);
             }
-
-            /* step 4 */
-            // stack: [catchEnv] -> []
-            pushLexicalEnvironment(mv);
             mv.enterScope(node);
 
             /* steps 5-6 */
@@ -1898,7 +1937,9 @@ final class StatementGenerator extends
         {
             result = catchBlock.accept(this, mv);
             if (!result.isAbrupt()) {
-                popLexicalEnvironment(mv);
+                if (scope.isPresent()) {
+                    popLexicalEnvironment(mv);
+                }
                 mv.goTo(mv.catchWithGuardedLabel());
             }
         }
@@ -1906,10 +1947,26 @@ final class StatementGenerator extends
 
         /* step 8 */
         mv.exitScope();
-        popLexicalEnvironment(mv);
+        if (scope.isPresent()) {
+            popLexicalEnvironment(mv);
+        }
 
         /* step 9 */
         return result;
+    }
+
+    private void newCatchEnvironment(Binding catchParameter, BlockScope scope, StatementVisitor mv) {
+        if (codegen.isEnabled(CompatibilityOption.CatchVarPattern)) {
+            if (catchParameter instanceof BindingPattern) {
+                newDeclarativeEnvironment(scope, mv);
+                return;
+            }
+        }
+        if (codegen.isEnabled(CompatibilityOption.CatchVarStatement)) {
+            newCatchDeclarativeEnvironment(scope, mv);
+            return;
+        }
+        newDeclarativeEnvironment(scope, mv);
     }
 
     /**
@@ -2053,15 +2110,15 @@ final class StatementGenerator extends
 
         /* step 8 */
         mv.enterScope(node);
+        if (node.hasCompletionValue()) {
+            mv.storeUndefinedAsCompletionValue();
+        }
         Completion result = node.getStatement().accept(this, mv);
         mv.exitScope();
 
         /* step 9 */
         if (!result.isAbrupt()) {
             popLexicalEnvironment(mv);
-            if (node.hasCompletionValue() && result == Completion.Empty) {
-                mv.storeUndefinedAsCompletionValue();
-            }
         }
 
         /* steps 10-11 */

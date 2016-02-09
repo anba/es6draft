@@ -33,7 +33,6 @@ import com.github.anba.es6draft.parser.Parser;
 import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.repl.global.ShellGlobalObject;
 import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.NativeCode;
 import com.github.anba.es6draft.util.Parallelized;
 import com.github.anba.es6draft.util.ParameterizedRunnerFactory;
@@ -61,15 +60,6 @@ public final class NativesV8Test {
     @ClassRule
     public static TestGlobals<V8NativeTestGlobalObject, TestInfo> globals = new TestGlobals<V8NativeTestGlobalObject, TestInfo>(
             configuration, V8NativeTestGlobalObject::new) {
-        @Override
-        protected EnumSet<CompatibilityOption> getOptions() {
-            EnumSet<CompatibilityOption> options = super.getOptions();
-            options.add(CompatibilityOption.Comprehension);
-            options.add(CompatibilityOption.Realm);
-            options.add(CompatibilityOption.System);
-            return options;
-        }
-
         @Override
         protected EnumSet<Parser.Option> getParserOptions() {
             return EnumSet.of(Parser.Option.NativeCall);
@@ -125,7 +115,6 @@ public final class NativesV8Test {
             NativeCode.load(getRealm(), "internal-error.js");
             NativeCode.load(getRealm(), "proxy.js");
             NativeCode.load(getRealm(), "stacktrace.js");
-            NativeCode.load(getRealm(), "typed-array.js");
         }
     }
 }

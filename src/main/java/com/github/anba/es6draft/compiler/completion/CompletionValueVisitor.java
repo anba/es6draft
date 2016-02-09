@@ -128,21 +128,20 @@ public final class CompletionValueVisitor extends DefaultNodeVisitor<Completion,
             computeValue = true;
         }
 
-        private State(State state) {
-            context = state.context;
-            computeValue = state.computeValue;
-        }
-
         void valueStatement() {
             computeValue = false;
         }
 
-        State newState() {
-            return new State(this);
+        void enter(Statement node) {
+            node.setCompletionValue(computeValue);
         }
 
-        void merge(State left, State right) {
-            computeValue = left.computeValue || right.computeValue;
+        void exit(Statement node) {
+            node.setCompletionValue(computeValue);
+        }
+
+        void exit(Statement node, boolean computeValue) {
+            node.setCompletionValue(computeValue);
         }
     }
 
@@ -177,8 +176,7 @@ public final class CompletionValueVisitor extends DefaultNodeVisitor<Completion,
         throw new IllegalStateException();
     }
 
-    public <STATEMENT extends ModuleItem> Completion statements(List<STATEMENT> statements,
-            State state) {
+    public <STATEMENT extends ModuleItem> Completion statements(List<STATEMENT> statements, State state) {
         Completion result = Completion.Empty;
         for (STATEMENT statement : reverse(statements)) {
             result = statement.accept(this, state).then(result);
@@ -198,45 +196,43 @@ public final class CompletionValueVisitor extends DefaultNodeVisitor<Completion,
 
     @Override
     public Completion visit(BlockStatement node, State state) {
-        node.setCompletionValue(state.computeValue);
-        return statements(node.getStatements(), state);
+        state.enter(node);
+        Completion result = statements(node.getStatements(), state);
+        state.exit(node);
+        return result;
     }
 
     @Override
     public Completion visit(ExpressionStatement node, State state) {
-        node.setCompletionValue(state.computeValue);
+        state.enter(node);
+        state.exit(node);
         state.valueStatement();
         return Completion.Value;
     }
 
     @Override
     public Completion visit(IfStatement node, State state) {
-        node.setCompletionValue(state.computeValue);
-        if (node.getOtherwise() == null) {
-            Completion thenResult = node.getThen().accept(this, state);
-            if (thenResult == Completion.Empty) {
-                state.valueStatement();
-            }
-            return Completion.Value;
+        final boolean computeValue = state.computeValue;
+        boolean innerComputeValue = false;
+
+        state.enter(node);
+        node.getThen().accept(this, state);
+        innerComputeValue |= state.computeValue;
+        if (node.getOtherwise() != null) {
+            state.computeValue = computeValue;
+            node.getOtherwise().accept(this, state);
+            innerComputeValue |= state.computeValue;
         }
-        State thenState = state.newState();
-        Completion thenResult = node.getThen().accept(this, thenState);
-        if (thenResult == Completion.Empty) {
-            thenState.valueStatement();
-        }
-        State otherwiseState = state.newState();
-        Completion otherwiseResult = node.getOtherwise().accept(this, otherwiseState);
-        if (otherwiseResult == Completion.Empty) {
-            otherwiseState.valueStatement();
-        }
-        state.merge(thenState, otherwiseState);
+        state.exit(node, innerComputeValue);
+        state.valueStatement();
         return Completion.Value;
     }
 
     @Override
     public Completion visit(BreakStatement node, State state) {
-        node.setCompletionValue(state.computeValue);
+        state.enter(node);
         Statement target = state.context.breakTarget(node);
+        state.exit(node);
         if (target.hasCompletionValue()) {
             state.computeValue = true;
         }
@@ -245,8 +241,9 @@ public final class CompletionValueVisitor extends DefaultNodeVisitor<Completion,
 
     @Override
     public Completion visit(ContinueStatement node, State state) {
-        node.setCompletionValue(state.computeValue);
+        state.enter(node);
         IterationStatement target = state.context.continueTarget(node);
+        state.exit(node);
         if (target.hasCompletionValue()) {
             state.computeValue = true;
         }
@@ -255,61 +252,32 @@ public final class CompletionValueVisitor extends DefaultNodeVisitor<Completion,
 
     @Override
     public Completion visit(LabelledStatement node, State state) {
-        node.setCompletionValue(state.computeValue);
+        state.enter(node);
         state.context.enterLabelled(node);
         Completion result = node.getStatement().accept(this, state);
         state.context.exitLabelled(node);
+        state.exit(node);
         return result;
     }
 
     @Override
-    public Completion visit(DoWhileStatement node, State state) {
-        return visitIteration(node, node.getStatement(), state);
-    }
-
-    @Override
-    public Completion visit(ForOfStatement node, State state) {
-        return visitIteration(node, node.getStatement(), state);
-    }
-
-    @Override
-    public Completion visit(ForEachStatement node, State state) {
-        return visitIteration(node, node.getStatement(), state);
-    }
-
-    @Override
-    public Completion visit(ForInStatement node, State state) {
-        return visitIteration(node, node.getStatement(), state);
-    }
-
-    @Override
-    public Completion visit(ForStatement node, State state) {
-        return visitIteration(node, node.getStatement(), state);
-    }
-
-    @Override
-    public Completion visit(WhileStatement node, State state) {
-        return visitIteration(node, node.getStatement(), state);
-    }
-
-    private Completion visitIteration(IterationStatement iteration, Statement inner, State state) {
-        iteration.setCompletionValue(state.computeValue);
-        state.context.enterIteration(iteration);
-        inner.accept(this, state);
-        state.context.exitIteration(iteration);
+    protected Completion visit(IterationStatement node, State state) {
+        state.enter(node);
+        state.context.enterIteration(node);
+        node.getStatement().accept(this, state);
+        state.context.exitIteration(node);
+        state.exit(node);
         state.valueStatement();
         return Completion.Value;
     }
 
     @Override
     public Completion visit(WithStatement node, State state) {
-        node.setCompletionValue(state.computeValue);
-        Completion result = node.getStatement().accept(this, state);
-        if (result == Completion.Empty) {
-            state.valueStatement();
-            result = Completion.Value;
-        }
-        return result;
+        state.enter(node);
+        node.getStatement().accept(this, state);
+        state.exit(node);
+        state.valueStatement();
+        return Completion.Value;
     }
 
     @Override
@@ -321,20 +289,28 @@ public final class CompletionValueVisitor extends DefaultNodeVisitor<Completion,
     @Override
     public Completion visit(TryStatement node, State state) {
         final boolean computeValue = state.computeValue;
-        node.setCompletionValue(computeValue);
+        boolean innerComputeValue = false;
+
+        state.enter(node);
         node.getTryBlock().accept(this, state);
+        innerComputeValue |= state.computeValue;
         if (node.getCatchNode() != null) {
             state.computeValue = computeValue;
             node.getCatchNode().getCatchBlock().accept(this, state);
+            innerComputeValue |= state.computeValue;
         }
         for (GuardedCatchNode guardedCatchNode : node.getGuardedCatchNodes()) {
             state.computeValue = computeValue;
             guardedCatchNode.getCatchBlock().accept(this, state);
+            innerComputeValue |= state.computeValue;
         }
         if (node.getFinallyBlock() != null) {
             state.computeValue = computeValue;
             node.getFinallyBlock().accept(this, state);
+            innerComputeValue |= state.computeValue;
         }
+        // Always request completion value when 'computeValue' is true and the finally block is present.
+        state.exit(node, innerComputeValue || (computeValue && node.getFinallyBlock() != null));
         state.valueStatement();
         return Completion.Value;
     }
@@ -342,13 +318,18 @@ public final class CompletionValueVisitor extends DefaultNodeVisitor<Completion,
     @Override
     public Completion visit(SwitchStatement node, State state) {
         final boolean computeValue = state.computeValue;
-        node.setCompletionValue(computeValue);
+        boolean innerComputeValue = false;
+
+        state.enter(node);
         state.context.enterBreakable(node);
         for (SwitchClause clause : node.getClauses()) {
             state.computeValue = computeValue;
             statements(clause.getStatements(), state);
+            innerComputeValue |= state.computeValue;
         }
         state.context.exitBreakable(node);
+        // Always request completion value when 'computeValue' is true and no catch clauses are present.
+        state.exit(node, innerComputeValue || (computeValue && node.getClauses().isEmpty()));
         state.valueStatement();
         return Completion.Value;
     }

@@ -25,10 +25,6 @@ tests/arguments/defaults-call-function.js
 # ES6: SpiderMonkey bug (https://bugzilla.mozilla.org/show_bug.cgi?id=1041341)
 tests/basic/destructuring-rest.js
 
-# ES6: IteratorPrototype object
-# https://bugzilla.mozilla.org/show_bug.cgi?id=1091945
-tests/for-of/string-iterator-surfaces.js
-
 # ES6: eval in default parameter initializer
 # https://bugzilla.mozilla.org/show_bug.cgi?id=1022967
 tests/arguments/alias-function-not-closed.js
@@ -161,17 +157,6 @@ tests/auto-regress/bug578015.js
 tests/proxy/testIndirectProxyGetOwnPropertyDescriptor.js
 
 
-###############################################################
-# ES6 (rev14) <Object>.prototype no longer instance of <Type> #
-###############################################################
-
-# Number.prototype no longer Number instance
-tests/auto-regress/bug698074.js
-
-# String.prototype no longer String instance
-tests/basic/bug699166.js
-
-
 #######################################
 # ES6 related runtime changes         #
 #######################################
@@ -185,9 +170,6 @@ tests/auto-regress/bug678090.js
 # ToLength() moved array length restriction to 2^53-1
 tests/for-of/array-iterator-generic.js
 tests/basic/bug1200108.js
-
-# String.prototype.split changed to use ToLength instead of ToUint32
-tests/basic/bug943126.js
 
 # contextual .name property for functions
 tests/self-test/assertDeepEq.js
@@ -219,13 +201,6 @@ tests/arguments/alias-function-closed.js
 # ES6: duplicate formal-parameter + variable declaration (non-simple parameter lists)
 tests/arguments/defaults-bound-to-function.js
 tests/arguments/defaults-with-rest.js
-
-# Declaration directly nested in Statement
-tests/auto-regress/bug771027.js
-tests/basic/bug667504-syntax.js
-
-# Annex B extension B.3.3 is not applied for Script
-tests/basic/testDynamicLookup.js
 
 # CallExpression no longer valid LHS
 tests/auto-regress/bug701248.js

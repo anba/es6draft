@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.github.anba.es6draft.ast.Declaration;
+import com.github.anba.es6draft.ast.FunctionDeclaration;
 import com.github.anba.es6draft.ast.HoistableDeclaration;
 import com.github.anba.es6draft.ast.Script;
 import com.github.anba.es6draft.ast.StatementListItem;
@@ -23,6 +24,7 @@ import com.github.anba.es6draft.ast.VariableStatement;
 import com.github.anba.es6draft.ast.scope.Name;
 import com.github.anba.es6draft.compiler.CodeGenerator.ScriptName;
 import com.github.anba.es6draft.compiler.assembler.Code.MethodCode;
+import com.github.anba.es6draft.compiler.assembler.Jump;
 import com.github.anba.es6draft.compiler.assembler.Variable;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.GlobalEnvironmentRecord;
@@ -62,7 +64,8 @@ final class GlobalDeclarationInstantiationGenerator extends
 
         mv.lineInfo(script);
         mv.begin();
-        if (VarDeclaredNames(script).isEmpty() && LexicallyDeclaredNames(script).isEmpty()) {
+        if (VarDeclaredNames(script).isEmpty() && LexicallyDeclaredNames(script).isEmpty()
+                && !hasBlockFunctions(script)) {
             mv._return();
         } else {
             generate(script, mv);
@@ -151,6 +154,28 @@ final class GlobalDeclarationInstantiationGenerator extends
             }
         }
         /* step 13 (note) */
+        // ES2016: Block-scoped global function declarations
+        if (hasBlockFunctions(script)) {
+            int idCounter = 0;
+            HashSet<Name> declaredFunctionOrVarNames = new HashSet<>();
+            declaredFunctionOrVarNames.addAll(declaredFunctionNames);
+            declaredFunctionOrVarNames.addAll(declaredVarNames.keySet());
+            for (FunctionDeclaration f : script.getScope().blockFunctions()) {
+                Name fn = BoundName(f);
+                Jump next = new Jump();
+
+                // Runtime check always required for global block-level function declarations.
+                f.setLegacyBlockScopeId(++idCounter);
+                // FIXME: spec issue - avoid (observable!) duplicate checks for same name?
+                // FIXME: spec issue - property creation order important?
+                canDeclareGlobalFunction(envRec, f, fn, next, mv);
+                setLegacyBlockFunction(context, f, mv);
+                if (declaredFunctionOrVarNames.add(fn)) {
+                    createGlobalFunctionBinding(envRec, f, fn, false, mv);
+                }
+                mv.mark(next);
+            }
+        }
         /* step 14 */
         List<Declaration> lexDeclarations = LexicallyScopedDeclarations(script);
         /* step 15 */
@@ -179,5 +204,9 @@ final class GlobalDeclarationInstantiationGenerator extends
         }
         /* step 18 */
         mv._return();
+    }
+
+    private static boolean hasBlockFunctions(Script script) {
+        return !script.getScope().blockFunctions().isEmpty();
     }
 }

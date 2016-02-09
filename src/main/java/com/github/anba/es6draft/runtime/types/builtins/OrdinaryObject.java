@@ -26,7 +26,6 @@ import com.github.anba.es6draft.runtime.internal.ScriptException;
 import com.github.anba.es6draft.runtime.internal.ScriptIterator;
 import com.github.anba.es6draft.runtime.objects.simd.SIMDValue;
 import com.github.anba.es6draft.runtime.types.Callable;
-import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Property;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
@@ -2109,7 +2108,7 @@ public class OrdinaryObject implements ScriptObject {
      *            the default prototype
      * @return the new object
      */
-    public static final OrdinaryObject OrdinaryCreateFromConstructor(ExecutionContext cx, Constructor constructor,
+    public static final OrdinaryObject OrdinaryCreateFromConstructor(ExecutionContext cx, Callable constructor,
             Intrinsics intrinsicDefaultProto) {
         /* step 1 (not applicable) */
         /* steps 2-3 */
@@ -2134,7 +2133,7 @@ public class OrdinaryObject implements ScriptObject {
      * @return the new object
      */
     public static final <OBJECT extends OrdinaryObject> OBJECT OrdinaryCreateFromConstructor(ExecutionContext cx,
-            Constructor constructor, Intrinsics intrinsicDefaultProto, ObjectAllocator<OBJECT> allocator) {
+            Callable constructor, Intrinsics intrinsicDefaultProto, ObjectAllocator<OBJECT> allocator) {
         /* step 1 (not applicable) */
         /* steps 2-3 */
         ScriptObject proto = GetPrototypeFromConstructor(cx, constructor, intrinsicDefaultProto);
@@ -2153,7 +2152,7 @@ public class OrdinaryObject implements ScriptObject {
      *            the default prototype
      * @return the prototype object
      */
-    public static final ScriptObject GetPrototypeFromConstructor(ExecutionContext cx, Constructor constructor,
+    public static final ScriptObject GetPrototypeFromConstructor(ExecutionContext cx, Callable constructor,
             Intrinsics intrinsicDefaultProto) {
         /* steps 1-2 (not applicable) */
         /* steps 3-4 */
