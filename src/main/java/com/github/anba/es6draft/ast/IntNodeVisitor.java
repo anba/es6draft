@@ -124,6 +124,8 @@ public interface IntNodeVisitor<V> {
 
     int visit(FunctionExpression node, V value);
 
+    int visit(FunctionSent node, V value);
+
     int visit(GeneratorComprehension node, V value);
 
     int visit(GeneratorDeclaration node, V value);

@@ -8,19 +8,19 @@ package com.github.anba.es6draft.compiler;
 
 import static com.github.anba.es6draft.compiler.DefaultCodeGenerator.SetFunctionName;
 import static com.github.anba.es6draft.compiler.DefaultCodeGenerator.ToPropertyKey;
-import static com.github.anba.es6draft.semantics.StaticSemantics.AssignmentPropertyNames;
 import static com.github.anba.es6draft.semantics.StaticSemantics.IsAnonymousFunctionDefinition;
 import static com.github.anba.es6draft.semantics.StaticSemantics.IsIdentifierRef;
 import static com.github.anba.es6draft.semantics.StaticSemantics.PropName;
 
+import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import com.github.anba.es6draft.ast.*;
 import com.github.anba.es6draft.ast.scope.Name;
 import com.github.anba.es6draft.compiler.DefaultCodeGenerator.ValType;
 import com.github.anba.es6draft.compiler.Labels.TempLabel;
 import com.github.anba.es6draft.compiler.StatementGenerator.Completion;
+import com.github.anba.es6draft.compiler.assembler.FieldName;
 import com.github.anba.es6draft.compiler.assembler.Jump;
 import com.github.anba.es6draft.compiler.assembler.MethodName;
 import com.github.anba.es6draft.compiler.assembler.Type;
@@ -35,14 +35,16 @@ import com.github.anba.es6draft.runtime.internal.ScriptIterator;
  * </ul>
  */
 final class DestructuringAssignmentGenerator {
+    private static final class Fields {
+        static final FieldName Collections_EMPTY_SET = FieldName.findStatic(Types.Collections, "EMPTY_SET", Types.Set);
+    }
+
     private static final class Methods {
         // class: AbstractOperations
-        static final MethodName AbstractOperations_GetV = MethodName.findStatic(
-                Types.AbstractOperations, "GetV",
+        static final MethodName AbstractOperations_GetV = MethodName.findStatic(Types.AbstractOperations, "GetV",
                 Type.methodType(Types.Object, Types.ExecutionContext, Types.Object, Types.Object));
 
-        static final MethodName AbstractOperations_GetV_String = MethodName.findStatic(
-                Types.AbstractOperations, "GetV",
+        static final MethodName AbstractOperations_GetV_String = MethodName.findStatic(Types.AbstractOperations, "GetV",
                 Type.methodType(Types.Object, Types.ExecutionContext, Types.Object, Types.String));
 
         static final MethodName AbstractOperations_RequireObjectCoercible = MethodName.findStatic(
@@ -50,25 +52,28 @@ final class DestructuringAssignmentGenerator {
                 Type.methodType(Types.Object, Types.ExecutionContext, Types.Object));
 
         // class: ScriptRuntime
-        static final MethodName ScriptRuntime_createRestArray = MethodName.findStatic(
-                Types.ScriptRuntime, "createRestArray",
-                Type.methodType(Types.ArrayObject, Types.Iterator, Types.ExecutionContext));
+        static final MethodName ScriptRuntime_createRestArray = MethodName.findStatic(Types.ScriptRuntime,
+                "createRestArray", Type.methodType(Types.ArrayObject, Types.Iterator, Types.ExecutionContext));
 
-        static final MethodName ScriptRuntime_createRestObject = MethodName.findStatic(
-                Types.ScriptRuntime, "createRestObject", Type.methodType(Types.OrdinaryObject,
-                        Types.Object, Types.String_, Types.ExecutionContext));
+        static final MethodName ScriptRuntime_createRestObject = MethodName.findStatic(Types.ScriptRuntime,
+                "createRestObject",
+                Type.methodType(Types.OrdinaryObject, Types.Object, Types.Set, Types.ExecutionContext));
 
-        static final MethodName ScriptRuntime_iterate = MethodName.findStatic(Types.ScriptRuntime,
-                "iterate",
+        static final MethodName ScriptRuntime_iterate = MethodName.findStatic(Types.ScriptRuntime, "iterate",
                 Type.methodType(Types.ScriptIterator, Types.Object, Types.ExecutionContext));
 
-        static final MethodName ScriptRuntime_iteratorNextAndIgnore = MethodName.findStatic(
-                Types.ScriptRuntime, "iteratorNextAndIgnore",
-                Type.methodType(Type.VOID_TYPE, Types.Iterator));
+        static final MethodName ScriptRuntime_iteratorNextAndIgnore = MethodName.findStatic(Types.ScriptRuntime,
+                "iteratorNextAndIgnore", Type.methodType(Type.VOID_TYPE, Types.Iterator));
 
-        static final MethodName ScriptRuntime_iteratorNextOrUndefined = MethodName.findStatic(
-                Types.ScriptRuntime, "iteratorNextOrUndefined",
-                Type.methodType(Types.Object, Types.Iterator));
+        static final MethodName ScriptRuntime_iteratorNextOrUndefined = MethodName.findStatic(Types.ScriptRuntime,
+                "iteratorNextOrUndefined", Type.methodType(Types.Object, Types.Iterator));
+
+        // class: HashSet
+        static final MethodName HashSet_init = MethodName.findConstructor(Types.HashSet,
+                Type.methodType(Type.VOID_TYPE));
+
+        static final MethodName HashSet_add = MethodName.findVirtual(Types.HashSet, "add",
+                Type.methodType(Type.BOOLEAN_TYPE, Types.Object));
     }
 
     private DestructuringAssignmentGenerator() {
@@ -108,14 +113,14 @@ final class DestructuringAssignmentGenerator {
             node.accept(new IteratorDestructuringAssignmentEvaluation(codegen, mv), iterator);
         }
 
-        protected final void KeyedDestructuringAssignmentEvaluation(AssignmentProperty node,
-                String key, Variable<Object> value) {
-            node.accept(new LiteralKeyedDestructuringAssignmentEvaluation(codegen, mv, value), key);
+        protected final void KeyedDestructuringAssignmentEvaluation(AssignmentProperty node, String key,
+                Variable<Object> value, Variable<HashSet<?>> propertyNames) {
+            node.accept(new LiteralKeyedDestructuringAssignmentEvaluation(codegen, mv, value, propertyNames), key);
         }
 
-        protected final void KeyedDestructuringAssignmentEvaluation(AssignmentProperty node,
-                ComputedPropertyName key, Variable<Object> value) {
-            node.accept(new ComputedKeyedDestructuringAssignmentEvaluation(codegen, mv, value), key);
+        protected final void KeyedDestructuringAssignmentEvaluation(AssignmentProperty node, ComputedPropertyName key,
+                Variable<Object> value, Variable<HashSet<?>> propertyNames) {
+            node.accept(new ComputedKeyedDestructuringAssignmentEvaluation(codegen, mv, value, propertyNames), key);
         }
 
         protected final ValType expression(Expression node, ExpressionVisitor mv) {
@@ -203,56 +208,77 @@ final class DestructuringAssignmentGenerator {
             Variable<Object> val = mv.newVariable("value", Object.class);
             mv.store(val);
 
+            Variable<HashSet<?>> propertyNames = null;
+            if (!node.getProperties().isEmpty() && node.getRest() != null) {
+                propertyNames = mv.newVariable("propertyNames", HashSet.class).uncheckedCast();
+                mv.anew(Types.HashSet, Methods.HashSet_init);
+                mv.store(propertyNames);
+            }
+
             // ObjectAssignmentPattern : { AssignmentPropertyList }
             for (AssignmentProperty property : node.getProperties()) {
                 if (property.getPropertyName() == null) {
                     // AssignmentProperty : IdentifierReference Initializer{opt}
                     assert property.getTarget() instanceof IdentifierReference;
                     String name = ((IdentifierReference) property.getTarget()).getName();
-                    KeyedDestructuringAssignmentEvaluation(property, name, val);
+                    KeyedDestructuringAssignmentEvaluation(property, name, val, propertyNames);
                 } else {
                     // AssignmentProperty : PropertyName : AssignmentElement
                     String name = PropName(property.getPropertyName());
                     if (name != null) {
-                        KeyedDestructuringAssignmentEvaluation(property, name, val);
+                        KeyedDestructuringAssignmentEvaluation(property, name, val, propertyNames);
                     } else {
                         PropertyName propertyName = property.getPropertyName();
                         assert propertyName instanceof ComputedPropertyName;
-                        KeyedDestructuringAssignmentEvaluation(property,
-                                (ComputedPropertyName) propertyName, val);
+                        KeyedDestructuringAssignmentEvaluation(property, (ComputedPropertyName) propertyName, val,
+                                propertyNames);
                     }
                 }
             }
 
-            // ObjectAssignmentPattern : { ... IdentifierReference }
-            // ObjectAssignmentPattern: { AssignmentPropertyList , ... IdentifierReference }
+            // ObjectAssignmentPattern : { ... DestructuringAssignmentTarget }
+            // ObjectAssignmentPattern: { AssignmentPropertyList , ... DestructuringAssignmentTarget }
             AssignmentRestProperty rest = node.getRest();
             if (rest != null) {
-                IdentifierReference target = rest.getTarget();
-                ReferenceOp<IdentifierReference> op = ReferenceOp.of(target);
+                LeftHandSideExpression target = rest.getTarget();
+                ReferenceOp<LeftHandSideExpression> op = null;
 
-                // stack: [] -> [lref]
-                ValType refType = op.reference(target, mv, codegen);
+                /* steps 1, 1-2 (not applicable) */
+                /* step 2, 3 */
+                ValType refType = null;
+                if (!(target instanceof AssignmentPattern)) {
+                    // stack: [] -> [lref]
+                    op = ReferenceOp.of(target);
+                    refType = op.reference(target, mv, codegen);
+                }
 
-                // stack: [] -> [lref, restObj]
+                /* steps 3-5, 4-6 */
+                // stack: [lref?] -> [lref?, restObj]
                 mv.load(val);
-                newStringArray(mv, AssignmentPropertyNames(node));
+                if (propertyNames != null) {
+                    mv.load(propertyNames);
+                } else {
+                    mv.get(Fields.Collections_EMPTY_SET);
+                }
                 mv.loadExecutionContext();
                 mv.lineInfo(rest);
                 mv.invoke(Methods.ScriptRuntime_createRestObject);
 
-                // stack: [lref, restObj] -> []
-                op.putValue(target, refType, ValType.Object, mv);
-            }
+                // Exit the variable scope early to avoid restoring the value/propertyNames slots after a yield.
+                mv.exitVariableScope();
 
-            mv.exitVariableScope();
-        }
-
-        private static void newStringArray(InstructionVisitor mv, Set<String> strings) {
-            mv.anewarray(strings.size(), Types.String);
-            int index = 0;
-            for (String string : strings) {
-                mv.astore(index++, string);
+                /* steps 6-8, 7-9 */
+                if (!(target instanceof AssignmentPattern)) {
+                    /* step 6, 7 */
+                    // stack: [lref, restObj] -> []
+                    op.putValue(target, refType, ValType.Object, mv);
+                } else {
+                    /* steps 7-8, 8-9 */
+                    // stack: [restObj] -> []
+                    DestructuringAssignmentEvaluation((AssignmentPattern) target);
+                }
+            } else {
+                mv.exitVariableScope();
             }
         }
     }
@@ -360,8 +386,7 @@ final class DestructuringAssignmentGenerator {
             RuntimeSemantics<PROPERTYNAME> {
         private final Variable<Object> value;
 
-        KeyedDestructuringAssignmentEvaluation(CodeGenerator codegen, ExpressionVisitor mv,
-                Variable<Object> value) {
+        KeyedDestructuringAssignmentEvaluation(CodeGenerator codegen, ExpressionVisitor mv, Variable<Object> value) {
             super(codegen, mv);
             this.value = value;
         }
@@ -473,13 +498,22 @@ final class DestructuringAssignmentGenerator {
      */
     private static final class LiteralKeyedDestructuringAssignmentEvaluation extends
             KeyedDestructuringAssignmentEvaluation<String> {
+        private final Variable<HashSet<?>> propertyNames;
+
         LiteralKeyedDestructuringAssignmentEvaluation(CodeGenerator codegen, ExpressionVisitor mv,
-                Variable<Object> value) {
+                Variable<Object> value, Variable<HashSet<?>> propertyNames) {
             super(codegen, mv, value);
+            this.propertyNames = propertyNames;
         }
 
         @Override
         ValType evaluatePropertyName(String propertyName) {
+            if (propertyNames != null) {
+                mv.load(propertyNames);
+                mv.aconst(propertyName);
+                mv.invoke(Methods.HashSet_add);
+                mv.pop();
+            }
             mv.aconst(propertyName);
             return ValType.String;
         }
@@ -495,17 +529,29 @@ final class DestructuringAssignmentGenerator {
      */
     private static final class ComputedKeyedDestructuringAssignmentEvaluation extends
             KeyedDestructuringAssignmentEvaluation<ComputedPropertyName> {
+        private final Variable<HashSet<?>> propertyNames;
+
         ComputedKeyedDestructuringAssignmentEvaluation(CodeGenerator codegen, ExpressionVisitor mv,
-                Variable<Object> value) {
+                Variable<Object> value, Variable<HashSet<?>> propertyNames) {
             super(codegen, mv, value);
+            this.propertyNames = propertyNames;
         }
 
         @Override
         ValType evaluatePropertyName(ComputedPropertyName propertyName) {
+            if (propertyNames != null) {
+                mv.load(propertyNames);
+            }
             // Runtime Semantics: Evaluation
             // ComputedPropertyName : [ AssignmentExpression ]
             ValType propType = expression(propertyName.getExpression(), mv);
-            return ToPropertyKey(propType, mv);
+            ValType keyType = ToPropertyKey(propType, mv);
+            if (propertyNames != null) {
+                mv.dupX1();
+                mv.invoke(Methods.HashSet_add);
+                mv.pop();
+            }
+            return keyType;
         }
 
         @Override

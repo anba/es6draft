@@ -47,6 +47,9 @@ public final class GeneratorObject extends OrdinaryObject {
     /** [[GeneratorContext]] */
     private ExecutionContext context;
 
+    /** [[LastYieldValue]] */
+    private Object lastYieldValue;
+
     // internal generator implementation
     private Continuation<ScriptObject> continuation;
 
@@ -70,6 +73,15 @@ public final class GeneratorObject extends OrdinaryObject {
     }
 
     /**
+     * [[LastYieldValue]]
+     *
+     * @return the last yield value
+     */
+    public Object getLastYieldValue() {
+        return lastYieldValue;
+    }
+
+    /**
      * Returns {@code true} for legacy generator objects.
      * 
      * @return {@code true} if legacy generator object
@@ -84,6 +96,7 @@ public final class GeneratorObject extends OrdinaryObject {
     private void suspend() {
         assert state == GeneratorState.Executing : "suspend from: " + state;
         this.state = GeneratorState.SuspendedYield;
+        this.lastYieldValue = UNDEFINED;
     }
 
     /**
@@ -93,6 +106,7 @@ public final class GeneratorObject extends OrdinaryObject {
         assert state == GeneratorState.Executing || state == GeneratorState.SuspendedStart : "close from: "
                 + state;
         this.state = GeneratorState.Completed;
+        this.lastYieldValue = null;
         this.context = null;
         this.code = null;
         this.continuation = null;
@@ -114,6 +128,7 @@ public final class GeneratorObject extends OrdinaryObject {
         this.context = cx;
         this.code = code;
         this.state = GeneratorState.SuspendedStart;
+        this.lastYieldValue = UNDEFINED;
         this.context.setCurrentGenerator(this);
         GeneratorHandler handler = new GeneratorHandler(this);
         if (code.is(RuntimeInfo.FunctionFlags.ResumeGenerator)) {
@@ -141,10 +156,12 @@ public final class GeneratorObject extends OrdinaryObject {
             return CreateIterResultObject(cx, UNDEFINED, true);
         case SuspendedStart:
             this.state = GeneratorState.Executing;
+            this.lastYieldValue = value;
             return continuation.start(cx);
         case SuspendedYield:
         default:
             this.state = GeneratorState.Executing;
+            this.lastYieldValue = value;
             return continuation.resume(cx, value);
         }
     }

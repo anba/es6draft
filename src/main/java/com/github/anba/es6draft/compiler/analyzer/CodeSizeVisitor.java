@@ -484,6 +484,11 @@ final class CodeSizeVisitor implements IntNodeVisitor<CodeSizeHandler> {
     }
 
     @Override
+    public int visit(FunctionSent node, CodeSizeHandler handler) {
+        return 5;
+    }
+
+    @Override
     public int visit(GeneratorComprehension node, CodeSizeHandler handler) {
         submit(node, singletonList(node.getComprehension()), handler);
         return 10;

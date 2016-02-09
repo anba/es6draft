@@ -23,7 +23,9 @@ final class FindParameter extends DefaultNodeVisitor<BindingIdentifier, Name> {
      * @return the parameter node
      */
     static BindingIdentifier find(FunctionNode function, Name name) {
-        return function.getParameters().accept(INSTANCE, name);
+        BindingIdentifier parameter = function.getParameters().accept(INSTANCE, name);
+        assert parameter != null : "Parameter not found: " + name;
+        return parameter;
     }
 
     private BindingIdentifier forEach(Iterable<? extends Node> list, Name name) {
@@ -78,11 +80,20 @@ final class FindParameter extends DefaultNodeVisitor<BindingIdentifier, Name> {
 
     @Override
     public BindingIdentifier visit(ObjectBindingPattern node, Name value) {
-        return forEach(node.getProperties(), value);
+        BindingIdentifier parameter = forEach(node.getProperties(), value);
+        if (parameter == null && node.getRest() != null) {
+            parameter = node.getRest().accept(this, value);
+        }
+        return parameter;
     }
 
     @Override
     public BindingIdentifier visit(BindingProperty node, Name value) {
         return node.getBinding().accept(this, value);
+    }
+
+    @Override
+    public BindingIdentifier visit(BindingRestProperty node, Name value) {
+        return node.getBindingIdentifier().accept(this, value);
     }
 }

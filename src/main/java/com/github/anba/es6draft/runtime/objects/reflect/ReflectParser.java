@@ -139,6 +139,7 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
         // New node types
         SuperExpression(),
         AwaitExpression(),
+        FunctionSent(),
 
         ;
         /* @formatter:on */
@@ -1383,6 +1384,11 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
         addProperty(function, "generator", generator);
         addProperty(function, "expression", expression);
         return function;
+    }
+
+    @Override
+    public Object visit(FunctionSent node, Void value) {
+        return createExpression(node, Type.FunctionSent);
     }
 
     @Override

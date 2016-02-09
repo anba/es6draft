@@ -374,6 +374,11 @@ public abstract class DefaultIntNodeVisitor<V> implements IntNodeVisitor<V> {
     }
 
     @Override
+    public int visit(FunctionSent node, V value) {
+        return visit((Expression) node, value);
+    }
+
+    @Override
     public int visit(GeneratorComprehension node, V value) {
         return visit((Expression) node, value);
     }

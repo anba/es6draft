@@ -8,14 +8,13 @@ package com.github.anba.es6draft.compiler;
 
 import static com.github.anba.es6draft.compiler.DefaultCodeGenerator.SetFunctionName;
 import static com.github.anba.es6draft.compiler.DefaultCodeGenerator.ToPropertyKey;
-import static com.github.anba.es6draft.semantics.StaticSemantics.BindingPropertyNames;
 import static com.github.anba.es6draft.semantics.StaticSemantics.BoundNames;
 import static com.github.anba.es6draft.semantics.StaticSemantics.IsAnonymousFunctionDefinition;
 import static com.github.anba.es6draft.semantics.StaticSemantics.PropName;
 
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
 
 import com.github.anba.es6draft.ast.*;
 import com.github.anba.es6draft.ast.scope.Name;
@@ -57,18 +56,18 @@ import com.github.anba.es6draft.runtime.internal.ScriptIterator;
  */
 final class BindingInitializationGenerator {
     private static final class Fields {
-        static final FieldName Undefined_UNDEFINED = FieldName.findStatic(Types.Undefined,
-                "UNDEFINED", Types.Undefined);
+        static final FieldName Undefined_UNDEFINED = FieldName.findStatic(Types.Undefined, "UNDEFINED",
+                Types.Undefined);
+
+        static final FieldName Collections_EMPTY_SET = FieldName.findStatic(Types.Collections, "EMPTY_SET", Types.Set);
     }
 
     private static final class Methods {
         // class: AbstractOperations
-        static final MethodName AbstractOperations_GetV = MethodName.findStatic(
-                Types.AbstractOperations, "GetV",
+        static final MethodName AbstractOperations_GetV = MethodName.findStatic(Types.AbstractOperations, "GetV",
                 Type.methodType(Types.Object, Types.ExecutionContext, Types.Object, Types.Object));
 
-        static final MethodName AbstractOperations_GetV_String = MethodName.findStatic(
-                Types.AbstractOperations, "GetV",
+        static final MethodName AbstractOperations_GetV_String = MethodName.findStatic(Types.AbstractOperations, "GetV",
                 Type.methodType(Types.Object, Types.ExecutionContext, Types.Object, Types.String));
 
         static final MethodName AbstractOperations_RequireObjectCoercible = MethodName.findStatic(
@@ -76,35 +75,38 @@ final class BindingInitializationGenerator {
                 Type.methodType(Types.Object, Types.ExecutionContext, Types.Object));
 
         // class: ExecutionContext
-        static final MethodName ExecutionContext_setVariableAndLexicalEnvironment = MethodName
-                .findVirtual(Types.ExecutionContext, "setVariableAndLexicalEnvironment",
-                        Type.methodType(Type.VOID_TYPE, Types.LexicalEnvironment));
+        static final MethodName ExecutionContext_setVariableAndLexicalEnvironment = MethodName.findVirtual(
+                Types.ExecutionContext, "setVariableAndLexicalEnvironment",
+                Type.methodType(Type.VOID_TYPE, Types.LexicalEnvironment));
 
         // class: LexicalEnvironment
-        static final MethodName LexicalEnvironment_newDeclarativeEnvironment = MethodName
-                .findStatic(Types.LexicalEnvironment, "newDeclarativeEnvironment",
-                        Type.methodType(Types.LexicalEnvironment, Types.LexicalEnvironment));
+        static final MethodName LexicalEnvironment_newDeclarativeEnvironment = MethodName.findStatic(
+                Types.LexicalEnvironment, "newDeclarativeEnvironment",
+                Type.methodType(Types.LexicalEnvironment, Types.LexicalEnvironment));
 
         // class: ScriptRuntime
-        static final MethodName ScriptRuntime_createRestArray = MethodName.findStatic(
-                Types.ScriptRuntime, "createRestArray",
-                Type.methodType(Types.ArrayObject, Types.Iterator, Types.ExecutionContext));
+        static final MethodName ScriptRuntime_createRestArray = MethodName.findStatic(Types.ScriptRuntime,
+                "createRestArray", Type.methodType(Types.ArrayObject, Types.Iterator, Types.ExecutionContext));
 
-        static final MethodName ScriptRuntime_createRestObject = MethodName.findStatic(
-                Types.ScriptRuntime, "createRestObject", Type.methodType(Types.OrdinaryObject,
-                        Types.Object, Types.String_, Types.ExecutionContext));
+        static final MethodName ScriptRuntime_createRestObject = MethodName.findStatic(Types.ScriptRuntime,
+                "createRestObject",
+                Type.methodType(Types.OrdinaryObject, Types.Object, Types.Set, Types.ExecutionContext));
 
-        static final MethodName ScriptRuntime_iterate = MethodName.findStatic(Types.ScriptRuntime,
-                "iterate",
+        static final MethodName ScriptRuntime_iterate = MethodName.findStatic(Types.ScriptRuntime, "iterate",
                 Type.methodType(Types.ScriptIterator, Types.Object, Types.ExecutionContext));
 
-        static final MethodName ScriptRuntime_iteratorNextAndIgnore = MethodName.findStatic(
-                Types.ScriptRuntime, "iteratorNextAndIgnore",
-                Type.methodType(Type.VOID_TYPE, Types.Iterator));
+        static final MethodName ScriptRuntime_iteratorNextAndIgnore = MethodName.findStatic(Types.ScriptRuntime,
+                "iteratorNextAndIgnore", Type.methodType(Type.VOID_TYPE, Types.Iterator));
 
-        static final MethodName ScriptRuntime_iteratorNextOrUndefined = MethodName.findStatic(
-                Types.ScriptRuntime, "iteratorNextOrUndefined",
-                Type.methodType(Types.Object, Types.Iterator));
+        static final MethodName ScriptRuntime_iteratorNextOrUndefined = MethodName.findStatic(Types.ScriptRuntime,
+                "iteratorNextOrUndefined", Type.methodType(Types.Object, Types.Iterator));
+
+        // class: HashSet
+        static final MethodName HashSet_init = MethodName.findConstructor(Types.HashSet,
+                Type.methodType(Type.VOID_TYPE));
+
+        static final MethodName HashSet_add = MethodName.findVirtual(Types.HashSet, "add",
+                Type.methodType(Type.BOOLEAN_TYPE, Types.Object));
     }
 
     private BindingInitializationGenerator() {
@@ -374,14 +376,14 @@ final class BindingInitializationGenerator {
             node.accept(new IteratorBindingInitialization(codegen, mv, envRec), iterator);
         }
 
-        protected final void KeyedBindingInitialization(BindingProperty node,
-                Variable<Object> value, String key) {
-            node.accept(new LiteralKeyedBindingInitialization(codegen, mv, envRec, value), key);
+        protected final void KeyedBindingInitialization(BindingProperty node, String key, Variable<Object> value,
+                Variable<HashSet<?>> propertyNames) {
+            node.accept(new LiteralKeyedBindingInitialization(codegen, mv, envRec, value, propertyNames), key);
         }
 
-        protected final void KeyedBindingInitialization(BindingProperty node,
-                Variable<Object> value, ComputedPropertyName key) {
-            node.accept(new ComputedKeyedBindingInitialization(codegen, mv, envRec, value), key);
+        protected final void KeyedBindingInitialization(BindingProperty node, ComputedPropertyName key,
+                Variable<Object> value, Variable<HashSet<?>> propertyNames) {
+            node.accept(new ComputedKeyedBindingInitialization(codegen, mv, envRec, value, propertyNames), key);
         }
 
         @Override
@@ -503,28 +505,38 @@ final class BindingInitializationGenerator {
             final Variable<Object> val = mv.newVariable("value", Object.class);
             mv.store(val);
 
+            final Variable<HashSet<?>> propertyNames;
+            if (!node.getProperties().isEmpty() && node.getRest() != null) {
+                propertyNames = mv.newVariable("propertyNames", HashSet.class).uncheckedCast();
+                mv.anew(Types.HashSet, Methods.HashSet_init);
+                mv.store(propertyNames);
+            } else {
+                propertyNames = null;
+            }
+
             // step 1: [...]
             for (BindingProperty property : node.getProperties()) {
                 if (property.getPropertyName() == null) {
                     // BindingProperty : SingleNameBinding
                     Name name = BoundNames(property.getBinding()).get(0);
-                    KeyedBindingInitialization(property, val, name.getIdentifier());
+                    KeyedBindingInitialization(property, name.getIdentifier(), val, propertyNames);
                 } else {
                     // BindingProperty : PropertyName : BindingElement
                     String name = PropName(property.getPropertyName());
                     if (name != null) {
-                        KeyedBindingInitialization(property, val, name);
+                        KeyedBindingInitialization(property, name, val, propertyNames);
                     } else {
                         PropertyName propertyName = property.getPropertyName();
                         assert propertyName instanceof ComputedPropertyName;
-                        KeyedBindingInitialization(property, val,
-                                (ComputedPropertyName) propertyName);
+                        KeyedBindingInitialization(property, (ComputedPropertyName) propertyName, val, propertyNames);
                     }
                 }
             }
 
             BindingRestProperty rest = node.getRest();
             if (rest != null) {
+                // FIXME: spec bug? - evaluation order for resolving ref and CopyDataProperties
+                // The current spec calls CopyDataProperties before resolving the reference.
                 BindingIdentifier identifier = rest.getBindingIdentifier();
                 if (envRec == null) {
                     // stack: [] -> [ref]
@@ -532,16 +544,16 @@ final class BindingInitializationGenerator {
                     op.resolveBinding(identifier, mv);
 
                     // stack: [ref] -> [ref, object]
-                    emitCreateRestObject(node, val);
+                    emitCreateRestObject(node, val, propertyNames);
 
-                    // stack: [ref, value] -> []
+                    // stack: [ref, object] -> []
                     op.putValue(identifier, ValType.Any, mv);
                 } else {
                     BindingOp<EnvironmentRecord> op = BindingOp.of(envRec, identifier.getName());
                     op.initializeBinding(envRec, identifier.getName(), new Value<Object>() {
                         @Override
                         protected void load(InstructionAssembler assembler) {
-                            emitCreateRestObject(node, val);
+                            emitCreateRestObject(node, val, propertyNames);
                         }
                     }, mv);
                 }
@@ -550,21 +562,18 @@ final class BindingInitializationGenerator {
             mv.exitVariableScope();
         }
 
-        private void emitCreateRestObject(ObjectBindingPattern node, Variable<Object> val) {
+        private void emitCreateRestObject(ObjectBindingPattern node, Variable<Object> val,
+                Variable<HashSet<?>> propertyNames) {
             // stack: [] -> [object]
             mv.load(val);
-            newStringArray(mv, BindingPropertyNames(node));
+            if (propertyNames != null) {
+                mv.load(propertyNames);
+            } else {
+                mv.get(Fields.Collections_EMPTY_SET);
+            }
             mv.loadExecutionContext();
             mv.lineInfo(node.getRest());
             mv.invoke(Methods.ScriptRuntime_createRestObject);
-        }
-
-        private static void newStringArray(InstructionVisitor mv, Set<String> strings) {
-            mv.anewarray(strings.size(), Types.String);
-            int index = 0;
-            for (String string : strings) {
-                mv.astore(index++, string);
-            }
         }
     }
 
@@ -914,11 +923,11 @@ final class BindingInitializationGenerator {
                         ValType type = evaluatePropertyName(propertyName);
 
                         /* steps 4-5 */
-                        // stack: [<env, id>|ref, cx, value, propertyName] -> [<env, id>|ref, v]
+                        // stack: [cx, value, propertyName] -> [v]
                         emitGetV(node, type);
 
                         /* step 6 */
-                        // stack: [<env, id>|ref, v] -> [<env, id>|ref, v']
+                        // stack: [v] -> [v']
                         if (initializer != null) {
                             emitDefaultInitializer(initializer, bindingId);
                         }
@@ -936,13 +945,23 @@ final class BindingInitializationGenerator {
      */
     private static final class LiteralKeyedBindingInitialization extends
             KeyedBindingInitialization<String> {
+        private final Variable<HashSet<?>> propertyNames;
+
         LiteralKeyedBindingInitialization(CodeGenerator codegen, ExpressionVisitor mv,
-                Variable<? extends EnvironmentRecord> envRec, Variable<Object> value) {
+                Variable<? extends EnvironmentRecord> envRec, Variable<Object> value,
+                Variable<HashSet<?>> propertyNames) {
             super(codegen, mv, envRec, value);
+            this.propertyNames = propertyNames;
         }
 
         @Override
         ValType evaluatePropertyName(String propertyName) {
+            if (propertyNames != null) {
+                mv.load(propertyNames);
+                mv.aconst(propertyName);
+                mv.invoke(Methods.HashSet_add);
+                mv.pop();
+            }
             mv.aconst(propertyName);
             return ValType.String;
         }
@@ -961,17 +980,30 @@ final class BindingInitializationGenerator {
      */
     private static final class ComputedKeyedBindingInitialization extends
             KeyedBindingInitialization<ComputedPropertyName> {
+        private final Variable<HashSet<?>> propertyNames;
+
         ComputedKeyedBindingInitialization(CodeGenerator codegen, ExpressionVisitor mv,
-                Variable<? extends EnvironmentRecord> envRec, Variable<Object> value) {
+                Variable<? extends EnvironmentRecord> envRec, Variable<Object> value,
+                Variable<HashSet<?>> propertyNames) {
             super(codegen, mv, envRec, value);
+            this.propertyNames = propertyNames;
         }
 
         @Override
         ValType evaluatePropertyName(ComputedPropertyName propertyName) {
+            if (propertyNames != null) {
+                mv.load(propertyNames);
+            }
             // Runtime Semantics: Evaluation
             // ComputedPropertyName : [ AssignmentExpression ]
             ValType propType = expression(propertyName.getExpression(), mv);
-            return ToPropertyKey(propType, mv);
+            ValType keyType = ToPropertyKey(propType, mv);
+            if (propertyNames != null) {
+                mv.dupX1();
+                mv.invoke(Methods.HashSet_add);
+                mv.pop();
+            }
+            return keyType;
         }
 
         @Override

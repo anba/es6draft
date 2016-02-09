@@ -7,23 +7,17 @@
 package com.github.anba.es6draft.ast;
 
 /**
- * Extension: Object Rest Destructuring
+ * <h1>12 ECMAScript Language: Expressions</h1><br>
+ * <h2>12.3 Left-Hand-Side Expressions</h2>
+ * <ul>
+ * <li>12.3.8 Meta Properties
+ * </ul>
+ * 
+ * Extension: {@code function.sent} meta property
  */
-public final class AssignmentRestProperty extends AstNode {
-    private final LeftHandSideExpression target;
-
-    public AssignmentRestProperty(long beginPosition, long endPosition, LeftHandSideExpression target) {
+public final class FunctionSent extends Expression {
+    public FunctionSent(long beginPosition, long endPosition) {
         super(beginPosition, endPosition);
-        this.target = target;
-    }
-
-    /**
-     * Returns the left-hand side expression target.
-     * 
-     * @return the target expression
-     */
-    public LeftHandSideExpression getTarget() {
-        return target;
     }
 
     @Override

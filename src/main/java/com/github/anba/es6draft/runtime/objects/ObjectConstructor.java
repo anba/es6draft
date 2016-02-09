@@ -18,9 +18,11 @@ import java.util.List;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
+import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.Initializable;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
+import com.github.anba.es6draft.runtime.internal.Properties.CompatibilityExtension;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
@@ -58,6 +60,7 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
     @Override
     public void initialize(Realm realm) {
         createProperties(realm, this, Properties.class);
+        createProperties(realm, this, ValuesEntriesFunctions.class);
     }
 
     @Override
@@ -576,6 +579,53 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
         }
     }
 
+    @CompatibilityExtension(CompatibilityOption.ObjectValuesEntries)
+    public enum ValuesEntriesFunctions {
+        ;
+
+        /**
+         * Object.values( O )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param o
+         *            the script object
+         * @return the object values array
+         */
+        @Function(name = "values", arity = 1)
+        public static Object values(ExecutionContext cx, Object thisValue, Object o) {
+            /* steps 1-2 */
+            ScriptObject obj = ToObject(cx, o);
+            /* steps 3-4 */
+            List<Object> valueList = EnumerableOwnProperties(cx, obj, PropertyKind.Value);
+            /* step 5 */
+            return CreateArrayFromList(cx, valueList);
+        }
+
+        /**
+         * Object.entries( O )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param o
+         *            the script object
+         * @return the object entries array
+         */
+        @Function(name = "entries", arity = 1)
+        public static Object entries(ExecutionContext cx, Object thisValue, Object o) {
+            /* steps 1-2 */
+            ScriptObject obj = ToObject(cx, o);
+            /* steps 3-4 */
+            List<Object> entryList = EnumerableOwnProperties(cx, obj, PropertyKind.KeyValue);
+            /* step 5 */
+            return CreateArrayFromList(cx, entryList);
+        }
+    }
+
     /**
      * 19.1.2.3.1 Runtime Semantics: ObjectDefineProperties ( O, Properties )
      * 
@@ -679,5 +729,52 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
         }
         /* step 7 */
         return CreateArrayFromList(cx, nameList);
+    }
+
+    enum PropertyKind {
+        Key, Value, KeyValue
+    }
+
+    /**
+     * EnumerableOwnProperties (O)
+     * 
+     * @param cx
+     *            the execution context
+     * @param object
+     *            the script object
+     * @param kind
+     *            the property kind
+     * @return <var>object</var>'s own enumerable properties
+     */
+    static List<Object> EnumerableOwnProperties(ExecutionContext cx, ScriptObject object, PropertyKind kind) {
+        /* step 1 (not applicable) */
+        /* steps 2-3 */
+        List<?> ownKeys = object.ownPropertyKeys(cx);
+        /* step 4 */
+        int initialSize = Math.min(16, ownKeys.size());
+        ArrayList<Object> properties = new ArrayList<>(initialSize);
+        /* step 5 */
+        for (Object key : ownKeys) {
+            if (key instanceof String) {
+                String skey = (String) key;
+                Property desc = object.getOwnProperty(cx, skey);
+                if (desc != null && desc.isEnumerable()) {
+                    if (kind == PropertyKind.Key) {
+                        properties.add(skey);
+                    } else {
+                        Object value = Get(cx, object, skey);
+                        if (kind == PropertyKind.Value) {
+                            properties.add(value);
+                        } else {
+                            ArrayObject entry = CreateArrayFromList(cx, key, value);
+                            properties.add(entry);
+                        }
+                    }
+                }
+            }
+        }
+        /* step 6 (sort keys - not applicable) */
+        /* step 7 */
+        return properties;
     }
 }

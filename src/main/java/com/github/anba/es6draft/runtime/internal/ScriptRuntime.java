@@ -2853,6 +2853,13 @@ public final class ScriptRuntime {
     }
 
     /**
+     * Extension: 'function.sent' meta property
+     */
+    public static Object functionSent(ExecutionContext cx) {
+        return cx.getCurrentGenerator().getLastYieldValue();
+    }
+
+    /**
      * 14.5 Class Definitions
      * <p>
      * 14.5.14 Runtime Semantics: ClassDefinitionEvaluation
@@ -3204,7 +3211,7 @@ public final class ScriptRuntime {
      *            the execution context
      */
     public static void defineSpreadProperty(OrdinaryObject object, Object value, ExecutionContext cx) {
-        Assign(cx, object, value, Collections.<String> emptySet());
+        CopyDataProperties(cx, object, value, Collections.EMPTY_SET);
     }
 
     /**
@@ -3216,17 +3223,15 @@ public final class ScriptRuntime {
      * 
      * @param value
      *            the rest property
-     * @param names
+     * @param excludedNames
      *            the excluded property names
      * @param cx
      *            the execution context
      * @return the rest object
      */
-    public static OrdinaryObject createRestObject(Object value, String[] names, ExecutionContext cx) {
-        HashSet<String> excludedNames = new HashSet<>(Arrays.asList(names));
+    public static OrdinaryObject createRestObject(Object value, Set<?> excludedNames, ExecutionContext cx) {
         OrdinaryObject restObj = ObjectCreate(cx, Intrinsics.ObjectPrototype);
-        Assign(cx, restObj, value, excludedNames);
-        return restObj;
+        return CopyDataProperties(cx, restObj, value, excludedNames);
     }
 
     /**

@@ -374,6 +374,11 @@ public abstract class DefaultNodeVisitor<R, V> implements NodeVisitor<R, V> {
     }
 
     @Override
+    public R visit(FunctionSent node, V value) {
+        return visit((Expression) node, value);
+    }
+
+    @Override
     public R visit(GeneratorComprehension node, V value) {
         return visit((Expression) node, value);
     }

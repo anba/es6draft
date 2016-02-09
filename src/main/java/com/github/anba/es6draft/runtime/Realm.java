@@ -70,6 +70,7 @@ import com.github.anba.es6draft.runtime.objects.reflect.ReflectObject;
 import com.github.anba.es6draft.runtime.objects.reflect.SystemObject;
 import com.github.anba.es6draft.runtime.objects.text.RegExpConstructor;
 import com.github.anba.es6draft.runtime.objects.text.RegExpPrototype;
+import com.github.anba.es6draft.runtime.objects.text.RegExpStringIteratorPrototype;
 import com.github.anba.es6draft.runtime.objects.text.StringConstructor;
 import com.github.anba.es6draft.runtime.objects.text.StringIteratorPrototype;
 import com.github.anba.es6draft.runtime.objects.text.StringPrototype;
@@ -805,6 +806,12 @@ public final class Realm {
         // Array.prototype.values is also an intrinsic
         Object arrayPrototypeValues = arrayPrototype.lookupOwnProperty("values").getValue();
         intrinsics.put(Intrinsics.ArrayProto_values, (OrdinaryObject) arrayPrototypeValues);
+
+        if (realm.isEnabled(CompatibilityOption.StringMatchAll)) {
+            RegExpStringIteratorPrototype regExpStringIteratorPrototype = new RegExpStringIteratorPrototype(realm);
+            intrinsics.put(Intrinsics.RegExpStringIteratorPrototype, regExpStringIteratorPrototype);
+            regExpStringIteratorPrototype.initialize(realm);
+        }
     }
 
     /**

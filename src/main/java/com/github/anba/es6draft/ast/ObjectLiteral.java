@@ -17,10 +17,13 @@ import java.util.List;
  */
 public final class ObjectLiteral extends Expression {
     private List<PropertyDefinition> properties;
+    private final boolean trailingComma;
 
-    public ObjectLiteral(long beginPosition, long endPosition, List<PropertyDefinition> properties) {
+    public ObjectLiteral(long beginPosition, long endPosition, List<PropertyDefinition> properties,
+            boolean trailingComma) {
         super(beginPosition, endPosition);
         this.properties = properties;
+        this.trailingComma = trailingComma;
     }
 
     /**
@@ -40,6 +43,15 @@ public final class ObjectLiteral extends Expression {
      */
     public void setProperties(List<PropertyDefinition> properties) {
         this.properties = properties;
+    }
+
+    /**
+     * Returns {@code true} if the <code>ObjectLiteral</code> has a trailing comma.
+     * 
+     * @return {@code true} if the object literal has a trailing comma
+     */
+    public boolean hasTrailingComma() {
+        return trailingComma;
     }
 
     @Override

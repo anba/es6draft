@@ -2845,7 +2845,7 @@ public final class AbstractOperations {
         /* steps 2-3 */
         List<?> ownKeys = object.ownPropertyKeys(cx);
         /* step 4 */
-        int initialSize = Math.min(32, ownKeys.size());
+        int initialSize = Math.min(16, ownKeys.size());
         ArrayList<String> names = new ArrayList<>(initialSize);
         /* step 5 */
         for (Object key : ownKeys) {
@@ -3215,7 +3215,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * Assign (T, S, E)
+     * CopyDataProperties (target, source, excluded)
      * 
      * @param cx
      *            the execution context
@@ -3223,48 +3223,40 @@ public final class AbstractOperations {
      *            the target script object
      * @param source
      *            the source object
-     * @param exclude
+     * @param excluded
      *            the excluded property names
-     * @return {@code true} on success
+     * @return the <var>target</var> script object
      */
-    public static boolean Assign(ExecutionContext cx, ScriptObject target, Object source,
-            Set<String> exclude) {
+    public static <TARGET extends ScriptObject> TARGET CopyDataProperties(ExecutionContext cx, TARGET target,
+            Object source, Set<?> excluded) {
         /* step 1 (not applicable) */
-        /* step 2, 7 */
+        /* steps 2, 5 */
         if (Type.isUndefinedOrNull(source)) {
-            return true;
+            return target;
         }
-        /* steps 3.a-b */
+        /* step 3.a */
         ScriptObject from = ToObject(cx, source);
-        /* steps 3.c-d */
+        /* steps 3.b-c */
         List<?> keys = from.ownPropertyKeys(cx);
         /* step 4 */
-        ScriptException pendingException = null;
-        /* step 5 */
         for (Object nextKey : keys) {
-            try {
+            if (!excluded.contains(nextKey)) {
+                /* steps 4.i.a-b */
                 Property desc;
                 if (nextKey instanceof String) {
                     desc = from.getOwnProperty(cx, (String) nextKey);
                 } else {
                     desc = from.getOwnProperty(cx, (Symbol) nextKey);
                 }
-                if (desc != null && desc.isEnumerable() && !exclude.contains(nextKey)) {
+                /* step 4.i.c */
+                if (desc != null && desc.isEnumerable()) {
                     Object propValue = Get(cx, from, nextKey);
-                    CreateDataPropertyOrThrow(cx, target, nextKey, propValue);
-                }
-            } catch (ScriptException e) {
-                if (pendingException == null) {
-                    pendingException = e;
+                    CreateDataProperty(cx, target, nextKey, propValue);
                 }
             }
         }
-        /* step 6 */
-        if (pendingException != null) {
-            throw pendingException;
-        }
-        /* step 7 */
-        return true;
+        /* step 5 */
+        return target;
     }
 
     /**

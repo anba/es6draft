@@ -248,6 +248,9 @@ public enum Intrinsics {/* @formatter:off */
     /** Intrinsic: <tt>%System%</tt> */
     System,
 
+    // Extension: String.prototype.matchAll
+    RegExpStringIteratorPrototype,
+
     /* @formatter:on */
     ;
 

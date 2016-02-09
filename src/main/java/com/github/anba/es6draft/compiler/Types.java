@@ -9,9 +9,12 @@ package com.github.anba.es6draft.compiler;
 import java.lang.invoke.MethodHandle;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import com.github.anba.es6draft.Script;
 import com.github.anba.es6draft.compiler.assembler.Type;
@@ -74,9 +77,12 @@ final class Types {
     // java.util
     static final Type ArrayList = Type.of(ArrayList.class);
     static final Type Arrays = Type.of(Arrays.class);
+    static final Type Collections = Type.of(Collections.class);
+    static final Type HashSet = Type.of(HashSet.class);
     static final Type Iterator = Type.of(Iterator.class);
     static final Type List = Type.of(List.class);
     static final Type Map = Type.of(Map.class);
+    static final Type Set = Type.of(Set.class);
 
     // toplevel
     static final Type Script = Type.of(Script.class);

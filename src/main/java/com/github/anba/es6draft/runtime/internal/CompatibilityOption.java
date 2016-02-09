@@ -164,11 +164,6 @@ public enum CompatibilityOption {
     ForInVarInitializer,
 
     /**
-     * Moz-Extension: Allow parenthesized array- and object-literals in destructuring contexts
-     */
-    ParenthesizedDestructuring,
-
-    /**
      * Moz-Extension: RegExp.prototype.source returns the empty string instead of {@code (?:)}
      */
     RegExpEmptySource,
@@ -214,6 +209,11 @@ public enum CompatibilityOption {
     ArrayIncludes,
 
     /**
+     * ES7-Extension: function.sent
+     */
+    FunctionSent,
+
+    /**
      * ES7-Extension: Function.prototype.toMethod
      */
     FunctionToMethod,
@@ -254,9 +254,29 @@ public enum CompatibilityOption {
     FunctionCallTrailingComma,
 
     /**
+     * ES7-Extension: String.prototype.trimLeft and trimRight
+     */
+    StringTrim,
+
+    /**
      * ES7-Extension: StaticClassProperties.
      */
     StaticClassProperties,
+
+    /**
+     * ES7-Extension: Object.values and Object.entries functions
+     */
+    ObjectValuesEntries,
+
+    /**
+     * ES7-Extension: String.prototype.padStart and padEnd
+     */
+    StringPad,
+
+    /**
+     * ES7-Extension: String.prototype.matchAll
+     */
+    StringMatchAll,
 
     /**
      * Type annotations.
@@ -314,7 +334,7 @@ public enum CompatibilityOption {
     /**
      * Returns a set of all options for Annex B features.
      * 
-     * @return the options set for proposed Annex B features
+     * @return the options set for Annex B features
      */
     public static final Set<CompatibilityOption> AnnexB() {
         return EnumSet.range(LegacyOctalIntegerLiteral, CatchVarStatement);

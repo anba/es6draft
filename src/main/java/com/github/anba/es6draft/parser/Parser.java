@@ -7380,22 +7380,26 @@ public final class Parser {
         long begin = ts.beginPosition();
         consume(Token.LC);
         List<PropertyDefinition> defs;
+        boolean trailingComma = false;
         if (token() == Token.RC) {
             defs = Collections.emptyList();
         } else {
             InlineArrayList<PropertyDefinition> list = newList();
-            do {
+            for (;;) {
                 list.add(propertyDefinition());
-                if (token() == Token.COMMA) {
-                    consume(Token.COMMA);
-                } else {
+                if (token() != Token.COMMA) {
                     break;
                 }
-            } while (token() != Token.RC);
+                consume(Token.COMMA);
+                if (token() == Token.RC) {
+                    trailingComma = true;
+                    break;
+                }
+            }
             defs = list;
         }
         consume(Token.RC);
-        ObjectLiteral object = new ObjectLiteral(begin, ts.endPosition(), defs);
+        ObjectLiteral object = new ObjectLiteral(begin, ts.endPosition(), defs, trailingComma);
         context.addLiteral(object);
         return object;
     }
@@ -7554,7 +7558,7 @@ public final class Parser {
         if (token() == Token.TRIPLE_DOT
                 && (isEnabled(CompatibilityOption.ObjectSpreadInitializer) || isEnabled(CompatibilityOption.ObjectRestDestructuring))) {
             consume(Token.TRIPLE_DOT);
-            Expression expression = assignmentExpression(true);
+            Expression expression = assignmentExpressionNoValidation(true);
             return new SpreadProperty(begin, ts.endPosition(), expression);
         }
         if (isPropertyName(token()) && LOOKAHEAD(Token.COLON)) {
@@ -7925,7 +7929,8 @@ public final class Parser {
     private Expression leftHandSideExpression(boolean allowCall, boolean allowElement) {
         long begin = ts.beginPosition();
         Expression lhs;
-        if (token() == Token.NEW) {
+        switch (token()) {
+        case NEW: {
             consume(Token.NEW);
             if (token() == Token.DOT) {
                 newTarget();
@@ -7953,7 +7958,9 @@ public final class Parser {
                             Collections.<Expression> emptyList());
                 }
             }
-        } else if (token() == Token.SUPER) {
+            break;
+        }
+        case SUPER: {
             consume(Token.SUPER);
             switch (token()) {
             case DOT:
@@ -7980,7 +7987,31 @@ public final class Parser {
             default:
                 throw reportSyntaxError(Messages.Key.InvalidToken, token().toString());
             }
-        } else {
+            break;
+        }
+        case FUNCTION: {
+            if (LOOKAHEAD(Token.DOT) && isEnabled(CompatibilityOption.FunctionSent)) {
+                consume(Token.FUNCTION);
+                consume(Token.DOT);
+                consume("sent");
+
+                switch (context.kind) {
+                case Generator:
+                case GeneratorMethod:
+                    if (context.yieldAllowed) {
+                        break;
+                    }
+                    // fall-through
+                default:
+                    reportSyntaxError(Messages.Key.InvalidFunctionSent);
+                }
+
+                lhs = new FunctionSent(begin, ts.endPosition());
+                break;
+            }
+            // fall-through
+        }
+        default:
             lhs = primaryExpression();
         }
 
@@ -8716,11 +8747,11 @@ public final class Parser {
             Messages.Key messageKey) {
         // rewrite object/array literal to destructuring form
         if (lhs instanceof ObjectLiteral) {
-            if (!lhs.isParenthesized() || isEnabled(CompatibilityOption.ParenthesizedDestructuring)) {
+            if (!lhs.isParenthesized()) {
                 return toDestructuring((ObjectLiteral) lhs);
             }
         } else if (lhs instanceof ArrayLiteral) {
-            if (!lhs.isParenthesized() || isEnabled(CompatibilityOption.ParenthesizedDestructuring)) {
+            if (!lhs.isParenthesized()) {
                 return toDestructuring((ArrayLiteral) lhs);
             }
         }
@@ -8752,10 +8783,10 @@ public final class Parser {
      * @return the object assignment pattern for the object literal
      */
     private ObjectAssignmentPattern toDestructuring(ObjectLiteral object) {
+        assert !object.isParenthesized();
         InlineArrayList<AssignmentProperty> list = newList();
         AssignmentRestProperty rest = null;
-        for (Iterator<PropertyDefinition> iterator = object.getProperties().iterator(); iterator
-                .hasNext();) {
+        for (Iterator<PropertyDefinition> iterator = object.getProperties().iterator(); iterator.hasNext();) {
             PropertyDefinition p = iterator.next();
             AssignmentProperty property;
             if (p instanceof PropertyValueDefinition) {
@@ -8772,43 +8803,41 @@ public final class Parser {
                             || assignment.isParenthesized()) {
                         reportSyntaxError(p, Messages.Key.InvalidDestructuring);
                     }
-                    target = destructuringAssignmentTarget_EarlyErrors(assignment.getLeft());
+                    target = destructuringAssignmentTarget(assignment.getLeft());
                     initializer = assignment.getRight();
                 } else {
                     // AssignmentElement : DestructuringAssignmentTarget
-                    target = destructuringAssignmentTarget_EarlyErrors(propertyValue);
+                    target = destructuringAssignmentTarget(propertyValue);
                     initializer = null;
                 }
-                property = new AssignmentProperty(p.getBeginPosition(), p.getEndPosition(),
-                        propertyName, target, initializer);
+                property = new AssignmentProperty(p.getBeginPosition(), p.getEndPosition(), propertyName, target,
+                        initializer);
             } else if (p instanceof PropertyNameDefinition) {
                 // AssignmentProperty : IdentifierReference
                 PropertyNameDefinition def = (PropertyNameDefinition) p;
-                assignmentProperty_EarlyErrors(def.getPropertyName());
-                property = new AssignmentProperty(p.getBeginPosition(), p.getEndPosition(),
-                        def.getPropertyName(), null);
+                IdentifierReference id = assignmentProperty(def.getPropertyName());
+                property = new AssignmentProperty(p.getBeginPosition(), p.getEndPosition(), id, null);
             } else if (p instanceof CoverInitializedName) {
                 // AssignmentProperty : IdentifierReference Initializer
                 CoverInitializedName def = (CoverInitializedName) p;
-                assignmentProperty_EarlyErrors(def.getPropertyName());
-                property = new AssignmentProperty(p.getBeginPosition(), p.getEndPosition(),
-                        def.getPropertyName(), def.getInitializer());
+                IdentifierReference id = assignmentProperty(def.getPropertyName());
+                property = new AssignmentProperty(p.getBeginPosition(), p.getEndPosition(), id, def.getInitializer());
             } else if (p instanceof SpreadProperty) {
-                // ... IdentifierReference
+                // ... DestructuringAssignmentTarget
                 if (!isEnabled(CompatibilityOption.ObjectRestDestructuring)) {
-                    throw reportSyntaxError(p, Messages.Key.InvalidDestructuring);
+                    reportSyntaxError(p, Messages.Key.InvalidDestructuring);
                 }
                 SpreadProperty spread = (SpreadProperty) p;
-                Expression expression = spread.getExpression();
-                if (!(expression instanceof IdentifierReference) || expression.isParenthesized()) {
-                    throw reportSyntaxError(p, Messages.Key.InvalidDestructuring);
+                LeftHandSideExpression target = destructuringAssignmentTarget(spread.getExpression());
+                // no trailing comma allowed
+                if (object.hasTrailingComma()) {
+                    reportSyntaxError(spread, Messages.Key.InvalidDestructuring);
                 }
-                // no further elements after AssignmentRestElement allowed
+                // no further elements after AssignmentRestProperty allowed
                 if (iterator.hasNext()) {
-                    throw reportSyntaxError(p, Messages.Key.InvalidDestructuring);
+                    reportSyntaxError(iterator.next(), Messages.Key.InvalidDestructuring);
                 }
-                rest = new AssignmentRestProperty(p.getBeginPosition(), p.getEndPosition(),
-                        (IdentifierReference) expression);
+                rest = new AssignmentRestProperty(p.getBeginPosition(), p.getEndPosition(), target);
                 continue;
             } else {
                 assert p instanceof MethodDefinition;
@@ -8817,12 +8846,7 @@ public final class Parser {
             list.add(property);
         }
         context.removeLiteral(object);
-        ObjectAssignmentPattern pattern = new ObjectAssignmentPattern(object.getBeginPosition(),
-                object.getEndPosition(), list, rest);
-        if (object.isParenthesized()) {
-            pattern.addParentheses();
-        }
-        return pattern;
+        return new ObjectAssignmentPattern(object.getBeginPosition(), object.getEndPosition(), list, rest);
     }
 
     /**
@@ -8851,6 +8875,7 @@ public final class Parser {
      * @return the array assignment pattern for the array literal
      */
     private ArrayAssignmentPattern toDestructuring(ArrayLiteral array) {
+        assert !array.isParenthesized();
         InlineArrayList<AssignmentElementItem> list = newList();
         for (Iterator<Expression> iterator = array.getElements().iterator(); iterator.hasNext();) {
             Expression e = iterator.next();
@@ -8861,17 +8886,16 @@ public final class Parser {
             } else if (e instanceof SpreadElement) {
                 // AssignmentRestElement : ... DestructuringAssignmentTarget
                 Expression expression = ((SpreadElement) e).getExpression();
-                LeftHandSideExpression target = destructuringAssignmentTarget_EarlyErrors(expression);
-                element = new AssignmentRestElement(e.getBeginPosition(), e.getEndPosition(),
-                        target);
+                LeftHandSideExpression target = destructuringAssignmentTarget(expression);
+                // no trailing comma allowed
+                if (array.hasTrailingComma()) {
+                    reportSyntaxError(e, Messages.Key.InvalidDestructuring);
+                }
                 // no further elements after AssignmentRestElement allowed
                 if (iterator.hasNext()) {
                     reportSyntaxError(iterator.next(), Messages.Key.InvalidDestructuring);
                 }
-                // no trailing comma allowed
-                if (array.hasTrailingComma()) {
-                    reportSyntaxError(expression, Messages.Key.InvalidDestructuring);
-                }
+                element = new AssignmentRestElement(e.getBeginPosition(), e.getEndPosition(), target);
             } else {
                 LeftHandSideExpression target;
                 Expression initializer;
@@ -8882,24 +8906,18 @@ public final class Parser {
                             || assignment.isParenthesized()) {
                         reportSyntaxError(e, Messages.Key.InvalidDestructuring);
                     }
-                    target = destructuringAssignmentTarget_EarlyErrors(assignment.getLeft());
+                    target = destructuringAssignmentTarget(assignment.getLeft());
                     initializer = assignment.getRight();
                 } else {
                     // AssignmentElement : DestructuringAssignmentTarget
-                    target = destructuringAssignmentTarget_EarlyErrors(e);
+                    target = destructuringAssignmentTarget(e);
                     initializer = null;
                 }
-                element = new AssignmentElement(e.getBeginPosition(), e.getEndPosition(), target,
-                        initializer);
+                element = new AssignmentElement(e.getBeginPosition(), e.getEndPosition(), target, initializer);
             }
             list.add(element);
         }
-        ArrayAssignmentPattern pattern = new ArrayAssignmentPattern(array.getBeginPosition(),
-                array.getEndPosition(), list);
-        if (array.isParenthesized()) {
-            pattern.addParentheses();
-        }
-        return pattern;
+        return new ArrayAssignmentPattern(array.getBeginPosition(), array.getEndPosition(), list);
     }
 
     /**
@@ -8909,7 +8927,7 @@ public final class Parser {
      *            the left-hand side expression to check
      * @return the {@code lhs} parameter as a left-hand side expression node
      */
-    private LeftHandSideExpression destructuringAssignmentTarget_EarlyErrors(Expression lhs) {
+    private LeftHandSideExpression destructuringAssignmentTarget(Expression lhs) {
         if (lhs instanceof ObjectAssignmentPattern) {
             return (ObjectAssignmentPattern) lhs;
         } else if (lhs instanceof ArrayAssignmentPattern) {
@@ -8921,12 +8939,14 @@ public final class Parser {
     /**
      * 12.14.5.1 Static Semantics: Early Errors
      * 
-     * @param identifier
-     *            the identifier to check
+     * @param lhs
+     *            the left-hand side expression to check
+     * @return the {@code lhs} parameter as an identifier reference node
      */
-    private void assignmentProperty_EarlyErrors(IdentifierReference identifier) {
-        validateSimpleAssignment(identifier, ExceptionType.SyntaxError,
-                Messages.Key.InvalidDestructuring);
+    private IdentifierReference assignmentProperty(IdentifierReference identifier) {
+        assert !identifier.isParenthesized();
+        validateSimpleAssignment(identifier, ExceptionType.SyntaxError, Messages.Key.InvalidDestructuring);
+        return identifier;
     }
 
     /**

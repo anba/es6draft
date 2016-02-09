@@ -373,6 +373,11 @@ public abstract class DefaultVoidNodeVisitor<V> implements VoidNodeVisitor<V> {
     }
 
     @Override
+    public void visit(FunctionSent node, V value) {
+        visit((Expression) node, value);
+    }
+
+    @Override
     public void visit(GeneratorComprehension node, V value) {
         visit((Expression) node, value);
     }

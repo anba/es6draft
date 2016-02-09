@@ -151,6 +151,7 @@ public final class Messages {
         MissingExportBinding("parser.missing_export_binding"),
         InvalidForStatementLeftHandSide("parser.invalid_for_statement_lhs"),
         InvalidForEachStatement("parser.invalid_for_each_statement"),
+        InvalidFunctionSent("parser.invalid_function_sent"),
 
         // strict mode TokenStream/Parser errors
         StrictModeRestrictedIdentifier("parser.strict.restricted_identifier"),
@@ -253,6 +254,7 @@ public final class Messages {
         InvalidCodePoint("string.invalid_codepoint"),
         InvalidNormalizationForm("string.invalid_normalization_form"),
         InvalidRegExpArgument("string.invalid_regexp_argument"),
+        InvalidStringPad("string.invalid_string_pad"),
 
         // 21.2 RegExp (Regular Expression) Objects
         RegExpInvalidQuantifier("regexp.invalid_quantifier"),

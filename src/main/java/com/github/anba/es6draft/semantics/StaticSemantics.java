@@ -1108,52 +1108,6 @@ public final class StaticSemantics {
     }
 
     /**
-     * Static Semantics: AssignmentPropertyNames
-     * 
-     * @param node
-     *            the object assignment pattern
-     * @return the set of static property names
-     */
-    public static Set<String> AssignmentPropertyNames(ObjectAssignmentPattern node) {
-        HashSet<String> names = new HashSet<>();
-        for (AssignmentProperty property : node.getProperties()) {
-            String propName;
-            if (property.getPropertyName() == null) {
-                propName = ((IdentifierReference) property.getTarget()).getName();
-            } else {
-                propName = PropName(property.getPropertyName());
-            }
-            if (propName != null) {
-                names.add(propName);
-            }
-        }
-        return names;
-    }
-
-    /**
-     * Static Semantics: BindingPropertyNames
-     * 
-     * @param node
-     *            the object binding pattern
-     * @return the set of static property names
-     */
-    public static Set<String> BindingPropertyNames(ObjectBindingPattern node) {
-        HashSet<String> names = new HashSet<>();
-        for (BindingProperty property : node.getProperties()) {
-            String propName;
-            if (property.getPropertyName() == null) {
-                propName = ((BindingIdentifier) property.getBinding()).getName().getIdentifier();
-            } else {
-                propName = PropName(property.getPropertyName());
-            }
-            if (propName != null) {
-                names.add(propName);
-            }
-        }
-        return names;
-    }
-
-    /**
      * 12.2.8.1 Static Semantics: TemplateStrings
      * 
      * @param node

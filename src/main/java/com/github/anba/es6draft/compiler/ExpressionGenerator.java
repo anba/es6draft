@@ -221,6 +221,9 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
         static final MethodName ScriptRuntime_toStr = MethodName.findStatic(Types.ScriptRuntime,
                 "toStr", Type.methodType(Types.CharSequence, Types.Object, Types.ExecutionContext));
 
+        static final MethodName ScriptRuntime_functionSent = MethodName.findStatic(Types.ScriptRuntime,
+                "functionSent", Type.methodType(Types.Object, Types.ExecutionContext));
+
         // class: StringBuilder
         static final MethodName StringBuilder_append_Charsequence = MethodName.findVirtual(
                 Types.StringBuilder, "append",
@@ -2439,6 +2442,18 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
 
         /* step 6/11 */
         return ValType.Object;
+    }
+
+    /**
+     * Extension: 'function.sent' meta property
+     */
+    @Override
+    public ValType visit(FunctionSent node, ExpressionVisitor mv) {
+        mv.loadExecutionContext();
+        mv.lineInfo(node);
+        mv.invoke(Methods.ScriptRuntime_functionSent);
+
+        return ValType.Any;
     }
 
     /**

@@ -106,7 +106,11 @@ final class BoundNames extends DefaultNodeVisitor<List<Name>, List<Name>> {
      */
     @Override
     public List<Name> visit(ObjectBindingPattern node, List<Name> names) {
-        return forEach(node.getProperties(), names);
+        forEach(node.getProperties(), names);
+        if (node.getRest() != null) {
+            node.getRest().accept(this, names);
+        }
+        return names;
     }
 
     /**
@@ -118,6 +122,16 @@ final class BoundNames extends DefaultNodeVisitor<List<Name>, List<Name>> {
     @Override
     public List<Name> visit(BindingProperty node, List<Name> names) {
         return node.getBinding().accept(this, names);
+    }
+
+    /**
+     * <pre>
+     * BindingRestProperty : ... BindingIdentifier
+     * </pre>
+     */
+    @Override
+    public List<Name> visit(BindingRestProperty node, List<Name> names) {
+        return node.getBindingIdentifier().accept(this, names);
     }
 
     /**

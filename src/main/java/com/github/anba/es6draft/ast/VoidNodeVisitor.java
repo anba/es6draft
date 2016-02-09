@@ -124,6 +124,8 @@ public interface VoidNodeVisitor<V> {
 
     void visit(FunctionExpression node, V value);
 
+    void visit(FunctionSent node, V value);
+
     void visit(GeneratorComprehension node, V value);
 
     void visit(GeneratorDeclaration node, V value);

@@ -16,6 +16,7 @@ import static com.github.anba.es6draft.runtime.objects.intl.IntlAbstractOperatio
 import static com.github.anba.es6draft.runtime.objects.intl.IntlAbstractOperations.DefaultLocale;
 import static com.github.anba.es6draft.runtime.objects.intl.IntlAbstractOperations.RemoveUnicodeLocaleExtension;
 import static com.github.anba.es6draft.runtime.objects.text.RegExpConstructor.RegExpCreate;
+import static com.github.anba.es6draft.runtime.objects.text.RegExpStringIteratorPrototype.CreateRegExpStringIterator;
 import static com.github.anba.es6draft.runtime.objects.text.StringIteratorPrototype.CreateStringIterator;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.ArrayObject.ArrayCreate;
@@ -71,6 +72,9 @@ public final class StringPrototype extends OrdinaryObject implements Initializab
     public void initialize(Realm realm) {
         createProperties(realm, this, Properties.class);
         createProperties(realm, this, AdditionalProperties.class);
+        createProperties(realm, this, TrimFunctions.class);
+        createProperties(realm, this, PadFunctions.class);
+        createProperties(realm, this, MatchAllFunction.class);
     }
 
     /**
@@ -1373,6 +1377,222 @@ public final class StringPrototype extends OrdinaryObject implements Initializab
         public static Object sup(ExecutionContext cx, Object thisValue) {
             Object s = thisValue;
             return CreateHTML(cx, s, "sup", "", "");
+        }
+    }
+
+    /**
+     * Extension: String.prototype.trimLeft and trimRight
+     */
+    @CompatibilityExtension(CompatibilityOption.StringTrim)
+    public enum TrimFunctions {
+        ;
+
+        /**
+         * String.prototype.trimLeft ()
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the string with leading whitespace removed
+         */
+        @Function(name = "trimLeft", arity = 0)
+        public static Object trimLeft(ExecutionContext cx, Object thisValue) {
+            /* step 1 */
+            Object obj = RequireObjectCoercible(cx, thisValue);
+            /* steps 2-3 */
+            String s = ToFlatString(cx, obj);
+            /* steps 4-5 */
+            return Strings.trimLeft(s);
+        }
+
+        /**
+         * String.prototype.trimRight ()
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the string with trailing whitespace removed
+         */
+        @Function(name = "trimRight", arity = 0)
+        public static Object trimRight(ExecutionContext cx, Object thisValue) {
+            /* step 1 */
+            Object obj = RequireObjectCoercible(cx, thisValue);
+            /* steps 2-3 */
+            String s = ToFlatString(cx, obj);
+            /* steps 4-5 */
+            return Strings.trimRight(s);
+        }
+    }
+
+    /**
+     * Extension: String.prototype.padStart and padEnd
+     */
+    @CompatibilityExtension(CompatibilityOption.StringPad)
+    public enum PadFunctions {
+        ;
+
+        /**
+         * String.prototype.padStart( maxLength [ , fillString ] )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param maxLength
+         *            the maximum length
+         * @param fillString
+         *            the optional fill string
+         * @return the string with leading padding applied
+         */
+        @Function(name = "padStart", arity = 1)
+        public static Object padStart(ExecutionContext cx, Object thisValue, Object maxLength, Object fillString) {
+            /* step 1 */
+            Object obj = RequireObjectCoercible(cx, thisValue);
+            /* step 2 */
+            String s = ToFlatString(cx, obj);
+            /* step 3 */
+            long intMaxLength = ToLength(cx, maxLength);
+            /* step 4 */
+            int stringLength = s.length();
+            /* step 5 */
+            if (intMaxLength <= stringLength) {
+                return s;
+            }
+            /* steps 6-7 */
+            CharSequence fillStr = Type.isUndefined(fillString) ? "" : ToString(cx, fillString);
+            /* step 8 */
+            if (fillStr.length() == 0) {
+                fillStr = " ";
+            }
+            /* step 9 */
+            long fillLen = intMaxLength - stringLength;
+            if (fillLen > 1 << 27) {
+                // Likely to exceed heap space, throw RangeError to match String.prototype.repeat.
+                throw newRangeError(cx, Messages.Key.InvalidStringPad);
+            }
+            /* steps 10-11 */
+            return repeatFill(fillStr.toString(), (int) fillLen) + s;
+        }
+
+        /**
+         * String.prototype.padEnd( maxLength [ , fillString ] )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param maxLength
+         *            the maximum length
+         * @param fillString
+         *            the optional fill string
+         * @return the string with trailing padding applied
+         */
+        @Function(name = "padEnd", arity = 1)
+        public static Object padEnd(ExecutionContext cx, Object thisValue, Object maxLength, Object fillString) {
+            /* step 1 */
+            Object obj = RequireObjectCoercible(cx, thisValue);
+            /* step 2 */
+            String s = ToFlatString(cx, obj);
+            /* step 3 */
+            long intMaxLength = ToLength(cx, maxLength);
+            /* step 4 */
+            int stringLength = s.length();
+            /* step 5 */
+            if (intMaxLength <= stringLength) {
+                return s;
+            }
+            /* steps 6-7 */
+            CharSequence fillStr = Type.isUndefined(fillString) ? "" : ToString(cx, fillString);
+            /* step 8 */
+            if (fillStr.length() == 0) {
+                fillStr = " ";
+            }
+            /* step 9 */
+            long fillLen = intMaxLength - stringLength;
+            if (fillLen > 1 << 27) {
+                // Likely to exceed heap space, throw RangeError to match String.prototype.repeat.
+                throw newRangeError(cx, Messages.Key.InvalidStringPad);
+            }
+            /* steps 10-11 */
+            return s + repeatFill(fillStr.toString(), (int) fillLen);
+        }
+
+        private static String repeatFill(String fillStr, int fillLen) {
+            assert !fillStr.isEmpty() && fillLen > 0;
+            final int length = fillStr.length();
+            int c = fillLen / length;
+            if (c == 0) {
+                return fillStr.substring(0, fillLen);
+            }
+            if (c == 1) {
+                int r = fillLen - length;
+                if (r == 0) {
+                    return fillStr;
+                }
+                return fillStr + fillStr.substring(0, r);
+            }
+            char[] ca = new char[fillLen];
+            if (length == 1) {
+                Arrays.fill(ca, fillStr.charAt(0));
+                return new String(ca);
+            }
+            fillStr.getChars(0, length, ca, 0);
+            final int limit = length * Integer.highestOneBit(c);
+            for (int k = length; k < limit; k <<= 1) {
+                System.arraycopy(ca, 0, ca, k, k);
+            }
+            System.arraycopy(ca, 0, ca, limit, fillLen - limit);
+            return new String(ca);
+        }
+    }
+
+    /**
+     * Extension: String.prototype.matchAll
+     */
+    @CompatibilityExtension(CompatibilityOption.StringMatchAll)
+    public enum MatchAllFunction {
+        ;
+
+        /**
+         * String.prototype.matchAll ( regexp )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param regexp
+         *            the regular expression object
+         * @return the match iterator
+         */
+        @Function(name = "matchAll", arity = 1)
+        public static Object matchAll(ExecutionContext cx, Object thisValue, Object regexp) {
+            /* step 1 */
+            Object obj = RequireObjectCoercible(cx, thisValue);
+            /* steps 2-4 */
+            if (!IsRegExp(cx, regexp)) {
+                throw newTypeError(cx, Messages.Key.IncompatibleObject);
+            }
+            /* steps 5-6 */
+            String s = ToFlatString(cx, obj);
+            /* steps 7-8 */
+            String flags = ToFlatString(cx, Get(cx, Type.objectValue(regexp), "flags"));
+            /* step 9 */
+            if (flags.indexOf('g') == -1) {
+                flags = "g" + flags;
+            }
+            /* step 10 */
+            // FIXME: spec bug? - species not handled.
+            // FIXME: spec bug - regexp pattern not extracted.
+            String pattern = ToFlatString(cx, Get(cx, Type.objectValue(regexp), "source"));
+            RegExpObject rx = RegExpCreate(cx, pattern, flags);
+            /* steps 11-12 */
+            long lastIndex = ToLength(cx, Get(cx, Type.objectValue(regexp), "lastIndex"));
+            /* steps 13-14 */
+            Set(cx, rx, "lastIndex", lastIndex, true);
+            /* step 15 */
+            return CreateRegExpStringIterator(cx, rx, s);
         }
     }
 

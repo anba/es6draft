@@ -129,6 +129,8 @@ public interface NodeVisitor<R, V> {
 
     R visit(FunctionExpression node, V value);
 
+    R visit(FunctionSent node, V value);
+
     R visit(GeneratorComprehension node, V value);
 
     R visit(GeneratorDeclaration node, V value);
