@@ -26,7 +26,6 @@ import com.github.anba.es6draft.runtime.modules.ModuleSemantics;
 import com.github.anba.es6draft.runtime.modules.SourceTextModuleRecord;
 import com.github.anba.es6draft.runtime.objects.Eval;
 import com.github.anba.es6draft.runtime.objects.async.AsyncAbstractOperations;
-import com.github.anba.es6draft.runtime.objects.async.iteration.AsyncGeneratorAbstractOperations;
 import com.github.anba.es6draft.runtime.objects.async.iteration.AsyncGeneratorObject;
 import com.github.anba.es6draft.runtime.objects.iteration.GeneratorObject;
 import com.github.anba.es6draft.runtime.objects.promise.PromiseAbstractOperations;
@@ -130,7 +129,6 @@ final class Types {
     static final Type AsyncAbstractOperations = Type.of(AsyncAbstractOperations.class);
 
     // runtime.objects.async.iteration
-    static final Type AsyncGeneratorAbstractOperations = Type.of(AsyncGeneratorAbstractOperations.class);
     static final Type AsyncGeneratorObject = Type.of(AsyncGeneratorObject.class);
 
     // runtime.objects.iteration

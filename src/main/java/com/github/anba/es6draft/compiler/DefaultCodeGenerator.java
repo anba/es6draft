@@ -160,11 +160,6 @@ abstract class DefaultCodeGenerator<RETURN> extends DefaultNodeVisitor<RETURN, C
                 Types.AsyncAbstractOperations, "AsyncFunctionAwait",
                 Type.methodType(Type.VOID_TYPE, Types.ExecutionContext, Types.Object));
 
-        // class: AsyncGeneratorAbstractOperations
-        static final MethodName AsyncGeneratorAbstractOperations_AsyncFunctionAwait = MethodName.findStatic(
-                Types.AsyncGeneratorAbstractOperations, "AsyncFunctionAwait",
-                Type.methodType(Type.VOID_TYPE, Types.ExecutionContext, Types.Object));
-
         // class: Boolean
         static final MethodName Boolean_toString = MethodName.findStatic(Types.Boolean, "toString",
                 Type.methodType(Types.String, Type.BOOLEAN_TYPE));
@@ -1870,17 +1865,11 @@ abstract class DefaultCodeGenerator<RETURN> extends DefaultNodeVisitor<RETURN, C
      *            the code visitor
      */
     protected final void await(Node node, CodeVisitor mv) {
-        boolean asyncGenerator = mv.isGenerator();
-
         // stack: [value] -> [value']
         mv.loadExecutionContext();
         mv.swap();
         mv.lineInfo(node);
-        if (!asyncGenerator) {
-            mv.invoke(Methods.AsyncAbstractOperations_AsyncFunctionAwait);
-        } else {
-            mv.invoke(Methods.AsyncGeneratorAbstractOperations_AsyncFunctionAwait);
-        }
+        mv.invoke(Methods.AsyncAbstractOperations_AsyncFunctionAwait);
 
         // Reserve stack space for await return value.
         mv.anull();
@@ -1888,11 +1877,6 @@ abstract class DefaultCodeGenerator<RETURN> extends DefaultNodeVisitor<RETURN, C
 
         // check for exception
         throwAfterResume(mv);
-
-        // check for return value
-        if (asyncGenerator) {
-            returnAfterResume(mv);
-        }
     }
 
     private void throwAfterResume(CodeVisitor mv) {

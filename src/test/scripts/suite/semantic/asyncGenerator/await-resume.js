@@ -25,15 +25,16 @@ const {
   // Execution stops at 'await', async queue unchanged.
   it.next(1).then(v => assertEquals({value: -1, done: true}, v)).catch(reportFailure);
 
-  // Resume generator execution, pushes AsyncGeneratorRequest<Normal, 2> to async queue.
-  // 'await' is resumed with queue[0] = AsyncGeneratorRequest<Normal, 1>.
+  // Try to resume generator execution, pushes AsyncGeneratorRequest<Normal, 2> to async queue.
+  // 'await' is resumed in next tick, generators returns and pops AsyncGeneratorRequest<Normal, 1> from queue.
+  // Second next() invocation receives default `{value: undefined, done: true}` completion.
   it.next(2).then(v => assertEquals({value: void 0, done: true}, v)).catch(reportFailure);
 }
 
 {
   async function* g() {
     let x = await Promise.resolve(123);
-    assertSame(1, x);
+    assertSame(123, x);
 
     let y = yield 456;
     assertSame(2, y);
@@ -47,22 +48,9 @@ const {
   // Execution stops at 'await', async queue unchanged.
   it.next(1).then(v => assertEquals({value: 456, done: false}, v)).catch(reportFailure);
 
-  // Resume generator execution, pushes AsyncGeneratorRequest<Normal, 2> to async queue.
-  // 'await' is resumed with queue[0] = AsyncGeneratorRequest<Normal, 1>.
+  // Try to resume generator execution, pushes AsyncGeneratorRequest<Normal, 2> to async queue.
+  // 'await' is resumed in next tick.
   // Execution stops at 'yield', AsyncGeneratorRequest<Normal, 1> popped from queue.
   // 'yield' is resumed with queue[0] = AsyncGeneratorRequest<Normal, 2>.
   it.next(2).then(v => assertEquals({value: -1, done: true}, v)).catch(reportFailure);
-}
-
-// Test case for missing queue length check in AsyncGeneratorObject#fulfill.
-{
-  async function* g() {
-    let resolve;
-    await new Promise(r => (resolve = r));
-    resolve();
-    while (1) yield;
-  }
-  let it = g();
-  it.next(1);
-  it.next(2);
 }

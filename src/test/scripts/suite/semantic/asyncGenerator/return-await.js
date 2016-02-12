@@ -30,8 +30,8 @@ it.next(0).then(v => assertEquals({value: 123, done: false}, v)).catch(reportFai
 
 // Continue execution after 'yield', pushes AsyncGeneratorRequest<Return> to async queue.
 // Execution stops at 'await', async queue unchanged.
-it.return(1).then(v => assertEquals({value: 1, done: true}, v)).catch(reportFailure);
+it.return(1).then(reportFailure, reportFailure);
 
-// Continue execution after 'await', pushes AsyncGeneratorRequest<Normal> to async queue.
-// 'await' is resumed with queue[0] = AsyncGeneratorRequest<Return>.
-it.next(2).then(v => assertEquals({value: void 0, done: true}, v)).catch(reportFailure);
+// Try to resume execution, pushes AsyncGeneratorRequest<Normal> to async queue.
+// Generator is still suspended at 'await'.
+it.next(2).then(reportFailure, reportFailure);

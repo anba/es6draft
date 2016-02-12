@@ -20,9 +20,9 @@ import com.github.anba.es6draft.runtime.objects.promise.PromiseObject;
 /**
  * <h1>Async Functions</h1>
  * 
- * The async state shares
+ * {@link Async} implementation for async functions.
  */
-public final class AsyncObject {
+public final class AsyncObject implements Async {
     public enum AsyncState {
         SuspendedAwait, Executing, Completed
     }
@@ -83,15 +83,8 @@ public final class AsyncObject {
         continuation.start(cx);
     }
 
-    /**
-     * Resumes async function execution.
-     * 
-     * @param cx
-     *            the execution context
-     * @param value
-     *            the resumption value
-     */
-    void resume(ExecutionContext cx, Object value) {
+    @Override
+    public void resume(ExecutionContext cx, Object value) {
         switch (state) {
         case Executing:
         case Completed:
@@ -105,15 +98,8 @@ public final class AsyncObject {
         }
     }
 
-    /**
-     * Stops async function execution with a {@code throw} event.
-     * 
-     * @param cx
-     *            the execution context
-     * @param value
-     *            the exception value
-     */
-    void _throw(ExecutionContext cx, Object value) {
+    @Override
+    public void _throw(ExecutionContext cx, Object value) {
         switch (state) {
         case Executing:
         case Completed:

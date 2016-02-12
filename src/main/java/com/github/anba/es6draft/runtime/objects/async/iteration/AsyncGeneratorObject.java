@@ -7,7 +7,6 @@
 package com.github.anba.es6draft.runtime.objects.async.iteration;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.CreateIterResultObject;
-import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import java.util.ArrayList;
@@ -17,11 +16,11 @@ import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.CodeContinuation;
 import com.github.anba.es6draft.runtime.internal.Continuation;
-import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.ResumptionPoint;
 import com.github.anba.es6draft.runtime.internal.ReturnValue;
 import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
+import com.github.anba.es6draft.runtime.objects.async.Async;
 import com.github.anba.es6draft.runtime.objects.promise.PromiseAbstractOperations;
 import com.github.anba.es6draft.runtime.objects.promise.PromiseCapability;
 import com.github.anba.es6draft.runtime.objects.promise.PromiseObject;
@@ -35,12 +34,13 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>Properties of AsyncGenerator Instances
  * </ul>
  */
-public final class AsyncGeneratorObject extends OrdinaryObject {
+public final class AsyncGeneratorObject extends OrdinaryObject implements Async {
     /**
      * [[AsyncGeneratorState]]
      */
     public enum AsyncGeneratorState {
-        SuspendedStart, SuspendedYield, Executing, Completed
+        // NB: Additional 'SuspendedAwait' state to ease debugging of async generator execution.
+        SuspendedStart, SuspendedYield, SuspendedAwait, Executing, Completed
     }
 
     /** [[AsyncGeneratorState]] */
@@ -92,11 +92,12 @@ public final class AsyncGeneratorObject extends OrdinaryObject {
     }
 
     /**
-     * Proceeds to the "suspendedYield" generator state.
+     * Proceeds to either the "suspendedAwait" or the "suspendedYield" generator state.
      */
-    private void suspend() {
+    private void suspend(AsyncGeneratorState suspendState) {
+        assert suspendState == AsyncGeneratorState.SuspendedYield || suspendState == AsyncGeneratorState.SuspendedAwait;
         assert state == AsyncGeneratorState.Executing : "suspend from: " + state;
-        this.state = AsyncGeneratorState.SuspendedYield;
+        this.state = suspendState;
     }
 
     /**
@@ -128,51 +129,39 @@ public final class AsyncGeneratorObject extends OrdinaryObject {
         this.code = code;
         this.state = AsyncGeneratorState.SuspendedStart;
         this.queue = new ArrayList<>();
-        this.context.setCurrentAsyncGenerator(this);
+        this.context.setCurrentAsync(this);
         this.continuation = new CodeContinuation<>(new AsyncGeneratorHandler(this));
     }
 
-    /**
-     * Resumes async function execution.
-     * 
-     * @param cx
-     *            the execution context
-     * @param value
-     *            the resumption value
-     */
-    void resume(ExecutionContext cx, Object value) {
+    @Override
+    public void resume(ExecutionContext cx, Object value) {
         switch (state) {
-        case Completed:
-            throw newTypeError(cx, Messages.Key.GeneratorExecuting);
+        case SuspendedStart:
         case SuspendedYield:
+        case Executing:
+        case Completed:
+            throw new AssertionError();
+        case SuspendedAwait:
             state = AsyncGeneratorState.Executing;
             continuation.resume(cx, value);
             return;
-        case SuspendedStart:
-        case Executing:
         default:
             throw new AssertionError();
         }
     }
 
-    /**
-     * Stops async function execution with a {@code throw} event.
-     * 
-     * @param cx
-     *            the execution context
-     * @param value
-     *            the exception value
-     */
-    void _throw(ExecutionContext cx, Object value) {
+    @Override
+    public void _throw(ExecutionContext cx, Object value) {
         switch (state) {
-        case Completed:
-            throw newTypeError(cx, Messages.Key.GeneratorExecuting);
+        case SuspendedStart:
         case SuspendedYield:
+        case Executing:
+        case Completed:
+            throw new AssertionError();
+        case SuspendedAwait:
             state = AsyncGeneratorState.Executing;
             continuation._throw(cx, ScriptException.create(value));
             return;
-        case SuspendedStart:
-        case Executing:
         default:
             throw new AssertionError();
         }
@@ -191,15 +180,13 @@ public final class AsyncGeneratorObject extends OrdinaryObject {
         /* step 2 (not applicable) */
         /* step 3 */
         List<AsyncGeneratorRequest> queue = this.queue;
-        // FIXME: spec bug - queue can be empty
-        if (!queue.isEmpty()) {
-            /* step 4 */
-            AsyncGeneratorRequest next = queue.remove(0);
-            /* step 5 */
-            PromiseCapability<PromiseObject> capability = next.getCapability();
-            /* step 6 */
-            capability.getResolve().call(cx, UNDEFINED, iteratorResult);
-        }
+        /* step 4 */
+        assert !queue.isEmpty();
+        AsyncGeneratorRequest next = queue.remove(0);
+        /* step 5 */
+        PromiseCapability<PromiseObject> capability = next.getCapability();
+        /* step 6 */
+        capability.getResolve().call(cx, UNDEFINED, iteratorResult);
         /* step 7 */
         resumeNext(cx);
         /* step 8 (return) */
@@ -219,6 +206,7 @@ public final class AsyncGeneratorObject extends OrdinaryObject {
         /* step 3 */
         List<AsyncGeneratorRequest> queue = this.queue;
         /* step 4 */
+        assert !queue.isEmpty();
         AsyncGeneratorRequest next = queue.remove(0);
         /* step 5 */
         PromiseCapability<PromiseObject> capability = next.getCapability();
@@ -238,7 +226,7 @@ public final class AsyncGeneratorObject extends OrdinaryObject {
     void resumeNext(ExecutionContext cx) {
         /* step 1 (implicit) */
         /* steps 2-3 */
-        assert state != AsyncGeneratorState.Executing;
+        assert !(state == AsyncGeneratorState.Executing || state == AsyncGeneratorState.SuspendedAwait);
         /* step 4 */
         List<AsyncGeneratorRequest> queue = this.queue;
         /* step 5 */
@@ -273,6 +261,7 @@ public final class AsyncGeneratorObject extends OrdinaryObject {
                 /* step 20 */
                 return;
             case Executing:
+            case SuspendedAwait:
             default:
                 throw new AssertionError();
             }
@@ -284,7 +273,7 @@ public final class AsyncGeneratorObject extends OrdinaryObject {
             switch (state) {
             case SuspendedStart:
                 /* step 9.a */
-                state = AsyncGeneratorState.Completed;
+                close();
                 // fall-through
             case Completed:
                 /* step 9.b.i */
@@ -299,6 +288,7 @@ public final class AsyncGeneratorObject extends OrdinaryObject {
                 /* step 20 */
                 return;
             case Executing:
+            case SuspendedAwait:
             default:
                 throw new AssertionError();
             }
@@ -310,7 +300,7 @@ public final class AsyncGeneratorObject extends OrdinaryObject {
             switch (state) {
             case SuspendedStart:
                 /* step 9.a */
-                state = AsyncGeneratorState.Completed;
+                close();
                 // fall-through
             case Completed:
                 /* step 9.b */
@@ -324,6 +314,7 @@ public final class AsyncGeneratorObject extends OrdinaryObject {
                 /* step 20 */
                 return;
             case Executing:
+            case SuspendedAwait:
             default:
                 throw new AssertionError();
             }
@@ -357,7 +348,7 @@ public final class AsyncGeneratorObject extends OrdinaryObject {
         /* step 8 */
         AsyncGeneratorState state = this.state;
         /* step 9 */
-        if (state != AsyncGeneratorState.Executing) {
+        if (!(state == AsyncGeneratorState.Executing || state == AsyncGeneratorState.SuspendedAwait)) {
             resumeNext(cx);
         }
         return capability.getPromise();
@@ -383,10 +374,12 @@ public final class AsyncGeneratorObject extends OrdinaryObject {
 
         @Override
         public Void suspendWith(ExecutionContext cx, Object value) {
-            generatorObject.suspend();
             if (value != null) {
+                generatorObject.suspend(AsyncGeneratorState.SuspendedYield);
                 // The iteration result object was already constructed at the call site.
                 generatorObject.fulfill(cx, (ScriptObject) value);
+            } else {
+                generatorObject.suspend(AsyncGeneratorState.SuspendedAwait);
             }
             return null;
         }

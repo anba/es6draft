@@ -12,8 +12,7 @@ import com.github.anba.es6draft.Script;
 import com.github.anba.es6draft.runtime.internal.RuntimeContext;
 import com.github.anba.es6draft.runtime.internal.RuntimeInfo.SourceObject;
 import com.github.anba.es6draft.runtime.modules.SourceTextModuleRecord;
-import com.github.anba.es6draft.runtime.objects.async.AsyncObject;
-import com.github.anba.es6draft.runtime.objects.async.iteration.AsyncGeneratorObject;
+import com.github.anba.es6draft.runtime.objects.async.Async;
 import com.github.anba.es6draft.runtime.objects.iteration.GeneratorObject;
 import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
@@ -36,8 +35,7 @@ public final class ExecutionContext {
     private final Executable executable;
     private final FunctionObject function;
     private GeneratorObject generator;
-    private AsyncObject async;
-    private AsyncGeneratorObject asyncGenerator;
+    private Async async;
 
     private ExecutionContext(Realm realm, LexicalEnvironment<?> varEnv,
             LexicalEnvironment<?> lexEnv, LexicalEnvironment<FunctionEnvironmentRecord> funVarEnv,
@@ -138,43 +136,23 @@ public final class ExecutionContext {
     }
 
     /**
-     * Returns the {@code AsyncObject} component of this execution context.
+     * Returns the {@code Async} component of this execution context.
      * 
-     * @return the {@code AsyncObject} component or {@code null} if not evaluating an async function
+     * @return the {@code Async} component or {@code null} if not evaluating an async function
      */
-    public AsyncObject getCurrentAsync() {
+    public Async getCurrentAsync() {
         return async;
     }
 
     /**
-     * Sets the {@code AsyncObject} component of this execution context.
+     * Sets the {@code Async} component of this execution context.
      * 
      * @param async
-     *            the {@code AsyncObject} component
+     *            the {@code Async} component
      */
-    public void setCurrentAsync(AsyncObject async) {
+    public void setCurrentAsync(Async async) {
         assert this.async == null && async != null;
         this.async = async;
-    }
-
-    /**
-     * Returns the {@code AsyncGenerator} component of this execution context.
-     * 
-     * @return the {@code AsyncGenerator} component or {@code null} if not evaluating an async generator
-     */
-    public AsyncGeneratorObject getCurrentAsyncGenerator() {
-        return asyncGenerator;
-    }
-
-    /**
-     * Sets the {@code AsyncGenerator} component of this execution context.
-     * 
-     * @param asyncGenerator
-     *            the {@code AsyncGenerator} component
-     */
-    public void setCurrentAsyncGenerator(AsyncGeneratorObject asyncGenerator) {
-        assert this.asyncGenerator == null && asyncGenerator != null;
-        this.asyncGenerator = asyncGenerator;
     }
 
     /**

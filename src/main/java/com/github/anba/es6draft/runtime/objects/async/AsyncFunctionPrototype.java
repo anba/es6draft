@@ -18,7 +18,7 @@ import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
- * <h1>Extension: Async Function Definitions</h1><br>
+ * <h1>Async Functions</h1><br>
  * <h2>Async Function Objects</h2>
  * <ul>
  * <li>Properties of the AsyncFunction Prototype Object

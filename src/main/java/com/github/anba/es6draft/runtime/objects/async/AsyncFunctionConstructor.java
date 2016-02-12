@@ -36,7 +36,7 @@ import com.github.anba.es6draft.runtime.types.builtins.FunctionObject.FunctionKi
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryAsyncFunction;
 
 /**
- * <h1>Extension: Async Function Definitions</h1><br>
+ * <h1>Async Functions</h1><br>
  * <h2>Async Function Objects</h2>
  * <ul>
  * <li>The Async Function Constructor

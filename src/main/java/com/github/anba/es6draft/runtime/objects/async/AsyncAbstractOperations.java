@@ -19,7 +19,10 @@ import com.github.anba.es6draft.runtime.types.Undefined;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
 
 /**
- * Extension: Async Function Definitions
+ * <h1>Async Functions</h1>
+ * <ul>
+ * <li>Abstract Operations
+ * </ul>
  */
 public final class AsyncAbstractOperations {
     private AsyncAbstractOperations() {
@@ -52,7 +55,7 @@ public final class AsyncAbstractOperations {
      */
     public static void AsyncFunctionAwait(ExecutionContext cx, Object value) {
         /* step 1 */
-        AsyncObject asyncObject = cx.getCurrentAsync();
+        Async asyncObject = cx.getCurrentAsync();
         assert asyncObject != null;
         /* steps 2-3 */
         PromiseCapability<PromiseObject> promiseCapability = PromiseBuiltinCapability(cx);
@@ -73,14 +76,14 @@ public final class AsyncAbstractOperations {
      * 2.4 AsyncFunction Awaited Fulfilled
      */
     public static final class AwaitedFulfilled extends BuiltinFunction {
-        private final AsyncObject asyncObject;
+        private final Async asyncObject;
 
-        public AwaitedFulfilled(Realm realm, AsyncObject asyncObject) {
+        public AwaitedFulfilled(Realm realm, Async asyncObject) {
             this(realm, asyncObject, null);
             createDefaultFunctionProperties();
         }
 
-        private AwaitedFulfilled(Realm realm, AsyncObject asyncObject, Void ignore) {
+        private AwaitedFulfilled(Realm realm, Async asyncObject, Void ignore) {
             super(realm, ANONYMOUS, 1);
             this.asyncObject = asyncObject;
         }
@@ -104,14 +107,14 @@ public final class AsyncAbstractOperations {
      * 2.5 AsyncFunction Awaited Rejected
      */
     public static final class AwaitedRejected extends BuiltinFunction {
-        private final AsyncObject asyncObject;
+        private final Async asyncObject;
 
-        public AwaitedRejected(Realm realm, AsyncObject asyncObject) {
+        public AwaitedRejected(Realm realm, Async asyncObject) {
             this(realm, asyncObject, null);
             createDefaultFunctionProperties();
         }
 
-        private AwaitedRejected(Realm realm, AsyncObject asyncObject, Void ignore) {
+        private AwaitedRejected(Realm realm, Async asyncObject, Void ignore) {
             super(realm, ANONYMOUS, 1);
             this.asyncObject = asyncObject;
         }
