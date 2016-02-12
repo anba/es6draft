@@ -52,15 +52,15 @@ tests/basic/typed-array-copyWithin.js
 tests/arguments/defaults-destructuring-with-rest.js
 tests/arguments/destructuring-after-defaults.js
 
-# SM: Symbol.toPrimitive not implemented
-tests/basic/bug830049.js
-
 # SM: eval("-- /./") throws SyntaxError, expected is ReferenceError
 tests/parser/modifier-regexp-vs-div.js
 
 # SM: const not allowed in for-in head
 # https://bugzilla.mozilla.org/show_bug.cgi?id=449811
 tests/parser/letContextualKeyword.js
+
+# ES2016 does not allow non-simple parameter list if function contains "use strict" directive
+tests/arguments/defaults-strict-mode.js
 
 
 ###################
@@ -74,8 +74,10 @@ tests/basic/testBug720695.js
 # __iterator__ not supported
 tests/basic/bug684922.js
 tests/basic/bug885648.js
-tests/basic/bug942390.js
 tests/basic/testCustomIterator.js
+
+# legacy iterator
+tests/auto-regress/bug675520.js
 
 
 ############################################
@@ -115,6 +117,7 @@ tests/generators/bug931414.js
 tests/generators/wrappers.js
 tests/parser/syntax-error-illegal-character.js
 tests/self-hosting/invoke-self-hosted-with-primitive-this.js
+tests/self-hosting/method-called-on-incompatible.js
 
 # different error message with toString
 tests/basic/bug882416.js
@@ -126,9 +129,6 @@ tests/collections/bug-743101.js
 # Different maximal stack depth
 tests/auto-regress/bug743094.js
 tests/basic/bug522136.js
-
-# no dynamic access to arguments in generator comprehensions
-tests/basic/bug852016.js
 
 # sourceURL annotations
 tests/basic/display-url-in-stack-trace.js
@@ -147,9 +147,6 @@ tests/arguments/bug1227287.js
 ############################################
 # Misc proxy implementation isssues        #
 ############################################
-
-# Spidermonkey: Proxy vs. __proto__ on global
-tests/auto-regress/bug589103.js
 
 # missing [object Function] for proxied functions (and toStringTag)
 tests/basic/bug807623.js

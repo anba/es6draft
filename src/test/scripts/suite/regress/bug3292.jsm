@@ -14,4 +14,4 @@ const {
 import * as mod from "./resources/bug3292_1.jsm";
 
 assertEquals([], Object.getOwnPropertyNames(mod));
-assertEquals([], [...Reflect.enumerate(mod)]);
+assertEquals([], [...mod[Symbol.iterator]()]);

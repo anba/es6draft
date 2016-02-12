@@ -24,3 +24,24 @@ test/built-ins/String/prototype/trim/15.5.4.20-3-6.js
 
 # "length" property changed from 3 to 0 in ES2016
 test/built-ins/TypedArray/length.js
+
+# https://github.com/tc39/test262/pull/496
+test/built-ins/Proxy/enumerate/call-parameters.js
+test/built-ins/Proxy/enumerate/result-not-an-object-throws-boolean.js
+test/built-ins/Proxy/enumerate/result-not-an-object-throws-number.js
+test/built-ins/Proxy/enumerate/result-not-an-object-throws-string.js
+test/built-ins/Proxy/enumerate/result-not-an-object-throws-symbol.js
+test/built-ins/Proxy/enumerate/result-not-an-object-throws-undefined.js
+test/built-ins/Proxy/enumerate/return-is-abrupt.js
+test/built-ins/Proxy/enumerate/return-trap-result-no-value.js
+test/built-ins/Proxy/enumerate/return-trap-result.js
+test/built-ins/Proxy/enumerate/trap-is-not-callable.js
+test/built-ins/Reflect/enumerate/does-not-iterate-over-symbol-properties.js
+test/built-ins/Reflect/enumerate/enumerate.js
+test/built-ins/Reflect/enumerate/length.js
+test/built-ins/Reflect/enumerate/name.js
+test/built-ins/Reflect/enumerate/return-abrupt-from-result.js
+test/built-ins/Reflect/enumerate/return-iterator.js
+
+# ECMA-402 2nd edition change, length changed from 0 to 1 (TODO: spec bug?)
+test/intl402/DateTimeFormat/prototype/format/12.3.2_1_a_L15.js

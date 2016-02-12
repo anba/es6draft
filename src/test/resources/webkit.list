@@ -47,9 +47,6 @@ js/script-tests/let-syntax.js
 # invalid test, getter and setter definitions are not collapsed in classes
 js/script-tests/class-syntax-method-names.js
 
-# invalid test: super in non-method context
-js/script-tests/arrowfunction-superproperty.js
-
 # Unicode 8 not supported in JSC (mongolian vowel separator)
 js/script-tests/parseFloat.js
 js/script-tests/ToNumber.js

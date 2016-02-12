@@ -15,9 +15,6 @@ es6/typedarray.js
 # V8 does not implement %TypedArray% prototype object
 es6/typed-array-iterator.js
 
-# V8 generators: missing type checks in v8-implementation
-es6/generators-iteration.js
-
 # non-strict equality fails when comparing symbols and primitive values against each other
 es6/iteration-semantics.js
 
@@ -26,10 +23,6 @@ harmony/dataview-accessors.js
 
 # invalid test, ToDateTimeOptions does not alter input options object
 regress/regress-builtinbust-7.js
-
-# TODO: Add new v8-compat mode?
-# .caller and .arguments in sloppy generator functions are poison-pilled in V8
-es6/generators-runtime.js
 
 # direct eval() and lexical declarations
 regress/regress-1213575.js
@@ -89,9 +82,6 @@ regress/regress-crbug-570241.js
 
 # Proxy enumerate trap doesn't support infinite prototype chain in V8
 harmony/proxies-prototype-target-stackoverflow.js
-
-# V8 does not implement inferred names for computed property names, see todo in test file
-harmony/function-name.js
 
 # `/\ud808\udf45{3}/u.test("\u{12345}\udf45\udf45")` returns true in v8
 harmony/unicode-escapes-in-regexps.js
@@ -178,6 +168,7 @@ object-get-own-property-names.js
 object-prevent-extensions.js
 object-seal.js
 es6/block-conflicts.js
+es6/regexp-tostring.js
 es6/super.js
 es6/typedarray-reduce.js
 harmony/block-conflicts-sloppy.js
@@ -254,9 +245,6 @@ regress/regress-1530.js
 regexp-static.js
 string-replace.js
 
-# Function.arguments created anew on each access
-arguments-indirect.js
-
 # infinite loop in Object.prototype.isPrototypeOf, throws RangeError in V8
 regress/regress-578775.js
 
@@ -331,6 +319,9 @@ es6/block-let-contextual-sloppy.js
 # RegExp lookbehind
 harmony/unicode-character-ranges.js
 harmony/unicode-regexp-backrefs.js
+
+# RegExp \p property classes
+harmony/unicode-regexp-property-class.js
 
 # Duplicate block-scoped function declarations in non-strict mode
 regress/regress-4693.js

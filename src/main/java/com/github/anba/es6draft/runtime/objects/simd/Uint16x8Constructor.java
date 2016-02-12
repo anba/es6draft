@@ -6,8 +6,7 @@
  */
 package com.github.anba.es6draft.runtime.objects.simd;
 
-import static com.github.anba.es6draft.runtime.AbstractOperations.ToUint32;
-import static com.github.anba.es6draft.runtime.internal.Errors.newRangeError;
+import static com.github.anba.es6draft.runtime.AbstractOperations.ToInt32;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.objects.simd.SIMD.*;
@@ -641,16 +640,11 @@ public final class Uint16x8Constructor extends BuiltinConstructor implements Ini
             SIMDValue sa = simdValue(cx, a, SIMD_TYPE);
             /* step 2 */
             // FIXME: spec bug - Missing ReturnIfAbrupt
-            long scalar = ToUint32(cx, bits);
+            int scalar = ToInt32(cx, bits);
             /* step 3 */
-            if (scalar >= ELEMENT_SIZE * 8) {
-                /* step 3.a */
-                int[] list = new int[VECTOR_LENGTH];
-                /* step 3.b */
-                return SIMDCreate(SIMD_TYPE, list);
-            }
+            int shiftCount = scalar & (ELEMENT_SIZE * 8 - 1);
             /* steps 4-5 */
-            SIMDValue result = SIMDScalarOp(sa, (int) scalar, (x, y) -> (x << y) & 0xffff);
+            SIMDValue result = SIMDScalarOp(sa, shiftCount, (x, y) -> (x << y) & 0xffff);
             /* step 6 */
             return result;
         }
@@ -674,16 +668,11 @@ public final class Uint16x8Constructor extends BuiltinConstructor implements Ini
             SIMDValue sa = simdValue(cx, a, SIMD_TYPE);
             /* step 2 */
             // FIXME: spec bug - Missing ReturnIfAbrupt
-            long scalar = ToUint32(cx, bits);
+            int scalar = ToInt32(cx, bits);
             /* step 3 */
-            if (scalar >= ELEMENT_SIZE * 8) {
-                /* step 3.a */
-                int[] list = new int[VECTOR_LENGTH];
-                /* step 3.b */
-                return SIMDCreate(SIMD_TYPE, list);
-            }
+            int shiftCount = scalar & (ELEMENT_SIZE * 8 - 1);
             /* steps 4-5 */
-            SIMDValue result = SIMDScalarOp(sa, (int) scalar, (x, y) -> (x >>> y) & 0xffff);
+            SIMDValue result = SIMDScalarOp(sa, shiftCount, (x, y) -> (x >>> y) & 0xffff);
             /* step 6 */
             return result;
         }
@@ -887,36 +876,6 @@ public final class Uint16x8Constructor extends BuiltinConstructor implements Ini
             SIMDValue simd = simdValue(cx, value, SIMDType.Uint8x16);
             /* step 2 */
             return SIMDReinterpretCast(cx, simd, SIMD_TYPE);
-        }
-
-        /**
-         * SIMD Constructor.from TIMD ( value ), TIMD = Int16x8
-         * 
-         * @param cx
-         *            the execution context
-         * @param thisValue
-         *            the function this-value
-         * @param value
-         *            the value
-         * @return the new SIMD value
-         */
-        @Function(name = "fromInt16x8", arity = 1)
-        public static Object fromInt16x8(ExecutionContext cx, Object thisValue, Object value) {
-            /* step 1 */
-            SIMDValue simd = simdValue(cx, value, SIMDType.Int16x8);
-            /* step 2 */
-            int[] list = simd.asInt().clone();
-            /* step 3 (not applicable for Int16x8) */
-            // FIXME: spec bug - but required by tests!
-            // https://github.com/tc39/ecmascript_simd/issues/288
-            for (int i = 0; i < VECTOR_LENGTH; ++i) {
-                int v = list[i];
-                if (v < 0) {
-                    throw newRangeError(cx, Messages.Key.SIMDOutOfRange);
-                }
-            }
-            /* step 4 */
-            return SIMDCreate(SIMD_TYPE, list);
         }
 
         /**

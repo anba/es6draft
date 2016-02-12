@@ -239,21 +239,6 @@ public final class OrdinaryFunction extends FunctionObject {
     }
 
     /**
-     * 9.2.10 MakeMethod (F, homeObject)
-     * 
-     * @param f
-     *            the function object
-     * @param homeObject
-     *            the home object
-     */
-    public static void MakeMethod(FunctionObject f, OrdinaryObject homeObject) {
-        /* steps 1-2 (not applicable) */
-        /* step 3 */
-        f.toMethod(homeObject);
-        /* step 4 (return) */
-    }
-
-    /**
      * 9.2.11 SetFunctionName (F, name, prefix)
      * 
      * @param <FUNCTION>

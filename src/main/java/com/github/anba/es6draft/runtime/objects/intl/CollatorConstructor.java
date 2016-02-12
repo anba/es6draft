@@ -254,66 +254,66 @@ public final class CollatorConstructor extends BuiltinConstructor implements Ini
      */
     public static void InitializeCollator(ExecutionContext cx, CollatorObject collator, Object locales, Object opts) {
         /* steps 1-2 (FIXME: spec bug - unnecessary internal slot) */
-        /* steps 3-4 */
+        /* step 3 */
         Set<String> requestedLocals = CanonicalizeLocaleList(cx, locales);
-        /* steps 5-6 */
+        /* steps 4-5 */
         ScriptObject options;
         if (Type.isUndefined(opts)) {
             options = ObjectCreate(cx, Intrinsics.ObjectPrototype);
         } else {
             options = ToObject(cx, opts);
         }
-        /* steps 7-8 */
+        /* step 6 */
         String u = GetStringOption(cx, options, "usage", set("sort", "search"), "sort");
-        /* step 9 */
+        /* step 7 */
         collator.setUsage(u);
-        /* steps 10-11 */
+        /* steps 8-9 */
         CollatorLocaleData localeData = new CollatorLocaleData(u);
-        /* steps 13-14 */
+        /* step 11 */
         String matcher = GetStringOption(cx, options, "localeMatcher", set("lookup", "best fit"), "best fit");
-        /* steps 12, 15 */
+        /* steps 10, 12 */
         OptionsRecord opt = new OptionsRecord(OptionsRecord.MatcherType.forName(matcher));
         // FIXME: spec should propably define exact iteration order here
-        /* step 16 (kn-numeric) */
+        /* step 13 (kn-numeric) */
         Boolean numeric = GetBooleanOption(cx, options, "numeric", null);
         if (numeric != null) {
             opt.set(ExtensionKey.kn, numeric.toString());
         }
-        /* step 16 (kf-caseFirst) */
+        /* step 13 (kf-caseFirst) */
         String caseFirst = GetStringOption(cx, options, "caseFirst", set("upper", "lower", "false"), null);
         if (caseFirst != null) {
             opt.set(ExtensionKey.kf, caseFirst);
         }
-        /* steps 17-18 */
+        /* steps 14-15 */
         ResolvedLocale r = ResolveLocale(cx.getRealm(), getAvailableLocalesLazy(cx), requestedLocals, opt,
                 relevantExtensionKeys, localeData);
-        /* step 19 */
+        /* step 16 */
         collator.setLocale(r.getLocale());
-        /* steps 20-23 (co-collation) */
+        /* steps 17-20 (co-collation) */
         String collation = r.getValue(ExtensionKey.co);
         collator.setCollation(collation != null ? collation : "default");
-        /* steps 20-23 (kn-numeric) */
+        /* steps 17-20 (kn-numeric) */
         collator.setNumeric("true".equals(r.getValue(ExtensionKey.kn)));
-        /* steps 20-23 (kf-caseFirst) */
+        /* steps 17-20 (kf-caseFirst) */
         collator.setCaseFirst(r.getValue(ExtensionKey.kf));
-        /* steps 24-25 */
+        /* step 21 */
         String s = GetStringOption(cx, options, "sensitivity", set("base", "accent", "case", "variant"), null);
-        /* step 26 */
+        /* step 22 */
         if (s == null) {
             // The specification differentiates between "sort" and "search" usage, but effectively
             // you'll end up with "variant" in both cases, so take the short path here.
             s = "variant";
         }
-        /* step 27 */
+        /* step 23 */
         collator.setSensitivity(s);
-        /* steps 28-29 */
+        /* step 24 */
         boolean ip = GetBooleanOption(cx, options, "ignorePunctuation", false);
-        /* step 30 */
+        /* step 25 */
         collator.setIgnorePunctuation(ip);
-        /* step 31 */
+        /* step 26 */
         collator.setBoundCompare(null);
-        /* step 32 (FIXME: spec bug - unnecessary internal slot) */
-        /* step 33 (omitted) */
+        /* step 27 (FIXME: spec bug - unnecessary internal slot) */
+        /* step 28 (omitted) */
     }
 
     /**
@@ -326,33 +326,33 @@ public final class CollatorConstructor extends BuiltinConstructor implements Ini
      */
     public static void InitializeDefaultCollator(Realm realm, CollatorObject collator) {
         /* steps 1-2 (FIXME: spec bug - unnecessary internal slot) */
-        /* steps 3-6 (not applicable) */
-        /* step 7 */
+        /* steps 3-5 (not applicable) */
+        /* step 6 */
         String u = "sort";
-        /* steps 8-9 */
+        /* step 7 */
         collator.setUsage(u);
-        /* steps 10-11 */
+        /* steps 8-9 */
         CollatorLocaleData localeData = new CollatorLocaleData(u);
-        /* steps 12-16 (not applicable) */
-        /* steps 17-18 */
+        /* steps 10-13 (not applicable) */
+        /* steps 14-15 */
         ResolvedLocale r = ResolveDefaultLocale(realm, relevantExtensionKeys, localeData);
-        /* step 19 */
+        /* step 16 */
         collator.setLocale(r.getLocale());
-        /* steps 20-23 (co-collation) */
+        /* steps 17-20 (co-collation) */
         String collation = r.getValue(ExtensionKey.co);
         collator.setCollation(collation != null ? collation : "default");
-        /* steps 20-23 (kn-numeric) */
+        /* steps 17-20 (kn-numeric) */
         collator.setNumeric("true".equals(r.getValue(ExtensionKey.kn)));
-        /* steps 20-23 (kf-caseFirst) */
+        /* steps 17-20 (kf-caseFirst) */
         collator.setCaseFirst(r.getValue(ExtensionKey.kf));
-        /* steps 24-27 */
+        /* steps 21-23 */
         collator.setSensitivity("variant");
-        /* steps 28-30 */
+        /* steps 24-25 */
         collator.setIgnorePunctuation(false);
-        /* step 31 */
+        /* step 26 */
         collator.setBoundCompare(null);
-        /* step 32 (FIXME: spec bug - unnecessary internal slot) */
-        /* step 33 (omitted) */
+        /* step 27 (FIXME: spec bug - unnecessary internal slot) */
+        /* step 28 (omitted) */
     }
 
     /**
@@ -360,7 +360,7 @@ public final class CollatorConstructor extends BuiltinConstructor implements Ini
      */
     @Override
     public ScriptObject call(ExecutionContext callerContext, Object thisValue, Object... args) {
-        /* steps 1-4 */
+        /* steps 1-6 */
         return construct(callerContext, this, args);
     }
 
@@ -374,10 +374,10 @@ public final class CollatorConstructor extends BuiltinConstructor implements Ini
         Object options = argument(args, 1);
 
         /* step 1 (not applicable) */
-        /* steps 2-3 */
+        /* steps 2-5 */
         CollatorObject collator = OrdinaryCreateFromConstructor(calleeContext, newTarget,
                 Intrinsics.Intl_CollatorPrototype, CollatorObject::new);
-        /* step 4 */
+        /* step 6 */
         InitializeCollator(calleeContext, collator, locales, options);
         return collator;
     }
@@ -419,9 +419,9 @@ public final class CollatorConstructor extends BuiltinConstructor implements Ini
          */
         @Function(name = "supportedLocalesOf", arity = 1)
         public static Object supportedLocalesOf(ExecutionContext cx, Object thisValue, Object locales, Object options) {
-            /* steps 1-2 */
+            /* step 1 */
             Set<String> requestedLocales = CanonicalizeLocaleList(cx, locales);
-            /* step 3 */
+            /* step 2 */
             return SupportedLocales(cx, getAvailableLocales(cx), requestedLocales, options);
         }
     }

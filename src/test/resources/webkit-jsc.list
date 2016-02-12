@@ -47,6 +47,9 @@ stress/symbol-species.js
 # invalid: typo? test has `Symbol('test')` but expects `Symbol('foo')`
 es6/Object_static_methods_Object.getOwnPropertyDescriptors-proxy.js
 
+# invalid: Array.prototype.concat uses CreateDataProperty which throws when used with typed arrays
+stress/array-species-config-array-constructor.js
+
 
 ############################################
 # Implementation specific differences      #

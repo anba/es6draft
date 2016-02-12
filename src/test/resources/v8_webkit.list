@@ -61,9 +61,6 @@ fast/js/basic-strict-mode.js
 # different handling of noctal escapes in strings
 fast/js/numeric-escapes-in-string-literals.js
 
-# different handling of invalid class ranges
-fast/regex/invalid-range-in-class.js
-
 # different error message
 class-syntax-call.js
 class-syntax-declaration.js

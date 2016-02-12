@@ -1985,7 +1985,61 @@ public final class ScriptRuntime {
         /* step 7.b */
         ScriptObject obj = ToObject(cx, value);
         /* step 7.c */
-        return obj.enumerateKeys(cx);
+        if (cx.getRealm().isEnabled(CompatibilityOption.Enumerate)) {
+            return obj.enumerateKeys(cx);
+        }
+        return new EnumeratePropertiesIterator(cx, obj);
+    }
+
+    /**
+     * EnumerateObjectProperties (O)
+     */
+    private static final class EnumeratePropertiesIterator extends SimpleIterator<String>
+            implements ScriptIterator<String> {
+        private final HashSet<Object> visitedKeys = new HashSet<>();
+        private final ExecutionContext cx;
+        private ScriptObject obj;
+        private Iterator<String> keys;
+
+        EnumeratePropertiesIterator(ExecutionContext cx, ScriptObject obj) {
+            this.cx = cx;
+            this.obj = obj;
+            this.keys = obj.ownEnumerablePropertyKeys(cx);
+        }
+
+        @Override
+        protected String findNext() {
+            HashSet<Object> visitedKeys = this.visitedKeys;
+            ExecutionContext cx = this.cx;
+            for (ScriptObject obj = this.obj; obj != null;) {
+                for (Iterator<String> keys = this.keys; keys.hasNext();) {
+                    String key = keys.next();
+                    ScriptObject.Enumerability e = obj.isEnumerableOwnProperty(cx, key);
+                    if (e != ScriptObject.Enumerability.Deleted) {
+                        if (visitedKeys.add(key) && e == ScriptObject.Enumerability.Enumerable) {
+                            return key;
+                        }
+                    }
+                }
+                obj = this.obj = obj.getPrototypeOf(cx);
+                if (obj != null) {
+                    this.keys = obj.ownEnumerablePropertyKeys(cx);
+                } else {
+                    this.keys = null;
+                }
+            }
+            return null;
+        }
+
+        @Override
+        public void close() throws ScriptException {
+            // No return() action required.
+        }
+
+        @Override
+        public void close(Throwable cause) throws ScriptException {
+            // No return() action required.
+        }
     }
 
     /**
@@ -2040,8 +2094,8 @@ public final class ScriptRuntime {
     public static ScriptIterator<?> enumerateValues(Object value, ExecutionContext cx) {
         /* step 7.b */
         ScriptObject obj = ToObject(cx, value);
-        /* step 7.c */
-        return new ValuesIterator(cx, obj, obj.enumerateKeys(cx));
+        /* steps 7.b-c */
+        return new ValuesIterator(cx, obj, enumerate(obj, cx));
     }
 
     private static final class ValuesIterator extends SimpleIterator<Object> implements ScriptIterator<Object> {

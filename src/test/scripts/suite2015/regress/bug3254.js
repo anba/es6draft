@@ -12,11 +12,7 @@ const {
 // https://bugs.ecmascript.org/show_bug.cgi?id=3254
 
 var iterators = [
-  Object.getPrototypeOf(""[Symbol.iterator]()),
-  Object.getPrototypeOf([][Symbol.iterator]()),
-  Object.getPrototypeOf((new Map)[Symbol.iterator]()),
-  Object.getPrototypeOf((new Set)[Symbol.iterator]()),
-  Object.getPrototypeOf(function*(){}.prototype),
+  Reflect.enumerate({}),
 ];
 
 var IteratorPrototype = Object.getPrototypeOf(iterators[0]);

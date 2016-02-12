@@ -6,6 +6,7 @@
  */
 package com.github.anba.es6draft.runtime.types.builtins;
 
+import static com.github.anba.es6draft.runtime.AbstractOperations.CreateListIterator;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToString;
 import static com.github.anba.es6draft.runtime.internal.Errors.newReferenceError;
 import static com.github.anba.es6draft.runtime.modules.ModuleSemantics.GetModuleNamespace;
@@ -25,6 +26,7 @@ import com.github.anba.es6draft.runtime.EnvironmentRecord;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.Realm;
+import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.Errors;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.modules.MalformedNameException;
@@ -383,8 +385,13 @@ public final class ModuleNamespaceObject extends OrdinaryObject {
         // 26.3.1 @@toStringTag
         m.infallibleDefineOwnProperty(BuiltinSymbol.toStringTag.get(), new Property("Module", false, false, true));
         // 26.3.2 [ @@iterator ] ( )
-        m.infallibleDefineOwnProperty(BuiltinSymbol.iterator.get(),
-                new Property(new ModuleIteratorFunction(cx.getRealm()), true, false, true));
+        BuiltinFunction iterator;
+        if (cx.getRealm().isEnabled(CompatibilityOption.Enumerate)) {
+            iterator = new ModuleIteratorFunction(cx.getRealm());
+        } else {
+            iterator = new ModuleExportsIteratorFunction(cx.getRealm());
+        }
+        m.infallibleDefineOwnProperty(BuiltinSymbol.iterator.get(), new Property(iterator, true, false, true));
         /* step 9 */
         module.setNamespace(m);
         /* step 10 */
@@ -419,6 +426,38 @@ public final class ModuleNamespaceObject extends OrdinaryObject {
             }
             /* step 3 */
             return Type.objectValue(thisValue).enumerate(calleeContext);
+        }
+    }
+
+    /**
+     * 26.3.2 [ @@iterator ] ( )
+     */
+    public static final class ModuleExportsIteratorFunction extends BuiltinFunction {
+        public ModuleExportsIteratorFunction(Realm realm) {
+            super(realm, "[Symbol.iterator]", 0);
+            createDefaultFunctionProperties();
+        }
+
+        private ModuleExportsIteratorFunction(Realm realm, Void ignore) {
+            super(realm, "[Symbol.iterator]", 0);
+        }
+
+        @Override
+        public ModuleIteratorFunction clone() {
+            return new ModuleIteratorFunction(getRealm(), null);
+        }
+
+        @Override
+        public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
+            ExecutionContext calleeContext = calleeContext();
+            /* step 1 (not applicable) */
+            /* step 2 */
+            if (!(thisValue instanceof ModuleNamespaceObject)) {
+                throw Errors.newTypeError(calleeContext, Messages.Key.IncompatibleObject);
+            }
+            ModuleNamespaceObject module = (ModuleNamespaceObject) thisValue;
+            /* steps 3-4 */
+            return CreateListIterator(calleeContext, module.getSortedExports());
         }
     }
 }

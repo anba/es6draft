@@ -22,7 +22,7 @@ import com.ibm.icu.util.ULocale;
 /**
  * <h1>12 DateTimeFormat Objects</h1>
  * <ul>
- * <li>12.4 Properties of Intl.DateTimeFormat Instances
+ * <li>12.5 Properties of Intl.DateTimeFormat Instances
  * </ul>
  */
 public class DateTimeFormatObject extends OrdinaryObject {
@@ -38,13 +38,14 @@ public class DateTimeFormatObject extends OrdinaryObject {
     /** [[timeZone]] */
     private String timeZone;
 
+    /** [[pattern]] */
+    private Lazy<String> pattern;
+
     /** [[boundFormat]] */
     private Callable boundFormat;
 
     /** [[boundFormatToParts]] */
     private Callable boundFormatToParts;
-
-    private Lazy<String> pattern;
 
     private DateFormat dateFormat;
 
@@ -165,6 +166,25 @@ public class DateTimeFormatObject extends OrdinaryObject {
     }
 
     /**
+     * [[pattern]]
+     * 
+     * @return the pattern string
+     */
+    public String getPattern() {
+        return pattern.get();
+    }
+
+    /**
+     * [[pattern]]
+     * 
+     * @param pattern
+     *            the new pattern string
+     */
+    public void setPattern(Lazy<String> pattern) {
+        this.pattern = pattern;
+    }
+
+    /**
      * [[boundFormat]]
      * 
      * @return the bound format function
@@ -200,13 +220,5 @@ public class DateTimeFormatObject extends OrdinaryObject {
      */
     public void setBoundFormatToParts(Callable boundFormatToParts) {
         this.boundFormatToParts = boundFormatToParts;
-    }
-
-    public String getPattern() {
-        return pattern.get();
-    }
-
-    public void setPattern(Lazy<String> pattern) {
-        this.pattern = pattern;
     }
 }

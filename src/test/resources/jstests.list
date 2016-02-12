@@ -8,6 +8,7 @@
 # SIMD issues (TODO: write bug reports)
 ecma_7/SIMD/load.js
 ecma_7/SIMD/replaceLane.js
+ecma_7/SIMD/shifts.js
 ecma_7/SIMD/swizzle-shuffle.js
 
 # unboxed yield* in SpiderMonkey
@@ -45,9 +46,6 @@ ecma_6/Proxy/regress-bug950407.js
 # https://bugzilla.mozilla.org/show_bug.cgi?id=1100441
 ecma_6/Generators/syntax.js
 
-# Primitives always boxed, even in strict mode accessor (Bug 603201, Bug 869098)
-ecma_6/Symbol/as-base-value.js
-
 # Detached ArrayBuffer object issues, maybe request spec changes?
 ecma_6/extensions/DataView-construct-arguments-detaching.js
 
@@ -66,10 +64,6 @@ ecma_6/TypedArray/from_errors.js
 ecma_6/TypedArray/from_mapping.js
 ecma_6/TypedArray/from_proxy.js
 ecma_6/TypedArray/from_string.js
-
-# ES6: "bound " prefix not implemented
-# https://bugzilla.mozilla.org/show_bug.cgi?id=883377
-ecma_6/Function/bound-length-and-name.js
 
 # ES6: Support for classes is incomplete in SM.
 ecma_6/Class/superPropEvalInsideNested.js
@@ -111,11 +105,6 @@ ecma_6/Reflect/getPrototypeOf.js
 # bug 1184414
 ecma_6/Reflect/setPrototypeOf.js
 
-# Reflect.enumerate not supported
-# https://bugzilla.mozilla.org/show_bug.cgi?id=1185493
-ecma_6/Reflect/surfaces.js
-ecma_6/Reflect/target.js
-
 # ES6: Inferred function/class names
 ecma_6/Class/className.js
 
@@ -140,6 +129,9 @@ ecma_6/LexicalEnvironment/block-scoped-functions-annex-b-property.js
 # Unicode 8 not supported in SM (mongolian vowel separator)
 ecma_5/RegExp/regexp-space-character-class.js
 ecma_5/String/string-space-trim.js
+
+# ES2016 does not allow non-simple parameter list if function contains "use strict" directive
+ecma_6/Reflect/argumentsList.js
 
 
 ####################################
@@ -208,6 +200,7 @@ js1_8/extensions/regress-385729.js
 
 # Date parser
 ecma_3/Date/15.9.3.2-1.js
+ecma_6/Date/non-iso.js
 js1_5/Date/regress-301738-01.js
 js1_5/Date/regress-301738-02.js
 
@@ -305,6 +298,15 @@ ecma_5/extensions/function-caller-strict-cross-global.js
 ecma_6/extensions/element-setting-ToNumber-detaches.js
 js1_5/Regress/regress-422348.js
 js1_8_5/extensions/typedarray-set-neutering.js
+
+# legacy iterator
+js1_7/extensions/regress-590813.js
+
+# enumerate for scripted proxy objects
+js1_8_5/extensions/scripted-proxies.js
+
+# different sort implementation
+ecma_6/Array/sort_holes.js
 
 
 #######################################

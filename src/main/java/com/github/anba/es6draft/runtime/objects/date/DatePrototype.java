@@ -12,7 +12,7 @@ import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.objects.date.DateAbstractOperations.*;
 import static com.github.anba.es6draft.runtime.objects.intl.DateTimeFormatConstructor.ToDateTimeOptions;
-import static com.github.anba.es6draft.runtime.objects.intl.DateTimeFormatPrototype.FormatDateTime;
+import static com.github.anba.es6draft.runtime.objects.intl.DateTimeFormatConstructor.FormatDateTime;
 import static com.github.anba.es6draft.runtime.types.Null.NULL;
 
 import java.util.TimeZone;

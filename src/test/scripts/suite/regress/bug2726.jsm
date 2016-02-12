@@ -14,7 +14,7 @@ const {
 import* as self from "./bug2726.jsm";
 export var a = 123;
 
-let keys = [...Reflect.enumerate(self)];
+let keys = [...self[Symbol.iterator]()];
 assertSame(1, keys.length);
 assertSame("a", keys[0]);
 assertDataProperty(self, "a", {value: 123, writable: true, enumerable: true, configurable: false});

@@ -13,7 +13,7 @@ const {
 
 import* as self from "./bug3907.jsm";
 
-var iter = Reflect.enumerate(self);
+var iter = self[Symbol.iterator]();
 
 assertDataProperty(iter, "next", {
   value: iter.next,

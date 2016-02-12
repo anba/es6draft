@@ -238,12 +238,12 @@ int8x16.boolType = uint8x16.boolType = bool8x16;
 
 // SIMD fromTIMD types.
 float32x4.from = [int32x4, uint32x4];
-int32x4.from = [float32x4, uint32x4];
-int16x8.from = [uint16x8];
-int8x16.from = [uint8x16];
-uint32x4.from = [float32x4, int32x4];
-uint16x8.from = [int16x8];
-uint8x16.from = [int8x16];
+int32x4.from = [float32x4];
+int16x8.from = [];
+int8x16.from = [];
+uint32x4.from = [float32x4];
+uint16x8.from = [];
+uint8x16.from = [];
 
 // SIMD fromBits types.
 float32x4.fromBits = [int32x4, int16x8, int8x16, uint32x4, uint16x8, uint8x16];
@@ -940,8 +940,10 @@ simdTypes.filter(isIntType).forEach(function(type) {
   });
   test(type.name + ' shiftLeftByScalar', function() {
     function shift(a, bits) {
-      if (bits>>>0 >= type.laneSize * 8) return 0;
-      return a << bits;
+      // if (bits>>>0 >= type.laneSize * 8) return 0;
+      // return a << bits;
+      var shiftCount = (bits >>> 0) & (type.laneSize * 8 - 1);
+      return a << shiftCount;
     }
     testShiftOp(type, 'shiftLeftByScalar', shift);
   });
@@ -950,9 +952,11 @@ simdTypes.filter(isIntType).forEach(function(type) {
 simdTypes.filter(isSignedIntType).forEach(function(type) {
   test(type.name + ' shiftRightByScalar', function() {
     function shift(a, bits) {
-      if (bits>>>0 >= type.laneSize * 8)
-        bits = type.laneSize * 8 - 1;
-      return a >> bits;
+      // if (bits>>>0 >= type.laneSize * 8)
+      //   bits = type.laneSize * 8 - 1;
+      // return a >> bits;
+      var shiftCount = (bits >>> 0) & (type.laneSize * 8 - 1);
+      return a >> shiftCount;
     }
     testShiftOp(type, 'shiftRightByScalar', shift);
   });
@@ -961,10 +965,12 @@ simdTypes.filter(isSignedIntType).forEach(function(type) {
 simdTypes.filter(isUnsignedIntType).forEach(function(type) {
   test(type.name + ' shiftRightByScalar', function() {
     function shift(a, bits) {
-      if (bits>>>0 >= type.laneSize * 8) return 0;
-      if (type.laneMask)
-        a &= type.laneMask;
-      return a >>> bits;
+      // if (bits>>>0 >= type.laneSize * 8) return 0;
+      // if (type.laneMask)
+      //   a &= type.laneMask;
+      // return a >>> bits;
+      var shiftCount = (bits >>> 0) & (type.laneSize * 8 - 1);
+      return a >>> shiftCount;
     }
     testShiftOp(type, 'shiftRightByScalar', shift);
   });

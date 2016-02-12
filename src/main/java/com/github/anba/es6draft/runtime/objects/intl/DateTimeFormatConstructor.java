@@ -6,17 +6,21 @@
  */
 package com.github.anba.es6draft.runtime.objects.intl;
 
-import static com.github.anba.es6draft.runtime.AbstractOperations.CreateDataPropertyOrThrow;
-import static com.github.anba.es6draft.runtime.AbstractOperations.Get;
-import static com.github.anba.es6draft.runtime.AbstractOperations.ToFlatString;
-import static com.github.anba.es6draft.runtime.AbstractOperations.ToObject;
+import static com.github.anba.es6draft.runtime.AbstractOperations.*;
 import static com.github.anba.es6draft.runtime.internal.Errors.newRangeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.objects.intl.IntlAbstractOperations.*;
+import static com.github.anba.es6draft.runtime.types.builtins.ArrayObject.ArrayCreate;
 import static java.util.Arrays.asList;
 
+import java.text.AttributedCharacterIterator;
+import java.text.AttributedCharacterIterator.Attribute;
+import java.text.CharacterIterator;
+import java.util.AbstractMap;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -42,7 +46,9 @@ import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
+import com.github.anba.es6draft.runtime.types.builtins.ArrayObject;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
+import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 import com.ibm.icu.text.DateFormat;
 import com.ibm.icu.text.DateTimePatternGenerator;
@@ -55,8 +61,9 @@ import com.ibm.icu.util.ULocale;
 /**
  * <h1>12 DateTimeFormat Objects</h1>
  * <ul>
- * <li>12.1 The Intl.DateTimeFormat Constructor
- * <li>12.2 Properties of the Intl.DateTimeFormat Constructor
+ * <li>12.1 Abstract Operations For DateTimeFormat Objects
+ * <li>12.2 The Intl.DateTimeFormat Constructor
+ * <li>12.3 Properties of the Intl.DateTimeFormat Constructor
  * </ul>
  */
 public final class DateTimeFormatConstructor extends BuiltinConstructor implements Initializable {
@@ -256,44 +263,48 @@ public final class DateTimeFormatConstructor extends BuiltinConstructor implemen
     public static void InitializeDateTimeFormat(ExecutionContext cx, DateTimeFormatObject dateTimeFormat,
             Object locales, Object opts) {
         /* steps 1-2 (FIXME: spec bug - unnecessary internal slot) */
-        /* steps 3-4 */
+        /* step 3 */
         Set<String> requestedLocales = CanonicalizeLocaleList(cx, locales);
-        /* steps 5-6 */
+        /* step 4 */
         ScriptObject options = ToDateTimeOptions(cx, opts, "any", "date");
-        /* steps 8-9 */
+        /* step 6 */
         String matcher = GetStringOption(cx, options, "localeMatcher", set("lookup", "best fit"), "best fit");
-        /* step 7, 10 */
+        /* step 5, 7 */
         OptionsRecord opt = new OptionsRecord(OptionsRecord.MatcherType.forName(matcher));
-        /* step 11 */
+        /* step 8 */
         DateTimeFormatLocaleData localeData = new DateTimeFormatLocaleData();
-        /* step 12 */
+        /* step 9 */
         ResolvedLocale r = ResolveLocale(cx.getRealm(), getAvailableLocalesLazy(cx), requestedLocales, opt,
                 relevantExtensionKeys, localeData);
-        /* step 13 */
+        /* step 10 */
         dateTimeFormat.setLocale(r.getLocale());
-        /* step 14 */
+        /* step 11 */
         dateTimeFormat.setCalendar(r.getValue(ExtensionKey.ca));
-        /* step 15 */
+        /* step 12 */
         dateTimeFormat.setNumberingSystem(r.getValue(ExtensionKey.nu));
-        /* step 16 */
+        /* step 13 */
         String dataLocale = r.getDataLocale();
-        /* steps 17-18 */
+        /* step 14 */
         Object tz = Get(cx, options, "timeZone");
-        /* steps 19-20 */
+        /* steps 15-16 */
         String timeZone;
         if (!Type.isUndefined(tz)) {
+            /* step 15.a */
             timeZone = ToFlatString(cx, tz);
+            /* step 15.b */
             if (!IsValidTimeZoneName(timeZone)) {
                 throw newRangeError(cx, Messages.Key.IntlInvalidOption, timeZone);
             }
+            /* step 15.c */
             timeZone = CanonicalizeTimeZoneName(timeZone);
         } else {
+            /* step 16.a */
             timeZone = DefaultTimeZone(cx.getRealm());
         }
-        /* step 21 */
+        /* step 17 */
         dateTimeFormat.setTimeZone(timeZone);
-        /* step 22 (moved) */
-        /* step 23 */
+        /* step 18 (moved) */
+        /* step 19 */
         // FIXME: spec should propably define exact iteration order here
         String weekday = GetStringOption(cx, options, "weekday", set("narrow", "short", "long"), null);
         String era = GetStringOption(cx, options, "era", set("narrow", "short", "long"), null);
@@ -305,11 +316,13 @@ public final class DateTimeFormatConstructor extends BuiltinConstructor implemen
         String minute = GetStringOption(cx, options, "minute", set("2-digit", "numeric"), null);
         String second = GetStringOption(cx, options, "second", set("2-digit", "numeric"), null);
         String timeZoneName = GetStringOption(cx, options, "timeZoneName", set("short", "long"), null);
-        /* steps 26-27 */
+        /* steps 20-21 (moved) */
+        /* step 22 */
         String formatMatcher = GetStringOption(cx, options, "formatMatcher", set("basic", "best fit"), "best fit");
-        /* steps 32-33 */
+        /* steps 23-26 (moved) */
+        /* step 27 */
         Boolean hour12 = GetBooleanOption(cx, options, "hour12", null);
-        /* steps 22, 24-25, 28-31, 34-35 */
+        /* steps 18, 20-21, 23-26, 28-29 */
         FormatMatcherRecord formatRecord = new FormatMatcherRecord(weekday, era, year, month, day, hour, minute, second,
                 timeZoneName, hour12);
         Lazy<String> pattern;
@@ -318,12 +331,12 @@ public final class DateTimeFormatConstructor extends BuiltinConstructor implemen
         } else {
             pattern = new BestFitFormatPattern(formatRecord, dataLocale);
         }
-        /* step 36 */
+        /* step 30 */
         dateTimeFormat.setPattern(pattern);
-        /* step 37 */
+        /* step 31 */
         dateTimeFormat.setBoundFormat(null);
-        /* step 38 (FIXME: spec bug - unnecessary internal slot) */
-        /* step 39 (omitted) */
+        /* step 32 (FIXME: spec bug - unnecessary internal slot) */
+        /* step 33 (omitted) */
     }
 
     /**
@@ -336,35 +349,35 @@ public final class DateTimeFormatConstructor extends BuiltinConstructor implemen
      */
     public static void InitializeDefaultDateTimeFormat(Realm realm, DateTimeFormatObject dateTimeFormat) {
         /* steps 1-2 (FIXME: spec bug - unnecessary internal slot) */
-        /* steps 3-10 (not applicable) */
-        /* step 11 */
+        /* steps 3-7 (not applicable) */
+        /* step 8 */
         DateTimeFormatLocaleData localeData = new DateTimeFormatLocaleData();
-        /* step 12 */
+        /* step 9 */
         ResolvedLocale r = ResolveDefaultLocale(realm, relevantExtensionKeys, localeData);
-        /* step 13 */
+        /* step 10 */
         dateTimeFormat.setLocale(r.getLocale());
-        /* step 14 */
+        /* step 11 */
         dateTimeFormat.setCalendar(r.getValue(ExtensionKey.ca));
-        /* step 15 */
+        /* step 12 */
         dateTimeFormat.setNumberingSystem(r.getValue(ExtensionKey.nu));
-        /* step 16 */
+        /* step 13 */
         String dataLocale = r.getDataLocale();
-        /* steps 17-21 */
+        /* steps 14-17 */
         dateTimeFormat.setTimeZone(DefaultTimeZone(realm));
-        /* steps 22-35 */
+        /* steps 18-29 */
         FormatMatcherRecord formatRecord = new FormatMatcherRecord(null, null, "numeric", "numeric", "numeric", null,
                 null, null, null, null);
         Lazy<String> pattern = new BestFitFormatPattern(formatRecord, dataLocale);
-        /* step 36 */
+        /* step 30 */
         dateTimeFormat.setPattern(pattern);
-        /* step 37 */
+        /* step 31 */
         dateTimeFormat.setBoundFormat(null);
-        /* step 38 (FIXME: spec bug - unnecessary internal slot) */
-        /* step 39 (omitted) */
+        /* step 32 (FIXME: spec bug - unnecessary internal slot) */
+        /* step 33 (omitted) */
     }
 
     /**
-     * Abstract Operation: ToDateTimeOptions
+     * 12.1.2 ToDateTimeOptions (options, required, defaults)
      * 
      * @param cx
      *            the execution context
@@ -377,11 +390,11 @@ public final class DateTimeFormatConstructor extends BuiltinConstructor implemen
      * @return the date-time options script object
      */
     public static ScriptObject ToDateTimeOptions(ExecutionContext cx, Object opts, String required, String defaults) {
-        /* steps 1-3 */
+        /* steps 1-2 */
         OrdinaryObject options = ObjectCreate(cx, Type.isUndefined(opts) ? null : ToObject(cx, opts));
-        /* step 4 */
+        /* step 3 */
         boolean needDefaults = true;
-        /* step 5 */
+        /* step 4 */
         if ("date".equals(required) || "any".equals(required)) {
             // FIXME: spec vs. impl (short circuit after first undefined value?)
             for (String prop : array("weekday", "year", "month", "day")) {
@@ -391,7 +404,7 @@ public final class DateTimeFormatConstructor extends BuiltinConstructor implemen
                 }
             }
         }
-        /* step 6 */
+        /* step 5 */
         if ("time".equals(required) || "any".equals(required)) {
             // FIXME: spec vs. impl (short circuit after first undefined value?)
             for (String prop : array("hour", "minute", "second")) {
@@ -401,19 +414,19 @@ public final class DateTimeFormatConstructor extends BuiltinConstructor implemen
                 }
             }
         }
-        /* step 7 */
+        /* step 6 */
         if (needDefaults && ("date".equals(defaults) || "all".equals(defaults))) {
             for (String prop : array("year", "month", "day")) {
                 CreateDataPropertyOrThrow(cx, options, prop, "numeric");
             }
         }
-        /* step 8 */
+        /* step 7 */
         if (needDefaults && ("time".equals(defaults) || "all".equals(defaults))) {
             for (String prop : array("hour", "minute", "second")) {
                 CreateDataPropertyOrThrow(cx, options, prop, "numeric");
             }
         }
-        /* step 9 */
+        /* step 8 */
         return options;
     }
 
@@ -536,7 +549,7 @@ public final class DateTimeFormatConstructor extends BuiltinConstructor implemen
     }
 
     /**
-     * Abstract Operation: BasicFormatMatcher
+     * 12.1.3 BasicFormatMatcher (options, formats)
      * 
      * @param formatRecord
      *            the format matcher record
@@ -698,7 +711,7 @@ public final class DateTimeFormatConstructor extends BuiltinConstructor implemen
     }
 
     /**
-     * Abstract Operation: BasicFormatMatcher (score computation)
+     * 12.1.3 BasicFormatMatcher (options, formats) (score computation)
      * 
      * @param formatRecord
      *            the format matcher record
@@ -737,7 +750,7 @@ public final class DateTimeFormatConstructor extends BuiltinConstructor implemen
     }
 
     /**
-     * Abstract Operation: BasicFormatMatcher (penalty computation)
+     * 12.1.3 BasicFormatMatcher (options, formats) (penalty computation)
      * 
      * @param formatRecord
      *            the format matcher record
@@ -777,7 +790,7 @@ public final class DateTimeFormatConstructor extends BuiltinConstructor implemen
     }
 
     /**
-     * Abstract Operation: BestFitFormatMatcher
+     * 12.1.4 BestFitFormatMatcher (options, formats)
      * 
      * @param formatRecord
      *            the format matcher record
@@ -793,16 +806,229 @@ public final class DateTimeFormatConstructor extends BuiltinConstructor implemen
     }
 
     /**
-     * 12.1.2 Intl.DateTimeFormat([ locales [, options ]])
+     * 12.1.6 FormatDateTime (dateTimeFormat, x)
+     * 
+     * @param cx
+     *            the execution context
+     * @param dateTimeFormat
+     *            the date format object
+     * @param x
+     *            the number value
+     * @return the formatted date-time string
+     */
+    public static String FormatDateTime(ExecutionContext cx, DateTimeFormatObject dateTimeFormat, double x) {
+        /* step 1 */
+        if (Double.isInfinite(x) || Double.isNaN(x)) {
+            throw newRangeError(cx, Messages.Key.InvalidDateValue);
+        }
+        /* steps 2-15 */
+        return dateTimeFormat.getDateFormat().format(new Date((long) x));
+    }
+
+    /**
+     * CreateDateTimeParts(dateTimeFormat, x)
+     * 
+     * @param dateTimeFormat
+     *            the date format object
+     * @param date
+     *            the date object
+     * @return the formatted date-time object
+     */
+    private static List<Map.Entry<String, String>> CreateDateTimeParts(DateTimeFormatObject dateTimeFormat, Date date) {
+        ArrayList<Map.Entry<String, String>> parts = new ArrayList<>();
+        DateFormat dateFormat = dateTimeFormat.getDateFormat();
+        AttributedCharacterIterator iterator = dateFormat.formatToCharacterIterator(date);
+        StringBuilder sb = new StringBuilder();
+        for (char ch = iterator.first(); ch != CharacterIterator.DONE; ch = iterator.next()) {
+            sb.append(ch);
+            if (iterator.getIndex() + 1 == iterator.getRunLimit()) {
+                Iterator<Attribute> keyIterator = iterator.getAttributes().keySet().iterator();
+                String key;
+                if (keyIterator.hasNext()) {
+                    key = fieldToString((DateFormat.Field) keyIterator.next());
+                } else {
+                    key = "separator";
+                }
+                String value = sb.toString();
+                sb.setLength(0);
+                parts.add(new AbstractMap.SimpleImmutableEntry<>(key, value));
+            }
+        }
+        return parts;
+    }
+
+    private static String fieldToString(DateFormat.Field field) {
+        if (field == DateFormat.Field.DAY_OF_WEEK) {
+            return "weekday";
+        }
+        if (field == DateFormat.Field.ERA) {
+            return "era";
+        }
+        if (field == DateFormat.Field.YEAR) {
+            return "year";
+        }
+        if (field == DateFormat.Field.MONTH) {
+            return "month";
+        }
+        if (field == DateFormat.Field.DAY_OF_MONTH) {
+            return "day";
+        }
+        if (field == DateFormat.Field.HOUR0) {
+            return "hour";
+        }
+        if (field == DateFormat.Field.HOUR1) {
+            return "hour";
+        }
+        if (field == DateFormat.Field.HOUR_OF_DAY0) {
+            return "hour";
+        }
+        if (field == DateFormat.Field.HOUR_OF_DAY1) {
+            return "hour";
+        }
+        if (field == DateFormat.Field.MINUTE) {
+            return "minute";
+        }
+        if (field == DateFormat.Field.SECOND) {
+            return "second";
+        }
+        if (field == DateFormat.Field.TIME_ZONE) {
+            return "timeZoneName";
+        }
+        if (field == DateFormat.Field.AM_PM) {
+            // FIXME: spec issue - rename to "dayPeriod" for consistency with "timeZoneName"?
+            return "dayperiod";
+        }
+        // Report unsupported/unexpected date fields as separators.
+        return "separator";
+    }
+
+    /**
+     * FormatToPartDateTime(dateTimeFormat, x)
+     * 
+     * @param cx
+     *            the execution context
+     * @param dateTimeFormat
+     *            the date format object
+     * @param x
+     *            the number value
+     * @return the formatted date-time object
+     */
+    public static ArrayObject FormatToPartDateTime(ExecutionContext cx, DateTimeFormatObject dateTimeFormat, double x) {
+        if (Double.isInfinite(x) || Double.isNaN(x)) {
+            throw newRangeError(cx, Messages.Key.InvalidDateValue);
+        }
+        /* step 1 */
+        List<Map.Entry<String, String>> parts = CreateDateTimeParts(dateTimeFormat, new Date((long) x));
+        /* step 2 */
+        ArrayObject result = ArrayCreate(cx, 0);
+        /* step 3 */
+        int n = 0;
+        /* step 4 */
+        for (Map.Entry<String, String> part : parts) {
+            /* step 4.a */
+            OrdinaryObject o = ObjectCreate(cx, Intrinsics.ObjectPrototype);
+            /* steps 4.b-c */
+            CreateDataProperty(cx, o, "type", part.getKey());
+            /* steps 4.d-e */
+            CreateDataProperty(cx, o, "value", part.getValue());
+            /* steps 4.f-g */
+            CreateDataProperty(cx, result, n++, o);
+        }
+        /* step 5 */
+        return result;
+    }
+
+    /**
+     * 12.1.5 DateTime Format Functions
+     */
+    public static final class FormatFunction extends BuiltinFunction {
+        public FormatFunction(Realm realm) {
+            super(realm, "format", 1);
+            createDefaultFunctionProperties();
+        }
+
+        private FormatFunction(Realm realm, Void ignore) {
+            super(realm, "format", 1);
+        }
+
+        @Override
+        public FormatFunction clone() {
+            return new FormatFunction(getRealm(), null);
+        }
+
+        @Override
+        public String call(ExecutionContext callerContext, Object thisValue, Object... args) {
+            ExecutionContext calleeContext = calleeContext();
+            Object date = argument(args, 0);
+
+            /* steps 1-2 */
+            assert thisValue instanceof DateTimeFormatObject;
+            DateTimeFormatObject dtf = (DateTimeFormatObject) thisValue;
+            /* steps 3-4 */
+            double x;
+            if (Type.isUndefined(date)) {
+                /* step 3 */
+                x = System.currentTimeMillis();
+            } else {
+                /* step 4 */
+                x = ToNumber(calleeContext, date);
+            }
+            /* step 5 */
+            return FormatDateTime(calleeContext, dtf, x);
+        }
+    }
+
+    /**
+     * DateTime FormatToParts Functions
+     */
+    public static final class FormatToPartsFunction extends BuiltinFunction {
+        public FormatToPartsFunction(Realm realm) {
+            super(realm, "formatToParts", 1);
+            createDefaultFunctionProperties();
+        }
+
+        private FormatToPartsFunction(Realm realm, Void ignore) {
+            super(realm, "formatToParts", 1);
+        }
+
+        @Override
+        public FormatToPartsFunction clone() {
+            return new FormatToPartsFunction(getRealm(), null);
+        }
+
+        @Override
+        public ArrayObject call(ExecutionContext callerContext, Object thisValue, Object... args) {
+            ExecutionContext calleeContext = calleeContext();
+            Object date = argument(args, 0);
+
+            /* steps 1-2 */
+            assert thisValue instanceof DateTimeFormatObject;
+            DateTimeFormatObject dtf = (DateTimeFormatObject) thisValue;
+            /* steps 3-4 */
+            double x;
+            if (Type.isUndefined(date)) {
+                /* step 3 */
+                x = System.currentTimeMillis();
+            } else {
+                /* step 4 */
+                x = ToNumber(calleeContext, date);
+            }
+            /* step 5 */
+            return FormatToPartDateTime(calleeContext, dtf, x);
+        }
+    }
+
+    /**
+     * 12.2.1 Intl.DateTimeFormat([ locales [, options ]])
      */
     @Override
     public ScriptObject call(ExecutionContext callerContext, Object thisValue, Object... args) {
-        /* steps 1-4 */
+        /* steps 1-3 */
         return construct(callerContext, this, args);
     }
 
     /**
-     * 12.1.2 Intl.DateTimeFormat([ locales [, options ]])
+     * 12.2.1 Intl.DateTimeFormat([ locales [, options ]])
      */
     @Override
     public DateTimeFormatObject construct(ExecutionContext callerContext, Constructor newTarget, Object... args) {
@@ -811,16 +1037,16 @@ public final class DateTimeFormatConstructor extends BuiltinConstructor implemen
         Object options = argument(args, 1);
 
         /* step 1 (not applicable) */
-        /* steps 2-3 */
+        /* step 2 */
         DateTimeFormatObject obj = OrdinaryCreateFromConstructor(calleeContext, newTarget,
                 Intrinsics.Intl_DateTimeFormatPrototype, DateTimeFormatObject::new);
-        /* step 4 */
+        /* step 3 */
         InitializeDateTimeFormat(calleeContext, obj, locales, options);
         return obj;
     }
 
     /**
-     * 12.2 Properties of the Intl.DateTimeFormat Constructor
+     * 12.3 Properties of the Intl.DateTimeFormat Constructor
      */
     public enum Properties {
         ;
@@ -835,14 +1061,14 @@ public final class DateTimeFormatConstructor extends BuiltinConstructor implemen
         public static final String name = "DateTimeFormat";
 
         /**
-         * 12.2.1 Intl.DateTimeFormat.prototype
+         * 12.3.1 Intl.DateTimeFormat.prototype
          */
         @Value(name = "prototype",
                 attributes = @Attributes(writable = false, enumerable = false, configurable = false))
         public static final Intrinsics prototype = Intrinsics.Intl_DateTimeFormatPrototype;
 
         /**
-         * 12.2.2 Intl.DateTimeFormat.supportedLocalesOf (locales [, options])
+         * 12.3.2 Intl.DateTimeFormat.supportedLocalesOf (locales [, options])
          * 
          * @param cx
          *            the execution context
@@ -858,9 +1084,9 @@ public final class DateTimeFormatConstructor extends BuiltinConstructor implemen
         public static Object supportedLocalesOf(ExecutionContext cx, Object thisValue, Object locales, Object options) {
             /* step 1 */
             Set<String> availableLocales = getAvailableLocales(cx);
-            /* steps 2-3 */
+            /* step 2 */
             Set<String> requestedLocales = CanonicalizeLocaleList(cx, locales);
-            /* step 4 */
+            /* step 3 */
             return SupportedLocales(cx, availableLocales, requestedLocales, options);
         }
     }

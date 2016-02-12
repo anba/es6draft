@@ -20,6 +20,10 @@ assertNotUndefined(desc.value);
 var {value: iter} = desc;
 assertCallable(iter);
 
-for (var v of [void 0, null, 0, "abc", {}, {a: 0}, {a: 0, b: 1}]) {
+for (var v of [void 0, null, 0, "abc"]) {
   assertThrows(TypeError, () => iter.call(v));
+}
+
+for (var o of [{}, {a: 0}, {a: 0, b: 1}]) {
+  assertEquals([...Reflect.enumerate(o)], [...iter.call(o)])
 }

@@ -93,22 +93,20 @@ public final class CollatorPrototype extends CollatorObject implements Initializ
          */
         @Accessor(name = "compare", type = Accessor.Type.Getter)
         public static Object compare(ExecutionContext cx, Object thisValue) {
-            /* step 1 */
+            /* steps 1-3 */
             CollatorObject collator = thisCollatorObject(cx, thisValue);
-            /* step 2 */
+            /* step 4 */
             if (collator.getBoundCompare() == null) {
-                /* step 2.a */
+                /* step 4.a */
                 CompareFunction f = new CompareFunction(cx.getRealm());
-                /* step 2.b (not applicable) */
-                /* step 2.c */
+                /* step 4.b */
                 BoundFunctionObject bf = BoundFunctionCreate(cx, f, thisValue);
-                // FIXME: spec bug - missing define for .length
+                /* step 4.c */
                 bf.infallibleDefineOwnProperty("length", new Property(2, false, false, true));
-                // FIXME: spec issue - set .name property?
-                /* step 2.d */
+                /* step 4.d */
                 collator.setBoundCompare(bf);
             }
-            /* step 3 */
+            /* step 5 */
             return collator.getBoundCompare();
         }
 
@@ -179,11 +177,11 @@ public final class CollatorPrototype extends CollatorObject implements Initializ
             Object x = argument(args, 0);
             /* step 4 */
             Object y = argument(args, 1);
-            /* steps 5-6 */
+            /* step 5 */
             String sx = ToFlatString(calleeContext, x);
-            /* steps 7-8 */
+            /* step 6 */
             String sy = ToFlatString(calleeContext, y);
-            /* step 9 */
+            /* step 7 */
             return CompareStrings(collator, sx, sy);
         }
     }

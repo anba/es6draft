@@ -6,6 +6,7 @@
  */
 package com.github.anba.es6draft.runtime.types;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
@@ -420,6 +421,53 @@ public interface ScriptObject {
      * @return the properties iterator object
      */
     Iterator<?> ownKeys(ExecutionContext cx);
+
+    /**
+     * [[OwnPropertyKeys]] ( )
+     *
+     * @param cx
+     *            the execution context
+     * @return the enumerable keys iterator
+     * @see ScriptObject#isEnumerableOwnProperty(ExecutionContext, String)
+     */
+    default Iterator<String> ownEnumerablePropertyKeys(ExecutionContext cx) {
+        List<?> ownKeys = ownPropertyKeys(cx);
+        List<String> enumerableKeys = new ArrayList<>();
+        for (Object key : ownKeys) {
+            if (key instanceof String) {
+                enumerableKeys.add((String) key);
+            }
+        }
+        return enumerableKeys.iterator();
+    }
+
+    /**
+     * Enumerability states.
+     */
+    enum Enumerability {
+        Enumerable, NonEnumerable, Deleted;
+
+        public static Enumerability isEnumerable(boolean enumerable) {
+            return enumerable ? Enumerable : NonEnumerable;
+        }
+    }
+
+    /**
+     * [[GetOwnProperty]] (P)
+     * 
+     * @param cx
+     *            the execution context
+     * @param propertyKey
+     *            the property key
+     * @return the enumerability kind
+     */
+    default Enumerability isEnumerableOwnProperty(ExecutionContext cx, String propertyKey) {
+        Property prop = getOwnProperty(cx, propertyKey);
+        if (prop == null) {
+            return Enumerability.Deleted;
+        }
+        return Enumerability.isEnumerable(prop.isEnumerable());
+    }
 
     /**
      * Returns the class name of this script object. (Used in {@code Object.prototype.toString}.)

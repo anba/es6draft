@@ -60,8 +60,8 @@ final class LanguageData {
      * @return the set of available locales
      * @see PluralRules#getAvailableULocales()
      */
-    static List<String> getAvailablePluralRulesLocales() {
-        return toLanguageTags(PluralRules.getAvailableULocales());
+    static Set<String> getAvailablePluralRulesLocales() {
+        return addDerivedLanguages(toLanguageTags(PluralRules.getAvailableULocales()));
     }
 
     /**

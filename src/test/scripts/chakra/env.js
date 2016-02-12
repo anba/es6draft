@@ -92,7 +92,7 @@ WScript = {
   LoadScriptFile(path, type) {
     "use strict";
     path = std_String(path);
-    path = path.replace("\\\\", '/');
+    path = path.replace(/\\/g, "/");
     if (type !== void 0 && type !== "self") {
       throw new Error(`Unsupported type: ${type}`);
     }

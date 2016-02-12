@@ -6,7 +6,7 @@
  */
 package com.github.anba.es6draft.runtime.objects.simd;
 
-import static com.github.anba.es6draft.runtime.AbstractOperations.ToUint32;
+import static com.github.anba.es6draft.runtime.AbstractOperations.ToInt32;
 import static com.github.anba.es6draft.runtime.internal.Errors.newRangeError;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
@@ -597,16 +597,11 @@ public final class Int32x4Constructor extends BuiltinConstructor implements Init
             SIMDValue sa = simdValue(cx, a, SIMD_TYPE);
             /* step 2 */
             // FIXME: spec bug - Missing ReturnIfAbrupt
-            long scalar = ToUint32(cx, bits);
+            int scalar = ToInt32(cx, bits);
             /* step 3 */
-            if (scalar >= ELEMENT_SIZE * 8) {
-                /* step 3.a */
-                int[] list = new int[VECTOR_LENGTH];
-                /* step 3.b */
-                return SIMDCreate(SIMD_TYPE, list);
-            }
+            int shiftCount = scalar & (ELEMENT_SIZE * 8 - 1);
             /* steps 4-5 */
-            SIMDValue result = SIMDScalarOp(sa, (int) scalar, (x, y) -> x << y);
+            SIMDValue result = SIMDScalarOp(sa, shiftCount, (x, y) -> x << y);
             /* step 6 */
             return result;
         }
@@ -630,14 +625,11 @@ public final class Int32x4Constructor extends BuiltinConstructor implements Init
             SIMDValue sa = simdValue(cx, a, SIMD_TYPE);
             /* step 2 */
             // FIXME: spec bug - Missing ReturnIfAbrupt
-            long scalar = ToUint32(cx, bits);
+            int scalar = ToInt32(cx, bits);
             /* step 3 */
-            if (scalar >= ELEMENT_SIZE * 8) {
-                /* step 3.a */
-                scalar = ELEMENT_SIZE * 8 - 1;
-            }
+            int shiftCount = scalar & (ELEMENT_SIZE * 8 - 1);
             /* steps 4-5 */
-            SIMDValue result = SIMDScalarOp(sa, (int) scalar, (x, y) -> x >> y);
+            SIMDValue result = SIMDScalarOp(sa, shiftCount, (x, y) -> x >> y);
             /* step 6 */
             return result;
         }
@@ -988,42 +980,10 @@ public final class Int32x4Constructor extends BuiltinConstructor implements Init
             int[] list = new int[VECTOR_LENGTH];
             for (int i = 0; i < VECTOR_LENGTH; ++i) {
                 double v = simd.asDouble()[i];
-                // FIXME: spec bug - NaN values?
-                // https://github.com/tc39/ecmascript_simd/issues/290
                 if (v < MIN_VALUE || v > MAX_VALUE || v != v) {
                     throw newRangeError(cx, Messages.Key.SIMDOutOfRange);
                 }
                 list[i] = (int) v;
-            }
-            /* step 4 */
-            return SIMDCreate(SIMD_TYPE, list);
-        }
-
-        /**
-         * SIMD Constructor.from TIMD ( value ), TIMD = Uint32x4
-         * 
-         * @param cx
-         *            the execution context
-         * @param thisValue
-         *            the function this-value
-         * @param value
-         *            the value
-         * @return the new SIMD value
-         */
-        @Function(name = "fromUint32x4", arity = 1)
-        public static Object fromUint32x4(ExecutionContext cx, Object thisValue, Object value) {
-            /* step 1 */
-            SIMDValue simd = simdValue(cx, value, SIMDType.Uint32x4);
-            /* step 2 */
-            int[] list = simd.asInt().clone();
-            /* step 3 (not applicable for Uint32x4) */
-            // FIXME: spec bug - but required by tests!
-            // https://github.com/tc39/ecmascript_simd/issues/288
-            for (int i = 0; i < VECTOR_LENGTH; ++i) {
-                int v = list[i];
-                if (v < 0) {
-                    throw newRangeError(cx, Messages.Key.SIMDOutOfRange);
-                }
             }
             /* step 4 */
             return SIMDCreate(SIMD_TYPE, list);
@@ -1208,8 +1168,6 @@ public final class Int32x4Constructor extends BuiltinConstructor implements Init
             int[] list = new int[VECTOR_LENGTH];
             for (int i = 0; i < SIMDType.Float64x2.getVectorLength(); ++i) {
                 double v = simd.asDouble()[i];
-                // FIXME: spec bug - NaN values?
-                // https://github.com/tc39/ecmascript_simd/issues/290
                 if (v < MIN_VALUE || v > MAX_VALUE || v != v) {
                     throw newRangeError(cx, Messages.Key.SIMDOutOfRange);
                 }

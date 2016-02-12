@@ -9,6 +9,7 @@ package com.github.anba.es6draft.runtime;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import com.github.anba.es6draft.runtime.modules.ModuleRecord;
+import com.github.anba.es6draft.runtime.modules.SourceTextModuleRecord;
 
 /**
  * <h1>8 Executable Code and Execution Contexts</h1><br>
@@ -104,9 +105,10 @@ public final class ModuleEnvironmentRecord extends DeclarativeEnvironmentRecord 
     }
 
     private static boolean hasDirectBinding(ModuleRecord module, String name) {
-        // FIXME: spec bug - direct vs indirect binding?
-        // Binding binding = module.getEnvironment().getEnvRec().getBinding(name);
-        // return binding != null && !(binding instanceof IndirectBinding);
-        return module.getEnvironment().getEnvRec().hasBinding(name);
+        if (module instanceof SourceTextModuleRecord) {
+            Binding binding = ((SourceTextModuleRecord) module).getEnvironment().getEnvRec().getBinding(name);
+            return binding != null && !(binding instanceof IndirectBinding);
+        }
+        return true;
     }
 }

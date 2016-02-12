@@ -18,7 +18,7 @@ import com.ibm.icu.util.ULocale;
 /**
  * <h1>11 NumberFormat Objects</h1>
  * <ul>
- * <li>11.4 Properties of Intl.NumberFormat Instances
+ * <li>11.5 Properties of Intl.NumberFormat Instances
  * </ul>
  */
 public class NumberFormatObject extends OrdinaryObject {

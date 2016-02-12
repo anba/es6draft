@@ -144,11 +144,6 @@ public enum CompatibilityOption {
     ImplicitStrictDirective,
 
     /**
-     * Moz-Extension: Don't call [[Enumerate]] on Proxy objects in the prototype chain
-     */
-    ProxyProtoSkipEnumerate,
-
-    /**
      * Moz-Extension: Allow initializer expression in for-in variable declarations.
      */
     ForInVarInitializer,
@@ -344,6 +339,11 @@ public enum CompatibilityOption {
     System,
 
     /**
+     * ES2015: [[Enumerate]] internal method
+     */
+    Enumerate,
+
+    /**
      * ES2016: 'use strict' directive only allowed for functions with simple parameter lists.
      */
     StrictDirectiveSimpleParameterList,
@@ -399,8 +399,8 @@ public enum CompatibilityOption {
      * @return the options set for mozilla-compatibility
      */
     public static final Set<CompatibilityOption> MozCompatibility() {
-        return addAll(WebCompatibility(), MozExtensions(), EnumSet.of(ArrayIncludes, Comprehension, Exponentiation,
-                GeneratorNonConstructor, SIMD, SIMD_Phase2, Atomics, AtomicsFence));
+        return addAll(WebCompatibility(), MozExtensions(),
+                EnumSet.of(Comprehension, SIMD, SIMD_Phase2, Atomics, AtomicsFence));
     }
 
     /**
@@ -549,7 +549,7 @@ public enum CompatibilityOption {
     public static final Set<CompatibilityOption> Version(Version version) {
         switch (version) {
         case ECMAScript2015:
-            return EnumSet.noneOf(CompatibilityOption.class);
+            return EnumSet.of(Enumerate);
         case ECMAScript2016:
             return EnumSet.of(StrictDirectiveSimpleParameterList, RestBindingPattern, CatchVarPattern,
                     GeneratorNonConstructor);

@@ -33,4 +33,7 @@
   });
 }
 
+// Enable SIMD Phase 2 tests.
+simdPhase2 = true;
+
 loadRelativeToScript("./resources/ecmascript_simd_tests.js");

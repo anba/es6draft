@@ -32,7 +32,6 @@ const notIntegerIndexedProperties = [
   "+Infinity",
 ];
 
-function MyConstructor() { }
 const TypedArray = Object.getPrototypeOf(Int8Array);
 
 // Test with concrete TypedArray constructors
@@ -118,8 +117,13 @@ for (let constructor of [Int8Array]) {
   }
 
   // [[Enumerate]]
-  assertEquals([], [...Reflect.enumerate(create())]);
-  assertEquals(["0"], [...Reflect.enumerate(create(1))]);
+  function enumerateKeys(obj) {
+    let keys = [];
+    for (let key in obj) keys.push(key);
+    return keys;
+  }
+  assertEquals([], enumerateKeys(create()));
+  assertEquals(["0"], enumerateKeys(create(1)));
 
   // [[OwnPropertyKeys]]
   assertEquals([], Reflect.ownKeys(create()));

@@ -56,6 +56,7 @@ public final class ReflectObject extends OrdinaryObject implements Initializable
     @Override
     public void initialize(Realm realm) {
         createProperties(realm, this, Properties.class);
+        createProperties(realm, this, EnumerateProperty.class);
         createProperties(realm, this, RealmProperty.class);
         createProperties(realm, this, LoaderProperty.class);
         createProperties(realm, this, ParseProperty.class);
@@ -191,28 +192,6 @@ public final class ReflectObject extends OrdinaryObject implements Initializable
             Object key = ToPropertyKey(cx, propertyKey);
             /* step 4 */
             return targetObject.delete(cx, key);
-        }
-
-        /**
-         * 26.1.5 Reflect.enumerate (target)
-         * 
-         * @param cx
-         *            the execution context
-         * @param thisValue
-         *            the function this-value
-         * @param target
-         *            the target object
-         * @return the enumeration iterator object
-         */
-        @Function(name = "enumerate", arity = 1)
-        public static Object enumerate(ExecutionContext cx, Object thisValue, Object target) {
-            /* step 1 */
-            if (!Type.isObject(target)) {
-                throw newTypeError(cx, Messages.Key.NotObjectType);
-            }
-            ScriptObject targetObject = Type.objectValue(target);
-            /* step 2 */
-            return targetObject.enumerate(cx);
         }
 
         /**
@@ -457,6 +436,33 @@ public final class ReflectObject extends OrdinaryObject implements Initializable
             }
             /* step 3 */
             return targetObject.setPrototypeOf(cx, Type.objectValueOrNull(proto));
+        }
+    }
+
+    @CompatibilityExtension(CompatibilityOption.Enumerate)
+    public enum EnumerateProperty {
+        ;
+
+        /**
+         * 26.1.5 Reflect.enumerate (target)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param target
+         *            the target object
+         * @return the enumeration iterator object
+         */
+        @Function(name = "enumerate", arity = 1)
+        public static Object enumerate(ExecutionContext cx, Object thisValue, Object target) {
+            /* step 1 */
+            if (!Type.isObject(target)) {
+                throw newTypeError(cx, Messages.Key.NotObjectType);
+            }
+            ScriptObject targetObject = Type.objectValue(target);
+            /* step 2 */
+            return targetObject.enumerate(cx);
         }
     }
 

@@ -11,7 +11,7 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.ToString;
 import static com.github.anba.es6draft.runtime.internal.Errors.newRangeError;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
-import static com.github.anba.es6draft.runtime.objects.intl.NumberFormatPrototype.FormatNumber;
+import static com.github.anba.es6draft.runtime.objects.intl.NumberFormatConstructor.FormatNumber;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import org.mozilla.javascript.DToA;

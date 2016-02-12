@@ -1015,6 +1015,34 @@ public class ProxyObject implements ScriptObject {
      * 9.5.12 [[OwnPropertyKeys]] ()
      */
     @Override
+    public Iterator<String> ownEnumerablePropertyKeys(ExecutionContext cx) {
+        /* steps 1-3 */
+        ScriptObject handler = getProxyHandler(cx);
+        /* step 4 */
+        ScriptObject target = getProxyTarget();
+        /* steps 5-6 */
+        Callable trap = GetMethod(cx, handler, "ownKeys");
+        /* step 7 */
+        if (trap == null) {
+            return target.ownEnumerablePropertyKeys(cx);
+        }
+        /* step 8 */
+        Object trapResultArray = trap.call(cx, handler, target);
+        /* steps 9-25 */
+        List<?> ownKeys = validateOwnPropertyKeys(cx, target, trapResultArray);
+        List<String> enumerableKeys = new ArrayList<>();
+        for (Object key : ownKeys) {
+            if (key instanceof String) {
+                enumerableKeys.add((String) key);
+            }
+        }
+        return enumerableKeys.iterator();
+    }
+
+    /**
+     * 9.5.12 [[OwnPropertyKeys]] ()
+     */
+    @Override
     public List<?> ownPropertyKeys(ExecutionContext cx) {
         /* steps 1-3 */
         ScriptObject handler = getProxyHandler(cx);
@@ -1028,6 +1056,11 @@ public class ProxyObject implements ScriptObject {
         }
         /* step 8 */
         Object trapResultArray = trap.call(cx, handler, target);
+        /* steps 9-25 */
+        return validateOwnPropertyKeys(cx, target, trapResultArray);
+    }
+
+    private List<Object> validateOwnPropertyKeys(ExecutionContext cx, ScriptObject target, Object trapResultArray) {
         /* steps 9-10 */
         List<Object> trapResult = CreateListFromArrayLike(cx, trapResultArray, EnumSet.of(Type.String, Type.Symbol));
         /* steps 11-12 */

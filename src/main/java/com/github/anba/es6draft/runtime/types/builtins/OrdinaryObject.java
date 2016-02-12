@@ -18,7 +18,6 @@ import java.util.Map;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.IndexedMap;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.PropertyMap;
@@ -1726,14 +1725,6 @@ public class OrdinaryObject implements ScriptObject {
         return keys;
     }
 
-    protected enum Enumerability {
-        Enumerable, NonEnumerable, Deleted;
-
-        static Enumerability isEnumerable(boolean enumerable) {
-            return enumerable ? Enumerable : NonEnumerable;
-        }
-    }
-
     /**
      * Subclasses need to override this method if they have virtual, configurable properties.
      * 
@@ -1755,30 +1746,11 @@ public class OrdinaryObject implements ScriptObject {
         return Enumerability.isEnumerable(prop.isEnumerable());
     }
 
-    private static final class FakeObject extends OrdinaryObject {
-        private final ScriptObject object;
-
-        FakeObject(Realm realm, ScriptObject object) {
-            super(realm);
-            this.object = object;
-        }
-
-        @Override
-        public ScriptObject getPrototypeOf(ExecutionContext cx) {
-            return object.getPrototypeOf(cx);
-        }
-
-        @Override
-        protected Enumerability isEnumerableOwnProperty(String propertyKey) {
-            return Enumerability.Enumerable;
-        }
-    }
-
     private static final class EnumKeysIterator extends com.github.anba.es6draft.runtime.internal.SimpleIterator<Object>
             implements com.github.anba.es6draft.runtime.internal.ScriptIterator<Object> {
+        private final HashSet<Object> visitedKeys = new HashSet<>();
         private final ExecutionContext cx;
         private OrdinaryObject obj;
-        private final HashSet<Object> visitedKeys = new HashSet<>();
         private Iterator<String> keys;
         private ScriptIterator<?> protoKeys;
         private ScriptObject scriptIter;
@@ -1839,9 +1811,6 @@ public class OrdinaryObject implements ScriptObject {
                     if (proto instanceof OrdinaryObject) {
                         this.obj = (OrdinaryObject) proto;
                         this.keys = ((OrdinaryObject) proto).getEnumerableKeys(cx).iterator();
-                    } else if (cx.getRealm().isEnabled(CompatibilityOption.ProxyProtoSkipEnumerate)) {
-                        this.obj = new FakeObject(cx.getRealm(), proto);
-                        this.keys = EnumerableOwnNames(cx, proto).iterator();
                     } else {
                         ScriptIterator<?> protoKeys = proto.enumerateKeys(cx);
                         if (protoKeys instanceof EnumKeysIterator) {
@@ -1913,6 +1882,16 @@ public class OrdinaryObject implements ScriptObject {
                 iterProto = (OrdinaryObject) proto;
             }
         }
+    }
+
+    @Override
+    public final Iterator<String> ownEnumerablePropertyKeys(ExecutionContext cx) {
+        return getEnumerableKeys(cx).iterator();
+    }
+
+    @Override
+    public final Enumerability isEnumerableOwnProperty(ExecutionContext cx, String propertyKey) {
+        return isEnumerableOwnProperty(propertyKey);
     }
 
     /** 9.1.12 [[OwnPropertyKeys]] ( ) */

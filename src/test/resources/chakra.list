@@ -226,9 +226,7 @@ strict/13.delete.js
 SIMD.float32x4/testBitwise.js
 
 # SIMD.Bool types not supported in Chakra
-SIMD.float32x4/testSelect.js
 SIMD.float32x4.asmjs/testSelect.js
-SIMD.int32x4/testSelect.js
 SIMD.int32x4.asmjs/testSelect.js
 SIMD.workloads.asmjs/testLinearSearch.js
 
@@ -239,24 +237,15 @@ SIMD.int32x4/testWithFlag.js
 SIMD.int32x4/testZeroSplatBool.js
 
 # SIMD signMask, flagX, flagY, flagZ, flagW properties
-SIMD.int32x4/testAndOrXor.js
 SIMD.int32x4/testSignMask.js
 
 # SIMD lessThan() returns SIMD.Int
-SIMD.float32x4/testComparisons.js
 SIMD.float32x4.asmjs/testComparison.js
 SIMD.float32x4.asmjs/testLinearSearch.js
-SIMD.int8x16/testComparisons.js
-SIMD.int32x4/testComparisons.js
 SIMD.int32x4.asmjs/testComparison.js
 
 # SIMD.reciprocal not renamed
-SIMD.float32x4/testReciprocal.js
 SIMD.float32x4.asmjs/testRcpSqrt.js
-
-# SIMD.shift not renamed
-SIMD.int8x16/testShift.js
-SIMD.int32x4/testShift.js
 
 # SIMD properties non-writable/non-configurable in chakra (?)
 SIMD.float32x4.asmjs/testSIMDLink-1.js
@@ -264,10 +253,6 @@ SIMD.float32x4.asmjs/testSIMDLink-2.js
 
 # Addition operator applied on SIMD type (?)
 SIMD.float32x4.asmjs/testSIMDLink-3.js
-
-# typeof operator should return type name in lowercase
-SIMD.float32x4/testFields.js
-SIMD.int32x4/testFields.js
 
 # typos in test files
 SIMD.float32x4.asmjs/testVectorRotate.js
@@ -536,6 +521,9 @@ utf8/invalidutf8.js
 
 # `var a = [0,1,2]; a.join(a)` returns "00,1,210,1,22" in chakra (note: cyclic check!)
 Array/join2.js
+
+# module loading
+es6/module-syntax.js
 
 
 ##############################################
