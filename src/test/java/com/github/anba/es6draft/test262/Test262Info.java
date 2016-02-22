@@ -33,9 +33,9 @@ import com.github.anba.es6draft.util.TestInfo;
 
 /**
  * Parses and returns test case information from test262 js-doc comments.
- * 
+ *
  * {@link http://wiki.ecmascript.org/doku.php?id=test262:test_case_format}
- * 
+ *
  */
 final class Test262Info extends TestInfo {
     private static final Pattern fileNamePattern = Pattern.compile("(.+?)(?:\\.([^.]*)$|$)");
@@ -155,7 +155,7 @@ final class Test262Info extends TestInfo {
 
     /**
      * Returns {@code true} if the test configuration supports the requested strict (or sloppy) mode.
-     * 
+     *
      * @param strictTest
      *            {@code true} if strict-mode test
      * @param unmarkedDefault
@@ -176,7 +176,7 @@ final class Test262Info extends TestInfo {
 
     /**
      * Returns {@code true} if the test configuration has the requested features.
-     * 
+     *
      * @param includeFeatures
      *            the set of include features, ignored if empty
      * @param excludeFeatures
@@ -206,7 +206,7 @@ final class Test262Info extends TestInfo {
 
     /**
      * Parses the test file information for this test case.
-     * 
+     *
      * @return the file content
      * @throws IOException
      *             if there was any I/O error
@@ -223,7 +223,7 @@ final class Test262Info extends TestInfo {
 
     /**
      * Reads the file content.
-     * 
+     *
      * @return the file content
      * @throws IOException
      *             if there was any I/O error
@@ -234,7 +234,7 @@ final class Test262Info extends TestInfo {
 
     /**
      * Parses the test file information for this test case.
-     * 
+     *
      * @param content
      *            the file content
      */
@@ -244,7 +244,7 @@ final class Test262Info extends TestInfo {
 
     /**
      * Parses the test file information for this test case.
-     * 
+     *
      * @param content
      *            the file content
      * @param lenient
@@ -324,7 +324,7 @@ final class Test262Info extends TestInfo {
         private String es5id;
         private String es6id;
         private String es7id;
-        private String id;
+        private String esid;
         private String bestPractice;
         private String author;
 
@@ -400,12 +400,12 @@ final class Test262Info extends TestInfo {
             this.es7id = es7id;
         }
 
-        public String getId() {
-            return id;
+        public String getEsid() {
+            return esid;
         }
 
-        public void setId(String id) {
-            this.id = id;
+        public void setEsid(String esid) {
+            this.esid = esid;
         }
 
         public String getBestPractice() {
