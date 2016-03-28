@@ -53,4 +53,8 @@ public final class ResolutionException extends Exception implements InternalThro
     public ScriptException toScriptException(ExecutionContext cx) {
         throw Errors.newSyntaxError(cx, this, messageKey, messageArguments);
     }
+
+    public String getScriptMessage(ExecutionContext cx) {
+        return Errors.newSyntaxError(cx, this, messageKey, messageArguments).getMessage(cx);
+    }
 }

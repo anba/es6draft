@@ -13,6 +13,7 @@ import org.hamcrest.TypeSafeMatcher;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
+import com.github.anba.es6draft.runtime.modules.ResolutionException;
 
 /**
  * {@link Matcher} for script execution error messages.
@@ -53,6 +54,9 @@ public class ErrorMessageMatcher<T extends Throwable> extends TypeSafeMatcher<T>
         }
         if (error instanceof StackOverflowError) {
             return String.format("InternalError: %s", cx.getRealm().message(Messages.Key.StackOverflow));
+        }
+        if (error instanceof ResolutionException) {
+            return ((ResolutionException) error).getScriptMessage(cx);
         }
         return error.getMessage();
     }
