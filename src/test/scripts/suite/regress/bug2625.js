@@ -10,25 +10,35 @@ const {
 
 // 21.2.5.7 RegExp.prototype.replace, 21.2.5.2.1 RegExpExec: Dynamic flags retrieval is unsafe
 // https://bugs.ecmascript.org/show_bug.cgi?id=2625
+/**
+ * ES2015 section 21.2.5.8 ("RegExp.prototype [ @@replace ]"), step 16.p.i
+ * reads:
+ *
+ * > NOTE position should not normally move backwards. If it does, it is an
+ * > indication of an ill-behaving RegExp subclass or use of an access
+ * > triggered side-effect to change the global flag or other characteristics
+ * > of rx. In such cases, the corresponding substitution is ignored.
+ */
 
 {
-  let re = /test/;
-  let glob = true;
+  let re = /test/g;
   let c = 0;
-  Object.defineProperty(re, "global", {
-    get() {
-      c += 1;
-      if (c == 3) {
-        re.compile(/pre/);
-      }
-      if (c == 4) {
-        re.compile(/kaboom/);
-      }
-      let g = glob;
-      glob = false;
-      return g;
+  re.exec = function() {
+    let result;
+    c += 1;
+    if (c == 1) {
+      this.lastIndex = 8;
+      let val = ["test"];
+      val.index = 4;
+      return val;
     }
-  });
+    if (c == 2) {
+      result = ["pre"];
+      result.index = 0;
+      return result;
+    }
+    return null;
+  };
   let s = "pre-test".replace(re, () => {});
   assertSame("pre-undefined", s);
 }
