@@ -261,7 +261,6 @@ final class Test262Info extends TestInfo {
         } else {
             throw new MalformedDataException("Invalid test file: " + this);
         }
-        this.async = content.contains("$DONE");
     }
 
     private static final ConcurrentLinkedQueue<Yaml> yamlQueue = new ConcurrentLinkedQueue<>();
@@ -308,11 +307,12 @@ final class Test262Info extends TestInfo {
             this.onlyStrict = desc.getFlags().contains("onlyStrict");
             this.module = desc.getFlags().contains("module");
             this.raw = desc.getFlags().contains("raw");
+            this.async = desc.getFlags().contains("async");
         }
     }
 
     private static final HashSet<String> allowedFlags = new HashSet<>(Arrays.asList("negative",
-            "onlyStrict", "noStrict", "module", "raw"));
+            "onlyStrict", "noStrict", "module", "raw", "async"));
 
     public static final class TestDescriptor {
         private String description;
@@ -448,6 +448,9 @@ final class Test262Info extends TestInfo {
                 case "negative":
                     this.negative = true;
                     this.errorType = Objects.toString(val, this.errorType);
+                    break;
+                case "async":
+                    this.async = true;
                     break;
                 case "hostObject":
                 case "reviewers":
