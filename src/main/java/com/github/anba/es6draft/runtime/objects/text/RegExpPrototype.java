@@ -853,10 +853,9 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
         /* steps 2-3 (not applicable) */
         /* steps 4-5 */
         int lastIndex = (int) Math.min(ToLength(cx, Get(cx, r, "lastIndex")), Integer.MAX_VALUE);
-        /* steps 6-7 */
-        boolean global = ToBoolean(Get(cx, r, "global"));
-        /* steps 8-9 */
-        boolean sticky = ToBoolean(Get(cx, r, "sticky"));
+        /* ES2016 steps 5-7 */
+        boolean global = r.isSet(RegExpObject.Flags.Global);
+        boolean sticky = r.isSet(RegExpObject.Flags.Sticky);
         /* steps 10-15 */
         MatchState m = matchOrNull(r, s, lastIndex, global, sticky);
         /* step 15.a, 15.c */
