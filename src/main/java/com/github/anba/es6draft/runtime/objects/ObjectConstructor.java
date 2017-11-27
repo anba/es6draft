@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -16,13 +16,12 @@ import static com.github.anba.es6draft.runtime.types.PropertyDescriptor.ToProper
 import java.util.ArrayList;
 import java.util.List;
 
+import com.github.anba.es6draft.runtime.AbstractOperations.PropertyKind;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.Initializable;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
-import com.github.anba.es6draft.runtime.internal.Properties.CompatibilityExtension;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
@@ -61,13 +60,6 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
     @Override
     public void initialize(Realm realm) {
         createProperties(realm, this, Properties.class);
-        createProperties(realm, this, ValuesEntriesFunctions.class);
-        createProperties(realm, this, GetOwnPropertyDescriptors.class);
-    }
-
-    @Override
-    public ObjectConstructor clone() {
-        return new ObjectConstructor(getRealm());
     }
 
     /**
@@ -80,9 +72,7 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
         /* step 1 (not applicable) */
         /* step 2 */
         if (Type.isUndefinedOrNull(value)) {
-            // OrdinaryCreateFromConstructor instead of ObjectCreate in case the active function
-            // (= `this`) is not the intrinsic %Object% constructor function.
-            return OrdinaryCreateFromConstructor(calleeContext, this, Intrinsics.ObjectPrototype);
+            return ObjectCreate(calleeContext, Intrinsics.ObjectPrototype);
         }
         /* step 3 */
         return ToObject(calleeContext, value);
@@ -92,20 +82,16 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
      * 19.1.1.1 Object ( [ value ] )
      */
     @Override
-    public ScriptObject construct(ExecutionContext callerContext, Constructor newTarget,
-            Object... args) {
+    public ScriptObject construct(ExecutionContext callerContext, Constructor newTarget, Object... args) {
         ExecutionContext calleeContext = calleeContext();
         Object value = argument(args, 0);
         /* step 1 */
         if (newTarget != this) {
-            return OrdinaryCreateFromConstructor(calleeContext, newTarget,
-                    Intrinsics.ObjectPrototype);
+            return OrdinaryCreateFromConstructor(calleeContext, newTarget, Intrinsics.ObjectPrototype);
         }
         /* step 2 */
         if (Type.isUndefinedOrNull(value)) {
-            // OrdinaryCreateFromConstructor instead of ObjectCreate in case the active function
-            // (= `this`) is not the intrinsic %Object% constructor function.
-            return OrdinaryCreateFromConstructor(calleeContext, this, Intrinsics.ObjectPrototype);
+            return ObjectCreate(calleeContext, Intrinsics.ObjectPrototype);
         }
         /* step 3 */
         return ToObject(calleeContext, value);
@@ -120,23 +106,20 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
         @Prototype
         public static final Intrinsics __proto__ = Intrinsics.FunctionPrototype;
 
-        @Value(name = "length", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = true))
+        @Value(name = "length", attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static final int length = 1;
 
-        @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = true))
+        @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static final String name = "Object";
 
         /**
-         * 19.1.2.16 Object.prototype
+         * 19.1.2.18 Object.prototype
          */
-        @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = false))
+        @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false, configurable = false))
         public static final Intrinsics prototype = Intrinsics.ObjectPrototype;
 
         /**
-         * 19.1.2.9 Object.getPrototypeOf ( O )
+         * 19.1.2.11 Object.getPrototypeOf ( O )
          * 
          * @param cx
          *            the execution context
@@ -148,15 +131,15 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
          */
         @Function(name = "getPrototypeOf", arity = 1)
         public static Object getPrototypeOf(ExecutionContext cx, Object thisValue, Object o) {
-            /* steps 1-2 */
+            /* step 1 */
             ScriptObject obj = ToObject(cx, o);
-            /* step 3 */
+            /* step 2 */
             ScriptObject proto = obj.getPrototypeOf(cx);
             return proto != null ? proto : NULL;
         }
 
         /**
-         * 19.1.2.6 Object.getOwnPropertyDescriptor ( O, P )
+         * 19.1.2.7 Object.getOwnPropertyDescriptor ( O, P )
          * 
          * @param cx
          *            the execution context
@@ -169,20 +152,53 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
          * @return the property descriptor object or undefined
          */
         @Function(name = "getOwnPropertyDescriptor", arity = 2)
-        public static Object getOwnPropertyDescriptor(ExecutionContext cx, Object thisValue,
-                Object o, Object p) {
-            /* steps 1-2 */
+        public static Object getOwnPropertyDescriptor(ExecutionContext cx, Object thisValue, Object o, Object p) {
+            /* step 1 */
             ScriptObject obj = ToObject(cx, o);
-            /* steps 3-4 */
+            /* step 2 */
             Object key = ToPropertyKey(cx, p);
-            /* steps 5-6 */
+            /* step 3 */
             Property desc = obj.getOwnProperty(cx, key);
-            /* step 7 */
+            /* step 4 */
             return FromPropertyDescriptor(cx, desc);
         }
 
         /**
-         * 19.1.2.7 Object.getOwnPropertyNames ( O )
+         * 19.1.2.8 Object.getOwnPropertyDescriptors ( O )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param o
+         *            the script object
+         * @return the object property descriptors array
+         */
+        @Function(name = "getOwnPropertyDescriptors", arity = 1)
+        public static Object getOwnPropertyDescriptors(ExecutionContext cx, Object thisValue, Object o) {
+            /* step 1 */
+            ScriptObject obj = ToObject(cx, o);
+            /* step 2 */
+            List<?> ownKeys = obj.ownPropertyKeys(cx);
+            /* step 3 */
+            OrdinaryObject descriptors = ObjectCreate(cx, Intrinsics.ObjectPrototype);
+            /* step 4 */
+            for (Object key : ownKeys) {
+                /* step 4.a */
+                Property desc = obj.getOwnProperty(cx, key);
+                /* step 4.b */
+                Object descriptor = FromPropertyDescriptor(cx, desc);
+                /* step 4.c */
+                if (!Type.isUndefined(descriptor)) {
+                    CreateDataProperty(cx, descriptors, key, descriptor);
+                }
+            }
+            /* step 5 */
+            return descriptors;
+        }
+
+        /**
+         * 19.1.2.9 Object.getOwnPropertyNames ( O )
          * 
          * @param cx
          *            the execution context
@@ -199,7 +215,7 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
         }
 
         /**
-         * 19.1.2.8 Object.getOwnPropertySymbols ( O )
+         * 19.1.2.10 Object.getOwnPropertySymbols ( O )
          * 
          * @param cx
          *            the execution context
@@ -216,7 +232,7 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
         }
 
         /**
-         * 19.1.2.2 Object.create ( O [, Properties] )
+         * 19.1.2.2 Object.create ( O, Properties )
          * 
          * @param cx
          *            the execution context
@@ -229,8 +245,7 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
          * @return the new script object
          */
         @Function(name = "create", arity = 2)
-        public static Object create(ExecutionContext cx, Object thisValue, Object o,
-                Object properties) {
+        public static Object create(ExecutionContext cx, Object thisValue, Object o, Object properties) {
             /* step 1 */
             if (!Type.isObjectOrNull(o)) {
                 throw newTypeError(cx, Messages.Key.NotObjectOrNull);
@@ -261,19 +276,19 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
          * @return the script object
          */
         @Function(name = "defineProperty", arity = 3)
-        public static Object defineProperty(ExecutionContext cx, Object thisValue, Object o,
-                Object p, Object attributes) {
+        public static Object defineProperty(ExecutionContext cx, Object thisValue, Object o, Object p,
+                Object attributes) {
             /* step 1 */
             if (!Type.isObject(o)) {
                 throw newTypeError(cx, Messages.Key.NotObjectType);
             }
-            /* steps 2-3 */
+            /* step 2 */
             Object key = ToPropertyKey(cx, p);
-            /* steps 4-5 */
+            /* step 3 */
             PropertyDescriptor desc = ToPropertyDescriptor(cx, attributes);
-            /* steps 6-7 */
+            /* step 4 */
             DefinePropertyOrThrow(cx, Type.objectValue(o), key, desc);
-            /* step 8 */
+            /* step 5 */
             return o;
         }
 
@@ -291,14 +306,13 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
          * @return the script object
          */
         @Function(name = "defineProperties", arity = 2)
-        public static Object defineProperties(ExecutionContext cx, Object thisValue, Object o,
-                Object properties) {
+        public static Object defineProperties(ExecutionContext cx, Object thisValue, Object o, Object properties) {
             /* step 1 */
             return ObjectDefineProperties(cx, o, properties);
         }
 
         /**
-         * 19.1.2.17 Object.seal ( O )
+         * 19.1.2.19 Object.seal ( O )
          * 
          * @param cx
          *            the execution context
@@ -314,18 +328,18 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
             if (!Type.isObject(o)) {
                 return o;
             }
-            /* steps 2-3 */
+            /* step 2 */
             boolean status = SetIntegrityLevel(cx, Type.objectValue(o), IntegrityLevel.Sealed);
-            /* step 4 */
+            /* step 3 */
             if (!status) {
                 throw newTypeError(cx, Messages.Key.ObjectSealFailed);
             }
-            /* step 5 */
+            /* step 4 */
             return o;
         }
 
         /**
-         * 19.1.2.5 Object.freeze ( O )
+         * 19.1.2.6 Object.freeze ( O )
          * 
          * @param cx
          *            the execution context
@@ -341,18 +355,18 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
             if (!Type.isObject(o)) {
                 return o;
             }
-            /* steps 2-3 */
+            /* step 2 */
             boolean status = SetIntegrityLevel(cx, Type.objectValue(o), IntegrityLevel.Frozen);
-            /* step 4 */
+            /* step 3 */
             if (!status) {
                 throw newTypeError(cx, Messages.Key.ObjectFreezeFailed);
             }
-            /* step 5 */
+            /* step 4 */
             return o;
         }
 
         /**
-         * 19.1.2.15 Object.preventExtensions ( O )
+         * 19.1.2.17 Object.preventExtensions ( O )
          * 
          * @param cx
          *            the execution context
@@ -368,18 +382,18 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
             if (!Type.isObject(o)) {
                 return o;
             }
-            /* steps 2-3 */
+            /* step 2 */
             boolean status = Type.objectValue(o).preventExtensions(cx);
-            /* step 4 */
+            /* step 3 */
             if (!status) {
                 throw newTypeError(cx, Messages.Key.ObjectPreventExtensionsFailed);
             }
-            /* step 5 */
+            /* step 4 */
             return o;
         }
 
         /**
-         * 19.1.2.13 Object.isSealed ( O )
+         * 19.1.2.15 Object.isSealed ( O )
          * 
          * @param cx
          *            the execution context
@@ -400,7 +414,7 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
         }
 
         /**
-         * 19.1.2.12 Object.isFrozen ( O )
+         * 19.1.2.14 Object.isFrozen ( O )
          * 
          * @param cx
          *            the execution context
@@ -421,7 +435,7 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
         }
 
         /**
-         * 19.1.2.11 Object.isExtensible ( O )
+         * 19.1.2.13 Object.isExtensible ( O )
          * 
          * @param cx
          *            the execution context
@@ -442,7 +456,7 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
         }
 
         /**
-         * 19.1.2.14 Object.keys ( O )
+         * 19.1.2.16 Object.keys ( O )
          * 
          * @param cx
          *            the execution context
@@ -454,16 +468,58 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
          */
         @Function(name = "keys", arity = 1)
         public static Object keys(ExecutionContext cx, Object thisValue, Object o) {
-            /* steps 1-2 */
+            /* step 1 */
             ScriptObject obj = ToObject(cx, o);
-            /* steps 3-4 */
+            /* step 2 */
             List<String> nameList = EnumerableOwnNames(cx, obj);
-            /* step 5 */
+            /* step 3 */
             return CreateArrayFromList(cx, nameList);
         }
 
         /**
-         * 19.1.2.10 Object.is ( value1, value2 )
+         * 19.1.2.21 Object.values ( O )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param o
+         *            the script object
+         * @return the object values array
+         */
+        @Function(name = "values", arity = 1)
+        public static Object values(ExecutionContext cx, Object thisValue, Object o) {
+            /* step 1 */
+            ScriptObject obj = ToObject(cx, o);
+            /* step 2 */
+            List<Object> valueList = EnumerableOwnProperties(cx, obj, PropertyKind.Value);
+            /* step 3 */
+            return CreateArrayFromList(cx, valueList);
+        }
+
+        /**
+         * 19.1.2.5 Object.entries ( O )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param o
+         *            the script object
+         * @return the object entries array
+         */
+        @Function(name = "entries", arity = 1)
+        public static Object entries(ExecutionContext cx, Object thisValue, Object o) {
+            /* step 1 */
+            ScriptObject obj = ToObject(cx, o);
+            /* step 2 */
+            List<Object> entryList = EnumerableOwnProperties(cx, obj, PropertyKind.KeyValue);
+            /* step 3 */
+            return CreateArrayFromList(cx, entryList);
+        }
+
+        /**
+         * 19.1.2.12 Object.is ( value1, value2 )
          * 
          * @param cx
          *            the execution context
@@ -495,25 +551,24 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
          * @return the target object
          */
         @Function(name = "assign", arity = 2)
-        public static Object assign(ExecutionContext cx, Object thisValue, Object target,
-                Object... sources) {
-            /* steps 1-2 */
+        public static Object assign(ExecutionContext cx, Object thisValue, Object target, Object... sources) {
+            /* step 1 */
             ScriptObject to = ToObject(cx, target);
-            /* step 3 */
+            /* step 2 */
             if (sources.length == 0) {
                 return to;
             }
-            /* steps 4-5 */
+            /* steps 3-4 */
             for (Object nextSource : sources) {
-                /* step 5.a */
+                /* step 4.a */
                 if (Type.isUndefinedOrNull(nextSource)) {
                     continue;
                 }
-                /* step 5.b.i-ii */
+                /* step 4.b.i */
                 ScriptObject from = ToObject(cx, nextSource);
-                /* steps 5.b.iii-iv */
+                /* step 4.b.ii */
                 List<?> keys = from.ownPropertyKeys(cx);
-                /* step 5.c */
+                /* step 4.c */
                 for (Object nextKey : keys) {
                     Property desc = from.getOwnProperty(cx, nextKey);
                     if (desc != null && desc.isEnumerable()) {
@@ -522,12 +577,12 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
                     }
                 }
             }
-            /* step 6 */
+            /* step 5 */
             return to;
         }
 
         /**
-         * 19.1.2.18 Object.setPrototypeOf ( O, proto )
+         * 19.1.2.20 Object.setPrototypeOf ( O, proto )
          * 
          * @param cx
          *            the execution context
@@ -540,22 +595,21 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
          * @return the script object
          */
         @Function(name = "setPrototypeOf", arity = 2)
-        public static Object setPrototypeOf(ExecutionContext cx, Object thisValue, Object o,
-                Object proto) {
-            /* steps 1-2 */
+        public static Object setPrototypeOf(ExecutionContext cx, Object thisValue, Object o, Object proto) {
+            /* step 1 */
             RequireObjectCoercible(cx, o);
-            /* step 3 */
+            /* step 2 */
             if (!Type.isObjectOrNull(proto)) {
                 throw newTypeError(cx, Messages.Key.NotObjectOrNull);
             }
-            /* step 4 */
+            /* step 3 */
             if (!Type.isObject(o)) {
                 return o;
             }
-            /* steps 5-6 */
+            /* step 4 */
             ScriptObject obj = Type.objectValue(o);
             boolean status = obj.setPrototypeOf(cx, Type.objectValueOrNull(proto));
-            /* step 7 */
+            /* step 5 */
             if (!status) {
                 // provide better error messages for ordinary objects
                 if (obj instanceof OrdinaryObject && !(obj instanceof ImmutablePrototypeObject)) {
@@ -566,92 +620,8 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
                 }
                 throw newTypeError(cx, Messages.Key.ObjectSetPrototypeFailed);
             }
-            /* step 8 */
+            /* step 6 */
             return obj;
-        }
-    }
-
-    @CompatibilityExtension(CompatibilityOption.ObjectValuesEntries)
-    public enum ValuesEntriesFunctions {
-        ;
-
-        /**
-         * Object.values( O )
-         * 
-         * @param cx
-         *            the execution context
-         * @param thisValue
-         *            the function this-value
-         * @param o
-         *            the script object
-         * @return the object values array
-         */
-        @Function(name = "values", arity = 1)
-        public static Object values(ExecutionContext cx, Object thisValue, Object o) {
-            /* steps 1-2 */
-            ScriptObject obj = ToObject(cx, o);
-            /* steps 3-4 */
-            List<Object> valueList = EnumerableOwnProperties(cx, obj, PropertyKind.Value);
-            /* step 5 */
-            return CreateArrayFromList(cx, valueList);
-        }
-
-        /**
-         * Object.entries( O )
-         * 
-         * @param cx
-         *            the execution context
-         * @param thisValue
-         *            the function this-value
-         * @param o
-         *            the script object
-         * @return the object entries array
-         */
-        @Function(name = "entries", arity = 1)
-        public static Object entries(ExecutionContext cx, Object thisValue, Object o) {
-            /* steps 1-2 */
-            ScriptObject obj = ToObject(cx, o);
-            /* steps 3-4 */
-            List<Object> entryList = EnumerableOwnProperties(cx, obj, PropertyKind.KeyValue);
-            /* step 5 */
-            return CreateArrayFromList(cx, entryList);
-        }
-    }
-
-    @CompatibilityExtension(CompatibilityOption.ObjectGetOwnPropertyDescriptors)
-    public enum GetOwnPropertyDescriptors {
-        ;
-
-        /**
-         * Object.getOwnPropertyDescriptors( O )
-         * 
-         * @param cx
-         *            the execution context
-         * @param thisValue
-         *            the function this-value
-         * @param o
-         *            the script object
-         * @return the object property descriptors array
-         */
-        @Function(name = "getOwnPropertyDescriptors", arity = 1)
-        public static Object getOwnPropertyDescriptors(ExecutionContext cx, Object thisValue, Object o) {
-            /* step 1 */
-            ScriptObject obj = ToObject(cx, o);
-            /* step 2 */
-            List<?> ownKeys = obj.ownPropertyKeys(cx);
-            /* step 3 */
-            OrdinaryObject descriptors = ObjectCreate(cx, Intrinsics.ObjectPrototype);
-            /* step 4 */
-            for (Object key : ownKeys) {
-                /* step 4.a */
-                Property desc = obj.getOwnProperty(cx, key);
-                /* step 4.b */
-                Object descriptor = FromPropertyDescriptor(cx, desc);
-                /* step 4.c */
-                CreateDataProperty(cx, descriptors, key, descriptor);
-            }
-            /* step 5 */
-            return descriptors;
         }
     }
 
@@ -666,24 +636,25 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
      *            the properties object
      * @return the script object
      */
-    public static ScriptObject ObjectDefineProperties(ExecutionContext cx, Object o,
-            Object properties) {
+    public static ScriptObject ObjectDefineProperties(ExecutionContext cx, Object o, Object properties) {
         /* step 1 */
         if (!Type.isObject(o)) {
             throw newTypeError(cx, Messages.Key.NotObjectType);
         }
         ScriptObject obj = Type.objectValue(o);
-        /* steps 2-3 */
+        /* step 2 */
         ScriptObject props = ToObject(cx, properties);
-        /* steps 4-5 */
+        /* step 3 */
         List<?> keys = props.ownPropertyKeys(cx);
-        /* step 6 */
+        /* step 4 */
         int initialSize = Math.min(32, keys.size());
         ArrayList<PropertyDescriptor> descriptors = new ArrayList<>(initialSize);
         ArrayList<Object> names = new ArrayList<>(initialSize);
-        /* step 7 */
+        /* step 5 */
         for (Object nextKey : keys) {
+            /* step 5.a */
             Property propDesc = props.getOwnProperty(cx, nextKey);
+            /* step 5.b */
             if (propDesc != null && propDesc.isEnumerable()) {
                 Object descObj = Get(cx, props, nextKey);
                 PropertyDescriptor desc = ToPropertyDescriptor(cx, descObj);
@@ -691,18 +662,21 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
                 names.add(nextKey);
             }
         }
-        /* step 8 */
+        /* step 6 */
         for (int i = 0, size = names.size(); i < size; ++i) {
+            /* step 6.a */
             Object p = names.get(i);
+            /* step 6.b */
             PropertyDescriptor desc = descriptors.get(i);
+            /* step 6.c */
             DefinePropertyOrThrow(cx, obj, p, desc);
         }
-        /* step 9 */
+        /* step 7 */
         return obj;
     }
 
     /**
-     * 19.1.2.8.1 Runtime Semantics: GetOwnPropertyKeys ( O, Type ), with Type = String
+     * 19.1.2.10.1 Runtime Semantics: GetOwnPropertyKeys ( O, Type ), with Type = String
      * 
      * @param cx
      *            the execution context
@@ -711,25 +685,16 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
      * @return the own string-valued property keys of <var>o</var>
      */
     public static ArrayObject GetOwnPropertyNames(ExecutionContext cx, Object o) {
-        /* steps 1-2 */
+        /* step 1 */
         ScriptObject obj = ToObject(cx, o);
-        /* steps 3-4 */
-        List<?> keys = obj.ownPropertyKeys(cx);
+        /* steps 2-4 */
+        List<String> nameList = obj.ownPropertyNames(cx);
         /* step 5 */
-        int initialSize = Math.min(32, keys.size());
-        ArrayList<String> nameList = new ArrayList<>(initialSize);
-        /* step 6 */
-        for (Object key : keys) {
-            if (key instanceof String) {
-                nameList.add((String) key);
-            }
-        }
-        /* step 7 */
         return CreateArrayFromList(cx, nameList);
     }
 
     /**
-     * 19.1.2.8.1 Runtime Semantics: GetOwnPropertyKeys ( O, Type ), with Type = Symbol
+     * 19.1.2.10.1 Runtime Semantics: GetOwnPropertyKeys ( O, Type ), with Type = Symbol
      * 
      * @param cx
      *            the execution context
@@ -738,67 +703,11 @@ public final class ObjectConstructor extends BuiltinConstructor implements Initi
      * @return the own symbol-valued property keys of <var>o</var>
      */
     public static ArrayObject GetOwnPropertySymbols(ExecutionContext cx, Object o) {
-        /* steps 1-2 */
+        /* step 1 */
         ScriptObject obj = ToObject(cx, o);
-        /* steps 3-4 */
-        List<?> keys = obj.ownPropertyKeys(cx);
+        /* steps 2-4 */
+        List<Symbol> nameList = obj.ownPropertySymbols(cx);
         /* step 5 */
-        int initialSize = Math.min(8, keys.size());
-        ArrayList<Symbol> nameList = new ArrayList<>(initialSize);
-        /* step 6 */
-        for (Object key : keys) {
-            if (key instanceof Symbol) {
-                nameList.add((Symbol) key);
-            }
-        }
-        /* step 7 */
         return CreateArrayFromList(cx, nameList);
-    }
-
-    enum PropertyKind {
-        Key, Value, KeyValue
-    }
-
-    /**
-     * EnumerableOwnProperties (O)
-     * 
-     * @param cx
-     *            the execution context
-     * @param object
-     *            the script object
-     * @param kind
-     *            the property kind
-     * @return <var>object</var>'s own enumerable properties
-     */
-    static List<Object> EnumerableOwnProperties(ExecutionContext cx, ScriptObject object, PropertyKind kind) {
-        /* step 1 (not applicable) */
-        /* steps 2-3 */
-        List<?> ownKeys = object.ownPropertyKeys(cx);
-        /* step 4 */
-        int initialSize = Math.min(16, ownKeys.size());
-        ArrayList<Object> properties = new ArrayList<>(initialSize);
-        /* step 5 */
-        for (Object key : ownKeys) {
-            if (key instanceof String) {
-                String skey = (String) key;
-                Property desc = object.getOwnProperty(cx, skey);
-                if (desc != null && desc.isEnumerable()) {
-                    if (kind == PropertyKind.Key) {
-                        properties.add(skey);
-                    } else {
-                        Object value = Get(cx, object, skey);
-                        if (kind == PropertyKind.Value) {
-                            properties.add(value);
-                        } else {
-                            ArrayObject entry = CreateArrayFromList(cx, key, value);
-                            properties.add(entry);
-                        }
-                    }
-                }
-            }
-        }
-        /* step 6 (sort keys - not applicable) */
-        /* step 7 */
-        return properties;
     }
 }

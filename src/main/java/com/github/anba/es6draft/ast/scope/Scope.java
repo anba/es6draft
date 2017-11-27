@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -43,16 +43,13 @@ public interface Scope extends Iterable<Scope> {
     boolean isDeclared(Name name);
 
     /**
-     * Returns the resolved name for {@code name}. {@code name} must be statically declared in this
-     * scope.
+     * Returns the resolved name for {@code name}. {@code name} must be statically declared in this scope.
      * 
      * @param name
      *            the variable name
-     * @param lookupByName
-     *            named lookup
      * @return the resolved name
      */
-    Name resolveName(Name name, boolean lookupByName);
+    Name resolveName(Name name);
 
     /**
      * Returns <code>true</code> if the scope is emitted at runtime.

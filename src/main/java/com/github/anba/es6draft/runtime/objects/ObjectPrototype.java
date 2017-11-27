@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -10,6 +10,7 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.*;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.types.Null.NULL;
+import static com.github.anba.es6draft.runtime.types.PropertyDescriptor.AccessorPropertyDescriptor;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
@@ -23,12 +24,15 @@ import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
+import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Property;
+import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.ImmutablePrototypeObject;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
+import com.github.anba.es6draft.runtime.types.builtins.StringObject;
 
 /**
  * <h1>19 Fundamental Objects</h1><br>
@@ -88,20 +92,20 @@ public final class ObjectPrototype extends ImmutablePrototypeObject implements I
             }
             /* step 3 */
             ScriptObject o = ToObject(cx, thisValue);
-            /* steps 4-5 */
+            /* step 4 */
             boolean isArray = IsArray(cx, o);
-            /* steps 6-15 (not applicable) */
-            /* steps 16-17 */
+            /* steps 5-14 (not applicable) */
+            /* step 15 */
             Object ttag = Get(cx, o, BuiltinSymbol.toStringTag.get());
-            /* step 18 */
+            /* step 16 */
             String tag;
             if (!Type.isString(ttag)) {
                 tag = isArray ? "Array" : o.className();
             } else {
                 tag = Type.stringValue(ttag).toString();
             }
-            /* step 19 */
-            return "[object " + tag + "]";
+            /* step 17 */
+            return StringObject.validateLength(cx, "[object " + tag + "]");
         }
 
         /**
@@ -130,7 +134,7 @@ public final class ObjectPrototype extends ImmutablePrototypeObject implements I
          */
         @Function(name = "valueOf", arity = 0)
         public static Object valueOf(ExecutionContext cx, Object thisValue) {
-            /* steps 1-2 */
+            /* step 1 */
             return ToObject(cx, thisValue);
         }
 
@@ -147,11 +151,11 @@ public final class ObjectPrototype extends ImmutablePrototypeObject implements I
          */
         @Function(name = "hasOwnProperty", arity = 1)
         public static Object hasOwnProperty(ExecutionContext cx, Object thisValue, Object v) {
-            /* steps 1-2 */
+            /* step 1 */
             Object p = ToPropertyKey(cx, v);
-            /* steps 3-4 */
+            /* step 2 */
             ScriptObject o = ToObject(cx, thisValue);
-            /* step 5 */
+            /* step 3 */
             return HasOwnProperty(cx, o, p);
         }
 
@@ -173,14 +177,17 @@ public final class ObjectPrototype extends ImmutablePrototypeObject implements I
                 return false;
             }
             ScriptObject _v = Type.objectValue(v);
-            /* steps 2-3 */
+            /* step 2 */
             ScriptObject o = ToObject(cx, thisValue);
-            /* step 4 */
+            /* step 3 */
             for (;;) {
+                /* step 3.a */
                 _v = _v.getPrototypeOf(cx);
+                /* step 3.b */
                 if (_v == null) {
                     return false;
                 }
+                /* step 3.c */
                 if (o == _v) {
                     return true;
                 }
@@ -200,17 +207,17 @@ public final class ObjectPrototype extends ImmutablePrototypeObject implements I
          */
         @Function(name = "propertyIsEnumerable", arity = 1)
         public static Object propertyIsEnumerable(ExecutionContext cx, Object thisValue, Object v) {
-            /* steps 1-2 */
+            /* step 1 */
             Object p = ToPropertyKey(cx, v);
-            /* steps 3-4 */
+            /* step 2 */
             ScriptObject o = ToObject(cx, thisValue);
-            /* steps 5-6 */
+            /* step 3 */
             Property desc = o.getOwnProperty(cx, p);
-            /* step 7 */
+            /* step 4 */
             if (desc == null) {
                 return false;
             }
-            /* step 8 */
+            /* step 5 */
             return desc.isEnumerable();
         }
     }
@@ -234,9 +241,9 @@ public final class ObjectPrototype extends ImmutablePrototypeObject implements I
          */
         @Accessor(name = "__proto__", type = Accessor.Type.Getter)
         public static Object getPrototype(ExecutionContext cx, Object thisValue) {
-            /* steps 1-2 */
+            /* step 1 */
             ScriptObject o = ToObject(cx, thisValue);
-            /* step 3 */
+            /* step 2 */
             ScriptObject p = o.getPrototypeOf(cx);
             return p != null ? p : NULL;
         }
@@ -251,24 +258,24 @@ public final class ObjectPrototype extends ImmutablePrototypeObject implements I
          *            the function this-value
          * @param proto
          *            the new prototype object
-         * @return the prototype object
+         * @return the {@code undefined} value
          */
         @Accessor(name = "__proto__", type = Accessor.Type.Setter)
         public static Object setPrototype(ExecutionContext cx, Object thisValue, Object proto) {
-            /* steps 1-2 */
+            /* step 1 */
             Object o = RequireObjectCoercible(cx, thisValue);
-            /* step 3 */
+            /* step 2 */
             if (!Type.isObjectOrNull(proto)) {
                 return UNDEFINED;
             }
-            /* step 4 */
+            /* step 3 */
             if (!Type.isObject(o)) {
                 return UNDEFINED;
             }
-            /* steps 5-6 */
+            /* step 4 */
             ScriptObject obj = Type.objectValue(o);
             boolean status = obj.setPrototypeOf(cx, Type.objectValueOrNull(proto));
-            /* step 7 */
+            /* step 5 */
             if (!status) {
                 // provide better error messages for ordinary objects
                 if (obj instanceof OrdinaryObject && !(obj instanceof ImmutablePrototypeObject)) {
@@ -279,8 +286,148 @@ public final class ObjectPrototype extends ImmutablePrototypeObject implements I
                 }
                 throw newTypeError(cx, Messages.Key.ObjectSetPrototypeFailed);
             }
-            /* step 8 */
+            /* step 6 */
             return UNDEFINED;
+        }
+
+        /**
+         * B.2.2.2 Object.prototype.__defineGetter__ (P, getter)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param p
+         *            the property key
+         * @param getter
+         *            the getter function
+         * @return the {@code undefined} value
+         */
+        @Function(name = "__defineGetter__", arity = 2)
+        public static Object __defineGetter__(ExecutionContext cx, Object thisValue, Object p, Object getter) {
+            /* step 1 */
+            ScriptObject o = ToObject(cx, thisValue);
+            /* step 2 */
+            if (!IsCallable(getter)) {
+                throw newTypeError(cx, Messages.Key.NotCallable);
+            }
+            /* step 3 */
+            PropertyDescriptor desc = AccessorPropertyDescriptor((Callable) getter, null, true, true);
+            /* step 4 */
+            Object key = ToPropertyKey(cx, p);
+            /* step 5 */
+            DefinePropertyOrThrow(cx, o, key, desc);
+            /* step 6 */
+            return UNDEFINED;
+        }
+
+        /**
+         * B.2.2.3 Object.prototype.__defineSetter__ (P, setter)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param p
+         *            the property key
+         * @param setter
+         *            the setter function
+         * @return the {@code undefined} value
+         */
+        @Function(name = "__defineSetter__", arity = 2)
+        public static Object __defineSetter__(ExecutionContext cx, Object thisValue, Object p, Object setter) {
+            /* step 1 */
+            ScriptObject o = ToObject(cx, thisValue);
+            /* step 2 */
+            if (!IsCallable(setter)) {
+                throw newTypeError(cx, Messages.Key.NotCallable);
+            }
+            /* step 3 */
+            PropertyDescriptor desc = AccessorPropertyDescriptor(null, (Callable) setter, true, true);
+            /* step 4 */
+            Object key = ToPropertyKey(cx, p);
+            /* step 5 */
+            DefinePropertyOrThrow(cx, o, key, desc);
+            /* step 6 */
+            return UNDEFINED;
+        }
+
+        /**
+         * B.2.2.4 Object.prototype.__lookupGetter__ (P)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param p
+         *            the property key
+         * @return the getter function or {@code undefined} if not found
+         */
+        @Function(name = "__lookupGetter__", arity = 1)
+        public static Object __lookupGetter__(ExecutionContext cx, Object thisValue, Object p) {
+            /* step 1 */
+            ScriptObject o = ToObject(cx, thisValue);
+            /* step 2 */
+            Object key = ToPropertyKey(cx, p);
+            /* step 3 */
+            for (;;) {
+                /* step 3.a */
+                Property desc = o.getOwnProperty(cx, key);
+                /* step 3.b */
+                if (desc != null) {
+                    /* step 3.b.i */
+                    if (desc.isAccessorDescriptor()) {
+                        return desc.getGetter() != null ? desc.getGetter() : UNDEFINED;
+                    }
+                    /* step 3.b.ii */
+                    return UNDEFINED;
+                }
+                /* step 3.c */
+                o = o.getPrototypeOf(cx);
+                /* step 3.d */
+                if (o == null) {
+                    return UNDEFINED;
+                }
+            }
+        }
+
+        /**
+         * B.2.2.5 Object.prototype.__lookupSetter__ (P)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param p
+         *            the property key
+         * @return the setter function or {@code undefined} if not found
+         */
+        @Function(name = "__lookupSetter__", arity = 1)
+        public static Object __lookupSetter__(ExecutionContext cx, Object thisValue, Object p) {
+            /* step 1 */
+            ScriptObject o = ToObject(cx, thisValue);
+            /* step 2 */
+            Object key = ToPropertyKey(cx, p);
+            /* step 3 */
+            for (;;) {
+                /* step 3.a */
+                Property desc = o.getOwnProperty(cx, key);
+                /* step 3.b */
+                if (desc != null) {
+                    /* step 3.b.i */
+                    if (desc.isAccessorDescriptor()) {
+                        return desc.getSetter() != null ? desc.getSetter() : UNDEFINED;
+                    }
+                    /* step 3.b.ii */
+                    return UNDEFINED;
+                }
+                /* step 3.c */
+                o = o.getPrototypeOf(cx);
+                /* step 3.d */
+                if (o == null) {
+                    return UNDEFINED;
+                }
+            }
         }
     }
 }

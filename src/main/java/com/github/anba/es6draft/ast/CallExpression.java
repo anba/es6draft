@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -7,6 +7,9 @@
 package com.github.anba.es6draft.ast;
 
 import java.util.List;
+import java.util.Set;
+
+import com.github.anba.es6draft.runtime.objects.Eval;
 
 /**
  * <h1>12 ECMAScript Language: Expressions</h1><br>
@@ -18,12 +21,14 @@ import java.util.List;
 public final class CallExpression extends Expression {
     private final Expression base;
     private final List<Expression> arguments;
+    private final Set<Eval.EvalFlags> evalFlags;
 
-    public CallExpression(long beginPosition, long endPosition, Expression base,
-            List<Expression> arguments) {
+    public CallExpression(long beginPosition, long endPosition, Expression base, List<Expression> arguments,
+            Set<Eval.EvalFlags> evalFlags) {
         super(beginPosition, endPosition);
         this.base = base;
         this.arguments = arguments;
+        this.evalFlags = evalFlags;
     }
 
     /**
@@ -43,6 +48,15 @@ public final class CallExpression extends Expression {
      */
     public List<Expression> getArguments() {
         return arguments;
+    }
+
+    /**
+     * Returns the set of {@code eval} flags.
+     * 
+     * @return the {@code eval} flags or the empty set if this call expression is not a direct eval call
+     */
+    public Set<Eval.EvalFlags> getEvalFlags() {
+        return evalFlags;
     }
 
     @Override

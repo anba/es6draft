@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -18,8 +18,7 @@ import java.util.List;
 public final class ArrayBindingPattern extends BindingPattern {
     private final List<BindingElementItem> elements;
 
-    public ArrayBindingPattern(long beginPosition, long endPosition,
-            List<BindingElementItem> elements) {
+    public ArrayBindingPattern(long beginPosition, long endPosition, List<BindingElementItem> elements) {
         super(beginPosition, endPosition);
         this.elements = elements;
     }

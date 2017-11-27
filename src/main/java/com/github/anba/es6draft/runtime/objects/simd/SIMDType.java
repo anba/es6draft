@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -7,7 +7,6 @@
 package com.github.anba.es6draft.runtime.objects.simd;
 
 import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 
 /**
  * <h1>SIMD</h1>
@@ -255,16 +254,6 @@ public enum SIMDType {
         }
     }
 
-    private static final boolean IS_LITTLE_ENDIAN = ByteOrder.nativeOrder() == ByteOrder.LITTLE_ENDIAN;
-
-    private static ByteBuffer byteBuffer(ByteBuffer block, boolean isLittleEndian) {
-        // NB: Byte order is not reset after this call.
-        if ((block.order() == ByteOrder.LITTLE_ENDIAN) != isLittleEndian) {
-            block.order(isLittleEndian ? ByteOrder.LITTLE_ENDIAN : ByteOrder.BIG_ENDIAN);
-        }
-        return block;
-    }
-
     /**
      * SerializeFloat64( block, offset, value, isLittleEndian )
      * 
@@ -276,27 +265,11 @@ public enum SIMDType {
      *            the number value
      */
     public static void SerializeFloat64(ByteBuffer block, int offset, double value) {
-        SerializeFloat64(block, offset, value, IS_LITTLE_ENDIAN);
-    }
-
-    /**
-     * SerializeFloat64( block, offset, value, isLittleEndian )
-     * 
-     * @param block
-     *            the data block
-     * @param offset
-     *            the data block offset
-     * @param value
-     *            the number value
-     * @param isLittleEndian
-     *            {@code true} if little endian order, otherwise big endian order
-     */
-    public static void SerializeFloat64(ByteBuffer block, int offset, double value, boolean isLittleEndian) {
         /* steps 1-3 (not applicable) */
         /* step 4 */
         assert 0 <= offset && offset + 8 <= block.capacity();
         /* steps 5-6 */
-        byteBuffer(block, isLittleEndian).putDouble(offset, value);
+        block.putDouble(offset, value);
     }
 
     /**
@@ -309,27 +282,12 @@ public enum SIMDType {
      * @return the number value
      */
     public static double DeserializeFloat64(ByteBuffer block, int offset) {
-        return DeserializeFloat64(block, offset, IS_LITTLE_ENDIAN);
-    }
-
-    /**
-     * DeserializeFloat64( block, offset, isLittleEndian )
-     * 
-     * @param block
-     *            the data block
-     * @param offset
-     *            the data block offset
-     * @param isLittleEndian
-     *            {@code true} if little endian order, otherwise big endian order
-     * @return value the number value
-     */
-    public static double DeserializeFloat64(ByteBuffer block, int offset, boolean isLittleEndian) {
         // FIXME: spec bug - isLittleEndian never used as argument to [[DeserializeElement]]
         /* steps 1-2 (not applicable) */
         /* step 3 */
         assert 0 <= offset && offset + 8 <= block.capacity();
         /* steps 4-6 */
-        double value = byteBuffer(block, isLittleEndian).getDouble(offset);
+        double value = block.getDouble(offset);
         /* steps 7-8 */
         // FIXME: spec issue? - canonicalization breaks moz-tests
         // return Double.isNaN(value) ? Double.NaN : value;
@@ -347,27 +305,11 @@ public enum SIMDType {
      *            the number value
      */
     public static void SerializeFloat32(ByteBuffer block, int offset, double value) {
-        SerializeFloat32(block, offset, value, IS_LITTLE_ENDIAN);
-    }
-
-    /**
-     * SerializeFloat32( block, offset, value, isLittleEndian )
-     * 
-     * @param block
-     *            the data block
-     * @param offset
-     *            the data block offset
-     * @param value
-     *            the number value
-     * @param isLittleEndian
-     *            {@code true} if little endian order, otherwise big endian order
-     */
-    public static void SerializeFloat32(ByteBuffer block, int offset, double value, boolean isLittleEndian) {
         /* steps 1-3 (not applicable) */
         /* step 4 */
         assert 0 <= offset && offset + 4 <= block.capacity();
         /* steps 5-6 */
-        byteBuffer(block, isLittleEndian).putFloat(offset, (float) value);
+        block.putFloat(offset, (float) value);
     }
 
     /**
@@ -380,27 +322,12 @@ public enum SIMDType {
      * @return the number value
      */
     public static double DeserializeFloat32(ByteBuffer block, int offset) {
-        return DeserializeFloat32(block, offset, IS_LITTLE_ENDIAN);
-    }
-
-    /**
-     * DeserializeFloat32( block, offset, isLittleEndian )
-     * 
-     * @param block
-     *            the data block
-     * @param offset
-     *            the data block offset
-     * @param isLittleEndian
-     *            {@code true} if little endian order, otherwise big endian order
-     * @return value the number value
-     */
-    public static double DeserializeFloat32(ByteBuffer block, int offset, boolean isLittleEndian) {
         // FIXME: spec bug - isLittleEndian never used as argument to [[DeserializeElement]]
         /* steps 1-2 (not applicable) */
         /* step 3 */
         assert 0 <= offset && offset + 4 <= block.capacity();
         /* steps 4-6 */
-        float value = byteBuffer(block, isLittleEndian).getFloat(offset);
+        float value = block.getFloat(offset);
         /* steps 7-8 */
         // FIXME: spec issue? - canonicalization breaks moz-tests
         // return Float.isNaN(value) ? Float.NaN : value;
@@ -418,27 +345,11 @@ public enum SIMDType {
      *            the number value
      */
     public static void SerializeInt32(ByteBuffer block, int offset, int value) {
-        SerializeInt32(block, offset, value, IS_LITTLE_ENDIAN);
-    }
-
-    /**
-     * SerializeInt( descriptor )( block, offset, n, isLittleEndian ), descriptor = Int32x4
-     * 
-     * @param block
-     *            the data block
-     * @param offset
-     *            the data block offset
-     * @param value
-     *            the number value
-     * @param isLittleEndian
-     *            {@code true} if little endian order, otherwise big endian order
-     */
-    public static void SerializeInt32(ByteBuffer block, int offset, int value, boolean isLittleEndian) {
         /* steps 1-4 (not applicable) */
         /* step 5 */
         assert 0 <= offset && offset + 4 <= block.capacity();
         /* steps 6-7 */
-        byteBuffer(block, isLittleEndian).putInt(offset, value);
+        block.putInt(offset, value);
     }
 
     /**
@@ -451,26 +362,11 @@ public enum SIMDType {
      * @return the number value
      */
     public static int DeserializeInt32(ByteBuffer block, int offset) {
-        return DeserializeInt32(block, offset, IS_LITTLE_ENDIAN);
-    }
-
-    /**
-     * DeserializeInt( descriptor )( block, offset, isLittleEndian ), descriptor = Int32x4
-     * 
-     * @param block
-     *            the data block
-     * @param offset
-     *            the data block offset
-     * @param isLittleEndian
-     *            {@code true} if little endian order, otherwise big endian order
-     * @return the number value
-     */
-    public static int DeserializeInt32(ByteBuffer block, int offset, boolean isLittleEndian) {
         /* steps 1-2 (not applicable) */
         /* step 3 */
         assert 0 <= offset && offset + 4 <= block.capacity();
         /* steps 4-7 */
-        return byteBuffer(block, isLittleEndian).getInt(offset);
+        return block.getInt(offset);
     }
 
     /**
@@ -484,29 +380,13 @@ public enum SIMDType {
      *            the number value
      */
     public static void SerializeInt16(ByteBuffer block, int offset, int value) {
-        SerializeInt16(block, offset, value, IS_LITTLE_ENDIAN);
-    }
-
-    /**
-     * SerializeInt( descriptor )( block, offset, n, isLittleEndian ), descriptor = Int16x8
-     * 
-     * @param block
-     *            the data block
-     * @param offset
-     *            the data block offset
-     * @param value
-     *            the number value
-     * @param isLittleEndian
-     *            {@code true} if little endian order, otherwise big endian order
-     */
-    public static void SerializeInt16(ByteBuffer block, int offset, int value, boolean isLittleEndian) {
         /* steps 1-3 (not applicable) */
         /* step 4 */
         assert value == (short) value;
         /* step 5 */
         assert 0 <= offset && offset + 2 <= block.capacity();
         /* steps 6-7 */
-        byteBuffer(block, isLittleEndian).putShort(offset, (short) value);
+        block.putShort(offset, (short) value);
     }
 
     /**
@@ -519,26 +399,11 @@ public enum SIMDType {
      * @return the number value
      */
     public static int DeserializeInt16(ByteBuffer block, int offset) {
-        return DeserializeInt16(block, offset, IS_LITTLE_ENDIAN);
-    }
-
-    /**
-     * DeserializeInt( descriptor )( block, offset, isLittleEndian ), descriptor = Int16x8
-     * 
-     * @param block
-     *            the data block
-     * @param offset
-     *            the data block offset
-     * @param isLittleEndian
-     *            {@code true} if little endian order, otherwise big endian order
-     * @return the number value
-     */
-    public static int DeserializeInt16(ByteBuffer block, int offset, boolean isLittleEndian) {
         /* steps 1-2 (not applicable) */
         /* step 3 */
         assert 0 <= offset && offset + 2 <= block.capacity();
         /* steps 4-7 */
-        return byteBuffer(block, isLittleEndian).getShort(offset);
+        return block.getShort(offset);
     }
 
     /**
@@ -552,22 +417,6 @@ public enum SIMDType {
      *            the number value
      */
     public static void SerializeInt8(ByteBuffer block, int offset, int value) {
-        SerializeInt8(block, offset, value, IS_LITTLE_ENDIAN);
-    }
-
-    /**
-     * SerializeInt( descriptor )( block, offset, n, isLittleEndian ), descriptor = Int8x16
-     * 
-     * @param block
-     *            the data block
-     * @param offset
-     *            the data block offset
-     * @param value
-     *            the number value
-     * @param isLittleEndian
-     *            {@code true} if little endian order, otherwise big endian order
-     */
-    public static void SerializeInt8(ByteBuffer block, int offset, int value, boolean isLittleEndian) {
         /* steps 1-3 (not applicable) */
         /* step 4 */
         assert value == (byte) value;
@@ -587,21 +436,6 @@ public enum SIMDType {
      * @return the number value
      */
     public static int DeserializeInt8(ByteBuffer block, int offset) {
-        return DeserializeInt8(block, offset, IS_LITTLE_ENDIAN);
-    }
-
-    /**
-     * DeserializeInt( descriptor )( block, offset, isLittleEndian ), descriptor = Int8x16
-     * 
-     * @param block
-     *            the data block
-     * @param offset
-     *            the data block offset
-     * @param isLittleEndian
-     *            {@code true} if little endian order, otherwise big endian order
-     * @return the number value
-     */
-    public static int DeserializeInt8(ByteBuffer block, int offset, boolean isLittleEndian) {
         /* steps 1-2 (not applicable) */
         /* step 3 */
         assert 0 <= offset && offset + 1 <= block.capacity();
@@ -620,27 +454,11 @@ public enum SIMDType {
      *            the number value
      */
     public static void SerializeUint32(ByteBuffer block, int offset, int value) {
-        SerializeUint32(block, offset, value, IS_LITTLE_ENDIAN);
-    }
-
-    /**
-     * SerializeInt( descriptor )( block, offset, n, isLittleEndian ), descriptor = Uint32x4
-     * 
-     * @param block
-     *            the data block
-     * @param offset
-     *            the data block offset
-     * @param value
-     *            the number value
-     * @param isLittleEndian
-     *            {@code true} if little endian order, otherwise big endian order
-     */
-    public static void SerializeUint32(ByteBuffer block, int offset, int value, boolean isLittleEndian) {
         /* steps 1-4 (not applicable) */
         /* step 5 */
         assert 0 <= offset && offset + 4 <= block.capacity();
         /* steps 6-7 */
-        byteBuffer(block, isLittleEndian).putInt(offset, value);
+        block.putInt(offset, value);
     }
 
     /**
@@ -653,26 +471,11 @@ public enum SIMDType {
      * @return the number value
      */
     public static int DeserializeUint32(ByteBuffer block, int offset) {
-        return DeserializeUint32(block, offset, IS_LITTLE_ENDIAN);
-    }
-
-    /**
-     * DeserializeInt( descriptor )( block, offset, isLittleEndian ), descriptor = Uint32x4
-     * 
-     * @param block
-     *            the data block
-     * @param offset
-     *            the data block offset
-     * @param isLittleEndian
-     *            {@code true} if little endian order, otherwise big endian order
-     * @return the number value
-     */
-    public static int DeserializeUint32(ByteBuffer block, int offset, boolean isLittleEndian) {
         /* steps 1-2 (not applicable) */
         /* step 3 */
         assert 0 <= offset && offset + 4 <= block.capacity();
         /* steps 4-7 */
-        return byteBuffer(block, isLittleEndian).getInt(offset); // Value returned as signed int32.
+        return block.getInt(offset); // Value returned as signed int32.
     }
 
     /**
@@ -686,29 +489,13 @@ public enum SIMDType {
      *            the number value
      */
     public static void SerializeUint16(ByteBuffer block, int offset, int value) {
-        SerializeUint16(block, offset, value, IS_LITTLE_ENDIAN);
-    }
-
-    /**
-     * SerializeInt( descriptor )( block, offset, n, isLittleEndian ), descriptor = Uint16x8
-     * 
-     * @param block
-     *            the data block
-     * @param offset
-     *            the data block offset
-     * @param value
-     *            the number value
-     * @param isLittleEndian
-     *            {@code true} if little endian order, otherwise big endian order
-     */
-    public static void SerializeUint16(ByteBuffer block, int offset, int value, boolean isLittleEndian) {
         /* steps 1-3 (not applicable) */
         /* step 4 */
         assert value == (value & 0xffff);
         /* step 5 */
         assert 0 <= offset && offset + 2 <= block.capacity();
         /* steps 6-7 */
-        byteBuffer(block, isLittleEndian).putShort(offset, (short) value);
+        block.putShort(offset, (short) value);
     }
 
     /**
@@ -721,26 +508,11 @@ public enum SIMDType {
      * @return the number value
      */
     public static int DeserializeUint16(ByteBuffer block, int offset) {
-        return DeserializeUint16(block, offset, IS_LITTLE_ENDIAN);
-    }
-
-    /**
-     * DeserializeInt( descriptor )( block, offset, isLittleEndian ), descriptor = Uint16x8
-     * 
-     * @param block
-     *            the data block
-     * @param offset
-     *            the data block offset
-     * @param isLittleEndian
-     *            {@code true} if little endian order, otherwise big endian order
-     * @return the number value
-     */
-    public static int DeserializeUint16(ByteBuffer block, int offset, boolean isLittleEndian) {
         /* steps 1-2 (not applicable) */
         /* step 3 */
         assert 0 <= offset && offset + 2 <= block.capacity();
         /* steps 4-7 */
-        return byteBuffer(block, isLittleEndian).getShort(offset) & 0xffff;
+        return block.getShort(offset) & 0xffff;
     }
 
     /**
@@ -754,22 +526,6 @@ public enum SIMDType {
      *            the number value
      */
     public static void SerializeUint8(ByteBuffer block, int offset, int value) {
-        SerializeUint8(block, offset, value, IS_LITTLE_ENDIAN);
-    }
-
-    /**
-     * SerializeInt( descriptor )( block, offset, n, isLittleEndian ), descriptor = Uint8x16
-     * 
-     * @param block
-     *            the data block
-     * @param offset
-     *            the data block offset
-     * @param value
-     *            the number value
-     * @param isLittleEndian
-     *            {@code true} if little endian order, otherwise big endian order
-     */
-    public static void SerializeUint8(ByteBuffer block, int offset, int value, boolean isLittleEndian) {
         /* steps 1-3 (not applicable) */
         /* step 4 */
         assert value == (value & 0xff);
@@ -789,21 +545,6 @@ public enum SIMDType {
      * @return the number value
      */
     public static int DeserializeUint8(ByteBuffer block, int offset) {
-        return DeserializeUint8(block, offset, IS_LITTLE_ENDIAN);
-    }
-
-    /**
-     * DeserializeInt( descriptor )( block, offset, isLittleEndian ), descriptor = Uint8x16
-     * 
-     * @param block
-     *            the data block
-     * @param offset
-     *            the data block offset
-     * @param isLittleEndian
-     *            {@code true} if little endian order, otherwise big endian order
-     * @return the number value
-     */
-    public static int DeserializeUint8(ByteBuffer block, int offset, boolean isLittleEndian) {
         /* steps 1-2 (not applicable) */
         /* step 3 */
         assert 0 <= offset && offset + 1 <= block.capacity();

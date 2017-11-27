@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -17,19 +17,13 @@ import org.hamcrest.TypeSafeMatcher;
  */
 public class PatternMatcher extends TypeSafeMatcher<String> {
     private final String regex;
-    private final int flags;
 
-    public PatternMatcher(String regex, int flags) {
+    public PatternMatcher(String regex) {
         this.regex = regex;
-        this.flags = flags;
     }
 
     public static Matcher<String> matchesPattern(String regex) {
-        return new PatternMatcher(regex, 0);
-    }
-
-    public static Matcher<String> matchesPattern(String regex, int flags) {
-        return new PatternMatcher(regex, flags);
+        return new PatternMatcher(regex);
     }
 
     @Override
@@ -48,6 +42,6 @@ public class PatternMatcher extends TypeSafeMatcher<String> {
     }
 
     private Pattern getPattern() {
-        return Pattern.compile(regex, flags);
+        return Pattern.compile(regex);
     }
 }

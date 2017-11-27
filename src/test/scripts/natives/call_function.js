@@ -1,11 +1,9 @@
 /*
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
  */
-%Include("lib/assert.js");
-
 for (let thisArg of [void 0, null, {}]) {
   let callCount = 0;
   %CallFunction(function(){ callCount += 1 }, thisArg);

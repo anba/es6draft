@@ -1,22 +1,24 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
  */
 package com.github.anba.es6draft.runtime.objects.binary;
 
-import static com.github.anba.es6draft.runtime.AbstractOperations.ToNumber;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.objects.binary.ArrayBufferConstructor.GetValueFromBuffer;
 import static com.github.anba.es6draft.runtime.objects.binary.ArrayBufferConstructor.IsDetachedBuffer;
 import static com.github.anba.es6draft.runtime.objects.binary.ArrayBufferConstructor.SetValueInBuffer;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
+import java.util.List;
+
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
+import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.IntegerIndexedObject;
 
 /**
@@ -32,7 +34,6 @@ public final class TypedArrayObject extends IntegerIndexedObject implements Arra
 
     /** [[ElementType]] */
     private final ElementType elementType;
-    private final int elementShift;
 
     /** [[ByteLength]] */
     private final long byteLength;
@@ -63,7 +64,7 @@ public final class TypedArrayObject extends IntegerIndexedObject implements Arra
      */
     public TypedArrayObject(Realm realm, ElementType elementType, ArrayBuffer buffer, long byteLength, long byteOffset,
             long arrayLength, ScriptObject prototype) {
-        super(realm);
+        super(realm, prototype);
         assert elementType != null && buffer != null : "cannot initialize TypedArrayObject with null";
         assert byteLength >= 0 : "negative byte length: " + byteLength;
         assert byteOffset >= 0 : "negative byte offset: " + byteOffset;
@@ -71,12 +72,14 @@ public final class TypedArrayObject extends IntegerIndexedObject implements Arra
         assert buffer.isDetached() || (byteOffset + byteLength <= buffer.getByteLength());
         assert arrayLength * elementType.size() == byteLength : "invalid length: " + byteLength;
         this.elementType = elementType;
-        this.elementShift = 31 - Integer.numberOfLeadingZeros(elementType.size());
         this.buffer = buffer;
         this.byteLength = byteLength;
         this.byteOffset = byteOffset;
         this.arrayLength = arrayLength;
-        setPrototype(prototype);
+    }
+
+    private long byteIndex(long index) {
+        return (index << elementType.shift()) + byteOffset;
     }
 
     @Override
@@ -88,13 +91,13 @@ public final class TypedArrayObject extends IntegerIndexedObject implements Arra
     protected boolean elementHas(ExecutionContext cx, long index) {
         assert index >= 0;
         // 9.4.5.2 [[HasProperty]](P)
-        /* step 3.c.i */
+        /* step 3.b.i */
         ArrayBuffer buffer = getBuffer();
-        /* step 3.c.ii */
+        /* step 3.b.ii */
         if (IsDetachedBuffer(buffer)) {
             throw newTypeError(cx, Messages.Key.BufferDetached);
         }
-        /* steps 3.c.iii-vii */
+        /* steps 3.b.iii-vii */
         return index < getArrayLength();
     }
 
@@ -112,17 +115,11 @@ public final class TypedArrayObject extends IntegerIndexedObject implements Arra
         if (index >= getArrayLength()) {
             return UNDEFINED;
         }
-        /* step 9 */
-        long offset = getByteOffset();
-        /* steps 10, 13 */
-        ElementType elementType = getElementType();
-        /* steps 11-12 */
-        long indexedPosition = (index << elementShift) + offset;
-        /* step 14 */
-        return GetValueFromBuffer(buffer, indexedPosition, elementType);
+        /* steps 9-14 */
+        return GetValueFromBuffer(buffer, byteIndex(index), getElementType());
     }
 
-    double elementGetDirect(ExecutionContext cx, long index) {
+    Number elementGetMaybeDetached(ExecutionContext cx, long index) {
         assert 0 <= index && index < getArrayLength();
         /* steps 1-2 (not applicable) */
         /* step 3 */
@@ -132,63 +129,88 @@ public final class TypedArrayObject extends IntegerIndexedObject implements Arra
             throw newTypeError(cx, Messages.Key.BufferDetached);
         }
         /* steps 5-8 (not applicable) */
-        /* step 9 */
-        long offset = getByteOffset();
-        /* steps 10, 13 */
-        ElementType elementType = getElementType();
-        /* steps 11-12 */
-        long indexedPosition = (index << elementShift) + offset;
-        /* step 14 */
-        return GetValueFromBuffer(buffer, indexedPosition, elementType);
+        /* steps 9-14 */
+        return GetValueFromBuffer(buffer, byteIndex(index), getElementType());
+    }
+
+    Number elementGetUnchecked(long index) {
+        assert 0 <= index && index < getArrayLength();
+        /* steps 1-2 (not applicable) */
+        /* step 3 */
+        ArrayBuffer buffer = getBuffer();
+        /* step 4 */
+        assert !IsDetachedBuffer(buffer);
+        /* steps 5-8 (not applicable) */
+        /* steps 9-14 */
+        return GetValueFromBuffer(buffer, byteIndex(index), getElementType());
     }
 
     @Override
     protected boolean elementSet(ExecutionContext cx, long index, Object value) {
         assert index >= 0;
         /* steps 1-2 (not applicable) */
-        /* steps 3-4 */
-        double numValue = ToNumber(cx, value);
-        /* step 5 */
+        /* step 3 */
+        Number numValue = elementType.toElementValue(cx, value);
+        /* step 4 */
         ArrayBuffer buffer = getBuffer();
-        /* step 6 */
+        /* step 5 */
         if (IsDetachedBuffer(buffer)) {
             throw newTypeError(cx, Messages.Key.BufferDetached);
         }
-        /* steps 7-10 */
+        /* steps 6-9 */
         if (index >= getArrayLength()) {
             return false;
         }
-        /* step 11 */
-        long offset = getByteOffset();
-        /* steps 12, 15 */
-        ElementType elementType = getElementType();
-        /* steps 13-14 */
-        long indexedPosition = (index << elementShift) + offset;
+        /* steps 10-15 */
+        SetValueInBuffer(buffer, byteIndex(index), getElementType(), numValue);
         /* step 16 */
-        SetValueInBuffer(buffer, indexedPosition, elementType, numValue);
-        /* step 17 */
         return true;
     }
 
-    void elementSetDirect(ExecutionContext cx, long index, double numValue) {
+    void elementSetMaybeDetached(ExecutionContext cx, long index, Object value) {
         assert 0 <= index && index < getArrayLength();
-        /* steps 1-4 (not applicable) */
-        /* step 5 */
+        /* steps 1-2 (not applicable) */
+        /* step 3 */
+        Number numValue = elementType.toElementValue(cx, value);
+        /* step 4 */
         ArrayBuffer buffer = getBuffer();
-        /* step 6 */
+        /* step 5 */
         if (IsDetachedBuffer(buffer)) {
             throw newTypeError(cx, Messages.Key.BufferDetached);
         }
-        /* steps 7-10 (not applicable) */
-        /* step 11 */
-        long offset = getByteOffset();
-        /* steps 12, 15 */
-        ElementType elementType = getElementType();
-        /* steps 13-14 */
-        long indexedPosition = (index << elementShift) + offset;
-        /* steps 16-17 */
-        SetValueInBuffer(buffer, indexedPosition, elementType, numValue);
-        /* step 18 (return) */
+        /* steps 6-9 (not applicable) */
+        /* steps 10-15 */
+        SetValueInBuffer(buffer, byteIndex(index), getElementType(), numValue);
+        /* step 16 (return) */
+    }
+
+    void elementSetUnchecked(ExecutionContext cx, long index, Object value) {
+        assert 0 <= index && index < getArrayLength();
+        /* steps 1-2 (not applicable) */
+        /* step 3 */
+        Number numValue = elementType.toElementValue(cx, value);
+        /* step 4 */
+        ArrayBuffer buffer = getBuffer();
+        /* step 5 */
+        assert !IsDetachedBuffer(buffer);
+        /* steps 6-9 (not applicable) */
+        /* steps 10-15 */
+        SetValueInBuffer(buffer, byteIndex(index), getElementType(), numValue);
+        /* step 16 (return) */
+    }
+
+    void elementSetUnchecked(long index, Number numValue) {
+        assert 0 <= index && index < getArrayLength();
+        /* steps 1-3 (not applicable) */
+        /* step 4 */
+        ArrayBuffer buffer = getBuffer();
+        /* step 5 */
+        assert !IsDetachedBuffer(buffer);
+        /* steps 6-9 (not applicable) */
+        /* steps 10-15 */
+        assert elementType.isInt64() ? Type.isBigInt(numValue) : Type.isNumber(numValue);
+        SetValueInBuffer(buffer, byteIndex(index), getElementType(), numValue);
+        /* step 16 (return) */
     }
 
     /**
@@ -240,5 +262,21 @@ public final class TypedArrayObject extends IntegerIndexedObject implements Arra
      */
     public long getArrayLength() {
         return arrayLength;
+    }
+
+    @Override
+    public String toString() {
+        return String.format(
+                "%s, elementType=%s, buffer={data=%s, byteLength=%s, detached=%b}, byteLength=%d, byteOffset=%d, arrayLength=%d",
+                super.toString(), elementType, buffer.getData(), buffer.getByteLength(), buffer.isDetached(),
+                byteLength, byteOffset, arrayLength);
+    }
+
+    TypedArrayFunctions functions() {
+        return TypedArrayFunctions.functions(this);
+    }
+
+    List<? extends Number> toList() {
+        return functions().toList(this);
     }
 }

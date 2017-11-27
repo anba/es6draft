@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -7,14 +7,10 @@
 (function ArrayStringStatics() {
 "use strict";
 
-const global = %GlobalTemplate();
+const Array = %Intrinsic("Array");
+const String = %Intrinsic("String");
 
-const {
-  Object, Array, String
-} = global;
-
-{ /* Array statics */
-
+/* Array statics */
 const {
   join: Array_prototype_join,
   reverse: Array_prototype_reverse,
@@ -37,105 +33,101 @@ const {
   reduceRight: Array_prototype_reduceRight,
 } = Array.prototype;
 
-Object.defineProperties(Object.assign(Array, {
-  join(array, $1, ...more) {
-    return %CallFunction(Array_prototype_join, array, $1, ...more);
+%CreateMethodProperties(Array, {
+  join(array, separator) {
+    return %CallFunction(Array_prototype_join, array, separator);
   },
-  reverse(array, ...more) {
-    return %CallFunction(Array_prototype_reverse, array, ...more);
+  reverse(array) {
+    return %CallFunction(Array_prototype_reverse, array);
   },
-  sort(array, $1, ...more) {
-    return %CallFunction(Array_prototype_sort, array, $1, ...more);
+  sort(array, comparefn) {
+    return %CallFunction(Array_prototype_sort, array, comparefn);
   },
-  push(array, $1, ...more) {
+  push(array, item, ...items) {
     if (arguments.length <= 1) {
       return %CallFunction(Array_prototype_push, array);
     }
-    return %CallFunction(Array_prototype_push, array, ...[$1, ...more]);
+    return %CallFunction(Array_prototype_push, array, item, ...items);
   },
-  pop(array, ...more) {
-    return %CallFunction(Array_prototype_pop, array, ...more);
+  pop(array) {
+    return %CallFunction(Array_prototype_pop, array);
   },
-  shift(array, ...more) {
-    return %CallFunction(Array_prototype_shift, array, ...more);
+  shift(array) {
+    return %CallFunction(Array_prototype_shift, array);
   },
-  unshift(array, $1, ...more) {
+  unshift(array, item, ...items) {
     if (arguments.length <= 1) {
       return %CallFunction(Array_prototype_unshift, array);
     }
-    return %CallFunction(Array_prototype_unshift, array, ...[$1, ...more]);
+    return %CallFunction(Array_prototype_unshift, array, item, ...items);
   },
-  splice(array, $1, $2, ...more) {
-    return %CallFunction(Array_prototype_splice, array, $1, $2, ...more);
+  splice(array, start, deleteCount, ...items) {
+    if (arguments.length <= 1) {
+      return %CallFunction(Array_prototype_splice, array);
+    }
+    if (arguments.length <= 2) {
+      return %CallFunction(Array_prototype_splice, array, start);
+    }
+    if (arguments.length <= 3) {
+      return %CallFunction(Array_prototype_splice, array, start, deleteCount);
+    }
+    return %CallFunction(Array_prototype_splice, array, start, deleteCount, ...items);
   },
-  concat(array, $1, ...more) {
+  concat(array, arg, ...args) {
     if (arguments.length <= 1) {
       return %CallFunction(Array_prototype_concat, array);
     }
-    return %CallFunction(Array_prototype_concat, array, ...[$1, ...more]);
+    return %CallFunction(Array_prototype_concat, array, arg, ...args);
   },
-  slice(array, $1, $2, ...more) {
-    return %CallFunction(Array_prototype_slice, array, $1, $2, ...more);
+  slice(array, start, end) {
+    return %CallFunction(Array_prototype_slice, array, start, end);
   },
-  filter(array, $1, ...more) {
-    return %CallFunction(Array_prototype_filter, array, $1, ...more);
+  lastIndexOf(array, searchElement, fromIndex = void 0) {
+    if (arguments.length <= 2) {
+      return %CallFunction(Array_prototype_lastIndexOf, array, searchElement);
+    }
+    return %CallFunction(Array_prototype_lastIndexOf, array, searchElement, fromIndex);
   },
-  lastIndexOf(array, $1, ...more) {
-    return %CallFunction(Array_prototype_lastIndexOf, array, $1, ...more);
+  indexOf(array, searchElement, fromIndex = void 0) {
+    return %CallFunction(Array_prototype_indexOf, array, searchElement, fromIndex);
   },
-  indexOf(array, $1, ...more) {
-    return %CallFunction(Array_prototype_indexOf, array, $1, ...more);
+  forEach(array, callbackfn, thisArg = void 0) {
+    return %CallFunction(Array_prototype_forEach, array, callbackfn, thisArg);
   },
-  forEach(array, $1, ...more) {
-    return %CallFunction(Array_prototype_forEach, array, $1, ...more);
+  map(array, callbackfn, thisArg = void 0) {
+    return %CallFunction(Array_prototype_map, array, callbackfn, thisArg);
   },
-  map(array, $1, ...more) {
-    return %CallFunction(Array_prototype_map, array, $1, ...more);
+  filter(array, callbackfn, thisArg = void 0) {
+    return %CallFunction(Array_prototype_filter, array, callbackfn, thisArg);
   },
-  every(array, $1, ...more) {
-    return %CallFunction(Array_prototype_every, array, $1, ...more);
+  every(array, callbackfn, thisArg = void 0) {
+    return %CallFunction(Array_prototype_every, array, callbackfn, thisArg);
   },
-  some(array, $1, ...more) {
-    return %CallFunction(Array_prototype_some, array, $1, ...more);
+  some(array, callbackfn, thisArg = void 0) {
+    return %CallFunction(Array_prototype_some, array, callbackfn, thisArg);
   },
-  reduce(array, $1, ...more) {
-    return %CallFunction(Array_prototype_reduce, array, $1, ...more);
+  reduce(array, callbackfn, initialValue = void 0) {
+    if (arguments.length <= 2) {
+      return %CallFunction(Array_prototype_reduce, array, callbackfn);
+    }
+    return %CallFunction(Array_prototype_reduce, array, callbackfn, initialValue);
   },
-  reduceRight(array, $1, ...more) {
-    return %CallFunction(Array_prototype_reduceRight, array, $1, ...more);
+  reduceRight(array, callbackfn, initialValue = void 0) {
+    if (arguments.length <= 2) {
+      return %CallFunction(Array_prototype_reduceRight, array, callbackfn);
+    }
+    return %CallFunction(Array_prototype_reduceRight, array, callbackfn, initialValue);
   },
-}), {
-  join: {enumerable: false},
-  reverse: {enumerable: false},
-  sort: {enumerable: false},
-  push: {enumerable: false},
-  pop: {enumerable: false},
-  shift: {enumerable: false},
-  unshift: {enumerable: false},
-  splice: {enumerable: false},
-  concat: {enumerable: false},
-  slice: {enumerable: false},
-  filter: {enumerable: false},
-  lastIndexOf: {enumerable: false},
-  indexOf: {enumerable: false},
-  forEach: {enumerable: false},
-  map: {enumerable: false},
-  every: {enumerable: false},
-  some: {enumerable: false},
-  reduce: {enumerable: false},
-  reduceRight: {enumerable: false},
 });
-}
 
-{ /* String statics */
-
+/* String statics */
 const {
-  quote: String_prototype_quote,
   substring: String_prototype_substring,
   toLowerCase: String_prototype_toLowerCase,
   toUpperCase: String_prototype_toUpperCase,
   charAt: String_prototype_charAt,
   charCodeAt: String_prototype_charCodeAt,
+  includes: String_prototype_includes,
   contains: String_prototype_contains,
   indexOf: String_prototype_indexOf,
   lastIndexOf: String_prototype_lastIndexOf,
@@ -146,6 +138,7 @@ const {
   trimRight: String_prototype_trimRight,
   toLocaleLowerCase: String_prototype_toLocaleLowerCase,
   toLocaleUpperCase: String_prototype_toLocaleUpperCase,
+  normalize: String_prototype_normalize,
   localeCompare: String_prototype_localeCompare,
   match: String_prototype_match,
   search: String_prototype_search,
@@ -156,108 +149,85 @@ const {
   slice: String_prototype_slice,
 } = String.prototype;
 
-Object.defineProperties(Object.assign(String, {
-  quote(string, ...more) {
-    return %CallFunction(String_prototype_quote, string, ...more);
+%CreateMethodProperties(String, {
+  substring(string, start, end) {
+    return %CallFunction(String_prototype_substring, string, start, end);
   },
-  substring(string, $1, $2, ...more) {
-    return %CallFunction(String_prototype_substring, string, $1, $2, ...more);
+  toLowerCase(string) {
+    return %CallFunction(String_prototype_toLowerCase, string);
   },
-  toLowerCase(string, ...more) {
-    return %CallFunction(String_prototype_toLowerCase, string, ...more);
+  toUpperCase(string) {
+    return %CallFunction(String_prototype_toUpperCase, string);
   },
-  toUpperCase(string, ...more) {
-    return %CallFunction(String_prototype_toUpperCase, string, ...more);
+  charAt(string, pos) {
+    return %CallFunction(String_prototype_charAt, string, pos);
   },
-  charAt(string, $1, ...more) {
-    return %CallFunction(String_prototype_charAt, string, $1, ...more);
+  charCodeAt(string, pos) {
+    return %CallFunction(String_prototype_charCodeAt, string, pos);
   },
-  charCodeAt(string, $1, ...more) {
-    return %CallFunction(String_prototype_charCodeAt, string, $1, ...more);
+  includes(string, searchString, position = void 0) {
+    return %CallFunction(String_prototype_includes, string, searchString, position);
   },
-  contains(string, $1, ...more) {
-    return %CallFunction(String_prototype_contains, string, $1, ...more);
+  contains(string, searchString, position = void 0) {
+    return %CallFunction(String_prototype_contains, string, searchString, position);
   },
-  indexOf(string, $1, ...more) {
-    return %CallFunction(String_prototype_indexOf, string, $1, ...more);
+  indexOf(string, searchString, position = void 0) {
+    return %CallFunction(String_prototype_indexOf, string, searchString, position);
   },
-  lastIndexOf(string, $1, ...more) {
-    return %CallFunction(String_prototype_lastIndexOf, string, $1, ...more);
+  lastIndexOf(string, searchString, position = void 0) {
+    return %CallFunction(String_prototype_lastIndexOf, string, searchString, position);
   },
-  startsWith(string, $1, ...more) {
-    return %CallFunction(String_prototype_startsWith, string, $1, ...more);
+  startsWith(string, searchString, position = void 0) {
+    return %CallFunction(String_prototype_startsWith, string, searchString, position);
   },
-  endsWith(string, $1, ...more) {
-    return %CallFunction(String_prototype_endsWith, string, $1, ...more);
+  endsWith(string, searchString, position = void 0) {
+    return %CallFunction(String_prototype_endsWith, string, searchString, position);
   },
-  trim(string, ...more) {
-    return %CallFunction(String_prototype_trim, string, ...more);
+  trim(string) {
+    return %CallFunction(String_prototype_trim, string);
   },
-  trimLeft(string, ...more) {
-    return %CallFunction(String_prototype_trimLeft, string, ...more);
+  trimLeft(string) {
+    return %CallFunction(String_prototype_trimLeft, string);
   },
-  trimRight(string, ...more) {
-    return %CallFunction(String_prototype_trimRight, string, ...more);
+  trimRight(string) {
+    return %CallFunction(String_prototype_trimRight, string);
   },
-  toLocaleLowerCase(string, ...more) {
-    return %CallFunction(String_prototype_toLocaleLowerCase, string, ...more);
+  toLocaleLowerCase(string, locales = void 0) {
+    return %CallFunction(String_prototype_toLocaleLowerCase, string, locales);
   },
-  toLocaleUpperCase(string, ...more) {
-    return %CallFunction(String_prototype_toLocaleUpperCase, string, ...more);
+  toLocaleUpperCase(string, locales = void 0) {
+    return %CallFunction(String_prototype_toLocaleUpperCase, string, locales);
   },
-  localeCompare(string, $1, ...more) {
-    return %CallFunction(String_prototype_localeCompare, string, $1, ...more);
+  normalize(string, form = void 0) {
+    return %CallFunction(String_prototype_normalize, string, form);
   },
-  match(string, $1, ...more) {
-    return %CallFunction(String_prototype_match, string, $1, ...more);
+  localeCompare(string, that, locales = void 0, options = void 0) {
+    return %CallFunction(String_prototype_localeCompare, string, that, locales, options);
   },
-  search(string, $1, ...more) {
-    return %CallFunction(String_prototype_search, string, $1, ...more);
+  match(string, regexp) {
+    return %CallFunction(String_prototype_match, string, regexp);
   },
-  replace(string, $1, $2, ...more) {
-    return %CallFunction(String_prototype_replace, string, $1, $2, ...more);
+  search(string, regexp) {
+    return %CallFunction(String_prototype_search, string, regexp);
   },
-  split(string, $1, $2, ...more) {
-    return %CallFunction(String_prototype_split, string, $1, $2, ...more);
+  replace(string, searchValue, replaceValue) {
+    return %CallFunction(String_prototype_replace, string, searchValue, replaceValue);
   },
-  substr(string, $1, $2, ...more) {
-    return %CallFunction(String_prototype_substr, string, $1, $2, ...more);
+  split(string, separator, limit) {
+    return %CallFunction(String_prototype_split, string, separator, limit);
   },
-  concat(string, $1, ...more) {
+  substr(string, start, length) {
+    return %CallFunction(String_prototype_substr, string, start, length);
+  },
+  concat(string, arg, ...args) {
     if (arguments.length <= 1) {
       return %CallFunction(String_prototype_concat, string);
     }
-    return %CallFunction(String_prototype_concat, string, ...[$1, ...more]);
+    return %CallFunction(String_prototype_concat, string, arg, ...args);
   },
-  slice(string, $1, $2, ...more) {
-    return %CallFunction(String_prototype_slice, string, $1, $2, ...more);
+  slice(string, start, end) {
+    return %CallFunction(String_prototype_slice, string, start, end);
   },
-}), {
-  quote: {enumerable: false},
-  substring: {enumerable: false},
-  toLowerCase: {enumerable: false},
-  toUpperCase: {enumerable: false},
-  charAt: {enumerable: false},
-  charCodeAt: {enumerable: false},
-  contains: {enumerable: false},
-  indexOf: {enumerable: false},
-  lastIndexOf: {enumerable: false},
-  startsWith: {enumerable: false},
-  endsWith: {enumerable: false},
-  trim: {enumerable: false},
-  trimLeft: {enumerable: false},
-  trimRight: {enumerable: false},
-  toLocaleLowerCase: {enumerable: false},
-  toLocaleUpperCase: {enumerable: false},
-  localeCompare: {enumerable: false},
-  match: {enumerable: false},
-  search: {enumerable: false},
-  replace: {enumerable: false},
-  split: {enumerable: false},
-  substr: {enumerable: false},
-  concat: {enumerable: false},
-  slice: {enumerable: false},
 });
-}
 
 })();

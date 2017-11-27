@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -32,8 +32,7 @@ public final class MalformedNameException extends Exception implements InternalT
     }
 
     private String getFormattedMessage(Locale locale) {
-        return Messages.create(locale)
-                .getMessage(Messages.Key.ModulesInvalidName, unnormalizedName);
+        return Messages.create(locale).getMessage(Messages.Key.ModulesInvalidName, unnormalizedName);
     }
 
     @Override

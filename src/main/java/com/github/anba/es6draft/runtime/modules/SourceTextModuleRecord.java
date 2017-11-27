@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -17,6 +17,7 @@ import static com.github.anba.es6draft.semantics.StaticSemantics.ImportedLocalNa
 import static com.github.anba.es6draft.semantics.StaticSemantics.ModuleRequests;
 
 import java.io.IOException;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -32,7 +33,7 @@ import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.ModuleEnvironmentRecord;
 import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.internal.Messages;
+import com.github.anba.es6draft.runtime.internal.ScriptException;
 import com.github.anba.es6draft.runtime.internal.ScriptLoader;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 
@@ -61,9 +62,9 @@ public final class SourceTextModuleRecord implements ModuleRecord, Cloneable {
     private ScriptObject namespace;
 
     /**
-     * [[Evaluated]]
+     * [[Meta]]
      */
-    private boolean evaluated;
+    private ScriptObject meta;
 
     /**
      * [[ECMAScriptCode]]
@@ -101,7 +102,29 @@ public final class SourceTextModuleRecord implements ModuleRecord, Cloneable {
      */
     private final List<ExportEntry> nameSpaceExportEntries;
 
-    private boolean instantiated;
+    /**
+     * [[Status]]
+     */
+    private Status status = Status.Uninstantiated;
+
+    public enum Status {
+        Uninstantiated, Instantiating, Instantiated, Evaluating, Evaluated
+    }
+
+    /**
+     * [[EvaluationError]]
+     */
+    private Exception evaluationError = null;
+
+    /**
+     * [[DFSIndex]]
+     */
+    private int dfsIndex = -1;
+
+    /**
+     * [[DFSAncestorIndex]]
+     */
+    private int dfsAncestorIndex = -1;
 
     private SourceTextModuleRecord(SourceIdentifier sourceCodeId, Set<String> requestedModules,
             List<ImportEntry> importEntries, List<ExportEntry> localExportEntries,
@@ -263,13 +286,32 @@ public final class SourceTextModuleRecord implements ModuleRecord, Cloneable {
     }
 
     @Override
-    public boolean isEvaluated() {
-        return evaluated;
+    public ScriptObject getMeta() {
+        return meta;
     }
 
     @Override
-    public boolean isInstantiated() {
-        return instantiated;
+    public void setMeta(ScriptObject meta) {
+        assert this.meta == null : "meta already created";
+        this.meta = Objects.requireNonNull(meta);
+    }
+
+    /**
+     * [[Status]]
+     * 
+     * @return the current module status
+     */
+    public Status getStatus() {
+        return status;
+    }
+
+    /**
+     * [[EvaluationError]]
+     * 
+     * @return the evaluation error or {@code null} if none present
+     */
+    public Exception getEvaluationError() {
+        return evaluationError;
     }
 
     /**
@@ -289,13 +331,12 @@ public final class SourceTextModuleRecord implements ModuleRecord, Cloneable {
      * @throws CompilationException
      *             if the parsed module source cannot be compiled
      */
-    public static SourceTextModuleRecord ParseModule(ScriptLoader scriptLoader,
-            SourceIdentifier sourceCodeId, ModuleSource source) throws IOException,
-            ParserException, CompilationException {
+    public static SourceTextModuleRecord ParseModule(ScriptLoader scriptLoader, SourceIdentifier sourceCodeId,
+            ModuleSource source) throws IOException, ParserException, CompilationException {
         /* step 1 (not applicable) */
         /* steps 2-3 */
-        com.github.anba.es6draft.ast.Module parsedBody = scriptLoader.parseModule(
-                source.toSource(), source.sourceCode());
+        com.github.anba.es6draft.ast.Module parsedBody = scriptLoader.parseModule(source.toSource(),
+                source.sourceCode());
         /* steps 4-12 */
         return ParseModule(scriptLoader, sourceCodeId, parsedBody);
     }
@@ -313,9 +354,8 @@ public final class SourceTextModuleRecord implements ModuleRecord, Cloneable {
      * @throws CompilationException
      *             if the parsed module source cannot be compiled
      */
-    public static SourceTextModuleRecord ParseModule(ScriptLoader scriptLoader,
-            SourceIdentifier sourceCodeId, com.github.anba.es6draft.ast.Module parsedBody)
-            throws CompilationException {
+    public static SourceTextModuleRecord ParseModule(ScriptLoader scriptLoader, SourceIdentifier sourceCodeId,
+            com.github.anba.es6draft.ast.Module parsedBody) throws CompilationException {
         /* steps 1-3 (not applicable) */
         /* step 4 */
         Set<String> requestedModules = ModuleRequests(parsedBody);
@@ -340,9 +380,9 @@ public final class SourceTextModuleRecord implements ModuleRecord, Cloneable {
                 if (importEntry == null || importEntry.isStarImport()) {
                     localExportEntries.add(exportEntry);
                 } else {
-                    indirectExportEntries.add(new ExportEntry(exportEntry.getSourcePosition(),
-                            importEntry.getModuleRequest(), importEntry.getImportName(), null,
-                            exportEntry.getExportName()));
+                    indirectExportEntries
+                            .add(new ExportEntry(exportEntry.getSourcePosition(), importEntry.getModuleRequest(),
+                                    importEntry.getImportName(), null, exportEntry.getExportName()));
                 }
             } else if (exportEntry.isStarExport()) {
                 starExportEntries.add(exportEntry);
@@ -353,9 +393,8 @@ public final class SourceTextModuleRecord implements ModuleRecord, Cloneable {
             }
         }
         /* step 12 */
-        SourceTextModuleRecord m = new SourceTextModuleRecord(sourceCodeId, requestedModules,
-                importEntries, localExportEntries, indirectExportEntries, starExportEntries,
-                nameSpaceExportEntries);
+        SourceTextModuleRecord m = new SourceTextModuleRecord(sourceCodeId, requestedModules, importEntries,
+                localExportEntries, indirectExportEntries, starExportEntries, nameSpaceExportEntries);
         m.scriptCode = scriptLoader.load(parsedBody, m);
         return m;
     }
@@ -364,8 +403,8 @@ public final class SourceTextModuleRecord implements ModuleRecord, Cloneable {
      * 15.2.1.16.2 GetExportedNames( exportStarSet ) Concrete Method
      */
     @Override
-    public Set<String> getExportedNames(Set<ModuleRecord> exportStarSet) throws IOException,
-            MalformedNameException, ResolutionException {
+    public Set<String> getExportedNames(Set<ModuleRecord> exportStarSet)
+            throws IOException, MalformedNameException, ResolutionException {
         /* step 1 */
         SourceTextModuleRecord module = this;
         /* steps 2-3 */
@@ -389,8 +428,7 @@ public final class SourceTextModuleRecord implements ModuleRecord, Cloneable {
         /* step 7 */
         for (ExportEntry exportEntry : module.starExportEntries) {
             /* steps 7.a-b */
-            ModuleRecord requestedModule = HostResolveImportedModule(module,
-                    exportEntry.getModuleRequest());
+            ModuleRecord requestedModule = HostResolveImportedModule(module, exportEntry.getModuleRequest());
             /* step 7.c */
             Set<String> starNames = requestedModule.getExportedNames(exportStarSet);
             /* step 7.d */
@@ -409,12 +447,11 @@ public final class SourceTextModuleRecord implements ModuleRecord, Cloneable {
     }
 
     /**
-     * 15.2.1.16.3 ResolveExport(exportName, resolveSet, exportStarSet) Concrete Method
+     * 15.2.1.16.3 ResolveExport(exportName, resolveSet) Concrete Method
      */
     @Override
-    public ModuleExport resolveExport(String exportName, Map<ModuleRecord, Set<String>> resolveSet,
-            Set<ModuleRecord> exportStarSet) throws IOException, MalformedNameException,
-            ResolutionException {
+    public ResolvedBinding resolveExport(String exportName, Map<ModuleRecord, Set<String>> resolveSet)
+            throws IOException, MalformedNameException, ResolutionException {
         /* step 1 */
         SourceTextModuleRecord module = this;
         /* step 2 */
@@ -431,74 +468,57 @@ public final class SourceTextModuleRecord implements ModuleRecord, Cloneable {
             if (exportName.equals(exportEntry.getExportName())) {
                 /* step 4.a.i (not applicable) */
                 /* step 4.a.ii */
-                return new ModuleExport(module, exportEntry.getLocalName());
+                return new ResolvedBinding(module, exportEntry.getLocalName());
             }
         }
         /* step 5 */
         for (ExportEntry exportEntry : module.indirectExportEntries) {
             if (exportName.equals(exportEntry.getExportName())) {
                 /* step 5.a.i (not applicable) */
-                /* steps 5.a.ii-iii */
-                ModuleRecord importedModule = HostResolveImportedModule(module,
-                        exportEntry.getModuleRequest());
-                /* steps 5.a.iv-v */
-                ModuleExport indirectResolution = importedModule.resolveExport(
-                        exportEntry.getImportName(), resolveSet, exportStarSet);
-                /* step 5.a.vi */
-                if (indirectResolution != null) {
-                    return indirectResolution;
-                }
+                /* step 5.a.ii */
+                ModuleRecord importedModule = HostResolveImportedModule(module, exportEntry.getModuleRequest());
+                /* step 5.a.iii */
+                return importedModule.resolveExport(exportEntry.getImportName(), resolveSet);
             }
         }
         /* step ? (Extension: Export From) */
         for (ExportEntry exportEntry : module.nameSpaceExportEntries) {
             if (exportName.equals(exportEntry.getExportName())) {
-                ModuleRecord importedModule = HostResolveImportedModule(module,
-                        exportEntry.getModuleRequest());
-                return new ModuleExport(importedModule);
+                ModuleRecord importedModule = HostResolveImportedModule(module, exportEntry.getModuleRequest());
+                return new ResolvedBinding(importedModule);
             }
         }
         /* step 6 */
         if ("default".equals(exportName)) {
-            /* step 6.a (not applicable) */
-            /* step 6.b */
-            throw new ResolutionException(Messages.Key.ModulesMissingDefaultExport,
-                    module.sourceCodeId.toString());
-        }
-        /* steps 7-8 */
-        if (!exportStarSet.add(module)) {
             return null;
         }
+        /* step 7 */
+        ResolvedBinding starResolution = null;
         /* step 8 */
-        ModuleExport starResolution = null;
-        /* step 9 */
         for (ExportEntry exportEntry : module.starExportEntries) {
-            /* steps 9.a-b */
-            ModuleRecord importedModule = HostResolveImportedModule(module,
-                    exportEntry.getModuleRequest());
-            /* steps 9.c-d */
-            ModuleExport resolution = importedModule.resolveExport(exportName, resolveSet,
-                    exportStarSet);
-            /* step 9.e */
-            if (resolution == ModuleExport.AMBIGUOUS) {
-                return ModuleExport.AMBIGUOUS;
+            /* step 8.a */
+            ModuleRecord importedModule = HostResolveImportedModule(module, exportEntry.getModuleRequest());
+            /* step 8.b */
+            ResolvedBinding resolution = importedModule.resolveExport(exportName, resolveSet);
+            /* step 8.c */
+            if (resolution == ResolvedBinding.AMBIGUOUS) {
+                return ResolvedBinding.AMBIGUOUS;
             }
-            /* step 9.f */
+            /* step 8.d */
             if (resolution != null) {
                 if (starResolution == null) {
                     starResolution = resolution;
                 } else {
                     if (resolution.getModule() != starResolution.getModule()) {
-                        return ModuleExport.AMBIGUOUS;
+                        return ResolvedBinding.AMBIGUOUS;
                     }
-                    if (!Objects.equals(resolution.getBindingName(),
-                            starResolution.getBindingName())) {
-                        return ModuleExport.AMBIGUOUS;
+                    if (!Objects.equals(resolution.getBindingName(), starResolution.getBindingName())) {
+                        return ResolvedBinding.AMBIGUOUS;
                     }
                 }
             }
         }
-        /* step 11 */
+        /* step 9 */
         return starResolution;
     }
 
@@ -510,31 +530,140 @@ public final class SourceTextModuleRecord implements ModuleRecord, Cloneable {
         /* step 1 */
         SourceTextModuleRecord module = this;
         /* step 2 */
-        Realm realm = module.realm;
+        assert module.status != Status.Instantiating && module.status != Status.Evaluating;
         /* step 3 */
-        assert realm != null : "module is not linked";
-        /* step 4 */
-        Module code = module.scriptCode;
-        /* step 5 */
-        if (module.environment != null) {
-            return;
+        ArrayDeque<SourceTextModuleRecord> stack = new ArrayDeque<>();
+        /* steps 4-5 */
+        try {
+            InnerModuleInstantiation(module, stack, 0);
+        } catch (IOException | MalformedNameException | ResolutionException | ParserException | ScriptException e) {
+            /* step 5.a */
+            for (SourceTextModuleRecord m : stack) {
+                /* step 5.a.i */
+                assert m.status == Status.Instantiating;
+                /* step 5.a.ii */
+                m.status = Status.Uninstantiated;
+                /* step 5.a.iii */
+                m.environment = null;
+                /* step 5.a.iv */
+                m.dfsIndex = -1;
+                /* step 5.a.v */
+                m.dfsAncestorIndex = -1;
+            }
+            /* step 5.b */
+            assert module.status == Status.Uninstantiated;
+            /* step 5.c */
+            throw e;
         }
         /* step 6 */
-        LexicalEnvironment<ModuleEnvironmentRecord> env = newModuleEnvironment(realm.getGlobalEnv());
+        assert module.status == Status.Instantiated || module.status == Status.Evaluated;
         /* step 7 */
-        module.environment = env;
-        /* step 8 */
-        for (String required : module.requestedModules) {
-            /* step 8.a (note) */
-            /* steps 8.b-c */
-            ModuleRecord requiredModule = HostResolveImportedModule(module, required);
-            /* steps 8.d-e */
-            requiredModule.instantiate();
+        assert stack.isEmpty();
+        /* step 8 (return) */
+    }
+
+    /**
+     * 15.2.1.16.4.1 InnerModuleInstantiation( module, stack, index )
+     */
+    private static int InnerModuleInstantiation(ModuleRecord module, ArrayDeque<SourceTextModuleRecord> stack,
+            int index) throws IOException, MalformedNameException, ResolutionException {
+        /* step 1 */
+        if (!(module instanceof SourceTextModuleRecord)) {
+            /* step 1.a */
+            module.instantiate();
+            /* step 1.b */
+            return index;
         }
-        /* steps 9-17 */
+        SourceTextModuleRecord sourceModule = (SourceTextModuleRecord) module;
+        /* steps 3-4 */
+        switch (sourceModule.status) {
+        case Instantiating:
+        case Instantiated:
+        case Evaluated:
+            return index;
+        case Uninstantiated:
+            sourceModule.status = Status.Instantiating;
+            break;
+        case Evaluating:
+        default:
+            throw new AssertionError();
+        }
+        /* step 5 */
+        sourceModule.dfsIndex = index;
+        /* step 6 */
+        sourceModule.dfsAncestorIndex = index;
+        /* step 7 */
+        index += 1;
+        /* step 8 */
+        stack.push(sourceModule);
+        /* step 9 */
+        for (String required : sourceModule.requestedModules) {
+            /* step 9.a */
+            ModuleRecord requiredModule = HostResolveImportedModule(sourceModule, required);
+            /* step 9.b */
+            index = InnerModuleInstantiation(requiredModule, stack, index);
+            /* step 9.c */
+            // FIXME: spec bug - [[Status]] only defined for Source Text Module Records.
+            assert !(requiredModule instanceof SourceTextModuleRecord)
+                    || ((SourceTextModuleRecord) requiredModule).status == Status.Instantiating
+                    || ((SourceTextModuleRecord) requiredModule).status == Status.Instantiated
+                    || ((SourceTextModuleRecord) requiredModule).status == Status.Evaluated;
+            /* step 9.d */
+            // FIXME: spec bug - [[Status]] only defined for Source Text Module Records.
+            assert !(requiredModule instanceof SourceTextModuleRecord)
+                    || ((((SourceTextModuleRecord) requiredModule).status == Status.Instantiating) == stack
+                            .contains(requiredModule));
+            /* step 9.e */
+            if (requiredModule instanceof SourceTextModuleRecord
+                    && ((SourceTextModuleRecord) requiredModule).status == Status.Instantiating) {
+                /* step 9.e.i (omitted) */
+                /* step 9.e.ii */
+                SourceTextModuleRecord requiredSourceModule = (SourceTextModuleRecord) requiredModule;
+                requiredSourceModule.dfsAncestorIndex = Math.min(sourceModule.dfsAncestorIndex,
+                        requiredSourceModule.dfsAncestorIndex);
+            }
+        }
+        /* step 10 */
+        ModuleDeclarationEnvironmentSetup(sourceModule);
+        /* step 11 */
+        assert stack.stream().filter(m -> m == sourceModule).count() == 1;
+        /* step 12 */
+        assert sourceModule.dfsAncestorIndex <= sourceModule.dfsIndex;
+        /* step 13 */
+        if (sourceModule.dfsAncestorIndex == sourceModule.dfsIndex) {
+            while (true) {
+                /* steps 13.b.i-ii */
+                assert !stack.isEmpty();
+                SourceTextModuleRecord requiredModule = stack.pop();
+                /* step 13.b.iii */
+                requiredModule.status = Status.Instantiated;
+                /* step 13.b.iv */
+                if (requiredModule == sourceModule) {
+                    break;
+                }
+            }
+        }
+        /* step 14 */
+        return index;
+    }
+
+    /**
+     * 15.2.1.16.4.2 ModuleDeclarationEnvironmentSetup( module )
+     */
+    private static void ModuleDeclarationEnvironmentSetup(SourceTextModuleRecord module)
+            throws IOException, ResolutionException, MalformedNameException {
+        /* step 3 */
+        Realm realm = module.realm;
+        /* step 4 */
+        assert realm != null : "module is not linked";
+        /* step 5 */
+        LexicalEnvironment<ModuleEnvironmentRecord> env = newModuleEnvironment(realm.getGlobalEnv());
+        /* step 6 */
+        module.environment = env;
+        /* steps 1-2, 7-14 (generated code) */
+        Module code = module.scriptCode;
         ExecutionContext context = newModuleDeclarationExecutionContext(realm, code);
-        code.getModuleBody().moduleDeclarationInstantiation(context, this, env);
-        module.instantiated = true;
+        code.getModuleBody().moduleDeclarationInstantiation(context, module, env);
     }
 
     /**
@@ -545,42 +674,150 @@ public final class SourceTextModuleRecord implements ModuleRecord, Cloneable {
         /* step 1 */
         SourceTextModuleRecord module = this;
         /* step 2 */
-        // FIXME: spec issue - successful completion of ModuleDeclarationInstantiation incorrect?
-        // assert module.instantiated;
-        assert module.environment != null : "module is not instantiated";
+        assert module.status == Status.Instantiated || module.status == Status.Evaluated;
+        /* step 3 */
+        ArrayDeque<SourceTextModuleRecord> stack = new ArrayDeque<>();
+        /* steps 4-5 */
+        try {
+            InnerModuleEvaluation(module, stack, 0);
+        } catch (IOException | MalformedNameException | ResolutionException | ParserException | ScriptException e) {
+            /* step 5.a */
+            for (SourceTextModuleRecord m : stack) {
+                /* step 5.a.i */
+                assert m.status == Status.Evaluating;
+                /* step 5.a.ii */
+                m.status = Status.Evaluated;
+                /* step 5.a.iii */
+                m.evaluationError = e;
+            }
+            /* step 5.b */
+            assert module.status == Status.Evaluated;
+            /* step 5.c */
+            throw e;
+        }
+        /* step 6 */
+        assert module.status == Status.Evaluated && module.evaluationError == null;
+        /* step 7 */
+        assert stack.isEmpty();
+        /* step 8 */
+        return UNDEFINED;
+    }
+
+    /**
+     * 15.2.1.16.5.1 InnerModuleEvaluation( module, stack, index )
+     */
+    private static int InnerModuleEvaluation(ModuleRecord module, ArrayDeque<SourceTextModuleRecord> stack, int index)
+            throws IOException, MalformedNameException, ResolutionException {
+        /* step 1 */
+        if (!(module instanceof SourceTextModuleRecord)) {
+            /* step 1.a */
+            module.evaluate();
+            /* step 1.b */
+            return index;
+        }
+        SourceTextModuleRecord sourceModule = (SourceTextModuleRecord) module;
+        /* step 2 */
+        if (sourceModule.status == Status.Evaluated) {
+            /* step 2.a */
+            if (sourceModule.evaluationError == null) {
+                return index;
+            }
+            /* step 2.b */
+            // TODO: Create new exception and set cause to sourceModule.evaluationError for better stacktraces?
+            throw SourceTextModuleRecord.<RuntimeException> rethrow(sourceModule.evaluationError);
+        }
+        /* step 3 */
+        if (sourceModule.status == Status.Evaluating) {
+            return index;
+        }
+        /* step 4 */
+        assert sourceModule.status == Status.Instantiated;
+        /* step 5 */
+        sourceModule.status = Status.Evaluating;
+        /* step 6 */
+        sourceModule.dfsIndex = index;
+        /* step 7 */
+        sourceModule.dfsAncestorIndex = index;
+        /* step 8 */
+        index += 1;
+        /* step 9 */
+        stack.push(sourceModule);
+        /* step 10 */
+        for (String required : sourceModule.requestedModules) {
+            /* steps 10.a-b */
+            ModuleRecord requiredModule = HostResolveImportedModule(module, required);
+            /* step 10.c */
+            index = InnerModuleEvaluation(requiredModule, stack, index);
+            /* step 10.d */
+            // FIXME: spec bug - [[Status]] only defined for Source Text Module Records.
+            assert !(requiredModule instanceof SourceTextModuleRecord)
+                    || ((SourceTextModuleRecord) requiredModule).status == Status.Evaluating
+                    || ((SourceTextModuleRecord) requiredModule).status == Status.Evaluated;
+            /* step 10.e */
+            // FIXME: spec bug - [[Status]] only defined for Source Text Module Records.
+            assert !(requiredModule instanceof SourceTextModuleRecord)
+                    || ((((SourceTextModuleRecord) requiredModule).status == Status.Evaluating) == stack
+                            .contains(requiredModule));
+            /* step 10.f */
+            if (requiredModule instanceof SourceTextModuleRecord
+                    && ((SourceTextModuleRecord) requiredModule).status == Status.Evaluating) {
+                /* step 10.f.i (omitted) */
+                /* step 10.f.ii */
+                SourceTextModuleRecord requiredSourceModule = (SourceTextModuleRecord) requiredModule;
+                requiredSourceModule.dfsAncestorIndex = Math.min(sourceModule.dfsAncestorIndex,
+                        requiredSourceModule.dfsAncestorIndex);
+            }
+        }
+        /* step 11 */
+        ModuleExecution(sourceModule);
+        /* step 12 */
+        assert stack.stream().filter(m -> m == sourceModule).count() == 1;
+        /* step 13 */
+        assert sourceModule.dfsAncestorIndex <= sourceModule.dfsIndex;
+        /* step 14 */
+        if (sourceModule.dfsAncestorIndex == sourceModule.dfsIndex) {
+            while (true) {
+                /* steps 14.b.i-ii */
+                assert !stack.isEmpty();
+                SourceTextModuleRecord requiredModule = stack.pop();
+                /* step 14.b.iii */
+                requiredModule.status = Status.Evaluated;
+                /* step 14.b.iv */
+                if (requiredModule == sourceModule) {
+                    break;
+                }
+            }
+        }
+        /* step 15 */
+        return index;
+    }
+
+    /**
+     * 15.2.1.16.5.2 ModuleExecution( module )
+     */
+    private static Object ModuleExecution(SourceTextModuleRecord module) {
         /* step 3 */
         Realm realm = module.realm;
         assert realm != null : "module is not linked";
-        /* step 4 */
-        if (module.evaluated) {
-            return UNDEFINED;
-        }
-        /* step 5 */
-        module.evaluated = true;
-        // ModuleDeclarationInstantiation did not complete successfully - stop evaluation.
-        if (!this.instantiated) {
-            return UNDEFINED;
-        }
-        /* step 6 */
-        for (String required : module.requestedModules) {
-            /* steps 6.a-b */
-            ModuleRecord requiredModule = HostResolveImportedModule(module, required);
-            /* steps 6.c-d */
-            requiredModule.evaluate();
-        }
-        /* steps 7-12 */
+        /* steps 1-2, 4-8 */
         ExecutionContext moduleContext = newModuleExecutionContext(realm, module);
-        /* steps 13-14 */
-        ExecutionContext oldScriptContext = realm.getScriptContext();
+        /* step 9 */
+        ExecutionContext oldScriptContext = realm.getWorld().getScriptContext();
         try {
-            realm.setScriptContext(moduleContext);
-            /* step 15 */
+            /* step 10 */
+            realm.getWorld().setScriptContext(moduleContext);
+            /* step 11 */
             Object result = module.scriptCode.evaluate(moduleContext);
-            /* step 18 */
+            /* step 14 */
             return result;
         } finally {
-            /* steps 16-17 */
-            realm.setScriptContext(oldScriptContext);
+            /* steps 12-13 */
+            realm.getWorld().setScriptContext(oldScriptContext);
         }
+    }
+
+    @SuppressWarnings("unchecked")
+    private static <E extends Throwable> E rethrow(Throwable e) throws E {
+        throw (E) e;
     }
 }

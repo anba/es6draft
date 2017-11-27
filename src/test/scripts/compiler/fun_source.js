@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -30,21 +30,18 @@ assertEq((function(){}).bind().toString(), "function BoundFunction() { [native c
 
 function testProxy() {
   let {proxy, revoke} = Proxy.revocable(() => {}, {});
-  let err;
-  try { err = null; proxy.toString(); } catch (e) { err = e; }
-  assertEq(err instanceof TypeError, true);
+  assertEq(Function.prototype.toString.call(proxy), "function () { [native code] }");
   revoke();
-  try { err = null; proxy.toString(); } catch (e) { err = e; }
-  assertEq(err instanceof TypeError, true);
+  assertEq(Function.prototype.toString.call(proxy), "function () { [native code] }");
 }
 testProxy();
 
 function testClassDefaultConstructor() {
   class C1 { }
-  assertEq(C1.toString(), "constructor(){}");
+  assertEq(C1.toString(), "class C1 { }");
 
   class C2 extends class { } { }
-  assertEq(C2.toString(), "constructor(...args){super(...args);}");
+  assertEq(C2.toString(), "class C2 extends class { } { }");
 }
 testClassDefaultConstructor();
 
@@ -53,7 +50,7 @@ function testFunctionDeclaration() {
   assertEq(F1.toString(), "function F1(){}");
 
   function F2 (){}
-  assertEq(F2.toString(), "function F2(){}");
+  assertEq(F2.toString(), "function F2 (){}");
 
   function F3( ){}
   assertEq(F3.toString(), "function F3( ){}");
@@ -71,7 +68,7 @@ function testGeneratorDeclaration() {
   assertEq(F1.toString(), "function* F1(){}");
 
   function* F2 (){}
-  assertEq(F2.toString(), "function* F2(){}");
+  assertEq(F2.toString(), "function* F2 (){}");
 
   function* F3( ){}
   assertEq(F3.toString(), "function* F3( ){}");
@@ -83,10 +80,10 @@ function testGeneratorDeclaration() {
   assertEq(F5.toString(), "function* F5(){ }");
 
   function *G1(){}
-  assertEq(G1.toString(), "function* G1(){}");
+  assertEq(G1.toString(), "function *G1(){}");
 
   function * G2(){}
-  assertEq(G2.toString(), "function* G2(){}");
+  assertEq(G2.toString(), "function * G2(){}");
 
   function
   /* comment 1 */
@@ -95,13 +92,22 @@ function testGeneratorDeclaration() {
   G3
   /* comment 3 */
   (){}
-  assertEq(G3.toString(), "function* G3(){}");
+  assertEq(G3.toString(), `function
+  /* comment 1 */
+  *
+  /* comment 2 */
+  G3
+  /* comment 3 */
+  (){}`);
 
   function* G4 (/* comment */){}
-  assertEq(G4.toString(), "function* G4(/* comment */){}");
+  assertEq(G4.toString(), "function* G4 (/* comment */){}");
 
   function* G5 (){/* comment */}
-  assertEq(G5.toString(), "function* G5(){/* comment */}");
+  assertEq(G5.toString(), "function* G5 (){/* comment */}");
+
+  /* comment */ function* G6 (){} /* comment */
+  assertEq(G6.toString(), "function* G6 (){}");
 }
 testGeneratorDeclaration();
 
@@ -110,7 +116,7 @@ function testAsyncFunctionDeclaration() {
   assertEq(F1.toString(), "async function F1(){}");
 
   async function F2 (){}
-  assertEq(F2.toString(), "async function F2(){}");
+  assertEq(F2.toString(), "async function F2 (){}");
 
   async function F3( ){}
   assertEq(F3.toString(), "async function F3( ){}");
@@ -122,12 +128,36 @@ function testAsyncFunctionDeclaration() {
   assertEq(F5.toString(), "async function F5(){ }");
 
   async    function A1(){}
-  assertEq(A1.toString(), "async function A1(){}");
+  assertEq(A1.toString(), "async    function A1(){}");
 
   async /* comment */ function A2(){}
-  assertEq(A2.toString(), "async function A2(){}");
+  assertEq(A2.toString(), "async /* comment */ function A2(){}");
 }
 testAsyncFunctionDeclaration();
+
+function testAsyncGeneratorDeclaration() {
+  async function* F1(){}
+  assertEq(F1.toString(), "async function* F1(){}");
+
+  async function* F2 (){}
+  assertEq(F2.toString(), "async function* F2 (){}");
+
+  async function* F3( ){}
+  assertEq(F3.toString(), "async function* F3( ){}");
+
+  async function* F4() {}
+  assertEq(F4.toString(), "async function* F4() {}");
+
+  async function* F5(){ }
+  assertEq(F5.toString(), "async function* F5(){ }");
+
+  async    function * A1(){}
+  assertEq(A1.toString(), "async    function * A1(){}");
+
+  async /* comment */ function* A2(){}
+  assertEq(A2.toString(), "async /* comment */ function* A2(){}");
+}
+testAsyncGeneratorDeclaration();
 
 function testGeneratorComprehension() {
   function throwCaller() {
@@ -143,17 +173,17 @@ function testGeneratorComprehension() {
   }
 
   let g1 = (0, (for (v of [0]) throwCaller()));
-  assertEq(getHiddenGenerator(g1).toString(), "function* gencompr() { [generator comprehension] }");
+  assertEq(getHiddenGenerator(g1).toString(), "(for (v of [0]) throwCaller())");
 
   let g2 = (for (v of [0]) throwCaller());
-  assertEq(getHiddenGenerator(g2).toString(), "function* g2() { [generator comprehension] }");
+  assertEq(getHiddenGenerator(g2).toString(), "(for (v of [0]) throwCaller())");
 }
 testGeneratorComprehension();
 
 function testFunctionExpression() {
   // Anonymous function expression, different white space in function
   let f1 = (0, function(){});
-  assertEq(f1.toString(), "function (){}");
+  assertEq(f1.toString(), "function(){}");
 
   let f2 = (0, function (){});
   assertEq(f2.toString(), "function (){}");
@@ -166,7 +196,7 @@ function testFunctionExpression() {
 
   // Anonymous function expression, auto-assigned name not part of source
   let f5 = function(){};
-  assertEq(f5.toString(), "function (){}");
+  assertEq(f5.toString(), "function(){}");
   assertEq(f5.name, "f5");
 
   // Named function expression, different white space in function
@@ -174,17 +204,17 @@ function testFunctionExpression() {
   assertEq(f6.toString(), "function F6(){}");
 
   let f7 = function F7 (){};
-  assertEq(f7.toString(), "function F7(){}");
+  assertEq(f7.toString(), "function F7 (){}");
 
   let f8 = function F8 () {};
-  assertEq(f8.toString(), "function F8() {}");
+  assertEq(f8.toString(), "function F8 () {}");
 
   let f9 = function F9 (){ };
-  assertEq(f9.toString(), "function F9(){ }");
+  assertEq(f9.toString(), "function F9 (){ }");
 
   // Comments
   let f10 = (function/*a*/f/*b*/(/*c*/){/*d*/});
-  assertEq(f10.toString(), "function f(/*c*/){/*d*/}");
+  assertEq(f10.toString(), "function/*a*/f/*b*/(/*c*/){/*d*/}");
 }
 testFunctionExpression();
 
@@ -221,22 +251,30 @@ function testClassDeclarationConstructor() {
   class C1 {
     constructor(){}
   }
-  assertEq(C1.toString(), "constructor(){}");
+  assertEq(C1.toString(), `class C1 {
+    constructor(){}
+  }`);
 
   class C2 {
     constructor() {}
   }
-  assertEq(C2.toString(), "constructor() {}");
+  assertEq(C2.toString(), `class C2 {
+    constructor() {}
+  }`);
 
   class C3 {
     constructor( ) {}
   }
-  assertEq(C3.toString(), "constructor( ) {}");
+  assertEq(C3.toString(), `class C3 {
+    constructor( ) {}
+  }`);
 
   class C4 {
     constructor() { }
   }
-  assertEq(C4.toString(), "constructor() { }");
+  assertEq(C4.toString(), `class C4 {
+    constructor() { }
+  }`);
 }
 testClassDeclarationConstructor();
 
@@ -359,22 +397,22 @@ function testClassDeclarationStaticMethod() {
   class C1 {
     static method(){}
   }
-  assertEq(C1.method.toString(), "static method(){}");
+  assertEq(C1.method.toString(), "method(){}");
 
   class C2 {
     static method() {}
   }
-  assertEq(C2.method.toString(), "static method() {}");
+  assertEq(C2.method.toString(), "method() {}");
 
   class C3 {
     static method( ) {}
   }
-  assertEq(C3.method.toString(), "static method( ) {}");
+  assertEq(C3.method.toString(), "method( ) {}");
 
   class C4 {
     static method() { }
   }
-  assertEq(C4.method.toString(), "static method() { }");
+  assertEq(C4.method.toString(), "method() { }");
 }
 testClassDeclarationStaticMethod();
 
@@ -382,22 +420,22 @@ function testClassDeclarationStaticGeneratorMethod() {
   class C1 {
     static *method(){}
   }
-  assertEq(C1.method.toString(), "static *method(){}");
+  assertEq(C1.method.toString(), "*method(){}");
 
   class C2 {
     static *method() {}
   }
-  assertEq(C2.method.toString(), "static *method() {}");
+  assertEq(C2.method.toString(), "*method() {}");
 
   class C3 {
     static *method( ) {}
   }
-  assertEq(C3.method.toString(), "static *method( ) {}");
+  assertEq(C3.method.toString(), "*method( ) {}");
 
   class C4 {
     static *method() { }
   }
-  assertEq(C4.method.toString(), "static *method() { }");
+  assertEq(C4.method.toString(), "*method() { }");
 }
 testClassDeclarationStaticGeneratorMethod();
 
@@ -405,22 +443,22 @@ function testClassDeclarationStaticAsyncMethod() {
   class C1 {
     static async method(){}
   }
-  assertEq(C1.method.toString(), "static async method(){}");
+  assertEq(C1.method.toString(), "async method(){}");
 
   class C2 {
     static async method() {}
   }
-  assertEq(C2.method.toString(), "static async method() {}");
+  assertEq(C2.method.toString(), "async method() {}");
 
   class C3 {
     static async method( ) {}
   }
-  assertEq(C3.method.toString(), "static async method( ) {}");
+  assertEq(C3.method.toString(), "async method( ) {}");
 
   class C4 {
     static async method() { }
   }
-  assertEq(C4.method.toString(), "static async method() { }");
+  assertEq(C4.method.toString(), "async method() { }");
 }
 testClassDeclarationStaticAsyncMethod();
 
@@ -428,22 +466,22 @@ function testClassDeclarationStaticGetter() {
   class C1 {
     static get abc(){}
   }
-  assertEq(Object.getOwnPropertyDescriptor(C1, "abc").get.toString(), "static get abc(){}");
+  assertEq(Object.getOwnPropertyDescriptor(C1, "abc").get.toString(), "get abc(){}");
 
   class C2 {
     static get abc() {}
   }
-  assertEq(Object.getOwnPropertyDescriptor(C2, "abc").get.toString(), "static get abc() {}");
+  assertEq(Object.getOwnPropertyDescriptor(C2, "abc").get.toString(), "get abc() {}");
 
   class C3 {
     static get abc( ) {}
   }
-  assertEq(Object.getOwnPropertyDescriptor(C3, "abc").get.toString(), "static get abc( ) {}");
+  assertEq(Object.getOwnPropertyDescriptor(C3, "abc").get.toString(), "get abc( ) {}");
 
   class C4 {
     static get abc() { }
   }
-  assertEq(Object.getOwnPropertyDescriptor(C4, "abc").get.toString(), "static get abc() { }");
+  assertEq(Object.getOwnPropertyDescriptor(C4, "abc").get.toString(), "get abc() { }");
 }
 testClassDeclarationStaticGetter();
 
@@ -451,23 +489,21 @@ function testClassDeclarationStaticSetter() {
   class C1 {
     static set abc(x){}
   }
-  assertEq(Object.getOwnPropertyDescriptor(C1, "abc").set.toString(), "static set abc(x){}");
+  assertEq(Object.getOwnPropertyDescriptor(C1, "abc").set.toString(), "set abc(x){}");
 
   class C2 {
     static set abc(x) {}
   }
-  assertEq(Object.getOwnPropertyDescriptor(C2, "abc").set.toString(), "static set abc(x) {}");
+  assertEq(Object.getOwnPropertyDescriptor(C2, "abc").set.toString(), "set abc(x) {}");
 
   class C3 {
     static set abc( x) {}
   }
-  assertEq(Object.getOwnPropertyDescriptor(C3, "abc").set.toString(), "static set abc( x) {}");
+  assertEq(Object.getOwnPropertyDescriptor(C3, "abc").set.toString(), "set abc( x) {}");
 
   class C4 {
     static set abc(x) { }
   }
-  assertEq(Object.getOwnPropertyDescriptor(C4, "abc").set.toString(), "static set abc(x) { }");
+  assertEq(Object.getOwnPropertyDescriptor(C4, "abc").set.toString(), "set abc(x) { }");
 }
 testClassDeclarationStaticSetter();
-
-

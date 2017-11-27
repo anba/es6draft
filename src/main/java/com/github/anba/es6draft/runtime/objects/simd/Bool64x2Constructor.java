@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -25,8 +25,8 @@ import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
+import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
-import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
 
 /**
  * <h1>SIMD</h1>
@@ -66,20 +66,16 @@ public final class Bool64x2Constructor extends BuiltinConstructor implements Ini
         throw newTypeError(calleeContext(), Messages.Key.SIMDCreate, SIMD_TYPE.name());
     }
 
-    @Override
-    protected BuiltinFunction clone() {
-        return new Bool64x2Constructor(getRealm());
-    }
-
     /**
      * Properties of the SIMD.Bool64x2 Constructor
      */
     public enum Properties {
         ;
 
-        private static SIMDValue simdValue(ExecutionContext cx, Object value, SIMDType type) {
+        private static SIMDValue simdValue(ExecutionContext cx, Object value, SIMDType type, String method) {
             if (!(value instanceof SIMDValue)) {
-                throw newTypeError(cx, Messages.Key.IncompatibleObject);
+                throw newTypeError(cx, Messages.Key.SIMDInvalidObject, SIMD_TYPE.name() + method,
+                        Type.of(value).toString());
             }
             if (((SIMDValue) value).getType() != type) {
                 throw newTypeError(cx, Messages.Key.SIMDInvalidType);
@@ -90,15 +86,14 @@ public final class Bool64x2Constructor extends BuiltinConstructor implements Ini
         @Prototype
         public static final Intrinsics __proto__ = Intrinsics.FunctionPrototype;
 
-        @Value(name = "length", attributes = @Attributes(writable = false, enumerable = false, configurable = true) )
+        @Value(name = "length", attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static final int length = VECTOR_LENGTH;
 
-        @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false, configurable = true) )
+        @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static final String name = SIMD_TYPE.name();
 
         // FIXME: spec bug - missing definition
-        @Value(name = "prototype",
-                attributes = @Attributes(writable = false, enumerable = false, configurable = false) )
+        @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false, configurable = false))
         public static final Intrinsics prototype = Intrinsics.SIMD_Bool64x2Prototype;
 
         /**
@@ -135,7 +130,7 @@ public final class Bool64x2Constructor extends BuiltinConstructor implements Ini
         @Function(name = "check", arity = 1)
         public static Object check(ExecutionContext cx, Object thisValue, Object a) {
             /* steps 1-2 */
-            return simdValue(cx, a, SIMD_TYPE);
+            return simdValue(cx, a, SIMD_TYPE, ".check");
         }
 
         /**
@@ -154,8 +149,8 @@ public final class Bool64x2Constructor extends BuiltinConstructor implements Ini
         @Function(name = "and", arity = 2)
         public static Object and(ExecutionContext cx, Object thisValue, Object a, Object b) {
             /* step 1 */
-            SIMDValue sa = simdValue(cx, a, SIMD_TYPE);
-            SIMDValue sb = simdValue(cx, b, SIMD_TYPE);
+            SIMDValue sa = simdValue(cx, a, SIMD_TYPE, ".and");
+            SIMDValue sb = simdValue(cx, b, SIMD_TYPE, ".and");
             /* steps 2-3 */
             SIMDValue result = SIMDBinaryOpBool(sa, sb, (x, y) -> x && y);
             /* step 4 */
@@ -178,8 +173,8 @@ public final class Bool64x2Constructor extends BuiltinConstructor implements Ini
         @Function(name = "xor", arity = 2)
         public static Object xor(ExecutionContext cx, Object thisValue, Object a, Object b) {
             /* step 1 */
-            SIMDValue sa = simdValue(cx, a, SIMD_TYPE);
-            SIMDValue sb = simdValue(cx, b, SIMD_TYPE);
+            SIMDValue sa = simdValue(cx, a, SIMD_TYPE, ".xor");
+            SIMDValue sb = simdValue(cx, b, SIMD_TYPE, ".xor");
             /* steps 2-3 */
             SIMDValue result = SIMDBinaryOpBool(sa, sb, (x, y) -> x ^ y);
             /* step 4 */
@@ -202,8 +197,8 @@ public final class Bool64x2Constructor extends BuiltinConstructor implements Ini
         @Function(name = "or", arity = 2)
         public static Object or(ExecutionContext cx, Object thisValue, Object a, Object b) {
             /* step 1 */
-            SIMDValue sa = simdValue(cx, a, SIMD_TYPE);
-            SIMDValue sb = simdValue(cx, b, SIMD_TYPE);
+            SIMDValue sa = simdValue(cx, a, SIMD_TYPE, ".or");
+            SIMDValue sb = simdValue(cx, b, SIMD_TYPE, ".or");
             /* steps 2-3 */
             SIMDValue result = SIMDBinaryOpBool(sa, sb, (x, y) -> x | y);
             /* step 4 */
@@ -224,7 +219,7 @@ public final class Bool64x2Constructor extends BuiltinConstructor implements Ini
         @Function(name = "not", arity = 1)
         public static Object not(ExecutionContext cx, Object thisValue, Object a) {
             /* step 1 */
-            SIMDValue sa = simdValue(cx, a, SIMD_TYPE);
+            SIMDValue sa = simdValue(cx, a, SIMD_TYPE, ".not");
             /* steps 2-3 */
             // FIXME: spec bug - incorrect definition, should be using `!` instead of `~`
             SIMDValue result = SIMDUnaryOpBool(sa, x -> !x);
@@ -246,7 +241,7 @@ public final class Bool64x2Constructor extends BuiltinConstructor implements Ini
         @Function(name = "anyTrue", arity = 1)
         public static Object anyTrue(ExecutionContext cx, Object thisValue, Object a) {
             /* step 1 */
-            SIMDValue sa = simdValue(cx, a, SIMD_TYPE);
+            SIMDValue sa = simdValue(cx, a, SIMD_TYPE, ".anyTrue");
             /* step 2 */
             for (int i = 0; i < VECTOR_LENGTH; ++i) {
                 /* step 2.a */
@@ -272,7 +267,7 @@ public final class Bool64x2Constructor extends BuiltinConstructor implements Ini
         @Function(name = "allTrue", arity = 1)
         public static Object allTrue(ExecutionContext cx, Object thisValue, Object a) {
             /* step 1 */
-            SIMDValue sa = simdValue(cx, a, SIMD_TYPE);
+            SIMDValue sa = simdValue(cx, a, SIMD_TYPE, ".allTrue");
             /* step 2 */
             for (int i = 0; i < VECTOR_LENGTH; ++i) {
                 /* step 2.a */
@@ -300,7 +295,7 @@ public final class Bool64x2Constructor extends BuiltinConstructor implements Ini
         @Function(name = "extractLane", arity = 2)
         public static Object extractLane(ExecutionContext cx, Object thisValue, Object simd, Object lane) {
             /* step 1 */
-            SIMDValue sv = simdValue(cx, simd, SIMD_TYPE);
+            SIMDValue sv = simdValue(cx, simd, SIMD_TYPE, ".extractLane");
             /* step 2 */
             return SIMDExtractLaneBool(sv, SIMDToLane(cx, VECTOR_LENGTH, lane));
         }
@@ -324,7 +319,7 @@ public final class Bool64x2Constructor extends BuiltinConstructor implements Ini
         public static Object replaceLane(ExecutionContext cx, Object thisValue, Object simd, Object lane,
                 Object value) {
             /* step 1 */
-            SIMDValue sv = simdValue(cx, simd, SIMD_TYPE);
+            SIMDValue sv = simdValue(cx, simd, SIMD_TYPE, ".replaceLane");
             /* step 2 */
             return SIMDReplaceLaneBool(cx, sv, lane, value, AbstractOperations::ToBoolean);
         }

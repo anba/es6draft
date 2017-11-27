@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -14,9 +14,9 @@ import java.io.IOException;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
 import org.apache.commons.configuration.Configuration;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Rule;
@@ -32,8 +32,9 @@ import com.github.anba.es6draft.util.Parallelized;
 import com.github.anba.es6draft.util.ParameterizedRunnerFactory;
 import com.github.anba.es6draft.util.SystemConsole;
 import com.github.anba.es6draft.util.TestConfiguration;
-import com.github.anba.es6draft.util.TestGlobals;
 import com.github.anba.es6draft.util.TestInfo;
+import com.github.anba.es6draft.util.TestRealm;
+import com.github.anba.es6draft.util.TestRealms;
 import com.github.anba.es6draft.util.rules.ExceptionHandlers.ScriptExceptionHandler;
 import com.github.anba.es6draft.util.rules.ExceptionHandlers.StandardErrorHandler;
 
@@ -52,11 +53,15 @@ public final class CompilerTest {
     }
 
     @ClassRule
-    public static TestGlobals<TestGlobalObject, TestInfo> globals = new TestGlobals<TestGlobalObject, TestInfo>(
-            configuration, TestGlobalObject::new) {
+    public static TestRealms<TestInfo> realms = new TestRealms<TestInfo>(configuration, TestRealmData::new) {
         @Override
         protected EnumSet<Parser.Option> getParserOptions() {
             return EnumSet.of(Parser.Option.NativeCall);
+        }
+
+        @Override
+        protected Supplier<TestContextData> getRuntimeData() {
+            return TestContextData::new;
         }
     };
 
@@ -72,27 +77,19 @@ public final class CompilerTest {
     @Parameter(0)
     public TestInfo test;
 
-    private TestGlobalObject global;
+    @Rule
+    public TestRealm<TestInfo> realm = new TestRealm<>(realms);
 
     @Before
     public void setUp() throws Throwable {
         assumeTrue("Test disabled", test.isEnabled());
 
-        global = globals.newGlobal(new SystemConsole(), test);
-        exceptionHandler.setExecutionContext(global.getRealm().defaultContext());
-    }
-
-    @After
-    public void tearDown() {
-        globals.release(global);
+        realm.initialize(new SystemConsole(), test);
+        exceptionHandler.setExecutionContext(realm.get().defaultContext());
     }
 
     @Test
     public void runTest() throws Throwable {
-        // Evaluate actual test-script
-        global.eval(test.getScript(), test.toFile());
-
-        // Wait for pending tasks to finish
-        global.getRealm().getWorld().runEventLoop();
+        realm.execute(test);
     }
 }

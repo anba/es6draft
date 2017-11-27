@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -40,17 +40,8 @@ public final class TypeErrorThrower extends BuiltinFunction {
         setExtensible(false);
     }
 
-    private TypeErrorThrower(Realm realm, Void ignore) {
-        super(realm, ANONYMOUS, 0);
-    }
-
     @Override
     public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
         throw newTypeError(calleeContext(), Messages.Key.StrictModePoisonPill);
-    }
-
-    @Override
-    public TypeErrorThrower clone() {
-        return new TypeErrorThrower(getRealm(), null);
     }
 }

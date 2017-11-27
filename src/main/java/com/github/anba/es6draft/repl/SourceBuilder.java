@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -37,15 +37,15 @@ public final class SourceBuilder {
     private static final int MAX_STACK_DEPTH = 5;
     private static final int MAX_OBJECT_PROPERTIES = 30;
     private static final int MAX_ARRAY_PROPERTIES = 80;
-    private static final SourceBuilder INSTANCE = new SourceBuilder(false);
+    private static final SourceBuilder INSTANCE = new SourceBuilder();
 
     private final boolean colored;
     private final int maxStackDepth;
     private final int maxObjectProperties;
     private final int maxArrayProperties;
 
-    SourceBuilder(boolean colored) {
-        this(colored, MAX_STACK_DEPTH, MAX_OBJECT_PROPERTIES, MAX_ARRAY_PROPERTIES);
+    SourceBuilder() {
+        this(false, MAX_STACK_DEPTH, MAX_OBJECT_PROPERTIES, MAX_ARRAY_PROPERTIES);
     }
 
     SourceBuilder(boolean colored, int maxStackDepth, int maxObjectProperties, int maxArrayProperties) {
@@ -55,59 +55,31 @@ public final class SourceBuilder {
         this.maxArrayProperties = maxArrayProperties;
     }
 
-    private enum AnsiAttribute {
-        Reset(0), Bold(1), Underline(4), Negative(7), NormalIntensity(22), UnderlineNone(24), Positive(27),
-        TextColor(30), DefaultTextColor(39), BackgroundColor(40), DefaultBackgroundColor(49), TextColorHi(90),
-        BackgroundColorHi(100);
+    private enum Style {
+        Special(Ansi.Attribute.TextColorCyan),
 
-        final int code;
+        Number(Ansi.Attribute.TextColorYellow),
 
-        private AnsiAttribute(int code) {
-            this.code = code;
-        }
+        Boolean(Ansi.Attribute.TextColorYellow),
 
-        int color(AnsiColor color) {
-            return code + color.offset;
-        }
-    }
+        Undefined(Ansi.Attribute.TextColorHiBlack),
 
-    private enum AnsiColor {
-        Black(0), Red(1), Green(2), Yellow(3), Blue(4), Magenta(5), Cyan(6), White(7);
+        Null(Ansi.Attribute.Bold),
 
-        final int offset;
+        String(Ansi.Attribute.TextColorGreen),
 
-        private AnsiColor(int offset) {
-            this.offset = offset;
-        }
-    }
+        Symbol(Ansi.Attribute.TextColorGreen),
 
-    private enum Style {/* @formatter:off */
-        Special(AnsiAttribute.TextColor.color(AnsiColor.Cyan), AnsiAttribute.DefaultTextColor),
-        Number(AnsiAttribute.TextColor.color(AnsiColor.Yellow), AnsiAttribute.DefaultTextColor),
-        Boolean(AnsiAttribute.TextColor.color(AnsiColor.Yellow), AnsiAttribute.DefaultTextColor),
-        Undefined(AnsiAttribute.TextColorHi.color(AnsiColor.Black), AnsiAttribute.DefaultTextColor),
-        Null(AnsiAttribute.Bold, AnsiAttribute.NormalIntensity),
-        String(AnsiAttribute.TextColor.color(AnsiColor.Green), AnsiAttribute.DefaultTextColor),
-        Symbol(AnsiAttribute.TextColor.color(AnsiColor.Green), AnsiAttribute.DefaultTextColor),
-        SIMD(AnsiAttribute.TextColor.color(AnsiColor.Yellow), AnsiAttribute.DefaultTextColor),
-        Date(AnsiAttribute.TextColor.color(AnsiColor.Magenta), AnsiAttribute.DefaultTextColor),
-        RegExp(AnsiAttribute.TextColor.color(AnsiColor.Red), AnsiAttribute.DefaultTextColor),
-        ;
-        /* @formatter:on */
+        SIMD(Ansi.Attribute.TextColorYellow),
 
-        final int on, off;
+        Date(Ansi.Attribute.TextColorMagenta),
 
-        private Style(AnsiAttribute on, AnsiAttribute off) {
-            this(on.code, off.code);
-        }
+        RegExp(Ansi.Attribute.TextColorRed);
 
-        private Style(int on, AnsiAttribute off) {
-            this(on, off.code);
-        }
+        final Ansi.Attribute attr;
 
-        private Style(int on, int off) {
-            this.on = on;
-            this.off = off;
+        private Style(Ansi.Attribute attr) {
+            this.attr = attr;
         }
     }
 
@@ -153,7 +125,7 @@ public final class SourceBuilder {
         if (!colored || style == null) {
             return source;
         }
-        return String.format("\u001B[%dm%s\u001B[%d;%dm", style.on, source, AnsiAttribute.Reset.code, style.off);
+        return style.attr + source + Ansi.Attribute.Reset;
     }
 
     private static Style style(HashSet<ScriptObject> stack, Object value) {
@@ -167,6 +139,7 @@ public final class SourceBuilder {
         case String:
             return Style.String;
         case Number:
+        case BigInt:
             return Style.Number;
         case Symbol:
             return Style.Symbol;
@@ -202,6 +175,8 @@ public final class SourceBuilder {
             return Type.symbolValue(value).toString();
         case Number:
             return ToFlatString(cx, value);
+        case BigInt:
+            return ToFlatString(cx, value) + "n";
         case SIMD:
             return Type.simdValue(value).toString();
         case Object:
@@ -251,7 +226,7 @@ public final class SourceBuilder {
     }
 
     private String objectToSource(ExecutionContext cx, HashSet<ScriptObject> stack, ScriptObject object) {
-        Iterator<?> keys = object.ownKeys(cx);
+        Iterator<?> keys = object.ownPropertyKeys(cx).iterator();
         if (!keys.hasNext()) {
             return "{}";
         }
@@ -265,7 +240,7 @@ public final class SourceBuilder {
             } catch (ScriptException e) {
                 continue;
             }
-            if (!prop.isEnumerable()) {
+            if (prop == null || !prop.isEnumerable()) {
                 continue;
             }
             String value;

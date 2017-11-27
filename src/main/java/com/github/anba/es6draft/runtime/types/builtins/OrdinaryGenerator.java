@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -7,7 +7,6 @@
 package com.github.anba.es6draft.runtime.types.builtins;
 
 import static com.github.anba.es6draft.runtime.objects.iteration.GeneratorAbstractOperations.GeneratorStart;
-import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.FunctionInitialize;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
@@ -30,13 +29,8 @@ public final class OrdinaryGenerator extends FunctionObject {
      * @param realm
      *            the realm object
      */
-    protected OrdinaryGenerator(Realm realm) {
+    public OrdinaryGenerator(Realm realm) {
         super(realm);
-    }
-
-    @Override
-    protected OrdinaryGenerator allocateNew() {
-        return FunctionAllocate(getRealm().defaultContext(), getPrototype(), isStrict(), getFunctionKind());
     }
 
     /**
@@ -62,7 +56,7 @@ public final class OrdinaryGenerator extends FunctionObject {
     /**
      * 14.4 Generator Function Definitions
      * <p>
-     * 14.4.14 Runtime Semantics: EvaluateBody
+     * 14.4.11 Runtime Semantics: EvaluateBody
      * 
      * <pre>
      * GeneratorBody : FunctionBody
@@ -75,41 +69,13 @@ public final class OrdinaryGenerator extends FunctionObject {
      * @return the generator result value
      */
     public static GeneratorObject EvaluateBody(ExecutionContext cx, OrdinaryGenerator functionObject) {
-        /* steps 1-2 */
+        /* step 1 */
         GeneratorObject gen = OrdinaryCreateFromConstructor(cx, functionObject, Intrinsics.GeneratorPrototype,
                 GeneratorObject::new);
-        /* step 3 */
+        /* step 2 */
         GeneratorStart(cx, gen, functionObject.getCode());
-        /* step 4 */
+        /* step 3 */
         return gen;
-    }
-
-    /* ***************************************************************************************** */
-
-    /**
-     * 9.2.3 FunctionAllocate (functionPrototype, strict [,functionKind] )
-     * 
-     * @param cx
-     *            the execution context
-     * @param functionPrototype
-     *            the function prototype
-     * @param strict
-     *            the strict mode flag
-     * @param kind
-     *            the function kind
-     * @return the new generator function object
-     */
-    public static OrdinaryGenerator FunctionAllocate(ExecutionContext cx, ScriptObject functionPrototype,
-            boolean strict, FunctionKind kind) {
-        assert kind != FunctionKind.ClassConstructor;
-        Realm realm = cx.getRealm();
-        /* steps 1-5 (implicit) */
-        /* steps 6-9 */
-        OrdinaryGenerator f = new OrdinaryGenerator(realm);
-        /* steps 10-14 */
-        f.allocate(realm, functionPrototype, strict, kind, ConstructorKind.Base);
-        /* step 15 */
-        return f;
     }
 
     /**
@@ -128,12 +94,12 @@ public final class OrdinaryGenerator extends FunctionObject {
     public static OrdinaryGenerator GeneratorFunctionCreate(ExecutionContext cx, FunctionKind kind,
             RuntimeInfo.Function function, LexicalEnvironment<?> scope) {
         assert function.isGenerator() && kind != FunctionKind.ClassConstructor;
+        boolean strict = function.isStrict();
         /* step 1 */
         ScriptObject functionPrototype = cx.getIntrinsic(Intrinsics.Generator);
         /* step 2 */
-        OrdinaryGenerator f = FunctionAllocate(cx, functionPrototype, function.isStrict(), kind);
+        OrdinaryGenerator f = FunctionAllocate(cx, OrdinaryGenerator::new, functionPrototype, strict, kind);
         /* step 3 */
-        FunctionInitialize(f, kind, function, scope, cx.getCurrentExecutable());
-        return f;
+        return FunctionInitialize(f, kind, function, scope, cx.getCurrentExecutable());
     }
 }

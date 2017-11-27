@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -24,11 +24,11 @@ public abstract class AbstractFileModuleLoader<MODULE extends ModuleRecord> exte
 
     protected AbstractFileModuleLoader(RuntimeContext context) {
         super(context);
-        this.baseDirectory = context.getBaseDirectory();
+        this.baseDirectory = context.getBaseDirectory().toAbsolutePath();
         this.baseDirectoryURI = context.getBaseDirectory().toUri();
     }
 
-    public final Path getBaseDirectory() {
+    protected final Path getBaseDirectory() {
         return baseDirectory;
     }
 
@@ -44,13 +44,16 @@ public abstract class AbstractFileModuleLoader<MODULE extends ModuleRecord> exte
             throw new IllegalArgumentException();
         }
         FileSourceIdentifier sourceId = (FileSourceIdentifier) identifier;
-        Path path = Paths.get(baseDirectoryURI.resolve(sourceId.toUri()));
-        return new FileModuleSource(sourceId, path);
+        URI resolvedURI = baseDirectoryURI.resolve(sourceId.toUri());
+        String sourceName = baseDirectoryURI.relativize(sourceId.toUri()).toString();
+        return new FileModuleSource(Paths.get(resolvedURI), sourceName);
     }
 
     @Override
     public FileSourceIdentifier normalizeName(String unnormalizedName, SourceIdentifier referrerId)
             throws MalformedNameException {
-        return new FileSourceIdentifier(unnormalizedName, referrerId);
+        URI referrerURI = referrerId != null ? referrerId.toUri() : null;
+        URI normalized = SourceIdentifiers.normalize(unnormalizedName, referrerURI, baseDirectoryURI);
+        return new FileSourceIdentifier(normalized);
     }
 }

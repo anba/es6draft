@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -37,6 +37,6 @@ var foundDifferent = false;
 for (let nan of nans) {
   foundDifferent = foundDifferent || (numberToRawBits(0 / 0) !== numberToRawBits(nan));
   o.p = nan;
-  assertSame(numberToRawBits(0 / 0), numberToRawBits(o.p));
+  assertSame(numberToRawBits(nan), numberToRawBits(o.p));
 }
 assertTrue(foundDifferent);

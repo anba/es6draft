@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -57,16 +57,18 @@ public final class AsyncAbstractOperations {
         /* step 1 */
         Async asyncObject = cx.getCurrentAsync();
         assert asyncObject != null;
-        /* steps 2-3 */
+        /* step 2 */
         PromiseCapability<PromiseObject> promiseCapability = PromiseBuiltinCapability(cx);
-        /* steps 4-5 */
+        /* step 3 */
         promiseCapability.getResolve().call(cx, UNDEFINED, value);
-        /* steps 6, 8 */
+        /* steps 4, 6 */
         AwaitedFulfilled onFulfilled = new AwaitedFulfilled(cx.getRealm(), asyncObject);
-        /* steps 7, 8 */
+        /* steps 5, 7 */
         AwaitedRejected onRejected = new AwaitedRejected(cx.getRealm(), asyncObject);
-        /* step 9 */
+        /* step 8 */
         PromiseCapability<PromiseObject> throwawayCapability = PromiseBuiltinCapability(cx);
+        /* step 9 */
+        // TODO: [[PromiseIsHandled]]?
         /* step 10 */
         PerformPromiseThen(cx, promiseCapability.getPromise(), onFulfilled, onRejected, throwawayCapability);
         /* steps 11-13 (implemented in generated code) */
@@ -79,18 +81,9 @@ public final class AsyncAbstractOperations {
         private final Async asyncObject;
 
         public AwaitedFulfilled(Realm realm, Async asyncObject) {
-            this(realm, asyncObject, null);
-            createDefaultFunctionProperties();
-        }
-
-        private AwaitedFulfilled(Realm realm, Async asyncObject, Void ignore) {
             super(realm, ANONYMOUS, 1);
             this.asyncObject = asyncObject;
-        }
-
-        @Override
-        public AwaitedFulfilled clone() {
-            return new AwaitedFulfilled(getRealm(), asyncObject, null);
+            createDefaultFunctionProperties();
         }
 
         @Override
@@ -110,18 +103,9 @@ public final class AsyncAbstractOperations {
         private final Async asyncObject;
 
         public AwaitedRejected(Realm realm, Async asyncObject) {
-            this(realm, asyncObject, null);
-            createDefaultFunctionProperties();
-        }
-
-        private AwaitedRejected(Realm realm, Async asyncObject, Void ignore) {
             super(realm, ANONYMOUS, 1);
             this.asyncObject = asyncObject;
-        }
-
-        @Override
-        public AwaitedRejected clone() {
-            return new AwaitedRejected(getRealm(), asyncObject, null);
+            createDefaultFunctionProperties();
         }
 
         @Override

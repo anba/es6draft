@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -14,16 +14,18 @@ import static org.junit.Assume.assumeTrue;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.Iterator;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
+import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 import org.apache.commons.configuration.Configuration;
 import org.hamcrest.Matchers;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -38,15 +40,21 @@ import org.junit.runners.Parameterized.UseParametersRunnerFactory;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.internal.Properties;
+import com.github.anba.es6draft.runtime.internal.RuntimeContext;
+import com.github.anba.es6draft.runtime.internal.ScriptLoader;
+import com.github.anba.es6draft.runtime.modules.ResolutionException;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 import com.github.anba.es6draft.util.NullConsole;
 import com.github.anba.es6draft.util.Parallelized;
 import com.github.anba.es6draft.util.ParameterizedRunnerFactory;
+import com.github.anba.es6draft.util.Resources;
 import com.github.anba.es6draft.util.TestConfiguration;
-import com.github.anba.es6draft.util.TestGlobals;
 import com.github.anba.es6draft.util.TestInfo;
+import com.github.anba.es6draft.util.TestModuleLoader;
+import com.github.anba.es6draft.util.TestRealm;
+import com.github.anba.es6draft.util.TestRealms;
 import com.github.anba.es6draft.util.rules.ExceptionHandlers.ScriptExceptionHandler;
 import com.github.anba.es6draft.util.rules.ExceptionHandlers.StandardErrorHandler;
 import com.github.anba.es6draft.util.rules.ExceptionHandlers.StopExecutionHandler;
@@ -59,20 +67,33 @@ import com.github.anba.es6draft.util.rules.ExceptionHandlers.StopExecutionHandle
 @TestConfiguration(name = "mozilla.test.jittests", file = "resource:/test-configuration.properties")
 public final class MozillaJitTest {
     private static final Configuration configuration = loadConfiguration(MozillaJitTest.class);
+    private static final Set<String> ignoreFlags = Resources.set(configuration, "flags.ignore", Collections.emptySet());
+    private static final Set<String> disableFlags = Resources.set(configuration, "flags.disable",
+            Collections.emptySet());
+    private static final boolean warnUnknownFlag = configuration.getBoolean("flags.warn", false);
 
     @Parameters(name = "{0}")
     public static List<MozTest> suiteValues() throws IOException {
-        return loadTests(configuration, MozillaJitTest::createTest);
+        return loadTests(configuration, MozTest::new, MozillaJitTest::configureTest);
     }
 
     @BeforeClass
-    public static void setUpClass() throws IOException {
-        MozTestGlobalObject.testLoadInitializationScript();
+    public static void setUpClass() {
+        MozTestRealmData.testLoadInitializationScript();
     }
 
     @ClassRule
-    public static TestGlobals<MozTestGlobalObject, MozTest> globals = new TestGlobals<>(configuration,
-            MozTestGlobalObject::new);
+    public static TestRealms<TestInfo> realms = new TestRealms<TestInfo>(configuration, MozTestRealmData::new) {
+        @Override
+        protected BiFunction<RuntimeContext, ScriptLoader, TestModuleLoader<?>> getModuleLoader() {
+            return MozJitFileModuleLoader::new;
+        }
+
+        @Override
+        protected Supplier<MozContextData> getRuntimeData() {
+            return MozContextData::new;
+        }
+    };
 
     @Rule
     public Timeout maxTime = new Timeout(120, TimeUnit.SECONDS);
@@ -90,49 +111,50 @@ public final class MozillaJitTest {
     public ExpectedException expected = ExpectedException.none();
 
     @Parameter(0)
-    public MozTest moztest;
+    public MozTest test;
 
     private static final class MozTest extends TestInfo {
         String error = null;
+        boolean module = false;
 
         public MozTest(Path basedir, Path script) {
             super(basedir, script);
         }
-    }
 
-    private MozTestGlobalObject global;
-
-    @Before
-    public void setUp() throws Throwable {
-        assumeTrue("Test disabled", moztest.isEnabled());
-
-        global = globals.newGlobal(new NullConsole(), moztest);
-        exceptionHandler.setExecutionContext(global.getRealm().defaultContext());
-        global.createGlobalProperties(new TestEnvironment(), TestEnvironment.class);
-
-        if (moztest.error == null) {
-            errorHandler.match(StandardErrorHandler.defaultMatcher());
-            exceptionHandler.match(ScriptExceptionHandler.defaultMatcher());
-        } else {
-            ExecutionContext cx = global.getRealm().defaultContext();
-            expected.expect(
-                    Matchers.either(StandardErrorHandler.defaultMatcher()).or(ScriptExceptionHandler.defaultMatcher()));
-            expected.expect(hasErrorMessage(cx, containsString(moztest.error)));
+        @Override
+        public boolean isModule() {
+            return module;
         }
     }
 
-    @After
-    public void tearDown() {
-        globals.release(global);
+    @Rule
+    public TestRealm<TestInfo> realm = new TestRealm<>(realms);
+
+    @Before
+    public void setUp() throws Throwable {
+        assumeTrue("Test disabled", test.isEnabled());
+
+        realm.initialize(new NullConsole(), test);
+        exceptionHandler.setExecutionContext(realm.get().defaultContext());
+        realm.get().createGlobalProperties(new TestEnvironment(), TestEnvironment.class);
+
+        if (test.error == null) {
+            errorHandler.match(StandardErrorHandler.defaultMatcher());
+            exceptionHandler.match(ScriptExceptionHandler.defaultMatcher());
+        } else {
+            expected.expect(
+                    Matchers.either(StandardErrorHandler.defaultMatcher()).or(ScriptExceptionHandler.defaultMatcher()));
+            expected.expect(hasErrorMessage(realm.get().defaultContext(), containsString(test.error)));
+        }
     }
 
     @Test
     public void runTest() throws Throwable {
-        // Evaluate actual test-script
-        global.eval(moztest.getScript(), moztest.toFile());
-
-        // Wait for pending tasks to finish
-        global.getRealm().getWorld().runEventLoop();
+        try {
+            realm.execute(test);
+        } catch (ResolutionException e) {
+            throw e.toScriptException(realm.get().defaultContext());
+        }
     }
 
     public static final class TestEnvironment {
@@ -163,72 +185,39 @@ public final class MozillaJitTest {
 
     private static final Pattern testInfoPattern = Pattern.compile("//\\s*\\|(.+?)\\|\\s*(.*)");
 
-    private static BiFunction<Path, Iterator<String>, MozTest> createTest(Path basedir) {
-        return (file, lines) -> {
-            MozTest test = new MozTest(basedir, file);
-            String line = lines.next();
-            Matcher m = testInfoPattern.matcher(line);
-            if (!m.matches()) {
-                // Ignore if pattern invalid or not present
-                return test;
+    private static void configureTest(MozTest test, Stream<String> lines) {
+        String line = lines.findFirst().orElseThrow(IllegalArgumentException::new);
+        Matcher m = testInfoPattern.matcher(line);
+        if (!m.matches()) {
+            // Ignore if pattern invalid or not present
+            return;
+        }
+        if (!"jit-test".equals(m.group(1))) {
+            System.err.printf("invalid tag '%s' in line: %s\n", m.group(1), line);
+            return;
+        }
+        String content = m.group(2);
+        for (String p : content.split(";")) {
+            int sep = Math.max(p.indexOf(':'), Math.max(p.indexOf('='), -1));
+            String name, value;
+            if (sep != -1) {
+                name = p.substring(0, sep).trim();
+                value = p.substring(sep + 1).trim();
+            } else {
+                name = p.trim();
+                value = null;
             }
-            if (!"jit-test".equals(m.group(1))) {
-                System.err.printf("invalid tag '%s' in line: %s\n", m.group(1), line);
-                return test;
+            if (name.isEmpty() || ignoreFlags.contains(name)) {
+                // Ignored flags
+            } else if (disableFlags.contains(name)) {
+                test.setEnabled(false);
+            } else if ("error".equals(name) && value != null) {
+                test.error = value;
+            } else if ("module".equals(name)) {
+                test.module = true;
+            } else if (warnUnknownFlag) {
+                System.err.printf("unknown option '%s' in line: %s [%s]%n", name, content, test.getScript());
             }
-            String content = m.group(2);
-            for (String p : content.split(";")) {
-                int sep = p.indexOf(':');
-                if (sep != -1) {
-                    String name = p.substring(0, sep).trim();
-                    String value = p.substring(sep + 1).trim();
-                    switch (name) {
-                    case "error":
-                        test.error = value;
-                        break;
-                    case "exitstatus":
-                        // Ignore for now...
-                        break;
-                    default:
-                        System.err.printf("unknown option '%s' in line: %s\n", name, content);
-                    }
-                } else {
-                    String name = p.trim();
-                    switch (name) {
-                    case "slow":
-                        // Don't run slow tests
-                        test.setEnabled(false);
-                        break;
-                    case "debug":
-                        // Don't run debug-mode tests
-                        test.setEnabled(false);
-                        break;
-                    case "allow-oom":
-                    case "allow-overrecursed":
-                    case "allow-unhandlable-oom":
-                    case "valgrind":
-                    case "tz-pacific":
-                    case "mjitalways":
-                    case "mjit":
-                    case "no-jm":
-                    case "no-ion":
-                    case "ion-eager":
-                    case "dump-bytecode":
-                    case "--fuzzing-safe":
-                    case "--no-threads":
-                    case "--no-ion":
-                    case "--no-baseline":
-                        // Ignore for now...
-                        break;
-                    case "":
-                        // Ignore empty string
-                        break;
-                    default:
-                        System.err.printf("unknown option '%s' in line: %s [%s]\n", name, content, file);
-                    }
-                }
-            }
-            return test;
-        };
+        }
     }
 }

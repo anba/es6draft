@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -14,9 +14,9 @@ package com.github.anba.es6draft.ast;
  */
 public final class AssignmentExpression extends Expression {
     public enum Operator {
-        ASSIGN("="), ASSIGN_ADD("+="), ASSIGN_SUB("-="), ASSIGN_MUL("*="), ASSIGN_DIV("/="),
-        ASSIGN_MOD("%="), ASSIGN_SHL("<<="), ASSIGN_SHR(">>="), ASSIGN_USHR(">>>="),
-        ASSIGN_BITAND("&="), ASSIGN_BITOR("|="), ASSIGN_BITXOR("^="), ASSIGN_EXP("**=");
+        ASSIGN("="), ASSIGN_ADD("+="), ASSIGN_SUB("-="), ASSIGN_MUL("*="), ASSIGN_DIV("/="), ASSIGN_MOD("%="),
+        ASSIGN_SHL("<<="), ASSIGN_SHR(">>="), ASSIGN_USHR(">>>="), ASSIGN_BITAND("&="), ASSIGN_BITOR("|="),
+        ASSIGN_BITXOR("^="), ASSIGN_EXP("**=");
 
         private String name;
 
@@ -25,12 +25,12 @@ public final class AssignmentExpression extends Expression {
         }
 
         /**
-         * Returns the assignment operator name.
+         * Returns the assignment operator expression.
          * 
-         * @return the operator name
+         * @return the operator expression
          */
-        public String getName() {
-            // TODO: This is not a 'name'.
+        @Override
+        public String toString() {
             return name;
         }
     }

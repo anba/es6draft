@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -168,15 +168,4 @@ const GeneratorFunction = (function*(){}).constructor;
   let builtin = Object.create;
   assertFalse(builtin.hasOwnProperty("caller"));
   assertFalse(builtin.hasOwnProperty("arguments"));
-}
-
-// Cloned functions
-{
-  let nonStrict = function(){}.toMethod({});
-  assertFalse(nonStrict.hasOwnProperty("caller"));
-  assertFalse(nonStrict.hasOwnProperty("arguments"));
-
-  let strict = function(){ "use strict" }.toMethod({});
-  assertFalse(strict.hasOwnProperty("caller"));
-  assertFalse(strict.hasOwnProperty("arguments"));
 }

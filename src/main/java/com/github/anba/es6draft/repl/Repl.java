@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -18,8 +18,6 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -41,6 +39,8 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiFunction;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 import org.kohsuke.args4j.Argument;
 import org.kohsuke.args4j.CmdLineException;
@@ -49,6 +49,7 @@ import org.kohsuke.args4j.Option;
 import org.kohsuke.args4j.OptionDef;
 import org.kohsuke.args4j.OptionHandlerFilter;
 import org.kohsuke.args4j.ParserProperties;
+import org.kohsuke.args4j.spi.ExplicitBooleanOptionHandler;
 import org.kohsuke.args4j.spi.OneArgumentOptionHandler;
 import org.kohsuke.args4j.spi.OptionHandler;
 import org.kohsuke.args4j.spi.Parameters;
@@ -66,18 +67,19 @@ import com.github.anba.es6draft.repl.console.JLineConsole;
 import com.github.anba.es6draft.repl.console.LegacyConsole;
 import com.github.anba.es6draft.repl.console.NativeConsole;
 import com.github.anba.es6draft.repl.console.ShellConsole;
-import com.github.anba.es6draft.repl.global.ConsoleObject;
-import com.github.anba.es6draft.repl.global.MozShellGlobalObject;
-import com.github.anba.es6draft.repl.global.ShellGlobalObject;
-import com.github.anba.es6draft.repl.global.SimpleShellGlobalObject;
-import com.github.anba.es6draft.repl.global.StopExecutionException;
-import com.github.anba.es6draft.repl.global.StopExecutionException.Reason;
-import com.github.anba.es6draft.repl.global.V8ShellGlobalObject;
+import com.github.anba.es6draft.repl.functions.AtomicsTestFunctions;
+import com.github.anba.es6draft.repl.functions.BaseShellFunctions;
+import com.github.anba.es6draft.repl.functions.MozShellFunctions;
+import com.github.anba.es6draft.repl.functions.ShellFunctions;
+import com.github.anba.es6draft.repl.functions.StopExecutionException;
+import com.github.anba.es6draft.repl.functions.StopExecutionException.Reason;
+import com.github.anba.es6draft.repl.functions.V8ShellFunctions;
 import com.github.anba.es6draft.repl.loader.NodeModuleLoader;
 import com.github.anba.es6draft.repl.loader.NodeStandardModuleLoader;
 import com.github.anba.es6draft.runtime.ExecutionContext;
+import com.github.anba.es6draft.runtime.Job;
 import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.Task;
+import com.github.anba.es6draft.runtime.RealmData;
 import com.github.anba.es6draft.runtime.World;
 import com.github.anba.es6draft.runtime.extensions.timer.Timers;
 import com.github.anba.es6draft.runtime.internal.*;
@@ -87,6 +89,8 @@ import com.github.anba.es6draft.runtime.modules.ModuleSource;
 import com.github.anba.es6draft.runtime.modules.ResolutionException;
 import com.github.anba.es6draft.runtime.modules.SourceIdentifier;
 import com.github.anba.es6draft.runtime.modules.loader.FileModuleLoader;
+import com.github.anba.es6draft.runtime.modules.loader.FileModuleSource;
+import com.github.anba.es6draft.runtime.modules.loader.FileSourceIdentifier;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 
 /**
@@ -188,20 +192,21 @@ public final class Repl {
         }
     }
 
-    private void printScriptStackTrace(Realm realm, ScriptException e) {
+    private void printScriptStackTrace(ExecutionContext cx, ScriptException e) {
         if (options.scriptStacktrace) {
-            StringBuilder sb = new StringBuilder();
-            printScriptFrames(sb, realm, e, 1);
-            if (sb.length() == 0 && e.getCause() != null) {
-                printScriptFrames(sb, realm, e.getCause(), 1);
+            ResourceBundle rb = getResourceBundle();
+            PrintWriter pw = console.writer();
+            boolean hasStacktrace = printScriptFrames(rb, pw, cx, e, 1);
+            if (!hasStacktrace && e.getCause() != null) {
+                printScriptFrames(rb, pw, cx, e.getCause(), 1);
             }
-            console.writer().print(sb.toString());
         }
     }
 
-    private void printScriptFrames(StringBuilder sb, Realm realm, Throwable e, int level) {
+    private boolean printScriptFrames(ResourceBundle rb, PrintWriter pw, ExecutionContext cx, Throwable e, int level) {
         final String indent = Strings.repeat('\t', level);
         final int maxDepth = options.stacktraceDepth;
+        MessageFormat stackFrameFormat = messageFormat(rb, "stackframe");
         int depth = 0;
         StackTraceElement[] stackTrace = StackTraces.scriptStackTrace(e);
         for (; depth < Math.min(stackTrace.length, maxDepth); ++depth) {
@@ -209,24 +214,25 @@ public final class Repl {
             String methodName = element.getMethodName();
             String fileName = element.getFileName();
             int lineNumber = element.getLineNumber();
-            sb.append(indent).append("at ").append(methodName).append(" (").append(fileName).append(':')
-                    .append(lineNumber).append(")\n");
+            pw.println(indent + formatMessage(stackFrameFormat, methodName, fileName, lineNumber));
         }
         if (depth < stackTrace.length) {
             int skipped = stackTrace.length - depth;
-            sb.append("\t.. ").append(skipped).append(" frames omitted\n");
+            pw.println(indent + formatMessage(rb, "frames_omitted", skipped));
         }
+        boolean hasStacktrace = depth > 0;
         if (e.getSuppressed().length > 0 && level == 1) {
             Throwable suppressed = e.getSuppressed()[0];
             String message;
             if (suppressed instanceof ScriptException) {
-                message = ((ScriptException) suppressed).getMessage(realm.defaultContext());
+                message = ((ScriptException) suppressed).getMessage(cx);
             } else {
                 message = Objects.toString(suppressed.getMessage(), suppressed.getClass().getSimpleName());
             }
-            sb.append(indent).append(formatMessage("suppressed_exception", message)).append('\n');
-            printScriptFrames(sb, realm, suppressed, level + 1);
+            pw.println(indent + formatMessage(rb, "suppressed_exception", message));
+            hasStacktrace |= printScriptFrames(rb, pw, cx, suppressed, level + 1);
         }
+        return hasStacktrace;
     }
 
     private static void parseOptions(Options options, String[] args) {
@@ -251,7 +257,7 @@ public final class Repl {
             System.out.println(getUsageString(parser, true));
             System.exit(0);
         }
-        if (options.debug || options.fullDebug || options.debugInfo) {
+        if (options.printCode || options.printCodeWithTypes || options.debugInfo) {
             // Disable interpreter when bytecode is requested
             options.noInterpreter = true;
         }
@@ -266,24 +272,22 @@ public final class Repl {
                     options.interactive = true;
                 }
             } else {
-                options.evalScripts.add(new EvalPath(options.fileName));
+                options.evalScripts.add(new EvalPath(options.fileName, EvalPath.Type.Script));
             }
         }
         if (options.evalScripts.isEmpty()) {
             // Default to interactive mode when no files or expressions were set
             options.interactive = true;
-
-            // Warn if --module is used without input files.
-            if (options.module) {
-                System.err.println(formatMessage("module_no_files"));
-            }
-        }
-        if (options.ecmascript7) {
-            System.err.println(formatMessage("deprecated.es7"));
         }
     }
 
     private interface EvalScript {
+        enum Type {
+            Script, Module
+        }
+
+        Type getType();
+
         Source getSource();
 
         String getSourceCode() throws IOException;
@@ -294,11 +298,15 @@ public final class Repl {
     }
 
     private static final class EvalString implements EvalScript {
-        private static final AtomicInteger moduleIds = new AtomicInteger(0);
         private final String sourceCode;
 
         EvalString(String sourceCode) {
             this.sourceCode = sourceCode;
+        }
+
+        @Override
+        public Type getType() {
+            return Type.Script;
         }
 
         @Override
@@ -313,20 +321,36 @@ public final class Repl {
 
         @Override
         public SourceIdentifier getModuleName() {
-            return new EvalSourceIdentifier("eval-module-" + moduleIds.incrementAndGet(), URI.create(""));
+            throw new IllegalStateException();
         }
 
         @Override
         public ModuleSource getModuleSource() {
-            return new EvalModuleSource(getSourceCode(), getSource());
+            throw new IllegalStateException();
         }
     }
 
     private static final class EvalPath implements EvalScript {
         private final Path path;
+        private final Type type;
 
-        EvalPath(Path path) {
+        EvalPath(Path path, Type type) {
             this.path = path;
+            this.type = type;
+        }
+
+        private Path toAbsolutePathThrowIfNotFound() throws FileNotFoundException {
+            Path filePath = path.toAbsolutePath();
+            if (!Files.isRegularFile(filePath)) {
+                String message = formatMessage("file_not_found", filePath.toString());
+                throw new FileNotFoundException(message);
+            }
+            return filePath;
+        }
+
+        @Override
+        public Type getType() {
+            return type;
         }
 
         @Override
@@ -336,86 +360,25 @@ public final class Repl {
 
         @Override
         public String getSourceCode() throws IOException {
-            Path filePath = path.toAbsolutePath();
-            if (!Files.exists(filePath)) {
-                String message = formatMessage("file_not_found", filePath.toString());
-                throw new FileNotFoundException(message);
-            }
+            Path filePath = toAbsolutePathThrowIfNotFound();
             byte[] content = Files.readAllBytes(filePath);
             return new String(content, StandardCharsets.UTF_8);
         }
 
         @Override
         public SourceIdentifier getModuleName() {
-            URI file = Paths.get("").toAbsolutePath().toUri().relativize(path.toUri());
-            return new EvalSourceIdentifier(file.toString(), file);
+            return new FileSourceIdentifier(path.toAbsolutePath());
         }
 
         @Override
         public ModuleSource getModuleSource() throws IOException {
-            return new EvalModuleSource(getSourceCode(), getSource());
-        }
-    }
-
-    private static final class EvalSourceIdentifier implements SourceIdentifier {
-        private final String name;
-        private final URI uri;
-
-        EvalSourceIdentifier(String name, URI uri) {
-            this.name = name;
-            this.uri = uri;
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            if (obj instanceof EvalSourceIdentifier) {
-                return name.equals(((EvalSourceIdentifier) obj).name);
-            }
-            if (obj instanceof SourceIdentifier) {
-                return uri.equals(((SourceIdentifier) obj).toUri());
-            }
-            return false;
-        }
-
-        @Override
-        public int hashCode() {
-            return name.hashCode();
-        }
-
-        @Override
-        public String toString() {
-            return name;
-        }
-
-        @Override
-        public URI toUri() {
-            return uri;
-        }
-    }
-
-    private static final class EvalModuleSource implements ModuleSource {
-        private final String sourceCode;
-        private final Source source;
-
-        public EvalModuleSource(String sourceCode, Source source) {
-            this.sourceCode = sourceCode;
-            this.source = source;
-        }
-
-        @Override
-        public String sourceCode() {
-            return sourceCode;
-        }
-
-        @Override
-        public Source toSource() {
-            return source;
+            Path filePath = toAbsolutePathThrowIfNotFound();
+            return new FileModuleSource(filePath, path.toString());
         }
     }
 
     public enum ShellMode {
-        // TODO: "simple" is a misnomer, change to "default"?
-        Simple, Mozilla, V8;
+        Default, Mozilla, V8;
 
         @Override
         public String toString() {
@@ -448,14 +411,16 @@ public final class Repl {
 
         @Option(name = "-f", aliases = { "--file" }, metaVar = "meta.file", usage = "options.file")
         void setFile(Path path) {
-            evalScripts.add(new EvalPath(path));
+            evalScripts.add(new EvalPath(path, EvalPath.Type.Script));
         }
 
         @Option(name = "-i", aliases = { "--interactive" }, usage = "options.interactive")
         boolean interactive;
 
-        @Option(name = "--module", usage = "options.module")
-        boolean module;
+        @Option(name = "-m", aliases = { "--module" }, metaVar = "meta.file", usage = "options.module")
+        void setModule(Path path) {
+            evalScripts.add(new EvalPath(path, EvalPath.Type.Module));
+        }
 
         @Option(name = "--module-loader", usage = "options.module_loader")
         ModuleLoaderMode moduleLoaderMode = ModuleLoaderMode.Default;
@@ -464,20 +429,17 @@ public final class Repl {
         boolean strict;
 
         @Option(name = "--shell", usage = "options.shell")
-        ShellMode shellMode = ShellMode.Simple;
-
-        @Option(name = "--es7", usage = "options.es7")
-        boolean ecmascript7;
+        ShellMode shellMode = ShellMode.Default;
 
         @Option(name = "--stage", usage = "options.stage", handler = RangeIntOptionHandler.class)
         @RangeIntOptionHandler.Range(min = 0, max = 4)
         int stage = 3;
 
-        @Option(name = "--experimental", usage = "options.experimental")
+        @Option(name = "--experimental", usage = "options.experimental", hidden = true)
         boolean experimental;
 
-        @Option(name = "--async", usage = "options.async")
-        boolean asyncFunctions;
+        @Option(name = "--features", usage = "options.features", metaVar = "meta.strings")
+        String features;
 
         @Option(name = "--parser", usage = "options.parser")
         boolean parser;
@@ -485,8 +447,9 @@ public final class Repl {
         @Option(name = "--timers", usage = "options.timers")
         boolean timers;
 
-        @Option(name = "--console", usage = "options.console")
-        boolean console;
+        @Option(name = "--console", usage = "options.console", handler = ExplicitBooleanOptionHandler.class,
+                metaVar = "meta.bool")
+        boolean console = true;
 
         @Option(name = "--no-jline", usage = "options.no_jline")
         boolean noJLine;
@@ -500,17 +463,18 @@ public final class Repl {
         @Option(name = "--stacktrace", usage = "options.stacktrace")
         boolean stacktrace;
 
-        @Option(name = "--script-stacktrace", usage = "options.script_stacktrace")
-        boolean scriptStacktrace;
+        @Option(name = "--script-stacktrace", usage = "options.script_stacktrace",
+                handler = ExplicitBooleanOptionHandler.class, metaVar = "meta.bool")
+        boolean scriptStacktrace = true;
 
         @Option(name = "--stacktrace-depth", hidden = true, usage = "options.stacktrace_depth")
         int stacktraceDepth = STACKTRACE_DEPTH;
 
-        @Option(name = "--debug", usage = "options.debug")
-        boolean debug;
+        @Option(name = "--print-code", usage = "options.print_generated_code")
+        boolean printCode;
 
-        @Option(name = "--full-debug", hidden = true, usage = "options.full_debug")
-        boolean fullDebug;
+        @Option(name = "--print-types", hidden = true, usage = "options.print_generated_code_type_descriptors")
+        boolean printCodeWithTypes;
 
         @Option(name = "--debug-info", hidden = true, usage = "options.debug_info")
         boolean debugInfo;
@@ -667,12 +631,20 @@ public final class Repl {
         }
     }
 
-    private static String formatMessage(String key, String... messageArguments) {
+    private static String formatMessage(String key, Object... messageArguments) {
         return formatMessage(getResourceBundle(), key, messageArguments);
     }
 
-    private static String formatMessage(ResourceBundle rb, String key, String... messageArguments) {
+    private static String formatMessage(ResourceBundle rb, String key, Object... messageArguments) {
         return new MessageFormat(rb.getString(key), rb.getLocale()).format(messageArguments);
+    }
+
+    private static String formatMessage(MessageFormat messageFormat, Object... messageArguments) {
+        return messageFormat.format(messageArguments);
+    }
+
+    private static MessageFormat messageFormat(ResourceBundle rb, String key) {
+        return new MessageFormat(rb.getString(key), rb.getLocale());
     }
 
     private static String getVersionString() {
@@ -736,7 +708,7 @@ public final class Repl {
         printStackTrace(e);
     }
 
-    private void handleException(Realm realm, OutOfMemoryError e) {
+    private void handleException(ExecutionContext cx, OutOfMemoryError e) {
         // Try to recover after OOM.
         Runtime rt = Runtime.getRuntime();
         long beforeGc = rt.freeMemory();
@@ -747,27 +719,27 @@ public final class Repl {
             throw e;
         }
         // Create script exception with stacktrace from oom-error.
-        ScriptException exception = newInternalError(realm.defaultContext(), Messages.Key.OutOfMemoryVM);
+        ScriptException exception = newInternalError(cx, Messages.Key.OutOfMemoryVM);
         exception.setStackTrace(e.getStackTrace());
-        handleException(realm, exception);
+        handleException(cx, exception);
     }
 
-    private void handleException(Realm realm, StackOverflowError e) {
+    private void handleException(ExecutionContext cx, StackOverflowError e) {
         // Create script exception with stacktrace from stackoverflow-error.
-        ScriptException exception = newInternalError(realm.defaultContext(), Messages.Key.StackOverflow);
+        ScriptException exception = newInternalError(cx, Messages.Key.StackOverflow);
         exception.setStackTrace(e.getStackTrace());
-        handleException(realm, exception);
+        handleException(cx, exception);
     }
 
-    private void handleException(Realm realm, ScriptException e) {
-        String message = formatMessage("uncaught_exception", e.getMessage(realm.defaultContext()));
+    private void handleException(ExecutionContext cx, ScriptException e) {
+        String message = formatMessage("uncaught_exception", e.getMessage(cx));
         console.printf("%s%n", message);
-        printScriptStackTrace(realm, e);
+        printScriptStackTrace(cx, e);
         printStackTrace(e);
     }
 
-    private void handleException(Realm realm, UnhandledRejectionException e) {
-        String message = formatMessage("unhandled_rejection", e.getMessage(realm.defaultContext()));
+    private void handleException(ExecutionContext cx, UnhandledRejectionException e) {
+        String message = formatMessage("unhandled_rejection", e.getMessage(cx));
         console.printf("%s%n", message);
         printStackTrace(e.getCauseIfPresent());
     }
@@ -855,12 +827,7 @@ public final class Repl {
      */
     private Object eval(Realm realm, com.github.anba.es6draft.ast.Script parsedScript) {
         String className = "#typein_" + scriptCounter.incrementAndGet();
-        Script script;
-        if (options.noInterpreter) {
-            script = realm.getScriptLoader().compile(parsedScript, className);
-        } else {
-            script = realm.getScriptLoader().load(parsedScript, className);
-        }
+        Script script = realm.getScriptLoader().load(parsedScript, className);
         return script.evaluate(realm);
     }
 
@@ -884,10 +851,10 @@ public final class Repl {
     private void loop() throws InterruptedException {
         Realm realm = newRealm();
         World world = realm.getWorld();
-        TaskSource taskSource = createTaskSource(realm);
+        JobSource jobSource = createJobSource(realm);
         for (;;) {
             try {
-                world.runEventLoop(taskSource);
+                world.runEventLoop(jobSource);
                 return;
             } catch (StopExecutionException e) {
                 if (e.getReason() == Reason.Quit) {
@@ -896,13 +863,13 @@ public final class Repl {
             } catch (ParserExceptionWithSource e) {
                 handleException(e);
             } catch (ScriptException e) {
-                handleException(realm, e);
+                handleException(realm.defaultContext(), e);
             } catch (UnhandledRejectionException e) {
-                handleException(realm, e);
+                handleException(realm.defaultContext(), e);
             } catch (StackOverflowError e) {
-                handleException(realm, e);
+                handleException(realm.defaultContext(), e);
             } catch (OutOfMemoryError e) {
-                handleException(realm, e);
+                handleException(realm.defaultContext(), e);
             } catch (InternalException e) {
                 handleException(e);
             } catch (BootstrapMethodError e) {
@@ -921,13 +888,13 @@ public final class Repl {
                 System.exit(0);
             }
         } catch (ScriptException e) {
-            handleException(cx.getRealm(), e);
+            handleException(cx, e);
         } catch (UnhandledRejectionException e) {
-            handleException(cx.getRealm(), e);
+            handleException(cx, e);
         } catch (StackOverflowError e) {
-            handleException(cx.getRealm(), e);
+            handleException(cx, e);
         } catch (OutOfMemoryError e) {
-            handleException(cx.getRealm(), e);
+            handleException(cx, e);
         } catch (InternalException e) {
             handleException(e);
         } catch (BootstrapMethodError e) {
@@ -940,51 +907,51 @@ public final class Repl {
         }
     }
 
-    private TaskSource createTaskSource(Realm realm) {
-        ArrayList<TaskSource> sources = new ArrayList<>();
+    private JobSource createJobSource(Realm realm) {
+        ArrayList<JobSource> sources = new ArrayList<>();
         if (options.interactive) {
-            sources.add(new InteractiveTaskSource(realm));
+            sources.add(new InteractiveJobSource(realm));
         }
         if (options.timers) {
             sources.add(realm.createGlobalProperties(new Timers(), Timers.class));
         }
         switch (sources.size()) {
         case 0:
-            return new EmptyTaskSource();
+            return new EmptyJobSource();
         case 1:
             return sources.get(0);
         default:
-            return new MultiTaskSource(sources);
+            return new MultiJobSource(sources);
         }
     }
 
-    private static final class EmptyTaskSource implements TaskSource {
+    private static final class EmptyJobSource implements JobSource {
         @Override
-        public Task nextTask() {
+        public Job nextJob() {
             return null;
         }
 
         @Override
-        public Task awaitTask() {
+        public Job awaitJob() {
             throw new IllegalStateException();
         }
     }
 
-    private final class InteractiveTaskSource implements TaskSource {
+    private final class InteractiveJobSource implements JobSource {
         private final Realm realm;
         private final int[] line = { 1 };
 
-        InteractiveTaskSource(Realm realm) {
+        InteractiveJobSource(Realm realm) {
             this.realm = realm;
         }
 
         @Override
-        public Task nextTask() throws InterruptedException {
-            return awaitTask();
+        public Job nextJob() throws InterruptedException {
+            return awaitJob();
         }
 
         @Override
-        public Task awaitTask() throws InterruptedException {
+        public Job awaitJob() throws InterruptedException {
             for (;;) {
                 try {
                     com.github.anba.es6draft.ast.Script parsedScript = read(realm, line);
@@ -994,20 +961,20 @@ public final class Repl {
                     if (parsedScript.getStatements().isEmpty()) {
                         continue;
                     }
-                    return new EvalPrintTask(realm, parsedScript);
+                    return new EvalPrintJob(realm, parsedScript);
                 } catch (RuntimeException e) {
-                    return new ThrowExceptionTask<>(e);
+                    return new ThrowExceptionJob<>(e);
                 } catch (Error e) {
-                    return new ThrowErrorTask<>(e);
+                    return new ThrowErrorJob<>(e);
                 }
             }
         }
 
-        private final class EvalPrintTask implements Task {
+        private final class EvalPrintJob implements Job {
             private final Realm realm;
             private final com.github.anba.es6draft.ast.Script parsedScript;
 
-            EvalPrintTask(Realm realm, com.github.anba.es6draft.ast.Script parsedScript) {
+            EvalPrintJob(Realm realm, com.github.anba.es6draft.ast.Script parsedScript) {
                 this.realm = realm;
                 this.parsedScript = parsedScript;
             }
@@ -1019,10 +986,10 @@ public final class Repl {
             }
         }
 
-        private final class ThrowErrorTask<E extends Error> implements Task {
+        private final class ThrowErrorJob<E extends Error> implements Job {
             private final E exception;
 
-            ThrowErrorTask(E exception) {
+            ThrowErrorJob(E exception) {
                 this.exception = exception;
             }
 
@@ -1032,10 +999,10 @@ public final class Repl {
             }
         }
 
-        private final class ThrowExceptionTask<E extends RuntimeException> implements Task {
+        private final class ThrowExceptionJob<E extends RuntimeException> implements Job {
             private final E exception;
 
-            ThrowExceptionTask(E exception) {
+            ThrowExceptionJob(E exception) {
                 this.exception = exception;
             }
 
@@ -1046,33 +1013,33 @@ public final class Repl {
         }
     }
 
-    private static final class MultiTaskSource implements TaskSource {
-        private final SynchronousQueue<Task> queue = new SynchronousQueue<>();
+    private static final class MultiJobSource implements JobSource {
+        private final SynchronousQueue<Job> queue = new SynchronousQueue<>();
         private final Semaphore sem = new Semaphore(-1);
 
-        MultiTaskSource(List<TaskSource> sources) {
+        MultiJobSource(List<JobSource> sources) {
             ExecutorService service = Executors.newFixedThreadPool(sources.size());
-            for (TaskSource source : sources) {
-                service.submit(new TaskRunner(source));
+            for (JobSource source : sources) {
+                service.submit(new JobRunner(source));
             }
             service.shutdown();
         }
 
         @Override
-        public Task nextTask() throws InterruptedException {
-            return awaitTask();
+        public Job nextJob() throws InterruptedException {
+            return awaitJob();
         }
 
         @Override
-        public Task awaitTask() throws InterruptedException {
+        public Job awaitJob() throws InterruptedException {
             sem.release();
             return queue.take();
         }
 
-        private class TaskRunner implements Runnable {
-            private final TaskSource source;
+        private class JobRunner implements Runnable {
+            private final JobSource source;
 
-            TaskRunner(TaskSource source) {
+            JobRunner(JobSource source) {
                 this.source = source;
             }
 
@@ -1080,7 +1047,7 @@ public final class Repl {
             public void run() {
                 for (;;) {
                     try {
-                        queue.put(source.awaitTask());
+                        queue.put(source.awaitJob());
                         sem.acquire();
                     } catch (InterruptedException e) {
                         Thread.currentThread().interrupt();
@@ -1096,13 +1063,17 @@ public final class Repl {
     }
 
     private Realm newRealm() {
-        ObjectAllocator<? extends ShellGlobalObject> allocator;
+        Supplier<RuntimeContext.Data> runtimeData;
+        Function<Realm, ? extends RealmData> realmData;
         if (options.shellMode == ShellMode.Mozilla) {
-            allocator = MozShellGlobalObject::new;
+            runtimeData = RuntimeContext.Data::new;
+            realmData = MozShellRealmData::new;
         } else if (options.shellMode == ShellMode.V8) {
-            allocator = V8ShellGlobalObject::new;
+            runtimeData = RuntimeContext.Data::new;
+            realmData = V8ShellRealmData::new;
         } else {
-            allocator = SimpleShellGlobalObject::new;
+            runtimeData = ShellContextData::new;
+            realmData = ShellRealmData::new;
         }
 
         BiFunction<RuntimeContext, ScriptLoader, ModuleLoader> moduleLoader;
@@ -1123,9 +1094,11 @@ public final class Repl {
         /* @formatter:off */
         RuntimeContext context = new RuntimeContext.Builder()
                                                    .setBaseDirectory(Paths.get("").toAbsolutePath())
-                                                   .setGlobalAllocator(allocator)
+                                                   .setRuntimeData(runtimeData)
+                                                   .setRealmData(realmData)
                                                    .setModuleLoader(moduleLoader)
                                                    .setConsole(console)
+                                                   .setErrorReporter(this::errorReporter)
                                                    .setWorkerErrorReporter(this::errorReporter)
                                                    .setOptions(compatibilityOptions(options))
                                                    .setParserOptions(parserOptions(options))
@@ -1134,14 +1107,14 @@ public final class Repl {
         /* @formatter:on */
 
         World world = new World(context);
-        Realm realm = world.newRealm();
+        Realm realm = new Realm(world);
         ExecutionContext cx = realm.defaultContext();
 
         // Add completion to console
         console.addCompleter(new ShellCompleter(realm));
 
         // Execute global specific initialization
-        enqueueScriptTask(realm, () -> {
+        enqueueScriptJob(realm, () -> {
             InitializeHostDefinedRealm(realm);
 
             // Add global "arguments" property
@@ -1149,23 +1122,16 @@ public final class Repl {
             CreateMethodProperty(cx, realm.getGlobalObject(), "arguments", arguments);
         });
         if (options.console) {
-            enqueueScriptTask(realm, () -> {
-                ScriptObject console = ConsoleObject.createConsole(realm);
-                CreateMethodProperty(cx, realm.getGlobalObject(), "console", console);
-            });
-        }
-        if (options.moduleLoaderMode == ModuleLoaderMode.Node) {
-            // TODO: Add default initialize(Realm) method to ModuleLoader interface?
-            enqueueScriptTask(realm, () -> {
-                NodeModuleLoader nodeLoader = (NodeModuleLoader) world.getModuleLoader();
-                nodeLoader.initialize(realm);
+            enqueueScriptJob(realm, () -> {
+                ScriptObject consoleObj = ConsoleObject.createConsole(realm, !options.noColor);
+                CreateMethodProperty(cx, realm.getGlobalObject(), "console", consoleObj);
             });
         }
 
         // Run eval expressions and files
         for (EvalScript evalScript : options.evalScripts) {
-            if (options.module) {
-                enqueueScriptTask(realm, () -> {
+            if (evalScript.getType() == EvalScript.Type.Module) {
+                enqueueScriptJob(realm, () -> {
                     ModuleSource moduleSource = evalScript.getModuleSource();
                     SourceIdentifier moduleName = evalScript.getModuleName();
                     try {
@@ -1173,7 +1139,7 @@ public final class Repl {
                     } catch (ParserException e) {
                         Source source = moduleSource.toSource();
                         String file = e.getFile();
-                        if (file.equals(source.getFileString())) {
+                        if (source.getFile() != null && file.equals(source.getFile().toString())) {
                             throw new ParserExceptionWithSource(e, source, moduleSource.sourceCode());
                         }
                         Path filePath = Paths.get(file).toAbsolutePath();
@@ -1183,7 +1149,7 @@ public final class Repl {
                     }
                 });
             } else {
-                enqueueScriptTask(realm, () -> {
+                enqueueScriptJob(realm, () -> {
                     Source source = evalScript.getSource();
                     String sourceCode = evalScript.getSourceCode();
                     try {
@@ -1200,17 +1166,15 @@ public final class Repl {
 
     @FunctionalInterface
     private interface Init {
-        void apply() throws IOException, URISyntaxException, MalformedNameException, ResolutionException;
+        void apply() throws IOException, MalformedNameException, ResolutionException;
     }
 
-    private static void enqueueScriptTask(Realm realm, Init init) {
-        realm.enqueueScriptTask(() -> {
+    private static void enqueueScriptJob(Realm realm, Init init) {
+        realm.enqueueScriptJob(() -> {
             try {
                 init.apply();
             } catch (IOException e) {
                 throw new UncheckedIOException(e);
-            } catch (URISyntaxException e) {
-                throw new UncheckedIOException(new IOException(e));
             } catch (MalformedNameException | ResolutionException e) {
                 throw e.toScriptException(realm.defaultContext());
             }
@@ -1226,14 +1190,7 @@ public final class Repl {
         } else {
             compatibilityOptions = CompatibilityOption.WebCompatibility();
         }
-        compatibilityOptions.addAll(CompatibilityOption.Version(CompatibilityOption.Version.ECMAScript2016));
-        if (options.asyncFunctions) {
-            compatibilityOptions.add(CompatibilityOption.AsyncFunction);
-        }
-        if (options.ecmascript7) {
-            compatibilityOptions.addAll(CompatibilityOption.Stage(CompatibilityOption.Stage.Strawman));
-            compatibilityOptions.addAll(CompatibilityOption.Experimental());
-        }
+        compatibilityOptions.addAll(CompatibilityOption.Version(CompatibilityOption.Version.ECMAScript2018));
         if (options.experimental) {
             compatibilityOptions.addAll(CompatibilityOption.Experimental());
         }
@@ -1246,6 +1203,19 @@ public final class Repl {
         if (options.promiseRejection) {
             compatibilityOptions.add(CompatibilityOption.PromiseRejection);
         }
+        /* @formatter:off */
+        if (options.features != null) {
+            Arrays.stream(options.features.split(",")).map(String::trim)
+                    .map(feature -> Arrays.stream(CompatibilityOption.values())
+                            .filter(c -> feature.replaceAll("[_-]", "").equalsIgnoreCase(c.name().replace("_", "")))
+                            .findAny().orElseGet(() -> {
+                                System.err.println(formatMessage("unknown_feature", feature,
+                                        Arrays.toString(CompatibilityOption.values())));
+                                return null;
+                            }))
+                    .filter(Objects::nonNull).forEach(compatibilityOptions::add);
+        }
+        /* @formatter:on */
         return compatibilityOptions;
     }
 
@@ -1276,10 +1246,10 @@ public final class Repl {
 
     private static EnumSet<Compiler.Option> compilerOptions(Options options) {
         EnumSet<Compiler.Option> compilerOptions = EnumSet.noneOf(Compiler.Option.class);
-        if (options.debug) {
+        if (options.printCode) {
             compilerOptions.add(Compiler.Option.PrintCode);
         }
-        if (options.fullDebug) {
+        if (options.printCodeWithTypes) {
             compilerOptions.add(Compiler.Option.PrintCode);
             compilerOptions.add(Compiler.Option.PrintFullCode);
         }
@@ -1289,6 +1259,65 @@ public final class Repl {
         if (options.noTailCall) {
             compilerOptions.add(Compiler.Option.NoTailCall);
         }
+        if (options.noInterpreter) {
+            compilerOptions.add(Compiler.Option.NoInterpreter);
+        }
         return compilerOptions;
+    }
+
+    private final class ShellContextData extends RuntimeContext.Data implements AtomicsTestFunctions.MailboxProvider {
+        private final AtomicsTestFunctions.Mailbox mailbox = new AtomicsTestFunctions.Mailbox();
+
+        @Override
+        public AtomicsTestFunctions.Mailbox getMailbox() {
+            return mailbox;
+        }
+    }
+
+    private static final class ShellRealmData extends RealmData {
+        public ShellRealmData(Realm realm) {
+            super(realm);
+        }
+
+        @Override
+        public void initializeExtensions() {
+            getRealm().createGlobalProperties(new BaseShellFunctions(), BaseShellFunctions.class);
+            getRealm().createGlobalProperties(new ShellFunctions(), ShellFunctions.class);
+            getRealm().createGlobalProperties(new AtomicsTestFunctions(), AtomicsTestFunctions.class);
+        }
+    }
+
+    private static final class MozShellRealmData extends RealmData {
+        public MozShellRealmData(Realm realm) {
+            super(realm);
+        }
+
+        @Override
+        public void initializeScripted() throws IOException {
+            ScriptLoading.evalNative(getRealm(), "mozlegacy.js");
+        }
+
+        @Override
+        public void initializeExtensions() {
+            getRealm().createGlobalProperties(new BaseShellFunctions(), BaseShellFunctions.class);
+            getRealm().createGlobalProperties(new MozShellFunctions(), MozShellFunctions.class);
+        }
+    }
+
+    private static final class V8ShellRealmData extends RealmData {
+        public V8ShellRealmData(Realm realm) {
+            super(realm);
+        }
+
+        @Override
+        public void initializeScripted() throws IOException {
+            ScriptLoading.evalNative(getRealm(), "v8legacy.js");
+        }
+
+        @Override
+        public void initializeExtensions() {
+            getRealm().createGlobalProperties(new BaseShellFunctions(), BaseShellFunctions.class);
+            getRealm().createGlobalProperties(new V8ShellFunctions(), V8ShellFunctions.class);
+        }
     }
 }

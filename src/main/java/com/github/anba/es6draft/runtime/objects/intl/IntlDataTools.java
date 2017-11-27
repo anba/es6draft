@@ -1,21 +1,25 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
  */
 package com.github.anba.es6draft.runtime.objects.intl;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.Reader;
+import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -27,8 +31,11 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
+import com.ibm.icu.text.Collator;
+import com.ibm.icu.text.RuleBasedCollator;
 import com.ibm.icu.util.TimeZone;
 import com.ibm.icu.util.TimeZone.SystemTimeZoneType;
+import com.ibm.icu.util.ULocale;
 
 /**
  * Simple tools to generate the various language data for the intl package
@@ -38,8 +45,8 @@ final class IntlDataTools {
     }
 
     public static void main(String[] args) throws IOException {
-        // Path cldrMainDir = java.nio.file.Paths.get("/tmp/cldr-2.0.0-core--main");
-        // oldStyleLanguageTags(cldrMainDir);
+        // Path cldr = java.nio.file.Paths.get("/tmp/cldr32-core");
+        // oldStyleLanguageTags(cldr);
 
         // Path currencyFile = java.nio.file.Paths.get("/tmp/iso_currency.xml");
         // currencyDigits(currencyFile);
@@ -49,6 +56,10 @@ final class IntlDataTools {
 
         // Path langSubtagReg = java.nio.file.Paths.get("/tmp/language-subtag-registry.txt");
         // languageSubtagRegistry(langSubtagReg);
+
+        // Path cldr = java.nio.file.Paths.get("/tmp/cldr32-core");
+        // numberingSystems(cldr);
+        // collationCase(cldr);
     }
 
     /**
@@ -292,28 +303,26 @@ final class IntlDataTools {
             for (Path path : stream) {
                 String filename = Objects.requireNonNull(path.getFileName()).toString();
                 if (pFileName.matcher(filename).matches() && !ignoreFiles.contains(filename)) {
-                    try (BufferedReader reader = Files.newBufferedReader(path, StandardCharsets.UTF_8)) {
-                        for (String line; (line = reader.readLine()) != null;) {
-                            if (line.startsWith("Zone")) {
-                                Matcher m = pZone.matcher(line);
-                                if (!m.matches()) {
-                                    System.out.println(line);
-                                }
-                                String name = m.group(1);
-                                boolean changed = names.add(name);
-                                assert changed : line;
-                            } else if (line.startsWith("Link")) {
-                                Matcher m = pLink.matcher(line);
-                                if (!m.matches()) {
-                                    System.out.println(line);
-                                }
-                                String target = m.group(1);
-                                String source = m.group(2);
-                                boolean changed = links.put(source, target) == null;
-                                assert changed : String.format("%s: %s", filename, line);
+                    Files.lines(path, StandardCharsets.UTF_8).forEach(line -> {
+                        if (line.startsWith("Zone")) {
+                            Matcher m = pZone.matcher(line);
+                            if (!m.matches()) {
+                                System.out.println(line);
                             }
+                            String name = m.group(1);
+                            boolean changed = names.add(name);
+                            assert changed : line;
+                        } else if (line.startsWith("Link")) {
+                            Matcher m = pLink.matcher(line);
+                            if (!m.matches()) {
+                                System.out.println(line);
+                            }
+                            String target = m.group(1);
+                            String source = m.group(2);
+                            boolean changed = links.put(source, target) == null;
+                            assert changed : String.format("%s: %s", filename, line);
                         }
-                    }
+                    });
                 }
             }
         }
@@ -327,11 +336,7 @@ final class IntlDataTools {
         }
 
         TreeSet<String> ids = new TreeSet<>(TimeZone.getAvailableIDs(SystemTimeZoneType.ANY, null, null));
-        for (String id : new HashSet<>(ids)) {
-            if (id.startsWith("SystemV/")) {
-                ids.remove(id);
-            }
-        }
+        ids.removeIf(id -> id.startsWith("SystemV/"));
 
         System.out.println(allnames);
         System.out.println(ids.size());
@@ -355,44 +360,30 @@ final class IntlDataTools {
     static void currencyDigits(Path currencyFile) throws IOException {
         try (Reader reader = Files.newBufferedReader(currencyFile, StandardCharsets.UTF_8)) {
             LinkedHashMap<String, Integer> map = new LinkedHashMap<>();
-            Document xml = xml(reader);
-            NodeList list = xml.getDocumentElement().getElementsByTagName("CcyNtry");
-            for (int i = 0, len = list.getLength(); i < len; ++i) {
-                Element item = (Element) list.item(i);
-                Element code = getElementByTagName(item, "Ccy");
-                Element minor = getElementByTagName(item, "CcyMnrUnts");
-                if (code == null) {
-                    continue;
-                }
-                String scode = code.getTextContent();
-                int iminor = 2;
-                try {
-                    iminor = Integer.parseInt(minor.getTextContent());
-                } catch (NumberFormatException e) {
-                }
-                if (map.containsKey(scode) && map.get(scode) != iminor) {
-                    System.err.println(scode);
-                }
-                if (iminor != 2 && !map.containsKey(scode)) {
-                    map.put(scode, iminor);
-                }
-            }
-            TreeMap<Integer, List<String>> sorted = new TreeMap<>();
-            for (Map.Entry<String, Integer> entry : map.entrySet()) {
-                List<String> currencies = sorted.get(entry.getValue());
-                if (currencies == null) {
-                    currencies = new ArrayList<>();
-                }
-                currencies.add(entry.getKey());
-                sorted.put(entry.getValue(), currencies);
-            }
-            for (Map.Entry<Integer, List<String>> entry : sorted.entrySet()) {
-                Collections.sort(entry.getValue());
-                for (String c : entry.getValue()) {
-                    System.out.printf("case \"%s\":%n", c);
-                }
-                System.out.printf("    return %d;%n", entry.getKey());
-            }
+            Document document = document(reader);
+            elementsByTagName(document.getDocumentElement(), "CcyNtry").forEach(entry -> {
+                elementByTagName(entry, "Ccy").ifPresent(currency -> {
+                    String code = currency.getTextContent();
+                    int minor = 2;
+                    try {
+                        minor = Integer.parseInt(elementByTagName(entry, "CcyMnrUnts").get().getTextContent());
+                    } catch (NumberFormatException e) {
+                    }
+                    if (map.containsKey(code) && map.get(code) != minor) {
+                        System.err.println(code);
+                    }
+                    if (minor != 2) {
+                        map.putIfAbsent(code, minor);
+                    }
+                });
+            });
+            map.entrySet().stream()
+                    .collect(Collectors.groupingBy(Map.Entry::getValue, TreeMap::new,
+                            Collectors.mapping(Map.Entry::getKey, Collectors.toList())))
+                    .forEach((minor, currencies) -> {
+                        currencies.stream().sorted().forEach(c -> System.out.printf("case \"%s\":%n", c));
+                        System.out.printf("    return %d;%n", minor);
+                    });
             System.out.println("default:\n    return 2;");
         }
     }
@@ -401,67 +392,236 @@ final class IntlDataTools {
      * {@link IntlAbstractOperations#oldStyleLanguageTags}
      * 
      * @param cldrMainDir
-     *            the CLDR main directory
+     *            the CLDR directory
      * @throws IOException
      *             if an I/O error occurs
      */
-    static void oldStyleLanguageTags(Path cldrMainDir) throws IOException {
-        try (DirectoryStream<Path> newDirectoryStream = Files.newDirectoryStream(cldrMainDir)) {
-            Map<String, String> names = new LinkedHashMap<>();
-            Map<String, String> aliased = new LinkedHashMap<>();
-            for (Path path : newDirectoryStream) {
-                try (Reader reader = Files.newBufferedReader(path, StandardCharsets.UTF_8)) {
-                    Document xml = xml(reader);
-                    Element identity = getElementByTagName(xml.getDocumentElement(), "identity");
-                    assert identity != null;
-                    Element language = getElementByTagName(xml.getDocumentElement(), "language");
-                    Element script = getElementByTagName(xml.getDocumentElement(), "script");
-                    Element territory = getElementByTagName(xml.getDocumentElement(), "territory");
+    static void oldStyleLanguageTags(Path cldr) throws IOException {
+        LinkedHashMap<String, String> likelySubtags = new LinkedHashMap<>();
+        try (Reader reader = Files.newBufferedReader(cldr.resolve("supplemental/likelySubtags.xml"),
+                StandardCharsets.UTF_8)) {
+            Document document = document(reader);
+            elementsByTagName(document, "likelySubtag").forEach(likelySubtag -> {
+                String from = likelySubtag.getAttribute("from").replace('_', '-');
+                String to = likelySubtag.getAttribute("to").replace('_', '-');
+                likelySubtags.put(from, to);
+            });
+        }
 
-                    String tag = language.getAttribute("type");
-                    if (script != null) {
-                        tag += "-" + script.getAttribute("type");
-                    }
-                    if (territory != null) {
-                        tag += "-" + territory.getAttribute("type");
-                    }
+        Set<String> allTags = Files.walk(cldr.resolve("main")).filter(Files::isRegularFile).map(Path::getFileName)
+                .map(Path::toString).map(p -> p.substring(0, p.indexOf(".xml")).replace('_', '-'))
+                .collect(Collectors.toCollection(LinkedHashSet::new));
 
-                    String filename = Objects.requireNonNull(path.getFileName()).toString();
-                    filename = filename.substring(0, filename.lastIndexOf('.'));
-                    names.put(filename, tag);
+        class Entry implements Comparable<Entry> {
+            final String tag;
+            final String languageRegion;
+            final int priority;
 
-                    Element alias = getElementByTagName(xml.getDocumentElement(), "alias");
-                    if (alias != null && script == null && territory != null) {
-                        aliased.put(tag, alias.getAttribute("source"));
-                    }
-                }
-            }
-            Map<String, String> result = new LinkedHashMap<>();
-            for (Map.Entry<String, String> entry : aliased.entrySet()) {
-                String from = entry.getKey();
-                String to = names.get(entry.getValue());
-
-                String value = result.get(to);
-                if (value == null) {
-                    value = "";
-                } else {
-                    value += ", ";
-                }
-                value += "\"" + from + "\"";
-                result.put(to, value);
+            Entry(String tag, String languageRegion, int priority) {
+                this.tag = tag;
+                this.languageRegion = languageRegion;
+                this.priority = priority;
             }
 
-            for (Map.Entry<String, String> entry : result.entrySet()) {
-                System.out.printf("map.put(\"%s\", new String[]{%s});%n", entry.getKey(), entry.getValue());
+            @Override
+            public int compareTo(Entry o) {
+                int c = languageRegion.compareTo(o.languageRegion);
+                return c < 0 ? -1 : c > 0 ? 1 : Integer.compare(priority, o.priority);
+            }
+
+            @Override
+            public boolean equals(Object obj) {
+                if (obj instanceof Entry) {
+                    return languageRegion.equals(((Entry) obj).languageRegion);
+                }
+                return false;
+            }
+
+            @Override
+            public int hashCode() {
+                return languageRegion.hashCode();
+            }
+        }
+        Function<Locale, String> toLanguageScript = locale -> new Locale.Builder().setLanguage(locale.getLanguage())
+                .setScript(locale.getScript()).build().toLanguageTag();
+        Function<Locale, String> toLanguageRegion = locale -> new Locale.Builder().setLanguage(locale.getLanguage())
+                .setRegion(locale.getCountry()).build().toLanguageTag();
+        Function<Locale, String> toLanguage = locale -> new Locale.Builder().setLanguage(locale.getLanguage()).build()
+                .toLanguageTag();
+
+        System.out.printf("private static final String[] oldStyleLanguageTags = {%n");
+        allTags.stream().map(Locale::forLanguageTag)
+                .filter(locale -> !locale.getScript().isEmpty() && !locale.getCountry().isEmpty())
+                .filter(locale -> allTags.contains(toLanguageScript.apply(locale))).map(locale -> {
+                    String languageTag = locale.toLanguageTag();
+                    String languageScript = toLanguageScript.apply(locale);
+                    String languageRegion = toLanguageRegion.apply(locale);
+                    String language = toLanguage.apply(locale);
+
+                    int prio;
+                    if (languageTag.equals(likelySubtags.get(languageScript))) {
+                        prio = 1;
+                    } else if (languageTag.equals(likelySubtags.get(languageRegion))) {
+                        prio = 2;
+                    } else if (languageTag.equals(likelySubtags.get(language))) {
+                        prio = 3;
+                    } else if (likelySubtags.getOrDefault(language, "").startsWith(languageScript)) {
+                        prio = 4;
+                    } else {
+                        prio = 5;
+                    }
+                    return new Entry(languageTag, languageRegion, prio);
+                }).sorted().distinct().forEach(e -> {
+                    System.out.printf("    \"%s\", \"%s\",%n", e.tag, e.languageRegion);
+                });
+        System.out.printf("};%n");
+    }
+
+    static void collationCase(Path cldr) throws IOException {
+        Files.walk(cldr.resolve("collation")).filter(Files::isRegularFile).forEach(p -> {
+            try (Reader reader = Files.newBufferedReader(p, StandardCharsets.UTF_8)) {
+                Document document = document(reader);
+                elementsByTagName(document, "collation").filter(e -> "standard".equals(e.getAttribute("type")))
+                        .forEach(e -> {
+                            elementByTagName(e, "cr").ifPresent(cr -> {
+                                String text = cr.getTextContent();
+                                if (text.contains("caseFirst")) {
+                                    System.out.println(p.getFileName());
+                                }
+                            });
+                        });
+            } catch (IOException e) {
+                throw new UncheckedIOException(e);
+            }
+        });
+
+        for (ULocale locale : Collator.getAvailableULocales()) {
+            Collator collator = Collator.getInstance(locale);
+            if (collator instanceof RuleBasedCollator) {
+                RuleBasedCollator ruleBasedCollator = (RuleBasedCollator) collator;
+                if (ruleBasedCollator.isUpperCaseFirst()) {
+                    System.out.printf("upper-first = %s%n", locale);
+                } else if (ruleBasedCollator.isLowerCaseFirst()) {
+                    System.out.printf("lower-first = %s%n", locale);
+                }
             }
         }
     }
 
-    private static Element getElementByTagName(Element element, String tagName) {
-        return (Element) element.getElementsByTagName(tagName).item(0);
+    static void numberingSystems(Path cldr) throws IOException {
+        // Late additions? [bali, limb]
+        LinkedHashSet<String> bcp47Numbers = new LinkedHashSet<>();
+        Path bcp47 = cldr.resolve("bcp47/number.xml");
+        try (Reader reader = Files.newBufferedReader(bcp47, StandardCharsets.UTF_8)) {
+            Document document = document(reader);
+            elementsByTagName(document, "type").map(type -> type.getAttribute("name")).forEach(bcp47Numbers::add);
+        }
+        System.out.println(bcp47Numbers.size());
+        System.out.println(bcp47Numbers);
+
+        LinkedHashSet<String> numberingSystems = new LinkedHashSet<>();
+        Path supplemental = cldr.resolve("supplemental/numberingSystems.xml");
+        try (Reader reader = Files.newBufferedReader(supplemental, StandardCharsets.UTF_8)) {
+            Document document = document(reader);
+            elementsByTagName(document, "numberingSystem").filter(ns -> !"algorithmic".equals(ns.getAttribute("type")))
+                    .peek(ns -> {
+                        assert "numeric".equals(ns.getAttribute("type"));
+                        String digits = ns.getAttribute("digits");
+                        int radix = Character.codePointCount(digits, 0, digits.length());
+                        if (radix != 10) {
+                            System.out.printf("%s - %s [%d]%n", ns.getAttribute("id"), digits, radix);
+                        }
+                    }).map(ns -> ns.getAttribute("id")).forEach(numberingSystems::add);
+        }
+        System.out.println(numberingSystems.size());
+        System.out.println(numberingSystems);
+
+        // numberingSystems.forEach(s -> System.out.printf("\"%s\",", s));
+
+        TreeSet<String> defaultNames = new TreeSet<>();
+        TreeSet<String> otherNames = new TreeSet<>();
+        Files.walk(cldr.resolve("main")).filter(Files::isRegularFile).forEach(p -> {
+            try (Reader reader = Files.newBufferedReader(p, StandardCharsets.UTF_8)) {
+                Document document = document(reader);
+                elementByTagName(document, "numbers").ifPresent(numbers -> {
+                    elementByTagName(numbers, "defaultNumberingSystem").map(Element::getTextContent)
+                            .ifPresent(defaultNames::add);
+                    elementByTagName(numbers, "otherNumberingSystems").ifPresent(otherNumberingSystems -> {
+                        Stream.of("finance", "native", "traditional")
+                                .map(name -> elementByTagName(otherNumberingSystems, name)).filter(Optional::isPresent)
+                                .map(Optional::get).map(Element::getTextContent).forEach(otherNames::add);
+                    });
+                });
+            } catch (IOException e) {
+                throw new UncheckedIOException(e);
+            }
+        });
+        System.out.println(defaultNames);
+        System.out.println(otherNames);
+
+        TreeSet<String> allNames = new TreeSet<>();
+        allNames.addAll(defaultNames);
+        allNames.addAll(otherNames);
+
+        System.out.println(allNames.stream().filter(n -> numberingSystems.contains(n)).collect(Collectors.toList()));
+        System.out.println(allNames.stream().filter(n -> !numberingSystems.contains(n)).collect(Collectors.toList()));
     }
 
-    private static Document xml(Reader xml) throws IOException {
+    private static Optional<Element> elementByTagName(Document document, String tagName) {
+        return elementByTagName(document::getElementsByTagName, tagName);
+    }
+
+    private static Optional<Element> elementByTagName(Element element, String tagName) {
+        return elementByTagName(element::getElementsByTagName, tagName);
+    }
+
+    private static Optional<Element> elementByTagName(Function<String, NodeList> fn, String tagName) {
+        NodeList list = fn.apply(tagName);
+        if (list.getLength() == 0) {
+            return Optional.empty();
+        }
+        if (list.getLength() == 1) {
+            return Optional.of((Element) list.item(0));
+        }
+        throw new IllegalArgumentException("Too many elements: " + list.getLength());
+    }
+
+    private static Stream<Element> elementsByTagName(Document document, String tagName) {
+        return elementsByTagName(document::getElementsByTagName, tagName);
+    }
+
+    private static Stream<Element> elementsByTagName(Element element, String tagName) {
+        return elementsByTagName(element::getElementsByTagName, tagName);
+    }
+
+    private static Stream<Element> elementsByTagName(Function<String, NodeList> fn, String tagName) {
+        Iterator<Element> iterator = new Iterator<Element>() {
+            final NodeList list = fn.apply(tagName);
+            int i = 0;
+
+            @Override
+            public boolean hasNext() {
+                for (; i < list.getLength(); ++i) {
+                    if (list.item(i) instanceof Element) {
+                        return true;
+                    }
+                }
+                return false;
+            }
+
+            @Override
+            public Element next() {
+                if (!hasNext()) {
+                    throw new NoSuchElementException();
+                }
+                return (Element) list.item(i++);
+            }
+        };
+        return StreamSupport.stream(Spliterators.spliteratorUnknownSize(iterator,
+                Spliterator.ORDERED | Spliterator.NONNULL | Spliterator.DISTINCT), false);
+    }
+
+    private static Document document(Reader xml) throws IOException {
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
 
         // turn off any validation or namespace features
@@ -484,7 +644,7 @@ final class IntlDataTools {
             InputSource source = new InputSource(xml);
             return builder.parse(source);
         } catch (ParserConfigurationException | SAXException e) {
-            throw new IOException(e);
+            throw new RuntimeException(e);
         }
     }
 }

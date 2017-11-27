@@ -1,32 +1,34 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
  */
 package com.github.anba.es6draft.runtime;
 
-import static com.github.anba.es6draft.runtime.Realm.InitializeHostDefinedRealm;
-
-import java.io.IOException;
-import java.net.URISyntaxException;
+import java.lang.ref.Reference;
+import java.lang.ref.ReferenceQueue;
+import java.lang.ref.WeakReference;
 import java.util.ArrayDeque;
+import java.util.Deque;
+import java.util.WeakHashMap;
+import java.util.concurrent.ConcurrentLinkedDeque;
 
-import com.github.anba.es6draft.compiler.CompilationException;
-import com.github.anba.es6draft.parser.ParserException;
-import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
+import com.github.anba.es6draft.runtime.internal.JobSource;
 import com.github.anba.es6draft.runtime.internal.Messages;
+import com.github.anba.es6draft.runtime.internal.Ref;
 import com.github.anba.es6draft.runtime.internal.RuntimeContext;
 import com.github.anba.es6draft.runtime.internal.ScriptLoader;
-import com.github.anba.es6draft.runtime.internal.TaskSource;
 import com.github.anba.es6draft.runtime.internal.UnhandledRejectionException;
+import com.github.anba.es6draft.runtime.internal.WeakReferenceWithFinalizer;
 import com.github.anba.es6draft.runtime.modules.ModuleLoader;
+import com.github.anba.es6draft.runtime.types.ScriptObject;
 
 /**
  * <h1>8 Executable Code and Execution Contexts</h1>
  * <ul>
  * <li>8.2 Code Realms
- * <li>8.4 Tasks and Task Queues
+ * <li>8.4 Jobs and Job Queues
  * </ul>
  */
 public final class World {
@@ -36,18 +38,25 @@ public final class World {
     private final Messages messages;
 
     private final GlobalSymbolRegistry symbolRegistry = new GlobalSymbolRegistry();
-    private final ArrayDeque<Task> scriptTasks = new ArrayDeque<>();
-    private final ArrayDeque<Task> promiseTasks = new ArrayDeque<>();
+    private final ArrayDeque<Job> scriptJobs = new ArrayDeque<>();
+    private final ArrayDeque<Job> promiseJobs = new ArrayDeque<>();
+    private final ArrayDeque<Job> finalizerJobs = new ArrayDeque<>();
+    private final ConcurrentLinkedDeque<Job> asyncJobs = new ConcurrentLinkedDeque<>();
     private final ArrayDeque<Object> unhandledRejections = new ArrayDeque<>();
 
-    private static final TaskSource EMPTY_TASK_SOURCE = new TaskSource() {
+    private final WeakHashMap<Object, ScriptObject> reachabilityMap = new WeakHashMap<>();
+    private final ReferenceQueue<ScriptObject> weakQueue = new ReferenceQueue<>();
+
+    private ExecutionContext scriptContext;
+
+    private static final JobSource EMPTY_JOB_SOURCE = new JobSource() {
         @Override
-        public Task nextTask() {
+        public Job nextJob() {
             return null;
         }
 
         @Override
-        public Task awaitTask() {
+        public Job awaitJob() {
             throw new IllegalStateException();
         }
     };
@@ -70,7 +79,7 @@ public final class World {
      * 
      * @return the runtime context
      */
-    public RuntimeContext getContext() {
+    public RuntimeContext getRuntimeContext() {
         return context;
     }
 
@@ -93,36 +102,51 @@ public final class World {
     }
 
     /**
-     * Checks whether there are any pending tasks.
+     * 8.4.1 EnqueueJob (queueName, job, arguments)
+     * <p>
+     * Enqueues {@code job} to the queue of pending script-jobs.
      * 
-     * @return {@code true} if there are any pending tasks
+     * @param job
+     *            the new script job
      */
-    public boolean hasPendingTasks() {
-        return !(scriptTasks.isEmpty() && promiseTasks.isEmpty());
+    public void enqueueScriptJob(Job job) {
+        scriptJobs.offer(job);
     }
 
     /**
-     * 8.4.1 EnqueueTask ( queueName, task, arguments)
+     * 8.4.1 EnqueueJob (queueName, job, arguments)
      * <p>
-     * Enqueues {@code task} to the queue of pending script-tasks.
+     * Enqueues {@code job} to the queue of pending promise-jobs.
      * 
-     * @param task
-     *            the new script task
+     * @param job
+     *            the new promise job
      */
-    public void enqueueScriptTask(Task task) {
-        scriptTasks.offer(task);
+    public void enqueuePromiseJob(Job job) {
+        promiseJobs.offer(job);
     }
 
     /**
-     * 8.4.1 EnqueueTask ( queueName, task, arguments)
+     * 8.4.1 EnqueueJob (queueName, job, arguments)
      * <p>
-     * Enqueues {@code task} to the queue of pending promise-tasks.
+     * Enqueues {@code job} to the queue of pending finalizer-jobs.
      * 
-     * @param task
-     *            the new promise task
+     * @param job
+     *            the new finalizer job
      */
-    public void enqueuePromiseTask(Task task) {
-        promiseTasks.offer(task);
+    public void enqueueFinalizerJob(Job job) {
+        finalizerJobs.offer(job);
+    }
+
+    /**
+     * 8.4.1 EnqueueJob (queueName, job, arguments)
+     * <p>
+     * Enqueues {@code job} to the queue of pending async-jobs.
+     * 
+     * @param job
+     *            the new async job
+     */
+    public void enqueueAsyncJob(Job job) {
+        asyncJobs.offer(job);
     }
 
     /**
@@ -136,54 +160,90 @@ public final class World {
     }
 
     /**
-     * Executes the queue of pending tasks.
+     * Executes the queue of pending jobs.
      */
     public void runEventLoop() {
         try {
-            runEventLoop(EMPTY_TASK_SOURCE);
+            runEventLoop(EMPTY_JOB_SOURCE);
         } catch (InterruptedException e) {
-            // The empty task source never throws InterruptedException.
+            // The empty job source never throws InterruptedException.
             throw new AssertionError(e);
         }
     }
 
     /**
-     * Executes the queue of pending tasks.
+     * Executes the queue of pending jobs.
      * 
-     * @param taskSource
-     *            the task source
+     * @param jobSource
+     *            the job source
      * @throws InterruptedException
      *             if interrupted while waiting
      */
-    public void runEventLoop(TaskSource taskSource) throws InterruptedException {
-        ArrayDeque<Task> scriptTasks = this.scriptTasks, promiseTasks = this.promiseTasks;
+    public void runEventLoop(JobSource jobSource) throws InterruptedException {
+        ArrayDeque<Job> scriptJobs = this.scriptJobs;
+        ArrayDeque<Job> promiseJobs = this.promiseJobs;
+        ArrayDeque<Job> finalizerJobs = this.finalizerJobs;
+        ConcurrentLinkedDeque<Job> asyncJobs = this.asyncJobs;
         ArrayDeque<Object> unhandledRejections = this.unhandledRejections;
         for (;;) {
-            while (!(scriptTasks.isEmpty() && promiseTasks.isEmpty())) {
-                executeTasks(scriptTasks);
-                executeTasks(promiseTasks);
+            while (!(scriptJobs.isEmpty() && promiseJobs.isEmpty() && finalizerJobs.isEmpty() && asyncJobs.isEmpty())) {
+                executeJobs(scriptJobs);
+                executeJobs(promiseJobs);
+                executeJobs(finalizerJobs);
+                executeJobs(asyncJobs);
             }
             if (!unhandledRejections.isEmpty()) {
                 throw new UnhandledRejectionException(unhandledRejections.poll());
             }
-            Task task = taskSource.nextTask();
-            if (task == null) {
+            Job job = jobSource.nextJob();
+            if (job == null) {
                 break;
             }
-            enqueueScriptTask(task);
+            enqueueScriptJob(job);
         }
     }
 
-    /**
-     * Executes the queue of pending tasks.
-     * 
-     * @param tasks
-     *            the tasks to be executed
-     */
-    private void executeTasks(ArrayDeque<Task> tasks) {
-        // Execute all pending tasks until the queue is empty
-        for (Task task; (task = tasks.poll()) != null;) {
-            task.execute();
+    private void executeJobs(Deque<Job> jobs) {
+        // Execute all pending jobs until the queue is empty
+        for (Job job; (job = jobs.poll()) != null;) {
+            job.execute();
+            enqueueWeakFinalizers();
+        }
+    }
+
+    private void enqueueWeakFinalizers() {
+        // Clear any strong references.
+        WeakHashMap<?, ?> strongRefs = this.reachabilityMap;
+        if (!strongRefs.isEmpty()) {
+            strongRefs.clear();
+        }
+
+        // Enqueue finalizer jobs.
+        ReferenceQueue<ScriptObject> weakQueue = this.weakQueue;
+        ArrayDeque<Job> finalizerJobs = this.finalizerJobs;
+        for (Reference<? extends ScriptObject> ref; (ref = weakQueue.poll()) != null;) {
+            Ref<Runnable> finalizer = ((WeakReferenceWithFinalizer) ref).getFinalizer();
+            if (finalizer.get() != null) {
+                finalizerJobs.add(new FinalizerJob(finalizer));
+            }
+        }
+    }
+
+    private static final class FinalizerJob implements Job {
+        private Ref<Runnable> finalizer;
+
+        FinalizerJob(Ref<Runnable> finalizer) {
+            this.finalizer = finalizer;
+        }
+
+        @Override
+        public void execute() {
+            Runnable finalizer = this.finalizer.get();
+            if (finalizer != null) {
+                this.finalizer.clear();
+                this.finalizer = null;
+                finalizer.run();
+            }
         }
     }
 
@@ -212,17 +272,6 @@ public final class World {
     }
 
     /**
-     * Tests whether the requested compatibility option is enabled for this instance.
-     * 
-     * @param option
-     *            the compatibility option
-     * @return {@code true} if the compatibility option is enabled
-     */
-    public boolean isEnabled(CompatibilityOption option) {
-        return context.getOptions().contains(option);
-    }
-
-    /**
      * Returns the global symbol registry.
      * 
      * @return the global symbol registry
@@ -232,30 +281,46 @@ public final class World {
     }
 
     /**
-     * Creates a new {@link Realm} object.
+     * Creates a new weak reference
      * 
-     * @return the new realm object
+     * @param target
+     *            the target object
+     * @param finalizer
+     *            the optional finalizer or {@code null}
+     * @return the new weak reference
      */
-    public Realm newRealm() {
-        return new Realm(this);
+    public WeakReference<ScriptObject> makeWeakRef(ScriptObject target, Runnable finalizer) {
+        return new WeakReferenceWithFinalizer(target, finalizer, weakQueue);
     }
 
     /**
-     * Creates a new, initialized {@link Realm} object.
+     * Ensure {@code target} is reachable as long as {@code key} is reachable.
      * 
-     * @return the new realm object
-     * @throws IOException
-     *             if there was any I/O error
-     * @throws URISyntaxException
-     *             the URL is not a valid URI
-     * @throws ParserException
-     *             if the source contains any syntax errors
-     * @throws CompilationException
-     *             if the parsed source could not be compiled
+     * @param key
+     *            the key
+     * @param target
+     *            target object
      */
-    public Realm newInitializedRealm() throws ParserException, CompilationException, IOException, URISyntaxException {
-        Realm realm = new Realm(this);
-        InitializeHostDefinedRealm(realm);
-        return realm;
+    public void ensureReachable(Object key, ScriptObject target) {
+        reachabilityMap.put(key, target);
+    }
+
+    /**
+     * Returns the current script execution context for this object.
+     * 
+     * @return the current script execution context
+     */
+    public ExecutionContext getScriptContext() {
+        return scriptContext;
+    }
+
+    /**
+     * Sets a new script execution context for this object.
+     * 
+     * @param scriptContext
+     *            the new script execution context
+     */
+    public void setScriptContext(ExecutionContext scriptContext) {
+        this.scriptContext = scriptContext;
     }
 }

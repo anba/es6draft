@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -21,19 +21,23 @@ import com.github.anba.es6draft.ast.scope.BlockScope;
  */
 public final class ClassExpression extends Expression implements ClassDefinition {
     private final BlockScope scope;
+    private final BlockScope bodyScope;
     private final List<Expression> decorators;
     private final BindingIdentifier identifier;
     private final Expression heritage;
     private final List<MethodDefinition> methods;
     private final MethodDefinition constructor;
     private final MethodDefinition callConstructor;
+    private final String source;
+    private String className;
     private List<PropertyDefinition> properties;
 
-    public ClassExpression(long beginPosition, long endPosition, BlockScope scope,
+    public ClassExpression(long beginPosition, long endPosition, BlockScope scope, BlockScope bodyScope,
             List<Expression> decorators, BindingIdentifier identifier, Expression heritage,
-            List<MethodDefinition> methods, List<PropertyDefinition> properties) {
+            List<MethodDefinition> methods, List<PropertyDefinition> properties, String source) {
         super(beginPosition, endPosition);
         this.scope = scope;
+        this.bodyScope = bodyScope;
         this.decorators = decorators;
         this.identifier = identifier;
         this.heritage = heritage;
@@ -41,11 +45,18 @@ public final class ClassExpression extends Expression implements ClassDefinition
         this.properties = properties;
         this.constructor = ConstructorMethod(methods);
         this.callConstructor = CallConstructorMethod(methods);
+        this.source = source;
+        this.className = identifier != null ? identifier.getName().getIdentifier() : "";
     }
 
     @Override
     public BlockScope getScope() {
         return scope;
+    }
+
+    @Override
+    public BlockScope getBodyScope() {
+        return bodyScope;
     }
 
     @Override
@@ -55,7 +66,11 @@ public final class ClassExpression extends Expression implements ClassDefinition
 
     @Override
     public String getClassName() {
-        return identifier != null ? identifier.getName().getIdentifier() : "";
+        return className;
+    }
+
+    public void setClassName(String className) {
+        this.className = className;
     }
 
     @Override
@@ -91,6 +106,11 @@ public final class ClassExpression extends Expression implements ClassDefinition
     @Override
     public void setProperties(List<PropertyDefinition> properties) {
         this.properties = properties;
+    }
+
+    @Override
+    public String getSource() {
+        return source;
     }
 
     @Override

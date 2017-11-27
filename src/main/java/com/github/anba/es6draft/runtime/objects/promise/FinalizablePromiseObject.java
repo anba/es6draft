@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -31,11 +31,14 @@ public final class FinalizablePromiseObject extends PromiseObject {
     @Override
     void notifyRejectReaction(PromiseReaction reaction) {
         assert getState() == State.Pending || getState() == State.Rejected;
-        if (reaction.getType() != PromiseReaction.Type.Thrower) {
+        if (reaction.getType() != PromiseReaction.Type.Reject) {
+            return;
+        }
+        if (reaction.getHandler() != null) {
             trackRejection = false;
             rejectReason.clear();
         } else {
-            ScriptObject promise = reaction.getCapabilities().getPromise();
+            ScriptObject promise = reaction.getCapability().getPromise();
             if (promise instanceof FinalizablePromiseObject) {
                 FinalizablePromiseObject promiseObject = (FinalizablePromiseObject) promise;
                 if (promiseObject.getState() == State.Pending) {
@@ -75,6 +78,7 @@ public final class FinalizablePromiseObject extends PromiseObject {
             setValue(null);
         }
 
+        @SuppressWarnings("deprecation")
         @Override
         protected void finalize() throws Throwable {
             if (value != null) {

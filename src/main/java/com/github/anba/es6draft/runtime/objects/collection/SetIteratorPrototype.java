@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -26,6 +26,7 @@ import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.objects.collection.SetIteratorObject.SetIterationKind;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
+import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.NativeFunction;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
@@ -61,12 +62,15 @@ public final class SetIteratorPrototype extends OrdinaryObject implements Initia
      *            the set object
      * @param kind
      *            the set iteration kind
+     * @param method
+     *            the method name
      * @return the new set iterator
      */
-    public static OrdinaryObject CreateSetIterator(ExecutionContext cx, Object obj, SetIterationKind kind) {
+    public static SetIteratorObject CreateSetIterator(ExecutionContext cx, Object obj, SetIterationKind kind,
+            String method) {
         /* steps 1-2 */
         if (!(obj instanceof SetObject)) {
-            throw newTypeError(cx, Messages.Key.IncompatibleObject);
+            throw newTypeError(cx, Messages.Key.IncompatibleThis, method, Type.of(obj).toString());
         }
         SetObject set = (SetObject) obj;
         /* steps 3-7 */
@@ -84,7 +88,7 @@ public final class SetIteratorPrototype extends OrdinaryObject implements Initia
      *            the set iteration kind
      * @return the new set iterator
      */
-    public static OrdinaryObject CreateSetIterator(ExecutionContext cx, Iterator<Entry<Object, Void>> iterator,
+    public static SetIteratorObject CreateSetIterator(ExecutionContext cx, Iterator<Entry<Object, Void>> iterator,
             SetIterationKind kind) {
         /* steps 1-7 */
         return new SetIteratorObject(cx.getRealm(), iterator, kind, cx.getIntrinsic(Intrinsics.SetIteratorPrototype));
@@ -132,7 +136,8 @@ public final class SetIteratorPrototype extends OrdinaryObject implements Initia
         public static Object next(ExecutionContext cx, Object thisValue) {
             /* steps 1-3 */
             if (!(thisValue instanceof SetIteratorObject)) {
-                throw newTypeError(cx, Messages.Key.IncompatibleObject);
+                throw newTypeError(cx, Messages.Key.IncompatibleThis, "%SetIteratorPrototype%.next",
+                        Type.of(thisValue).toString());
             }
             SetIteratorObject o = (SetIteratorObject) thisValue;
             /* steps 4-5 */

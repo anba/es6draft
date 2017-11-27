@@ -1,11 +1,12 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
  */
 package com.github.anba.es6draft.runtime.objects.promise;
 
+import com.github.anba.es6draft.runtime.objects.zone.ZoneObject;
 import com.github.anba.es6draft.runtime.types.Callable;
 
 /**
@@ -17,52 +18,64 @@ import com.github.anba.es6draft.runtime.types.Callable;
  * </ul>
  */
 public final class PromiseReaction {
-    /** [[Capabilities]] */
-    private final PromiseCapability<?> capabilities;
+    /** [[Capability]] */
+    private final PromiseCapability<?> capability;
+
+    /** [[Type]] */
+    private final Type type;
 
     /** [[Handler]] */
     private final Callable handler;
 
-    private final Type type;
+    /** [[Zone]] */
+    private final ZoneObject zone;
 
     /**
      * Promise reaction handler type
      */
     public enum Type {
-        /** Identity function reaction handler */
-        Identity,
+        /** Fulfill reaction handler */
+        Fulfill,
 
-        /** Thrower function reaction handler */
-        Thrower,
-
-        /** User-defined reaction handler */
-        Function
+        /** Reject reaction handler */
+        Reject,
     }
 
     /**
      * Constructs a new Promise Reaction record.
      * 
-     * @param capabilities
+     * @param capability
      *            the promise capabilities
-     * @param handler
-     *            the reaction handle
      * @param type
      *            the reaction type
+     * @param handler
+     *            the reaction handle
+     * @param zone
+     *            the current zone
      */
-    public PromiseReaction(PromiseCapability<?> capabilities, Callable handler, Type type) {
-        assert type == Type.Function ^ handler == null;
-        this.capabilities = capabilities;
+    public PromiseReaction(PromiseCapability<?> capability, Type type, Callable handler, ZoneObject zone) {
+        this.capability = capability;
         this.handler = handler;
         this.type = type;
+        this.zone = zone;
     }
 
     /**
-     * Returns the [[Capabilities]] field of this PromiseReaction record.
+     * Returns the [[Capability]] field of this PromiseReaction record.
      * 
      * @return the promise capability
      */
-    public PromiseCapability<?> getCapabilities() {
-        return capabilities;
+    public PromiseCapability<?> getCapability() {
+        return capability;
+    }
+
+    /**
+     * Returns the promise reaction's type.
+     * 
+     * @return the promise reaction type
+     */
+    public Type getType() {
+        return type;
     }
 
     /**
@@ -75,11 +88,11 @@ public final class PromiseReaction {
     }
 
     /**
-     * Returns the promise reaction's type.
+     * Returns the [[Zone]] field of this PromiseReaction record.
      * 
-     * @return the promise reaction type
+     * @return the zone object
      */
-    public Type getType() {
-        return type;
+    public ZoneObject getZone() {
+        return zone;
     }
 }

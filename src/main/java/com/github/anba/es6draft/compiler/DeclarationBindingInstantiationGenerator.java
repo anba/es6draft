@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -18,7 +18,6 @@ import com.github.anba.es6draft.ast.Declaration;
 import com.github.anba.es6draft.ast.FunctionDeclaration;
 import com.github.anba.es6draft.ast.GeneratorDeclaration;
 import com.github.anba.es6draft.ast.HoistableDeclaration;
-import com.github.anba.es6draft.ast.LegacyGeneratorDeclaration;
 import com.github.anba.es6draft.ast.Node;
 import com.github.anba.es6draft.ast.VariableDeclaration;
 import com.github.anba.es6draft.ast.scope.Name;
@@ -33,7 +32,7 @@ import com.github.anba.es6draft.runtime.GlobalEnvironmentRecord;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
-import com.github.anba.es6draft.runtime.internal.ScriptRuntime;
+import com.github.anba.es6draft.runtime.language.FunctionOperations;
 import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
 
 /**
@@ -42,22 +41,20 @@ import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
 class DeclarationBindingInstantiationGenerator {
     private static final class Methods {
         // class: ExecutionContext
-        static final MethodName ExecutionContext_getLexicalEnvironment = MethodName.findVirtual(
-                Types.ExecutionContext, "getLexicalEnvironment",
-                Type.methodType(Types.LexicalEnvironment));
+        static final MethodName ExecutionContext_getLexicalEnvironment = MethodName.findVirtual(Types.ExecutionContext,
+                "getLexicalEnvironment", Type.methodType(Types.LexicalEnvironment));
 
-        static final MethodName ExecutionContext_getVariableEnvironment = MethodName.findVirtual(
-                Types.ExecutionContext, "getVariableEnvironment",
-                Type.methodType(Types.LexicalEnvironment));
+        static final MethodName ExecutionContext_getVariableEnvironment = MethodName.findVirtual(Types.ExecutionContext,
+                "getVariableEnvironment", Type.methodType(Types.LexicalEnvironment));
 
         // class: GlobalEnvironmentRecord
-        static final MethodName GlobalEnvironmentRecord_createGlobalVarBinding = MethodName
-                .findVirtual(Types.GlobalEnvironmentRecord, "createGlobalVarBinding",
-                        Type.methodType(Type.VOID_TYPE, Types.String, Type.BOOLEAN_TYPE));
+        static final MethodName GlobalEnvironmentRecord_createGlobalVarBinding = MethodName.findVirtual(
+                Types.GlobalEnvironmentRecord, "createGlobalVarBinding",
+                Type.methodType(Type.VOID_TYPE, Types.String, Type.BOOLEAN_TYPE));
 
-        static final MethodName GlobalEnvironmentRecord_createGlobalFunctionBinding = MethodName
-                .findVirtual(Types.GlobalEnvironmentRecord, "createGlobalFunctionBinding", Type
-                        .methodType(Type.VOID_TYPE, Types.String, Types.Object, Type.BOOLEAN_TYPE));
+        static final MethodName GlobalEnvironmentRecord_createGlobalFunctionBinding = MethodName.findVirtual(
+                Types.GlobalEnvironmentRecord, "createGlobalFunctionBinding",
+                Type.methodType(Type.VOID_TYPE, Types.String, Types.Object, Type.BOOLEAN_TYPE));
 
         static final MethodName GlobalEnvironmentRecord_canDeclareGlobalFunction = MethodName.findVirtual(
                 Types.GlobalEnvironmentRecord, "canDeclareGlobalFunction",
@@ -68,67 +65,57 @@ class DeclarationBindingInstantiationGenerator {
                 Type.methodType(Type.BOOLEAN_TYPE, Types.String));
 
         // class: LexicalEnvironment
-        static final MethodName LexicalEnvironment_getEnvRec = MethodName.findVirtual(
-                Types.LexicalEnvironment, "getEnvRec", Type.methodType(Types.EnvironmentRecord));
+        static final MethodName LexicalEnvironment_getEnvRec = MethodName.findVirtual(Types.LexicalEnvironment,
+                "getEnvRec", Type.methodType(Types.EnvironmentRecord));
 
-        // class: ScriptRuntime
-        static final MethodName ScriptRuntime_canDeclareGlobalFunctionOrThrow = MethodName
-                .findStatic(Types.ScriptRuntime, "canDeclareGlobalFunctionOrThrow", Type
-                        .methodType(Type.VOID_TYPE, Types.ExecutionContext,
-                                Types.GlobalEnvironmentRecord, Types.String));
+        // class: DeclarationOperations
+        static final MethodName DeclarationOperations_canDeclareGlobalFunctionOrThrow = MethodName.findStatic(
+                Types.DeclarationOperations, "canDeclareGlobalFunctionOrThrow",
+                Type.methodType(Type.VOID_TYPE, Types.ExecutionContext, Types.GlobalEnvironmentRecord, Types.String));
 
-        static final MethodName ScriptRuntime_canDeclareGlobalVarOrThrow = MethodName.findStatic(
-                Types.ScriptRuntime, "canDeclareGlobalVarOrThrow", Type.methodType(Type.VOID_TYPE,
-                        Types.ExecutionContext, Types.GlobalEnvironmentRecord, Types.String));
+        static final MethodName DeclarationOperations_canDeclareGlobalVarOrThrow = MethodName.findStatic(
+                Types.DeclarationOperations, "canDeclareGlobalVarOrThrow",
+                Type.methodType(Type.VOID_TYPE, Types.ExecutionContext, Types.GlobalEnvironmentRecord, Types.String));
 
-        static final MethodName ScriptRuntime_canDeclareLexicalScopedOrThrow = MethodName
-                .findStatic(Types.ScriptRuntime, "canDeclareLexicalScopedOrThrow", Type.methodType(
-                        Type.VOID_TYPE, Types.ExecutionContext, Types.GlobalEnvironmentRecord,
-                        Types.String));
+        static final MethodName DeclarationOperations_canDeclareLexicalScopedOrThrow = MethodName.findStatic(
+                Types.DeclarationOperations, "canDeclareLexicalScopedOrThrow",
+                Type.methodType(Type.VOID_TYPE, Types.ExecutionContext, Types.GlobalEnvironmentRecord, Types.String));
 
-        static final MethodName ScriptRuntime_canDeclareVarScopedOrThrow = MethodName.findStatic(
-                Types.ScriptRuntime, "canDeclareVarScopedOrThrow", Type.methodType(Type.VOID_TYPE,
-                        Types.ExecutionContext, Types.GlobalEnvironmentRecord, Types.String));
+        static final MethodName DeclarationOperations_canDeclareVarScopedOrThrow = MethodName.findStatic(
+                Types.DeclarationOperations, "canDeclareVarScopedOrThrow",
+                Type.methodType(Type.VOID_TYPE, Types.ExecutionContext, Types.GlobalEnvironmentRecord, Types.String));
 
-        static final MethodName ScriptRuntime_canDeclareVarBinding = MethodName.findStatic(Types.ScriptRuntime,
-                "canDeclareVarBinding", Type.methodType(Type.BOOLEAN_TYPE, Types.LexicalEnvironment,
-                        Types.LexicalEnvironment, Types.String, Type.BOOLEAN_TYPE));
+        static final MethodName DeclarationOperations_canDeclareVarBinding = MethodName
+                .findStatic(Types.DeclarationOperations, "canDeclareVarBinding", Type.methodType(Type.BOOLEAN_TYPE,
+                        Types.LexicalEnvironment, Types.LexicalEnvironment, Types.String, Type.BOOLEAN_TYPE));
 
-        static final MethodName ScriptRuntime_setLegacyBlockFunction = MethodName.findStatic(Types.ScriptRuntime,
-                "setLegacyBlockFunction", Type.methodType(Type.VOID_TYPE, Types.ExecutionContext, Type.INT_TYPE));
+        static final MethodName DeclarationOperations_setLegacyBlockFunction = MethodName.findStatic(
+                Types.DeclarationOperations, "setLegacyBlockFunction",
+                Type.methodType(Type.VOID_TYPE, Types.ExecutionContext, Type.INT_TYPE));
 
-        static final MethodName ScriptRuntime_InstantiateAsyncFunctionObject = MethodName
-                .findStatic(Types.ScriptRuntime, "InstantiateAsyncFunctionObject", Type.methodType(
-                        Types.OrdinaryAsyncFunction, Types.LexicalEnvironment,
-                        Types.ExecutionContext, Types.RuntimeInfo$Function));
-
-        static final MethodName ScriptRuntime_InstantiateAsyncGeneratorObject = MethodName
-                .findStatic(Types.ScriptRuntime, "InstantiateAsyncGeneratorObject", Type.methodType(
-                        Types.OrdinaryAsyncGenerator, Types.LexicalEnvironment,
-                        Types.ExecutionContext, Types.RuntimeInfo$Function));
-
-        static final MethodName ScriptRuntime_InstantiateFunctionObject = MethodName.findStatic(
-                Types.ScriptRuntime, "InstantiateFunctionObject", Type.methodType(
-                        Types.OrdinaryConstructorFunction, Types.LexicalEnvironment,
-                        Types.ExecutionContext, Types.RuntimeInfo$Function));
-
-        static final MethodName ScriptRuntime_InstantiateLegacyFunctionObject = MethodName.findStatic(
-                Types.ScriptRuntime, "InstantiateLegacyFunctionObject", Type.methodType(Types.LegacyConstructorFunction,
+        // class: FunctionOperations
+        static final MethodName FunctionOperations_InstantiateAsyncFunctionObject = MethodName.findStatic(
+                Types.FunctionOperations, "InstantiateAsyncFunctionObject", Type.methodType(Types.OrdinaryAsyncFunction,
                         Types.LexicalEnvironment, Types.ExecutionContext, Types.RuntimeInfo$Function));
 
-        static final MethodName ScriptRuntime_InstantiateConstructorGeneratorObject = MethodName.findStatic(
-                Types.ScriptRuntime, "InstantiateConstructorGeneratorObject", Type.methodType(
-                        Types.OrdinaryConstructorGenerator, Types.LexicalEnvironment, Types.ExecutionContext,
+        static final MethodName FunctionOperations_InstantiateAsyncGeneratorObject = MethodName.findStatic(
+                Types.FunctionOperations, "InstantiateAsyncGeneratorObject",
+                Type.methodType(Types.OrdinaryAsyncGenerator, Types.LexicalEnvironment, Types.ExecutionContext,
                         Types.RuntimeInfo$Function));
 
-        static final MethodName ScriptRuntime_InstantiateGeneratorObject = MethodName.findStatic(Types.ScriptRuntime,
-                "InstantiateGeneratorObject", Type.methodType(Types.OrdinaryGenerator, Types.LexicalEnvironment,
-                        Types.ExecutionContext, Types.RuntimeInfo$Function));
+        static final MethodName FunctionOperations_InstantiateFunctionObject = MethodName.findStatic(
+                Types.FunctionOperations, "InstantiateFunctionObject",
+                Type.methodType(Types.OrdinaryConstructorFunction, Types.LexicalEnvironment, Types.ExecutionContext,
+                        Types.RuntimeInfo$Function));
 
-        static final MethodName ScriptRuntime_InstantiateLegacyGeneratorObject = MethodName
-                .findStatic(Types.ScriptRuntime, "InstantiateLegacyGeneratorObject", Type
-                        .methodType(Types.OrdinaryConstructorGenerator, Types.LexicalEnvironment,
-                                Types.ExecutionContext, Types.RuntimeInfo$Function));
+        static final MethodName FunctionOperations_InstantiateLegacyFunctionObject = MethodName.findStatic(
+                Types.FunctionOperations, "InstantiateLegacyFunctionObject",
+                Type.methodType(Types.LegacyConstructorFunction, Types.LexicalEnvironment, Types.ExecutionContext,
+                        Types.RuntimeInfo$Function));
+
+        static final MethodName FunctionOperations_InstantiateGeneratorObject = MethodName.findStatic(
+                Types.FunctionOperations, "InstantiateGeneratorObject", Type.methodType(Types.OrdinaryGenerator,
+                        Types.LexicalEnvironment, Types.ExecutionContext, Types.RuntimeInfo$Function));
     }
 
     protected final CodeGenerator codegen;
@@ -182,8 +169,7 @@ class DeclarationBindingInstantiationGenerator {
      *            the instruction visitor
      */
     protected final <R extends EnvironmentRecord, R2 extends R, R3 extends R2> void getEnvironmentRecord(
-            Variable<? extends LexicalEnvironment<? extends R2>> env, Variable<R3> envRec,
-            InstructionVisitor mv) {
+            Variable<? extends LexicalEnvironment<? extends R2>> env, Variable<R3> envRec, InstructionVisitor mv) {
         mv.load(env);
         mv.invoke(Methods.LexicalEnvironment_getEnvRec);
         if (envRec.getType() != Types.EnvironmentRecord) {
@@ -193,7 +179,7 @@ class DeclarationBindingInstantiationGenerator {
     }
 
     /**
-     * Emit: {@code ScriptRuntime.canDeclareLexicalScopedOrThrow(cx, envRec, name)}
+     * Emit: {@code DeclarationOperations.canDeclareLexicalScopedOrThrow(cx, envRec, name)}
      * 
      * @param context
      *            the variable which holds the execution context
@@ -212,11 +198,11 @@ class DeclarationBindingInstantiationGenerator {
         mv.load(envRec);
         mv.aconst(name.getIdentifier());
         mv.lineInfo(node);
-        mv.invoke(Methods.ScriptRuntime_canDeclareLexicalScopedOrThrow);
+        mv.invoke(Methods.DeclarationOperations_canDeclareLexicalScopedOrThrow);
     }
 
     /**
-     * Emit: {@code ScriptRuntime.canDeclareVarScopedOrThrow(cx, envRec, name)}
+     * Emit: {@code DeclarationOperations.canDeclareVarScopedOrThrow(cx, envRec, name)}
      * 
      * @param context
      *            the variable which holds the execution context
@@ -235,11 +221,11 @@ class DeclarationBindingInstantiationGenerator {
         mv.load(envRec);
         mv.aconst(name.getIdentifier());
         mv.lineInfo(node);
-        mv.invoke(Methods.ScriptRuntime_canDeclareVarScopedOrThrow);
+        mv.invoke(Methods.DeclarationOperations_canDeclareVarScopedOrThrow);
     }
 
     /**
-     * Emit: {@code ScriptRuntime.canDeclareGlobalFunctionOrThrow(cx, envRec, name)}
+     * Emit: {@code DeclarationOperations.canDeclareGlobalFunctionOrThrow(cx, envRec, name)}
      * 
      * @param context
      *            the variable which holds the execution context
@@ -253,17 +239,16 @@ class DeclarationBindingInstantiationGenerator {
      *            the instruction visitor
      */
     protected final void canDeclareGlobalFunctionOrThrow(Variable<ExecutionContext> context,
-            Variable<GlobalEnvironmentRecord> envRec, HoistableDeclaration node, Name name,
-            InstructionVisitor mv) {
+            Variable<GlobalEnvironmentRecord> envRec, HoistableDeclaration node, Name name, InstructionVisitor mv) {
         mv.load(context);
         mv.load(envRec);
         mv.aconst(name.getIdentifier());
         mv.lineInfo(node);
-        mv.invoke(Methods.ScriptRuntime_canDeclareGlobalFunctionOrThrow);
+        mv.invoke(Methods.DeclarationOperations_canDeclareGlobalFunctionOrThrow);
     }
 
     /**
-     * Emit: {@code ScriptRuntime.canDeclareGlobalVarOrThrow(cx, envRec, name)}
+     * Emit: {@code DeclarationOperations.canDeclareGlobalVarOrThrow(cx, envRec, name)}
      * 
      * @param context
      *            the variable which holds the execution context
@@ -277,13 +262,12 @@ class DeclarationBindingInstantiationGenerator {
      *            the instruction visitor
      */
     protected final void canDeclareGlobalVarOrThrow(Variable<ExecutionContext> context,
-            Variable<GlobalEnvironmentRecord> envRec, VariableDeclaration node, Name name,
-            InstructionVisitor mv) {
+            Variable<GlobalEnvironmentRecord> envRec, VariableDeclaration node, Name name, InstructionVisitor mv) {
         mv.load(context);
         mv.load(envRec);
         mv.aconst(name.getIdentifier());
         mv.lineInfo(node);
-        mv.invoke(Methods.ScriptRuntime_canDeclareGlobalVarOrThrow);
+        mv.invoke(Methods.DeclarationOperations_canDeclareGlobalVarOrThrow);
     }
 
     /**
@@ -300,8 +284,8 @@ class DeclarationBindingInstantiationGenerator {
      * @param mv
      *            the instruction visitor
      */
-    protected final void createGlobalVarBinding(Variable<GlobalEnvironmentRecord> envRec,
-            VariableDeclaration node, Name name, boolean deletableBindings, InstructionVisitor mv) {
+    protected final void createGlobalVarBinding(Variable<GlobalEnvironmentRecord> envRec, VariableDeclaration node,
+            Name name, boolean deletableBindings, InstructionVisitor mv) {
         mv.load(envRec);
         mv.aconst(name.getIdentifier());
         mv.iconst(deletableBindings);
@@ -326,8 +310,8 @@ class DeclarationBindingInstantiationGenerator {
      *            the instruction visitor
      */
     protected final void createGlobalFunctionBinding(Variable<GlobalEnvironmentRecord> envRec,
-            HoistableDeclaration node, Name name, Variable<FunctionObject> fo,
-            boolean deletableBindings, InstructionVisitor mv) {
+            HoistableDeclaration node, Name name, Variable<FunctionObject> fo, boolean deletableBindings,
+            InstructionVisitor mv) {
         mv.load(envRec);
         mv.aconst(name.getIdentifier());
         mv.load(fo);
@@ -374,8 +358,8 @@ class DeclarationBindingInstantiationGenerator {
      * @param mv
      *            the instruction visitor
      */
-    protected final void canDeclareGlobalFunction(Variable<GlobalEnvironmentRecord> envRec,
-            HoistableDeclaration node, Name name, Jump next, InstructionVisitor mv) {
+    protected final void canDeclareGlobalFunction(Variable<GlobalEnvironmentRecord> envRec, HoistableDeclaration node,
+            Name name, Jump next, InstructionVisitor mv) {
         mv.load(envRec);
         mv.aconst(name.getIdentifier());
         mv.invoke(Methods.GlobalEnvironmentRecord_hasLexicalDeclaration);
@@ -388,7 +372,7 @@ class DeclarationBindingInstantiationGenerator {
     }
 
     /**
-     * Emit: {@code ScriptRuntime.canDeclareVarBinding(varEnv, lexEnv, name)}
+     * Emit: {@code DeclarationOperations.canDeclareVarBinding(varEnv, lexEnv, name)}
      * 
      * @param <R>
      *            the environment record type
@@ -412,12 +396,12 @@ class DeclarationBindingInstantiationGenerator {
         mv.load(lexEnv);
         mv.aconst(name.getIdentifier());
         mv.iconst(catchVar);
-        mv.invoke(Methods.ScriptRuntime_canDeclareVarBinding);
+        mv.invoke(Methods.DeclarationOperations_canDeclareVarBinding);
         mv.ifeq(next);
     }
 
     /**
-     * Emit: {@code ScriptRuntime.setScriptBlockFunction(cx, functionId)}
+     * Emit: {@code DeclarationOperations.setScriptBlockFunction(cx, functionId)}
      * 
      * @param context
      *            the variable which holds the execution context
@@ -430,7 +414,7 @@ class DeclarationBindingInstantiationGenerator {
             InstructionVisitor mv) {
         mv.load(context);
         mv.iconst(function.getLegacyBlockScopeId());
-        mv.invoke(Methods.ScriptRuntime_setLegacyBlockFunction);
+        mv.invoke(Methods.DeclarationOperations_setLegacyBlockFunction);
     }
 
     /**
@@ -466,7 +450,7 @@ class DeclarationBindingInstantiationGenerator {
 
     /**
      * Emit function call for:
-     * {@link ScriptRuntime#InstantiateAsyncFunctionObject(LexicalEnvironment, ExecutionContext, RuntimeInfo.Function)}
+     * {@link FunctionOperations#InstantiateAsyncFunctionObject(LexicalEnvironment, ExecutionContext, RuntimeInfo.Function)}
      * <p>
      * stack: [] {@literal ->} [fo]
      * 
@@ -480,19 +464,18 @@ class DeclarationBindingInstantiationGenerator {
      *            the instruction visitor
      */
     private void InstantiateAsyncFunctionObject(Variable<ExecutionContext> context,
-            Variable<? extends LexicalEnvironment<?>> env, AsyncFunctionDeclaration f,
-            InstructionVisitor mv) {
-        MethodName method = codegen.compile(f);
+            Variable<? extends LexicalEnvironment<?>> env, AsyncFunctionDeclaration f, InstructionVisitor mv) {
+        MethodName method = codegen.asyncFunctionDefinition(f);
 
         mv.load(env);
         mv.load(context);
         mv.invoke(method);
-        mv.invoke(Methods.ScriptRuntime_InstantiateAsyncFunctionObject);
+        mv.invoke(Methods.FunctionOperations_InstantiateAsyncFunctionObject);
     }
 
     /**
      * Emit function call for:
-     * {@link ScriptRuntime#InstantiateAsyncGeneratorObject(LexicalEnvironment, ExecutionContext, RuntimeInfo.Function)}
+     * {@link FunctionOperations#InstantiateAsyncGeneratorObject(LexicalEnvironment, ExecutionContext, RuntimeInfo.Function)}
      * <p>
      * stack: [] {@literal ->} [fo]
      * 
@@ -507,17 +490,17 @@ class DeclarationBindingInstantiationGenerator {
      */
     private void InstantiateAsyncGeneratorObject(Variable<ExecutionContext> context,
             Variable<? extends LexicalEnvironment<?>> env, AsyncGeneratorDeclaration f, InstructionVisitor mv) {
-        MethodName method = codegen.compile(f);
+        MethodName method = codegen.asyncGeneratorDefinition(f);
 
         mv.load(env);
         mv.load(context);
         mv.invoke(method);
-        mv.invoke(Methods.ScriptRuntime_InstantiateAsyncGeneratorObject);
+        mv.invoke(Methods.FunctionOperations_InstantiateAsyncGeneratorObject);
     }
 
     /**
      * Emit function call for:
-     * {@link ScriptRuntime#InstantiateFunctionObject(LexicalEnvironment, ExecutionContext, RuntimeInfo.Function)}
+     * {@link FunctionOperations#InstantiateFunctionObject(LexicalEnvironment, ExecutionContext, RuntimeInfo.Function)}
      * <p>
      * stack: [] {@literal ->} [fo]
      * 
@@ -531,19 +514,18 @@ class DeclarationBindingInstantiationGenerator {
      *            the instruction visitor
      */
     private void InstantiateFunctionObject(Variable<ExecutionContext> context,
-            Variable<? extends LexicalEnvironment<?>> env, FunctionDeclaration f,
-            InstructionVisitor mv) {
-        MethodName method = codegen.compile(f);
+            Variable<? extends LexicalEnvironment<?>> env, FunctionDeclaration f, InstructionVisitor mv) {
+        MethodName method = codegen.functionDefinition(f);
 
         mv.load(env);
         mv.load(context);
         mv.invoke(method);
-        mv.invoke(Methods.ScriptRuntime_InstantiateFunctionObject);
+        mv.invoke(Methods.FunctionOperations_InstantiateFunctionObject);
     }
 
     /**
      * Emit function call for:
-     * {@link ScriptRuntime#InstantiateLegacyFunctionObject(LexicalEnvironment, ExecutionContext, RuntimeInfo.Function)}
+     * {@link FunctionOperations#InstantiateLegacyFunctionObject(LexicalEnvironment, ExecutionContext, RuntimeInfo.Function)}
      * <p>
      * stack: [] {@literal ->} [fo]
      * 
@@ -558,17 +540,17 @@ class DeclarationBindingInstantiationGenerator {
      */
     private void InstantiateLegacyFunctionObject(Variable<ExecutionContext> context,
             Variable<? extends LexicalEnvironment<?>> env, FunctionDeclaration f, InstructionVisitor mv) {
-        MethodName method = codegen.compile(f);
+        MethodName method = codegen.functionDefinition(f);
 
         mv.load(env);
         mv.load(context);
         mv.invoke(method);
-        mv.invoke(Methods.ScriptRuntime_InstantiateLegacyFunctionObject);
+        mv.invoke(Methods.FunctionOperations_InstantiateLegacyFunctionObject);
     }
 
     /**
      * Emit function call for:
-     * {@link ScriptRuntime#InstantiateGeneratorObject(LexicalEnvironment, ExecutionContext, RuntimeInfo.Function)}
+     * {@link FunctionOperations#InstantiateGeneratorObject(LexicalEnvironment, ExecutionContext, RuntimeInfo.Function)}
      * <p>
      * stack: [] {@literal ->} [fo]
      * 
@@ -582,20 +564,13 @@ class DeclarationBindingInstantiationGenerator {
      *            the instruction visitor
      */
     private void InstantiateGeneratorObject(Variable<ExecutionContext> context,
-            Variable<? extends LexicalEnvironment<?>> env, GeneratorDeclaration f,
-            InstructionVisitor mv) {
-        MethodName method = codegen.compile(f);
+            Variable<? extends LexicalEnvironment<?>> env, GeneratorDeclaration f, InstructionVisitor mv) {
+        MethodName method = codegen.generatorDefinition(f);
 
         mv.load(env);
         mv.load(context);
         mv.invoke(method);
-        if (f instanceof LegacyGeneratorDeclaration) {
-            mv.invoke(Methods.ScriptRuntime_InstantiateLegacyGeneratorObject);
-        } else if (f.isConstructor()) {
-            mv.invoke(Methods.ScriptRuntime_InstantiateConstructorGeneratorObject);
-        } else {
-            mv.invoke(Methods.ScriptRuntime_InstantiateGeneratorObject);
-        }
+        mv.invoke(Methods.FunctionOperations_InstantiateGeneratorObject);
     }
 
     private boolean isLegacy(FunctionDeclaration node) {

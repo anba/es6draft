@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -216,8 +216,7 @@ public final class ScriptEngineScopeTest {
         engine.eval("var value = 'Sirius'");
 
         assertThat(engine.eval("value"), instanceOfWith(String.class, is("Sirius")));
-        assertThat(engine.eval("typeof value", context),
-                instanceOfWith(String.class, is("undefined")));
+        assertThat(engine.eval("typeof value", context), instanceOfWith(String.class, is("undefined")));
     }
 
     @Test
@@ -279,8 +278,7 @@ public final class ScriptEngineScopeTest {
         ScriptContext context = new SimpleScriptContext();
         context.setBindings(new SimpleBindings(), ScriptContext.ENGINE_SCOPE);
         context.setBindings(globalScope, ScriptContext.GLOBAL_SCOPE);
-        assertThat(engine.eval("globalVar", context),
-                instanceOfWith(String.class, is("Sigma Sagittarii")));
+        assertThat(engine.eval("globalVar", context), instanceOfWith(String.class, is("Sigma Sagittarii")));
     }
 
     @Test
@@ -334,10 +332,8 @@ public final class ScriptEngineScopeTest {
 
         assertThat(engine.eval("value", binding), instanceOfWith(String.class, is("Betelgeuse")));
         assertThat(engine.eval("typeof value"), instanceOfWith(String.class, is("undefined")));
-        assertThat(engine.eval("typeof value", engine.createBindings()),
-                instanceOfWith(String.class, is("undefined")));
-        assertThat(engine.eval("typeof value", new SimpleBindings()),
-                instanceOfWith(String.class, is("undefined")));
+        assertThat(engine.eval("typeof value", engine.createBindings()), instanceOfWith(String.class, is("undefined")));
+        assertThat(engine.eval("typeof value", new SimpleBindings()), instanceOfWith(String.class, is("undefined")));
     }
 
     @Test
@@ -347,10 +343,8 @@ public final class ScriptEngineScopeTest {
 
         assertThat(engine.eval("value", binding), instanceOfWith(String.class, is("Alnitak")));
         assertThat(engine.eval("typeof value"), instanceOfWith(String.class, is("undefined")));
-        assertThat(engine.eval("typeof value", engine.createBindings()),
-                instanceOfWith(String.class, is("undefined")));
-        assertThat(engine.eval("typeof value", new SimpleBindings()),
-                instanceOfWith(String.class, is("undefined")));
+        assertThat(engine.eval("typeof value", engine.createBindings()), instanceOfWith(String.class, is("undefined")));
+        assertThat(engine.eval("typeof value", new SimpleBindings()), instanceOfWith(String.class, is("undefined")));
     }
 
     @Test
@@ -363,12 +357,10 @@ public final class ScriptEngineScopeTest {
         assertThat(engine.eval("value", context), instanceOfWith(String.class, is("Alnilam")));
 
         context.setBindings(engine.createBindings(), ScriptContext.ENGINE_SCOPE);
-        assertThat(engine.eval("typeof value", context),
-                instanceOfWith(String.class, is("undefined")));
+        assertThat(engine.eval("typeof value", context), instanceOfWith(String.class, is("undefined")));
 
         context.setBindings(new SimpleBindings(), ScriptContext.ENGINE_SCOPE);
-        assertThat(engine.eval("typeof value", context),
-                instanceOfWith(String.class, is("undefined")));
+        assertThat(engine.eval("typeof value", context), instanceOfWith(String.class, is("undefined")));
 
         context.setBindings(binding, ScriptContext.ENGINE_SCOPE);
         assertThat(engine.eval("value", context), instanceOfWith(String.class, is("Alnilam")));
@@ -384,12 +376,10 @@ public final class ScriptEngineScopeTest {
         assertThat(engine.eval("value", context), instanceOfWith(String.class, is("Zeta Scorpii")));
 
         context.setBindings(engine.createBindings(), ScriptContext.ENGINE_SCOPE);
-        assertThat(engine.eval("typeof value", context),
-                instanceOfWith(String.class, is("undefined")));
+        assertThat(engine.eval("typeof value", context), instanceOfWith(String.class, is("undefined")));
 
         context.setBindings(new SimpleBindings(), ScriptContext.ENGINE_SCOPE);
-        assertThat(engine.eval("typeof value", context),
-                instanceOfWith(String.class, is("undefined")));
+        assertThat(engine.eval("typeof value", context), instanceOfWith(String.class, is("undefined")));
 
         context.setBindings(binding, ScriptContext.ENGINE_SCOPE);
         assertThat(engine.eval("value", context), instanceOfWith(String.class, is("Zeta Scorpii")));
@@ -401,11 +391,9 @@ public final class ScriptEngineScopeTest {
         engine.eval("value = 'Rigel'");
 
         assertThat(engine.eval("value"), instanceOfWith(String.class, is("Rigel")));
-        assertThat(engine.eval("typeof value", context),
-                instanceOfWith(String.class, is("undefined")));
+        assertThat(engine.eval("typeof value", context), instanceOfWith(String.class, is("undefined")));
 
-        assertThat(engine.getContext().getAttribute("value"),
-                instanceOfWith(String.class, is("Rigel")));
+        assertThat(engine.getContext().getAttribute("value"), instanceOfWith(String.class, is("Rigel")));
         assertThat(context.getAttribute("value"), nullValue());
     }
 
@@ -429,8 +417,7 @@ public final class ScriptEngineScopeTest {
         ScriptContext context = new SimpleScriptContext();
         engine.eval("value = 'Polaris'", context);
 
-        assertThat(engine.eval("typeof value", context),
-                instanceOfWith(String.class, is("undefined")));
+        assertThat(engine.eval("typeof value", context), instanceOfWith(String.class, is("undefined")));
         assertThat(engine.eval("typeof value"), instanceOfWith(String.class, is("undefined")));
         assertThat(engine.eval("typeof value", new SimpleScriptContext()),
                 instanceOfWith(String.class, is("undefined")));
@@ -468,8 +455,7 @@ public final class ScriptEngineScopeTest {
         Bindings binding = engine.createBindings();
         binding.put("value", "Alderamin");
 
-        assertThat(engine.eval("this.value", binding),
-                instanceOfWith(String.class, is("Alderamin")));
+        assertThat(engine.eval("this.value", binding), instanceOfWith(String.class, is("Alderamin")));
     }
 
     @Test
@@ -531,8 +517,7 @@ public final class ScriptEngineScopeTest {
     @Test
     public void scopeInteractionNewContextGlobalAssignment() throws ScriptException {
         ScriptContext context = new SimpleScriptContext();
-        context.setBindings(engine.getBindings(ScriptContext.GLOBAL_SCOPE),
-                ScriptContext.GLOBAL_SCOPE);
+        context.setBindings(engine.getBindings(ScriptContext.GLOBAL_SCOPE), ScriptContext.GLOBAL_SCOPE);
         context.setBindings(engine.createBindings(), ScriptContext.ENGINE_SCOPE);
         context.setAttribute("value", "Phecda", ScriptContext.ENGINE_SCOPE);
         context.setAttribute("value", "Scheat", ScriptContext.GLOBAL_SCOPE);
@@ -550,8 +535,7 @@ public final class ScriptEngineScopeTest {
     @Test
     public void scopeInteractionNewContextPropertyAssignment() throws ScriptException {
         ScriptContext context = new SimpleScriptContext();
-        context.setBindings(engine.getBindings(ScriptContext.GLOBAL_SCOPE),
-                ScriptContext.GLOBAL_SCOPE);
+        context.setBindings(engine.getBindings(ScriptContext.GLOBAL_SCOPE), ScriptContext.GLOBAL_SCOPE);
         context.setBindings(engine.createBindings(), ScriptContext.ENGINE_SCOPE);
         context.setAttribute("value", "Phecda", ScriptContext.ENGINE_SCOPE);
         context.setAttribute("value", "Scheat", ScriptContext.GLOBAL_SCOPE);
@@ -569,8 +553,7 @@ public final class ScriptEngineScopeTest {
     @Test
     public void scopeInteractionNewContextVarAssignment() throws ScriptException {
         ScriptContext context = new SimpleScriptContext();
-        context.setBindings(engine.getBindings(ScriptContext.GLOBAL_SCOPE),
-                ScriptContext.GLOBAL_SCOPE);
+        context.setBindings(engine.getBindings(ScriptContext.GLOBAL_SCOPE), ScriptContext.GLOBAL_SCOPE);
         context.setBindings(engine.createBindings(), ScriptContext.ENGINE_SCOPE);
         context.setAttribute("value", "Phecda", ScriptContext.ENGINE_SCOPE);
         context.setAttribute("value", "Scheat", ScriptContext.GLOBAL_SCOPE);
@@ -588,8 +571,7 @@ public final class ScriptEngineScopeTest {
     @Test
     public void scopeInteractionNewContextSimpleBindingsGlobalAssignment() throws ScriptException {
         ScriptContext context = new SimpleScriptContext();
-        context.setBindings(engine.getBindings(ScriptContext.GLOBAL_SCOPE),
-                ScriptContext.GLOBAL_SCOPE);
+        context.setBindings(engine.getBindings(ScriptContext.GLOBAL_SCOPE), ScriptContext.GLOBAL_SCOPE);
         context.setBindings(new SimpleBindings(), ScriptContext.ENGINE_SCOPE);
         context.setAttribute("value", "Phecda", ScriptContext.ENGINE_SCOPE);
         context.setAttribute("value", "Scheat", ScriptContext.GLOBAL_SCOPE);
@@ -607,8 +589,7 @@ public final class ScriptEngineScopeTest {
     @Test
     public void scopeInteractionNewContextSimpleBindingsPropertyAssignment() throws ScriptException {
         ScriptContext context = new SimpleScriptContext();
-        context.setBindings(engine.getBindings(ScriptContext.GLOBAL_SCOPE),
-                ScriptContext.GLOBAL_SCOPE);
+        context.setBindings(engine.getBindings(ScriptContext.GLOBAL_SCOPE), ScriptContext.GLOBAL_SCOPE);
         context.setBindings(new SimpleBindings(), ScriptContext.ENGINE_SCOPE);
         context.setAttribute("value", "Phecda", ScriptContext.ENGINE_SCOPE);
         context.setAttribute("value", "Scheat", ScriptContext.GLOBAL_SCOPE);
@@ -626,8 +607,7 @@ public final class ScriptEngineScopeTest {
     @Test
     public void scopeInteractionNewContextSimpleBindingsVarAssignment() throws ScriptException {
         ScriptContext context = new SimpleScriptContext();
-        context.setBindings(engine.getBindings(ScriptContext.GLOBAL_SCOPE),
-                ScriptContext.GLOBAL_SCOPE);
+        context.setBindings(engine.getBindings(ScriptContext.GLOBAL_SCOPE), ScriptContext.GLOBAL_SCOPE);
         context.setBindings(new SimpleBindings(), ScriptContext.ENGINE_SCOPE);
         context.setAttribute("value", "Phecda", ScriptContext.ENGINE_SCOPE);
         context.setAttribute("value", "Scheat", ScriptContext.GLOBAL_SCOPE);

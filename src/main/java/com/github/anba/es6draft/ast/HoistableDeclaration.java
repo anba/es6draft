@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -20,8 +20,8 @@ public abstract class HoistableDeclaration extends Declaration implements Functi
     }
 
     /**
-     * Returns the binding identifier of this hoistable declaration or {@code null} for anonymous
-     * default export declarations.
+     * Returns the binding identifier of this hoistable declaration or {@code null} for anonymous default export
+     * declarations.
      * 
      * @return the binding identifier or {@code null}
      */

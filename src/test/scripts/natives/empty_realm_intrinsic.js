@@ -1,11 +1,9 @@
 /*
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
  */
-%Include("lib/assert.js");
-
 // Create a new, blank realm
 
 let realm = new class extends Reflect.Realm {
@@ -55,8 +53,7 @@ assertEq(stdlib.WeakSet, intrinsics.WeakSet);
 // 18.4  Other Properties of the Global Object
 assertEq(stdlib.JSON, intrinsics.JSON);
 assertEq(stdlib.Math, intrinsics.Math);
-// TODO: See fixme in proxy.js
-// assertEq(stdlib.Proxy, intrinsics.Proxy);
+assertEq(stdlib.Proxy, intrinsics.Proxy);
 assertEq(stdlib.Reflect, intrinsics.Reflect);
 assertEq(stdlib.System, intrinsics.System);
 

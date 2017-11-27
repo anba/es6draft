@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -30,13 +30,23 @@ import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.objects.intl.LanguageTagParser.LanguageTag;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
+import com.github.anba.es6draft.runtime.types.Symbol;
 import com.github.anba.es6draft.runtime.types.builtins.ArrayObject;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
  * <h1>8 The Intl Object</h1>
+ * <ul>
+ * <li>8.1 Constructor Properties of the Intl Object
+ * <li>8.2 Function Properties of the Intl Object
+ * </ul>
  */
 public final class IntlObject extends OrdinaryObject implements Initializable {
+    /**
+     * [[FallbackSymbol]]
+     */
+    private final Symbol fallbackSymbol = new Symbol("IntlLegacyConstructedSymbol");
+
     /**
      * Constructs a new Intl object.
      * 
@@ -51,11 +61,25 @@ public final class IntlObject extends OrdinaryObject implements Initializable {
     public void initialize(Realm realm) {
         createProperties(realm, this, Properties.class);
         createProperties(realm, this, PluralRulesProperty.class);
+        createProperties(realm, this, SegmenterProperty.class);
+        createProperties(realm, this, ListFormatProperty.class);
         createProperties(realm, this, LocaleProperties.class);
     }
 
     /**
-     * 8.1 Properties of the Intl Object
+     * [[FallbackSymbol]]
+     * 
+     * @return the fallback symbol
+     */
+    Symbol getFallbackSymbol() {
+        return fallbackSymbol;
+    }
+
+    /**
+     * <ul>
+     * <li>8.1 Constructor Properties of the Intl Object
+     * <li>8.2 Function Properties of the Intl Object
+     * </ul>
      */
     public enum Properties {
         ;
@@ -63,14 +87,36 @@ public final class IntlObject extends OrdinaryObject implements Initializable {
         @Prototype
         public static final Intrinsics __proto__ = Intrinsics.ObjectPrototype;
 
+        /** 8.1.1 Intl.Collator (...) */
         @Value(name = "Collator")
         public static final Intrinsics Collator = Intrinsics.Intl_Collator;
 
+        /** 8.1.2 Intl.NumberFormat (...) */
         @Value(name = "NumberFormat")
         public static final Intrinsics NumberFormat = Intrinsics.Intl_NumberFormat;
 
+        /** 8.1.3 Intl.DateTimeFormat (...) */
         @Value(name = "DateTimeFormat")
         public static final Intrinsics DateTimeFormat = Intrinsics.Intl_DateTimeFormat;
+
+        /**
+         * 8.2.1 Intl.getCanonicalLocales (locales)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param locales
+         *            the locales array
+         * @return the array of canonicalized locales
+         */
+        @Function(name = "getCanonicalLocales", arity = 1)
+        public static Object getCanonicalLocales(ExecutionContext cx, Object thisValue, Object locales) {
+            /* step 1 */
+            Set<String> localesList = CanonicalizeLocaleList(cx, locales);
+            /* step 2 */
+            return CreateArrayFromList(cx, localesList);
+        }
     }
 
     /**
@@ -85,31 +131,33 @@ public final class IntlObject extends OrdinaryObject implements Initializable {
     }
 
     /**
+     * Intl.Segmenter property
+     */
+    @CompatibilityExtension(CompatibilityOption.IntlSegmenter)
+    public enum SegmenterProperty {
+        ;
+
+        @Value(name = "Segmenter")
+        public static final Intrinsics Segmenter = Intrinsics.Intl_Segmenter;
+    }
+
+    /**
+     * Intl.ListFormat property
+     */
+    @CompatibilityExtension(CompatibilityOption.IntlListFormat)
+    public enum ListFormatProperty {
+        ;
+
+        @Value(name = "ListFormat")
+        public static final Intrinsics ListFormat = Intrinsics.Intl_ListFormat;
+    }
+
+    /**
      * Locale Operations
      */
     @CompatibilityExtension(CompatibilityOption.Locale)
     public enum LocaleProperties {
         ;
-
-        /**
-         * Intl.getCanonicalLocales (locales)
-         * 
-         * @param cx
-         *            the execution context
-         * @param thisValue
-         *            the function this-value
-         * @param locales
-         *            the locales array
-         * @return the array of canonicalized locales
-         */
-        @Function(name = "getCanonicalLocales", arity = 1)
-        public static Object getCanonicalLocales(ExecutionContext cx, Object thisValue, Object locales) {
-            /* step 2 */
-            Set<String> localesList = CanonicalizeLocaleList(cx, locales);
-            // FIXME: spec issue - should use CreateArrayFromList abstract op.
-            /* steps 1, 3-5 */
-            return CreateArrayFromList(cx, localesList);
-        }
 
         /**
          * Intl.getParentLocales (locale)

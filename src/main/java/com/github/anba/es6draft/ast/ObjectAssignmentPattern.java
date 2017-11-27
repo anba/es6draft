@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -19,8 +19,8 @@ public final class ObjectAssignmentPattern extends AssignmentPattern {
     private final List<AssignmentProperty> properties;
     private final AssignmentRestProperty rest;
 
-    public ObjectAssignmentPattern(long beginPosition, long endPosition,
-            List<AssignmentProperty> properties, AssignmentRestProperty rest) {
+    public ObjectAssignmentPattern(long beginPosition, long endPosition, List<AssignmentProperty> properties,
+            AssignmentRestProperty rest) {
         super(beginPosition, endPosition);
         this.properties = properties;
         this.rest = rest;

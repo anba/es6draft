@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -12,6 +12,7 @@ import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
+import com.github.anba.es6draft.runtime.types.Type;
 
 /**
  * <h1>25 Control Abstraction Objects</h1><br>
@@ -48,12 +49,14 @@ public final class GeneratorAbstractOperations {
      *            the execution context
      * @param generator
      *            the generator object
+     * @param method
+     *            the method name
      * @return the generator object
      */
-    public static GeneratorObject GeneratorValidate(ExecutionContext cx, Object generator) {
+    public static GeneratorObject GeneratorValidate(ExecutionContext cx, Object generator, String method) {
         /* steps 1-2 */
         if (!(generator instanceof GeneratorObject)) {
-            throw newTypeError(cx, Messages.Key.IncompatibleObject);
+            throw newTypeError(cx, Messages.Key.IncompatibleThis, method, Type.of(generator).toString());
         }
         /* steps 3-6 (execution state checked in GeneratorObject) */
         return (GeneratorObject) generator;
@@ -68,12 +71,14 @@ public final class GeneratorAbstractOperations {
      *            the generator object
      * @param value
      *            the resumption value
+     * @param method
+     *            the method name
      * @return the iterator result object
      */
-    public static ScriptObject GeneratorResume(ExecutionContext cx, Object generator, Object value) {
-        /* steps 1-2 */
-        GeneratorObject gen = GeneratorValidate(cx, generator);
-        /* steps 3-12 */
+    public static ScriptObject GeneratorResume(ExecutionContext cx, Object generator, Object value, String method) {
+        /* step 1 */
+        GeneratorObject gen = GeneratorValidate(cx, generator, method);
+        /* steps 2-11 */
         return gen.resume(cx, value);
     }
 
@@ -88,12 +93,14 @@ public final class GeneratorAbstractOperations {
      *            the generator object
      * @param value
      *            the return value
+     * @param method
+     *            the method name
      * @return the iterator result object
      */
-    public static ScriptObject GeneratorReturn(ExecutionContext cx, Object generator, Object value) {
-        /* steps 1-2 */
-        GeneratorObject gen = GeneratorValidate(cx, generator);
-        /* steps 4-13 */
+    public static ScriptObject GeneratorReturn(ExecutionContext cx, Object generator, Object value, String method) {
+        /* step 1 */
+        GeneratorObject gen = GeneratorValidate(cx, generator, method);
+        /* steps 2-12 */
         return gen._return(cx, value);
     }
 
@@ -108,12 +115,14 @@ public final class GeneratorAbstractOperations {
      *            the generator object
      * @param exception
      *            the exception value
+     * @param method
+     *            the method name
      * @return the iterator result object
      */
-    public static ScriptObject GeneratorThrow(ExecutionContext cx, Object generator, Object exception) {
-        /* steps 1-2 */
-        GeneratorObject gen = GeneratorValidate(cx, generator);
-        /* steps 4-13 */
+    public static ScriptObject GeneratorThrow(ExecutionContext cx, Object generator, Object exception, String method) {
+        /* step 1 */
+        GeneratorObject gen = GeneratorValidate(cx, generator, method);
+        /* steps 2-12 */
         return gen._throw(cx, exception);
     }
 }

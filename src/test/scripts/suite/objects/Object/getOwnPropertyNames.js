@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -33,18 +33,15 @@ assertBuiltinFunction(Object.getOwnPropertyNames, "getOwnPropertyNames", 1);
   assertThrows(TypeError, () => Object.getOwnPropertyNames(void 0));
   assertThrows(TypeError, () => Object.getOwnPropertyNames(null));
 
-  // wrapped primitives do not have own properties...
-  for (let v of [for (v of primitives) if (typeof v !== "string") v]) {
+  // wrapped primitives do not have own properties, except for 'length' and indexed properties on wrapped strings.
+  for (let v of primitives) {
     let names = Object.getOwnPropertyNames(v);
     assertInstanceOf(Array, names);
-    assertSame(0, names.length);
-  }
-
-  // ...except for 'length' and indexed properties on wrapped strings
-  for (let v of [for (v of primitives) if (typeof v === "string") v]) {
-    let names = Object.getOwnPropertyNames(v);
-    assertInstanceOf(Array, names);
-    assertSame(1 + v.length, names.length);
+    if (typeof v !== "string") {
+      assertSame(0, names.length);
+    } else {
+      assertSame(1 + v.length, names.length);
+    }
   }
 }
 

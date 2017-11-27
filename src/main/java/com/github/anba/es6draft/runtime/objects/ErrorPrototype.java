@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -16,11 +16,13 @@ import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
+import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.Initializable;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.Properties.Accessor;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
+import com.github.anba.es6draft.runtime.internal.Properties.Optional;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
@@ -29,6 +31,7 @@ import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
+import com.github.anba.es6draft.runtime.types.builtins.StringObject;
 
 /**
  * <h1>19 Fundamental Objects</h1><br>
@@ -51,6 +54,8 @@ public final class ErrorPrototype extends OrdinaryObject implements Initializabl
     @Override
     public void initialize(Realm realm) {
         createProperties(realm, this, Properties.class);
+        createProperties(realm, this, StackProperty.class);
+        createProperties(realm, this, AdditionalProperties.class);
     }
 
     /**
@@ -97,145 +102,32 @@ public final class ErrorPrototype extends OrdinaryObject implements Initializabl
             }
             /* step 1 */
             ScriptObject o = Type.objectValue(thisValue);
-            /* steps 3-4 */
+            /* step 3 */
             Object name = Get(cx, o, "name");
-            /* steps 5-6 */
+            /* step 4 */
             CharSequence sname = Type.isUndefined(name) ? "Error" : ToString(cx, name);
-            /* steps 7-8 */
+            /* step 5 */
             Object msg = Get(cx, o, "message");
-            /* steps 9-10 */
+            /* step 6 */
             CharSequence smsg = Type.isUndefined(msg) ? "" : ToString(cx, msg);
-            /* step 11 */
+            /* step 7 */
             if (sname.length() == 0) {
                 return smsg;
             }
-            /* step 12 */
+            /* step 8 */
             if (smsg.length() == 0) {
                 return sname;
             }
-            /* step 13 */
-            return sname + ": " + smsg;
+            /* step 9 */
+            return StringObject.validateLength(cx, sname + ": " + smsg);
         }
+    }
 
-        /**
-         * Extension: Error.prototype.fileName
-         * 
-         * @param cx
-         *            the execution context
-         * @param thisValue
-         *            the function this-value
-         * @return the file name
-         */
-        @Accessor(name = "fileName", type = Accessor.Type.Getter, attributes = @Attributes(
-                writable = false, enumerable = false, configurable = true))
-        public static Object get_fileName(ExecutionContext cx, Object thisValue) {
-            if (!(thisValue instanceof ErrorObject)) {
-                return UNDEFINED;
-            }
-            ScriptException e = ((ErrorObject) thisValue).getException();
-            return StackTraces.stackTraceStream(e).findFirst().map(StackTraceElement::getFileName).orElse("");
-        }
-
-        /**
-         * Extension: Error.prototype.fileName
-         * 
-         * @param cx
-         *            the execution context
-         * @param thisValue
-         *            the function this-value
-         * @param value
-         *            the new file name
-         * @return the undefined value
-         */
-        @Accessor(name = "fileName", type = Accessor.Type.Setter, attributes = @Attributes(
-                writable = false, enumerable = false, configurable = true))
-        public static Object set_fileName(ExecutionContext cx, Object thisValue, Object value) {
-            if (!(thisValue instanceof ErrorObject)) {
-                return UNDEFINED;
-            }
-            CreateDataProperty(cx, (ErrorObject) thisValue, "fileName", value);
-            return UNDEFINED;
-        }
-
-        /**
-         * Extension: Error.prototype.lineNumber
-         * 
-         * @param cx
-         *            the execution context
-         * @param thisValue
-         *            the function this-value
-         * @return the line number
-         */
-        @Accessor(name = "lineNumber", type = Accessor.Type.Getter, attributes = @Attributes(
-                writable = false, enumerable = false, configurable = true))
-        public static Object get_lineNumber(ExecutionContext cx, Object thisValue) {
-            if (!(thisValue instanceof ErrorObject)) {
-                return UNDEFINED;
-            }
-            ScriptException e = ((ErrorObject) thisValue).getException();
-            return StackTraces.stackTraceStream(e).findFirst().map(StackTraceElement::getLineNumber).orElse(0);
-        }
-
-        /**
-         * Extension: Error.prototype.lineNumber
-         * 
-         * @param cx
-         *            the execution context
-         * @param thisValue
-         *            the function this-value
-         * @param value
-         *            the new line number
-         * @return the undefined value
-         */
-        @Accessor(name = "lineNumber", type = Accessor.Type.Setter, attributes = @Attributes(
-                writable = false, enumerable = false, configurable = true))
-        public static Object set_lineNumber(ExecutionContext cx, Object thisValue, Object value) {
-            if (!(thisValue instanceof ErrorObject)) {
-                return UNDEFINED;
-            }
-            CreateDataProperty(cx, (ErrorObject) thisValue, "lineNumber", value);
-            return UNDEFINED;
-        }
-
-        /**
-         * Extension: Error.prototype.columnNumber
-         * 
-         * @param cx
-         *            the execution context
-         * @param thisValue
-         *            the function this-value
-         * @return the column number
-         */
-        @Accessor(name = "columnNumber", type = Accessor.Type.Getter, attributes = @Attributes(
-                writable = false, enumerable = false, configurable = true))
-        public static Object get_columnNumber(ExecutionContext cx, Object thisValue) {
-            if (!(thisValue instanceof ErrorObject)) {
-                return UNDEFINED;
-            }
-            // no column information available in StackTraceElements...
-            return 0;
-        }
-
-        /**
-         * Extension: Error.prototype.columnNumber
-         * 
-         * @param cx
-         *            the execution context
-         * @param thisValue
-         *            the function this-value
-         * @param value
-         *            the new column number
-         * @return the undefined value
-         */
-        @Accessor(name = "columnNumber", type = Accessor.Type.Setter, attributes = @Attributes(
-                writable = false, enumerable = false, configurable = true))
-        public static Object set_columnNumber(ExecutionContext cx, Object thisValue, Object value) {
-            if (!(thisValue instanceof ErrorObject)) {
-                return UNDEFINED;
-            }
-            CreateDataProperty(cx, (ErrorObject) thisValue, "columnNumber", value);
-            return UNDEFINED;
-        }
+    /**
+     * The {@code stack} property of the Error Prototype Object
+     */
+    public enum StackProperty {
+        ;
 
         /**
          * Extension: Error.prototype.stack
@@ -246,11 +138,18 @@ public final class ErrorPrototype extends OrdinaryObject implements Initializabl
          *            the function this-value
          * @return the stack string
          */
-        @Accessor(name = "stack", type = Accessor.Type.Getter, attributes = @Attributes(
-                writable = false, enumerable = false, configurable = true))
+        @Accessor(name = "stack", type = Accessor.Type.Getter,
+                attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static Object get_stack(ExecutionContext cx, Object thisValue) {
+            if (!Type.isObject(thisValue)) {
+                throw newTypeError(cx, Messages.Key.IncompatibleThis, "get Error.prototype.stack",
+                        Type.of(thisValue).toString());
+            }
             if (!(thisValue instanceof ErrorObject)) {
                 return UNDEFINED;
+            }
+            if (cx.getRuntimeContext().isEnabled(CompatibilityOption.ErrorStacks)) {
+                return ErrorConstructor.GetStackString(cx, (ErrorObject) thisValue);
             }
             ScriptException e = ((ErrorObject) thisValue).getException();
             return StackTraces.stackTraceStream(e).collect(StringBuilder::new, (sb, element) -> {
@@ -272,13 +171,145 @@ public final class ErrorPrototype extends OrdinaryObject implements Initializabl
          *            the new stack string
          * @return the undefined value
          */
-        @Accessor(name = "stack", type = Accessor.Type.Setter, attributes = @Attributes(
-                writable = false, enumerable = false, configurable = true))
-        public static Object set_stack(ExecutionContext cx, Object thisValue, Object value) {
+        @Accessor(name = "stack", type = Accessor.Type.Setter,
+                attributes = @Attributes(writable = false, enumerable = false, configurable = true))
+        public static Object set_stack(ExecutionContext cx, Object thisValue,
+                @Optional(Optional.Default.NONE) Object value) {
+            if (!Type.isObject(thisValue)) {
+                throw newTypeError(cx, Messages.Key.IncompatibleThis, "set Error.prototype.stack",
+                        Type.of(thisValue).toString());
+            }
+            if (value == null) {
+                throw newTypeError(cx, Messages.Key.MissingArgument);
+            }
+            CreateDataProperty(cx, Type.objectValue(thisValue), "stack", value);
+            return UNDEFINED;
+        }
+    }
+
+    /**
+     * Additional properties of the Error Prototype Object
+     */
+    public enum AdditionalProperties {
+        ;
+
+        /**
+         * Extension: Error.prototype.fileName
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the file name
+         */
+        @Accessor(name = "fileName", type = Accessor.Type.Getter,
+                attributes = @Attributes(writable = false, enumerable = false, configurable = true))
+        public static Object get_fileName(ExecutionContext cx, Object thisValue) {
             if (!(thisValue instanceof ErrorObject)) {
                 return UNDEFINED;
             }
-            CreateDataProperty(cx, (ErrorObject) thisValue, "stack", value);
+            ScriptException e = ((ErrorObject) thisValue).getException();
+            return StackTraces.stackTraceStream(e).findFirst().map(StackTraceElement::getFileName).orElse("");
+        }
+
+        /**
+         * Extension: Error.prototype.fileName
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param value
+         *            the new file name
+         * @return the undefined value
+         */
+        @Accessor(name = "fileName", type = Accessor.Type.Setter,
+                attributes = @Attributes(writable = false, enumerable = false, configurable = true))
+        public static Object set_fileName(ExecutionContext cx, Object thisValue, Object value) {
+            if (!(thisValue instanceof ErrorObject)) {
+                return UNDEFINED;
+            }
+            CreateDataProperty(cx, (ErrorObject) thisValue, "fileName", value);
+            return UNDEFINED;
+        }
+
+        /**
+         * Extension: Error.prototype.lineNumber
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the line number
+         */
+        @Accessor(name = "lineNumber", type = Accessor.Type.Getter,
+                attributes = @Attributes(writable = false, enumerable = false, configurable = true))
+        public static Object get_lineNumber(ExecutionContext cx, Object thisValue) {
+            if (!(thisValue instanceof ErrorObject)) {
+                return UNDEFINED;
+            }
+            ScriptException e = ((ErrorObject) thisValue).getException();
+            return StackTraces.stackTraceStream(e).findFirst().map(StackTraceElement::getLineNumber).orElse(0);
+        }
+
+        /**
+         * Extension: Error.prototype.lineNumber
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param value
+         *            the new line number
+         * @return the undefined value
+         */
+        @Accessor(name = "lineNumber", type = Accessor.Type.Setter,
+                attributes = @Attributes(writable = false, enumerable = false, configurable = true))
+        public static Object set_lineNumber(ExecutionContext cx, Object thisValue, Object value) {
+            if (!(thisValue instanceof ErrorObject)) {
+                return UNDEFINED;
+            }
+            CreateDataProperty(cx, (ErrorObject) thisValue, "lineNumber", value);
+            return UNDEFINED;
+        }
+
+        /**
+         * Extension: Error.prototype.columnNumber
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the column number
+         */
+        @Accessor(name = "columnNumber", type = Accessor.Type.Getter,
+                attributes = @Attributes(writable = false, enumerable = false, configurable = true))
+        public static Object get_columnNumber(ExecutionContext cx, Object thisValue) {
+            if (!(thisValue instanceof ErrorObject)) {
+                return UNDEFINED;
+            }
+            // no column information available in StackTraceElements...
+            return 0;
+        }
+
+        /**
+         * Extension: Error.prototype.columnNumber
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param value
+         *            the new column number
+         * @return the undefined value
+         */
+        @Accessor(name = "columnNumber", type = Accessor.Type.Setter,
+                attributes = @Attributes(writable = false, enumerable = false, configurable = true))
+        public static Object set_columnNumber(ExecutionContext cx, Object thisValue, Object value) {
+            if (!(thisValue instanceof ErrorObject)) {
+                return UNDEFINED;
+            }
+            CreateDataProperty(cx, (ErrorObject) thisValue, "columnNumber", value);
             return UNDEFINED;
         }
 
@@ -291,8 +322,8 @@ public final class ErrorPrototype extends OrdinaryObject implements Initializabl
          *            the function this-value
          * @return stack-trace object
          */
-        @Accessor(name = "stackTrace", type = Accessor.Type.Getter, attributes = @Attributes(
-                writable = false, enumerable = false, configurable = true))
+        @Accessor(name = "stackTrace", type = Accessor.Type.Getter,
+                attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static Object get_stackTrace(ExecutionContext cx, Object thisValue) {
             if (!(thisValue instanceof ErrorObject)) {
                 return UNDEFINED;

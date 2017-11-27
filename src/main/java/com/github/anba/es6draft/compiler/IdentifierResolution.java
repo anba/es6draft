@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -19,13 +19,11 @@ import com.github.anba.es6draft.compiler.assembler.Type;
 final class IdentifierResolution {
     private static final class Methods {
         // class: ExecutionContext
-        static final MethodName ExecutionContext_resolveBinding = MethodName.findVirtual(
-                Types.ExecutionContext, "resolveBinding",
-                Type.methodType(Types.Reference, Types.String, Type.BOOLEAN_TYPE));
+        static final MethodName ExecutionContext_resolveBinding = MethodName.findVirtual(Types.ExecutionContext,
+                "resolveBinding", Type.methodType(Types.Reference, Types.String, Type.BOOLEAN_TYPE));
 
-        static final MethodName ExecutionContext_resolveBindingValue = MethodName.findVirtual(
-                Types.ExecutionContext, "resolveBindingValue",
-                Type.methodType(Types.Object, Types.String, Type.BOOLEAN_TYPE));
+        static final MethodName ExecutionContext_resolveBindingValue = MethodName.findVirtual(Types.ExecutionContext,
+                "resolveBindingValue", Type.methodType(Types.Object, Types.String, Type.BOOLEAN_TYPE));
     }
 
     private IdentifierResolution() {

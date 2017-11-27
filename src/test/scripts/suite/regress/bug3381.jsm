@@ -1,11 +1,11 @@
 /*
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
  */
 const {
-  assertNotUndefined, assertCallable, assertThrows, assertEquals
+  assertUndefined
 } = Assert;
 
 // 26.3.2 [ @@iterator ]: Missing type checks
@@ -14,12 +14,4 @@ const {
 import* as self from "./bug3381.jsm";
 
 var desc = Object.getOwnPropertyDescriptor(self, Symbol.iterator);
-assertNotUndefined(desc);
-assertNotUndefined(desc.value);
-
-var {value: iter} = desc;
-assertCallable(iter);
-
-for (var v of [void 0, null, 0, "abc", {}, {a: 0}, {a: 0, b: 1}]) {
-  assertThrows(TypeError, () => iter.call(v));
-}
+assertUndefined(desc);

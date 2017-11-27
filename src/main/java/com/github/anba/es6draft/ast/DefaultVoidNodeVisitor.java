@@ -1,15 +1,15 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
  */
 package com.github.anba.es6draft.ast;
 
+import com.github.anba.es6draft.ast.synthetic.ClassFieldInitializer;
 import com.github.anba.es6draft.ast.synthetic.ExpressionMethod;
 import com.github.anba.es6draft.ast.synthetic.MethodDefinitionsMethod;
 import com.github.anba.es6draft.ast.synthetic.PropertyDefinitionsMethod;
-import com.github.anba.es6draft.ast.synthetic.SpreadArrayLiteral;
 import com.github.anba.es6draft.ast.synthetic.SpreadElementMethod;
 import com.github.anba.es6draft.ast.synthetic.StatementListMethod;
 
@@ -63,10 +63,6 @@ public abstract class DefaultVoidNodeVisitor<V> implements VoidNodeVisitor<V> {
         visit((Expression) node, value);
     }
 
-    protected void visit(ArrayInitializer node, V value) {
-        visit((Expression) node, value);
-    }
-
     protected void visit(ModuleItem node, V value) {
         visit((Node) node, value);
     }
@@ -109,12 +105,12 @@ public abstract class DefaultVoidNodeVisitor<V> implements VoidNodeVisitor<V> {
 
     @Override
     public void visit(ArrayComprehension node, V value) {
-        visit((ArrayInitializer) node, value);
+        visit((Expression) node, value);
     }
 
     @Override
     public void visit(ArrayLiteral node, V value) {
-        visit((ArrayInitializer) node, value);
+        visit((Expression) node, value);
     }
 
     @Override
@@ -175,6 +171,11 @@ public abstract class DefaultVoidNodeVisitor<V> implements VoidNodeVisitor<V> {
     @Override
     public void visit(AwaitExpression node, V value) {
         visit((Expression) node, value);
+    }
+
+    @Override
+    public void visit(BigIntegerLiteral node, V value) {
+        visit((ValueLiteral<?>) node, value);
     }
 
     @Override
@@ -250,6 +251,17 @@ public abstract class DefaultVoidNodeVisitor<V> implements VoidNodeVisitor<V> {
     @Override
     public void visit(ClassExpression node, V value) {
         visit((Expression) node, value);
+    }
+
+    @Override
+    public void visit(ClassFieldDefinition node, V value) {
+        visit((PropertyDefinition) node, value);
+    }
+
+    @Override
+    public void visit(ClassFieldInitializer node, V value) {
+        visit((Statement) node, value);
+
     }
 
     @Override
@@ -358,11 +370,6 @@ public abstract class DefaultVoidNodeVisitor<V> implements VoidNodeVisitor<V> {
     }
 
     @Override
-    public void visit(ForEachStatement node, V value) {
-        visit((IterationStatement) node, value);
-    }
-
-    @Override
     public void visit(ForInStatement node, V value) {
         visit((IterationStatement) node, value);
     }
@@ -438,6 +445,11 @@ public abstract class DefaultVoidNodeVisitor<V> implements VoidNodeVisitor<V> {
     }
 
     @Override
+    public void visit(ImportCallExpression node, V value) {
+        visit((Expression) node, value);
+    }
+
+    @Override
     public void visit(ImportClause node, V value) {
         visit((Node) node, value);
     }
@@ -445,6 +457,11 @@ public abstract class DefaultVoidNodeVisitor<V> implements VoidNodeVisitor<V> {
     @Override
     public void visit(ImportDeclaration node, V value) {
         visit((ModuleItem) node, value);
+    }
+
+    @Override
+    public void visit(ImportMeta node, V value) {
+        visit((Expression) node, value);
     }
 
     @Override
@@ -459,36 +476,6 @@ public abstract class DefaultVoidNodeVisitor<V> implements VoidNodeVisitor<V> {
 
     @Override
     public void visit(LabelledStatement node, V value) {
-        visit((Statement) node, value);
-    }
-
-    @Override
-    public void visit(LegacyComprehension node, V value) {
-        visit((Comprehension) node, value);
-    }
-
-    @Override
-    public void visit(LegacyComprehensionFor node, V value) {
-        visit((ComprehensionQualifier) node, value);
-    }
-
-    @Override
-    public void visit(LegacyGeneratorDeclaration node, V value) {
-        visit((GeneratorDeclaration) node, value);
-    }
-
-    @Override
-    public void visit(LegacyGeneratorExpression node, V value) {
-        visit((GeneratorExpression) node, value);
-    }
-
-    @Override
-    public void visit(LetExpression node, V value) {
-        visit((Expression) node, value);
-    }
-
-    @Override
-    public void visit(LetStatement node, V value) {
         visit((Statement) node, value);
     }
 
@@ -558,6 +545,16 @@ public abstract class DefaultVoidNodeVisitor<V> implements VoidNodeVisitor<V> {
     }
 
     @Override
+    public void visit(PrivateNameProperty node, V value) {
+        visit((Node) node, value);
+    }
+
+    @Override
+    public void visit(PrivatePropertyAccessor node, V value) {
+        visit((Expression) node, value);
+    }
+
+    @Override
     public void visit(PropertyAccessor node, V value) {
         visit((Expression) node, value);
     }
@@ -593,18 +590,13 @@ public abstract class DefaultVoidNodeVisitor<V> implements VoidNodeVisitor<V> {
     }
 
     @Override
-    public void visit(SpreadArrayLiteral node, V value) {
-        visit((ArrayLiteral) node, value);
-    }
-
-    @Override
     public void visit(SpreadElement node, V value) {
         visit((Expression) node, value);
     }
 
     @Override
     public void visit(SpreadElementMethod node, V value) {
-        visit((SpreadElement) node, value);
+        visit((Expression) node, value);
     }
 
     @Override
@@ -673,6 +665,11 @@ public abstract class DefaultVoidNodeVisitor<V> implements VoidNodeVisitor<V> {
     }
 
     @Override
+    public void visit(ThrowExpression node, V value) {
+        visit((Expression) node, value);
+    }
+
+    @Override
     public void visit(ThrowStatement node, V value) {
         visit((Statement) node, value);
     }
@@ -684,6 +681,11 @@ public abstract class DefaultVoidNodeVisitor<V> implements VoidNodeVisitor<V> {
 
     @Override
     public void visit(UnaryExpression node, V value) {
+        visit((Expression) node, value);
+    }
+
+    @Override
+    public void visit(UpdateExpression node, V value) {
         visit((Expression) node, value);
     }
 

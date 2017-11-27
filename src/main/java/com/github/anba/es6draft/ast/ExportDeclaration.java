@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -105,8 +105,7 @@ public final class ExportDeclaration extends ModuleItem {
      * @param moduleSpecifier
      *            the requested module name or {@code null}
      */
-    public ExportDeclaration(long beginPosition, long endPosition, ExportClause exportClause,
-            String moduleSpecifier) {
+    public ExportDeclaration(long beginPosition, long endPosition, ExportClause exportClause, String moduleSpecifier) {
         super(beginPosition, endPosition);
         this.type = moduleSpecifier != null ? Type.External : Type.Local;
         this.moduleSpecifier = moduleSpecifier;
@@ -129,8 +128,7 @@ public final class ExportDeclaration extends ModuleItem {
      * @param variableStatement
      *            the variable statement node
      */
-    public ExportDeclaration(long beginPosition, long endPosition,
-            VariableStatement variableStatement) {
+    public ExportDeclaration(long beginPosition, long endPosition, VariableStatement variableStatement) {
         super(beginPosition, endPosition);
         this.type = Type.Variable;
         this.moduleSpecifier = null;
@@ -222,8 +220,7 @@ public final class ExportDeclaration extends ModuleItem {
      * @param expression
      *            the default export expression node
      */
-    public ExportDeclaration(long beginPosition, long endPosition,
-            ExportDefaultExpression expression) {
+    public ExportDeclaration(long beginPosition, long endPosition, ExportDefaultExpression expression) {
         super(beginPosition, endPosition);
         this.type = Type.DefaultExpression;
         this.moduleSpecifier = null;

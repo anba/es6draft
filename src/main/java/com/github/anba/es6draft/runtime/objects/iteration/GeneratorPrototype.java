@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -78,8 +78,8 @@ public final class GeneratorPrototype extends OrdinaryObject implements Initiali
         /**
          * 25.3.1.1 Generator.prototype.constructor
          */
-        @Value(name = "constructor", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = true))
+        @Value(name = "constructor",
+                attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static final Intrinsics constructor = Intrinsics.Generator;
 
         /**
@@ -95,7 +95,8 @@ public final class GeneratorPrototype extends OrdinaryObject implements Initiali
          */
         @Function(name = "next", arity = 1, nativeId = GeneratorPrototypeNext.class)
         public static Object next(ExecutionContext cx, Object thisValue, Object value) {
-            return GeneratorResume(cx, thisValue, value);
+            /* steps 1-2 */
+            return GeneratorResume(cx, thisValue, value, "Generator.prototype.next");
         }
 
         /**
@@ -111,7 +112,8 @@ public final class GeneratorPrototype extends OrdinaryObject implements Initiali
          */
         @Function(name = "return", arity = 1)
         public static Object _return(ExecutionContext cx, Object thisValue, Object value) {
-            return GeneratorReturn(cx, thisValue, value);
+            /* steps 1-3 */
+            return GeneratorReturn(cx, thisValue, value, "Generator.prototype.return");
         }
 
         /**
@@ -127,7 +129,8 @@ public final class GeneratorPrototype extends OrdinaryObject implements Initiali
          */
         @Function(name = "throw", arity = 1)
         public static Object _throw(ExecutionContext cx, Object thisValue, Object exception) {
-            return GeneratorThrow(cx, thisValue, exception);
+            /* steps 1-3 */
+            return GeneratorThrow(cx, thisValue, exception, "Generator.prototype.throw");
         }
 
         /**

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -17,8 +17,7 @@ public final class ExportSpecifier extends AstNode {
     private final String sourceName;
     private final String exportName;
 
-    public ExportSpecifier(long beginPosition, long endPosition, String sourceName,
-            String exportName) {
+    public ExportSpecifier(long beginPosition, long endPosition, String sourceName, String exportName) {
         super(beginPosition, endPosition);
         this.sourceName = sourceName;
         this.exportName = exportName;

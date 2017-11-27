@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -35,9 +35,8 @@ public final class SymbolObject extends OrdinaryObject {
      *            the prototype object
      */
     public SymbolObject(Realm realm, Symbol symbolData, ScriptObject prototype) {
-        super(realm);
+        super(realm, prototype);
         this.symbolData = symbolData;
-        setPrototype(prototype);
     }
 
     /**
@@ -47,6 +46,11 @@ public final class SymbolObject extends OrdinaryObject {
      */
     public Symbol getSymbolData() {
         return symbolData;
+    }
+
+    @Override
+    public String toString() {
+        return String.format("%s, symbolData=%s", super.toString(), symbolData);
     }
 
     /**
@@ -59,7 +63,6 @@ public final class SymbolObject extends OrdinaryObject {
      * @return the new symbol object
      */
     public static SymbolObject SymbolCreate(ExecutionContext cx, Symbol symbolData) {
-        return new SymbolObject(cx.getRealm(), symbolData,
-                cx.getIntrinsic(Intrinsics.SymbolPrototype));
+        return new SymbolObject(cx.getRealm(), symbolData, cx.getIntrinsic(Intrinsics.SymbolPrototype));
     }
 }

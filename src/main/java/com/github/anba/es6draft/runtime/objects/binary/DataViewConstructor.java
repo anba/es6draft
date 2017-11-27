@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -7,9 +7,7 @@
 package com.github.anba.es6draft.runtime.objects.binary;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToBoolean;
-import static com.github.anba.es6draft.runtime.AbstractOperations.ToInteger;
-import static com.github.anba.es6draft.runtime.AbstractOperations.ToLength;
-import static com.github.anba.es6draft.runtime.AbstractOperations.ToNumber;
+import static com.github.anba.es6draft.runtime.AbstractOperations.ToIndex;
 import static com.github.anba.es6draft.runtime.internal.Errors.newRangeError;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
@@ -46,17 +44,12 @@ public final class DataViewConstructor extends BuiltinConstructor implements Ini
      *            the realm object
      */
     public DataViewConstructor(Realm realm) {
-        super(realm, "DataView", 3);
+        super(realm, "DataView", 1);
     }
 
     @Override
     public void initialize(Realm realm) {
         createProperties(realm, this, Properties.class);
-    }
-
-    @Override
-    public DataViewConstructor clone() {
-        return new DataViewConstructor(getRealm());
     }
 
     /**
@@ -73,44 +66,41 @@ public final class DataViewConstructor extends BuiltinConstructor implements Ini
      *            the little endian flag
      * @param type
      *            the element type
+     * @param method
+     *            the method name
      * @return the view element value
      */
-    public static double GetViewValue(ExecutionContext cx, Object view, Object requestIndex,
-            Object isLittleEndian, ElementType type) {
+    public static Number GetViewValue(ExecutionContext cx, Object view, Object requestIndex, Object isLittleEndian,
+            ElementType type, String method) {
         /* steps 1-2 */
         if (!(view instanceof DataViewObject)) {
-            throw newTypeError(cx, Messages.Key.IncompatibleObject);
+            throw newTypeError(cx, Messages.Key.IncompatibleThis, method, Type.of(view).toString());
         }
         DataViewObject dataView = (DataViewObject) view;
-        /* step 3 */
-        double numberIndex = ToNumber(cx, requestIndex);
-        /* steps 4-5 */
-        double getIndex = ToInteger(numberIndex);
-        /* step 6 */
-        if (numberIndex != getIndex || getIndex < 0) {
-            throw newRangeError(cx, Messages.Key.InvalidByteOffset);
-        }
-        /* step 7 */
+        /* step 3 (not applicable) */
+        /* step 4 */
+        long getIndex = ToIndex(cx, requestIndex);
+        /* step 5 */
         boolean littleEndian = ToBoolean(isLittleEndian);
-        /* step 8 */
+        /* step 6 */
         ArrayBuffer buffer = dataView.getBuffer();
-        /* step 9 */
+        /* step 7 */
         if (IsDetachedBuffer(buffer)) {
             throw newTypeError(cx, Messages.Key.BufferDetached);
         }
-        /* step 10 */
+        /* step 8 */
         long viewOffset = dataView.getByteOffset();
-        /* step 11 */
+        /* step 9 */
         long viewSize = dataView.getByteLength();
-        /* step 12 */
+        /* step 10 */
         int elementSize = type.size();
-        /* step 13 */
+        /* step 11 */
         if (getIndex + elementSize > viewSize) {
             throw newRangeError(cx, Messages.Key.ArrayOffsetOutOfRange);
         }
-        /* step 14 */
-        long bufferIndex = (long) getIndex + viewOffset;
-        /* step 15 */
+        /* step 12 */
+        long bufferIndex = getIndex + viewOffset;
+        /* step 13 */
         return GetValueFromBuffer(buffer, bufferIndex, type, littleEndian);
     }
 
@@ -130,49 +120,47 @@ public final class DataViewConstructor extends BuiltinConstructor implements Ini
      *            the element type
      * @param value
      *            the new view element value
+     * @param method
+     *            the method name
      */
-    public static void SetViewValue(ExecutionContext cx, Object view, Object requestIndex,
-            Object isLittleEndian, ElementType type, Object value) {
+    public static void SetViewValue(ExecutionContext cx, Object view, Object requestIndex, Object isLittleEndian,
+            ElementType type, Object value, String method) {
         /* steps 1-2 */
         if (!(view instanceof DataViewObject)) {
-            throw newTypeError(cx, Messages.Key.IncompatibleObject);
+            throw newTypeError(cx, Messages.Key.IncompatibleThis, method, Type.of(view).toString());
         }
         DataViewObject dataView = (DataViewObject) view;
-        /* step 3 */
-        double numberIndex = ToNumber(cx, requestIndex);
-        /* steps 4-5 */
-        double getIndex = ToInteger(numberIndex);
+        /* step 3 (not applicable) */
+        /* step 4 */
+        long getIndex = ToIndex(cx, requestIndex);
+        /* step 5 */
+        Number numberValue = type.toElementValue(cx, value);
         /* step 6 */
-        if (numberIndex != getIndex || getIndex < 0) {
-            throw newRangeError(cx, Messages.Key.InvalidByteOffset);
-        }
-        double numberValue = ToNumber(cx, value);
-        /* step 7 */
         boolean littleEndian = ToBoolean(isLittleEndian);
-        /* step 8 */
+        /* step 7 */
         ArrayBuffer buffer = dataView.getBuffer();
-        /* step 9 */
+        /* step 8 */
         if (IsDetachedBuffer(buffer)) {
             throw newTypeError(cx, Messages.Key.BufferDetached);
         }
-        /* step 10 */
+        /* step 9 */
         long viewOffset = dataView.getByteOffset();
-        /* step 11 */
+        /* step 10 */
         long viewSize = dataView.getByteLength();
-        /* step 12 */
+        /* step 11 */
         int elementSize = type.size();
-        /* step 13 */
+        /* step 12 */
         if (getIndex + elementSize > viewSize) {
             throw newRangeError(cx, Messages.Key.ArrayOffsetOutOfRange);
         }
+        /* step 13 */
+        long bufferIndex = getIndex + viewOffset;
         /* step 14 */
-        long bufferIndex = (long) getIndex + viewOffset;
-        /* step 15 */
         SetValueInBuffer(buffer, bufferIndex, type, numberValue, littleEndian);
     }
 
     /**
-     * 24.2.2.1 DataView (buffer [, byteOffset [, byteLength ] ])
+     * 24.2.2.1 DataView ( buffer [ , byteOffset [ , byteLength ] ] )
      */
     @Override
     public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
@@ -181,55 +169,48 @@ public final class DataViewConstructor extends BuiltinConstructor implements Ini
     }
 
     /**
-     * 24.2.2.1 DataView (buffer [, byteOffset [, byteLength ] ])
+     * 24.2.2.1 DataView ( buffer [ , byteOffset [ , byteLength ] ] )
      */
     @Override
-    public DataViewObject construct(ExecutionContext callerContext, Constructor newTarget,
-            Object... args) {
+    public DataViewObject construct(ExecutionContext callerContext, Constructor newTarget, Object... args) {
         ExecutionContext calleeContext = calleeContext();
         Object buffer = argument(args, 0);
-        // FIXME: spec bug - missing/undefined byteOffset parameter not handled.
-        // https://bugs.ecmascript.org/show_bug.cgi?id=4516
-        Object byteOffset = argument(args, 1, 0);
+        Object byteOffset = argument(args, 1);
         Object byteLength = argument(args, 2);
         /* step 1 (not applicable)*/
         /* steps 2-3 */
         if (!(buffer instanceof ArrayBuffer)) {
-            throw newTypeError(calleeContext, Messages.Key.IncompatibleObject);
+            throw newTypeError(calleeContext, Messages.Key.IncompatibleArgument, "DataView",
+                    Type.of(buffer).toString());
         }
         ArrayBuffer bufferObj = (ArrayBuffer) buffer;
         /* step 4 */
-        double numberOffset = ToNumber(calleeContext, byteOffset);
-        /* steps 5-6 */
-        double offset = ToInteger(numberOffset);
-        /* step 7 */
-        if (numberOffset != offset || offset < 0) {
-            throw newRangeError(calleeContext, Messages.Key.InvalidByteOffset);
-        }
-        /* step 8 */
+        long offset = ToIndex(calleeContext, byteOffset);
+        /* step 5 */
         if (IsDetachedBuffer(bufferObj)) {
             throw newTypeError(calleeContext, Messages.Key.BufferDetached);
         }
-        /* step 9 */
+        /* step 6 */
         long bufferByteLength = bufferObj.getByteLength();
-        /* step 10 */
+        /* step 7 */
         if (offset > bufferByteLength) {
             throw newRangeError(calleeContext, Messages.Key.ArrayOffsetOutOfRange);
         }
-        /* steps 11-12 */
-        long viewByteLength, viewByteOffset = (long) offset;
+        /* steps 8-9 */
+        long viewByteLength;
         if (Type.isUndefined(byteLength)) {
-            viewByteLength = bufferByteLength - viewByteOffset;
+            /* step 8 */
+            viewByteLength = bufferByteLength - offset;
         } else {
-            viewByteLength = ToLength(calleeContext, byteLength);
+            /* step 9 */
+            viewByteLength = ToIndex(calleeContext, byteLength);
             if (offset + viewByteLength > bufferByteLength) {
                 throw newRangeError(calleeContext, Messages.Key.ArrayOffsetOutOfRange);
             }
         }
-        /* steps 13-19 */
-        return new DataViewObject(calleeContext.getRealm(), bufferObj, viewByteLength,
-                viewByteOffset, GetPrototypeFromConstructor(calleeContext, newTarget,
-                        Intrinsics.DataViewPrototype));
+        /* steps 10-15 */
+        return new DataViewObject(calleeContext.getRealm(), bufferObj, viewByteLength, offset,
+                GetPrototypeFromConstructor(calleeContext, newTarget, Intrinsics.DataViewPrototype));
     }
 
     /**
@@ -241,19 +222,16 @@ public final class DataViewConstructor extends BuiltinConstructor implements Ini
         @Prototype
         public static final Intrinsics __proto__ = Intrinsics.FunctionPrototype;
 
-        @Value(name = "length", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = true))
-        public static final int length = 3;
+        @Value(name = "length", attributes = @Attributes(writable = false, enumerable = false, configurable = true))
+        public static final int length = 1;
 
-        @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = true))
+        @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static final String name = "DataView";
 
         /**
          * 24.2.3.1 DataView.prototype
          */
-        @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = false))
+        @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false, configurable = false))
         public static final Intrinsics prototype = Intrinsics.DataViewPrototype;
     }
 }

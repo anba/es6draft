@@ -1,30 +1,41 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
  */
 package com.github.anba.es6draft.runtime.types.builtins;
 
+import static com.github.anba.es6draft.runtime.internal.Errors.newInternalError;
+
+import java.util.Iterator;
 import java.util.List;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
+import com.github.anba.es6draft.runtime.internal.CompoundIterator;
 import com.github.anba.es6draft.runtime.internal.CompoundList;
+import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.StringPropertyKeyList;
 import com.github.anba.es6draft.runtime.internal.Strings;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Property;
+import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 
 /**
  * <h1>9 Ordinary and Exotic Objects Behaviours</h1><br>
- * <h2>9.4 Built-in Exotic Object Internal Methods and Data Fields</h2>
+ * <h2>9.4 Built-in Exotic Object Internal Methods and Slots</h2>
  * <ul>
  * <li>9.4.3 String Exotic Objects
  * </ul>
  */
 public class StringObject extends OrdinaryObject {
+    /**
+     * Maximum allowed string length.
+     */
+    public static final int MAX_LENGTH = 0xFFF_FFFF;
+
     /** [[StringData]] */
     private final CharSequence stringData;
 
@@ -36,7 +47,7 @@ public class StringObject extends OrdinaryObject {
      * @param stringData
      *            the string data
      */
-    public StringObject(Realm realm, CharSequence stringData) {
+    protected StringObject(Realm realm, CharSequence stringData) {
         super(realm);
         this.stringData = stringData;
     }
@@ -52,12 +63,10 @@ public class StringObject extends OrdinaryObject {
      *            the prototype object
      */
     public StringObject(Realm realm, CharSequence stringData, ScriptObject prototype) {
-        super(realm);
-        // StringCreate - step 4
+        super(realm, prototype);
+        // StringCreate - step 3
         this.stringData = stringData;
-        // StringCreate - step 9
-        setPrototype(prototype);
-        // StringCreate - steps 11-13
+        // StringCreate - steps 9-10
         infallibleDefineOwnProperty("length", new Property(stringData.length(), false, false, false));
     }
 
@@ -66,17 +75,22 @@ public class StringObject extends OrdinaryObject {
      * 
      * @return the string data
      */
-    public CharSequence getStringData() {
+    public final CharSequence getStringData() {
         return stringData;
     }
 
     @Override
-    public String className() {
+    public final String className() {
         return "String";
     }
 
     @Override
-    public boolean hasSpecialIndexedProperties() {
+    public String toString() {
+        return String.format("%s, stringData=%s", super.toString(), stringData);
+    }
+
+    @Override
+    public final boolean hasSpecialIndexedProperties() {
         return true;
     }
 
@@ -84,15 +98,15 @@ public class StringObject extends OrdinaryObject {
      * [[HasOwnProperty]] (P)
      */
     @Override
-    protected boolean hasOwnProperty(ExecutionContext cx, long propertyKey) {
-        return propertyKey < getStringData().length() || super.hasOwnProperty(cx, propertyKey);
+    public final boolean hasOwnProperty(ExecutionContext cx, long propertyKey) {
+        return propertyKey < getStringData().length() || ordinaryHasOwnProperty(propertyKey);
     }
 
     /**
      * 9.4.3.1 [[GetOwnProperty]] ( P )
      */
     @Override
-    protected Property getProperty(ExecutionContext cx, long propertyKey) {
+    public final Property getOwnProperty(ExecutionContext cx, long propertyKey) {
         /* step 1 (not applicable) */
         /* step 2 */
         Property desc = ordinaryGetOwnProperty(propertyKey);
@@ -101,71 +115,56 @@ public class StringObject extends OrdinaryObject {
             return desc;
         }
         /* step 4 */
-        return StringGetIndexProperty(this, propertyKey);
+        return StringGetOwnProperty(this, propertyKey);
     }
 
     /**
-     * 9.4.3.1.1 StringGetIndexProperty (S, P)
-     * 
-     * @param s
-     *            the string object
-     * @param propertyKey
-     *            the property key
-     * @return the property descriptor or {@code null}
-     */
-    private static Property StringGetIndexProperty(StringObject s, long propertyKey) {
-        /* steps 1-6 (not applicable) */
-        assert propertyKey >= 0;
-        /* step 7 */
-        CharSequence str = s.getStringData();
-        /* step 8 */
-        int len = str.length();
-        /* step 9 */
-        if (len <= propertyKey) {
-            return null;
-        }
-        /* step 10 */
-        String resultStr = String.valueOf(str.charAt((int) propertyKey));
-        /* step 11 */
-        return new Property(resultStr, false, true, false);
-    }
-
-    /**
-     * 9.4.3.2 [[HasProperty]](P)
+     * 9.4.3.2 [[DefineOwnProperty]] ( P, Desc )
      */
     @Override
-    protected boolean has(ExecutionContext cx, long propertyKey) {
-        /* steps 1-3 */
-        return propertyKey < getStringData().length() || super.has(cx, propertyKey);
+    public final boolean defineOwnProperty(ExecutionContext cx, long propertyKey, PropertyDescriptor desc) {
+        /* step 1 (not applicable) */
+        /* step 2 */
+        Property stringDesc = StringGetOwnProperty(this, propertyKey);
+        /* step 3 */
+        if (stringDesc != null) {
+            /* step 3.a */
+            boolean extensible = isExtensible();
+            /* step 3.b */
+            return IsCompatiblePropertyDescriptor(extensible, desc, stringDesc);
+        }
+        /* step 4 */
+        return super.defineOwnProperty(cx, propertyKey, desc);
     }
 
     /**
      * 9.4.3.3 [[OwnPropertyKeys]] ()
      */
     @Override
-    protected List<Object> getOwnPropertyKeys(ExecutionContext cx) {
-        /* step 1 (moved) */
-        /* steps 2-4 */
-        StringPropertyKeyList stringIndices = new StringPropertyKeyList(getStringData().length());
-        /* steps 5-7 */
-        List<Object> ownPropertyKeys = super.getOwnPropertyKeys(cx);
-        /* steps 1, 8 */
-        return new CompoundList<>(stringIndices, ownPropertyKeys);
+    public final List<Object> ownPropertyKeys(ExecutionContext cx) {
+        /* steps 1-8 */
+        return new CompoundList<>(new StringPropertyKeyList(getStringData().length()), super.ownPropertyKeys(cx));
     }
 
     @Override
-    protected List<String> getEnumerableKeys(ExecutionContext cx) {
-        StringPropertyKeyList stringIndices = new StringPropertyKeyList(getStringData().length());
-        return new CompoundList<>(stringIndices, super.getEnumerableKeys(cx));
+    public final List<String> ownPropertyNames(ExecutionContext cx) {
+        /* steps 1-8 */
+        return new CompoundList<>(new StringPropertyKeyList(getStringData().length()), super.ownPropertyNames(cx));
     }
 
     @Override
-    protected Enumerability isEnumerableOwnProperty(String key) {
+    public final Iterator<String> ownEnumerablePropertyKeys(ExecutionContext cx) {
+        StringPropertyKeyList stringIndices = new StringPropertyKeyList(getStringData().length());
+        return new CompoundIterator<>(stringIndices.iterator(), super.ownEnumerablePropertyKeys(cx));
+    }
+
+    @Override
+    public final Enumerability isEnumerableOwnProperty(ExecutionContext cx, String key) {
         int index = Strings.toStringIndex(key);
         if (0 <= index && index < getStringData().length()) {
             return Enumerability.Enumerable;
         }
-        return super.isEnumerableOwnProperty(key);
+        return super.isEnumerableOwnProperty(cx, key);
     }
 
     /**
@@ -178,7 +177,7 @@ public class StringObject extends OrdinaryObject {
      * @return the new string object
      */
     public static StringObject StringCreate(ExecutionContext cx, CharSequence stringData) {
-        /* steps 1-14 */
+        /* steps 1-12 */
         return new StringObject(cx.getRealm(), stringData, cx.getIntrinsic(Intrinsics.StringPrototype));
     }
 
@@ -194,8 +193,62 @@ public class StringObject extends OrdinaryObject {
      * @return the new string object
      */
     public static StringObject StringCreate(ExecutionContext cx, CharSequence stringData, ScriptObject prototype) {
-        /* steps 1-2 (not applicable) */
-        /* steps 3-14 */
+        /* steps 1-12 */
         return new StringObject(cx.getRealm(), stringData, prototype);
+    }
+
+    /**
+     * 9.4.3.5 StringGetOwnProperty ( S, P )
+     * 
+     * @param s
+     *            the string object
+     * @param propertyKey
+     *            the property key
+     * @return the property descriptor or {@code null}
+     */
+    private Property StringGetOwnProperty(StringObject s, long propertyKey) {
+        /* steps 1-7 (not applicable) */
+        /* step 8 */
+        CharSequence str = getStringData();
+        /* step 9 */
+        int len = str.length();
+        /* step 10 */
+        if (len <= propertyKey) {
+            return null;
+        }
+        /* step 11 */
+        String resultStr = String.valueOf(str.charAt((int) propertyKey));
+        /* step 12 */
+        return new Property(resultStr, false, true, false);
+    }
+
+    /**
+     * Throws an error if {@code length} exceeds the maximum allowed string length.
+     * 
+     * @param cx
+     *            the execution context
+     * @param length
+     *            the string length
+     */
+    public static void validateLength(ExecutionContext cx, int length) {
+        if (length > StringObject.MAX_LENGTH) {
+            throw newInternalError(cx, Messages.Key.InvalidStringSize);
+        }
+    }
+
+    /**
+     * Throws an error if {@code s.length()} exceeds the maximum allowed string length.
+     * 
+     * @param <STRING>
+     *            the string type
+     * @param cx
+     *            the execution context
+     * @param s
+     *            the string
+     * @return the input string
+     */
+    public static <STRING extends CharSequence> STRING validateLength(ExecutionContext cx, STRING s) {
+        validateLength(cx, s.length());
+        return s;
     }
 }

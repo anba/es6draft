@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -10,19 +10,20 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.Get;
 import static com.github.anba.es6draft.runtime.AbstractOperations.IsCallable;
 import static com.github.anba.es6draft.runtime.AbstractOperations.IsConstructor;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
+import static com.github.anba.es6draft.runtime.objects.zone.ZoneConstructor.CallInZone;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
+import com.github.anba.es6draft.runtime.Job;
 import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.Task;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.Messages;
-import com.github.anba.es6draft.runtime.internal.MutRef;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
+import com.github.anba.es6draft.runtime.objects.zone.ZoneObject;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
@@ -36,7 +37,7 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
  * <h2>25.4 Promise Objects</h2>
  * <ul>
  * <li>25.4.1 Promise Abstract Operations
- * <li>25.4.2 Promise Tasks
+ * <li>25.4.2 Promise Jobs
  * </ul>
  */
 public final class PromiseAbstractOperations {
@@ -51,7 +52,7 @@ public final class PromiseAbstractOperations {
      * @return the promise allocator
      */
     public static ObjectAllocator<? extends PromiseObject> GetPromiseAllocator(Realm realm) {
-        if (realm.isEnabled(CompatibilityOption.PromiseRejection)) {
+        if (realm.getRuntimeContext().isEnabled(CompatibilityOption.PromiseRejection)) {
             return FinalizablePromiseObject::new;
         }
         return PromiseObject::new;
@@ -99,16 +100,13 @@ public final class PromiseAbstractOperations {
      *            the promise object
      * @return the resolving functions tuple
      */
-    public static ResolvingFunctions CreateResolvingFunctions(ExecutionContext cx,
-            PromiseObject promise) {
+    public static ResolvingFunctions CreateResolvingFunctions(ExecutionContext cx, PromiseObject promise) {
         /* step 1 */
         AtomicBoolean alreadyResolved = new AtomicBoolean(false);
         /* steps 2-4 */
-        PromiseResolveFunction resolve = new PromiseResolveFunction(cx.getRealm(), promise,
-                alreadyResolved);
+        PromiseResolveFunction resolve = new PromiseResolveFunction(cx.getRealm(), promise, alreadyResolved);
         /* steps 5-7 */
-        PromiseRejectFunction reject = new PromiseRejectFunction(cx.getRealm(), promise,
-                alreadyResolved);
+        PromiseRejectFunction reject = new PromiseRejectFunction(cx.getRealm(), promise, alreadyResolved);
         /* step 8 */
         return new ResolvingFunctions(resolve, reject);
     }
@@ -122,22 +120,11 @@ public final class PromiseAbstractOperations {
         /** [[AlreadyResolved]] */
         private final AtomicBoolean alreadyResolved;
 
-        public PromiseRejectFunction(Realm realm, PromiseObject promise,
-                AtomicBoolean alreadyResolved) {
-            this(realm, promise, alreadyResolved, null);
-            createDefaultFunctionProperties();
-        }
-
-        private PromiseRejectFunction(Realm realm, PromiseObject promise,
-                AtomicBoolean alreadyResolved, Void ignore) {
+        public PromiseRejectFunction(Realm realm, PromiseObject promise, AtomicBoolean alreadyResolved) {
             super(realm, ANONYMOUS, 1);
             this.promise = promise;
             this.alreadyResolved = alreadyResolved;
-        }
-
-        @Override
-        public PromiseRejectFunction clone() {
-            return new PromiseRejectFunction(getRealm(), promise, alreadyResolved, null);
+            createDefaultFunctionProperties();
         }
 
         @Override
@@ -166,22 +153,11 @@ public final class PromiseAbstractOperations {
         /** [[AlreadyResolved]] */
         private final AtomicBoolean alreadyResolved;
 
-        public PromiseResolveFunction(Realm realm, PromiseObject promise,
-                AtomicBoolean alreadyResolved) {
-            this(realm, promise, alreadyResolved, null);
-            createDefaultFunctionProperties();
-        }
-
-        private PromiseResolveFunction(Realm realm, PromiseObject promise,
-                AtomicBoolean alreadyResolved, Void ignore) {
+        public PromiseResolveFunction(Realm realm, PromiseObject promise, AtomicBoolean alreadyResolved) {
             super(realm, ANONYMOUS, 1);
             this.promise = promise;
             this.alreadyResolved = alreadyResolved;
-        }
-
-        @Override
-        public PromiseResolveFunction clone() {
-            return new PromiseResolveFunction(getRealm(), promise, alreadyResolved, null);
+            createDefaultFunctionProperties();
         }
 
         @Override
@@ -197,8 +173,7 @@ public final class PromiseAbstractOperations {
             }
             /* step 6 */
             if (resolution == promise) { // SameValue
-                ScriptException selfResolutionError = newTypeError(calleeContext,
-                        Messages.Key.PromiseSelfResolution);
+                ScriptException selfResolutionError = newTypeError(calleeContext, Messages.Key.PromiseSelfResolution);
                 RejectPromise(calleeContext, promise, selfResolutionError.getValue());
                 return UNDEFINED;
             }
@@ -223,8 +198,8 @@ public final class PromiseAbstractOperations {
             }
             /* step 12 */
             Realm realm = calleeContext.getRealm();
-            realm.enqueuePromiseTask(new PromiseResolveThenableTask(realm, promise, Type
-                    .objectValue(resolution), (Callable) then));
+            realm.enqueuePromiseJob(
+                    new PromiseResolveThenableJob(realm, promise, Type.objectValue(resolution), (Callable) then));
             /* step 13 */
             return UNDEFINED;
         }
@@ -260,12 +235,12 @@ public final class PromiseAbstractOperations {
      *            the promise constructor function
      * @return the new promise capability record
      */
-    public static PromiseCapability<ScriptObject> NewPromiseCapability(ExecutionContext cx, Object c) {
+    public static PromiseCapability<ScriptObject> NewPromiseCapability(ExecutionContext cx, ScriptObject c) {
         /* step 1 */
         if (!IsConstructor(c)) {
             throw newTypeError(cx, Messages.Key.NotConstructor);
         }
-        /* steps 2-11 */
+        /* steps 2-10 */
         return NewPromiseCapability(cx, (Constructor) c);
     }
 
@@ -280,25 +255,24 @@ public final class PromiseAbstractOperations {
      *            the promise constructor function
      * @return the new promise capability record
      */
-    public static PromiseCapability<ScriptObject> NewPromiseCapability(ExecutionContext cx,
-            Constructor c) {
+    public static PromiseCapability<ScriptObject> NewPromiseCapability(ExecutionContext cx, Constructor c) {
         /* steps 1-2 (not applicable) */
         /* step 3 (moved) */
         /* steps 4-5 */
         GetCapabilitiesExecutor executor = new GetCapabilitiesExecutor(cx.getRealm());
-        /* steps 6-7 */
-        ScriptObject promise = c.construct(cx, c, executor);
-        /* step 8 */
-        Object resolve = executor.resolve.get();
+        /* step 6 */
+        ScriptObject promise = c.construct(cx, executor);
+        /* step 7 */
+        Object resolve = executor.resolve;
         if (!IsCallable(resolve)) {
             throw newTypeError(cx, Messages.Key.NotCallable);
         }
-        /* step 9 */
-        Object reject = executor.reject.get();
+        /* step 8 */
+        Object reject = executor.reject;
         if (!IsCallable(reject)) {
             throw newTypeError(cx, Messages.Key.NotCallable);
         }
-        /* steps 3, 10-11 */
+        /* steps 3, 9-10 */
         return new PromiseCapability<>(promise, (Callable) resolve, (Callable) reject);
     }
 
@@ -307,25 +281,16 @@ public final class PromiseAbstractOperations {
      */
     public static final class GetCapabilitiesExecutor extends BuiltinFunction {
         /** [[Resolve]] */
-        private final MutRef<Object> resolve;
+        private Object resolve;
 
         /** [[Reject]] */
-        private final MutRef<Object> reject;
+        private Object reject;
 
         public GetCapabilitiesExecutor(Realm realm) {
-            this(realm, new MutRef<>(UNDEFINED), new MutRef<>(UNDEFINED));
-            createDefaultFunctionProperties();
-        }
-
-        private GetCapabilitiesExecutor(Realm realm, MutRef<Object> resolve, MutRef<Object> reject) {
             super(realm, ANONYMOUS, 2);
-            this.resolve = resolve;
-            this.reject = reject;
-        }
-
-        @Override
-        public GetCapabilitiesExecutor clone() {
-            return new GetCapabilitiesExecutor(getRealm(), resolve, reject);
+            this.resolve = UNDEFINED;
+            this.reject = UNDEFINED;
+            createDefaultFunctionProperties();
         }
 
         @Override
@@ -336,17 +301,17 @@ public final class PromiseAbstractOperations {
             /* step 1 (not applicable) */
             /* step 2 (omitted) */
             /* step 3 */
-            if (!Type.isUndefined(this.resolve.get())) {
+            if (!Type.isUndefined(this.resolve)) {
                 throw newTypeError(calleeContext, Messages.Key.NotUndefined);
             }
             /* step 4 */
-            if (!Type.isUndefined(this.reject.get())) {
+            if (!Type.isUndefined(this.reject)) {
                 throw newTypeError(calleeContext, Messages.Key.NotUndefined);
             }
             /* step 5 */
-            this.resolve.set(resolve);
+            this.resolve = resolve;
             /* step 6 */
-            this.reject.set(reject);
+            this.reject = reject;
             /* step 7 */
             return UNDEFINED;
         }
@@ -359,7 +324,7 @@ public final class PromiseAbstractOperations {
      * 
      * @param x
      *            the object
-     * @return {@code true} if <var>x</var> is an initialized promise object
+     * @return {@code true} if <var>x</var> is a promise object
      */
     public static boolean IsPromise(Object x) {
         /* steps 1-3 */
@@ -381,7 +346,8 @@ public final class PromiseAbstractOperations {
     public static void RejectPromise(ExecutionContext cx, PromiseObject promise, Object reason) {
         /* steps 1-6 */
         List<PromiseReaction> reactions = promise.reject(reason);
-        /* step 7 */
+        /* step 7 (not applicable) */
+        /* step 8 */
         TriggerPromiseReactions(cx, reactions, reason);
     }
 
@@ -395,14 +361,13 @@ public final class PromiseAbstractOperations {
      * @param reactions
      *            the list of promise reactions
      * @param argument
-     *            the reaction task argument
+     *            the reaction job argument
      */
-    public static void TriggerPromiseReactions(ExecutionContext cx,
-            List<PromiseReaction> reactions, Object argument) {
+    public static void TriggerPromiseReactions(ExecutionContext cx, List<PromiseReaction> reactions, Object argument) {
         /* step 1 */
         Realm realm = cx.getRealm();
         for (PromiseReaction reaction : reactions) {
-            realm.enqueuePromiseTask(new PromiseReactionTask(realm, reaction, argument));
+            realm.enqueuePromiseJob(new PromiseReactionJob(realm, reaction, argument));
         }
         /* step 2 (return) */
     }
@@ -412,12 +377,12 @@ public final class PromiseAbstractOperations {
      * <p>
      * 25.4.2.1 PromiseReactionJob( reaction, argument )
      */
-    public static final class PromiseReactionTask implements Task {
+    public static final class PromiseReactionJob implements Job {
         private final Realm realm;
         private final PromiseReaction reaction;
         private final Object argument;
 
-        public PromiseReactionTask(Realm realm, PromiseReaction reaction, Object argument) {
+        public PromiseReactionJob(Realm realm, PromiseReaction reaction, Object argument) {
             this.realm = realm;
             this.reaction = reaction;
             this.argument = argument;
@@ -428,30 +393,60 @@ public final class PromiseAbstractOperations {
             ExecutionContext cx = realm.defaultContext();
             /* step 1 (not applicable) */
             /* step 2 */
-            PromiseCapability<?> promiseCapability = reaction.getCapabilities();
-            /* steps 3-7 */
-            if (reaction.getType() == PromiseReaction.Type.Identity) {
-                /* steps 4, 8 */
-                promiseCapability.getResolve().call(cx, UNDEFINED, argument);
-            } else if (reaction.getType() == PromiseReaction.Type.Thrower) {
-                /* steps 5, 7 */
-                promiseCapability.getReject().call(cx, UNDEFINED, argument);
+            PromiseCapability<?> promiseCapability = reaction.getCapability();
+            /* step 3 */
+            PromiseReaction.Type type = reaction.getType();
+            /* step 4 */
+            Callable handler = reaction.getHandler();
+            /* steps 5-8 */
+            if (handler == null) {
+                if (type == PromiseReaction.Type.Fulfill) {
+                    /* steps 5.a, 8 */
+                    promiseCapability.getResolve().call(cx, UNDEFINED, argument);
+                } else {
+                    assert type == PromiseReaction.Type.Reject;
+                    /* steps 5.b, 7 */
+                    promiseCapability.getReject().call(cx, UNDEFINED, argument);
+                }
             } else {
-                /* step 3 */
-                Callable handler = reaction.getHandler();
                 /* steps 6-7 */
                 Object handlerResult;
                 try {
-                    handlerResult = handler.call(cx, UNDEFINED, argument);
+                    ZoneObject zone = reaction.getZone();
+                    if (zone == null) {
+                        handlerResult = handler.call(cx, UNDEFINED, argument);
+                    } else {
+                        handlerResult = CallInZone(cx, zone, handler, UNDEFINED, argument);
+                    }
                 } catch (ScriptException e) {
                     /* step 7 */
                     promiseCapability.getReject().call(cx, UNDEFINED, e.getValue());
                     return;
                 }
-                /* steps 8-9 */
+                /* step 8 */
                 promiseCapability.getResolve().call(cx, UNDEFINED, handlerResult);
             }
+            /* step 9 (return) */
         }
+    }
+
+    /**
+     * PromiseResolve ( C, x )
+     * 
+     * @param cx
+     *            the execution context
+     * @param x
+     *            the resolved value
+     * @return the new promise object
+     */
+    public static PromiseObject BuiltinPromiseResolve(ExecutionContext cx, Object x) {
+        /* step 1 (implicit) */
+        /* step 2 */
+        PromiseCapability<PromiseObject> promiseCapability = PromiseBuiltinCapability(cx);
+        /* step 3 */
+        promiseCapability.getResolve().call(cx, UNDEFINED, x);
+        /* step 4 */
+        return promiseCapability.getPromise();
     }
 
     /**
@@ -459,14 +454,13 @@ public final class PromiseAbstractOperations {
      * <p>
      * 25.4.2.2 PromiseResolveThenableJob ( promiseToResolve, thenable, then )
      */
-    public static final class PromiseResolveThenableTask implements Task {
+    public static final class PromiseResolveThenableJob implements Job {
         private final Realm realm;
         private final PromiseObject promise;
         private final ScriptObject thenable;
         private final Callable then;
 
-        public PromiseResolveThenableTask(Realm realm, PromiseObject promise,
-                ScriptObject thenable, Callable then) {
+        public PromiseResolveThenableJob(Realm realm, PromiseObject promise, ScriptObject thenable, Callable then) {
             this.realm = realm;
             this.promise = promise;
             this.thenable = thenable;
@@ -481,8 +475,7 @@ public final class PromiseAbstractOperations {
             /* steps 2-4 */
             try {
                 /* step 2 */
-                then.call(cx, thenable, resolvingFunctions.getResolve(),
-                        resolvingFunctions.getReject());
+                then.call(cx, thenable, resolvingFunctions.getResolve(), resolvingFunctions.getReject());
             } catch (ScriptException e) {
                 /* step 3 */
                 resolvingFunctions.getReject().call(cx, UNDEFINED, e.getValue());
@@ -515,11 +508,8 @@ public final class PromiseAbstractOperations {
      * @return the new promise object
      */
     public static PromiseObject PromiseOf(ExecutionContext cx, Object value) {
-        /* steps 1-2 */
         PromiseCapability<PromiseObject> capability = PromiseBuiltinCapability(cx);
-        /* steps 3-4 */
         capability.getResolve().call(cx, UNDEFINED, value);
-        /* step 5 */
         return capability.getPromise();
     }
 
@@ -533,11 +523,8 @@ public final class PromiseAbstractOperations {
      * @return the new promise object
      */
     public static PromiseObject PromiseOf(ExecutionContext cx, ScriptException e) {
-        /* steps 1-2 */
         PromiseCapability<PromiseObject> capability = PromiseBuiltinCapability(cx);
-        /* steps 3-4 */
         capability.getReject().call(cx, UNDEFINED, e.getValue());
-        /* step 5 */
         return capability.getPromise();
     }
 }

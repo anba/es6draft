@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -17,7 +17,6 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.configuration.Configuration;
 import org.hamcrest.Matchers;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Rule;
@@ -29,15 +28,15 @@ import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
 import org.junit.runners.Parameterized.UseParametersRunnerFactory;
 
-import com.github.anba.es6draft.TestGlobalObject;
 import com.github.anba.es6draft.runtime.extensions.timer.Timers;
 import com.github.anba.es6draft.runtime.internal.UnhandledRejectionException;
 import com.github.anba.es6draft.util.Parallelized;
 import com.github.anba.es6draft.util.ParameterizedRunnerFactory;
 import com.github.anba.es6draft.util.SystemConsole;
 import com.github.anba.es6draft.util.TestConfiguration;
-import com.github.anba.es6draft.util.TestGlobals;
 import com.github.anba.es6draft.util.TestInfo;
+import com.github.anba.es6draft.util.TestRealm;
+import com.github.anba.es6draft.util.TestRealms;
 import com.github.anba.es6draft.util.rules.ExceptionHandlers.ScriptExceptionHandler;
 import com.github.anba.es6draft.util.rules.ExceptionHandlers.StandardErrorHandler;
 
@@ -56,8 +55,7 @@ public final class UnhandledRejectionTest {
     }
 
     @ClassRule
-    public static TestGlobals<TestGlobalObject, TestInfo> globals = new TestGlobals<>(configuration,
-            TestGlobalObject::new);
+    public static TestRealms<TestInfo> realms = new TestRealms<>(configuration, PromiseTestRealmData::new);
 
     @Rule
     public Timeout maxTime = new Timeout(120, TimeUnit.SECONDS);
@@ -84,7 +82,9 @@ public final class UnhandledRejectionTest {
         }
     }
 
-    private TestGlobalObject global;
+    @Rule
+    public TestRealm<TestInfo> realm = new TestRealm<>(realms);
+
     private Timers timers;
 
     @SuppressWarnings("serial")
@@ -95,9 +95,9 @@ public final class UnhandledRejectionTest {
     public void setUp() throws Throwable {
         assumeTrue("Test disabled", test.isEnabled());
 
-        global = globals.newGlobal(new SystemConsole(), test);
-        exceptionHandler.setExecutionContext(global.getRealm().defaultContext());
-        timers = global.createGlobalProperties(new Timers(), Timers.class);
+        realm.initialize(new SystemConsole(), test);
+        exceptionHandler.setExecutionContext(realm.get().defaultContext());
+        timers = realm.get().createGlobalProperties(new Timers(), Timers.class);
 
         if (test.negative) {
             expected.expect(Matchers.either(Matchers.instanceOf(UnhandledRejectionException.class))
@@ -108,18 +108,9 @@ public final class UnhandledRejectionTest {
         }
     }
 
-    @After
-    public void tearDown() throws InterruptedException {
-        globals.release(global);
-    }
-
     @Test
     public void runTest() throws Throwable {
-        // Evaluate actual test-script
-        global.eval(test.getScript(), test.toFile());
-
-        // Wait for pending tasks to finish
-        global.getRealm().getWorld().runEventLoop(timers);
+        realm.execute(test, timers);
 
         // FIXME: Missing unhandled rejection exceptions need to be soft instead of hard failures.
         if (test.negative) {

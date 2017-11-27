@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -47,15 +47,6 @@ public interface Callable extends ScriptObject {
      *             any error thrown by the underlying method implementation
      */
     Object tailCall(ExecutionContext callerContext, Object thisValue, Object... args) throws Throwable;
-
-    /**
-     * Returns a copy of this function object with the same internal methods and internal slots.
-     * 
-     * @param cx
-     *            the execution context
-     * @return the new function object
-     */
-    Callable clone(ExecutionContext cx); // TODO: Function.p.toMethod was removed, remove clone, too?
 
     /**
      * Returns the function's realm component.

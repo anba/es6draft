@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -10,6 +10,7 @@ import java.util.HashSet;
 
 import com.github.anba.es6draft.Script;
 import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
+import com.github.anba.es6draft.runtime.internal.Source;
 
 /**
  * Base class for compiled scripts.
@@ -17,13 +18,13 @@ import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
 public class CompiledScript extends CompiledObject implements Script {
     private HashSet<Integer> blockFunctions;
 
-    protected CompiledScript(RuntimeInfo.ScriptBody scriptBody) {
-        super(scriptBody);
+    protected CompiledScript(Source source, RuntimeInfo.ScriptBody scriptBody) {
+        super(source, scriptBody);
     }
 
     @Override
     public final RuntimeInfo.ScriptBody getScriptBody() {
-        return (RuntimeInfo.ScriptBody) getSourceObject();
+        return (RuntimeInfo.ScriptBody) getRuntimeObject();
     }
 
     /**
@@ -34,7 +35,7 @@ public class CompiledScript extends CompiledObject implements Script {
      * @return {@code true} if script block function
      */
     public final boolean isLegacyBlockFunction(int functionId) {
-        return blockFunctions != null ? blockFunctions.contains(functionId) : false;
+        return blockFunctions != null && blockFunctions.contains(functionId);
     }
 
     /**

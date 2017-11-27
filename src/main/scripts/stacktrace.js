@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -7,14 +7,11 @@
 (function Stacktrace() {
 "use strict";
 
-const global = %GlobalTemplate();
+const Object = %Intrinsic("Object");
+const Math = %Intrinsic("Math");
+const Error = %Intrinsic("Error");
 
-const {
-  Object, Math, Error,
-} = global;
-
-const Object_defineProperty = Object.defineProperty,
-      Object_setPrototypeOf = Object.setPrototypeOf,
+const Object_setPrototypeOf = Object.setPrototypeOf,
       Error_prototype_toString = Error.prototype.toString,
       Math_floor = Math.floor,
       Math_min = Math.min;
@@ -64,12 +61,11 @@ const stackFrameProto = {
   },
 };
 
-const getStackTrace = Object.getOwnPropertyDescriptor(Error.prototype, "stackTrace").get;
+const getStackTrace = %LookupGetter(Error.prototype, "stackTrace");
 var prepareStackTraceLock = false;
 
-delete Error.prototype.stack;
-Object.defineProperty(Error.prototype, "stack", {
-  get() {
+%CreateMethodProperties(Error.prototype, {
+  get stack() {
     var limit = Error.stackTraceLimit;
     if (typeof limit != 'number') {
       return;
@@ -82,15 +78,15 @@ Object.defineProperty(Error.prototype, "stack", {
     var prepare = Error.prepareStackTrace;
     if (!prepareStackTraceLock && typeof prepare == 'function') {
       prepareStackTraceLock = true;
-      // Hide additional frames from user.
-      if (len < stackTrace.length) {
-        stackTrace.length = len;
-      }
-      // Add stack trace API methods.
-      for (var i = 0; i < stackTrace.length; ++i) {
-        %CallFunction(Object_setPrototypeOf, null, stackTrace[i], stackFrameProto);
-      }
       try {
+        // Hide additional frames from user.
+        if (len < stackTrace.length) {
+          stackTrace.length = len;
+        }
+        // Add stack trace API methods.
+        for (var i = 0; i < len; ++i) {
+          %CallFunction(Object_setPrototypeOf, null, stackTrace[i], stackFrameProto);
+        }
         return %CallFunction(prepare, Error, this, stackTrace);
       } finally {
         prepareStackTraceLock = false;
@@ -103,12 +99,9 @@ Object.defineProperty(Error.prototype, "stack", {
     }
     return out;
   },
-  set(v) {
-    Object_defineProperty(this, "stack", {
-      __proto__: null, value: v, writable: true, enumerable: true, configurable: true
-    });
-  },
-  enumerable: false, configurable: true
+  set stack(v) {
+    %CreateDataPropertyOrThrow(this, "stack", v);
+  }
 });
 
 })();

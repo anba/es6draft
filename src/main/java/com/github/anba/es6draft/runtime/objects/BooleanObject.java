@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -47,9 +47,8 @@ public class BooleanObject extends OrdinaryObject {
      *            the prototype object
      */
     public BooleanObject(Realm realm, boolean booleanData, ScriptObject prototype) {
-        super(realm);
+        super(realm, prototype);
         this.booleanData = booleanData;
-        setPrototype(prototype);
     }
 
     /**
@@ -57,13 +56,18 @@ public class BooleanObject extends OrdinaryObject {
      * 
      * @return the boolean value
      */
-    public boolean getBooleanData() {
+    public final boolean getBooleanData() {
         return booleanData;
     }
 
     @Override
-    public String className() {
+    public final String className() {
         return "Boolean";
+    }
+
+    @Override
+    public String toString() {
+        return String.format("%s, booleanData=%b", super.toString(), booleanData);
     }
 
     /**
@@ -76,8 +80,7 @@ public class BooleanObject extends OrdinaryObject {
      * @return the new boolean object
      */
     public static BooleanObject BooleanCreate(ExecutionContext cx, boolean booleanData) {
-        return new BooleanObject(cx.getRealm(), booleanData,
-                cx.getIntrinsic(Intrinsics.BooleanPrototype));
+        return new BooleanObject(cx.getRealm(), booleanData, cx.getIntrinsic(Intrinsics.BooleanPrototype));
     }
 
     /**
@@ -91,8 +94,7 @@ public class BooleanObject extends OrdinaryObject {
      *            the prototype object
      * @return the new boolean object
      */
-    public static BooleanObject BooleanCreate(ExecutionContext cx, boolean booleanData,
-            ScriptObject prototype) {
+    public static BooleanObject BooleanCreate(ExecutionContext cx, boolean booleanData, ScriptObject prototype) {
         return new BooleanObject(cx.getRealm(), booleanData, prototype);
     }
 }

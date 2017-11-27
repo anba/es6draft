@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -18,7 +18,7 @@ import org.hamcrest.Matchers;
 
 import com.github.anba.es6draft.compiler.CompilationException;
 import com.github.anba.es6draft.parser.ParserException;
-import com.github.anba.es6draft.repl.global.StopExecutionException;
+import com.github.anba.es6draft.repl.functions.StopExecutionException;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
 import com.github.anba.es6draft.util.TestAssertions;

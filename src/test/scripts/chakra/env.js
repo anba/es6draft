@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -54,7 +54,7 @@ WScript = {
     var expected = WScript.nextMessage(sep);
     if (expected === null) {
       var err = new Error(`Expected <EOF>, but got: '${actual}'`);
-      $async_enqueueTask(() => { throw err; });
+      $async_enqueueJob(() => { throw err; });
       return;
     }
     var lc = WScript.lineCount;
@@ -65,14 +65,14 @@ WScript = {
         if (expected.startsWith(nativeErrors[i])) {
           if (!actual.startsWith(nativeErrors[i])) {
             var err = new Error(`${lc}: Expected: '${expected}', but got: '${actual}'`);
-            $async_enqueueTask(() => { throw err; });
+            $async_enqueueJob(() => { throw err; });
           }
           return;
         }
       }
       // Report the error in the next event loop turn, otherwise it messes up the test framework.
       var err = new Error(`${lc} Expected: '${expected}', but got: '${actual}' `);
-      $async_enqueueTask(() => { throw err; });
+      $async_enqueueJob(() => { throw err; });
     }
   },
   Echo(...args) {

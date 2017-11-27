@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -7,7 +7,7 @@
 package com.github.anba.es6draft.runtime.objects.binary;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.SpeciesConstructor;
-import static com.github.anba.es6draft.runtime.AbstractOperations.ToInteger;
+import static com.github.anba.es6draft.runtime.AbstractOperations.ToNumber;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.objects.binary.ArrayBufferConstructor.CopyDataBlockBytes;
@@ -27,6 +27,7 @@ import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
+import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
@@ -59,22 +60,15 @@ public final class ArrayBufferPrototype extends OrdinaryObject implements Initia
     public enum Properties {
         ;
 
-        private static ArrayBufferObject thisArrayBufferObject(ExecutionContext cx, Object m) {
-            if (m instanceof ArrayBufferObject) {
-                return (ArrayBufferObject) m;
-            }
-            throw newTypeError(cx, Messages.Key.IncompatibleObject);
-        }
-
-        private static ArrayBufferObject thisArrayBufferObjectChecked(ExecutionContext cx, Object m) {
-            if (m instanceof ArrayBufferObject) {
-                ArrayBufferObject buffer = (ArrayBufferObject) m;
+        private static ArrayBufferObject thisArrayBufferObject(ExecutionContext cx, Object value, String method) {
+            if (value instanceof ArrayBufferObject) {
+                ArrayBufferObject buffer = (ArrayBufferObject) value;
                 if (IsDetachedBuffer(buffer)) {
                     throw newTypeError(cx, Messages.Key.BufferDetached);
                 }
                 return buffer;
             }
-            throw newTypeError(cx, Messages.Key.IncompatibleObject);
+            throw newTypeError(cx, Messages.Key.IncompatibleThis, method, Type.of(value).toString());
         }
 
         @Prototype
@@ -98,7 +92,7 @@ public final class ArrayBufferPrototype extends OrdinaryObject implements Initia
         @Accessor(name = "byteLength", type = Accessor.Type.Getter)
         public static Object byteLength(ExecutionContext cx, Object thisValue) {
             /* steps 1-4 */
-            ArrayBufferObject obj = thisArrayBufferObjectChecked(cx, thisValue);
+            ArrayBufferObject obj = thisArrayBufferObject(cx, thisValue, "ArrayBuffer.prototype.byteLength");
             /* steps 5-6 */
             return obj.getByteLength();
         }
@@ -119,50 +113,52 @@ public final class ArrayBufferPrototype extends OrdinaryObject implements Initia
         @Function(name = "slice", arity = 2)
         public static Object slice(ExecutionContext cx, Object thisValue, Object start, Object end) {
             /* steps 1-4 */
-            ArrayBufferObject obj = thisArrayBufferObjectChecked(cx, thisValue);
+            ArrayBufferObject obj = thisArrayBufferObject(cx, thisValue, "ArrayBuffer.prototype.slice");
             /* step 5 */
             long len = obj.getByteLength();
-            /* steps 6-7 */
-            double relativeStart = ToInteger(cx, start);
+            /* step 6 */
+            long relativeStart = (long) ToNumber(cx, start); // ToInteger
+            /* step 7 */
+            long first = (relativeStart < 0 ? Math.max((len + relativeStart), 0) : Math.min(relativeStart, len));
             /* step 8 */
-            long first = (long) (relativeStart < 0 ? Math.max((len + relativeStart), 0) : Math.min(
-                    relativeStart, len));
-            /* steps 9-10 */
-            double relativeEnd = Type.isUndefined(end) ? len : ToInteger(cx, end);
-            /* step 11 */
-            long _final = (long) (relativeEnd < 0 ? Math.max((len + relativeEnd), 0) : Math.min(
-                    relativeEnd, len));
-            /* step 12 */
+            long relativeEnd = Type.isUndefined(end) ? len : (long) ToNumber(cx, end); // ToInteger
+            /* step 9 */
+            long _final = (relativeEnd < 0 ? Math.max((len + relativeEnd), 0) : Math.min(relativeEnd, len));
+            /* step 10 */
             long newLen = Math.max(_final - first, 0);
-            /* steps 13-14 */
+            /* step 11 */
             Constructor ctor = SpeciesConstructor(cx, obj, Intrinsics.ArrayBuffer);
-            /* steps 15-17 */
-            ArrayBufferObject _new = thisArrayBufferObject(cx, ctor.construct(cx, ctor, newLen));
-            /* step 18 */
+            /* step 12 */
+            ScriptObject newObj = ctor.construct(cx, newLen);
+            /* step 13 */
+            if (!(newObj instanceof ArrayBufferObject)) {
+                throw newTypeError(cx, Messages.Key.IncompatibleNewObject, "ArrayBuffer.prototype.slice",
+                        Type.of(newObj).toString());
+            }
+            ArrayBufferObject _new = (ArrayBufferObject) newObj;
+            /* step 14 */
             if (IsDetachedBuffer(_new)) {
                 throw newTypeError(cx, Messages.Key.BufferDetached);
             }
-            /* step 19 */
+            /* step 15 */
             if (_new == obj) {
-                // TODO: better error message
                 throw newTypeError(cx, Messages.Key.BufferInvalid);
             }
-            /* step 20 */
+            /* step 16 */
             if (_new.getByteLength() < newLen) {
-                // FIXME: spec bug - throw RangeError instead of TypeError?
                 throw newTypeError(cx, Messages.Key.InvalidBufferSize);
             }
-            /* steps 21-22 */
+            /* steps 17-18 */
             if (IsDetachedBuffer(obj)) {
                 throw newTypeError(cx, Messages.Key.BufferDetached);
             }
-            /* step 23 */
+            /* step 19 */
             ByteBuffer fromBuf = obj.getData();
-            /* step 24 */
+            /* step 20 */
             ByteBuffer toBuf = _new.getData();
-            /* step 25 */
+            /* step 21 */
             CopyDataBlockBytes(toBuf, 0, fromBuf, first, newLen);
-            /* step 26 */
+            /* step 22 */
             return _new;
         }
 

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -16,8 +16,7 @@ public final class YieldExpression extends Expression {
     private final boolean delegatedYield;
     private final Expression expression;
 
-    public YieldExpression(long beginPosition, long endPosition, boolean delegatedYield,
-            Expression expression) {
+    public YieldExpression(long beginPosition, long endPosition, boolean delegatedYield, Expression expression) {
         super(beginPosition, endPosition);
         this.delegatedYield = delegatedYield;
         this.expression = expression;

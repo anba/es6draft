@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -17,8 +17,7 @@ public final class IfStatement extends Statement {
     private Statement then;
     private Statement otherwise;
 
-    public IfStatement(long beginPosition, long endPosition, Expression test, Statement then,
-            Statement otherwise) {
+    public IfStatement(long beginPosition, long endPosition, Expression test, Statement then, Statement otherwise) {
         super(beginPosition, endPosition);
         this.test = test;
         this.then = then;

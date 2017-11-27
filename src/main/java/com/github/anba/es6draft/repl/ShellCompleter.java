@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -98,11 +98,7 @@ final class ShellCompleter implements ShellConsole.Completer {
     private LinkedHashSet<String> getPropertyNames(ExecutionContext cx, ScriptObject object) {
         LinkedHashSet<String> names = new LinkedHashSet<>();
         for (; object != null; object = object.getPrototypeOf(cx)) {
-            for (Object key : object.ownPropertyKeys(cx)) {
-                if (key instanceof String) {
-                    names.add((String) key);
-                }
-            }
+            names.addAll(object.ownPropertyNames(cx));
         }
         return names;
     }

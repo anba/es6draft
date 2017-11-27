@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -1254,11 +1254,13 @@ public final class SIMD extends OrdinaryObject implements Initializable {
      *            the read index
      * @param descriptor
      *            the SIMD type descriptor
+     * @param method
+     *            the method name
      * @return the new SIMD value
      */
     public static SIMDValue SIMDLoadFromTypedArray(ExecutionContext cx, Object tarray, Object index,
-            SIMDType descriptor) {
-        return SIMDLoadFromTypedArray(cx, tarray, index, descriptor, descriptor.getVectorLength());
+            SIMDType descriptor, String method) {
+        return SIMDLoadFromTypedArray(cx, tarray, index, descriptor, descriptor.getVectorLength(), method);
     }
 
     /**
@@ -1276,14 +1278,17 @@ public final class SIMD extends OrdinaryObject implements Initializable {
      *            the SIMD type descriptor
      * @param length
      *            the read length
+     * @param method
+     *            the method name
      * @return the new SIMD value
      */
     public static SIMDValue SIMDLoadFromTypedArray(ExecutionContext cx, Object tarray, Object index,
-            SIMDType descriptor, int length) {
+            SIMDType descriptor, int length, String method) {
         /* step 1 */
         // FIXME: spec bug - missing type check Type(tarray) = Object
         if (!(tarray instanceof TypedArrayObject)) {
-            throw newTypeError(cx, Messages.Key.IncompatibleObject);
+            throw newTypeError(cx, Messages.Key.SIMDInvalidObject, descriptor.name() + method,
+                    Type.of(tarray).toString());
         }
         TypedArrayObject typedArray = (TypedArrayObject) tarray;
         /* step 2 */
@@ -1303,19 +1308,16 @@ public final class SIMD extends OrdinaryObject implements Initializable {
         if (numIndex != ToLength(numIndex)) {
             throw newTypeError(cx, Messages.Key.InvalidByteOffset);
         }
-        /* step 6 */
+        /* steps 6-7 */
         // FIXME: spec issue - should use typedArray.[[TypedArrayName]] and retrieve element size from table 49.
         // FIXME: spec issue - rename elementLength to elementSize to match ES2015.
-        // long elementLength = typedArray.getByteLength() / typedArray.getArrayLength();
-        long elementLength = typedArray.getElementType().size();
-        /* step 7 */
-        double byteIndex = numIndex * elementLength;
+        long byteIndex = typedArray.getElementType().toBytes((long) numIndex);
         /* step 8 */
-        if (byteIndex < 0 || byteIndex + descriptor.getElementSize() * length > typedArray.getByteLength()) {
+        if (byteIndex < 0 || byteIndex + (descriptor.getElementSize() * length) > typedArray.getByteLength()) {
             throw newRangeError(cx, Messages.Key.InvalidByteOffset);
         }
         /* step 9 */
-        return SIMDLoad(block, descriptor, (long) byteIndex, length);
+        return SIMDLoad(block, descriptor, byteIndex, length);
     }
 
     /**
@@ -1474,11 +1476,13 @@ public final class SIMD extends OrdinaryObject implements Initializable {
      *            the SIMD type descriptor
      * @param n
      *            the SIMD value
+     * @param method
+     *            the method name
      * @return the input SIMD value
      */
     public static SIMDValue SIMDStoreInTypedArray(ExecutionContext cx, Object tarray, Object index, SIMDType descriptor,
-            SIMDValue n) {
-        return SIMDStoreInTypedArray(cx, tarray, index, descriptor, n, descriptor.getVectorLength());
+            SIMDValue n, String method) {
+        return SIMDStoreInTypedArray(cx, tarray, index, descriptor, n, descriptor.getVectorLength(), method);
     }
 
     /**
@@ -1498,10 +1502,12 @@ public final class SIMD extends OrdinaryObject implements Initializable {
      *            the SIMD value
      * @param length
      *            the write length
+     * @param method
+     *            the method name
      * @return the input SIMD value
      */
     public static SIMDValue SIMDStoreInTypedArray(ExecutionContext cx, Object tarray, Object index, SIMDType descriptor,
-            SIMDValue n, int length) {
+            SIMDValue n, int length, String method) {
         /* step 1 */
         // FIXME: spec bug - incorrect variable name in spec
         if (n.getType() != descriptor) {
@@ -1511,7 +1517,8 @@ public final class SIMD extends OrdinaryObject implements Initializable {
         // FIXME: spec bug - missing type check Type(tarray) = Object
         // FIXME: spec bug - type check at wrong position
         if (!(tarray instanceof TypedArrayObject)) {
-            throw newTypeError(cx, Messages.Key.IncompatibleObject);
+            throw newTypeError(cx, Messages.Key.SIMDInvalidObject, descriptor.name() + method,
+                    Type.of(tarray).toString());
         }
         TypedArrayObject typedArray = (TypedArrayObject) tarray;
         /* step 2 */
@@ -1530,20 +1537,17 @@ public final class SIMD extends OrdinaryObject implements Initializable {
         if (numIndex != ToLength(numIndex)) {
             throw newTypeError(cx, Messages.Key.InvalidByteOffset);
         }
-        /* step 7 */
+        /* steps 7-8 */
         // FIXME: spec issue - should use typedArray.[[TypedArrayName]] and retrieve element size from table 49.
         // FIXME: spec issue - rename elementLength to elementSize to match ES2015.
-        // long elementLength = typedArray.getByteLength() / typedArray.getArrayLength();
-        long elementLength = typedArray.getElementType().size();
-        /* step 8 */
-        double byteIndex = numIndex * elementLength;
+        long byteIndex = typedArray.getElementType().toBytes((long) numIndex);
         /* step 9 */
-        if (byteIndex < 0 || byteIndex + descriptor.getElementSize() * length > typedArray.getByteLength()) {
+        if (byteIndex < 0 || byteIndex + (descriptor.getElementSize() * length) > typedArray.getByteLength()) {
             throw newRangeError(cx, Messages.Key.InvalidByteOffset);
         }
         /* step 10 */
         // FIXME: spec bug - wrong variable name `simd` -> `n`
-        SIMDStore(block, descriptor, (long) byteIndex, n, length);
+        SIMDStore(block, descriptor, byteIndex, n, length);
         /* step 11 */
         return n;
     }

@@ -1,19 +1,15 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
  */
 package com.github.anba.es6draft.runtime.types.builtins;
 
-import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
-
 import com.github.anba.es6draft.runtime.DeclarativeEnvironmentRecord;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
-import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
@@ -22,24 +18,27 @@ import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 
 /**
  * <h1>9 Ordinary and Exotic Objects Behaviours</h1><br>
- * <h2>9.4 Built-in Exotic Object Internal Methods and Data Fields</h2>
+ * <h2>9.4 Built-in Exotic Object Internal Methods and Slots</h2>
  * <ul>
  * <li>9.4.4 Arguments Exotic Objects
  * </ul>
  */
 public final class ArgumentsObject extends OrdinaryObject {
     /** [[ParameterMap]] */
-    private ParameterMap parameterMap = null;
-    private boolean hasIndexedAccessors = false;
+    private final ParameterMap parameterMap;
+    private boolean hasIndexedAccessors;
 
     /**
      * Constructs a new Arguments object.
      * 
      * @param realm
      *            the realm object
+     * @param parameterMap
+     *            the parameter map
      */
-    public ArgumentsObject(Realm realm) {
-        super(realm);
+    public ArgumentsObject(Realm realm, ParameterMap parameterMap) {
+        super(realm, realm.getIntrinsic(Intrinsics.ObjectPrototype));
+        this.parameterMap = parameterMap;
     }
 
     /**
@@ -53,10 +52,6 @@ public final class ArgumentsObject extends OrdinaryObject {
 
     private boolean isMapped(long propertyKey) {
         return parameterMap != null && parameterMap.hasOwnProperty(propertyKey);
-    }
-
-    private static boolean isStrictFunction(Object v) {
-        return v instanceof FunctionObject && ((FunctionObject) v).isStrict();
     }
 
     @Override
@@ -81,7 +76,7 @@ public final class ArgumentsObject extends OrdinaryObject {
      * 9.4.4.1 [[GetOwnProperty]] (P)
      */
     @Override
-    protected Property getProperty(ExecutionContext cx, long propertyKey) {
+    public Property getOwnProperty(ExecutionContext cx, long propertyKey) {
         /* step 1 (not applicable) */
         /* step 2 */
         Property desc = ordinaryGetOwnProperty(propertyKey);
@@ -91,9 +86,9 @@ public final class ArgumentsObject extends OrdinaryObject {
         }
         /* step 4 */
         ParameterMap map = this.parameterMap;
-        /* steps 5-6 */
+        /* step 5 */
         boolean isMapped = map != null && map.hasOwnProperty(propertyKey);
-        /* step 7 */
+        /* step 6 */
         if (isMapped) {
             // FIXME: spec issue - maybe add assertion: IsDataDescriptor(desc)?
             assert desc.isDataDescriptor();
@@ -101,30 +96,7 @@ public final class ArgumentsObject extends OrdinaryObject {
             d.setValue(map.get(propertyKey));
             desc = d.toProperty();
         }
-        /* step 8 (not applicable) */
-        /* step 9 */
-        return desc;
-    }
-
-    /**
-     * 9.4.4.1 [[GetOwnProperty]] (P)
-     */
-    @Override
-    protected Property getProperty(ExecutionContext cx, String propertyKey) {
-        /* step 1 (not applicable) */
-        /* step 2 */
-        Property desc = ordinaryGetOwnProperty(propertyKey);
-        /* step 3 */
-        if (desc == null) {
-            return desc;
-        }
-        /* steps 4-7 (not applicable) */
-        /* step 8 */
-        if (desc.isDataDescriptor() && "caller".equals(propertyKey) && isStrictFunction(desc.getValue())
-                && cx.getRealm().isEnabled(CompatibilityOption.ArgumentsCaller)) {
-            throw newTypeError(cx, Messages.Key.StrictModePoisonPill);
-        }
-        /* step 9 */
+        /* step 7 */
         return desc;
     }
 
@@ -132,7 +104,7 @@ public final class ArgumentsObject extends OrdinaryObject {
      * 9.4.4.2 [[DefineOwnProperty]] (P, Desc)
      */
     @Override
-    protected boolean defineProperty(ExecutionContext cx, long propertyKey, PropertyDescriptor desc) {
+    public boolean defineOwnProperty(ExecutionContext cx, long propertyKey, PropertyDescriptor desc) {
         /* step 1 (not applicable) */
         /* step 2 */
         ParameterMap map = this.parameterMap;
@@ -176,16 +148,17 @@ public final class ArgumentsObject extends OrdinaryObject {
      * 9.4.4.3 [[Get]] (P, Receiver)
      */
     @Override
-    protected Object getValue(ExecutionContext cx, long propertyKey, Object receiver) {
-        /* steps 1-2 */
+    public Object get(ExecutionContext cx, long propertyKey, Object receiver) {
+        /* step 1 (not applicable) */
+        /* step 2 */
         ParameterMap map = this.parameterMap;
-        /* steps 3-4 */
+        /* step 3 */
         boolean isMapped = map != null && map.hasOwnProperty(propertyKey);
-        /* step 5 */
+        /* step 4 */
         if (!isMapped) {
-            return super.getValue(cx, propertyKey, receiver);
+            return ordinaryGet(cx, propertyKey, receiver);
         }
-        /* step 6 */
+        /* step 5 */
         return map.get(propertyKey);
     }
 
@@ -193,8 +166,9 @@ public final class ArgumentsObject extends OrdinaryObject {
      * 9.4.4.4 [[Set]] ( P, V, Receiver)
      */
     @Override
-    protected boolean setValue(ExecutionContext cx, long propertyKey, Object value, Object receiver) {
-        /* steps 1, 3.a */
+    public boolean set(ExecutionContext cx, long propertyKey, Object value, Object receiver) {
+        /* step 1 (not applicable) */
+        /* step 3.a */
         ParameterMap map = this.parameterMap;
         /* steps 2-3 */
         boolean isMapped;
@@ -209,42 +183,30 @@ public final class ArgumentsObject extends OrdinaryObject {
         if (isMapped) {
             map.put(propertyKey, value);
 
-            // Mapped parameter implies own, writable property on the arguments object. It is not necessary to update
-            // the underlying property in this case!
-            // 1. Ordinary [[Set]] calls [[DefineOwnProperty]].
-            // 2. [[DefineOwnProperty]] for argument objects calls OrdinaryDefineOwnProperty.
-            // 3. OrdinaryDefineOwnProperty calls [[GetOwnProperty]].
-            // 4. [[GetOwnProperty]] for argument objects calls OrdinaryGetOwnProperty, but updates [[Value]] from map.
-            // 5. OrdinaryDefineOwnProperty calls ValidateAndApplyPropertyDescriptor.
-            // 6. ValidateAndApplyPropertyDescriptor returns in step 4 if no property attribute changes are detected.
+            // Skip updating the underlying property, because it's not observable.
             return true;
         }
         /* step 5 */
-        return super.setValue(cx, propertyKey, value, receiver);
-    }
-
-    @Override
-    protected boolean setPropertyValue(ExecutionContext cx, long propertyKey, Object value, Property current) {
-        assert !isMapped(propertyKey);
-        return super.setPropertyValue(cx, propertyKey, value, current);
+        return ordinarySet(cx, propertyKey, value, receiver);
     }
 
     /**
      * 9.4.4.5 [[Delete]] (P)
      */
     @Override
-    protected boolean deleteProperty(ExecutionContext cx, long propertyKey) {
-        /* step 1 */
+    public boolean delete(ExecutionContext cx, long propertyKey) {
+        /* step 1 (not applicable) */
+        /* step 2 */
         ParameterMap map = this.parameterMap;
-        /* steps 2-3 */
+        /* step 3 */
         boolean isMapped = map != null && map.hasOwnProperty(propertyKey);
-        /* steps 4-5 */
-        boolean result = super.deleteProperty(cx, propertyKey);
-        /* step 6 */
+        /* step 4 */
+        boolean result = ordinaryDelete(cx, propertyKey);
+        /* step 5 */
         if (result && isMapped) {
             map.delete(propertyKey);
         }
-        /* step 7 */
+        /* step 6 */
         return result;
     }
 
@@ -263,8 +225,7 @@ public final class ArgumentsObject extends OrdinaryObject {
         /* step 1 */
         int len = argumentsList.length;
         /* steps 2-3 */
-        ArgumentsObject obj = new ArgumentsObject(cx.getRealm());
-        obj.setPrototype(cx.getIntrinsic(Intrinsics.ObjectPrototype));
+        ArgumentsObject obj = new ArgumentsObject(cx.getRealm(), null);
         /* step 4 */
         obj.infallibleDefineOwnProperty("length", new Property(len, true, false, true));
         /* steps 5-6 */
@@ -278,9 +239,6 @@ public final class ArgumentsObject extends OrdinaryObject {
         /* step 8 */
         obj.infallibleDefineOwnProperty("callee", new Property(thrower, thrower, false, false));
         /* step 9 */
-        obj.infallibleDefineOwnProperty("caller", new Property(thrower, thrower, false, false));
-        /* step 10 (not applicable) */
-        /* step 11 */
         return obj;
     }
 
@@ -338,29 +296,27 @@ public final class ArgumentsObject extends OrdinaryObject {
      *            the parameter map
      * @return the mapped arguments object
      */
-    static ArgumentsObject CreateMappedArgumentsObject(ExecutionContext cx, FunctionObject func, Object[] argumentsList,
-            ParameterMap map) {
+    private static ArgumentsObject CreateMappedArgumentsObject(ExecutionContext cx, FunctionObject func,
+            Object[] argumentsList, ParameterMap map) {
         /* step 1 (not applicable) */
         /* step 2 */
         int len = argumentsList.length;
-        /* steps 3-11 */
-        ArgumentsObject obj = new ArgumentsObject(cx.getRealm());
-        obj.setPrototype(cx.getIntrinsic(Intrinsics.ObjectPrototype));
-        /* steps 12-13 (not applicable) */
-        /* steps 14-15 */
+        /* steps 3-13 */
+        ArgumentsObject obj = new ArgumentsObject(cx.getRealm(), map);
+        /* steps 14-15 (not applicable) */
+        /* steps 16-17 */
         for (int index = 0; index < len; ++index) {
             obj.setIndexed(index, argumentsList[index]);
         }
-        /* step 16 */
+        /* step 18 */
         obj.infallibleDefineOwnProperty("length", new Property(len, true, false, true));
-        /* steps 17-21 */
-        obj.parameterMap = map;
+        /* steps 19-21 (not applicable) */
         /* step 22 */
         obj.infallibleDefineOwnProperty(BuiltinSymbol.iterator.get(),
                 new Property(cx.getIntrinsic(Intrinsics.ArrayProto_values), true, false, true));
-        /* steps 23-24 */
+        /* step 23 */
         obj.infallibleDefineOwnProperty("callee", new Property(func, true, false, true));
-        /* step 25 */
+        /* step 24 */
         return obj;
     }
 }

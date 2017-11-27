@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -24,12 +24,11 @@ import com.github.anba.es6draft.compiler.assembler.Variable;
 final class ArrayComprehensionGenerator extends ComprehensionGenerator {
     private static final class Methods {
         // class: AbstractOperations
-        static final MethodName AbstractOperations_CreateArrayFromList = MethodName.findStatic(
-                Types.AbstractOperations, "CreateArrayFromList",
-                Type.methodType(Types.ArrayObject, Types.ExecutionContext, Types.List));
+        static final MethodName AbstractOperations_CreateArrayFromList = MethodName.findStatic(Types.AbstractOperations,
+                "CreateArrayFromList", Type.methodType(Types.ArrayObject, Types.ExecutionContext, Types.List));
 
         // class: ArrayList
-        static final MethodName ArrayList_init = MethodName.findConstructor(Types.ArrayList,
+        static final MethodName ArrayList_new = MethodName.findConstructor(Types.ArrayList,
                 Type.methodType(Type.VOID_TYPE));
 
         static final MethodName ArrayList_add = MethodName.findVirtual(Types.ArrayList, "add",
@@ -51,7 +50,7 @@ final class ArrayComprehensionGenerator extends ComprehensionGenerator {
         /* step 1 */
         mv.enterVariableScope();
         generator.result = mv.newVariable("result", ArrayList.class).uncheckedCast();
-        mv.anew(Types.ArrayList, Methods.ArrayList_init);
+        mv.anew(Methods.ArrayList_new);
         mv.store(generator.result);
 
         /* steps 2-3 */

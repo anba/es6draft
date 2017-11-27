@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -19,6 +19,15 @@ public final class BooleanLiteral extends ValueLiteral<Boolean> {
     public BooleanLiteral(long beginPosition, long endPosition, boolean value) {
         super(beginPosition, endPosition);
         this.value = value;
+    }
+
+    /**
+     * Returns the boolean literal's {@code boolean} value.
+     * 
+     * @return the boolean value
+     */
+    public boolean booleanValue() {
+        return value;
     }
 
     @Override

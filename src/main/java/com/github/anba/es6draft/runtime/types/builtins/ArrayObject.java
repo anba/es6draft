@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -11,7 +11,6 @@ import static com.github.anba.es6draft.runtime.internal.Errors.newRangeError;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Spliterator;
@@ -31,7 +30,7 @@ import com.github.anba.es6draft.runtime.types.Type;
 
 /**
  * <h1>9 Ordinary and Exotic Objects Behaviours</h1><br>
- * <h2>9.4 Built-in Exotic Object Internal Methods and Data Fields</h2>
+ * <h2>9.4 Built-in Exotic Object Internal Methods and Slots</h2>
  * <ul>
  * <li>9.4.2 Array Exotic Objects
  * </ul>
@@ -49,6 +48,21 @@ public class ArrayObject extends OrdinaryObject {
      */
     public ArrayObject(Realm realm) {
         super(realm);
+    }
+
+    /**
+     * Constructs a new Array object.
+     * 
+     * @param realm
+     *            the realm object
+     * @param length
+     *            the initial length
+     * @param prototype
+     *            the prototype object
+     */
+    protected ArrayObject(Realm realm, long length, ScriptObject prototype) {
+        super(realm, prototype);
+        this.length = length;
     }
 
     /**
@@ -95,7 +109,7 @@ public class ArrayObject extends OrdinaryObject {
     }
 
     @Override
-    public String className() {
+    public final String className() {
         return "Array";
     }
 
@@ -123,19 +137,16 @@ public class ArrayObject extends OrdinaryObject {
             return true;
         }
         assert desc.isDataDescriptor();
-        if (!lengthWritable && (desc.isWritable() || (desc.hasValue() && newLength != length))) {
+        if (!lengthWritable && (desc.isWritable() || newLength != length)) {
             return false;
         }
         return true;
     }
 
     private boolean defineLength(PropertyDescriptor desc, long newLength) {
-        assert desc.hasValue() ? newLength >= 0 : newLength < 0;
         boolean succeeded = isCompatibleLengthProperty(desc, newLength);
         if (succeeded) {
-            if (newLength >= 0) {
-                length = newLength;
-            }
+            length = newLength;
             if (desc.hasWritable()) {
                 lengthWritable = desc.isWritable();
             }
@@ -153,23 +164,7 @@ public class ArrayObject extends OrdinaryObject {
     }
 
     @Override
-    protected final boolean setPropertyValue(ExecutionContext cx, String propertyKey, Object value, Property current) {
-        if ("length".equals(propertyKey)) {
-            return ArraySetLength(cx, this, value);
-        }
-        return super.setPropertyValue(cx, propertyKey, value, current);
-    }
-
-    @Override
-    protected final boolean has(ExecutionContext cx, String propertyKey) {
-        if ("length".equals(propertyKey)) {
-            return true;
-        }
-        return super.has(cx, propertyKey);
-    }
-
-    @Override
-    protected final boolean hasOwnProperty(ExecutionContext cx, String propertyKey) {
+    public final boolean hasOwnProperty(ExecutionContext cx, String propertyKey) {
         if ("length".equals(propertyKey)) {
             return true;
         }
@@ -177,65 +172,66 @@ public class ArrayObject extends OrdinaryObject {
     }
 
     @Override
-    protected final Property getProperty(ExecutionContext cx, String propertyKey) {
+    public final Property getOwnProperty(ExecutionContext cx, String propertyKey) {
         if ("length".equals(propertyKey)) {
             return new Property(length, lengthWritable, false, false);
         }
-        return super.getProperty(cx, propertyKey);
+        return super.getOwnProperty(cx, propertyKey);
     }
 
     @Override
-    protected final boolean deleteProperty(ExecutionContext cx, String propertyKey) {
+    public final Object get(ExecutionContext cx, String propertyKey, Object receiver) {
         if ("length".equals(propertyKey)) {
-            return false;
+            return length;
         }
-        return super.deleteProperty(cx, propertyKey);
+        return super.get(cx, propertyKey, receiver);
     }
 
     @Override
-    protected final List<Object> getOwnPropertyKeys(ExecutionContext cx) {
-        int totalSize = countProperties(true) + 1; // + 1 for length property
-        /* step 1 */
-        ArrayList<Object> ownKeys = new ArrayList<>(totalSize);
-        /* step 2 */
-        appendIndexedProperties(ownKeys);
-        /* step 3 */
-        ownKeys.add("length");
-        appendProperties(ownKeys);
-        /* step 4 */
-        appendSymbolProperties(ownKeys);
-        /* step 5 */
-        return ownKeys;
+    public final boolean set(ExecutionContext cx, String propertyKey, Object value, Object receiver) {
+        if (this == receiver && "length".equals(propertyKey)) {
+            if (!lengthWritable) {
+                return false;
+            }
+            return ArraySetLength(cx, this, value);
+        }
+        return super.set(cx, propertyKey, value, receiver);
+    }
+
+    @Override
+    protected final void ownPropertyNames(List<? super String> list) {
+        list.add("length");
+        super.ownPropertyNames(list);
     }
 
     /**
      * 9.4.2.1 [[DefineOwnProperty]] (P, Desc)
      */
     @Override
-    protected final boolean defineProperty(ExecutionContext cx, long propertyKey, PropertyDescriptor desc) {
+    public final boolean defineOwnProperty(ExecutionContext cx, long propertyKey, PropertyDescriptor desc) {
         /* steps 1-2 (not applicable) */
         /* step 3 */
         if (isArrayIndex(propertyKey)) {
-            /* steps 3.a-3.c */
+            /* steps 3.a-c */
             long oldLen = this.length;
-            /* steps 3.d-3.e */
+            /* step 3.d */
             long index = propertyKey;
-            /* steps 3.f */
+            /* step 3.e */
             if (index >= oldLen && !lengthWritable) {
                 return false;
             }
-            /* steps 3.g-3.h */
+            /* step 3.f */
             boolean succeeded = ordinaryDefineOwnProperty(cx, propertyKey, desc);
-            /* step 3.i */
+            /* step 3.g */
             if (!succeeded) {
                 return false;
             }
-            /* step 3.j */
+            /* step 3.h */
             if (index >= oldLen) {
                 this.length = index + 1;
             }
             hasIndexedAccessors |= desc.isAccessorDescriptor();
-            /* step 3.k */
+            /* step 3.i */
             return true;
         }
         /* step 4 */
@@ -246,7 +242,7 @@ public class ArrayObject extends OrdinaryObject {
      * 9.4.2.1 [[DefineOwnProperty]] (P, Desc)
      */
     @Override
-    protected final boolean defineProperty(ExecutionContext cx, String propertyKey, PropertyDescriptor desc) {
+    public final boolean defineOwnProperty(ExecutionContext cx, String propertyKey, PropertyDescriptor desc) {
         /* steps 1, 3 (not applicable) */
         /* step 2 */
         if ("length".equals(propertyKey)) {
@@ -298,14 +294,8 @@ public class ArrayObject extends OrdinaryObject {
         /* steps 1-2 */
         assert length >= 0;
         /* steps 3-4 (not applicable) */
-        /* steps 5-7, 9 (implicit) */
-        ArrayObject array = new ArrayObject(cx.getRealm());
-        /* step 8 */
-        array.setPrototype(proto);
-        /* steps 10-11 */
-        array.length = length;
-        /* step 12 */
-        return array;
+        /* steps 5-11 */
+        return new ArrayObject(cx.getRealm(), length, proto);
     }
 
     /**
@@ -329,14 +319,8 @@ public class ArrayObject extends OrdinaryObject {
             throw newRangeError(cx, Messages.Key.InvalidArrayLength);
         }
         /* step 4 (not applicable) */
-        /* steps 5-7, 9 (implicit) */
-        ArrayObject array = new ArrayObject(cx.getRealm());
-        /* step 8 */
-        array.setPrototype(proto);
-        /* steps 10-11 */
-        array.length = length;
-        /* step 12 */
-        return array;
+        /* steps 5-11 */
+        return new ArrayObject(cx.getRealm(), length, proto);
     }
 
     /**
@@ -468,42 +452,43 @@ public class ArrayObject extends OrdinaryObject {
         /* step 1 */
         assert length >= 0;
         /* step 2 (not applicable) */
-        /* step 3 */
-        Object c = UNDEFINED;
-        /* steps 4-6 */
-        if (IsArray(cx, orginalArray)) {
-            /* steps 6.a-b */
-            c = Get(cx, orginalArray, "constructor");
+        /* steps 3-4 */
+        if (!IsArray(cx, orginalArray)) {
+            return ArrayCreate(cx, length);
+        }
+        /* step 5 */
+        Object c = Get(cx, orginalArray, "constructor");
+        /* step 6 */
+        if (IsConstructor(c)) {
+            Constructor constructor = (Constructor) c;
+            /* step 6.a */
+            Realm thisRealm = cx.getRealm();
+            /* step 6.b */
+            Realm realmC = GetFunctionRealm(cx, constructor);
             /* step 6.c */
-            if (IsConstructor(c)) {
-                Constructor constructor = (Constructor) c;
-                /* step 6.c.i */
-                Realm thisRealm = cx.getRealm();
-                /* steps 6.c.ii-iii */
-                Realm realmC = GetFunctionRealm(cx, constructor);
-                /* step 6.c.iv */
-                if (thisRealm != realmC && constructor == realmC.getIntrinsic(Intrinsics.Array)) {
-                    c = UNDEFINED;
-                }
-            }
-            /* step 6.d */
-            if (Type.isObject(c)) {
-                c = Get(cx, Type.objectValue(c), BuiltinSymbol.species.get());
-                if (Type.isNull(c)) {
-                    c = UNDEFINED;
-                }
+            if (thisRealm != realmC && constructor == realmC.getIntrinsic(Intrinsics.Array)) {
+                c = UNDEFINED;
             }
         }
         /* step 7 */
+        if (Type.isObject(c)) {
+            /* step 7.a.*/
+            c = Get(cx, Type.objectValue(c), BuiltinSymbol.species.get());
+            /* step 7.b */
+            if (Type.isNull(c)) {
+                c = UNDEFINED;
+            }
+        }
+        /* step 8 */
         if (Type.isUndefined(c)) {
             return ArrayCreate(cx, length);
         }
-        /* step 8 */
+        /* step 9 */
         if (!IsConstructor(c)) {
             throw newTypeError(cx, Messages.Key.NotConstructor);
         }
-        /* step 9 */
-        return ((Constructor) c).construct(cx, (Constructor) c, length);
+        /* step 10 */
+        return ((Constructor) c).construct(cx, length);
     }
 
     /**
@@ -520,47 +505,46 @@ public class ArrayObject extends OrdinaryObject {
     public static boolean ArraySetLength(ExecutionContext cx, ArrayObject array, PropertyDescriptor desc) {
         /* step 1 */
         if (!desc.hasValue()) {
-            return array.defineLength(desc, -1);
+            return array.defineLength(desc, array.length);
         }
-        /* step 2 */
-        PropertyDescriptor newLenDesc = desc.clone();
-        /* steps 3-4 */
+        /* step 2 (not applicable) */
+        /* step 3 */
         long newLen = ToUint32(cx, desc.getValue());
-        /* steps 5-6 */
+        /* step 4 */
         double numberLen = ToNumber(cx, desc.getValue());
-        /* step 7 */
+        /* step 5 */
         if (newLen != numberLen) {
             throw newRangeError(cx, Messages.Key.InvalidArrayLength);
         }
-        /* step 8 */
-        newLenDesc.setValue(newLen);
-        /* steps 9-11 */
+        /* step 6 (not applicable) */
+        /* steps 7-9 */
         long oldLen = array.length;
-        /* step 12 */
+        /* step 10 */
         if (newLen >= oldLen) {
-            return array.defineLength(newLenDesc, newLen);
+            return array.defineLength(desc, newLen);
         }
-        /* step 13 */
+        /* step 11 */
         if (!array.lengthWritable) {
             return false;
         }
-        /* steps 14-15 */
+        /* steps 12-13 */
         boolean newWritable;
-        if (!newLenDesc.hasWritable() || newLenDesc.isWritable()) {
+        if (!desc.hasWritable() || desc.isWritable()) {
             newWritable = true;
         } else {
             newWritable = false;
-            newLenDesc.setWritable(true);
+            desc = desc.clone();
+            desc.setWritable(true);
         }
-        /* steps 16-17 */
-        boolean succeeded = array.defineLength(newLenDesc, newLen);
-        /* step 18 */
+        /* step 14 */
+        boolean succeeded = array.defineLength(desc, newLen);
+        /* step 15 */
         if (!succeeded) {
             return false;
         }
-        /* step 19 */
+        /* step 16 */
         long nonDeletableIndex = array.deleteRange(newLen, oldLen);
-        /* step 19.d */
+        /* step 16.c */
         if (nonDeletableIndex >= 0) {
             array.length = nonDeletableIndex + 1;
             if (!newWritable) {
@@ -568,11 +552,11 @@ public class ArrayObject extends OrdinaryObject {
             }
             return false;
         }
-        /* step 20 */
+        /* step 17 */
         if (!newWritable) {
             array.lengthWritable = false;
         }
-        /* step 21 */
+        /* step 18 */
         return true;
     }
 
@@ -589,39 +573,39 @@ public class ArrayObject extends OrdinaryObject {
      */
     private static boolean ArraySetLength(ExecutionContext cx, ArrayObject array, Object lenValue) {
         /* steps 1-2 (not applicable) */
-        /* steps 3-4 */
+        /* step 3 */
         long newLen = ToUint32(cx, lenValue);
-        /* steps 5-6 */
+        /* step 4 */
         double numberLen = ToNumber(cx, lenValue);
-        /* step 7 */
+        /* step 5 */
         if (newLen != numberLen) {
             throw newRangeError(cx, Messages.Key.InvalidArrayLength);
         }
-        /* step 8 (not applicable) */
-        /* steps 9-11 */
+        /* step 6 (not applicable) */
+        /* steps 7-9 */
         long oldLen = array.length;
-        /* step 12 */
+        /* step 10 */
         if (newLen >= oldLen) {
             return array.defineLength(newLen);
         }
-        /* step 13 */
+        /* step 11 */
         if (!array.lengthWritable) {
             return false;
         }
-        /* steps 14-15 (not applicable) */
-        /* steps 16-17 */
+        /* steps 12-13 (not applicable) */
+        /* step 14 */
         boolean succeeded = array.defineLength(newLen);
-        /* step 18 */
+        /* step 15 */
         assert succeeded;
-        /* step 19 */
+        /* step 16 */
         long nonDeletableIndex = array.deleteRange(newLen, oldLen);
-        /* step 19.d */
+        /* step 16.c */
         if (nonDeletableIndex >= 0) {
             array.length = nonDeletableIndex + 1;
             return false;
         }
-        /* step 20 (not applicable) */
-        /* step 21 */
+        /* step 17 (not applicable) */
+        /* step 18 */
         return true;
     }
 

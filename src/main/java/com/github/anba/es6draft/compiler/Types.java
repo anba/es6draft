@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -7,6 +7,7 @@
 package com.github.anba.es6draft.compiler;
 
 import java.lang.invoke.MethodHandle;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -20,12 +21,14 @@ import com.github.anba.es6draft.Script;
 import com.github.anba.es6draft.compiler.assembler.Type;
 import com.github.anba.es6draft.runtime.*;
 import com.github.anba.es6draft.runtime.internal.*;
-import com.github.anba.es6draft.runtime.modules.ModuleExport;
+import com.github.anba.es6draft.runtime.language.*;
 import com.github.anba.es6draft.runtime.modules.ModuleRecord;
 import com.github.anba.es6draft.runtime.modules.ModuleSemantics;
+import com.github.anba.es6draft.runtime.modules.ResolvedBinding;
 import com.github.anba.es6draft.runtime.modules.SourceTextModuleRecord;
 import com.github.anba.es6draft.runtime.objects.Eval;
 import com.github.anba.es6draft.runtime.objects.async.AsyncAbstractOperations;
+import com.github.anba.es6draft.runtime.objects.async.iteration.AsyncGeneratorAbstractOperations;
 import com.github.anba.es6draft.runtime.objects.async.iteration.AsyncGeneratorObject;
 import com.github.anba.es6draft.runtime.objects.iteration.GeneratorObject;
 import com.github.anba.es6draft.runtime.objects.promise.PromiseAbstractOperations;
@@ -33,14 +36,7 @@ import com.github.anba.es6draft.runtime.objects.promise.PromiseObject;
 import com.github.anba.es6draft.runtime.objects.simd.SIMDType;
 import com.github.anba.es6draft.runtime.objects.text.RegExpConstructor;
 import com.github.anba.es6draft.runtime.objects.text.RegExpObject;
-import com.github.anba.es6draft.runtime.types.Callable;
-import com.github.anba.es6draft.runtime.types.Constructor;
-import com.github.anba.es6draft.runtime.types.Intrinsics;
-import com.github.anba.es6draft.runtime.types.Null;
-import com.github.anba.es6draft.runtime.types.Reference;
-import com.github.anba.es6draft.runtime.types.ScriptObject;
-import com.github.anba.es6draft.runtime.types.Symbol;
-import com.github.anba.es6draft.runtime.types.Undefined;
+import com.github.anba.es6draft.runtime.types.*;
 import com.github.anba.es6draft.runtime.types.builtins.*;
 
 /**
@@ -64,6 +60,7 @@ final class Types {
     static final Type Float = Type.of(Float.class);
     static final Type IllegalStateException = Type.of(IllegalStateException.class);
     static final Type Integer = Type.of(Integer.class);
+    static final Type Iterable = Type.of(Iterable.class);
     static final Type Long = Type.of(Long.class);
     static final Type Math = Type.of(Math.class);
     static final Type Number = Type.of(Number.class);
@@ -79,6 +76,9 @@ final class Types {
 
     // java.lang.invoke
     static final Type MethodHandle = Type.of(MethodHandle.class);
+
+    // java.math
+    static final Type BigInteger = Type.of(BigInteger.class);
 
     // java.util
     static final Type ArrayList = Type.of(ArrayList.class);
@@ -101,8 +101,7 @@ final class Types {
     // runtime
     static final Type AbstractOperations = Type.of(AbstractOperations.class);
     static final Type DeclarativeEnvironmentRecord = Type.of(DeclarativeEnvironmentRecord.class);
-    static final Type DeclarativeEnvironmentRecord$Binding = Type
-            .of(DeclarativeEnvironmentRecord.Binding.class);
+    static final Type DeclarativeEnvironmentRecord$Binding = Type.of(DeclarativeEnvironmentRecord.Binding.class);
     static final Type EnvironmentRecord = Type.of(EnvironmentRecord.class);
     static final Type ExecutionContext = Type.of(ExecutionContext.class);
     static final Type FunctionEnvironmentRecord = Type.of(FunctionEnvironmentRecord.class);
@@ -111,12 +110,31 @@ final class Types {
     static final Type ModuleEnvironmentRecord = Type.of(ModuleEnvironmentRecord.class);
     static final Type ObjectEnvironmentRecord = Type.of(ObjectEnvironmentRecord.class);
     static final Type Realm = Type.of(Realm.class);
-    static final Type ScriptRuntime = Type.of(ScriptRuntime.class);
+    static final Type World = Type.of(World.class);
+
+    // runtime.language
+    static final Type ArrayOperations = Type.of(ArrayOperations.class);
+    static final Type CallOperations = Type.of(CallOperations.class);
+    static final Type ClassOperations = Type.of(ClassOperations.class);
+    static final Type ClassOperations$InstanceMethod = Type.of(ClassOperations.InstanceMethod.class);
+    static final Type ClassOperations$InstanceMethod_ = Type.of(ClassOperations.InstanceMethod[].class);
+    static final Type ClassOperations$InstanceMethodKind = Type.of(ClassOperations.InstanceMethodKind.class);
+    static final Type DebuggerOperations = Type.of(DebuggerOperations.class);
+    static final Type DeclarationOperations = Type.of(DeclarationOperations.class);
+    static final Type DecoratorOperations = Type.of(DecoratorOperations.class);
+    static final Type ErrorOperations = Type.of(ErrorOperations.class);
+    static final Type FunctionOperations = Type.of(FunctionOperations.class);
+    static final Type IteratorOperations = Type.of(IteratorOperations.class);
+    static final Type ModuleOperations = Type.of(ModuleOperations.class);
+    static final Type ObjectOperations = Type.of(ObjectOperations.class);
+    static final Type Operators = Type.of(Operators.class);
+    static final Type PropertyOperations = Type.of(PropertyOperations.class);
+    static final Type TemplateOperations = Type.of(TemplateOperations.class);
 
     // runtime.modules
-    static final Type ModuleExport = Type.of(ModuleExport.class);
     static final Type ModuleRecord = Type.of(ModuleRecord.class);
     static final Type ModuleSemantics = Type.of(ModuleSemantics.class);
+    static final Type ResolvedBinding = Type.of(ResolvedBinding.class);
     static final Type SourceTextModuleRecord = Type.of(SourceTextModuleRecord.class);
 
     // runtime.objects
@@ -129,6 +147,7 @@ final class Types {
     static final Type AsyncAbstractOperations = Type.of(AsyncAbstractOperations.class);
 
     // runtime.objects.async.iteration
+    static final Type AsyncGeneratorAbstractOperations = Type.of(AsyncGeneratorAbstractOperations.class);
     static final Type AsyncGeneratorObject = Type.of(AsyncGeneratorObject.class);
 
     // runtime.objects.iteration
@@ -142,7 +161,9 @@ final class Types {
 
     // runtime.types
     static final Type Callable = Type.of(Callable.class);
+    static final Type Callable_ = Type.of(Callable[].class);
     static final Type Constructor = Type.of(Constructor.class);
+    static final Type HTMLDDAObject = Type.of(HTMLDDAObject.class);
     static final Type Intrinsics = Type.of(Intrinsics.class);
     static final Type Null = Type.of(Null.class);
     static final Type Reference = Type.of(Reference.class);
@@ -164,7 +185,6 @@ final class Types {
     static final Type OrdinaryAsyncGenerator = Type.of(OrdinaryAsyncGenerator.class);
     static final Type OrdinaryConstructorFunction = Type.of(OrdinaryConstructorFunction.class);
     static final Type OrdinaryFunction = Type.of(OrdinaryFunction.class);
-    static final Type OrdinaryConstructorGenerator = Type.of(OrdinaryConstructorGenerator.class);
     static final Type OrdinaryGenerator = Type.of(OrdinaryGenerator.class);
     static final Type OrdinaryObject = Type.of(OrdinaryObject.class);
 
@@ -172,6 +192,8 @@ final class Types {
     static final Type DebugInfo = Type.of(DebugInfo.class);
     static final Type Errors = Type.of(Errors.class);
     static final Type Messages$Key = Type.of(Messages.Key.class);
+    static final Type PrivateName = Type.of(PrivateName.class);
+    static final Type PrivateName_ = Type.of(PrivateName[].class);
     static final Type ResumptionPoint = Type.of(ResumptionPoint.class);
     static final Type ResumptionPoint_ = Type.of(ResumptionPoint[].class);
     static final Type ReturnValue = Type.of(ReturnValue.class);
@@ -181,5 +203,6 @@ final class Types {
     static final Type RuntimeInfo$ScriptBody = Type.of(RuntimeInfo.ScriptBody.class);
     static final Type ScriptException = Type.of(ScriptException.class);
     static final Type ScriptIterator = Type.of(ScriptIterator.class);
+    static final Type Source = Type.of(Source.class);
     static final Type TailCallInvocation = Type.of(TailCallInvocation.class);
 }

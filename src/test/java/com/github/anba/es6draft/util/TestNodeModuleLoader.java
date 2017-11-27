@@ -1,11 +1,12 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
  */
 package com.github.anba.es6draft.util;
 
+import java.io.IOException;
 import java.util.Collection;
 
 import com.github.anba.es6draft.repl.loader.NodeModuleLoader;
@@ -14,6 +15,8 @@ import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.RuntimeContext;
 import com.github.anba.es6draft.runtime.internal.ScriptLoader;
 import com.github.anba.es6draft.runtime.modules.ModuleRecord;
+import com.github.anba.es6draft.runtime.modules.ModuleSource;
+import com.github.anba.es6draft.runtime.modules.SourceIdentifier;
 
 /**
  * 
@@ -31,6 +34,13 @@ public class TestNodeModuleLoader extends NodeModuleLoader implements TestModule
         NodeSourceTextModuleRecord module = ((NodeSourceTextModuleRecord) template).clone();
         defineModule(module);
         linkModule(module, realm);
+    }
+
+    @Override
+    public ModuleRecord defineUnlinked(SourceIdentifier sourceId, ModuleSource moduleSource) throws IOException {
+        ModuleRecord module = parseModule(sourceId, moduleSource);
+        defineModule(module);
+        return module;
     }
 
     @Override

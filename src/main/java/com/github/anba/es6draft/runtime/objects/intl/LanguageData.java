@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -11,8 +11,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import com.ibm.icu.text.BreakIterator;
 import com.ibm.icu.text.Collator;
 import com.ibm.icu.text.DateFormat;
+import com.ibm.icu.text.ListFormatter;
 import com.ibm.icu.text.NumberFormat;
 import com.ibm.icu.text.PluralRules;
 import com.ibm.icu.util.ULocale;
@@ -62,6 +64,25 @@ final class LanguageData {
      */
     static Set<String> getAvailablePluralRulesLocales() {
         return addDerivedLanguages(toLanguageTags(PluralRules.getAvailableULocales()));
+    }
+
+    /**
+     * Returns the set of available locales supported by the {@link BreakIterator} class.
+     * 
+     * @return the set of available locales
+     * @see BreakIterator#getAvailableULocales()
+     */
+    static Set<String> getAvailableSegmenterLocales() {
+        return addDerivedLanguages(toLanguageTags(BreakIterator.getAvailableULocales()));
+    }
+
+    /**
+     * Returns the set of available locales supported by the {@link ListFormatter} class.
+     * 
+     * @return the set of available locales
+     */
+    static List<String> getAvailableListFormatLocales() {
+        return toLanguageTags(ULocale.getAvailableLocales());
     }
 
     /**

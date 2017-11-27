@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -74,8 +74,7 @@ public final class InvocableTest {
 
     @Test
     public void invokeMethod() throws NoSuchMethodException, ScriptException {
-        Object obj = engine
-                .eval("({ test1() { return 'Cygnus' }, test2(v) { return v + ' Minor' } })");
+        Object obj = engine.eval("({ test1() { return 'Cygnus' }, test2(v) { return v + ' Minor' } })");
 
         Object result1 = invocable.invokeMethod(obj, "test1");
         assertThat(result1, instanceOfWith(String.class, is("Cygnus")));

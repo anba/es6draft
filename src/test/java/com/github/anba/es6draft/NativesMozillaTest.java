@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -11,13 +11,11 @@ import static com.github.anba.es6draft.util.Resources.loadTests;
 import static org.junit.Assume.assumeTrue;
 
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.configuration.Configuration;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Rule;
@@ -28,18 +26,17 @@ import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
 import org.junit.runners.Parameterized.UseParametersRunnerFactory;
 
-import com.github.anba.es6draft.compiler.CompilationException;
 import com.github.anba.es6draft.parser.Parser;
-import com.github.anba.es6draft.parser.ParserException;
-import com.github.anba.es6draft.repl.global.ShellGlobalObject;
 import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.internal.NativeCode;
+import com.github.anba.es6draft.runtime.RealmData;
+import com.github.anba.es6draft.runtime.internal.ScriptLoading;
 import com.github.anba.es6draft.util.Parallelized;
 import com.github.anba.es6draft.util.ParameterizedRunnerFactory;
 import com.github.anba.es6draft.util.SystemConsole;
 import com.github.anba.es6draft.util.TestConfiguration;
-import com.github.anba.es6draft.util.TestGlobals;
 import com.github.anba.es6draft.util.TestInfo;
+import com.github.anba.es6draft.util.TestRealm;
+import com.github.anba.es6draft.util.TestRealms;
 import com.github.anba.es6draft.util.rules.ExceptionHandlers.ScriptExceptionHandler;
 import com.github.anba.es6draft.util.rules.ExceptionHandlers.StandardErrorHandler;
 
@@ -58,8 +55,7 @@ public final class NativesMozillaTest {
     }
 
     @ClassRule
-    public static TestGlobals<MozNativeTestGlobalObject, TestInfo> globals = new TestGlobals<MozNativeTestGlobalObject, TestInfo>(
-            configuration, MozNativeTestGlobalObject::new) {
+    public static TestRealms<TestInfo> realms = new TestRealms<TestInfo>(configuration, NativeTestRealmData::new) {
         @Override
         protected EnumSet<Parser.Option> getParserOptions() {
             return EnumSet.of(Parser.Option.NativeCall);
@@ -78,49 +74,34 @@ public final class NativesMozillaTest {
     @Parameter(0)
     public TestInfo test;
 
-    private MozNativeTestGlobalObject global;
+    @Rule
+    public TestRealm<TestInfo> realm = new TestRealm<>(realms);
 
     @Before
     public void setUp() throws Throwable {
         assumeTrue("Test disabled", test.isEnabled());
 
-        global = globals.newGlobal(new SystemConsole(), test);
-        exceptionHandler.setExecutionContext(global.getRealm().defaultContext());
-    }
-
-    @After
-    public void tearDown() {
-        globals.release(global);
+        realm.initialize(new SystemConsole(), test);
+        exceptionHandler.setExecutionContext(realm.get().defaultContext());
     }
 
     @Test
     public void runTest() throws Throwable {
-        // Evaluate actual test-script
-        global.eval(test.getScript(), test.toFile());
-
-        // Wait for pending tasks to finish
-        global.getRealm().getWorld().runEventLoop();
+        realm.execute(test);
     }
 
-    public static final class MozNativeTestGlobalObject extends ShellGlobalObject {
-        MozNativeTestGlobalObject(Realm realm) {
+    public static final class NativeTestRealmData extends RealmData {
+        NativeTestRealmData(Realm realm) {
             super(realm);
         }
 
         @Override
-        public void initializeScripted() throws IOException, URISyntaxException, ParserException, CompilationException {
-            NativeCode.load(getRealm(), "arraybuffer.js");
-            NativeCode.load(getRealm(), "collection.js");
-            NativeCode.load(getRealm(), "global.js");
-            NativeCode.load(getRealm(), "iterator.js");
-            NativeCode.load(getRealm(), "legacy-generator.js");
-            NativeCode.load(getRealm(), "object.js");
-            NativeCode.load(getRealm(), "proxy.js");
-            NativeCode.load(getRealm(), "simd.js");
-            NativeCode.load(getRealm(), "source.js");
-            NativeCode.load(getRealm(), "statics.js");
-            NativeCode.load(getRealm(), "string.js");
-            NativeCode.load(getRealm(), "stringtrim.js");
+        public void initializeScripted() throws IOException {
+            ScriptLoading.evalNative(getRealm(), "arraybuffer.js");
+            ScriptLoading.evalNative(getRealm(), "console-stub.js");
+            ScriptLoading.evalNative(getRealm(), "global.js");
+            ScriptLoading.evalNative(getRealm(), "source.js");
+            ScriptLoading.evalNative(getRealm(), "statics.js");
         }
     }
 }

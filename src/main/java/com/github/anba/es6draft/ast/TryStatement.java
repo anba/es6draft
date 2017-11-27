@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -20,9 +20,8 @@ public final class TryStatement extends Statement {
     private final BlockStatement finallyBlock;
     private final List<GuardedCatchNode> guardedCatchNodes;
 
-    public TryStatement(long beginPosition, long endPosition, BlockStatement tryBlock,
-            CatchNode catchNode, List<GuardedCatchNode> guardedCatchNodes,
-            BlockStatement finallyBlock) {
+    public TryStatement(long beginPosition, long endPosition, BlockStatement tryBlock, CatchNode catchNode,
+            List<GuardedCatchNode> guardedCatchNodes, BlockStatement finallyBlock) {
         super(beginPosition, endPosition);
         this.tryBlock = tryBlock;
         this.catchNode = catchNode;

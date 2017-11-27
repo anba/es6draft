@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -23,8 +23,7 @@ public final class LexicalDeclaration extends Declaration {
         Let, Const
     }
 
-    public LexicalDeclaration(long beginPosition, long endPosition, Type type,
-            List<LexicalBinding> elements) {
+    public LexicalDeclaration(long beginPosition, long endPosition, Type type, List<LexicalBinding> elements) {
         super(beginPosition, endPosition);
         this.type = type;
         this.elements = elements;

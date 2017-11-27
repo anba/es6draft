@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
  */
 package com.github.anba.es6draft.ast;
 
-import com.github.anba.es6draft.ast.scope.Scope;
+import com.github.anba.es6draft.ast.scope.ParameterScope;
 
 /**
  * <h1>14 ECMAScript Language: Functions and Classes</h1>
@@ -16,18 +16,18 @@ import com.github.anba.es6draft.ast.scope.Scope;
  */
 public final class FormalParameter extends AstNode implements ScopedNode {
     private final BindingElementItem element;
-    private final Scope scope;
+    private final ParameterScope scope;
 
-    public FormalParameter(long beginPosition, long endPosition, BindingElement element, Scope scope) {
+    public FormalParameter(long beginPosition, long endPosition, BindingElement element, ParameterScope scope) {
         super(beginPosition, endPosition);
         this.element = element;
         this.scope = scope;
     }
 
-    public FormalParameter(long beginPosition, long endPosition, BindingRestElement element) {
+    public FormalParameter(long beginPosition, long endPosition, BindingRestElement element, ParameterScope scope) {
         super(beginPosition, endPosition);
         this.element = element;
-        this.scope = null;
+        this.scope = scope;
     }
 
     /**
@@ -42,10 +42,10 @@ public final class FormalParameter extends AstNode implements ScopedNode {
     /**
      * {@inheritDoc}
      * <p>
-     * Returns {@code null} for simple or rest formal parameters.
+     * Returns {@code null} for simple parameters.
      */
     @Override
-    public Scope getScope() {
+    public ParameterScope getScope() {
         return scope;
     }
 

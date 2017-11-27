@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -15,7 +15,7 @@ import java.util.List;
  * </ul>
  */
 public final class SwitchClause extends AstNode {
-    private final Expression expression;
+    private Expression expression;
     private List<StatementListItem> statements;
 
     public SwitchClause(long beginPosition, long endPosition, Expression expression,
@@ -32,6 +32,17 @@ public final class SwitchClause extends AstNode {
      */
     public Expression getExpression() {
         return expression;
+    }
+
+    /**
+     * Updates the <code>CaseClause</code> expression.
+     * 
+     * @param expression
+     *            the new expression
+     */
+    public void setExpression(Expression expression) {
+        assert this.expression != null && expression != null;
+        this.expression = expression;
     }
 
     /**

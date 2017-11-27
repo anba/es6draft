@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -285,7 +285,7 @@ public final class MathImpl {
     }
     /* @formatter:on */
 
-    /* @formatter:on */
+    /* @formatter:off */
     /* @(#)e_pow.c 1.5 04/04/22 SMI */
     /*
      * ====================================================
@@ -516,7 +516,7 @@ public final class MathImpl {
         else  z = __HI(z, __HI(z) + (n<<20));
         return s*z;
     }
-    /* @formatter:off */
+    /* @formatter:on */
 
     private static int __HI(long bits) {
         return (int) (bits >>> 32);

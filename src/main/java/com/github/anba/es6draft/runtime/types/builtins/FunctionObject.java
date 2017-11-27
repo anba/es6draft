@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -13,12 +13,17 @@ import com.github.anba.es6draft.Executable;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.Realm;
+import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
 import com.github.anba.es6draft.runtime.internal.Source;
 import com.github.anba.es6draft.runtime.internal.TailCallInvocation;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Constructor;
+import com.github.anba.es6draft.runtime.types.Intrinsics;
+import com.github.anba.es6draft.runtime.types.PrivateName;
+import com.github.anba.es6draft.runtime.types.Property;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
+import com.github.anba.es6draft.runtime.types.Symbol;
 
 /**
  * <h1>9 Ordinary and Exotic Objects Behaviours</h1><br>
@@ -44,7 +49,6 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
     /** [[HomeObject]] */
     private ScriptObject homeObject;
 
-    private boolean isClone;
     private Executable executable;
     private String source;
     private MethodHandle callMethod;
@@ -111,144 +115,7 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
         if (source == null) {
             this.source = source = FunctionSource.toSourceString(this);
         }
-        return source;
-    }
-
-    @Override
-    public final FunctionObject clone(ExecutionContext cx) {
-        FunctionObject clone = allocateNew();
-        clone.isClone = true;
-        clone.initialize(getFunctionKind(), getCode(), getEnvironment(), getExecutable());
-        return clone;
-    }
-
-    /**
-     * Returns a copy of this function object with the same internal methods and internal slots.
-     * 
-     * @param cx
-     *            the execution context
-     * @param newHome
-     *            the new home object
-     * @return the cloned function object
-     */
-    public final FunctionObject clone(ExecutionContext cx, ScriptObject newHome) {
-        FunctionObject clone = clone(cx);
-        if (getHomeObject() != null) {
-            clone.toMethod(newHome);
-        }
-        return clone;
-    }
-
-    /**
-     * Allocates a new, uninitialized copy of this function object.
-     * 
-     * @return a new uninitialized function object
-     */
-    protected abstract FunctionObject allocateNew();
-
-    /**
-     * 9.2.3 FunctionAllocate (functionPrototype, strict)
-     * 
-     * @param realm
-     *            the realm instance
-     * @param functionPrototype
-     *            the prototype object
-     * @param strict
-     *            the strict mode flag
-     * @param functionKind
-     *            the function kind
-     * @param constructorKind
-     *            the constructor kind
-     */
-    protected final void allocate(Realm realm, ScriptObject functionPrototype, boolean strict,
-            FunctionKind functionKind, ConstructorKind constructorKind) {
-        assert this.realm == null && realm != null : "function object already allocated";
-        /* step 9 */
-        this.constructorKind = constructorKind;
-        /* step 10 */
-        this.strict = strict;
-        /* step 11 */
-        this.functionKind = functionKind;
-        /* step 12 */
-        this.setPrototype(functionPrototype);
-        /* step 13 */
-        // f.[[Extensible]] = true (implicit)
-        /* step 14 */
-        this.realm = realm;
-    }
-
-    /**
-     * 9.2.4 FunctionInitialize (F, kind, ParameterList, Body, Scope)
-     * 
-     * @param kind
-     *            the function kind
-     * @param function
-     *            the function code
-     * @param scope
-     *            the function scope
-     * @param executable
-     *            the source executable
-     */
-    protected final void initialize(FunctionKind kind, RuntimeInfo.Function function, LexicalEnvironment<?> scope,
-            Executable executable) {
-        assert this.function == null && function != null : "function object already initialized";
-        assert this.functionKind == kind : String.format("%s != %s", functionKind, kind);
-        /* step 5 */
-        boolean strict = this.strict;
-        /* step 6 */
-        this.environment = scope;
-        /* steps 7-8 */
-        this.function = function;
-        this.callMethod = tailCallAdapter(function, this);
-        this.tailCallMethod = function.callMethod();
-        this.constructMethod = tailConstructAdapter(function);
-        /* steps 9-11 */
-        if (kind == FunctionKind.Arrow) {
-            this.thisMode = ThisMode.Lexical;
-        } else if (strict) {
-            this.thisMode = ThisMode.Strict;
-        } else {
-            this.thisMode = ThisMode.Global;
-        }
-        this.executable = executable;
-    }
-
-    /**
-     * 9.2.10 MakeMethod ( F, homeObject)
-     * 
-     * @param homeObject
-     *            the new home object
-     */
-    protected final void toMethod(ScriptObject homeObject) {
-        assert homeObject != null;
-        assert this.homeObject == null : "function object already method";
-        this.homeObject = homeObject;
-    }
-
-    private static MethodHandle tailCallAdapter(RuntimeInfo.Function function, FunctionObject functionObject) {
-        MethodHandle mh = function.callMethod();
-        if (function.is(RuntimeInfo.FunctionFlags.TailCall)) {
-            assert !function.isGenerator() && !function.isAsync() && function.isStrict();
-            MethodHandle result = TailCallInvocation.getTailCallHandler();
-            result = MethodHandles.dropArguments(result, 1, functionObject.getClass());
-            result = MethodHandles.dropArguments(result, 3, Object.class, Object[].class);
-            result = MethodHandles.foldArguments(result, mh);
-            return result;
-        }
-        return mh;
-    }
-
-    private static MethodHandle tailConstructAdapter(RuntimeInfo.Function function) {
-        MethodHandle mh = function.constructMethod();
-        if (mh != null && function.is(RuntimeInfo.FunctionFlags.TailConstruct)) {
-            assert !function.isGenerator() && !function.isAsync() && function.isStrict();
-            MethodHandle result = TailCallInvocation.getTailConstructHandler();
-            result = MethodHandles.dropArguments(result, 1, OrdinaryConstructorFunction.class);
-            result = MethodHandles.dropArguments(result, 3, Constructor.class, Object[].class);
-            result = MethodHandles.foldArguments(result, mh);
-            return result;
-        }
-        return mh;
+        return StringObject.validateLength(cx, source);
     }
 
     /**
@@ -294,15 +161,6 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
      */
     public final Executable getExecutable() {
         return executable;
-    }
-
-    /**
-     * Returns {@code true} if this is a cloned function object.
-     * 
-     * @return {@code true} if cloned function
-     */
-    public boolean isClone() {
-        return isClone;
     }
 
     /**
@@ -358,8 +216,422 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
 
     @Override
     public String toString() {
-        Source source = executable.getSourceObject().toSource();
-        return String.format("%s, functionKind=%s, constructorKind=%s, thisMode=%s, cloned=%b, source=%s",
-                super.toString(), functionKind, constructorKind, thisMode, isClone, source);
+        Source source = executable.getSource();
+        return String.format("%s, functionKind=%s, constructorKind=%s, thisMode=%s, source=%s", super.toString(),
+                functionKind, constructorKind, thisMode, source);
+    }
+
+    /* ***************************************************************************************** */
+
+    /**
+     * 9.2.3 FunctionAllocate (functionPrototype, strict, functionKind)
+     * 
+     * @param <FUNCTION>
+     *            the function type
+     * @param cx
+     *            the execution context
+     * @param allocator
+     *            the function allocator
+     * @param functionPrototype
+     *            the function prototype
+     * @param strict
+     *            the strict mode flag
+     * @param functionKind
+     *            the function kind
+     * @return the new function object
+     */
+    public static <FUNCTION extends FunctionObject> FUNCTION FunctionAllocate(ExecutionContext cx,
+            ObjectAllocator<FUNCTION> allocator, ScriptObject functionPrototype, boolean strict,
+            FunctionKind functionKind) {
+        return FunctionAllocate(cx, allocator, functionPrototype, strict, functionKind, ConstructorKind.Base);
+    }
+
+    /**
+     * 9.2.3 FunctionAllocate (functionPrototype, strict, functionKind)
+     * 
+     * @param <FUNCTION>
+     *            the function type
+     * @param cx
+     *            the execution context
+     * @param allocator
+     *            the function allocator
+     * @param functionPrototype
+     *            the function prototype
+     * @param strict
+     *            the strict mode flag
+     * @param functionKind
+     *            the function kind
+     * @param constructorKind
+     *            the constructor kind
+     * @return the new function object
+     */
+    public static <FUNCTION extends FunctionObject> FUNCTION FunctionAllocate(ExecutionContext cx,
+            ObjectAllocator<FUNCTION> allocator, ScriptObject functionPrototype, boolean strict,
+            FunctionKind functionKind, ConstructorKind constructorKind) {
+        assert constructorKind != ConstructorKind.Derived || functionKind == FunctionKind.ClassConstructor;
+        Realm realm = cx.getRealm();
+        /* steps 1-5 (implicit) */
+        /* steps 6-9 */
+        FUNCTION f = allocator.newInstance(realm);
+        FunctionObject fo = (FunctionObject) f;
+        fo.constructorKind = constructorKind;
+        /* step 10 */
+        fo.strict = strict;
+        /* step 11 */
+        fo.functionKind = functionKind;
+        /* step 12 */
+        fo.setPrototype(functionPrototype);
+        /* step 13 */
+        // f.[[Extensible]] = true (implicit)
+        /* step 14 */
+        fo.realm = realm;
+        /* step 15 */
+        return f;
+    }
+
+    /**
+     * 9.2.4 FunctionInitialize (F, kind, ParameterList, Body, Scope)
+     * 
+     * @param <FUNCTION>
+     *            the function type
+     * @param f
+     *            the function object
+     * @param kind
+     *            the function kind
+     * @param function
+     *            the function code
+     * @param scope
+     *            the lexical environment
+     * @param executable
+     *            the executable object
+     * @return the function object
+     */
+    public static <FUNCTION extends FunctionObject> FUNCTION FunctionInitialize(FUNCTION f, FunctionKind kind,
+            RuntimeInfo.Function function, LexicalEnvironment<?> scope, Executable executable) {
+        FunctionObject fo = (FunctionObject) f;
+        assert fo.function == null && function != null : "function object already initialized";
+        assert fo.functionKind == kind : String.format("%s != %s", fo.functionKind, kind);
+        /* step 1 */
+        assert f.isExtensible() && !f.ordinaryHasOwnProperty("length");
+        /* step 2 */
+        int len = function.expectedArgumentCount();
+        /* step 3 */
+        f.infallibleDefineOwnProperty("length", new Property(len, false, false, true));
+        /* step 4 */
+        boolean strict = fo.strict;
+        /* step 5 */
+        fo.environment = scope;
+        /* steps 6-8 */
+        fo.function = function;
+        fo.callMethod = tailCallAdapter(function, f);
+        fo.tailCallMethod = function.callMethod();
+        fo.constructMethod = tailConstructAdapter(function, f);
+        /* steps 9-11 */
+        if (kind == FunctionKind.Arrow) {
+            fo.thisMode = ThisMode.Lexical;
+        } else if (strict) {
+            fo.thisMode = ThisMode.Strict;
+        } else {
+            fo.thisMode = ThisMode.Global;
+        }
+        fo.executable = executable;
+        /* step 12 */
+        return f;
+    }
+
+    private static MethodHandle tailCallAdapter(RuntimeInfo.Function function, FunctionObject functionObject) {
+        MethodHandle mh = function.callMethod();
+        if (function.is(RuntimeInfo.FunctionFlags.TailCall)) {
+            assert !function.isGenerator() && !function.isAsync() && function.isStrict();
+            MethodHandle result = TailCallInvocation.getTailCallHandler();
+            result = MethodHandles.dropArguments(result, 1, functionObject.getClass());
+            result = MethodHandles.dropArguments(result, 3, Object.class, Object[].class);
+            result = MethodHandles.foldArguments(result, mh);
+            return result;
+        }
+        return mh;
+    }
+
+    private static MethodHandle tailConstructAdapter(RuntimeInfo.Function function, FunctionObject functionObject) {
+        MethodHandle mh = function.constructMethod();
+        if (mh != null && function.is(RuntimeInfo.FunctionFlags.TailConstruct)) {
+            assert !function.isGenerator() && !function.isAsync() && function.isStrict();
+            assert functionObject.getClass() == OrdinaryConstructorFunction.class;
+            MethodHandle result = TailCallInvocation.getTailConstructHandler();
+            result = MethodHandles.dropArguments(result, 1, OrdinaryConstructorFunction.class);
+            result = MethodHandles.dropArguments(result, 3, Constructor.class, Object[].class);
+            result = MethodHandles.foldArguments(result, mh);
+            return result;
+        }
+        return mh;
+    }
+
+    /**
+     * 9.2.7 AddRestrictedFunctionProperties ( F, realm )
+     * 
+     * @param <FUNCTION>
+     *            the function type
+     * @param f
+     *            the function object
+     * @param realm
+     *            the realm object
+     */
+    public static <FUNCTION extends OrdinaryObject & Callable> void AddRestrictedFunctionProperties(FUNCTION f,
+            Realm realm) {
+        /* steps 1-2 */
+        Callable thrower = realm.getThrowTypeError();
+        /* step 3 */
+        f.infallibleDefineOwnProperty("caller", new Property(thrower, thrower, false, true));
+        /* step 4 */
+        f.infallibleDefineOwnProperty("arguments", new Property(thrower, thrower, false, true));
+    }
+
+    /**
+     * 9.2.8 MakeConstructor (F, writablePrototype, prototype)
+     * 
+     * @param <CONSTRUCTOR>
+     *            the constructor function type
+     * @param cx
+     *            the execution context
+     * @param f
+     *            the function object
+     */
+    public static <CONSTRUCTOR extends FunctionObject & Constructor> void MakeConstructor(ExecutionContext cx,
+            CONSTRUCTOR f) {
+        /* steps 1-2 (not applicable) */
+        /* step 3 */
+        assert f.isExtensible() && !f.ordinaryHasOwnProperty("prototype");
+        /* step 4 */
+        boolean writablePrototype = true;
+        /* step 5.a */
+        OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.ObjectPrototype);
+        /* step 5.b */
+        prototype.infallibleDefineOwnProperty("constructor", new Property(f, writablePrototype, false, true));
+        /* step 6 */
+        f.infallibleDefineOwnProperty("prototype", new Property(prototype, writablePrototype, false, false));
+        /* step 7 (return) */
+    }
+
+    /**
+     * 9.2.8 MakeConstructor (F, writablePrototype, prototype)
+     * 
+     * @param <CONSTRUCTOR>
+     *            the constructor function type
+     * @param f
+     *            the function object
+     * @param writablePrototype
+     *            the writable flag for the .prototype property
+     * @param prototype
+     *            the prototype object
+     */
+    public static <CONSTRUCTOR extends FunctionObject & Constructor> void MakeConstructor(CONSTRUCTOR f,
+            boolean writablePrototype, ScriptObject prototype) {
+        /* steps 1-2 (not applicable) */
+        /* step 3 */
+        assert f.isExtensible() && !f.ordinaryHasOwnProperty("prototype");
+        /* steps 4-5 (not applicable) */
+        /* step 6 */
+        f.infallibleDefineOwnProperty("prototype", new Property(prototype, writablePrototype, false, false));
+        /* step 7 (return) */
+    }
+
+    /**
+     * 9.2.9 MakeClassConstructor (F)
+     * 
+     * @param f
+     *            the function object
+     */
+    public static void MakeClassConstructor(OrdinaryConstructorFunction f) {
+        /* step 1 (not applicable) */
+        /* steps 2-3 */
+        assert f.getFunctionKind() == FunctionKind.ClassConstructor;
+        /* step 4 (return) */
+    }
+
+    /**
+     * 9.2.10 MakeMethod (F, homeObject)
+     * 
+     * @param f
+     *            the function object
+     * @param homeObject
+     *            the home object
+     */
+    public static void MakeMethod(FunctionObject f, ScriptObject homeObject) {
+        assert homeObject != null;
+        assert f.homeObject == null : "function object already method";
+        /* steps 1-2 (not applicable) */
+        /* step 3 */
+        f.homeObject = homeObject;
+        /* step 4 (return) */
+    }
+
+    /**
+     * 9.2.11 SetFunctionName (F, name, prefix)
+     * 
+     * @param <FUNCTION>
+     *            the function type
+     * @param f
+     *            the function object
+     * @param name
+     *            the function name
+     */
+    public static <FUNCTION extends OrdinaryObject & Callable> void SetFunctionName(FUNCTION f, String name) {
+        SetFunctionName(f, name, null);
+    }
+
+    /**
+     * 9.2.11 SetFunctionName (F, name, prefix)
+     * 
+     * @param <FUNCTION>
+     *            the function type
+     * @param f
+     *            the function object
+     * @param name
+     *            the function name
+     * @param prefix
+     *            the function name prefix
+     */
+    public static <FUNCTION extends OrdinaryObject & Callable> void SetFunctionName(FUNCTION f, String name,
+            String prefix) {
+        /* step 1 */
+        assert f.isExtensible() && !f.ordinaryHasOwnProperty("name");
+        /* steps 2-4 (not applicable) */
+        /* step 5 */
+        if (prefix != null) {
+            name = prefix + " " + name;
+        }
+        /* step 6 */
+        assert name.length() <= StringObject.MAX_LENGTH;
+        f.infallibleDefineOwnProperty("name", new Property(name, false, false, true));
+    }
+
+    /**
+     * 9.2.11 SetFunctionName (F, name, prefix)
+     * 
+     * @param <FUNCTION>
+     *            the function type
+     * @param f
+     *            the function object
+     * @param name
+     *            the function name
+     */
+    public static <FUNCTION extends OrdinaryObject & Callable> void SetFunctionName(FUNCTION f, Symbol name) {
+        SetFunctionName(f, name, null);
+    }
+
+    /**
+     * 9.2.11 SetFunctionName (F, name, prefix)
+     * 
+     * @param <FUNCTION>
+     *            the function type
+     * @param f
+     *            the function object
+     * @param name
+     *            the function name
+     * @param prefix
+     *            the function name prefix
+     */
+    public static <FUNCTION extends OrdinaryObject & Callable> void SetFunctionName(FUNCTION f, Symbol name,
+            String prefix) {
+        /* step 1 */
+        assert f.isExtensible() && !f.ordinaryHasOwnProperty("name");
+        /* steps 2-3 (not applicable) */
+        /* step 4 */
+        String description = name.getDescription();
+        String sname = description == null ? "" : "[" + description + "]";
+        /* step 5 */
+        if (prefix != null) {
+            sname = prefix + " " + sname;
+        }
+        /* step 6 */
+        assert sname.length() <= StringObject.MAX_LENGTH;
+        f.infallibleDefineOwnProperty("name", new Property(sname, false, false, true));
+    }
+
+    /**
+     * 9.2.11 SetFunctionName (F, name, prefix)
+     * 
+     * @param <FUNCTION>
+     *            the function type
+     * @param f
+     *            the function object
+     * @param name
+     *            the function name
+     */
+    public static <FUNCTION extends OrdinaryObject & Callable> void SetFunctionName(FUNCTION f, PrivateName name) {
+        SetFunctionName(f, name, null);
+    }
+
+    /**
+     * 9.2.11 SetFunctionName (F, name, prefix)
+     * 
+     * @param <FUNCTION>
+     *            the function type
+     * @param f
+     *            the function object
+     * @param name
+     *            the function name
+     * @param prefix
+     *            the function name prefix
+     */
+    public static <FUNCTION extends OrdinaryObject & Callable> void SetFunctionName(FUNCTION f, PrivateName name,
+            String prefix) {
+        /* step 1 */
+        assert f.isExtensible() && !f.ordinaryHasOwnProperty("name");
+        /* steps 2-4 (not applicable) */
+        /* step 5 */
+        String sname = name.toString();
+        /* step 6 */
+        if (prefix != null) {
+            sname = prefix + " " + sname;
+        }
+        /* step 7 */
+        assert sname.length() <= StringObject.MAX_LENGTH;
+        f.infallibleDefineOwnProperty("name", new Property(sname, false, false, true));
+    }
+
+    /**
+     * 9.2.11 SetFunctionName (F, name, prefix)
+     * 
+     * @param <FUNCTION>
+     *            the function type
+     * @param f
+     *            the function object
+     * @param name
+     *            the function name
+     */
+    public static <FUNCTION extends OrdinaryObject & Callable> void SetFunctionName(FUNCTION f, Object name) {
+        if (name instanceof String) {
+            SetFunctionName(f, (String) name, null);
+        } else if (name instanceof Symbol) {
+            SetFunctionName(f, (Symbol) name, null);
+        } else {
+            assert name instanceof PrivateName;
+            SetFunctionName(f, (PrivateName) name, null);
+        }
+    }
+
+    /**
+     * 9.2.11 SetFunctionName (F, name, prefix)
+     * 
+     * @param <FUNCTION>
+     *            the function type
+     * @param f
+     *            the function object
+     * @param name
+     *            the function name
+     * @param prefix
+     *            the function name prefix
+     */
+    public static <FUNCTION extends OrdinaryObject & Callable> void SetFunctionName(FUNCTION f, Object name,
+            String prefix) {
+        if (name instanceof String) {
+            SetFunctionName(f, (String) name, prefix);
+        } else if (name instanceof Symbol) {
+            SetFunctionName(f, (Symbol) name, prefix);
+        } else {
+            assert name instanceof PrivateName;
+            SetFunctionName(f, (PrivateName) name, prefix);
+        }
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -22,7 +22,7 @@ default   if        throw
 delete    import    try
 `.trim().split(/\s+/);
 
-const KeywordsWithoutYield = [for (w of Keywords) if (w !== "yield") w];
+const KeywordsWithoutYield = Keywords.filter(w => w !== "yield");
 
 // 11.6.2.2 Future Reserved Words
 const FutureReservedWords =
@@ -37,7 +37,7 @@ implements  let      private    public
 interface   package  protected  static
 `.trim().split(/\s+/);
 
-const FutureReservedWordsStrictWithoutLet = [for (w of FutureReservedWordsStrict) if (w !== "let") w];
+const FutureReservedWordsStrictWithoutLet = FutureReservedWordsStrict.filter(w => w !== "let");
 
 // 11.8 Literals
 // 11.8.1 Null Literals

@@ -1,31 +1,28 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
  */
 package com.github.anba.es6draft.runtime.objects.atomics;
 
-import static com.github.anba.es6draft.runtime.AbstractOperations.ToLength;
-import static com.github.anba.es6draft.runtime.AbstractOperations.ToNumber;
+import static com.github.anba.es6draft.runtime.AbstractOperations.ToIndex;
 import static com.github.anba.es6draft.runtime.internal.Errors.newRangeError;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 
 import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
+import com.github.anba.es6draft.runtime.internal.Bytes;
 import com.github.anba.es6draft.runtime.internal.Initializable;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.Properties.Accessor;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
-import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.objects.binary.ArrayBuffer;
-import com.github.anba.es6draft.runtime.objects.binary.ArrayBufferView;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
@@ -33,15 +30,17 @@ import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
 
 /**
- * <h1>Shared Memory and Atomics</h1><br>
- * <h2>SharedArrayBuffer Objects</h2>
+ * <h1>24 Structured Data</h1><br>
+ * <h2>24.2 SharedArrayBuffer Objects</h2>
  * <ul>
- * <li>Abstract Operations For SharedArrayBuffer Objects
- * <li>The SharedArrayBuffer Constructor
- * <li>Properties of the SharedArrayBuffer Constructor
+ * <li>24.2.1 Abstract Operations for SharedArrayBuffer Objects
+ * <li>24.2.2 The SharedArrayBuffer Constructor
+ * <li>24.2.3 Properties of the SharedArrayBuffer Constructor
  * </ul>
  */
 public final class SharedArrayBufferConstructor extends BuiltinConstructor implements Initializable {
+    private static final int DIRECT_LIMIT = 10 * 1024;
+
     /**
      * Constructs a new SharedArrayBuffer constructor function.
      * 
@@ -57,13 +56,8 @@ public final class SharedArrayBufferConstructor extends BuiltinConstructor imple
         createProperties(realm, this, Properties.class);
     }
 
-    @Override
-    public SharedArrayBufferConstructor clone() {
-        return new SharedArrayBufferConstructor(getRealm());
-    }
-
     /**
-     * CreateSharedByteDataBlock( size )
+     * 6.2.7.2 CreateSharedByteDataBlock( size )
      * 
      * @param cx
      *            the execution context
@@ -71,7 +65,7 @@ public final class SharedArrayBufferConstructor extends BuiltinConstructor imple
      *            the byte buffer size in bytes
      * @return the new byte buffer
      */
-    public static ByteBuffer CreateSharedByteDataBlock(ExecutionContext cx, long size) {
+    public static SharedByteBuffer CreateSharedByteDataBlock(ExecutionContext cx, long size) {
         /* step 1 */
         assert size >= 0;
         /* step 2 */
@@ -86,8 +80,13 @@ public final class SharedArrayBufferConstructor extends BuiltinConstructor imple
         }
         try {
             /* steps 3-4 */
-            // TODO: Call allocateDirect() if size exceeds predefined limit?
-            return ByteBuffer.allocate(requestedSize).order(ByteOrder.nativeOrder());
+            ByteBuffer buffer;
+            if (size < DIRECT_LIMIT) {
+                buffer = ByteBuffer.allocate(requestedSize);
+            } else {
+                buffer = ByteBuffer.allocateDirect(requestedSize);
+            }
+            return new SharedByteBuffer(buffer.order(Bytes.DEFAULT_BYTE_ORDER));
         } catch (OutOfMemoryError e) {
             /* step 2 */
             throw newRangeError(cx, Messages.Key.OutOfMemoryVM);
@@ -95,18 +94,7 @@ public final class SharedArrayBufferConstructor extends BuiltinConstructor imple
     }
 
     /**
-     * SharedDataBlockID( block )
-     * 
-     * @param block
-     *            the byte buffer
-     * @return the byte buffer id
-     */
-    public static Object SharedDataBlockID(ByteBuffer block) {
-        return block;
-    }
-
-    /**
-     * AllocateSharedArrayBuffer( constructor, byteLength )
+     * 24.2.1.1 AllocateSharedArrayBuffer( constructor, byteLength )
      * 
      * @param cx
      *            the execution context
@@ -118,29 +106,31 @@ public final class SharedArrayBufferConstructor extends BuiltinConstructor imple
      */
     public static SharedArrayBufferObject AllocateSharedArrayBuffer(ExecutionContext cx, Constructor constructor,
             long byteLength) {
-        /* steps 1-2 */
+        /* step 1 */
         ScriptObject proto = GetPrototypeFromConstructor(cx, constructor, Intrinsics.SharedArrayBufferPrototype);
-        /* step 3 */
+        /* step 2 */
         assert byteLength >= 0;
-        /* steps 4-5 */
-        ByteBuffer block = CreateSharedByteDataBlock(cx, byteLength);
-        /* steps 1-2, 6-8 */
+        /* step 3 */
+        SharedByteBuffer block = CreateSharedByteDataBlock(cx, byteLength);
+        /* steps 1, 4-6 */
         return new SharedArrayBufferObject(cx.getRealm(), block, byteLength, proto);
     }
 
     /**
-     * IsSharedMemory( obj )
+     * 24.2.1.2 IsSharedArrayBuffer( obj )
      * 
      * @param obj
      *            the object
      * @return {@code true} if the buffer is shared array buffer object
      */
-    public static boolean IsSharedMemory(ArrayBuffer obj) {
+    public static boolean IsSharedArrayBuffer(ArrayBuffer obj) {
+        /* step 1 (implicit) */
+        /* steps 2-6 */
         return obj instanceof SharedArrayBufferObject;
     }
 
     /**
-     * SharedArrayBuffer(length)
+     * 24.2.2.1 SharedArrayBuffer( length )
      */
     @Override
     public SharedArrayBufferObject call(ExecutionContext callerContext, Object thisValue, Object... args) {
@@ -149,7 +139,7 @@ public final class SharedArrayBufferConstructor extends BuiltinConstructor imple
     }
 
     /**
-     * SharedArrayBuffer(length)
+     * 24.2.2.1 SharedArrayBuffer( length )
      */
     @Override
     public SharedArrayBufferObject construct(ExecutionContext callerContext, Constructor newTarget, Object... args) {
@@ -157,19 +147,14 @@ public final class SharedArrayBufferConstructor extends BuiltinConstructor imple
         Object length = argument(args, 0);
         /* step 1 (not applicable) */
         /* step 2 */
-        double numberLength = ToNumber(calleeContext, length);
-        /* steps 3-4 */
-        long byteLength = ToLength(numberLength);
-        /* step 5 */
-        if (numberLength != byteLength) { // SameValueZero
-            throw newRangeError(calleeContext, Messages.Key.InvalidBufferSize);
-        }
-        /* step 6 */
+        // FIXME: spec bug - typo `numberLength` -> `length`
+        long byteLength = ToIndex(calleeContext, length);
+        /* step 3 */
         return AllocateSharedArrayBuffer(calleeContext, newTarget, byteLength);
     }
 
     /**
-     * Properties of the SharedArrayBuffer Constructor
+     * 24.2.3 Properties of the SharedArrayBuffer Constructor
      */
     public enum Properties {
         ;
@@ -177,38 +162,20 @@ public final class SharedArrayBufferConstructor extends BuiltinConstructor imple
         @Prototype
         public static final Intrinsics __proto__ = Intrinsics.FunctionPrototype;
 
-        @Value(name = "length", attributes = @Attributes(writable = false, enumerable = false, configurable = true) )
+        @Value(name = "length", attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static final int length = 1;
 
-        @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false, configurable = true) )
+        @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static final String name = "SharedArrayBuffer";
 
         /**
-         * SharedArrayBuffer.prototype
+         * 24.2.3.1 SharedArrayBuffer.prototype
          */
-        @Value(name = "prototype",
-                attributes = @Attributes(writable = false, enumerable = false, configurable = false) )
+        @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false, configurable = false))
         public static final Intrinsics prototype = Intrinsics.SharedArrayBufferPrototype;
 
         /**
-         * SharedArrayBuffer.isView ( arg )
-         * 
-         * @param cx
-         *            the execution context
-         * @param thisValue
-         *            the function this-value
-         * @param arg
-         *            the argument object
-         * @return {@code true} if the argument is an array buffer view object
-         */
-        @Function(name = "isView", arity = 1)
-        public static Object isView(ExecutionContext cx, Object thisValue, Object arg) {
-            /* steps 1-3 */
-            return arg instanceof ArrayBufferView;
-        }
-
-        /**
-         * get SharedArrayBuffer [ @@species ]
+         * 24.2.3.2 get SharedArrayBuffer [ @@species ]
          * 
          * @param cx
          *            the execution context

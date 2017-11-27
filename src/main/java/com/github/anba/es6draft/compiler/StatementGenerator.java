@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -15,23 +15,26 @@ import static com.github.anba.es6draft.semantics.StaticSemantics.BoundNames;
 import static com.github.anba.es6draft.semantics.StaticSemantics.IsAnonymousFunctionDefinition;
 import static com.github.anba.es6draft.semantics.StaticSemantics.IsConstantDeclaration;
 
+import java.util.Iterator;
 import java.util.List;
-import java.util.Map.Entry;
 
 import com.github.anba.es6draft.ast.*;
 import com.github.anba.es6draft.ast.scope.BlockScope;
+import com.github.anba.es6draft.ast.scope.ClassFieldScope;
 import com.github.anba.es6draft.ast.scope.FunctionScope;
 import com.github.anba.es6draft.ast.scope.Name;
 import com.github.anba.es6draft.ast.scope.ScriptScope;
 import com.github.anba.es6draft.ast.scope.TopLevelScope;
+import com.github.anba.es6draft.ast.synthetic.ClassFieldInitializer;
 import com.github.anba.es6draft.ast.synthetic.StatementListMethod;
-import com.github.anba.es6draft.compiler.CodeVisitor.LabelState;
+import com.github.anba.es6draft.compiler.CodeVisitor.OutlinedCall;
 import com.github.anba.es6draft.compiler.Labels.BreakLabel;
 import com.github.anba.es6draft.compiler.Labels.ContinueLabel;
 import com.github.anba.es6draft.compiler.Labels.TempLabel;
-import com.github.anba.es6draft.compiler.assembler.InstructionAssembler;
+import com.github.anba.es6draft.compiler.assembler.Code.MethodCode;
 import com.github.anba.es6draft.compiler.assembler.Jump;
 import com.github.anba.es6draft.compiler.assembler.MethodName;
+import com.github.anba.es6draft.compiler.assembler.MethodTypeDescriptor;
 import com.github.anba.es6draft.compiler.assembler.MutableValue;
 import com.github.anba.es6draft.compiler.assembler.TryCatchLabel;
 import com.github.anba.es6draft.compiler.assembler.Type;
@@ -54,15 +57,15 @@ final class StatementGenerator extends DefaultCodeGenerator<StatementGenerator.C
      * 6.2.2 The Completion Record Specification Type
      */
     enum Completion {
-        Empty, Normal, Return, Throw, Break, Continue, Abrupt;
+        Normal, Abrupt;
 
         /**
-         * Returns {@code true} if this completion type is not {@link #Normal}.
+         * Returns {@code true} if this completion type is {@link #Abrupt}.
          * 
-         * @return {@code true} if not the normal completion type
+         * @return {@code true} if the abrupt completion type
          */
         boolean isAbrupt() {
-            return !(this == Normal || this == Empty);
+            return this == Abrupt;
         }
 
         /**
@@ -70,10 +73,8 @@ final class StatementGenerator extends DefaultCodeGenerator<StatementGenerator.C
          * {@code
          * then :: Completion -> Completion -> Completion
          * then a b = case (a, b) of
-         *              (Normal, Empty) -> a
-         *              (Normal, _) -> b
-         *              (Empty, _) -> b
-         *              _ -> a
+         *              (Abrupt, _) -> a
+         *              _ -> b
          * }
          * </pre>
          * 
@@ -82,7 +83,7 @@ final class StatementGenerator extends DefaultCodeGenerator<StatementGenerator.C
          * @return the statically computed completion type
          */
         Completion then(Completion next) {
-            if (!(this == Normal || this == Empty) || (this == Normal && next == Empty)) {
+            if (this == Abrupt) {
                 return this;
             }
             return next;
@@ -93,12 +94,8 @@ final class StatementGenerator extends DefaultCodeGenerator<StatementGenerator.C
          * {@code
          * select :: Completion -> Completion -> Completion
          * select a b = case (a, b) of
-         *                (Empty, _) -> Normal
-         *                (_, Empty) -> Normal
-         *                (Normal, _) -> Normal
-         *                (_, Normal) -> Normal
-         *                _ | a == b -> a
-         *                _ -> Abrupt
+         *                (Abrupt, Abrupt) -> Abrupt
+         *                _ -> Normal
          * }
          * </pre>
          * 
@@ -107,10 +104,10 @@ final class StatementGenerator extends DefaultCodeGenerator<StatementGenerator.C
          * @return the statically computed completion type
          */
         Completion select(Completion other) {
-            if (this == Normal || this == Empty || other == Normal || other == Empty) {
-                return Normal;
+            if (this == Abrupt && other == Abrupt) {
+                return Abrupt;
             }
-            return this == other ? this : Abrupt;
+            return Normal;
         }
 
         /**
@@ -119,7 +116,6 @@ final class StatementGenerator extends DefaultCodeGenerator<StatementGenerator.C
          * normal :: Completion -> Bool -> Completion
          * normal a b = case (a, b) of
          *                (_, True) -> Normal
-         *                (Empty, _) -> Normal
          *                _ -> a
          * }
          * </pre>
@@ -129,41 +125,7 @@ final class StatementGenerator extends DefaultCodeGenerator<StatementGenerator.C
          * @return the statically computed completion type
          */
         Completion normal(boolean useNormal) {
-            return (useNormal || this == Empty) ? Normal : this;
-        }
-
-        /**
-         * <pre>
-         * {@code
-         * normal :: Completion -> Bool -> Completion
-         * normal a b = case (a, b) of
-         *                (_, True) -> Normal
-         *                _ -> a
-         * }
-         * </pre>
-         * 
-         * @param useNormal
-         *            the flag to select the normal completion type
-         * @return the statically computed completion type
-         */
-        Completion normalOrEmpty(boolean useNormal) {
             return useNormal ? Normal : this;
-        }
-
-        /**
-         * <pre>
-         * {@code
-         * nonEmpty :: Completion -> Completion
-         * nonEmpty a = case (a) of
-         *                (Empty) -> Normal
-         *                _ -> a
-         * }
-         * </pre>
-         * 
-         * @return the statically computed completion type
-         */
-        Completion nonEmpty() {
-            return this == Empty ? Normal : this;
         }
     }
 
@@ -177,10 +139,10 @@ final class StatementGenerator extends DefaultCodeGenerator<StatementGenerator.C
         static Bool evaluate(Expression expr) {
             if (expr instanceof Literal) {
                 if (expr instanceof BooleanLiteral) {
-                    return from(((BooleanLiteral) expr).getValue());
+                    return from(((BooleanLiteral) expr).booleanValue());
                 }
                 if (expr instanceof NumericLiteral) {
-                    double num = ((NumericLiteral) expr).getValue();
+                    double num = ((NumericLiteral) expr).doubleValue();
                     return from(num != 0 && !Double.isNaN(num));
                 }
                 if (expr instanceof StringLiteral) {
@@ -195,54 +157,67 @@ final class StatementGenerator extends DefaultCodeGenerator<StatementGenerator.C
     }
 
     private static final class Methods {
-        // class: GeneratorObject
-        static final MethodName GeneratorObject_isLegacyGenerator = MethodName.findVirtual(
-                Types.GeneratorObject, "isLegacyGenerator", Type.methodType(Type.BOOLEAN_TYPE));
-
         // class: Iterator
-        static final MethodName Iterator_hasNext = MethodName.findInterface(Types.Iterator,
-                "hasNext", Type.methodType(Type.BOOLEAN_TYPE));
+        static final MethodName Iterator_hasNext = MethodName.findInterface(Types.Iterator, "hasNext",
+                Type.methodType(Type.BOOLEAN_TYPE));
 
         static final MethodName Iterator_next = MethodName.findInterface(Types.Iterator, "next",
                 Type.methodType(Types.Object));
 
         // class: ScriptException
-        static final MethodName ScriptException_create = MethodName.findStatic(
-                Types.ScriptException, "create",
+        static final MethodName ScriptException_create = MethodName.findStatic(Types.ScriptException, "create",
                 Type.methodType(Types.ScriptException, Types.Object));
 
-        static final MethodName ScriptException_getValue = MethodName.findVirtual(
-                Types.ScriptException, "getValue", Type.methodType(Types.Object));
+        static final MethodName ScriptException_getValue = MethodName.findVirtual(Types.ScriptException, "getValue",
+                Type.methodType(Types.Object));
 
-        // class: ScriptRuntime
-        static final MethodName ScriptRuntime_debugger = MethodName.findStatic(Types.ScriptRuntime,
-                "debugger", Type.methodType(Type.VOID_TYPE));
+        // class: ExecutionContext
+        static final MethodName ExecutionContext_setVariableAndLexicalEnvironment = MethodName.findVirtual(
+                Types.ExecutionContext, "setVariableAndLexicalEnvironment",
+                Type.methodType(Type.VOID_TYPE, Types.LexicalEnvironment));
 
-        static final MethodName ScriptRuntime_enumerate = MethodName.findStatic(
-                Types.ScriptRuntime, "enumerate",
+        // class: LexicalEnvironment
+        static final MethodName LexicalEnvironment_newDeclarativeEnvironment = MethodName.findStatic(
+                Types.LexicalEnvironment, "newDeclarativeEnvironment",
+                Type.methodType(Types.LexicalEnvironment, Types.LexicalEnvironment));
+
+        // class: ClassOperations
+        static final MethodName ClassOperations_DefineField = MethodName.findStatic(Types.ClassOperations,
+                "DefineField", Type.methodType(Type.VOID_TYPE, Types.Object, Types.Object, Types.ExecutionContext));
+
+        // class: DeclarationOperations
+        static final MethodName DeclarationOperations_isLegacyBlockFunction = MethodName.findStatic(
+                Types.DeclarationOperations, "isLegacyBlockFunction",
+                Type.methodType(Type.BOOLEAN_TYPE, Types.ExecutionContext, Type.INT_TYPE));
+
+        // class: IteratorOperations
+        static final MethodName IteratorOperations_enumerate = MethodName.findStatic(Types.IteratorOperations,
+                "enumerate", Type.methodType(Types.Iterator, Types.Object, Types.ExecutionContext));
+
+        static final MethodName IteratorOperations_iterate = MethodName.findStatic(Types.IteratorOperations, "iterate",
                 Type.methodType(Types.ScriptIterator, Types.Object, Types.ExecutionContext));
 
-        static final MethodName ScriptRuntime_enumerateValues = MethodName.findStatic(
-                Types.ScriptRuntime, "enumerateValues",
-                Type.methodType(Types.ScriptIterator, Types.Object, Types.ExecutionContext));
+        static final MethodName IteratorOperations_asyncIterate = MethodName.findStatic(Types.IteratorOperations,
+                "asyncIterate", Type.methodType(Types.ScriptIterator, Types.Object, Types.ExecutionContext));
 
-        static final MethodName ScriptRuntime_stackOverflowError = MethodName.findStatic(
-                Types.ScriptRuntime, "stackOverflowError",
-                Type.methodType(Types.StackOverflowError, Types.Error));
+        // class: DebuggerOperations
+        static final MethodName DebuggerOperations_debugger = MethodName.findStatic(Types.DebuggerOperations,
+                "debugger", Type.methodType(Type.VOID_TYPE, Types.ExecutionContext));
 
-        static final MethodName ScriptRuntime_iterate = MethodName.findStatic(Types.ScriptRuntime,
-                "iterate",
-                Type.methodType(Types.ScriptIterator, Types.Object, Types.ExecutionContext));
+        // class: ErrorOperations
+        static final MethodName ErrorOperations_stackOverflowError = MethodName.findStatic(Types.ErrorOperations,
+                "stackOverflowError", Type.methodType(Types.StackOverflowError, Types.Error));
 
-        static final MethodName ScriptRuntime_asyncIterate = MethodName.findStatic(Types.ScriptRuntime, "asyncIterate",
-                Type.methodType(Types.ScriptObject, Types.Object, Types.ExecutionContext));
+        static final MethodName ErrorOperations_toInternalError = MethodName.findStatic(Types.ErrorOperations,
+                "toInternalError",
+                Type.methodType(Types.ScriptException, Types.StackOverflowError, Types.ExecutionContext));
 
-        static final MethodName ScriptRuntime_toInternalError = MethodName.findStatic(
-                Types.ScriptRuntime, "toInternalError", Type.methodType(Types.ScriptException,
-                        Types.StackOverflowError, Types.ExecutionContext));
+        // class: ScriptIterator
+        static final MethodName ScriptIterator_getScriptObject = MethodName.findInterface(Types.ScriptIterator,
+                "getScriptObject", Type.methodType(Types.ScriptObject));
 
-        static final MethodName ScriptRuntime_isLegacyBlockFunction = MethodName.findStatic(Types.ScriptRuntime,
-                "isLegacyBlockFunction", Type.methodType(Type.BOOLEAN_TYPE, Types.ExecutionContext, Type.INT_TYPE));
+        static final MethodName ScriptIterator_nextIterResult = MethodName.findInterface(Types.ScriptIterator,
+                "nextIterResult", Type.methodType(Types.Object));
     }
 
     public StatementGenerator(CodeGenerator codegen) {
@@ -273,8 +248,7 @@ final class StatementGenerator extends DefaultCodeGenerator<StatementGenerator.C
         mv.store(value);
 
         Class<? extends EnvironmentRecord> envRecClass = getEnvironmentRecordClass(mv);
-        Variable<? extends EnvironmentRecord> envRec = mv.newVariable("envRec", envRecClass);
-        getLexicalEnvironmentRecord(envRec, mv);
+        Value<? extends EnvironmentRecord> envRec = getLexicalEnvironmentRecord(Type.of(envRecClass), mv);
 
         InitializeBoundName(envRec, name, value, mv);
 
@@ -287,7 +261,7 @@ final class StatementGenerator extends DefaultCodeGenerator<StatementGenerator.C
     @Override
     public Completion visit(AsyncFunctionDeclaration node, CodeVisitor mv) {
         /* step 1 */
-        return Completion.Empty;
+        return Completion.Normal;
     }
 
     /**
@@ -296,7 +270,7 @@ final class StatementGenerator extends DefaultCodeGenerator<StatementGenerator.C
     @Override
     public Completion visit(AsyncGeneratorDeclaration node, CodeVisitor mv) {
         /* step 1 */
-        return Completion.Empty;
+        return Completion.Normal;
     }
 
     /**
@@ -309,7 +283,7 @@ final class StatementGenerator extends DefaultCodeGenerator<StatementGenerator.C
         if (node.getStatements().isEmpty()) {
             // Block : { }
             // -> Return NormalCompletion(empty)
-            return Completion.Empty;
+            return Completion.Normal;
         }
 
         /* steps 1-4 */
@@ -322,13 +296,13 @@ final class StatementGenerator extends DefaultCodeGenerator<StatementGenerator.C
 
         /* step 5 */
         mv.enterScope(node);
-        Completion result = Completion.Empty;
+        Completion result = Completion.Normal;
         {
             // 13.2.13 Runtime Semantics: Evaluation
             // StatementList : StatementList StatementListItem
             /* steps 1-4 */
             for (StatementListItem statement : node.getStatements()) {
-                if ((result = result.then(statement.accept(this, mv))).isAbrupt()) {
+                if ((result = statement.accept(this, mv)).isAbrupt()) {
                     break;
                 }
             }
@@ -354,7 +328,7 @@ final class StatementGenerator extends DefaultCodeGenerator<StatementGenerator.C
         assert mv.getStackSize() == 0;
         /* steps 1-2 */
         mv.goTo(mv.breakLabel(node));
-        return Completion.Break;
+        return Completion.Abrupt;
     }
 
     /**
@@ -367,7 +341,7 @@ final class StatementGenerator extends DefaultCodeGenerator<StatementGenerator.C
         /* steps 1-2 */
         BindingClassDeclarationEvaluation(node, mv);
         /* step 3 */
-        return Completion.Empty;
+        return Completion.Normal;
     }
 
     /**
@@ -398,6 +372,70 @@ final class StatementGenerator extends DefaultCodeGenerator<StatementGenerator.C
         }
     }
 
+    @Override
+    public Completion visit(ClassFieldInitializer node, CodeVisitor mv) {
+        ClassFieldDefinition field = node.getField();
+
+        // stack: [] -> [fieldName]
+        ValType type = expressionBoxed(node.getFieldName(), mv);
+
+        // stack: [fieldName] -> [fieldName, value]
+        Expression initializer = field.getInitializer();
+        ClassFieldScope scope = node.getScope();
+        assert (initializer != null) == (scope != null);
+        if (initializer != null) {
+            mv.enterScope(node);
+
+            if (!scope.isPresent()) {
+                expressionBoxed(initializer, mv);
+            } else {
+                Variable<LexicalEnvironment<?>> env = saveEnvironment(mv);
+                newClassFieldInitializerEnvironment(env, mv);
+                if (!scope.varDeclaredNames().isEmpty()) {
+                    Variable<DeclarativeEnvironmentRecord> classFieldEnvRec = mv.newVariable("classFieldEnvRec",
+                            DeclarativeEnvironmentRecord.class);
+                    getVariableEnvironmentRecord(classFieldEnvRec, mv);
+                    for (Name varName : scope.varDeclaredNames()) {
+                        BindingOp<DeclarativeEnvironmentRecord> op = BindingOp.of(classFieldEnvRec, varName);
+                        op.createMutableBinding(classFieldEnvRec, varName, false, mv);
+                        op.initializeBinding(classFieldEnvRec, varName, mv.undefinedValue(), mv);
+                    }
+                }
+                expressionBoxed(initializer, mv);
+                setVariableAndLexicalEnvironment(env, mv);
+            }
+
+            mv.exitScope();
+
+            if (IsAnonymousFunctionDefinition(initializer)) {
+                SetFunctionName(initializer, type, mv);
+            }
+        } else {
+            mv.loadUndefined();
+        }
+
+        mv.loadExecutionContext();
+        mv.lineInfo(node);
+        mv.invoke(Methods.ClassOperations_DefineField);
+
+        return Completion.Normal;
+    }
+
+    private void newClassFieldInitializerEnvironment(Variable<? extends LexicalEnvironment<?>> env, CodeVisitor mv) {
+        // stack: [] -> []
+        mv.loadExecutionContext();
+        mv.load(env);
+        mv.invoke(Methods.LexicalEnvironment_newDeclarativeEnvironment);
+        mv.invoke(Methods.ExecutionContext_setVariableAndLexicalEnvironment);
+    }
+
+    private void setVariableAndLexicalEnvironment(Variable<? extends LexicalEnvironment<?>> env, CodeVisitor mv) {
+        // stack: [] -> []
+        mv.loadExecutionContext();
+        mv.load(env);
+        mv.invoke(Methods.ExecutionContext_setVariableAndLexicalEnvironment);
+    }
+
     /**
      * 13.8 The continue Statement
      * <p>
@@ -408,7 +446,7 @@ final class StatementGenerator extends DefaultCodeGenerator<StatementGenerator.C
         assert mv.getStackSize() == 0;
         /* steps 1-2 */
         mv.goTo(mv.continueLabel(node));
-        return Completion.Continue;
+        return Completion.Abrupt;
     }
 
     /**
@@ -419,9 +457,10 @@ final class StatementGenerator extends DefaultCodeGenerator<StatementGenerator.C
     @Override
     public Completion visit(DebuggerStatement node, CodeVisitor mv) {
         /* steps 1-3 */
+        mv.loadExecutionContext();
         mv.lineInfo(node);
-        mv.invoke(Methods.ScriptRuntime_debugger);
-        return Completion.Empty;
+        mv.invoke(Methods.DebuggerOperations_debugger);
+        return Completion.Normal;
     }
 
     /**
@@ -466,9 +505,7 @@ final class StatementGenerator extends DefaultCodeGenerator<StatementGenerator.C
         /* steps 2.d-g */
         if (!result.isAbrupt() || lblContinue.isTarget()) {
             if (btest == Bool.Any) {
-                ValType type = expression(node.getTest(), mv);
-                ToBoolean(type, mv);
-                mv.ifne(lblNext);
+                testExpressionFallthrough(node.getTest(), lblNext, mv);
             } else if (btest == Bool.True) {
                 mv.goTo(lblNext);
             }
@@ -482,11 +519,8 @@ final class StatementGenerator extends DefaultCodeGenerator<StatementGenerator.C
         mv.exitVariableScope();
 
         /* steps 2.b, 2.g */
-        if (btest == Bool.True) {
-            if (!result.isAbrupt() && !lblBreak.isTarget()) {
-                return Completion.Abrupt; // infinite loop
-            }
-            return result.normal(lblBreak.isTarget());
+        if (btest == Bool.True && !lblBreak.isTarget()) {
+            return Completion.Abrupt; // abrupt or infinite loop
         }
         return result.normal(lblContinue.isTarget() || lblBreak.isTarget());
     }
@@ -499,7 +533,7 @@ final class StatementGenerator extends DefaultCodeGenerator<StatementGenerator.C
     @Override
     public Completion visit(EmptyStatement node, CodeVisitor mv) {
         /* step 1 */
-        return Completion.Empty;
+        return Completion.Normal;
     }
 
     /**
@@ -513,7 +547,7 @@ final class StatementGenerator extends DefaultCodeGenerator<StatementGenerator.C
         case All:
         case External:
         case Local:
-            return Completion.Empty;
+            return Completion.Normal;
         case Variable:
             return node.getVariableStatement().accept(this, mv);
         case Declaration:
@@ -532,7 +566,7 @@ final class StatementGenerator extends DefaultCodeGenerator<StatementGenerator.C
                 InitializeBoundNameWithValue(decl.getName(), FunctionObject.class, mv);
             }
             /* step 5 */
-            return Completion.Empty;
+            return Completion.Normal;
         }
         case DefaultExpression:
             return node.getExpression().accept(this, mv);
@@ -558,7 +592,7 @@ final class StatementGenerator extends DefaultCodeGenerator<StatementGenerator.C
         /* steps 5-6 */
         InitializeBoundNameWithValue(node.getBinding().getName(), Object.class, mv);
         /* step 7 */
-        return Completion.Empty;
+        return Completion.Normal;
     }
 
     /**
@@ -583,7 +617,7 @@ final class StatementGenerator extends DefaultCodeGenerator<StatementGenerator.C
     }
 
     private enum IterationKind {
-        AsyncIterate, Enumerate, EnumerateValues, Iterate
+        AsyncIterate, Enumerate, Iterate
     }
 
     /**
@@ -592,14 +626,6 @@ final class StatementGenerator extends DefaultCodeGenerator<StatementGenerator.C
     @Override
     public Completion visit(ForAwaitStatement node, CodeVisitor mv) {
         return visitForInOfLoop(node, IterationKind.AsyncIterate, mv);
-    }
-
-    /**
-     * Extension: 'for-each' statement
-     */
-    @Override
-    public Completion visit(ForEachStatement node, CodeVisitor mv) {
-        return visitForInOfLoop(node, IterationKind.EnumerateValues, mv);
     }
 
     /**
@@ -650,15 +676,45 @@ final class StatementGenerator extends DefaultCodeGenerator<StatementGenerator.C
         assert mv.getStackSize() == 0;
         Jump lblFail = new Jump();
 
+        if (node.getHead() instanceof VariableStatement) {
+            VariableStatement lhs = (VariableStatement) node.getHead();
+            Binding binding = forVarDeclarationBinding(lhs);
+            if (binding instanceof BindingIdentifier) {
+                Expression initializer = forVarDeclarationBindingInitializer(lhs);
+                if (initializer != null) {
+                    BindingIdentifier bindingId = (BindingIdentifier) binding;
+                    /* steps 1-2 */
+                    IdReferenceOp op = IdReferenceOp.of(bindingId);
+                    op.resolveBinding(bindingId, mv);
+                    /* steps 3-4 */
+                    ValType type = expression(initializer, mv);
+                    /* step 5 */
+                    if (IsAnonymousFunctionDefinition(initializer)) {
+                        SetFunctionName(initializer, bindingId.getName(), mv);
+                    }
+                    /* step 6 */
+                    op.putValue(bindingId, type, mv);
+                }
+            }
+        }
+
         /* steps 1-2 */
         ValType type = ForInOfHeadEvaluation(node, iterationKind, lblFail, mv);
 
         /* step 3 */
         Completion result;
-        if (iterationKind != IterationKind.AsyncIterate) {
-            result = ForInOfBodyEvaluation(node, mv);
-        } else {
+        switch (iterationKind) {
+        case AsyncIterate:
             result = AsyncForInOfBodyEvaluation(node, mv);
+            break;
+        case Iterate:
+            result = ForInOfBodyEvaluation(node, mv);
+            break;
+        case Enumerate:
+            result = ForInBodyEvaluation(node, mv);
+            break;
+        default:
+            throw new AssertionError();
         }
 
         if (type != ValType.Object) {
@@ -694,11 +750,12 @@ final class StatementGenerator extends DefaultCodeGenerator<StatementGenerator.C
             tdzNames = BoundNames(forDeclarationBinding((LexicalDeclaration) lhs));
             assert scope.isPresent() == !tdzNames.isEmpty();
             if (scope.isPresent()) {
-                // stack: [] -> [TDZ]
-                newDeclarativeEnvironment(scope, mv);
                 mv.enterVariableScope();
                 Variable<DeclarativeEnvironmentRecord> envRec = mv.newVariable("envRec",
                         DeclarativeEnvironmentRecord.class);
+                // stack: [] -> [TDZ]
+                newDeclarativeEnvironment(scope, mv);
+                // stack: [TDZ] -> [TDZ]
                 getEnvRec(envRec, mv);
 
                 // stack: [TDZ] -> [TDZ]
@@ -726,8 +783,7 @@ final class StatementGenerator extends DefaultCodeGenerator<StatementGenerator.C
         }
 
         /* steps 7-8 */
-        if (iterationKind == IterationKind.Enumerate
-                || iterationKind == IterationKind.EnumerateValues) {
+        if (iterationKind == IterationKind.Enumerate) {
             /* step 7.a */
             if (type != ValType.Object) {
                 Jump loopstart = new Jump();
@@ -739,49 +795,19 @@ final class StatementGenerator extends DefaultCodeGenerator<StatementGenerator.C
                 mv.mark(loopstart);
             }
             /* steps 7.b-c */
-            if (codegen.isEnabled(CompatibilityOption.LegacyGenerator)) {
-                // legacy generator mode, both, for-in and for-each, perform Iterate on generators
-                Jump l0 = new Jump(), l1 = new Jump();
-                mv.dup();
-                mv.instanceOf(Types.GeneratorObject);
-                mv.ifeq(l0);
-                mv.dup();
-                mv.checkcast(Types.GeneratorObject);
-                mv.invoke(Methods.GeneratorObject_isLegacyGenerator);
-                mv.ifeq(l0);
-                mv.loadExecutionContext();
-                mv.lineInfo(expr);
-                mv.invoke(Methods.ScriptRuntime_iterate);
-                mv.goTo(l1);
-                mv.mark(l0);
-                mv.loadExecutionContext();
-                if (iterationKind == IterationKind.Enumerate) {
-                    mv.lineInfo(expr);
-                    mv.invoke(Methods.ScriptRuntime_enumerate);
-                } else {
-                    mv.lineInfo(expr);
-                    mv.invoke(Methods.ScriptRuntime_enumerateValues);
-                }
-                mv.mark(l1);
-            } else if (iterationKind == IterationKind.Enumerate) {
-                mv.loadExecutionContext();
-                mv.lineInfo(expr);
-                mv.invoke(Methods.ScriptRuntime_enumerate);
-            } else {
-                mv.loadExecutionContext();
-                mv.lineInfo(expr);
-                mv.invoke(Methods.ScriptRuntime_enumerateValues);
-            }
+            mv.loadExecutionContext();
+            mv.lineInfo(expr);
+            mv.invoke(Methods.IteratorOperations_enumerate);
         } else if (iterationKind == IterationKind.AsyncIterate) {
             mv.loadExecutionContext();
             mv.lineInfo(expr);
-            mv.invoke(Methods.ScriptRuntime_asyncIterate);
+            mv.invoke(Methods.IteratorOperations_asyncIterate);
         } else {
             /* step 8 */
             assert iterationKind == IterationKind.Iterate;
             mv.loadExecutionContext();
             mv.lineInfo(expr);
-            mv.invoke(Methods.ScriptRuntime_iterate);
+            mv.invoke(Methods.IteratorOperations_iterate);
         }
 
         return type;
@@ -891,6 +917,79 @@ final class StatementGenerator extends DefaultCodeGenerator<StatementGenerator.C
      *            the code visitor
      * @return the completion value
      */
+    private <FORSTATEMENT extends IterationStatement & ForIterationNode> Completion ForInBodyEvaluation(
+            FORSTATEMENT node, CodeVisitor mv) {
+        assert mv.getStackSize() == 1;
+        ContinueLabel lblContinue = new ContinueLabel();
+        BreakLabel lblBreak = new BreakLabel();
+        Jump enter = new Jump(), test = new Jump();
+
+        mv.enterVariableScope();
+        Variable<Iterator<?>> iterator = mv.newVariable("iter", Iterator.class).uncheckedCast();
+        // stack: [Iterator] -> []
+        mv.store(iterator);
+        Variable<Object> nextValue = mv.newVariable("nextValue", Object.class);
+        Variable<LexicalEnvironment<?>> savedEnv = saveEnvironment(node, mv);
+
+        /* step 1 (not applicable) */
+        /* step 2 */
+        if (node.hasCompletionValue()) {
+            mv.storeUndefinedAsCompletionValue();
+        }
+        /* steps 3-4 (not applicable) */
+        /* step 5 (repeat loop) */
+        mv.nonDestructiveGoTo(test);
+
+        /* steps 5.d-e */
+        mv.mark(enter);
+        mv.load(iterator);
+        mv.lineInfo(node);
+        mv.invoke(Methods.Iterator_next);
+        mv.store(nextValue);
+
+        /* steps 5.f-l */
+        {
+            mv.enterIteration(node, lblBreak, lblContinue);
+            ForInOfBodyEvaluationInner(node, nextValue, mv);
+            mv.exitIteration(node);
+        }
+
+        /* steps 5.m-n */
+        if (lblContinue.isTarget()) {
+            mv.mark(lblContinue);
+            restoreEnvironment(savedEnv, mv);
+        }
+
+        /* steps 5.a-c */
+        mv.mark(test);
+        mv.load(iterator);
+        mv.lineInfo(node);
+        mv.invoke(Methods.Iterator_hasNext);
+        mv.ifne(enter);
+
+        /* steps 5.m-n */
+        if (lblBreak.isTarget()) {
+            mv.mark(lblBreak);
+            restoreEnvironment(savedEnv, mv);
+        }
+        mv.exitVariableScope();
+
+        return Completion.Normal;
+    }
+
+    /**
+     * 13.7.5.13 Runtime Semantics: ForIn/OfBodyEvaluation (lhs, stmt, iterator, lhsKind, labelSet)
+     * <p>
+     * stack: [Iterator] {@literal ->} []
+     * 
+     * @param <FORSTATEMENT>
+     *            the for-statement node type
+     * @param node
+     *            the for-statement node
+     * @param mv
+     *            the code visitor
+     * @return the completion value
+     */
     private <FORSTATEMENT extends IterationStatement & ForIterationNode> Completion AsyncForInOfBodyEvaluation(
             FORSTATEMENT node, CodeVisitor mv) {
         assert mv.getStackSize() == 1;
@@ -899,8 +998,12 @@ final class StatementGenerator extends DefaultCodeGenerator<StatementGenerator.C
         Jump enter = new Jump(), test = new Jump();
 
         mv.enterVariableScope();
+        Variable<ScriptIterator<?>> iterRec = mv.newVariable("iterRec", ScriptIterator.class).uncheckedCast();
         Variable<ScriptObject> iterator = mv.newVariable("iter", ScriptObject.class);
         // stack: [Iterator] -> []
+        mv.store(iterRec);
+        mv.load(iterRec);
+        mv.invoke(Methods.ScriptIterator_getScriptObject);
         mv.store(iterator);
         Variable<ScriptObject> nextResult = mv.newVariable("nextResult", ScriptObject.class);
         mv.anull();
@@ -922,7 +1025,6 @@ final class StatementGenerator extends DefaultCodeGenerator<StatementGenerator.C
         /* steps 5.d-e */
         mv.mark(enter);
         IteratorValue(node, nextResult, mv);
-        await(node, mv);
         mv.store(nextValue);
 
         /* steps 5.f-l */
@@ -968,10 +1070,10 @@ final class StatementGenerator extends DefaultCodeGenerator<StatementGenerator.C
 
         /* steps 5.a-c */
         mv.mark(test);
-        IteratorNext(node, iterator, mv);
+        mv.load(iterRec);
+        mv.invoke(Methods.ScriptIterator_nextIterResult);
         await(node, mv);
 
-        // FIXME: spec bug - missing type check after await
         requireObjectResult(node, "next", mv);
         mv.store(nextResult);
 
@@ -1034,7 +1136,7 @@ final class StatementGenerator extends DefaultCodeGenerator<StatementGenerator.C
                 BindingInitialization(codegen, (BindingPattern) binding, mv);
             }
         } else {
-            /* step 5.g-j */
+            /* steps 5.g-j */
             Binding binding = forDeclarationBinding((LexicalDeclaration) lhs);
             Variable<DeclarativeEnvironmentRecord> envRec = null;
             if (scope.isPresent()) {
@@ -1079,6 +1181,11 @@ final class StatementGenerator extends DefaultCodeGenerator<StatementGenerator.C
     private static Binding forVarDeclarationBinding(VariableStatement lhs) {
         assert ((VariableStatement) lhs).getElements().size() == 1;
         return ((VariableStatement) lhs).getElements().get(0).getBinding();
+    }
+
+    private static Expression forVarDeclarationBindingInitializer(VariableStatement lhs) {
+        assert ((VariableStatement) lhs).getElements().size() == 1;
+        return ((VariableStatement) lhs).getElements().get(0).getInitializer();
     }
 
     private static Binding forDeclarationBinding(LexicalDeclaration lhs) {
@@ -1130,12 +1237,12 @@ final class StatementGenerator extends DefaultCodeGenerator<StatementGenerator.C
             perIterationsLets = !isConst && !boundNames.isEmpty();
 
             if (scope.isPresent()) {
-                // stack: [] -> [loopEnv]
-                newDeclarativeEnvironment(scope, mv);
-                // stack: [loopEnv] -> [loopEnv]
                 mv.enterVariableScope();
                 Variable<DeclarativeEnvironmentRecord> envRec = mv.newVariable("envRec",
                         DeclarativeEnvironmentRecord.class);
+                // stack: [] -> [loopEnv]
+                newDeclarativeEnvironment(scope, mv);
+                // stack: [loopEnv] -> [loopEnv]
                 getEnvRec(envRec, mv);
 
                 // stack: [loopEnv] -> [loopEnv]
@@ -1147,9 +1254,9 @@ final class StatementGenerator extends DefaultCodeGenerator<StatementGenerator.C
                         op.createMutableBinding(envRec, dn, false, mv);
                     }
                 }
-                mv.exitVariableScope();
                 // stack: [loopEnv] -> []
                 pushLexicalEnvironment(mv);
+                mv.exitVariableScope();
             }
             mv.enterScope(node);
 
@@ -1168,8 +1275,7 @@ final class StatementGenerator extends DefaultCodeGenerator<StatementGenerator.C
     }
 
     /**
-     * 13.7.4.8 Runtime Semantics: ForBodyEvaluation(test, increment, stmt, perIterationBindings,
-     * labelSet)
+     * 13.7.4.8 Runtime Semantics: ForBodyEvaluation(test, increment, stmt, perIterationBindings, labelSet)
      */
     private Completion ForBodyEvaluation(ForStatement node, boolean perIterationsLets, CodeVisitor mv) {
         assert mv.getStackSize() == 0;
@@ -1224,9 +1330,7 @@ final class StatementGenerator extends DefaultCodeGenerator<StatementGenerator.C
         /* step 4.a */
         if (btest != Bool.True) {
             mv.mark(lblTest);
-            ValType type = expression(node.getTest(), mv);
-            ToBoolean(type, mv);
-            mv.ifne(lblStmt);
+            testExpressionFallthrough(node.getTest(), lblStmt, mv);
         } else {
             mv.goTo(lblStmt);
         }
@@ -1238,11 +1342,8 @@ final class StatementGenerator extends DefaultCodeGenerator<StatementGenerator.C
         }
         mv.exitVariableScope();
 
-        if (btest == Bool.True) {
-            if (!result.isAbrupt() && !lblBreak.isTarget()) {
-                return Completion.Abrupt; // infinite loop
-            }
-            return result.normal(lblBreak.isTarget());
+        if (btest == Bool.True && !lblBreak.isTarget()) {
+            return Completion.Abrupt; // abrupt or infinite loop
         }
         return Completion.Normal;
     }
@@ -1276,13 +1377,13 @@ final class StatementGenerator extends DefaultCodeGenerator<StatementGenerator.C
             TopLevelScope top = mv.getScope().getTop();
             if (mv.isFunction()) {
                 assert top instanceof FunctionScope;
-                Name varName = ((FunctionScope) top).variableScope().resolveName(name, false);
+                Name varName = ((FunctionScope) top).variableScope().resolveName(name);
                 assert varName != null && name != varName;
                 /* step 1.a.ii.3.1 */
                 Value<DeclarativeEnvironmentRecord> fenv = getVariableEnvironmentRecord(
                         Types.DeclarativeEnvironmentRecord, mv);
                 /* steps 1.a.ii.3.5-6 */
-                BindingOp.of(fenv, varName).setMutableBinding(fenv, varName, asm -> {
+                BindingOp.of(fenv, varName).setMutableBinding(fenv, varName, __ -> {
                     /* step 1.a.ii.3.2 */
                     Value<DeclarativeEnvironmentRecord> benv = getLexicalEnvironmentRecord(
                             Types.DeclarativeEnvironmentRecord, mv);
@@ -1299,7 +1400,7 @@ final class StatementGenerator extends DefaultCodeGenerator<StatementGenerator.C
                     isLegacyScoped = new Jump();
                     mv.loadExecutionContext();
                     mv.iconst(functionId);
-                    mv.invoke(Methods.ScriptRuntime_isLegacyBlockFunction);
+                    mv.invoke(Methods.DeclarationOperations_isLegacyBlockFunction);
                     mv.ifeq(isLegacyScoped);
                 }
 
@@ -1308,7 +1409,7 @@ final class StatementGenerator extends DefaultCodeGenerator<StatementGenerator.C
                 // 2. Or a (function) declarative environment record for eval in functions.
                 // 3. Or a script-context environment record for eval in JSR-223 scripting.
                 Value<EnvironmentRecord> genv = getVariableEnvironmentRecord(Types.EnvironmentRecord, mv);
-                BindingOp.of(genv, varName).setMutableBinding(genv, varName, asm -> {
+                BindingOp.of(genv, varName).setMutableBinding(genv, varName, __ -> {
                     Value<DeclarativeEnvironmentRecord> benv = getLexicalEnvironmentRecord(
                             Types.DeclarativeEnvironmentRecord, mv);
                     BindingOp.of(benv, name).getBindingValue(benv, name, false, mv);
@@ -1321,7 +1422,7 @@ final class StatementGenerator extends DefaultCodeGenerator<StatementGenerator.C
         }
 
         /* step 1 */
-        return Completion.Empty;
+        return Completion.Normal;
     }
 
     /**
@@ -1330,7 +1431,7 @@ final class StatementGenerator extends DefaultCodeGenerator<StatementGenerator.C
     @Override
     public Completion visit(GeneratorDeclaration node, CodeVisitor mv) {
         /* step 1 */
-        return Completion.Empty;
+        return Completion.Normal;
     }
 
     /**
@@ -1346,27 +1447,24 @@ final class StatementGenerator extends DefaultCodeGenerator<StatementGenerator.C
                 mv.storeUndefinedAsCompletionValue();
             }
             if (btest == Bool.True) {
-                Completion resultThen = node.getThen().accept(this, mv);
-                return resultThen.nonEmpty();
+                return node.getThen().accept(this, mv);
             }
             if (node.getOtherwise() != null) {
-                Completion resultOtherwise = node.getOtherwise().accept(this, mv);
-                return resultOtherwise.nonEmpty();
+                return node.getOtherwise().accept(this, mv);
             }
             return Completion.Normal;
         }
 
-        /* steps 1-3 */
-        ValType type = expression(node.getTest(), mv);
-        ToBoolean(type, mv);
         if (node.getOtherwise() != null) {
             // IfStatement : if ( Expression ) Statement else Statement
             Jump l0 = new Jump(), l1 = new Jump();
 
-            /* step 4 */
-            mv.ifeq(l0);
-            if (node.hasCompletionValue()) {
-                // TODO: Emit only when necessary, i.e. 'then' branch does not return a completion value.
+            /* steps 1-2 */
+            testExpressionBailout(node.getTest(), l0, mv);
+
+            /* step 3 */
+            if (node.hasCompletionValue()
+                    && (!node.getThen().hasCompletionValue() || codegen.isEnabled(Compiler.Option.NoCompletion))) {
                 mv.storeUndefinedAsCompletionValue();
             }
             Completion resultThen = node.getThen().accept(this, mv);
@@ -1374,10 +1472,10 @@ final class StatementGenerator extends DefaultCodeGenerator<StatementGenerator.C
                 mv.goTo(l1);
             }
 
-            /* step 5 */
+            /* step 4 */
             mv.mark(l0);
-            if (node.hasCompletionValue()) {
-                // TODO: Emit only when necessary, i.e. 'otherwise' branch does not return a completion value.
+            if (node.hasCompletionValue()
+                    && (!node.getOtherwise().hasCompletionValue() || codegen.isEnabled(Compiler.Option.NoCompletion))) {
                 mv.storeUndefinedAsCompletionValue();
             }
             Completion resultOtherwise = node.getOtherwise().accept(this, mv);
@@ -1385,14 +1483,16 @@ final class StatementGenerator extends DefaultCodeGenerator<StatementGenerator.C
                 mv.mark(l1);
             }
 
-            /* steps 6-8 */
+            /* step 5 */
             return resultThen.select(resultOtherwise);
         } else {
             // IfStatement : if ( Expression ) Statement
             Jump l0 = new Jump();
 
-            /* step 5 */
-            mv.ifeq(l0);
+            /* steps 1-2 */
+            testExpressionBailout(node.getTest(), l0, mv);
+
+            /* step 3 */
             if (node.hasCompletionValue()) {
                 mv.storeUndefinedAsCompletionValue();
             }
@@ -1412,8 +1512,8 @@ final class StatementGenerator extends DefaultCodeGenerator<StatementGenerator.C
                 mv.mark(l0);
             }
 
-            /* steps 4-5 */
-            return resultThen.select(Completion.Normal);
+            /* step 4 */
+            return Completion.Normal;
         }
     }
 
@@ -1422,7 +1522,7 @@ final class StatementGenerator extends DefaultCodeGenerator<StatementGenerator.C
      */
     @Override
     public Completion visit(ImportDeclaration node, CodeVisitor mv) {
-        return Completion.Empty;
+        return Completion.Normal;
     }
 
     /**
@@ -1451,7 +1551,7 @@ final class StatementGenerator extends DefaultCodeGenerator<StatementGenerator.C
         mv.exitVariableScope();
 
         /* steps 4-5 */
-        return result.normalOrEmpty(label.isTarget());
+        return result.normal(label.isTarget());
     }
 
     /**
@@ -1504,68 +1604,7 @@ final class StatementGenerator extends DefaultCodeGenerator<StatementGenerator.C
         }
         mv.exitVariableScope();
         /* step 3 */
-        return Completion.Empty;
-    }
-
-    /**
-     * Extension: 'let' statement
-     */
-    @Override
-    public Completion visit(LetStatement node, CodeVisitor mv) {
-        BlockScope scope = node.getScope();
-        if (scope.isPresent()) {
-            mv.enterVariableScope();
-            Variable<LexicalEnvironment<DeclarativeEnvironmentRecord>> env = mv.newVariable("env",
-                    LexicalEnvironment.class).uncheckedCast();
-            Variable<DeclarativeEnvironmentRecord> envRec = mv.newVariable("envRec",
-                    DeclarativeEnvironmentRecord.class);
-
-            newDeclarativeEnvironment(scope, mv);
-            mv.store(env);
-            getEnvRec(env, envRec, mv);
-
-            for (LexicalBinding lexical : node.getBindings()) {
-                Binding binding = lexical.getBinding();
-                Expression initializer = lexical.getInitializer();
-                for (Name name : BoundNames(binding)) {
-                    BindingOp<DeclarativeEnvironmentRecord> op = BindingOp.of(envRec, name);
-                    op.createMutableBinding(envRec, name, false, mv);
-                }
-                if (initializer == null) {
-                    // LexicalBinding : BindingIdentifier
-                    assert binding instanceof BindingIdentifier;
-                    Name name = ((BindingIdentifier) binding).getName();
-                    /* steps 1-2 */
-                    InitializeBoundNameWithUndefined(envRec, name, mv);
-                } else if (binding instanceof BindingIdentifier) {
-                    // LexicalBinding : BindingIdentifier Initializer
-                    Name name = ((BindingIdentifier) binding).getName();
-                    /* steps 1-7 */
-                    InitializeBoundNameWithInitializer(codegen, envRec, name, initializer, mv);
-                } else {
-                    // LexicalBinding : BindingPattern Initializer
-                    assert binding instanceof BindingPattern;
-                    /* steps 1-3 */
-                    expressionBoxed(initializer, mv);
-                    /* steps 4-5 */
-                    BindingInitialization(codegen, envRec, (BindingPattern) binding, mv);
-                }
-            }
-
-            mv.load(env);
-            pushLexicalEnvironment(mv);
-
-            mv.exitVariableScope();
-        }
-
-        mv.enterScope(node);
-        Completion result = node.getStatement().accept(this, mv);
-        mv.exitScope();
-
-        if (scope.isPresent() && !result.isAbrupt()) {
-            popLexicalEnvironment(mv);
-        }
-        return result;
+        return Completion.Normal;
     }
 
     /**
@@ -1582,67 +1621,50 @@ final class StatementGenerator extends DefaultCodeGenerator<StatementGenerator.C
             mv.returnCompletion(mv.undefinedValue());
         } else {
             // ReturnStatement : return Expression;
-            /* steps 1-3 */
+            /* steps 1-2 */
             mv.enterTailCallPosition(expr);
             expressionBoxed(expr, mv);
             mv.exitTailCallPosition();
-            /* step 4 */
+            // Extension: Async iteration.
+            if (mv.isAsyncGenerator()) {
+                await(node, mv);
+            }
+            /* step 3 */
             mv.returnCompletion();
         }
-        return Completion.Return;
+        return Completion.Abrupt;
     }
 
     @Override
     public Completion visit(StatementListMethod node, CodeVisitor mv) {
-        Entry<MethodName, LabelState> entry = codegen.compile(node, mv);
-        MethodName method = entry.getKey();
-        LabelState labelState = entry.getValue();
-        boolean hasCompletion = labelState.hasReturn() || (mv.hasCompletion() && node.hasCompletionValue());
-        boolean hasResume = node.hasResumePoint();
-        boolean hasTarget = hasResume || labelState.hasTargetInstruction();
+        OutlinedCall call = mv.compile(node, this::statementList);
 
-        mv.enterVariableScope();
-        Value<Object[]> completion;
-        if (hasCompletion) {
-            Variable<Object[]> completionVar = mv.newVariable("completion", Object[].class);
-            mv.anewarray(1, Types.Object);
-            mv.store(completionVar);
-            if (mv.hasCompletion()) {
-                mv.astore(completionVar, 0, mv.completionValue());
-            }
-            completion = completionVar;
-        } else {
-            completion = mv.anullValue();
-        }
-        MutableValue<Integer> target = hasTarget ? mv.newVariable("target", int.class) : new PopStoreValue<>();
-
-        // stack: [] -> []
-        mv.lineInfo(0); // 0 = hint for stacktraces to omit this frame
-        if (hasResume) {
-            mv.callWithSuspendInt(method, target, completion);
-        } else {
-            mv.callWithResult(method, target, completion);
-        }
-
-        Value<Object> completionValue = mv.arrayElement(completion, 0, Object.class);
-        if (node.hasCompletionValue()) {
-            mv.storeCompletionValue(completionValue);
-        }
-        mv.labelSwitch(labelState, target, completionValue, false);
-        mv.exitVariableScope();
-
-        return labelState.completion;
+        return mv.invokeCompletion(call, node.hasCompletionValue() && mv.hasCompletion());
     }
 
-    private static final class PopStoreValue<V> implements MutableValue<V> {
-        @Override
-        public void load(InstructionAssembler assembler) {
-            throw new AssertionError();
+    private OutlinedCall statementList(StatementListMethod node, CodeVisitor mv) {
+        MethodTypeDescriptor methodDescriptor = StatementListMethodCodeVisitor.methodDescriptor(mv);
+        MethodCode method = codegen.method(mv, "stmt", methodDescriptor);
+        return outlined(new StatementListMethodCodeVisitor(node, method, mv), body -> {
+            return statements(node.getStatements(), body);
+        });
+    }
+
+    private static final class StatementListMethodCodeVisitor extends OutlinedCodeVisitor {
+        private final boolean nodeCompletion;
+
+        StatementListMethodCodeVisitor(StatementListMethod node, MethodCode method, CodeVisitor parent) {
+            super(node, method, parent);
+            this.nodeCompletion = node.hasCompletionValue();
         }
 
         @Override
-        public void store(InstructionAssembler assembler) {
-            assembler.pop();
+        protected boolean hasCompletionValue() {
+            return nodeCompletion && getParent().hasCompletionValue();
+        }
+
+        static MethodTypeDescriptor methodDescriptor(CodeVisitor mv) {
+            return OutlinedCodeVisitor.outlinedMethodDescriptor(mv);
         }
     }
 
@@ -1674,7 +1696,7 @@ final class StatementGenerator extends DefaultCodeGenerator<StatementGenerator.C
 
         /* step 4 */
         mv.athrow();
-        return Completion.Throw;
+        return Completion.Abrupt;
     }
 
     /**
@@ -1729,8 +1751,7 @@ final class StatementGenerator extends DefaultCodeGenerator<StatementGenerator.C
 
         /* steps 2-3 */
         // Emit catch-block
-        Completion catchResult = emitCatchBlock(node, savedEnv, handlerCatch,
-                handlerCatchStackOverflow, mv);
+        Completion catchResult = emitCatchBlock(node, savedEnv, handlerCatch, handlerCatchStackOverflow, mv);
         if (!catchResult.isAbrupt()) {
             mv.goTo(noException);
         }
@@ -1782,8 +1803,7 @@ final class StatementGenerator extends DefaultCodeGenerator<StatementGenerator.C
 
         /* step 2 */
         // Emit catch-block
-        Completion catchResult = emitCatchBlock(node, savedEnv, handlerCatch,
-                handlerCatchStackOverflow, mv);
+        Completion catchResult = emitCatchBlock(node, savedEnv, handlerCatch, handlerCatchStackOverflow, mv);
 
         /* step 3 */
         if (!tryResult.isAbrupt()) {
@@ -1848,7 +1868,7 @@ final class StatementGenerator extends DefaultCodeGenerator<StatementGenerator.C
         if (!tryResult.isAbrupt()) {
             mv.goTo(noException);
         }
-        return tryResult.nonEmpty();
+        return tryResult;
     }
 
     private Completion emitCatchBlock(TryStatement node, Variable<LexicalEnvironment<?>> savedEnv,
@@ -1860,9 +1880,9 @@ final class StatementGenerator extends DefaultCodeGenerator<StatementGenerator.C
 
         // StackOverflowError -> ScriptException
         mv.catchHandler(handlerCatchStackOverflow, Types.Error);
-        mv.invoke(Methods.ScriptRuntime_stackOverflowError);
+        mv.invoke(Methods.ErrorOperations_stackOverflowError);
         mv.loadExecutionContext();
-        mv.invoke(Methods.ScriptRuntime_toInternalError);
+        mv.invoke(Methods.ErrorOperations_toInternalError);
 
         mv.catchHandler(handlerCatch, Types.ScriptException);
         restoreEnvironment(savedEnv, mv);
@@ -1889,7 +1909,7 @@ final class StatementGenerator extends DefaultCodeGenerator<StatementGenerator.C
             } else {
                 mv.load(exception);
                 mv.athrow();
-                catchResult = Completion.Throw;
+                catchResult = Completion.Abrupt;
             }
 
             if (!result.isAbrupt()) {
@@ -1904,7 +1924,7 @@ final class StatementGenerator extends DefaultCodeGenerator<StatementGenerator.C
         if (hasFinally) {
             mv.exitWrapped();
         }
-        return catchResult.nonEmpty();
+        return catchResult;
     }
 
     private Completion emitFinallyBlock(TryStatement node, Variable<LexicalEnvironment<?>> savedEnv,
@@ -1918,7 +1938,7 @@ final class StatementGenerator extends DefaultCodeGenerator<StatementGenerator.C
         mv.enterVariableScope();
         Variable<Throwable> throwable = mv.newVariable("throwable", Throwable.class);
         mv.catchHandler(handlerFinallyStackOverflow, Types.Error);
-        mv.invoke(Methods.ScriptRuntime_stackOverflowError);
+        mv.invoke(Methods.ErrorOperations_stackOverflowError);
         mv.catchHandler(handlerFinally, Types.ScriptException);
         mv.store(throwable);
         restoreEnvironment(savedEnv, mv);
@@ -1965,7 +1985,7 @@ final class StatementGenerator extends DefaultCodeGenerator<StatementGenerator.C
             mv.mark(exceptionHandled);
         }
 
-        return finallyResult.nonEmpty();
+        return finallyResult;
     }
 
     /**
@@ -1995,8 +2015,7 @@ final class StatementGenerator extends DefaultCodeGenerator<StatementGenerator.C
         /* step 7 */
         Jump l0 = new Jump();
         Completion result;
-        ToBoolean(expression(node.getGuard(), mv), mv);
-        mv.ifeq(l0);
+        testExpressionBailout(node.getGuard(), l0, mv);
         {
             result = node.getCatchBlock().accept(this, mv);
             if (!result.isAbrupt()) {
@@ -2038,9 +2057,11 @@ final class StatementGenerator extends DefaultCodeGenerator<StatementGenerator.C
                 getEnvRec(envRec, mv);
 
                 /* step 3 */
-                for (Name name : BoundNames(catchParameter)) {
-                    BindingOp<DeclarativeEnvironmentRecord> op = BindingOp.of(envRec, name);
-                    op.createMutableBinding(envRec, name, false, mv);
+                if (catchParameter != null) {
+                    for (Name name : BoundNames(catchParameter)) {
+                        BindingOp<DeclarativeEnvironmentRecord> op = BindingOp.of(envRec, name);
+                        op.createMutableBinding(envRec, name, false, mv);
+                    }
                 }
 
                 /* step 4 */
@@ -2051,7 +2072,9 @@ final class StatementGenerator extends DefaultCodeGenerator<StatementGenerator.C
 
             /* steps 5-6 */
             // stack: [ex] -> []
-            BindingInitialization(codegen, envRec, catchParameter, exception, mv);
+            if (catchParameter != null) {
+                BindingInitialization(codegen, envRec, catchParameter, exception, mv);
+            }
         }
         mv.exitVariableScope();
     }
@@ -2064,11 +2087,11 @@ final class StatementGenerator extends DefaultCodeGenerator<StatementGenerator.C
     }
 
     private void newCatchEnvironment(Binding catchParameter, BlockScope scope, CodeVisitor mv) {
-        if (codegen.isEnabled(CompatibilityOption.CatchVarPattern)) {
-            if (catchParameter instanceof BindingPattern) {
-                newDeclarativeEnvironment(scope, mv);
-                return;
-            }
+        // FIXME: spec issue - allowed or disallowed -> `try {throw {}} catch ({foo}) { eval("var foo") }` ?
+        // https://github.com/tc39/ecma262/issues/150
+        if (catchParameter instanceof BindingPattern) {
+            newDeclarativeEnvironment(scope, mv);
+            return;
         }
         if (codegen.isEnabled(CompatibilityOption.CatchVarStatement)) {
             newCatchDeclarativeEnvironment(scope, mv);
@@ -2113,7 +2136,7 @@ final class StatementGenerator extends DefaultCodeGenerator<StatementGenerator.C
             /* step 4 */
             BindingInitialization(codegen, (BindingPattern) binding, mv);
         }
-        return Completion.Empty;
+        return Completion.Normal;
     }
 
     /**
@@ -2128,7 +2151,7 @@ final class StatementGenerator extends DefaultCodeGenerator<StatementGenerator.C
             decl.accept(this, mv);
         }
         /* step 3 */
-        return Completion.Empty;
+        return Completion.Normal;
     }
 
     /**
@@ -2176,9 +2199,7 @@ final class StatementGenerator extends DefaultCodeGenerator<StatementGenerator.C
         /* steps 2.a-d */
         if (btest != Bool.True) {
             mv.mark(lblTest);
-            ValType type = expression(node.getTest(), mv);
-            ToBoolean(type, mv);
-            mv.ifne(lblNext);
+            testExpressionFallthrough(node.getTest(), lblNext, mv);
         } else if (!result.isAbrupt() || lblContinue.isTarget()) {
             mv.goTo(lblNext);
         }
@@ -2191,11 +2212,8 @@ final class StatementGenerator extends DefaultCodeGenerator<StatementGenerator.C
         mv.exitVariableScope();
 
         /* steps 2.d, 2.f */
-        if (btest == Bool.True) {
-            if (!result.isAbrupt() && !lblBreak.isTarget()) {
-                return Completion.Abrupt; // infinite loop
-            }
-            return result.normal(lblBreak.isTarget());
+        if (btest == Bool.True && !lblBreak.isTarget()) {
+            return Completion.Abrupt; // abrupt or infinite loop
         }
         return Completion.Normal;
     }
@@ -2231,6 +2249,6 @@ final class StatementGenerator extends DefaultCodeGenerator<StatementGenerator.C
         }
 
         /* steps 10-11 */
-        return result.nonEmpty();
+        return result;
     }
 }

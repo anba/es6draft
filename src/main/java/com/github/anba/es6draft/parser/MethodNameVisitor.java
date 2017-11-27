@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -79,11 +79,16 @@ final class MethodNameVisitor extends DefaultNodeVisitor<String, Void> {
     }
 
     private static boolean isIdentifier(String name) {
-        if (name.isEmpty() || !Character.isJavaIdentifierStart(name.charAt(0))) {
+        if (name.isEmpty()) {
             return false;
         }
-        for (int i = 1; i < name.length(); ++i) {
-            if (!Character.isJavaIdentifierPart(name.charAt(i))) {
+        int cp = name.codePointAt(0);
+        if (!Characters.isIdentifierStart(cp)) {
+            return false;
+        }
+        for (int i = Character.charCount(cp); i < name.length(); i += Character.charCount(cp)) {
+            cp = name.codePointAt(i);
+            if (!Characters.isIdentifierPart(cp)) {
                 return false;
             }
         }

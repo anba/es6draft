@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.ListIterator;
 
 import com.github.anba.es6draft.ast.*;
+import com.github.anba.es6draft.ast.Module;
 import com.github.anba.es6draft.ast.synthetic.StatementListMethod;
 import com.github.anba.es6draft.compiler.completion.CompletionValueVisitor.Completion;
 import com.github.anba.es6draft.compiler.completion.CompletionValueVisitor.State;
@@ -21,9 +22,6 @@ import com.github.anba.es6draft.compiler.completion.CompletionValueVisitor.State
  * Compute statement nodes which require a completion value.
  */
 public final class CompletionValueVisitor extends DefaultNodeVisitor<Completion, State> {
-    // TODO: This visitor class performs (more or less) live variable analysis. Or rather, with
-    // proper live variable analysis the visitor shouldn't be necessary at all.
-
     enum Completion {
         Empty, Value;
 
@@ -138,11 +136,16 @@ public final class CompletionValueVisitor extends DefaultNodeVisitor<Completion,
             computeValue = state.computeValue;
         }
 
-        void implicitValue() {
+        void emptyCompletion(ModuleItem node) {
+            node.setCompletionValue(false);
+        }
+
+        void implicitValue(Statement node) {
+            node.setCompletionValue(true);
             computeValue = false;
         }
 
-        void requestValue() {
+        void requestValue(Statement node) {
             computeValue = defaultComputeValue;
         }
 
@@ -234,6 +237,9 @@ public final class CompletionValueVisitor extends DefaultNodeVisitor<Completion,
         state.enter(node);
         Completion result = statements(node.getStatements(), state);
         state.exit(node);
+        if (result == Completion.Empty) {
+            state.emptyCompletion(node);
+        }
         return result;
     }
 
@@ -267,9 +273,10 @@ public final class CompletionValueVisitor extends DefaultNodeVisitor<Completion,
         Statement target = state.context.breakTarget(node);
         state.exit(node);
         if (target == null || target.hasCompletionValue()) {
-            state.requestValue();
+            state.emptyCompletion(node);
+            state.requestValue(node);
         }
-        return Completion.Value;
+        return Completion.Empty;
     }
 
     @Override
@@ -278,9 +285,10 @@ public final class CompletionValueVisitor extends DefaultNodeVisitor<Completion,
         IterationStatement target = state.context.continueTarget(node);
         state.exit(node);
         if (target == null || target.hasCompletionValue()) {
-            state.requestValue();
+            state.emptyCompletion(node);
+            state.requestValue(node);
         }
-        return Completion.Value;
+        return Completion.Empty;
     }
 
     @Override
@@ -290,6 +298,9 @@ public final class CompletionValueVisitor extends DefaultNodeVisitor<Completion,
         Completion result = node.getStatement().accept(this, state);
         state.context.exitLabelled(node);
         state.exit(node);
+        if (result == Completion.Empty) {
+            state.emptyCompletion(node);
+        }
         return result;
     }
 
@@ -313,13 +324,13 @@ public final class CompletionValueVisitor extends DefaultNodeVisitor<Completion,
 
     @Override
     public Completion visit(ReturnStatement node, State state) {
-        state.implicitValue();
+        state.implicitValue(node);
         return Completion.Value;
     }
 
     @Override
     public Completion visit(ThrowStatement node, State state) {
-        state.implicitValue();
+        state.implicitValue(node);
         return Completion.Value;
     }
 
@@ -355,23 +366,20 @@ public final class CompletionValueVisitor extends DefaultNodeVisitor<Completion,
     public Completion visit(SwitchStatement node, State state) {
         final boolean computeValue = state.computeValue;
         boolean innerComputeValue = false;
+        boolean lastComputeValue = false;
 
         state.enterValue(node);
         state.context.enterBreakable(node);
-        for (SwitchClause clause : node.getClauses()) {
-            state.computeValue = computeValue;
+        for (SwitchClause clause : reverse(node.getClauses())) {
+            state.computeValue = computeValue || lastComputeValue;
             statements(clause.getStatements(), state);
             innerComputeValue |= state.computeValue;
+            lastComputeValue = state.computeValue;
         }
         state.context.exitBreakable(node);
-        // Request completion value when 'computeValue' is true and no catch clauses are present.
+        // Request completion value when 'computeValue' is true and no case clauses are present.
         state.exitValue(node, innerComputeValue || (computeValue && node.getClauses().isEmpty()));
         return Completion.Value;
-    }
-
-    @Override
-    public Completion visit(LetStatement node, State state) {
-        return node.getStatement().accept(this, state);
     }
 
     @Override
@@ -387,36 +395,43 @@ public final class CompletionValueVisitor extends DefaultNodeVisitor<Completion,
 
     @Override
     public Completion visit(VariableStatement node, State state) {
+        state.emptyCompletion(node);
         return Completion.Empty;
     }
 
     @Override
     protected Completion visit(Declaration node, State state) {
+        state.emptyCompletion(node);
         return Completion.Empty;
     }
 
     @Override
-    public Completion visit(ExportDeclaration node, State value) {
+    public Completion visit(ExportDeclaration node, State state) {
+        state.emptyCompletion(node);
         return Completion.Empty;
     }
 
     @Override
-    public Completion visit(ImportDeclaration node, State value) {
+    public Completion visit(ImportDeclaration node, State state) {
+        state.emptyCompletion(node);
         return Completion.Empty;
     }
 
     @Override
     public Completion visit(EmptyStatement node, State state) {
+        state.emptyCompletion(node);
         return Completion.Empty;
     }
 
     @Override
     public Completion visit(DebuggerStatement node, State state) {
+        state.emptyCompletion(node);
         return Completion.Empty;
     }
 
     @Override
-    public Completion visit(LabelledFunctionStatement node, State value) {
+    public Completion visit(LabelledFunctionStatement node, State state) {
+        state.emptyCompletion(node);
         return Completion.Empty;
     }
 }

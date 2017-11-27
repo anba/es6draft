@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -73,19 +73,19 @@ const {
 // Non-strict mode, 'let' and 'yield' in ASI context in GeneratorDeclaration
 {
   var let = 1;
-  function* g1() {
+  assertSyntaxError(`function* g1() {
     let
     yield
-  }
-  function* g2() {
+  }`);
+  assertSyntaxError(`function* g2() {
     let
     yield
     0
-  }
-  function* g3() {
+  }`);
+  assertSyntaxError(`function* g3() {
     let
     yield 0
-  }
+  }`)
   function* g4() {
     yield
     let
@@ -97,9 +97,6 @@ const {
     let yield
   }`);
 
-  assertEquals({value: void 0, done: false}, g1().next());
-  assertEquals({value: void 0, done: false}, g2().next());
-  assertEquals({value: 0, done: false}, g3().next());
   assertEquals({value: void 0, done: false}, g4().next());
   assertEquals({value: 1, done: false}, g5().next());
 }

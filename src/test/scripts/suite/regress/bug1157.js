@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -13,7 +13,7 @@ const {
 
 {
   let calledOnce = false;
-  let m = new Map([for (c of "abc") [c, c.toUpperCase()]]);
+  let m = new Map(Array.from("abc", c => [c, c.toUpperCase()]));
   assertSame(3, m.size);
   m.forEach((v, k) => {
     assertFalse(calledOnce);

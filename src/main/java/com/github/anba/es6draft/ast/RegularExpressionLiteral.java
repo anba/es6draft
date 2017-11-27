@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -17,8 +17,7 @@ public final class RegularExpressionLiteral extends Expression {
     private final String flags;
     private final String regexp;
 
-    public RegularExpressionLiteral(long beginPosition, long endPosition, String regexp,
-            String flags) {
+    public RegularExpressionLiteral(long beginPosition, long endPosition, String regexp, String flags) {
         super(beginPosition, endPosition);
         this.regexp = regexp;
         this.flags = flags;

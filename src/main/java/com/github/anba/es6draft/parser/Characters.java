@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -8,6 +8,7 @@ package com.github.anba.es6draft.parser;
 
 import com.ibm.icu.lang.UCharacter;
 import com.ibm.icu.lang.UCharacterCategory;
+import com.ibm.icu.lang.UProperty;
 
 /**
  * 
@@ -49,9 +50,7 @@ public final class Characters {
      * @return {@code true} if the character is space separator
      */
     public static boolean isSpaceSeparator(int c) {
-        // Unicode 8.0
-        return c == 0x20 || c == 0xA0 || c == 0x1680 || (0x2000 <= c && c <= 0x200A) || c == 0x202F || c == 0x205F
-                || c == 0x3000;
+        return UCharacter.getType(c) == UCharacterCategory.SPACE_SEPARATOR;
     }
 
     /**
@@ -112,33 +111,7 @@ public final class Characters {
         if (c <= 127) {
             return ('a' <= (c | 0x20) && (c | 0x20) <= 'z') || c == '$' || c == '_';
         }
-        return isIdentifierStartUnlikely(c);
-    }
-
-    // Cf. definition of "ID_Start" from http://www.unicode.org/reports/tr31/.
-    private static final int ID_START_MASK = 1 << UCharacterCategory.UPPERCASE_LETTER
-            | 1 << UCharacterCategory.LOWERCASE_LETTER | 1 << UCharacterCategory.TITLECASE_LETTER
-            | 1 << UCharacterCategory.MODIFIER_LETTER | 1 << UCharacterCategory.OTHER_LETTER
-            | 1 << UCharacterCategory.LETTER_NUMBER;
-
-    private static boolean isIdentifierStartUnlikely(int c) {
-        if (c == '\u2E2F') {
-            // VERTICAL TILDE is in 'Lm' and [:Pattern_Syntax:]
-            return false;
-        }
-        if ((1 << UCharacter.getType(c) & ID_START_MASK) != 0) {
-            return true;
-        }
-        // Grandfathered characters (Other_ID_Start) [Unicode 8.0].
-        switch (c) {
-        case '\u2118':
-        case '\u212E':
-        case '\u309B':
-        case '\u309C':
-            return true;
-        default:
-            return false;
-        }
+        return UCharacter.hasBinaryProperty(c, UProperty.ID_START);
     }
 
     /**
@@ -164,49 +137,10 @@ public final class Characters {
         if (c <= 127) {
             return ('a' <= (c | 0x20) && (c | 0x20) <= 'z') || ('0' <= c && c <= '9') || c == '$' || c == '_';
         }
-        return isIdentifierPartUnlikely(c);
-    }
-
-    // Cf. definition of "ID_Continue" from http://www.unicode.org/reports/tr31/.
-    private static final int ID_CONTINUE_MASK = 1 << UCharacterCategory.UPPERCASE_LETTER
-            | 1 << UCharacterCategory.LOWERCASE_LETTER | 1 << UCharacterCategory.TITLECASE_LETTER
-            | 1 << UCharacterCategory.MODIFIER_LETTER | 1 << UCharacterCategory.OTHER_LETTER
-            | 1 << UCharacterCategory.LETTER_NUMBER | 1 << UCharacterCategory.NON_SPACING_MARK
-            | 1 << UCharacterCategory.COMBINING_SPACING_MARK | 1 << UCharacterCategory.DECIMAL_DIGIT_NUMBER
-            | 1 << UCharacterCategory.CONNECTOR_PUNCTUATION;
-
-    private static boolean isIdentifierPartUnlikely(int c) {
-        if (c == '\u200C' || c == '\u200D')
-            return true;
-        if (c == '\u2E2F') {
-            // VERTICAL TILDE is in 'Lm' and [:Pattern_Syntax:]
-            return false;
-        }
-        if ((1 << UCharacter.getType(c) & ID_CONTINUE_MASK) != 0) {
+        if (c == '\u200C' || c == '\u200D') {
             return true;
         }
-        // Grandfathered characters (Other_ID_Start + Other_ID_Continue) [Unicode 8.0].
-        switch (c) {
-        case '\u00B7':
-        case '\u0387':
-        case '\u1369':
-        case '\u136A':
-        case '\u136B':
-        case '\u136C':
-        case '\u136D':
-        case '\u136E':
-        case '\u136F':
-        case '\u1370':
-        case '\u1371':
-        case '\u19DA':
-        case '\u2118':
-        case '\u212E':
-        case '\u309B':
-        case '\u309C':
-            return true;
-        default:
-            return false;
-        }
+        return UCharacter.hasBinaryProperty(c, UProperty.ID_CONTINUE);
     }
 
     /**
@@ -225,27 +159,7 @@ public final class Characters {
         if (c <= 127) {
             return ('a' <= (c | 0x20) && (c | 0x20) <= 'z');
         }
-        return isUnicodeIDStartUnlikely(c);
-    }
-
-    private static boolean isUnicodeIDStartUnlikely(int c) {
-        if (c == '\u2E2F') {
-            // VERTICAL TILDE is in 'Lm' and [:Pattern_Syntax:]
-            return false;
-        }
-        if ((1 << UCharacter.getType(c) & ID_START_MASK) != 0) {
-            return true;
-        }
-        // Grandfathered characters (Other_ID_Start) [Unicode 8.0].
-        switch (c) {
-        case '\u2118':
-        case '\u212E':
-        case '\u309B':
-        case '\u309C':
-            return true;
-        default:
-            return false;
-        }
+        return UCharacter.hasBinaryProperty(c, UProperty.ID_START);
     }
 
     /**
@@ -264,39 +178,7 @@ public final class Characters {
         if (c <= 127) {
             return ('a' <= (c | 0x20) && (c | 0x20) <= 'z') || ('0' <= c && c <= '9') || c == '_';
         }
-        return isUnicodeIDContinueUnlikely(c);
-    }
-
-    private static boolean isUnicodeIDContinueUnlikely(int c) {
-        if (c == '\u2E2F') {
-            // VERTICAL TILDE is in 'Lm' and [:Pattern_Syntax:]
-            return false;
-        }
-        if ((1 << UCharacter.getType(c) & ID_CONTINUE_MASK) != 0) {
-            return true;
-        }
-        // Grandfathered characters (Other_ID_Start + Other_ID_Continue) [Unicode 8.0].
-        switch (c) {
-        case '\u00B7':
-        case '\u0387':
-        case '\u1369':
-        case '\u136A':
-        case '\u136B':
-        case '\u136C':
-        case '\u136D':
-        case '\u136E':
-        case '\u136F':
-        case '\u1370':
-        case '\u1371':
-        case '\u19DA':
-        case '\u2118':
-        case '\u212E':
-        case '\u309B':
-        case '\u309C':
-            return true;
-        default:
-            return false;
-        }
+        return UCharacter.hasBinaryProperty(c, UProperty.ID_CONTINUE);
     }
 
     /**

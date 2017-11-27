@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -14,7 +14,6 @@ import java.io.Reader;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
-import java.net.URISyntaxException;
 import java.nio.file.Paths;
 import java.util.EnumSet;
 import java.util.Objects;
@@ -35,6 +34,7 @@ import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.Realm;
+import com.github.anba.es6draft.runtime.RealmData;
 import com.github.anba.es6draft.runtime.World;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.Console;
@@ -42,6 +42,7 @@ import com.github.anba.es6draft.runtime.internal.RuntimeContext;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
 import com.github.anba.es6draft.runtime.internal.ScriptLoader;
 import com.github.anba.es6draft.runtime.internal.Source;
+import com.github.anba.es6draft.runtime.modules.loader.FileSourceIdentifier;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 
@@ -62,7 +63,7 @@ final class ScriptEngineImpl extends AbstractScriptEngine implements ScriptEngin
         /* @formatter:off */
         RuntimeContext context = new RuntimeContext.Builder()
                                                    .setBaseDirectory(Paths.get("").toAbsolutePath())
-                                                   .setGlobalAllocator(ScriptingGlobalObject::new)
+                                                   .setRealmData(ScriptingRealmData::new)
                                                    .setConsole(new ScriptingConsole(this.context))
                                                    .setOptions(CompatibilityOption.WebCompatibility())
                                                    .build();
@@ -76,10 +77,21 @@ final class ScriptEngineImpl extends AbstractScriptEngine implements ScriptEngin
         this.context.setBindings(createBindings(), ScriptContext.ENGINE_SCOPE);
     }
 
+    private static final class ScriptingRealmData extends RealmData {
+        public ScriptingRealmData(Realm realm) {
+            super(realm);
+        }
+
+        @Override
+        public void initializeExtensions() {
+            getRealm().createGlobalProperties(new ScriptingFunctions(), ScriptingFunctions.class);
+        }
+    }
+
     private Realm newScriptingRealm() {
         try {
-            return world.newInitializedRealm();
-        } catch (ParserException | CompilationException | IOException | URISyntaxException e) {
+            return Realm.InitializeHostDefinedRealm(world);
+        } catch (ParserException | CompilationException | IOException e) {
             throw new IllegalStateException(e);
         }
     }
@@ -143,8 +155,12 @@ final class ScriptEngineImpl extends AbstractScriptEngine implements ScriptEngin
     }
 
     private Source createSource(ScriptContext context) {
-        String sourceName = Objects.toString(context.getAttribute(FILENAME), "<eval>");
-        return new Source(sourceName, 1);
+        Object fileName = context.getAttribute(FILENAME);
+        if (fileName != null) {
+            String file = fileName.toString();
+            return new Source(new FileSourceIdentifier(Paths.get(file)), file, 1);
+        }
+        return new Source(new FileSourceIdentifier(Paths.get("")), "<eval>", 1);
     }
 
     private Script script(String sourceCode, ScriptContext context) throws javax.script.ScriptException {
@@ -171,7 +187,7 @@ final class ScriptEngineImpl extends AbstractScriptEngine implements ScriptEngin
 
     Object eval(Script script, ScriptContext context) throws javax.script.ScriptException {
         Realm realm = getEvalRealm(context);
-        RuntimeContext runtimeContext = realm.getWorld().getContext();
+        RuntimeContext runtimeContext = realm.getRuntimeContext();
         Console console = runtimeContext.getConsole();
         runtimeContext.setConsole(new ScriptingConsole(context));
         try {
@@ -191,7 +207,7 @@ final class ScriptEngineImpl extends AbstractScriptEngine implements ScriptEngin
     private Object invoke(ScriptObject thisValue, String name, Object... args)
             throws javax.script.ScriptException, NoSuchMethodException {
         Realm realm = getEvalRealm(context);
-        RuntimeContext runtimeContext = realm.getWorld().getContext();
+        RuntimeContext runtimeContext = realm.getRuntimeContext();
         Console console = runtimeContext.getConsole();
         runtimeContext.setConsole(new ScriptingConsole(context));
         try {
@@ -200,7 +216,7 @@ final class ScriptEngineImpl extends AbstractScriptEngine implements ScriptEngin
                 thisValue = realm.getGlobalThis();
             }
             ExecutionContext cx = realm.defaultContext();
-            Object func = thisValue.get(cx, name, thisValue);
+            Object func = thisValue.get(cx, (Object) name, thisValue);
             if (!IsCallable(func)) {
                 throw new NoSuchMethodException(name);
             }

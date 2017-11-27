@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -7,13 +7,13 @@
 package com.github.anba.es6draft.compiler;
 
 import static com.github.anba.es6draft.compiler.ArrayComprehensionGenerator.EvaluateArrayComprehension;
-import static com.github.anba.es6draft.compiler.BindingInitializationGenerator.InitializeBoundNameWithInitializer;
-import static com.github.anba.es6draft.compiler.BindingInitializationGenerator.InitializeBoundNameWithUndefined;
+import static com.github.anba.es6draft.compiler.PropertyGenerator.PropertyEvaluation;
 import static com.github.anba.es6draft.semantics.StaticSemantics.*;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map.Entry;
+import java.util.ListIterator;
 import java.util.Objects;
 
 import com.github.anba.es6draft.ast.*;
@@ -23,12 +23,12 @@ import com.github.anba.es6draft.ast.scope.Scope;
 import com.github.anba.es6draft.ast.scope.TopLevelScope;
 import com.github.anba.es6draft.ast.scope.WithScope;
 import com.github.anba.es6draft.ast.synthetic.ExpressionMethod;
-import com.github.anba.es6draft.ast.synthetic.SpreadArrayLiteral;
 import com.github.anba.es6draft.ast.synthetic.SpreadElementMethod;
-import com.github.anba.es6draft.compiler.CodeVisitor.LabelState;
+import com.github.anba.es6draft.compiler.CodeVisitor.OutlinedCall;
 import com.github.anba.es6draft.compiler.DefaultCodeGenerator.ValType;
+import com.github.anba.es6draft.compiler.StatementGenerator.Completion;
+import com.github.anba.es6draft.compiler.assembler.Code.MethodCode;
 import com.github.anba.es6draft.compiler.assembler.FieldName;
-import com.github.anba.es6draft.compiler.assembler.InstructionAssembler;
 import com.github.anba.es6draft.compiler.assembler.Jump;
 import com.github.anba.es6draft.compiler.assembler.MethodName;
 import com.github.anba.es6draft.compiler.assembler.MethodTypeDescriptor;
@@ -36,234 +36,259 @@ import com.github.anba.es6draft.compiler.assembler.MutableValue;
 import com.github.anba.es6draft.compiler.assembler.Type;
 import com.github.anba.es6draft.compiler.assembler.Value;
 import com.github.anba.es6draft.compiler.assembler.Variable;
+import com.github.anba.es6draft.compiler.completion.CompletionValueVisitor;
 import com.github.anba.es6draft.parser.Parser;
-import com.github.anba.es6draft.runtime.DeclarativeEnvironmentRecord;
-import com.github.anba.es6draft.runtime.LexicalEnvironment;
+import com.github.anba.es6draft.runtime.AbstractOperations;
+import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.internal.Bootstrap;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.NativeCalls;
 import com.github.anba.es6draft.runtime.objects.Eval.EvalFlags;
 import com.github.anba.es6draft.runtime.objects.simd.SIMDType;
 import com.github.anba.es6draft.runtime.types.builtins.ArrayObject;
+import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
  *
  */
 final class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
     private static final class Fields {
-        static final FieldName Intrinsics_ObjectPrototype = FieldName.findStatic(Types.Intrinsics,
-                "ObjectPrototype", Types.Intrinsics);
+        static final FieldName Intrinsics_ObjectPrototype = FieldName.findStatic(Types.Intrinsics, "ObjectPrototype",
+                Types.Intrinsics);
 
-        static final FieldName ScriptRuntime_EMPTY_ARRAY = FieldName.findStatic(
-                Types.ScriptRuntime, "EMPTY_ARRAY", Types.Object_);
+        static final FieldName CallOperations_EMPTY_ARRAY = FieldName.findStatic(Types.CallOperations, "EMPTY_ARRAY",
+                Types.Object_);
+
+        static final FieldName BigInteger_ZERO = FieldName.findStatic(Types.BigInteger, "ZERO", Types.BigInteger);
+
+        static final FieldName BigInteger_ONE = FieldName.findStatic(Types.BigInteger, "ONE", Types.BigInteger);
     }
 
     private static final class Methods {
         // class: Eval
-        static final MethodName Eval_directEvalWithTranslate = MethodName
-                .findStatic(Types.Eval, "directEval", Type.methodType(Types.Object, Types.Object_,
-                        Types.ExecutionContext, Type.INT_TYPE));
+        static final MethodName Eval_directEvalWithTranslate = MethodName.findStatic(Types.Eval, "directEval",
+                Type.methodType(Types.Object, Types.Object_, Types.ExecutionContext, Type.INT_TYPE));
 
         static final MethodName Eval_directEval = MethodName.findStatic(Types.Eval, "directEval",
                 Type.methodType(Types.Object, Types.Object, Types.ExecutionContext, Type.INT_TYPE));
 
         // class: ExecutionContext
-        static final MethodName ExecutionContext_resolveThisBinding = MethodName.findVirtual(
-                Types.ExecutionContext, "resolveThisBinding", Type.methodType(Types.Object));
+        static final MethodName ExecutionContext_resolveThisBinding = MethodName.findVirtual(Types.ExecutionContext,
+                "resolveThisBinding", Type.methodType(Types.Object));
+
+        // class: Type
+        static final MethodName Type_isObject = MethodName.findStatic(Types._Type, "isObject",
+                Type.methodType(Type.BOOLEAN_TYPE, Types.Object));
 
         // class: ArrayObject
-        static final MethodName ArrayObject_ArrayCreate = MethodName.findStatic(Types.ArrayObject,
-                "ArrayCreate",
+        static final MethodName ArrayObject_ArrayCreate = MethodName.findStatic(Types.ArrayObject, "ArrayCreate",
                 Type.methodType(Types.ArrayObject, Types.ExecutionContext, Type.LONG_TYPE));
 
-        static final MethodName ArrayObject_DenseArrayCreate = MethodName.findStatic(
-                Types.ArrayObject, "DenseArrayCreate",
-                Type.methodType(Types.ArrayObject, Types.ExecutionContext, Types.Object_));
+        static final MethodName ArrayObject_DenseArrayCreate = MethodName.findStatic(Types.ArrayObject,
+                "DenseArrayCreate", Type.methodType(Types.ArrayObject, Types.ExecutionContext, Types.Object_));
 
-        static final MethodName ArrayObject_SparseArrayCreate = MethodName.findStatic(
-                Types.ArrayObject, "SparseArrayCreate",
-                Type.methodType(Types.ArrayObject, Types.ExecutionContext, Types.Object_));
+        static final MethodName ArrayObject_SparseArrayCreate = MethodName.findStatic(Types.ArrayObject,
+                "SparseArrayCreate", Type.methodType(Types.ArrayObject, Types.ExecutionContext, Types.Object_));
+
+        // class: BigInteger
+        static final MethodName BigInteger_valueOf = MethodName.findStatic(Types.BigInteger, "valueOf",
+                Type.methodType(Types.BigInteger, Type.LONG_TYPE));
+
+        static final MethodName BigInteger_add = MethodName.findVirtual(Types.BigInteger, "add",
+                Type.methodType(Types.BigInteger, Types.BigInteger));
+
+        static final MethodName BigInteger_negate = MethodName.findVirtual(Types.BigInteger, "negate",
+                Type.methodType(Types.BigInteger));
+
+        static final MethodName BigInteger_not = MethodName.findVirtual(Types.BigInteger, "not",
+                Type.methodType(Types.BigInteger));
+
+        static final MethodName BigInteger_new = MethodName.findConstructor(Types.BigInteger,
+                Type.methodType(Type.VOID_TYPE, Types.String));
 
         // class: Math
         static final MethodName Math_pow = MethodName.findStatic(Types.Math, "pow",
                 Type.methodType(Type.DOUBLE_TYPE, Type.DOUBLE_TYPE, Type.DOUBLE_TYPE));
 
         // class: OrdinaryObject
-        static final MethodName OrdinaryObject_ObjectCreate = MethodName.findStatic(
-                Types.OrdinaryObject, "ObjectCreate",
-                Type.methodType(Types.OrdinaryObject, Types.ExecutionContext, Types.Intrinsics));
+        static final MethodName OrdinaryObject_ObjectCreate = MethodName.findStatic(Types.OrdinaryObject,
+                "ObjectCreate", Type.methodType(Types.OrdinaryObject, Types.ExecutionContext, Types.Intrinsics));
 
         // class: RegExpConstructor
-        static final MethodName RegExpConstructor_RegExpCreate = MethodName.findStatic(
-                Types.RegExpConstructor, "RegExpCreate", Type.methodType(Types.RegExpObject,
-                        Types.ExecutionContext, Types.Object, Types.Object));
+        static final MethodName RegExpConstructor_RegExpCreate = MethodName.findStatic(Types.RegExpConstructor,
+                "RegExpCreate",
+                Type.methodType(Types.RegExpObject, Types.ExecutionContext, Types.Object, Types.Object));
 
-        // class: ScriptRuntime
-        static final MethodName ScriptRuntime_add_str = MethodName.findStatic(Types.ScriptRuntime,
-                "add", Type.methodType(Types.CharSequence, Types.CharSequence, Types.CharSequence,
-                        Types.ExecutionContext));
+        // class: Operators
+        static final MethodName Operators_add_str = MethodName.findStatic(Types.Operators, "add",
+                Type.methodType(Types.CharSequence, Types.CharSequence, Types.CharSequence, Types.ExecutionContext));
 
-        static final MethodName ScriptRuntime_in = MethodName.findStatic(Types.ScriptRuntime, "in",
-                Type.methodType(Type.BOOLEAN_TYPE, Types.Object, Types.Object,
-                        Types.ExecutionContext));
+        static final MethodName Operators_in = MethodName.findStatic(Types.Operators, "in",
+                Type.methodType(Type.BOOLEAN_TYPE, Types.Object, Types.Object, Types.ExecutionContext));
 
-        static final MethodName ScriptRuntime_typeof = MethodName.findStatic(Types.ScriptRuntime,
-                "typeof", Type.methodType(Types.String, Types.Object));
+        static final MethodName Operators_in_int = MethodName.findStatic(Types.Operators, "in",
+                Type.methodType(Type.BOOLEAN_TYPE, Type.INT_TYPE, Types.Object, Types.ExecutionContext));
 
-        static final MethodName ScriptRuntime_typeof_Reference = MethodName.findStatic(
-                Types.ScriptRuntime, "typeof",
+        static final MethodName Operators_in_long = MethodName.findStatic(Types.Operators, "in",
+                Type.methodType(Type.BOOLEAN_TYPE, Type.LONG_TYPE, Types.Object, Types.ExecutionContext));
+
+        static final MethodName Operators_in_double = MethodName.findStatic(Types.Operators, "in",
+                Type.methodType(Type.BOOLEAN_TYPE, Type.DOUBLE_TYPE, Types.Object, Types.ExecutionContext));
+
+        static final MethodName Operators_in_String = MethodName.findStatic(Types.Operators, "in",
+                Type.methodType(Type.BOOLEAN_TYPE, Types.String, Types.Object, Types.ExecutionContext));
+
+        static final MethodName Operators_typeof = MethodName.findStatic(Types.Operators, "typeof",
+                Type.methodType(Types.String, Types.Object));
+
+        static final MethodName Operators_typeof_Reference = MethodName.findStatic(Types.Operators, "typeof",
                 Type.methodType(Types.String, Types.Reference, Types.ExecutionContext));
 
-        static final MethodName ScriptRuntime_InstanceofOperator = MethodName.findStatic(
-                Types.ScriptRuntime, "InstanceofOperator", Type.methodType(Type.BOOLEAN_TYPE,
-                        Types.Object, Types.Object, Types.ExecutionContext));
+        static final MethodName Operators_InstanceofOperator = MethodName.findStatic(Types.Operators,
+                "InstanceofOperator",
+                Type.methodType(Type.BOOLEAN_TYPE, Types.Object, Types.Object, Types.ExecutionContext));
 
-        static final MethodName ScriptRuntime_ArrayAccumulationSpreadElement = MethodName
-                .findStatic(Types.ScriptRuntime, "ArrayAccumulationSpreadElement", Type.methodType(
-                        Type.INT_TYPE, Types.ArrayObject, Type.INT_TYPE, Types.Object,
-                        Types.ExecutionContext));
+        static final MethodName Operators_GetNewTargetOrUndefined = MethodName.findStatic(Types.Operators,
+                "GetNewTargetOrUndefined", Type.methodType(Types.Object, Types.ExecutionContext));
 
-        static final MethodName ScriptRuntime_CheckCallable = MethodName.findStatic(
-                Types.ScriptRuntime, "CheckCallable",
-                Type.methodType(Types.Callable, Types.Object, Types.ExecutionContext));
+        static final MethodName Operators_toStr = MethodName.findStatic(Types.Operators, "toStr",
+                Type.methodType(Types.CharSequence, Types.Object, Types.ExecutionContext));
 
-        static final MethodName ScriptRuntime_defineLength = MethodName.findStatic(
-                Types.ScriptRuntime, "defineLength",
-                Type.methodType(Type.VOID_TYPE, Types.ArrayObject, Type.INT_TYPE));
-
-        static final MethodName ScriptRuntime_defineProperty__int = MethodName.findStatic(
-                Types.ScriptRuntime, "defineProperty", Type.methodType(Type.VOID_TYPE,
-                        Types.ArrayObject, Type.INT_TYPE, Types.Object));
-
-        static final MethodName ScriptRuntime_directEvalFallbackArguments = MethodName.findStatic(
-                Types.ScriptRuntime, "directEvalFallbackArguments", Type.methodType(Types.Object_,
-                        Types.Callable, Types.ExecutionContext, Types.Object, Types.Object_));
-
-        static final MethodName ScriptRuntime_directEvalFallbackThisArgument = MethodName
-                .findStatic(Types.ScriptRuntime, "directEvalFallbackThisArgument",
-                        Type.methodType(Types.Object, Types.ExecutionContext));
-
-        static final MethodName ScriptRuntime_directEvalFallbackHook = MethodName.findStatic(
-                Types.ScriptRuntime, "directEvalFallbackHook",
-                Type.methodType(Types.Callable, Types.ExecutionContext));
-
-        static final MethodName ScriptRuntime_EvaluateArrowFunction = MethodName
-                .findStatic(Types.ScriptRuntime, "EvaluateArrowFunction", Type.methodType(
-                        Types.OrdinaryFunction, Types.RuntimeInfo$Function, Types.ExecutionContext));
-
-        static final MethodName ScriptRuntime_EvaluateAsyncArrowFunction = MethodName.findStatic(
-                Types.ScriptRuntime, "EvaluateAsyncArrowFunction", Type.methodType(
-                        Types.OrdinaryAsyncFunction, Types.RuntimeInfo$Function,
-                        Types.ExecutionContext));
-
-        static final MethodName ScriptRuntime_EvaluateAsyncFunctionExpression = MethodName
-                .findStatic(Types.ScriptRuntime, "EvaluateAsyncFunctionExpression", Type
-                        .methodType(Types.OrdinaryAsyncFunction, Types.RuntimeInfo$Function,
-                                Types.ExecutionContext));
-
-        static final MethodName ScriptRuntime_EvaluateAsyncGeneratorExpression = MethodName
-                .findStatic(Types.ScriptRuntime, "EvaluateAsyncGeneratorExpression", Type
-                        .methodType(Types.OrdinaryAsyncGenerator, Types.RuntimeInfo$Function,
-                                Types.ExecutionContext));
-
-        static final MethodName ScriptRuntime_EvaluateFunctionExpression = MethodName.findStatic(
-                Types.ScriptRuntime, "EvaluateFunctionExpression", Type.methodType(
-                        Types.OrdinaryConstructorFunction, Types.RuntimeInfo$Function,
-                        Types.ExecutionContext));
-
-        static final MethodName ScriptRuntime_EvaluateLegacyFunctionExpression = MethodName.findStatic(
-                Types.ScriptRuntime, "EvaluateLegacyFunctionExpression", Type.methodType(
-                        Types.LegacyConstructorFunction, Types.RuntimeInfo$Function, Types.ExecutionContext));
-
-        static final MethodName ScriptRuntime_EvaluateConstructorGeneratorComprehension = MethodName.findStatic(
-                Types.ScriptRuntime, "EvaluateConstructorGeneratorComprehension",
-                Type.methodType(Types.GeneratorObject, Types.RuntimeInfo$Function, Types.ExecutionContext));
-
-        static final MethodName ScriptRuntime_EvaluateGeneratorComprehension = MethodName.findStatic(
-                Types.ScriptRuntime, "EvaluateGeneratorComprehension",
-                Type.methodType(Types.GeneratorObject, Types.RuntimeInfo$Function, Types.ExecutionContext));
-
-        static final MethodName ScriptRuntime_EvaluateLegacyGeneratorComprehension = MethodName
-                .findStatic(Types.ScriptRuntime, "EvaluateLegacyGeneratorComprehension", Type
-                        .methodType(Types.GeneratorObject, Types.RuntimeInfo$Function,
-                                Types.ExecutionContext));
-
-        static final MethodName ScriptRuntime_EvaluateConstructorGeneratorExpression = MethodName.findStatic(
-                Types.ScriptRuntime, "EvaluateConstructorGeneratorExpression",
-                Type.methodType(Types.OrdinaryConstructorGenerator, Types.RuntimeInfo$Function, Types.ExecutionContext));
-
-        static final MethodName ScriptRuntime_EvaluateGeneratorExpression = MethodName.findStatic(
-                Types.ScriptRuntime, "EvaluateGeneratorExpression",
-                Type.methodType(Types.OrdinaryGenerator, Types.RuntimeInfo$Function, Types.ExecutionContext));
-
-        static final MethodName ScriptRuntime_EvaluateLegacyGeneratorExpression = MethodName
-                .findStatic(Types.ScriptRuntime, "EvaluateLegacyGeneratorExpression", Type
-                        .methodType(Types.OrdinaryConstructorGenerator, Types.RuntimeInfo$Function,
-                                Types.ExecutionContext));
-
-        static final MethodName ScriptRuntime_EvaluateMethodDecorators = MethodName.findStatic(
-                Types.ScriptRuntime, "EvaluateMethodDecorators", Type.methodType(Type.VOID_TYPE,
-                        Types.OrdinaryObject, Types.ArrayList, Types.ExecutionContext));
-
-        static final MethodName ScriptRuntime_BindThisValue = MethodName.findStatic(
-                Types.ScriptRuntime, "BindThisValue",
-                Type.methodType(Type.VOID_TYPE, Types.ScriptObject, Types.ExecutionContext));
-
-        static final MethodName ScriptRuntime_GetNewTargetOrUndefined = MethodName.findStatic(
-                Types.ScriptRuntime, "GetNewTargetOrUndefined",
+        static final MethodName Operators_functionSent = MethodName.findStatic(Types.Operators, "functionSent",
                 Type.methodType(Types.Object, Types.ExecutionContext));
 
-        static final MethodName ScriptRuntime_GetNewTarget = MethodName.findStatic(
-                Types.ScriptRuntime, "GetNewTarget",
-                Type.methodType(Types.Constructor, Types.ExecutionContext));
+        static final MethodName Operators_toBigIntOrThrow = MethodName.findStatic(Types.Operators, "toBigIntOrThrow",
+                Type.methodType(Types.BigInteger, Types.Object, Types.ExecutionContext));
 
-        static final MethodName ScriptRuntime_GetSuperConstructor = MethodName.findStatic(
-                Types.ScriptRuntime, "GetSuperConstructor",
-                Type.methodType(Types.Constructor, Types.ExecutionContext));
+        static final MethodName Operators_throw = MethodName.findStatic(Types.Operators, "_throw",
+                Type.methodType(Types.Object, Types.Object));
 
-        static final MethodName ScriptRuntime_IsBuiltinEval = MethodName.findStatic(
-                Types.ScriptRuntime, "IsBuiltinEval",
-                Type.methodType(Type.BOOLEAN_TYPE, Types.Callable, Types.ExecutionContext));
+        // class: ArrayOperations
+        static final MethodName ArrayOperations_spreadElement = MethodName.findStatic(Types.ArrayOperations,
+                "spreadElement",
+                Type.methodType(Type.INT_TYPE, Types.ArrayObject, Type.INT_TYPE, Types.Object, Types.ExecutionContext));
 
-        static final MethodName ScriptRuntime_PrepareForTailCall = MethodName.findStatic(
-                Types.ScriptRuntime, "PrepareForTailCall", Type.methodType(Types.Object,
-                        Types.Callable, Types.ExecutionContext, Types.Object, Types.Object_));
+        static final MethodName ArrayOperations_defineLength = MethodName.findStatic(Types.ArrayOperations,
+                "defineLength", Type.methodType(Type.VOID_TYPE, Types.ArrayObject, Type.INT_TYPE));
 
-        static final MethodName ScriptRuntime_PrepareForTailCallUnchecked = MethodName.findStatic(
-                Types.ScriptRuntime, "PrepareForTailCall", Type.methodType(Types.Object,
-                        Types.Object, Types.ExecutionContext, Types.Object, Types.Object_));
+        static final MethodName ArrayOperations_defineProperty__int = MethodName.findStatic(Types.ArrayOperations,
+                "defineProperty", Type.methodType(Type.VOID_TYPE, Types.ArrayObject, Type.INT_TYPE, Types.Object));
 
-        static final MethodName ScriptRuntime_SpreadArray = MethodName.findStatic(
-                Types.ScriptRuntime, "SpreadArray",
+        // class: CallOperations
+        static final MethodName CallOperations_CheckCallable = MethodName.findStatic(Types.CallOperations,
+                "CheckCallable", Type.methodType(Types.Callable, Types.Object, Types.ExecutionContext));
+
+        static final MethodName CallOperations_directEvalFallbackArguments = MethodName.findStatic(Types.CallOperations,
+                "directEvalFallbackArguments",
+                Type.methodType(Types.Object_, Types.Callable, Types.ExecutionContext, Types.Object, Types.Object_));
+
+        static final MethodName CallOperations_directEvalFallbackThisArgument = MethodName.findStatic(
+                Types.CallOperations, "directEvalFallbackThisArgument",
+                Type.methodType(Types.Object, Types.ExecutionContext));
+
+        static final MethodName CallOperations_directEvalFallbackHook = MethodName.findStatic(Types.CallOperations,
+                "directEvalFallbackHook", Type.methodType(Types.Callable, Types.ExecutionContext));
+
+        static final MethodName CallOperations_IsBuiltinEval = MethodName.findStatic(Types.CallOperations,
+                "IsBuiltinEval", Type.methodType(Type.BOOLEAN_TYPE, Types.Callable, Types.ExecutionContext));
+
+        static final MethodName CallOperations_PrepareForTailCall = MethodName.findStatic(Types.CallOperations,
+                "PrepareForTailCall",
+                Type.methodType(Types.Object, Types.Callable, Types.ExecutionContext, Types.Object, Types.Object_));
+
+        static final MethodName CallOperations_PrepareForTailCallUnchecked = MethodName.findStatic(Types.CallOperations,
+                "PrepareForTailCall",
+                Type.methodType(Types.Object, Types.Object, Types.ExecutionContext, Types.Object, Types.Object_));
+
+        static final MethodName CallOperations_spreadArray = MethodName.findStatic(Types.CallOperations, "spreadArray",
                 Type.methodType(Types.Object_, Types.Object, Types.ExecutionContext));
 
-        static final MethodName ScriptRuntime_NativeCallSpreadArray = MethodName.findStatic(
-                Types.ScriptRuntime, "NativeCallSpreadArray",
-                Type.methodType(Types.Object_, Types.Object, Types.ExecutionContext));
+        static final MethodName CallOperations_nativeCallSpreadArray = MethodName.findStatic(Types.CallOperations,
+                "nativeCallSpreadArray", Type.methodType(Types.Object_, Types.Object, Types.ExecutionContext));
 
-        static final MethodName ScriptRuntime_toFlatArray = MethodName.findStatic(
-                Types.ScriptRuntime, "toFlatArray",
+        static final MethodName CallOperations_toFlatArray = MethodName.findStatic(Types.CallOperations, "toFlatArray",
                 Type.methodType(Types.Object_, Types.Object_, Types.ExecutionContext));
 
-        static final MethodName ScriptRuntime_toStr = MethodName.findStatic(Types.ScriptRuntime,
-                "toStr", Type.methodType(Types.CharSequence, Types.Object, Types.ExecutionContext));
+        // class: FunctionOperations
+        static final MethodName FunctionOperations_EvaluateArrowFunction = MethodName.findStatic(
+                Types.FunctionOperations, "EvaluateArrowFunction",
+                Type.methodType(Types.OrdinaryFunction, Types.RuntimeInfo$Function, Types.ExecutionContext));
 
-        static final MethodName ScriptRuntime_functionSent = MethodName.findStatic(Types.ScriptRuntime,
-                "functionSent", Type.methodType(Types.Object, Types.ExecutionContext));
+        static final MethodName FunctionOperations_EvaluateAsyncArrowFunction = MethodName.findStatic(
+                Types.FunctionOperations, "EvaluateAsyncArrowFunction",
+                Type.methodType(Types.OrdinaryAsyncFunction, Types.RuntimeInfo$Function, Types.ExecutionContext));
+
+        static final MethodName FunctionOperations_EvaluateAsyncFunctionExpression = MethodName.findStatic(
+                Types.FunctionOperations, "EvaluateAsyncFunctionExpression",
+                Type.methodType(Types.OrdinaryAsyncFunction, Types.RuntimeInfo$Function, Types.ExecutionContext));
+
+        static final MethodName FunctionOperations_EvaluateAsyncGeneratorExpression = MethodName.findStatic(
+                Types.FunctionOperations, "EvaluateAsyncGeneratorExpression",
+                Type.methodType(Types.OrdinaryAsyncGenerator, Types.RuntimeInfo$Function, Types.ExecutionContext));
+
+        static final MethodName FunctionOperations_EvaluateFunctionExpression = MethodName.findStatic(
+                Types.FunctionOperations, "EvaluateFunctionExpression",
+                Type.methodType(Types.OrdinaryConstructorFunction, Types.RuntimeInfo$Function, Types.ExecutionContext));
+
+        static final MethodName FunctionOperations_EvaluateLegacyFunctionExpression = MethodName.findStatic(
+                Types.FunctionOperations, "EvaluateLegacyFunctionExpression",
+                Type.methodType(Types.LegacyConstructorFunction, Types.RuntimeInfo$Function, Types.ExecutionContext));
+
+        static final MethodName FunctionOperations_EvaluateGeneratorComprehension = MethodName.findStatic(
+                Types.FunctionOperations, "EvaluateGeneratorComprehension",
+                Type.methodType(Types.GeneratorObject, Types.RuntimeInfo$Function, Types.ExecutionContext));
+
+        static final MethodName FunctionOperations_EvaluateGeneratorExpression = MethodName.findStatic(
+                Types.FunctionOperations, "EvaluateGeneratorExpression",
+                Type.methodType(Types.OrdinaryGenerator, Types.RuntimeInfo$Function, Types.ExecutionContext));
+
+        // class: DecoratorOperations
+        static final MethodName DecoratorOperations_propertyDescriptor = MethodName.findStatic(
+                Types.DecoratorOperations, "propertyDescriptor",
+                Type.methodType(Types.Object, Types.OrdinaryObject, Types.Object, Types.ExecutionContext));
+
+        static final MethodName DecoratorOperations_defineProperty = MethodName.findStatic(Types.DecoratorOperations,
+                "defineProperty", Type.methodType(Type.VOID_TYPE, Types.OrdinaryObject, Types.Object, Types.Object,
+                        Types.ExecutionContext));
+
+        // class: ClassOperations
+        static final MethodName ClassOperations_BindThisValue = MethodName.findStatic(Types.ClassOperations,
+                "BindThisValue", Type.methodType(Type.VOID_TYPE, Types.ScriptObject, Types.ExecutionContext));
+
+        static final MethodName ClassOperations_GetNewTargetOrThrow = MethodName.findStatic(Types.ClassOperations,
+                "GetNewTargetOrThrow", Type.methodType(Types.Constructor, Types.ExecutionContext));
+
+        static final MethodName ClassOperations_GetSuperConstructor = MethodName.findStatic(Types.ClassOperations,
+                "GetSuperConstructor", Type.methodType(Types.Constructor, Types.ExecutionContext));
+
+        static final MethodName ClassOperations_InitializeInstanceFields = MethodName.findStatic(Types.ClassOperations,
+                "InitializeInstanceFields",
+                Type.methodType(Type.VOID_TYPE, Types.ScriptObject, Types.ExecutionContext));
+
+        // class: ModuleOperations
+        static final MethodName ModuleOperations_dynamicImport = MethodName.findStatic(Types.ModuleOperations,
+                "dynamicImport", Type.methodType(Types.PromiseObject, Types.Object, Types.ExecutionContext));
+
+        static final MethodName ModuleOperations_importMeta = MethodName.findStatic(Types.ModuleOperations,
+                "importMeta", Type.methodType(Types.ScriptObject, Types.ExecutionContext));
+
+        // class: TemplateOperations
+        static final MethodName TemplateOperations_GetTemplateObject = MethodName.findStatic(Types.TemplateOperations,
+                "GetTemplateObject",
+                Type.methodType(Types.ArrayObject, Type.INT_TYPE, Types.MethodHandle, Types.ExecutionContext));
 
         // class: StringBuilder
-        static final MethodName StringBuilder_append_Charsequence = MethodName.findVirtual(
-                Types.StringBuilder, "append",
-                Type.methodType(Types.StringBuilder, Types.CharSequence));
+        static final MethodName StringBuilder_append_Charsequence = MethodName.findVirtual(Types.StringBuilder,
+                "append", Type.methodType(Types.StringBuilder, Types.CharSequence));
 
-        static final MethodName StringBuilder_append_String = MethodName.findVirtual(
-                Types.StringBuilder, "append", Type.methodType(Types.StringBuilder, Types.String));
+        static final MethodName StringBuilder_append_String = MethodName.findVirtual(Types.StringBuilder, "append",
+                Type.methodType(Types.StringBuilder, Types.String));
 
-        static final MethodName StringBuilder_init = MethodName.findConstructor(
-                Types.StringBuilder, Type.methodType(Type.VOID_TYPE));
+        static final MethodName StringBuilder_new = MethodName.findConstructor(Types.StringBuilder,
+                Type.methodType(Type.VOID_TYPE));
 
-        static final MethodName StringBuilder_toString = MethodName.findVirtual(
-                Types.StringBuilder, "toString", Type.methodType(Types.String));
+        static final MethodName StringBuilder_toString = MethodName.findVirtual(Types.StringBuilder, "toString",
+                Type.methodType(Types.String));
     }
 
     private static final int MAX_JVM_ARGUMENTS = 255;
@@ -276,8 +301,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
 
     private static void invokeDynamicCall(CodeVisitor mv) {
         // stack: [func(Callable), cx, thisValue, args] -> [result]
-        mv.invokedynamic(Bootstrap.getCallName(), Bootstrap.getCallMethodDescriptor(),
-                Bootstrap.getCallBootstrap());
+        mv.invokedynamic(Bootstrap.getCallName(), Bootstrap.getCallMethodDescriptor(), Bootstrap.getCallBootstrap());
     }
 
     private static void invokeDynamicConstruct(CodeVisitor mv) {
@@ -288,15 +312,26 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
 
     private static void invokeDynamicSuper(CodeVisitor mv) {
         // stack: [constructor(Constructor), cx, newTarget, args] -> [result]
-        mv.invokedynamic(Bootstrap.getSuperName(), Bootstrap.getSuperMethodDescriptor(),
-                Bootstrap.getSuperBootstrap());
+        mv.invokedynamic(Bootstrap.getSuperName(), Bootstrap.getSuperMethodDescriptor(), Bootstrap.getSuperBootstrap());
     }
 
     private static ValType invokeDynamicNativeCall(String name, Type[] arguments, CodeVisitor mv) {
         // stack: [cx, ...args] -> [result]
-        MethodTypeDescriptor desc = MethodTypeDescriptor.methodType(Types.Object, arguments);
+        MethodTypeDescriptor desc = Type.methodType(Types.Object, arguments);
         mv.invokedynamic(NativeCalls.getNativeCallName(name), desc, NativeCalls.getNativeCallBootstrap());
         return ValType.of(desc.returnType());
+    }
+
+    private static void invokeDynamicOperator(UpdateExpression.Operator operator, CodeVisitor mv) {
+        // stack: [val, cx?] -> [result]
+        mv.invokedynamic(Bootstrap.getName(operator), Bootstrap.getMethodDescriptor(operator),
+                Bootstrap.getBootstrap(operator));
+    }
+
+    private static void invokeDynamicOperator(UnaryExpression.Operator operator, CodeVisitor mv) {
+        // stack: [val, cx?] -> [result]
+        mv.invokedynamic(Bootstrap.getName(operator), Bootstrap.getMethodDescriptor(operator),
+                Bootstrap.getBootstrap(operator));
     }
 
     private static void invokeDynamicOperator(BinaryExpression.Operator operator, CodeVisitor mv) {
@@ -305,14 +340,86 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
                 Bootstrap.getBootstrap(operator));
     }
 
+    private static void invokeDynamicOperator(AssignmentExpression.Operator operator, CodeVisitor mv) {
+        // stack: [lval, rval, cx?] -> [result]
+        invokeDynamicOperator(toBinaryOperator(operator), mv);
+    }
+
+    private static BinaryExpression.Operator toBinaryOperator(AssignmentExpression.Operator operator) {
+        switch (operator) {
+        case ASSIGN_ADD:
+            return BinaryExpression.Operator.ADD;
+        case ASSIGN_BITAND:
+            return BinaryExpression.Operator.BITAND;
+        case ASSIGN_BITOR:
+            return BinaryExpression.Operator.BITOR;
+        case ASSIGN_BITXOR:
+            return BinaryExpression.Operator.BITXOR;
+        case ASSIGN_DIV:
+            return BinaryExpression.Operator.DIV;
+        case ASSIGN_EXP:
+            return BinaryExpression.Operator.EXP;
+        case ASSIGN_MOD:
+            return BinaryExpression.Operator.MOD;
+        case ASSIGN_MUL:
+            return BinaryExpression.Operator.MUL;
+        case ASSIGN_SHL:
+            return BinaryExpression.Operator.SHL;
+        case ASSIGN_SHR:
+            return BinaryExpression.Operator.SHR;
+        case ASSIGN_SUB:
+            return BinaryExpression.Operator.SUB;
+        case ASSIGN_USHR:
+            return BinaryExpression.Operator.USHR;
+        default:
+            throw new AssertionError();
+        }
+    }
+
     private static void invokeDynamicConcat(int numberOfStrings, CodeVisitor mv) {
-        mv.invokedynamic(Bootstrap.getConcatName(),
-                Bootstrap.getConcatMethodDescriptor(numberOfStrings),
+        mv.invokedynamic(Bootstrap.getConcatName(), Bootstrap.getConcatMethodDescriptor(numberOfStrings),
                 Bootstrap.getConcatBootstrap());
     }
 
     private boolean isTailCall(Expression node, CodeVisitor mv) {
         return !codegen.isEnabled(Compiler.Option.NoTailCall) && mv.isTailCall(node);
+    }
+
+    private static void toBigIntOrThrow(ValType type, CodeVisitor mv) {
+        if (type != ValType.BigInt) {
+            mv.toBoxed(type);
+            // stack: [any] -> [bigint]
+            mv.loadExecutionContext();
+            mv.invoke(Methods.Operators_toBigIntOrThrow);
+        }
+    }
+
+    private static ValType toPrimitiveNumeric(ValType type, ValType numericType, CodeVisitor mv) {
+        switch (numericType) {
+        case Number:
+            ToNumber(type, mv);
+            break;
+        case Number_int:
+            ToInt32(type, mv);
+            break;
+        case BigInt:
+            toBigIntOrThrow(type, mv);
+            break;
+        default:
+            throw new AssertionError();
+        }
+        return numericType;
+    }
+
+    private static ValType toNumeric(ValType type, ValType numericType, CodeVisitor mv) {
+        switch (numericType) {
+        case Number:
+            return ToNumeric(type, mv);
+        case Number_int:
+            return ToNumericInt32(type, mv);
+        default:
+            throw new AssertionError();
+        }
     }
 
     /**
@@ -359,18 +466,26 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
         return codegen.isEnabled(Parser.Option.EnclosedByWithStatement);
     }
 
+    private boolean isEnclosedByCatchStatement(Scope currentScope) {
+        // TODO: Create separate catch-scope class?
+        for (Scope scope : currentScope) {
+            if (scope instanceof BlockScope && ((BlockScope) scope).getNode() instanceof CatchClause) {
+                return true;
+            }
+        }
+        return codegen.isEnabled(Parser.Option.EnclosedByCatchStatement);
+    }
+
     private boolean isEnclosedByLexicalDeclaration(Scope currentScope) {
         final boolean catchVar = codegen.isEnabled(CompatibilityOption.CatchVarStatement);
-        final boolean catchPattern = codegen.isEnabled(CompatibilityOption.CatchVarPattern);
         TopLevelScope top = currentScope.getTop();
         for (Scope scope : currentScope) {
             if (scope instanceof BlockScope) {
                 if (catchVar) {
                     ScopedNode node = scope.getNode();
-                    if (node instanceof CatchClause) {
-                        if (!catchPattern || ((CatchClause) node).getCatchParameter() instanceof BindingIdentifier) {
-                            continue;
-                        }
+                    if (node instanceof CatchClause
+                            && ((CatchClause) node).getCatchParameter() instanceof BindingIdentifier) {
+                        continue;
                     }
                 }
                 if (!((BlockScope) scope).lexicallyDeclaredNames().isEmpty()) {
@@ -388,32 +503,6 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
             return true;
         }
         return codegen.isEnabled(Parser.Option.EnclosedByLexicalDeclaration);
-    }
-
-    private static boolean isGlobalScope(Scope currentScope) {
-        ScopedNode node = currentScope.getNode();
-        if (node instanceof Script) {
-            return ((Script) node).isGlobalScope();
-        }
-        return false;
-    }
-
-    private static boolean isGlobalThis(Scope currentScope) {
-        for (Scope scope = currentScope;;) {
-            TopLevelScope top = scope.getTop();
-            TopLevelNode<?> node = top.getNode();
-            if (node instanceof Script) {
-                return ((Script) node).isGlobalThis();
-            }
-            if (node instanceof Module) {
-                return true;
-            }
-            assert node instanceof FunctionNode : "class=" + node.getClass();
-            if (((FunctionNode) node).getThisMode() != FunctionNode.ThisMode.Lexical) {
-                return false;
-            }
-            scope = top.getEnclosingScope();
-        }
     }
 
     private enum CallType {
@@ -457,9 +546,9 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
         case IdentifierWith:
             return EvaluateCallIdentWith(call, (IdentifierReference) base, arguments, mv);
         case Eval:
-            return EvaluateCallEval(call, (IdentifierReference) base, arguments, mv);
+            return EvaluateCallEval((CallExpression) call, (IdentifierReference) base, arguments, mv);
         case EvalWith:
-            return EvaluateCallEvalWith(call, (IdentifierReference) base, arguments, mv);
+            return EvaluateCallEvalWith((CallExpression) call, (IdentifierReference) base, arguments, mv);
         case Property:
             return EvaluateCallProperty(call, (LeftHandSideExpression) base, arguments, mv);
         case Value:
@@ -533,7 +622,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
         return EvaluateDirectCall(call, arguments, mv);
     }
 
-    private ValType EvaluateCallEval(Expression call, IdentifierReference base, List<Expression> arguments,
+    private ValType EvaluateCallEval(CallExpression call, IdentifierReference base, List<Expression> arguments,
             CodeVisitor mv) {
         /* steps 1-2 */
         // stack: [] -> [func]
@@ -545,7 +634,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
         return EvaluateDirectCallEval(call, arguments, false, mv);
     }
 
-    private ValType EvaluateCallEvalWith(Expression call, IdentifierReference base, List<Expression> arguments,
+    private ValType EvaluateCallEvalWith(CallExpression call, IdentifierReference base, List<Expression> arguments,
             CodeVisitor mv) {
         /* steps 1-4 */
         // stack: [] -> [func, thisValue]
@@ -575,7 +664,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
         mv.lineInfo(call);
         if (isTailCall(call, mv)) {
             // stack: [func, cx, thisValue, args] -> [<func(Callable), thisValue, args>]
-            mv.invoke(Methods.ScriptRuntime_PrepareForTailCallUnchecked);
+            mv.invoke(Methods.CallOperations_PrepareForTailCallUnchecked);
         } else {
             // stack: [func, cx, thisValue, args] -> [result]
             invokeDynamicCall(mv);
@@ -595,7 +684,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
      * @param mv
      *            the code visitor
      */
-    private ValType EvaluateDirectCallEval(Expression call, List<Expression> arguments, boolean hasThisValue,
+    private ValType EvaluateDirectCallEval(CallExpression call, List<Expression> arguments, boolean hasThisValue,
             CodeVisitor mv) {
         Jump afterCall = new Jump(), notEval = new Jump();
         if (hasThisValue) {
@@ -617,12 +706,12 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
         /* steps 3-4 (EvaluateDirectCall) */
         // stack: [thisValue?, args?, func] -> [thisValue?, args?, func(Callable)]
         mv.loadExecutionContext();
-        mv.invoke(Methods.ScriptRuntime_CheckCallable);
+        mv.invoke(Methods.CallOperations_CheckCallable);
 
         // stack: [thisValue?, args?, func(Callable)] -> [thisValue?, args?, func(Callable)]
         mv.dup();
         mv.loadExecutionContext();
-        mv.invoke(Methods.ScriptRuntime_IsBuiltinEval);
+        mv.invoke(Methods.CallOperations_IsBuiltinEval);
         mv.ifeq(notEval);
         {
             PerformEval(call, arguments, hasThisValue, afterCall, mv);
@@ -660,25 +749,22 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
             // direct-eval fallback hook
             Jump noEvalHook = new Jump();
             mv.loadExecutionContext();
-            mv.invoke(Methods.ScriptRuntime_directEvalFallbackHook);
+            mv.invoke(Methods.CallOperations_directEvalFallbackHook);
             mv.ifnull(noEvalHook);
             {
                 // stack: [func(Callable), cx, thisValue, args] -> [args']
-                mv.invoke(Methods.ScriptRuntime_directEvalFallbackArguments);
+                mv.invoke(Methods.CallOperations_directEvalFallbackArguments);
 
                 // stack: [args'] -> []
-                Variable<Object[]> fallbackArguments = mv.newScratchVariable(Object[].class);
-                mv.store(fallbackArguments);
+                Value<Object[]> fallbackArguments = mv.storeTemporary(Object[].class);
 
                 // stack: [] -> [func(Callable), cx, thisValue, args']
                 mv.loadExecutionContext();
-                mv.invoke(Methods.ScriptRuntime_directEvalFallbackHook);
+                mv.invoke(Methods.CallOperations_directEvalFallbackHook);
                 mv.loadExecutionContext();
                 mv.loadExecutionContext();
-                mv.invoke(Methods.ScriptRuntime_directEvalFallbackThisArgument);
+                mv.invoke(Methods.CallOperations_directEvalFallbackThisArgument);
                 mv.load(fallbackArguments);
-
-                mv.freeVariable(fallbackArguments);
             }
             mv.mark(noEvalHook);
         }
@@ -686,7 +772,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
         /* steps 5-9 (EvaluateDirectCall) */
         if (isTailCall(call, mv)) {
             // stack: [func(Callable), cx, thisValue, args'] -> [<func(Callable), thisValue, args>]
-            mv.invoke(Methods.ScriptRuntime_PrepareForTailCall);
+            mv.invoke(Methods.CallOperations_PrepareForTailCall);
         } else {
             // stack: [func(Callable), cx, thisValue, args] -> [result]
             invokeDynamicCall(mv);
@@ -710,23 +796,18 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
      * @param mv
      *            the code visitor
      */
-    private void PerformEval(Expression call, List<Expression> arguments, boolean hasThisValue, Jump afterCall,
+    private void PerformEval(CallExpression call, List<Expression> arguments, boolean hasThisValue, Jump afterCall,
             CodeVisitor mv) {
-        int evalFlags = EvalFlags.Direct.getValue();
+        int evalFlags = EvalFlags.toFlags(call.getEvalFlags());
         if (mv.isStrict()) {
+            // TODO: Remove this case when StrictDirectiveSimpleParameterList is the default.
             evalFlags |= EvalFlags.Strict.getValue();
-        }
-        if (mv.isGlobalCode()) {
-            evalFlags |= EvalFlags.GlobalCode.getValue();
-        }
-        if (isGlobalScope(mv.getScope())) {
-            evalFlags |= EvalFlags.GlobalScope.getValue();
-        }
-        if (isGlobalThis(mv.getScope())) {
-            evalFlags |= EvalFlags.GlobalThis.getValue();
         }
         if (isEnclosedByWithStatement(mv.getScope())) {
             evalFlags |= EvalFlags.EnclosedByWithStatement.getValue();
+        }
+        if (isEnclosedByCatchStatement(mv.getScope())) {
+            evalFlags |= EvalFlags.EnclosedByCatchStatement.getValue();
         }
         if (!mv.isStrict() && isEnclosedByLexicalDeclaration(mv.getScope())) {
             evalFlags |= EvalFlags.EnclosedByLexicalDeclaration.getValue();
@@ -830,7 +911,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
      */
     private void ArgumentListEvaluation(Expression call, List<Expression> arguments, CodeVisitor mv) {
         if (arguments.isEmpty()) {
-            mv.get(Fields.ScriptRuntime_EMPTY_ARRAY);
+            mv.get(Fields.CallOperations_EMPTY_ARRAY);
         } else if (arguments.size() == 1 && arguments.get(0) instanceof CallSpreadElement) {
             ((CallSpreadElement) arguments.get(0)).accept(this, mv);
         } else {
@@ -849,7 +930,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
             if (hasSpread) {
                 mv.loadExecutionContext();
                 mv.lineInfo(call);
-                mv.invoke(Methods.ScriptRuntime_toFlatArray);
+                mv.invoke(Methods.CallOperations_toFlatArray);
             }
         }
     }
@@ -877,17 +958,26 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
      */
     @Override
     public ValType visit(ArrayLiteral node, CodeVisitor mv) {
-        int elision = 0;
-        boolean hasSpread = false;
+        int elision = 0, spread = 0;
+        boolean hasSpreadMethod = false;
         for (Expression element : node.getElements()) {
-            if (element instanceof Elision) {
+            if (element instanceof SpreadElementMethod) {
+                hasSpreadMethod = true;
+                break;
+            } else if (element instanceof Elision) {
                 elision += 1;
             } else if (element instanceof SpreadElement) {
-                hasSpread = true;
+                spread += 1;
             }
         }
 
-        if (!hasSpread) {
+        if (hasSpreadMethod) {
+            arrayLiteralWithSpread(node, mv);
+        } else if (spread > 0 && hasTrailingSpread(node, spread)) {
+            arrayLiteralTrailingSpread(node, mv);
+        } else if (spread > 0) {
+            arrayLiteralWithSpread(node, mv);
+        } else {
             // Try to initialize array with faster {Dense, Sparse}ArrayCreate methods
             int length = node.getElements().size();
             float density = (float) (length - elision) / length;
@@ -912,104 +1002,26 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
                 } else {
                     mv.invoke(Methods.ArrayObject_SparseArrayCreate);
                 }
-                return ValType.Object;
-            }
-        }
+            } else {
+                ArrayCreate(length, mv); // initialize with correct "length"
 
-        if (!hasSpread) {
-            int length = node.getElements().size();
-            mv.loadExecutionContext();
-            mv.lconst(length); // initialize with correct "length"
-            mv.invoke(Methods.ArrayObject_ArrayCreate);
-
-            int nextIndex = 0;
-            for (Expression element : node.getElements()) {
-                if (element instanceof Elision) {
-                    // Elision
-                } else {
-                    mv.dup();
-                    mv.iconst(nextIndex);
-                    ValType elementType = element.accept(this, mv);
-                    mv.toBoxed(elementType);
-                    mv.invoke(Methods.ScriptRuntime_defineProperty__int);
+                int nextIndex = 0;
+                for (Expression element : node.getElements()) {
+                    if (element instanceof Elision) {
+                        // Elision
+                    } else {
+                        mv.dup();
+                        mv.iconst(nextIndex);
+                        ArrayAccumulationElement(element, mv);
+                    }
+                    nextIndex += 1;
                 }
-                nextIndex += 1;
+                assert nextIndex == length;
+                // Skip Put(array, "length", nextIndex, false), array is initialized with fixed length.
             }
-            assert nextIndex == length;
-            // Skip Put(array, "length", nextIndex, false), array is initialized with fixed length.
-        } else {
-            mv.loadExecutionContext();
-            mv.lconst(0);
-            mv.invoke(Methods.ArrayObject_ArrayCreate);
-            mv.dup();
-
-            // stack: [array, array, nextIndex]
-            mv.iconst(0); // nextIndex
-
-            arrayLiteralWithSpread(node, mv);
-
-            // stack: [array, array, nextIndex] -> [array]
-            mv.invoke(Methods.ScriptRuntime_defineLength);
         }
 
         return ValType.Object;
-    }
-
-    /**
-     * 12.2.4.1.3 Runtime Semantics: Evaluation<br>
-     * 12.2.4.1.2 Runtime Semantics: Array Accumulation
-     */
-    @Override
-    public ValType visit(SpreadArrayLiteral node, CodeVisitor mv) {
-        // stack: [array, nextIndex]
-        arrayLiteralWithSpread(node, mv);
-
-        // stack: [array, nextIndex] -> [nextIndex]
-        mv.swap();
-        mv.pop();
-
-        return ValType.Any;
-    }
-
-    /**
-     * 12.2.4.1.3 Runtime Semantics: Evaluation<br>
-     * 12.2.4.1.2 Runtime Semantics: Array Accumulation
-     * 
-     * @param node
-     *            the array literal
-     * @param mv
-     *            the expresion visitor
-     */
-    private void arrayLiteralWithSpread(ArrayLiteral node, CodeVisitor mv) {
-        // stack: [array, nextIndex]
-        int elisionWidth = 0;
-        for (Expression element : node.getElements()) {
-            if (element instanceof Elision) {
-                // Elision
-                elisionWidth += 1;
-                continue;
-            }
-            if (elisionWidth != 0) {
-                mv.iconst(elisionWidth);
-                mv.iadd();
-                elisionWidth = 0;
-            }
-            if (element instanceof SpreadElement) {
-                element.accept(this, mv);
-            } else {
-                // stack: [array, nextIndex] -> [array, nextIndex, array, nextIndex]
-                mv.dup2();
-                ValType elementType = element.accept(this, mv);
-                mv.toBoxed(elementType);
-                // stack: [array, nextIndex, array, nextIndex, value] -> [array, nextIndex]
-                mv.invoke(Methods.ScriptRuntime_defineProperty__int);
-                elisionWidth += 1;
-            }
-        }
-        if (elisionWidth != 0) {
-            mv.iconst(elisionWidth);
-            mv.iadd();
-        }
     }
 
     /**
@@ -1017,52 +1029,250 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
      */
     @Override
     public ValType visit(SpreadElement node, CodeVisitor mv) {
-        // stack: [array, nextIndex] -> [array, array, nextIndex]
-        mv.swap();
-        mv.dupX1();
-        mv.swap();
+        return node.getExpression().accept(this, mv);
+    }
 
-        // stack: [array, array, nextIndex] -> [array, array, nextIndex, value]
-        Expression spread = node.getExpression();
+    private void ArrayCreate(long length, CodeVisitor mv) {
+        mv.loadExecutionContext();
+        mv.lconst(length);
+        mv.invoke(Methods.ArrayObject_ArrayCreate);
+    }
+
+    private void ArrayAccumulationElement(Expression element, CodeVisitor mv) {
+        // stack: [array, nextIndex] -> []
+        ValType elementType = element.accept(this, mv);
+        mv.toBoxed(elementType);
+        mv.invoke(Methods.ArrayOperations_defineProperty__int);
+    }
+
+    private void ArrayAccumulationSpreadElement(SpreadElement spread, CodeVisitor mv) {
+        // stack: [array, nextIndex] -> [nextIndex']
         ValType spreadType = spread.accept(this, mv);
         mv.toBoxed(spreadType);
-
-        // stack: [array, array, nextIndex, value] -> [array, nextIndex']
         mv.loadExecutionContext();
-        mv.lineInfo(node);
-        mv.invoke(Methods.ScriptRuntime_ArrayAccumulationSpreadElement);
-
-        return ValType.Any;
+        mv.lineInfo(spread);
+        mv.invoke(Methods.ArrayOperations_spreadElement);
     }
 
     /**
      * 12.2.4.1.3 Runtime Semantics: Evaluation<br>
      * 12.2.4.1.2 Runtime Semantics: Array Accumulation
+     * 
+     * @param node
+     *            the array node
+     * @param mv
+     *            the code visitor
      */
-    @Override
-    public ValType visit(SpreadElementMethod node, CodeVisitor mv) {
-        MethodName method = codegen.compile(node, mv);
-        boolean hasResume = node.hasResumePoint();
-
+    private void arrayLiteralWithSpread(ArrayLiteral node, CodeVisitor mv) {
         mv.enterVariableScope();
-        Variable<ArrayObject> array = mv.newVariable("array", ArrayObject.class);
-        Variable<Integer> nextIndex = mv.newVariable("nextIndex", int.class);
 
-        // stack: [array, nextIndex] -> [array]
-        mv.store(nextIndex);
-        mv.dup();
+        Variable<ArrayObject> array = mv.newVariable("array", ArrayObject.class);
+        ArrayCreate(0, mv);
         mv.store(array);
 
-        // stack: [array] -> [array, nextIndex']
-        mv.lineInfo(0); // 0 = hint for stacktraces to omit this frame
-        if (hasResume) {
-            mv.callWithSuspend(method, array, nextIndex);
-        } else {
-            mv.call(method, array, nextIndex);
-        }
-        mv.exitVariableScope();
+        Variable<Integer> nextIndex = mv.newVariable("nextIndex", int.class);
+        mv.iconst(0);
+        mv.store(nextIndex);
 
-        return ValType.Any;
+        spreadArray(node.getElements(), array, nextIndex, mv);
+
+        if (hasTrailingElision(node)) {
+            mv.load(array);
+            mv.load(nextIndex);
+            mv.invoke(Methods.ArrayOperations_defineLength);
+        }
+        mv.load(array);
+
+        mv.exitVariableScope();
+    }
+
+    /**
+     * 12.2.4.1.3 Runtime Semantics: Evaluation<br>
+     * 12.2.4.1.2 Runtime Semantics: Array Accumulation
+     * 
+     * @param node
+     *            the array node
+     * @param mv
+     *            the code visitor
+     */
+    private void arrayLiteralTrailingSpread(ArrayLiteral node, CodeVisitor mv) {
+        // stack: [] -> [array]
+        ArrayCreate(0, mv);
+
+        ListIterator<Expression> iterator = node.getElements().listIterator();
+        // stack: [array] -> [array]
+        int nextIndex = arrayLiteral(iterator, mv);
+        if (iterator.hasNext()) {
+            // stack: [array] -> [array, array, nextIndex]
+            mv.dup();
+            mv.iconst(nextIndex);
+
+            // stack: [array, array, nextIndex] -> [array, nextIndex']
+            ArrayAccumulationSpreadElement((SpreadElement) iterator.next(), mv);
+
+            // [array, nextIndex] -> [array, nextIndex]
+            while (iterator.hasNext()) {
+                // stack: [array, nextIndex] -> [array, array, nextIndex]
+                mv.swap();
+                mv.dupX1();
+                mv.swap();
+
+                // stack: [array, array, nextIndex] -> [array, nextIndex']
+                ArrayAccumulationSpreadElement((SpreadElement) iterator.next(), mv);
+            }
+            // [array, nextIndex] -> [array]
+            mv.pop();
+        }
+    }
+
+    private int arrayLiteral(ListIterator<Expression> iterator, CodeVisitor mv) {
+        int nextIndex = 0;
+        while (iterator.hasNext()) {
+            Expression element = iterator.next();
+            if (element instanceof Elision) {
+                // Elision
+            } else if (element instanceof SpreadElement) {
+                iterator.previous(); // step back
+                break;
+            } else {
+                mv.dup();
+                mv.iconst(nextIndex);
+                ArrayAccumulationElement(element, mv);
+            }
+            nextIndex += 1;
+        }
+        return nextIndex;
+    }
+
+    private boolean hasTrailingSpread(ArrayLiteral node, int spreadCount) {
+        assert spreadCount > 0 && spreadCount <= node.getElements().size();
+        for (int i = node.getElements().size(); spreadCount > 0; --spreadCount) {
+            if (!(node.getElements().get(--i) instanceof SpreadElement)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private boolean hasTrailingElision(ArrayLiteral node) {
+        assert !node.getElements().isEmpty();
+        Expression last = node.getElements().get(node.getElements().size() - 1);
+        return last instanceof Elision || last instanceof SpreadElementMethod;
+    }
+
+    /**
+     * 12.2.4.1.3 Runtime Semantics: Evaluation<br>
+     * 12.2.4.1.2 Runtime Semantics: Array Accumulation
+     * 
+     * @param elements
+     *            the array elements
+     * @param array
+     *            the array object
+     * @param nextIndex
+     *            the next array index
+     * @param mv
+     *            the code visitor
+     */
+    private void spreadArray(List<Expression> elements, Variable<ArrayObject> array, Variable<Integer> nextIndex,
+            CodeVisitor mv) {
+        int elisionWidth = 0;
+        for (Expression element : elements) {
+            if (element instanceof Elision) {
+                // Elision
+                elisionWidth += 1;
+                continue;
+            }
+            if (elisionWidth != 0) {
+                iadd(nextIndex, elisionWidth, mv);
+                elisionWidth = 0;
+            }
+            if (element instanceof SpreadElementMethod) {
+                SpreadElementMethod spread = (SpreadElementMethod) element;
+                OutlinedCall call = mv.compile(spread, this::spreadElement);
+
+                mv.enterVariableScope();
+                Variable<int[]> nextIndexRef = mv.newVariable("nextIndexRef", int[].class);
+                mv.newarray(1, Type.INT_TYPE);
+                mv.store(nextIndexRef);
+                mv.invoke(call, false, array, nextIndex, nextIndexRef);
+                mv.store(nextIndex, mv.iarrayElement(nextIndexRef, 0));
+                mv.exitVariableScope();
+            } else if (element instanceof SpreadElement) {
+                SpreadElement spread = (SpreadElement) element;
+
+                // stack: [] -> []
+                mv.load(array);
+                mv.load(nextIndex);
+                ArrayAccumulationSpreadElement(spread, mv);
+                mv.store(nextIndex);
+            } else {
+                // stack: [] -> [array, nextIndex, value]
+                mv.load(array);
+                mv.load(nextIndex);
+                ArrayAccumulationElement(element, mv);
+                elisionWidth += 1;
+            }
+        }
+        if (elisionWidth != 0) {
+            iadd(nextIndex, elisionWidth, mv);
+        }
+    }
+
+    private void iadd(Variable<Integer> nextIndex, int c, CodeVisitor mv) {
+        if (c <= Short.MAX_VALUE) {
+            mv.iinc(nextIndex, c);
+        } else {
+            mv.load(nextIndex);
+            mv.iconst(c);
+            mv.iadd();
+            mv.store(nextIndex);
+        }
+    }
+
+    private OutlinedCall spreadElement(SpreadElementMethod node, CodeVisitor mv) {
+        MethodTypeDescriptor methodDescriptor = SpreadElementCodeVisitor.methodDescriptor(mv);
+        MethodCode method = codegen.method(mv, "spread", methodDescriptor);
+        return outlined(new SpreadElementCodeVisitor(node, method, mv), body -> {
+            Variable<ArrayObject> array = body.getArrayParameter();
+            Variable<Integer> index = body.getIndexParameter();
+            MutableValue<Integer> nextIndex = body.iarrayElement(body.getNextIndexParameter(), 0);
+
+            spreadArray(node.getElements(), array, index, body);
+            body.store(nextIndex, index);
+
+            return Completion.Normal;
+        });
+    }
+
+    private static final class SpreadElementCodeVisitor extends OutlinedCodeVisitor {
+        SpreadElementCodeVisitor(SpreadElementMethod node, MethodCode method, CodeVisitor parent) {
+            super(node, method, parent);
+        }
+
+        @Override
+        public void begin() {
+            super.begin();
+            setParameterName("array", parameter(0), Types.ArrayObject);
+            setParameterName("index", parameter(1), Type.INT_TYPE);
+            setParameterName("nextIndex", parameter(2), Types.int_);
+        }
+
+        Variable<ArrayObject> getArrayParameter() {
+            return getParameter(parameter(0), ArrayObject.class);
+        }
+
+        Variable<Integer> getIndexParameter() {
+            return getParameter(parameter(1), int.class);
+        }
+
+        Variable<int[]> getNextIndexParameter() {
+            return getParameter(parameter(2), int[].class);
+        }
+
+        static MethodTypeDescriptor methodDescriptor(CodeVisitor mv) {
+            MethodTypeDescriptor methodDescriptor = OutlinedCodeVisitor.outlinedMethodDescriptor(mv);
+            return methodDescriptor.appendParameterTypes(Types.ArrayObject, Type.INT_TYPE, Types.int_);
+        }
     }
 
     /**
@@ -1070,12 +1280,12 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
      */
     @Override
     public ValType visit(ArrowFunction node, CodeVisitor mv) {
-        MethodName method = codegen.compile(node);
+        MethodName method = mv.compile(node, codegen::arrowFunction);
 
         /* steps 1-4 */
         mv.invoke(method);
         mv.loadExecutionContext();
-        mv.invoke(Methods.ScriptRuntime_EvaluateArrowFunction);
+        mv.invoke(Methods.FunctionOperations_EvaluateArrowFunction);
 
         /* step 5 */
         return ValType.Object;
@@ -1165,11 +1375,43 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
     }
 
     private static abstract class CompoundAssignmentOp extends AssignmentOp {
-        abstract ValType convertLeft(ValType type, CodeVisitor mv);
+        final ValType speculativeConvertLeft(AssignmentExpression node, ValType type, CodeVisitor mv) {
+            assert type.isPrimitive() || node.getRight() instanceof Literal;
+            boolean isBigInt = type.isPrimitive() ? type == ValType.BigInt
+                    : (node.getRight() instanceof BigIntegerLiteral);
+            ValType numericType = isBigInt ? ValType.BigInt : primitiveType();
+            return toPrimitiveNumeric(type, numericType, mv);
+        }
 
-        abstract ValType convertRight(ValType type, CodeVisitor mv);
+        final ValType nonSpeculativeConvertLeft(AssignmentExpression node, ValType ltype, ValType rtype,
+                CodeVisitor mv) {
+            assert !ltype.isPrimitive();
+            if (rtype.isPrimitive()) {
+                ValType numericType = rtype == ValType.BigInt ? ValType.BigInt : primitiveType();
+                return toPrimitiveNumeric(ltype, numericType, mv);
+            } else {
+                return toNumeric(ltype, primitiveType(), mv);
+            }
+        }
 
-        abstract ValType operation(CodeVisitor mv);
+        final ValType convertRight(AssignmentExpression node, ValType ltype, ValType rtype, CodeVisitor mv) {
+            if (ltype.isPrimitive()) {
+                ValType numericType = ltype == ValType.BigInt ? ValType.BigInt : primitiveType();
+                return toPrimitiveNumeric(rtype, numericType, mv);
+            } else {
+                assert ltype == ValType.Any && !rtype.isPrimitive();
+                return toNumeric(rtype, primitiveType(), mv);
+            }
+        }
+
+        abstract ValType primitiveType();
+
+        abstract ValType operation(AssignmentExpression node, ValType ltype, ValType rtype, CodeVisitor mv);
+
+        void untypedOperation(AssignmentExpression node, CodeVisitor mv) {
+            mv.loadExecutionContext();
+            invokeDynamicOperator(node.getOperator(), mv);
+        }
 
         @Override
         final ValType emit(AssignmentExpression node, CodeVisitor mv, ExpressionGenerator gen) {
@@ -1181,79 +1423,115 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
             ValType vtype = op.getValue(left, ltype, mv);
             // lref lval
             if (right instanceof Literal) {
-                vtype = convertLeft(vtype, mv);
+                vtype = speculativeConvertLeft(node, vtype, mv);
             }
             ValType rtype = right.accept(gen, mv);
             if (!(right instanceof Literal)) {
                 mv.swap(vtype, rtype);
-                vtype = convertLeft(vtype, mv);
+                vtype = nonSpeculativeConvertLeft(node, vtype, rtype, mv);
                 mv.swap(rtype, vtype);
             }
-            convertRight(rtype, mv);
+            rtype = convertRight(node, vtype, rtype, mv);
             // lref lval rval
-            ValType result = operation(mv);
+            ValType result = operation(node, vtype, rtype, mv);
             // r lref r
             return op.putValue(left, ltype, result, node.hasCompletion(), mv);
         }
 
         static abstract class ArithmeticCompoundAssignmentOp extends CompoundAssignmentOp {
             @Override
-            final ValType convertLeft(ValType type, CodeVisitor mv) {
-                ToNumber(type, mv);
+            final ValType primitiveType() {
                 return ValType.Number;
             }
 
             @Override
-            final ValType convertRight(ValType type, CodeVisitor mv) {
-                ToNumber(type, mv);
-                return ValType.Number;
+            final ValType operation(AssignmentExpression node, ValType ltype, ValType rtype, CodeVisitor mv) {
+                assert ltype == rtype;
+                switch (ltype) {
+                case Number:
+                    operation(node, mv);
+                    return ValType.Number;
+                case BigInt:
+                    bigIntOperation(node, mv);
+                    return ValType.BigInt;
+                case Any:
+                    untypedOperation(node, mv);
+                    return ValType.Any;
+                default:
+                    throw new AssertionError();
+                }
+            }
+
+            abstract void operation(AssignmentExpression node, CodeVisitor mv);
+
+            void bigIntOperation(AssignmentExpression node, CodeVisitor mv) {
+                // TODO(BigInt): Implement BigInt compile-time specialization.
+                mv.loadExecutionContext();
+                invokeDynamicOperator(node.getOperator(), mv);
+                mv.checkcast(Types.BigInteger);
             }
         }
 
         static abstract class IntegerCompoundAssignmentOp extends CompoundAssignmentOp {
             @Override
-            final ValType convertLeft(ValType type, CodeVisitor mv) {
-                ToInt32(type, mv);
+            final ValType primitiveType() {
                 return ValType.Number_int;
             }
 
             @Override
-            final ValType convertRight(ValType type, CodeVisitor mv) {
-                ToInt32(type, mv);
-                return ValType.Number_int;
+            final ValType operation(AssignmentExpression node, ValType ltype, ValType rtype, CodeVisitor mv) {
+                assert ltype == rtype;
+                switch (ltype) {
+                case Number_int:
+                    return operation(node, mv);
+                case BigInt:
+                    bigIntOperation(node, mv);
+                    return ValType.BigInt;
+                case Any:
+                    untypedOperation(node, mv);
+                    return ValType.Any;
+                default:
+                    throw new AssertionError();
+                }
+            }
+
+            // intOperation() can be specialized to return int or uint.
+            abstract ValType operation(AssignmentExpression node, CodeVisitor mv);
+
+            void bigIntOperation(AssignmentExpression node, CodeVisitor mv) {
+                // TODO(BigInt): Implement BigInt compile-time specialization.
+                mv.loadExecutionContext();
+                invokeDynamicOperator(node.getOperator(), mv);
+                mv.checkcast(Types.BigInteger);
             }
         }
 
-        // Extension: Exponentiation Operator
+        // 12.6 Exponentiation Operator
         static final CompoundAssignmentOp EXP = new ArithmeticCompoundAssignmentOp() {
             @Override
-            ValType operation(CodeVisitor mv) {
+            void operation(AssignmentExpression node, CodeVisitor mv) {
                 mv.invoke(Methods.Math_pow);
-                return ValType.Number;
             }
         };
         // 12.6 Multiplicative Operators
         static final CompoundAssignmentOp MUL = new ArithmeticCompoundAssignmentOp() {
             @Override
-            ValType operation(CodeVisitor mv) {
+            void operation(AssignmentExpression node, CodeVisitor mv) {
                 mv.dmul();
-                return ValType.Number;
             }
         };
         // 12.6 Multiplicative Operators
         static final CompoundAssignmentOp DIV = new ArithmeticCompoundAssignmentOp() {
             @Override
-            ValType operation(CodeVisitor mv) {
+            void operation(AssignmentExpression node, CodeVisitor mv) {
                 mv.ddiv();
-                return ValType.Number;
             }
         };
         // 12.6 Multiplicative Operators
         static final CompoundAssignmentOp MOD = new ArithmeticCompoundAssignmentOp() {
             @Override
-            ValType operation(CodeVisitor mv) {
+            void operation(AssignmentExpression node, CodeVisitor mv) {
                 mv.drem();
-                return ValType.Number;
             }
         };
         // 12.7.3 The Addition operator ( + )
@@ -1269,13 +1547,11 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
 
                 ValType result;
                 if (right instanceof StringLiteral || right instanceof TemplateLiteral) {
-                    assert !(right instanceof TemplateLiteral && ((TemplateLiteral) right)
-                            .isTagged());
+                    assert !(right instanceof TemplateLiteral && ((TemplateLiteral) right).isTagged());
                     // x += "..."
                     toStringForConcat(left, vtype, mv);
                     // lref lval(string)
-                    if (!(right instanceof StringLiteral && ((StringLiteral) right).getValue()
-                            .isEmpty())) {
+                    if (!(right instanceof StringLiteral && ((StringLiteral) right).getValue().isEmpty())) {
                         ValType rtype = right.accept(gen, mv);
                         addStrings(ValType.String, rtype, mv);
                     }
@@ -1297,17 +1573,14 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
         // 12.7.4 The Subtraction Operator ( - )
         static final CompoundAssignmentOp SUB = new ArithmeticCompoundAssignmentOp() {
             @Override
-            ValType operation(CodeVisitor mv) {
+            void operation(AssignmentExpression node, CodeVisitor mv) {
                 mv.dsub();
-                return ValType.Number;
             }
         };
         // 12.8.3 The Left Shift Operator ( << )
         static final CompoundAssignmentOp SHL = new IntegerCompoundAssignmentOp() {
             @Override
-            ValType operation(CodeVisitor mv) {
-                mv.iconst(0x1F);
-                mv.iand();
+            ValType operation(AssignmentExpression node, CodeVisitor mv) {
                 mv.ishl();
                 return ValType.Number_int;
             }
@@ -1315,39 +1588,27 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
         // 12.8.4 The Signed Right Shift Operator ( >> )
         static final CompoundAssignmentOp SHR = new IntegerCompoundAssignmentOp() {
             @Override
-            ValType operation(CodeVisitor mv) {
-                mv.iconst(0x1F);
-                mv.iand();
+            ValType operation(AssignmentExpression node, CodeVisitor mv) {
                 mv.ishr();
                 return ValType.Number_int;
             }
         };
         // 12.8.5 The Unsigned Right Shift Operator ( >>> )
-        static final CompoundAssignmentOp USHR = new CompoundAssignmentOp() {
+        static final CompoundAssignmentOp USHR = new IntegerCompoundAssignmentOp() {
             @Override
-            ValType convertLeft(ValType type, CodeVisitor mv) {
-                ToUint32(type, mv);
-                return ValType.Number_uint;
-            }
-
-            @Override
-            ValType convertRight(ValType type, CodeVisitor mv) {
-                ToInt32(type, mv);
-                return ValType.Number_int;
-            }
-
-            @Override
-            ValType operation(CodeVisitor mv) {
-                mv.iconst(0x1F);
-                mv.iand();
-                mv.lushr();
+            ValType operation(AssignmentExpression node, CodeVisitor mv) {
+                mv.iushr();
+                if (isInt32UnsignedRightShift(node.getRight())) {
+                    return ValType.Number_int;
+                }
+                ToUint32(ValType.Number_int, mv);
                 return ValType.Number_uint;
             }
         };
         // 12.11 Binary Bitwise Operators ( & )
         static final CompoundAssignmentOp BITAND = new IntegerCompoundAssignmentOp() {
             @Override
-            ValType operation(CodeVisitor mv) {
+            ValType operation(AssignmentExpression node, CodeVisitor mv) {
                 mv.iand();
                 return ValType.Number_int;
             }
@@ -1355,7 +1616,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
         // 12.11 Binary Bitwise Operators ( ^ )
         static final CompoundAssignmentOp BITXOR = new IntegerCompoundAssignmentOp() {
             @Override
-            ValType operation(CodeVisitor mv) {
+            ValType operation(AssignmentExpression node, CodeVisitor mv) {
                 mv.ixor();
                 return ValType.Number_int;
             }
@@ -1363,7 +1624,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
         // 12.11 Binary Bitwise Operators ( | )
         static final CompoundAssignmentOp BITOR = new IntegerCompoundAssignmentOp() {
             @Override
-            ValType operation(CodeVisitor mv) {
+            ValType operation(AssignmentExpression node, CodeVisitor mv) {
                 mv.ior();
                 return ValType.Number_int;
             }
@@ -1372,12 +1633,12 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
 
     @Override
     public ValType visit(AsyncArrowFunction node, CodeVisitor mv) {
-        MethodName method = codegen.compile(node);
+        MethodName method = mv.compile(node, codegen::asyncArrowFunction);
 
         /* steps 1-4 */
         mv.invoke(method);
         mv.loadExecutionContext();
-        mv.invoke(Methods.ScriptRuntime_EvaluateAsyncArrowFunction);
+        mv.invoke(Methods.FunctionOperations_EvaluateAsyncArrowFunction);
 
         /* step 5 */
         return ValType.Object;
@@ -1388,12 +1649,12 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
      */
     @Override
     public ValType visit(AsyncFunctionExpression node, CodeVisitor mv) {
-        MethodName method = codegen.compile(node);
+        MethodName method = mv.compile(node, codegen::asyncFunctionDefinition);
 
         /* steps 1-5/10 */
         mv.invoke(method);
         mv.loadExecutionContext();
-        mv.invoke(Methods.ScriptRuntime_EvaluateAsyncFunctionExpression);
+        mv.invoke(Methods.FunctionOperations_EvaluateAsyncFunctionExpression);
 
         /* step 6/11 */
         return ValType.Object;
@@ -1404,12 +1665,12 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
      */
     @Override
     public ValType visit(AsyncGeneratorExpression node, CodeVisitor mv) {
-        MethodName method = codegen.compile(node);
+        MethodName method = mv.compile(node, codegen::asyncGeneratorDefinition);
 
         /* steps 1-5/10 */
         mv.invoke(method);
         mv.loadExecutionContext();
-        mv.invoke(Methods.ScriptRuntime_EvaluateAsyncGeneratorExpression);
+        mv.invoke(Methods.FunctionOperations_EvaluateAsyncGeneratorExpression);
 
         /* step 6/11 */
         return ValType.Object;
@@ -1426,6 +1687,25 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
         await(node, mv);
 
         return ValType.Any;
+    }
+
+    @Override
+    public ValType visit(BigIntegerLiteral node, CodeVisitor mv) {
+        BigInteger value = node.getValue();
+        if (value.bitLength() <= 63) {
+            if (value.equals(BigInteger.ZERO)) {
+                mv.get(Fields.BigInteger_ZERO);
+            } else if (value.equals(BigInteger.ONE)) {
+                mv.get(Fields.BigInteger_ONE);
+            } else {
+                mv.lconst(value.longValueExact());
+                mv.invoke(Methods.BigInteger_valueOf);
+            }
+        } else {
+            mv.anew(Methods.BigInteger_new, mv.vconst(value.toString()));
+        }
+
+        return ValType.BigInt;
     }
 
     /**
@@ -1504,69 +1784,141 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
         abstract ValType emit(BinaryExpression node, CodeVisitor mv, ExpressionGenerator gen);
 
         static abstract class ConvertOp extends BinaryOp {
-            abstract ValType operation(CodeVisitor mv);
+            final ValType speculativeConvertLeft(BinaryExpression node, ValType type, CodeVisitor mv) {
+                assert type.isPrimitive() || node.getRight() instanceof Literal;
+                boolean isBigInt = type.isPrimitive() ? type == ValType.BigInt
+                        : (node.getRight() instanceof BigIntegerLiteral);
+                ValType numericType = isBigInt ? ValType.BigInt : primitiveType();
+                return toPrimitiveNumeric(type, numericType, mv);
+            }
 
-            abstract ValType convertLeft(ValType type, CodeVisitor mv);
+            final ValType nonSpeculativeConvertLeft(BinaryExpression node, ValType ltype, ValType rtype,
+                    CodeVisitor mv) {
+                assert !ltype.isPrimitive();
+                if (rtype.isPrimitive()) {
+                    ValType numericType = rtype == ValType.BigInt ? ValType.BigInt : primitiveType();
+                    return toPrimitiveNumeric(ltype, numericType, mv);
+                } else {
+                    return toNumeric(ltype, primitiveType(), mv);
+                }
+            }
 
-            abstract ValType convertRight(ValType type, CodeVisitor mv);
+            final ValType convertRight(BinaryExpression node, ValType ltype, ValType rtype, CodeVisitor mv) {
+                if (ltype.isPrimitive()) {
+                    ValType numericType = ltype == ValType.BigInt ? ValType.BigInt : primitiveType();
+                    return toPrimitiveNumeric(rtype, numericType, mv);
+                } else {
+                    assert ltype == ValType.Any && !rtype.isPrimitive();
+                    return toNumeric(rtype, primitiveType(), mv);
+                }
+            }
 
             @Override
-            final ValType emit(BinaryExpression node, CodeVisitor mv, ExpressionGenerator gen) {
+            ValType emit(BinaryExpression node, CodeVisitor mv, ExpressionGenerator gen) {
                 Expression left = node.getLeft();
                 Expression right = node.getRight();
 
                 ValType ltype = left.accept(gen, mv);
                 if (ltype.isPrimitive() || right instanceof Literal) {
-                    ltype = convertLeft(ltype, mv);
+                    ltype = speculativeConvertLeft(node, ltype, mv);
                 }
                 ValType rtype = right.accept(gen, mv);
                 if (!(ltype.isPrimitive() || right instanceof Literal)) {
                     mv.swap(ltype, rtype);
-                    ltype = convertLeft(ltype, mv);
+                    ltype = nonSpeculativeConvertLeft(node, ltype, rtype, mv);
                     mv.swap(rtype, ltype);
                 }
-                convertRight(rtype, mv);
-                return operation(mv);
+                rtype = convertRight(node, ltype, rtype, mv);
+                return operation(node, ltype, rtype, mv);
+            }
+
+            abstract ValType primitiveType();
+
+            abstract ValType operation(BinaryExpression node, ValType ltype, ValType rtype, CodeVisitor mv);
+
+            void untypedOperation(BinaryExpression node, CodeVisitor mv) {
+                mv.loadExecutionContext();
+                invokeDynamicOperator(node.getOperator(), mv);
             }
         }
 
         static abstract class ArithmeticOp extends ConvertOp {
             @Override
-            final ValType convertLeft(ValType type, CodeVisitor mv) {
-                ToNumber(type, mv);
+            final ValType primitiveType() {
                 return ValType.Number;
             }
 
             @Override
-            final ValType convertRight(ValType type, CodeVisitor mv) {
-                ToNumber(type, mv);
-                return ValType.Number;
+            final ValType operation(BinaryExpression node, ValType ltype, ValType rtype, CodeVisitor mv) {
+                assert ltype == rtype;
+                switch (ltype) {
+                case Number:
+                    operation(node, mv);
+                    return ValType.Number;
+                case BigInt:
+                    bigIntOperation(node, mv);
+                    return ValType.BigInt;
+                case Any:
+                    untypedOperation(node, mv);
+                    return ValType.Any;
+                default:
+                    throw new AssertionError();
+                }
+            }
+
+            abstract void operation(BinaryExpression node, CodeVisitor mv);
+
+            void bigIntOperation(BinaryExpression node, CodeVisitor mv) {
+                // TODO(BigInt): Implement BigInt compile-time specialization.
+                mv.loadExecutionContext();
+                invokeDynamicOperator(node.getOperator(), mv);
+                mv.checkcast(Types.BigInteger);
             }
         }
 
         static abstract class IntegerOp extends ConvertOp {
             @Override
-            final ValType convertLeft(ValType type, CodeVisitor mv) {
-                ToInt32(type, mv);
+            final ValType primitiveType() {
                 return ValType.Number_int;
             }
 
             @Override
-            final ValType convertRight(ValType type, CodeVisitor mv) {
-                ToInt32(type, mv);
-                return ValType.Number_int;
+            final ValType operation(BinaryExpression node, ValType ltype, ValType rtype, CodeVisitor mv) {
+                assert ltype == rtype;
+                switch (ltype) {
+                case Number_int:
+                    return operation(node, mv);
+                case BigInt:
+                    bigIntOperation(node, mv);
+                    return ValType.BigInt;
+                case Any:
+                    untypedOperation(node, mv);
+                    return ValType.Any;
+                default:
+                    throw new AssertionError();
+                }
+            }
+
+            // intOperation() can be specialized to return int or uint.
+            abstract ValType operation(BinaryExpression node, CodeVisitor mv);
+
+            void bigIntOperation(BinaryExpression node, CodeVisitor mv) {
+                // TODO(BigInt): Implement BigInt compile-time specialization.
+                mv.loadExecutionContext();
+                invokeDynamicOperator(node.getOperator(), mv);
+                mv.checkcast(Types.BigInteger);
             }
         }
 
         static abstract class RelationalOp extends BinaryOp {
-            abstract void operation(CodeVisitor mv);
+            abstract void operation(BinaryExpression node, CodeVisitor mv);
 
             @Override
             final ValType emit(BinaryExpression node, CodeVisitor mv, ExpressionGenerator gen) {
                 mv.toBoxed(node.getLeft().accept(gen, mv));
                 mv.toBoxed(node.getRight().accept(gen, mv));
                 mv.lineInfo(node);
-                operation(mv);
+                operation(node, mv);
                 return ValType.Boolean;
             }
         }
@@ -1598,18 +1950,22 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
             static final MethodName Type_isUndefined = MethodName.findStatic(Types._Type, "isUndefined",
                     Type.methodType(Type.BOOLEAN_TYPE, Types.Object));
 
+            // class: BigInteger
+            static final MethodName BigInteger_equals = MethodName.findVirtual(Types.BigInteger, "equals",
+                    Type.methodType(Type.BOOLEAN_TYPE, Types.Object));
+
             // class: Reference
             static final MethodName Reference_isUnresolvableReference = MethodName.findVirtual(Types.Reference,
                     "isUnresolvableReference", Type.methodType(Type.BOOLEAN_TYPE));
 
-            // class: ScriptRuntime
-            static final MethodName ScriptRuntime_compare = MethodName.findStatic(Types.ScriptRuntime, "compare",
+            // class: Operators
+            static final MethodName Operators_compare = MethodName.findStatic(Types.Operators, "compare",
                     Type.methodType(Type.BOOLEAN_TYPE, Types.CharSequence, Types.CharSequence));
 
-            static final MethodName ScriptRuntime_isNonCallableObjectOrNull = MethodName.findStatic(Types.ScriptRuntime,
+            static final MethodName Operators_isNonCallableObjectOrNull = MethodName.findStatic(Types.Operators,
                     "isNonCallableObjectOrNull", Type.methodType(Type.BOOLEAN_TYPE, Types.Object));
 
-            static final MethodName ScriptRuntime_isSIMDType = MethodName.findStatic(Types.ScriptRuntime, "isSIMDType",
+            static final MethodName Operators_isSIMDType = MethodName.findStatic(Types.Operators, "isSIMDType",
                     Type.methodType(Type.BOOLEAN_TYPE, Types.Object, Types.SIMDType));
         }
 
@@ -1648,6 +2004,9 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
             protected abstract void emitLiteral(BinaryExpression node, ValType type, StringLiteral literal,
                     CodeVisitor mv, ExpressionGenerator gen);
 
+            protected abstract void emitLiteral(BinaryExpression node, ValType type, BigIntegerLiteral literal,
+                    CodeVisitor mv, ExpressionGenerator gen);
+
             private void emitLiteral(BinaryExpression node, Literal literal, Expression expr, CodeVisitor mv,
                     ExpressionGenerator gen) {
                 if (literal instanceof NullLiteral) {
@@ -1657,7 +2016,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
                     BooleanLiteral bool = (BooleanLiteral) literal;
                     ValType type = expr.accept(gen, mv);
                     if (type == ValType.Boolean) {
-                        if (bool.getValue() == false) {
+                        if (bool.booleanValue() == false) {
                             mv.not();
                         }
                     } else {
@@ -1666,7 +2025,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
                 } else if (literal instanceof NumericLiteral) {
                     NumericLiteral numeric = (NumericLiteral) literal;
                     ValType type = expr.accept(gen, mv);
-                    if (type.isNumeric()) {
+                    if (type.isNumber()) {
                         if (type == ValType.Number_int && numeric.isInt()) {
                             if (numeric.intValue() == 0) {
                                 compareInt0(mv);
@@ -1685,8 +2044,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
                     } else {
                         emitLiteral(node, type, numeric, mv, gen);
                     }
-                } else {
-                    assert literal instanceof StringLiteral;
+                } else if (literal instanceof StringLiteral) {
                     StringLiteral string = (StringLiteral) literal;
                     if (isTypeof(expr) && isTypeString(string.getValue())) {
                         emitTypeCheck(string.getValue(), ((UnaryExpression) expr).getOperand(), mv, gen);
@@ -1698,6 +2056,15 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
                         } else {
                             emitLiteral(node, type, string, mv, gen);
                         }
+                    }
+                } else {
+                    assert literal instanceof BigIntegerLiteral;
+                    ValType type = expr.accept(gen, mv);
+                    if (type == ValType.BigInt) {
+                        literal.accept(gen, mv);
+                        compareBigInt(mv);
+                    } else {
+                        emitLiteral(node, type, (BigIntegerLiteral) literal, mv, gen);
                     }
                 }
             }
@@ -1719,6 +2086,9 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
                     case Number:
                         compareDouble(mv);
                         break;
+                    case BigInt:
+                        compareBigInt(mv);
+                        break;
                     case String:
                         compareString(mv);
                         break;
@@ -1729,7 +2099,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
                     default:
                         throw new AssertionError();
                     }
-                } else if (ltype.isNumeric() && expected.isNumeric()) {
+                } else if (ltype.isNumber() && expected.isNumber()) {
                     ToNumber(ltype, mv);
                     ValType rtype = right.accept(gen, mv);
                     assert rtype == expected;
@@ -1741,42 +2111,47 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
             }
 
             private void compareString(CodeVisitor mv) {
-                mv.invoke(EqMethods.ScriptRuntime_compare);
+                mv.invoke(EqMethods.Operators_compare);
             }
 
             private void compareReference(CodeVisitor mv) {
-                Jump notSame = new Jump(), end = new Jump();
+                Jump notSame = new Jump();
                 mv.ifacmpne(notSame);
-                compareTail(end, notSame, mv);
+                comparePushBoolean(notSame, mv);
             }
 
             private void compareInt0(CodeVisitor mv) {
-                Jump notSame = new Jump(), end = new Jump();
+                Jump notSame = new Jump();
                 mv.ifne(notSame);
-                compareTail(end, notSame, mv);
+                comparePushBoolean(notSame, mv);
             }
 
             private void compareInt(CodeVisitor mv) {
-                Jump notSame = new Jump(), end = new Jump();
+                Jump notSame = new Jump();
                 mv.ificmpne(notSame);
-                compareTail(end, notSame, mv);
+                comparePushBoolean(notSame, mv);
             }
 
             private void compareLong(CodeVisitor mv) {
-                Jump notSame = new Jump(), end = new Jump();
+                Jump notSame = new Jump();
                 mv.lcmp();
                 mv.ifne(notSame);
-                compareTail(end, notSame, mv);
+                comparePushBoolean(notSame, mv);
             }
 
             private void compareDouble(CodeVisitor mv) {
-                Jump notSame = new Jump(), end = new Jump();
+                Jump notSame = new Jump();
                 mv.dcmpl();
                 mv.ifne(notSame);
-                compareTail(end, notSame, mv);
+                comparePushBoolean(notSame, mv);
             }
 
-            private void compareTail(Jump end, Jump notSame, CodeVisitor mv) {
+            private void compareBigInt(CodeVisitor mv) {
+                mv.invoke(EqMethods.BigInteger_equals);
+            }
+
+            private void comparePushBoolean(Jump notSame, CodeVisitor mv) {
+                Jump end = new Jump();
                 mv.iconst(true);
                 mv.goTo(end);
                 mv.mark(notSame);
@@ -1787,47 +2162,54 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
             private void emitTypeCheck(String name, Expression operand, CodeVisitor mv, ExpressionGenerator gen) {
                 if (operand instanceof IdentifierReference) {
                     IdentifierReference ident = (IdentifierReference) operand;
-                    Name resolvedName = ident.getResolvedName();
-                    if (resolvedName == null || !resolvedName.isLocal()) {
-                        // stack: [] -> [ref, ref]
-                        ValType reference = ReferenceOp.LOOKUP.reference(ident, mv, gen.codegen);
-                        mv.dup(reference);
+                    // stack: [] -> [ref, ref]
+                    ValType reference = ReferenceOp.LOOKUP.reference(ident, mv, gen.codegen);
+                    mv.dup(reference);
 
-                        // stack: [ref, ref] -> [ref, unresolvable]
-                        Jump unresolvable = new Jump(), end = new Jump();
-                        mv.invoke(EqMethods.Reference_isUnresolvableReference);
-                        mv.ifeq(unresolvable);
-                        {
-                            mv.pop(reference);
-                            mv.iconst("undefined".equals(name));
-                            mv.goTo(end);
-                        }
-                        mv.mark(unresolvable);
-                        // stack: [ref] -> [val]
-                        ReferenceOp.LOOKUP.getValue(ident, reference, mv);
-                        emitTypeCheckGeneric(name, mv);
-                        mv.mark(end);
-                        return;
+                    // stack: [ref, ref] -> [ref, unresolvable]
+                    Jump unresolvable = new Jump(), end = new Jump();
+                    mv.invoke(EqMethods.Reference_isUnresolvableReference);
+                    mv.ifeq(unresolvable);
+                    {
+                        mv.pop(reference);
+                        mv.iconst("undefined".equals(name));
+                        mv.goTo(end);
                     }
+                    mv.mark(unresolvable);
+                    // stack: [ref] -> [val]
+                    ReferenceOp.LOOKUP.getValue(ident, reference, mv);
+                    emitTypeCheckGeneric(name, mv, gen.codegen);
+                    mv.mark(end);
+                    return;
                 }
                 ValType type = operand.accept(gen, mv);
                 if (type != ValType.Any) {
-                    emitTypeCheckConst(name, type, mv);
+                    emitTypeCheckConst(name, type, mv, gen.codegen);
                 } else {
-                    emitTypeCheckGeneric(name, mv);
+                    emitTypeCheckGeneric(name, mv, gen.codegen);
                 }
             }
 
-            private void emitTypeCheckConst(String name, ValType type, CodeVisitor mv) {
+            private void emitTypeCheckConst(String name, ValType type, CodeVisitor mv, CodeGenerator codegen) {
                 assert type != ValType.Any;
                 boolean result;
                 switch (name) {
                 case "undefined":
+                    if (type == ValType.Object && codegen.isEnabled(CompatibilityOption.IsHTMLDDAObjects)) {
+                        mv.instanceOf(Types.HTMLDDAObject);
+                        return;
+                    }
                     result = type == ValType.Undefined;
                     break;
                 case "object":
                     if (type == ValType.Object) {
-                        emitTypeCheckGeneric(name, mv);
+                        Jump end = new Jump();
+                        if (codegen.isEnabled(CompatibilityOption.IsHTMLDDAObjects)) {
+                            testIsHTMLDDA(false, end, mv);
+                        }
+                        mv.instanceOf(Types.Callable);
+                        mv.not();
+                        mv.mark(end);
                         return;
                     }
                     result = type == ValType.Null;
@@ -1836,14 +2218,22 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
                     result = type == ValType.Boolean;
                     break;
                 case "number":
-                    result = type.isNumeric();
+                    result = type.isNumber();
+                    break;
+                case "bigint":
+                    result = type == ValType.BigInt;
                     break;
                 case "string":
                     result = type == ValType.String;
                     break;
                 case "function": {
                     if (type == ValType.Object) {
-                        emitTypeCheckGeneric(name, mv);
+                        Jump end = new Jump();
+                        if (codegen.isEnabled(CompatibilityOption.IsHTMLDDAObjects)) {
+                            testIsHTMLDDA(false, end, mv);
+                        }
+                        mv.instanceOf(Types.Callable);
+                        mv.mark(end);
                         return;
                     }
                     result = false;
@@ -1857,12 +2247,35 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
                 mv.iconst(result);
             }
 
-            private void emitTypeCheckGeneric(String name, CodeVisitor mv) {
+            private void emitTypeCheckGeneric(String name, CodeVisitor mv, CodeGenerator codegen) {
+                Jump end = new Jump();
+                if (codegen.isEnabled(CompatibilityOption.IsHTMLDDAObjects)) {
+                    switch (name) {
+                    case "undefined":
+                    case "object":
+                    case "function":
+                        testIsHTMLDDA("undefined".equals(name), end, mv);
+                    }
+                }
                 MethodName typeCheck = typeCheck(name);
-                if (typeCheck == EqMethods.ScriptRuntime_isSIMDType) {
+                if (typeCheck == EqMethods.Operators_isSIMDType) {
                     mv.getstatic(Types.SIMDType, SIMDType.from(name).name(), Types.SIMDType);
                 }
                 mv.invoke(typeCheck);
+                mv.mark(end);
+            }
+
+            protected final void testIsHTMLDDA(boolean value, Jump end, CodeVisitor mv) {
+                Jump notDDA = new Jump();
+                mv.dup();
+                mv.instanceOf(Types.HTMLDDAObject);
+                mv.ifeq(notDDA);
+                {
+                    mv.pop();
+                    mv.iconst(value);
+                    mv.goTo(end);
+                }
+                mv.mark(notDDA);
             }
 
             private MethodName typeCheck(String name) {
@@ -1870,7 +2283,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
                 case "undefined":
                     return EqMethods.Type_isUndefined;
                 case "object":
-                    return EqMethods.ScriptRuntime_isNonCallableObjectOrNull;
+                    return EqMethods.Operators_isNonCallableObjectOrNull;
                 case "boolean":
                     return EqMethods.Type_isBoolean;
                 case "number":
@@ -1882,7 +2295,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
                 case "function":
                     return EqMethods.AbstractOperations_IsCallable;
                 default:
-                    return EqMethods.ScriptRuntime_isSIMDType;
+                    return EqMethods.Operators_isSIMDType;
                 }
             }
 
@@ -1923,7 +2336,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
         }
 
         static abstract class LogicalOp extends BinaryOp {
-            abstract void operation(Jump jump, CodeVisitor mv);
+            abstract void operation(BinaryExpression node, Jump jump, CodeVisitor mv);
 
             @Override
             final ValType emit(BinaryExpression node, CodeVisitor mv, ExpressionGenerator gen) {
@@ -1933,26 +2346,40 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
 
                 ValType ltype = left.accept(gen, mv);
                 if (!node.hasCompletion()) {
-                    ToBoolean(ltype, mv);
-                    operation(after, mv);
+                    gen.ToBoolean(ltype, mv);
+                    operation(node, after, mv);
                     ValType rtype = right.emptyCompletion().accept(gen, mv);
                     mv.pop(rtype);
                     mv.mark(after);
                     return ValType.Empty;
                 }
-                if (ltype == ValType.Boolean && expressionType(right) == ValType.Boolean) {
-                    mv.dup();
-                    operation(after, mv);
-                    mv.pop();
+                ValType expected = expressionType(right);
+                if (ltype == expected) {
+                    mv.dup(ltype);
+                    gen.ToBoolean(ltype, mv);
+                    operation(node, after, mv);
+                    mv.pop(ltype);
                     ValType rtype = right.accept(gen, mv);
-                    assert rtype == ValType.Boolean;
+                    assert expected == rtype : String.format("expected=%s, actual=%s", expected, rtype);
                     mv.mark(after);
-                    return ValType.Boolean;
+                    return ltype;
+                }
+                if (ltype.isNumber() && expected.isNumber()) {
+                    ToNumber(ltype, mv);
+                    mv.dup(ValType.Number);
+                    gen.ToBoolean(ValType.Number, mv);
+                    operation(node, after, mv);
+                    mv.pop(ValType.Number);
+                    ValType rtype = right.accept(gen, mv);
+                    assert rtype.isNumber() : String.format("expected=%s, actual=%s", expected, rtype);
+                    ToNumber(rtype, mv);
+                    mv.mark(after);
+                    return ValType.Number;
                 }
                 mv.toBoxed(ltype);
                 mv.dup();
-                ToBoolean(ValType.Any, mv);
-                operation(after, mv);
+                gen.ToBoolean(ValType.Any, mv);
+                operation(node, after, mv);
                 mv.pop();
                 ValType rtype = right.accept(gen, mv);
                 mv.toBoxed(rtype);
@@ -1961,36 +2388,32 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
             }
         }
 
-        // Extension: Exponentiation Operator
+        // 12.6 Exponentiation Operator
         static final ArithmeticOp EXP = new ArithmeticOp() {
             @Override
-            ValType operation(CodeVisitor mv) {
+            void operation(BinaryExpression node, CodeVisitor mv) {
                 mv.invoke(Methods.Math_pow);
-                return ValType.Number;
             }
         };
         // 12.6 Multiplicative Operators
         static final ArithmeticOp MUL = new ArithmeticOp() {
             @Override
-            ValType operation(CodeVisitor mv) {
+            void operation(BinaryExpression node, CodeVisitor mv) {
                 mv.dmul();
-                return ValType.Number;
             }
         };
         // 12.6 Multiplicative Operators
         static final ArithmeticOp DIV = new ArithmeticOp() {
             @Override
-            ValType operation(CodeVisitor mv) {
+            void operation(BinaryExpression node, CodeVisitor mv) {
                 mv.ddiv();
-                return ValType.Number;
             }
         };
         // 12.6 Multiplicative Operators
         static final ArithmeticOp MOD = new ArithmeticOp() {
             @Override
-            ValType operation(CodeVisitor mv) {
+            void operation(BinaryExpression node, CodeVisitor mv) {
                 mv.drem();
-                return ValType.Number;
             }
         };
         // 12.7.3 The Addition operator ( + )
@@ -2060,13 +2483,19 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
                 if (ltype.isNumeric()) {
                     ValType expected = expressionType(right);
                     if (expected.isPrimitive() && expected != ValType.String) {
-                        ToNumber(ltype, mv);
+                        ltype = ToNumeric(ltype, mv);
                         ValType rtype = right.accept(gen, mv);
-                        assert rtype.isPrimitive() && rtype != ValType.String : String.format(
-                                "expected=%s, actual=%s", expected, rtype);
-                        ToNumber(rtype, mv);
-                        mv.dadd();
-                        return ValType.Number;
+                        assert rtype.isPrimitive() && rtype != ValType.String : String.format("expected=%s, actual=%s",
+                                expected, rtype);
+                        if (ltype != ValType.BigInt) {
+                            ToNumber(rtype, mv);
+                            mv.dadd();
+                            return ValType.Number;
+                        } else {
+                            toBigIntOrThrow(rtype, mv);
+                            mv.invoke(Methods.BigInteger_add);
+                            return ValType.BigInt;
+                        }
                     }
                 }
                 if (right instanceof BinaryExpression && isStringConcat((BinaryExpression) right)) {
@@ -2157,8 +2586,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
                         node = (BinaryExpression) left;
                     } else if (left instanceof StringLiteral && right instanceof BinaryExpression) {
                         node = (BinaryExpression) right;
-                    } else if (left instanceof BinaryExpression
-                            && right instanceof BinaryExpression
+                    } else if (left instanceof BinaryExpression && right instanceof BinaryExpression
                             && isConstantStringConcat((BinaryExpression) right)) {
                         node = (BinaryExpression) left;
                     } else {
@@ -2257,17 +2685,14 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
         // 12.7.4 The Subtraction Operator ( - )
         static final ArithmeticOp SUB = new ArithmeticOp() {
             @Override
-            ValType operation(CodeVisitor mv) {
+            void operation(BinaryExpression node, CodeVisitor mv) {
                 mv.dsub();
-                return ValType.Number;
             }
         };
         // 12.8.3 The Left Shift Operator ( << )
         static final IntegerOp SHL = new IntegerOp() {
             @Override
-            ValType operation(CodeVisitor mv) {
-                mv.iconst(0x1F);
-                mv.iand();
+            ValType operation(BinaryExpression node, CodeVisitor mv) {
                 mv.ishl();
                 return ValType.Number_int;
             }
@@ -2275,39 +2700,27 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
         // 12.8.4 The Signed Right Shift Operator ( >> )
         static final IntegerOp SHR = new IntegerOp() {
             @Override
-            ValType operation(CodeVisitor mv) {
-                mv.iconst(0x1F);
-                mv.iand();
+            ValType operation(BinaryExpression node, CodeVisitor mv) {
                 mv.ishr();
                 return ValType.Number_int;
             }
         };
         // 12.8.5 The Unsigned Right Shift Operator ( >>> )
-        static final ConvertOp USHR = new ConvertOp() {
+        static final IntegerOp USHR = new IntegerOp() {
             @Override
-            ValType convertLeft(ValType type, CodeVisitor mv) {
-                ToUint32(type, mv);
-                return ValType.Number_uint;
-            }
-
-            @Override
-            ValType convertRight(ValType type, CodeVisitor mv) {
-                ToInt32(type, mv); // ToUint32()
-                return ValType.Number_int;
-            }
-
-            @Override
-            ValType operation(CodeVisitor mv) {
-                mv.iconst(0x1F);
-                mv.iand();
-                mv.lushr();
+            ValType operation(BinaryExpression node, CodeVisitor mv) {
+                mv.iushr();
+                if (isInt32UnsignedRightShift(node.getRight())) {
+                    return ValType.Number_int;
+                }
+                ToUint32(ValType.Number_int, mv);
                 return ValType.Number_uint;
             }
         };
         // 12.9 Relational Operators ( < )
         static final RelationalOp LT = new RelationalOp() {
             @Override
-            void operation(CodeVisitor mv) {
+            void operation(BinaryExpression node, CodeVisitor mv) {
                 mv.loadExecutionContext();
                 invokeDynamicOperator(BinaryExpression.Operator.LT, mv);
             }
@@ -2315,7 +2728,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
         // 12.9 Relational Operators ( > )
         static final RelationalOp GT = new RelationalOp() {
             @Override
-            void operation(CodeVisitor mv) {
+            void operation(BinaryExpression node, CodeVisitor mv) {
                 mv.swap();
                 mv.loadExecutionContext();
                 invokeDynamicOperator(BinaryExpression.Operator.GT, mv);
@@ -2324,7 +2737,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
         // 12.9 Relational Operators ( <= )
         static final RelationalOp LE = new RelationalOp() {
             @Override
-            void operation(CodeVisitor mv) {
+            void operation(BinaryExpression node, CodeVisitor mv) {
                 mv.swap();
                 mv.loadExecutionContext();
                 invokeDynamicOperator(BinaryExpression.Operator.LE, mv);
@@ -2333,7 +2746,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
         // 12.9 Relational Operators ( >= )
         static final RelationalOp GE = new RelationalOp() {
             @Override
-            void operation(CodeVisitor mv) {
+            void operation(BinaryExpression node, CodeVisitor mv) {
                 mv.loadExecutionContext();
                 invokeDynamicOperator(BinaryExpression.Operator.GE, mv);
             }
@@ -2341,17 +2754,63 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
         // 12.9 Relational Operators ( instanceof )
         static final RelationalOp INSTANCEOF = new RelationalOp() {
             @Override
-            void operation(CodeVisitor mv) {
+            void operation(BinaryExpression node, CodeVisitor mv) {
                 mv.loadExecutionContext();
-                mv.invoke(Methods.ScriptRuntime_InstanceofOperator);
+                mv.invoke(Methods.Operators_InstanceofOperator);
             }
         };
         // 12.9 Relational Operators ( in )
-        static final RelationalOp IN = new RelationalOp() {
+        static final BinaryOp IN = new BinaryOp() {
             @Override
-            void operation(CodeVisitor mv) {
+            ValType emit(BinaryExpression node, CodeVisitor mv, ExpressionGenerator gen) {
+                ValType type = evalPropertyKey(node.getLeft(), mv, gen);
+                mv.toBoxed(node.getRight().accept(gen, mv));
                 mv.loadExecutionContext();
-                mv.invoke(Methods.ScriptRuntime_in);
+                mv.lineInfo(node);
+                mv.invoke(inMethod(type));
+                return ValType.Boolean;
+            }
+
+            ValType evalPropertyKey(Expression node, CodeVisitor mv, ExpressionGenerator gen) {
+                ValType type = node.accept(gen, mv);
+                switch (type) {
+                case Number:
+                case Number_int:
+                case Number_uint:
+                    return type;
+                case String:
+                    if (node instanceof StringLiteral) {
+                        return ValType.String;
+                    }
+                case Undefined:
+                case Null:
+                case Boolean:
+                case BigInt:
+                    ToFlatString(type, mv);
+                    return ValType.String;
+                case Object:
+                case Any:
+                    return ValType.Any;
+                default:
+                    throw new AssertionError();
+                }
+            }
+
+            MethodName inMethod(ValType type) {
+                switch (type) {
+                case Any:
+                    return Methods.Operators_in;
+                case Number:
+                    return Methods.Operators_in_double;
+                case Number_int:
+                    return Methods.Operators_in_int;
+                case Number_uint:
+                    return Methods.Operators_in_long;
+                case String:
+                    return Methods.Operators_in_String;
+                default:
+                    throw new AssertionError();
+                }
             }
         };
         // 12.10 Equality Operators ( == )
@@ -2369,12 +2828,19 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
             @Override
             protected void emitLiteral(BinaryExpression node, ValType type, NullLiteral literal, CodeVisitor mv,
                     ExpressionGenerator gen) {
+                Jump end = new Jump();
+                if (gen.codegen.isEnabled(CompatibilityOption.IsHTMLDDAObjects)) {
+                    if (type == ValType.Any || type == ValType.Object) {
+                        testIsHTMLDDA(true, end, mv);
+                    }
+                }
                 if (type == ValType.Any) {
                     mv.invoke(EqMethods.Type_isUndefinedOrNull);
                 } else {
                     mv.pop(type);
                     mv.iconst(type == ValType.Undefined || type == ValType.Null);
                 }
+                mv.mark(end);
             }
 
             @Override
@@ -2387,7 +2853,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
             @Override
             protected void emitLiteral(BinaryExpression node, ValType type, NumericLiteral literal, CodeVisitor mv,
                     ExpressionGenerator gen) {
-                assert !type.isNumeric();
+                assert !type.isNumber();
                 emitGeneric(node, type, literal, mv, gen);
             }
 
@@ -2395,6 +2861,13 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
             protected void emitLiteral(BinaryExpression node, ValType type, StringLiteral literal, CodeVisitor mv,
                     ExpressionGenerator gen) {
                 assert type != ValType.String;
+                emitGeneric(node, type, literal, mv, gen);
+            }
+
+            @Override
+            protected void emitLiteral(BinaryExpression node, ValType type, BigIntegerLiteral literal, CodeVisitor mv,
+                    ExpressionGenerator gen) {
+                assert type != ValType.BigInt;
                 emitGeneric(node, type, literal, mv, gen);
             }
         };
@@ -2418,6 +2891,16 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
                 invokeDynamicOperator(BinaryExpression.Operator.SHEQ, mv);
             }
 
+            void emitGenericIfAnyOrConstantFalse(BinaryExpression node, ValType ltype, Expression right, CodeVisitor mv,
+                    ExpressionGenerator gen) {
+                if (ltype == ValType.Any) {
+                    emitGeneric(node, ltype, right, mv, gen);
+                } else {
+                    mv.pop(ltype);
+                    mv.iconst(false);
+                }
+            }
+
             @Override
             protected void emitLiteral(BinaryExpression node, ValType type, NullLiteral literal, CodeVisitor mv,
                     ExpressionGenerator gen) {
@@ -2433,36 +2916,28 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
             protected void emitLiteral(BinaryExpression node, ValType type, BooleanLiteral literal, CodeVisitor mv,
                     ExpressionGenerator gen) {
                 assert type != ValType.Boolean;
-                if (type == ValType.Any) {
-                    emitGeneric(node, type, literal, mv, gen);
-                } else {
-                    mv.pop(type);
-                    mv.iconst(false);
-                }
+                emitGenericIfAnyOrConstantFalse(node, type, literal, mv, gen);
             }
 
             @Override
             protected void emitLiteral(BinaryExpression node, ValType type, NumericLiteral literal, CodeVisitor mv,
                     ExpressionGenerator gen) {
-                assert !type.isNumeric();
-                if (type == ValType.Any) {
-                    emitGeneric(node, type, literal, mv, gen);
-                } else {
-                    mv.pop(type);
-                    mv.iconst(false);
-                }
+                assert !type.isNumber();
+                emitGenericIfAnyOrConstantFalse(node, type, literal, mv, gen);
             }
 
             @Override
             protected void emitLiteral(BinaryExpression node, ValType type, StringLiteral literal, CodeVisitor mv,
                     ExpressionGenerator gen) {
                 assert type != ValType.String;
-                if (type == ValType.Any) {
-                    emitGeneric(node, type, literal, mv, gen);
-                } else {
-                    mv.pop(type);
-                    mv.iconst(false);
-                }
+                emitGenericIfAnyOrConstantFalse(node, type, literal, mv, gen);
+            }
+
+            @Override
+            protected void emitLiteral(BinaryExpression node, ValType type, BigIntegerLiteral literal, CodeVisitor mv,
+                    ExpressionGenerator gen) {
+                assert type != ValType.BigInt;
+                emitGenericIfAnyOrConstantFalse(node, type, literal, mv, gen);
             }
         };
         // 12.10 Equality Operators ( !== )
@@ -2477,7 +2952,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
         // 12.11 Binary Bitwise Operators ( & )
         static final IntegerOp BITAND = new IntegerOp() {
             @Override
-            ValType operation(CodeVisitor mv) {
+            ValType operation(BinaryExpression node, CodeVisitor mv) {
                 mv.iand();
                 return ValType.Number_int;
             }
@@ -2485,7 +2960,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
         // 12.11 Binary Bitwise Operators ( ^ )
         static final IntegerOp BITXOR = new IntegerOp() {
             @Override
-            ValType operation(CodeVisitor mv) {
+            ValType operation(BinaryExpression node, CodeVisitor mv) {
                 mv.ixor();
                 return ValType.Number_int;
             }
@@ -2493,7 +2968,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
         // 12.11 Binary Bitwise Operators ( | )
         static final IntegerOp BITOR = new IntegerOp() {
             @Override
-            ValType operation(CodeVisitor mv) {
+            ValType operation(BinaryExpression node, CodeVisitor mv) {
                 mv.ior();
                 return ValType.Number_int;
             }
@@ -2501,14 +2976,14 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
         // 12.12 Binary Logical Operators
         static final LogicalOp AND = new LogicalOp() {
             @Override
-            void operation(Jump jump, CodeVisitor mv) {
+            void operation(BinaryExpression node, Jump jump, CodeVisitor mv) {
                 mv.ifeq(jump);
             }
         };
         // 12.12 Binary Logical Operators
         static final LogicalOp OR = new LogicalOp() {
             @Override
-            void operation(Jump jump, CodeVisitor mv) {
+            void operation(BinaryExpression node, Jump jump, CodeVisitor mv) {
                 mv.ifne(jump);
             }
         };
@@ -2521,7 +2996,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
         } else {
             mv.loadExecutionContext();
             mv.lineInfo(node);
-            mv.invoke(Methods.ScriptRuntime_toStr);
+            mv.invoke(Methods.Operators_toStr);
         }
         return ValType.String;
     }
@@ -2529,8 +3004,29 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
     private static ValType addStrings(ValType left, ValType right, CodeVisitor mv) {
         assert left == ValType.String && right == ValType.String;
         mv.loadExecutionContext();
-        mv.invoke(Methods.ScriptRuntime_add_str);
+        mv.invoke(Methods.Operators_add_str);
         return ValType.String;
+    }
+
+    private static boolean isInt32UnsignedRightShift(Expression rightOperand) {
+        if (rightOperand instanceof Literal) {
+            double value;
+            if (rightOperand instanceof NumericLiteral) {
+                value = ((NumericLiteral) rightOperand).doubleValue();
+            } else if (rightOperand instanceof StringLiteral) {
+                value = AbstractOperations.ToNumber(((StringLiteral) rightOperand).getValue());
+            } else if (rightOperand instanceof BooleanLiteral) {
+                value = ((BooleanLiteral) rightOperand).booleanValue() ? 1 : 0;
+            } else if (rightOperand instanceof NullLiteral) {
+                value = 0;
+            } else {
+                assert rightOperand instanceof BigIntegerLiteral;
+                return false;
+            }
+            int shift = AbstractOperations.ToInt32(value) & 0x1f;
+            return shift > 0;
+        }
+        return false;
     }
 
     private static ValType expressionType(Expression node) {
@@ -2562,23 +3058,38 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
 
         @Override
         public ValType visit(AssignmentExpression node, Void value) {
+            ValType rtype = expressionType(node.getRight());
             switch (node.getOperator()) {
             case ASSIGN_BITAND:
             case ASSIGN_BITOR:
             case ASSIGN_BITXOR:
             case ASSIGN_SHL:
             case ASSIGN_SHR:
-                return ValType.Number_int;
+                if (rtype.isPrimitive()) {
+                    return rtype != ValType.BigInt ? ValType.Number_int : rtype;
+                }
+                // Pessimistically assume any-type
+                return ValType.Any;
             case ASSIGN_USHR:
-                return ValType.Number_uint;
+                if (rtype.isPrimitive()) {
+                    if (isInt32UnsignedRightShift(node.getRight())) {
+                        return ValType.Number_int;
+                    }
+                    return rtype != ValType.BigInt ? ValType.Number_uint : rtype;
+                }
+                // Pessimistically assume any-type
+                return ValType.Any;
             case ASSIGN_DIV:
             case ASSIGN_EXP:
             case ASSIGN_MOD:
             case ASSIGN_MUL:
             case ASSIGN_SUB:
-                return ValType.Number;
+                if (rtype.isPrimitive()) {
+                    return rtype != ValType.BigInt ? ValType.Number : rtype;
+                }
+                // Pessimistically assume any-type
+                return ValType.Any;
             case ASSIGN_ADD: {
-                ValType rtype = expressionType(node.getRight());
                 if (rtype == ValType.String) {
                     return ValType.String;
                 }
@@ -2586,7 +3097,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
                 return ValType.Any;
             }
             case ASSIGN:
-                return expressionType(node.getRight());
+                return rtype;
             default:
                 throw new AssertionError();
             }
@@ -2603,22 +3114,65 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
         }
 
         @Override
+        public ValType visit(AsyncGeneratorExpression node, Void value) {
+            return ValType.Object;
+        }
+
+        @Override
+        public ValType visit(BigIntegerLiteral node, Void value) {
+            return ValType.BigInt;
+        }
+
+        @Override
         public ValType visit(BinaryExpression node, Void value) {
+            ValType ltype = expressionType(node.getLeft());
+            ValType rtype = expressionType(node.getRight());
             switch (node.getOperator()) {
             case BITAND:
             case BITOR:
             case BITXOR:
             case SHL:
-            case SHR:
-                return ValType.Number_int;
-            case USHR:
-                return ValType.Number_uint;
+            case SHR: {
+                if (ltype.isPrimitive()) {
+                    return ltype != ValType.BigInt ? ValType.Number_int : ltype;
+                }
+                if (rtype.isPrimitive()) {
+                    return rtype != ValType.BigInt ? ValType.Number_int : rtype;
+                }
+                // Pessimistically assume any-type
+                return ValType.Any;
+            }
+            case USHR: {
+                if (ltype.isPrimitive()) {
+                    // NB: `bigInt >>> int32Shift` is typed as BigInt.
+                    if (ltype != ValType.BigInt && isInt32UnsignedRightShift(node.getRight())) {
+                        return ValType.Number_int;
+                    }
+                    return ltype != ValType.BigInt ? ValType.Number_uint : ltype;
+                }
+                if (rtype.isPrimitive()) {
+                    if (isInt32UnsignedRightShift(node.getRight())) {
+                        return ValType.Number_int;
+                    }
+                    return rtype != ValType.BigInt ? ValType.Number_uint : rtype;
+                }
+                // Pessimistically assume any-type
+                return ValType.Any;
+            }
             case DIV:
             case EXP:
             case MOD:
             case MUL:
-            case SUB:
-                return ValType.Number;
+            case SUB: {
+                if (ltype.isPrimitive()) {
+                    return ltype != ValType.BigInt ? ValType.Number : ltype;
+                }
+                if (rtype.isPrimitive()) {
+                    return rtype != ValType.BigInt ? ValType.Number : rtype;
+                }
+                // Pessimistically assume any-type
+                return ValType.Any;
+            }
             case EQ:
             case GE:
             case GT:
@@ -2631,21 +3185,20 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
             case SHNE:
                 return ValType.Boolean;
             case ADD: {
-                ValType ltype = expressionType(node.getLeft());
-                ValType rtype = expressionType(node.getRight());
                 if (ltype == ValType.String || rtype == ValType.String) {
                     return ValType.String;
-                } else if (ltype.isNumeric() && rtype.isPrimitive()) {
+                } else if (ltype.isNumber() && rtype.isPrimitive()) {
                     return ValType.Number;
+                } else if (ltype == ValType.BigInt && rtype.isPrimitive()) {
+                    return ValType.BigInt;
                 }
                 // Pessimistically assume any-type
                 return ValType.Any;
             }
             case AND:
-            case OR:
-                return expressionType(node.getLeft()) == ValType.Boolean
-                        && expressionType(node.getRight()) == ValType.Boolean ? ValType.Boolean
-                        : ValType.Any;
+            case OR: {
+                return ltype == rtype ? ltype : ltype.isNumber() && rtype.isNumber() ? ValType.Number : ValType.Any;
+            }
             default:
                 throw new AssertionError();
             }
@@ -2671,7 +3224,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
         public ValType visit(ConditionalExpression node, Void value) {
             ValType ltype = expressionType(node.getThen());
             ValType rtype = expressionType(node.getOtherwise());
-            if (ltype != rtype && ltype.isNumeric() && rtype.isNumeric()) {
+            if (ltype != rtype && ltype.isNumber() && rtype.isNumber()) {
                 return ValType.Number;
             }
             return ltype == rtype ? ltype : ValType.Any;
@@ -2693,8 +3246,13 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
         }
 
         @Override
-        public ValType visit(LetExpression node, Void value) {
-            return expressionType(node.getExpression());
+        public ValType visit(ImportCallExpression node, Void value) {
+            return ValType.Object;
+        }
+
+        @Override
+        public ValType visit(ImportMeta node, Void value) {
+            return ValType.Object;
         }
 
         @Override
@@ -2745,14 +3303,28 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
         @Override
         public ValType visit(UnaryExpression node, Void value) {
             switch (node.getOperator()) {
-            case BITNOT:
-                return ValType.Number_int;
-            case NEG:
+            case BITNOT: {
+                ValType type = expressionType(node.getOperand());
+                if (type.isPrimitive()) {
+                    return type != ValType.BigInt ? ValType.Number_int : type;
+                }
+                return ValType.Any;
+            }
+            case NEG: {
+                if (node.getOperand() instanceof NumericLiteral) {
+                    NumericLiteral numeric = (NumericLiteral) node.getOperand();
+                    if (numeric.isInt() && numeric.intValue() != 0) {
+                        return ValType.Number_int;
+                    }
+                }
+                ValType type = expressionType(node.getOperand());
+                if (type.isPrimitive()) {
+                    return type != ValType.BigInt ? ValType.Number : type;
+                }
+                return ValType.Any;
+            }
             case POS:
-            case POST_DEC:
-            case POST_INC:
-            case PRE_DEC:
-            case PRE_INC:
+                // `+bigInt` doesn't return a BigInt value, so we can the expression type as ValType.Number.
                 return ValType.Number;
             case DELETE:
             case NOT:
@@ -2765,6 +3337,12 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
                 throw new AssertionError();
             }
         }
+
+        @Override
+        public ValType visit(UpdateExpression node, Void value) {
+            // ValType.Number or ValType.BigInt
+            return ValType.Any;
+        }
     }
 
     /**
@@ -2775,7 +3353,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
     @Override
     public ValType visit(BooleanLiteral node, CodeVisitor mv) {
         /* steps 1-2 */
-        mv.iconst(node.getValue());
+        mv.iconst(node.booleanValue());
         return ValType.Boolean;
     }
 
@@ -2798,7 +3376,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
         mv.toBoxed(type);
         mv.loadExecutionContext();
         mv.lineInfo(node);
-        mv.invoke(Methods.ScriptRuntime_SpreadArray);
+        mv.invoke(Methods.CallOperations_spreadArray);
 
         return ValType.Any; // actually Object[]
     }
@@ -2847,25 +3425,21 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
         Jump l0 = new Jump(), l1 = new Jump();
 
         /* steps 1-2 */
-        ValType typeTest = node.getTest().accept(this, mv);
-        /* step 2 */
-        ToBoolean(typeTest, mv);
+        testExpressionBailout(node.getTest(), l0, mv);
         /* step 3 */
-        mv.ifeq(l0);
         ValType typeThen = node.getThen().accept(this, mv);
         if (typeThen.isJavaPrimitive()) {
             // Try to avoid boxing if then-and-otherwise are both compatible primitive types.
             ValType expected = expressionType(node.getOtherwise());
             boolean sameType = typeThen == expected;
-            if (sameType || (typeThen.isNumeric() && expected.isNumeric())) {
+            if (sameType || (typeThen.isNumber() && expected.isNumber())) {
                 if (!sameType) {
                     ToNumber(typeThen, mv);
                 }
                 mv.goTo(l1);
                 mv.mark(l0);
                 ValType typeOtherwise = node.getOtherwise().accept(this, mv);
-                assert expected == typeOtherwise : String.format("expected=%s, got=%s", expected,
-                        typeOtherwise);
+                assert expected == typeOtherwise : String.format("expected=%s, got=%s", expected, typeOtherwise);
                 if (!sameType) {
                     ToNumber(typeOtherwise, mv);
                 }
@@ -2885,59 +3459,39 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
     }
 
     /**
-     * Extension: 'do' expression
+     * Extension: 'do-expressions'
      */
     @Override
     public ValType visit(DoExpression node, CodeVisitor mv) {
-        Entry<MethodName, LabelState> entry = codegen.compile(node, mv);
-        MethodName method = entry.getKey();
-        LabelState labelState = entry.getValue();
-        boolean hasCompletion = labelState.hasReturn() || node.hasCompletion();
-        boolean hasResume = node.hasYieldOrAwait();
-        boolean hasTarget = hasResume || labelState.size() > 0;
-
-        mv.enterVariableScope();
-        Value<Object[]> completion;
-        if (hasCompletion) {
-            Variable<Object[]> completionVar = mv.newVariable("completion", Object[].class);
-            mv.anewarray(1, Types.Object);
-            mv.store(completionVar);
-            if (node.hasCompletion()) {
-                mv.astore(completionVar, 0, mv.undefinedValue());
-            }
-            completion = completionVar;
-        } else {
-            completion = mv.anullValue();
-        }
-        MutableValue<Integer> target = hasTarget ? mv.newVariable("target", int.class) : new PopStoreValue<>();
-
-        // stack: [] -> []
-        mv.lineInfo(0); // 0 = hint for stacktraces to omit this frame
-        if (hasResume) {
-            mv.callWithSuspendInt(method, target, completion);
-        } else {
-            mv.callWithResult(method, target, completion);
-        }
-
-        Value<Object> completionValue = mv.arrayElement(completion, 0, Object.class);
-        mv.labelSwitch(labelState, target, completionValue, true);
-        if (node.hasCompletion()) {
-            mv.load(completionValue);
-        }
-        mv.exitVariableScope();
+        OutlinedCall call = mv.compile(node, this::doExpression);
+        mv.invoke(call, node.hasCompletion());
 
         return node.hasCompletion() ? ValType.Any : ValType.Empty;
     }
 
-    private static final class PopStoreValue<V> implements MutableValue<V> {
-        @Override
-        public void load(InstructionAssembler assembler) {
-            throw new AssertionError();
+    private OutlinedCall doExpression(DoExpression node, CodeVisitor mv) {
+        if (!codegen.isEnabled(Compiler.Option.NoCompletion)) {
+            CompletionValueVisitor.performCompletion(node);
+        }
+        MethodTypeDescriptor methodDescriptor = DoExpressionCodeVisitor.methodDescriptor(mv);
+        MethodCode method = codegen.method(mv, "doexpr", methodDescriptor);
+        return outlined(new DoExpressionCodeVisitor(node, method, mv), body -> {
+            return statement(node.getStatement(), body);
+        });
+    }
+
+    private static final class DoExpressionCodeVisitor extends OutlinedCodeVisitor {
+        DoExpressionCodeVisitor(DoExpression node, MethodCode method, CodeVisitor parent) {
+            super(node, method, parent);
         }
 
         @Override
-        public void store(InstructionAssembler assembler) {
-            assembler.pop();
+        protected boolean hasCompletionValue() {
+            return true;
+        }
+
+        static MethodTypeDescriptor methodDescriptor(CodeVisitor mv) {
+            return OutlinedCodeVisitor.outlinedMethodDescriptor(mv);
         }
     }
 
@@ -2959,18 +3513,37 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
 
     @Override
     public ValType visit(ExpressionMethod node, CodeVisitor mv) {
-        MethodName method = codegen.compile(node, mv);
-        boolean hasResume = node.hasResumePoint();
-
-        // stack: [] -> [result]
-        mv.lineInfo(0); // 0 = hint for stacktraces to omit this frame
-        if (hasResume) {
-            mv.callWithSuspend(method);
-        } else {
-            mv.call(method);
-        }
+        OutlinedCall call = mv.compile(node, this::expressionMethod);
+        mv.invoke(call, true);
 
         return ValType.Any;
+    }
+
+    private OutlinedCall expressionMethod(ExpressionMethod node, CodeVisitor mv) {
+        MethodTypeDescriptor methodDescriptor = ExpressionMethodVisitor.methodDescriptor(mv);
+        MethodCode method = codegen.method(mv, "expr", methodDescriptor);
+        return outlined(new ExpressionMethodVisitor(node, method, mv), body -> {
+            ValType type = node.getExpression().accept(this, body);
+            assert type != ValType.Empty;
+            body.storeCompletionValue(type);
+
+            return Completion.Normal;
+        });
+    }
+
+    private static final class ExpressionMethodVisitor extends OutlinedCodeVisitor {
+        ExpressionMethodVisitor(ExpressionMethod node, MethodCode method, CodeVisitor parent) {
+            super(node, method, parent);
+        }
+
+        @Override
+        protected boolean hasCompletionValue() {
+            return true;
+        }
+
+        static MethodTypeDescriptor methodDescriptor(CodeVisitor mv) {
+            return OutlinedCodeVisitor.outlinedMethodDescriptor(mv);
+        }
     }
 
     /**
@@ -2978,15 +3551,15 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
      */
     @Override
     public ValType visit(FunctionExpression node, CodeVisitor mv) {
-        MethodName method = codegen.compile(node);
+        MethodName method = mv.compile(node, codegen::functionDefinition);
 
         /* steps 1-5/10 */
         mv.invoke(method);
         mv.loadExecutionContext();
         if (isLegacy(node)) {
-            mv.invoke(Methods.ScriptRuntime_EvaluateLegacyFunctionExpression);
+            mv.invoke(Methods.FunctionOperations_EvaluateLegacyFunctionExpression);
         } else {
-            mv.invoke(Methods.ScriptRuntime_EvaluateFunctionExpression);
+            mv.invoke(Methods.FunctionOperations_EvaluateFunctionExpression);
         }
 
         /* step 6/11 */
@@ -3008,7 +3581,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
     public ValType visit(FunctionSent node, CodeVisitor mv) {
         mv.loadExecutionContext();
         mv.lineInfo(node);
-        mv.invoke(Methods.ScriptRuntime_functionSent);
+        mv.invoke(Methods.Operators_functionSent);
 
         return ValType.Any;
     }
@@ -3018,18 +3591,12 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
      */
     @Override
     public ValType visit(GeneratorComprehension node, CodeVisitor mv) {
-        MethodName method = codegen.compile(node);
+        MethodName method = mv.compile(node, codegen::generatorComprehension);
 
         /* steps 1-8 */
         mv.invoke(method);
         mv.loadExecutionContext();
-        if (node.getComprehension() instanceof LegacyComprehension) {
-            mv.invoke(Methods.ScriptRuntime_EvaluateLegacyGeneratorComprehension);
-        } else if (node.isConstructor()) {
-            mv.invoke(Methods.ScriptRuntime_EvaluateConstructorGeneratorComprehension);
-        } else {
-            mv.invoke(Methods.ScriptRuntime_EvaluateGeneratorComprehension);
-        }
+        mv.invoke(Methods.FunctionOperations_EvaluateGeneratorComprehension);
 
         /* step 9 */
         return ValType.Object;
@@ -3040,34 +3607,14 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
      */
     @Override
     public ValType visit(GeneratorExpression node, CodeVisitor mv) {
-        MethodName method = codegen.compile(node);
+        MethodName method = mv.compile(node, codegen::generatorDefinition);
 
         /* steps 1-7/11 */
         mv.invoke(method);
         mv.loadExecutionContext();
-        if (node.isConstructor()) {
-            mv.invoke(Methods.ScriptRuntime_EvaluateConstructorGeneratorExpression);
-        } else {
-            mv.invoke(Methods.ScriptRuntime_EvaluateGeneratorExpression);
-        }
+        mv.invoke(Methods.FunctionOperations_EvaluateGeneratorExpression);
 
         /* step 8/12 */
-        return ValType.Object;
-    }
-
-    /**
-     * 14.4.14 Runtime Semantics: Evaluation
-     */
-    @Override
-    public ValType visit(LegacyGeneratorExpression node, CodeVisitor mv) {
-        MethodName method = codegen.compile(node);
-
-        /* steps 1-7 */
-        mv.invoke(method);
-        mv.loadExecutionContext();
-        mv.invoke(Methods.ScriptRuntime_EvaluateLegacyGeneratorExpression);
-
-        /* step 8 */
         return ValType.Object;
     }
 
@@ -3083,67 +3630,21 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
         return op.referenceValue(node, mv, codegen);
     }
 
-    /**
-     * Extension: 'let' expression
-     */
     @Override
-    public ValType visit(LetExpression node, CodeVisitor mv) {
-        BlockScope scope = node.getScope();
-        if (scope.isPresent()) {
-            mv.enterVariableScope();
-            Variable<LexicalEnvironment<DeclarativeEnvironmentRecord>> env = mv.newVariable("env",
-                    LexicalEnvironment.class).uncheckedCast();
-            Variable<DeclarativeEnvironmentRecord> envRec = mv.newVariable("envRec",
-                    DeclarativeEnvironmentRecord.class);
+    public ValType visit(ImportCallExpression node, CodeVisitor mv) {
+        /* steps 1-9 */
+        node.getArgument().accept(this, mv);
+        mv.loadExecutionContext();
+        mv.invoke(Methods.ModuleOperations_dynamicImport);
 
-            newDeclarativeEnvironment(scope, mv);
-            mv.store(env);
-            getEnvRec(env, envRec, mv);
+        return ValType.Object;
+    }
 
-            for (LexicalBinding lexical : node.getBindings()) {
-                Binding binding = lexical.getBinding();
-                Expression initializer = lexical.getInitializer();
-                for (Name name : BoundNames(binding)) {
-                    BindingOp<DeclarativeEnvironmentRecord> op = BindingOp.of(envRec, name);
-                    op.createMutableBinding(envRec, name, false, mv);
-                }
-                if (initializer == null) {
-                    // LexicalBinding : BindingIdentifier
-                    assert binding instanceof BindingIdentifier;
-                    Name name = ((BindingIdentifier) binding).getName();
-                    /* steps 1-2 */
-                    // stack: [] -> []
-                    InitializeBoundNameWithUndefined(envRec, name, mv);
-                } else if (binding instanceof BindingIdentifier) {
-                    // LexicalBinding : BindingIdentifier Initializer
-                    Name name = ((BindingIdentifier) binding).getName();
-                    /* steps 1-7 */
-                    InitializeBoundNameWithInitializer(codegen, envRec, name, initializer, mv);
-                } else {
-                    // LexicalBinding : BindingPattern Initializer
-                    assert binding instanceof BindingPattern;
-                    /* steps 1-3 */
-                    expressionBoxed(initializer, mv);
-                    /* steps 4-5 */
-                    BindingInitializationGenerator.BindingInitialization(codegen, envRec,
-                            (BindingPattern) binding, mv);
-                }
-            }
-
-            mv.load(env);
-            pushLexicalEnvironment(mv);
-
-            mv.exitVariableScope();
-        }
-
-        mv.enterScope(node);
-        ValType type = node.getExpression().accept(this, mv);
-        mv.exitScope();
-
-        if (scope.isPresent()) {
-            popLexicalEnvironment(mv);
-        }
-        return type;
+    @Override
+    public ValType visit(ImportMeta node, CodeVisitor mv) {
+        mv.loadExecutionContext();
+        mv.invoke(Methods.ModuleOperations_importMeta);
+        return ValType.Object;
     }
 
     @Override
@@ -3167,7 +3668,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
             mv.toBoxed(type);
             mv.loadExecutionContext();
             mv.lineInfo(spread);
-            mv.invoke(Methods.ScriptRuntime_NativeCallSpreadArray);
+            mv.invoke(Methods.CallOperations_nativeCallSpreadArray);
 
             return Types.Object_;
         }
@@ -3193,7 +3694,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
     @Override
     public ValType visit(NewTarget node, CodeVisitor mv) {
         mv.loadExecutionContext();
-        mv.invoke(Methods.ScriptRuntime_GetNewTargetOrUndefined);
+        mv.invoke(Methods.Operators_GetNewTargetOrUndefined);
         return ValType.Any;
     }
 
@@ -3234,32 +3735,133 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
      */
     @Override
     public ValType visit(ObjectLiteral node, CodeVisitor mv) {
-        Variable<ArrayList<Object>> decorators = null;
-        boolean hasDecorators = HasDecorators(node);
-        if (hasDecorators) {
-            mv.enterVariableScope();
-            decorators = newDecoratorVariable("decorators", mv);
+        List<MethodDefinition> decoratedMethods = DecoratedMethods(node.getProperties());
+        if (decoratedMethods.isEmpty()) {
+            /* step 1 */
+            mv.loadExecutionContext();
+            mv.get(Fields.Intrinsics_ObjectPrototype);
+            mv.invoke(Methods.OrdinaryObject_ObjectCreate);
+            /* steps 2-3 */
+            PropertyEvaluation(codegen, node.getProperties(), mv);
+            /* step 4 */
+            return ValType.Object;
         }
-        PropertyGenerator propgen = codegen.propertyGenerator(decorators);
+
+        mv.enterVariableScope();
+
         /* step 1 */
+        Variable<OrdinaryObject> object = mv.newVariable("object", OrdinaryObject.class);
         mv.loadExecutionContext();
         mv.get(Fields.Intrinsics_ObjectPrototype);
         mv.invoke(Methods.OrdinaryObject_ObjectCreate);
+        mv.store(object);
+
+        int decoratorsCount = decoratedMethods.stream().mapToInt(m -> m.getDecorators().size()).sum();
+        int decoratorsLength = decoratorsCount + decoratedMethods.size();
+
+        StoreToArray<Object> methodDecorators = StoreToArray.create("methodDecorators", decoratorsLength,
+                Object[].class, mv);
+
         /* steps 2-3 */
-        for (PropertyDefinition property : node.getProperties()) {
-            mv.dup();
-            property.accept(propgen, mv);
-        }
-        if (hasDecorators) {
-            mv.dup();
-            mv.load(decorators);
-            mv.loadExecutionContext();
-            mv.lineInfo(node);
-            mv.invoke(Methods.ScriptRuntime_EvaluateMethodDecorators);
-            mv.exitVariableScope();
-        }
+        PropertyEvaluation(codegen, node.getProperties(), object, methodDecorators, mv);
+
+        MethodName decoratorsMethod = mv.compile(node, this::objectMethodDecorators);
+        mv.lineInfo(0); // 0 = hint for stacktraces to omit this frame
+        mv.invoke(decoratorsMethod, mv.executionContext(), object, methodDecorators.array);
+
+        mv.load(object);
+        mv.exitVariableScope();
+
         /* step 4 */
         return ValType.Object;
+    }
+
+    private MethodName objectMethodDecorators(ObjectLiteral node, CodeVisitor parent) {
+        MethodTypeDescriptor descriptor = ObjectMethodDecoratorsVisitor.methodDescriptor();
+        MethodCode method = codegen.method(parent, "objectdecorators", descriptor);
+
+        ObjectMethodDecoratorsVisitor mv = new ObjectMethodDecoratorsVisitor(method);
+        mv.begin();
+        Variable<ExecutionContext> cx = mv.getExecutionContext();
+        Variable<OrdinaryObject> object = mv.getObject();
+        // List of <1..n callable, property key>.
+        Variable<Object[]> decorators = mv.getDecorators();
+
+        Variable<Object> propertyKey = mv.newVariable("propertyKey", Object.class);
+        Variable<Object> propertyDesc = mv.newVariable("propertyDesc", Object.class);
+        Variable<Object> result = mv.newVariable("result", Object.class);
+
+        int index = 0;
+        for (MethodDefinition methodDef : DecoratedMethods(node.getProperties())) {
+            List<Expression> decoratorsList = methodDef.getDecorators();
+            assert !decoratorsList.isEmpty();
+
+            mv.store(propertyKey, mv.arrayElement(decorators, index + decoratorsList.size(), Object.class));
+
+            mv.lineInfo(methodDef);
+            mv.invoke(Methods.DecoratorOperations_propertyDescriptor, object, propertyKey, cx);
+            mv.store(propertyDesc);
+
+            for (Expression decoratorExpr : decoratorsList) {
+                Value<Object> decorator = mv.arrayElement(decorators, index++, Object.class);
+                invokeDynamicCall(mv, decoratorExpr, decorator, cx, mv.undefinedValue(), object, propertyKey,
+                        propertyDesc);
+                mv.store(result);
+
+                Jump isObject = new Jump();
+                mv.invoke(Methods.Type_isObject, result);
+                mv.ifeq(isObject);
+                {
+                    mv.store(propertyDesc, result);
+                }
+                mv.mark(isObject);
+            }
+
+            Jump isObject = new Jump();
+            mv.invoke(Methods.Type_isObject, propertyDesc);
+            mv.ifeq(isObject);
+            {
+                mv.lineInfo(methodDef);
+                mv.invoke(Methods.DecoratorOperations_defineProperty, object, propertyKey, propertyDesc, cx);
+            }
+            mv.mark(isObject);
+
+            index += 1; // Skip over property key element.
+        }
+        mv._return();
+        mv.end();
+
+        return method.name();
+    }
+
+    private static final class ObjectMethodDecoratorsVisitor extends InstructionVisitor {
+        ObjectMethodDecoratorsVisitor(MethodCode method) {
+            super(method);
+        }
+
+        @Override
+        public void begin() {
+            super.begin();
+            setParameterName("cx", 0, Types.ExecutionContext);
+            setParameterName("object", 1, Types.OrdinaryObject);
+            setParameterName("decorators", 2, Types.Object_);
+        }
+
+        Variable<ExecutionContext> getExecutionContext() {
+            return getParameter(0, ExecutionContext.class);
+        }
+
+        Variable<OrdinaryObject> getObject() {
+            return getParameter(1, OrdinaryObject.class);
+        }
+
+        Variable<Object[]> getDecorators() {
+            return getParameter(2, Object[].class);
+        }
+
+        static MethodTypeDescriptor methodDescriptor() {
+            return Type.methodType(Type.VOID_TYPE, Types.ExecutionContext, Types.OrdinaryObject, Types.Object_);
+        }
     }
 
     /**
@@ -3270,6 +3872,15 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
     @Override
     public ValType visit(PropertyAccessor node, CodeVisitor mv) {
         ReferenceOp<PropertyAccessor> op = ReferenceOp.propertyOp(node);
+        return op.referenceValue(node, mv, codegen);
+    }
+
+    /**
+     * Extension: Class Fields
+     */
+    @Override
+    public ValType visit(PrivatePropertyAccessor node, CodeVisitor mv) {
+        ReferenceOp<PrivatePropertyAccessor> op = ReferenceOp.propertyOp(node);
         return op.referenceValue(node, mv, codegen);
     }
 
@@ -3312,13 +3923,13 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
         // stack: [] -> [newTarget]
         mv.loadExecutionContext();
         mv.lineInfo(node);
-        mv.invoke(Methods.ScriptRuntime_GetNewTarget);
+        mv.invoke(Methods.ClassOperations_GetNewTargetOrThrow);
 
         /* steps 3-4 */
         // stack: [newTarget] -> [constructor, newTarget]
         mv.loadExecutionContext();
         mv.lineInfo(node);
-        mv.invoke(Methods.ScriptRuntime_GetSuperConstructor);
+        mv.invoke(Methods.ClassOperations_GetSuperConstructor);
         mv.swap();
 
         // stack: [constructor, newTarget] -> [constructor, cx, newTarget]
@@ -3334,14 +3945,41 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
         mv.lineInfo(node);
         invokeDynamicSuper(mv);
 
+        // Extension: Class Fields
+        if (codegen.isEnabled(CompatibilityOption.ClassFields)) {
+            ClassDefinition classDef = classDefinition(mv);
+            if (classDef == null || HasClassInstanceDefinitions(classDef)) {
+                // stack: [result] -> [result]
+                mv.dup();
+                mv.loadExecutionContext();
+                mv.lineInfo(0); // 0 = hint for stacktraces to omit this frame
+                mv.invoke(Methods.ClassOperations_InitializeInstanceFields);
+            }
+        }
+
         /* steps 9-10 */
         // stack: [result] -> [result]
         mv.dup();
         mv.loadExecutionContext();
         mv.lineInfo(node);
-        mv.invoke(Methods.ScriptRuntime_BindThisValue);
+        mv.invoke(Methods.ClassOperations_BindThisValue);
 
         return ValType.Object;
+    }
+
+    private static ClassDefinition classDefinition(CodeVisitor mv) {
+        TopLevelNode<?> topLevelNode = mv.getTopLevelNode();
+        if (topLevelNode instanceof MethodDefinition) {
+            MethodDefinition method = (MethodDefinition) topLevelNode;
+            if (method.isClassConstructor()) {
+                Scope enclosingScope = method.getScope().getEnclosingScope();
+                ScopedNode enclosingNode = enclosingScope.getNode();
+                if (enclosingNode instanceof ClassDefinition) {
+                    return (ClassDefinition) enclosingNode;
+                }
+            }
+        }
+        return null;
     }
 
     /**
@@ -3362,13 +4000,13 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
         // stack: [] -> [newTarget]
         mv.loadExecutionContext();
         mv.lineInfo(node);
-        mv.invoke(Methods.ScriptRuntime_GetNewTarget);
+        mv.invoke(Methods.ClassOperations_GetNewTargetOrThrow);
 
         /* steps 3-4 */
         // stack: [newTarget] -> [constructor, newTarget]
         mv.loadExecutionContext();
         mv.lineInfo(node);
-        mv.invoke(Methods.ScriptRuntime_GetSuperConstructor);
+        mv.invoke(Methods.ClassOperations_GetSuperConstructor);
         mv.swap();
 
         // stack: [constructor, newTarget] -> [constructor, cx, newTarget]
@@ -3402,8 +4040,6 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
      */
     @Override
     public ValType visit(TemplateCallExpression node, CodeVisitor mv) {
-        codegen.compile(node.getTemplate());
-
         // 12.2.9.2.1 Runtime Semantics: ArgumentListEvaluation
         // 12.2.8.2.2 Runtime Semantics: GetTemplateObject
         // 12.2.9.2.3 Runtime Semantics: SubstitutionEvaluation
@@ -3425,7 +4061,12 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
     @Override
     public ValType visit(TemplateLiteral node, CodeVisitor mv) {
         if (node.isTagged()) {
-            codegen.GetTemplateObject(node, mv);
+            MethodName method = mv.compile(node, this::templateLiteral);
+
+            mv.iconst(codegen.templateKey(node));
+            mv.handle(method);
+            mv.loadExecutionContext();
+            mv.invoke(Methods.TemplateOperations_GetTemplateObject);
             return ValType.Object;
         }
 
@@ -3433,13 +4074,15 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
         if (elements.size() == 1) {
             assert elements.get(0) instanceof TemplateCharacters;
             TemplateCharacters chars = (TemplateCharacters) elements.get(0);
+            assert chars.getValue() != null;
             mv.aconst(chars.getValue());
         } else {
             // TODO: change to expression::concat?
-            mv.anew(Types.StringBuilder, Methods.StringBuilder_init);
+            mv.anew(Methods.StringBuilder_new);
             for (Expression expr : elements) {
                 if (expr instanceof TemplateCharacters) {
                     String value = ((TemplateCharacters) expr).getValue();
+                    assert value != null;
                     if (!value.isEmpty()) {
                         mv.aconst(value);
                         mv.invoke(Methods.StringBuilder_append_String);
@@ -3453,6 +4096,26 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
             mv.invoke(Methods.StringBuilder_toString);
         }
         return ValType.String;
+    }
+
+    private MethodName templateLiteral(TemplateLiteral node) {
+        MethodCode method = codegen.method("!template", Type.methodType(Types.String_));
+        InstructionVisitor body = new InstructionVisitor(method);
+        body.lineInfo(node);
+        body.begin();
+
+        List<TemplateCharacters> strings = TemplateStrings(node);
+        body.anewarray(strings.size() * 2, Types.String);
+        for (int i = 0, size = strings.size(); i < size; ++i) {
+            TemplateCharacters e = strings.get(i);
+            int index = i << 1;
+            body.astore(index, e.getValue());
+            body.astore(index + 1, e.getRawValue());
+        }
+
+        body._return();
+        body.end();
+        return method.name();
     }
 
     /**
@@ -3469,27 +4132,26 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
         return ValType.Any;
     }
 
+    @Override
+    public ValType visit(ThrowExpression node, CodeVisitor mv) {
+        expressionBoxed(node.getExpression(), mv);
+        mv.lineInfo(node);
+        mv.invoke(Methods.Operators_throw);
+        return ValType.Any;
+    }
+
     /**
-     * 12.4.4.1 Runtime Semantics: Evaluation<br>
-     * 12.4.5.1 Runtime Semantics: Evaluation<br>
-     * 12.5.4.2 Runtime Semantics: Evaluation<br>
+     * 12.5.3.2 Runtime Semantics: Evaluation<br>
+     * 12.5.4.1 Runtime Semantics: Evaluation<br>
      * 12.5.5.1 Runtime Semantics: Evaluation<br>
      * 12.5.6.1 Runtime Semantics: Evaluation<br>
      * 12.5.7.1 Runtime Semantics: Evaluation<br>
      * 12.5.8.1 Runtime Semantics: Evaluation<br>
      * 12.5.9.1 Runtime Semantics: Evaluation<br>
-     * 12.5.10.1 Runtime Semantics: Evaluation<br>
-     * 12.5.11.1 Runtime Semantics: Evaluation<br>
-     * 12.5.12.1 Runtime Semantics: Evaluation<br>
      */
     @Override
     public ValType visit(UnaryExpression node, CodeVisitor mv) {
         switch (node.getOperator()) {
-        case POST_INC:
-        case POST_DEC:
-        case PRE_INC:
-        case PRE_DEC:
-            return unaryUpdateOp(node).emit(node, mv, this);
         case DELETE: {
             // 12.5.4 The delete Operator
             Expression operand = node.getOperand();
@@ -3518,40 +4180,68 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
             Expression operand = node.getOperand();
             if (operand instanceof IdentifierReference) {
                 IdentifierReference ident = (IdentifierReference) operand;
-                Name resolvedName = ident.getResolvedName();
-                if (resolvedName == null || !resolvedName.isLocal()) {
-                    // TODO: Add referenceValueOrUndefined() method
-                    ReferenceOp.LOOKUP.reference(ident, mv, codegen);
-                    mv.loadExecutionContext();
-                    mv.lineInfo(node);
-                    mv.invoke(Methods.ScriptRuntime_typeof_Reference);
-                    return ValType.String;
-                }
+                // TODO: Add referenceValueOrUndefined() method
+                ReferenceOp.LOOKUP.reference(ident, mv, codegen);
+                mv.loadExecutionContext();
+                mv.lineInfo(node);
+                mv.invoke(Methods.Operators_typeof_Reference);
+                return ValType.String;
             }
             ValType type = operand.accept(this, mv);
             mv.toBoxed(type);
-            mv.invoke(Methods.ScriptRuntime_typeof);
+            mv.invoke(Methods.Operators_typeof);
             return ValType.String;
         }
         case POS: {
             // 12.5.9 Unary + Operator
             ValType type = node.getOperand().accept(this, mv);
+            // NB: Calls ToNumber() even if the value is a BigInt.
             ToNumber(type, mv);
             return ValType.Number;
         }
         case NEG: {
             // 12.5.10 Unary - Operator
-            ValType type = node.getOperand().accept(this, mv);
-            ToNumber(type, mv);
-            mv.dneg();
-            return ValType.Number;
+            Expression operand = node.getOperand();
+            if (operand instanceof NumericLiteral) {
+                NumericLiteral numeric = (NumericLiteral) operand;
+                if (numeric.isInt() && numeric.intValue() != 0) {
+                    mv.iconst(-numeric.intValue());
+                    return ValType.Number_int;
+                }
+                mv.dconst(-numeric.doubleValue());
+                return ValType.Number;
+            }
+            ValType type = operand.accept(this, mv);
+            switch (ToNumeric(type, mv)) {
+            case Number:
+                mv.dneg();
+                return ValType.Number;
+            case BigInt:
+                mv.invoke(Methods.BigInteger_negate);
+                return ValType.BigInt;
+            case Any:
+                invokeDynamicOperator(node.getOperator(), mv);
+                return ValType.Any;
+            default:
+                throw new AssertionError();
+            }
         }
         case BITNOT: {
             // 12.5.11 Bitwise NOT Operator ( ~ )
             ValType type = node.getOperand().accept(this, mv);
-            ToInt32(type, mv);
-            mv.bitnot();
-            return ValType.Number_int;
+            switch (ToNumericInt32(type, mv)) {
+            case Number_int:
+                mv.bitnot();
+                return ValType.Number_int;
+            case BigInt:
+                mv.invoke(Methods.BigInteger_not);
+                return ValType.BigInt;
+            case Any:
+                invokeDynamicOperator(node.getOperator(), mv);
+                return ValType.Any;
+            default:
+                throw new AssertionError();
+            }
         }
         case NOT: {
             // 12.5.12 Logical NOT Operator ( ! )
@@ -3570,64 +4260,35 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
         }
     }
 
-    private static UnaryUpdateOp unaryUpdateOp(UnaryExpression node) {
-        switch (node.getOperator()) {
-        case PRE_INC:
-        case POST_INC:
-            return UnaryUpdateOp.INCREMENT;
-        case PRE_DEC:
-        case POST_DEC:
-            return UnaryUpdateOp.DECREMENT;
-        default:
-            throw new AssertionError(Objects.toString(node.getOperator(), "<null>"));
+    /**
+     * 12.4.4.1 Runtime Semantics: Evaluation<br>
+     * 12.4.5.1 Runtime Semantics: Evaluation<br>
+     * 12.4.6.1 Runtime Semantics: Evaluation<br>
+     * 12.4.7.1 Runtime Semantics: Evaluation<br>
+     */
+    @Override
+    public ValType visit(UpdateExpression node, CodeVisitor mv) {
+        LeftHandSideExpression expr = (LeftHandSideExpression) node.getOperand();
+        ReferenceOp<LeftHandSideExpression> op = ReferenceOp.of(expr);
+
+        ValType type = op.referenceForUpdate(expr, mv, codegen);
+        ValType vtype = op.getValue(expr, type, mv);
+        vtype = ToNumeric(vtype, mv);
+
+        if (!node.getOperator().isPostfix()) {
+            invokeDynamicOperator(node.getOperator(), mv);
+            return op.putValue(expr, type, vtype, node.hasCompletion(), mv);
         }
-    }
-
-    private static abstract class UnaryUpdateOp {
-        abstract void operation(CodeVisitor mv);
-
-        final ValType emit(UnaryExpression node, CodeVisitor mv, ExpressionGenerator gen) {
-            LeftHandSideExpression expr = (LeftHandSideExpression) node.getOperand();
-            ReferenceOp<LeftHandSideExpression> op = ReferenceOp.of(expr);
-
-            ValType type = op.referenceForUpdate(expr, mv, gen.codegen);
-            ValType vtype = op.getValue(expr, type, mv);
-            ToNumber(vtype, mv);
-
-            if (!node.getOperator().isPostfix()) {
-                operation(mv);
-                return op.putValue(expr, type, ValType.Number, node.hasCompletion(), mv);
-            }
-            if (node.hasCompletion()) {
-                Variable<?> saved = op.saveValue(type, ValType.Number, mv);
-                operation(mv);
-                op.putValue(expr, type, ValType.Number, mv);
-                op.restoreValue(saved, mv);
-                return ValType.Number;
-            }
-            operation(mv);
-            op.putValue(expr, type, ValType.Number, mv);
-            return ValType.Empty;
+        if (node.hasCompletion()) {
+            Value<?> currentValue = op.dupOrStoreValue(type, vtype, mv);
+            invokeDynamicOperator(node.getOperator(), mv);
+            op.putValue(expr, type, vtype, mv);
+            mv.load(currentValue);
+            return vtype;
         }
-
-        // 12.4.4 Postfix Increment Operator
-        // 12.5.7 Prefix Increment Operator
-        static final UnaryUpdateOp INCREMENT = new UnaryUpdateOp() {
-            @Override
-            void operation(CodeVisitor mv) {
-                mv.dconst(1d);
-                mv.dadd();
-            }
-        };
-        // 12.4.5 Postfix Decrement Operator
-        // 12.5.8 Prefix Decrement Operator
-        static final UnaryUpdateOp DECREMENT = new UnaryUpdateOp() {
-            @Override
-            void operation(CodeVisitor mv) {
-                mv.dconst(1d);
-                mv.dsub();
-            }
-        };
+        invokeDynamicOperator(node.getOperator(), mv);
+        op.putValue(expr, type, vtype, mv);
+        return ValType.Empty;
     }
 
     /**

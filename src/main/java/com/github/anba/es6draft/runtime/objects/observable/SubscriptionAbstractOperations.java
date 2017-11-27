@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -9,6 +9,7 @@ package com.github.anba.es6draft.runtime.objects.observable;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
+import com.github.anba.es6draft.runtime.internal.ScriptException;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
@@ -57,8 +58,13 @@ public final class SubscriptionAbstractOperations {
         /* step 4 (implicit) */
         /* step 5 */
         subscription.setCleanup(null);
-        /* steps 6-7 */
-        cleanup.call(cx, UNDEFINED);
+        try {
+            /* step 6 */
+            cleanup.call(cx, UNDEFINED);
+        } catch (ScriptException e) {
+            /* step 7 */
+            cx.getRuntimeContext().getErrorReporter().accept(cx, e);
+        }
         /* step 8 (return) */
     }
 
@@ -73,22 +79,5 @@ public final class SubscriptionAbstractOperations {
         /* step 1 (implicit) */
         /* steps 2-3 */
         return subscription.getObserver() == null;
-    }
-
-    /**
-     * CloseSubscription ( subscription ) Abstract Operation
-     * 
-     * @param cx
-     *            the execution context
-     * @param subscription
-     *            the subscription object
-     */
-    // FIXME: spec bug - not defined
-    public static void CloseSubscription(ExecutionContext cx, SubscriptionObject subscription) {
-        if (SubscriptionClosed(subscription)) {
-            return;
-        }
-        subscription.clearObserver();
-        CleanupSubscription(cx, subscription);
     }
 }

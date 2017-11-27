@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -23,6 +23,7 @@ import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
+import com.github.anba.es6draft.runtime.types.builtins.NativeFunction;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
@@ -49,16 +50,33 @@ public final class WeakSetPrototype extends OrdinaryObject implements Initializa
     }
 
     /**
+     * Marker class for {@code WeakSet.prototype.add}.
+     */
+    private static final class WeakSetPrototypeAdd {
+    }
+
+    /**
+     * Returns {@code true} if <var>add</var> is the built-in {@code WeakSet.prototype.add} function.
+     * 
+     * @param add
+     *            the add function
+     * @return {@code true} if <var>add</var> is the built-in {@code WeakSet.prototype.add} function
+     */
+    static boolean isBuiltinAdd(Object add) {
+        return NativeFunction.isNative(add, WeakSetPrototypeAdd.class);
+    }
+
+    /**
      * 23.4.3 Properties of the WeakSet Prototype Object
      */
     public enum Properties {
         ;
 
-        private static WeakSetObject thisWeakSetObject(ExecutionContext cx, Object obj) {
-            if (obj instanceof WeakSetObject) {
-                return (WeakSetObject) obj;
+        private static WeakSetObject thisWeakSetObject(ExecutionContext cx, Object value, String method) {
+            if (value instanceof WeakSetObject) {
+                return (WeakSetObject) value;
             }
-            throw newTypeError(cx, Messages.Key.IncompatibleObject);
+            throw newTypeError(cx, Messages.Key.IncompatibleThis, method, Type.of(value).toString());
         }
 
         @Prototype
@@ -81,10 +99,10 @@ public final class WeakSetPrototype extends OrdinaryObject implements Initializa
          *            the new value
          * @return this weak set object
          */
-        @Function(name = "add", arity = 1)
+        @Function(name = "add", arity = 1, nativeId = WeakSetPrototypeAdd.class)
         public static Object add(ExecutionContext cx, Object thisValue, Object value) {
             /* steps 1-3 */
-            WeakSetObject s = thisWeakSetObject(cx, thisValue);
+            WeakSetObject s = thisWeakSetObject(cx, thisValue, "WeakSet.prototype.add");
             /* step 4 */
             if (!Type.isObject(value)) {
                 throw newTypeError(cx, Messages.Key.WeakSetKeyNotObject);
@@ -111,7 +129,7 @@ public final class WeakSetPrototype extends OrdinaryObject implements Initializa
         @Function(name = "delete", arity = 1)
         public static Object delete(ExecutionContext cx, Object thisValue, Object value) {
             /* steps 1-3 */
-            WeakSetObject s = thisWeakSetObject(cx, thisValue);
+            WeakSetObject s = thisWeakSetObject(cx, thisValue, "WeakSet.prototype.delete");
             /* step 4 */
             if (!Type.isObject(value)) {
                 return false;
@@ -136,7 +154,7 @@ public final class WeakSetPrototype extends OrdinaryObject implements Initializa
         @Function(name = "has", arity = 1)
         public static Object has(ExecutionContext cx, Object thisValue, Object value) {
             /* steps 1-3 */
-            WeakSetObject s = thisWeakSetObject(cx, thisValue);
+            WeakSetObject s = thisWeakSetObject(cx, thisValue, "WeakSet.prototype.has");
             /* step 5 */
             if (!Type.isObject(value)) {
                 return false;

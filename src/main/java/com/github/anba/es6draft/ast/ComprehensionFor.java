@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -16,8 +16,8 @@ public final class ComprehensionFor extends ComprehensionQualifier implements Sc
     private final Binding binding;
     private final Expression expression;
 
-    public ComprehensionFor(long beginPosition, long endPosition, BlockScope scope,
-            Binding binding, Expression expression) {
+    public ComprehensionFor(long beginPosition, long endPosition, BlockScope scope, Binding binding,
+            Expression expression) {
         super(beginPosition, endPosition);
         this.scope = scope;
         this.binding = binding;

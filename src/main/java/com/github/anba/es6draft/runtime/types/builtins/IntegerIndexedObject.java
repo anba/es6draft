@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -8,10 +8,12 @@ package com.github.anba.es6draft.runtime.types.builtins;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.CanonicalNumericIndexString;
 
+import java.util.Iterator;
 import java.util.List;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
+import com.github.anba.es6draft.runtime.internal.CompoundIterator;
 import com.github.anba.es6draft.runtime.internal.CompoundList;
 import com.github.anba.es6draft.runtime.internal.IndexedPropertyKeyList;
 import com.github.anba.es6draft.runtime.types.Property;
@@ -21,7 +23,7 @@ import com.github.anba.es6draft.runtime.types.Type;
 
 /**
  * <h1>9 Ordinary and Exotic Objects Behaviours</h1><br>
- * <h2>9.4 Built-in Exotic Object Internal Methods and Data Fields</h2>
+ * <h2>9.4 Built-in Exotic Object Internal Methods and Slots</h2>
  * <ul>
  * <li>9.4.5 Integer Indexed Exotic Objects
  * </ul>
@@ -32,9 +34,11 @@ public abstract class IntegerIndexedObject extends OrdinaryObject {
      * 
      * @param realm
      *            the realm object
+     * @param prototype
+     *            the prototype object
      */
-    public IntegerIndexedObject(Realm realm) {
-        super(realm);
+    protected IntegerIndexedObject(Realm realm, ScriptObject prototype) {
+        super(realm, prototype);
     }
 
     private static boolean isCanonicalNumericIndex(long numericIndex) {
@@ -48,26 +52,24 @@ public abstract class IntegerIndexedObject extends OrdinaryObject {
 
     /** [[HasOwnProperty]] (P) */
     @Override
-    protected final boolean hasOwnProperty(ExecutionContext cx, long propertyKey) {
+    public final boolean hasOwnProperty(ExecutionContext cx, long propertyKey) {
         return elementHas(cx, propertyKey);
     }
 
     /** [[HasOwnProperty]] (P) */
     @Override
-    protected final boolean hasOwnProperty(ExecutionContext cx, String propertyKey) {
-        /* steps 1-2 (not applicable) */
-        /* step 3 */
+    public final boolean hasOwnProperty(ExecutionContext cx, String propertyKey) {
         long numericIndex = CanonicalNumericIndexString(propertyKey);
         if (isCanonicalNumericIndex(numericIndex)) {
             return elementHas(cx, numericIndex);
         }
-        /* step 4 */
-        return super.hasOwnProperty(cx, propertyKey);
+        return ordinaryHasOwnProperty(propertyKey);
     }
 
     /** 9.4.5.1 [[GetOwnProperty]] (P) */
     @Override
-    protected final Property getProperty(ExecutionContext cx, long propertyKey) {
+    public final Property getOwnProperty(ExecutionContext cx, long propertyKey) {
+        /* step 3.b */
         Object value = elementGet(cx, propertyKey);
         if (Type.isUndefined(value)) {
             return null;
@@ -77,10 +79,12 @@ public abstract class IntegerIndexedObject extends OrdinaryObject {
 
     /** 9.4.5.1 [[GetOwnProperty]] (P) */
     @Override
-    protected final Property getProperty(ExecutionContext cx, String propertyKey) {
+    public final Property getOwnProperty(ExecutionContext cx, String propertyKey) {
         /* steps 1-2 (not applicable) */
         /* step 3 */
+        /* step 3.a */
         long numericIndex = CanonicalNumericIndexString(propertyKey);
+        /* step 3.b */
         if (isCanonicalNumericIndex(numericIndex)) {
             Object value = elementGet(cx, numericIndex);
             if (Type.isUndefined(value)) {
@@ -94,60 +98,68 @@ public abstract class IntegerIndexedObject extends OrdinaryObject {
 
     /** 9.4.5.2 [[HasProperty]](P) */
     @Override
-    protected final boolean has(ExecutionContext cx, long propertyKey) {
+    public final boolean hasProperty(ExecutionContext cx, long propertyKey) {
+        /* step 3.b */
         return elementHas(cx, propertyKey);
     }
 
     /** 9.4.5.2 [[HasProperty]](P) */
     @Override
-    protected final boolean has(ExecutionContext cx, String propertyKey) {
+    public final boolean hasProperty(ExecutionContext cx, String propertyKey) {
+        /* steps 1-2 (not applicable) */
+        /* step 3 */
+        /* step 3.a */
         long numericIndex = CanonicalNumericIndexString(propertyKey);
+        /* step 3.b */
         if (isCanonicalNumericIndex(numericIndex)) {
             return elementHas(cx, numericIndex);
         }
+        /* step 4 */
         return ordinaryHasProperty(cx, propertyKey);
     }
 
     /** 9.4.5.3 [[DefineOwnProperty]] (P, Desc) */
     @Override
-    protected final boolean defineProperty(ExecutionContext cx, long propertyKey, PropertyDescriptor desc) {
-        /* steps 3.c.i-3.c.vi */
+    public final boolean defineOwnProperty(ExecutionContext cx, long propertyKey, PropertyDescriptor desc) {
+        /* steps 3.b.i-vi */
         if (propertyKey >= getLength()) {
             return false;
         }
-        /* step 3.c.vii */
+        /* step 3.b.vii */
         if (desc.isAccessorDescriptor()) {
             return false;
         }
-        /* step 3.c.viii */
+        /* step 3.b.viii */
         if (desc.hasConfigurable() && desc.isConfigurable()) {
             return false;
         }
-        /* step 3.c.ix */
+        /* step 3.b.ix */
         if (desc.hasEnumerable() && !desc.isEnumerable()) {
             return false;
         }
-        /* step 3.c.x */
+        /* step 3.b.x */
         if (desc.hasWritable() && !desc.isWritable()) {
             return false;
         }
-        /* step 3.c.xi */
+        /* step 3.b.xi */
         if (desc.hasValue()) {
             Object value = desc.getValue();
             return elementSet(cx, propertyKey, value);
         }
-        /* step 3.c.xii */
+        /* step 3.b.xii */
         return true;
     }
 
     /** 9.4.5.3 [[DefineOwnProperty]] (P, Desc) */
     @Override
-    protected final boolean defineProperty(ExecutionContext cx, String propertyKey, PropertyDescriptor desc) {
+    public final boolean defineOwnProperty(ExecutionContext cx, String propertyKey, PropertyDescriptor desc) {
         /* steps 1-2 (not applicable) */
         /* step 3 */
+        /* step 3.a */
         long numericIndex = CanonicalNumericIndexString(propertyKey);
+        /* step 3.b */
         if (isCanonicalNumericIndex(numericIndex)) {
-            return defineProperty(cx, numericIndex, desc);
+            return defineOwnProperty(cx, numericIndex, desc);
         }
         /* step 4 */
         return ordinaryDefineOwnProperty(cx, propertyKey, desc);
@@ -155,91 +167,77 @@ public abstract class IntegerIndexedObject extends OrdinaryObject {
 
     /** 9.4.5.4 [[Get]] (P, Receiver) */
     @Override
-    protected final Object getValue(ExecutionContext cx, long propertyKey, Object receiver) {
-        /* step 1 (not applicable) */
+    public final Object get(ExecutionContext cx, long propertyKey, Object receiver) {
         /* step 2 */
-        if (this == receiver) { // SameValue(this, receiver)
-            return elementGet(cx, propertyKey);
-        }
-        /* step 3 */
-        return super.getValue(cx, propertyKey, receiver);
+        return elementGet(cx, propertyKey);
     }
 
     /** 9.4.5.4 [[Get]] (P, Receiver) */
     @Override
-    protected final Object getValue(ExecutionContext cx, String propertyKey, Object receiver) {
+    public final Object get(ExecutionContext cx, String propertyKey, Object receiver) {
         /* step 1 (not applicable) */
         /* step 2 */
-        if (this == receiver) { // SameValue(this, receiver)
-            long numericIndex = CanonicalNumericIndexString(propertyKey);
-            if (isCanonicalNumericIndex(numericIndex)) {
-                return elementGet(cx, numericIndex);
-            }
+        /* step 2.a */
+        long numericIndex = CanonicalNumericIndexString(propertyKey);
+        /* step 2.b */
+        if (isCanonicalNumericIndex(numericIndex)) {
+            return elementGet(cx, numericIndex);
         }
         /* step 3 */
-        return super.getValue(cx, propertyKey, receiver);
+        return ordinaryGet(cx, propertyKey, receiver);
     }
 
     /** 9.4.5.5 [[Set]] (P, V, Receiver) */
     @Override
-    protected final boolean setValue(ExecutionContext cx, long propertyKey, Object value, Object receiver) {
-        /* step 1 (not applicable) */
+    public final boolean set(ExecutionContext cx, long propertyKey, Object value, Object receiver) {
         /* step 2 */
-        if (this == receiver) { // SameValue(this, receiver)
-            return elementSet(cx, propertyKey, value);
-        }
-        /* step 3 */
-        return super.setValue(cx, propertyKey, value, receiver);
+        return elementSet(cx, propertyKey, value);
     }
 
     /** 9.4.5.5 [[Set]] (P, V, Receiver) */
     @Override
-    protected final boolean setValue(ExecutionContext cx, String propertyKey, Object value, Object receiver) {
+    public final boolean set(ExecutionContext cx, String propertyKey, Object value, Object receiver) {
         /* step 1 (not applicable) */
         /* step 2 */
-        if (this == receiver) { // SameValue(this, receiver)
-            long numericIndex = CanonicalNumericIndexString(propertyKey);
-            if (isCanonicalNumericIndex(numericIndex)) {
-                return elementSet(cx, numericIndex, value);
-            }
+        /* step 2.a */
+        long numericIndex = CanonicalNumericIndexString(propertyKey);
+        /* step 2.b */
+        if (isCanonicalNumericIndex(numericIndex)) {
+            return elementSet(cx, numericIndex, value);
         }
         /* step 3 */
-        return super.setValue(cx, propertyKey, value, receiver);
+        return ordinarySet(cx, propertyKey, value, receiver);
     }
 
     /** 9.4.5.6 [[OwnPropertyKeys]] () */
     @Override
-    protected final List<Object> getOwnPropertyKeys(ExecutionContext cx) {
+    public final List<Object> ownPropertyKeys(ExecutionContext cx) {
         /* steps 1-7 */
-        return new CompoundList<>(new IndexedPropertyKeyList(getLength()), super.getOwnPropertyKeys(cx));
+        IndexedPropertyKeyList indexedProperties = new IndexedPropertyKeyList(getLength());
+        return new CompoundList<>(indexedProperties, super.ownPropertyKeys(cx));
     }
 
     @Override
-    protected final List<String> getEnumerableKeys(ExecutionContext cx) {
-        return new CompoundList<>(new IndexedPropertyKeyList(getLength()), super.getEnumerableKeys(cx));
+    public final List<String> ownPropertyNames(ExecutionContext cx) {
+        /* steps 1-7 */
+        IndexedPropertyKeyList indexedProperties = new IndexedPropertyKeyList(getLength());
+        return new CompoundList<>(indexedProperties, super.ownPropertyNames(cx));
+    }
+
+    /** 9.4.5.6 [[OwnPropertyKeys]] () */
+    @Override
+    public final Iterator<String> ownEnumerablePropertyKeys(ExecutionContext cx) {
+        IndexedPropertyKeyList indexedProperties = new IndexedPropertyKeyList(getLength());
+        return new CompoundIterator<>(indexedProperties.iterator(), super.ownEnumerablePropertyKeys(cx));
     }
 
     @Override
-    protected final Enumerability isEnumerableOwnProperty(String propertyKey) {
+    public final Enumerability isEnumerableOwnProperty(ExecutionContext cx, String propertyKey) {
         long numericIndex = CanonicalNumericIndexString(propertyKey);
         if (isCanonicalNumericIndex(numericIndex)) {
-            return Enumerability.isEnumerable(numericIndex < getLength());
+            return Enumerability.isEnumerable(elementHas(cx, numericIndex));
         }
-        return super.isEnumerableOwnProperty(propertyKey);
-    }
-
-    /**
-     * 9.4.5.7 IntegerIndexedObjectCreate (prototype, internalSlotsList)
-     * 
-     * @param cx
-     *            the execution context
-     * @param prototype
-     *            the prototype object
-     * @return the new integer indexed object
-     */
-    public static ScriptObject IntegerIndexedObjectCreate(ExecutionContext cx, ScriptObject prototype) {
-        // the operation is not supported in this implementation
-        throw new UnsupportedOperationException();
+        return super.isEnumerableOwnProperty(cx, propertyKey);
     }
 
     /**

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -9,7 +9,7 @@ package com.github.anba.es6draft.runtime.objects.reflect;
 import static com.github.anba.es6draft.runtime.AbstractOperations.*;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
-import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.PrepareForTailCall;
+import static com.github.anba.es6draft.runtime.language.CallOperations.PrepareForTailCall;
 import static com.github.anba.es6draft.runtime.types.Null.NULL;
 import static com.github.anba.es6draft.runtime.types.PropertyDescriptor.FromPropertyDescriptor;
 import static com.github.anba.es6draft.runtime.types.PropertyDescriptor.ToPropertyDescriptor;
@@ -56,8 +56,10 @@ public final class ReflectObject extends OrdinaryObject implements Initializable
     @Override
     public void initialize(Realm realm) {
         createProperties(realm, this, Properties.class);
-        createProperties(realm, this, EnumerateProperty.class);
-        createProperties(realm, this, RealmProperty.class);
+        if (realm.getRuntimeContext().isEnabled(CompatibilityOption.Realm)
+                || realm.getRuntimeContext().isEnabled(CompatibilityOption.FrozenRealm)) {
+            createProperties(realm, this, RealmProperty.class);
+        }
         createProperties(realm, this, LoaderProperty.class);
         createProperties(realm, this, ParseProperty.class);
     }
@@ -88,15 +90,15 @@ public final class ReflectObject extends OrdinaryObject implements Initializable
          */
         @TailCall
         @Function(name = "apply", arity = 3)
-        public static Object apply(ExecutionContext cx, Object thisValue, Object target,
-                Object thisArgument, Object argumentsList) {
+        public static Object apply(ExecutionContext cx, Object thisValue, Object target, Object thisArgument,
+                Object argumentsList) {
             /* step 1 */
             if (!IsCallable(target)) {
                 throw newTypeError(cx, Messages.Key.NotCallable);
             }
-            /* steps 2-3 */
+            /* step 2 */
             Object[] args = CreateListFromArrayLike(cx, argumentsList);
-            /* steps 4-5 */
+            /* steps 3-4 */
             return PrepareForTailCall((Callable) target, thisArgument, args);
         }
 
@@ -116,8 +118,8 @@ public final class ReflectObject extends OrdinaryObject implements Initializable
          * @return the new script object
          */
         @Function(name = "construct", arity = 2)
-        public static Object construct(ExecutionContext cx, Object thisValue, Object target,
-                Object argumentsList, @Optional(Optional.Default.NONE) Object newTarget) {
+        public static Object construct(ExecutionContext cx, Object thisValue, Object target, Object argumentsList,
+                @Optional(Optional.Default.NONE) Object newTarget) {
             /* step 1 */
             if (!IsConstructor(target)) {
                 throw newTypeError(cx, Messages.Key.NotConstructor);
@@ -130,9 +132,9 @@ public final class ReflectObject extends OrdinaryObject implements Initializable
             } else if (!IsConstructor(newTarget)) {
                 throw newTypeError(cx, Messages.Key.NotConstructor);
             }
-            /* steps 4-5 */
+            /* step 4 */
             Object[] args = CreateListFromArrayLike(cx, argumentsList);
-            /* step 6 */
+            /* step 5 */
             return ((Constructor) target).construct(cx, (Constructor) newTarget, args);
         }
 
@@ -152,18 +154,18 @@ public final class ReflectObject extends OrdinaryObject implements Initializable
          * @return {@code true} on success
          */
         @Function(name = "defineProperty", arity = 3)
-        public static Object defineProperty(ExecutionContext cx, Object thisValue, Object target,
-                Object propertyKey, Object attributes) {
+        public static Object defineProperty(ExecutionContext cx, Object thisValue, Object target, Object propertyKey,
+                Object attributes) {
             /* step 1 */
             if (!Type.isObject(target)) {
                 throw newTypeError(cx, Messages.Key.NotObjectType);
             }
             ScriptObject targetObject = Type.objectValue(target);
-            /* steps 2-3 */
+            /* step 2 */
             Object key = ToPropertyKey(cx, propertyKey);
-            /* steps 4-5 */
+            /* step 3 */
             PropertyDescriptor desc = ToPropertyDescriptor(cx, attributes);
-            /* step 6 */
+            /* step 4 */
             return targetObject.defineOwnProperty(cx, key, desc);
         }
 
@@ -181,16 +183,15 @@ public final class ReflectObject extends OrdinaryObject implements Initializable
          * @return {@code true} on success
          */
         @Function(name = "deleteProperty", arity = 2)
-        public static Object deleteProperty(ExecutionContext cx, Object thisValue, Object target,
-                Object propertyKey) {
+        public static Object deleteProperty(ExecutionContext cx, Object thisValue, Object target, Object propertyKey) {
             /* step 1 */
             if (!Type.isObject(target)) {
                 throw newTypeError(cx, Messages.Key.NotObjectType);
             }
             ScriptObject targetObject = Type.objectValue(target);
-            /* steps 2-3 */
+            /* step 2 */
             Object key = ToPropertyKey(cx, propertyKey);
-            /* step 4 */
+            /* step 3 */
             return targetObject.delete(cx, key);
         }
 
@@ -210,14 +211,14 @@ public final class ReflectObject extends OrdinaryObject implements Initializable
          * @return the property value
          */
         @Function(name = "get", arity = 2)
-        public static Object get(ExecutionContext cx, Object thisValue, Object target,
-                Object propertyKey, @Optional(Optional.Default.NONE) Object receiver) {
+        public static Object get(ExecutionContext cx, Object thisValue, Object target, Object propertyKey,
+                @Optional(Optional.Default.NONE) Object receiver) {
             /* step 1 */
             if (!Type.isObject(target)) {
                 throw newTypeError(cx, Messages.Key.NotObjectType);
             }
             ScriptObject targetObject = Type.objectValue(target);
-            /* steps 2-3 */
+            /* step 3 */
             Object key = ToPropertyKey(cx, propertyKey);
             /* step 4 */
             if (receiver == null) {
@@ -241,18 +242,18 @@ public final class ReflectObject extends OrdinaryObject implements Initializable
          * @return the property descriptor object
          */
         @Function(name = "getOwnPropertyDescriptor", arity = 2)
-        public static Object getOwnPropertyDescriptor(ExecutionContext cx, Object thisValue,
-                Object target, Object propertyKey) {
+        public static Object getOwnPropertyDescriptor(ExecutionContext cx, Object thisValue, Object target,
+                Object propertyKey) {
             /* step 1 */
             if (!Type.isObject(target)) {
                 throw newTypeError(cx, Messages.Key.NotObjectType);
             }
             ScriptObject targetObject = Type.objectValue(target);
-            /* steps 2-3 */
+            /* step 2 */
             Object key = ToPropertyKey(cx, propertyKey);
-            /* steps 4-5 */
+            /* step 3 */
             Property desc = targetObject.getOwnProperty(cx, key);
-            /* step 6 */
+            /* step 4 */
             return FromPropertyDescriptor(cx, desc);
         }
 
@@ -293,16 +294,15 @@ public final class ReflectObject extends OrdinaryObject implements Initializable
          * @return {@code true} if the property was found
          */
         @Function(name = "has", arity = 2)
-        public static Object has(ExecutionContext cx, Object thisValue, Object target,
-                Object propertyKey) {
+        public static Object has(ExecutionContext cx, Object thisValue, Object target, Object propertyKey) {
             /* step 1 */
             if (!Type.isObject(target)) {
                 throw newTypeError(cx, Messages.Key.NotObjectType);
             }
             ScriptObject targetObject = Type.objectValue(target);
-            /* steps 2-3 */
+            /* step 2 */
             Object key = ToPropertyKey(cx, propertyKey);
-            /* step 4 */
+            /* step 3 */
             return targetObject.hasProperty(cx, key);
         }
 
@@ -346,9 +346,9 @@ public final class ReflectObject extends OrdinaryObject implements Initializable
                 throw newTypeError(cx, Messages.Key.NotObjectType);
             }
             ScriptObject targetObject = Type.objectValue(target);
-            /* steps 2-3 */
+            /* step 2 */
             List<?> keys = targetObject.ownPropertyKeys(cx);
-            /* step 4 */
+            /* step 3 */
             return CreateArrayFromList(cx, keys);
         }
 
@@ -392,20 +392,20 @@ public final class ReflectObject extends OrdinaryObject implements Initializable
          * @return {@code true} on success
          */
         @Function(name = "set", arity = 3)
-        public static Object set(ExecutionContext cx, Object thisValue, Object target,
-                Object propertyKey, Object value, @Optional(Optional.Default.NONE) Object receiver) {
+        public static Object set(ExecutionContext cx, Object thisValue, Object target, Object propertyKey, Object value,
+                @Optional(Optional.Default.NONE) Object receiver) {
             /* step 1 */
             if (!Type.isObject(target)) {
                 throw newTypeError(cx, Messages.Key.NotObjectType);
             }
             ScriptObject targetObject = Type.objectValue(target);
-            /* steps 2-3 */
+            /* step 2 */
             Object key = ToPropertyKey(cx, propertyKey);
-            /* step 4 */
+            /* step 3 */
             if (receiver == null) {
                 receiver = target;
             }
-            /* step 5 */
+            /* step 4 */
             return targetObject.set(cx, key, value, receiver);
         }
 
@@ -423,8 +423,7 @@ public final class ReflectObject extends OrdinaryObject implements Initializable
          * @return {@code true} on success
          */
         @Function(name = "setPrototypeOf", arity = 2)
-        public static Object setPrototypeOf(ExecutionContext cx, Object thisValue, Object target,
-                Object proto) {
+        public static Object setPrototypeOf(ExecutionContext cx, Object thisValue, Object target, Object proto) {
             /* step 1 */
             if (!Type.isObject(target)) {
                 throw newTypeError(cx, Messages.Key.NotObjectType);
@@ -436,33 +435,6 @@ public final class ReflectObject extends OrdinaryObject implements Initializable
             }
             /* step 3 */
             return targetObject.setPrototypeOf(cx, Type.objectValueOrNull(proto));
-        }
-    }
-
-    @CompatibilityExtension(CompatibilityOption.Enumerate)
-    public enum EnumerateProperty {
-        ;
-
-        /**
-         * 26.1.5 Reflect.enumerate (target)
-         * 
-         * @param cx
-         *            the execution context
-         * @param thisValue
-         *            the function this-value
-         * @param target
-         *            the target object
-         * @return the enumeration iterator object
-         */
-        @Function(name = "enumerate", arity = 1)
-        public static Object enumerate(ExecutionContext cx, Object thisValue, Object target) {
-            /* step 1 */
-            if (!Type.isObject(target)) {
-                throw newTypeError(cx, Messages.Key.NotObjectType);
-            }
-            ScriptObject targetObject = Type.objectValue(target);
-            /* step 2 */
-            return targetObject.enumerate(cx);
         }
     }
 
@@ -498,7 +470,6 @@ public final class ReflectObject extends OrdinaryObject implements Initializable
         }
     }
 
-    @CompatibilityExtension(CompatibilityOption.Realm)
     public enum RealmProperty {
         ;
 

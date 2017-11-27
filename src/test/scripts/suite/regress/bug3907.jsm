@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -13,9 +13,9 @@ const {
 
 import* as self from "./bug3907.jsm";
 
-var iter = self[Symbol.iterator]();
-
-assertDataProperty(iter, "next", {
-  value: iter.next,
-  writable: true, enumerable: false, configurable: true
-});
+// var iter = self[Symbol.iterator]();
+//
+// assertDataProperty(iter, "next", {
+//   value: iter.next,
+//   writable: true, enumerable: false, configurable: true
+// });

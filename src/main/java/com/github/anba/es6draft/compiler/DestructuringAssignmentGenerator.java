@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -16,7 +16,6 @@ import java.util.HashSet;
 import java.util.List;
 
 import com.github.anba.es6draft.ast.*;
-import com.github.anba.es6draft.ast.scope.Name;
 import com.github.anba.es6draft.compiler.DefaultCodeGenerator.ValType;
 import com.github.anba.es6draft.compiler.Labels.TempLabel;
 import com.github.anba.es6draft.compiler.StatementGenerator.Completion;
@@ -25,7 +24,9 @@ import com.github.anba.es6draft.compiler.assembler.Jump;
 import com.github.anba.es6draft.compiler.assembler.MethodName;
 import com.github.anba.es6draft.compiler.assembler.MutableValue;
 import com.github.anba.es6draft.compiler.assembler.Type;
+import com.github.anba.es6draft.compiler.assembler.Value;
 import com.github.anba.es6draft.compiler.assembler.Variable;
+import com.github.anba.es6draft.runtime.internal.IndexedMap;
 import com.github.anba.es6draft.runtime.internal.ScriptIterator;
 
 /**
@@ -45,6 +46,9 @@ final class DestructuringAssignmentGenerator {
         static final MethodName AbstractOperations_GetV = MethodName.findStatic(Types.AbstractOperations, "GetV",
                 Type.methodType(Types.Object, Types.ExecutionContext, Types.Object, Types.Object));
 
+        static final MethodName AbstractOperations_GetV_long = MethodName.findStatic(Types.AbstractOperations, "GetV",
+                Type.methodType(Types.Object, Types.ExecutionContext, Types.Object, Type.LONG_TYPE));
+
         static final MethodName AbstractOperations_GetV_String = MethodName.findStatic(Types.AbstractOperations, "GetV",
                 Type.methodType(Types.Object, Types.ExecutionContext, Types.Object, Types.String));
 
@@ -52,25 +56,27 @@ final class DestructuringAssignmentGenerator {
                 Types.AbstractOperations, "RequireObjectCoercible",
                 Type.methodType(Types.Object, Types.ExecutionContext, Types.Object));
 
-        // class: ScriptRuntime
-        static final MethodName ScriptRuntime_createRestArray = MethodName.findStatic(Types.ScriptRuntime,
+        // class: ArrayOperations
+        static final MethodName ArrayOperations_createRestArray = MethodName.findStatic(Types.ArrayOperations,
                 "createRestArray", Type.methodType(Types.ArrayObject, Types.Iterator, Types.ExecutionContext));
 
-        static final MethodName ScriptRuntime_createRestObject = MethodName.findStatic(Types.ScriptRuntime,
+        // class: ObjectOperations
+        static final MethodName ObjectOperations_createRestObject = MethodName.findStatic(Types.ObjectOperations,
                 "createRestObject",
                 Type.methodType(Types.OrdinaryObject, Types.Object, Types.Set, Types.ExecutionContext));
 
-        static final MethodName ScriptRuntime_iterate = MethodName.findStatic(Types.ScriptRuntime, "iterate",
+        // class: IteratorOperations
+        static final MethodName IteratorOperations_iterate = MethodName.findStatic(Types.IteratorOperations, "iterate",
                 Type.methodType(Types.ScriptIterator, Types.Object, Types.ExecutionContext));
 
-        static final MethodName ScriptRuntime_iteratorNextAndIgnore = MethodName.findStatic(Types.ScriptRuntime,
-                "iteratorNextAndIgnore", Type.methodType(Type.VOID_TYPE, Types.Iterator));
+        static final MethodName IteratorOperations_iteratorNextAndIgnore = MethodName.findStatic(
+                Types.IteratorOperations, "iteratorNextAndIgnore", Type.methodType(Type.VOID_TYPE, Types.Iterator));
 
-        static final MethodName ScriptRuntime_iteratorNextOrUndefined = MethodName.findStatic(Types.ScriptRuntime,
-                "iteratorNextOrUndefined", Type.methodType(Types.Object, Types.Iterator));
+        static final MethodName IteratorOperations_iteratorNextOrUndefined = MethodName.findStatic(
+                Types.IteratorOperations, "iteratorNextOrUndefined", Type.methodType(Types.Object, Types.Iterator));
 
         // class: HashSet
-        static final MethodName HashSet_init = MethodName.findConstructor(Types.HashSet,
+        static final MethodName HashSet_new = MethodName.findConstructor(Types.HashSet,
                 Type.methodType(Type.VOID_TYPE));
 
         static final MethodName HashSet_add = MethodName.findVirtual(Types.HashSet, "add",
@@ -149,11 +155,10 @@ final class DestructuringAssignmentGenerator {
         public void visit(ArrayAssignmentPattern node, Void value) {
             // stack: [value] -> []
             mv.enterVariableScope();
-            Variable<ScriptIterator<?>> iterator = mv.newVariable("iterator", ScriptIterator.class)
-                    .uncheckedCast();
+            Variable<ScriptIterator<?>> iterator = mv.newVariable("iterator", ScriptIterator.class).uncheckedCast();
             mv.loadExecutionContext();
             mv.lineInfo(node);
-            mv.invoke(Methods.ScriptRuntime_iterate);
+            mv.invoke(Methods.IteratorOperations_iterate);
             mv.store(iterator);
 
             new IterationGenerator<ArrayAssignmentPattern>(codegen) {
@@ -209,7 +214,7 @@ final class DestructuringAssignmentGenerator {
             Variable<HashSet<?>> propertyNames = null;
             if (!node.getProperties().isEmpty() && node.getRest() != null) {
                 propertyNames = mv.newVariable("propertyNames", HashSet.class).uncheckedCast();
-                mv.anew(Types.HashSet, Methods.HashSet_init);
+                mv.anew(Methods.HashSet_new);
                 mv.store(propertyNames);
             }
 
@@ -260,7 +265,7 @@ final class DestructuringAssignmentGenerator {
                 }
                 mv.loadExecutionContext();
                 mv.lineInfo(rest);
-                mv.invoke(Methods.ScriptRuntime_createRestObject);
+                mv.invoke(Methods.ObjectOperations_createRestObject);
 
                 // Exit the variable scope early to avoid restoring the value/propertyNames slots after a yield.
                 mv.exitVariableScope();
@@ -284,8 +289,8 @@ final class DestructuringAssignmentGenerator {
     /**
      * 12.14.5.3 Runtime Semantics: IteratorDestructuringAssignmentEvaluation
      */
-    private static final class IteratorDestructuringAssignmentEvaluation extends
-            RuntimeSemantics<Variable<ScriptIterator<?>>> {
+    private static final class IteratorDestructuringAssignmentEvaluation
+            extends RuntimeSemantics<Variable<ScriptIterator<?>>> {
         IteratorDestructuringAssignmentEvaluation(CodeGenerator codegen, CodeVisitor mv) {
             super(codegen, mv);
         }
@@ -295,7 +300,7 @@ final class DestructuringAssignmentGenerator {
             // stack: [] -> []
             mv.load(iterator);
             mv.lineInfo(node);
-            mv.invoke(Methods.ScriptRuntime_iteratorNextAndIgnore);
+            mv.invoke(Methods.IteratorOperations_iteratorNextAndIgnore);
         }
 
         @Override
@@ -316,7 +321,7 @@ final class DestructuringAssignmentGenerator {
             // stack: [(lref)] -> [(lref), v]
             mv.load(iterator);
             mv.lineInfo(node);
-            mv.invoke(Methods.ScriptRuntime_iteratorNextOrUndefined);
+            mv.invoke(Methods.IteratorOperations_iteratorNextOrUndefined);
 
             /* steps 4-5 */
             // stack: [(lref), v] -> [(lref), v']
@@ -364,7 +369,7 @@ final class DestructuringAssignmentGenerator {
             mv.load(iterator);
             mv.loadExecutionContext();
             mv.lineInfo(node);
-            mv.invoke(Methods.ScriptRuntime_createRestArray);
+            mv.invoke(Methods.ArrayOperations_createRestArray);
 
             /* steps 5-7 */
             if (!(target instanceof AssignmentPattern)) {
@@ -380,8 +385,8 @@ final class DestructuringAssignmentGenerator {
     /**
      * 12.14.5.4 Runtime Semantics: KeyedDestructuringAssignmentEvaluation
      */
-    private static abstract class KeyedDestructuringAssignmentEvaluation<PROPERTYNAME> extends
-            RuntimeSemantics<PROPERTYNAME> {
+    private static abstract class KeyedDestructuringAssignmentEvaluation<PROPERTYNAME>
+            extends RuntimeSemantics<PROPERTYNAME> {
         private final Variable<Object> value;
 
         KeyedDestructuringAssignmentEvaluation(CodeGenerator codegen, CodeVisitor mv, Variable<Object> value) {
@@ -393,16 +398,29 @@ final class DestructuringAssignmentGenerator {
 
         abstract boolean isSimplePropertyName(PROPERTYNAME propertyName);
 
-        final boolean isSimplePropertyNameOrTarget(LeftHandSideExpression target,
-                PROPERTYNAME propertyName) {
+        final boolean isSimplePropertyNameOrTarget(LeftHandSideExpression target, PROPERTYNAME propertyName) {
             if (isSimplePropertyName(propertyName)) {
                 return true;
             }
-            if (target instanceof IdentifierReference) {
-                Name resolvedName = ((IdentifierReference) target).getResolvedName();
-                return resolvedName != null && resolvedName.isLocal();
-            }
             return false;
+        }
+
+        final void emitGetV(AssignmentProperty node, ValType type) {
+            // stack: [cx, value, propertyName] -> [v]
+            mv.lineInfo(node);
+            switch (type) {
+            case Number_uint:
+                mv.invoke(Methods.AbstractOperations_GetV_long);
+                break;
+            case String:
+                mv.invoke(Methods.AbstractOperations_GetV_String);
+                break;
+            case Any:
+                mv.invoke(Methods.AbstractOperations_GetV);
+                break;
+            default:
+                throw new AssertionError();
+            }
         }
 
         @Override
@@ -438,8 +456,7 @@ final class DestructuringAssignmentGenerator {
             } else {
                 // stack: [] -> []
                 type = evaluatePropertyName(propertyName);
-                Variable<?> propertyNameVar = mv.newScratchVariable(type.toClass());
-                mv.store(propertyNameVar);
+                Value<?> propertyNameVar = mv.storeTemporary(type.toClass());
 
                 /* step 1 */
                 // stack: [] -> [lref]
@@ -450,17 +467,11 @@ final class DestructuringAssignmentGenerator {
                 mv.loadExecutionContext();
                 mv.load(value);
                 mv.load(propertyNameVar);
-                mv.freeVariable(propertyNameVar);
             }
 
             /* steps 2-3 */
             // stack: [(lref), cx, value, propertyName] -> [(lref), v]
-            mv.lineInfo(node);
-            if (type == ValType.String) {
-                mv.invoke(Methods.AbstractOperations_GetV_String);
-            } else {
-                mv.invoke(Methods.AbstractOperations_GetV);
-            }
+            emitGetV(node, type);
 
             /* steps 4-5 */
             // stack: [(lref), v] -> [(lref), v']
@@ -494,8 +505,8 @@ final class DestructuringAssignmentGenerator {
     /**
      * 12.14.5.4 Runtime Semantics: KeyedDestructuringAssignmentEvaluation
      */
-    private static final class LiteralKeyedDestructuringAssignmentEvaluation extends
-            KeyedDestructuringAssignmentEvaluation<String> {
+    private static final class LiteralKeyedDestructuringAssignmentEvaluation
+            extends KeyedDestructuringAssignmentEvaluation<String> {
         private final Variable<HashSet<?>> propertyNames;
 
         LiteralKeyedDestructuringAssignmentEvaluation(CodeGenerator codegen, CodeVisitor mv, Variable<Object> value,
@@ -512,6 +523,11 @@ final class DestructuringAssignmentGenerator {
                 mv.invoke(Methods.HashSet_add);
                 mv.pop();
             }
+            long index = IndexedMap.toIndex(propertyName);
+            if (IndexedMap.isIndex(index)) {
+                mv.lconst(index);
+                return ValType.Number_uint;
+            }
             mv.aconst(propertyName);
             return ValType.String;
         }
@@ -525,8 +541,8 @@ final class DestructuringAssignmentGenerator {
     /**
      * 12.14.5.4 Runtime Semantics: KeyedDestructuringAssignmentEvaluation
      */
-    private static final class ComputedKeyedDestructuringAssignmentEvaluation extends
-            KeyedDestructuringAssignmentEvaluation<ComputedPropertyName> {
+    private static final class ComputedKeyedDestructuringAssignmentEvaluation
+            extends KeyedDestructuringAssignmentEvaluation<ComputedPropertyName> {
         private final Variable<HashSet<?>> propertyNames;
 
         ComputedKeyedDestructuringAssignmentEvaluation(CodeGenerator codegen, CodeVisitor mv, Variable<Object> value,
@@ -543,13 +559,13 @@ final class DestructuringAssignmentGenerator {
             // Runtime Semantics: Evaluation
             // ComputedPropertyName : [ AssignmentExpression ]
             ValType propType = expression(propertyName.getExpression(), mv);
-            ValType keyType = ToPropertyKey(propType, mv);
+            ToPropertyKey(propType, mv);
             if (propertyNames != null) {
                 mv.dupX1();
                 mv.invoke(Methods.HashSet_add);
                 mv.pop();
             }
-            return keyType;
+            return ValType.Any;
         }
 
         @Override

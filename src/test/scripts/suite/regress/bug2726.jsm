@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -14,7 +14,7 @@ const {
 import* as self from "./bug2726.jsm";
 export var a = 123;
 
-let keys = [...self[Symbol.iterator]()];
+let keys = Object.getOwnPropertyNames(self);
 assertSame(1, keys.length);
 assertSame("a", keys[0]);
 assertDataProperty(self, "a", {value: 123, writable: true, enumerable: true, configurable: false});

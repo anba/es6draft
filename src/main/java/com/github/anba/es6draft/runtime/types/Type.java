@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -8,6 +8,8 @@ package com.github.anba.es6draft.runtime.types;
 
 import static com.github.anba.es6draft.runtime.types.Null.NULL;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
+
+import java.math.BigInteger;
 
 import org.mozilla.javascript.ConsString;
 
@@ -50,6 +52,10 @@ public enum Type {
 
     /** Extension: SIMD */
     SIMD,
+
+    /** Extension: BigInt */
+    BigInt,
+
     ;
 
     @Override
@@ -71,6 +77,8 @@ public enum Type {
             return "object";
         case SIMD:
             return "SIMD";
+        case BigInt:
+            return "bigint";
         default:
             throw new AssertionError();
         }
@@ -105,6 +113,9 @@ public enum Type {
         if (value instanceof SIMDValue) {
             return SIMD;
         }
+        if (value instanceof BigInteger) {
+            return BigInt;
+        }
         assert value instanceof ScriptObject : (value != null ? value.getClass() : "<null>");
         return Object;
     }
@@ -136,6 +147,9 @@ public enum Type {
             return true;
         }
         if (value instanceof SIMDValue) {
+            return true;
+        }
+        if (value instanceof BigInteger) {
             return true;
         }
         if (value instanceof ScriptObject) {
@@ -265,6 +279,18 @@ public enum Type {
     }
 
     /**
+     * Short cut for:<br>
+     * <code>Type.of(value) == Type.BigInt</code>
+     * 
+     * @param value
+     *            the value object
+     * @return {@code true} if the value is a BigInt value
+     */
+    public static boolean isBigInt(Object value) {
+        return value instanceof BigInteger;
+    }
+
+    /**
      * If {@code value} is a Boolean type, its value is returned. Otherwise a {@link ClassCastException} is thrown.
      * 
      * @param value
@@ -340,5 +366,16 @@ public enum Type {
      */
     public static SIMDValue simdValue(Object value) {
         return (SIMDValue) value;
+    }
+
+    /**
+     * If {@code value} is a BigInt type, its value is returned. Otherwise a {@link ClassCastException} is thrown.
+     * 
+     * @param value
+     *            the value object
+     * @return the BigInt value
+     */
+    public static BigInteger bigIntValue(Object value) {
+        return (BigInteger) value;
     }
 }

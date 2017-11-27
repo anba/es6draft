@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -32,9 +32,8 @@ public final class ObservableObject extends OrdinaryObject {
      *            the prototype object
      */
     ObservableObject(Realm realm, Callable subscriber, ScriptObject prototype) {
-        super(realm);
+        super(realm, prototype);
         this.subscriber = subscriber;
-        setPrototype(prototype);
     }
 
     /**

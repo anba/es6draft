@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -11,11 +11,11 @@
  */
 
 function reportFailure(reason) {
-  return $async_enqueueTask(() => { throw reason });
+  return $async_enqueueJob(() => { throw reason });
 }
 
-function queueTask(task) {
-  return $async_enqueueTask(task);
+function queueJob(job) {
+  return $async_enqueueJob(job);
 }
 
 global.done = function done() {
@@ -124,7 +124,7 @@ class TestSuite {
     }
     if (testCase.async) {
       callDone(testCase);
-      queueTask(() => { this.drainQueue() });
+      queueJob(() => { this.drainQueue() });
     }
   }
 

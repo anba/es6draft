@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -54,11 +54,11 @@ public class PromiseObject extends OrdinaryObject {
         return String.format("%s, state=%s", super.toString(), state);
     }
 
-    /*package*/void notifyRejectReaction(PromiseReaction reaction) {
+    void notifyRejectReaction(PromiseReaction reaction) {
         // override in sub-class
     }
 
-    /*package*/void notifyReject(Object reason) {
+    void notifyReject(Object reason) {
         // override in sub-class
     }
 

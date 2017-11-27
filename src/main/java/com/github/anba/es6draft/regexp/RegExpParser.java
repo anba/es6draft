@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -10,14 +10,21 @@ import static com.github.anba.es6draft.parser.Characters.*;
 
 import java.util.Arrays;
 import java.util.BitSet;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Locale;
+import java.util.Map;
+import java.util.function.IntPredicate;
 import java.util.regex.Pattern;
 
 import org.joni.Config;
 
+import com.github.anba.es6draft.parser.Characters;
 import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.parser.ParserException.ExceptionType;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.Messages;
+import com.github.anba.es6draft.runtime.internal.RuntimeContext;
 
 /**
  * <h1>21 Text Processing</h1><br>
@@ -28,27 +35,38 @@ import com.github.anba.es6draft.runtime.internal.Messages;
  * </ul>
  */
 public final class RegExpParser {
+    private static final boolean UNICODE_PROPERTY_TESTER_ENABLED = true;
     private static final int BACKREF_LIMIT = 0xFFFF;
     private static final int DEPTH_LIMIT = 0xFFFF;
     private static final char[] HEXDIGITS = new char[] { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B',
             'C', 'D', 'E', 'F' };
 
-    // CharacterClass \w ~ [a-zA-Z0-9_] and LATIN SMALL LETTER LONG S and KELVIN SIGN
-    private static final String characterClass_wu = "a-zA-Z0-9_\\u017f\\u212a";
-    // CharacterClass \W ~ [\u0000-\u002F\u003A-\u0040\u005B-\u005E\u0060\u007B-\x{10ffff}]
-    private static final String characterClass_Wu = "\\u0000-\\u002F\\u003A-\\u0040\\u005B-\\u005E\\u0060\\u007B-\\x{10ffff}\\x53\\x73\\x4B\\x6B";
-    // [] => matches nothing
-    private static final String emptyCharacterClass = "(?:\\Z )";
-    // [^] => matches everything
-    private static final String emptyNegCharacterClass = "(?s:.)";
+    /** \w ~ [a-zA-Z0-9_] and LATIN SMALL LETTER LONG S and KELVIN SIGN */
+    private static final String characterClass_wui = "a-zA-Z0-9_\\u017F\\u212A";
+    /** \W ~ [\u0000-\u002F\u003A-\u0040\u005B-\u005E\u0060\u007B-\u017E\u0180-\u2129\u212B-\x{10FFFF}] */
+    private static final String characterClass_Wui = "\\u0000-\\u002F\\u003A-\\u0040\\u005B-\\u005E\\u0060\\u007B-\\u017E\\u0180-\\u2129\\u212B-\\x{10FFFF}";
+    /** \b ~ {@literal (?:(?=\w)(?<!\w)|(?<=\w)(?!\w))} */
+    private static final String assertion_bui = String.format(Locale.US,
+            "(?:(?=[%1$s])(?<![%1$s])|(?<=[%1$s])(?![%1$s]))", characterClass_wui);
+    /** \B ~ {@literal (?:(?=\w)(?<=\w)|(?<!\w)(?!\w))} */
+    private static final String assertion_Bui = String.format(Locale.US,
+            "(?:(?=[%1$s])(?<=[%1$s])|(?<![%1$s])(?![%1$s]))", characterClass_wui);
+    /** {@literal .} in {@link Pattern#DOTALL} mode */
+    private static final String dotAll = "(?s:.)";
 
     private final String source;
     private final int length;
+    private final int flags;
     private final String sourceFile;
     private final int sourceLine;
     private final int sourceColumn;
-    private final int flags;
     private final boolean webRegExp;
+    private final boolean lookBehind;
+    private final boolean namedCapture;
+    private final boolean unicodeProperties;
+    private final boolean possessive;
+
+    // Normalized regular expression.
     private final StringBuilder out;
 
     // Current source position.
@@ -57,31 +75,196 @@ public final class RegExpParser {
     // Map of groups created within negative lookahead.
     private final BitSet negativeLAGroups = new BitSet();
 
-    private RegExpParser(String source, String flags, String sourceFile, int sourceLine, int sourceColumn,
-            boolean webRegExp) {
+    // Map of named capturing groups.
+    private final Map<String, Integer> namedGroups;
+
+    private RegExpParser(RuntimeContext context, String source, int flags, String sourceFile, int sourceLine,
+            int sourceColumn) {
         this.source = source;
         this.length = source.length();
+        this.flags = flags;
         this.sourceFile = sourceFile;
         this.sourceLine = sourceLine;
         this.sourceColumn = sourceColumn;
-        // Call after source information was set
-        this.flags = toFlags(flags);
-        this.webRegExp = webRegExp;
+        this.webRegExp = context.isEnabled(CompatibilityOption.WebRegularExpressions);
+        this.lookBehind = context.isEnabled(CompatibilityOption.RegExpLookBehind);
+        this.namedCapture = context.isEnabled(CompatibilityOption.RegExpNamedCapture);
+        this.unicodeProperties = isUnicode() && context.isEnabled(CompatibilityOption.RegExpUnicodeProperties);
+        this.possessive = context.isEnabled(CompatibilityOption.RegExpPossessive);
+        this.namedGroups = namedCapture ? new LinkedHashMap<>() : Collections.emptyMap();
         this.out = new StringBuilder(length);
     }
 
-    public static RegExpMatcher parse(String pattern, String flags, String sourceFile, int sourceLine, int sourceColumn,
-            boolean webRegExp) throws ParserException {
-        RegExpParser parser = new RegExpParser(pattern, flags, sourceFile, sourceLine, sourceColumn, webRegExp);
+    public static RegExpMatcher parse(RuntimeContext context, String pattern, String flags, String sourceFile,
+            int sourceLine, int sourceColumn) throws ParserException {
+        int iflags = parseFlags(context, flags, sourceFile, sourceLine, sourceColumn);
+        if ((iflags & Pattern.CASE_INSENSITIVE) == 0 && isSimpleRegExp(pattern)) {
+            return new SimpleRegExpMatcher(pattern);
+        }
+        if (iflags == Pattern.UNICODE_CASE && context.isEnabled(CompatibilityOption.RegExpUnicodeProperties)
+                && isUnicodePropertyTester(pattern)) {
+            SimpleUnicodeRegExpMatcher matcher = createUnicodePropertyMatcher(pattern);
+            if (matcher != null) {
+                return matcher;
+            }
+        }
+        RegExpParser parser = new RegExpParser(context, pattern, iflags, sourceFile, sourceLine, sourceColumn);
         parser.pattern();
-
-        return new JoniRegExpMatcher(parser.out.toString(), parser.flags, parser.negativeLAGroups);
+        return new JoniRegExpMatcher(parser.out.toString(), parser.flags, parser.negativeLAGroups, parser.namedGroups);
     }
 
-    public static void syntaxParse(String pattern, String flags, String sourceFile, int sourceLine, int sourceColumn,
-            boolean webRegExp) throws ParserException {
-        RegExpParser parser = new RegExpParser(pattern, flags, sourceFile, sourceLine, sourceColumn, webRegExp);
-        parser.pattern();
+    public static void syntaxParse(RuntimeContext context, String pattern, String flags, String sourceFile,
+            int sourceLine, int sourceColumn) throws ParserException {
+        int iflags = parseFlags(context, flags, sourceFile, sourceLine, sourceColumn);
+        if (!isSimpleRegExp(pattern)) {
+            RegExpParser parser = new RegExpParser(context, pattern, iflags, sourceFile, sourceLine, sourceColumn);
+            parser.pattern();
+        }
+    }
+
+    private static boolean isSimpleRegExp(String pattern) {
+        for (int i = 0; i < pattern.length(); ++i) {
+            char c = pattern.charAt(i);
+            if (isSyntaxCharacter(c)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static boolean isUnicodePropertyTester(String pattern) {
+        if (!UNICODE_PROPERTY_TESTER_ENABLED) {
+            return false;
+        }
+        // Accept pattern: ^\p{...}+$ (complete string)
+        // Accept pattern: ^\p{...}+ (starts with)
+        // Accept pattern: \p{...}+ (contains)
+        final int length = pattern.length();
+
+        int start = 0;
+        if (start < length && pattern.charAt(start) == '^') {
+            start += 1;
+        }
+        if (!(start < length && pattern.charAt(start) == '\\')) {
+            return false;
+        }
+        start += 1;
+        if (!(start < length && (pattern.charAt(start) == 'p') || pattern.charAt(start) == 'P')) {
+            return false;
+        }
+        start += 1;
+        if (!(start < length && pattern.charAt(start) == '{')) {
+            return false;
+        }
+        start += 1;
+
+        int end = length - 1;
+        if (end >= 0 && pattern.charAt(end) == '$' && pattern.charAt(0) == '^') {
+            end -= 1;
+        }
+        if (end >= 0 && pattern.charAt(end) == '+') {
+            end -= 1;
+        }
+        if (!(end >= 0 && pattern.charAt(end) == '}')) {
+            return false;
+        }
+        end -= 1;
+
+        boolean hasEquals = false;
+        for (int i = start; i <= end; ++i) {
+            char c = pattern.charAt(i);
+            if (isASCIIAlphaNumericUnderscore(c)) {
+                continue;
+            }
+            if (c == '=' && i > start && !hasEquals) {
+                hasEquals = true;
+                continue;
+            }
+            return false;
+        }
+        return true;
+    }
+
+    private static SimpleUnicodeRegExpMatcher createUnicodePropertyMatcher(String pattern) {
+        int start = 0, end = pattern.length() - 1;
+        boolean startsWith = pattern.charAt(start) == '^';
+        if (startsWith) {
+            start += 1;
+        }
+        boolean inverse = pattern.charAt(start + 1) == 'P';
+        boolean endsWith = pattern.charAt(end) == '$';
+        if (endsWith) {
+            end -= 1;
+        }
+        boolean plus = pattern.charAt(end) == '+';
+        if (plus) {
+            end -= 1;
+        }
+
+        IntPredicate predicate;
+        String unicodeProperty = pattern.substring(start + 3, end);
+        int equals = unicodeProperty.indexOf('=');
+        if (equals < 0) {
+            // UnicodePropertyValueExpression :: LoneUnicodePropertyNameOrValue
+            String name = unicodeProperty;
+            if (UnicodeData.EnumProperty.General_Category.isValue(name)) {
+                predicate = UnicodeData.EnumProperty.General_Category.predicate(name);
+            } else {
+                switch (name) {
+                case "Any":
+                    predicate = c -> Character.MIN_CODE_POINT <= c && c <= Character.MAX_CODE_POINT;
+                    break;
+                case "ASCII":
+                    predicate = c -> Character.MIN_CODE_POINT <= c && c <= 0x7f;
+                    break;
+                case "Assigned":
+                    predicate = UnicodeData.EnumProperty.General_Category.predicate("Cn");
+                    inverse = !inverse;
+                    break;
+                default:
+                    UnicodeData.Property property = UnicodeData.Property.from(name);
+                    if (!(property instanceof UnicodeData.BinaryProperty)) {
+                        return null;
+                    }
+                    predicate = ((UnicodeData.BinaryProperty) property).predicate();
+                    break;
+                }
+            }
+        } else {
+            // UnicodePropertyValueExpression :: UnicodePropertyName=UnicodePropertyValue
+            String name = unicodeProperty.substring(0, equals);
+            String value = unicodeProperty.substring(equals + 1);
+            UnicodeData.Property property = UnicodeData.Property.from(name);
+            if (!(property instanceof UnicodeData.EnumProperty)) {
+                return null;
+            }
+            UnicodeData.EnumProperty enumProperty = (UnicodeData.EnumProperty) property;
+            if (!enumProperty.isValue(value)) {
+                return null;
+            }
+            predicate = enumProperty.predicate(value);
+        }
+        if (inverse) {
+            predicate = predicate.negate();
+        }
+
+        SimpleUnicodeRegExpMatcher.Term term;
+        if (plus) {
+            term = SimpleUnicodeRegExpMatcher.plus(predicate);
+        } else {
+            term = SimpleUnicodeRegExpMatcher.character(predicate);
+        }
+
+        SimpleUnicodeRegExpMatcher.Matcher matcher;
+        if (startsWith && endsWith) {
+            matcher = SimpleUnicodeRegExpMatcher.stringMatches(term);
+        } else if (startsWith && !endsWith) {
+            matcher = SimpleUnicodeRegExpMatcher.startsWith(term);
+        } else {
+            assert !startsWith && !endsWith;
+            matcher = SimpleUnicodeRegExpMatcher.contains(term, predicate);
+        }
+        return new SimpleUnicodeRegExpMatcher(pattern, matcher);
     }
 
     private ParserException error(Messages.Key messageKey, String... args) {
@@ -89,61 +272,104 @@ public final class RegExpParser {
                 args);
     }
 
+    private ParserException error(Messages.Key messageKey, int offset, String... args) {
+        throw new ParserException(ExceptionType.SyntaxError, sourceFile, sourceLine, sourceColumn + pos + offset,
+                messageKey, args);
+    }
+
     private ParserException error(Messages.Key messageKey, int offset, char offending) {
         throw new ParserException(ExceptionType.SyntaxError, sourceFile, sourceLine, sourceColumn + pos + offset,
                 messageKey, String.valueOf(offending));
     }
 
-    private int toFlags(String flags) {
-        // flags :: g | i | m | u | y
-        final int global = 0b00001, ignoreCase = 0b00010, multiline = 0b00100, unicode = 0b01000, sticky = 0b10000;
-        int mask = 0b00000;
-        for (int i = 0, len = flags.length(); i < len; ++i) {
-            char c = flags.charAt(i);
-            int flag;
-            String name;
-            switch (c) {
-            case 'g':
-                flag = global;
-                name = "global";
-                break;
-            case 'i':
-                flag = ignoreCase;
-                name = "ignoreCase";
-                break;
-            case 'm':
-                flag = multiline;
-                name = "multiline";
-                break;
-            case 'u':
-                flag = unicode;
-                name = "unicode";
-                break;
-            case 'y':
-                flag = sticky;
-                name = "sticky";
-                break;
-            default:
-                throw error(Messages.Key.RegExpInvalidFlag, String.valueOf(c));
-            }
-            if ((mask & flag) == 0) {
-                mask |= flag;
-            } else {
-                throw error(Messages.Key.RegExpDuplicateFlag, name);
-            }
-        }
+    private ParserException errorAt(Messages.Key messageKey, int pos, String... args) {
+        throw new ParserException(ExceptionType.SyntaxError, sourceFile, sourceLine, sourceColumn + pos, messageKey,
+                args);
+    }
 
-        int iflags = 0;
-        if ((mask & ignoreCase) != 0) {
-            iflags |= Pattern.CASE_INSENSITIVE;
+    private static int parseFlags(RuntimeContext context, String flags, String sourceFile, int sourceLine,
+            int sourceColumn) {
+        boolean allowDotAll = context.isEnabled(CompatibilityOption.RegExpDotAll);
+        int mask = 0;
+        for (int i = 0; i < flags.length(); ++i) {
+            char c = flags.charAt(i);
+            int flag = flagMask(c, allowDotAll);
+            if (flag < 0) {
+                throw new ParserException(ExceptionType.SyntaxError, sourceFile, sourceLine, sourceColumn,
+                        Messages.Key.RegExpInvalidFlag, String.valueOf(c));
+            }
+            if ((mask & flag) != 0) {
+                throw new ParserException(ExceptionType.SyntaxError, sourceFile, sourceLine, sourceColumn,
+                        Messages.Key.RegExpDuplicateFlag, flagName(c));
+            }
+            mask |= flag;
         }
-        if ((mask & unicode) != 0) {
-            iflags |= Pattern.UNICODE_CASE;
+        return toPatternFlags(mask);
+    }
+
+    // flags :: g | i | m | u | y
+    private static final class Flags {
+        static final int GLOBAL = 0x01;
+        static final int IGNORE_CASE = 0x02;
+        static final int MULTILINE = 0x04;
+        static final int UNICODE = 0x08;
+        static final int STICKY = 0x10;
+        static final int DOTALL = 0x20;
+    }
+
+    private static int toPatternFlags(int mask) {
+        int flags = 0;
+        if ((mask & Flags.IGNORE_CASE) != 0) {
+            flags |= Pattern.CASE_INSENSITIVE;
         }
-        if ((mask & multiline) != 0) {
-            iflags |= Pattern.MULTILINE;
+        if ((mask & Flags.UNICODE) != 0) {
+            flags |= Pattern.UNICODE_CASE;
         }
-        return iflags;
+        if ((mask & Flags.MULTILINE) != 0) {
+            flags |= Pattern.MULTILINE;
+        }
+        if ((mask & Flags.DOTALL) != 0) {
+            flags |= Pattern.DOTALL;
+        }
+        return flags;
+    }
+
+    private static int flagMask(char c, boolean allowDotAll) {
+        switch (c) {
+        case 'g':
+            return Flags.GLOBAL;
+        case 'i':
+            return Flags.IGNORE_CASE;
+        case 'm':
+            return Flags.MULTILINE;
+        case 'u':
+            return Flags.UNICODE;
+        case 'y':
+            return Flags.STICKY;
+        case 's':
+            return allowDotAll ? Flags.DOTALL : -1;
+        default:
+            return -1;
+        }
+    }
+
+    private static String flagName(char c) {
+        switch (c) {
+        case 'g':
+            return "global";
+        case 'i':
+            return "ignoreCase";
+        case 'm':
+            return "multiline";
+        case 'u':
+            return "unicode";
+        case 'y':
+            return "sticky";
+        case 's':
+            return "dotAll";
+        default:
+            throw new AssertionError();
+        }
     }
 
     /**
@@ -168,6 +394,17 @@ public final class RegExpParser {
         return (flags & Pattern.MULTILINE) != 0;
     }
 
+    private boolean isDotAll() {
+        return (flags & Pattern.DOTALL) != 0;
+    }
+
+    private void resetParser() {
+        out.setLength(0);
+        pos = 0;
+        negativeLAGroups.clear();
+        namedGroups.clear();
+    }
+
     private void reset(int p) {
         pos = p;
     }
@@ -188,6 +425,12 @@ public final class RegExpParser {
         return c;
     }
 
+    private String substr(int len) {
+        String s = source.substring(pos, pos + len);
+        pos += len;
+        return s;
+    }
+
     private boolean match(char c) {
         if (c == peek(0)) {
             get();
@@ -197,7 +440,7 @@ public final class RegExpParser {
     }
 
     private char mustMatch(char c) {
-        if (c != get()) {
+        if (!match(c)) {
             throw error(Messages.Key.RegExpUnexpectedCharacter, String.valueOf(c));
         }
         return c;
@@ -322,6 +565,78 @@ public final class RegExpParser {
         return -1;
     }
 
+    private String readGroupName() {
+        boolean unicode = isUnicode();
+        StringBuilder name = new StringBuilder();
+        while (!eof()) {
+            int c = get(unicode);
+            if (c == '>') {
+                if (name.length() == 0) {
+                    break;
+                }
+                pos -= 1;
+                return name.toString();
+            }
+            // Unicode escape sequence
+            if (c == '\\' && match('u')) {
+                if (unicode && match('{')) {
+                    c = readExtendedUnicodeEscapeSequence();
+                } else {
+                    c = readUnicodeEscapeSequence();
+                }
+                if (c < 0) {
+                    throw error(Messages.Key.InvalidUnicodeEscape);
+                }
+            }
+            if (!(name.length() == 0 ? Characters.isIdentifierStart(c) : Characters.isIdentifierPart(c))) {
+                break;
+            }
+            name.appendCodePoint(c);
+        }
+        throw error(Messages.Key.RegExpInvalidGroup);
+    }
+
+    /**
+     * <pre>
+     * UnicodePropertyValueExpression ::
+     *     UnicodePropertyName = UnicodePropertyValue
+     *     LoneUnicodePropertyNameOrValue
+     * </pre>
+     * 
+     * @return the property value tuple [name, value]
+     */
+    private String[] readUnicodePropertyValueExpression() {
+        int i = 0, sep = -1;
+        for (; !eof(); ++i) {
+            char c = peek(i);
+            if (c == '}') {
+                if (i == 0 || (sep != -1 && sep + 1 == i)) {
+                    break;
+                }
+                String name, value;
+                if (sep == -1) {
+                    name = substr(i);
+                    value = null;
+                } else {
+                    name = substr(sep);
+                    mustMatch('=');
+                    value = substr(i - sep - 1);
+                }
+                mustMatch('}');
+                return new String[] { name, value };
+            }
+            if (c == '=') {
+                if (i == 0 || sep != -1) {
+                    break;
+                }
+                sep = i;
+            } else if (!isASCIIAlphaNumericUnderscore(c)) {
+                break;
+            }
+        }
+        throw error(Messages.Key.RegExpInvalidUnicodeProperty, i + 1);
+    }
+
     /**
      * <pre>
      * CharacterClass<span><sub>[U]</sub></span>  ::
@@ -375,18 +690,14 @@ public final class RegExpParser {
     private void characterClass() {
         final StringBuilder out = this.out;
         boolean negation = match('^');
-        if (match(']')) {
-            // empty character class
-            out.append(!negation ? emptyCharacterClass : emptyNegCharacterClass);
-            return;
-        }
+
         out.append('[');
         if (negation) {
             out.append('^');
         }
-
         final boolean unicode = isUnicode();
         final boolean web = isWebRegularExpression();
+        int startCClass = out.length();
         int rangeStartCV = 0;
         boolean inRange = false, inCCRange = false;
         charclass: for (;;) {
@@ -397,6 +708,12 @@ public final class RegExpParser {
             final int cv, c = get(unicode);
             classatom: switch (c) {
             case ']':
+                if (startCClass == out.length()) {
+                    // Empty character class: [] or [^]. This case can also happen for "\P{Any}". Treat "[\P{Any}]"
+                    // like "[]", and "[^\P{Any}]" like "[^]".
+                    // Output an empty range by using b-a.
+                    out.append("b-a");
+                }
                 out.append(']');
                 return;
             case '\\': {
@@ -432,6 +749,22 @@ public final class RegExpParser {
                     }
                     continue charclass;
                 }
+
+                case 'p':
+                case 'P':
+                    if (unicodeProperties) {
+                        boolean inverse = get() == 'P';
+                        if (!match('{')) {
+                            throw error(Messages.Key.RegExpInvalidEscape, inverse ? "P" : "p");
+                        }
+                        String[] nameValue = readUnicodePropertyValueExpression();
+                        if (inRange || (peek(0) == '-' && peek(1) != ']')) {
+                            throw error(Messages.Key.RegExpInvalidCharacterRange);
+                        }
+                        unicodeProperty(nameValue[0], nameValue[1], inverse, true);
+                        continue charclass;
+                    }
+                    break;
 
                 case '-': {
                     // ClassEscape :: [+U] -
@@ -567,20 +900,19 @@ public final class RegExpParser {
                     cv = d;
                     break classatom;
                 }
+                }
 
-                default: {
-                    if (eof()) {
-                        throw error(Messages.Key.RegExpTrailingSlash);
-                    }
-                    int d = get(unicode);
-                    if (unicode ? !isSyntaxCharacterOrSlash(d) : !web && isUnicodeIDContinue(d)) {
-                        throw error(Messages.Key.RegExpInvalidEscape, new String(Character.toChars(d)));
-                    }
-                    appendIdentityEscape(d);
-                    cv = d;
-                    break classatom;
+                // IdentityEscape
+                if (eof()) {
+                    throw error(Messages.Key.RegExpTrailingSlash);
                 }
+                int d = get(unicode);
+                if (unicode ? !isSyntaxCharacterOrSlash(d) : !web && isUnicodeIDContinue(d)) {
+                    throw error(Messages.Key.RegExpInvalidEscape, new String(Character.toChars(d)));
                 }
+                appendIdentityEscape(d);
+                cv = d;
+                break classatom;
             }
             case '-':
             case '[':
@@ -728,54 +1060,85 @@ public final class RegExpParser {
         final boolean web = isWebRegularExpression();
         final StringBuilder out = this.out;
 
-        // map of valid groups
-        BitSet validGroups = new BitSet();
-        // number of groups
-        int groups = 0;
-        // maximum back-reference found
-        int backrefmax = 0;
-        // back-reference limit
-        int backreflimit = BACKREF_LIMIT;
-        // current depths
-        int depth = 0;
-        int negativedepth = 0;
-        // map: depth -> negative
-        BitSet negativeGroup = new BitSet();
-        // map: depth -> positive
-        BitSet positiveGroup = new BitSet();
-        // map: depth -> capturing
-        BitSet capturingGroup = new BitSet();
-        // stack: groups
-        int[] groupStack = new int[8];
-        int groupStackSP = 0;
+        final class State {
+            // map of valid groups
+            final BitSet validGroups = new BitSet();
+            // number of groups
+            int groups = 0;
+            // maximum back-reference found
+            int backrefmax = 0;
+            // back-reference limit
+            int backreflimit = BACKREF_LIMIT;
+            // current depths
+            int depth = 0;
+            // map: depth -> negative
+            final BitSet negativeGroup = new BitSet();
+            // map: depth -> positive
+            final BitSet positiveGroup = new BitSet();
+            // map: depth -> capturing
+            final BitSet capturingGroup = new BitSet();
+            // map: depth -> lookbehind
+            final BitSet lookbehindGroup = new BitSet();
+            // stack: groups
+            int[] groupStack = new int[8];
+            int groupStackSP = 0;
+            // Map of unresolved named capturing groups.
+            final Map<String, Integer> unresolvedNamedGroups = namedCapture ? new LinkedHashMap<>()
+                    : Collections.emptyMap();
+            boolean namedBackref = namedCapture && (!web || unicode);
+            boolean namedBackrefSeen = false;
+
+            void resetForNamedBackref() {
+                // Reset all locals except 'backreflimit'.
+                validGroups.clear();
+                groups = 0;
+                backrefmax = 0;
+                depth = 0;
+                negativeGroup.clear();
+                positiveGroup.clear();
+                capturingGroup.clear();
+                lookbehindGroup.clear();
+                groupStackSP = 0;
+                unresolvedNamedGroups.clear();
+            }
+
+            void resetForBackrefLimit() {
+                // remember correct back reference limit
+                backreflimit = groups;
+                assert backreflimit != BACKREF_LIMIT;
+                // reset locals
+                validGroups.clear();
+                unresolvedNamedGroups.clear();
+                groups = 0;
+                backrefmax = 0;
+                // assert other locals don't carry any state
+                assert depth == 0;
+                assert negativeGroup.isEmpty();
+                assert positiveGroup.isEmpty();
+                assert capturingGroup.isEmpty();
+                assert lookbehindGroup.isEmpty();
+                assert groupStackSP == 0;
+            }
+        }
+
+        State state = new State();
 
         term: for (;;) {
             if (eof()) {
-                if (depth > 0) {
+                if (state.depth > 0) {
                     throw error(Messages.Key.RegExpUnmatchedCharacter, "(");
                 }
-                if (backrefmax > groups && backreflimit == BACKREF_LIMIT) {
+                if (state.backrefmax > state.groups && state.backreflimit == BACKREF_LIMIT) {
                     // discard state and restart parsing
-                    out.setLength(0);
-                    pos = 0;
-                    negativeLAGroups.clear();
-                    // remember correct back reference limit
-                    backreflimit = groups;
-                    assert backreflimit != BACKREF_LIMIT;
-                    // reset locals
-                    validGroups.clear();
-                    groups = 0;
-                    backrefmax = 0;
-                    // assert other locals don't carry any state
-                    assert depth == 0;
-                    assert negativedepth == 0;
-                    assert negativeGroup.isEmpty();
-                    assert positiveGroup.isEmpty();
-                    assert capturingGroup.isEmpty();
-                    assert groupStackSP == 0;
+                    resetParser();
+                    state.resetForBackrefLimit();
                     continue term;
                 }
-                assert backrefmax <= groups;
+                assert state.backrefmax <= state.groups;
+                if (!state.unresolvedNamedGroups.isEmpty()) {
+                    Map.Entry<String, Integer> unresolved = state.unresolvedNamedGroups.entrySet().iterator().next();
+                    throw errorAt(Messages.Key.RegExpUnknownGroup, unresolved.getValue(), unresolved.getKey());
+                }
                 return;
             }
 
@@ -802,6 +1165,9 @@ public final class RegExpParser {
                 if (isMultiline()) {
                     out.append((char) c);
                 } else {
+                    if (!state.lookbehindGroup.isEmpty()) {
+                        error(Messages.Key.RegExpAssertionInLookbehind);
+                    }
                     out.append("\\z");
                 }
                 continue term;
@@ -812,7 +1178,7 @@ public final class RegExpParser {
                 case 'b':
                 case 'B':
                     // Assertion
-                    out.append('\\').append(get());
+                    appendWordBoundary(get(), !state.lookbehindGroup.isEmpty());
                     continue term;
                 case 'f':
                 case 'n':
@@ -906,7 +1272,7 @@ public final class RegExpParser {
                     // DecimalEscape - back-reference or invalid escape
                     int start = pos;
                     int num = readDecimalEscape();
-                    if (num > backreflimit) {
+                    if (num > state.backreflimit) {
                         // invalid backreference -> roll back to start of decimal escape
                         reset(start);
                         if (!web || unicode) {
@@ -920,39 +1286,88 @@ public final class RegExpParser {
                             appendByteCodeUnit(get());
                         }
                     } else {
-                        if (num > backrefmax) {
-                            backrefmax = num;
+                        if (num > state.backrefmax) {
+                            state.backrefmax = num;
                         }
-                        if (num <= groups && validGroups.get(num)) {
-                            out.append('\\').append(num);
+                        if (state.lookbehindGroup.isEmpty()) {
+                            if (num <= state.groups && state.validGroups.get(num)) {
+                                out.append('\\').append(num);
+                            } else {
+                                // omit forward reference or backward reference into capturing group
+                                // from negative lookahead
+                                out.append("(?:)");
+                            }
                         } else {
-                            // omit forward reference or backward reference into capturing group
-                            // from negative lookahead
-                            out.append("(?:)");
+                            // Joni doesn't support back-references in lookbehind groups.
+                            throw error(Messages.Key.RegExpBackreferenceInLookbehind);
                         }
                     }
                     break atom;
                 }
 
-                default: {
-                    // CharacterEscape :: IdentityEscape
-                    if (eof()) {
-                        throw error(Messages.Key.RegExpTrailingSlash);
+                case 'k':
+                    if (namedCapture) {
+                        state.namedBackrefSeen = true;
+                        if (!state.namedBackref) {
+                            break;
+                        }
+                        int start = pos;
+                        mustMatch('k');
+                        mustMatch('<');
+                        String name = readGroupName();
+                        mustMatch('>');
+                        int num = namedGroups.getOrDefault(name, -1);
+                        if (num < 0) {
+                            state.unresolvedNamedGroups.putIfAbsent(name, start);
+                            // omit forward reference
+                            out.append("(?:)");
+                        } else {
+                            assert 0 < num && num <= state.groups;
+                            if (state.lookbehindGroup.isEmpty()) {
+                                if (state.validGroups.get(num)) {
+                                    out.append('\\').append(num);
+                                } else {
+                                    // omit backward reference into capturing group from negative lookahead
+                                    out.append("(?:)");
+                                }
+                            } else {
+                                // Joni doesn't support back-references in lookbehind groups.
+                                throw error(Messages.Key.RegExpBackreferenceInLookbehind);
+                            }
+                        }
+                        break atom;
                     }
-                    int d = get(unicode);
-                    if (unicode ? !isSyntaxCharacterOrSlash(d) : !web && isUnicodeIDContinue(d)) {
-                        throw error(Messages.Key.RegExpInvalidEscape, new String(Character.toChars(d)));
+                    break;
+
+                case 'p':
+                case 'P':
+                    if (unicodeProperties) {
+                        boolean inverse = get() == 'P';
+                        if (!match('{')) {
+                            throw error(Messages.Key.RegExpInvalidEscape, inverse ? "P" : "p");
+                        }
+                        String[] nameValue = readUnicodePropertyValueExpression();
+                        unicodeProperty(nameValue[0], nameValue[1], inverse, false);
+                        break atom;
                     }
-                    appendIdentityEscape(d);
-                    break atom;
+                    break;
                 }
+
+                // CharacterEscape :: IdentityEscape
+                if (eof()) {
+                    throw error(Messages.Key.RegExpTrailingSlash);
                 }
+                int d = get(unicode);
+                if (unicode ? !isSyntaxCharacterOrSlash(d) : !web && isUnicodeIDContinue(d)) {
+                    throw error(Messages.Key.RegExpInvalidEscape, new String(Character.toChars(d)));
+                }
+                appendIdentityEscape(d);
+                break atom;
             }
 
             case '(': {
-                boolean negative = false, positive = false, capturing = false;
+                boolean negative = false, positive = false, capturing = false, behind = false;
                 if (match('?')) {
-                    // (?=X) or (?!X) or (?:X)
                     if (eof()) {
                         throw error(Messages.Key.RegExpUnexpectedCharacter, "?");
                     }
@@ -960,38 +1375,84 @@ public final class RegExpParser {
                     switch (d) {
                     case '!':
                         negative = true;
+                        out.append("(?!");
                         break;
                     case '=':
                         positive = true;
+                        out.append("(?=");
                         break;
                     case ':':
                         // non-capturing
+                        out.append("(?:");
                         break;
+                    case '<':
+                        if (lookBehind) {
+                            if (match('!')) {
+                                negative = true;
+                                behind = true;
+                                out.append("(?<!");
+                                break;
+                            }
+                            if (match('=')) {
+                                positive = true;
+                                behind = true;
+                                out.append("(?<=");
+                                break;
+                            }
+                        }
+                        if (namedCapture) {
+                            String name = readGroupName();
+                            mustMatch('>');
+                            if (!state.namedBackref) {
+                                state.namedBackref = true;
+                                if (state.namedBackrefSeen) {
+                                    // We have seen the named-capturing group reference syntax "\k<" before entering
+                                    // named-capturing mode; throw away the current state and restart parsing.
+                                    resetParser();
+                                    state.resetForNamedBackref();
+                                    continue term;
+                                }
+                            }
+                            if (namedGroups.containsKey(name)) {
+                                throw error(Messages.Key.RegExpDuplicateGroup, name);
+                            }
+                            namedGroups.put(name, state.groups + 1);
+                            state.unresolvedNamedGroups.remove(name);
+                            capturing = true;
+                            out.append('(');
+                            break;
+                        }
+                        // fall-through
                     default:
                         throw error(Messages.Key.RegExpUnexpectedCharacter, String.valueOf(d));
                     }
-                    out.append("(?").append(d);
                 } else {
                     capturing = true;
                     out.append('(');
                 }
-                depth += 1;
+                if (!state.lookbehindGroup.isEmpty() && (capturing || negative || positive)) {
+                    // Joni doesn't support nested capturing groups in lookbehind contexts.
+                    throw error(Messages.Key.RegExpCaptureInLookbehind);
+                }
+                state.depth += 1;
                 if (capturing) {
-                    groups += 1;
-                    capturingGroup.set(depth);
+                    state.groups += 1;
+                    state.capturingGroup.set(state.depth);
                 } else if (negative) {
-                    negativedepth += 1;
-                    negativeGroup.set(depth);
+                    state.negativeGroup.set(state.depth);
                 } else if (positive) {
-                    positiveGroup.set(depth);
+                    state.positiveGroup.set(state.depth);
+                }
+                if (behind) {
+                    state.lookbehindGroup.set(state.depth);
                 }
                 if (capturing || negative) {
-                    if (groupStackSP == groupStack.length) {
-                        groupStack = Arrays.copyOf(groupStack, groupStackSP << 1);
+                    if (state.groupStackSP == state.groupStack.length) {
+                        state.groupStack = Arrays.copyOf(state.groupStack, state.groupStackSP << 1);
                     }
-                    groupStack[groupStackSP++] = groups;
+                    state.groupStack[state.groupStackSP++] = state.groups;
                 }
-                if (depth >= DEPTH_LIMIT || groups >= BACKREF_LIMIT) {
+                if (state.depth >= DEPTH_LIMIT || state.groups >= BACKREF_LIMIT) {
                     throw error(Messages.Key.RegExpPatternTooComplex);
                 }
                 continue term;
@@ -999,32 +1460,33 @@ public final class RegExpParser {
 
             case ')': {
                 out.append(')');
-                if (depth == 0) {
+                if (state.depth == 0) {
                     throw error(Messages.Key.RegExpUnmatchedCharacter, ")");
                 }
                 boolean lookaround = false;
-                if (capturingGroup.get(depth)) {
-                    capturingGroup.clear(depth);
+                if (state.capturingGroup.get(state.depth)) {
+                    state.capturingGroup.clear(state.depth);
                     // update group information after parsing ")"
-                    int g = groupStack[--groupStackSP];
-                    validGroups.set(g);
-                    if (negativedepth > 0) {
+                    int g = state.groupStack[--state.groupStackSP];
+                    state.validGroups.set(g);
+                    if (!state.negativeGroup.isEmpty()) {
                         negativeLAGroups.set(g);
                     }
-                } else if (negativeGroup.get(depth)) {
-                    negativeGroup.clear(depth);
-                    // invalidate all capturing groups created within the negative lookahead
-                    int g = groupStack[--groupStackSP];
-                    for (int v = groups; v != g; --v) {
-                        validGroups.clear(v);
+                } else if (state.negativeGroup.get(state.depth)) {
+                    state.negativeGroup.clear(state.depth);
+                    state.lookbehindGroup.clear(state.depth);
+                    // invalidate all capturing groups created within the negative lookaround
+                    int g = state.groupStack[--state.groupStackSP];
+                    for (int v = state.groups; v != g; --v) {
+                        state.validGroups.clear(v);
                     }
-                    negativedepth -= 1;
                     lookaround = true;
-                } else if (positiveGroup.get(depth)) {
-                    positiveGroup.clear(depth);
+                } else if (state.positiveGroup.get(state.depth)) {
+                    state.positiveGroup.clear(state.depth);
+                    state.lookbehindGroup.clear(state.depth);
                     lookaround = true;
                 }
-                depth -= 1;
+                state.depth -= 1;
                 if (lookaround && (!web || unicode)) {
                     continue term;
                 }
@@ -1044,7 +1506,7 @@ public final class RegExpParser {
                 throw error(Messages.Key.RegExpInvalidQuantifier);
 
             case '{': {
-                if (quantifier((char) c)) {
+                if (quantifier((char) c, !state.lookbehindGroup.isEmpty())) {
                     // quantifier without applicable atom
                     throw error(Messages.Key.RegExpInvalidQuantifier);
                 }
@@ -1059,7 +1521,11 @@ public final class RegExpParser {
                 break atom;
 
             case '.':
-                out.append('.');
+                if (isDotAll()) {
+                    out.append(dotAll);
+                } else {
+                    out.append('.');
+                }
                 break atom;
 
             default: {
@@ -1074,7 +1540,7 @@ public final class RegExpParser {
             case '+':
             case '?':
             case '{':
-                if (!quantifier(get())) {
+                if (!quantifier(get(), !state.lookbehindGroup.isEmpty())) {
                     if (unicode || !web) {
                         throw error(Messages.Key.RegExpUnexpectedCharacter, "{");
                     }
@@ -1102,9 +1568,11 @@ public final class RegExpParser {
      * 
      * @param c
      *            the start character of the quantifier
+     * @param inLookBehind
+     *            {@code true} if in look-behind group
      * @return {@code true} if the input could be parsed as a quantifier
      */
-    private boolean quantifier(char c) {
+    private boolean quantifier(char c, boolean inLookBehind) {
         StringBuilder out = this.out;
 
         // Greedy/Reluctant quantifiers
@@ -1112,6 +1580,9 @@ public final class RegExpParser {
         case '*':
         case '+':
         case '?':
+            if (inLookBehind) {
+                throw error(Messages.Key.RegExpInvalidQuantifier);
+            }
             out.append(c);
             break quantifier;
         case '{': {
@@ -1137,6 +1608,9 @@ public final class RegExpParser {
             if (max != -1 && min > max) {
                 throw error(Messages.Key.RegExpInvalidQuantifier);
             }
+            if (inLookBehind && comma && min != max) {
+                throw error(Messages.Key.RegExpInvalidQuantifier);
+            }
 
             // output result
             out.append('{').append((int) Math.min(min, Config.MAX_REPEAT_NUM));
@@ -1158,8 +1632,28 @@ public final class RegExpParser {
         if (match('?')) {
             out.append('?');
         }
+        // Possessive quantifiers
+        else if (possessive && match('+')) {
+            out.append('+');
+        }
 
         return true;
+    }
+
+    private void appendWordBoundary(char c, boolean inLookBehind) {
+        if (isIgnoreCase() && isUnicode()) {
+            if (inLookBehind) {
+                error(Messages.Key.RegExpAssertionInLookbehind);
+            }
+            if (c == 'b') {
+                out.append(assertion_bui);
+            } else {
+                assert c == 'B';
+                out.append(assertion_Bui);
+            }
+        } else {
+            out.append('\\').append(c);
+        }
     }
 
     private void appendCharacterClassEscape(char c, boolean cclass) {
@@ -1167,7 +1661,11 @@ public final class RegExpParser {
             if (!cclass) {
                 out.append('[');
             }
-            out.append(c == 'w' ? characterClass_wu : characterClass_Wu);
+            if (c == 'w') {
+                out.append(characterClass_wui);
+            } else {
+                out.append(characterClass_Wui);
+            }
             if (!cclass) {
                 out.append(']');
             }
@@ -1192,6 +1690,139 @@ public final class RegExpParser {
         default:
             throw new AssertionError("unreachable");
         }
+    }
+
+    private void unicodeProperty(String name, String value, boolean inverse, boolean cclass) {
+        if (value == null) {
+            // UnicodePropertyValueExpression :: LoneUnicodePropertyNameOrValue
+            int nameOffset = -name.length();
+            if (UnicodeData.EnumProperty.General_Category.isValue(name)) {
+                appendUnicodeProperty(UnicodeData.EnumProperty.General_Category, name, inverse, cclass);
+            } else {
+                switch (name) {
+                case "Any":
+                    appendRange(Character.MIN_CODE_POINT, Character.MAX_CODE_POINT, inverse, cclass);
+                    break;
+                case "ASCII":
+                    appendRange(0, 0x7f, inverse, cclass);
+                    break;
+                case "Assigned":
+                    appendUnicodeProperty(UnicodeData.EnumProperty.General_Category, "Cn", !inverse, cclass);
+                    break;
+                default: {
+                    UnicodeData.Property unaliased = unicodeMatchProperty(name, nameOffset);
+                    if (unaliased instanceof UnicodeData.BinaryProperty) {
+                        appendUnicodeProperty((UnicodeData.BinaryProperty) unaliased, inverse, cclass);
+                    } else {
+                        assert unaliased instanceof UnicodeData.EnumProperty;
+                        throw error(Messages.Key.RegExpMissingUnicodePropertyValue, nameOffset, unaliased.getName());
+                    }
+                    break;
+                }
+                }
+            }
+        } else {
+            // UnicodePropertyValueExpression :: UnicodePropertyName=UnicodePropertyValue
+            int nameOffset = -(name.length() + 1 + value.length());
+            int valueOffset = -value.length();
+            UnicodeData.Property unaliasedName = unicodeMatchProperty(name, nameOffset);
+            if (unaliasedName instanceof UnicodeData.BinaryProperty) {
+                throw error(Messages.Key.RegExpInvalidUnicodePropertyValue, valueOffset, unaliasedName.getName(),
+                        value);
+            }
+            assert unaliasedName instanceof UnicodeData.EnumProperty;
+            UnicodeData.EnumProperty enumProperty = (UnicodeData.EnumProperty) unaliasedName;
+            String unaliasedValue = unicodeMatchPropertyValue(enumProperty, value, valueOffset);
+            appendUnicodeProperty(enumProperty, unaliasedValue, inverse, cclass);
+        }
+    }
+
+    private void appendRange(int start, int end, boolean inverse, boolean cclass) {
+        if (!cclass) {
+            out.append('[');
+            if (inverse) {
+                out.append('^');
+            }
+            appendCodePoint(start);
+            out.append('-');
+            appendCodePoint(end);
+            out.append(']');
+        } else if (!inverse) {
+            appendCodePoint(start);
+            out.append('-');
+            appendCodePoint(end);
+        } else {
+            if (start > Character.MIN_CODE_POINT) {
+                appendCodePoint(Character.MIN_CODE_POINT);
+                out.append('-');
+                appendCodePoint(start - 1);
+            }
+            if (end < Character.MAX_CODE_POINT) {
+                appendCodePoint(end + 1);
+                out.append('-');
+                appendCodePoint(Character.MAX_CODE_POINT);
+            }
+        }
+    }
+
+    private void appendUnicodeProperty(UnicodeData.BinaryProperty property, boolean inverse, boolean cclass) {
+        // Place in character class to enforce case-folding in Joni.
+        // TODO: Report Joni bug (`/\p{Lu}/i.match("a")` returns nil in JRuby, but MatchData in Ruby)
+        if (!cclass) {
+            out.append('[');
+        }
+        out.append('\\').append(inverse ? 'P' : 'p').append('{').append(property.getName()).append('}');
+        if (!cclass) {
+            out.append(']');
+        }
+    }
+
+    private void appendUnicodeProperty(UnicodeData.EnumProperty property, String value, boolean inverse,
+            boolean cclass) {
+        // Place in character class to enforce case-folding in Joni.
+        if (!cclass) {
+            out.append('[');
+        }
+        out.append('\\').append(inverse ? 'P' : 'p').append('{').append(property.getName()).append('=').append(value)
+                .append('}');
+        if (!cclass) {
+            out.append(']');
+        }
+    }
+
+    /**
+     * Runtime Semantics: UnicodeMatchProperty ( p )
+     * 
+     * @param property
+     *            the unicode property name
+     * @param offset
+     *            the start offset
+     * @return the Unicode property
+     */
+    private UnicodeData.Property unicodeMatchProperty(String property, int offset) {
+        UnicodeData.Property p = UnicodeData.Property.from(property);
+        if (p != null) {
+            return p;
+        }
+        throw error(Messages.Key.RegExpInvalidUnicodeCategory, offset, property);
+    }
+
+    /**
+     * Runtime Semantics: UnicodeMatchPropertyValue ( p, v )
+     * 
+     * @param property
+     *            the property name
+     * @param value
+     *            the property value
+     * @param offset
+     *            the start offset
+     * @return the unaliased property value
+     */
+    private String unicodeMatchPropertyValue(UnicodeData.EnumProperty property, String value, int offset) {
+        if (property.isValue(value)) {
+            return value;
+        }
+        throw error(Messages.Key.RegExpInvalidUnicodePropertyValue, offset, property.getName(), value);
     }
 
     private void appendIdentityEscape(int ch) {
@@ -1264,6 +1895,38 @@ public final class RegExpParser {
         case '}':
         case '|':
         case '/':
+            return true;
+        default:
+            return false;
+        }
+    }
+
+    /**
+     * <pre>
+     * SyntaxCharacter :: <b>one of</b>
+     *     <b>^ $ \ . * + ? ( ) [ ] { } |</b>
+     * </pre>
+     * 
+     * @param c
+     *            the character to inspect
+     * @return {@code true} if the character is a syntax character
+     */
+    private static boolean isSyntaxCharacter(int c) {
+        switch (c) {
+        case '^':
+        case '$':
+        case '\\':
+        case '.':
+        case '*':
+        case '+':
+        case '?':
+        case '(':
+        case ')':
+        case '[':
+        case ']':
+        case '{':
+        case '}':
+        case '|':
             return true;
         default:
             return false;

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -60,6 +60,10 @@ public final class TypedArrayPrototype extends OrdinaryObject implements Initial
             return Properties_Int32Array.class;
         case Uint32:
             return Properties_Uint32Array.class;
+        case BigInt64:
+            return Properties_BigInt64Array.class;
+        case BigUint64:
+            return Properties_BigUint64Array.class;
         case Float32:
             return Properties_Float32Array.class;
         case Float64:
@@ -87,8 +91,8 @@ public final class TypedArrayPrototype extends OrdinaryObject implements Initial
         /**
          * 22.2.6.1 TypedArray.prototype.BYTES_PER_ELEMENT
          */
-        @Value(name = "BYTES_PER_ELEMENT", attributes = @Attributes(writable = false,
-                enumerable = false, configurable = false))
+        @Value(name = "BYTES_PER_ELEMENT",
+                attributes = @Attributes(writable = false, enumerable = false, configurable = false))
         public static final int BYTES_PER_ELEMENT = ElementType.Int8.size();
     }
 
@@ -110,8 +114,8 @@ public final class TypedArrayPrototype extends OrdinaryObject implements Initial
         /**
          * 22.2.6.1 TypedArray.prototype.BYTES_PER_ELEMENT
          */
-        @Value(name = "BYTES_PER_ELEMENT", attributes = @Attributes(writable = false,
-                enumerable = false, configurable = false))
+        @Value(name = "BYTES_PER_ELEMENT",
+                attributes = @Attributes(writable = false, enumerable = false, configurable = false))
         public static final int BYTES_PER_ELEMENT = ElementType.Uint8.size();
     }
 
@@ -133,8 +137,8 @@ public final class TypedArrayPrototype extends OrdinaryObject implements Initial
         /**
          * 22.2.6.1 TypedArray.prototype.BYTES_PER_ELEMENT
          */
-        @Value(name = "BYTES_PER_ELEMENT", attributes = @Attributes(writable = false,
-                enumerable = false, configurable = false))
+        @Value(name = "BYTES_PER_ELEMENT",
+                attributes = @Attributes(writable = false, enumerable = false, configurable = false))
         public static final int BYTES_PER_ELEMENT = ElementType.Uint8C.size();
     }
 
@@ -156,8 +160,8 @@ public final class TypedArrayPrototype extends OrdinaryObject implements Initial
         /**
          * 22.2.6.1 TypedArray.prototype.BYTES_PER_ELEMENT
          */
-        @Value(name = "BYTES_PER_ELEMENT", attributes = @Attributes(writable = false,
-                enumerable = false, configurable = false))
+        @Value(name = "BYTES_PER_ELEMENT",
+                attributes = @Attributes(writable = false, enumerable = false, configurable = false))
         public static final int BYTES_PER_ELEMENT = ElementType.Int16.size();
     }
 
@@ -179,8 +183,8 @@ public final class TypedArrayPrototype extends OrdinaryObject implements Initial
         /**
          * 22.2.6.1 TypedArray.prototype.BYTES_PER_ELEMENT
          */
-        @Value(name = "BYTES_PER_ELEMENT", attributes = @Attributes(writable = false,
-                enumerable = false, configurable = false))
+        @Value(name = "BYTES_PER_ELEMENT",
+                attributes = @Attributes(writable = false, enumerable = false, configurable = false))
         public static final int BYTES_PER_ELEMENT = ElementType.Uint16.size();
     }
 
@@ -202,8 +206,8 @@ public final class TypedArrayPrototype extends OrdinaryObject implements Initial
         /**
          * 22.2.6.1 TypedArray.prototype.BYTES_PER_ELEMENT
          */
-        @Value(name = "BYTES_PER_ELEMENT", attributes = @Attributes(writable = false,
-                enumerable = false, configurable = false))
+        @Value(name = "BYTES_PER_ELEMENT",
+                attributes = @Attributes(writable = false, enumerable = false, configurable = false))
         public static final int BYTES_PER_ELEMENT = ElementType.Int32.size();
     }
 
@@ -225,8 +229,8 @@ public final class TypedArrayPrototype extends OrdinaryObject implements Initial
         /**
          * 22.2.6.1 TypedArray.prototype.BYTES_PER_ELEMENT
          */
-        @Value(name = "BYTES_PER_ELEMENT", attributes = @Attributes(writable = false,
-                enumerable = false, configurable = false))
+        @Value(name = "BYTES_PER_ELEMENT",
+                attributes = @Attributes(writable = false, enumerable = false, configurable = false))
         public static final int BYTES_PER_ELEMENT = ElementType.Uint32.size();
     }
 
@@ -248,8 +252,8 @@ public final class TypedArrayPrototype extends OrdinaryObject implements Initial
         /**
          * 22.2.6.1 TypedArray.prototype.BYTES_PER_ELEMENT
          */
-        @Value(name = "BYTES_PER_ELEMENT", attributes = @Attributes(writable = false,
-                enumerable = false, configurable = false))
+        @Value(name = "BYTES_PER_ELEMENT",
+                attributes = @Attributes(writable = false, enumerable = false, configurable = false))
         public static final int BYTES_PER_ELEMENT = ElementType.Float32.size();
     }
 
@@ -271,8 +275,54 @@ public final class TypedArrayPrototype extends OrdinaryObject implements Initial
         /**
          * 22.2.6.1 TypedArray.prototype.BYTES_PER_ELEMENT
          */
-        @Value(name = "BYTES_PER_ELEMENT", attributes = @Attributes(writable = false,
-                enumerable = false, configurable = false))
+        @Value(name = "BYTES_PER_ELEMENT",
+                attributes = @Attributes(writable = false, enumerable = false, configurable = false))
         public static final int BYTES_PER_ELEMENT = ElementType.Float64.size();
+    }
+
+    /**
+     * 22.2.6 Properties of the TypedArray Prototype Object
+     */
+    public enum Properties_BigInt64Array {
+        ;
+
+        @Prototype
+        public static final Intrinsics __proto__ = Intrinsics.TypedArrayPrototype;
+
+        /**
+         * 22.2.6.2 TypedArray.prototype.constructor
+         */
+        @Value(name = "constructor")
+        public static final Intrinsics constructor = Intrinsics.BigInt64Array;
+
+        /**
+         * 22.2.6.1 TypedArray.prototype.BYTES_PER_ELEMENT
+         */
+        @Value(name = "BYTES_PER_ELEMENT",
+                attributes = @Attributes(writable = false, enumerable = false, configurable = false))
+        public static final int BYTES_PER_ELEMENT = ElementType.BigInt64.size();
+    }
+
+    /**
+     * 22.2.6 Properties of the TypedArray Prototype Object
+     */
+    public enum Properties_BigUint64Array {
+        ;
+
+        @Prototype
+        public static final Intrinsics __proto__ = Intrinsics.TypedArrayPrototype;
+
+        /**
+         * 22.2.6.2 TypedArray.prototype.constructor
+         */
+        @Value(name = "constructor")
+        public static final Intrinsics constructor = Intrinsics.BigUint64Array;
+
+        /**
+         * 22.2.6.1 TypedArray.prototype.BYTES_PER_ELEMENT
+         */
+        @Value(name = "BYTES_PER_ELEMENT",
+                attributes = @Attributes(writable = false, enumerable = false, configurable = false))
+        public static final int BYTES_PER_ELEMENT = ElementType.BigUint64.size();
     }
 }

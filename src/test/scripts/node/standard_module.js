@@ -1,12 +1,12 @@
 /*
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
  */
-import {
+const {
   assertSame
-} from "../suite/lib/assert.jsm";
+} = Assert;
 
 import nodeDefault, {foo as nodeFoo} from "./resources/node_dependency.js";
 import standardDefault, {foo as standardFoo} from "./resources/standard_dependency.js";

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -29,9 +29,9 @@ final class TokenStream {
     /** start position of current line */
     private int linestart;
     /** start position of current token, includes leading whitespace and comments */
-    private int position;
+    private int position, startPosition;
     /** start position of next token, includes leading whitespace and comments */
-    private int nextPosition;
+    private int nextPosition, nextStartPosition;
 
     // token data
     /** current token in stream */
@@ -50,7 +50,7 @@ final class TokenStream {
     // literal data
     private final StrBuffer buffer;
     private String string = null;
-    private double number = 0;
+    private Number number = null;
     private boolean hasEscape = false;
 
     /**
@@ -85,8 +85,8 @@ final class TokenStream {
     }
 
     /**
-     * Updates line state information for line breaks within literals, does <strong>not</strong> set
-     * the {@link #hasLineTerminator} flag.
+     * Updates line state information for line breaks within literals, does <strong>not</strong> set the
+     * {@link #hasLineTerminator} flag.
      */
     private void incrementLine() {
         line += 1;
@@ -107,11 +107,11 @@ final class TokenStream {
      */
     private void updateSourcePosition() {
         nextSourcePosition = ((long) (input.position() - linestart) << 32) | line;
+        nextStartPosition = input.position() - 1;
     }
 
     /**
-     * Public constructor, token stream still needs to be initialized by calling the
-     * {@link #initialize()} method.
+     * Public constructor, token stream still needs to be initialized by calling the {@link #initialize()} method.
      * 
      * @param parser
      *            the parser instance
@@ -125,14 +125,23 @@ final class TokenStream {
     }
 
     /**
-     * Return the start position of current token, includes leading whitespace and comments. Also
-     * needed to reset the token stream.
+     * Returns the start position of current token, includes leading whitespace and comments. Also needed to reset the
+     * token stream.
      * 
      * @return the token start position
      * @see #reset(long, long)
      */
     public int position() {
         return position;
+    }
+
+    /**
+     * Returns the start position of current token, does not include leading whitespace and comments.
+     * 
+     * @return the token start position
+     */
+    public int startPosition() {
+        return startPosition;
     }
 
     /**
@@ -174,6 +183,16 @@ final class TokenStream {
      */
     public long sourcePosition() {
         return sourcePosition;
+    }
+
+    /**
+     * Returns the encoded line/column information of the next source position.
+     * 
+     * @return the next line/column information
+     */
+    public long nextSourcePosition() {
+        assert next != null;
+        return nextSourcePosition;
     }
 
     /**
@@ -229,6 +248,7 @@ final class TokenStream {
         this.line = line;
         this.linestart = input.position();
         this.current = scanTokenNoComment();
+        this.startPosition = nextStartPosition;
         this.sourcePosition = nextSourcePosition;
         this.nextPosition = input.position();
         this.next = null;
@@ -252,13 +272,17 @@ final class TokenStream {
         this.hasLineTerminator = false;
         this.hasCurrentLineTerminator = true;
         this.position = input.position();
+        this.linestart = (int) lineinfo;
         this.current = scanTokenNoComment();
+        this.startPosition = nextStartPosition;
         this.sourcePosition = nextSourcePosition;
         this.nextPosition = input.position();
         this.next = null;
         // reset line state last, effectively ignoring any changes from scanTokenNoComment()
         this.line = (int) (lineinfo >>> 32);
         this.linestart = (int) lineinfo;
+        // adjust source position to account for line breaks
+        this.sourcePosition = (this.sourcePosition & ~0xFFFF_FFFFL) | this.line;
     }
 
     /**
@@ -286,8 +310,7 @@ final class TokenStream {
     }
 
     /**
-     * Returns <code>true</code> if the current token is a string literal which contains an escape
-     * sequence.
+     * Returns <code>true</code> if the current token is a string literal which contains an escape sequence.
      * 
      * @return {@code true} if the string literal contains an escape sequence
      */
@@ -300,7 +323,7 @@ final class TokenStream {
      * 
      * @return the current number data
      */
-    public double getNumber() {
+    public Number getNumber() {
         return number;
     }
 
@@ -356,8 +379,9 @@ final class TokenStream {
             next = scanTokenNoComment();
         }
         current = next;
-        sourcePosition = nextSourcePosition;
         position = nextPosition;
+        startPosition = nextStartPosition;
+        sourcePosition = nextSourcePosition;
         hasCurrentLineTerminator = hasLineTerminator;
         string = null;
         next = null;
@@ -392,6 +416,7 @@ final class TokenStream {
             case ESCAPED_ASYNC:
             case ESCAPED_AWAIT:
             case ESCAPED_LET:
+            case PRIVATE_NAME:
             case STRING:
                 string = getString();
             default:
@@ -510,8 +535,6 @@ final class TokenStream {
         }
     }
 
-    //
-
     /**
      * <strong>[11.8.6] Template Literal Lexical Components</strong>
      * 
@@ -541,11 +564,12 @@ final class TokenStream {
      * </pre>
      * 
      * @param startToken
-     *            the start token of the template literal, either {@link Token#TEMPLATE} or
-     *            {@link Token#RC}
+     *            the start token of the template literal, either {@link Token#TEMPLATE} or {@link Token#RC}
+     * @param tagged
+     *            the flag for tagged template literals
      * @return string tuple {cooked, raw} for the template literal
      */
-    public String[] readTemplateLiteral(Token startToken) {
+    public String[] readTemplateLiteral(Token startToken, boolean tagged) {
         assert startToken == Token.TEMPLATE || startToken == Token.RC;
         assert currentToken() == startToken;
         assert next == null : "template literal in lookahead";
@@ -554,6 +578,7 @@ final class TokenStream {
         TokenStreamInput input = this.input;
         StringBuilder raw = new StringBuilder();
         StrBuffer buffer = buffer();
+        boolean hasInvalidEscape = false;
         int pos = input.position();
         int rawPos = input.position();
         for (;;) {
@@ -565,13 +590,15 @@ final class TokenStream {
                 current = Token.TEMPLATE;
                 buffer.append(input, pos, input.position() - 1);
                 raw.append(input.range(rawPos, input.position() - 1));
-                return new String[] { buffer.toString(), raw.toString() };
+                String cooked = hasInvalidEscape ? null : buffer.toString();
+                return new String[] { cooked, raw.toString() };
             }
             if (c == '$' && match('{')) {
                 current = Token.LC;
                 buffer.append(input, pos, input.position() - 2);
                 raw.append(input.range(rawPos, input.position() - 2));
-                return new String[] { buffer.toString(), raw.toString() };
+                String cooked = hasInvalidEscape ? null : buffer.toString();
+                return new String[] { cooked, raw.toString() };
             }
             if (c != '\\') {
                 if (isLineTerminator(c)) {
@@ -604,7 +631,12 @@ final class TokenStream {
                 }
                 incrementLine();
             } else {
-                buffer.appendCodePoint(readTemplateEscapeSequence(c));
+                int e = readTemplateEscapeSequence(c, tagged);
+                if (e < 0) {
+                    hasInvalidEscape = true;
+                } else {
+                    buffer.appendCodePoint(e);
+                }
             }
             pos = input.position();
         }
@@ -640,44 +672,37 @@ final class TokenStream {
      * 
      * @param c
      *            the start character
+     * @param allowNonEscape
+     *            if {@code true} non-escape sequences are allowed
      * @return the escaped character
      */
-    private int readTemplateEscapeSequence(int c) {
+    private int readTemplateEscapeSequence(int c, boolean allowNonEscape) {
         TokenStreamInput input = this.input;
         switch (c) {
         case 'b':
-            c = '\b';
-            break;
+            return '\b';
         case 'f':
-            c = '\f';
-            break;
+            return '\f';
         case 'n':
-            c = '\n';
-            break;
+            return '\n';
         case 'r':
-            c = '\r';
-            break;
+            return '\r';
         case 't':
-            c = '\t';
-            break;
+            return '\t';
         case 'v':
-            c = '\u000B';
-            break;
+            return '\u000B';
         case 'x':
-            c = (hexDigit(input.getChar()) << 4) | hexDigit(input.getChar());
-            if (c < 0) {
-                throw error(Messages.Key.InvalidHexEscape);
-            }
-            break;
+            return allowNonEscape ? readHexEscapeUnchecked() : readHexEscape();
         case 'u':
-            c = readUnicodeEscape();
-            break;
+            return allowNonEscape ? readUnicodeEscapeUnchecked() : readUnicodeEscape();
         case '0':
             if (isDecimalDigit(input.peek(0))) {
+                if (allowNonEscape) {
+                    return -1;
+                }
                 throw error(Messages.Key.InvalidNULLEscape);
             }
-            c = '\0';
-            break;
+            return '\0';
         case '1':
         case '2':
         case '3':
@@ -687,17 +712,17 @@ final class TokenStream {
         case '7':
         case '8':
         case '9':
+            if (allowNonEscape) {
+                return -1;
+            }
             throw error(Messages.Key.OctalEscapeSequence);
         case '"':
         case '\'':
         case '\\':
         default:
-            // fall-through
+            return c;
         }
-        return c;
     }
-
-    //
 
     /**
      * <strong>[11] ECMAScript Language: Lexical Grammar</strong>
@@ -707,21 +732,28 @@ final class TokenStream {
      *     WhiteSpace
      *     LineTerminator
      *     Comment
-     *     Token
+     *     CommonToken
      *     DivPunctuator
      *     RightBracePunctuator
      * InputElementRegExp ::
      *     WhiteSpace
      *     LineTerminator
      *     Comment
-     *     Token
+     *     CommonToken
      *     RightBracePunctuator
      *     RegularExpressionLiteral
+     * InputElementRegExpOrTemplateTail ::
+     *     WhiteSpace
+     *     LineTerminator
+     *     Comment
+     *     CommonToken
+     *     RegularExpressionLiteral
+     *     TemplateSubstitutionTail
      * InputElementTemplateTail ::
      *     WhiteSpace
      *     LineTerminator
      *     Comment
-     *     Token
+     *     CommonToken
      *     DivPunctuator
      *     TemplateSubstitutionTail
      * </pre>
@@ -737,10 +769,10 @@ final class TokenStream {
     }
 
     /**
-     * <strong>[11.5] Token</strong>
+     * <strong>[11.5] Tokens</strong>
      * 
      * <pre>
-     * Token ::
+     * CommonToken ::
      *     IdentifierName
      *     Punctuator
      *     NumericLiteral
@@ -969,8 +1001,8 @@ final class TokenStream {
             }
         case '-':
             if (match('-')) {
-                if (input.peek(0) == '>' && hasLineTerminator
-                        && isEnabled(CompatibilityOption.HTMLComments) && !isModule()) {
+                if (input.peek(0) == '>' && hasLineTerminator && isEnabled(CompatibilityOption.HTMLComments)
+                        && !isModule()) {
                     // html end-comment at line start
                     mustMatch('>');
                     readSingleLineComment();
@@ -983,7 +1015,7 @@ final class TokenStream {
                 return Token.SUB;
             }
         case '*':
-            if (input.peek(0) == '*' && isEnabled(CompatibilityOption.Exponentiation)) {
+            if (input.peek(0) == '*') {
                 mustMatch('*');
                 if (match('=')) {
                     return Token.ASSIGN_EXP;
@@ -1039,6 +1071,11 @@ final class TokenStream {
         case '@':
             if (isEnabled(CompatibilityOption.Decorator)) {
                 return Token.AT;
+            }
+            return Token.ERROR;
+        case '#':
+            if (isEnabled(CompatibilityOption.ClassFields) || isEnabled(CompatibilityOption.PrivateMethods)) {
+                return readPrivateName();
             }
             return Token.ERROR;
         case '\\':
@@ -1140,18 +1177,18 @@ final class TokenStream {
      *     IdentifierName IdentifierPart
      * </pre>
      * 
+     * @param buffer
+     *            the string buffer
      * @param c
      *            the start character of the identifier
-     * @param hasEscape
-     *            the flag for escaped identifiers
-     * @return the identifier token
+     * @return {@code true} if the identifier name contains escaped characters
      */
-    private Token readIdentifier(int c, boolean hasEscape) {
+    private boolean readIdentifierName(StrBuffer buffer, int c) {
         assert isIdentifierStart(c);
 
         TokenStreamInput input = this.input;
-        StrBuffer buffer = this.buffer();
         buffer.appendCodePoint(c);
+        boolean hasEscape = false;
         for (;;) {
             c = input.get();
             if (isIdentifierPart(c)) {
@@ -1169,12 +1206,56 @@ final class TokenStream {
                 break;
             }
         }
+        return hasEscape;
+    }
 
+    /**
+     * <strong>[11.6] Names and Keywords</strong>
+     * 
+     * <pre>
+     * Identifier ::
+     *     IdentifierName but not ReservedWord
+     * </pre>
+     * 
+     * @param c
+     *            the start character of the identifier
+     * @param identifierStartHasEscape
+     *            the flag for escaped identifiers
+     * @return the identifier token
+     */
+    private Token readIdentifier(int c, boolean identifierStartHasEscape) {
+        assert isIdentifierStart(c);
+
+        StrBuffer buffer = this.buffer();
+        boolean identifierPartHasEscape = readIdentifierName(buffer, c);
         Token tok = readReservedWord(buffer.array(), buffer.length());
-        if (hasEscape) {
+        if (identifierStartHasEscape || identifierPartHasEscape) {
             return Token.toEscapedNameToken(tok);
         }
         return tok;
+    }
+
+    /**
+     * Extension: Private Fields
+     * 
+     * <pre>
+     * PrivateName ::
+     *     `#` IdentifierName
+     * </pre>
+     * 
+     * @return the private name token
+     */
+    private Token readPrivateName() {
+        StrBuffer buffer = this.buffer();
+        buffer.append('#');
+
+        int c = input.get();
+        if (!isIdentifierStart(c)) {
+            throw error(Messages.Key.InvalidUnicodeEscapedIdentifierStart);
+        }
+        readIdentifierName(buffer, c);
+
+        return Token.PRIVATE_NAME;
     }
 
     /**
@@ -1203,13 +1284,66 @@ final class TokenStream {
                 c = -1;
             }
         } else {
-            c = (hexDigit(c) << 12) | (hexDigit(input.getChar()) << 8)
-                    | (hexDigit(input.getChar()) << 4) | hexDigit(input.getChar());
+            c = (hexDigit(c) << 12) | (hexDigit(input.getChar()) << 8) | (hexDigit(input.getChar()) << 4)
+                    | hexDigit(input.getChar());
         }
         if (c < 0 || c > 0x10FFFF) {
             throw error(Messages.Key.InvalidUnicodeEscape);
         }
         return c;
+    }
+
+    private int readUnicodeEscapeUnchecked() {
+        TokenStreamInput input = this.input;
+        int p = input.position();
+        int c = input.getChar();
+        if (c == '{') {
+            int acc = 0;
+            c = input.getChar();
+            do {
+                acc = (acc << 4) | hexDigit(c);
+            } while ((acc >= 0 && acc <= 0x10FFFF) && (c = input.getChar()) != '}');
+            if (c == '}') {
+                c = acc;
+            } else {
+                c = -1;
+            }
+        } else {
+            c = (hexDigit(c) << 12) | (hexDigit(input.getChar()) << 8) | (hexDigit(input.getChar()) << 4)
+                    | hexDigit(input.getChar());
+        }
+        if (c < 0 || c > 0x10FFFF) {
+            input.reset(p);
+            return -1;
+        }
+        return c;
+    }
+
+    /**
+     * <strong>[11.8.4] String Literals</strong>
+     * 
+     * <pre>
+     * HexEscapeSequence ::
+     *     x HexDigit HexDigit
+     * </pre>
+     * 
+     * @return the hex-escape sequence value
+     */
+    private int readHexEscape() {
+        TokenStreamInput input = this.input;
+        int x = (hexDigit(input.getChar()) << 4) | hexDigit(input.getChar());
+        if (x < 0) {
+            throw error(Messages.Key.InvalidHexEscape);
+        }
+        return x;
+    }
+
+    private int readHexEscapeUnchecked() {
+        TokenStreamInput input = this.input;
+        if (isHexDigit(input.peek(0)) && isHexDigit(input.peek(1))) {
+            return (hexDigit(input.getChar()) << 4) | hexDigit(input.getChar());
+        }
+        return -1;
     }
 
     static Token readReservedWord(String name) {
@@ -1250,17 +1384,19 @@ final class TokenStream {
      * <pre>
      * FutureReservedWord :: one of
      *     enum
+     *     await
      * </pre>
      * 
      * <pre>
      * StrictFutureReservedWord :: one of
-     *     implements  package     protected   static
+     *     implements  package     protected
      *     interface   private     public
      * </pre>
      * 
      * <pre>
      * ContextualKeyword :: one of
      *     let
+     *     static
      * </pre>
      * 
      * <strong>[11.8.1] Null Literals</strong>
@@ -1544,42 +1680,29 @@ final class TokenStream {
         TokenStreamInput input = this.input;
         switch (c) {
         case 'b':
-            c = '\b';
-            break;
+            return '\b';
         case 'f':
-            c = '\f';
-            break;
+            return '\f';
         case 'n':
-            c = '\n';
-            break;
+            return '\n';
         case 'r':
-            c = '\r';
-            break;
+            return '\r';
         case 't':
-            c = '\t';
-            break;
+            return '\t';
         case 'v':
-            c = '\u000B';
-            break;
+            return '\u000B';
         case 'x':
-            c = (hexDigit(input.getChar()) << 4) | hexDigit(input.getChar());
-            if (c < 0) {
-                throw error(Messages.Key.InvalidHexEscape);
-            }
-            break;
+            return readHexEscape();
         case 'u':
-            c = readUnicodeEscape();
-            break;
+            return readUnicodeEscape();
         case '0':
             if (isDecimalDigit(input.peek(0))) {
                 if (!isEnabled(CompatibilityOption.OctalEscapeSequence)) {
                     throw error(Messages.Key.InvalidNULLEscape);
                 }
-                c = readLegacyOctalEscape(c);
-            } else {
-                c = '\0';
+                return readLegacyOctalEscape(c);
             }
-            break;
+            return '\0';
         case '1':
         case '2':
         case '3':
@@ -1590,8 +1713,7 @@ final class TokenStream {
             if (!isEnabled(CompatibilityOption.OctalEscapeSequence)) {
                 throw error(Messages.Key.OctalEscapeSequence);
             }
-            c = readLegacyOctalEscape(c);
-            break;
+            return readLegacyOctalEscape(c);
         case '8':
         case '9':
             // FIXME: spec bug - undefined behaviour for \8 and \9
@@ -1603,9 +1725,8 @@ final class TokenStream {
         case '\'':
         case '\\':
         default:
-            // fall-through
+            return c;
         }
-        return c;
     }
 
     /**
@@ -1704,20 +1825,35 @@ final class TokenStream {
      * 
      * @return the hexadecimal integer literal
      */
-    private double readHexIntegerLiteral() {
+    private Number readHexIntegerLiteral() {
         TokenStreamInput input = this.input;
         StrBuffer buffer = this.buffer();
         int c;
-        while (isHexDigit(c = input.get())) {
-            buffer.append(c);
+        if (isEnabled(CompatibilityOption.NumericSeparators)) {
+            do {
+                c = input.get();
+                if (!isHexDigit(c)) {
+                    throw error(Messages.Key.InvalidHexIntegerLiteral);
+                }
+                do {
+                    buffer.append(c);
+                } while (isHexDigit(c = input.get()));
+            } while (c == '_');
+        } else {
+            while (isHexDigit(c = input.get())) {
+                buffer.append(c);
+            }
+            if (buffer.length() == 0) {
+                throw error(Messages.Key.InvalidHexIntegerLiteral);
+            }
+        }
+        if (c == 'n' && isEnabled(CompatibilityOption.BigInt)) {
+            return parseBigIntHex(buffer.array(), buffer.length());
         }
         if (isDecimalDigitOrIdentifierStart(c)) {
             throw error(Messages.Key.InvalidHexIntegerLiteral);
         }
         input.unget(c);
-        if (buffer.length() == 0) {
-            throw error(Messages.Key.InvalidHexIntegerLiteral);
-        }
         return parseHex(buffer.array(), buffer.length());
     }
 
@@ -1733,20 +1869,35 @@ final class TokenStream {
      * 
      * @return the binary integer literal
      */
-    private double readBinaryIntegerLiteral() {
+    private Number readBinaryIntegerLiteral() {
         TokenStreamInput input = this.input;
         StrBuffer buffer = this.buffer();
         int c;
-        while (isBinaryDigit(c = input.get())) {
-            buffer.append(c);
+        if (isEnabled(CompatibilityOption.NumericSeparators)) {
+            do {
+                c = input.get();
+                if (!isBinaryDigit(c)) {
+                    throw error(Messages.Key.InvalidBinaryIntegerLiteral);
+                }
+                do {
+                    buffer.append(c);
+                } while (isBinaryDigit(c = input.get()));
+            } while (c == '_');
+        } else {
+            while (isBinaryDigit(c = input.get())) {
+                buffer.append(c);
+            }
+            if (buffer.length() == 0) {
+                throw error(Messages.Key.InvalidBinaryIntegerLiteral);
+            }
+        }
+        if (c == 'n' && isEnabled(CompatibilityOption.BigInt)) {
+            return parseBigIntBinary(buffer.array(), buffer.length());
         }
         if (isDecimalDigitOrIdentifierStart(c)) {
             throw error(Messages.Key.InvalidBinaryIntegerLiteral);
         }
         input.unget(c);
-        if (buffer.length() == 0) {
-            throw error(Messages.Key.InvalidBinaryIntegerLiteral);
-        }
         return parseBinary(buffer.array(), buffer.length());
     }
 
@@ -1762,20 +1913,35 @@ final class TokenStream {
      * 
      * @return the octal integer literal
      */
-    private double readOctalIntegerLiteral() {
+    private Number readOctalIntegerLiteral() {
         TokenStreamInput input = this.input;
         StrBuffer buffer = this.buffer();
         int c;
-        while (isOctalDigit(c = input.get())) {
-            buffer.append(c);
+        if (isEnabled(CompatibilityOption.NumericSeparators)) {
+            do {
+                c = input.get();
+                if (!isOctalDigit(c)) {
+                    throw error(Messages.Key.InvalidOctalIntegerLiteral);
+                }
+                do {
+                    buffer.append(c);
+                } while (isOctalDigit(c = input.get()));
+            } while (c == '_');
+        } else {
+            while (isOctalDigit(c = input.get())) {
+                buffer.append(c);
+            }
+            if (buffer.length() == 0) {
+                throw error(Messages.Key.InvalidOctalIntegerLiteral);
+            }
+        }
+        if (c == 'n' && isEnabled(CompatibilityOption.BigInt)) {
+            return parseBigIntOctal(buffer.array(), buffer.length());
         }
         if (isDecimalDigitOrIdentifierStart(c)) {
             throw error(Messages.Key.InvalidOctalIntegerLiteral);
         }
         input.unget(c);
-        if (buffer.length() == 0) {
-            throw error(Messages.Key.InvalidOctalIntegerLiteral);
-        }
         return parseOctal(buffer.array(), buffer.length());
     }
 
@@ -1790,7 +1956,7 @@ final class TokenStream {
      * 
      * @return the octal integer literal
      */
-    private double readLegacyOctalIntegerLiteral() {
+    private Number readLegacyOctalIntegerLiteral() {
         TokenStreamInput input = this.input;
         StrBuffer buffer = this.buffer();
         int c;
@@ -1800,7 +1966,7 @@ final class TokenStream {
         if (c == '8' || c == '9') {
             // invalid octal integer literal -> treat as decimal literal in non-strict mode
             strictModeError(Messages.Key.StrictModeDecimalLeadingZero);
-            return readDecimalLiteral(c, false);
+            return readDecimalLiteral(c, true);
         }
         strictModeError(Messages.Key.StrictModeOctalIntegerLiteral);
         if (isDecimalDigitOrIdentifierStart(c)) {
@@ -1859,20 +2025,18 @@ final class TokenStream {
      *            the start character of the decimal integer literal
      * @return the decimal integer literal
      */
-    private double readDecimalLiteral(int c) {
-        return readDecimalLiteral(c, true);
+    private Number readDecimalLiteral(int c) {
+        return readDecimalLiteral(c, false);
     }
 
-    private double readDecimalLiteral(int c, boolean resetBuffer) {
+    private Number readDecimalLiteral(int c, boolean isInvalidLegacyOctal) {
         assert c == '.' || isDecimalDigit(c);
         boolean isInteger = true;
         TokenStreamInput input = this.input;
-        StrBuffer buffer = resetBuffer ? this.buffer() : this.buffer;
+        StrBuffer buffer = isInvalidLegacyOctal ? this.buffer : this.buffer();
         if (c != '.' && c != '0') {
-            buffer.append(c);
-            while (isDecimalDigit(c = input.get())) {
-                buffer.append(c);
-            }
+            // FIXME: spec issue - numeric separator proposal disallows `08_1`, but allows `08.1_2`.
+            c = parseDecimalDigits(c, !isInvalidLegacyOctal);
         } else if (c == '0') {
             buffer.append(c);
             c = input.get();
@@ -1880,8 +2044,8 @@ final class TokenStream {
         if (c == '.') {
             isInteger = false;
             buffer.append(c);
-            while (isDecimalDigit(c = input.get())) {
-                buffer.append(c);
+            if (isDecimalDigit(c = input.get())) {
+                c = parseDecimalDigits(c, true);
             }
         }
         if (c == 'e' || c == 'E') {
@@ -1895,10 +2059,13 @@ final class TokenStream {
             if (!isDecimalDigit(c)) {
                 throw error(Messages.Key.InvalidNumberLiteral);
             }
-            buffer.append(c);
-            while (isDecimalDigit(c = input.get())) {
-                buffer.append(c);
+            c = parseDecimalDigits(c, true);
+        }
+        if (c == 'n' && isEnabled(CompatibilityOption.BigInt)) {
+            if (!isInteger || isInvalidLegacyOctal) {
+                throw error(Messages.Key.InvalidNumberLiteral);
             }
+            return parseBigInt(buffer.array(), buffer.length());
         }
         if (isDecimalDigitOrIdentifierStart(c)) {
             throw error(Messages.Key.InvalidNumberLiteral);
@@ -1910,14 +2077,36 @@ final class TokenStream {
         return parseDecimal(buffer.array(), buffer.length());
     }
 
+    private int parseDecimalDigits(int c, boolean allowSeparator) {
+        assert isDecimalDigit(c);
+        TokenStreamInput input = this.input;
+        StrBuffer buffer = this.buffer;
+        if (allowSeparator && isEnabled(CompatibilityOption.NumericSeparators)) {
+            while (true) {
+                do {
+                    buffer.append(c);
+                } while (isDecimalDigit(c = input.get()));
+                if (c != '_') {
+                    break;
+                }
+                if (!isDecimalDigit(c = input.get())) {
+                    throw error(Messages.Key.InvalidNumberLiteral);
+                }
+            }
+        } else {
+            do {
+                buffer.append(c);
+            } while (isDecimalDigit(c = input.get()));
+        }
+        return c;
+    }
+
     /**
-     * Returns <code>true</code> if {@code c} is either a decimal digit or an identifier start
-     * character.
+     * Returns <code>true</code> if {@code c} is either a decimal digit or an identifier start character.
      * 
      * @param c
      *            the character to test
-     * @return {@code true} if the character is either a decimal digit or an identifier start
-     *         character
+     * @return {@code true} if the character is either a decimal digit or an identifier start character
      */
     private boolean isDecimalDigitOrIdentifierStart(int c) {
         return isDecimalDigit(c) || isIdentifierStart(c);
@@ -1933,8 +2122,8 @@ final class TokenStream {
      * @return the parser exception
      */
     private ParserException error(Messages.Key messageKey, String... args) {
-        throw new ParserException(ExceptionType.SyntaxError, parser.getSourceName(), getLine(),
-                getColumn(), messageKey, args);
+        throw new ParserException(ExceptionType.SyntaxError, parser.getSourceName(), getLine(), getColumn(), messageKey,
+                args);
     }
 
     /**
@@ -1947,8 +2136,7 @@ final class TokenStream {
      * @return the parser exception
      */
     private ParserException eofError(Messages.Key messageKey, String... args) {
-        throw new ParserEOFException(parser.getSourceName(), getLine(), getColumn(), messageKey,
-                args);
+        throw new ParserEOFException(parser.getSourceName(), getLine(), getColumn(), messageKey, args);
     }
 
     /**
@@ -1967,8 +2155,8 @@ final class TokenStream {
     }
 
     /**
-     * Returns <code>true</code> and advances the source position if the current character is
-     * {@code c}. Otherwise returns <code>false</code> and does not advance the source position.
+     * Returns <code>true</code> and advances the source position if the current character is {@code c}. Otherwise
+     * returns <code>false</code> and does not advance the source position.
      * 
      * @param c
      *            the character to test
@@ -1979,8 +2167,7 @@ final class TokenStream {
     }
 
     /**
-     * Advances the source position if the current character is {@code c}. Otherwise throws a parser
-     * exception.
+     * Advances the source position if the current character is {@code c}. Otherwise throws a parser exception.
      * 
      * @param c
      *            the character to test

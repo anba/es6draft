@@ -1,12 +1,10 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
  */
 package com.github.anba.es6draft.runtime.objects;
-
-import java.util.Objects;
 
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
@@ -46,27 +44,14 @@ public final class ErrorObject extends OrdinaryObject {
      * 
      * @param realm
      *            the realm object
-     * @param cause
-     *            the exception's cause
-     */
-    public ErrorObject(Realm realm, Throwable cause) {
-        super(realm);
-        this.exception = new ScriptException(this, cause);
-    }
-
-    /**
-     * Constructs a new Error object.
-     * 
-     * @param realm
-     *            the realm object
      * @param prototype
      *            the error prototype
      * @param message
      *            the error message
      */
     public ErrorObject(Realm realm, Intrinsics prototype, String message) {
-        this(realm);
-        setPrototype(realm.getIntrinsic(prototype));
+        super(realm, realm.getIntrinsic(prototype));
+        this.exception = new ScriptException(this);
         defineErrorProperty("message", message, false);
     }
 
@@ -83,8 +68,8 @@ public final class ErrorObject extends OrdinaryObject {
      *            the error message
      */
     public ErrorObject(Realm realm, Throwable cause, Intrinsics prototype, String message) {
-        this(realm, cause);
-        setPrototype(realm.getIntrinsic(prototype));
+        super(realm, realm.getIntrinsic(prototype));
+        this.exception = new ScriptException(this, cause);
         defineErrorProperty("message", message, false);
     }
 
@@ -104,10 +89,10 @@ public final class ErrorObject extends OrdinaryObject {
      * @param columnNumber
      *            the column number
      */
-    public ErrorObject(Realm realm, Intrinsics prototype, String message, String fileName,
-            int lineNumber, int columnNumber) {
-        this(realm);
-        setPrototype(realm.getIntrinsic(prototype));
+    public ErrorObject(Realm realm, Intrinsics prototype, String message, String fileName, int lineNumber,
+            int columnNumber) {
+        super(realm, realm.getIntrinsic(prototype));
+        this.exception = new ScriptException(this);
         defineErrorProperty("message", message, false);
         defineErrorProperty("fileName", fileName, true);
         defineErrorProperty("lineNumber", lineNumber, true);
@@ -132,17 +117,17 @@ public final class ErrorObject extends OrdinaryObject {
      * @param columnNumber
      *            the column number
      */
-    public ErrorObject(Realm realm, Throwable cause, Intrinsics prototype, String message,
-            String fileName, int lineNumber, int columnNumber) {
-        this(realm, cause);
-        setPrototype(realm.getIntrinsic(prototype));
+    public ErrorObject(Realm realm, Throwable cause, Intrinsics prototype, String message, String fileName,
+            int lineNumber, int columnNumber) {
+        super(realm, realm.getIntrinsic(prototype));
+        this.exception = new ScriptException(this, cause);
         defineErrorProperty("message", message, false);
         defineErrorProperty("fileName", fileName, true);
         defineErrorProperty("lineNumber", lineNumber, true);
         defineErrorProperty("columnNumber", columnNumber, true);
     }
 
-    /*package*/void defineErrorProperty(String name, Object value, boolean enumerable) {
+    void defineErrorProperty(String name, Object value, boolean enumerable) {
         infallibleDefineOwnProperty(name, new Property(value, true, enumerable, true));
     }
 
@@ -192,14 +177,17 @@ public final class ErrorObject extends OrdinaryObject {
                 property = ((OrdinaryObject) proto).lookupOwnProperty(propertyName);
             }
         }
-        Object value = property != null && property.isDataDescriptor() ? property.getValue() : null;
-        if (value == null || Type.isUndefined(value)) {
+        if (property == null || !property.isDataDescriptor()) {
+            return defaultValue;
+        }
+        Object value = property.getValue();
+        if (Type.isUndefined(value)) {
             return defaultValue;
         }
         // Prevent possible recursion
-        if (value instanceof ErrorObject) {
-            return "<error>";
+        if (Type.isObject(value)) {
+            return String.format("<%s@%x>", value.getClass().getSimpleName(), System.identityHashCode(value));
         }
-        return Objects.toString(value);
+        return value.toString();
     }
 }

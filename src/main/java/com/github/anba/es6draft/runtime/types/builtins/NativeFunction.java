@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -37,8 +37,7 @@ public final class NativeFunction extends BuiltinFunction {
      *            the method handle to the function code
      */
     public NativeFunction(Realm realm, String name, int arity, MethodHandle mh) {
-        // TODO: clean up callers
-        this(realm, name, arity, null, MethodHandles.dropArguments(mh, 0, ExecutionContext.class));
+        this(realm, name, arity, null, mh);
     }
 
     /**
@@ -60,17 +59,6 @@ public final class NativeFunction extends BuiltinFunction {
         this.mh = mh;
         this.id = id;
         createDefaultFunctionProperties();
-    }
-
-    private NativeFunction(NativeFunction original) {
-        super(original.getRealm(), original.getName(), original.getArity());
-        this.mh = original.mh;
-        this.id = original.id;
-    }
-
-    @Override
-    public NativeFunction clone() {
-        return new NativeFunction(this);
     }
 
     @Override

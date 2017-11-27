@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -43,17 +43,6 @@ public final class NativeTailCallFunction extends BuiltinFunction {
         this.mh = tailCallAdapter(mh);
         this.tmh = mh;
         createDefaultFunctionProperties();
-    }
-
-    private NativeTailCallFunction(NativeTailCallFunction original) {
-        super(original.getRealm(), original.getName(), original.getArity());
-        this.mh = original.mh;
-        this.tmh = original.tmh;
-    }
-
-    @Override
-    public NativeTailCallFunction clone() {
-        return new NativeTailCallFunction(this);
     }
 
     @Override

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -14,6 +14,7 @@ import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import java.util.HashSet;
 import java.util.LinkedHashSet;
+import java.util.List;
 
 import com.github.anba.es6draft.parser.JSONParser;
 import com.github.anba.es6draft.parser.ParserException;
@@ -25,7 +26,9 @@ import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
+import com.github.anba.es6draft.runtime.internal.StrBuilder;
 import com.github.anba.es6draft.runtime.internal.Strings;
+import com.github.anba.es6draft.runtime.objects.bigint.BigIntObject;
 import com.github.anba.es6draft.runtime.objects.number.NumberObject;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
@@ -80,9 +83,9 @@ public final class JSONObject extends OrdinaryObject implements Initializable {
          */
         @Function(name = "parse", arity = 2)
         public static Object parse(ExecutionContext cx, Object thisValue, Object text, Object reviver) {
-            /* steps 1-2 */
+            /* step 1 */
             String jtext = ToFlatString(cx, text);
-            /* steps 3-7 */
+            /* steps 2-6 */
             Object unfiltered;
             try {
                 unfiltered = JSONParser.parse(cx, jtext);
@@ -90,7 +93,7 @@ public final class JSONObject extends OrdinaryObject implements Initializable {
                 throw newSyntaxError(cx, e, Messages.Key.JSONInvalidLiteral, e.getFormattedMessage(cx.getRealm()),
                         Integer.toString(e.getLine()), Integer.toString(e.getColumn()));
             }
-            /* step 8 */
+            /* step 7 */
             if (IsCallable(reviver)) {
                 OrdinaryObject root = ObjectCreate(cx, Intrinsics.ObjectPrototype);
                 String rootName = "";
@@ -98,7 +101,7 @@ public final class JSONObject extends OrdinaryObject implements Initializable {
                 assert status;
                 return InternalizeJSONProperty(cx, (Callable) reviver, root, rootName);
             }
-            /* step 9 */
+            /* step 8 */
             return unfiltered;
         }
 
@@ -163,7 +166,7 @@ public final class JSONObject extends OrdinaryObject implements Initializable {
             /* steps 6-8 */
             String gap;
             if (Type.isNumber(space)) {
-                int nspace = (int) Math.max(0, Math.min(10, ToInteger(Type.numberValue(space))));
+                int nspace = Math.max(0, Math.min(10, (int) Type.numberValue(space))); // ToInteger
                 gap = Strings.repeat(' ', nspace);
             } else if (Type.isString(space)) {
                 String sspace = Type.stringValue(space).toString();
@@ -177,13 +180,14 @@ public final class JSONObject extends OrdinaryObject implements Initializable {
             boolean status = CreateDataProperty(cx, wrapper, "", value);
             assert status;
             /* step 12 */
-            JSONSerializer serializer = new JSONSerializer(propertyList, replacerFunction, gap);
+            StrBuilder result = new StrBuilder(cx);
+            JSONSerializer serializer = new JSONSerializer(propertyList, replacerFunction, gap, result);
             value = TransformJSONValue(cx, serializer, wrapper, "", value);
             if (!IsJSONSerializable(value)) {
                 return UNDEFINED;
             }
             SerializeJSONValue(cx, serializer, value);
-            return serializer.result.toString();
+            return result.toString();
         }
 
         /**
@@ -192,6 +196,19 @@ public final class JSONObject extends OrdinaryObject implements Initializable {
         @Value(name = "[Symbol.toStringTag]", symbol = BuiltinSymbol.toStringTag,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static final String toStringTag = "JSON";
+    }
+
+    public static String stringify(ExecutionContext cx, Object value) {
+        OrdinaryObject wrapper = ObjectCreate(cx, Intrinsics.ObjectPrototype);
+        CreateDataProperty(cx, wrapper, "", value);
+        StrBuilder result = new StrBuilder(cx);
+        JSONSerializer serializer = new JSONSerializer(null, null, "", result);
+        value = TransformJSONValue(cx, serializer, wrapper, "", value);
+        if (!IsJSONSerializable(value)) {
+            return "";
+        }
+        SerializeJSONValue(cx, serializer, value);
+        return result.toString();
     }
 
     /**
@@ -208,14 +225,14 @@ public final class JSONObject extends OrdinaryObject implements Initializable {
      * @return the result value
      */
     private static Object InternalizeJSONProperty(ExecutionContext cx, Callable reviver, ScriptObject holder,
-            String name) {
-        /* steps 1-2 */
+            Object name) {
+        /* step 1 */
         Object val = Get(cx, holder, name);
-        /* step 3 */
+        /* step 2 */
         if (Type.isObject(val)) {
             InternalizeJSONValue(cx, reviver, Type.objectValue(val));
         }
-        /* step 4 */
+        /* step 3 */
         return reviver.call(cx, holder, name, val);
     }
 
@@ -234,23 +251,23 @@ public final class JSONObject extends OrdinaryObject implements Initializable {
      */
     private static Object InternalizeJSONProperty(ExecutionContext cx, Callable reviver, ScriptObject holder,
             long name) {
-        /* steps 1-2 */
+        /* step 1 */
         Object val = Get(cx, holder, name);
-        /* step 3 */
+        /* step 2 */
         if (Type.isObject(val)) {
             InternalizeJSONValue(cx, reviver, Type.objectValue(val));
         }
-        /* step 4 */
+        /* step 3 */
         return reviver.call(cx, holder, ToString(name), val);
     }
 
     private static void InternalizeJSONValue(ExecutionContext cx, Callable reviver, ScriptObject val) {
-        /* InternalizeJSONProperty, step 3 */
-        /* steps 3.a-b */
+        /* InternalizeJSONProperty, step 2 */
+        /* step 2.a */
         boolean isArray = IsArray(cx, val);
-        /* steps 3.c-d */
+        /* steps 2.b-c */
         if (isArray) {
-            /* step 3.c */
+            /* step 2.b */
             long len = ToLength(cx, Get(cx, val, "length"));
             for (long i = 0; i < len; ++i) {
                 Object newElement = InternalizeJSONProperty(cx, reviver, val, i);
@@ -261,8 +278,9 @@ public final class JSONObject extends OrdinaryObject implements Initializable {
                 }
             }
         } else {
-            /* step 3.d */
-            for (String p : EnumerableOwnNames(cx, val)) {
+            /* step 2.c */
+            List<String> keys = EnumerableOwnNames(cx, val);
+            for (Object p : keys) {
                 Object newElement = InternalizeJSONProperty(cx, reviver, val, p);
                 if (Type.isUndefined(newElement)) {
                     val.delete(cx, p);
@@ -275,17 +293,18 @@ public final class JSONObject extends OrdinaryObject implements Initializable {
 
     private static final class JSONSerializer {
         final HashSet<ScriptObject> stack;
-        final HashSet<String> propertyList;
+        final LinkedHashSet<String> propertyList;
         final Callable replacerFunction;
         final String gap;
-        final StringBuilder result = new StringBuilder();
+        final StrBuilder result;
         int level = 0;
 
-        JSONSerializer(HashSet<String> propertyList, Callable replacerFunction, String gap) {
+        JSONSerializer(LinkedHashSet<String> propertyList, Callable replacerFunction, String gap, StrBuilder result) {
             this.stack = new HashSet<>();
             this.propertyList = propertyList;
             this.replacerFunction = replacerFunction;
             this.gap = gap;
+            this.result = result;
         }
     }
 
@@ -306,15 +325,15 @@ public final class JSONObject extends OrdinaryObject implements Initializable {
      */
     private static Object TransformJSONValue(ExecutionContext cx, JSONSerializer serializer, ScriptObject holder,
             String key, Object value) {
-        /* steps 1-2 (not applicable) */
-        /* step 3 */
-        if (Type.isObject(value)) {
-            Object toJSON = Get(cx, Type.objectValue(value), "toJSON");
+        /* step 1 (not applicable) */
+        /* step 2 */
+        if (Type.isObject(value) || Type.isBigInt(value)) {
+            Object toJSON = GetV(cx, value, "toJSON");
             if (IsCallable(toJSON)) {
                 value = ((Callable) toJSON).call(cx, value, key);
             }
         }
-        /* step 4 */
+        /* step 3 */
         if (serializer.replacerFunction != null) {
             value = serializer.replacerFunction.call(cx, holder, key, value);
         }
@@ -332,8 +351,8 @@ public final class JSONObject extends OrdinaryObject implements Initializable {
      *            the property value
      */
     private static void SerializeJSONValue(ExecutionContext cx, JSONSerializer serializer, Object value) {
-        /* steps 1-4 (not applicable) */
-        /* steps 5-12 */
+        /* steps 1-3 (not applicable) */
+        /* steps 4-11 */
         switch (Type.of(value)) {
         case Null:
             SerializeJSONNull(serializer);
@@ -347,6 +366,8 @@ public final class JSONObject extends OrdinaryObject implements Initializable {
         case Number:
             SerializeJSONNumber(serializer, Type.numberValue(value));
             return;
+        case BigInt:
+            throw newTypeError(cx, Messages.Key.BigIntCannotJSONStringify);
         case Object:
             assert !IsCallable(value);
             ScriptObject valueObj = Type.objectValue(value);
@@ -356,6 +377,8 @@ public final class JSONObject extends OrdinaryObject implements Initializable {
                 SerializeJSONString(serializer, ToString(cx, value));
             } else if (valueObj instanceof BooleanObject) {
                 SerializeJSONBoolean(serializer, ((BooleanObject) valueObj).getBooleanData());
+            } else if (valueObj instanceof BigIntObject) {
+                throw newTypeError(cx, Messages.Key.BigIntCannotJSONStringify);
             } else if (IsArray(cx, valueObj)) {
                 SerializeJSONArray(cx, serializer, valueObj);
             } else {
@@ -396,6 +419,7 @@ public final class JSONObject extends OrdinaryObject implements Initializable {
         case Null:
         case String:
         case Number:
+        case BigInt:
             return true;
         case Object:
             return !IsCallable(value);
@@ -422,7 +446,7 @@ public final class JSONObject extends OrdinaryObject implements Initializable {
      * @param value
      *            the string
      */
-    private static void QuoteJSONString(StringBuilder product, String value) {
+    private static void QuoteJSONString(StrBuilder product, String value) {
         product.ensureCapacity(value.length() + 2);
         /* step 1 */
         product.append('"');
@@ -453,10 +477,10 @@ public final class JSONObject extends OrdinaryObject implements Initializable {
                 if (c < ' ') {
                     /* @formatter:off */
                     product.append('\\').append('u')
-                            .append(HEXDIGITS[(c >> 12) & 0xf])
-                            .append(HEXDIGITS[(c >> 8) & 0xf])
-                            .append(HEXDIGITS[(c >> 4) & 0xf])
-                            .append(HEXDIGITS[(c >> 0) & 0xf]);
+                           .append(HEXDIGITS[(c >> 12) & 0xf])
+                           .append(HEXDIGITS[(c >> 8) & 0xf])
+                           .append(HEXDIGITS[(c >> 4) & 0xf])
+                           .append(HEXDIGITS[(c >> 0) & 0xf]);
                     /* @formatter:on */
                 } else {
                     product.append(c);
@@ -495,12 +519,12 @@ public final class JSONObject extends OrdinaryObject implements Initializable {
         /* steps 8-10 */
         boolean isEmpty = true;
         String gap = serializer.gap;
-        StringBuilder result = serializer.result;
+        StrBuilder result = serializer.result;
         result.append('{');
         serializer.level += 1;
         for (String p : k) {
             // Inlined: SerializeJSONProperty
-            Object v = Get(cx, value, p);
+            Object v = Get(cx, value, (Object) p);
             v = TransformJSONValue(cx, serializer, value, p, v);
             if (!IsJSONSerializable(v)) {
                 continue;
@@ -547,11 +571,11 @@ public final class JSONObject extends OrdinaryObject implements Initializable {
             throw newTypeError(cx, Messages.Key.JSONCyclicValue);
         }
         /* steps 3-5 (not applicable) */
-        /* steps 6-7 */
+        /* step 6 */
         long len = ToLength(cx, Get(cx, value, "length"));
-        /* steps 8-11 */
+        /* steps 7-10 */
         String gap = serializer.gap;
-        StringBuilder result = serializer.result;
+        StrBuilder result = serializer.result;
         result.append('[');
         if (len > 0) {
             serializer.level += 1;
@@ -577,12 +601,12 @@ public final class JSONObject extends OrdinaryObject implements Initializable {
             }
         }
         result.append(']');
-        /* step 12 */
+        /* step 11 */
         serializer.stack.remove(value);
-        /* steps 13-14 (not applicable) */
+        /* steps 12-13 (not applicable) */
     }
 
-    private static void indent(JSONSerializer serializer, StringBuilder sb) {
+    private static void indent(JSONSerializer serializer, StrBuilder sb) {
         int level = serializer.level;
         String gap = serializer.gap;
         sb.ensureCapacity(1 + level * gap.length());

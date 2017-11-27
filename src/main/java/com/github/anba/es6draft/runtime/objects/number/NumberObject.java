@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -47,9 +47,8 @@ public class NumberObject extends OrdinaryObject {
      *            the prototype object
      */
     public NumberObject(Realm realm, double numberData, ScriptObject prototype) {
-        super(realm);
+        super(realm, prototype);
         this.numberData = numberData;
-        setPrototype(prototype);
     }
 
     /**
@@ -57,13 +56,18 @@ public class NumberObject extends OrdinaryObject {
      * 
      * @return the number value
      */
-    public double getNumberData() {
+    public final double getNumberData() {
         return numberData;
     }
 
     @Override
-    public String className() {
+    public final String className() {
         return "Number";
+    }
+
+    @Override
+    public String toString() {
+        return String.format("%s, numberData=%s", super.toString(), numberData);
     }
 
     /**
@@ -76,8 +80,7 @@ public class NumberObject extends OrdinaryObject {
      * @return the new number object
      */
     public static NumberObject NumberCreate(ExecutionContext cx, double numberData) {
-        return new NumberObject(cx.getRealm(), numberData,
-                cx.getIntrinsic(Intrinsics.NumberPrototype));
+        return new NumberObject(cx.getRealm(), numberData, cx.getIntrinsic(Intrinsics.NumberPrototype));
     }
 
     /**
@@ -91,8 +94,7 @@ public class NumberObject extends OrdinaryObject {
      *            the prototype object
      * @return the new number object
      */
-    public static NumberObject NumberCreate(ExecutionContext cx, double numberData,
-            ScriptObject prototype) {
+    public static NumberObject NumberCreate(ExecutionContext cx, double numberData, ScriptObject prototype) {
         return new NumberObject(cx.getRealm(), numberData, prototype);
     }
 }

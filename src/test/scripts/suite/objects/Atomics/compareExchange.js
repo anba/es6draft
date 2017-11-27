@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -24,12 +24,12 @@ for (let TArray of [Int32Array, Int16Array, Int8Array, Uint32Array, Uint16Array,
 
     for (let i = 0; i < ${iterations}; ++i) {
       // Wait until state is reset.
-      while (Atomics.futexWait(fta, 0, 0) !== Atomics.OK) ;
+      while (Atomics.wait(fta, 0, 0) !== "ok") ;
 
       Atomics.store(ta, 1, Atomics.compareExchange(ta, 0, 3, 1));
 
       // Notify worker has finished.
-      while (Atomics.futexWake(fta, 0, 1) !== 1) ;
+      while (Atomics.wake(fta, 0, 1) !== 1) ;
     }
   `);
 
@@ -38,12 +38,12 @@ for (let TArray of [Int32Array, Int16Array, Int8Array, Uint32Array, Uint16Array,
     Atomics.store(ta, 0, 3);
 
     // Wake worker.
-    while (Atomics.futexWake(fta, 0, 1) !== 1) ;
+    while (Atomics.wake(fta, 0, 1) !== 1) ;
 
     let r = Atomics.compareExchange(ta, 0, 1, 2);
 
     // Wait until worker finished.
-    while (Atomics.futexWait(fta, 0, 0) !== Atomics.OK) ;
+    while (Atomics.wait(fta, 0, 0) !== "ok") ;
 
     assertSame(3, Atomics.load(ta, 1));
     if (r === 1) {

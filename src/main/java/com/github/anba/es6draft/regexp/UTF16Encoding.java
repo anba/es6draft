@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -32,8 +32,8 @@ final class UTF16Encoding extends UEncoding {
         byte[] bytes = new byte[chars.length * 2 + 2]; // null-terminated c-string
         for (int i = 0, j = 0, len = chars.length; i < len; ++i) {
             char c = chars[i];
-            bytes[j++] = (byte) ((c >>> 8) & 0xff);
-            bytes[j++] = (byte) ((c >>> 0) & 0xff);
+            bytes[j++] = (byte) (c >>> 8);
+            bytes[j++] = (byte) (c >>> 0);
         }
         return bytes;
     }
@@ -104,16 +104,16 @@ final class UTF16Encoding extends UEncoding {
     @Override
     public int codeToMbc(int code, byte[] bytes, int p) {
         if (Character.isBmpCodePoint(code)) {
-            bytes[p + 0] = (byte) ((code >>> 8) & 0xff);
-            bytes[p + 1] = (byte) ((code >>> 0) & 0xff);
+            bytes[p + 0] = (byte) (code >>> 8);
+            bytes[p + 1] = (byte) (code >>> 0);
             return 2;
         }
         char high = Character.highSurrogate(code);
         char low = Character.lowSurrogate(code);
-        bytes[p + 0] = (byte) ((high >>> 8) & 0xff);
-        bytes[p + 1] = (byte) ((high >>> 0) & 0xff);
-        bytes[p + 2] = (byte) ((low >>> 8) & 0xff);
-        bytes[p + 3] = (byte) ((low >>> 0) & 0xff);
+        bytes[p + 0] = (byte) (high >>> 8);
+        bytes[p + 1] = (byte) (high >>> 0);
+        bytes[p + 2] = (byte) (low >>> 8);
+        bytes[p + 3] = (byte) (low >>> 0);
         return 4;
     }
 

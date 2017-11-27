@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
  */
 package com.github.anba.es6draft.runtime.objects.number;
 
-import static com.github.anba.es6draft.runtime.AbstractOperations.ToInteger;
+import static com.github.anba.es6draft.runtime.AbstractOperations.ToNumber;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToString;
 import static com.github.anba.es6draft.runtime.internal.Errors.newRangeError;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
@@ -18,7 +18,6 @@ import org.mozilla.javascript.DToA;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.Initializable;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
@@ -63,18 +62,20 @@ public final class NumberPrototype extends NumberObject implements Initializable
          * 
          * @param cx
          *            the execution context
-         * @param object
-         *            the object
+         * @param value
+         *            the value
+         * @param method
+         *            the method name
          * @return the number value
          */
-        private static double thisNumberValue(ExecutionContext cx, Object object) {
-            if (Type.isNumber(object)) {
-                return Type.numberValue(object);
+        private static double thisNumberValue(ExecutionContext cx, Object value, String method) {
+            if (Type.isNumber(value)) {
+                return Type.numberValue(value);
             }
-            if (object instanceof NumberObject) {
-                return ((NumberObject) object).getNumberData();
+            if (value instanceof NumberObject) {
+                return ((NumberObject) value).getNumberData();
             }
-            throw newTypeError(cx, Messages.Key.IncompatibleObject);
+            throw newTypeError(cx, Messages.Key.IncompatibleThis, method, Type.of(value).toString());
         }
 
         @Prototype
@@ -100,11 +101,11 @@ public final class NumberPrototype extends NumberObject implements Initializable
         @Function(name = "toString", arity = 1)
         public static Object toString(ExecutionContext cx, Object thisValue, Object radix) {
             /* steps 1-2 */
-            double x = thisNumberValue(cx, thisValue);
+            double x = thisNumberValue(cx, thisValue, "Number.prototype.toString");
             /* steps 3-6 */
-            double radixNumber = 10;
+            int radixNumber = 10;
             if (!Type.isUndefined(radix)) {
-                radixNumber = ToInteger(cx, radix);
+                radixNumber = (int) ToNumber(cx, radix); // ToInteger
             }
             /* step 7 */
             if (radixNumber < 2 || radixNumber > 36) {
@@ -115,18 +116,7 @@ public final class NumberPrototype extends NumberObject implements Initializable
                 return ToString(x);
             }
             /* step 9 */
-            // 7.1.12.1 ToString Applied to the Number Type
-            // steps 1-4
-            if (x != x) {
-                return "NaN";
-            } else if (x == Double.POSITIVE_INFINITY) {
-                return "Infinity";
-            } else if (x == Double.NEGATIVE_INFINITY) {
-                return "-Infinity";
-            } else if (x == 0d) {
-                return "0";
-            }
-            return DToA.JS_dtobasestr((int) radixNumber, x);
+            return DToA.JS_dtobasestr(radixNumber, x);
         }
 
         /**
@@ -144,17 +134,15 @@ public final class NumberPrototype extends NumberObject implements Initializable
          * @return the locale string representation for this number
          */
         @Function(name = "toLocaleString", arity = 0)
-        public static Object toLocaleString(ExecutionContext cx, Object thisValue, Object locales,
-                Object options) {
+        public static Object toLocaleString(ExecutionContext cx, Object thisValue, Object locales, Object options) {
             // N.B. permissible but not encouraged:
             // return ToString(thisNumberValue(cx, thisValue));
 
             // ECMA-402
             /* steps 1-2 */
-            double x = thisNumberValue(cx, thisValue);
+            double x = thisNumberValue(cx, thisValue, "Number.prototype.toLocaleString");
             /* steps 3-4 */
-            NumberFormatConstructor ctor = (NumberFormatConstructor) cx
-                    .getIntrinsic(Intrinsics.Intl_NumberFormat);
+            NumberFormatConstructor ctor = (NumberFormatConstructor) cx.getIntrinsic(Intrinsics.Intl_NumberFormat);
             NumberFormatObject numberFormat = ctor.construct(cx, ctor, locales, options);
             /* step 5 */
             return FormatNumber(numberFormat, x);
@@ -172,7 +160,7 @@ public final class NumberPrototype extends NumberObject implements Initializable
         @Function(name = "valueOf", arity = 0)
         public static Object valueOf(ExecutionContext cx, Object thisValue) {
             /* steps 1-2 */
-            return thisNumberValue(cx, thisValue);
+            return thisNumberValue(cx, thisValue, "Number.prototype.valueOf");
         }
 
         /**
@@ -189,12 +177,11 @@ public final class NumberPrototype extends NumberObject implements Initializable
         @Function(name = "toFixed", arity = 1)
         public static Object toFixed(ExecutionContext cx, Object thisValue, Object fractionDigits) {
             /* steps 1-2 */
-            double x = thisNumberValue(cx, thisValue);
+            double x = thisNumberValue(cx, thisValue, "Number.prototype.toFixed");
             /* steps 3-4 */
-            double f = ToInteger(cx, fractionDigits);
+            int f = (int) ToNumber(cx, fractionDigits); // ToInteger
             /* step 5 */
-            boolean extPrecision = cx.getRealm().isEnabled(CompatibilityOption.ExtendedPrecision);
-            if (f < 0 || f > (extPrecision ? 100 : 20)) {
+            if (f < 0 || f > 100) {
                 throw newRangeError(cx, Messages.Key.InvalidPrecision);
             }
             /* step 6 */
@@ -203,7 +190,7 @@ public final class NumberPrototype extends NumberObject implements Initializable
             }
             /* steps 7-11 */
             StringBuilder sb = new StringBuilder();
-            DToA.JS_dtostr(sb, DToA.DTOSTR_FIXED, (int) f, x);
+            DToA.JS_dtostr(sb, DToA.DTOSTR_FIXED, f, x);
             return sb.toString();
         }
 
@@ -219,12 +206,11 @@ public final class NumberPrototype extends NumberObject implements Initializable
          * @return the decimal exponential notation of this number
          */
         @Function(name = "toExponential", arity = 1)
-        public static Object toExponential(ExecutionContext cx, Object thisValue,
-                Object fractionDigits) {
+        public static Object toExponential(ExecutionContext cx, Object thisValue, Object fractionDigits) {
             /* steps 1-2 */
-            double x = thisNumberValue(cx, thisValue);
+            double x = thisNumberValue(cx, thisValue, "Number.prototype.toExponential");
             /* steps 3-5 */
-            double f = ToInteger(cx, fractionDigits);
+            int f = (int) ToNumber(cx, fractionDigits); // ToInteger
             assert fractionDigits != UNDEFINED || f == 0;
             /* steps 6-9 */
             if (x != x) {
@@ -235,16 +221,15 @@ public final class NumberPrototype extends NumberObject implements Initializable
                 return "-Infinity";
             }
             /* step 10 */
-            boolean extPrecision = cx.getRealm().isEnabled(CompatibilityOption.ExtendedPrecision);
-            if (f < 0 || f > (extPrecision ? 100 : 20)) {
+            if (f < 0 || f > 100) {
                 throw newRangeError(cx, Messages.Key.InvalidPrecision);
             }
             /* steps 11-17 */
             StringBuilder sb = new StringBuilder();
             if (fractionDigits == UNDEFINED) {
-                DToA.JS_dtostr(sb, DToA.DTOSTR_STANDARD_EXPONENTIAL, 1 + (int) f, x);
+                DToA.JS_dtostr(sb, DToA.DTOSTR_STANDARD_EXPONENTIAL, 1 + f, x);
             } else {
-                DToA.JS_dtostr(sb, DToA.DTOSTR_EXPONENTIAL, 1 + (int) f, x);
+                DToA.JS_dtostr(sb, DToA.DTOSTR_EXPONENTIAL, 1 + f, x);
             }
             return sb.toString();
         }
@@ -263,13 +248,13 @@ public final class NumberPrototype extends NumberObject implements Initializable
         @Function(name = "toPrecision", arity = 1)
         public static Object toPrecision(ExecutionContext cx, Object thisValue, Object precision) {
             /* steps 1-2 */
-            double x = thisNumberValue(cx, thisValue);
+            double x = thisNumberValue(cx, thisValue, "Number.prototype.toPrecision");
             /* step 3 */
             if (precision == UNDEFINED) {
                 return ToString(x);
             }
             /* steps 4-5 */
-            double p = ToInteger(cx, precision);
+            int p = (int) ToNumber(cx, precision); // ToInteger
             /* steps 6-9 */
             if (x != x) {
                 return "NaN";
@@ -279,13 +264,12 @@ public final class NumberPrototype extends NumberObject implements Initializable
                 return "-Infinity";
             }
             /* step 10 */
-            boolean extPrecision = cx.getRealm().isEnabled(CompatibilityOption.ExtendedPrecision);
-            if (p < 1 || p > (extPrecision ? 100 : 21)) {
+            if (p < 1 || p > 100) {
                 throw newRangeError(cx, Messages.Key.InvalidPrecision);
             }
             /* steps 11-16 */
             StringBuilder sb = new StringBuilder();
-            DToA.JS_dtostr(sb, DToA.DTOSTR_PRECISION, (int) p, x);
+            DToA.JS_dtostr(sb, DToA.DTOSTR_PRECISION, p, x);
             return sb.toString();
         }
     }

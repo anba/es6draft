@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -15,16 +15,23 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  */
 public final class RegExpStringIteratorObject extends OrdinaryObject {
     /** [[IteratingRegExp]] */
-    private final RegExpObject iteratedRegExp;
+    private final ScriptObject iteratedRegExp;
 
     /** [[IteratedString]] */
     private final String iteratedString;
 
-    RegExpStringIteratorObject(Realm realm, RegExpObject regexp, String string, ScriptObject prototype) {
-        super(realm);
+    /** [[PreviousIndex]] */
+    private long previousIndex;
+
+    /** [[Done]] */
+    private boolean done;
+
+    RegExpStringIteratorObject(Realm realm, ScriptObject regexp, String string, ScriptObject prototype) {
+        super(realm, prototype);
         this.iteratedRegExp = regexp;
         this.iteratedString = string;
-        setPrototype(prototype);
+        this.previousIndex = -1;
+        this.done = false;
     }
 
     /**
@@ -32,7 +39,7 @@ public final class RegExpStringIteratorObject extends OrdinaryObject {
      * 
      * @return the iterated regexp
      */
-    public RegExpObject getIteratedRegExp() {
+    public ScriptObject getIteratedRegExp() {
         return iteratedRegExp;
     }
 
@@ -43,5 +50,43 @@ public final class RegExpStringIteratorObject extends OrdinaryObject {
      */
     public String getIteratedString() {
         return iteratedString;
+    }
+
+    /**
+     * [[PreviousIndex]]
+     * 
+     * @return the previous index
+     */
+    public long getPreviousIndex() {
+        return previousIndex;
+    }
+
+    /**
+     * [[PreviousIndex]]
+     * 
+     * @param previousIndex
+     *            the new previous index value
+     */
+    public void setPreviousIndex(long previousIndex) {
+        this.previousIndex = previousIndex;
+    }
+
+    /**
+     * [[Done]]
+     * 
+     * @return the done flag
+     */
+    public boolean isDone() {
+        return done;
+    }
+
+    /**
+     * [[Done]]
+     * 
+     * @param done
+     *            the new done value
+     */
+    public void setDone(boolean done) {
+        this.done = done;
     }
 }

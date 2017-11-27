@@ -1,0 +1,873 @@
+#
+# Copyright (c) André Bargull
+# Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
+#
+# <https://github.com/anba/es6draft>
+#
+
+
+# JSC bug
+arguments-bizarre-behaviour-disable-enumerability.js
+
+# invalid test: delete ignores uninitialized bindings (`function foo(){ delete x; let x }`)
+lexical-let-not-strict-mode.js
+
+# ES2016: generators are no longer constructors
+generator-eval-this.js
+generator-this.js
+generator-with-new-target.js
+
+# Integer indexed property keys don't perform prototype lookup on typed arrays
+float32array-out-of-bounds.js
+
+# Missing hasInstance or bind prototype changes
+class-subclassing-function.js
+
+# Assignment to oob index should throw in strict mode
+class-subclassing-typedarray.js
+
+# invalid: Array.prototype.concat uses CreateDataProperty which throws when used with typed arrays
+array-species-config-array-constructor.js
+
+# invalid: Promise constructor checks IsCallable(executor) before retrieving prototype property
+create-subclass-structure-might-throw.js
+
+# invalid: syntax error in `for (let x = 0, []; x < 10; ++x) ...`
+for-let-comma.js
+
+# invalid: result typed array length too small
+typedarray-slice.js
+
+# invalid: assignment to new.target is early reference error
+new-target-syntax-errors.js
+
+# invalid: functions with non-simple parameter lists cannot use UseStrict directive
+reflect-set.js
+
+# invalid: Proxy 'set' trap does not return boolean
+regexp-match-proxy.js
+
+# Annex B for sloppy mode function hoisting still in flux
+sloppy-mode-function-hoisting.js
+
+# invalid: default parameter scope has no access to function body declarations
+arrow-functions-as-default-parameter-values.js
+
+# invalid: syntax under test is valid
+default-value-parsing-should-propagate-error.js
+
+# invalid: set() trap does not return truish success value
+regexp-replace-proxy.js
+
+# invalid: immutable Prototype for Object.prototype not implemented
+get-from-scope-dynamic-onto-proxy.js
+
+# invalid: Object.defineProperty should throw TypeError
+to-this-before-arrow-function-closes-over-this-that-starts-as-lexical-environment.js
+
+# invalid: should throw SyntaxError
+variable-under-tdz-eval-tricky.js
+
+# invalid: jsc bug https://bugs.webkit.org/show_bug.cgi?id=159645
+array-prototype-splice-making-typed-array.js
+
+# invalid: var shadows let declaration
+for-in-tests.js
+
+# invalid: new.target in async arrow in global context
+async-arrow-functions-lexical-new.target-binding.js
+
+# invalid: missing early error for invalid flags in regexp literal
+regress-161995.js
+
+# invalid: hoisted block function named "arguments" should be initialized with undefined per 3.3.1
+sloppy-mode-hoist-arguments-function-non-simple-parameter-list.js
+
+# es2017: enumerate trap
+property-name-enumerator-should-not-look-into-indexed-values-when-it-is-a-dictionary.js
+
+# invalid: Atomics now use ToIndex
+SharedArrayBuffer.js
+
+# invalid: incorrect completion value for class-declaration
+super-get-by-id.js
+
+# invalid: TypedArray.prototype.fill changed to call ToNumber only once
+typedarray-fill.js
+
+# es-issue: DataView.length either 1 or 3
+native-constructors-length.js
+
+# invalid: `Atomics.add(new Int32Array(new SharedArrayBuffer(128)), "hello", 0);` shouldn't throw
+SharedArrayBuffer-opt.js
+
+# expected exception test file format not supported
+regress-170732.js
+
+# invalid: not updated to disallow duplicate property keys
+Object_static_methods_Object.getOwnPropertyDescriptors-proxy.js
+
+# invalid: `Function("//", "")` shouldn't throw a SyntaxError
+function-constructor-semantics.js
+
+# invalid: `for (let i in null) for (var i in null) ;` should throw a SyntaxError
+for-in-invalidate-context-weird-assignments.js
+
+# see todo for https://github.com/tc39/ecma262/issues/753
+eval-func-decl-in-global.js
+
+# invalid: Object.freeze(global) called, followed by (implicit) assignment `var error = false`...
+eval-func-decl-in-frozen-global.js
+
+# invalid: should throw TypeError
+construct-overwritten-variable.js
+construct-spread-overwritten-variable.js
+construct-spread-overwritten-variable-2.js
+
+# invalid: completion value of eval(`L: { try { 42 } finally { -2; break L; } }`) is -2, but 42 in JSC
+completion-value.js
+
+# invalid: second Await in AsyncGeneratorYield missing in JSC when called from return in yield*
+async-iteration-yield-star.js
+async-iteration-yield-star-interface.js
+
+# invalid: typed array indexed properties marked as non-writable in JSC
+typedarray-getownproperty-not-configurable.js
+
+
+############################################
+# Implementation specific differences      #
+############################################
+
+# Different precision for Math.pow(2.1, 42)
+math-pow-with-constants.js
+pow-with-constants.js
+
+# symbol valued property key on global object fails test
+object-get-own-property-symbols.js
+
+# JSC uses .line instead of .lineNumber
+template-literal-line-terminators.js
+
+# Throws TypeError on .caller access to strict function
+tail-call-recognize.js
+
+# Throws RangeError for stack overflow
+arity-check-ftl-throw.js
+proxy-stack-overflow-exceptions.js
+
+# Throws different error for internal errors like OOM
+array-join-on-strings-need-overflow-checks.js
+joined-strings-should-not-exceed-max-string-length.js
+regexp-prototype-exec-on-too-long-rope.js
+regexp-prototype-match-on-too-long-rope.js
+
+# Promise recursion dropped in jsc
+promise-infinite-recursion-should-not-crash.js
+
+# RegExp repeat quantifier limited to 100000 in Joni
+regress-159744.js
+regress-159954.js
+
+# Different string length limits
+exception-in-strcat-string-overflow.js
+exception-effect-strcat.js
+regress-178385.js
+regress-178386.js
+string-prototype-replace-should-throw-out-of-memory-error-when-using-too-much-memory.js
+
+# date parsing
+date-relaxed.js
+
+# questionable sort-comparator special-casing
+sorting-boolean-result-comparator.js
+sort-null-comparator.js
+
+# different error message
+array-buffer-byte-length.js
+array-copywithin.js
+array-from-with-iterator.js
+array-iterators-next-error-messages.js
+array-iterators-next-with-call.js
+array-prototype-concat-of-long-spliced-arrays.js
+array-prototype-concat-of-long-spliced-arrays2.js
+array-reverse-proxy.js
+arrow-function-token-is-not-keyword.js
+async-arrow-functions-lexical-binding-in-class.js
+async-arrow-functions-lexical-super-binding.js
+async-await-module-reserved-word.js
+async-await-reserved-word.js
+async-await-basic.js
+async-await-syntax.js
+async-iteration-basic.js
+bug-165091.js
+builtin-function-is-construct-type-none.js
+builtin-function-length.js
+builtin-function-name.js
+catch-parameter-syntax.js
+class-derived-from-null.js
+class-expression-generates-environment.js
+class-expression-should-be-tdz-in-heritage.js
+code-cache-incorrect-caching.js
+const-and-with-statement.js
+const-loop-semantics.js
+const-not-strict-mode.js
+const-semantics.js
+create-subclass-structure-may-throw-exception-when-getting-prototype.js
+custom-iterators.js
+dataview-construct.js
+destructuring-assignment-accepts-iterables.js
+destructuring-assignment-require-object-coercible.js
+destructuring-assignment-syntax.js
+dfg-object-proto-accessor.js
+dfg-object-proto-getter.js
+dfg-object-prototype-of.js
+dfg-reflect-get-prototype-of.js
+dfg-to-primitive-pass-symbol.js
+error-description-on-symbols-should-not-crash.js
+error-message-for-function-base-not-found.js
+error-messages-for-in-operator-should-not-crash.js
+es6-for-of-loop-exception.js
+eval-and-super.js
+eval-func-decl-block-with-var-and-remove.js
+eval-func-decl-block-with-var-sinthesize.js
+eval-func-decl-in-eval-within-block-with-let.js
+eval-func-decl-in-eval-within-with-scope.js
+eval-func-decl-in-global-of-eval.js
+eval-func-decl-with-let-const-class.js
+eval-func-decl-within-eval-with-reassign-to-var.js
+eval-func-decl-within-eval-without-reassign-to-let.js
+exception-in-to-property-key-should-be-handled-early-in-object-methods.js
+exception-in-to-property-key-should-be-handled-early.js
+floating-point-div-to-mul.js
+for-in-of-const.js
+freeze-and-seal-should-prevent-extensions.js
+ftl-library-inlining-exceptions-dataview.js
+function-constructor-reading-from-global-lexical-environment.js
+generator-and-super.js
+generator-class-methods-syntax.js
+generator-class-methods.js
+generator-frame-empty.js
+generator-function-constructor.js
+generator-is-not-constructible.js
+generator-methods-with-non-generator.js
+generator-syntax.js
+generator-with-super.js
+generator-yield-star.js
+global-lexical-redeclare-variable.js
+global-lexical-redefine-const.js
+global-lexical-var-injection.js
+global-lexical-variable-with-statement.js
+has-instance-exception-check.js
+import-reject-with-exception.js
+import-syntax.js
+llint-stack-overflow-location.js
+make-large-string.js
+make-large-string-jit-strcat.js
+make-large-string-jit.js
+make-large-string-strcat.js
+map-constructor.js
+method-name.js
+modules-syntax-error-with-names.js
+modules-syntax-error.js
+mutual-tail-call-no-stack-overflow.js
+new-promise-capabilities-requires-constructor.js
+non-constructors.js
+number-to-string-with-radix-invalid.js
+object-entries.js
+object-get-own-property-descriptor-perform-to-object.js
+object-get-own-property-names-perform-to-object.js
+object-get-own-property-symbols-perform-to-object.js
+object-get-prototype-of-perform-to-object.js
+object-keys-perform-to-object.js
+object-prototype-proto-accessors-should-throw-on-undefined-this.js
+object-rest-deconstruct.js
+Object_static_methods_Object.getOwnPropertyDescriptors.js
+object-values.js
+obscure-error-message-dont-crash.js
+optional-catch-binding-syntax.js
+ordinary-set-exceptions.js
+parameter-scoping.js
+pow-expects-update-expression-on-lhs.js
+pow-to-number-should-be-executed-in-code-side.js
+promise-cannot-be-called.js
+proxy-basic.js
+proxy-construct.js
+proxy-define-own-property.js
+proxy-delete.js
+proxy-get-and-set-recursion-stack-overflow.js
+proxy-get-own-property.js
+proxy-get-prototype-of.js
+proxy-has-property.js
+proxy-is-array.js
+proxy-is-extensible.js
+proxy-json.js
+proxy-own-keys.js
+proxy-prevent-extensions.js
+proxy-property-descriptor.js
+proxy-revoke.js
+proxy-set.js
+proxy-set-prototype-of.js
+proxy-with-private-symbols.js
+put-direct-index-broken-2.js
+re-execute-error-module.js
+recurse-infinitely-on-getter.js
+recursive-try-catch.js
+reflect-apply.js
+reflect-construct.js
+reflect-define-property.js
+reflect-delete-property.js
+reflect-get-own-property.js
+reflect-get-prototype-of.js
+reflect-get.js
+reflect-has.js
+reflect-is-extensible.js
+reflect-own-keys.js
+reflect-prevent-extensions.js
+reflect-set-prototype-of.js
+reflect-set-proxy-set.js
+reflect-set-receiver-proxy-set.js
+regexp-last-index-writable.js
+regexp-match.js
+regexp-search.js
+regress-151324.js
+regress-166812.js
+regress-169783.js
+regress-170661.js
+regress-171079.js
+regress-172346.js
+regress-173053.js
+regress-176485.js
+reserved-word-with-escape.js
+rest-elements.js
+set-constructor.js
+set-same-prototype.js
+static-getter-delete.js
+static-getter-put.js
+string-from-code-point.js
+string-iterators.js
+string-normalize.js
+string-object-put-by-index.js
+string-prototype-methods-endsWith-startsWith-includes-correctness.js
+string-prototype-scopes.js
+string-prototype-scopes-global-lexical-environment.js
+string-prototype-scopes-global-lexical-environment-strict.js
+string-prototype-scopes-strict.js
+string-raw.js
+string-repeat-edge-cases.js
+string-symbol-customization.js
+super-dot-call-and-apply.js
+super-in-lexical-scope.js
+super-property-access-tdz.js
+symbol-error-messages.js
+symbol-registry.js
+symbol-toprimitive-errors.js
+tagged-templates-syntax.js
+tail-call-host-call-throw.js
+tail-call-no-stack-overflow.js
+tail-call-varargs-no-stack-overflow.js
+template-literal-syntax.js
+throw-from-ftl-call-ic-slow-path.js
+throw-from-ftl-call-ic-slow-path-cells.js
+throw-from-ftl-call-ic-slow-path-undefined.js
+to-string-non-cell-use.js
+trailing-comma-in-function-parameters.js
+trailing-comma-in-patterns.js
+typedarray-access-monomorphic-neutered.js
+typedarray-access-neutered.js
+typedarray-every.js
+typedarray-filter.js
+typedarray-find.js
+typedarray-findIndex.js
+typedarray-forEach.js
+typedarray-functions-with-neutered.js
+typedarray-map.js
+typedarray-of.js
+typedarray-reduce.js
+typedarray-reduceRight.js
+typedarray-set.js
+typedarray-some.js
+typedarray-sort.js
+typed-array-view-set-should-not-crash-on-exception.js
+weak-map-constructor.js
+weak-set-constructor.js
+yield-and-line-terminator.js
+yield-label-generator.js
+yield-label.js
+yield-named-variable.js
+yield-named-variable-generator.js
+yield-out-of-generator.js
+yield-reserved-word.js
+
+
+#######################################
+# Unsupported shell functions         #
+#######################################
+
+# addressOf()
+equality-type-checking.js
+
+# reoptimizationRetryCount()
+float32-repeat-out-of-bounds.js
+fold-multi-get-by-offset-to-get-by-offset.js
+fold-multi-get-by-offset-to-get-by-offset-with-watchpoint.js
+int8-repeat-out-of-bounds.js
+
+# makeMasquerader()
+branch-may-exit-due-to-object-or-other-use-kind.js
+equals-masquerader.js
+is-undefined-exit-on-masquerader.js
+is-undefined-jettison-on-masquerader.js
+is-undefined-masquerader.js
+logical-not-masquerades.js
+value-to-boolean.js
+
+# isFinalTier()
+arguments-elimination-varargs-too-many-args-arg-count.js
+fold-multi-get-by-offset-to-get-by-offset-without-folding-the-structure-check-new.js
+fold-to-double-constant-then-exit.js
+fold-to-int52-constant-then-exit.js
+math-pow-coherency.js
+pow-coherency.js
+prop-type-struct-then-object-opt-fold.js
+sink-multigetbyoffset.js
+
+# createProxy()
+for-in-proxy.js
+for-in-proxy-target-changed-structure.js
+proxy-inline-cache.js
+object-toString-with-proxy.js
+
+# createImpureGetter()
+impure-get-own-property-slot-inline-cache.js
+
+# createCustomGetterObject()
+regress-150532.js
+try-catch-custom-getter-as-get-by-id.js
+
+# Root()
+generational-opaque-roots.js
+
+# gcHeapSize()
+new-largeish-contiguous-array-with-size.js
+
+# Loader()
+pathname-resolve.js
+
+# DFGTrue()
+fiat-value-to-int52-then-exit-not-double.js
+tricky-array-bounds-checks.js
+
+# platformSupportsSamplingProfiler()
+sampling-profiler-anonymous-function.js
+sampling-profiler-basic.js
+sampling-profiler-bound-function-name.js
+sampling-profiler-deep-stack.js
+sampling-profiler-display-name.js
+sampling-profiler-internal-function-name.js
+sampling-profiler-microtasks.js
+
+# Disables legacy Function#arguments property
+disable-function-dot-arguments.js
+
+# shadowChickenFunctionsOnStack()
+shadow-chicken-disabled.js
+shadow-chicken-enabled.js
+
+# createBuiltin()
+argument-count-bytecode.js
+argument-intrinsic-basic.js
+argument-intrinsic-inlining-use-caller-arg.js
+argument-intrinsic-inlining-with-result-escape.js
+argument-intrinsic-inlining-with-vararg-with-enough-arguments.js
+argument-intrinsic-inlining-with-vararg.js
+argument-intrinsic-nested-inlining.js
+argument-intrinsic-not-convert-to-get-argument.js
+argument-intrinsic-with-stack-write.js
+arity-mismatch-get-argument.js
+array-push-with-force-exit.js
+compare-eq-incomplete-profile.js
+exit-during-inlined-arity-fixup-recover-proper-frame.js
+istypedarrayview-intrinsic.js
+is-constructor.js
+regress-156992.js
+tailCallForwardArguments.js
+to-object-intrinsic.js
+to-object-intrinsic-boolean-edge.js
+to-object-intrinsic-null-or-undefined-edge.js
+to-object-intrinsic-number-edge.js
+to-object-intrinsic-object-edge.js
+to-object-intrinsic-string-edge.js
+to-object-intrinsic-symbol-edge.js
+try-get-by-id.js
+try-get-by-id-poly-proto.js
+try-get-by-id-should-spill-registers-dfg.js
+
+# noFTL()
+for-in-side-effects.js
+in-ftl-exception-check.js
+regress-179140.js
+
+# setGlobalConstRedeclarationShouldNotThrow()
+global-const-redeclaration-setting.js
+global-const-redeclaration-setting-2.js
+global-const-redeclaration-setting-3.js
+global-const-redeclaration-setting-4.js
+global-const-redeclaration-setting-5.js
+
+# noOSRExitFuzzing()
+arith-abs-on-various-types.js
+arith-acos-on-various-types.js
+arith-acosh-on-various-types.js
+arith-asin-on-various-types.js
+arith-asinh-on-various-types.js
+arith-atan-on-various-types.js
+arith-atanh-on-various-types.js
+arith-cbrt-on-various-types.js
+arith-ceil-on-various-types.js
+arith-clz32-on-various-types.js
+arith-cos-on-various-types.js
+arith-cosh-on-various-types.js
+arith-expm1-on-various-types.js
+arith-floor-on-various-types.js
+arith-fround-on-various-types.js
+arith-log-on-various-types.js
+arith-log2-on-various-types.js
+arith-log10-on-various-types.js
+arith-negate-on-various-types.js
+arith-round-on-various-types.js
+arith-sin-on-various-types.js
+arith-sinh-on-various-types.js
+arith-sqrt-on-various-types.js
+arith-tan-on-various-types.js
+arith-tanh-on-various-types.js
+arith-trunc-on-various-types.js
+check-string-ident.js
+compare-strict-eq-on-various-types.js
+
+# runString
+broken-have-a-bad-time-with-arguments-for-gc-testing.js
+have-a-bad-time-with-arguments.js
+
+# run
+regress-170990.js
+
+# createDOMJITFunction
+check-dom-with-signature.js
+domjit-exception.js
+domjit-exception-ic.js
+domjit-getter.js
+domjit-getter-complex.js
+domjit-getter-complex-with-incorrect-object.js
+domjit-getter-poly.js
+domjit-getter-proto.js
+domjit-getter-super-poly.js
+domjit-getter-try-catch-getter-as-get-by-id-register-restoration.js
+
+# readFile
+jsc-read.js
+
+# setImpureGetterDelegate
+jsc-setImpureGetterDelegate-on-bad-type.js
+
+# getHiddenValue
+jsc-test-functions-should-be-more-robust.js
+
+# global $ object
+lars-sab-workers.js
+
+# callerSourceOrigin
+source-origin.js
+
+# globalObjectForObject
+spread-correct-global-object-on-exception.js
+
+# isRope
+to-lower-case-intrinsic-on-empty-rope.js
+
+# console object
+test-finally.js
+
+# ensureArrayStorage
+array-indexof-arraystorage.js
+array-push-multiple-many-storage.js
+array-push-multiple-storage.js
+array-storage-get-by-val.js
+unshift-array-storage.js
+
+# preciseTime
+splay-flash-access-1ms.js
+splay-flash-access.js
+
+# Error.stackTraceLimit
+error-stack-trace-limit.js
+
+# createDOMJITCheckSubClassObject
+check-sub-class.js
+
+# createCustomTestGetterSetter
+custom-get-set-inline-caching-one-level-up-proto-chain.js
+poly-proto-custom-value-and-accessor.js
+
+# createDOMJITGetterBaseJSObject
+dom-jit-with-poly-proto.js
+
+# createDOMJITGetterObject
+domjit-getter-type-check.js
+
+# abort
+do-eval-virtual-call-correctly.js
+
+
+#######################################
+# Compilation or runtime issues       #
+#######################################
+
+# Too many local variables
+heap-allocator-allocates-incorrect-size-for-activation.js
+
+# Too many function arguments
+arity-check-ftl-throw-more-args.js
+arity-fixup-should-not-touch-stack-area-below-sp.js
+tagged-templates-raw-strings.js
+
+# unknown test type
+regress-159779-1.js
+regress-159779-2.js
+
+# oom
+regexp-prototype-test-on-too-long-rope.js
+
+# Timeout
+arrowfunction-lexical-bind-superproperty.js
+js-fixed-array-out-of-memory.js
+op_add.js
+op_bitand.js
+op_bitor.js
+op_bitxor.js
+op_div-ConstVar.js
+op_div-VarConst.js
+op_div-VarVar.js
+op_lshift-ConstVar.js
+op_lshift-VarConst.js
+op_lshift-VarVar.js
+op_mod-ConstVar.js
+op_mod-VarConst.js
+op_mod-VarVar.js
+op_mul-ConstVar.js
+op_mul-VarConst.js
+op_mul-VarVar.js
+op_rshift-ConstVar.js
+op_rshift-VarConst.js
+op_rshift-VarVar.js
+op_sub-ConstVar.js
+op_sub-VarConst.js
+op_sub-VarVar.js
+op_urshift-ConstVar.js
+op_urshift-VarConst.js
+op_urshift-VarVar.js
+
+# Timeout (slow - Disable most tests with runtime > 3s to keep the overall time at a reasonable level.)
+arrayify-fires-watchpoint.js
+array-push-multiple-int32.js
+array-slice-jettison-on-constructor-change.js
+array-slice-osr-exit.js
+array-slice-osr-exit-2.js
+activation-sink.js
+activation-sink-default-value.js
+activation-sink-default-value-tdz-error.js
+activation-sink-osrexit.js
+activation-sink-osrexit-default-value.js
+activation-sink-osrexit-default-value-tdz-error.js
+arguments-custom-properties-gc.js
+arith-abs-to-arith-negate-range-optimizaton.js
+arith-add-on-double-array-with-holes.js
+arith-sub-on-double-array-with-holes.js
+arrowfunction-activation-sink.js
+arrowfunction-lexical-bind-this-1.js
+arrowfunction-lexical-bind-this-8.js
+arrowfunction-lexical-bind-supercall-1.js
+arrowfunction-lexical-bind-supercall-2.js
+arrowfunction-lexical-bind-supercall-3.js
+arrowfunction-lexical-bind-supercall-4.js
+arrowfunction-lexical-this-activation-sink.js
+arrowfunction-lexical-this-activation-sink-osrexit.js
+es6-default-parameters.js
+call-apply-exponential-bytecode-size.js
+class-syntax-tdz-osr-entry-in-loop.js
+elidable-new-object-roflcopter-then-exit.js
+elide-new-object-dag-then-exit.js
+ftl-call-bad-callee-exception-interesting-live-state.js
+materialize-past-butterfly-allocation.js
+materialize-past-put-structure.js
+obviously-elidable-new-object-then-exit.js
+typed-array-get-by-val-profiling.js
+random-53bit.js
+value-add-on-double-array-with-holes.js
+array-push.js
+array-push-contiguous.js
+array-push-double.js
+array-push-double-then-nan.js
+eval-script-contains-null-character.js
+ftl-try-catch-patchpoint-with-volatile-registers.js
+object-escapes-in-loop.js
+op-push-name-scope-crashes-profiler.js
+op_negate.js
+op_predec.js
+op_preinc.js
+op_postdec.js
+op_postinc.js
+poly-call-exit-this.js
+redundant-array-bounds-checks-addition-skip-first.js
+redundant-array-bounds-checks-unchecked-addition.js
+regress-148564.js
+string-rope-with-custom-valueof.js
+typed-array-put-by-val-profiling.js
+tier-up-in-loop-with-cfg-simplification.js
+ftl-library-inlining-loops.js
+ftl-try-catch-oom-error-lazy-slow-path.js
+array-pop-int32.js
+arrowfunction-activation-sink-osrexit.js
+arrowfunction-activation-sink-osrexit-default-value.js
+arrowfunction-activation-sink-osrexit-default-value-tdz-error.js
+compare-eq-object-to-object-or-other.js
+compare-eq-object-or-other-to-object.js
+dead-fiat-double-to-int52.js
+dead-fiat-int32-to-int52.js
+dead-fiat-value-to-int52.js
+dead-fiat-value-to-int52-then-exit-not-double.js
+dead-fiat-double-to-int52-then-exit-not-int52.js
+dead-osr-entry-value.js
+dfg-put-by-val-direct-with-edge-numbers.js
+dfg-tail-calls.js
+double-to-float.js
+eval-func-decl-block-with-remove.js
+fiat-double-to-int52.js
+fiat-double-to-int52-then-exit-not-int52.js
+fiat-double-to-int52-then-fail-to-fold.js
+fiat-int32-to-int52.js
+fiat-value-to-int52.js
+fiat-value-to-int52-double-path.js
+fiat-value-to-int52-then-exit-not-int52.js
+fiat-value-to-int52-then-fail-to-fold.js
+fiat-value-to-int52-then-fold.js
+fold-multi-get-by-offset-to-get-by-offset-without-folding-the-structure-check.js
+fold-multi-put-by-offset-to-put-by-offset-without-folding-the-structure-check.js
+fold-typed-array-properties.js
+for-in-array-mode.js
+ftl-checkin.js
+ftl-checkin-variable.js
+function-name-scope.js
+get-by-val-on-undecided-array-type.js
+get-by-val-on-undecided-trivial.js
+get-by-val-double-predicted-int.js
+multi-put-by-offset-reallocation-butterfly-cse.js
+new-double-array-with-size.js
+new-undecided-array-with-size.js
+poly-chain-getter.js
+poly-chain-setter.js
+poly-setter-then-self.js
+try-catch-stub-routine-replaced.js
+inline-call-varargs-and-call.js
+multi-put-by-offset-multiple-transitions.js
+poly-chain-then-getter.js
+poly-chain-then-setter.js
+put-by-id-build-list-order-recurse.js
+put-local-conservative.js
+prune-multi-put-by-offset-replace-or-transition-variant.js
+redundant-array-bounds-checks-addition.js
+arith-add-with-constants.js
+dead-fiat-value-to-int52-then-exit-not-int52.js
+fiat-double-to-int52-then-fold.js
+ftl-library-inlining-random.js
+new-int32-array-with-size.js
+poly-getter-combo.js
+poly-proto-setter.js
+poly-setter-combo.js
+array-pop-contiguous.js
+array-pop-double.js
+dead-fiat-value-to-int52-double-path.js
+poly-self-then-getter.js
+repeated-put-by-id-reallocating-transition.js
+rest-parameter-inlined.js
+multi-put-by-offset-reallocation-cases.js
+new-contiguous-array-with-size.js
+sink_checkstructure.js
+poly-self-getter.js
+int16-put-by-val-in-and-out-of-bounds.js
+ftl-library-inline-gettimezoneoffset.js
+compare-number-and-other.js
+string-compare.js
+slow-path-generator-updating-current-node-dfg.js
+spread-capture-rest.js
+regress-164081.js
+regress-173035.js
+typedarray-construct-iterator.js
+typedarray-constructor.js
+typedarray-bad-getter.js
+typedarray-forEach.js
+typed-array-byte-offset.js
+uint32-comparison.js
+uint32-comparison-jump.js
+uint32-to-number-constant-folding.js
+uint32-to-number-fold-constant-with-do-overflow.js
+uint32-to-number-overflows-to-uint52.js
+unshiftCountSlowCase-correct-postCapacity.js
+untyped-add.js
+untyped-bit-and.js
+untyped-bit-or.js
+untyped-bit-xor.js
+untyped-div.js
+untyped-equality.js
+untyped-less-than.js
+untyped-lshift.js
+untyped-mul.js
+untyped-rshift.js
+untyped-sub.js
+untyped-urshift.js
+has-own-property-name-cache-string-keys.js
+has-own-property-name-cache-symbol-keys.js
+has-own-property-name-cache-symbols-and-strings.js
+math-pow-stable-results.js
+new-regex-inline.js
+rest-parameter-many-arguments.js
+spread-forward-call-varargs-stack-overflow.js
+spread-forward-varargs-stack-overflow.js
+string-prototype-charCodeAt-on-too-long-rope.js
+tagged-template-registry-key-collect.js
+regexp-exec-effect-after-exception.js
+array-concat-spread-object.js
+array-indexof-negative-index.js
+get-array-length-on-undecided.js
+global-isNaN-basics.js
+module-namespace-access-transitive-exports.js
+phantom-spread-forward-varargs.js
+poly-proto-using-inheritance.js
+put-inline-cache-side-effects.js
+regress-159537.js
+spread-multi-layers.js
+any-int-as-double-add.js
+constant-folding-should-fold-make-rope-with-empty-strings.js
+dont-crash-on-bad-invalidation-point.js
+map-rehash.js
+arith-abs-integer-range-optimization.js
+array-concat-on-frozen-object.js
+array-concat-spread-proxy.js
+array-indexof-index.js
+array-indexof-structure-change-convert.js
+double-rep-real-number-use-on-nan.js
+map-cse-correctness.js
+module-namespace-access.js
+to-number-throws-correct-exception.js
+array-concat-with-slow-indexingtypes.js
+pow-simple.js
+tagged-template-tdz.js
+
+# No reason to run v8-tests
+v8-crypto-strict.js
+v8-deltablue-strict.js
+v8-earley-boyer-strict.js
+v8-raytrace-strict.js
+v8-regexp-strict.js
+v8-richards-strict.js
+v8-splay-strict.js

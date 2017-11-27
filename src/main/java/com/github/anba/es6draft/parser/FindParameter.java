@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -121,6 +121,6 @@ final class FindParameter extends DefaultNodeVisitor<BindingIdentifier, Name> {
 
     @Override
     public BindingIdentifier visit(BindingRestProperty node, Name value) {
-        return node.getBindingIdentifier().accept(this, value);
+        return node.getBinding().accept(this, value);
     }
 }

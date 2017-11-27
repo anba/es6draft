@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -7,6 +7,7 @@
 package com.github.anba.es6draft;
 
 import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
+import com.github.anba.es6draft.runtime.internal.Source;
 
 /**
  * <h1>15 ECMAScript Language: Scripts and Modules</h1>
@@ -17,9 +18,16 @@ import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
  */
 public interface Executable {
     /**
-     * Returns the runtime source object if available.
+     * Returns the source information for this object.
      * 
-     * @return the source object or {@code null} if not available
+     * @return the source or {@code null} if no source available
      */
-    RuntimeInfo.SourceObject getSourceObject();
+    Source getSource();
+
+    /**
+     * Returns the runtime object.
+     * 
+     * @return the runtime object
+     */
+    RuntimeInfo.RuntimeObject getRuntimeObject();
 }

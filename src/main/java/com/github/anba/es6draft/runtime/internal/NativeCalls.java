@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -14,14 +14,13 @@ import java.lang.invoke.ConstantCallSite;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
+import java.lang.invoke.MutableCallSite;
 import java.lang.invoke.WrongMethodTypeException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArraySet;
 
 import com.github.anba.es6draft.compiler.assembler.Handle;
 import com.github.anba.es6draft.compiler.assembler.MethodName;
@@ -62,30 +61,7 @@ public final class NativeCalls {
         return BOOTSTRAP;
     }
 
-    // TODO: Make runtime context specific.
-    private static final CopyOnWriteArraySet<Class<?>> lookupClasses = new CopyOnWriteArraySet<>(
-            Collections.singletonList(RuntimeFunctions.class));
-
-    /**
-     * Adds {@code clazz} to the lookup classes.
-     * 
-     * @param clazz
-     *            the class object
-     */
-    public static void register(Class<?> clazz) {
-        lookupClasses.add(Objects.requireNonNull(clazz));
-    }
-
-    /**
-     * Removes {@code clazz} from the lookup classes.
-     * 
-     * @param clazz
-     *            the class object
-     */
-    public static void unregister(Class<?> clazz) {
-        lookupClasses.remove(Objects.requireNonNull(clazz));
-    }
-
+    private static final List<Class<?>> lookupClasses = Collections.singletonList(RuntimeFunctions.class);
     private static final ConcurrentHashMap<String, MethodHandle> nativeMethods = new ConcurrentHashMap<>();
 
     /**
@@ -102,22 +78,68 @@ public final class NativeCalls {
     public static CallSite bootstrapDynamic(MethodHandles.Lookup caller, String name, MethodType type) {
         MethodHandle target;
         try {
-            MethodHandle mh = nativeMethods.computeIfAbsent(name, NativeCalls::getNativeMethodHandle);
-            if (isSpreadCall(mh, type)) {
-                target = forSpreadCall(mh, type);
-            } else {
-                target = mh.asType(type);
+            if (!name.startsWith("native:")) {
+                throw new IllegalArgumentException();
             }
-            if (target != mh) {
-                MethodHandle invalidArgumentsHandle = invalidCallArgumentsExceptionHandle(name, type);
-                target = MethodHandles.catchException(target, ClassCastException.class, invalidArgumentsHandle);
+            String methodName = name.substring("native:".length());
+            MethodHandle mh = nativeMethods.computeIfAbsent(methodName, NativeCalls::getNativeMethodHandle);
+            if (mh == null) {
+                return createRuntimeCallSite(methodName, type);
             }
+            target = adaptMethodHandle(methodName, type, mh);
         } catch (IllegalArgumentException e) {
             target = invalidCallHandle(name, type);
-        } catch (WrongMethodTypeException e) {
-            target = invalidCallArgumentsHandle(name, type, e);
         }
         return new ConstantCallSite(target);
+    }
+
+    private static MutableCallSite createRuntimeCallSite(String name, MethodType type) {
+        MutableCallSite callsite = new MutableCallSite(type);
+        MethodHandle target = MethodHandles.insertArguments(nativeCallSetupMH, 0, callsite, name);
+        callsite.setTarget(MethodHandles.foldArguments(MethodHandles.exactInvoker(type), target));
+        return callsite;
+    }
+
+    private static final MethodHandle nativeCallSetupMH = MethodLookup.findStatic(MethodHandles.lookup(),
+            "nativeCallSetup",
+            MethodType.methodType(MethodHandle.class, MutableCallSite.class, String.class, ExecutionContext.class));
+
+    @SuppressWarnings("unused")
+    private static MethodHandle nativeCallSetup(MutableCallSite callsite, String name, ExecutionContext cx) {
+        RuntimeContext context = cx.getRuntimeContext();
+        MethodHandle target;
+        try {
+            MethodHandle mh = context.getNativeCallResolver().apply(name, callsite.type());
+            if (mh == null) {
+                throw new IllegalArgumentException();
+            }
+            target = adaptNativeMethodHandle(mh);
+            target = adaptMethodHandle(name, callsite.type(), target);
+        } catch (IllegalArgumentException e) {
+            target = invalidCallHandle(name, callsite.type());
+        }
+        callsite.setTarget(target);
+        return target;
+    }
+
+    private static MethodHandle adaptMethodHandle(String name, MethodType callsiteType, MethodHandle mh) {
+        try {
+            MethodHandle target;
+            if (isSpreadCall(mh, callsiteType)) {
+                target = forSpreadCall(mh, callsiteType);
+            } else {
+                target = mh.asType(callsiteType);
+            }
+            if (target != mh) {
+                MethodHandle invalidArgumentsHandle = invalidCallArgumentsExceptionHandle(name, callsiteType);
+                target = MethodHandles.catchException(target, ClassCastException.class, invalidArgumentsHandle);
+            }
+            return target;
+        } catch (IllegalArgumentException e) {
+            return invalidCallHandle(name, callsiteType);
+        } catch (WrongMethodTypeException e) {
+            return invalidCallArgumentsHandle(name, callsiteType, e);
+        }
     }
 
     private static boolean isSpreadCall(MethodHandle mh, MethodType type) {
@@ -198,35 +220,29 @@ public final class NativeCalls {
         return MethodHandles.filterArguments(invalidNativeCallArgumentsMH, 0, throwableGetMessageMH);
     }
 
-    private static MethodHandle getNativeMethodHandle(String name) {
-        if (!name.startsWith("native:")) {
+    private static MethodHandle getNativeMethodHandle(String methodName) {
+        for (Class<?> lookupClass : lookupClasses) {
+            MethodHandle mh = getNativeMethodHandle(lookupClass, methodName);
+            if (mh != null) {
+                return mh;
+            }
+        }
+        return null;
+    }
+
+    private static MethodHandle getNativeMethodHandle(Class<?> lookupClass, String methodName) {
+        MethodLookup lookup = new MethodLookup(MethodHandles.publicLookup().in(lookupClass));
+        Method m = findMethod(lookup, methodName);
+        if (m == null) {
+            return null;
+        }
+        MethodHandle mh;
+        try {
+            mh = lookup.getLookup().unreflect(m);
+        } catch (IllegalAccessException e) {
             throw new IllegalArgumentException();
         }
-        String methodName = name.substring("native:".length());
-        for (Class<?> lookupClass : lookupClasses) {
-            MethodLookup lookup = new MethodLookup(MethodHandles.publicLookup().in(lookupClass));
-            Method m = findMethod(lookup, methodName);
-            if (m == null) {
-                continue;
-            }
-            MethodHandle mh;
-            try {
-                mh = lookup.getLookup().unreflect(m);
-            } catch (IllegalAccessException e) {
-                throw new IllegalArgumentException();
-            }
-            // Allow to omit execution context argument.
-            MethodType type = mh.type();
-            if (type.parameterCount() == 0 || !type.parameterType(0).equals(ExecutionContext.class)) {
-                mh = MethodHandles.dropArguments(mh, 0, ExecutionContext.class);
-            }
-            // Allow void return type.
-            if (type.returnType() == void.class) {
-                mh = MethodHandles.filterReturnValue(mh, MethodHandles.constant(Object.class, UNDEFINED));
-            }
-            return mh;
-        }
-        throw new IllegalArgumentException();
+        return adaptNativeMethodHandle(mh);
     }
 
     private static Method findMethod(MethodLookup lookup, String name) {
@@ -237,5 +253,23 @@ public final class NativeCalls {
             }
         }
         return null;
+    }
+
+    private static MethodHandle adaptNativeMethodHandle(MethodHandle mh) {
+        MethodType type = mh.type();
+        boolean varargs = mh.isVarargsCollector();
+        // Allow to omit execution context argument.
+        if (type.parameterCount() == 0 || !type.parameterType(0).equals(ExecutionContext.class)) {
+            mh = MethodHandles.dropArguments(mh, 0, ExecutionContext.class);
+        }
+        // Allow void return type.
+        if (type.returnType() == void.class) {
+            mh = MethodHandles.filterReturnValue(mh, MethodHandles.constant(Object.class, UNDEFINED));
+        }
+        // Restore var-args flag.
+        if (varargs && !mh.isVarargsCollector()) {
+            mh = mh.asVarargsCollector(mh.type().parameterType(mh.type().parameterCount() - 1));
+        }
+        return mh;
     }
 }

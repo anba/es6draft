@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -22,6 +22,7 @@ import com.github.anba.es6draft.ast.scope.Name;
  */
 public final class ClassDeclaration extends Declaration implements ClassDefinition {
     private final BlockScope scope;
+    private final BlockScope bodyScope;
     private final List<Expression> decorators;
     private final BindingIdentifier identifier;
     private final Name name;
@@ -29,14 +30,16 @@ public final class ClassDeclaration extends Declaration implements ClassDefiniti
     private final List<MethodDefinition> methods;
     private final MethodDefinition constructor;
     private final MethodDefinition callConstructor;
+    private final String source;
     private final String className;
     private List<PropertyDefinition> properties;
 
-    public ClassDeclaration(long beginPosition, long endPosition, BlockScope scope,
+    public ClassDeclaration(long beginPosition, long endPosition, BlockScope scope, BlockScope bodyScope,
             List<Expression> decorators, BindingIdentifier identifier, Expression heritage,
-            List<MethodDefinition> methods, List<PropertyDefinition> properties, String className) {
+            List<MethodDefinition> methods, List<PropertyDefinition> properties, String source, String className) {
         super(beginPosition, endPosition);
         this.scope = scope;
+        this.bodyScope = bodyScope;
         this.decorators = decorators;
         this.identifier = identifier;
         this.name = identifier != null ? identifier.getName() : new Name(Name.DEFAULT_EXPORT);
@@ -45,12 +48,18 @@ public final class ClassDeclaration extends Declaration implements ClassDefiniti
         this.properties = properties;
         this.constructor = ConstructorMethod(methods);
         this.callConstructor = CallConstructorMethod(methods);
+        this.source = source;
         this.className = className;
     }
 
     @Override
     public BlockScope getScope() {
         return scope;
+    }
+
+    @Override
+    public BlockScope getBodyScope() {
+        return bodyScope;
     }
 
     @Override
@@ -64,8 +73,8 @@ public final class ClassDeclaration extends Declaration implements ClassDefiniti
     }
 
     /**
-     * Returns the binding identifier of this class declaration or {@code null} for anonymous
-     * default export declarations.
+     * Returns the binding identifier of this class declaration or {@code null} for anonymous default export
+     * declarations.
      * 
      * @return the binding identifier or {@code null}
      */
@@ -111,6 +120,11 @@ public final class ClassDeclaration extends Declaration implements ClassDefiniti
     @Override
     public void setProperties(List<PropertyDefinition> properties) {
         this.properties = properties;
+    }
+
+    @Override
+    public String getSource() {
+        return source;
     }
 
     @Override

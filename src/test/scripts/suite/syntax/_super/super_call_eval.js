@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -18,15 +18,15 @@ const {
 function fdecl() {
   eval("super()");
 }
-assertThrows(ReferenceError, () => fdecl());
-assertThrows(TypeError, () => new fdecl());
+assertThrows(SyntaxError, () => fdecl());
+assertThrows(SyntaxError, () => new fdecl());
 
 // 14.1 FunctionExpression
 var fexpr = function() {
   eval("super()");
 };
-assertThrows(ReferenceError, () => fexpr());
-assertThrows(TypeError, () => new fexpr());
+assertThrows(SyntaxError, () => fexpr());
+assertThrows(SyntaxError, () => new fexpr());
 
 // 14.3 Method Definitions [Method]
 var obj = {
@@ -34,7 +34,7 @@ var obj = {
     eval("super()");
   }
 };
-assertThrows(ReferenceError, () => obj.m());
+assertThrows(SyntaxError, () => obj.m());
 assertThrows(TypeError, () => new obj.m());
 
 var obj = class {
@@ -42,7 +42,7 @@ var obj = class {
     eval("super()");
   }
 };
-assertThrows(ReferenceError, () => obj.prototype.m());
+assertThrows(SyntaxError, () => obj.prototype.m());
 assertThrows(TypeError, () => new obj.prototype.m());
 
 var obj = class {
@@ -50,7 +50,7 @@ var obj = class {
     eval("super()");
   }
 };
-assertThrows(ReferenceError, () => obj.m());
+assertThrows(SyntaxError, () => obj.m());
 assertThrows(TypeError, () => new obj.m());
 
 // 14.3 Method Definitions [ConstructorMethod]
@@ -60,7 +60,7 @@ var obj = class {
   }
 };
 assertThrows(TypeError, () => obj());
-assertThrows(TypeError, () => new obj());
+assertThrows(SyntaxError, () => new obj());
 
 var obj = class extends class {} {
   constructor() {
@@ -76,7 +76,7 @@ var obj = {
     eval("super()");
   }
 };
-assertThrows(ReferenceError, () => Object.getOwnPropertyDescriptor(obj, "x").get());
+assertThrows(SyntaxError, () => Object.getOwnPropertyDescriptor(obj, "x").get());
 assertThrows(TypeError, () => new (Object.getOwnPropertyDescriptor(obj, "x").get)());
 
 var obj = class {
@@ -84,7 +84,7 @@ var obj = class {
     eval("super()");
   }
 };
-assertThrows(ReferenceError, () => Object.getOwnPropertyDescriptor(obj.prototype, "x").get());
+assertThrows(SyntaxError, () => Object.getOwnPropertyDescriptor(obj.prototype, "x").get());
 assertThrows(TypeError, () => new (Object.getOwnPropertyDescriptor(obj.prototype, "x").get)());
 
 var obj = class {
@@ -92,7 +92,7 @@ var obj = class {
     eval("super()");
   }
 };
-assertThrows(ReferenceError, () => Object.getOwnPropertyDescriptor(obj, "x").get());
+assertThrows(SyntaxError, () => Object.getOwnPropertyDescriptor(obj, "x").get());
 assertThrows(TypeError, () => new (Object.getOwnPropertyDescriptor(obj, "x").get)());
 
 // 14.3 Method Definitions [Setter]
@@ -101,7 +101,7 @@ var obj = {
     eval("super()");
   }
 };
-assertThrows(ReferenceError, () => Object.getOwnPropertyDescriptor(obj, "x").set());
+assertThrows(SyntaxError, () => Object.getOwnPropertyDescriptor(obj, "x").set());
 assertThrows(TypeError, () => new (Object.getOwnPropertyDescriptor(obj, "x").set)());
 
 var obj = class {
@@ -109,7 +109,7 @@ var obj = class {
     eval("super()");
   }
 };
-assertThrows(ReferenceError, () => Object.getOwnPropertyDescriptor(obj.prototype, "x").set());
+assertThrows(SyntaxError, () => Object.getOwnPropertyDescriptor(obj.prototype, "x").set());
 assertThrows(TypeError, () => new (Object.getOwnPropertyDescriptor(obj.prototype, "x").set)());
 
 var obj = class {
@@ -117,21 +117,21 @@ var obj = class {
     eval("super()");
   }
 };
-assertThrows(ReferenceError, () => Object.getOwnPropertyDescriptor(obj, "x").set());
+assertThrows(SyntaxError, () => Object.getOwnPropertyDescriptor(obj, "x").set());
 assertThrows(TypeError, () => new (Object.getOwnPropertyDescriptor(obj, "x").set)());
 
 // 14.4 GeneratorDeclaration
 function* gdecl() {
   eval("super()");
 }
-assertThrows(ReferenceError, () => gdecl().next());
+assertThrows(SyntaxError, () => gdecl().next());
 assertThrows(TypeError, () => new gdecl().next());
 
 // 14.4 GeneratorExpression
 var gexpr = function*() {
   eval("super()");
 };
-assertThrows(ReferenceError, () => gexpr().next());
+assertThrows(SyntaxError, () => gexpr().next());
 assertThrows(TypeError, () => new gexpr().next());
 
 // 14.4 GeneratorMethod
@@ -140,7 +140,7 @@ var obj = {
     eval("super()");
   }
 };
-assertThrows(ReferenceError, () => obj.m().next());
+assertThrows(SyntaxError, () => obj.m().next());
 assertThrows(TypeError, () => new obj.m().next());
 
 var obj = class {
@@ -148,7 +148,7 @@ var obj = class {
     eval("super()");
   }
 };
-assertThrows(ReferenceError, () => obj.prototype.m().next());
+assertThrows(SyntaxError, () => obj.prototype.m().next());
 assertThrows(TypeError, () => new obj.prototype.m().next());
 
 var obj = class {
@@ -156,7 +156,7 @@ var obj = class {
     eval("super()");
   }
 };
-assertThrows(ReferenceError, () => obj.m().next());
+assertThrows(SyntaxError, () => obj.m().next());
 assertThrows(TypeError, () => new obj.m().next());
 
 // 15.1 Scripts

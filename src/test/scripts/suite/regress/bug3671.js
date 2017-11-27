@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -13,7 +13,7 @@ const {
 
 class Err extends Error { }
 
-var newTarget = function (){}.toMethod({});
+var newTarget = function (){}.bind(null);
 Object.defineProperty(newTarget, "prototype", {
   get() {
     throw new Err;

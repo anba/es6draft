@@ -1,0 +1,29 @@
+#
+# Copyright (c) André Bargull
+# Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
+#
+# <https://github.com/anba/es6draft>
+#
+
+
+# invalid: missing getOwnPropertyDescriptor trap
+Proxy_ownKeys_duplicates.js
+
+# ES2017: for-in with var initializer
+miscellaneous_no_assignments_allowed_in_for-in_head.js
+
+# ES2017: extra access to lastIndex with RegExp#lastIndex changes in ES2017
+Proxy_internal_get_calls_RegExp.prototype[Symbol.search].js
+
+# ES2017: enumerate trap
+Proxy_enumerate_handler.js
+Reflect_Reflect.enumerate.js
+
+
+############################################
+# Implementation specific differences      #
+############################################
+
+# different error message
+String.prototype_methods_String.prototype.padEnd.js
+String.prototype_methods_String.prototype.padStart.js

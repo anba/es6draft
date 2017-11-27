@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -21,16 +21,17 @@ public final class MethodDefinition extends PropertyDefinition implements Functi
     private final MethodType type;
     private final MethodAllocation allocation;
     private final List<Expression> decorators;
-    private final PropertyName propertyName;
+    private final ClassElementName classElementName;
     private final FormalParameterList parameters;
     private List<StatementListItem> statements;
-    private final String headerSource, bodySource;
+    private final String source;
     private String className;
+    private String methodName;
     private StrictMode strictMode;
+    private boolean isSynthetic;
 
     public enum MethodType {
-        AsyncFunction, AsyncGenerator, BaseConstructor, DerivedConstructor, CallConstructor, Function, Generator,
-        ConstructorGenerator, Getter, Setter
+        AsyncFunction, AsyncGenerator, ClassConstructor, CallConstructor, Function, Generator, Getter, Setter
     }
 
     public enum MethodAllocation {
@@ -38,19 +39,17 @@ public final class MethodDefinition extends PropertyDefinition implements Functi
     }
 
     public MethodDefinition(long beginPosition, long endPosition, FunctionScope scope, MethodType type,
-            MethodAllocation allocation, List<Expression> decorators, PropertyName propertyName,
-            FormalParameterList parameters, List<StatementListItem> statements, String headerSource,
-            String bodySource) {
+            MethodAllocation allocation, List<Expression> decorators, ClassElementName classElementName,
+            FormalParameterList parameters, List<StatementListItem> statements, String source) {
         super(beginPosition, endPosition);
         this.scope = scope;
         this.type = type;
         this.allocation = allocation;
         this.decorators = decorators;
-        this.propertyName = propertyName;
+        this.classElementName = classElementName;
         this.parameters = parameters;
         this.statements = statements;
-        this.headerSource = headerSource;
-        this.bodySource = bodySource;
+        this.source = source;
     }
 
     @Override
@@ -96,13 +95,7 @@ public final class MethodDefinition extends PropertyDefinition implements Functi
      * @return {@code true} if this method is a <code>class constructor</code> method definition
      */
     public boolean isClassConstructor() {
-        switch (type) {
-        case BaseConstructor:
-        case DerivedConstructor:
-            return true;
-        default:
-            return false;
-        }
+        return type == MethodType.ClassConstructor;
     }
 
     /**
@@ -125,7 +118,16 @@ public final class MethodDefinition extends PropertyDefinition implements Functi
 
     @Override
     public PropertyName getPropertyName() {
-        return propertyName;
+        return classElementName.toPropertyName();
+    }
+
+    /**
+     * Returns the method's class element name.
+     * 
+     * @return the method's class element name
+     */
+    public ClassElementName getClassElementName() {
+        return classElementName;
     }
 
     /**
@@ -148,69 +150,60 @@ public final class MethodDefinition extends PropertyDefinition implements Functi
         this.className = className;
     }
 
+    private String propertyName() {
+        String pname = getPropertyName().getName();
+        if (pname != null) {
+            return pname;
+        }
+        assert classElementName instanceof ComputedPropertyName;
+        return ((ComputedPropertyName) classElementName).toString();
+    }
+
     @Override
     public String getMethodName() {
+        if (methodName != null) {
+            return methodName;
+        }
+
         // Give methods a better name for stacktraces
-        final String fname;
-        String pname = propertyName.getName();
-        if (pname != null) {
-            if (allocation == MethodAllocation.Prototype && className != null) {
-                if (isClassConstructor()) {
-                    fname = className;
-                } else if (isCallConstructor()) {
-                    assert "constructor".equals(pname);
-                    fname = className + '.' + "call constructor";
-                } else {
-                    fname = className + '.' + pname;
-                }
-            } else if (isCallConstructor()) {
-                assert "constructor".equals(pname);
-                fname = "call constructor";
-            } else {
-                fname = pname;
+        if (isClassConstructor()) {
+            if (className != null) {
+                return className;
             }
-        } else {
-            assert propertyName instanceof ComputedPropertyName;
-            String cname = ((ComputedPropertyName) propertyName).toString();
-            if (allocation == MethodAllocation.Prototype && className != null) {
-                fname = className + cname;
+            return "constructor";
+        }
+        if (isCallConstructor()) {
+            if (className != null) {
+                return className + '.' + "call constructor";
+            }
+            return "call constructor";
+        }
+        String name = propertyName();
+        if (allocation == MethodAllocation.Prototype && className != null) {
+            if (!(classElementName instanceof ComputedPropertyName)) {
+                name = className + '.' + name;
             } else {
-                fname = cname;
+                name = className + name;
             }
         }
         switch (type) {
         case Getter:
-            return "get " + fname;
+            return "get " + name;
         case Setter:
-            return "set " + fname;
+            return "set " + name;
         default:
-            return fname;
+            return name;
         }
     }
 
     @Override
     public void setMethodName(String methodName) {
-        throw new AssertionError();
+        this.methodName = methodName;
     }
 
     @Override
     public String getFunctionName() {
-        final String fname;
-        String pname = propertyName.getName();
-        if (pname != null) {
-            fname = pname;
-        } else {
-            assert propertyName instanceof ComputedPropertyName;
-            fname = ((ComputedPropertyName) propertyName).toString();
-        }
-        switch (type) {
-        case Getter:
-            return "get " + fname;
-        case Setter:
-            return "set " + fname;
-        default:
-            return fname;
-        }
+        return propertyName();
     }
 
     @Override
@@ -243,14 +236,17 @@ public final class MethodDefinition extends PropertyDefinition implements Functi
         this.strictMode = strictMode;
     }
 
-    @Override
-    public String getHeaderSource() {
-        return headerSource;
+    public boolean isSynthetic() {
+        return isSynthetic;
+    }
+
+    public void setSynthetic(boolean isSynthetic) {
+        this.isSynthetic = isSynthetic;
     }
 
     @Override
-    public String getBodySource() {
-        return bodySource;
+    public String getSource() {
+        return source;
     }
 
     @Override
@@ -263,7 +259,6 @@ public final class MethodDefinition extends PropertyDefinition implements Functi
         switch (type) {
         case AsyncGenerator:
         case Generator:
-        case ConstructorGenerator:
             return true;
         default:
             return false;
@@ -284,9 +279,7 @@ public final class MethodDefinition extends PropertyDefinition implements Functi
     @Override
     public boolean isConstructor() {
         switch (type) {
-        case BaseConstructor:
-        case DerivedConstructor:
-        case ConstructorGenerator:
+        case ClassConstructor:
             return true;
         default:
             return false;

@@ -1,12 +1,10 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
  */
 package com.github.anba.es6draft.runtime.types.builtins;
-
-import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.FunctionInitialize;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
@@ -31,12 +29,6 @@ public final class OrdinaryConstructorFunction extends FunctionObject implements
      */
     public OrdinaryConstructorFunction(Realm realm) {
         super(realm);
-    }
-
-    @Override
-    protected OrdinaryConstructorFunction allocateNew() {
-        return FunctionAllocate(getRealm().defaultContext(), getPrototype(), isStrict(), getFunctionKind(),
-                getConstructorKind());
     }
 
     /**
@@ -71,36 +63,6 @@ public final class OrdinaryConstructorFunction extends FunctionObject implements
         }
     }
 
-    /* ***************************************************************************************** */
-
-    /**
-     * 9.2.3 FunctionAllocate (functionPrototype, strict [,functionKind] )
-     * 
-     * @param cx
-     *            the execution context
-     * @param functionPrototype
-     *            the function prototype
-     * @param strict
-     *            the strict mode flag
-     * @param functionKind
-     *            the function kind
-     * @param constructorKind
-     *            the constructor kind
-     * @return the new function object
-     */
-    public static OrdinaryConstructorFunction FunctionAllocate(ExecutionContext cx, ScriptObject functionPrototype,
-            boolean strict, FunctionKind functionKind, ConstructorKind constructorKind) {
-        assert (functionKind == FunctionKind.Normal || functionKind == FunctionKind.ClassConstructor);
-        Realm realm = cx.getRealm();
-        /* steps 1-5 (implicit) */
-        /* steps 6-9 */
-        OrdinaryConstructorFunction f = new OrdinaryConstructorFunction(realm);
-        /* steps 10-14 */
-        f.allocate(realm, functionPrototype, strict, functionKind, constructorKind);
-        /* step 15 */
-        return f;
-    }
-
     /**
      * 9.2.5 FunctionCreate (kind, ParameterList, Body, Scope, Strict)
      * 
@@ -118,7 +80,7 @@ public final class OrdinaryConstructorFunction extends FunctionObject implements
             RuntimeInfo.Function function, LexicalEnvironment<?> scope) {
         /* step 1 */
         ScriptObject prototype = cx.getIntrinsic(Intrinsics.FunctionPrototype);
-        /* steps 2-5 */
+        /* steps 4-5 */
         return ConstructorFunctionCreate(cx, kind, ConstructorKind.Base, function, scope, prototype);
     }
 
@@ -143,11 +105,12 @@ public final class OrdinaryConstructorFunction extends FunctionObject implements
             ConstructorKind constructorKind, RuntimeInfo.Function function, LexicalEnvironment<?> scope,
             ScriptObject prototype) {
         assert !function.isGenerator() && !function.isAsync();
+        boolean strict = function.isStrict();
         /* steps 1-3 (not applicable) */
         /* step 4 */
-        OrdinaryConstructorFunction f = FunctionAllocate(cx, prototype, function.isStrict(), kind, constructorKind);
+        OrdinaryConstructorFunction f = FunctionAllocate(cx, OrdinaryConstructorFunction::new, prototype, strict, kind,
+                constructorKind);
         /* step 5 */
-        FunctionInitialize(f, kind, function, scope, cx.getCurrentExecutable());
-        return f;
+        return FunctionInitialize(f, kind, function, scope, cx.getCurrentExecutable());
     }
 }

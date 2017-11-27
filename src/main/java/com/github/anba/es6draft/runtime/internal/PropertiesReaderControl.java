@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -19,8 +19,8 @@ import java.util.PropertyResourceBundle;
 import java.util.ResourceBundle;
 
 /**
- * {@link java.util.ResourceBundle.Control} subclass to create {@link PropertyResourceBundle}
- * objects which use a configurable encoding instead of the default ISO-8859-1 encoding.
+ * {@link java.util.ResourceBundle.Control} subclass to create {@link PropertyResourceBundle} objects which use a
+ * configurable encoding instead of the default ISO-8859-1 encoding.
  */
 public class PropertiesReaderControl extends ResourceBundle.Control {
     private final Charset charset;
@@ -41,8 +41,8 @@ public class PropertiesReaderControl extends ResourceBundle.Control {
     }
 
     @Override
-    public ResourceBundle newBundle(String baseName, Locale locale, String format,
-            ClassLoader loader, boolean reload) throws IOException {
+    public ResourceBundle newBundle(String baseName, Locale locale, String format, ClassLoader loader, boolean reload)
+            throws IOException {
         if ("java.properties".equals(format)) {
             String bundleName = toBundleName(baseName, locale);
             String resourceName = toResourceName(bundleName, "properties");
@@ -57,8 +57,8 @@ public class PropertiesReaderControl extends ResourceBundle.Control {
         throw new IllegalArgumentException("unknown format: " + format);
     }
 
-    private static InputStream getInputStream(ClassLoader loader, String resourceName,
-            boolean reload) throws IOException {
+    private static InputStream getInputStream(ClassLoader loader, String resourceName, boolean reload)
+            throws IOException {
         URL url = loader.getResource(resourceName);
         if (url == null) {
             return null;

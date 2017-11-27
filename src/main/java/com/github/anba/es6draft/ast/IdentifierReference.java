@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -16,7 +16,6 @@ import com.github.anba.es6draft.ast.scope.Name;
  */
 public final class IdentifierReference extends LeftHandSideExpression implements PropertyName {
     private final String name;
-    private Name resolvedName;
 
     public IdentifierReference(long beginPosition, long endPosition, String name) {
         super(beginPosition, endPosition);
@@ -30,17 +29,6 @@ public final class IdentifierReference extends LeftHandSideExpression implements
 
     public Name toName() {
         return new Name(name);
-    }
-
-    public Name getResolvedName() {
-        return resolvedName;
-    }
-
-    public void setResolvedName(Name resolvedName) {
-        assert resolvedName != null && resolvedName.isResolved();
-        assert this.resolvedName == null : String.format("%s: <%s> != <%s>", name,
-                this.resolvedName.getScope(), resolvedName.getScope());
-        this.resolvedName = resolvedName;
     }
 
     @Override

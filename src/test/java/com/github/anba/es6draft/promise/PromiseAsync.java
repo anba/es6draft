@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -29,8 +29,8 @@ public final class PromiseAsync {
         doneCalled = true;
     }
 
-    @Properties.Function(name = "$async_enqueueTask", arity = 1)
-    public void enqueueTask(ExecutionContext cx, Callable task) {
-        cx.getRealm().enqueuePromiseTask(() -> task.call(cx, Undefined.UNDEFINED));
+    @Properties.Function(name = "$async_enqueueJob", arity = 1)
+    public void enqueueJob(ExecutionContext cx, Callable job) {
+        cx.getRealm().enqueuePromiseJob(() -> job.call(cx, Undefined.UNDEFINED));
     }
 }

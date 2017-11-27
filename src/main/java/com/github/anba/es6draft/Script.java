@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -18,15 +18,14 @@ import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
  */
 public interface Script extends Program {
     /**
-     * Returns this script's
-     * {@link com.github.anba.es6draft.runtime.internal.RuntimeInfo.ScriptBody ScriptBody} object.
+     * Returns this script's {@link com.github.anba.es6draft.runtime.internal.RuntimeInfo.ScriptBody ScriptBody} object.
      * 
      * @return the script body object
      */
     RuntimeInfo.ScriptBody getScriptBody();
 
     /**
-     * Evaluates this script in the given {@link ExecutionContext}.
+     * Evaluates this script in the given {@link Realm}.
      * 
      * @param realm
      *            the realm instance

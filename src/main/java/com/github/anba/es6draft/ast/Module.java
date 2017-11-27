@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -11,7 +11,6 @@ import java.util.List;
 
 import com.github.anba.es6draft.ast.scope.ModuleScope;
 import com.github.anba.es6draft.parser.Parser;
-import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.Source;
 
 /**
@@ -23,8 +22,8 @@ public final class Module extends Program implements TopLevelNode<ModuleItem> {
     private List<ModuleItem> statements;
 
     public Module(long beginPosition, long endPosition, Source source, ModuleScope scope, List<ModuleItem> statements,
-            EnumSet<CompatibilityOption> options, EnumSet<Parser.Option> parserOptions) {
-        super(beginPosition, endPosition, source, options, parserOptions);
+            EnumSet<Parser.Option> parserOptions) {
+        super(beginPosition, endPosition, source, parserOptions);
         this.scope = scope;
         this.statements = statements;
     }

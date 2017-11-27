@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -38,7 +38,6 @@ assertSame(SharedArrayBuffer, SharedArrayBuffer.prototype.constructor);
 /* Properties of the SharedArrayBuffer Constructor */
 
 assertPrototypeProperty(SharedArrayBuffer);
-assertFunctionProperty(SharedArrayBuffer, "isView");
 assertGetterProperty(SharedArrayBuffer, Symbol.species);
 
 

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -20,12 +20,11 @@ public interface ScriptScope extends TopLevelScope {
     Script getNode();
 
     /**
-     * Returns the set of variable declared names in for-of statements. This information is only
-     * tracked for eval scripts.
+     * Returns the set of restricted variable declared names. This information is only tracked for eval scripts.
      * 
      * @return the variable declared names
      */
-    Set<Name> varForOfDeclaredNames();
+    Set<Name> restrictedVarDeclaredNames();
 
     /**
      * Returns the script's web legacy block-level function declarations.

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -25,9 +25,8 @@ public final class ForStatement extends IterationStatement implements ScopedNode
     private final Expression step;
     private Statement statement;
 
-    public ForStatement(long beginPosition, long endPosition, BlockScope scope,
-            EnumSet<Abrupt> abrupt, Set<String> labelSet, Node head, Expression test,
-            Expression step, Statement statement) {
+    public ForStatement(long beginPosition, long endPosition, BlockScope scope, EnumSet<Abrupt> abrupt,
+            Set<String> labelSet, Node head, Expression test, Expression step, Statement statement) {
         super(beginPosition, endPosition, abrupt, labelSet);
         this.scope = scope;
         this.head = head;

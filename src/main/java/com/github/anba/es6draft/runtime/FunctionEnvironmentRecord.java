@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -54,10 +54,10 @@ public final class FunctionEnvironmentRecord extends DeclarativeEnvironmentRecor
 
     @Override
     public String toString() {
-        return String
-                .format("%s:{%n\tfunctionObject=%s,%n\tnewTarget=%s,%n\thomeObject=%s,%n\tthisValue=%s,%n\tthisBindingStatus=%s,%n\tbindings=%s%n}",
-                        getClass().getSimpleName(), functionObject, newTarget, homeObject,
-                        thisValue, thisBindingStatus, bindingsToString());
+        return String.format(
+                "%s:{%n\tfunctionObject=%s,%n\tnewTarget=%s,%n\thomeObject=%s,%n\tthisValue=%s,%n\tthisBindingStatus=%s,%n\tbindings=%s%n}",
+                getClass().getSimpleName(), functionObject, newTarget, homeObject, thisValue, thisBindingStatus,
+                bindingsToString());
     }
 
     /**
@@ -76,6 +76,24 @@ public final class FunctionEnvironmentRecord extends DeclarativeEnvironmentRecor
      */
     public Constructor getNewTarget() {
         return newTarget;
+    }
+
+    /**
+     * Returns the {@code homeObject} field.
+     * 
+     * @return the {@code homeObject} field
+     */
+    public ScriptObject getHomeObject() {
+        return homeObject;
+    }
+
+    /**
+     * Returns the {@code thisValue} field.
+     * 
+     * @return the {@code thisValue} field
+     */
+    public Object getThisValue() {
+        return thisValue;
     }
 
     /**
@@ -107,7 +125,7 @@ public final class FunctionEnvironmentRecord extends DeclarativeEnvironmentRecor
         this.thisValue = thisValue;
         /* step 5 */
         this.thisBindingStatus = ThisBindingStatus.Initialized;
-        /* step 5 (not applicable) */
+        /* step 6 (not applicable) */
     }
 
     /**

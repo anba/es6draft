@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -42,7 +42,7 @@ public final class DataViewObject extends OrdinaryObject implements ArrayBufferV
      *            the prototype object
      */
     public DataViewObject(Realm realm, ArrayBuffer buffer, long byteLength, long byteOffset, ScriptObject prototype) {
-        super(realm);
+        super(realm, prototype);
         assert buffer != null : "cannot initialize DataView with null";
         assert byteLength >= 0 : "negative byte length: " + byteLength;
         assert byteOffset >= 0 : "negative byte offset: " + byteOffset;
@@ -50,7 +50,6 @@ public final class DataViewObject extends OrdinaryObject implements ArrayBufferV
         this.buffer = buffer;
         this.byteLength = byteLength;
         this.byteOffset = byteOffset;
-        setPrototype(prototype);
     }
 
     /**
@@ -75,5 +74,12 @@ public final class DataViewObject extends OrdinaryObject implements ArrayBufferV
     @Override
     public long getByteOffset() {
         return byteOffset;
+    }
+
+    @Override
+    public String toString() {
+        return String.format("%s, buffer={data=%s, byteLength=%s, detached=%b}, byteLength=%d, byteOffset=%d",
+                super.toString(), buffer.getData(), buffer.getByteLength(), buffer.isDetached(), byteLength,
+                byteOffset);
     }
 }

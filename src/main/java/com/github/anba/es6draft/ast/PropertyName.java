@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -13,12 +13,17 @@ package com.github.anba.es6draft.ast;
  * <li>12.2.6 Object Initializer
  * </ul>
  */
-public interface PropertyName extends Node {
+public interface PropertyName extends ClassElementName {
     /**
-     * Returns the string representation for this property name or <code>null</code> if no string
-     * representation is available.
+     * Returns the string representation for this property name or <code>null</code> if no string representation is
+     * available.
      * 
      * @return the string representation or {@code null}
      */
     String getName();
+
+    @Override
+    default PropertyName toPropertyName() {
+        return this;
+    }
 }

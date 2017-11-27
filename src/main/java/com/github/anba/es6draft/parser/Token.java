@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -9,7 +9,8 @@ package com.github.anba.es6draft.parser;
 /**
  * Enumeration of lexer tokens
  */
-enum Token {/* @formatter:off */
+enum Token {
+    /* @formatter:off */
     // Keyword -> 11.6.2.1
     BREAK("break"),
     CASE("case"),
@@ -90,11 +91,11 @@ enum Token {/* @formatter:off */
     ASSIGN_ADD("+="), ASSIGN_SUB("-="), ASSIGN_MUL("*="), ASSIGN_MOD("%="), ASSIGN_DIV("/="),
     ASSIGN_SHL("<<="), ASSIGN_SHR(">>="), ASSIGN_USHR(">>>="),
     ASSIGN_BITAND("&="), ASSIGN_BITOR("|="), ASSIGN_BITXOR("^="),
-    ARROW("=>"),
-    // Exponentiation Operator
-    EXP("**"), ASSIGN_EXP("**"),
+    ARROW("=>"), EXP("**"), ASSIGN_EXP("**="),
     // Decorators
     AT("@"),
+    // Private fields
+    PRIVATE_NAME("<private-name>"),
     // Comment
     COMMENT("<comment>"),
     // EOF, Error
@@ -122,7 +123,7 @@ enum Token {/* @formatter:off */
     }
 
     /**
-     * <strong>[11.6] Identifier Names and Identifiers</strong>
+     * <strong>[11.6] Names and Keywords</strong>
      * 
      * @param token
      *            the token to inspect
@@ -316,37 +317,37 @@ enum Token {/* @formatter:off */
     public static boolean isBinaryOperator(Token token) {
         switch (token) {
         case EXP:
-            // Extension: Exponentiation Operator
+            // 12.6 Exponentiation Operator
         case MUL:
         case MOD:
         case DIV:
-            // 12.6 Multiplicative Operators
+            // 12.7 Multiplicative Operators
         case ADD:
         case SUB:
-            // 12.7 Additive Operators
+            // 12.8 Additive Operators
         case SHL:
         case SHR:
         case USHR:
-            // 12.8 Bitwise Shift Operators
+            // 12.9 Bitwise Shift Operators
         case LT:
         case GT:
         case LE:
         case GE:
         case IN:
         case INSTANCEOF:
-            // 12.9 Relational Operators
+            // 12.10 Relational Operators
         case EQ:
         case NE:
         case SHEQ:
         case SHNE:
-            // 12.10 Equality Operators
+            // 12.11 Equality Operators
         case BITAND:
         case BITOR:
         case BITXOR:
-            // 12.11 Binary Bitwise Operators
+            // 12.12 Binary Bitwise Operators
         case AND:
         case OR:
-            // 12.12 Binary Logical Operators
+            // 12.13 Binary Logical Operators
             return true;
         default:
             return false;

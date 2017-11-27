@@ -1,26 +1,35 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
  */
 package com.github.anba.es6draft.runtime.objects.intl;
 
-import static com.github.anba.es6draft.runtime.AbstractOperations.Get;
-import static com.github.anba.es6draft.runtime.AbstractOperations.ToNumber;
-import static com.github.anba.es6draft.runtime.AbstractOperations.ToObject;
+import static com.github.anba.es6draft.runtime.AbstractOperations.*;
 import static com.github.anba.es6draft.runtime.internal.Errors.newRangeError;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
+import static com.github.anba.es6draft.runtime.language.Operators.InstanceofOperator;
 import static com.github.anba.es6draft.runtime.objects.intl.IntlAbstractOperations.*;
+import static com.github.anba.es6draft.runtime.types.builtins.ArrayObject.ArrayCreate;
 import static java.util.Arrays.asList;
 
+import java.text.AttributedCharacterIterator;
+import java.text.AttributedCharacterIterator.Attribute;
+import java.text.CharacterIterator;
+import java.util.AbstractMap;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.function.IntConsumer;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
+import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.Initializable;
 import com.github.anba.es6draft.runtime.internal.Lazy;
 import com.github.anba.es6draft.runtime.internal.Messages;
@@ -35,10 +44,14 @@ import com.github.anba.es6draft.runtime.objects.intl.IntlAbstractOperations.Opti
 import com.github.anba.es6draft.runtime.objects.intl.IntlAbstractOperations.ResolvedLocale;
 import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
+import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
+import com.github.anba.es6draft.runtime.types.builtins.ArrayObject;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
+import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
+import com.ibm.icu.text.NumberFormat;
 import com.ibm.icu.text.NumberingSystem;
 import com.ibm.icu.util.ULocale;
 
@@ -84,6 +97,7 @@ public final class NumberFormatConstructor extends BuiltinConstructor implements
 
     /** [[localeData]] */
     private static final class NumberFormatLocaleDataInfo implements LocaleDataInfo {
+        private static final boolean ICU_NUMBERING_SYSTEMS = true;
         private final ULocale locale;
 
         public NumberFormatLocaleDataInfo(ULocale locale) {
@@ -113,10 +127,37 @@ public final class NumberFormatConstructor extends BuiltinConstructor implements
         private List<String> getNumberInfo() {
             // ICU4J does not provide an API to retrieve the numbering systems per locale, go with
             // Spidermonkey instead and return default numbering system of locale + Table 2 entries
+            // FIXME: spec issue - increase list of Table 2 entries (newer CLDR than v21).
             String localeNumberingSystem = NumberingSystem.getInstance(locale).getName();
-            return asList(localeNumberingSystem, "arab", "arabtext", "bali", "beng", "deva", "fullwide", "gujr", "guru",
+            if (ICU_NUMBERING_SYSTEMS) {
+                ArrayList<String> list = new ArrayList<>(ICUNumberingSystems.available);
+                list.set(0, localeNumberingSystem);
+                return list;
+            }
+            return asList(localeNumberingSystem, "arab", "arabext", "bali", "beng", "deva", "fullwide", "gujr", "guru",
                     "hanidec", "khmr", "knda", "laoo", "latn", "limb", "mlym", "mong", "mymr", "orya", "tamldec",
                     "telu", "thai", "tibt");
+        }
+
+        private static final class ICUNumberingSystems {
+            private static final ArrayList<String> available;
+            static {
+                ArrayList<String> list = new ArrayList<>();
+                list.add(null);
+                for (String name : NumberingSystem.getAvailableNames()) {
+                    NumberingSystem ns;
+                    try {
+                        ns = NumberingSystem.getInstanceByName(name);
+                    } catch (IllegalArgumentException e) {
+                        // ICU4J throws an IllegalArgumentException if the numbering system digits are outside of BMP.
+                        continue;
+                    }
+                    if (!ns.isAlgorithmic()) {
+                        list.add(name);
+                    }
+                }
+                available = list;
+            }
         }
     }
 
@@ -135,18 +176,71 @@ public final class NumberFormatConstructor extends BuiltinConstructor implements
         createProperties(realm, this, Properties.class);
     }
 
-    @Override
-    public NumberFormatConstructor clone() {
-        return new NumberFormatConstructor(getRealm());
-    }
-
     @SafeVarargs
     private static <T> Set<T> set(T... elements) {
         return new HashSet<>(asList(elements));
     }
 
     /**
-     * 11.1.1 InitializeNumberFormat (numberFormat, locales, options)
+     * 11.1.1 SetNumberFormatDigitOptions ( intlObj, options, mnfdDefault )
+     * 
+     * @param cx
+     *            the execution context
+     * @param setMinimumIntegerDigits
+     *            the minimum integer digits setter
+     * @param setMinimumFractionDigits
+     *            the minimum fraction digits setter
+     * @param setMaximumFractionDigits
+     *            the maximum fraction digits setter
+     * @param setMinimumSignificantDigits
+     *            the minimum significants digits setter
+     * @param setMaximumSignificantDigits
+     *            the maximum significants digits setter
+     * @param options
+     *            the options object
+     * @param mnfdDefault
+     *            the minimum fraction digits default value
+     * @param mxfdDefault
+     *            the maximum fraction digits default value
+     */
+    public static void SetNumberFormatDigitOptions(ExecutionContext cx, IntConsumer setMinimumIntegerDigits,
+            IntConsumer setMinimumFractionDigits, IntConsumer setMaximumFractionDigits,
+            IntConsumer setMinimumSignificantDigits, IntConsumer setMaximumSignificantDigits, ScriptObject options,
+            int mnfdDefault, int mxfdDefault) {
+        /* steps 1-4 (not applicable) */
+        /* step 5 */
+        int mnid = GetNumberOption(cx, options, "minimumIntegerDigits", 1, 21, 1);
+        /* step 6 */
+        int mnfd = GetNumberOption(cx, options, "minimumFractionDigits", 0, 20, mnfdDefault);
+        /* step 7 */
+        int mxfdActualDefault = Math.max(mnfd, mxfdDefault);
+        /* step 8 */
+        int mxfd = GetNumberOption(cx, options, "maximumFractionDigits", mnfd, 20, mxfdActualDefault);
+        /* step 9 */
+        Object mnsd = Get(cx, options, "minimumSignificantDigits");
+        /* step 10 */
+        Object mxsd = Get(cx, options, "maximumSignificantDigits");
+        /* step 11 */
+        setMinimumIntegerDigits.accept(mnid);
+        /* step 12 */
+        setMinimumFractionDigits.accept(mnfd);
+        /* step 13 */
+        setMaximumFractionDigits.accept(mxfd);
+        /* step 14 */
+        if (!Type.isUndefined(mnsd) || !Type.isUndefined(mxsd)) {
+            /* step 14.a */
+            int _mnsd = DefaultNumberOption(cx, "minimumSignificantDigits", mnsd, 1, 21, 1);
+            /* step 14.b */
+            int _mxsd = DefaultNumberOption(cx, "maximumSignificantDigits", mxsd, _mnsd, 21, 21);
+            /* step 14.c */
+            setMinimumSignificantDigits.accept(_mnsd);
+            /* step 14.d */
+            setMaximumSignificantDigits.accept(_mxsd);
+        }
+    }
+
+    /**
+     * 11.1.2 InitializeNumberFormat (numberFormat, locales, options)
      * 
      * @param cx
      *            the execution context
@@ -165,7 +259,7 @@ public final class NumberFormatConstructor extends BuiltinConstructor implements
         /* steps 4-5 */
         ScriptObject options;
         if (Type.isUndefined(opts)) {
-            options = ObjectCreate(cx, Intrinsics.ObjectPrototype);
+            options = ObjectCreate(cx, (ScriptObject) null);
         } else {
             options = ToObject(cx, opts);
         }
@@ -184,9 +278,9 @@ public final class NumberFormatConstructor extends BuiltinConstructor implements
         numberFormat.setNumberingSystem(r.getValue(ExtensionKey.nu));
         /* step 13 (not applicable) */
         /* step 14 */
-        String s = GetStringOption(cx, options, "style", set("decimal", "percent", "currency"), "decimal");
+        String style = GetStringOption(cx, options, "style", set("decimal", "percent", "currency"), "decimal");
         /* step 15 */
-        numberFormat.setStyle(s);
+        numberFormat.setStyle(style);
         /* step 16 */
         String c = GetStringOption(cx, options, "currency", null, null);
         /* step 17 */
@@ -194,12 +288,12 @@ public final class NumberFormatConstructor extends BuiltinConstructor implements
             throw newRangeError(cx, Messages.Key.IntlInvalidCurrency, c);
         }
         /* step 18 */
-        if ("currency".equals(s) && c == null) {
-            throw newTypeError(cx, Messages.Key.IntlInvalidCurrency, "null");
+        if ("currency".equals(style) && c == null) {
+            throw newTypeError(cx, Messages.Key.IntlMissingCurrency);
         }
         /* step 19 */
         int cDigits = -1;
-        if ("currency".equals(s)) {
+        if ("currency".equals(style)) {
             c = ToUpperCase(c);
             numberFormat.setCurrency(c);
             cDigits = CurrencyDigits(c);
@@ -207,100 +301,39 @@ public final class NumberFormatConstructor extends BuiltinConstructor implements
         /* step 20 */
         String cd = GetStringOption(cx, options, "currencyDisplay", set("code", "symbol", "name"), "symbol");
         /* step 21 */
-        if ("currency".equals(s)) {
+        if ("currency".equals(style)) {
             numberFormat.setCurrencyDisplay(cd);
         }
-        /* step 22 */
-        int mnid = GetNumberOption(cx, options, "minimumIntegerDigits", 1, 21, 1);
-        /* step 23 */
-        numberFormat.setMinimumIntegerDigits(mnid);
-        /* step 24 */
-        int mnfdDefault = "currency".equals(s) ? cDigits : 0;
-        /* step 25 */
-        int mnfd = GetNumberOption(cx, options, "minimumFractionDigits", 0, 20, mnfdDefault);
-        /* step 26 */
-        numberFormat.setMinimumFractionDigits(mnfd);
-        /* step 27 */
-        int mxfdDefault = "currency".equals(s) ? Math.max(mnfd, cDigits)
-                : "percent".equals(s) ? Math.max(mnfd, 0) : Math.max(mnfd, 3);
-        /* step 28 */
-        int mxfd = GetNumberOption(cx, options, "maximumFractionDigits", mnfd, 20, mxfdDefault);
-        /* step 29 */
-        numberFormat.setMaximumFractionDigits(mxfd);
-        /* step 30 */
-        Object mnsd = Get(cx, options, "minimumSignificantDigits");
-        /* step 31 */
-        Object mxsd = Get(cx, options, "maximumSignificantDigits");
-        /* step 32 */
-        if (!Type.isUndefined(mnsd) || !Type.isUndefined(mxsd)) {
-            int _mnsd = GetNumberOption(cx, options, "minimumSignificantDigits", 1, 21, 1);
-            int _mxsd = GetNumberOption(cx, options, "maximumSignificantDigits", _mnsd, 21, 21);
-            numberFormat.setMinimumSignificantDigits(_mnsd);
-            numberFormat.setMaximumSignificantDigits(_mxsd);
-        }
-        /* step 33 */
-        boolean g = GetBooleanOption(cx, options, "useGrouping", true);
-        /* step 34 */
-        numberFormat.setUseGrouping(g);
-        /* steps 35-40 (not applicable) */
-        /* step 41 */
-        numberFormat.setBoundFormat(null);
-        /* step 42 (FIXME: spec bug - unnecessary internal slot) */
-        /* step 43 (omitted) */
-    }
-
-    /**
-     * 11.1.1 InitializeNumberFormat (numberFormat, locales, options)
-     * 
-     * @param realm
-     *            the realm instance
-     * @param numberFormat
-     *            the number format object
-     */
-    public static void InitializeDefaultNumberFormat(Realm realm, NumberFormatObject numberFormat) {
-        /* steps 1-2 (FIXME: spec bug - unnecessary internal slot) */
-        /* steps 3-8 (not applicable) */
-        /* step 9 */
-        NumberFormatLocaleData localeData = new NumberFormatLocaleData();
-        /* step 10 */
-        ResolvedLocale r = ResolveDefaultLocale(realm, relevantExtensionKeys, localeData);
-        /* step 11 */
-        numberFormat.setLocale(r.getLocale());
-        /* step 12 */
-        numberFormat.setNumberingSystem(r.getValue(ExtensionKey.nu));
-        /* step 13 (not applicable) */
-        /* steps 14-15 */
-        numberFormat.setStyle("decimal");
-        /* steps 16-21 (not applicable) */
         /* steps 22-23 */
-        numberFormat.setMinimumIntegerDigits(1);
-        /* steps 24-26 */
-        numberFormat.setMinimumFractionDigits(0);
-        /* steps 27-29 */
-        numberFormat.setMaximumFractionDigits(3);
-        /* steps 30-32 (not applicable) */
-        /* steps 33-34 */
-        numberFormat.setUseGrouping(true);
-        /* steps 35-40 (not applicable) */
-        /* step 41 */
+        int mnfdDefault = "currency".equals(style) ? cDigits : 0;
+        int mxfdDefault = "currency".equals(style) ? cDigits : "percent".equals(style) ? 0 : 3;
+        /* step 24 */
+        SetNumberFormatDigitOptions(cx, numberFormat::setMinimumIntegerDigits, numberFormat::setMinimumFractionDigits,
+                numberFormat::setMaximumFractionDigits, numberFormat::setMinimumSignificantDigits,
+                numberFormat::setMaximumSignificantDigits, options, mnfdDefault, mxfdDefault);
+        /* step 25 */
+        boolean g = GetBooleanOption(cx, options, "useGrouping", true);
+        /* step 26 */
+        numberFormat.setUseGrouping(g);
+        /* steps 27-32 (not applicable) */
+        /* step 33 */
         numberFormat.setBoundFormat(null);
-        /* step 42 (FIXME: spec bug - unnecessary internal slot) */
-        /* step 43 (omitted) */
+        /* step 34 (FIXME: spec bug - unnecessary internal slot) */
+        /* step 35 (omitted) */
     }
 
     /**
-     * 11.1.2 CurrencyDigits (currency)
+     * 11.1.3 CurrencyDigits (currency)
      * 
      * @param c
      *            the currency
      * @return the number of currency digits
      */
     private static int CurrencyDigits(String c) {
-        // http://www.currency-iso.org/dam/downloads/lists/list_one.xml
-        // Last updated: 2015-06-19
+        // https://www.currency-iso.org/dam/downloads/lists/list_one.xml
+        // Last updated: 2017-01-01
         switch (c) {
         case "BIF":
-        case "BYR":
         case "CLP":
         case "DJF":
         case "GNF":
@@ -334,21 +367,12 @@ public final class NumberFormatConstructor extends BuiltinConstructor implements
     }
 
     /**
-     * 11.1.3 Number Format Functions
+     * 11.1.4 Number Format Functions
      */
     public static final class FormatFunction extends BuiltinFunction {
         public FormatFunction(Realm realm) {
             super(realm, "format", 1);
             createDefaultFunctionProperties();
-        }
-
-        private FormatFunction(Realm realm, Void ignore) {
-            super(realm, "format", 1);
-        }
-
-        @Override
-        public FormatFunction clone() {
-            return new FormatFunction(getRealm(), null);
         }
 
         @Override
@@ -367,7 +391,7 @@ public final class NumberFormatConstructor extends BuiltinConstructor implements
     }
 
     /**
-     * 11.1.4 FormatNumber(numberFormat, x)
+     * 11.1.5 FormatNumber(numberFormat, x)
      * 
      * @param numberFormat
      *            the number format object
@@ -385,12 +409,175 @@ public final class NumberFormatConstructor extends BuiltinConstructor implements
     }
 
     /**
+     * PartitionNumberPattern(numberFormat, x)
+     * 
+     * @param numberFormatObj
+     *            the number format object
+     * @param x
+     *            the number value
+     * @return the formatted number object
+     */
+    private static List<Map.Entry<String, String>> PartitionNumberPattern(NumberFormatObject numberFormat, double x) {
+        if (x == -0.0) {
+            // -0 is not considered to be negative, cf. step 3a
+            x = +0.0;
+        }
+        ArrayList<Map.Entry<String, String>> parts = new ArrayList<>();
+        NumberFormat numFormat = numberFormat.getNumberFormat();
+        AttributedCharacterIterator iterator = numFormat.formatToCharacterIterator(x);
+        StringBuilder sb = new StringBuilder();
+        for (char ch = iterator.first(); ch != CharacterIterator.DONE; ch = iterator.next()) {
+            sb.append(ch);
+            if (iterator.getIndex() + 1 == iterator.getRunLimit()) {
+                Iterator<Attribute> keyIterator = iterator.getAttributes().keySet().iterator();
+                String key;
+                if (keyIterator.hasNext()) {
+                    key = fieldToString((NumberFormat.Field) keyIterator.next(), x);
+                } else {
+                    key = "literal";
+                }
+                String value = sb.toString();
+                sb.setLength(0);
+                parts.add(new AbstractMap.SimpleImmutableEntry<>(key, value));
+            }
+        }
+        return parts;
+    }
+
+    private static String fieldToString(NumberFormat.Field field, double x) {
+        if (field == NumberFormat.Field.SIGN) {
+            if (Double.compare(x, +0) >= 0) {
+                return "plusSign";
+            }
+            return "minusSign";
+        }
+        if (field == NumberFormat.Field.INTEGER) {
+            if (Double.isNaN(x)) {
+                return "nan";
+            }
+            if (Double.isInfinite(x)) {
+                return "infinity";
+            }
+            return "integer";
+        }
+        if (field == NumberFormat.Field.FRACTION) {
+            return "fraction";
+        }
+        if (field == NumberFormat.Field.EXPONENT) {
+            return "literal";
+        }
+        if (field == NumberFormat.Field.EXPONENT_SIGN) {
+            return "literal";
+        }
+        if (field == NumberFormat.Field.EXPONENT_SYMBOL) {
+            return "literal";
+        }
+        if (field == NumberFormat.Field.DECIMAL_SEPARATOR) {
+            return "decimal";
+        }
+        if (field == NumberFormat.Field.GROUPING_SEPARATOR) {
+            return "group";
+        }
+        if (field == NumberFormat.Field.PERCENT) {
+            return "percentSign";
+        }
+        if (field == NumberFormat.Field.PERMILLE) {
+            return "permilleSign";
+        }
+        if (field == NumberFormat.Field.CURRENCY) {
+            return "currency";
+        }
+        // Report unsupported/unexpected number fields as literal.
+        return "literal";
+    }
+
+    /**
+     * FormatNumberToParts(numberFormat, x)
+     * 
+     * @param cx
+     *            the execution context
+     * @param numberFormat
+     *            the number format object
+     * @param x
+     *            the number value
+     * @return the formatted number object
+     */
+    public static ArrayObject FormatNumberToParts(ExecutionContext cx, NumberFormatObject numberFormat, double x) {
+        /* step 1 */
+        List<Map.Entry<String, String>> parts = PartitionNumberPattern(numberFormat, x);
+        /* step 2 */
+        ArrayObject result = ArrayCreate(cx, 0);
+        /* step 3 */
+        int n = 0;
+        /* step 4 */
+        for (Map.Entry<String, String> part : parts) {
+            /* step 4.a */
+            OrdinaryObject o = ObjectCreate(cx, Intrinsics.ObjectPrototype);
+            /* step 4.b */
+            CreateDataProperty(cx, o, "type", part.getKey());
+            /* step 4.c */
+            CreateDataProperty(cx, o, "value", part.getValue());
+            /* steps 4.d-e */
+            CreateDataProperty(cx, result, n++, o);
+        }
+        /* step 5 */
+        return result;
+    }
+
+    /**
+     * 11.1.11 UnwrapNumberFormat( nf )
+     * 
+     * @param cx
+     *            the execution context
+     * @param nf
+     *            the number format object
+     * @param method
+     *            the caller method
+     * @return the unwrapped number format object
+     */
+    public static NumberFormatObject UnwrapNumberFormat(ExecutionContext cx, Object nf, String method) {
+        /* step 1 */
+        if (cx.getRuntimeContext().isEnabled(CompatibilityOption.IntlConstructorLegacyFallback)) {
+            if (Type.isObject(nf) && !(nf instanceof NumberFormatObject)
+                    && InstanceofOperator(nf, cx.getIntrinsic(Intrinsics.Intl_NumberFormat), cx)) {
+                nf = Get(cx, Type.objectValue(nf),
+                        cx.getIntrinsic(Intrinsics.Intl, IntlObject.class).getFallbackSymbol());
+            }
+        }
+        /* step 2 */
+        if (!(nf instanceof NumberFormatObject)) {
+            throw newTypeError(cx, Messages.Key.IncompatibleThis, method, Type.of(nf).toString());
+        }
+        /* step 3 */
+        return (NumberFormatObject) nf;
+    }
+
+    /**
      * 11.2.1 Intl.NumberFormat([ locales [, options]])
      */
     @Override
     public ScriptObject call(ExecutionContext callerContext, Object thisValue, Object... args) {
-        /* steps 1-3 */
-        return construct(callerContext, this, args);
+        ExecutionContext calleeContext = calleeContext();
+        Object locales = argument(args, 0);
+        Object options = argument(args, 1);
+
+        /* step 1 (not applicable) */
+        /* step 2 */
+        NumberFormatObject numberFormat = OrdinaryCreateFromConstructor(calleeContext, this,
+                Intrinsics.Intl_NumberFormatPrototype, NumberFormatObject::new);
+        /* step 3 */
+        InitializeNumberFormat(calleeContext, numberFormat, locales, options);
+        /* steps 4-5 */
+        if (calleeContext.getRuntimeContext().isEnabled(CompatibilityOption.IntlConstructorLegacyFallback)) {
+            if (Type.isObject(thisValue) && InstanceofOperator(thisValue, this, calleeContext)) {
+                PropertyDescriptor desc = new PropertyDescriptor(numberFormat, false, false, false);
+                DefinePropertyOrThrow(calleeContext, Type.objectValue(thisValue),
+                        calleeContext.getIntrinsic(Intrinsics.Intl, IntlObject.class).getFallbackSymbol(), desc);
+                return Type.objectValue(thisValue);
+            }
+        }
+        /* step 6 */
+        return numberFormat;
     }
 
     /**
@@ -408,6 +595,8 @@ public final class NumberFormatConstructor extends BuiltinConstructor implements
                 Intrinsics.Intl_NumberFormatPrototype, NumberFormatObject::new);
         /* step 3 */
         InitializeNumberFormat(calleeContext, obj, locales, options);
+        /* steps 4-5 (not applicable) */
+        /* step 6 */
         return obj;
     }
 
@@ -429,8 +618,7 @@ public final class NumberFormatConstructor extends BuiltinConstructor implements
         /**
          * 11.3.1 Intl.NumberFormat.prototype
          */
-        @Value(name = "prototype",
-                attributes = @Attributes(writable = false, enumerable = false, configurable = false))
+        @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false, configurable = false))
         public static final Intrinsics prototype = Intrinsics.Intl_NumberFormatPrototype;
 
         /**

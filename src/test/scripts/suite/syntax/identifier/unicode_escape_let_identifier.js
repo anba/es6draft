@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -33,21 +33,6 @@ const transformer = [
     return `${name.substring(0, 1)}\\u${toStr(name.charCodeAt(1), 16, 4)}${name.substring(2)}`
   },
 ].map(fn => (n => n.replace("let", fn)));
-
-for (let t of transformer) {
-  // 12.1.4.2.1  Static Semantics: Early Errors
-  // It is a Syntax Error if the BoundNames of ForBinding contains "let".
-  for (let binding of bindings.letIsBoundName) {
-    binding = t(binding);
-    assertSyntaxError(`[for (${binding} of []) 0];`);
-    assertSyntaxError(`(for (${binding} of []) 0);`);
-  }
-  for (let binding of bindings.letIsntBoundName) {
-    binding = t(binding);
-    Function(`[for (${binding} of []) 0];`);
-    Function(`(for (${binding} of []) 0);`);
-  }
-}
 
 for (let t of transformer) {
   // 13.2.1.1  Static Semantics: Early Errors

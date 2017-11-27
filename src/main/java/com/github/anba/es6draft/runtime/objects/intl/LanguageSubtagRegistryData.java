@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -11,7 +11,7 @@ import java.util.HashMap;
 /**
  * Supplemental data for canonicalization of language tags.
  * <p>
- * Data generated from: language-subtag-registry, 2015-08-04
+ * Data generated from: language-subtag-registry, 2017-08-15
  * 
  * @see <a href="http://www.iana.org/assignments/language-subtag-registry">language-subtag-registry</a>
  */
@@ -188,44 +188,68 @@ final class LanguageSubtagRegistryData {
         map.put("adp", "dz");
         map.put("aue", "ktz");
         map.put("ayx", "nun");
+        map.put("bgm", "bcg");
         map.put("bjd", "drl");
         map.put("ccq", "rki");
         map.put("cjr", "mom");
         map.put("cka", "cmr");
         map.put("cmk", "xch");
+        map.put("coy", "pij");
+        map.put("cqu", "quh");
         map.put("drh", "khk");
         map.put("drw", "prs");
         map.put("gav", "dev");
         map.put("gfx", "vaj");
+        map.put("ggn", "gvr");
         map.put("gti", "nyc");
+        map.put("guv", "duz");
         map.put("hrr", "jal");
         map.put("ibi", "opa");
         map.put("ilw", "gal");
+        map.put("jeg", "oyb");
+        map.put("kgc", "tdf");
         map.put("kgh", "kml");
         map.put("koj", "kwv");
+        map.put("krm", "bmf");
+        map.put("ktr", "dtp");
+        map.put("kvs", "gdj");
         map.put("kwq", "yam");
         map.put("kxe", "tvd");
+        map.put("kzj", "dtp");
+        map.put("kzt", "dtp");
         map.put("lii", "raq");
         map.put("lmm", "rmx");
         map.put("meg", "cir");
         map.put("mst", "mry");
         map.put("mwj", "vaj");
         map.put("myt", "mry");
+        map.put("nad", "xny");
         map.put("nnx", "ngv");
+        map.put("nts", "pij");
         map.put("oun", "vaj");
         map.put("pcr", "adx");
+        map.put("pmc", "huw");
         map.put("pmu", "phr");
+        map.put("ppa", "bfy");
         map.put("ppr", "lcq");
+        map.put("pry", "prt");
         map.put("puz", "pub");
         map.put("sca", "hle");
+        map.put("skk", "oyb");
+        map.put("tdu", "dtp");
+        map.put("thc", "tpo");
         map.put("thx", "oyb");
         map.put("tie", "ras");
         map.put("tkk", "twm");
         map.put("tlw", "weo");
+        map.put("tmp", "tyj");
+        map.put("tne", "kak");
         map.put("tnf", "prs");
         map.put("tsf", "taj");
         map.put("uok", "ema");
+        map.put("xba", "cax");
         map.put("xia", "acn");
+        map.put("xkh", "waw");
         map.put("xsj", "suj");
         map.put("ybd", "rki");
         map.put("yma", "lrr");
@@ -417,6 +441,7 @@ final class LanguageSubtagRegistryData {
         map.put("ors", "ms");
         map.put("pel", "ms");
         map.put("pga", "ar");
+        map.put("pgz", "sgn");
         map.put("pks", "sgn");
         map.put("prl", "sgn");
         map.put("prz", "sgn");
@@ -430,8 +455,8 @@ final class LanguageSubtagRegistryData {
         map.put("psr", "sgn");
         map.put("pys", "sgn");
         map.put("rms", "sgn");
-        map.put("rsi", "sgn");
         map.put("rsl", "sgn");
+        map.put("rsm", "sgn");
         map.put("sdl", "sgn");
         map.put("sfb", "sgn");
         map.put("sfs", "sgn");
@@ -450,6 +475,7 @@ final class LanguageSubtagRegistryData {
         map.put("swh", "sw");
         map.put("swl", "sgn");
         map.put("syy", "sgn");
+        map.put("szs", "sgn");
         map.put("tmw", "ms");
         map.put("tse", "sgn");
         map.put("tsm", "sgn");
@@ -470,6 +496,7 @@ final class LanguageSubtagRegistryData {
         map.put("vsi", "sgn");
         map.put("vsl", "sgn");
         map.put("vsv", "sgn");
+        map.put("wbs", "sgn");
         map.put("wuu", "zh");
         map.put("xki", "sgn");
         map.put("xml", "sgn");

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -53,18 +53,23 @@ public final class BooleanPrototype extends BooleanObject implements Initializab
          * 
          * @param cx
          *            the execution context
-         * @param object
-         *            the boolean object
+         * @param value
+         *            the value
+         * @param method
+         *            the method
          * @return the boolean value
          */
-        private static boolean thisBooleanValue(ExecutionContext cx, Object object) {
-            if (Type.isBoolean(object)) {
-                return Type.booleanValue(object);
+        private static boolean thisBooleanValue(ExecutionContext cx, Object value, String method) {
+            /* step 1 */
+            if (Type.isBoolean(value)) {
+                return Type.booleanValue(value);
             }
-            if (object instanceof BooleanObject) {
-                return ((BooleanObject) object).getBooleanData();
+            /* step 2 */
+            if (value instanceof BooleanObject) {
+                return ((BooleanObject) value).getBooleanData();
             }
-            throw newTypeError(cx, Messages.Key.IncompatibleObject);
+            /* step 3 */
+            throw newTypeError(cx, Messages.Key.IncompatibleThis, method, Type.of(value).toString());
         }
 
         @Prototype
@@ -87,7 +92,8 @@ public final class BooleanPrototype extends BooleanObject implements Initializab
          */
         @Function(name = "toString", arity = 0)
         public static Object toString(ExecutionContext cx, Object thisValue) {
-            return thisBooleanValue(cx, thisValue) ? "true" : "false";
+            /* steps 1-2 */
+            return thisBooleanValue(cx, thisValue, "Boolean.prototype.toString") ? "true" : "false";
         }
 
         /**
@@ -101,7 +107,8 @@ public final class BooleanPrototype extends BooleanObject implements Initializab
          */
         @Function(name = "valueOf", arity = 0)
         public static Object valueOf(ExecutionContext cx, Object thisValue) {
-            return thisBooleanValue(cx, thisValue);
+            /* step 1 */
+            return thisBooleanValue(cx, thisValue, "Boolean.prototype.valueOf");
         }
     }
 }

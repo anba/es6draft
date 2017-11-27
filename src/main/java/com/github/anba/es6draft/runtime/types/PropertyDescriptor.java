@@ -1,12 +1,15 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
  */
 package com.github.anba.es6draft.runtime.types;
 
-import static com.github.anba.es6draft.runtime.AbstractOperations.*;
+import static com.github.anba.es6draft.runtime.AbstractOperations.Get;
+import static com.github.anba.es6draft.runtime.AbstractOperations.HasProperty;
+import static com.github.anba.es6draft.runtime.AbstractOperations.IsCallable;
+import static com.github.anba.es6draft.runtime.AbstractOperations.ToBoolean;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject.ObjectCreate;
@@ -71,7 +74,7 @@ public final class PropertyDescriptor implements Cloneable {
      * @param original
      *            the original property
      */
-    /* package */ PropertyDescriptor(Property original) {
+    PropertyDescriptor(Property original) {
         present = original.isDataDescriptor() ? POPULATED_DATA_DESC : POPULATED_ACCESSOR_DESC;
         value = original.getValue();
         getter = original.getGetter();
@@ -476,36 +479,6 @@ public final class PropertyDescriptor implements Cloneable {
      */
     public boolean isEmpty() {
         return present == 0;
-    }
-
-    /**
-     * Returns {@code true} if every field of {@code desc} also occurs in this property descriptor and every present
-     * field has the same value. That means {@code true} is returned iff {@code desc} &#8838; {@code this} holds.
-     * 
-     * @param desc
-     *            the property descriptor
-     * @return {@code true} if <var>desc</var> if a subset of this property descriptor
-     */
-    public boolean isSubset(PropertyDescriptor desc) {
-        if (desc.hasValue() && !(hasValue() && SameValue(desc.value, value))) {
-            return false;
-        }
-        if (desc.hasGetter() && !(hasGetter() && desc.getter == getter)) {
-            return false;
-        }
-        if (desc.hasSetter() && !(hasSetter() && desc.setter == setter)) {
-            return false;
-        }
-        if (desc.hasWritable() && !(hasWritable() && desc.writable == writable)) {
-            return false;
-        }
-        if (desc.hasEnumerable() && !(hasEnumerable() && desc.enumerable == enumerable)) {
-            return false;
-        }
-        if (desc.hasConfigurable() && !(hasConfigurable() && desc.configurable == configurable)) {
-            return false;
-        }
-        return true;
     }
 
     /**

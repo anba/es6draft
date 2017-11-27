@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -29,10 +29,9 @@ public final class SetIteratorObject extends OrdinaryObject {
 
     SetIteratorObject(Realm realm, Iterator<Entry<Object, Void>> iterator, SetIterationKind kind,
             ScriptObject prototype) {
-        super(realm);
+        super(realm, prototype);
         this.iterator = iterator;
         this.iterationKind = kind;
-        setPrototype(prototype);
     }
 
     /**
@@ -68,5 +67,10 @@ public final class SetIteratorObject extends OrdinaryObject {
      */
     public SetIterationKind getIterationKind() {
         return iterationKind;
+    }
+
+    @Override
+    public String toString() {
+        return String.format("%s, iterationKind=%s", super.toString(), iterationKind);
     }
 }

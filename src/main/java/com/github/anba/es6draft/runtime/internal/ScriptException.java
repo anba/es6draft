@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -44,8 +44,8 @@ public final class ScriptException extends RuntimeException implements InternalT
     }
 
     /**
-     * Creates a new {@link ScriptException} instance, unless {@code value} is an instance of
-     * {@link ErrorObject}, in that case {@link ErrorObject#getException()} is returned.
+     * Creates a new {@link ScriptException} instance, unless {@code value} is an instance of {@link ErrorObject}, in
+     * that case {@link ErrorObject#getException()} is returned.
      * 
      * @param value
      *            the wrapped exception value

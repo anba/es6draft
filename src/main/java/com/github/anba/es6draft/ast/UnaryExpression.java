@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -8,58 +8,35 @@ package com.github.anba.es6draft.ast;
 
 /**
  * <h1>12 ECMAScript Language: Expressions</h1><br>
- * <h2>12.4 Postfix Expressions</h2>
- * <ul>
- * <li>12.4.4 Postfix Increment Operator
- * <li>12.4.5 Postfix Decrement Operator
- * </ul>
  * <h2>12.5 Unary Operators</h2>
  * <ul>
- * <li>12.5.4 The delete Operator
- * <li>12.5.5 The void Operator
- * <li>12.5.6 The typeof Operator
- * <li>12.5.7 Prefix Increment Operator
- * <li>12.5.8 Prefix Decrement Operator
- * <li>12.5.9 Unary + Operator
- * <li>12.5.10 Unary - Operator
- * <li>12.5.11 Bitwise NOT Operator ( ~ )
- * <li>12.5.12 Logical NOT Operator ( ! )
+ * <li>12.5.3 The delete Operator
+ * <li>12.5.4 The void Operator
+ * <li>12.5.5 The typeof Operator
+ * <li>12.5.6 Unary + Operator
+ * <li>12.5.7 Unary - Operator
+ * <li>12.5.8 Bitwise NOT Operator ( ~ )
+ * <li>12.5.9 Logical NOT Operator ( ! )
  * </ul>
  */
 public final class UnaryExpression extends Expression {
     public enum Operator {
-        DELETE("delete"), VOID("void"), TYPEOF("typeof"), PRE_INC("++"), PRE_DEC("--"),
-        POST_INC("++", true), POST_DEC("--", true), POS("+"), NEG("-"), BITNOT("~"), NOT("!");
+        DELETE("delete"), VOID("void"), TYPEOF("typeof"), POS("+"), NEG("-"), BITNOT("~"), NOT("!");
 
         private final String name;
-        private final boolean postfix;
 
         private Operator(String name) {
-            this(name, false);
-        }
-
-        private Operator(String name, boolean postfix) {
             this.name = name;
-            this.postfix = postfix;
         }
 
         /**
-         * Returns the unary operator name.
+         * Returns the unary operator expression.
          * 
-         * @return the operator name
+         * @return the operator expression
          */
-        public String getName() {
-            // TODO: This is not a 'name'.
+        @Override
+        public String toString() {
             return name;
-        }
-
-        /**
-         * Returns {@code true} if the operator is postfix.
-         * 
-         * @return {@code true} if postfix operator
-         */
-        public boolean isPostfix() {
-            return postfix;
         }
     }
 
@@ -67,8 +44,7 @@ public final class UnaryExpression extends Expression {
     private final Expression operand;
     private boolean completion = true;
 
-    public UnaryExpression(long beginPosition, long endPosition, Operator operator,
-            Expression operand) {
+    public UnaryExpression(long beginPosition, long endPosition, Operator operator, Expression operand) {
         super(beginPosition, endPosition);
         this.operator = operator;
         this.operand = operand;

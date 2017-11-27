@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -66,11 +66,10 @@ public final class JSONParser {
             throw reportEofError(Messages.Key.UnexpectedEndOfFile, expected.toString());
         }
         if (actual == Token.ERROR) {
-            throw reportSyntaxError(Messages.Key.UnexpectedCharacter,
-                    String.valueOf(ts.lastChar()), expected.toString());
+            throw reportSyntaxError(Messages.Key.UnexpectedCharacter, String.valueOf(ts.lastChar()),
+                    expected.toString());
         }
-        throw reportSyntaxError(Messages.Key.UnexpectedToken, actual.toString(),
-                expected.toString());
+        throw reportSyntaxError(Messages.Key.UnexpectedToken, actual.toString(), expected.toString());
     }
 
     /**
@@ -100,8 +99,7 @@ public final class JSONParser {
     private ParserException reportSyntaxError(Messages.Key messageKey, String... args) {
         long sourcePosition = ts.sourcePosition();
         int line = toLine(sourcePosition), column = toColumn(sourcePosition);
-        throw new ParserException(ExceptionType.SyntaxError, getSourceName(), line, column,
-                messageKey, args);
+        throw new ParserException(ExceptionType.SyntaxError, getSourceName(), line, column, messageKey, args);
     }
 
     /**
@@ -128,8 +126,8 @@ public final class JSONParser {
     }
 
     /**
-     * Parses the input source string as a JSON text and returns its value. Throws a
-     * {@link ParserException} if the source string is not a valid JSON text.
+     * Parses the input source string as a JSON text and returns its value. Throws a {@link ParserException} if the
+     * source string is not a valid JSON text.
      * 
      * @return the value of the parsed JSON text
      * @throws ParserException
@@ -142,8 +140,8 @@ public final class JSONParser {
         return jsonText();
     }
 
-    private <DOCUMENT, OBJECT, ARRAY, VALUE> DOCUMENT parse(
-            JSONBuilder<DOCUMENT, OBJECT, ARRAY, VALUE> builder) throws ParserException {
+    private <DOCUMENT, OBJECT, ARRAY, VALUE> DOCUMENT parse(JSONBuilder<DOCUMENT, OBJECT, ARRAY, VALUE> builder)
+            throws ParserException {
         if (parseCalled)
             throw new IllegalStateException();
         parseCalled = true;
@@ -151,8 +149,8 @@ public final class JSONParser {
     }
 
     /**
-     * Parses the input source string as a JSON text and returns its value. Throws a
-     * {@link ParserException} if the source string is not a valid JSON text.
+     * Parses the input source string as a JSON text and returns its value. Throws a {@link ParserException} if the
+     * source string is not a valid JSON text.
      * 
      * @param cx
      *            the execution context
@@ -167,8 +165,8 @@ public final class JSONParser {
     }
 
     /**
-     * Parses the input source string as a JSON text. Throws a {@link ParserException} if the source
-     * string is not a valid JSON text.
+     * Parses the input source string as a JSON text. Throws a {@link ParserException} if the source string is not a
+     * valid JSON text.
      * 
      * @param <DOCUMENT>
      *            the document type
@@ -207,8 +205,7 @@ public final class JSONParser {
         return value;
     }
 
-    private <DOCUMENT, OBJECT, ARRAY, VALUE> DOCUMENT jsonText(
-            JSONBuilder<DOCUMENT, OBJECT, ARRAY, VALUE> builder) {
+    private <DOCUMENT, OBJECT, ARRAY, VALUE> DOCUMENT jsonText(JSONBuilder<DOCUMENT, OBJECT, ARRAY, VALUE> builder) {
         VALUE value = jsonValue(builder);
         consume(Token.EOF);
         return builder.createDocument(value);
@@ -255,8 +252,7 @@ public final class JSONParser {
         }
     }
 
-    private <DOCUMENT, OBJECT, ARRAY, VALUE> VALUE jsonValue(
-            JSONBuilder<DOCUMENT, OBJECT, ARRAY, VALUE> builder) {
+    private <DOCUMENT, OBJECT, ARRAY, VALUE> VALUE jsonValue(JSONBuilder<DOCUMENT, OBJECT, ARRAY, VALUE> builder) {
         Token tok = token();
         switch (tok) {
         case NULL:
@@ -312,7 +308,7 @@ public final class JSONParser {
                 String name = ts.getString();
                 consume(Token.COLON);
                 Object value = jsonValue();
-                object.defineOwnProperty(cx, name, new PropertyDescriptor(value, true, true, true));
+                object.defineOwnProperty(cx, (Object) name, new PropertyDescriptor(value, true, true, true));
                 if (token() == Token.RC) {
                     break;
                 }
@@ -323,8 +319,7 @@ public final class JSONParser {
         return object;
     }
 
-    private <DOCUMENT, OBJECT, ARRAY, VALUE> VALUE jsonObject(
-            JSONBuilder<DOCUMENT, OBJECT, ARRAY, VALUE> builder) {
+    private <DOCUMENT, OBJECT, ARRAY, VALUE> VALUE jsonObject(JSONBuilder<DOCUMENT, OBJECT, ARRAY, VALUE> builder) {
         consume(Token.LC);
         OBJECT object = builder.newObject();
         if (token() != Token.RC) {
@@ -364,8 +359,7 @@ public final class JSONParser {
         if (token() != Token.RB) {
             for (long index = 0;;) {
                 Object value = jsonValue();
-                array.defineOwnProperty(cx, index++,
-                        new PropertyDescriptor(value, true, true, true));
+                array.defineOwnProperty(cx, index++, new PropertyDescriptor(value, true, true, true));
                 if (token() == Token.RB) {
                     break;
                 }
@@ -376,8 +370,7 @@ public final class JSONParser {
         return array;
     }
 
-    private <DOCUMENT, OBJECT, ARRAY, VALUE> VALUE jsonArray(
-            JSONBuilder<DOCUMENT, OBJECT, ARRAY, VALUE> builder) {
+    private <DOCUMENT, OBJECT, ARRAY, VALUE> VALUE jsonArray(JSONBuilder<DOCUMENT, OBJECT, ARRAY, VALUE> builder) {
         consume(Token.LB);
         ARRAY array = builder.newArray();
         if (token() != Token.RB) {

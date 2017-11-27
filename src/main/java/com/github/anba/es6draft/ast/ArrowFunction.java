@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -21,30 +21,28 @@ public final class ArrowFunction extends Expression implements FunctionNode {
     private final FormalParameterList parameters;
     private List<StatementListItem> statements;
     private final Expression expression;
-    private final String headerSource, bodySource;
+    private final String source;
     private String functionName, methodName;
     private StrictMode strictMode;
 
     public ArrowFunction(long beginPosition, long endPosition, FunctionScope scope, FormalParameterList parameters,
-            List<StatementListItem> statements, String headerSource, String bodySource) {
+            List<StatementListItem> statements, String source) {
         super(beginPosition, endPosition);
         this.scope = scope;
         this.parameters = parameters;
         this.statements = statements;
         this.expression = null;
-        this.headerSource = headerSource;
-        this.bodySource = bodySource;
+        this.source = source;
     }
 
     public ArrowFunction(long beginPosition, long endPosition, FunctionScope scope, FormalParameterList parameters,
-            Expression expression, String headerSource, String bodySource) {
+            Expression expression, String source) {
         super(beginPosition, endPosition);
         this.scope = scope;
         this.parameters = parameters;
         this.statements = null;
         this.expression = expression;
-        this.headerSource = headerSource;
-        this.bodySource = bodySource;
+        this.source = source;
     }
 
     @Override
@@ -119,13 +117,8 @@ public final class ArrowFunction extends Expression implements FunctionNode {
     }
 
     @Override
-    public String getHeaderSource() {
-        return headerSource;
-    }
-
-    @Override
-    public String getBodySource() {
-        return bodySource;
+    public String getSource() {
+        return source;
     }
 
     @Override

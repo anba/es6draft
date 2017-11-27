@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -11,7 +11,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
-import com.github.anba.es6draft.runtime.internal.ScriptIterator;
+import com.github.anba.es6draft.runtime.internal.IndexedMap;
 
 /**
  * <h1>6 ECMAScript Data Types and Values</h1><br>
@@ -104,6 +104,10 @@ public interface ScriptObject {
      */
     default Property getOwnProperty(ExecutionContext cx, Object propertyKey) {
         if (propertyKey instanceof String) {
+            long index = IndexedMap.toIndex((String) propertyKey);
+            if (IndexedMap.isIndex(index)) {
+                return getOwnProperty(cx, index);
+            }
             return getOwnProperty(cx, (String) propertyKey);
         }
         return getOwnProperty(cx, (Symbol) propertyKey);
@@ -153,6 +157,10 @@ public interface ScriptObject {
      */
     default boolean hasProperty(ExecutionContext cx, Object propertyKey) {
         if (propertyKey instanceof String) {
+            long index = IndexedMap.toIndex((String) propertyKey);
+            if (IndexedMap.isIndex(index)) {
+                return hasProperty(cx, index);
+            }
             return hasProperty(cx, (String) propertyKey);
         }
         return hasProperty(cx, (Symbol) propertyKey);
@@ -210,6 +218,10 @@ public interface ScriptObject {
      */
     default Object get(ExecutionContext cx, Object propertyKey, Object receiver) {
         if (propertyKey instanceof String) {
+            long index = IndexedMap.toIndex((String) propertyKey);
+            if (IndexedMap.isIndex(index)) {
+                return get(cx, index, receiver);
+            }
             return get(cx, (String) propertyKey, receiver);
         }
         return get(cx, (Symbol) propertyKey, receiver);
@@ -275,6 +287,10 @@ public interface ScriptObject {
      */
     default boolean set(ExecutionContext cx, Object propertyKey, Object value, Object receiver) {
         if (propertyKey instanceof String) {
+            long index = IndexedMap.toIndex((String) propertyKey);
+            if (IndexedMap.isIndex(index)) {
+                return set(cx, index, value, receiver);
+            }
             return set(cx, (String) propertyKey, value, receiver);
         }
         return set(cx, (Symbol) propertyKey, value, receiver);
@@ -324,6 +340,10 @@ public interface ScriptObject {
      */
     default boolean delete(ExecutionContext cx, Object propertyKey) {
         if (propertyKey instanceof String) {
+            long index = IndexedMap.toIndex((String) propertyKey);
+            if (IndexedMap.isIndex(index)) {
+                return delete(cx, index);
+            }
             return delete(cx, (String) propertyKey);
         }
         return delete(cx, (Symbol) propertyKey);
@@ -381,35 +401,21 @@ public interface ScriptObject {
      */
     default boolean defineOwnProperty(ExecutionContext cx, Object propertyKey, PropertyDescriptor desc) {
         if (propertyKey instanceof String) {
+            long index = IndexedMap.toIndex((String) propertyKey);
+            if (IndexedMap.isIndex(index)) {
+                return defineOwnProperty(cx, index, desc);
+            }
             return defineOwnProperty(cx, (String) propertyKey, desc);
         }
         return defineOwnProperty(cx, (Symbol) propertyKey, desc);
     }
 
     /**
-     * [[Enumerate]] ()
-     *
-     * @param cx
-     *            the execution context
-     * @return the enumeration iterator object
-     */
-    ScriptObject enumerate(ExecutionContext cx);
-
-    /**
-     * [[Enumerate]] ()
-     *
-     * @param cx
-     *            the execution context
-     * @return the enumeration iterator object
-     */
-    ScriptIterator<?> enumerateKeys(ExecutionContext cx);
-
-    /**
      * [[OwnPropertyKeys]] ( )
      *
      * @param cx
      *            the execution context
-     * @return the properties array object
+     * @return the list of own property keys
      */
     List<?> ownPropertyKeys(ExecutionContext cx);
 
@@ -418,9 +424,36 @@ public interface ScriptObject {
      *
      * @param cx
      *            the execution context
-     * @return the properties iterator object
+     * @return the list of own string-valued property keys
      */
-    Iterator<?> ownKeys(ExecutionContext cx);
+    default List<String> ownPropertyNames(ExecutionContext cx) {
+        List<?> ownKeys = ownPropertyKeys(cx);
+        ArrayList<String> ownNames = new ArrayList<>();
+        for (Object key : ownKeys) {
+            if (key instanceof String) {
+                ownNames.add((String) key);
+            }
+        }
+        return ownNames;
+    }
+
+    /**
+     * [[OwnPropertyKeys]] ( )
+     *
+     * @param cx
+     *            the execution context
+     * @return the list of own symbol-valued property keys
+     */
+    default List<Symbol> ownPropertySymbols(ExecutionContext cx) {
+        List<?> ownKeys = ownPropertyKeys(cx);
+        ArrayList<Symbol> ownSymbols = new ArrayList<>();
+        for (Object key : ownKeys) {
+            if (key instanceof Symbol) {
+                ownSymbols.add((Symbol) key);
+            }
+        }
+        return ownSymbols;
+    }
 
     /**
      * [[OwnPropertyKeys]] ( )
@@ -462,11 +495,82 @@ public interface ScriptObject {
      * @return the enumerability kind
      */
     default Enumerability isEnumerableOwnProperty(ExecutionContext cx, String propertyKey) {
-        Property prop = getOwnProperty(cx, propertyKey);
+        Property prop = getOwnProperty(cx, (Object) propertyKey);
         if (prop == null) {
             return Enumerability.Deleted;
         }
         return Enumerability.isEnumerable(prop.isEnumerable());
+    }
+
+    /**
+     * 7.3.11 HasOwnProperty (O, P)
+     * 
+     * @param cx
+     *            the execution context
+     * @param propertyKey
+     *            the property key
+     * @return the enumerability kind
+     */
+    default boolean hasOwnProperty(ExecutionContext cx, Object propertyKey) {
+        if (propertyKey instanceof String) {
+            long index = IndexedMap.toIndex((String) propertyKey);
+            if (IndexedMap.isIndex(index)) {
+                return hasOwnProperty(cx, index);
+            }
+            return hasOwnProperty(cx, (String) propertyKey);
+        }
+        return hasOwnProperty(cx, (Symbol) propertyKey);
+    }
+
+    /**
+     * 7.3.11 HasOwnProperty (O, P)
+     * 
+     * @param cx
+     *            the execution context
+     * @param propertyKey
+     *            the property key
+     * @return the enumerability kind
+     */
+    default boolean hasOwnProperty(ExecutionContext cx, long propertyKey) {
+        /* steps 1-2 (not applicable) */
+        /* step 3 */
+        Property desc = getOwnProperty(cx, propertyKey);
+        /* steps 4-5 */
+        return desc != null;
+    }
+
+    /**
+     * 7.3.11 HasOwnProperty (O, P)
+     * 
+     * @param cx
+     *            the execution context
+     * @param propertyKey
+     *            the property key
+     * @return the enumerability kind
+     */
+    default boolean hasOwnProperty(ExecutionContext cx, String propertyKey) {
+        /* steps 1-2 (not applicable) */
+        /* step 3 */
+        Property desc = getOwnProperty(cx, propertyKey);
+        /* steps 4-5 */
+        return desc != null;
+    }
+
+    /**
+     * 7.3.11 HasOwnProperty (O, P)
+     * 
+     * @param cx
+     *            the execution context
+     * @param propertyKey
+     *            the property key
+     * @return the enumerability kind
+     */
+    default boolean hasOwnProperty(ExecutionContext cx, Symbol propertyKey) {
+        /* steps 1-2 (not applicable) */
+        /* step 3 */
+        Property desc = getOwnProperty(cx, propertyKey);
+        /* steps 4-5 */
+        return desc != null;
     }
 
     /**
@@ -477,4 +581,23 @@ public interface ScriptObject {
     default String className() {
         return "Object";
     }
+
+    /**
+     * Returns a private name property.
+     * 
+     * @param name
+     *            the private name
+     * @return the private property or {@code null} if not present
+     */
+    Property get(PrivateName name);
+
+    /**
+     * Adds a new private name property.
+     * 
+     * @param name
+     *            the private name
+     * @param property
+     *            the new private property
+     */
+    void define(PrivateName name, Property property);
 }

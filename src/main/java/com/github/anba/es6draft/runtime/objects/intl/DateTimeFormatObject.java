@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -25,27 +25,24 @@ import com.ibm.icu.util.ULocale;
  * <li>12.5 Properties of Intl.DateTimeFormat Instances
  * </ul>
  */
-public class DateTimeFormatObject extends OrdinaryObject {
-    /** [[locale]] */
+public final class DateTimeFormatObject extends OrdinaryObject {
+    /** [[Locale]] */
     private String locale;
 
-    /** [[calendar]] */
+    /** [[Calendar]] */
     private String calendar;
 
-    /** [[numberingSystem]] */
+    /** [[NumberingSystem]] */
     private String numberingSystem;
 
-    /** [[timeZone]] */
+    /** [[TimeZone]] */
     private String timeZone;
 
-    /** [[pattern]] */
+    /** [[Pattern]] */
     private Lazy<String> pattern;
 
-    /** [[boundFormat]] */
+    /** [[BoundFormat]] */
     private Callable boundFormat;
-
-    /** [[boundFormatToParts]] */
-    private Callable boundFormatToParts;
 
     private DateFormat dateFormat;
 
@@ -90,7 +87,7 @@ public class DateTimeFormatObject extends OrdinaryObject {
     }
 
     /**
-     * [[locale]]
+     * [[Locale]]
      * 
      * @return the locale
      */
@@ -99,7 +96,7 @@ public class DateTimeFormatObject extends OrdinaryObject {
     }
 
     /**
-     * [[locale]]
+     * [[Locale]]
      * 
      * @param locale
      *            the new locale
@@ -109,7 +106,7 @@ public class DateTimeFormatObject extends OrdinaryObject {
     }
 
     /**
-     * [[calendar]]
+     * [[Calendar]]
      * 
      * @return the calendar value
      */
@@ -118,7 +115,7 @@ public class DateTimeFormatObject extends OrdinaryObject {
     }
 
     /**
-     * [[calendar]]
+     * [[Calendar]]
      * 
      * @param calendar
      *            the new calendar value
@@ -128,7 +125,7 @@ public class DateTimeFormatObject extends OrdinaryObject {
     }
 
     /**
-     * [[numberingSystem]]
+     * [[NumberingSystem]]
      * 
      * @return the numbering system value
      */
@@ -137,7 +134,7 @@ public class DateTimeFormatObject extends OrdinaryObject {
     }
 
     /**
-     * [[numberingSystem]]
+     * [[NumberingSystem]]
      * 
      * @param numberingSystem
      *            the new numbering system
@@ -147,7 +144,7 @@ public class DateTimeFormatObject extends OrdinaryObject {
     }
 
     /**
-     * [[timeZone]]
+     * [[TimeZone]]
      * 
      * @return the time zone
      */
@@ -156,7 +153,7 @@ public class DateTimeFormatObject extends OrdinaryObject {
     }
 
     /**
-     * [[timeZone]]
+     * [[TimeZone]]
      * 
      * @param timeZone
      *            the new time zone
@@ -166,7 +163,7 @@ public class DateTimeFormatObject extends OrdinaryObject {
     }
 
     /**
-     * [[pattern]]
+     * [[Pattern]]
      * 
      * @return the pattern string
      */
@@ -175,7 +172,7 @@ public class DateTimeFormatObject extends OrdinaryObject {
     }
 
     /**
-     * [[pattern]]
+     * [[Pattern]]
      * 
      * @param pattern
      *            the new pattern string
@@ -185,7 +182,7 @@ public class DateTimeFormatObject extends OrdinaryObject {
     }
 
     /**
-     * [[boundFormat]]
+     * [[BoundFormat]]
      * 
      * @return the bound format function
      */
@@ -194,7 +191,7 @@ public class DateTimeFormatObject extends OrdinaryObject {
     }
 
     /**
-     * [[boundFormat]]
+     * [[BoundFormat]]
      * 
      * @param boundFormat
      *            the bound format function
@@ -203,22 +200,10 @@ public class DateTimeFormatObject extends OrdinaryObject {
         this.boundFormat = boundFormat;
     }
 
-    /**
-     * [[boundFormatToParts]]
-     * 
-     * @return the bound formatToParts function
-     */
-    public Callable getBoundFormatToParts() {
-        return boundFormatToParts;
-    }
+    @Override
+    public String toString() {
+        return String.format("%s, locale=%s, calendar=%s, numberingSystem=%s, timeZone=%s, pattern=%s, dateFormat=%s",
+                super.toString(), locale, calendar, numberingSystem, timeZone, pattern.get(), dateFormat);
 
-    /**
-     * [[boundFormatToParts]]
-     * 
-     * @param boundFormatToParts
-     *            the bound formatToParts function
-     */
-    public void setBoundFormatToParts(Callable boundFormatToParts) {
-        this.boundFormatToParts = boundFormatToParts;
     }
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -31,7 +31,7 @@ public final class ModuleEnvironmentRecord extends DeclarativeEnvironmentRecord 
         }
 
         @Override
-        public Binding clone() {
+        public IndirectBinding clone() {
             throw new AssertionError();
         }
 
@@ -98,17 +98,34 @@ public final class ModuleEnvironmentRecord extends DeclarativeEnvironmentRecord 
         assert !hasBinding(name) : "binding redeclaration: " + name;
         /* step 3 (not applicable) */
         /* step 4 */
-        assert !module.isInstantiated() || hasDirectBinding(module, otherName);
+        assert hasDirectBindingIfInstantiated(module, otherName);
         /* step 5 */
         createBinding(name, new IndirectBinding(module, otherName));
         /* step 6 (return) */
     }
 
-    private static boolean hasDirectBinding(ModuleRecord module, String name) {
+    private static boolean hasDirectBindingIfInstantiated(ModuleRecord module, String name) {
         if (module instanceof SourceTextModuleRecord) {
-            Binding binding = ((SourceTextModuleRecord) module).getEnvironment().getEnvRec().getBinding(name);
-            return binding != null && !(binding instanceof IndirectBinding);
+            SourceTextModuleRecord sourceModule = (SourceTextModuleRecord) module;
+            if (isInstantiated(sourceModule)) {
+                Binding binding = sourceModule.getEnvironment().getEnvRec().getBinding(name);
+                return binding != null && !(binding instanceof IndirectBinding);
+            }
         }
         return true;
+    }
+
+    private static boolean isInstantiated(SourceTextModuleRecord module) {
+        switch (module.getStatus()) {
+        case Instantiated:
+        case Evaluating:
+        case Evaluated:
+            return true;
+        case Instantiating:
+        case Uninstantiated:
+            return false;
+        default:
+            throw new AssertionError();
+        }
     }
 }

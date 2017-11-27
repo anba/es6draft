@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -25,7 +25,7 @@
           c = Atomics.exchange(typedArray, value, 2);
         }
         while (c !== 0) {
-          Atomics.futexWait(typedArray, value, 2);
+          Atomics.wait(typedArray, value, 2);
           c = Atomics.exchange(typedArray, value, 2);
         }
       }
@@ -38,7 +38,7 @@
       } = this;
       if (Atomics.sub(typedArray, value, 1) !== 1) {
         Atomics.store(typedArray, value, 0);
-        Atomics.futexWake(typedArray, value, 1);
+        Atomics.wake(typedArray, value, 1);
       }
     }
   }
@@ -70,12 +70,12 @@
         const ev = Atomics.load(typedArray, event);
         mutex.unlock();
         do {
-          Atomics.futexWait(typedArray, event, ev);
+          Atomics.wait(typedArray, event, ev);
         } while (Atomics.load(typedArray, event) === ev);
       } else {
         Atomics.add(typedArray, event, 1);
         Atomics.store(typedArray, stillNeeded, Atomics.load(typedArray, initialNeeded));
-        Atomics.futexWake(typedArray, event, Infinity);
+        Atomics.wake(typedArray, event, Infinity);
         mutex.unlock();
       }
     }

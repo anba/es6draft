@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -19,8 +19,8 @@ public final class WithStatement extends Statement implements ScopedNode {
     private final Expression expression;
     private Statement statement;
 
-    public WithStatement(long beginPosition, long endPosition, WithScope scope,
-            Expression expression, Statement statement) {
+    public WithStatement(long beginPosition, long endPosition, WithScope scope, Expression expression,
+            Statement statement) {
         super(beginPosition, endPosition);
         this.scope = scope;
         this.expression = expression;

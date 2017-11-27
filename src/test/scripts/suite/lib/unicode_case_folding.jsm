@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -9,9 +9,8 @@ import range from "lib/range.jsm";
 export function UnicodeCaseFolding(test, {latin, basic, supplementary}) {
   test(range('A', 'Z'), range('a', 'z'), latin);
 
-  // Generated from CaseFolding-8.0.0.txt
-  test(range(0x41, 0x49, 1), range(0x61, 0x69, 1), latin);
-  test(range(0x4a, 0x5a, 1), range(0x6a, 0x7a, 1), latin);
+  // Generated from CaseFolding-10.0.0.txt
+  test(range(0x41, 0x5a, 1), range(0x61, 0x7a, 1), latin);
   test(range(0xb5, 0xb5, 1), range(0x3bc, 0x3bc, 1), basic);
   test(range(0xc0, 0xd6, 1), range(0xe0, 0xf6, 1), latin);
   test(range(0xd8, 0xde, 1), range(0xf8, 0xfe, 1), latin);
@@ -110,6 +109,14 @@ export function UnicodeCaseFolding(test, {latin, basic, supplementary}) {
   test(range(0x10a0, 0x10c5, 1), range(0x2d00, 0x2d25, 1), basic);
   test(range(0x10c7, 0x10cd, 6), range(0x2d27, 0x2d2d, 6), basic);
   test(range(0x13f8, 0x13fd, 1), range(0x13f0, 0x13f5, 1), basic);
+  test(range(0x1c80, 0x1c80, 1), range(0x432, 0x432, 1), basic);
+  test(range(0x1c81, 0x1c81, 1), range(0x434, 0x434, 1), basic);
+  test(range(0x1c82, 0x1c82, 1), range(0x43e, 0x43e, 1), basic);
+  test(range(0x1c83, 0x1c84, 1), range(0x441, 0x442, 1), basic);
+  test(range(0x1c85, 0x1c85, 1), range(0x442, 0x442, 1), basic);
+  test(range(0x1c86, 0x1c86, 1), range(0x44a, 0x44a, 1), basic);
+  test(range(0x1c87, 0x1c87, 1), range(0x463, 0x463, 1), basic);
+  test(range(0x1c88, 0x1c88, 1), range(0xa64b, 0xa64b, 1), basic);
   test(range(0x1e00, 0x1e94, 2), range(0x1e01, 0x1e95, 2), basic);
   test(range(0x1e9b, 0x1e9b, 1), range(0x1e61, 0x1e61, 1), basic);
   test(range(0x1e9e, 0x1e9e, 1), range(0xdf, 0xdf, 1), basic, {unicode: true});
@@ -121,30 +128,9 @@ export function UnicodeCaseFolding(test, {latin, basic, supplementary}) {
   test(range(0x1f48, 0x1f4d, 1), range(0x1f40, 0x1f45, 1), basic);
   test(range(0x1f59, 0x1f5f, 2), range(0x1f51, 0x1f57, 2), basic);
   test(range(0x1f68, 0x1f6f, 1), range(0x1f60, 0x1f67, 1), basic);
-  test(range(0x1f88, 0x1f88, 1), range(0x1f80, 0x1f80, 1), basic);
-  test(range(0x1f89, 0x1f89, 1), range(0x1f81, 0x1f81, 1), basic);
-  test(range(0x1f8a, 0x1f8a, 1), range(0x1f82, 0x1f82, 1), basic);
-  test(range(0x1f8b, 0x1f8b, 1), range(0x1f83, 0x1f83, 1), basic);
-  test(range(0x1f8c, 0x1f8c, 1), range(0x1f84, 0x1f84, 1), basic);
-  test(range(0x1f8d, 0x1f8d, 1), range(0x1f85, 0x1f85, 1), basic);
-  test(range(0x1f8e, 0x1f8e, 1), range(0x1f86, 0x1f86, 1), basic);
-  test(range(0x1f8f, 0x1f8f, 1), range(0x1f87, 0x1f87, 1), basic);
-  test(range(0x1f98, 0x1f98, 1), range(0x1f90, 0x1f90, 1), basic);
-  test(range(0x1f99, 0x1f99, 1), range(0x1f91, 0x1f91, 1), basic);
-  test(range(0x1f9a, 0x1f9a, 1), range(0x1f92, 0x1f92, 1), basic);
-  test(range(0x1f9b, 0x1f9b, 1), range(0x1f93, 0x1f93, 1), basic);
-  test(range(0x1f9c, 0x1f9c, 1), range(0x1f94, 0x1f94, 1), basic);
-  test(range(0x1f9d, 0x1f9d, 1), range(0x1f95, 0x1f95, 1), basic);
-  test(range(0x1f9e, 0x1f9e, 1), range(0x1f96, 0x1f96, 1), basic);
-  test(range(0x1f9f, 0x1f9f, 1), range(0x1f97, 0x1f97, 1), basic);
-  test(range(0x1fa8, 0x1fa8, 1), range(0x1fa0, 0x1fa0, 1), basic);
-  test(range(0x1fa9, 0x1fa9, 1), range(0x1fa1, 0x1fa1, 1), basic);
-  test(range(0x1faa, 0x1faa, 1), range(0x1fa2, 0x1fa2, 1), basic);
-  test(range(0x1fab, 0x1fab, 1), range(0x1fa3, 0x1fa3, 1), basic);
-  test(range(0x1fac, 0x1fac, 1), range(0x1fa4, 0x1fa4, 1), basic);
-  test(range(0x1fad, 0x1fad, 1), range(0x1fa5, 0x1fa5, 1), basic);
-  test(range(0x1fae, 0x1fae, 1), range(0x1fa6, 0x1fa6, 1), basic);
-  test(range(0x1faf, 0x1faf, 1), range(0x1fa7, 0x1fa7, 1), basic);
+  test(range(0x1f88, 0x1f8f, 1), range(0x1f80, 0x1f87, 1), basic);
+  test(range(0x1f98, 0x1f9f, 1), range(0x1f90, 0x1f97, 1), basic);
+  test(range(0x1fa8, 0x1faf, 1), range(0x1fa0, 0x1fa7, 1), basic);
   test(range(0x1fb8, 0x1fb9, 1), range(0x1fb0, 0x1fb1, 1), basic);
   test(range(0x1fba, 0x1fbb, 1), range(0x1f70, 0x1f71, 1), basic);
   test(range(0x1fbc, 0x1fbc, 1), range(0x1fb3, 0x1fb3, 1), basic);
@@ -196,6 +182,7 @@ export function UnicodeCaseFolding(test, {latin, basic, supplementary}) {
   test(range(0xa7ab, 0xa7ab, 1), range(0x25c, 0x25c, 1), basic);
   test(range(0xa7ac, 0xa7ac, 1), range(0x261, 0x261, 1), basic);
   test(range(0xa7ad, 0xa7ad, 1), range(0x26c, 0x26c, 1), basic);
+  test(range(0xa7ae, 0xa7ae, 1), range(0x26a, 0x26a, 1), basic);
   test(range(0xa7b0, 0xa7b0, 1), range(0x29e, 0x29e, 1), basic);
   test(range(0xa7b1, 0xa7b1, 1), range(0x287, 0x287, 1), basic);
   test(range(0xa7b2, 0xa7b2, 1), range(0x29d, 0x29d, 1), basic);
@@ -204,6 +191,8 @@ export function UnicodeCaseFolding(test, {latin, basic, supplementary}) {
   test(range(0xab70, 0xabbf, 1), range(0x13a0, 0x13ef, 1), basic);
   test(range(0xff21, 0xff3a, 1), range(0xff41, 0xff5a, 1), basic);
   test(range(0x10400, 0x10427, 1), range(0x10428, 0x1044f, 1), supplementary);
+  test(range(0x104b0, 0x104d3, 1), range(0x104d8, 0x104fb, 1), supplementary);
   test(range(0x10c80, 0x10cb2, 1), range(0x10cc0, 0x10cf2, 1), supplementary);
   test(range(0x118a0, 0x118bf, 1), range(0x118c0, 0x118df, 1), supplementary);
+  test(range(0x1e900, 0x1e921, 1), range(0x1e922, 0x1e943, 1), supplementary);
 }

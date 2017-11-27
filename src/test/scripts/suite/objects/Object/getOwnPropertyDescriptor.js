@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -33,8 +33,10 @@ assertBuiltinFunction(Object.getOwnPropertyDescriptor, "getOwnPropertyDescriptor
   assertThrows(TypeError, () => Object.getOwnPropertyDescriptor(null));
 
   // wrapped primitives do not have own properties...
-  for (let [v, p] of [for (v of primitives) for (p of ["valueOf", "toString"]) [v, p]]) {
-    assertUndefined(Object.getOwnPropertyDescriptor(v, p));
+  for (let v of primitives) {
+    for (let p of ["valueOf", "toString"]) {
+      assertUndefined(Object.getOwnPropertyDescriptor(v, p));
+    }
   }
 
   // ...except for 'length' and indexed properties on wrapped strings

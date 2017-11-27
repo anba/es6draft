@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -46,9 +46,8 @@ public class ParserException extends InternalException {
      * @param args
      *            the message arguments
      */
-    public ParserException(ExceptionType type, String file, int line, int column,
-            Messages.Key messageKey, String... args) {
-        super(messageKey.name());
+    public ParserException(ExceptionType type, String file, int line, int column, Messages.Key messageKey,
+            String... args) {
         this.type = type;
         this.file = file;
         this.line = line;
@@ -59,13 +58,20 @@ public class ParserException extends InternalException {
 
     @Override
     public String getMessage() {
-        String message = type.toString() + ": " + getFormattedMessage();
+        String message = type.toString() + ": " + getFormattedMessage(Locale.ROOT);
         if (line != -1 && column != -1) {
             message += " (line " + line + ", column " + column + ")";
         } else if (line != -1) {
             message += " (line " + line + ")";
         }
         // FIXME: Add file info
+        return message;
+    }
+
+    @Override
+    public String getLocalizedMessage() {
+        String message = type.toString() + ": " + getFormattedMessage(Locale.getDefault());
+        // FIXME: Add line, column, and file info
         return message;
     }
 

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -19,9 +19,8 @@ import com.github.anba.es6draft.ast.VoidNodeVisitor;
 /**
  * List of {@link StatementListItem}s as an external Java method.
  */
-public final class StatementListMethod extends Statement implements SyntheticNode {
+public final class StatementListMethod extends Statement {
     private final List<? extends ModuleItem> statements;
-    private boolean resumePoint;
 
     public StatementListMethod(ModuleItem statement) {
         super(statement.getBeginPosition(), statement.getEndPosition());
@@ -35,16 +34,6 @@ public final class StatementListMethod extends Statement implements SyntheticNod
 
     public List<? extends ModuleItem> getStatements() {
         return statements;
-    }
-
-    @Override
-    public boolean hasResumePoint() {
-        return resumePoint;
-    }
-
-    @Override
-    public void setResumePoint(boolean resumePoint) {
-        this.resumePoint = resumePoint;
     }
 
     @Override

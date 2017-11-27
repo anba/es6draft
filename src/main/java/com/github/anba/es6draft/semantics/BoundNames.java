@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -131,7 +131,7 @@ final class BoundNames extends DefaultNodeVisitor<List<Name>, List<Name>> {
      */
     @Override
     public List<Name> visit(BindingRestProperty node, List<Name> names) {
-        return node.getBindingIdentifier().accept(this, names);
+        return node.getBinding().accept(this, names);
     }
 
     /**
@@ -164,20 +164,6 @@ final class BoundNames extends DefaultNodeVisitor<List<Name>, List<Name>> {
      */
     @Override
     public List<Name> visit(BindingElision node, List<Name> names) {
-        return names;
-    }
-
-    /**
-     * <pre>
-     * for each (ForDeclaration in Expression ) Statement
-     * ForDeclaration : LetOrConst ForBinding
-     * </pre>
-     */
-    @Override
-    public List<Name> visit(ForEachStatement node, List<Name> names) {
-        if (node.getHead() instanceof LexicalDeclaration) {
-            return node.getHead().accept(this, names);
-        }
         return names;
     }
 
@@ -229,17 +215,6 @@ final class BoundNames extends DefaultNodeVisitor<List<Name>, List<Name>> {
      */
     @Override
     public List<Name> visit(GeneratorDeclaration node, List<Name> names) {
-        names.add(node.getName());
-        return names;
-    }
-
-    /**
-     * <pre>
-     * GeneratorDeclaration : function * BindingIdentifier ( FormalParameterList ) { FunctionBody }
-     * </pre>
-     */
-    @Override
-    public List<Name> visit(LegacyGeneratorDeclaration node, List<Name> names) {
         names.add(node.getName());
         return names;
     }

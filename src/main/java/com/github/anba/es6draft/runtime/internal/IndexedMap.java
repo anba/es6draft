@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -820,8 +820,7 @@ public final class IndexedMap<VALUE> implements Iterable<Map.Entry<Long, VALUE>>
         }
     }
 
-    private static final class StubSortedMap<V> extends AbstractMap<Long, V> implements
-            SortedMap<Long, V> {
+    private static final class StubSortedMap<V> extends AbstractMap<Long, V> implements SortedMap<Long, V> {
         private final V[] values;
         private final int size;
 
@@ -893,8 +892,22 @@ public final class IndexedMap<VALUE> implements Iterable<Map.Entry<Long, VALUE>>
     }
 
     /**
-     * If {@code s} is an integer indexed property key less than {@code 2}<span><sup>{@code 53}
-     * </sup></span>{@code -1}, its integer value is returned. Otherwise {@code -1} is returned.
+     * Returns {@code true} if the property key is a valid index.
+     * 
+     * @param propertyKey
+     *            the property key
+     * @return {@code true} if the property key is a valid index
+     */
+    public static boolean isIndex(String propertyKey) {
+        if (propertyKey.isEmpty() || propertyKey.charAt(0) < '0' || propertyKey.charAt(0) > '9') {
+            return false;
+        }
+        return isIndex(Strings.toIndex(propertyKey));
+    }
+
+    /**
+     * If {@code s} is an integer indexed property key less than {@code 2}<span><sup>{@code 53} </sup></span>{@code -1},
+     * its integer value is returned. Otherwise {@code -1} is returned.
      * 
      * @param propertyKey
      *            the property key

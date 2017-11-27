@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -30,6 +30,7 @@ import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Optional;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
+import com.github.anba.es6draft.runtime.internal.StrBuilder;
 import com.github.anba.es6draft.runtime.objects.ArrayIteratorObject.ArrayIterationKind;
 import com.github.anba.es6draft.runtime.objects.binary.TypedArrayObject;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
@@ -63,7 +64,7 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
     @Override
     public void initialize(Realm realm) {
         createProperties(realm, this, Properties.class);
-        createProperties(realm, this, AdditionalProperties.class);
+        createProperties(realm, this, FlatMapFlattenProperties.class);
     }
 
     /**
@@ -92,14 +93,38 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
     private static final int MAX_PROTO_DEPTH = 10; // Arbitrarily chosen limit
 
     private enum IterationKind {
-        DenseOwnKeys, SparseOwnKeys, InheritedKeys, TypedArray, Slow;
+        DenseOwnKeys, SparseOwnKeys, SparseKeys, Slow;
 
-        public boolean isSparse() {
-            return this == SparseOwnKeys || this == InheritedKeys;
+        boolean isSparse() {
+            return this == SparseOwnKeys || this == SparseKeys;
         }
 
-        public boolean isInherited() {
-            return this == InheritedKeys;
+        Keyiterator forward(OrdinaryObject array, long from, long to) {
+            // assert 0 <= from && from <= to;
+            switch (this) {
+            case SparseKeys:
+                return new ForwardSparseIter(from, to, arrayKeysWithProto(array, from, to));
+            case SparseOwnKeys:
+                return new ForwardSparseIter(from, to, arrayOwnKeys(array, from, to));
+            case Slow:
+            case DenseOwnKeys:
+            default:
+                throw new AssertionError();
+            }
+        }
+
+        Keyiterator reverse(OrdinaryObject array, long from, long to) {
+            // assert 0 <= from && from <= to;
+            switch (this) {
+            case SparseKeys:
+                return new ReverseSparseIter(from, to, arrayKeysWithProto(array, from, to));
+            case SparseOwnKeys:
+                return new ReverseSparseIter(from, to, arrayOwnKeys(array, from, to));
+            case Slow:
+            case DenseOwnKeys:
+            default:
+                throw new AssertionError();
+            }
         }
     }
 
@@ -156,7 +181,7 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
         if (typedArray.getBuffer().isDetached()) {
             return IterationKind.Slow;
         }
-        return IterationKind.TypedArray;
+        return IterationKind.DenseOwnKeys;
     }
 
     private static IterationKind iterationKindForSparse(OrdinaryObject arrayLike, long length) {
@@ -180,7 +205,7 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
                 if (object.hasIndexedAccessors()) {
                     return IterationKind.Slow;
                 }
-                iteration = IterationKind.InheritedKeys;
+                iteration = IterationKind.SparseKeys;
             }
             if (++protoDepth == MAX_PROTO_DEPTH) {
                 return IterationKind.Slow;
@@ -193,14 +218,11 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
         return iteration;
     }
 
-    private static long[] arrayKeys(OrdinaryObject array, long from, long to, boolean inherited) {
-        if (inherited) {
-            return inheritedKeys(array, from, to);
-        }
+    private static long[] arrayOwnKeys(OrdinaryObject array, long from, long to) {
         return array.indices(from, to);
     }
 
-    private static long[] inheritedKeys(OrdinaryObject array, long from, long to) {
+    private static long[] arrayKeysWithProto(OrdinaryObject array, long from, long to) {
         long[] indices = array.indices(from, to);
         for (ScriptObject prototype = array.getPrototype(); prototype != null;) {
             assert prototype instanceof OrdinaryObject : "Wrong class " + prototype.getClass();
@@ -218,28 +240,18 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
         return indices;
     }
 
-    private static ForwardIter forwardIter(OrdinaryObject array, long from, long to, boolean inherited) {
-        return new ForwardIter(from, to, arrayKeys(array, from, to, inherited), inherited);
-    }
-
-    private static ReverseIter reverseIterator(OrdinaryObject array, long from, long to, boolean inherited) {
-        return new ReverseIter(from, to, arrayKeys(array, from, to, inherited), inherited);
-    }
-
-    private static class KeyIter {
+    private static abstract class Keyiterator {
         protected final long from;
         protected final long to;
         protected final long[] keys;
-        protected final boolean inherited;
         protected final int length;
         protected int index;
         protected long lastKey;
 
-        KeyIter(long from, long to, long[] keys, boolean inherited, int index, long lastKey) {
+        Keyiterator(long from, long to, long[] keys, int index, long lastKey) {
             this.from = from;
             this.to = to;
             this.keys = keys;
-            this.inherited = inherited;
             this.length = keys.length;
             this.index = index;
             this.lastKey = lastKey;
@@ -253,13 +265,20 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
             assert 0 <= index && index < length;
             return keys[index];
         }
+
+        abstract boolean hasNext();
+
+        abstract long next();
+
+        abstract boolean containsNext(long needle);
     }
 
-    private static final class ForwardIter extends KeyIter {
-        ForwardIter(long from, long to, long[] keys, boolean inherited) {
-            super(from, to, keys, inherited, 0, from - 1);
+    private static final class ForwardSparseIter extends Keyiterator {
+        ForwardSparseIter(long from, long to, long[] keys) {
+            super(from, to, keys, 0, from - 1);
         }
 
+        @Override
         boolean hasNext() {
             for (; index < length; ++index) {
                 long key = keys[index];
@@ -267,17 +286,18 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
                     assert lastKey < key && (from <= key && key < to);
                     return true;
                 }
-                assert inherited;
             }
             return false;
         }
 
+        @Override
         long next() {
             assert index < length;
             return lastKey = keys[index++];
         }
 
-        boolean contains(long needle) {
+        @Override
+        boolean containsNext(long needle) {
             for (int i = index; i < length; ++i) {
                 if (keys[i] == needle) {
                     return true;
@@ -290,11 +310,12 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
         }
     }
 
-    private static final class ReverseIter extends KeyIter {
-        ReverseIter(long from, long to, long[] keys, boolean inherited) {
-            super(from, to, keys, inherited, keys.length - 1, to);
+    private static final class ReverseSparseIter extends Keyiterator {
+        ReverseSparseIter(long from, long to, long[] keys) {
+            super(from, to, keys, keys.length - 1, to);
         }
 
+        @Override
         boolean hasNext() {
             for (; index >= 0; --index) {
                 long key = keys[index];
@@ -302,17 +323,18 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
                     assert key < lastKey && (from <= key && key < to);
                     return true;
                 }
-                assert inherited;
             }
             return false;
         }
 
+        @Override
         long next() {
             assert index >= 0;
             return lastKey = keys[index--];
         }
 
-        boolean contains(long needle) {
+        @Override
+        boolean containsNext(long needle) {
             for (int i = index; i >= 0; --i) {
                 if (keys[i] == needle) {
                     return true;
@@ -332,11 +354,11 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
         ;
 
         private static long ToArrayIndex(ExecutionContext cx, Object index, long length) {
-            double relativeIndex = ToInteger(cx, index);
+            long relativeIndex = (long) ToNumber(cx, index); // ToInteger
             if (relativeIndex < 0) {
-                return (long) Math.max(length + relativeIndex, 0);
+                return Math.max(length + relativeIndex, 0);
             }
-            return (long) Math.min(relativeIndex, length);
+            return Math.min(relativeIndex, length);
         }
 
         @Prototype
@@ -349,7 +371,7 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
         public static final Intrinsics constructor = Intrinsics.Array;
 
         /**
-         * 22.1.3.27 Array.prototype.toString ( )
+         * 22.1.3.28 Array.prototype.toString ( )
          * 
          * @param cx
          *            the execution context
@@ -359,20 +381,20 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
          */
         @Function(name = "toString", arity = 0)
         public static Object toString(ExecutionContext cx, Object thisValue) {
-            /* steps 1-2 */
+            /* step 1 */
             ScriptObject array = ToObject(cx, thisValue);
-            /* steps 3-4 */
+            /* step 2 */
             Object func = Get(cx, array, "join");
-            /* step 5 */
+            /* step 3 */
             if (!IsCallable(func)) {
                 func = cx.getIntrinsic(Intrinsics.ObjProto_toString);
             }
-            /* step 6 */
+            /* step 4 */
             return ((Callable) func).call(cx, array);
         }
 
         /**
-         * 22.1.3.26 Array.prototype.toLocaleString ( [ reserved1 [ , reserved2 ] ] )<br>
+         * 22.1.3.27 Array.prototype.toLocaleString ( [ reserved1 [ , reserved2 ] ] )<br>
          * 13.4.1 Array.prototype.toLocaleString([locales [, options ]])
          * 
          * @param cx
@@ -386,36 +408,34 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
          * @return the locale specific string representation
          */
         @Function(name = "toLocaleString", arity = 0)
-        public static Object toLocaleString(ExecutionContext cx, Object thisValue, Object locales,
-                Object options) {
-            /* steps 1-2 */
+        public static Object toLocaleString(ExecutionContext cx, Object thisValue, Object locales, Object options) {
+            /* step 1 */
             ScriptObject array = ToObject(cx, thisValue);
-            /* steps 3-4 */
+            /* step 2 */
             long len = ToLength(cx, Get(cx, array, "length"));
-            /* step 5 */
+            /* step 3 */
             // FIXME: spec issue - retrieve list separator from locale?
             String separator = cx.getRealm().getListSeparator();
-            /* step 6 */
+            /* step 4 */
             if (len == 0) {
                 return "";
             }
-            /* steps 7-8 */
+            /* step 5 */
             Object firstElement = Get(cx, array, 0);
-            /* steps 9-10 */
-            StringBuilder r = new StringBuilder();
+            /* step 6 */
+            StrBuilder r = new StrBuilder(cx);
             if (!Type.isUndefinedOrNull(firstElement)) {
                 r.append(ToString(cx, Invoke(cx, firstElement, "toLocaleString", locales, options)));
             }
-            /* steps 11-12 */
+            /* steps 7-8 */
             for (long k = 1; k < len; ++k) {
                 r.append(separator);
                 Object nextElement = Get(cx, array, k);
                 if (!Type.isUndefinedOrNull(nextElement)) {
-                    r.append(ToString(cx,
-                            Invoke(cx, nextElement, "toLocaleString", locales, options)));
+                    r.append(ToString(cx, Invoke(cx, nextElement, "toLocaleString", locales, options)));
                 }
             }
-            /* step 13 */
+            /* step 9 */
             return r.toString();
         }
 
@@ -432,81 +452,61 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
          */
         @Function(name = "concat", arity = 1)
         public static Object concat(ExecutionContext cx, Object thisValue, Object... items) {
-            /* steps 1-2 */
+            /* step 1 */
             ScriptObject o = ToObject(cx, thisValue);
-            /* steps 3-4 */
+            /* step 2 */
             ScriptObject a = ArraySpeciesCreate(cx, o, 0);
-            /* step 5 */
+            /* step 3 */
             long n = 0;
-            /* step 6 */
+            /* step 4 */
             Object[] allItems = new Object[items.length + 1];
             allItems[0] = o;
             System.arraycopy(items, 0, allItems, 1, items.length);
-            /* step 7 */
+            /* step 5 */
             for (Object item : allItems) {
+                /* step 5.a (not applicable) */
+                /* step 5.b */
                 boolean spreadable = IsConcatSpreadable(cx, item);
                 if (spreadable) {
                     ScriptObject e = (ScriptObject) item;
-                    /* steps 7.d.ii-7.d.iii */
+                    /* step 5.c.ii */
                     long len = ToLength(cx, Get(cx, e, "length"));
-                    /* step 7.d.iv */
+                    /* step 5.c.iii */
                     if (n + len > ARRAY_LENGTH_LIMIT) {
                         throw newTypeError(cx, Messages.Key.InvalidArrayLength);
                     }
+                    /* steps 5.c.i, 5.c.iv */
                     IterationKind iteration = iterationKind(a, e, len);
-                    // Optimization: Sparse Array objects
                     if (iteration.isSparse()) {
-                        concatSpread(cx, (OrdinaryObject) a, n, (OrdinaryObject) e, len,
-                                iteration.isInherited());
+                        for (Keyiterator keys = iteration.forward((OrdinaryObject) e, 0, len); keys.hasNext();) {
+                            long k = keys.next();
+                            Object subElement = Get(cx, e, k);
+                            CreateDataPropertyOrThrow(cx, a, n + k, subElement);
+                        }
                         n += len;
-                        continue;
-                    }
-                    // Optimization: TypedArray objects
-                    if (iteration == IterationKind.TypedArray) {
-                        concatSpread(cx, (OrdinaryObject) a, n, (TypedArrayObject) e, len);
-                        n += len;
-                        continue;
-                    }
-                    /* steps 7.d.i, 7.d.v */
-                    for (long k = 0; k < len; ++k, ++n) {
-                        long p = k;
-                        boolean exists = HasProperty(cx, e, p);
-                        if (exists) {
-                            Object subElement = Get(cx, e, p);
-                            CreateDataPropertyOrThrow(cx, a, n, subElement);
+                    } else {
+                        for (long k = 0; k < len; ++k, ++n) {
+                            long p = k;
+                            boolean exists = HasProperty(cx, e, p);
+                            if (exists) {
+                                Object subElement = Get(cx, e, p);
+                                CreateDataPropertyOrThrow(cx, a, n, subElement);
+                            }
                         }
                     }
                 } else {
-                    /* step 7.e */
+                    /* step 5.d */
                     if (n >= ARRAY_LENGTH_LIMIT) {
                         throw newTypeError(cx, Messages.Key.InvalidArrayLength);
                     }
                     CreateDataPropertyOrThrow(cx, a, n++, item);
                 }
             }
-            /* steps 8-9 */
+            /* step 6 */
             assert n <= ARRAY_LENGTH_LIMIT;
             Set(cx, a, "length", n, true);
-            /* step 10 */
+            /* step 7 */
             return a;
-        }
-
-        private static void concatSpread(ExecutionContext cx, OrdinaryObject a, long offset,
-                OrdinaryObject e, long length, boolean inherited) {
-            for (ForwardIter iter = forwardIter(e, 0, length, inherited); iter.hasNext();) {
-                long k = iter.next();
-                Object subElement = Get(cx, e, k);
-                CreateDataPropertyOrThrow(cx, a, offset + k, subElement);
-            }
-        }
-
-        private static void concatSpread(ExecutionContext cx, OrdinaryObject a, long offset,
-                TypedArrayObject e, long length) {
-            assert length > 0;
-            for (long k = 0; k < length; ++k) {
-                Object subElement = Get(cx, e, k);
-                CreateDataPropertyOrThrow(cx, a, offset + k, subElement);
-            }
         }
 
         /**
@@ -524,18 +524,18 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
                 return false;
             }
             ScriptObject object = Type.objectValue(o);
-            /* steps 2-3 */
+            /* step 2 */
             Object spreadable = Get(cx, object, BuiltinSymbol.isConcatSpreadable.get());
-            /* step 4 */
+            /* step 3 */
             if (!Type.isUndefined(spreadable)) {
                 return ToBoolean(spreadable);
             }
-            /* step 5 */
+            /* step 4 */
             return IsArray(cx, object);
         }
 
         /**
-         * 22.1.3.12 Array.prototype.join (separator)
+         * 22.1.3.13 Array.prototype.join (separator)
          * 
          * @param cx
          *            the execution context
@@ -547,46 +547,45 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
          */
         @Function(name = "join", arity = 1)
         public static Object join(ExecutionContext cx, Object thisValue, Object separator) {
-            /* steps 1-2 */
+            /* step 1 */
             ScriptObject o = ToObject(cx, thisValue);
-            /* steps 3-4 */
+            /* step 2 */
             long len = ToLength(cx, Get(cx, o, "length"));
-            /* steps 5-7 */
+            /* steps 3-4 */
             String sep = Type.isUndefined(separator) ? "," : ToFlatString(cx, separator);
-            /* step 8 */
+            /* step 5 */
             if (len == 0) {
                 return "";
             }
-            /* step 9 */
+            /* step 6 */
             Object element0 = Get(cx, o, 0);
-            /* steps 10-11 */
-            StringBuilder r = new StringBuilder();
+            /* step 7 */
+            StrBuilder r = new StrBuilder(cx);
             if (!Type.isUndefinedOrNull(element0)) {
                 r.append(ToString(cx, element0));
             }
+            /* steps 8-9 */
             IterationKind iteration = iterationKind(o, len);
             if (iteration.isSparse()) {
-                /* steps 12-13 (Optimization: Sparse Array objects) */
-                joinSparse(cx, (OrdinaryObject) o, len, sep, r, iteration.isInherited());
+                joinSparse(cx, (OrdinaryObject) o, len, sep, r, iteration);
             } else {
-                /* steps 12-13 */
                 for (long k = 1; k < len; ++k) {
-                    /* step 13.a */
+                    /* step 9.a */
                     r.append(sep);
-                    /* step 13.b */
+                    /* step 9.b */
                     Object element = Get(cx, o, k);
-                    /* steps 13.c-e */
+                    /* steps 9.c-d */
                     if (!Type.isUndefinedOrNull(element)) {
                         r.append(ToString(cx, element));
                     }
                 }
             }
-            /* step 14 */
+            /* step 10 */
             return r.toString();
         }
 
-        private static void joinSparse(ExecutionContext cx, OrdinaryObject o, long length,
-                String sep, StringBuilder r, boolean inherited) {
+        private static void joinSparse(ExecutionContext cx, OrdinaryObject o, long length, String sep, StrBuilder r,
+                IterationKind iteration) {
             final boolean hasSeparator = !sep.isEmpty();
             if (hasSeparator) {
                 long estimated = length * sep.length();
@@ -596,7 +595,7 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
             }
             long lastKey = 0;
             objectElement: {
-                for (ForwardIter iter = forwardIter(o, 1, length, inherited); iter.hasNext();) {
+                for (Keyiterator iter = iteration.forward(o, 1, length); iter.hasNext();) {
                     long k = iter.next();
                     // Add leading separator and fill holes if separator is not the empty string.
                     if (hasSeparator) {
@@ -634,7 +633,7 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
         }
 
         /**
-         * 22.1.3.16 Array.prototype.pop ( )
+         * 22.1.3.17 Array.prototype.pop ( )
          * 
          * @param cx
          *            the execution context
@@ -644,37 +643,37 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
          */
         @Function(name = "pop", arity = 0)
         public static Object pop(ExecutionContext cx, Object thisValue) {
-            /* steps 1-2 */
+            /* step 1 */
             ScriptObject o = ToObject(cx, thisValue);
-            /* steps 3-4 */
+            /* step 2 */
             long len = ToLength(cx, Get(cx, o, "length"));
-            /* steps 5-6 */
+            /* steps 3-4 */
             if (len == 0) {
-                /* step 5 */
-                /* steps 5.a-b */
+                /* step 3 */
+                /* step 3.a */
                 Set(cx, o, "length", 0, true);
-                /* step 5.c */
+                /* step 3.b */
                 return UNDEFINED;
             } else {
-                /* step 6 */
+                /* step 4 */
                 assert len > 0;
-                /* step 6.a */
+                /* step 4.a */
                 long newLen = len - 1;
-                /* step 6.b */
+                /* step 4.b */
                 long index = newLen;
-                /* steps 6.c-d */
+                /* step 4.c */
                 Object element = Get(cx, o, index);
-                /* steps 6.e-f */
+                /* step 4.d */
                 DeletePropertyOrThrow(cx, o, index);
-                /* steps 6.g-h */
+                /* step 4.e */
                 Set(cx, o, "length", newLen, true);
-                /* step 6.i */
+                /* step 4.f */
                 return element;
             }
         }
 
         /**
-         * 22.1.3.17 Array.prototype.push ( ...items )
+         * 22.1.3.18 Array.prototype.push ( ...items )
          * 
          * @param cx
          *            the execution context
@@ -686,32 +685,32 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
          */
         @Function(name = "push", arity = 1)
         public static Object push(ExecutionContext cx, Object thisValue, Object... items) {
-            /* steps 1-2 */
+            /* step 1 */
             ScriptObject o = ToObject(cx, thisValue);
-            /* steps 3-4 */
+            /* step 2 */
             long len = ToLength(cx, Get(cx, o, "length"));
-            /* step 5 (not applicable) */
-            /* steps 6-7 */
+            /* step 3 (not applicable) */
+            /* steps 4-5 */
             if (len + items.length > ARRAY_LENGTH_LIMIT) {
                 throw newTypeError(cx, Messages.Key.InvalidArrayLength);
             }
-            /* step 8 */
+            /* step 6 */
             for (Object e : items) {
-                /* step 8.a (not applicable) */
-                /* steps 8.b-c */
+                /* step 6.a (not applicable) */
+                /* step 6.b */
                 Set(cx, o, len, e, true);
-                /* step 8.d */
+                /* step 6.c */
                 len += 1;
             }
-            /* steps 9-10 */
+            /* step 7 */
             assert len <= ARRAY_LENGTH_LIMIT;
             Set(cx, o, "length", len, true);
-            /* step 11 */
+            /* step 8 */
             return len;
         }
 
         /**
-         * 22.1.3.20 Array.prototype.reverse ( )
+         * 22.1.3.21 Array.prototype.reverse ( )
          * 
          * @param cx
          *            the execution context
@@ -721,34 +720,34 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
          */
         @Function(name = "reverse", arity = 0)
         public static Object reverse(ExecutionContext cx, Object thisValue) {
-            /* steps 1-2 */
+            /* step 1 */
             ScriptObject o = ToObject(cx, thisValue);
-            /* steps 3-4 */
+            /* step 2 */
             long len = ToLength(cx, Get(cx, o, "length"));
+            /* steps 3-5 */
             IterationKind iteration = iterationKind(o, len);
             if (iteration.isSparse()) {
-                /* steps 5-7 (Optimization: Sparse Array objects) */
-                reverseSparse(cx, (OrdinaryObject) o, len, iteration.isInherited());
+                reverseSparse(cx, (OrdinaryObject) o, len, iteration);
             } else {
-                /* step 5 */
+                /* step 3 */
                 long middle = len / 2L;
-                /* steps 6-7 */
+                /* steps 4-5 */
                 for (long lower = 0; lower != middle; ++lower) {
-                    /* step 7.a */
+                    /* step 5.a */
                     long upper = len - lower - 1;
-                    /* step 7.b */
+                    /* step 5.b */
                     long upperP = upper;
-                    /* step 7.c */
+                    /* step 5.c */
                     long lowerP = lower;
-                    /* steps 7.d-e */
+                    /* step 5.d */
                     boolean lowerExists = HasProperty(cx, o, lowerP);
-                    /* step 7.f */
+                    /* step 5.e */
                     Object lowerValue = lowerExists ? Get(cx, o, lowerP) : null;
-                    /* steps 7.g-h */
+                    /* step 5.f */
                     boolean upperExists = HasProperty(cx, o, upperP);
-                    /* step 7.i */
+                    /* step 5.g */
                     Object upperValue = upperExists ? Get(cx, o, upperP) : null;
-                    /* steps 7.j-m */
+                    /* steps 5.h-k */
                     if (lowerExists && upperExists) {
                         Set(cx, o, lowerP, upperValue, true);
                         Set(cx, o, upperP, lowerValue, true);
@@ -763,15 +762,14 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
                     }
                 }
             }
-            /* step 8 */
+            /* step 6 */
             return o;
         }
 
-        private static void reverseSparse(ExecutionContext cx, OrdinaryObject o, long length,
-                boolean inherited) {
+        private static void reverseSparse(ExecutionContext cx, OrdinaryObject o, long length, IterationKind iteration) {
             long middle = length / 2L;
-            ForwardIter lowerIter = forwardIter(o, 0, middle, inherited);
-            ReverseIter upperIter = reverseIterator(o, length - middle, length, inherited);
+            Keyiterator lowerIter = iteration.forward(o, 0, middle);
+            Keyiterator upperIter = iteration.reverse(o, length - middle, length);
 
             while (lowerIter.hasNext() && upperIter.hasNext()) {
                 long lower = lowerIter.peek();
@@ -822,7 +820,7 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
         }
 
         /**
-         * 22.1.3.21 Array.prototype.shift ( )
+         * 22.1.3.22 Array.prototype.shift ( )
          * 
          * @param cx
          *            the execution context
@@ -832,32 +830,31 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
          */
         @Function(name = "shift", arity = 0)
         public static Object shift(ExecutionContext cx, Object thisValue) {
-            /* steps 1-2 */
+            /* step 1 */
             ScriptObject o = ToObject(cx, thisValue);
-            /* steps 3-4 */
+            /* step 2 */
             long len = ToLength(cx, Get(cx, o, "length"));
-            /* step 5 */
+            /* step 3 */
             if (len == 0) {
                 Set(cx, o, "length", 0, true);
                 return UNDEFINED;
             }
             assert len > 0;
-            /* steps 6-7 */
+            /* step 4 */
             Object first = Get(cx, o, 0);
+            /* steps 5-6 */
             IterationKind iteration = iterationKind(o, len);
             if (iteration.isSparse()) {
-                /* steps 8-9 (Optimization: Sparse Array objects) */
-                shiftSparse(cx, (OrdinaryObject) o, len, iteration.isInherited());
+                shiftSparse(cx, (OrdinaryObject) o, len, iteration);
             } else {
-                /* steps 8-9 */
                 for (long k = 1; k < len; ++k) {
-                    /* step 9.a */
+                    /* step 6.a */
                     long from = k;
-                    /* step 9.b */
+                    /* step 6.b */
                     long to = k - 1;
-                    /* steps 9.c-d */
+                    /* step 6.c */
                     boolean fromPresent = HasProperty(cx, o, from);
-                    /* steps 9.e-f */
+                    /* steps 6.d-e */
                     if (fromPresent) {
                         Object fromVal = Get(cx, o, from);
                         Set(cx, o, to, fromVal, true);
@@ -866,17 +863,16 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
                     }
                 }
             }
-            /* steps 10-11 */
+            /* step 7 */
             DeletePropertyOrThrow(cx, o, len - 1);
-            /* steps 12-13 */
+            /* step 8 */
             Set(cx, o, "length", len - 1, true);
-            /* step 14 */
+            /* step 9 */
             return first;
         }
 
-        private static void shiftSparse(ExecutionContext cx, OrdinaryObject o, long length,
-                boolean inherited) {
-            ForwardIter iter = forwardIter(o, 1, length, inherited);
+        private static void shiftSparse(ExecutionContext cx, OrdinaryObject o, long length, IterationKind iteration) {
+            Keyiterator iter = iteration.forward(o, 1, length);
             if (iter.hasNext() && iter.peek() != 1) {
                 DeletePropertyOrThrow(cx, o, 0);
             }
@@ -889,14 +885,14 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
                 Set(cx, o, to, fromVal, true);
 
                 long replacement = k + 1;
-                if (replacement < length && !iter.contains(replacement)) {
+                if (replacement < length && !iter.containsNext(replacement)) {
                     DeletePropertyOrThrow(cx, o, from);
                 }
             }
         }
 
         /**
-         * 22.1.3.22 Array.prototype.slice (start, end)
+         * 22.1.3.23 Array.prototype.slice (start, end)
          * 
          * @param cx
          *            the execution context
@@ -910,28 +906,26 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
          */
         @Function(name = "slice", arity = 2)
         public static Object slice(ExecutionContext cx, Object thisValue, Object start, Object end) {
-            /* steps 1-2 */
+            /* step 1 */
             ScriptObject o = ToObject(cx, thisValue);
-            /* steps 3-4 */
+            /* step 2 */
             long len = ToLength(cx, Get(cx, o, "length"));
-            /* steps 5-7 */
+            /* steps 3-4 */
             long k = ToArrayIndex(cx, start, len);
-            /* steps 8-10 */
+            /* steps 5-6 */
             long finall = Type.isUndefined(end) ? len : ToArrayIndex(cx, end, len);
-            /* step 11 */
+            /* step 7 */
             long count = Math.max(finall - k, 0);
-            /* steps 12-13 */
+            /* step 8 */
             ScriptObject a = ArraySpeciesCreate(cx, o, count);
+            /* steps 9-10 */
             long n;
             IterationKind iteration = iterationKind(a, o, len);
             if (iteration.isSparse()) {
-                /* steps 14-15 (Optimization: Sparse Array objects) */
-                sliceSparse(cx, (OrdinaryObject) a, k, finall, (OrdinaryObject) o,
-                        iteration.isInherited());
+                sliceSparse(cx, (OrdinaryObject) a, k, finall, (OrdinaryObject) o, iteration);
                 n = count;
             } else {
                 n = 0;
-                /* steps 14-15 */
                 for (; k < finall; ++k, ++n) {
                     long pk = k;
                     boolean kpresent = HasProperty(cx, o, pk);
@@ -941,15 +935,15 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
                     }
                 }
             }
-            /* steps 16-17 */
+            /* step 11 */
             Set(cx, a, "length", n, true);
-            /* step 18 */
+            /* step 12 */
             return a;
         }
 
-        private static void sliceSparse(ExecutionContext cx, OrdinaryObject a, long k, long finall,
-                OrdinaryObject o, boolean inherited) {
-            for (ForwardIter iter = forwardIter(o, k, finall, inherited); iter.hasNext();) {
+        private static void sliceSparse(ExecutionContext cx, OrdinaryObject a, long k, long finall, OrdinaryObject o,
+                IterationKind iteration) {
+            for (Keyiterator iter = iteration.forward(o, k, finall); iter.hasNext();) {
                 long pk = iter.next();
 
                 long n = pk - k;
@@ -971,11 +965,11 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
             @Override
             public int compare(Object o1, Object o2) {
                 /* steps 1-4 (not applicable) */
-                /* steps 5-6 */
+                /* step 5 */
                 String x = ToFlatString(cx, o1);
-                /* steps 7-8 */
+                /* step 6 */
                 String y = ToFlatString(cx, o2);
-                /* steps 9-11 */
+                /* steps 7-11 */
                 return x.compareTo(y);
             }
         }
@@ -1001,13 +995,9 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
             }
         }
 
-        private static void sortElements(ExecutionContext cx, ArrayList<Object> elements,
-                Object comparefn) {
+        private static void sortElements(ExecutionContext cx, ArrayList<Object> elements, Callable comparefn) {
             Comparator<Object> comparator;
-            if (!Type.isUndefined(comparefn)) {
-                if (!IsCallable(comparefn)) {
-                    throw newTypeError(cx, Messages.Key.NotCallable);
-                }
+            if (comparefn != null) {
                 comparator = new FunctionComparator(cx, (Callable) comparefn);
             } else {
                 comparator = new DefaultComparator(cx);
@@ -1023,7 +1013,7 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
         }
 
         /**
-         * 22.1.3.24 Array.prototype.sort (comparefn)
+         * 22.1.3.25 Array.prototype.sort (comparefn)
          * 
          * @param cx
          *            the execution context
@@ -1036,8 +1026,16 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
         @Function(name = "sort", arity = 1)
         public static Object sort(ExecutionContext cx, Object thisValue, Object comparefn) {
             /* step 1 */
+            Callable compareFunction = null;
+            if (!Type.isUndefined(comparefn)) {
+                if (!IsCallable(comparefn)) {
+                    throw newTypeError(cx, Messages.Key.NotCallable);
+                }
+                compareFunction = (Callable) comparefn;
+            }
+            /* step 2 */
             ScriptObject obj = ToObject(cx, thisValue);
-            /* steps 2-3 */
+            /* step 3 */
             long len = ToLength(cx, Get(cx, obj, "length"));
 
             // return if array is empty or has only one element
@@ -1046,7 +1044,7 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
             }
             IterationKind iteration = iterationKind(obj, len);
             if (iteration.isSparse()) {
-                sortSparse(cx, (OrdinaryObject) obj, len, comparefn, iteration.isInherited());
+                sortSparse(cx, (OrdinaryObject) obj, len, compareFunction, iteration);
             } else {
                 // handle OOM early
                 if (len > Integer.MAX_VALUE) {
@@ -1075,7 +1073,7 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
                 // sort elements
                 int count = elements.size();
                 if (count > 1) {
-                    sortElements(cx, elements, comparefn);
+                    sortElements(cx, elements, compareFunction);
                 }
 
                 // and finally set sorted elements
@@ -1095,10 +1093,10 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
             return obj;
         }
 
-        private static void sortSparse(ExecutionContext cx, OrdinaryObject obj, long length,
-                Object comparefn, boolean inherited) {
+        private static void sortSparse(ExecutionContext cx, OrdinaryObject obj, long length, Callable comparefn,
+                IterationKind iteration) {
             // collect elements
-            ForwardIter collectIter = forwardIter(obj, 0, length, inherited);
+            Keyiterator collectIter = iteration.forward(obj, 0, length);
             int undefCount = 0;
             ArrayList<Object> elements = new ArrayList<>(Math.min(collectIter.size(), 1024));
             while (collectIter.hasNext()) {
@@ -1129,7 +1127,7 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
             // User-defined actions in comparefn may have invalidated sparse-array property
             IterationKind iterationDelete = iterationKind(obj, length);
             if (iterationDelete.isSparse()) {
-                ForwardIter deleteIter = forwardIter(obj, count + undefCount, length, iterationDelete.isInherited());
+                Keyiterator deleteIter = iterationDelete.forward(obj, count + undefCount, length);
                 while (deleteIter.hasNext()) {
                     long p = deleteIter.next();
                     DeletePropertyOrThrow(cx, obj, p);
@@ -1143,7 +1141,7 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
         }
 
         /**
-         * 22.1.3.25 Array.prototype.splice (start, deleteCount, ...items )
+         * 22.1.3.26 Array.prototype.splice (start, deleteCount, ...items )
          * 
          * @param cx
          *            the execution context
@@ -1159,15 +1157,15 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
          */
         @Function(name = "splice", arity = 2)
         public static Object splice(ExecutionContext cx, Object thisValue,
-                @Optional(Optional.Default.NONE) Object start,
-                @Optional(Optional.Default.NONE) Object deleteCount, Object... items) {
-            /* steps 1-2 */
+                @Optional(Optional.Default.NONE) Object start, @Optional(Optional.Default.NONE) Object deleteCount,
+                Object... items) {
+            /* step 1 */
             ScriptObject o = ToObject(cx, thisValue);
-            /* steps 3-4 */
+            /* step 2 */
             long len = ToLength(cx, Get(cx, o, "length"));
-            /* steps 5-7 */
+            /* steps 3-4 */
             long actualStart = start != null ? ToArrayIndex(cx, start, len) : 0;
-            /* steps 8-10 */
+            /* steps 5-7 */
             int insertCount;
             long actualDeleteCount;
             if (start == null) {
@@ -1178,47 +1176,46 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
                 actualDeleteCount = len - actualStart;
             } else {
                 insertCount = items.length;
-                double dc = ToInteger(cx, deleteCount);
-                actualDeleteCount = (long) Math.min(Math.max(dc, 0), len - actualStart);
+                long dc = (long) ToNumber(cx, deleteCount); // ToInteger
+                actualDeleteCount = Math.min(Math.max(dc, 0), len - actualStart);
             }
-            /* step 11 */
+            /* step 8 */
             if (len + insertCount - actualDeleteCount > ARRAY_LENGTH_LIMIT) {
                 throw newTypeError(cx, Messages.Key.InvalidArrayLength);
             }
-            /* steps 12-13 */
+            /* step 9 */
             ScriptObject a = ArraySpeciesCreate(cx, o, actualDeleteCount);
+            /* steps 10-11 */
             IterationKind iterationCopy = iterationKind(a, o, actualDeleteCount);
             if (iterationCopy.isSparse()) {
-                /* steps 14-15 */
-                spliceSparseCopy(cx, (OrdinaryObject) a, (OrdinaryObject) o, actualStart,
-                        actualDeleteCount, iterationCopy.isInherited());
+                spliceSparseCopy(cx, (OrdinaryObject) a, (OrdinaryObject) o, actualStart, actualDeleteCount,
+                        iterationCopy);
             } else {
-                /* steps 14-15 */
                 for (long k = 0; k < actualDeleteCount; ++k) {
-                    /* step 15.a */
+                    /* step 11.a */
                     long from = actualStart + k;
-                    /* steps 15.b-c */
+                    /* step 11.b */
                     boolean fromPresent = HasProperty(cx, o, from);
-                    /* step 15.d */
+                    /* step 11.c */
                     if (fromPresent) {
                         Object fromValue = Get(cx, o, from);
                         CreateDataPropertyOrThrow(cx, a, k, fromValue);
                     }
                 }
             }
-            /* steps 16-17 */
+            /* step 12 */
             Set(cx, a, "length", actualDeleteCount, true);
-            /* steps 18-19 */
+            /* step 13 (not applicable) */
+            /* step 14 */
             int itemCount = items.length;
+            /* steps 15-16 */
             if (itemCount < actualDeleteCount) {
-                /* step 20 */
+                /* steps 15.a-b */
                 IterationKind iterationMove = iterationKind(o, len);
                 if (iterationMove.isSparse()) {
-                    /* steps 20.a-20.b */
-                    spliceSparseMoveLeft(cx, (OrdinaryObject) o, len, actualStart,
-                            actualDeleteCount, itemCount, iterationMove.isInherited());
+                    spliceSparseMoveLeft(cx, (OrdinaryObject) o, len, actualStart, actualDeleteCount, itemCount,
+                            iterationMove);
                 } else {
-                    /* steps 20.a-20.b */
                     for (long k = actualStart; k < (len - actualDeleteCount); ++k) {
                         long from = k + actualDeleteCount;
                         long to = k + itemCount;
@@ -1231,26 +1228,22 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
                         }
                     }
                 }
+                /* steps 15.c-d */
                 IterationKind iterationDelete = iterationKind(o, len);
                 if (iterationDelete.isSparse()) {
-                    /* steps 20.c-20.d */
-                    spliceSparseDelete(cx, (OrdinaryObject) o, len, actualDeleteCount, itemCount,
-                            iterationDelete.isInherited());
+                    spliceSparseDelete(cx, (OrdinaryObject) o, len, actualDeleteCount, itemCount, iterationDelete);
                 } else {
-                    /* steps 20.c-20.d */
                     for (long k = len; k > (len - actualDeleteCount + itemCount); --k) {
                         DeletePropertyOrThrow(cx, o, k - 1);
                     }
                 }
             } else if (itemCount > actualDeleteCount) {
-                /* step 21 */
+                /* steps 16.a-b */
                 IterationKind iterationMove = iterationKind(o, len);
                 if (iterationMove.isSparse()) {
-                    /* step 21 */
-                    spliceSparseMoveRight(cx, (OrdinaryObject) o, len, actualStart,
-                            actualDeleteCount, itemCount, iterationMove.isInherited());
+                    spliceSparseMoveRight(cx, (OrdinaryObject) o, len, actualStart, actualDeleteCount, itemCount,
+                            iterationMove);
                 } else {
-                    /* step 21 */
                     for (long k = (len - actualDeleteCount); k > actualStart; --k) {
                         long from = k + actualDeleteCount - 1;
                         long to = k + itemCount - 1;
@@ -1264,33 +1257,32 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
                     }
                 }
             }
-            /* step 22 */
+            /* step 17 */
             long k = actualStart;
-            /* step 23 */
+            /* step 18 */
             for (int i = 0; i < itemCount; ++k, ++i) {
                 Object e = items[i];
                 Set(cx, o, k, e, true);
             }
-            /* steps 24-25 */
+            /* step 19 */
             assert len - actualDeleteCount + itemCount <= ARRAY_LENGTH_LIMIT;
             Set(cx, o, "length", len - actualDeleteCount + itemCount, true);
-            /* step 26 */
+            /* step 20 */
             return a;
         }
 
-        private static void spliceSparseMoveRight(ExecutionContext cx, OrdinaryObject o,
-                long length, long start, long deleteCount, int itemCount, boolean inherited) {
-            assert 0 <= deleteCount && deleteCount <= (length - start) : "actualDeleteCount="
-                    + deleteCount;
+        private static void spliceSparseMoveRight(ExecutionContext cx, OrdinaryObject o, long length, long start,
+                long deleteCount, int itemCount, IterationKind iteration) {
+            assert 0 <= deleteCount && deleteCount <= (length - start) : "actualDeleteCount=" + deleteCount;
             assert start >= 0 && (itemCount > 0 && itemCount > deleteCount);
 
             long targetRangeStart = start + itemCount;
             long targetRangeEnd = length;
-            ReverseIter iterTarget = reverseIterator(o, targetRangeStart, targetRangeEnd, inherited);
+            Keyiterator iterTarget = iteration.reverse(o, targetRangeStart, targetRangeEnd);
 
             long sourceRangeStart = start + deleteCount;
             long sourceRangeEnd = length;
-            ReverseIter iterSource = reverseIterator(o, sourceRangeStart, sourceRangeEnd, inherited);
+            Keyiterator iterSource = iteration.reverse(o, sourceRangeStart, sourceRangeEnd);
 
             while (iterTarget.hasNext() && iterSource.hasNext()) {
                 long toRel = iterTarget.peek() - itemCount;
@@ -1324,10 +1316,9 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
             }
         }
 
-        private static void spliceSparseMoveLeft(ExecutionContext cx, OrdinaryObject o,
-                long length, long start, long deleteCount, int itemCount, boolean inherited) {
-            assert 0 < deleteCount && deleteCount <= (length - start) : "actualDeleteCount="
-                    + deleteCount;
+        private static void spliceSparseMoveLeft(ExecutionContext cx, OrdinaryObject o, long length, long start,
+                long deleteCount, int itemCount, IterationKind iteration) {
+            assert 0 < deleteCount && deleteCount <= (length - start) : "actualDeleteCount=" + deleteCount;
             assert (itemCount < deleteCount);
             assert start >= 0 && itemCount >= 0;
             long moveAmount = (length - start) - deleteCount;
@@ -1336,12 +1327,12 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
             long targetRangeStart = start + itemCount;
             long targetRangeEnd = targetRangeStart + moveAmount;
             assert targetRangeEnd < length;
-            ForwardIter iterTarget = forwardIter(o, targetRangeStart, targetRangeEnd, inherited);
+            Keyiterator iterTarget = iteration.forward(o, targetRangeStart, targetRangeEnd);
 
             long sourceRangeStart = start + deleteCount;
             long sourceRangeEnd = sourceRangeStart + moveAmount;
             assert sourceRangeEnd == length;
-            ForwardIter iterSource = forwardIter(o, sourceRangeStart, sourceRangeEnd, inherited);
+            Keyiterator iterSource = iteration.forward(o, sourceRangeStart, sourceRangeEnd);
 
             while (iterTarget.hasNext() && iterSource.hasNext()) {
                 long toRel = iterTarget.peek() - itemCount;
@@ -1375,27 +1366,27 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
             }
         }
 
-        private static void spliceSparseCopy(ExecutionContext cx, OrdinaryObject a,
-                OrdinaryObject o, long start, long deleteCount, boolean inherited) {
+        private static void spliceSparseCopy(ExecutionContext cx, OrdinaryObject a, OrdinaryObject o, long start,
+                long deleteCount, IterationKind iteration) {
             long copyEnd = start + deleteCount;
-            for (ForwardIter iter = forwardIter(o, start, copyEnd, inherited); iter.hasNext();) {
+            for (Keyiterator iter = iteration.forward(o, start, copyEnd); iter.hasNext();) {
                 long from = iter.next();
                 Object fromValue = Get(cx, o, from);
                 CreateDataPropertyOrThrow(cx, a, from - start, fromValue);
             }
         }
 
-        private static void spliceSparseDelete(ExecutionContext cx, OrdinaryObject o, long length,
-                long deleteCount, long itemCount, boolean inherited) {
+        private static void spliceSparseDelete(ExecutionContext cx, OrdinaryObject o, long length, long deleteCount,
+                long itemCount, IterationKind iteration) {
             long delStart = length - deleteCount + itemCount;
-            for (ReverseIter iter = reverseIterator(o, delStart, length, inherited); iter.hasNext();) {
+            for (Keyiterator iter = iteration.reverse(o, delStart, length); iter.hasNext();) {
                 long k = iter.next();
                 DeletePropertyOrThrow(cx, o, k);
             }
         }
 
         /**
-         * 22.1.3.28 Array.prototype.unshift ( ...items )
+         * 22.1.3.29 Array.prototype.unshift ( ...items )
          * 
          * @param cx
          *            the execution context
@@ -1407,24 +1398,23 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
          */
         @Function(name = "unshift", arity = 1)
         public static Object unshift(ExecutionContext cx, Object thisValue, Object... items) {
-            /* steps 1-2 */
+            /* step 1 */
             ScriptObject o = ToObject(cx, thisValue);
-            /* steps 3-4 */
+            /* step 2 */
             long len = ToLength(cx, Get(cx, o, "length"));
-            /* step 5 */
+            /* step 3 */
             int argCount = items.length;
-            /* step 6 */
+            /* step 4 */
             if (argCount > 0) {
-                /* step 6.a */
+                /* step 4.a */
                 if (len + argCount > ARRAY_LENGTH_LIMIT) {
                     throw newTypeError(cx, Messages.Key.InvalidArrayLength);
                 }
+                /* steps 4.b-c */
                 IterationKind iteration = iterationKind(o, len);
                 if (iteration.isSparse()) {
-                    /* steps 6.b-6.c (Optimization: Sparse Array objects) */
-                    unshiftSparse(cx, (OrdinaryObject) o, len, argCount, iteration.isInherited());
+                    unshiftSparse(cx, (OrdinaryObject) o, len, argCount, iteration);
                 } else {
-                    /* steps 6.b-6.c */
                     for (long k = len; k > 0; --k) {
                         long from = k - 1;
                         long to = k + argCount - 1;
@@ -1437,22 +1427,22 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
                         }
                     }
                 }
-                /* steps 6.d-6.f */
+                /* steps 4.d-f */
                 for (int j = 0; j < items.length; ++j) {
                     Object e = items[j];
                     Set(cx, o, j, e, true);
                 }
             }
-            /* steps 7-8 */
+            /* step 5 */
             assert len + argCount <= ARRAY_LENGTH_LIMIT;
             Set(cx, o, "length", len + argCount, true);
-            /* step 9 */
+            /* step 6 */
             return len + argCount;
         }
 
-        private static void unshiftSparse(ExecutionContext cx, OrdinaryObject o, long length,
-                int argCount, boolean inherited) {
-            ReverseIter iter = reverseIterator(o, 0, length, inherited);
+        private static void unshiftSparse(ExecutionContext cx, OrdinaryObject o, long length, int argCount,
+                IterationKind iteration) {
+            Keyiterator iter = iteration.reverse(o, 0, length);
             int deleteFirst = 0, deleteLast = 0;
             // TODO: alloc Math.min(iter.size, argCount) + ring buffer?
             long[] keysToDelete = new long[iter.size()];
@@ -1468,7 +1458,7 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
                 Set(cx, o, to, fromValue, true);
 
                 long replacement = k - argCount;
-                if (replacement >= 0 && !iter.contains(replacement)) {
+                if (replacement >= 0 && !iter.containsNext(replacement)) {
                     keysToDelete[deleteLast++] = replacement;
                 }
             }
@@ -1478,7 +1468,7 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
         }
 
         /**
-         * 22.1.3.11 Array.prototype.indexOf ( searchElement [ , fromIndex ] )
+         * 22.1.3.12 Array.prototype.indexOf ( searchElement [ , fromIndex ] )
          * 
          * @param cx
          *            the execution context
@@ -1491,42 +1481,36 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
          * @return the result index
          */
         @Function(name = "indexOf", arity = 1)
-        public static Object indexOf(ExecutionContext cx, Object thisValue, Object searchElement,
-                @Optional(Optional.Default.NONE) Object fromIndex) {
-            /* steps 1-2 */
+        public static Object indexOf(ExecutionContext cx, Object thisValue, Object searchElement, Object fromIndex) {
+            /* step 1 */
             ScriptObject o = ToObject(cx, thisValue);
-            /* steps 3-4 */
+            /* step 2 */
             long len = ToLength(cx, Get(cx, o, "length"));
-            /* step 5 */
+            /* step 3 */
             if (len == 0) {
                 return -1;
             }
-            /* steps 6-7 */
-            long n;
-            if (fromIndex != null) {
-                n = (long) ToInteger(cx, fromIndex);
-            } else {
-                n = 0;
-            }
-            /* step 8 */
+            /* step 4 */
+            long n = (long) ToNumber(cx, fromIndex); // ToInteger
+            /* step 5 */
             if (n >= len) {
                 return -1;
             }
-            /* steps 9-10 */
+            /* steps 6-7 */
             long k;
             if (n >= 0) {
                 k = n;
             } else {
-                k = len - Math.abs(n);
+                k = len + n;
                 if (k < 0) {
                     k = 0;
                 }
             }
-            /* step 11 */
+            /* step 8 */
             for (; k < len; ++k) {
-                /* step 11.a-b */
+                /* step 8.a */
                 boolean kpresent = HasProperty(cx, o, k);
-                /* step 11.c */
+                /* step 8.b */
                 if (kpresent) {
                     Object elementk = Get(cx, o, k);
                     boolean same = StrictEqualityComparison(searchElement, elementk);
@@ -1535,12 +1519,12 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
                     }
                 }
             }
-            /* step 12 */
+            /* step 9 */
             return -1;
         }
 
         /**
-         * 22.1.3.14 Array.prototype.lastIndexOf ( searchElement [ , fromIndex ] )
+         * 22.1.3.15 Array.prototype.lastIndexOf ( searchElement [ , fromIndex ] )
          * 
          * @param cx
          *            the execution context
@@ -1553,35 +1537,35 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
          * @return the result index
          */
         @Function(name = "lastIndexOf", arity = 1)
-        public static Object lastIndexOf(ExecutionContext cx, Object thisValue,
-                Object searchElement, @Optional(Optional.Default.NONE) Object fromIndex) {
-            /* steps 1-2 */
+        public static Object lastIndexOf(ExecutionContext cx, Object thisValue, Object searchElement,
+                @Optional(Optional.Default.NONE) Object fromIndex) {
+            /* step 1 */
             ScriptObject o = ToObject(cx, thisValue);
-            /* steps 3-4 */
+            /* step 2 */
             long len = ToLength(cx, Get(cx, o, "length"));
-            /* step 5 */
+            /* step 3 */
             if (len == 0) {
                 return -1;
             }
-            /* steps 6-7 */
+            /* step 4 */
             long n;
             if (fromIndex != null) {
-                n = (long) ToInteger(cx, fromIndex);
+                n = (long) ToNumber(cx, fromIndex); // ToInteger
             } else {
                 n = len - 1;
             }
-            /* steps 8-9 */
+            /* steps 5-6 */
             long k;
             if (n >= 0) {
                 k = Math.min(n, len - 1);
             } else {
-                k = len - Math.abs(n);
+                k = len + n;
             }
-            /* step 10 */
+            /* step 7 */
             for (; k >= 0; --k) {
-                /* steps 10.a-b */
+                /* step 7.a */
                 boolean kpresent = HasProperty(cx, o, k);
-                /* step 10.c */
+                /* step 7.b */
                 if (kpresent) {
                     Object elementk = Get(cx, o, k);
                     boolean same = StrictEqualityComparison(searchElement, elementk);
@@ -1590,7 +1574,7 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
                     }
                 }
             }
-            /* step 11 */
+            /* step 8 */
             return -1;
         }
 
@@ -1608,25 +1592,24 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
          * @return {@code true} if every element matches
          */
         @Function(name = "every", arity = 1)
-        public static Object every(ExecutionContext cx, Object thisValue, Object callbackfn,
-                Object thisArg) {
-            /* steps 1-2 */
+        public static Object every(ExecutionContext cx, Object thisValue, Object callbackfn, Object thisArg) {
+            /* step 1 */
             ScriptObject o = ToObject(cx, thisValue);
-            /* steps 3-4 */
+            /* step 2 */
             long len = ToLength(cx, Get(cx, o, "length"));
-            /* step 5 */
+            /* step 3 */
             if (!IsCallable(callbackfn)) {
                 throw newTypeError(cx, Messages.Key.NotCallable);
             }
             Callable callback = (Callable) callbackfn;
-            /* step 6 (omitted) */
-            /* steps 7-8 */
+            /* step 4 (omitted) */
+            /* steps 5-6 */
             for (long k = 0; k < len; ++k) {
-                /* step 8.a */
+                /* step 6.a */
                 long pk = k;
-                /* steps 8.b-c */
+                /* step 6.b */
                 boolean kpresent = HasProperty(cx, o, pk);
-                /* step 8.d */
+                /* step 6.c */
                 if (kpresent) {
                     Object kvalue = Get(cx, o, pk);
                     boolean testResult = ToBoolean(callback.call(cx, thisArg, kvalue, k, o));
@@ -1635,12 +1618,12 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
                     }
                 }
             }
-            /* step 9 */
+            /* step 7 */
             return true;
         }
 
         /**
-         * 22.1.3.23 Array.prototype.some ( callbackfn [ , thisArg ] )
+         * 22.1.3.24 Array.prototype.some ( callbackfn [ , thisArg ] )
          * 
          * @param cx
          *            the execution context
@@ -1653,22 +1636,24 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
          * @return {@code true} if some elements match
          */
         @Function(name = "some", arity = 1)
-        public static Object some(ExecutionContext cx, Object thisValue, Object callbackfn,
-                Object thisArg) {
-            /* steps 1-2 */
+        public static Object some(ExecutionContext cx, Object thisValue, Object callbackfn, Object thisArg) {
+            /* step 1 */
             ScriptObject o = ToObject(cx, thisValue);
-            /* steps 3-4 */
+            /* step 2 */
             long len = ToLength(cx, Get(cx, o, "length"));
-            /* step 5 */
+            /* step 3 */
             if (!IsCallable(callbackfn)) {
                 throw newTypeError(cx, Messages.Key.NotCallable);
             }
             Callable callback = (Callable) callbackfn;
-            /* step 6 (omitted) */
-            /* steps 7-8 */
+            /* step 4 (omitted) */
+            /* steps 5-6 */
             for (long k = 0; k < len; ++k) {
+                /* step 6.a */
                 long pk = k;
+                /* step 6.b */
                 boolean kpresent = HasProperty(cx, o, pk);
+                /* step 6.c */
                 if (kpresent) {
                     Object kvalue = Get(cx, o, pk);
                     boolean testResult = ToBoolean(callback.call(cx, thisArg, kvalue, k, o));
@@ -1677,7 +1662,7 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
                     }
                 }
             }
-            /* step 9 */
+            /* step 7 */
             return false;
         }
 
@@ -1695,36 +1680,35 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
          * @return the undefined value
          */
         @Function(name = "forEach", arity = 1)
-        public static Object forEach(ExecutionContext cx, Object thisValue, Object callbackfn,
-                Object thisArg) {
-            /* steps 1-2 */
+        public static Object forEach(ExecutionContext cx, Object thisValue, Object callbackfn, Object thisArg) {
+            /* step 1 */
             ScriptObject o = ToObject(cx, thisValue);
-            /* steps 3-4 */
+            /* step 2 */
             long len = ToLength(cx, Get(cx, o, "length"));
-            /* step 5 */
+            /* step 3 */
             if (!IsCallable(callbackfn)) {
                 throw newTypeError(cx, Messages.Key.NotCallable);
             }
             Callable callback = (Callable) callbackfn;
-            /* step 6 (omitted) */
-            /* steps 7-8 */
+            /* step 4 (omitted) */
+            /* steps 5-6 */
             for (long k = 0; k < len; ++k) {
-                /* step 8.a */
+                /* step 6.a */
                 long pk = k;
-                /* steps 8.b-c */
+                /* step 6.b */
                 boolean kpresent = HasProperty(cx, o, pk);
-                /* step 8.d */
+                /* step 6.c */
                 if (kpresent) {
                     Object kvalue = Get(cx, o, pk);
                     callback.call(cx, thisArg, kvalue, k, o);
                 }
             }
-            /* step 9 */
+            /* step 7 */
             return UNDEFINED;
         }
 
         /**
-         * 22.1.3.15 Array.prototype.map ( callbackfn [ , thisArg ] )
+         * 22.1.3.16 Array.prototype.map ( callbackfn [ , thisArg ] )
          * 
          * @param cx
          *            the execution context
@@ -1737,34 +1721,33 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
          * @return the mapped value
          */
         @Function(name = "map", arity = 1)
-        public static Object map(ExecutionContext cx, Object thisValue, Object callbackfn,
-                Object thisArg) {
-            /* steps 1-2 */
+        public static Object map(ExecutionContext cx, Object thisValue, Object callbackfn, Object thisArg) {
+            /* step 1 */
             ScriptObject o = ToObject(cx, thisValue);
-            /* steps 3-4 */
+            /* step 2 */
             long len = ToLength(cx, Get(cx, o, "length"));
-            /* step 5 */
+            /* step 3 */
             if (!IsCallable(callbackfn)) {
                 throw newTypeError(cx, Messages.Key.NotCallable);
             }
             Callable callback = (Callable) callbackfn;
-            /* step 6 (omitted) */
-            /* steps 7-8 */
+            /* step 4 (omitted) */
+            /* step 5 */
             ScriptObject a = ArraySpeciesCreate(cx, o, len);
-            /* steps 9-10 */
+            /* steps 6-7 */
             for (long k = 0; k < len; ++k) {
-                /* step 10.a */
+                /* step 7.a */
                 long pk = k;
-                /* steps 10.b-c */
+                /* step 7.b */
                 boolean kpresent = HasProperty(cx, o, pk);
-                /* step 10.d */
+                /* step 7.c */
                 if (kpresent) {
                     Object kvalue = Get(cx, o, pk);
                     Object mappedValue = callback.call(cx, thisArg, kvalue, k, o);
                     CreateDataPropertyOrThrow(cx, a, pk, mappedValue);
                 }
             }
-            /* step 11 */
+            /* step 8 */
             return a;
         }
 
@@ -1782,27 +1765,26 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
          * @return the filtered value
          */
         @Function(name = "filter", arity = 1)
-        public static Object filter(ExecutionContext cx, Object thisValue, Object callbackfn,
-                Object thisArg) {
-            /* steps 1-2 */
+        public static Object filter(ExecutionContext cx, Object thisValue, Object callbackfn, Object thisArg) {
+            /* step 1 */
             ScriptObject o = ToObject(cx, thisValue);
-            /* steps 3-4 */
+            /* step 2 */
             long len = ToLength(cx, Get(cx, o, "length"));
-            /* step 5 */
+            /* step 3 */
             if (!IsCallable(callbackfn)) {
                 throw newTypeError(cx, Messages.Key.NotCallable);
             }
             Callable callback = (Callable) callbackfn;
-            /* step 6 (omitted) */
-            /* steps 7-8 */
+            /* step 4 (omitted) */
+            /* step 5 */
             ScriptObject a = ArraySpeciesCreate(cx, o, 0);
-            /* steps 9-11 */
+            /* steps 6-7 */
             for (long k = 0, to = 0; k < len; ++k) {
-                /* step 11.a */
+                /* step 7.a */
                 long pk = k;
-                /* steps 11.b-c */
+                /* step 7.b */
                 boolean kpresent = HasProperty(cx, o, pk);
-                /* step 11.d */
+                /* step 7.c */
                 if (kpresent) {
                     Object kvalue = Get(cx, o, pk);
                     boolean selected = ToBoolean(callback.call(cx, thisArg, kvalue, k, o));
@@ -1812,12 +1794,12 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
                     }
                 }
             }
-            /* step 12 */
+            /* step 8 */
             return a;
         }
 
         /**
-         * 22.1.3.18 Array.prototype.reduce ( callbackfn [ , initialValue ] )
+         * 22.1.3.19 Array.prototype.reduce ( callbackfn [ , initialValue ] )
          * 
          * @param cx
          *            the execution context
@@ -1832,30 +1814,30 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
         @Function(name = "reduce", arity = 1)
         public static Object reduce(ExecutionContext cx, Object thisValue, Object callbackfn,
                 @Optional(Optional.Default.NONE) Object initialValue) {
-            /* steps 1-2 */
+            /* step 1 */
             ScriptObject o = ToObject(cx, thisValue);
-            /* steps 3-4 */
+            /* step 2 */
             long len = ToLength(cx, Get(cx, o, "length"));
-            /* step 5 */
+            /* step 3 */
             if (!IsCallable(callbackfn)) {
                 throw newTypeError(cx, Messages.Key.NotCallable);
             }
             Callable callback = (Callable) callbackfn;
-            /* step 6 */
+            /* step 4 */
             if (len == 0 && initialValue == null) {
                 throw newTypeError(cx, Messages.Key.ReduceInitialValue);
             }
-            /* step 7 */
+            /* step 5 */
             long k = 0;
-            /* steps 8-9 */
+            /* steps 6-7 */
             Object accumulator = null;
             if (initialValue != null) {
-                /* step 8.a */
+                /* step 6.a */
                 accumulator = initialValue;
             } else {
-                /* step 9.a */
+                /* step 7.a */
                 boolean kpresent = false;
-                /* step 9.b */
+                /* step 7.b */
                 for (; !kpresent && k < len; ++k) {
                     long pk = k;
                     kpresent = HasProperty(cx, o, pk);
@@ -1863,29 +1845,29 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
                         accumulator = Get(cx, o, pk);
                     }
                 }
-                /* step 9.c */
+                /* step 7.c */
                 if (!kpresent) {
                     throw newTypeError(cx, Messages.Key.ReduceInitialValue);
                 }
             }
-            /* step 10 */
+            /* step 8 */
             for (; k < len; ++k) {
-                /* step 10.a */
+                /* step 8.a */
                 long pk = k;
-                /* steps 10.b-c */
+                /* step 8.b */
                 boolean kpresent = HasProperty(cx, o, pk);
-                /* step 10.d */
+                /* step 8.c */
                 if (kpresent) {
                     Object kvalue = Get(cx, o, pk);
                     accumulator = callback.call(cx, UNDEFINED, accumulator, kvalue, k, o);
                 }
             }
-            /* step 11 */
+            /* step 9 */
             return accumulator;
         }
 
         /**
-         * 22.1.3.19 Array.prototype.reduceRight ( callbackfn [ , initialValue ] )
+         * 22.1.3.20 Array.prototype.reduceRight ( callbackfn [ , initialValue ] )
          * 
          * @param cx
          *            the execution context
@@ -1900,30 +1882,30 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
         @Function(name = "reduceRight", arity = 1)
         public static Object reduceRight(ExecutionContext cx, Object thisValue, Object callbackfn,
                 @Optional(Optional.Default.NONE) Object initialValue) {
-            /* steps 1-2 */
+            /* step 1 */
             ScriptObject o = ToObject(cx, thisValue);
-            /* steps 3-4 */
+            /* step 2 */
             long len = ToLength(cx, Get(cx, o, "length"));
-            /* step 5 */
+            /* step 3 */
             if (!IsCallable(callbackfn)) {
                 throw newTypeError(cx, Messages.Key.NotCallable);
             }
             Callable callback = (Callable) callbackfn;
-            /* step 6 */
+            /* step 4 */
             if (len == 0 && initialValue == null) {
                 throw newTypeError(cx, Messages.Key.ReduceInitialValue);
             }
-            /* step 7 */
+            /* step 5 */
             long k = len - 1;
-            /* steps 8-9 */
+            /* steps 6-7 */
             Object accumulator = null;
             if (initialValue != null) {
-                /* step 8.a */
+                /* step 6.a */
                 accumulator = initialValue;
             } else {
-                /* step 9.a */
+                /* step 7.a */
                 boolean kpresent = false;
-                /* step 9.b */
+                /* step 7.b */
                 for (; !kpresent && k >= 0; --k) {
                     long pk = k;
                     kpresent = HasProperty(cx, o, pk);
@@ -1931,24 +1913,24 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
                         accumulator = Get(cx, o, pk);
                     }
                 }
-                /* step 9.c */
+                /* step 7.c */
                 if (!kpresent) {
                     throw newTypeError(cx, Messages.Key.ReduceInitialValue);
                 }
             }
-            /* step 10 */
+            /* step 8 */
             for (; k >= 0; --k) {
-                /* step 10.a */
+                /* step 8.a */
                 long pk = k;
-                /* steps 10.b-c */
+                /* step 8.b */
                 boolean kpresent = HasProperty(cx, o, pk);
-                /* step 10.d */
+                /* step 8.c */
                 if (kpresent) {
                     Object kvalue = Get(cx, o, pk);
                     accumulator = callback.call(cx, UNDEFINED, accumulator, kvalue, k, o);
                 }
             }
-            /* step 11 */
+            /* step 9 */
             return accumulator;
         }
 
@@ -1966,32 +1948,31 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
          * @return the result value
          */
         @Function(name = "find", arity = 1)
-        public static Object find(ExecutionContext cx, Object thisValue, Object predicate,
-                Object thisArg) {
-            /* steps 1-2 */
+        public static Object find(ExecutionContext cx, Object thisValue, Object predicate, Object thisArg) {
+            /* step 1 */
             ScriptObject o = ToObject(cx, thisValue);
-            /* steps 3-4 */
+            /* step 2 */
             long len = ToLength(cx, Get(cx, o, "length"));
-            /* step 5 */
+            /* step 3 */
             if (!IsCallable(predicate)) {
                 throw newTypeError(cx, Messages.Key.NotCallable);
             }
             Callable pred = (Callable) predicate;
-            /* step 6 (omitted) */
-            /* steps 7-8 */
+            /* step 4 (omitted) */
+            /* steps 5-6 */
             for (long k = 0; k < len; ++k) {
-                /* step 8.a */
+                /* step 6.a */
                 long pk = k;
-                /* steps 8.b-c */
+                /* step 6.b */
                 Object kvalue = Get(cx, o, pk);
-                /* steps 8.d-e */
+                /* step 6.c */
                 boolean testResult = ToBoolean(pred.call(cx, thisArg, kvalue, k, o));
-                /* step 8.f */
+                /* step 6.d */
                 if (testResult) {
                     return kvalue;
                 }
             }
-            /* step 9 */
+            /* step 7 */
             return UNDEFINED;
         }
 
@@ -2009,32 +1990,31 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
          * @return the result index
          */
         @Function(name = "findIndex", arity = 1)
-        public static Object findIndex(ExecutionContext cx, Object thisValue, Object predicate,
-                Object thisArg) {
-            /* steps 1-2 */
+        public static Object findIndex(ExecutionContext cx, Object thisValue, Object predicate, Object thisArg) {
+            /* step 1 */
             ScriptObject o = ToObject(cx, thisValue);
-            /* steps 3-4 */
+            /* step 2 */
             long len = ToLength(cx, Get(cx, o, "length"));
-            /* step 5 */
+            /* step 3 */
             if (!IsCallable(predicate)) {
                 throw newTypeError(cx, Messages.Key.NotCallable);
             }
             Callable pred = (Callable) predicate;
-            /* step 6 (omitted) */
-            /* steps 7-8 */
+            /* step 4 (omitted) */
+            /* steps 5-6 */
             for (long k = 0; k < len; ++k) {
-                /* step 8.a */
+                /* step 6.a */
                 long pk = k;
-                /* steps 8.b-c */
+                /* step 6.b */
                 Object kvalue = Get(cx, o, pk);
-                /* steps 8.d-e */
+                /* step 6.c */
                 boolean testResult = ToBoolean(pred.call(cx, thisArg, kvalue, k, o));
-                /* step 8.f */
+                /* step 6.d */
                 if (testResult) {
                     return k;
                 }
             }
-            /* step 9 */
+            /* step 7 */
             return -1;
         }
 
@@ -2049,14 +2029,14 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
          */
         @Function(name = "entries", arity = 0)
         public static Object entries(ExecutionContext cx, Object thisValue) {
-            /* steps 1-2 */
+            /* step 1 */
             ScriptObject o = ToObject(cx, thisValue);
-            /* step 3 */
+            /* step 2 */
             return CreateArrayIterator(cx, o, ArrayIterationKind.KeyValue);
         }
 
         /**
-         * 22.1.3.13 Array.prototype.keys ( )
+         * 22.1.3.14 Array.prototype.keys ( )
          * 
          * @param cx
          *            the execution context
@@ -2066,15 +2046,15 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
          */
         @Function(name = "keys", arity = 0)
         public static Object keys(ExecutionContext cx, Object thisValue) {
-            /* steps 1-2 */
+            /* step 1 */
             ScriptObject o = ToObject(cx, thisValue);
-            /* step 3 */
+            /* step 2 */
             return CreateArrayIterator(cx, o, ArrayIterationKind.Key);
         }
 
         /**
-         * 22.1.3.29 Array.prototype.values ( )<br>
-         * 22.1.3.30 Array.prototype [ @@iterator ] ( )
+         * 22.1.3.30 Array.prototype.values ( )<br>
+         * 22.1.3.31 Array.prototype [ @@iterator ] ( )
          * 
          * @param cx
          *            the execution context
@@ -2085,14 +2065,14 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
         @Function(name = "values", arity = 0, nativeId = ArrayPrototypeValues.class)
         @AliasFunction(name = "[Symbol.iterator]", symbol = BuiltinSymbol.iterator)
         public static Object values(ExecutionContext cx, Object thisValue) {
-            /* steps 1-2 */
+            /* step 1 */
             ScriptObject o = ToObject(cx, thisValue);
-            /* step 3 */
+            /* step 2 */
             return CreateArrayIterator(cx, o, ArrayIterationKind.Value);
         }
 
         /**
-         * 22.1.3.31 Array.prototype [ @@unscopables ]
+         * 22.1.3.32 Array.prototype [ @@unscopables ]
          * 
          * @param cx
          *            the execution context
@@ -2110,14 +2090,12 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
             status &= CreateDataProperty(cx, blackList, "fill", true);
             status &= CreateDataProperty(cx, blackList, "find", true);
             status &= CreateDataProperty(cx, blackList, "findIndex", true);
-            if (cx.getRealm().isEnabled(CompatibilityOption.ArrayIncludes)) {
-                status &= CreateDataProperty(cx, blackList, "includes", true);
-            }
+            status &= CreateDataProperty(cx, blackList, "includes", true);
             status &= CreateDataProperty(cx, blackList, "keys", true);
             status &= CreateDataProperty(cx, blackList, "values", true);
-            /* step 9 */
-            assert status;
             /* step 10 */
+            assert status;
+            /* step 11 */
             return blackList;
         }
 
@@ -2137,24 +2115,23 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
          * @return this typed array object
          */
         @Function(name = "fill", arity = 1)
-        public static Object fill(ExecutionContext cx, Object thisValue, Object value,
-                Object start, Object end) {
-            /* steps 1-2 */
+        public static Object fill(ExecutionContext cx, Object thisValue, Object value, Object start, Object end) {
+            /* step 1 */
             ScriptObject o = ToObject(cx, thisValue);
-            /* steps 3-4 */
+            /* step 2 */
             long len = ToLength(cx, Get(cx, o, "length"));
-            /* steps 5-7 */
+            /* steps 3-4 */
             long k = ToArrayIndex(cx, start, len);
-            /* steps 8-10 */
+            /* steps 5-6 */
             long finall = Type.isUndefined(end) ? len : ToArrayIndex(cx, end, len);
-            /* step 11 */
+            /* step 7 */
             for (; k < finall; ++k) {
-                /* step 11.a */
+                /* step 7.a */
                 long pk = k;
-                /* steps 11.b-c */
+                /* step 7.b */
                 Set(cx, o, pk, value, true);
             }
-            /* step 12 */
+            /* step 8 */
             return o;
         }
 
@@ -2174,21 +2151,21 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
          * @return this typed array object
          */
         @Function(name = "copyWithin", arity = 2)
-        public static Object copyWithin(ExecutionContext cx, Object thisValue, Object target,
-                Object start, Object end) {
-            /* steps 1-2 */
+        public static Object copyWithin(ExecutionContext cx, Object thisValue, Object target, Object start,
+                Object end) {
+            /* step 1 */
             ScriptObject o = ToObject(cx, thisValue);
-            /* steps 3-4 */
+            /* step 2 */
             long len = ToLength(cx, Get(cx, o, "length"));
-            /* steps 5-7 */
+            /* steps 3-4 */
             long to = ToArrayIndex(cx, target, len);
-            /* steps 8-10 */
+            /* steps 5-6 */
             long from = ToArrayIndex(cx, start, len);
-            /* steps 11-13 */
+            /* steps 7-8 */
             long finall = Type.isUndefined(end) ? len : ToArrayIndex(cx, end, len);
-            /* step 14 */
+            /* step 9 */
             long count = Math.min(finall - from, len - to);
-            /* steps 15-16 */
+            /* steps 10-11 */
             long direction;
             if (from < to && to < from + count) {
                 direction = -1;
@@ -2197,38 +2174,30 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
             } else {
                 direction = 1;
             }
-            /* step 17 */
+            /* step 12 */
             for (; count > 0; --count) {
-                /* steps 17.a-b */
+                /* steps 12.a-b */
                 long fromKey = from;
                 long toKey = to;
-                /* steps 17.c-d */
+                /* step 12.c */
                 boolean fromPresent = HasProperty(cx, o, fromKey);
-                /* steps 17.e-f */
+                /* steps 12.d-e */
                 if (fromPresent) {
                     Object fromVal = Get(cx, o, fromKey);
                     Set(cx, o, toKey, fromVal, true);
                 } else {
                     DeletePropertyOrThrow(cx, o, toKey);
                 }
-                /* steps 17.g-h */
+                /* steps 12.f-g */
                 from += direction;
                 to += direction;
             }
-            /* step 18 */
+            /* step 13 */
             return o;
         }
-    }
-
-    /**
-     * Proposed ECMAScript 7 additions
-     */
-    @CompatibilityExtension(CompatibilityOption.ArrayIncludes)
-    public enum AdditionalProperties {
-        ;
 
         /**
-         * Array.prototype.includes ( searchElement [ , fromIndex ] )
+         * 22.1.3.11 Array.prototype.includes ( searchElement [ , fromIndex ] )
          * 
          * @param cx
          *            the execution context
@@ -2241,8 +2210,7 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
          * @return the result index
          */
         @Function(name = "includes", arity = 1)
-        public static Object includes(ExecutionContext cx, Object thisValue, Object searchElement,
-                Object fromIndex) {
+        public static Object includes(ExecutionContext cx, Object thisValue, Object searchElement, Object fromIndex) {
             /* step 1 */
             ScriptObject o = ToObject(cx, thisValue);
             /* step 2 */
@@ -2252,7 +2220,7 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
                 return false;
             }
             /* step 4 */
-            long n = (long) ToInteger(cx, fromIndex);
+            long n = (long) ToNumber(cx, fromIndex); // ToInteger
             /* steps 5-6 */
             long k;
             if (n >= 0) {
@@ -2274,6 +2242,186 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
             }
             /* step 8 */
             return false;
+        }
+    }
+
+    /**
+     * Extension: Array.prototype.flat{Map,ten}
+     */
+    @CompatibilityExtension(CompatibilityOption.ArrayPrototypeFlatMapFlatten)
+    public enum FlatMapFlattenProperties {
+        ;
+
+        /**
+         * Array.prototype.flatMap ( callbackfn [ , thisArg ] )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param callbackfn
+         *            the callback function
+         * @param thisArg
+         *            the optional this-argument for the callback function
+         * @return the flattened array
+         */
+        @Function(name = "flatMap", arity = 1)
+        public static Object flatMap(ExecutionContext cx, Object thisValue, Object callbackfn, Object thisArg) {
+            /* step 1 */
+            ScriptObject o = ToObject(cx, thisValue);
+            /* step 2 */
+            if (!IsCallable(callbackfn)) {
+                throw newTypeError(cx, Messages.Key.NotCallable);
+            }
+            Callable callback = (Callable) callbackfn;
+            /* step 3 (omitted) */
+            /* step 4 */
+            long sourceLen = ToLength(cx, Get(cx, o, "length"));
+            /* step 5 */
+            ScriptObject a = ArraySpeciesCreate(cx, o, 0);
+            /* step 6 */
+            long lastIndex = FlattenIntoArray(cx, a, o, o, sourceLen, 0, 1, callback, thisArg);
+            /* step 7 */
+            assert lastIndex <= ARRAY_LENGTH_LIMIT;
+            // FIXME: spec bug - `lastIndex` already has the correct value, no need to compute `lastIndex + 1`
+            Set(cx, a, "length", lastIndex, true);
+            /* step 8 */
+            return a;
+        }
+
+        /**
+         * Array.prototype.flatten( [ depth ] )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param depth
+         *            the optional flatten depth
+         * @return the flattened array
+         */
+        @Function(name = "flatten", arity = 0)
+        public static Object flatten(ExecutionContext cx, Object thisValue, Object depth) {
+            /* step 1 */
+            ScriptObject o = ToObject(cx, thisValue);
+            /* step 2 */
+            long depthNum = 1;
+            /* step 3 */
+            if (!Type.isUndefined(depth)) {
+                depthNum = (long) ToNumber(cx, depth); // ToInteger
+            }
+            /* step 4 */
+            long sourceLen = ToLength(cx, Get(cx, o, "length"));
+            /* step 5 */
+            ScriptObject a = ArraySpeciesCreate(cx, o, 0);
+            /* step 6 */
+            long lastIndex = FlattenIntoArray(cx, a, o, o, sourceLen, 0, depthNum);
+            /* step 7 */
+            assert lastIndex <= ARRAY_LENGTH_LIMIT;
+            // FIXME: spec bug - `lastIndex` already has the correct value, no need to compute `lastIndex + 1`
+            Set(cx, a, "length", lastIndex, true);
+            /* step 8 */
+            return a;
+        }
+
+        /**
+         * FlattenIntoArray(target, original, source, sourceLen, start, depth [ , mapperFunction, thisArg ])
+         * 
+         * @param cx
+         *            the execution context
+         * @param target
+         *            the target array
+         * @param original
+         *            the original array
+         * @param source
+         *            the source array
+         * @param sourceLen
+         *            the source array's lenght
+         * @param start
+         *            the start index
+         * @param depth
+         *            the maximum depth
+         * @return the assigned last index
+         */
+        private static long FlattenIntoArray(ExecutionContext cx, ScriptObject target, ScriptObject original,
+                ScriptObject source, long sourceLen, long start, long depth) {
+            return FlattenIntoArray(cx, target, original, source, sourceLen, start, depth, null, null);
+        }
+
+        /**
+         * FlattenIntoArray(target, original, source, sourceLen, start, depth [ , mapperFunction, thisArg ])
+         * 
+         * @param cx
+         *            the execution context
+         * @param target
+         *            the target array
+         * @param original
+         *            the original array
+         * @param source
+         *            the source array
+         * @param sourceLen
+         *            the source array's lenght
+         * @param start
+         *            the start index
+         * @param depth
+         *            the maximum depth
+         * @param mapperFunction
+         *            the mapper function
+         * @param thisArg
+         *            the this-argument for the mapper function
+         * @return the assigned last index
+         */
+        private static long FlattenIntoArray(ExecutionContext cx, ScriptObject target, ScriptObject original,
+                ScriptObject source, long sourceLen, long start, long depth, Callable mapperFunction, Object thisArg) {
+            /* step 1 */
+            long targetIndex = start;
+            /* steps 2-3 */
+            for (long sourceIndex = 0; sourceIndex < sourceLen; ++sourceIndex) {
+                /* step 3.a (not applicable) */
+                /* step 3.b */
+                // FIXME: spec issue - newer Array.prototype methods no longer call HasProperty.
+                boolean exists = HasProperty(cx, source, sourceIndex);
+                /* step 3.c */
+                if (exists) {
+                    /* step 3.c.i */
+                    Object element = Get(cx, source, sourceIndex);
+                    /* step 3.c.ii */
+                    if (mapperFunction != null) {
+                        // FIXME: spec bug - why is `original` passed instead of `source`? `original` and `source`
+                        // are always the same object at this point.
+                        assert original == source;
+                        element = Call(cx, mapperFunction, thisArg, element, sourceIndex, original);
+                    }
+                    /* step 3.c.iii */
+                    // FIXME: spec issue - misleading variable name
+                    boolean spreadable = IsArray(cx, element);
+                    /* steps 3.c.iv-v */
+                    if (spreadable && depth > 0) {
+                        /* step 3.c.iv.1 */
+                        long elementLen = ToLength(cx, Get(cx, Type.objectValue(element), "length"));
+                        /* step 3.c.iv.2 */
+                        long nextIndex = FlattenIntoArray(cx, target, original, Type.objectValue(element), elementLen,
+                                targetIndex, depth - 1);
+                        /* step 3.c.iv.3 */
+                        targetIndex = nextIndex - 1;
+                    } else {
+                        /* step 3.c.v.1 */
+                        if (targetIndex >= ARRAY_LENGTH_LIMIT) {
+                            throw newTypeError(cx, Messages.Key.InvalidArrayLength);
+                        }
+                        /* step 3.c.v.2 */
+                        CreateDataPropertyOrThrow(cx, target, targetIndex, element);
+                    }
+                    /* step 3.c.vi */
+                    // FIXME: spec issue - it's clearer to move this into steps 3.c.iv-v
+                    // - step 3.c.iv: just assign to `targetIndex = FlattenIntoArray(...)`
+                    // - step 3.c.v: increment targetIndex by one
+                    targetIndex += 1;
+                }
+                /* step 3.d (omitted) */
+            }
+            /* step 4 */
+            return targetIndex;
         }
     }
 }

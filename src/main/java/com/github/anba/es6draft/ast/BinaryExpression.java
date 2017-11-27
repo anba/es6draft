@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -26,7 +26,8 @@ package com.github.anba.es6draft.ast;
  * <h2>12.12 Binary Logical Operators</h2><br>
  */
 public final class BinaryExpression extends Expression {
-    public enum Operator {/* @formatter:off */
+    public enum Operator {
+        /* @formatter:off */
         EXP("**", 10),
         MUL("*", 9), MOD("%", 9), DIV("/", 9),
         ADD("+", 8), SUB("-", 8),
@@ -49,12 +50,12 @@ public final class BinaryExpression extends Expression {
         }
 
         /**
-         * Returns the binary operator name.
+         * Returns the binary operator expression.
          * 
-         * @return the operator name
+         * @return the operator expression
          */
-        public String getName() {
-            // TODO: This is not a 'name'.
+        @Override
+        public String toString() {
             return name;
         }
 

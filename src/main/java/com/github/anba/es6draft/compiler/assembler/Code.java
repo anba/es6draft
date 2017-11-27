@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -8,6 +8,7 @@ package com.github.anba.es6draft.compiler.assembler;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.lang.invoke.MethodType;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -28,12 +29,12 @@ import org.objectweb.asm.util.TraceMethodVisitor;
  */
 public final class Code {
     private static final int METHOD_LIMIT = 1 << 12;
-    private static final int JAVA_VERSION = Opcodes.V1_7;
+    private static final int JAVA_VERSION = Opcodes.V1_8;
 
     private final ArrayList<ClassCode> classes = new ArrayList<>();
     private final SourceInfo sourceInfo;
     private final ClassCode mainClass;
-    private ExternConstantPool sharedConstantPool = null;
+    private ExternConstantPool sharedConstantPool;
     private ClassCode currentClass;
 
     /**
@@ -52,30 +53,25 @@ public final class Code {
      * @param sourceInfo
      *            the source information object
      */
-    public Code(int access, String className, ClassSignature signature, Type superClass,
-            List<Type> interfaces, SourceInfo sourceInfo) {
+    public Code(int access, String className, ClassSignature signature, Type superClass, List<Type> interfaces,
+            SourceInfo sourceInfo) {
         this.sourceInfo = sourceInfo;
         this.mainClass = newMainClass(this, access, className, signature, superClass, interfaces);
         classes.add(mainClass);
-        setCurrentClass(mainClass);
-    }
-
-    private void setCurrentClass(ClassCode currentClass) {
-        this.currentClass = currentClass;
+        this.currentClass = mainClass;
     }
 
     private ClassCode requestClassForMethod() {
         if (currentClass.methodCount() >= METHOD_LIMIT) {
-            setCurrentClass(newClass(new InlineConstantPool(this)));
+            currentClass = newClass(new InlineConstantPool(this));
         }
         return currentClass;
     }
 
-    private ClassCode newMainClass(Code code, int access, String className,
-            ClassSignature signature, Type superClass, List<Type> interfaces) {
+    private ClassCode newMainClass(Code code, int access, String className, ClassSignature signature, Type superClass,
+            List<Type> interfaces) {
         ConstantPool constantPool = new InlineConstantPool(code);
-        return newClass(constantPool, access, className, signature, superClass, interfaces,
-                sourceInfo);
+        return newClass(constantPool, access, className, signature, superClass, interfaces, sourceInfo);
     }
 
     private ClassCode newClass(ConstantPool constantPool, int access, String className) {
@@ -83,14 +79,14 @@ public final class Code {
                 Collections.<Type> emptyList(), sourceInfo);
     }
 
-    private static ClassCode newClass(ConstantPool constantPool, int access, String className,
-            ClassSignature signature, Type superClass, List<Type> interfaces, SourceInfo sourceInfo) {
+    private static ClassCode newClass(ConstantPool constantPool, int access, String className, ClassSignature signature,
+            Type superClass, List<Type> interfaces, SourceInfo sourceInfo) {
         if ((access & ~Modifier.classModifiers()) != 0) {
             throw new IllegalArgumentException();
         }
         ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES | ClassWriter.COMPUTE_MAXS);
-        cw.visit(JAVA_VERSION, access | Opcodes.ACC_SUPER, className, signature.toString(),
-                superClass.internalName(), toInternalNames(interfaces));
+        cw.visit(JAVA_VERSION, access | Opcodes.ACC_SUPER, className, signature.toString(), superClass.internalName(),
+                toInternalNames(interfaces));
         cw.visitSource(sourceInfo.getFileName(), sourceInfo.getSourceMap());
 
         return new ClassCode(constantPool, className, cw);
@@ -193,11 +189,13 @@ public final class Code {
      *            the class byte code
      * @param methodName
      *            the method name
+     * @param methodType
+     *            the method type
      * @return the decompiled byte code
      */
-    public static String methodToByteCode(byte[] bytes, String methodName) {
+    public static String methodToByteCode(byte[] bytes, String methodName, MethodType methodType) {
         Printer p = new SimpleTypeTextifier();
-        return toByteCode(new FilterMethodVisitor(p, methodName), p, bytes);
+        return toByteCode(new FilterMethodVisitor(p, methodName, methodType), p, bytes);
     }
 
     private static String toByteCode(ClassVisitor cv, Printer p, byte[] bytes) {
@@ -213,17 +211,18 @@ public final class Code {
     private static final class FilterMethodVisitor extends ClassVisitor {
         private final Printer printer;
         private final String methodName;
+        private final MethodType methodType;
 
-        public FilterMethodVisitor(Printer p, String methodName) {
+        public FilterMethodVisitor(Printer p, String methodName, MethodType methodType) {
             super(Opcodes.ASM5);
             this.printer = p;
             this.methodName = methodName;
+            this.methodType = methodType;
         }
 
         @Override
-        public MethodVisitor visitMethod(int access, String name, String desc, String signature,
-                String[] exceptions) {
-            if (methodName.equals(name)) {
+        public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
+            if (methodName.equals(name) && methodType.toMethodDescriptorString().equals(desc)) {
                 Printer p = printer.visitMethod(access, name, desc, signature, exceptions);
                 return new TraceMethodVisitor(null, p);
             }
@@ -241,13 +240,25 @@ public final class Code {
         public final MethodTypeDescriptor methodDescriptor;
         public final MethodVisitor methodVisitor;
 
-        MethodCode(ClassCode classCode, int access, String methodName,
-                MethodTypeDescriptor methodDescriptor, MethodVisitor methodVisitor) {
+        MethodCode(ClassCode classCode, int access, String methodName, MethodTypeDescriptor methodDescriptor,
+                MethodVisitor methodVisitor) {
             this.classCode = classCode;
             this.access = access;
             this.methodName = methodName;
             this.methodDescriptor = methodDescriptor;
             this.methodVisitor = methodVisitor;
+        }
+
+        public MethodName name() {
+            MethodName.Invoke invoke;
+            if ((access & Modifier.STATIC) != 0) {
+                invoke = MethodName.Invoke.Static;
+            } else if ("<init>".equals(methodName)) {
+                invoke = MethodName.Invoke.Special;
+            } else {
+                invoke = MethodName.Invoke.Virtual;
+            }
+            return new MethodName(invoke, classCode.classType, methodName, methodDescriptor);
         }
     }
 
@@ -278,35 +289,31 @@ public final class Code {
             return classWriter.toByteArray();
         }
 
-        public MethodCode newConstructor(int access, MethodTypeDescriptor methodDescriptor,
-                String signature, String[] exceptions) {
+        public MethodCode newConstructor(int access, MethodTypeDescriptor methodDescriptor, String signature,
+                String[] exceptions) {
             if ((access & ~Modifier.constructorModifiers()) != 0) {
                 throw new IllegalArgumentException();
             }
             methodCount += 1;
             return new MethodCode(this, access, "<init>", methodDescriptor,
-                    classWriter.visitMethod(access, "<init>", methodDescriptor.descriptor(),
-                            signature, exceptions));
+                    classWriter.visitMethod(access, "<init>", methodDescriptor.descriptor(), signature, exceptions));
         }
 
-        public MethodCode newMethod(int access, String methodName,
-                MethodTypeDescriptor methodDescriptor, String signature, String[] exceptions) {
+        public MethodCode newMethod(int access, String methodName, MethodTypeDescriptor methodDescriptor,
+                String signature, String[] exceptions) {
             if ((access & ~Modifier.methodModifiers()) != 0) {
                 throw new IllegalArgumentException();
             }
             methodCount += 1;
             return new MethodCode(this, access, methodName, methodDescriptor,
-                    classWriter.visitMethod(access, methodName, methodDescriptor.descriptor(),
-                            signature, exceptions));
+                    classWriter.visitMethod(access, methodName, methodDescriptor.descriptor(), signature, exceptions));
         }
 
         public void addField(int access, String fieldName, Type fieldDescriptor, String signature) {
             if ((access & ~Modifier.fieldModifiers()) != 0) {
                 throw new IllegalArgumentException();
             }
-            classWriter
-                    .visitField(access, fieldName, fieldDescriptor.descriptor(), signature, null)
-                    .visitEnd();
+            classWriter.visitField(access, fieldName, fieldDescriptor.descriptor(), signature, null).visitEnd();
         }
     }
 }

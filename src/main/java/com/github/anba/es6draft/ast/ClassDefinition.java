@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -18,13 +18,21 @@ import com.github.anba.es6draft.ast.scope.BlockScope;
  */
 public interface ClassDefinition extends ScopedNode {
     /**
-     * Returns the scope object for this node. May return {@code null} if this class definition does
-     * not create an implicit scope.
+     * Returns the scope object for this node. May return {@code null} if this class definition does not create an
+     * implicit scope.
      * 
      * @return the scope object or {@code null}
      */
     @Override
     BlockScope getScope();
+
+    /**
+     * Returns the scope object for this node. May return {@code null} if this class definition does not create an
+     * implicit scope for its class body.
+     * 
+     * @return the scope object or {@code null}
+     */
+    BlockScope getBodyScope();
 
     /**
      * Returns the list of class decorators.
@@ -89,4 +97,11 @@ public interface ClassDefinition extends ScopedNode {
      *            the new list of class properties
      */
     void setProperties(List<PropertyDefinition> properties);
+
+    /**
+     * Returns the source string for this class.
+     * 
+     * @return the source string
+     */
+    String getSource();
 }

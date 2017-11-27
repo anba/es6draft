@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -144,13 +144,19 @@ public final class Strings {
      */
     public static String repeat(char c, int n) {
         assert n >= 0;
+        if (n == 0) {
+            return "";
+        }
+        if (n == 1) {
+            return String.valueOf(c);
+        }
         char[] value = new char[n];
         Arrays.fill(value, c);
         return new String(value);
     }
 
-    private static final char[] HEXDIGITS = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-            'a', 'b', 'c', 'd', 'e', 'f' };
+    private static final char[] HEXDIGITS = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e',
+            'f' };
 
     /**
      * Quotes the input string.
@@ -209,11 +215,13 @@ public final class Strings {
                 break;
             default:
                 if (c < ' ' || c > 0xff) {
-                    sb.append('\\').append('u')//
-                            .append(HEXDIGITS[(c >> 12) & 0xf])//
-                            .append(HEXDIGITS[(c >> 8) & 0xf])//
-                            .append(HEXDIGITS[(c >> 4) & 0xf])//
-                            .append(HEXDIGITS[(c >> 0) & 0xf]);
+                    /* @formatter:off */
+                    sb.append('\\').append('u')
+                      .append(HEXDIGITS[(c >> 12) & 0xf])
+                      .append(HEXDIGITS[(c >> 8) & 0xf])
+                      .append(HEXDIGITS[(c >> 4) & 0xf])
+                      .append(HEXDIGITS[(c >> 0) & 0xf]);
+                    /* @formatter:on */
                 } else {
                     sb.append(c);
                 }
@@ -224,9 +232,8 @@ public final class Strings {
     }
 
     /**
-     * If {@code s} is an argument index less than {@code 2}<span><sup>{@code 31}</sup></span>
-     * {@code -1} ({@code 0x7FFFFFF}), its integer value is returned. Otherwise {@code -1} is
-     * returned.
+     * If {@code s} is an argument index less than {@code 2}<span><sup>{@code 31}</sup></span> {@code -1} (
+     * {@code 0x7FFFFFF}), its integer value is returned. Otherwise {@code -1} is returned.
      * 
      * @param s
      *            the property key
@@ -238,9 +245,8 @@ public final class Strings {
     }
 
     /**
-     * If {@code s} is a string index less than {@code 2}<span><sup>{@code 31}</sup></span>
-     * {@code -1} ({@code 0x7FFFFFF}), its integer value is returned. Otherwise {@code -1} is
-     * returned.
+     * If {@code s} is a string index less than {@code 2}<span><sup>{@code 31}</sup></span> {@code -1} (
+     * {@code 0x7FFFFFF}), its integer value is returned. Otherwise {@code -1} is returned.
      * 
      * @param s
      *            the property key
@@ -252,9 +258,8 @@ public final class Strings {
     }
 
     /**
-     * If {@code s} is an integer indexed property key less than {@code 2}<span><sup>{@code 32}
-     * </sup></span>{@code -1} ({@code 0xFFFFFFF}), its integer value is returned. Otherwise
-     * {@code -1} is returned.
+     * If {@code s} is an array integer indexed property key less than {@code 2}<span><sup>{@code 32} </sup></span>
+     * {@code -1} ({@code 0xFFFFFFF}), its integer value is returned. Otherwise {@code -1} is returned.
      * 
      * @param s
      *            the property key
@@ -266,8 +271,8 @@ public final class Strings {
     }
 
     /**
-     * If {@code s} is an integer indexed property key less than {@code 2}<span><sup>{@code 53}
-     * </sup></span>{@code -1}, its integer value is returned. Otherwise {@code -1} is returned.
+     * If {@code s} is an integer indexed property key less than {@code 2}<span><sup>{@code 53} </sup></span>{@code -1},
+     * its integer value is returned. Otherwise {@code -1} is returned.
      * 
      * @param propertyKey
      *            the property key
@@ -280,15 +285,28 @@ public final class Strings {
 
     private static long toIndex(String s, int maxLength, long limit) {
         int length = s.length();
-        if (length < 1 || length > maxLength) {
+        if (length == 0 || length > maxLength) {
             // empty string or definitely greater than maximum value
             return -1;
         }
-        if (s.charAt(0) == '0') {
-            return length == 1 ? 0 : -1;
+        char c = s.charAt(0);
+        if (c < '0' || c > '9') {
+            // not an integer number
+            return -1;
         }
-        long index = 0L;
-        for (int i = 0; i < length; ++i) {
+        if (length == 1) {
+            return c - '0';
+        }
+        if (c == '0') {
+            // leading zeroes not allowed in indexed strings
+            return -1;
+        }
+        return toIndex(s, (long) (c - '0'), limit);
+    }
+
+    private static long toIndex(String s, long index, long limit) {
+        int length = s.length();
+        for (int i = 1; i < length; ++i) {
             char c = s.charAt(i);
             if (!(c >= '0' && c <= '9')) {
                 return -1;

@@ -1,11 +1,9 @@
 /*
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
  */
-%Include("lib/assert.js");
-
 const globalThis = %GlobalThis();
 assertEq(globalThis, this);
 
@@ -47,10 +45,8 @@ assertEq(WeakSet, %Intrinsic("WeakSet"));
 // 18.4  Other Properties of the Global Object
 assertEq(JSON, %Intrinsic("JSON"));
 assertEq(Math, %Intrinsic("Math"));
-// TODO: See fixme in proxy.js
-// assertEq(Proxy, %Intrinsic("Proxy"));
+assertEq(Proxy, %Intrinsic("Proxy"));
 assertEq(Reflect, %Intrinsic("Reflect"));
-assertEq(System, %Intrinsic("System"));
 
 // ECMA - 402
 assertEq(Intl, %Intrinsic("Intl"));

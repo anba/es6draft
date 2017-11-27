@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -17,37 +17,33 @@ public final class Errors {
     private Errors() {
     }
 
-    private static ScriptException newError(ExecutionContext cx, Intrinsics prototype,
-            String message) {
+    private static ScriptException newError(ExecutionContext cx, Intrinsics prototype, String message) {
         return new ErrorObject(cx.getRealm(), prototype, message).getException();
     }
 
-    private static ScriptException newError(ExecutionContext cx, Intrinsics prototype,
-            String message, String file, int line, int column) {
-        return new ErrorObject(cx.getRealm(), prototype, message, file, line, column)
-                .getException();
+    private static ScriptException newError(ExecutionContext cx, Intrinsics prototype, String message, String file,
+            int line, int column) {
+        return new ErrorObject(cx.getRealm(), prototype, message, file, line, column).getException();
     }
 
-    private static ScriptException newError(ExecutionContext cx, Throwable cause,
-            Intrinsics prototype, String message, String file, int line, int column) {
-        return new ErrorObject(cx.getRealm(), cause, prototype, message, file, line, column)
-                .getException();
+    private static ScriptException newError(ExecutionContext cx, Throwable cause, Intrinsics prototype, String message,
+            String file, int line, int column) {
+        return new ErrorObject(cx.getRealm(), cause, prototype, message, file, line, column).getException();
     }
 
-    private static ScriptException newError(ExecutionContext cx, Intrinsics prototype,
-            Messages.Key key) {
+    private static ScriptException newError(ExecutionContext cx, Intrinsics prototype, Messages.Key key) {
         String message = cx.getRealm().message(key);
         return new ErrorObject(cx.getRealm(), prototype, message).getException();
     }
 
-    private static ScriptException newError(ExecutionContext cx, Intrinsics prototype,
-            Messages.Key key, String... args) {
+    private static ScriptException newError(ExecutionContext cx, Intrinsics prototype, Messages.Key key,
+            String... args) {
         String message = cx.getRealm().message(key, args);
         return new ErrorObject(cx.getRealm(), prototype, message).getException();
     }
 
-    private static ScriptException newError(ExecutionContext cx, Throwable cause,
-            Intrinsics prototype, Messages.Key key, String... args) {
+    private static ScriptException newError(ExecutionContext cx, Throwable cause, Intrinsics prototype,
+            Messages.Key key, String... args) {
         String message = cx.getRealm().message(key, args);
         return new ErrorObject(cx.getRealm(), cause, prototype, message).getException();
     }
@@ -89,8 +85,7 @@ public final class Errors {
      *            the error message arguments
      * @return the new script exception object
      */
-    public static ScriptException newInternalError(ExecutionContext cx, Messages.Key key,
-            String... args) {
+    public static ScriptException newInternalError(ExecutionContext cx, Messages.Key key, String... args) {
         return newError(cx, Intrinsics.InternalErrorPrototype, key, args);
     }
 
@@ -107,8 +102,8 @@ public final class Errors {
      *            the error message arguments
      * @return the new script exception object
      */
-    public static ScriptException newInternalError(ExecutionContext cx, Throwable cause,
-            Messages.Key key, String... args) {
+    public static ScriptException newInternalError(ExecutionContext cx, Throwable cause, Messages.Key key,
+            String... args) {
         return newError(cx, cause, Intrinsics.InternalErrorPrototype, key, args);
     }
 
@@ -136,8 +131,7 @@ public final class Errors {
      *            the error message arguments
      * @return the new script exception object
      */
-    public static ScriptException newTypeError(ExecutionContext cx, Messages.Key key,
-            String... args) {
+    public static ScriptException newTypeError(ExecutionContext cx, Messages.Key key, String... args) {
         return newError(cx, Intrinsics.TypeErrorPrototype, key, args);
     }
 
@@ -165,8 +159,7 @@ public final class Errors {
      *            the error message arguments
      * @return the new script exception object
      */
-    public static ScriptException newReferenceError(ExecutionContext cx, Messages.Key key,
-            String... args) {
+    public static ScriptException newReferenceError(ExecutionContext cx, Messages.Key key, String... args) {
         return newError(cx, Intrinsics.ReferenceErrorPrototype, key, args);
     }
 
@@ -185,8 +178,8 @@ public final class Errors {
      *            the column number
      * @return the new script exception object
      */
-    public static ScriptException newReferenceError(ExecutionContext cx, String message,
-            String file, int line, int column) {
+    public static ScriptException newReferenceError(ExecutionContext cx, String message, String file, int line,
+            int column) {
         return newError(cx, Intrinsics.ReferenceErrorPrototype, message, file, line, column);
     }
 
@@ -207,8 +200,8 @@ public final class Errors {
      *            the column number
      * @return the new script exception object
      */
-    public static ScriptException newReferenceError(ExecutionContext cx, Throwable cause,
-            String message, String file, int line, int column) {
+    public static ScriptException newReferenceError(ExecutionContext cx, Throwable cause, String message, String file,
+            int line, int column) {
         return newError(cx, cause, Intrinsics.ReferenceErrorPrototype, message, file, line, column);
     }
 
@@ -236,8 +229,7 @@ public final class Errors {
      *            the error message arguments
      * @return the new script exception object
      */
-    public static ScriptException newSyntaxError(ExecutionContext cx, Messages.Key key,
-            String... args) {
+    public static ScriptException newSyntaxError(ExecutionContext cx, Messages.Key key, String... args) {
         return newError(cx, Intrinsics.SyntaxErrorPrototype, key, args);
     }
 
@@ -254,8 +246,8 @@ public final class Errors {
      *            the error message arguments
      * @return the new script exception object
      */
-    public static ScriptException newSyntaxError(ExecutionContext cx, Throwable cause,
-            Messages.Key key, String... args) {
+    public static ScriptException newSyntaxError(ExecutionContext cx, Throwable cause, Messages.Key key,
+            String... args) {
         return newError(cx, cause, Intrinsics.SyntaxErrorPrototype, key, args);
     }
 
@@ -274,8 +266,8 @@ public final class Errors {
      *            the column number
      * @return the new script exception object
      */
-    public static ScriptException newSyntaxError(ExecutionContext cx, String message, String file,
-            int line, int column) {
+    public static ScriptException newSyntaxError(ExecutionContext cx, String message, String file, int line,
+            int column) {
         return newError(cx, Intrinsics.SyntaxErrorPrototype, message, file, line, column);
     }
 
@@ -296,8 +288,8 @@ public final class Errors {
      *            the column number
      * @return the new script exception object
      */
-    public static ScriptException newSyntaxError(ExecutionContext cx, Throwable cause,
-            String message, String file, int line, int column) {
+    public static ScriptException newSyntaxError(ExecutionContext cx, Throwable cause, String message, String file,
+            int line, int column) {
         return newError(cx, cause, Intrinsics.SyntaxErrorPrototype, message, file, line, column);
     }
 
@@ -325,8 +317,7 @@ public final class Errors {
      *            the error message arguments
      * @return the new script exception object
      */
-    public static ScriptException newRangeError(ExecutionContext cx, Messages.Key key,
-            String... args) {
+    public static ScriptException newRangeError(ExecutionContext cx, Messages.Key key, String... args) {
         return newError(cx, Intrinsics.RangeErrorPrototype, key, args);
     }
 

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -328,13 +328,16 @@ final class DateAbstractOperations {
     /**
      * 20.3.1.11 Hours, Minutes, Second, and Milliseconds
      */
-    public static final double //
-            HoursPerDay = 24, //
-            MinutesPerHour = 60, //
-            SecondsPerMinute = 60, //
-            msPerSecond = 1000, //
-            msPerMinute = msPerSecond * SecondsPerMinute, //
-            msPerHour = msPerMinute * MinutesPerHour;
+    // @formatter:off
+    public static final double
+        HoursPerDay = 24,
+        MinutesPerHour = 60,
+        SecondsPerMinute = 60,
+        msPerSecond = 1000,
+        msPerMinute = msPerSecond * SecondsPerMinute,
+        msPerHour = msPerMinute * MinutesPerHour
+        ;
+    // @formatter:on
 
     /**
      * 20.3.1.11 Hours, Minutes, Second, and Milliseconds
@@ -426,9 +429,12 @@ final class DateAbstractOperations {
         double y = ToInteger(year);
         double m = ToInteger(month);
         double dt = ToInteger(date);
+        // FIXME: spec issue - `y + Math.floor(m / 12)` could produce Inf if y and m are near Number.MAX_VALUE.
         double ym = y + Math.floor(m / 12);
         double mn = modulo(m, 12);
 
+        // FIXME: spec issue - unclear spec comment (step 7):
+        // "[...]; but if this is not possible (because some argument is out of range), return NaN."
         double[] monthStart = { 0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334 };
         double day = Math.floor(TimeFromYear(ym) / msPerDay) + monthStart[(int) mn];
         if (mn >= 2 && DaysInYear(ym) == 366) {
@@ -636,16 +642,13 @@ final class DateAbstractOperations {
             int hour = values[HOUR], min = values[MIN], sec = values[SEC], msec = values[MSEC];
             int tzhour = values[TZHOUR], tzmin = values[TZMIN];
             if (year > 275943 // ceil(1e8/365) + 1970 = 275943
-                    || (month < 1 || month > 12)
-                    || (day < 1 || day > DaysInMonth(year, month))
-                    || hour > 24 || (hour == 24 && (min > 0 || sec > 0 || msec > 0))
-                    || min > 59
-                    || sec > 59 || tzhour > 23 || tzmin > 59) {
+                    || (month < 1 || month > 12) || (day < 1 || day > DaysInMonth(year, month)) || hour > 24
+                    || (hour == 24 && (min > 0 || sec > 0 || msec > 0)) || min > 59 || sec > 59 || tzhour > 23
+                    || tzmin > 59) {
                 break syntax;
             }
             // valid ISO-8601 format, compute date in milliseconds
-            double date = MakeDate(MakeDay(year * yearmod, month - 1, day),
-                    MakeTime(hour, min, sec, msec));
+            double date = MakeDate(MakeDay(year * yearmod, month - 1, day), MakeTime(hour, min, sec, msec));
             if (tzhour == -1) {
                 if (!(state == YEAR || state == MONTH || state == DAY)) {
                     // if time zone offset absent, interpret date-time as a local time
@@ -679,8 +682,8 @@ final class DateAbstractOperations {
         return weekDayNames[(int) weekDay];
     }
 
-    private static final String[] monthNames = { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul",
-            "Aug", "Sep", "Oct", "Nov", "Dec" };
+    private static final String[] monthNames = { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct",
+            "Nov", "Dec" };
 
     /**
      * Month Name
@@ -698,6 +701,7 @@ final class DateAbstractOperations {
     private static final Pattern utcDateTimePattern;
     private static final Pattern dateTimePattern;
     private static final Pattern usDateTimePattern;
+
     static {
         String weekday = "(?:([a-zA-Z]{3}),? )?";
         String time = "(?: ([0-2]?[0-9]):([0-5][0-9])(?::([0-5][0-9]))?(?: (AM|PM))?)?";
@@ -724,8 +728,8 @@ final class DateAbstractOperations {
     }
 
     /**
-     * Parses a date-time string in "EEE MMM dd yyyy HH:mm:ss 'GMT'Z (z)" format, returns
-     * {@link Double#NaN} on mismatch.
+     * Parses a date-time string in "EEE MMM dd yyyy HH:mm:ss 'GMT'Z (z)" format, returns {@link Double#NaN} on
+     * mismatch.
      * 
      * @param realm
      *            the realm instance
@@ -737,10 +741,8 @@ final class DateAbstractOperations {
         Matcher matcher;
         if ((matcher = utcDateTimePattern.matcher(s)).matches()) {
             assert matcher.groupCount() == 11;
-            double day = fromDateString(matcher.group(4), matcher.group(3), matcher.group(2),
-                    matcher.group(1));
-            double time = fromTimeString(matcher.group(5), matcher.group(6), matcher.group(7),
-                    matcher.group(8));
+            double day = fromDateString(matcher.group(4), matcher.group(3), matcher.group(2), matcher.group(1));
+            double time = fromTimeString(matcher.group(5), matcher.group(6), matcher.group(7), matcher.group(8));
             double tzOffset = 0;
             boolean localTime = matcher.group(9) == null;
             if (!localTime) {
@@ -750,10 +752,8 @@ final class DateAbstractOperations {
         }
         if ((matcher = dateTimePattern.matcher(s)).matches()) {
             assert matcher.groupCount() == 11;
-            double day = fromDateString(matcher.group(4), matcher.group(2), matcher.group(3),
-                    matcher.group(1));
-            double time = fromTimeString(matcher.group(5), matcher.group(6), matcher.group(7),
-                    matcher.group(8));
+            double day = fromDateString(matcher.group(4), matcher.group(2), matcher.group(3), matcher.group(1));
+            double time = fromTimeString(matcher.group(5), matcher.group(6), matcher.group(7), matcher.group(8));
             double tzOffset = 0;
             boolean localTime = matcher.group(9) == null;
             if (!localTime) {
@@ -764,8 +764,7 @@ final class DateAbstractOperations {
         if ((matcher = usDateTimePattern.matcher(s)).matches()) {
             assert matcher.groupCount() == 7;
             double day = fromDateString(matcher.group(3), matcher.group(1), matcher.group(2));
-            double time = fromTimeString(matcher.group(4), matcher.group(5), matcher.group(6),
-                    matcher.group(7));
+            double time = fromTimeString(matcher.group(4), matcher.group(5), matcher.group(6), matcher.group(7));
             double tzOffset = 0;
             boolean localTime = true;
             return fromDateTimeString(realm, day, time, tzOffset, localTime);
@@ -773,8 +772,7 @@ final class DateAbstractOperations {
         return Double.NaN;
     }
 
-    private static double fromDateTimeString(Realm realm, double day, double time, double tzOffset,
-            boolean localTime) {
+    private static double fromDateTimeString(Realm realm, double day, double time, double tzOffset, boolean localTime) {
         if (Double.isNaN(day) || Double.isNaN(time) || Double.isNaN(tzOffset))
             return Double.NaN;
         double date = MakeDate(day, time);
@@ -788,8 +786,7 @@ final class DateAbstractOperations {
         return date;
     }
 
-    private static double fromDateString(String yearValue, String monthName, String dayValue,
-            String weekdayName) {
+    private static double fromDateString(String yearValue, String monthName, String dayValue, String weekdayName) {
         assert yearValue != null && monthName != null && dayValue != null;
         int month = 1 + indexOf(monthNames, monthName);
         if (weekdayName != null) {
@@ -820,8 +817,7 @@ final class DateAbstractOperations {
         return MakeDay(year, month - 1, day);
     }
 
-    private static double fromTimeString(String hourValue, String minValue, String secValue,
-            String amPm) {
+    private static double fromTimeString(String hourValue, String minValue, String secValue, String amPm) {
         if (hourValue == null) {
             assert minValue == null && secValue == null && amPm == null;
             return MakeTime(0, 0, 0, 0);

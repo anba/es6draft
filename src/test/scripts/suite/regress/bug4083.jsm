@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -22,7 +22,7 @@ assertUndefined(Object.getOwnPropertyDescriptor(self, ""));
 assertUndefined(Object.getOwnPropertyDescriptor(self, 0));
 assertUndefined(Object.getOwnPropertyDescriptor(self, 1));
 
-assertNotUndefined(Object.getOwnPropertyDescriptor(self, Symbol.iterator));
+assertUndefined(Object.getOwnPropertyDescriptor(self, Symbol.iterator));
 assertNotUndefined(Object.getOwnPropertyDescriptor(self, Symbol.toStringTag));
 assertUndefined(Object.getOwnPropertyDescriptor(self, Symbol()));
 assertUndefined(Object.getOwnPropertyDescriptor(self, Symbol.hasInstance));

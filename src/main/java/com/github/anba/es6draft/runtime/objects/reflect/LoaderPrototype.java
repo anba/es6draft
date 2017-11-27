@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -22,6 +22,7 @@ import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.modules.Loader;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
+import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
@@ -61,13 +62,15 @@ public final class LoaderPrototype extends OrdinaryObject implements Initializab
          *            the execution context
          * @param value
          *            the argument value
+         * @param method
+         *            the method
          * @return the loader object
          */
-        private static LoaderObject thisLoader(ExecutionContext cx, Object value) {
+        private static LoaderObject thisLoader(ExecutionContext cx, Object value, String method) {
             if (value instanceof LoaderObject) {
                 return (LoaderObject) value;
             }
-            throw newTypeError(cx, Messages.Key.IncompatibleObject);
+            throw newTypeError(cx, Messages.Key.IncompatibleThis, method, Type.of(value).toString());
         }
 
         @Prototype
@@ -91,7 +94,7 @@ public final class LoaderPrototype extends OrdinaryObject implements Initializab
         @Accessor(name = "global", type = Accessor.Type.Getter)
         public static Object global(ExecutionContext cx, Object thisValue) {
             /* steps 1-2 */
-            LoaderObject loader = thisLoader(cx, thisValue);
+            LoaderObject loader = thisLoader(cx, thisValue, "Reflect.Loader.prototype.global");
             /* step 3 */
             Loader loaderRecord = loader.getLoader();
             /* steps 4-5 */
@@ -120,13 +123,15 @@ public final class LoaderPrototype extends OrdinaryObject implements Initializab
          *            the execution context
          * @param value
          *            the argument value
+         * @param method
+         *            the method
          * @return the loader object
          */
-        private static LoaderObject thisLoader(ExecutionContext cx, Object value) {
+        private static LoaderObject thisLoader(ExecutionContext cx, Object value, String method) {
             if (value instanceof LoaderObject) {
                 return (LoaderObject) value;
             }
-            throw newTypeError(cx, Messages.Key.IncompatibleObject);
+            throw newTypeError(cx, Messages.Key.IncompatibleThis, method, Type.of(value).toString());
         }
 
         /**
@@ -141,7 +146,7 @@ public final class LoaderPrototype extends OrdinaryObject implements Initializab
         @Accessor(name = "realm", type = Accessor.Type.Getter)
         public static Object realm(ExecutionContext cx, Object thisValue) {
             /* steps 1-2 */
-            LoaderObject loader = thisLoader(cx, thisValue);
+            LoaderObject loader = thisLoader(cx, thisValue, "Reflect.Loader.prototype.realm");
             /* step 3 */
             Loader loaderRecord = loader.getLoader();
             /* step 4 */

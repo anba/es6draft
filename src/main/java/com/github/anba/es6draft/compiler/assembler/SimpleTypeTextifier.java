@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -76,7 +76,7 @@ public final class SimpleTypeTextifier extends Textifier {
         if (cst instanceof Handle) {
             Handle handle = (Handle) cst;
             handle = new Handle(handle.getTag(), handle.getOwner(), handle.getName(),
-                    getMethodDescriptor(handle.getDesc()));
+                    getMethodDescriptor(handle.getDesc()), handle.isInterface());
             buf.setLength(0);
             buf.append(tab2).append("LDC ");
             buf.append(handle.getOwner()).append('.').append(handle.getName()).append(handle.getDesc());

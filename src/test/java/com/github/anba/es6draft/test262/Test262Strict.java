@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -9,8 +9,6 @@ package com.github.anba.es6draft.test262;
 import static com.github.anba.es6draft.util.Resources.loadConfiguration;
 import static com.github.anba.es6draft.util.matchers.ErrorMessageMatcher.hasErrorMessage;
 import static com.github.anba.es6draft.util.matchers.PatternMatcher.matchesPattern;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
 import java.io.IOException;
@@ -18,17 +16,15 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Predicate;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.apache.commons.configuration.Configuration;
-import org.hamcrest.Matchers;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Rule;
@@ -42,13 +38,11 @@ import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
 import org.junit.runners.Parameterized.UseParametersRunnerFactory;
 
-import com.github.anba.es6draft.runtime.internal.Strings;
 import com.github.anba.es6draft.util.Parallelized;
 import com.github.anba.es6draft.util.ParameterizedRunnerFactory;
 import com.github.anba.es6draft.util.Resources;
-import com.github.anba.es6draft.util.SystemConsole;
 import com.github.anba.es6draft.util.TestConfiguration;
-import com.github.anba.es6draft.util.TestGlobals;
+import com.github.anba.es6draft.util.TestRealms;
 import com.github.anba.es6draft.util.rules.ExceptionHandlers.ScriptExceptionHandler;
 import com.github.anba.es6draft.util.rules.ExceptionHandlers.StandardErrorHandler;
 
@@ -61,13 +55,12 @@ import com.github.anba.es6draft.util.rules.ExceptionHandlers.StandardErrorHandle
 public final class Test262Strict {
     private static final Configuration configuration = loadConfiguration(Test262Strict.class);
     private static final DefaultMode unmarkedDefault = DefaultMode.forName(configuration.getString("unmarked_default"));
-    private static final Set<String> includeFeatures = stringSet(configuration.getList("include.features"));
-    private static final Set<String> excludeFeatures = stringSet(configuration.getList("exclude.features"));
-
-    public static final Set<String> stringSet(List<?> xs) {
-        Predicate<String> nonEmpty = ((Predicate<String>) String::isEmpty).negate();
-        return xs.stream().filter(Objects::nonNull).map(Object::toString).filter(nonEmpty).collect(Collectors.toSet());
-    }
+    private static final Set<String> includeFeatures = Resources.set(configuration, "include.features",
+            Collections.emptySet());
+    private static final Set<String> excludeFeatures = Resources.set(configuration, "exclude.features",
+            Collections.emptySet());
+    private static final List<Path> harnesses = Resources.list(configuration, "harness", Collections.emptyList())
+            .stream().map(Paths::get).map(Path::toAbsolutePath).collect(Collectors.toList());
 
     @Parameters(name = "{0}")
     public static List<Test262Info> suiteValues() throws IOException {
@@ -75,8 +68,7 @@ public final class Test262Strict {
     }
 
     @ClassRule
-    public static TestGlobals<Test262GlobalObject, Test262Info> globals = new TestGlobals<Test262GlobalObject, Test262Info>(
-            configuration, Test262GlobalObject::new);
+    public static TestRealms<Test262Info> realms = new TestRealms<>(configuration, Test262RealmData::new);
 
     @Rule
     public TestWatcher watcher = new TestWatcher() {
@@ -102,10 +94,8 @@ public final class Test262Strict {
     @Parameter(0)
     public Test262Info test;
 
-    private Test262GlobalObject global;
-    private Test262Async async;
-    private String sourceCode;
-    private int preambleLines;
+    @Rule
+    public Test262TestRealm realm = new Test262TestRealm(realms);
 
     private boolean isValidTestConfiguration() {
         return test.hasMode(isStrictTest, unmarkedDefault) && test.hasFeature(includeFeatures, excludeFeatures);
@@ -115,100 +105,40 @@ public final class Test262Strict {
     public void setUp() throws Throwable {
         assumeTrue("Test disabled", test.isEnabled());
 
-        String fileContent = test.readFile();
-        if (!isValidTestConfiguration()) {
+        if (!realm.initialize(test, Test262Info::readFile, this::isValidTestConfiguration)) {
             return;
         }
+        exceptionHandler.setExecutionContext(realm.get().defaultContext());
 
-        final String preamble;
-        if (test.isRaw() || test.isModule()) {
-            preamble = "";
-            preambleLines = 0;
-        } else if (isStrictTest) {
-            preamble = "\"use strict\";\nvar strict_mode = true;\n";
-            preambleLines = 2;
-        } else {
-            preamble = "//\"use strict\";\nvar strict_mode = false;\n";
-            preambleLines = 2;
+        // Load test includes
+        for (String name : test.getIncludes()) {
+            realm.include(harnesses, name);
         }
-        sourceCode = Strings.concat(preamble, fileContent);
-
-        global = globals.newGlobal(new SystemConsole(), test);
-        exceptionHandler.setExecutionContext(global.getRealm().defaultContext());
 
         if (!test.isNegative()) {
             errorHandler.match(StandardErrorHandler.defaultMatcher());
             exceptionHandler.match(ScriptExceptionHandler.defaultMatcher());
         } else {
-            expected.expect(
-                    Matchers.either(StandardErrorHandler.defaultMatcher()).or(ScriptExceptionHandler.defaultMatcher()));
-            String errorType = test.getErrorType();
-            if (errorType != null) {
-                expected.expect(hasErrorMessage(global.getRealm().defaultContext(),
-                        matchesPattern(errorType, Pattern.CASE_INSENSITIVE)));
+            if (test.getErrorPhase() == Test262Info.ErrorPhase.Early) {
+                expected.expect(StandardErrorHandler.defaultMatcher());
+                exceptionHandler.match(ScriptExceptionHandler.defaultMatcher());
+            } else {
+                expected.expect(ScriptExceptionHandler.defaultMatcher());
+                errorHandler.match(StandardErrorHandler.defaultMatcher());
             }
+            expected.expect(hasErrorMessage(realm.get().defaultContext(), matchesPattern(test.getErrorType())));
         }
-
-        // Load test includes
-        for (String name : test.getIncludes()) {
-            global.include(name);
-        }
-
-        if (test.isAsync()) {
-            async = global.createGlobalProperties(new Test262Async(), Test262Async.class);
-        }
-    }
-
-    @After
-    public void tearDown() {
-        globals.release(global);
     }
 
     @Test
     public void runTest() throws Throwable {
-        if (!isValidTestConfiguration()) {
-            return;
-        }
-
-        // Evaluate actual test-script
-        if (test.isModule()) {
-            global.evalModule(test.toModuleName(), sourceCode, 1 - preambleLines);
-        } else {
-            global.eval(test.toFile(), sourceCode, 1 - preambleLines);
-        }
-
-        // Wait for pending tasks to finish
-        if (test.isAsync()) {
-            assertFalse(async.isDone());
-            global.getRealm().getWorld().runEventLoop();
-            assertTrue(async.isDone());
-        } else {
-            global.getRealm().getWorld().runEventLoop();
-        }
+        realm.execute(test);
     }
 
     @Test
     @Strict
     public void runTestStrict() throws Throwable {
-        if (!isValidTestConfiguration()) {
-            return;
-        }
-
-        // Evaluate actual test-script
-        if (test.isModule()) {
-            global.evalModule(test.toModuleName(), sourceCode, 1 - preambleLines);
-        } else {
-            global.eval(test.toFile(), sourceCode, 1 - preambleLines);
-        }
-
-        // Wait for pending tasks to finish
-        if (test.isAsync()) {
-            assertFalse(async.isDone());
-            global.getRealm().getWorld().runEventLoop();
-            assertTrue(async.isDone());
-        } else {
-            global.getRealm().getWorld().runEventLoop();
-        }
+        realm.executeStrict(test);
     }
 
     @Retention(RetentionPolicy.RUNTIME)

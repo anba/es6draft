@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -11,9 +11,13 @@ import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 
 /**
- *
+ * <h1>9 Ordinary and Exotic Objects Behaviours</h1><br>
+ * <h2>9.4 Built-in Exotic Object Internal Methods and Slots</h2>
+ * <ul>
+ * <li>9.4.7 Immutable Prototype Exotic Objects
+ * </ul>
  */
-public abstract class ImmutablePrototypeObject extends OrdinaryObject {
+public class ImmutablePrototypeObject extends OrdinaryObject {
     /**
      * Constructs a new Immutable Prototype Object instance.
      * 
@@ -23,19 +27,36 @@ public abstract class ImmutablePrototypeObject extends OrdinaryObject {
      *            the initial prototype
      */
     public ImmutablePrototypeObject(Realm realm, ScriptObject prototype) {
-        super(realm);
-        setPrototype(prototype);
+        super(realm, prototype);
     }
 
+    /**
+     * 9.4.7.1 [[SetPrototypeOf]] (V)
+     */
     @Override
-    public boolean setPrototypeOf(ExecutionContext cx, ScriptObject prototype) {
+    public final boolean setPrototypeOf(ExecutionContext cx, ScriptObject prototype) {
         /* step 1 */
-        ScriptObject current = getPrototype();
+        return SetImmutablePrototype(this, prototype);
+    }
+
+    /**
+     * 9.4.7.2 SetImmutablePrototype ( O, V )
+     * 
+     * @param obj
+     *            the script object
+     * @param prototype
+     *            the new prototype object
+     * @return {@code true} if the prototype was successfully updated
+     */
+    public static final boolean SetImmutablePrototype(OrdinaryObject obj, ScriptObject prototype) {
+        /* step 1 (not applicable) */
         /* step 2 */
+        ScriptObject current = obj.getPrototype();
+        /* step 3 */
         if (prototype == current) { // SameValue(prototype, current)
             return true;
         }
-        /* step 3 */
+        /* step 4 */
         return false;
     }
 }

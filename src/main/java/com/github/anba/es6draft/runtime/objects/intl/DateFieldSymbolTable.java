@@ -1,10 +1,12 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
  */
 package com.github.anba.es6draft.runtime.objects.intl;
+
+import java.util.Arrays;
 
 /**
  * <h1>Unicode Locale Data Markup Language (LDML)</h1>
@@ -14,7 +16,7 @@ package com.github.anba.es6draft.runtime.objects.intl;
  * <li>Date Field Symbol Table
  * </ul>
  * <p>
- * Version: 28
+ * Version: 29
  * 
  * @see <a href="http://unicode.org/reports/tr35/tr35-dates.html#Date_Format_Patterns">Date&nbsp;Format&nbsp;Patterns
  *      </a>
@@ -28,25 +30,28 @@ final class DateFieldSymbolTable {
     static final class Skeleton {
         private final char[] symbols;
         private final FieldWeight[] fieldWeights;
-        private final boolean hour12;
 
-        public Skeleton(String skeleton) {
+        private Skeleton(char[] symbols, FieldWeight[] weights) {
+            this.symbols = symbols;
+            this.fieldWeights = weights;
+        }
+
+        /**
+         * Parses a skeleton pattern and returns the corresponding skeleton object.
+         * 
+         * @param skeleton
+         *            the skeleton pattern
+         * @return the skeleton object for the skeleton
+         * 
+         * @see <a href="http://unicode.org/reports/tr35/tr35-dates.html#availableFormats_appendItems">Date Format
+         *      Patterns</a>
+         */
+        public static Skeleton fromSkeleton(String skeleton) {
             char[] symbols = new char[DateField.LENGTH];
             FieldWeight[] weights = new FieldWeight[DateField.LENGTH];
-            boolean hour12 = false, quote = false;
             for (int i = 0, len = skeleton.length(); i < len;) {
                 char sym = skeleton.charAt(i++);
-                if (sym == '\'') {
-                    if (i < len && skeleton.charAt(i) == '\'') {
-                        i += 1;
-                    } else {
-                        quote = !quote;
-                    }
-                    continue;
-                }
-                if (quote || !(('A' <= sym && sym <= 'Z') || ('a' <= sym && sym <= 'z'))) {
-                    continue;
-                }
+                assert ('A' <= sym && sym <= 'Z') || ('a' <= sym && sym <= 'z');
                 int length = 1;
                 for (; i < len && skeleton.charAt(i) == sym; ++i) {
                     length += 1;
@@ -59,17 +64,81 @@ final class DateFieldSymbolTable {
                 }
                 symbols[index] = sym;
                 weights[index] = weight;
-                if (field == DateField.Hour) {
-                    hour12 = (sym == 'h' || sym == 'K');
-                }
             }
-            this.symbols = symbols;
-            this.fieldWeights = weights;
-            this.hour12 = hour12;
+            return new Skeleton(symbols, weights);
         }
 
-        public boolean has(DateField field) {
-            return fieldWeights[field.ordinal()] != null;
+        /**
+         * Parses a format pattern and returns the corresponding skeleton.
+         * 
+         * @param pattern
+         *            the format pattern
+         * @return the skeleton for the pattern
+         * 
+         * @see <a href="http://unicode.org/reports/tr35/tr35-dates.html#Date_Format_Patterns">Date Format Patterns</a>
+         */
+        public static Skeleton fromPattern(String pattern) {
+            char[] symbols = new char[DateField.LENGTH];
+            FieldWeight[] weights = new FieldWeight[DateField.LENGTH];
+            boolean quote = false;
+            for (int i = 0, len = pattern.length(); i < len;) {
+                char sym = pattern.charAt(i++);
+                if (sym == '\'') {
+                    if (i < len && pattern.charAt(i) == '\'') {
+                        i += 1;
+                    } else {
+                        quote = !quote;
+                    }
+                    continue;
+                }
+                if (quote || !(('A' <= sym && sym <= 'Z') || ('a' <= sym && sym <= 'z'))) {
+                    continue;
+                }
+                int length = 1;
+                for (; i < len && pattern.charAt(i) == sym; ++i) {
+                    length += 1;
+                }
+                DateField field = DateField.forSymbol(sym);
+                FieldWeight weight = field.getWeight(sym, length);
+                int index = field.ordinal();
+                if (symbols[index] != 0) {
+                    throw new IllegalArgumentException();
+                }
+                symbols[index] = sym;
+                weights[index] = weight;
+            }
+            return new Skeleton(symbols, weights);
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj == this) {
+                return true;
+            }
+            if (obj == null || obj.getClass() != Skeleton.class) {
+                return false;
+            }
+            Skeleton other = (Skeleton) obj;
+            return Arrays.equals(symbols, other.symbols) && Arrays.equals(fieldWeights, other.fieldWeights);
+        }
+
+        @Override
+        public int hashCode() {
+            final int prime = 31;
+            int result = 1;
+            result = prime * result + Arrays.hashCode(fieldWeights);
+            result = prime * result + Arrays.hashCode(symbols);
+            return result;
+        }
+
+        @Override
+        public String toString() {
+            StringBuilder sb = new StringBuilder();
+            for (DateField df : DateField.values()) {
+                int index = df.ordinal();
+                df.append(sb, fieldWeights[index], symbols[index]);
+            }
+            return sb.toString();
         }
 
         public char getSymbol(DateField field) {
@@ -80,16 +149,69 @@ final class DateFieldSymbolTable {
             return fieldWeights[field.ordinal()];
         }
 
+        public boolean has(DateField field) {
+            return getWeight(field) != null;
+        }
+
+        public boolean isSingleton() {
+            boolean found = false;
+            for (int i = 0; i < DateField.LENGTH; ++i) {
+                if (fieldWeights[i] != null) {
+                    if (found != false) {
+                        return false;
+                    }
+                    found = true;
+                }
+            }
+            return found;
+        }
+
         public boolean isHour12() {
-            return hour12;
+            char hour = getSymbol(DateField.Hour);
+            return (hour == 'h' || hour == 'K');
+        }
+
+        public String hourCycle() {
+            char hour = getSymbol(DateField.Hour);
+            switch (hour) {
+            case 'h':
+                return "h12";
+            case 'H':
+                return "h23";
+            case 'k':
+                return "h24";
+            case 'K':
+                return "h11";
+            default:
+                throw new AssertionError();
+            }
+        }
+
+        public Skeleton hour12() {
+            assert has(DateField.Hour) && !isHour12();
+            int hourIndex = DateField.Hour.ordinal();
+            char[] symbols = this.symbols.clone();
+            symbols[hourIndex] = (char) (symbols[hourIndex] ^ 0x20);
+            return new Skeleton(symbols, fieldWeights);
+        }
+
+        public Skeleton hour24() {
+            assert has(DateField.Hour) && isHour12();
+            int hourIndex = DateField.Hour.ordinal();
+            char[] symbols = this.symbols.clone();
+            symbols[hourIndex] = (char) (symbols[hourIndex] ^ 0x20);
+            return new Skeleton(symbols, fieldWeights);
         }
 
         public boolean isDate() {
-            return has(DateField.Year) || has(DateField.Month) || has(DateField.Day);
+            if (has(DateField.Year) || has(DateField.Month) || has(DateField.Day) || has(DateField.Era)) {
+                return true;
+            }
+            return has(DateField.Weekday) && !isTime();
         }
 
         public boolean isTime() {
-            return has(DateField.Hour) || has(DateField.Minute) || has(DateField.Second);
+            return has(DateField.Hour) || has(DateField.Minute) || has(DateField.Second) || has(DateField.Timezone);
         }
     }
 
@@ -477,7 +599,7 @@ final class DateFieldSymbolTable {
             }
         }
 
-        protected final void append(StringBuilder sb, FieldWeight weight, char c) {
+        final void append(StringBuilder sb, FieldWeight weight, char c) {
             if (weight != null) {
                 int n = weight.length();
                 sb.ensureCapacity(sb.length() + n);

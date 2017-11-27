@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -11,7 +11,7 @@ import java.util.List;
 /**
  * Extension: Array and Generator Comprehension
  */
-public class Comprehension extends AstNode {
+public final class Comprehension extends AstNode {
     private final List<ComprehensionQualifier> list;
     private final Expression expression;
 

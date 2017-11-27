@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -7,9 +7,7 @@
 package com.github.anba.es6draft.runtime.types.builtins;
 
 import static com.github.anba.es6draft.runtime.types.Null.NULL;
-import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.FunctionInitialize;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
@@ -57,11 +55,6 @@ public final class LegacyConstructorFunction extends FunctionObject implements C
         super(realm);
     }
 
-    @Override
-    protected LegacyConstructorFunction allocateNew() {
-        return FunctionAllocate(getRealm().defaultContext(), getPrototype());
-    }
-
     private static boolean isNonStrictFunctionOrNull(FunctionObject v) {
         return v == null || !v.isStrict();
     }
@@ -72,7 +65,7 @@ public final class LegacyConstructorFunction extends FunctionObject implements C
      * @return {@code true} if legacy .arguments is supported
      */
     private boolean hasArguments() {
-        return !isClone() && getRealm().isEnabled(CompatibilityOption.FunctionArguments);
+        return getRealm().getRuntimeContext().isEnabled(CompatibilityOption.FunctionArguments);
     }
 
     /**
@@ -81,7 +74,7 @@ public final class LegacyConstructorFunction extends FunctionObject implements C
      * @return {@code true} if legacy .caller is supported
      */
     private boolean hasCaller() {
-        return !isClone() && getRealm().isEnabled(CompatibilityOption.FunctionCaller);
+        return getRealm().getRuntimeContext().isEnabled(CompatibilityOption.FunctionCaller);
     }
 
     /**
@@ -137,15 +130,7 @@ public final class LegacyConstructorFunction extends FunctionObject implements C
     }
 
     @Override
-    protected boolean has(ExecutionContext cx, String propertyKey) {
-        if (("arguments".equals(propertyKey) && hasArguments()) || ("caller".equals(propertyKey) && hasCaller())) {
-            return true;
-        }
-        return super.has(cx, propertyKey);
-    }
-
-    @Override
-    protected boolean hasOwnProperty(ExecutionContext cx, String propertyKey) {
+    public boolean hasOwnProperty(ExecutionContext cx, String propertyKey) {
         if (("arguments".equals(propertyKey) && hasArguments()) || ("caller".equals(propertyKey) && hasCaller())) {
             return true;
         }
@@ -153,7 +138,7 @@ public final class LegacyConstructorFunction extends FunctionObject implements C
     }
 
     @Override
-    protected Property getProperty(ExecutionContext cx, String propertyKey) {
+    public Property getOwnProperty(ExecutionContext cx, String propertyKey) {
         if ("arguments".equals(propertyKey) && hasArguments()) {
             return argumentsProperty(cx);
         }
@@ -165,7 +150,7 @@ public final class LegacyConstructorFunction extends FunctionObject implements C
     }
 
     @Override
-    protected boolean defineProperty(ExecutionContext cx, String propertyKey, PropertyDescriptor desc) {
+    public boolean defineOwnProperty(ExecutionContext cx, String propertyKey, PropertyDescriptor desc) {
         // If the property descriptor is compatible and the [[Writable]] field is present, assume
         // this call to [[DefineOwnProperty]] is meant to freeze the property value. Also reset the
         // property value by setting its value to `null`, so we won't leak previous .arguments or
@@ -186,42 +171,44 @@ public final class LegacyConstructorFunction extends FunctionObject implements C
             }
             return compatible;
         }
-        return super.defineProperty(cx, propertyKey, desc);
+        return super.defineOwnProperty(cx, propertyKey, desc);
     }
 
     @Override
-    protected boolean setPropertyValue(ExecutionContext cx, String propertyKey, Object value, Property current) {
+    public boolean set(ExecutionContext cx, String propertyKey, Object value, Object receiver) {
         // Disallow direct [[Set]] on .arguments and .caller, but still return `true` so the
         // result value is consistent with [[DefineOwnProperty]].
-        if (("arguments".equals(propertyKey) && hasArguments()) || "caller".equals(propertyKey) && hasCaller()) {
-            return true;
+        if (receiver == this && "arguments".equals(propertyKey) && hasArguments()) {
+            return argumentsWritable;
         }
-        return super.setPropertyValue(cx, propertyKey, value, current);
+        if (receiver == this && "caller".equals(propertyKey) && hasCaller()) {
+            return callerWritable;
+        }
+        return super.set(cx, propertyKey, value, receiver);
     }
 
     @Override
-    protected List<Object> getOwnPropertyKeys(ExecutionContext cx) {
-        boolean hasArguments = hasArguments(), hasCaller = hasCaller();
-        int extraSlots = 0;
-        if (hasArguments) {
-            ++extraSlots;
+    public Enumerability isEnumerableOwnProperty(ExecutionContext cx, String propertyKey) {
+        // Overridden to avoid creating the arguments object, cf. getOwnProperty(...) method above.
+        if ("arguments".equals(propertyKey) && hasArguments()) {
+            return Enumerability.NonEnumerable;
         }
-        if (hasCaller) {
-            ++extraSlots;
+        if ("caller".equals(propertyKey) && hasCaller()) {
+            return Enumerability.NonEnumerable;
         }
-        int totalSize = countProperties(true) + extraSlots;
-        ArrayList<Object> ownKeys = new ArrayList<>(totalSize);
-        appendIndexedProperties(ownKeys);
+        return super.isEnumerableOwnProperty(cx, propertyKey);
+    }
+
+    @Override
+    protected void ownPropertyNames(List<? super String> list) {
         // TODO: add test case for property order
-        if (hasArguments) {
-            ownKeys.add("arguments");
+        if (hasArguments()) {
+            list.add("arguments");
         }
-        if (hasCaller) {
-            ownKeys.add("caller");
+        if (hasCaller()) {
+            list.add("caller");
         }
-        appendProperties(ownKeys);
-        appendSymbolProperties(ownKeys);
-        return ownKeys;
+        super.ownPropertyNames(list);
     }
 
     /**
@@ -257,26 +244,6 @@ public final class LegacyConstructorFunction extends FunctionObject implements C
     }
 
     /**
-     * 9.2.3 FunctionAllocate (functionPrototype, strict [,functionKind] )
-     * 
-     * @param cx
-     *            the execution context
-     * @param functionPrototype
-     *            the function prototype
-     * @return the new function object
-     */
-    public static LegacyConstructorFunction FunctionAllocate(ExecutionContext cx, ScriptObject functionPrototype) {
-        Realm realm = cx.getRealm();
-        /* steps 1-5 (implicit) */
-        /* steps 6-9 */
-        LegacyConstructorFunction f = new LegacyConstructorFunction(realm);
-        /* steps 10-14 */
-        f.allocate(realm, functionPrototype, false, FunctionKind.Normal, ConstructorKind.Base);
-        /* step 15 */
-        return f;
-    }
-
-    /**
      * 9.2.5 FunctionCreate (kind, ParameterList, Body, Scope, Strict)
      * 
      * @param cx
@@ -289,12 +256,14 @@ public final class LegacyConstructorFunction extends FunctionObject implements C
      */
     public static LegacyConstructorFunction LegacyFunctionCreate(ExecutionContext cx, RuntimeInfo.Function function,
             LexicalEnvironment<?> scope) {
+        assert !function.isStrict();
         /* step 1 */
         ScriptObject prototype = cx.getIntrinsic(Intrinsics.FunctionPrototype);
         /* steps 2-3 */
         assert !function.isGenerator() && !function.isAsync();
         /* step 4 */
-        LegacyConstructorFunction f = FunctionAllocate(cx, prototype);
+        LegacyConstructorFunction f = FunctionAllocate(cx, LegacyConstructorFunction::new, prototype, false,
+                FunctionKind.Normal);
         /* step 5 */
         FunctionInitialize(f, FunctionKind.Normal, function, scope, cx.getCurrentExecutable());
         return f;

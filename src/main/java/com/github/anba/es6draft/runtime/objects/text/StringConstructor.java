@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -20,6 +20,7 @@ import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
+import com.github.anba.es6draft.runtime.internal.StrBuilder;
 import com.github.anba.es6draft.runtime.internal.Strings;
 import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
@@ -52,11 +53,6 @@ public final class StringConstructor extends BuiltinConstructor implements Initi
         createProperties(realm, this, Properties.class);
     }
 
-    @Override
-    public StringConstructor clone() {
-        return new StringConstructor(getRealm());
-    }
-
     /**
      * 21.1.1.1 String ( value )
      */
@@ -67,12 +63,12 @@ public final class StringConstructor extends BuiltinConstructor implements Initi
         if (args.length == 0) {
             return "";
         }
-        /* steps 2-3 */
         Object value = args[0];
+        /* step 2.a */
         if (Type.isSymbol(value)) {
-            return SymbolDescriptiveString(Type.symbolValue(value));
+            return SymbolDescriptiveString(calleeContext, Type.symbolValue(value));
         }
-        /* steps 4-5 */
+        /* steps 2.b, 3 */
         return ToString(calleeContext, value);
     }
 
@@ -80,13 +76,12 @@ public final class StringConstructor extends BuiltinConstructor implements Initi
      * 21.1.1.1 String ( value )
      */
     @Override
-    public StringObject construct(ExecutionContext callerContext, Constructor newTarget,
-            Object... args) {
+    public StringObject construct(ExecutionContext callerContext, Constructor newTarget, Object... args) {
         ExecutionContext calleeContext = calleeContext();
-        /* steps 1-3 */
+        /* steps 1-2 */
         CharSequence s = args.length == 0 ? "" : ToString(calleeContext, args[0]);
-        /* step 4 (not applicable) */
-        /* step 5 */
+        /* step 3 (not applicable) */
+        /* step 4 */
         return StringCreate(calleeContext, s,
                 GetPrototypeFromConstructor(calleeContext, newTarget, Intrinsics.StringPrototype));
     }
@@ -100,19 +95,16 @@ public final class StringConstructor extends BuiltinConstructor implements Initi
         @Prototype
         public static final Intrinsics __proto__ = Intrinsics.FunctionPrototype;
 
-        @Value(name = "length", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = true))
+        @Value(name = "length", attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static final int length = 1;
 
-        @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = true))
+        @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static final String name = "String";
 
         /**
          * 21.1.2.3 String.prototype
          */
-        @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = false))
+        @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false, configurable = false))
         public static final Intrinsics prototype = Intrinsics.StringPrototype;
 
         /**
@@ -127,21 +119,20 @@ public final class StringConstructor extends BuiltinConstructor implements Initi
          * @return the result string
          */
         @Function(name = "fromCharCode", arity = 1)
-        public static Object fromCharCode(ExecutionContext cx, Object thisValue,
-                Object... codeUnits) {
+        public static Object fromCharCode(ExecutionContext cx, Object thisValue, Object... codeUnits) {
             /* steps 1-2 */
             int length = codeUnits.length;
             // Optimize:
             if (length == 1) {
-                return String.valueOf((char) ToUint16(cx, codeUnits[0]));
+                return String.valueOf(ToUint16(cx, codeUnits[0]));
             }
             /* step 3 */
             char elements[] = new char[length];
             /* steps 4-5 */
             for (int nextIndex = 0; nextIndex < length; ++nextIndex) {
-                /* steps 5.a-c */
+                /* steps 5.a-b */
                 char nextCU = ToUint16(cx, codeUnits[nextIndex]);
-                /* steps 5.d-e */
+                /* step 5.c */
                 elements[nextIndex] = nextCU;
             }
             /* step 6 */
@@ -160,34 +151,33 @@ public final class StringConstructor extends BuiltinConstructor implements Initi
          * @return the result string
          */
         @Function(name = "fromCodePoint", arity = 1)
-        public static Object fromCodePoint(ExecutionContext cx, Object thisValue,
-                Object... codePoints) {
+        public static Object fromCodePoint(ExecutionContext cx, Object thisValue, Object... codePoints) {
             /* steps 1-2 */
             int length = codePoints.length;
             // Optimize:
             if (length == 1) {
-                /* steps 5.a-c */
+                /* steps 5.a-b */
                 double nextCP = ToNumber(cx, codePoints[0]);
                 int cp = (int) nextCP;
-                /* steps 5.d-e */
+                /* steps 5.c-d */
                 if (cp < 0 || cp > 0x10FFFF || nextCP != (double) cp) {
                     throw newRangeError(cx, Messages.Key.InvalidCodePoint);
                 }
-                /* steps 5.f, 6 */
+                /* steps 5.e, 6 */
                 return Strings.fromCodePoint(cp);
             }
             /* step 3 */
             int elements[] = new int[length];
             /* steps 4-5 */
             for (int nextIndex = 0; nextIndex < length; ++nextIndex) {
-                /* steps 5.a-c */
+                /* steps 5.a-b */
                 double nextCP = ToNumber(cx, codePoints[nextIndex]);
                 int cp = (int) nextCP;
-                /* steps 5.d-e */
+                /* steps 5.c-d */
                 if (cp < 0 || cp > 0x10FFFF || nextCP != (double) cp) {
                     throw newRangeError(cx, Messages.Key.InvalidCodePoint);
                 }
-                /* step 5.f */
+                /* step 5.e */
                 elements[nextIndex] = cp;
             }
             /* step 6 */
@@ -208,34 +198,33 @@ public final class StringConstructor extends BuiltinConstructor implements Initi
          * @return the interpolated string
          */
         @Function(name = "raw", arity = 1)
-        public static Object raw(ExecutionContext cx, Object thisValue, Object template,
-                Object... substitutions) {
+        public static Object raw(ExecutionContext cx, Object thisValue, Object template, Object... substitutions) {
             /* step 1 (not applicable) */
             /* step 2 */
             long numberOfSubstitutions = substitutions.length;
-            /* steps 3-4 */
+            /* step 3 */
             ScriptObject cooked = ToObject(cx, template);
-            /* steps 5-6 */
+            /* step 4 */
             ScriptObject raw = ToObject(cx, Get(cx, cooked, "raw"));
-            /* steps 7-8 */
+            /* step 5 */
             long literalSegments = ToLength(cx, Get(cx, raw, "length"));
-            /* step 9 */
+            /* step 6 */
             if (literalSegments <= 0) {
                 return "";
             }
-            /* step 10 */
-            StringBuilder stringElements = new StringBuilder();
-            /* steps 11-12 */
+            /* step 7 */
+            StrBuilder stringElements = new StrBuilder(cx);
+            /* steps 8-9 */
             for (long nextIndex = 0;; ++nextIndex) {
-                /* steps 12.a-c */
+                /* steps 9.a-b */
                 CharSequence nextSeg = ToString(cx, Get(cx, raw, nextIndex));
-                /* step 12.d */
+                /* step 9.c */
                 stringElements.append(nextSeg);
-                /* step 12.e */
+                /* step 9.d */
                 if (nextIndex + 1 == literalSegments) {
                     return stringElements.toString();
                 }
-                /* steps 12.f-j */
+                /* steps 9.e-h */
                 if (nextIndex < numberOfSubstitutions) {
                     CharSequence nextSub = ToString(cx, substitutions[(int) nextIndex]);
                     stringElements.append(nextSub);

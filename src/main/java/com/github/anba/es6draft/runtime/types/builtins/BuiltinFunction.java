@@ -1,21 +1,22 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
  */
 package com.github.anba.es6draft.runtime.types.builtins;
 
+import static com.github.anba.es6draft.runtime.AbstractOperations.SameValue;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
 import java.util.List;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
+import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Property;
@@ -27,7 +28,7 @@ import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
  * <li>9.3 Built-in Function Objects
  * </ul>
  */
-public abstract class BuiltinFunction extends OrdinaryObject implements Callable, Cloneable {
+public abstract class BuiltinFunction extends OrdinaryObject implements Callable {
     /**
      * Function name for anonymous functions.
      */
@@ -109,23 +110,14 @@ public abstract class BuiltinFunction extends OrdinaryObject implements Callable
         // "length" property of function objects, cf. 19.2.4.1
         hasDefaultLength = true;
         // anonymous functions do not have an own "name" property, cf. 19.2.4.2
-        if (!name.isEmpty()) {
-            hasDefaultName = true;
-        }
-    }
-
-    @Override
-    protected abstract BuiltinFunction clone();
-
-    @Override
-    public final BuiltinFunction clone(ExecutionContext cx) {
-        BuiltinFunction f = clone();
-        f.setPrototype(getPrototype());
-        return f;
+        hasDefaultName = !name.isEmpty();
     }
 
     @Override
     public final String toSource(ExecutionContext cx) {
+        if (cx.getRuntimeContext().isEnabled(CompatibilityOption.FunctionToString)) {
+            return FunctionSource.nativeCodeWithBindingIdentifier(name);
+        }
         return FunctionSource.nativeCode(name);
     }
 
@@ -210,7 +202,7 @@ public abstract class BuiltinFunction extends OrdinaryObject implements Callable
     }
 
     @Override
-    public long getLength() {
+    public final long getLength() {
         if (hasDefaultLength) {
             return arity;
         }
@@ -218,133 +210,102 @@ public abstract class BuiltinFunction extends OrdinaryObject implements Callable
     }
 
     @Override
-    protected boolean setPropertyValue(ExecutionContext cx, String propertyKey, Object value, Property current) {
-        assert !(hasDefaultName && "name".equals(propertyKey));
-        assert !(hasDefaultLength && "length".equals(propertyKey));
-        return super.setPropertyValue(cx, propertyKey, value, current);
-    }
-
-    @Override
-    protected boolean has(ExecutionContext cx, String propertyKey) {
-        if (hasDefaultName && "name".equals(propertyKey)) {
+    public final boolean hasOwnProperty(ExecutionContext cx, String propertyKey) {
+        if ("name".equals(propertyKey) && hasDefaultName) {
             return true;
         }
-        if (hasDefaultLength && "length".equals(propertyKey)) {
-            return true;
-        }
-        return super.has(cx, propertyKey);
-    }
-
-    @Override
-    protected boolean hasOwnProperty(ExecutionContext cx, String propertyKey) {
-        if (hasDefaultName && "name".equals(propertyKey)) {
-            return true;
-        }
-        if (hasDefaultLength && "length".equals(propertyKey)) {
+        if ("length".equals(propertyKey) && hasDefaultLength) {
             return true;
         }
         return super.hasOwnProperty(cx, propertyKey);
     }
 
     @Override
-    protected Property getProperty(ExecutionContext cx, String propertyKey) {
-        if (hasDefaultName && "name".equals(propertyKey)) {
+    public final Property getOwnProperty(ExecutionContext cx, String propertyKey) {
+        if ("name".equals(propertyKey) && hasDefaultName) {
             return new Property(name, false, false, true);
         }
-        if (hasDefaultLength && "length".equals(propertyKey)) {
+        if ("length".equals(propertyKey) && hasDefaultLength) {
             return new Property(arity, false, false, true);
         }
-        return super.getProperty(cx, propertyKey);
+        return super.getOwnProperty(cx, propertyKey);
     }
 
     @Override
-    protected boolean defineProperty(ExecutionContext cx, String propertyKey, PropertyDescriptor desc) {
-        if (hasDefaultName && "name".equals(propertyKey)) {
-            hasDefaultName = false;
-            defineOwnPropertyUnchecked(propertyKey, new Property(name, false, false, true));
+    public final boolean defineOwnProperty(ExecutionContext cx, String propertyKey, PropertyDescriptor desc) {
+        if ("name".equals(propertyKey) && hasDefaultName) {
+            if (isCompatiblePropertyDescriptorForDefault(desc, name)) {
+                return true;
+            }
+            reifyDefaultProperties();
         }
-        if (hasDefaultLength && "length".equals(propertyKey)) {
-            hasDefaultLength = false;
-            defineOwnPropertyUnchecked(propertyKey, new Property(arity, false, false, true));
+        if ("length".equals(propertyKey) && hasDefaultLength) {
+            if (isCompatiblePropertyDescriptorForDefault(desc, arity)) {
+                return true;
+            }
+            reifyDefaultProperties();
         }
-        return super.defineProperty(cx, propertyKey, desc);
+        return super.defineOwnProperty(cx, propertyKey, desc);
+    }
+
+    private void reifyDefaultProperties() {
+        assert hasDefaultName || hasDefaultLength;
+        // This is a bit kludgy, but necessary to ensure the property order is spec-compliant. Alternatively we could
+        // store the default 'name' and 'length' properties as Property objects.
+        defineOwnPropertiesUncheckedAtFront(p -> {
+            if (hasDefaultLength) {
+                p.accept("length", new Property(arity, false, false, true));
+            }
+            if (hasDefaultName) {
+                p.accept("name", new Property(name, false, false, true));
+            }
+        });
+        hasDefaultName = false;
+        hasDefaultLength = false;
+    }
+
+    private boolean isCompatiblePropertyDescriptorForDefault(PropertyDescriptor desc, Object currentValue) {
+        if (desc.isAccessorDescriptor()) {
+            return false;
+        }
+        if (desc.hasEnumerable() && desc.isEnumerable()) {
+            return false;
+        }
+        if (desc.hasConfigurable() && !desc.isConfigurable()) {
+            return false;
+        }
+        if (desc.isDataDescriptor()) {
+            if (desc.hasWritable() && desc.isWritable()) {
+                return false;
+            }
+            if (desc.hasValue() && !SameValue(currentValue, desc.getValue())) {
+                return false;
+            }
+        }
+        return true;
     }
 
     @Override
-    protected boolean deleteProperty(ExecutionContext cx, String propertyKey) {
-        if (hasDefaultName && "name".equals(propertyKey)) {
+    public final boolean delete(ExecutionContext cx, String propertyKey) {
+        if ("name".equals(propertyKey) && hasDefaultName) {
             hasDefaultName = false;
             return true;
         }
-        if (hasDefaultLength && "length".equals(propertyKey)) {
+        if ("length".equals(propertyKey) && hasDefaultLength) {
             hasDefaultLength = false;
             return true;
         }
-        return super.deleteProperty(cx, propertyKey);
+        return super.delete(cx, propertyKey);
     }
 
     @Override
-    protected List<String> getEnumerableKeys(ExecutionContext cx) {
-        if (hasDefaultLength || hasDefaultName) {
-            int totalSize = countProperties(false);
-            if (hasDefaultLength) {
-                totalSize += 1;
-            }
-            if (hasDefaultName) {
-                totalSize += 1;
-            }
-            ArrayList<String> keys = new ArrayList<>(totalSize);
-            appendIndexedProperties(keys);
-            if (hasDefaultLength) {
-                keys.add("length");
-            }
-            if (hasDefaultName) {
-                keys.add("name");
-            }
-            appendProperties(keys);
-            return keys;
+    protected final void ownPropertyNames(List<? super String> list) {
+        if (hasDefaultLength) {
+            list.add("length");
         }
-        return super.getEnumerableKeys(cx);
-    }
-
-    @Override
-    protected Enumerability isEnumerableOwnProperty(String propertyKey) {
-        if (hasDefaultName && "name".equals(propertyKey)) {
-            return Enumerability.NonEnumerable;
+        if (hasDefaultName) {
+            list.add("name");
         }
-        if (hasDefaultLength && "length".equals(propertyKey)) {
-            return Enumerability.NonEnumerable;
-        }
-        return super.isEnumerableOwnProperty(propertyKey);
-    }
-
-    @Override
-    protected List<Object> getOwnPropertyKeys(ExecutionContext cx) {
-        if (hasDefaultLength || hasDefaultName) {
-            int totalSize = countProperties(true);
-            if (hasDefaultLength) {
-                totalSize += 1;
-            }
-            if (hasDefaultName) {
-                totalSize += 1;
-            }
-            /* step 1 */
-            ArrayList<Object> ownKeys = new ArrayList<>(totalSize);
-            /* step 2 */
-            appendIndexedProperties(ownKeys);
-            /* step 3 */
-            if (hasDefaultLength) {
-                ownKeys.add("length");
-            }
-            if (hasDefaultName) {
-                ownKeys.add("name");
-            }
-            appendProperties(ownKeys);
-            /* step 4 */
-            appendSymbolProperties(ownKeys);
-            /* step 5 */
-            return ownKeys;
-        }
-        return super.getOwnPropertyKeys(cx);
+        super.ownPropertyNames(list);
     }
 }

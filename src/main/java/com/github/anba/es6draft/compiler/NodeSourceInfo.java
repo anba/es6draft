@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -8,7 +8,6 @@ package com.github.anba.es6draft.compiler;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.EnumSet;
 import java.util.Formatter;
 import java.util.Locale;
 
@@ -28,16 +27,16 @@ final class NodeSourceInfo {
     private NodeSourceInfo() {
     }
 
-    static SourceInfo create(Script script, EnumSet<Compiler.Option> compilerOptions) {
-        return new ScriptSourceInfo(script, compilerOptions.contains(Compiler.Option.SourceMap));
+    static SourceInfo create(Script script, boolean sourceMap) {
+        return new ScriptSourceInfo(script, sourceMap);
     }
 
-    static SourceInfo create(Module module, EnumSet<Compiler.Option> compilerOptions) {
-        return new ModuleSourceInfo(module, compilerOptions.contains(Compiler.Option.SourceMap));
+    static SourceInfo create(Module module, boolean sourceMap) {
+        return new ModuleSourceInfo(module, sourceMap);
     }
 
-    static SourceInfo create(FunctionNode function, EnumSet<Compiler.Option> compilerOptions) {
-        return new FunctionSourceInfo(function, compilerOptions.contains(Compiler.Option.SourceMap));
+    static SourceInfo create(FunctionNode function, boolean sourceMap) {
+        return new FunctionSourceInfo(function, sourceMap);
     }
 
     private static final class ScriptSourceInfo implements SourceInfo {

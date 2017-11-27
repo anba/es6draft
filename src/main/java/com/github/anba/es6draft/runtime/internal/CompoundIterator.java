@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -16,8 +16,7 @@ public final class CompoundIterator<E> implements Iterator<E> {
     private final Iterator<? extends E> firstIterator;
     private final Iterator<? extends E> secondIterator;
 
-    public CompoundIterator(Iterator<? extends E> firstIterator,
-            Iterator<? extends E> secondIterator) {
+    public CompoundIterator(Iterator<? extends E> firstIterator, Iterator<? extends E> secondIterator) {
         this.firstIterator = firstIterator;
         this.secondIterator = secondIterator;
     }

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -53,11 +53,7 @@ public final class SymbolConstructor extends BuiltinConstructor implements Initi
         createProperties(realm, this, Properties.class);
         createProperties(realm, this, ObservableProperty.class);
         createProperties(realm, this, AsyncIteratorProperty.class);
-    }
-
-    @Override
-    public SymbolConstructor clone() {
-        return new SymbolConstructor(getRealm());
+        createProperties(realm, this, MatchAllProperty.class);
     }
 
     /**
@@ -68,10 +64,9 @@ public final class SymbolConstructor extends BuiltinConstructor implements Initi
         ExecutionContext calleeContext = calleeContext();
         Object description = argument(args, 0);
         /* step 1 (not applicable) */
-        /* steps 2-4 */
-        String descString = Type.isUndefined(description) ? null : ToFlatString(calleeContext,
-                description);
-        /* step 5 */
+        /* steps 2-3 */
+        String descString = Type.isUndefined(description) ? null : ToFlatString(calleeContext, description);
+        /* step 4 */
         return new Symbol(descString);
     }
 
@@ -79,8 +74,7 @@ public final class SymbolConstructor extends BuiltinConstructor implements Initi
      * 19.4.1.1 Symbol ( [ description ] )
      */
     @Override
-    public ScriptObject construct(ExecutionContext callerContext, Constructor newTarget,
-            Object... args) {
+    public ScriptObject construct(ExecutionContext callerContext, Constructor newTarget, Object... args) {
         /* step 1 */
         throw newTypeError(calleeContext(), Messages.Key.SymbolCreate);
     }
@@ -94,96 +88,87 @@ public final class SymbolConstructor extends BuiltinConstructor implements Initi
         @Prototype
         public static final Intrinsics __proto__ = Intrinsics.FunctionPrototype;
 
-        @Value(name = "length", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = true))
+        @Value(name = "length", attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static final int length = 0;
 
-        @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = true))
+        @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static final String name = "Symbol";
 
         /**
          * 19.4.2.7 Symbol.prototype
          */
-        @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = false))
+        @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false, configurable = false))
         public static final Intrinsics prototype = Intrinsics.SymbolPrototype;
 
         /**
          * 19.4.2.2 Symbol.hasInstance
          */
-        @Value(name = "hasInstance", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = false))
+        @Value(name = "hasInstance",
+                attributes = @Attributes(writable = false, enumerable = false, configurable = false))
         public static final Symbol hasInstance = BuiltinSymbol.hasInstance.get();
 
         /**
          * 19.4.2.3 Symbol.isConcatSpreadable
          */
-        @Value(name = "isConcatSpreadable", attributes = @Attributes(writable = false,
-                enumerable = false, configurable = false))
+        @Value(name = "isConcatSpreadable",
+                attributes = @Attributes(writable = false, enumerable = false, configurable = false))
         public static final Symbol isConcatSpreadable = BuiltinSymbol.isConcatSpreadable.get();
 
         /**
          * 19.4.2.4 Symbol.iterator
          */
-        @Value(name = "iterator", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = false))
+        @Value(name = "iterator", attributes = @Attributes(writable = false, enumerable = false, configurable = false))
         public static final Symbol iterator = BuiltinSymbol.iterator.get();
 
         /**
          * 19.4.2.6 Symbol.match
          */
-        @Value(name = "match", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = false))
+        @Value(name = "match", attributes = @Attributes(writable = false, enumerable = false, configurable = false))
         public static final Symbol match = BuiltinSymbol.match.get();
 
         /**
          * 19.4.2.8 Symbol.replace
          */
-        @Value(name = "replace", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = false))
+        @Value(name = "replace", attributes = @Attributes(writable = false, enumerable = false, configurable = false))
         public static final Symbol replace = BuiltinSymbol.replace.get();
 
         /**
          * 19.4.2.9 Symbol.search
          */
-        @Value(name = "search", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = false))
+        @Value(name = "search", attributes = @Attributes(writable = false, enumerable = false, configurable = false))
         public static final Symbol search = BuiltinSymbol.search.get();
 
         /**
          * 19.4.2.10 Symbol.species
          */
-        @Value(name = "species", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = false))
+        @Value(name = "species", attributes = @Attributes(writable = false, enumerable = false, configurable = false))
         public static final Symbol species = BuiltinSymbol.species.get();
 
         /**
          * 19.4.2.11 Symbol.split
          */
-        @Value(name = "split", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = false))
+        @Value(name = "split", attributes = @Attributes(writable = false, enumerable = false, configurable = false))
         public static final Symbol split = BuiltinSymbol.split.get();
 
         /**
          * 19.4.2.12 Symbol.toPrimitive
          */
-        @Value(name = "toPrimitive", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = false))
+        @Value(name = "toPrimitive",
+                attributes = @Attributes(writable = false, enumerable = false, configurable = false))
         public static final Symbol toPrimitive = BuiltinSymbol.toPrimitive.get();
 
         /**
          * 19.4.2.13 Symbol.toStringTag
          */
-        @Value(name = "toStringTag", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = false))
+        @Value(name = "toStringTag",
+                attributes = @Attributes(writable = false, enumerable = false, configurable = false))
         public static final Symbol toStringTag = BuiltinSymbol.toStringTag.get();
 
         /**
          * 19.4.2.14 Symbol.unscopables
          */
-        @Value(name = "unscopables", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = false))
+        @Value(name = "unscopables",
+                attributes = @Attributes(writable = false, enumerable = false, configurable = false))
         public static final Symbol unscopables = BuiltinSymbol.unscopables.get();
 
         /**
@@ -199,9 +184,9 @@ public final class SymbolConstructor extends BuiltinConstructor implements Initi
          */
         @Function(name = "for", arity = 1)
         public static Object _for(ExecutionContext cx, Object thisValue, Object key) {
-            /* steps 1-2 */
+            /* step 1 */
             String stringKey = ToFlatString(cx, key);
-            /* steps 3-7 */
+            /* steps 2-6 */
             return cx.getRealm().getSymbolRegistry().getSymbol(stringKey);
         }
 
@@ -245,9 +230,9 @@ public final class SymbolConstructor extends BuiltinConstructor implements Initi
     }
 
     /**
-     * Extension: Async Generator Functions
+     * Extension: Asynchronous Iteration
      */
-    @CompatibilityExtension(CompatibilityOption.AsyncGenerator)
+    @CompatibilityExtension(CompatibilityOption.AsyncIteration)
     public enum AsyncIteratorProperty {
         ;
 
@@ -257,5 +242,19 @@ public final class SymbolConstructor extends BuiltinConstructor implements Initi
         @Value(name = "asyncIterator",
                 attributes = @Attributes(writable = false, enumerable = false, configurable = false))
         public static final Symbol asyncIterator = BuiltinSymbol.asyncIterator.get();
+    }
+
+    /**
+     * Extension: String.prototype.matchAll
+     */
+    @CompatibilityExtension(CompatibilityOption.StringMatchAll)
+    public enum MatchAllProperty {
+        ;
+
+        /**
+         * Symbol.matchAll
+         */
+        @Value(name = "matchAll", attributes = @Attributes(writable = false, enumerable = false, configurable = false))
+        public static final Symbol matchAll = BuiltinSymbol.matchAll.get();
     }
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -12,6 +12,7 @@ import static com.github.anba.es6draft.runtime.objects.intl.IntlAbstractOperatio
 import static java.util.Arrays.asList;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -70,9 +71,10 @@ public final class CollatorConstructor extends BuiltinConstructor implements Ini
             ExtensionKey.kf);
 
     /**
-     * Collation type keys (BCP 47; CLDR, version 28)
+     * Collation type keys (BCP 47; CLDR, version 32)
      */
-    private enum CollationType {/* @formatter:off */
+    private enum CollationType {
+        /* @formatter:off */
         big5han("big5han"),
         compat("compat"),
         dict("dict", "dictionary"),
@@ -121,12 +123,27 @@ public final class CollatorConstructor extends BuiltinConstructor implements Ini
         }
     }
 
+    private enum CollatorUsage {
+        Sort, Search;
+
+        static CollatorUsage forName(String name) {
+            switch (name) {
+            case "sort":
+                return Sort;
+            case "search":
+                return Search;
+            default:
+                throw new IllegalArgumentException();
+            }
+        }
+    }
+
     /** [[sortLocaleData]] + [[searchLocaleData]] */
     private static final class CollatorLocaleData implements LocaleData {
-        private final String usage;
+        private final CollatorUsage usage;
 
         public CollatorLocaleData(String usage) {
-            this.usage = usage;
+            this.usage = CollatorUsage.forName(usage);
         }
 
         @Override
@@ -137,10 +154,10 @@ public final class CollatorConstructor extends BuiltinConstructor implements Ini
 
     /** [[sortLocaleData]] + [[searchLocaleData]] */
     private static final class CollatorLocaleDataInfo implements LocaleDataInfo {
-        private final String usage;
+        private final CollatorUsage usage;
         private final ULocale locale;
 
-        public CollatorLocaleDataInfo(String usage, ULocale locale) {
+        public CollatorLocaleDataInfo(CollatorUsage usage, ULocale locale) {
             this.usage = usage;
             this.locale = locale;
         }
@@ -151,7 +168,7 @@ public final class CollatorConstructor extends BuiltinConstructor implements Ini
             case co:
                 return null; // null must be first value, cf. 10.2.3
             case kf:
-                if ("sort".equals(usage)) {
+                if (usage == CollatorUsage.Sort) {
                     // special case 'sort' usage for Danish and Maltese to use uppercase first defaults
                     String language = locale.getLanguage();
                     if ("da".equals(language) || "mt".equals(language)) {
@@ -181,17 +198,20 @@ public final class CollatorConstructor extends BuiltinConstructor implements Ini
         }
 
         private List<String> getCollationInfo() {
+            // FIXME: spec issue? Search collators cannot specify any other collation type through a Unicode extension
+            // value. Does this apply to all Collator implementations or just when implemented with ICU? If the former,
+            // does it make sense to change the spec to make it more clear that %Collator%.[[SearchLocaleData]] always
+            // returns a list containing only `null` for the "co" extension key?
+            if (usage == CollatorUsage.Search) {
+                return Collections.singletonList((String) null);
+            }
             String[] values = Collator.getKeywordValuesForLocale("collation", locale, false);
             ArrayList<String> result = new ArrayList<>(values.length);
             result.add(null); // null must be first value, cf. 10.2.3
-            for (int i = 0, len = values.length; i < len; ++i) {
+            for (int i = 0; i < values.length; ++i) {
                 CollationType type = CollationType.forName(values[i]);
                 if (type == CollationType.standard || type == CollationType.search) {
                     // 'standard' and 'search' must not be elements of 'co' array, cf. 10.2.3
-                    // FIXME: spec issue? This gives slightly akward results for `new
-                    // Intl.Collator("de-u-co-phonebk",{usage:"search"}).resolvedOptions()`.
-                    // The resolved locale is "de-u-co-phonebk", that means co=phonebk, but for the
-                    // actual collator co=search will be used...
                     continue;
                 }
                 result.add(type.getName());
@@ -204,7 +224,7 @@ public final class CollatorConstructor extends BuiltinConstructor implements Ini
         }
 
         private List<String> getCaseFirstInfo() {
-            if ("sort".equals(usage)) {
+            if (usage == CollatorUsage.Sort) {
                 // special case 'sort' usage for Danish and Maltese to use uppercase first defaults
                 String language = locale.getLanguage();
                 if ("da".equals(language) || "mt".equals(language)) {
@@ -228,11 +248,6 @@ public final class CollatorConstructor extends BuiltinConstructor implements Ini
     @Override
     public void initialize(Realm realm) {
         createProperties(realm, this, Properties.class);
-    }
-
-    @Override
-    public CollatorConstructor clone() {
-        return new CollatorConstructor(getRealm());
     }
 
     @SafeVarargs
@@ -259,7 +274,7 @@ public final class CollatorConstructor extends BuiltinConstructor implements Ini
         /* steps 4-5 */
         ScriptObject options;
         if (Type.isUndefined(opts)) {
-            options = ObjectCreate(cx, Intrinsics.ObjectPrototype);
+            options = ObjectCreate(cx, (ScriptObject) null);
         } else {
             options = ToObject(cx, opts);
         }
@@ -289,77 +304,38 @@ public final class CollatorConstructor extends BuiltinConstructor implements Ini
                 relevantExtensionKeys, localeData);
         /* step 16 */
         collator.setLocale(r.getLocale());
-        /* steps 17-20 (co-collation) */
+        /* step 17 (co-collation) */
         String collation = r.getValue(ExtensionKey.co);
         collator.setCollation(collation != null ? collation : "default");
-        /* steps 17-20 (kn-numeric) */
+        /* step 17 (kn-numeric) */
         collator.setNumeric("true".equals(r.getValue(ExtensionKey.kn)));
-        /* steps 17-20 (kf-caseFirst) */
+        /* step 17 (kf-caseFirst) */
         collator.setCaseFirst(r.getValue(ExtensionKey.kf));
-        /* step 21 */
+        /* step 18 */
         String s = GetStringOption(cx, options, "sensitivity", set("base", "accent", "case", "variant"), null);
-        /* step 22 */
+        /* step 19 */
         if (s == null) {
             // The specification differentiates between "sort" and "search" usage, but effectively
             // you'll end up with "variant" in both cases, so take the short path here.
             s = "variant";
         }
-        /* step 23 */
+        /* step 20 */
         collator.setSensitivity(s);
-        /* step 24 */
+        /* step 21 */
         boolean ip = GetBooleanOption(cx, options, "ignorePunctuation", false);
-        /* step 25 */
+        /* step 22 */
         collator.setIgnorePunctuation(ip);
-        /* step 26 */
+        /* step 23 */
         collator.setBoundCompare(null);
-        /* step 27 (FIXME: spec bug - unnecessary internal slot) */
-        /* step 28 (omitted) */
-    }
-
-    /**
-     * 10.1.1 InitializeCollator (collator, locales, options)
-     * 
-     * @param realm
-     *            the realm instance
-     * @param collator
-     *            the collator object
-     */
-    public static void InitializeDefaultCollator(Realm realm, CollatorObject collator) {
-        /* steps 1-2 (FIXME: spec bug - unnecessary internal slot) */
-        /* steps 3-5 (not applicable) */
-        /* step 6 */
-        String u = "sort";
-        /* step 7 */
-        collator.setUsage(u);
-        /* steps 8-9 */
-        CollatorLocaleData localeData = new CollatorLocaleData(u);
-        /* steps 10-13 (not applicable) */
-        /* steps 14-15 */
-        ResolvedLocale r = ResolveDefaultLocale(realm, relevantExtensionKeys, localeData);
-        /* step 16 */
-        collator.setLocale(r.getLocale());
-        /* steps 17-20 (co-collation) */
-        String collation = r.getValue(ExtensionKey.co);
-        collator.setCollation(collation != null ? collation : "default");
-        /* steps 17-20 (kn-numeric) */
-        collator.setNumeric("true".equals(r.getValue(ExtensionKey.kn)));
-        /* steps 17-20 (kf-caseFirst) */
-        collator.setCaseFirst(r.getValue(ExtensionKey.kf));
-        /* steps 21-23 */
-        collator.setSensitivity("variant");
-        /* steps 24-25 */
-        collator.setIgnorePunctuation(false);
-        /* step 26 */
-        collator.setBoundCompare(null);
-        /* step 27 (FIXME: spec bug - unnecessary internal slot) */
-        /* step 28 (omitted) */
+        /* step 24 (FIXME: spec bug - unnecessary internal slot) */
+        /* step 25 (omitted) */
     }
 
     /**
      * 10.1.2 Intl.Collator([ locales [, options]])
      */
     @Override
-    public ScriptObject call(ExecutionContext callerContext, Object thisValue, Object... args) {
+    public CollatorObject call(ExecutionContext callerContext, Object thisValue, Object... args) {
         /* steps 1-6 */
         return construct(callerContext, this, args);
     }
@@ -400,8 +376,7 @@ public final class CollatorConstructor extends BuiltinConstructor implements Ini
         /**
          * 10.2.1 Intl.Collator.prototype
          */
-        @Value(name = "prototype",
-                attributes = @Attributes(writable = false, enumerable = false, configurable = false))
+        @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false, configurable = false))
         public static final Intrinsics prototype = Intrinsics.Intl_CollatorPrototype;
 
         /**
@@ -420,9 +395,11 @@ public final class CollatorConstructor extends BuiltinConstructor implements Ini
         @Function(name = "supportedLocalesOf", arity = 1)
         public static Object supportedLocalesOf(ExecutionContext cx, Object thisValue, Object locales, Object options) {
             /* step 1 */
-            Set<String> requestedLocales = CanonicalizeLocaleList(cx, locales);
+            Set<String> availableLocales = getAvailableLocales(cx);
             /* step 2 */
-            return SupportedLocales(cx, getAvailableLocales(cx), requestedLocales, options);
+            Set<String> requestedLocales = CanonicalizeLocaleList(cx, locales);
+            /* step 3 */
+            return SupportedLocales(cx, availableLocales, requestedLocales, options);
         }
     }
 }

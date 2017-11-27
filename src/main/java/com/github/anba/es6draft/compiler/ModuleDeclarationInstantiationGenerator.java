@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -19,7 +19,6 @@ import com.github.anba.es6draft.ast.Module;
 import com.github.anba.es6draft.ast.StatementListItem;
 import com.github.anba.es6draft.ast.VariableStatement;
 import com.github.anba.es6draft.ast.scope.Name;
-import com.github.anba.es6draft.compiler.CodeGenerator.ModuleName;
 import com.github.anba.es6draft.compiler.assembler.Code.MethodCode;
 import com.github.anba.es6draft.compiler.assembler.MethodName;
 import com.github.anba.es6draft.compiler.assembler.Type;
@@ -29,7 +28,7 @@ import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.ModuleEnvironmentRecord;
 import com.github.anba.es6draft.runtime.modules.ExportEntry;
 import com.github.anba.es6draft.runtime.modules.ImportEntry;
-import com.github.anba.es6draft.runtime.modules.ModuleExport;
+import com.github.anba.es6draft.runtime.modules.ResolvedBinding;
 import com.github.anba.es6draft.runtime.modules.SourceTextModuleRecord;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Undefined;
@@ -41,45 +40,51 @@ import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
  * <h3>15.2.1 Module Semantics</h3><br>
  * <h4>15.2.1.15 Source Text Module Records</h4>
  * <ul>
- * <li>15.2.1.15.4 ModuleDeclarationInstantiation( ) Concrete Method
+ * <li>15.2.1.16.4.2 ModuleDeclarationEnvironmentSetup( module )
  * </ul>
  */
 final class ModuleDeclarationInstantiationGenerator extends DeclarationBindingInstantiationGenerator {
     private static final class Methods {
-        // class: ScriptRuntime
-        static final MethodName ScriptRuntime_createImportBinding = MethodName.findStatic(
-                Types.ScriptRuntime, "createImportBinding", Type.methodType(Type.VOID_TYPE,
-                        Types.ExecutionContext, Types.ModuleEnvironmentRecord, Types.String,
-                        Types.ModuleExport));
+        // class: ModuleOperations
+        static final MethodName ModuleOperations_createImportBinding = MethodName.findStatic(Types.ModuleOperations,
+                "createImportBinding", Type.methodType(Type.VOID_TYPE, Types.ExecutionContext,
+                        Types.ModuleEnvironmentRecord, Types.String, Types.ResolvedBinding));
 
-        static final MethodName ScriptRuntime_getModuleNamespace = MethodName.findStatic(
-                Types.ScriptRuntime, "getModuleNamespace", Type.methodType(Types.ScriptObject,
-                        Types.ExecutionContext, Types.SourceTextModuleRecord, Types.String));
+        static final MethodName ModuleOperations_getModuleNamespace = MethodName.findStatic(Types.ModuleOperations,
+                "getModuleNamespace", Type.methodType(Types.ScriptObject, Types.ExecutionContext,
+                        Types.SourceTextModuleRecord, Types.String));
 
-        static final MethodName ScriptRuntime_resolveExportOrThrow = MethodName.findStatic(
-                Types.ScriptRuntime, "resolveExportOrThrow",
-                Type.methodType(Type.VOID_TYPE, Types.SourceTextModuleRecord, Types.String));
+        static final MethodName ModuleOperations_resolveExportOrThrow = MethodName.findStatic(Types.ModuleOperations,
+                "resolveExportOrThrow", Type.methodType(Type.VOID_TYPE, Types.SourceTextModuleRecord, Types.String));
 
-        static final MethodName ScriptRuntime_resolveImportOrThrow = MethodName.findStatic(
-                Types.ScriptRuntime, "resolveImportOrThrow", Type.methodType(Types.ModuleExport,
-                        Types.SourceTextModuleRecord, Types.String, Types.String));
+        static final MethodName ModuleOperations_resolveImportOrThrow = MethodName.findStatic(Types.ModuleOperations,
+                "resolveImportOrThrow",
+                Type.methodType(Types.ResolvedBinding, Types.SourceTextModuleRecord, Types.String, Types.String));
     }
 
-    private static final int EXECUTION_CONTEXT = 0;
-    private static final int MODULE = 1;
-    private static final int MODULE_ENV = 2;
-
-    private static final class ModuleDeclInitMethodGenerator extends InstructionVisitor {
-        ModuleDeclInitMethodGenerator(MethodCode method) {
+    private static final class ModuleDeclInitVisitor extends InstructionVisitor {
+        ModuleDeclInitVisitor(MethodCode method) {
             super(method);
         }
 
         @Override
         public void begin() {
             super.begin();
-            setParameterName("cx", EXECUTION_CONTEXT, Types.ExecutionContext);
-            setParameterName("module", MODULE, Types.SourceTextModuleRecord);
-            setParameterName("moduleEnv", MODULE_ENV, Types.LexicalEnvironment);
+            setParameterName("cx", 0, Types.ExecutionContext);
+            setParameterName("module", 1, Types.SourceTextModuleRecord);
+            setParameterName("moduleEnv", 2, Types.LexicalEnvironment);
+        }
+
+        Variable<ExecutionContext> getExecutionContext() {
+            return getParameter(0, ExecutionContext.class);
+        }
+
+        Variable<SourceTextModuleRecord> getModule() {
+            return getParameter(1, SourceTextModuleRecord.class);
+        }
+
+        Variable<LexicalEnvironment<ModuleEnvironmentRecord>> getModuleEnvironment() {
+            return getParameter(2, LexicalEnvironment.class).uncheckedCast();
         }
     }
 
@@ -87,29 +92,23 @@ final class ModuleDeclarationInstantiationGenerator extends DeclarationBindingIn
         super(codegen);
     }
 
-    void generate(Module module, SourceTextModuleRecord moduleRecord) {
-        MethodCode method = codegen.newMethod(module, ModuleName.Init);
-        InstructionVisitor mv = new ModuleDeclInitMethodGenerator(method);
-
+    void generate(Module module, SourceTextModuleRecord moduleRecord, MethodCode method) {
+        ModuleDeclInitVisitor mv = new ModuleDeclInitVisitor(method);
         mv.lineInfo(module);
         mv.begin();
         generate(module, moduleRecord, mv);
         mv.end();
     }
 
-    private void generate(Module module, SourceTextModuleRecord moduleRecord, InstructionVisitor mv) {
-        Variable<ExecutionContext> context = mv.getParameter(EXECUTION_CONTEXT,
-                ExecutionContext.class);
-        Variable<SourceTextModuleRecord> moduleRec = mv.getParameter(MODULE,
-                SourceTextModuleRecord.class);
-        Variable<LexicalEnvironment<ModuleEnvironmentRecord>> env = mv.getParameter(MODULE_ENV,
-                LexicalEnvironment.class).uncheckedCast();
+    private void generate(Module module, SourceTextModuleRecord moduleRecord, ModuleDeclInitVisitor mv) {
+        Variable<ExecutionContext> context = mv.getExecutionContext();
+        Variable<SourceTextModuleRecord> moduleRec = mv.getModule();
+        Variable<LexicalEnvironment<ModuleEnvironmentRecord>> env = mv.getModuleEnvironment();
 
-        Variable<ModuleEnvironmentRecord> envRec = mv.newVariable("envRec",
-                ModuleEnvironmentRecord.class);
+        Variable<ModuleEnvironmentRecord> envRec = mv.newVariable("envRec", ModuleEnvironmentRecord.class);
         getEnvironmentRecord(env, envRec, mv);
 
-        Variable<ModuleExport> resolved = mv.newVariable("resolved", ModuleExport.class);
+        Variable<ResolvedBinding> resolved = mv.newVariable("resolved", ResolvedBinding.class);
         Variable<ScriptObject> namespace = null;
         Variable<FunctionObject> fo = null;
 
@@ -117,16 +116,17 @@ final class ModuleDeclarationInstantiationGenerator extends DeclarationBindingIn
         mv.loadUndefined();
         mv.store(undef);
 
-        /* steps 1-8 (not applicable) */
-        /* step 9 */
+        /* step 1 */
         for (ExportEntry exportEntry : moduleRecord.getIndirectExportEntries()) {
             mv.lineInfo(exportEntry.getLine());
             mv.load(moduleRec);
             mv.aconst(exportEntry.getExportName());
-            mv.invoke(Methods.ScriptRuntime_resolveExportOrThrow);
+            mv.invoke(Methods.ModuleOperations_resolveExportOrThrow);
         }
-        /* steps 10-11 (not applicable) */
-        /* step 12 */
+        /* step 2 (omitted) */
+        /* steps 3-6 (already performed in caller) */
+        /* step 7 (not applicable) */
+        /* step 8 */
         for (ImportEntry importEntry : moduleRecord.getImportEntries()) {
             mv.lineInfo(importEntry.getLine());
             if (importEntry.isStarImport()) {
@@ -137,7 +137,7 @@ final class ModuleDeclarationInstantiationGenerator extends DeclarationBindingIn
                 mv.load(context);
                 mv.load(moduleRec);
                 mv.aconst(importEntry.getModuleRequest());
-                mv.invoke(Methods.ScriptRuntime_getModuleNamespace);
+                mv.invoke(Methods.ModuleOperations_getModuleNamespace);
                 if (namespace == null) {
                     namespace = mv.newVariable("namespace", ScriptObject.class);
                 }
@@ -148,16 +148,19 @@ final class ModuleDeclarationInstantiationGenerator extends DeclarationBindingIn
                 mv.load(moduleRec);
                 mv.aconst(importEntry.getModuleRequest());
                 mv.aconst(importEntry.getImportName());
-                mv.invoke(Methods.ScriptRuntime_resolveImportOrThrow);
+                mv.invoke(Methods.ModuleOperations_resolveImportOrThrow);
                 mv.store(resolved);
 
+                /* step 8.d.iii */
                 createImportBinding(context, envRec, importEntry.getLocalName(), resolved, mv);
             }
         }
-        /* step 13 */
+        /* step 9 (not applicable) */
+        /* step 10 */
         List<StatementListItem> varDeclarations = VarScopedDeclarations(module);
+        /* step 11 */
         HashSet<Name> declaredVarNames = new HashSet<>();
-        /* step 14 */
+        /* step 12 */
         for (StatementListItem d : varDeclarations) {
             assert d instanceof VariableStatement;
             for (Name dn : BoundNames((VariableStatement) d)) {
@@ -168,9 +171,9 @@ final class ModuleDeclarationInstantiationGenerator extends DeclarationBindingIn
                 }
             }
         }
-        /* step 15 */
+        /* step 13 */
         List<Declaration> lexDeclarations = LexicallyScopedDeclarations(module);
-        /* step 16 */
+        /* step 14 */
         for (Declaration d : lexDeclarations) {
             for (Name dn : BoundNames(d)) {
                 BindingOp<ModuleEnvironmentRecord> op = BindingOp.of(envRec, dn);
@@ -189,17 +192,16 @@ final class ModuleDeclarationInstantiationGenerator extends DeclarationBindingIn
                 }
             }
         }
-        /* step 17 */
+
         mv._return();
     }
 
-    private void createImportBinding(Variable<ExecutionContext> context,
-            Variable<ModuleEnvironmentRecord> envRec, String name, Variable<ModuleExport> resolved,
-            InstructionVisitor mv) {
+    private void createImportBinding(Variable<ExecutionContext> context, Variable<ModuleEnvironmentRecord> envRec,
+            String name, Variable<ResolvedBinding> resolved, InstructionVisitor mv) {
         mv.load(context);
         mv.load(envRec);
         mv.aconst(name);
         mv.load(resolved);
-        mv.invoke(Methods.ScriptRuntime_createImportBinding);
+        mv.invoke(Methods.ModuleOperations_createImportBinding);
     }
 }

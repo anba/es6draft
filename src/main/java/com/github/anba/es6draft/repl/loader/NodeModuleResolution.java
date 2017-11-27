@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -12,12 +12,10 @@ import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Iterator;
 
 import com.github.anba.es6draft.parser.JSONBuilder;
 import com.github.anba.es6draft.parser.JSONParser;
 import com.github.anba.es6draft.parser.ParserException;
-import com.github.anba.es6draft.runtime.internal.SimpleIterator;
 import com.github.anba.es6draft.runtime.modules.MalformedNameException;
 import com.github.anba.es6draft.runtime.modules.SourceIdentifier;
 import com.github.anba.es6draft.runtime.modules.loader.FileSourceIdentifier;
@@ -25,7 +23,7 @@ import com.github.anba.es6draft.runtime.modules.loader.FileSourceIdentifier;
 /**
  * Node module file resolution.
  * 
- * @see https://iojs.org/api/modules.html#modules_all_together
+ * @see https://nodejs.org/api/modules.html#modules_all_together
  */
 final class NodeModuleResolution {
     private static final String INDEX_FILE_NAME = "index";
@@ -52,72 +50,111 @@ final class NodeModuleResolution {
      * @throws MalformedNameException
      *             if the name cannot be normalized
      */
-    public static FileSourceIdentifier resolve(Path baseDirectory, FileSourceIdentifier normalizedName,
+    static FileSourceIdentifier resolve(Path baseDirectory, FileSourceIdentifier normalizedName,
             String unnormalizedName, SourceIdentifier referrerId) throws MalformedNameException {
-        try {
-            Path normalizedPath = normalizedName.getPath();
-            boolean isRelative = unnormalizedName.startsWith("./") || unnormalizedName.startsWith("../");
-            if (isRelative) {
-                Path file = findModuleFile(baseDirectory, normalizedPath, true);
-                if (file != null) {
-                    return new FileSourceIdentifier(baseDirectory, file);
-                }
-            } else if (referrerId != null) {
-                for (Path p : new NodeModulePaths(baseDirectory, referrerId)) {
-                    Path file = findModuleFile(baseDirectory, p.resolve(normalizedPath), true);
+        if (referrerId != null) {
+            try {
+                Path unnormalizedPath = Paths.get(unnormalizedName);
+                Path referrer = Paths.get(baseDirectory.toUri().resolve(referrerId.toUri()));
+
+                if (unnormalizedName.startsWith("./") || unnormalizedName.startsWith("../")) {
+                    Path path = referrer.resolveSibling(unnormalizedPath);
+                    Path file = loadAsFile(path);
                     if (file != null) {
-                        return new FileSourceIdentifier(baseDirectory, file);
+                        return new FileSourceIdentifier(file);
+                    }
+                    file = loadAsDirectory(path);
+                    if (file != null) {
+                        return new FileSourceIdentifier(file);
                     }
                 }
+
+                Path file = loadNodeModules(unnormalizedPath, referrer, baseDirectory);
+                if (file != null) {
+                    return new FileSourceIdentifier(file);
+                }
+            } catch (InvalidPathException e) {
+                throw new MalformedNameException(unnormalizedName);
             }
-            return normalizedName;
-        } catch (InvalidPathException e) {
-            throw new MalformedNameException(unnormalizedName);
         }
+
+        // If node module resolution failed, use default module name resolution.
+        return normalizedName;
     }
 
-    private static Path findModuleFile(Path dir, Path path, boolean searchPackage) {
-        path = dir.resolve(path);
-        if (Files.exists(path)) {
-            if (Files.isRegularFile(path)) {
-                return path;
+    private static Path loadAsFile(Path path) {
+        if (Files.isRegularFile(path)) {
+            return path;
+        }
+        for (String ext : FILE_EXTENSIONS) {
+            Path pathWithExt = Paths.get(path + ext);
+            if (Files.isRegularFile(pathWithExt)) {
+                return pathWithExt;
             }
-            if (Files.isDirectory(path)) {
-                if (searchPackage) {
-                    Path executable = readPackage(path);
-                    if (executable != null) {
-                        Path executablePath = findModuleFile(path, executable, false);
-                        if (executablePath != null) {
-                            return executablePath;
-                        }
-                    }
+        }
+        return null;
+    }
+
+    private static Path loadIndex(Path path) {
+        for (String ext : FILE_EXTENSIONS) {
+            Path indexFile = path.resolve(INDEX_FILE_NAME + ext);
+            if (Files.isRegularFile(indexFile)) {
+                return indexFile;
+            }
+        }
+        return null;
+    }
+
+    private static Path loadAsDirectory(Path path) {
+        Path jsonPackage = path.resolve(PACKAGE_FILE_NAME);
+        if (Files.isRegularFile(jsonPackage)) {
+            Path executable = readPackage(jsonPackage);
+            if (executable != null) {
+                executable = path.resolve(executable);
+                Path file = loadAsFile(executable);
+                if (file != null) {
+                    return file;
                 }
-                for (String ext : FILE_EXTENSIONS) {
-                    Path indexFile = path.resolve(INDEX_FILE_NAME + ext);
-                    if (Files.isRegularFile(indexFile)) {
-                        return indexFile;
-                    }
+                file = loadIndex(executable);
+                if (file != null) {
+                    return file;
                 }
             }
+        }
+        return loadIndex(path);
+    }
+
+    private static Path loadNodeModules(Path path, Path referrer, Path baseDirectory) {
+        Path start = referrer.getParent();
+        if (start != null) {
+            start = baseDirectory.relativize(baseDirectory.resolve(start));
         } else {
-            for (String ext : FILE_EXTENSIONS) {
-                Path pathWithExt = Paths.get(path + ext);
-                if (Files.isRegularFile(pathWithExt)) {
-                    return pathWithExt;
-                }
+            start = Paths.get("");
+        }
+
+        final Path nodeModules = Paths.get(MODULES_DIR_NAME);
+        for (Path dir = start; dir != null; dir = dir.getParent()) {
+            Path dirName = dir.getFileName();
+            if (dirName == null || dirName.equals(nodeModules)) {
+                continue;
+            }
+            Path p = baseDirectory.resolve(dir.resolve(nodeModules).resolve(path));
+            Path file = loadAsFile(p);
+            if (file != null) {
+                return file;
+            }
+            file = loadAsDirectory(p);
+            if (file != null) {
+                return file;
             }
         }
         return null;
     }
 
     private static Path readPackage(Path path) {
-        Path jsonPackage = path.resolve(PACKAGE_FILE_NAME);
-        if (!Files.isRegularFile(jsonPackage)) {
-            return null;
-        }
         String executable;
         try {
-            String json = new String(Files.readAllBytes(jsonPackage), StandardCharsets.UTF_8);
+            String json = new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
             executable = JSONParser.parse(json, new ExecJSONBuilder());
         } catch (IOException | ParserException e) {
             // ignore?
@@ -127,36 +164,6 @@ final class NodeModuleResolution {
             return null;
         }
         return Paths.get(executable);
-    }
-
-    private static final class NodeModulePaths implements Iterable<Path> {
-        private final Path referrer;
-
-        NodeModulePaths(Path base, SourceIdentifier referrerId) {
-            this.referrer = base.relativize(Paths.get(base.toUri().resolve(referrerId.toUri())));
-        }
-
-        @Override
-        public Iterator<Path> iterator() {
-            return new SimpleIterator<Path>() {
-                final Path node_modules = Paths.get(MODULES_DIR_NAME);
-                Path p = referrer;
-
-                @Override
-                protected Path findNext() {
-                    if (p != null) {
-                        while ((p = p.getParent()) != null) {
-                            Path fileName = p.getFileName();
-                            if (fileName != null && !fileName.equals(node_modules)) {
-                                return p.resolve(node_modules);
-                            }
-                        }
-                        return node_modules;
-                    }
-                    return null;
-                }
-            };
-        }
     }
 
     private static final class ExecJSONBuilder implements JSONBuilder<String, Void, Void, String> {

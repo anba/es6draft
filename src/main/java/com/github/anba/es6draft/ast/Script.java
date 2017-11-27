@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -11,7 +11,6 @@ import java.util.List;
 
 import com.github.anba.es6draft.ast.scope.ScriptScope;
 import com.github.anba.es6draft.parser.Parser;
-import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.Source;
 
 /**
@@ -24,14 +23,17 @@ public final class Script extends Program implements TopLevelNode<StatementListI
     private final ScriptScope scope;
     private List<StatementListItem> statements;
     private final boolean strict;
+    private final List<IdentifierName> undeclaredPrivateNames;
 
     public Script(long beginPosition, long endPosition, Source source, ScriptScope scope,
-            List<StatementListItem> statements, EnumSet<CompatibilityOption> options,
-            EnumSet<Parser.Option> parserOptions, boolean strict) {
-        super(beginPosition, endPosition, source, options, parserOptions);
+            List<StatementListItem> statements, EnumSet<Parser.Option> parserOptions, boolean strict,
+            List<IdentifierName> undeclaredPrivateNames) {
+        super(beginPosition, endPosition, source, parserOptions);
         this.scope = scope;
         this.statements = statements;
         this.strict = strict;
+        assert undeclaredPrivateNames.isEmpty() || isEvalScript();
+        this.undeclaredPrivateNames = undeclaredPrivateNames;
     }
 
     @Override
@@ -53,6 +55,10 @@ public final class Script extends Program implements TopLevelNode<StatementListI
         return strict;
     }
 
+    public List<IdentifierName> getUndeclaredPrivateNames() {
+        return undeclaredPrivateNames;
+    }
+
     public boolean isEvalScript() {
         return getParserOptions().contains(Parser.Option.EvalScript);
     }
@@ -71,14 +77,6 @@ public final class Script extends Program implements TopLevelNode<StatementListI
 
     public boolean isScripting() {
         return getParserOptions().contains(Parser.Option.Scripting);
-    }
-
-    public boolean isGlobalScope() {
-        return !getParserOptions().contains(Parser.Option.LocalScope);
-    }
-
-    public boolean isGlobalThis() {
-        return !getParserOptions().contains(Parser.Option.FunctionThis);
     }
 
     @Override

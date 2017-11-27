@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -12,6 +12,7 @@ import static com.github.anba.es6draft.runtime.types.builtins.ArrayObject.ArrayC
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject.ObjectCreate;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
+import com.github.anba.es6draft.runtime.internal.IndexedMap;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.builtins.ArrayObject;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
@@ -19,8 +20,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 /**
  *
  */
-public final class JSONObjectBuilder implements
-        JSONBuilder<Object, OrdinaryObject, ArrayObject, Object> {
+public final class JSONObjectBuilder implements JSONBuilder<Object, OrdinaryObject, ArrayObject, Object> {
     private final ExecutionContext cx;
 
     public JSONObjectBuilder(ExecutionContext cx) {
@@ -48,9 +48,13 @@ public final class JSONObjectBuilder implements
     }
 
     @Override
-    public void finishProperty(OrdinaryObject object, String name, String rawName, long index,
-            Object value) {
-        CreateDataPropertyOrThrow(cx, object, name, value);
+    public void finishProperty(OrdinaryObject object, String name, String rawName, long index, Object value) {
+        long indexedName = IndexedMap.toIndex(name);
+        if (IndexedMap.isIndex(indexedName)) {
+            CreateDataPropertyOrThrow(cx, object, indexedName, value);
+        } else {
+            CreateDataPropertyOrThrow(cx, object, name, value);
+        }
     }
 
     @Override

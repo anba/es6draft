@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -16,7 +16,7 @@ import java.util.EnumMap;
  * </ul>
  */
 public enum BuiltinSymbol {
-    NONE, //
+    NONE,
 
     /**
      * &#64;&#64;hasInstance
@@ -82,6 +82,11 @@ public enum BuiltinSymbol {
      * &#64;&#64;asyncIterator
      */
     asyncIterator,
+
+    /**
+     * &#64;&#64;matchAll
+     */
+    matchAll,
 
     ;
 

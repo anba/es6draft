@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -17,7 +17,6 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.configuration.Configuration;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Rule;
@@ -28,14 +27,14 @@ import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
 import org.junit.runners.Parameterized.UseParametersRunnerFactory;
 
-import com.github.anba.es6draft.TestGlobalObject;
 import com.github.anba.es6draft.runtime.extensions.timer.Timers;
 import com.github.anba.es6draft.util.Parallelized;
 import com.github.anba.es6draft.util.ParameterizedRunnerFactory;
 import com.github.anba.es6draft.util.SystemConsole;
 import com.github.anba.es6draft.util.TestConfiguration;
-import com.github.anba.es6draft.util.TestGlobals;
 import com.github.anba.es6draft.util.TestInfo;
+import com.github.anba.es6draft.util.TestRealm;
+import com.github.anba.es6draft.util.TestRealms;
 import com.github.anba.es6draft.util.rules.ExceptionHandlers.ScriptExceptionHandler;
 import com.github.anba.es6draft.util.rules.ExceptionHandlers.StandardErrorHandler;
 
@@ -54,8 +53,7 @@ public final class PromiseAPlusTest {
     }
 
     @ClassRule
-    public static TestGlobals<TestGlobalObject, TestInfo> globals = new TestGlobals<TestGlobalObject, TestInfo>(
-            configuration, TestGlobalObject::new);
+    public static TestRealms<TestInfo> realms = new TestRealms<>(configuration, PromiseTestRealmData::new);
 
     @Rule
     public Timeout maxTime = new Timeout(120, TimeUnit.SECONDS);
@@ -69,7 +67,9 @@ public final class PromiseAPlusTest {
     @Parameter(0)
     public TestInfo test;
 
-    private TestGlobalObject global;
+    @Rule
+    public TestRealm<TestInfo> realm = new TestRealm<>(realms);
+
     private PromiseAsync async;
     private Timers timers;
 
@@ -77,25 +77,16 @@ public final class PromiseAPlusTest {
     public void setUp() throws Throwable {
         assumeTrue("Test disabled", test.isEnabled());
 
-        global = globals.newGlobal(new SystemConsole(), test);
-        exceptionHandler.setExecutionContext(global.getRealm().defaultContext());
-        async = global.createGlobalProperties(new PromiseAsync(), PromiseAsync.class);
-        timers = global.createGlobalProperties(new Timers(), Timers.class);
-    }
-
-    @After
-    public void tearDown() throws InterruptedException {
-        globals.release(global);
+        realm.initialize(new SystemConsole(), test);
+        exceptionHandler.setExecutionContext(realm.get().defaultContext());
+        async = realm.get().createGlobalProperties(new PromiseAsync(), PromiseAsync.class);
+        timers = realm.get().createGlobalProperties(new Timers(), Timers.class);
     }
 
     @Test
     public void runTest() throws Throwable {
-        // Evaluate actual test-script
-        global.eval(test.getScript(), test.toFile());
-
-        // Wait for pending tasks to finish
         assertFalse(async.isDone());
-        global.getRealm().getWorld().runEventLoop(timers);
+        realm.execute(test, timers);
         assertTrue(async.isDone());
     }
 }

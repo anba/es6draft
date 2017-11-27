@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -69,7 +69,7 @@ public final class Type {
         return descriptor.hashCode();
     }
 
-    /*package*/org.objectweb.asm.Type type() {
+    org.objectweb.asm.Type type() {
         if (type == null) {
             type = org.objectweb.asm.Type.getType(descriptor);
         }
@@ -81,7 +81,7 @@ public final class Type {
      * 
      * @return the type descriptor string
      */
-    /*package*/String descriptor() {
+    String descriptor() {
         return descriptor;
     }
 
@@ -90,8 +90,17 @@ public final class Type {
      * 
      * @return the internal name
      */
-    /*package*/String internalName() {
+    String internalName() {
         return type().getInternalName();
+    }
+
+    /**
+     * Returns the class name.
+     * 
+     * @return the class name
+     */
+    String className() {
+        return type().getClassName();
     }
 
     /**
@@ -107,15 +116,15 @@ public final class Type {
         return getSort() < Type.Sort.ARRAY;
     }
 
-    /*package*/int getSort() {
+    int getSort() {
         return type().getSort();
     }
 
-    /*package*/int getOpcode(int opcode) {
+    int getOpcode(int opcode) {
         return type().getOpcode(opcode);
     }
 
-    /*package*/Type asArray() {
+    Type asArray() {
         return Type.of("[" + descriptor());
     }
 
@@ -124,7 +133,7 @@ public final class Type {
      * 
      * @return the type's wrapper object
      */
-    /*package*/Type asWrapper() {
+    Type asWrapper() {
         switch (getSort()) {
         case Type.Sort.VOID:
             return Types.Void;
@@ -177,7 +186,7 @@ public final class Type {
      *            the internal name of the object
      * @return the type object
      */
-    /*package*/static Type forName(String internalName) {
+    static Type forName(String internalName) {
         return of(org.objectweb.asm.Type.getObjectType(internalName).getDescriptor());
     }
 
@@ -199,7 +208,7 @@ public final class Type {
      *            the type descriptor string
      * @return the type object
      */
-    /*package*/static Type of(String descriptor) {
+    static Type of(String descriptor) {
         return new Type(descriptor);
     }
 
@@ -227,7 +236,7 @@ public final class Type {
      *            the sort kind
      * @return the type object
      */
-    /*package*/static Type of(int sort) {
+    static Type of(int sort) {
         switch (sort) {
         case Type.Sort.VOID:
             return Type.VOID_TYPE;

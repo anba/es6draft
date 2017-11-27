@@ -1,0 +1,55 @@
+#
+# Copyright (c) André Bargull
+# Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
+#
+# <https://github.com/anba/es6draft>
+#
+
+# https://github.com/tc39/ecma262/pull/767
+namespace.js
+
+# invalid test
+namespace-object-typed-array-fast-path.js
+
+# investigate spec algorithm
+self-star-link.js
+
+# invalid
+async-function-export.js
+
+# invalid
+import-meta-assignment.js
+
+
+############################################
+# Implementation specific differences      #
+############################################
+
+# different error message
+string-prototype-module-scope.js
+
+# different function source representation
+export-default-function-name-in-function-declaration.js
+
+
+#######################################
+# Unsupported shell functions         #
+#######################################
+
+# navigator
+namespace-prototype-assignment.js
+
+# createBuiltin
+namespace-object-try-get.js
+
+# noInline
+imported-bindings-are-immutable.js
+namespace-empty.js
+namespace-object-inline-caching.js
+
+# loadModule
+different-view.js
+fallback-ambiguous.js
+import-error.js
+indirect-export-error.js
+namespace-error.js

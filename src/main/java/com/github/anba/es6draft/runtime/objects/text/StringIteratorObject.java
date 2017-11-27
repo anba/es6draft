@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -25,10 +25,9 @@ public final class StringIteratorObject extends OrdinaryObject {
     }
 
     StringIteratorObject(Realm realm, String string, int index, ScriptObject prototype) {
-        super(realm);
+        super(realm, prototype);
         this.iteratedString = string;
         this.nextIndex = index;
-        setPrototype(prototype);
     }
 
     /**
@@ -67,5 +66,10 @@ public final class StringIteratorObject extends OrdinaryObject {
      */
     public void setNextIndex(int nextIndex) {
         this.nextIndex = nextIndex;
+    }
+
+    @Override
+    public String toString() {
+        return String.format("%s, iteratedString=%s, nextIndex=%d", super.toString(), iteratedString, nextIndex);
     }
 }

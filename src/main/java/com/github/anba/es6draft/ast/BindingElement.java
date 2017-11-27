@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -17,8 +17,7 @@ public final class BindingElement extends BindingElementItem {
     private final Binding binding;
     private final Expression initializer;
 
-    public BindingElement(long beginPosition, long endPosition, Binding binding,
-            Expression initializer) {
+    public BindingElement(long beginPosition, long endPosition, Binding binding, Expression initializer) {
         super(beginPosition, endPosition);
         this.binding = binding;
         this.initializer = initializer;

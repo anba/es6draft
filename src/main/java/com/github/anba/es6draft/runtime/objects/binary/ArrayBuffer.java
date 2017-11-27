@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -7,6 +7,7 @@
 package com.github.anba.es6draft.runtime.objects.binary;
 
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 
@@ -23,6 +24,15 @@ public interface ArrayBuffer extends ScriptObject {
      * @return the underlying byte buffer or {@code null} if detached
      */
     ByteBuffer getData();
+
+    /**
+     * [[ArrayBufferData]]
+     *
+     * @param byteOrder
+     *            the request byte-order
+     * @return the underlying byte buffer or {@code null} if detached
+     */
+    ByteBuffer getData(ByteOrder byteOrder);
 
     /**
      * [[ArrayBufferByteLength]]
@@ -42,4 +52,13 @@ public interface ArrayBuffer extends ScriptObject {
      * @return {@code true} if this array buffer object is detached
      */
     boolean isDetached();
+
+    /**
+     * Returns {@code true} if this array buffer and the given object use the same underlying memory data.
+     * 
+     * @param other
+     *            the other array buffer
+     * @return {@code true} if the same memory is used
+     */
+    boolean sameData(ArrayBuffer other);
 }

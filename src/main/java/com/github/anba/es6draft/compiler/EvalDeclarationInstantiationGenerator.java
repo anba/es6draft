@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -19,12 +19,12 @@ import java.util.Set;
 import com.github.anba.es6draft.ast.Declaration;
 import com.github.anba.es6draft.ast.FunctionDeclaration;
 import com.github.anba.es6draft.ast.HoistableDeclaration;
+import com.github.anba.es6draft.ast.IdentifierName;
 import com.github.anba.es6draft.ast.Script;
 import com.github.anba.es6draft.ast.StatementListItem;
 import com.github.anba.es6draft.ast.VariableDeclaration;
 import com.github.anba.es6draft.ast.VariableStatement;
 import com.github.anba.es6draft.ast.scope.Name;
-import com.github.anba.es6draft.compiler.CodeGenerator.ScriptName;
 import com.github.anba.es6draft.compiler.assembler.Code.MethodCode;
 import com.github.anba.es6draft.compiler.assembler.Jump;
 import com.github.anba.es6draft.compiler.assembler.MethodName;
@@ -45,33 +45,42 @@ import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
  * <h2>18.2 Function Properties of the Global Object</h2><br>
  * <h3>18.2.1 eval (x)</h3>
  * <ul>
- * <li>18.2.1.2 Runtime Semantics: EvalDeclarationInstantiation( body, varEnv, lexEnv, strict)
+ * <li>18.2.1.3 Runtime Semantics: EvalDeclarationInstantiation( body, varEnv, lexEnv, strict)
  * </ul>
  */
 final class EvalDeclarationInstantiationGenerator extends DeclarationBindingInstantiationGenerator {
     private static final class Methods {
         // class: LexicalEnvironment
-        static final MethodName LexicalEnvironment_getOuter = MethodName.findVirtual(
-                Types.LexicalEnvironment, "getOuter", Type.methodType(Types.LexicalEnvironment));
+        static final MethodName LexicalEnvironment_getOuter = MethodName.findVirtual(Types.LexicalEnvironment,
+                "getOuter", Type.methodType(Types.LexicalEnvironment));
 
-        // class: ScriptRuntime
-        static final MethodName ScriptRuntime_canDeclareVarOrThrow = MethodName.findStatic(
-                Types.ScriptRuntime, "canDeclareVarOrThrow", Type.methodType(Type.VOID_TYPE,
-                        Types.ExecutionContext, Types.DeclarativeEnvironmentRecord, Types.String,
-                        Type.BOOLEAN_TYPE));
+        // class: DeclarationOperations
+        static final MethodName DeclarationOperations_canDeclareVarOrThrow = MethodName
+                .findStatic(Types.DeclarationOperations, "canDeclareVarOrThrow", Type.methodType(Type.VOID_TYPE,
+                        Types.ExecutionContext, Types.DeclarativeEnvironmentRecord, Types.String));
+
+        static final MethodName DeclarationOperations_canDeclareVarOrThrowMaybeCatch = MethodName
+                .findStatic(Types.DeclarationOperations, "canDeclareVarOrThrow", Type.methodType(Type.VOID_TYPE,
+                        Types.ExecutionContext, Types.DeclarativeEnvironmentRecord, Types.String, Type.BOOLEAN_TYPE));
+
+        static final MethodName DeclarationOperations_hasDeclaredPrivateNameOrThrow = MethodName.findStatic(
+                Types.DeclarationOperations, "hasDeclaredPrivateNameOrThrow",
+                Type.methodType(Type.VOID_TYPE, Types.ExecutionContext, Types.String));
     }
 
-    private static final int EXECUTION_CONTEXT = 0;
-
-    private static final class EvalDeclInitMethodGenerator extends InstructionVisitor {
-        EvalDeclInitMethodGenerator(MethodCode method) {
+    private static final class EvalDeclInitVisitor extends InstructionVisitor {
+        EvalDeclInitVisitor(MethodCode method) {
             super(method);
         }
 
         @Override
         public void begin() {
             super.begin();
-            setParameterName("cx", EXECUTION_CONTEXT, Types.ExecutionContext);
+            setParameterName("cx", 0, Types.ExecutionContext);
+        }
+
+        Variable<ExecutionContext> getExecutionContext() {
+            return getParameter(0, ExecutionContext.class);
         }
     }
 
@@ -79,15 +88,12 @@ final class EvalDeclarationInstantiationGenerator extends DeclarationBindingInst
         super(codegen);
     }
 
-    void generate(Script evalScript) {
-        MethodCode method = codegen.newMethod(evalScript, ScriptName.Init);
-        InstructionVisitor mv = new EvalDeclInitMethodGenerator(method);
-
+    void generate(Script evalScript, MethodCode method) {
+        EvalDeclInitVisitor mv = new EvalDeclInitVisitor(method);
         mv.lineInfo(evalScript);
         mv.begin();
-        if (VarDeclaredNames(evalScript).isEmpty() && LexicallyDeclaredNames(evalScript).isEmpty()
-                && !hasBlockFunctions(evalScript)) {
-            mv._return();
+        if (!hasAnyDeclarations(evalScript)) {
+            generateScriptNoDeclarations(evalScript, mv);
         } else if (evalScript.isScripting()) {
             generateScripting(evalScript, mv);
         } else if (evalScript.isStrict()) {
@@ -100,14 +106,27 @@ final class EvalDeclarationInstantiationGenerator extends DeclarationBindingInst
         mv.end();
     }
 
-    private void generateGlobal(Script evalScript, InstructionVisitor mv) {
+    private static boolean hasAnyDeclarations(Script evalScript) {
+        return !VarDeclaredNames(evalScript).isEmpty() || !LexicallyDeclaredNames(evalScript).isEmpty()
+                || hasBlockFunctions(evalScript);
+    }
+
+    private void generateScriptNoDeclarations(Script evalScript, EvalDeclInitVisitor mv) {
+        assert !hasAnyDeclarations(evalScript);
+        Variable<ExecutionContext> context = mv.getExecutionContext();
+
+        checkUndeclaredPrivateNames(evalScript, context, mv);
+
+        mv._return();
+    }
+
+    private void generateGlobal(Script evalScript, EvalDeclInitVisitor mv) {
         assert evalScript.isGlobalCode() && !evalScript.isStrict() && !evalScript.isScripting();
-        Variable<ExecutionContext> context = mv.getParameter(EXECUTION_CONTEXT,
-                ExecutionContext.class);
-        Variable<LexicalEnvironment<GlobalEnvironmentRecord>> varEnv = mv.newVariable("varEnv",
-                LexicalEnvironment.class).uncheckedCast();
-        Variable<LexicalEnvironment<DeclarativeEnvironmentRecord>> lexEnv = mv.newVariable(
-                "lexEnv", LexicalEnvironment.class).uncheckedCast();
+        Variable<ExecutionContext> context = mv.getExecutionContext();
+        Variable<LexicalEnvironment<GlobalEnvironmentRecord>> varEnv = mv
+                .newVariable("varEnv", LexicalEnvironment.class).uncheckedCast();
+        Variable<LexicalEnvironment<DeclarativeEnvironmentRecord>> lexEnv = mv
+                .newVariable("lexEnv", LexicalEnvironment.class).uncheckedCast();
         Variable<FunctionObject> fo = null;
 
         getVariableEnvironment(context, varEnv, mv);
@@ -121,8 +140,7 @@ final class EvalDeclarationInstantiationGenerator extends DeclarationBindingInst
         Variable<DeclarativeEnvironmentRecord> lexEnvRec = mv.newVariable("lexEnvRec",
                 DeclarativeEnvironmentRecord.class);
         /* step 4 */
-        Variable<GlobalEnvironmentRecord> varEnvRec = mv.newVariable("varEnvRec",
-                GlobalEnvironmentRecord.class);
+        Variable<GlobalEnvironmentRecord> varEnvRec = mv.newVariable("varEnvRec", GlobalEnvironmentRecord.class);
         getEnvironmentRecord(varEnv, varEnvRec, mv);
         /* step 5 */
         if (!varNames.isEmpty()) {
@@ -147,10 +165,14 @@ final class EvalDeclarationInstantiationGenerator extends DeclarationBindingInst
                 }
             }
             /* steps 5.b-d */
-            if (isEnclosedByLexicalOrHasVarForOf(evalScript)) {
+            if (isEnclosedByLexicalOrHasRestrictedVar(evalScript)) {
                 checkLexicalRedeclaration(evalScript, context, varEnv, lexEnv, varNames, mv);
             }
         }
+
+        // Extension: Class Fields
+        checkUndeclaredPrivateNames(evalScript, context, mv);
+
         /* step 6 */
         ArrayDeque<HoistableDeclaration> functionsToInitialize = new ArrayDeque<>();
         /* step 7 */
@@ -235,15 +257,14 @@ final class EvalDeclarationInstantiationGenerator extends DeclarationBindingInst
         mv._return();
     }
 
-    private void generateFunction(Script evalScript, InstructionVisitor mv) {
+    private void generateFunction(Script evalScript, EvalDeclInitVisitor mv) {
         assert evalScript.isFunctionCode() && !evalScript.isStrict() && !evalScript.isScripting();
         final boolean strict = false;
-        Variable<ExecutionContext> context = mv.getParameter(EXECUTION_CONTEXT,
-                ExecutionContext.class);
-        Variable<LexicalEnvironment<DeclarativeEnvironmentRecord>> varEnv = mv.newVariable(
-                "varEnv", LexicalEnvironment.class).uncheckedCast();
-        Variable<LexicalEnvironment<DeclarativeEnvironmentRecord>> lexEnv = mv.newVariable(
-                "lexEnv", LexicalEnvironment.class).uncheckedCast();
+        Variable<ExecutionContext> context = mv.getExecutionContext();
+        Variable<LexicalEnvironment<DeclarativeEnvironmentRecord>> varEnv = mv
+                .newVariable("varEnv", LexicalEnvironment.class).uncheckedCast();
+        Variable<LexicalEnvironment<DeclarativeEnvironmentRecord>> lexEnv = mv
+                .newVariable("lexEnv", LexicalEnvironment.class).uncheckedCast();
         Variable<FunctionObject> fo = null;
         Variable<Undefined> undef = mv.newVariable("undef", Undefined.class);
         mv.loadUndefined();
@@ -264,11 +285,15 @@ final class EvalDeclarationInstantiationGenerator extends DeclarationBindingInst
                 DeclarativeEnvironmentRecord.class);
         getEnvironmentRecord(varEnv, varEnvRec, mv);
         /* step 5 */
-        if (!varNames.isEmpty() && isEnclosedByLexicalOrHasVarForOf(evalScript)) {
+        if (!varNames.isEmpty() && isEnclosedByLexicalOrHasRestrictedVar(evalScript)) {
             /* step 5.a (not applicable) */
             /* steps 5.b-d */
             checkLexicalRedeclaration(evalScript, context, varEnv, lexEnv, varNames, mv);
         }
+
+        // Extension: Class Fields
+        checkUndeclaredPrivateNames(evalScript, context, mv);
+
         /* step 6 */
         ArrayDeque<HoistableDeclaration> functionsToInitialize = new ArrayDeque<>();
         /* step 7 */
@@ -304,15 +329,14 @@ final class EvalDeclarationInstantiationGenerator extends DeclarationBindingInst
         mv._return();
     }
 
-    private void generateScripting(Script evalScript, InstructionVisitor mv) {
+    private void generateScripting(Script evalScript, EvalDeclInitVisitor mv) {
         assert evalScript.isScripting();
         final boolean strict = IsStrict(evalScript);
-        Variable<ExecutionContext> context = mv.getParameter(EXECUTION_CONTEXT,
-                ExecutionContext.class);
-        Variable<LexicalEnvironment<EnvironmentRecord>> varEnv = mv.newVariable("varEnv",
-                LexicalEnvironment.class).uncheckedCast();
-        Variable<LexicalEnvironment<DeclarativeEnvironmentRecord>> lexEnv = mv.newVariable(
-                "lexEnv", LexicalEnvironment.class).uncheckedCast();
+        Variable<ExecutionContext> context = mv.getExecutionContext();
+        Variable<LexicalEnvironment<EnvironmentRecord>> varEnv = mv.newVariable("varEnv", LexicalEnvironment.class)
+                .uncheckedCast();
+        Variable<LexicalEnvironment<DeclarativeEnvironmentRecord>> lexEnv = mv
+                .newVariable("lexEnv", LexicalEnvironment.class).uncheckedCast();
         Variable<FunctionObject> fo = null;
         Variable<Undefined> undef = mv.newVariable("undef", Undefined.class);
         mv.loadUndefined();
@@ -329,10 +353,13 @@ final class EvalDeclarationInstantiationGenerator extends DeclarationBindingInst
         Variable<DeclarativeEnvironmentRecord> lexEnvRec = mv.newVariable("lexEnvRec",
                 DeclarativeEnvironmentRecord.class);
         /* step 4 */
-        Variable<EnvironmentRecord> varEnvRec = mv
-                .newVariable("varEnvRec", EnvironmentRecord.class);
+        Variable<EnvironmentRecord> varEnvRec = mv.newVariable("varEnvRec", EnvironmentRecord.class);
         getEnvironmentRecord(varEnv, varEnvRec, mv);
         /* step 5 (not applicable) */
+
+        // Extension: Class Fields
+        checkUndeclaredPrivateNames(evalScript, context, mv);
+
         /* step 6 */
         ArrayDeque<HoistableDeclaration> functionsToInitialize = new ArrayDeque<>();
         /* step 7 */
@@ -368,14 +395,13 @@ final class EvalDeclarationInstantiationGenerator extends DeclarationBindingInst
         mv._return();
     }
 
-    private void generateStrict(Script evalScript, InstructionVisitor mv) {
+    private void generateStrict(Script evalScript, EvalDeclInitVisitor mv) {
         assert evalScript.isStrict() && !evalScript.isScripting();
-        Variable<ExecutionContext> context = mv.getParameter(EXECUTION_CONTEXT,
-                ExecutionContext.class);
-        Variable<LexicalEnvironment<DeclarativeEnvironmentRecord>> varEnv = mv.newVariable(
-                "varEnv", LexicalEnvironment.class).uncheckedCast();
-        Variable<LexicalEnvironment<DeclarativeEnvironmentRecord>> lexEnv = mv.newVariable(
-                "lexEnv", LexicalEnvironment.class).uncheckedCast();
+        Variable<ExecutionContext> context = mv.getExecutionContext();
+        Variable<LexicalEnvironment<DeclarativeEnvironmentRecord>> varEnv = mv
+                .newVariable("varEnv", LexicalEnvironment.class).uncheckedCast();
+        Variable<LexicalEnvironment<DeclarativeEnvironmentRecord>> lexEnv = mv
+                .newVariable("lexEnv", LexicalEnvironment.class).uncheckedCast();
         Variable<FunctionObject> fo = null;
         Variable<Undefined> undef = mv.newVariable("undef", Undefined.class);
         mv.loadUndefined();
@@ -397,6 +423,10 @@ final class EvalDeclarationInstantiationGenerator extends DeclarationBindingInst
                 DeclarativeEnvironmentRecord.class);
         getEnvironmentRecord(varEnv, varEnvRec, mv);
         /* step 5 (not applicable) */
+
+        // Extension: Class Fields
+        checkUndeclaredPrivateNames(evalScript, context, mv);
+
         /* step 6 */
         ArrayDeque<HoistableDeclaration> functionsToInitialize = new ArrayDeque<>();
         /* step 7 */
@@ -444,8 +474,7 @@ final class EvalDeclarationInstantiationGenerator extends DeclarationBindingInst
      * 18.2.1.2, step 8
      */
     private boolean findFunctionDeclarations(List<StatementListItem> varDeclarations,
-            ArrayDeque<HoistableDeclaration> functionsToInitialize,
-            HashSet<Name> declaredFunctionNames) {
+            ArrayDeque<HoistableDeclaration> functionsToInitialize, HashSet<Name> declaredFunctionNames) {
         for (StatementListItem item : reverse(varDeclarations)) {
             if (item instanceof HoistableDeclaration) {
                 HoistableDeclaration d = (HoistableDeclaration) item;
@@ -479,11 +508,9 @@ final class EvalDeclarationInstantiationGenerator extends DeclarationBindingInst
     /**
      * 18.2.1.2, step 14
      */
-    private void createFunctions(ArrayDeque<HoistableDeclaration> functionsToInitialize,
-            boolean strict, Variable<ExecutionContext> context,
-            Variable<LexicalEnvironment<DeclarativeEnvironmentRecord>> lexEnv,
-            Variable<FunctionObject> fo, Variable<? extends EnvironmentRecord> varEnvRec,
-            InstructionVisitor mv) {
+    private void createFunctions(ArrayDeque<HoistableDeclaration> functionsToInitialize, boolean strict,
+            Variable<ExecutionContext> context, Variable<LexicalEnvironment<DeclarativeEnvironmentRecord>> lexEnv,
+            Variable<FunctionObject> fo, Variable<? extends EnvironmentRecord> varEnvRec, InstructionVisitor mv) {
         for (HoistableDeclaration f : functionsToInitialize) {
             Name fn = BoundName(f);
 
@@ -513,8 +540,7 @@ final class EvalDeclarationInstantiationGenerator extends DeclarationBindingInst
      * 18.2.1.2, step 15
      */
     private void createVarDeclarations(LinkedHashSet<Name> declaredVarNames,
-            Variable<? extends EnvironmentRecord> varEnvRec, Variable<Undefined> undef,
-            InstructionVisitor mv) {
+            Variable<? extends EnvironmentRecord> varEnvRec, Variable<Undefined> undef, InstructionVisitor mv) {
         for (Name vn : declaredVarNames) {
             BindingOp<EnvironmentRecord> op = BindingOp.LOOKUP;
             Jump varAlreadyDeclared = new Jump();
@@ -571,10 +597,11 @@ final class EvalDeclarationInstantiationGenerator extends DeclarationBindingInst
         return codegen.isEnabled(Parser.Option.EnclosedByLexicalDeclaration);
     }
 
-    private boolean isEnclosedByLexicalOrHasVarForOf(Script evalScript) {
+    private boolean isEnclosedByLexicalOrHasRestrictedVar(Script evalScript) {
         return codegen.isEnabled(Parser.Option.EnclosedByLexicalDeclaration)
                 || (codegen.isEnabled(CompatibilityOption.CatchVarStatement)
-                        && !evalScript.getScope().varForOfDeclaredNames().isEmpty());
+                        && codegen.isEnabled(Parser.Option.EnclosedByCatchStatement)
+                        && !evalScript.getScope().restrictedVarDeclaredNames().isEmpty());
     }
 
     private static boolean hasBlockFunctions(Script evalScript) {
@@ -588,15 +615,16 @@ final class EvalDeclarationInstantiationGenerator extends DeclarationBindingInst
             Variable<? extends LexicalEnvironment<? extends EnvironmentRecord>> varEnv,
             Variable<LexicalEnvironment<DeclarativeEnvironmentRecord>> lexEnv, Set<Name> varNames,
             InstructionVisitor mv) {
-        Variable<LexicalEnvironment<EnvironmentRecord>> thisLex = mv.newVariable("thisLex",
-                LexicalEnvironment.class).uncheckedCast();
-        Variable<EnvironmentRecord> thisEnvRec = mv.newVariable("thisEnvRec",
-                EnvironmentRecord.class).uncheckedCast();
-        Variable<DeclarativeEnvironmentRecord> envRec = mv.newVariable("envRec",
-                DeclarativeEnvironmentRecord.class).uncheckedCast();
-        Set<Name> varForOfNames = evalScript.getScope().varForOfDeclaredNames();
+        Variable<LexicalEnvironment<EnvironmentRecord>> thisLex = mv.newVariable("thisLex", LexicalEnvironment.class)
+                .uncheckedCast();
+        Variable<EnvironmentRecord> thisEnvRec = mv.newVariable("thisEnvRec", EnvironmentRecord.class).uncheckedCast();
+        Variable<DeclarativeEnvironmentRecord> envRec = mv.newVariable("envRec", DeclarativeEnvironmentRecord.class)
+                .uncheckedCast();
+        Set<Name> restrictedVarNames = evalScript.getScope().restrictedVarDeclaredNames();
         final boolean catchVar = codegen.isEnabled(CompatibilityOption.CatchVarStatement);
         final boolean hasWith = codegen.isEnabled(Parser.Option.EnclosedByWithStatement);
+        final boolean hasCatch = codegen.isEnabled(Parser.Option.EnclosedByCatchStatement);
+        assert hasCatch || restrictedVarNames.isEmpty();
 
         Jump loopTest = new Jump(), loop = new Jump(), objectEnv = new Jump();
         mv.load(lexEnv);
@@ -621,8 +649,12 @@ final class EvalDeclarationInstantiationGenerator extends DeclarationBindingInst
                 mv.load(context);
                 mv.load(envRec);
                 mv.aconst(name.getIdentifier());
-                mv.iconst(catchVar && !varForOfNames.contains(name));
-                mv.invoke(Methods.ScriptRuntime_canDeclareVarOrThrow);
+                if (hasCatch) {
+                    mv.iconst(catchVar && !restrictedVarNames.contains(name));
+                    mv.invoke(Methods.DeclarationOperations_canDeclareVarOrThrowMaybeCatch);
+                } else {
+                    mv.invoke(Methods.DeclarationOperations_canDeclareVarOrThrow);
+                }
             }
             if (hasWith) {
                 mv.mark(objectEnv);
@@ -640,5 +672,16 @@ final class EvalDeclarationInstantiationGenerator extends DeclarationBindingInst
     private boolean hasLexicalEnvironment(Script evalScript) {
         assert !evalScript.isStrict() && !evalScript.isScripting();
         return !evalScript.getScope().lexicallyDeclaredNames().isEmpty();
+    }
+
+    private void checkUndeclaredPrivateNames(Script evalScript, Variable<ExecutionContext> context,
+            InstructionVisitor mv) {
+        List<IdentifierName> undeclaredPrivateNames = evalScript.getUndeclaredPrivateNames();
+        for (IdentifierName privateName : undeclaredPrivateNames) {
+            mv.load(context);
+            mv.aconst(privateName.getName());
+            mv.lineInfo(privateName);
+            mv.invoke(Methods.DeclarationOperations_hasDeclaredPrivateNameOrThrow);
+        }
     }
 }

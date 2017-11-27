@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -21,16 +21,16 @@ function fdecl() {
   eval("new super()");
 }
 Object.setPrototypeOf(fdecl, SuperConstructor);
-assertThrows(ReferenceError, () => fdecl());
-new fdecl();
+assertThrows(SyntaxError, () => fdecl());
+assertThrows(SyntaxError, () => new fdecl());
 
 // 14.1 FunctionExpression
 var fexpr = function() {
   eval("new super()");
 };
 Object.setPrototypeOf(fexpr, SuperConstructor);
-assertThrows(ReferenceError, () => fexpr());
-new fexpr();
+assertThrows(SyntaxError, () => fexpr());
+assertThrows(SyntaxError, () => new fexpr());
 
 // 14.3 Method Definitions [Method]
 var obj = {
@@ -39,7 +39,7 @@ var obj = {
   }
 };
 Object.setPrototypeOf(obj.m, SuperConstructor);
-assertThrows(ReferenceError, () => obj.m());
+assertThrows(SyntaxError, () => obj.m());
 assertThrows(TypeError, () => new obj.m());
 
 var obj = class {
@@ -48,7 +48,7 @@ var obj = class {
   }
 };
 Object.setPrototypeOf(obj.prototype.m, SuperConstructor);
-assertThrows(ReferenceError, () => obj.prototype.m());
+assertThrows(SyntaxError, () => obj.prototype.m());
 assertThrows(TypeError, () => new obj.prototype.m());
 
 var obj = class {
@@ -57,7 +57,7 @@ var obj = class {
   }
 };
 Object.setPrototypeOf(obj.m, SuperConstructor);
-assertThrows(ReferenceError, () => obj.m());
+assertThrows(SyntaxError, () => obj.m());
 assertThrows(TypeError, () => new obj.m());
 
 // 14.3 Method Definitions [ConstructorMethod]
@@ -68,7 +68,7 @@ var obj = class {
 };
 Object.setPrototypeOf(obj, SuperConstructor);
 assertThrows(TypeError, () => obj());
-new obj();
+assertThrows(SyntaxError, () => new obj());
 
 var obj = class extends class {} {
   constructor() {
@@ -86,7 +86,7 @@ var obj = {
   }
 };
 Object.setPrototypeOf(Object.getOwnPropertyDescriptor(obj, "x").get, SuperConstructor);
-assertThrows(ReferenceError, () => Object.getOwnPropertyDescriptor(obj, "x").get());
+assertThrows(SyntaxError, () => Object.getOwnPropertyDescriptor(obj, "x").get());
 assertThrows(TypeError, () => new (Object.getOwnPropertyDescriptor(obj, "x").get)());
 
 var obj = class {
@@ -95,7 +95,7 @@ var obj = class {
   }
 };
 Object.setPrototypeOf(Object.getOwnPropertyDescriptor(obj.prototype, "x").get, SuperConstructor);
-assertThrows(ReferenceError, () => Object.getOwnPropertyDescriptor(obj.prototype, "x").get());
+assertThrows(SyntaxError, () => Object.getOwnPropertyDescriptor(obj.prototype, "x").get());
 assertThrows(TypeError, () => new (Object.getOwnPropertyDescriptor(obj.prototype, "x").get)());
 
 var obj = class {
@@ -104,7 +104,7 @@ var obj = class {
   }
 };
 Object.setPrototypeOf(Object.getOwnPropertyDescriptor(obj, "x").get, SuperConstructor);
-assertThrows(ReferenceError, () => Object.getOwnPropertyDescriptor(obj, "x").get());
+assertThrows(SyntaxError, () => Object.getOwnPropertyDescriptor(obj, "x").get());
 assertThrows(TypeError, () => new (Object.getOwnPropertyDescriptor(obj, "x").get)());
 
 // 14.3 Method Definitions [Setter]
@@ -114,7 +114,7 @@ var obj = {
   }
 };
 Object.setPrototypeOf(Object.getOwnPropertyDescriptor(obj, "x").set, SuperConstructor);
-assertThrows(ReferenceError, () => Object.getOwnPropertyDescriptor(obj, "x").set());
+assertThrows(SyntaxError, () => Object.getOwnPropertyDescriptor(obj, "x").set());
 assertThrows(TypeError, () => new (Object.getOwnPropertyDescriptor(obj, "x").set)());
 
 var obj = class {
@@ -123,7 +123,7 @@ var obj = class {
   }
 };
 Object.setPrototypeOf(Object.getOwnPropertyDescriptor(obj.prototype, "x").set, SuperConstructor);
-assertThrows(ReferenceError, () => Object.getOwnPropertyDescriptor(obj.prototype, "x").set());
+assertThrows(SyntaxError, () => Object.getOwnPropertyDescriptor(obj.prototype, "x").set());
 assertThrows(TypeError, () => new (Object.getOwnPropertyDescriptor(obj.prototype, "x").set)());
 
 var obj = class {
@@ -132,7 +132,7 @@ var obj = class {
   }
 };
 Object.setPrototypeOf(Object.getOwnPropertyDescriptor(obj, "x").set, SuperConstructor);
-assertThrows(ReferenceError, () => Object.getOwnPropertyDescriptor(obj, "x").set());
+assertThrows(SyntaxError, () => Object.getOwnPropertyDescriptor(obj, "x").set());
 assertThrows(TypeError, () => new (Object.getOwnPropertyDescriptor(obj, "x").set)());
 
 // 14.4 GeneratorDeclaration
@@ -140,7 +140,7 @@ function* gdecl() {
   eval("new super()");
 }
 Object.setPrototypeOf(gdecl, SuperConstructor);
-assertThrows(ReferenceError, () => gdecl().next());
+assertThrows(SyntaxError, () => gdecl().next());
 assertThrows(TypeError, () => new gdecl());
 
 // 14.4 GeneratorExpression
@@ -148,7 +148,7 @@ var gexpr = function*() {
   eval("new super()");
 };
 Object.setPrototypeOf(gexpr, SuperConstructor);
-assertThrows(ReferenceError, () => gexpr().next());
+assertThrows(SyntaxError, () => gexpr().next());
 assertThrows(TypeError, () => new gexpr());
 
 // 14.4 GeneratorMethod
@@ -158,7 +158,7 @@ var obj = {
   }
 };
 Object.setPrototypeOf(obj.m, SuperConstructor);
-assertThrows(ReferenceError, () => obj.m().next());
+assertThrows(SyntaxError, () => obj.m().next());
 assertThrows(TypeError, () => new obj.m());
 
 var obj = class {
@@ -167,7 +167,7 @@ var obj = class {
   }
 };
 Object.setPrototypeOf(obj.prototype.m, SuperConstructor);
-assertThrows(ReferenceError, () => obj.prototype.m().next());
+assertThrows(SyntaxError, () => obj.prototype.m().next());
 assertThrows(TypeError, () => new obj.prototype.m());
 
 var obj = class {
@@ -176,7 +176,7 @@ var obj = class {
   }
 };
 Object.setPrototypeOf(obj.m, SuperConstructor);
-assertThrows(ReferenceError, () => obj.m().next());
+assertThrows(SyntaxError, () => obj.m().next());
 assertThrows(TypeError, () => new obj.m());
 
 // 15.1 Scripts

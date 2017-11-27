@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -9,8 +9,10 @@ package com.github.anba.es6draft.runtime;
 import com.github.anba.es6draft.Executable;
 import com.github.anba.es6draft.Module;
 import com.github.anba.es6draft.Script;
+import com.github.anba.es6draft.runtime.internal.DebugInfo;
 import com.github.anba.es6draft.runtime.internal.RuntimeContext;
-import com.github.anba.es6draft.runtime.internal.RuntimeInfo.SourceObject;
+import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
+import com.github.anba.es6draft.runtime.internal.Source;
 import com.github.anba.es6draft.runtime.modules.SourceTextModuleRecord;
 import com.github.anba.es6draft.runtime.objects.async.Async;
 import com.github.anba.es6draft.runtime.objects.iteration.GeneratorObject;
@@ -37,9 +39,8 @@ public final class ExecutionContext {
     private GeneratorObject generator;
     private Async async;
 
-    private ExecutionContext(Realm realm, LexicalEnvironment<?> varEnv,
-            LexicalEnvironment<?> lexEnv, LexicalEnvironment<FunctionEnvironmentRecord> funVarEnv,
-            Executable executable, FunctionObject function) {
+    private ExecutionContext(Realm realm, LexicalEnvironment<?> varEnv, LexicalEnvironment<?> lexEnv,
+            LexicalEnvironment<FunctionEnvironmentRecord> funVarEnv, Executable executable, FunctionObject function) {
         this.realm = realm;
         this.varEnv = varEnv;
         this.lexEnv = lexEnv;
@@ -63,7 +64,7 @@ public final class ExecutionContext {
      * @return the runtime context
      */
     public RuntimeContext getRuntimeContext() {
-        return realm.getWorld().getContext();
+        return realm.getRuntimeContext();
     }
 
     /**
@@ -91,7 +92,7 @@ public final class ExecutionContext {
      * @see Realm#getIntrinsic(Intrinsics)
      */
     @SuppressWarnings("unchecked")
-    public <T extends OrdinaryObject> OrdinaryObject getIntrinsic(Intrinsics id, Class<T> klass) {
+    public <T extends OrdinaryObject> T getIntrinsic(Intrinsics id, Class<T> klass) {
         OrdinaryObject intrinsic = realm.getIntrinsic(id);
         assert klass.isInstance(intrinsic) : "Unexpected type: " + intrinsic.getClass();
         return (T) intrinsic;
@@ -158,8 +159,7 @@ public final class ExecutionContext {
     /**
      * Returns the {@code LexicalEnvironment} component of this execution context.
      * 
-     * @return the {@code LexicalEnvironment} component or {@code null} if not evaluating ECMAScript
-     *         code
+     * @return the {@code LexicalEnvironment} component or {@code null} if not evaluating ECMAScript code
      */
     public LexicalEnvironment<?> getLexicalEnvironment() {
         return lexEnv;
@@ -168,8 +168,7 @@ public final class ExecutionContext {
     /**
      * Returns the {@code VariableEnvironment} component of this execution context.
      * 
-     * @return the {@code VariableEnvironment} component or {@code null} if not evaluating
-     *         ECMAScript code
+     * @return the {@code VariableEnvironment} component or {@code null} if not evaluating ECMAScript code
      */
     public LexicalEnvironment<?> getVariableEnvironment() {
         return varEnv;
@@ -178,16 +177,16 @@ public final class ExecutionContext {
     /**
      * Returns the {@code FunctionVariableEnvironment} component of this execution context.
      * 
-     * @return the {@code FunctionVariableEnvironment} component or {@code null} if not evaluating
-     *         ECMAScript function code
+     * @return the {@code FunctionVariableEnvironment} component or {@code null} if not evaluating ECMAScript function
+     *         code
      */
     public LexicalEnvironment<FunctionEnvironmentRecord> getFunctionVariableEnvironment() {
         return funVarEnv;
     }
 
     /**
-     * Returns the environment record of the {@code LexicalEnvironment} component of this execution
-     * context. Must not be called if not evaluating ECMAScript code.
+     * Returns the environment record of the {@code LexicalEnvironment} component of this execution context. Must not be
+     * called if not evaluating ECMAScript code.
      * 
      * @return the environment record
      */
@@ -196,8 +195,8 @@ public final class ExecutionContext {
     }
 
     /**
-     * Returns the environment record of the {@code VariableEnvironment} component of this execution
-     * context. Must not be called if not evaluating ECMAScript code.
+     * Returns the environment record of the {@code VariableEnvironment} component of this execution context. Must not
+     * be called if not evaluating ECMAScript code.
      * 
      * @return the environment record
      */
@@ -206,8 +205,8 @@ public final class ExecutionContext {
     }
 
     /**
-     * Returns the environment record of the {@code FunctionVariableEnvironment} component of this
-     * execution context. Must not be called if not evaluating ECMAScript function code.
+     * Returns the environment record of the {@code FunctionVariableEnvironment} component of this execution context.
+     * Must not be called if not evaluating ECMAScript function code.
      * 
      * @return the environment record
      */
@@ -298,10 +297,24 @@ public final class ExecutionContext {
     }
 
     private static final class DefaultExecutable implements Executable {
-        private static final DefaultExecutable INSTANCE = new DefaultExecutable();
+        static final DefaultExecutable INSTANCE = new DefaultExecutable();
 
         @Override
-        public SourceObject getSourceObject() {
+        public RuntimeInfo.RuntimeObject getRuntimeObject() {
+            return DefaultRuntimeObject.INSTANCE;
+        }
+
+        @Override
+        public Source getSource() {
+            return null;
+        }
+    }
+
+    private static final class DefaultRuntimeObject implements RuntimeInfo.RuntimeObject {
+        static final DefaultRuntimeObject INSTANCE = new DefaultRuntimeObject();
+
+        @Override
+        public DebugInfo debugInfo() {
             return null;
         }
     }
@@ -324,8 +337,7 @@ public final class ExecutionContext {
      */
     public static ExecutionContext newScriptExecutionContext(Realm realm, Script script) {
         /* steps 3-6 */
-        return new ExecutionContext(realm, realm.getGlobalEnv(), realm.getGlobalEnv(), null,
-                script, null);
+        return new ExecutionContext(realm, realm.getGlobalEnv(), realm.getGlobalEnv(), null, script, null);
     }
 
     /**
@@ -348,8 +360,7 @@ public final class ExecutionContext {
      * @return the new module execution context
      */
     public static ExecutionContext newModuleDeclarationExecutionContext(Realm realm, Module module) {
-        return new ExecutionContext(realm, realm.getGlobalEnv(), realm.getGlobalEnv(), null,
-                module, null);
+        return new ExecutionContext(realm, realm.getGlobalEnv(), realm.getGlobalEnv(), null, module, null);
     }
 
     /**
@@ -371,8 +382,7 @@ public final class ExecutionContext {
      *            the module object
      * @return the new module execution context
      */
-    public static ExecutionContext newModuleExecutionContext(Realm realm,
-            SourceTextModuleRecord module) {
+    public static ExecutionContext newModuleExecutionContext(Realm realm, SourceTextModuleRecord module) {
         /* steps 4-9 */
         return new ExecutionContext(realm, module.getEnvironment(), module.getEnvironment(), null,
                 module.getScriptCode(), null);
@@ -398,11 +408,11 @@ public final class ExecutionContext {
      *            the new lexical environment
      * @return the new eval execution context
      */
-    public static ExecutionContext newEvalExecutionContext(ExecutionContext callerContext,
-            Script evalScript, LexicalEnvironment<?> varEnv, LexicalEnvironment<?> lexEnv) {
-        /* steps 12-17 */
-        return new ExecutionContext(callerContext.realm, varEnv, lexEnv, callerContext.funVarEnv,
-                evalScript, callerContext.function);
+    public static ExecutionContext newEvalExecutionContext(ExecutionContext callerContext, Script evalScript,
+            LexicalEnvironment<?> varEnv, LexicalEnvironment<?> lexEnv) {
+        /* steps 13-18 */
+        return new ExecutionContext(callerContext.realm, varEnv, lexEnv, callerContext.funVarEnv, evalScript,
+                callerContext.function);
     }
 
     /**
@@ -425,8 +435,7 @@ public final class ExecutionContext {
             LexicalEnvironment<FunctionEnvironmentRecord> localEnv) {
         /* steps 1-2, 7 (not applicable) */
         /* steps 3-6, 8-13 */
-        return new ExecutionContext(f.getRealm(), localEnv, localEnv, localEnv, f.getExecutable(),
-                f);
+        return new ExecutionContext(f.getRealm(), localEnv, localEnv, localEnv, f.getExecutable(), f);
     }
 
     /**
@@ -446,8 +455,39 @@ public final class ExecutionContext {
     }
 
     /**
-     * Combined {@link #resolveBinding(String, boolean)} with
-     * {@link Reference#GetValue(Object, ExecutionContext)} internal method.
+     * 8.3.1 GetActiveScriptOrModule ( )
+     * 
+     * @return the active executable or {@code null} if none found
+     */
+    public Executable getActiveScriptOrModule() {
+        if (executable != DefaultExecutable.INSTANCE) {
+            return executable;
+        }
+        ExecutionContext scriptContext = getRealm().getWorld().getScriptContext();
+        if (scriptContext != null && scriptContext.executable != DefaultExecutable.INSTANCE) {
+            return scriptContext.executable;
+        }
+        return null;
+    }
+
+    /**
+     * Returns the source info from the caller execution context. If no applicable source is attached to the caller
+     * context, the source from the most recent script execution is returned.
+     * 
+     * @return the source info or {@code null} if none available
+     */
+    public Source sourceInfo() {
+        Executable activeExecutable = getActiveScriptOrModule();
+        if (activeExecutable != null) {
+            return activeExecutable.getSource();
+        }
+        // Return null if no script or module execution context is available.
+        return null;
+    }
+
+    /**
+     * Combined {@link #resolveBinding(String, boolean)} with {@link Reference#GetValue(Object, ExecutionContext)}
+     * internal method.
      * 
      * @param name
      *            the binding name
@@ -460,7 +500,7 @@ public final class ExecutionContext {
     }
 
     /**
-     * 8.3.1 ResolveBinding(name)
+     * 8.3.2 ResolveBinding(name)
      * 
      * @param name
      *            the binding name
@@ -469,12 +509,12 @@ public final class ExecutionContext {
      * @return the resolved reference
      */
     public Reference<?, String> resolveBinding(String name, boolean strict) {
-        /* steps 1-3 */
+        /* steps 1-4 */
         return LexicalEnvironment.getIdentifierReference(lexEnv, name, strict);
     }
 
     /**
-     * 8.3.2 GetThisEnvironment()
+     * 8.3.3 GetThisEnvironment()
      * 
      * @return the first environment record with a this-binding
      */
@@ -493,7 +533,7 @@ public final class ExecutionContext {
     }
 
     /**
-     * 8.3.3 ResolveThisBinding()
+     * 8.3.4 ResolveThisBinding()
      * 
      * @return the this-binding object
      */
@@ -505,7 +545,7 @@ public final class ExecutionContext {
     }
 
     /**
-     * 8.3.4 GetNewTarget ( )
+     * 8.3.5 GetNewTarget ( )
      * 
      * @return the NewTarget constructor object
      */
@@ -513,14 +553,14 @@ public final class ExecutionContext {
         /* step 1 */
         EnvironmentRecord envRec = getThisEnvironment();
         /* step 2 */
-        assert envRec instanceof FunctionEnvironmentRecord : String.format(
-                "Wrong environment kind = %s", envRec.getClass().getSimpleName());
+        assert envRec instanceof FunctionEnvironmentRecord : String.format("Wrong environment kind = %s",
+                envRec.getClass().getSimpleName());
         /* step 3 */
         return ((FunctionEnvironmentRecord) envRec).getNewTarget();
     }
 
     /**
-     * 8.3.5 GetGlobalObject()
+     * 8.3.6 GetGlobalObject()
      * 
      * @return the global object instance
      */

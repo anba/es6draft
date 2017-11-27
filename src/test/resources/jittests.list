@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2012-2016 André Bargull
+# Copyright (c) André Bargull
 # Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
 #
 # <https://github.com/anba/es6draft>
@@ -14,53 +14,26 @@ tests/basic/typed-array-sealed-frozen.js
 # https://bugzilla.mozilla.org/show_bug.cgi?id=609756 (?)
 tests/basic/spread-call-setcall.js
 
-# ES6: SpiderMonkey bug (https://bugzilla.mozilla.org/show_bug.cgi?id=1022967)
-tests/arguments/defaults-call-function.js
-
-# ES6: SpiderMonkey bug (https://bugzilla.mozilla.org/show_bug.cgi?id=1041341)
-tests/basic/destructuring-rest.js
-
-# ES6: eval in default parameter initializer
-# https://bugzilla.mozilla.org/show_bug.cgi?id=1022967
-tests/arguments/alias-function-not-closed.js
-
-# SM issue: destructuring and default parameters not supported in Function
-# https://bugzilla.mozilla.org/show_bug.cgi?id=755821
-tests/basic/destructuring-default.js
-
-# SM: toStringTag not implemented
-# https://bugzilla.mozilla.org/show_bug.cgi?id=1114580
-tests/collections/iterator-proto-surfaces.js
-tests/collections/Map-surfaces-1.js
-tests/collections/Set-surfaces-1.js
-tests/collections/WeakMap-surfaces.js
-tests/collections/WeakSet-surface.js
-tests/proxy/operations-on-revoked.js
-
-# ES6: array destructuring tracks completed iterators
-# https://bugzilla.mozilla.org/show_bug.cgi?id=1184922
-tests/basic/destructuring-iterator.js
-
-# ES6: Argument validation in DataView constructor
-tests/basic/bug-1133377.js
-
 # ES6: Detached typed arrays have no indexed properties in SM
 tests/basic/typed-array-copyWithin.js
-
-# ES6: Access to uninitialized argument in default parameter expression
-# https://bugzilla.mozilla.org/show_bug.cgi?id=1187502
-tests/arguments/defaults-destructuring-with-rest.js
-tests/arguments/destructuring-after-defaults.js
 
 # SM: eval("-- /./") throws SyntaxError, expected is ReferenceError
 tests/parser/modifier-regexp-vs-div.js
 
-# SM: const not allowed in for-in head
-# https://bugzilla.mozilla.org/show_bug.cgi?id=449811
-tests/parser/letContextualKeyword.js
+# ES2016 removed receiver checks in [[Get]] and [[Set]] of typed arrays
+tests/proxy/testDirectProxySetArray4.js
 
-# ES2016 does not allow non-simple parameter list if function contains "use strict" directive
-tests/arguments/defaults-strict-mode.js
+# ES2017: SM does not use ToIndex for TypedArray constructor
+tests/basic/bug1292858.js
+
+# Function-to-source on proxies
+tests/basic/bug807623.js
+tests/proxy/function-tostring.js
+
+# https://bugzilla.mozilla.org/show_bug.cgi?id=1407588
+tests/for-of/next-shenanigans.js
+tests/for-of/semantics-07.js
+tests/for-of/semantics-11.js
 
 
 ###################
@@ -70,14 +43,6 @@ tests/arguments/defaults-strict-mode.js
 # invalid test case (relies on order in which elements are visited in Array.prototype.sort)
 # and its strcmp function is broken as well
 tests/basic/testBug720695.js
-
-# __iterator__ not supported
-tests/basic/bug684922.js
-tests/basic/bug885648.js
-tests/basic/testCustomIterator.js
-
-# legacy iterator
-tests/auto-regress/bug675520.js
 
 
 ############################################
@@ -90,32 +55,38 @@ tests/auto-regress/bug666599.js
 # different Function toSource behaviour
 tests/basic/function-tosource-bug779694.js
 tests/basic/function-tosource-constructor.js
-tests/basic/function-tosource-exprbody.js
 tests/basic/function-tosource-func-proto.js
-tests/basic/function-tosource-getset.js
-tests/basic/function-tosource-strict.js
 tests/basic/testLet.js
 
 # different error message
 tests/atomics/basic-tests.js
+tests/basic/assign-primitive-error.js
+tests/basic/assign-primitive-proxy-class-error.js
 tests/basic/bug827104.js
 tests/basic/bug839420.js
 tests/basic/bug934997.js
 tests/basic/bug1100623.js
 tests/basic/bug1147216.js
-tests/basic/bug1172503.js
 tests/basic/bug1237564.js
-tests/basic/evalInWorker-nested.js
 tests/basic/expression-autopsy.js
 tests/basic/iterable-error-messages.js
-tests/basic/spread-call-maxarg.js
-tests/basic/testBug566556.js
+tests/basic/plain-object-prototypes-error.js
 tests/basic/testBug604210.js
 tests/basic/testDontClobberScannerError.js
 tests/basic/testInitSingletons.js
-tests/generators/bug931414.js
 tests/generators/wrappers.js
+tests/modules/bug1198673.js
+tests/modules/bug1204857.js
+tests/modules/bug-1225346.js
+tests/modules/bug1394492.js
+tests/modules/bug1394493.js
+tests/modules/unbound-export.js
+tests/parser/break-continue-errors.js
+tests/parser/missing-closing-brace.js
+tests/parser/redeclaration-message.js
 tests/parser/syntax-error-illegal-character.js
+tests/promise/newpromisecapability-error-message.js
+tests/regexp/bug1419785.js
 tests/self-hosting/invoke-self-hosted-with-primitive-this.js
 tests/self-hosting/method-called-on-incompatible.js
 
@@ -143,17 +114,23 @@ tests/parser/arrow-rest.js
 # Different legacy function.arguments behaviour
 tests/arguments/bug1227287.js
 
+# Different stack trace format
+tests/arrow-functions/column-number.js
+tests/basic/eval-introduction-principals.js
 
-############################################
-# Misc proxy implementation isssues        #
-############################################
+# Different max-arguments per function call
+tests/parser/bug-1263355-38.js
 
-# missing [object Function] for proxied functions (and toStringTag)
-tests/basic/bug807623.js
+# Internal module reflection
+tests/modules/bug-1283448.js
+tests/modules/bug-1284486.js
+tests/modules/bug-1284486-2.js
+tests/modules/bug-1287410.js
+tests/modules/module-environment.js
+tests/modules/module-declaration-instantiation.js
 
-# Old Proxy API can violate object invariants
-tests/auto-regress/bug578015.js
-tests/proxy/testIndirectProxyGetOwnPropertyDescriptor.js
+# Module evaluation return value present
+tests/modules/module-evaluation.js
 
 
 #######################################
@@ -163,78 +140,15 @@ tests/proxy/testIndirectProxyGetOwnPropertyDescriptor.js
 # ES6-change: AddRestrictedFunctionProperties for built-ins (Function.prototype)
 tests/basic/bug675889.js
 
-# ES6-change: <this> within generator is always a generator object
-tests/auto-regress/bug678090.js
-
-# ToLength() moved array length restriction to 2^53-1
-tests/for-of/array-iterator-generic.js
-tests/basic/bug1200108.js
-
-# formal parameter initializers are evaluated in extra scope
-tests/arguments/defaults-scoping.js
-
-# RegExp.prototype.toString is generic
-tests/basic/testCrossCompartmentTransparency.js
-
 
 #######################################
 # ES6 related syntax changes          #
 #######################################
 
-# ES6: let-var temporary dead zone
-tests/arguments/defaults-evaluation-order.js
-
-# ES6: temporary dead zone in for-in/of
-tests/basic/bug646968-4.js
-tests/basic/bug678087.js
-
-# missing const initializer
-tests/basic/letTDZDelete.js
-
-# ES6: parameter environment not supported in SM
-tests/arguments/alias-function-closed.js
-
-# ES6: duplicate formal-parameter + variable declaration (non-simple parameter lists)
-tests/arguments/defaults-bound-to-function.js
-tests/arguments/defaults-with-rest.js
-
 # CallExpression no longer valid LHS
+tests/backup-point-bug1315634.js
 tests/auto-regress/bug701248.js
 tests/basic/bug738841.js
-
-# function declaration with same name as parameter in surrounding function not applicable for B.3.3
-tests/basic/testFunctionStatementAliasLocals.js
-
-
-############################################
-# Unsupported built-in object functions    #
-############################################
-
-# Object.prototype.watch
-tests/auto-regress/bug516897.js
-tests/auto-regress/bug537854.js
-tests/auto-regress/bug560796.js
-tests/basic/testBug578044.js
-tests/basic/testEvalCalledFromWatchOverSetter.js
-tests/basic/testNonStubGetter.js
-tests/basic/testSettingWatchPointOnReadOnlyProp.js
-tests/auto-regress/bug638735.js
-tests/basic/bug510437.js
-tests/basic/bug631305.js
-tests/basic/bug690292.js
-tests/basic/testAssigningWatchedDeletedProperty.js
-tests/basic/testBug584650.js
-tests/basic/testWatchRecursion.js
-tests/pic/fuzz1.js
-tests/pic/fuzz3.js
-tests/pic/watch1.js
-tests/pic/watch1a.js
-tests/pic/watch2.js
-tests/pic/watch2a.js
-tests/pic/watch3.js
-tests/pic/watch3a.js
-tests/pic/watch4.js
-tests/pic/watch5.js
 
 
 #######################################
@@ -248,6 +162,8 @@ tests/auto-regress/bug677977.js
 tests/auto-regress/bug720396.js
 tests/auto-regress/bug765483.js
 tests/auto-regress/bug1147907.js
+tests/auto-regress/bug1315943.js
+tests/auto-regress/bug1317460.js
 tests/basic/bug646968-7.js
 tests/basic/bug646968-8.js
 tests/basic/bug713226.js
@@ -257,10 +173,14 @@ tests/basic/testBug663789-2.js
 tests/basic/testBug895774.js
 tests/basic/testEvalInFrameEdgeCase.js
 tests/basic/testGeneratorDieButScopeAlive.js
-tests/tracelogger/bug1174542.js
-tests/tracelogger/bug1231170.js
-tests/tracelogger/drainTraceLogger.js
-tests/tracelogger/setupTraceLogger.js
+tests/modules/bug-1233915.js
+tests/modules/bug-1245518.js
+tests/modules/debugger-frames.js
+tests/modules/debugger-vars-function.js
+tests/modules/debugger-vars-toplevel.js
+tests/parser/bug-1263355-27.js
+tests/parser/bug-1324773.js
+tests/parser/bug-1324773-2.js
 
 
 #######################################
@@ -270,16 +190,17 @@ tests/tracelogger/setupTraceLogger.js
 # Spidermonkey strict/werror options
 tests/basic/bug629858.js
 tests/basic/statement-after-return.js
+tests/basic/werror.js
 
 # Unsupported shell functions
 # shapeOf
 tests/basic/bug641525.js
 tests/basic/testMethodWriteBarrier3.js
 tests/basic/testSetProtoRegeneratesObjectShape.js
-tests/pic/watch3b.js
 # objectEmulatingUndefined
 tests/basic/emulates-undefined.js
 tests/basic/bug1206265.js
+tests/cacheir/typeof-proxy.js
 # FakeDOMObject
 tests/basic/testFakeDOMWeakmapKey.js
 tests/basic/test-jitinfo.js
@@ -296,6 +217,7 @@ tests/basic/testBug616454.js
 # clone
 tests/basic/bug751139.js
 tests/basic/bug1106982-2.js
+tests/basic/bug1412654.js
 tests/basic/function-cloning-1.js
 tests/basic/testScriptCloning.js
 tests/basic/weird-scopechains.js
@@ -308,18 +230,16 @@ tests/basic/shell-principals.js
 
 # Unsupported 'Testing' functions
 # gcparam
+tests/auto-regress/bug1263857.js
 tests/bug793385.js
 tests/basic/bug623859.js
 tests/basic/bug720675.js
 tests/basic/bug858097.js
 tests/basic/bug1118996.js
-tests/basic/testBug756919.js
 tests/basic/testBug840012.js
 # makeFinalizeObserver
 tests/basic/testBug637014.js
 tests/basic/testStringBufferMallocAccounting.js
-# validategc
-tests/basic/bug782337.js
 # internalConst
 tests/basic/bug656261.js
 # displayName
@@ -331,11 +251,20 @@ tests/basic/bug951346.js
 tests/basic/bug951632.js
 # setJitCompilerOption
 tests/bug953337.js
+tests/auto-regress/bug1263532.js
 tests/basic/bug970643.js
 tests/basic/bug1135718.js
 tests/basic/bug1141154.js
 tests/basic/bug1196579.js
 tests/basic/testBug686274.js
+tests/basic/write-frozen-dense-strict-inlinecache.js
+tests/cacheir/has.js
+tests/cacheir/hasown.js
+tests/modules/bug-1247934.js
+tests/parser/bug-1263355-46.js
+tests/symbol-equality.js
+tests/typedarray/indexed-integer-exotics.js
+tests/typedarray/sort.js
 # enableTrackAllocations
 tests/basic/track-allocation-sites.js
 tests/basic/bug1035287-track-allocation-sites-recursion.js
@@ -344,15 +273,30 @@ tests/basic/bug673569.js
 # cacheEntry
 tests/basic/bug1057571.js
 tests/basic/bug1061534.js
+tests/parser/bug-1319443.js
 # saveStack
 tests/parser/columnNumber.js
+tests/parser/bug-1161312.js
 # getBacktrace
 tests/basic/bug1015339.js
 tests/basic/bug1122581.js
+tests/parser/bug-1263355-35.js
+tests/promise/drain-job-queue-after-quit-called.js
+tests/self-hosting/get-backtrace-in-constructing-bound-function.js
 # relazifyFunctions
 tests/basic/relazify.js
 # inIon
+tests/auto-regress/bug1266579.js
+tests/basic/bug1296015.js
+tests/basic/bug1302682.js
+tests/auto-regress/bug1343513.js
+tests/auto-regress/bug1343513-2.js
+tests/basic/define-frozen-dense-strict.js
+tests/basic/define-frozen-dense.js
 tests/basic/invokeFunctionMagic.js
+tests/basic/write-frozen-dense-strict.js
+tests/basic/write-frozen-dense.js
+tests/collections/bug-1381423.js
 # setLazyParsingEnabled
 tests/basic/eval-scopes.js
 tests/basic/function-gname.js
@@ -367,21 +311,52 @@ tests/basic/newTargetRectifier.js
 tests/basic/bug1180054.js
 # getSelfHostedValue('outer')
 tests/basic/relazify-selfhosted.js
-# evalInWorker
-tests/basic/evalInWorker-stack-limit.js
 # byteSizeOfScript
 tests/basic/bug1208403.js
-# getSelfHostedValue('CreateListIterator')
-tests/basic/bug1220766.js
+# getSelfHostedValue('GetStringDataProperty')
+tests/self-hosting/GetStringDataProperty.js
 # enableLastWarning
 tests/parser/expr-closure-warn.js
-tests/basic/regexp-multiline-warning.js
 # os.file.redirect
 tests/basic/bug908915.js
 # GetBuiltinConstructor
 tests/self-hosting/getbuiltinconstructor.js
-# enableMatchFlagArgument
-tests/basic/bug593663-regexp.js
+# IsPossiblyWrappedTypedArray
+tests/self-hosting/is-possibly-wrapped-typed-array.js
+# gc
+tests/basic/testBug579602.js
+# minorgc
+tests/parser/bug-1263355-23.js
+# setModuleResolveHook
+tests/parser/bug-1263881-1.js
+# sleep
+tests/basic/bug1276882.js
+# unwrappedObjectsHaveSameShape
+tests/basic/globals-shared-shapes.js
+# getWaitForAllPromise
+tests/promise/getwaitforallpromise-error-handling.js
+# newExternalString
+tests/basic/external-strings.js
+# addIntlExtras
+tests/auto-regress/bug1335135.js
+# getErrorNotes
+tests/parser/redeclaration.js
+# nukeCCW
+tests/cacheir/nukedCCW.js
+# getLcovInfo
+tests/modules/bug-1233179.js
+# startgc
+tests/basic/external-strings-cgc.js
+# isConstructor
+tests/proxy/preserve-iscallable-isconstructor.js
+# setDiscardSource
+tests/basic/bug1380962.js
+tests/class/bug1359622.js
+# parseModule return value
+tests/modules/requested-modules.js
+# nukeAllCCWs
+tests/promise/bug1347984.js
+tests/promise/bug1406463.js
 
 
 #######################################
@@ -391,16 +366,6 @@ tests/basic/bug593663-regexp.js
 # finally-blocks are executed when for-in produces an abrupt completion
 tests/basic/testErrorInFinalizerCalledWhileUnwinding.js
 
-# finally-blocks are executed when generator is closed
-tests/generators/closing-osr.js
-
-# yield during close() throws error in SM
-tests/generators/bug1151326.js
-
-# Function() with legacy generator source code
-tests/basic/testBug603193.js
-tests/parser/yield-without-operand.js
-
 
 #######################################
 # Compilation or runtime issues       #
@@ -408,6 +373,8 @@ tests/parser/yield-without-operand.js
 
 # Method code too large - too many variables
 tests/basic/testManyVars.js
+tests/parser/bug-1263881-2.js
+tests/parser/bug-1263881-3.js
 
 # Method code too large - too many switch cases
 tests/basic/bug1146836.js
@@ -420,16 +387,12 @@ tests/basic/spread-call.js
 # Timeout
 tests/auto-regress/bug620637.js
 tests/basic/math-jit-tests.js
+tests/basic/shifted-elements4.js
 
 # OutOfMemory: Java heap space
-tests/auto-regress/bug690933.js
-tests/auto-regress/bug735313.js
 tests/basic/testBug614653.js
 tests/basic/testBug621202.js
 tests/basic/bug826581.js
-
-# Intermittent stackoverflow error
-tests/auto-regress/bug622167.js
 
 # Too much recursion in interpreter
 tests/basic/bug1013922.js

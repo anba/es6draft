@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -7,9 +7,10 @@
 package com.github.anba.es6draft.interpreter;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.*;
-import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.CheckCallable;
-import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.CheckConstructor;
-import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.IsBuiltinEval;
+import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
+import static com.github.anba.es6draft.runtime.language.CallOperations.CheckCallable;
+import static com.github.anba.es6draft.runtime.language.CallOperations.CheckConstructor;
+import static com.github.anba.es6draft.runtime.language.CallOperations.IsBuiltinEval;
 import static com.github.anba.es6draft.runtime.types.Null.NULL;
 import static com.github.anba.es6draft.runtime.types.Reference.GetValue;
 import static com.github.anba.es6draft.runtime.types.Reference.PutValue;
@@ -18,6 +19,7 @@ import static com.github.anba.es6draft.runtime.types.builtins.ArrayObject.ArrayC
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject.ObjectCreate;
 import static com.github.anba.es6draft.semantics.StaticSemantics.PropName;
 
+import java.math.BigInteger;
 import java.util.EnumSet;
 import java.util.List;
 
@@ -27,12 +29,17 @@ import com.github.anba.es6draft.parser.Parser;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.IndexedMap;
-import com.github.anba.es6draft.runtime.internal.ScriptRuntime;
+import com.github.anba.es6draft.runtime.internal.Messages;
+import com.github.anba.es6draft.runtime.language.ArrayOperations;
+import com.github.anba.es6draft.runtime.language.CallOperations;
+import com.github.anba.es6draft.runtime.language.ObjectOperations;
+import com.github.anba.es6draft.runtime.language.Operators;
+import com.github.anba.es6draft.runtime.language.PropertyOperations;
 import com.github.anba.es6draft.runtime.objects.Eval;
 import com.github.anba.es6draft.runtime.objects.Eval.EvalFlags;
+import com.github.anba.es6draft.runtime.objects.bigint.BigIntType;
 import com.github.anba.es6draft.runtime.objects.text.RegExpConstructor;
 import com.github.anba.es6draft.runtime.types.Callable;
-import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Reference;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
@@ -45,8 +52,8 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  */
 public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionContext> {
     /**
-     * Returns a new {@link InterpretedScript} if {@code parsedScript} can be interpreted, otherwise
-     * returns {@code null}.
+     * Returns a new {@link InterpretedScript} if {@code parsedScript} can be interpreted, otherwise returns
+     * {@code null}.
      * 
      * @param parsedScript
      *            the script node
@@ -61,16 +68,22 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
 
     private final EnumSet<Parser.Option> parserOptions;
     private final boolean strict;
+    private int currentLine;
 
-    public Interpreter(Script parsedScript) {
+    Interpreter(Script parsedScript) {
         this.parserOptions = EnumSet.copyOf(parsedScript.getParserOptions());
         this.strict = parsedScript.isStrict();
+        this.currentLine = parsedScript.getBeginLine();
+    }
+
+    int getCurrentLine() {
+        return currentLine;
     }
 
     /* ----------------------------------------------------------------------------------------- */
 
     /**
-     * 12.4.4 Postfix Increment Operator.
+     * 12.4.4 Postfix Increment Operator
      * 
      * @param lhs
      *            the left-hand side expression
@@ -78,9 +91,14 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
      *            the execution context
      * @return the return value after applying the operation
      */
-    private static Double postIncrement(Reference<?, ?> lhs, ExecutionContext cx) {
-        double oldValue = ToNumber(cx, GetValue(lhs, cx));
-        double newValue = oldValue + 1;
+    private static Number postIncrement(Reference<?, ?> lhs, ExecutionContext cx) {
+        Number oldValue = ToNumeric(cx, GetValue(lhs, cx));
+        if (oldValue.getClass() == Double.class) {
+            double newValue = (double) oldValue + 1;
+            PutValue(lhs, newValue, cx);
+            return oldValue;
+        }
+        BigInteger newValue = BigIntType.add((BigInteger) oldValue, BigIntType.UNIT);
         PutValue(lhs, newValue, cx);
         return oldValue;
     }
@@ -94,15 +112,62 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
      *            the execution context
      * @return the return value after applying the operation
      */
-    private static Double postDecrement(Reference<?, ?> lhs, ExecutionContext cx) {
-        double oldValue = ToNumber(cx, GetValue(lhs, cx));
-        double newValue = oldValue - 1;
+    private static Number postDecrement(Reference<?, ?> lhs, ExecutionContext cx) {
+        Number oldValue = ToNumeric(cx, GetValue(lhs, cx));
+        if (oldValue.getClass() == Double.class) {
+            double newValue = (double) oldValue - 1;
+            PutValue(lhs, newValue, cx);
+            return oldValue;
+        }
+        BigInteger newValue = BigIntType.subtract((BigInteger) oldValue, BigIntType.UNIT);
         PutValue(lhs, newValue, cx);
         return oldValue;
     }
 
     /**
-     * 12.5.4 The delete Operator
+     * 12.4.6 Prefix Increment Operator
+     * 
+     * @param expr
+     *            the expression value
+     * @param cx
+     *            the execution context
+     * @return the return value after applying the operation
+     */
+    private static Number preIncrement(Reference<?, ?> expr, ExecutionContext cx) {
+        Number oldValue = ToNumeric(cx, GetValue(expr, cx));
+        if (oldValue.getClass() == Double.class) {
+            double newValue = (double) oldValue + 1;
+            PutValue(expr, newValue, cx);
+            return newValue;
+        }
+        BigInteger newValue = BigIntType.add((BigInteger) oldValue, BigIntType.UNIT);
+        PutValue(expr, newValue, cx);
+        return newValue;
+    }
+
+    /**
+     * 12.4.7 Prefix Decrement Operator
+     * 
+     * @param expr
+     *            the expression value
+     * @param cx
+     *            the execution context
+     * @return the return value after applying the operation
+     */
+    private static Number preDecrement(Reference<?, ?> expr, ExecutionContext cx) {
+        Number oldValue = ToNumeric(cx, GetValue(expr, cx));
+        if (oldValue.getClass() == Double.class) {
+            double newValue = (double) oldValue - 1;
+            PutValue(expr, newValue, cx);
+            return newValue;
+        }
+        BigInteger newValue = BigIntType.subtract((BigInteger) oldValue, BigIntType.UNIT);
+        PutValue(expr, newValue, cx);
+        return newValue;
+    }
+
+    /**
+     * 12.5.3 The delete Operator
      * 
      * @param expr
      *            the expression value
@@ -118,7 +183,7 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
     }
 
     /**
-     * 12.5.5 The void Operator
+     * 12.5.4 The void Operator
      * 
      * @param value
      *            the expression value
@@ -130,39 +195,7 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
     }
 
     /**
-     * 12.5.7 Prefix Increment Operator
-     * 
-     * @param expr
-     *            the expression value
-     * @param cx
-     *            the execution context
-     * @return the return value after applying the operation
-     */
-    private static Double preIncrement(Reference<?, ?> expr, ExecutionContext cx) {
-        double oldValue = ToNumber(cx, GetValue(expr, cx));
-        double newValue = oldValue + 1;
-        PutValue(expr, newValue, cx);
-        return newValue;
-    }
-
-    /**
-     * 12.5.8 Prefix Decrement Operator
-     * 
-     * @param expr
-     *            the expression value
-     * @param cx
-     *            the execution context
-     * @return the return value after applying the operation
-     */
-    private static Double preDecrement(Reference<?, ?> expr, ExecutionContext cx) {
-        double oldValue = ToNumber(cx, GetValue(expr, cx));
-        double newValue = oldValue - 1;
-        PutValue(expr, newValue, cx);
-        return newValue;
-    }
-
-    /**
-     * 12.5.9 Unary + Operator
+     * 12.5.6 Unary + Operator
      * 
      * @param value
      *            the expression value
@@ -175,7 +208,7 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
     }
 
     /**
-     * 12.5.10 Unary - Operator
+     * 12.5.7 Unary - Operator
      * 
      * @param value
      *            the expression value
@@ -183,12 +216,16 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
      *            the execution context
      * @return the return value after applying the operation
      */
-    private static Double neg(Object value, ExecutionContext cx) {
-        return -ToNumber(cx, value);
+    private static Number neg(Object value, ExecutionContext cx) {
+        Number num = ToNumeric(cx, value);
+        if (num.getClass() == Double.class) {
+            return -(double) num;
+        }
+        return BigIntType.unaryMinus((BigInteger) num);
     }
 
     /**
-     * 12.5.11 Bitwise NOT Operator ( ~ )
+     * 12.5.8 Bitwise NOT Operator ( ~ )
      * 
      * @param value
      *            the expression value
@@ -196,12 +233,16 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
      *            the execution context
      * @return the return value after applying the operation
      */
-    private static Integer bitnot(Object value, ExecutionContext cx) {
-        return ~ToInt32(cx, value);
+    private static Number bitnot(Object value, ExecutionContext cx) {
+        Number num = ToNumericInt32(cx, value);
+        if (num.getClass() == Integer.class) {
+            return ~(int) num;
+        }
+        return BigIntType.bitwiseNOT((BigInteger) num);
     }
 
     /**
-     * 12.5.12 Logical NOT Operator ( ! )
+     * 12.5.9 Logical NOT Operator ( ! )
      * 
      * @param value
      *            the expression value
@@ -212,7 +253,7 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
     }
 
     /**
-     * Extension: Exponentiation Operator
+     * 12.6 Exponentiation Operator
      * 
      * @param leftValue
      *            the left-hand side expression value
@@ -222,14 +263,20 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
      *            the execution context
      * @return the return value after applying the operation
      */
-    private static Double exp(Object leftValue, Object rightValue, ExecutionContext cx) {
-        double lnum = ToNumber(cx, leftValue);
-        double rnum = ToNumber(cx, rightValue);
-        return Math.pow(lnum, rnum);
+    private static Number exp(Object leftValue, Object rightValue, ExecutionContext cx) {
+        Number lnum = ToNumeric(cx, leftValue);
+        Number rnum = ToNumeric(cx, rightValue);
+        if (lnum.getClass() != rnum.getClass()) {
+            throw newTypeError(cx, Messages.Key.BigIntNumber);
+        }
+        if (lnum.getClass() == Double.class) {
+            return Math.pow((double) lnum, (double) rnum);
+        }
+        return BigIntType.exponentiate(cx, (BigInteger) lnum, (BigInteger) rnum);
     }
 
     /**
-     * 12.6 Multiplicative Operators
+     * 12.7 Multiplicative Operators
      * 
      * @param leftValue
      *            the left-hand side expression value
@@ -239,14 +286,20 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
      *            the execution context
      * @return the return value after applying the operation
      */
-    private static Double mul(Object leftValue, Object rightValue, ExecutionContext cx) {
-        double lnum = ToNumber(cx, leftValue);
-        double rnum = ToNumber(cx, rightValue);
-        return lnum * rnum;
+    private static Number mul(Object leftValue, Object rightValue, ExecutionContext cx) {
+        Number lnum = ToNumeric(cx, leftValue);
+        Number rnum = ToNumeric(cx, rightValue);
+        if (lnum.getClass() != rnum.getClass()) {
+            throw newTypeError(cx, Messages.Key.BigIntNumber);
+        }
+        if (lnum.getClass() == Double.class) {
+            return (double) lnum * (double) rnum;
+        }
+        return BigIntType.multiply((BigInteger) lnum, (BigInteger) rnum);
     }
 
     /**
-     * 12.6 Multiplicative Operators
+     * 12.7 Multiplicative Operators
      * 
      * @param leftValue
      *            the left-hand side expression value
@@ -256,14 +309,20 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
      *            the execution context
      * @return the return value after applying the operation
      */
-    private static Double div(Object leftValue, Object rightValue, ExecutionContext cx) {
-        double lnum = ToNumber(cx, leftValue);
-        double rnum = ToNumber(cx, rightValue);
-        return lnum / rnum;
+    private static Number div(Object leftValue, Object rightValue, ExecutionContext cx) {
+        Number lnum = ToNumeric(cx, leftValue);
+        Number rnum = ToNumeric(cx, rightValue);
+        if (lnum.getClass() != rnum.getClass()) {
+            throw newTypeError(cx, Messages.Key.BigIntNumber);
+        }
+        if (lnum.getClass() == Double.class) {
+            return (double) lnum / (double) rnum;
+        }
+        return BigIntType.divide(cx, (BigInteger) lnum, (BigInteger) rnum);
     }
 
     /**
-     * 12.6 Multiplicative Operators
+     * 12.7 Multiplicative Operators
      * 
      * @param leftValue
      *            the left-hand side expression value
@@ -273,14 +332,20 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
      *            the execution context
      * @return the return value after applying the operation
      */
-    private static Double mod(Object leftValue, Object rightValue, ExecutionContext cx) {
-        double lnum = ToNumber(cx, leftValue);
-        double rnum = ToNumber(cx, rightValue);
-        return lnum % rnum;
+    private static Number mod(Object leftValue, Object rightValue, ExecutionContext cx) {
+        Number lnum = ToNumeric(cx, leftValue);
+        Number rnum = ToNumeric(cx, rightValue);
+        if (lnum.getClass() != rnum.getClass()) {
+            throw newTypeError(cx, Messages.Key.BigIntNumber);
+        }
+        if (lnum.getClass() == Double.class) {
+            return (double) lnum % (double) rnum;
+        }
+        return BigIntType.remainder(cx, (BigInteger) lnum, (BigInteger) rnum);
     }
 
     /**
-     * 12.7.2 The Subtraction Operator ( - )
+     * 12.8.2 The Subtraction Operator ( - )
      * 
      * @param lval
      *            the left-hand side expression value
@@ -290,14 +355,20 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
      *            the execution context
      * @return the return value after applying the operation
      */
-    private static Double sub(Object lval, Object rval, ExecutionContext cx) {
-        double lnum = ToNumber(cx, lval);
-        double rnum = ToNumber(cx, rval);
-        return lnum - rnum;
+    private static Number sub(Object lval, Object rval, ExecutionContext cx) {
+        Number lnum = ToNumeric(cx, lval);
+        Number rnum = ToNumeric(cx, rval);
+        if (lnum.getClass() != rnum.getClass()) {
+            throw newTypeError(cx, Messages.Key.BigIntNumber);
+        }
+        if (lnum.getClass() == Double.class) {
+            return (double) lnum - (double) rnum;
+        }
+        return BigIntType.subtract((BigInteger) lnum, (BigInteger) rnum);
     }
 
     /**
-     * 12.8.1 The Left Shift Operator ( {@literal <<} )
+     * 12.9.1 The Left Shift Operator ( {@literal <<} )
      * 
      * @param lval
      *            the left-hand side expression value
@@ -307,15 +378,20 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
      *            the execution context
      * @return the return value after applying the operation
      */
-    private static Integer leftShift(Object lval, Object rval, ExecutionContext cx) {
-        int lnum = ToInt32(cx, lval);
-        long rnum = ToUint32(cx, rval);
-        int shiftCount = (int) (rnum & 0x1F);
-        return lnum << shiftCount;
+    private static Number leftShift(Object lval, Object rval, ExecutionContext cx) {
+        Number lnum = ToNumericInt32(cx, lval);
+        Number rnum = ToNumericInt32(cx, rval);
+        if (lnum.getClass() != rnum.getClass()) {
+            throw newTypeError(cx, Messages.Key.BigIntNumber);
+        }
+        if (lnum.getClass() == Integer.class) {
+            return (int) lnum << ((int) rnum & 0x1f);
+        }
+        return BigIntType.leftShift(cx, (BigInteger) lnum, (BigInteger) rnum);
     }
 
     /**
-     * 12.8.2 The Signed Right Shift Operator ( {@literal >>} )
+     * 12.9.2 The Signed Right Shift Operator ( {@literal >>} )
      * 
      * @param lval
      *            the left-hand side expression value
@@ -325,15 +401,20 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
      *            the execution context
      * @return the return value after applying the operation
      */
-    private static Integer rightShift(Object lval, Object rval, ExecutionContext cx) {
-        int lnum = ToInt32(cx, lval);
-        long rnum = ToUint32(cx, rval);
-        int shiftCount = (int) (rnum & 0x1F);
-        return lnum >> shiftCount;
+    private static Number rightShift(Object lval, Object rval, ExecutionContext cx) {
+        Number lnum = ToNumericInt32(cx, lval);
+        Number rnum = ToNumericInt32(cx, rval);
+        if (lnum.getClass() != rnum.getClass()) {
+            throw newTypeError(cx, Messages.Key.BigIntNumber);
+        }
+        if (lnum.getClass() == Integer.class) {
+            return (int) lnum >> ((int) rnum & 0x1f);
+        }
+        return BigIntType.signedRightShift(cx, (BigInteger) lnum, (BigInteger) rnum);
     }
 
     /**
-     * 12.8.3 The Unsigned Right Shift Operator ( {@literal >>>} )
+     * 12.9.3 The Unsigned Right Shift Operator ( {@literal >>>} )
      * 
      * @param lval
      *            the left-hand side expression value
@@ -343,15 +424,20 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
      *            the execution context
      * @return the return value after applying the operation
      */
-    private static Long unsignedRightShift(Object lval, Object rval, ExecutionContext cx) {
-        long lnum = ToUint32(cx, lval);
-        long rnum = ToUint32(cx, rval);
-        int shiftCount = (int) (rnum & 0x1F);
-        return lnum >>> shiftCount;
+    private static Number unsignedRightShift(Object lval, Object rval, ExecutionContext cx) {
+        Number lnum = ToNumericInt32(cx, lval);
+        Number rnum = ToNumericInt32(cx, rval);
+        if (lnum.getClass() != rnum.getClass()) {
+            throw newTypeError(cx, Messages.Key.BigIntNumber);
+        }
+        if (lnum.getClass() == Integer.class) {
+            return ((int) lnum & 0xffffffffL) >>> ((int) rnum & 0x1f);
+        }
+        return BigIntType.unsignedRightShift(cx, (BigInteger) lnum, (BigInteger) rnum);
     }
 
     /**
-     * 12.9 Relational Operators
+     * 12.10 Relational Operators
      * 
      * @param lval
      *            the left-hand side expression value
@@ -362,11 +448,11 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
      * @return the return value after applying the operation
      */
     private static Boolean _instanceof(Object lval, Object rval, ExecutionContext cx) {
-        return ScriptRuntime.InstanceofOperator(lval, rval, cx);
+        return Operators.InstanceofOperator(lval, rval, cx);
     }
 
     /**
-     * 12.9 Relational Operators
+     * 12.10 Relational Operators
      * 
      * @param lval
      *            the left-hand side expression value
@@ -381,7 +467,7 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
     }
 
     /**
-     * 12.9 Relational Operators
+     * 12.10 Relational Operators
      * 
      * @param lval
      *            the left-hand side expression value
@@ -396,7 +482,7 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
     }
 
     /**
-     * 12.9 Relational Operators
+     * 12.10 Relational Operators
      * 
      * @param lval
      *            the left-hand side expression value
@@ -411,7 +497,7 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
     }
 
     /**
-     * 12.9 Relational Operators
+     * 12.10 Relational Operators
      * 
      * @param lval
      *            the left-hand side expression value
@@ -426,7 +512,7 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
     }
 
     /**
-     * 12.10 Equality Operators
+     * 12.11 Equality Operators
      * 
      * @param lval
      *            the left-hand side expression value
@@ -441,7 +527,7 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
     }
 
     /**
-     * 12.10 Equality Operators
+     * 12.11 Equality Operators
      * 
      * @param lval
      *            the left-hand side expression value
@@ -456,7 +542,7 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
     }
 
     /**
-     * 12.10 Equality Operators
+     * 12.11 Equality Operators
      * 
      * @param lval
      *            the left-hand side expression value
@@ -469,7 +555,7 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
     }
 
     /**
-     * 12.10 Equality Operators
+     * 12.11 Equality Operators
      * 
      * @param lval
      *            the left-hand side expression value
@@ -482,7 +568,7 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
     }
 
     /**
-     * 12.11 Binary Bitwise Operators
+     * 12.12 Binary Bitwise Operators
      * 
      * @param lval
      *            the left-hand side expression value
@@ -492,14 +578,20 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
      *            the execution context
      * @return the return value after applying the operation
      */
-    private static Integer bitand(Object lval, Object rval, ExecutionContext cx) {
-        int lnum = ToInt32(cx, lval);
-        int rnum = ToInt32(cx, rval);
-        return lnum & rnum;
+    private static Number bitand(Object lval, Object rval, ExecutionContext cx) {
+        Number lnum = ToNumericInt32(cx, lval);
+        Number rnum = ToNumericInt32(cx, rval);
+        if (lnum.getClass() != rnum.getClass()) {
+            throw newTypeError(cx, Messages.Key.BigIntNumber);
+        }
+        if (lnum.getClass() == Integer.class) {
+            return (int) lnum & (int) rnum;
+        }
+        return BigIntType.bitwiseAND((BigInteger) lnum, (BigInteger) rnum);
     }
 
     /**
-     * 12.11 Binary Bitwise Operators
+     * 12.12 Binary Bitwise Operators
      * 
      * @param lval
      *            the left-hand side expression value
@@ -509,14 +601,20 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
      *            the execution context
      * @return the return value after applying the operation
      */
-    private static Integer bitxor(Object lval, Object rval, ExecutionContext cx) {
-        int lnum = ToInt32(cx, lval);
-        int rnum = ToInt32(cx, rval);
-        return lnum ^ rnum;
+    private static Number bitxor(Object lval, Object rval, ExecutionContext cx) {
+        Number lnum = ToNumericInt32(cx, lval);
+        Number rnum = ToNumericInt32(cx, rval);
+        if (lnum.getClass() != rnum.getClass()) {
+            throw newTypeError(cx, Messages.Key.BigIntNumber);
+        }
+        if (lnum.getClass() == Integer.class) {
+            return (int) lnum ^ (int) rnum;
+        }
+        return BigIntType.bitwiseXOR((BigInteger) lnum, (BigInteger) rnum);
     }
 
     /**
-     * 12.11 Binary Bitwise Operators
+     * 12.12 Binary Bitwise Operators
      * 
      * @param lval
      *            the left-hand side expression value
@@ -526,10 +624,16 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
      *            the execution context
      * @return the return value after applying the operation
      */
-    private static Integer bitor(Object lval, Object rval, ExecutionContext cx) {
-        int lnum = ToInt32(cx, lval);
-        int rnum = ToInt32(cx, rval);
-        return lnum | rnum;
+    private static Number bitor(Object lval, Object rval, ExecutionContext cx) {
+        Number lnum = ToNumericInt32(cx, lval);
+        Number rnum = ToNumericInt32(cx, rval);
+        if (lnum.getClass() != rnum.getClass()) {
+            throw newTypeError(cx, Messages.Key.BigIntNumber);
+        }
+        if (lnum.getClass() == Integer.class) {
+            return (int) lnum | (int) rnum;
+        }
+        return BigIntType.bitwiseOR((BigInteger) lnum, (BigInteger) rnum);
     }
 
     /* ----------------------------------------------------------------------------------------- */
@@ -564,8 +668,10 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
         BindingIdentifier binding = (BindingIdentifier) node.getBinding();
         Expression initializer = node.getInitializer();
         if (initializer != null) {
+            currentLine = binding.getBeginLine();
             Reference<?, String> lhs = cx.resolveBinding(binding.getName().getIdentifier(), strict);
             Object val = GetValue(initializer.accept(this, cx), cx);
+            currentLine = node.getBeginLine();
             lhs.putValue(val, cx);
         }
         return null;
@@ -581,16 +687,18 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
         if (node.getOperator() == AssignmentExpression.Operator.ASSIGN) {
             Reference<?, ?> lref = (Reference<?, ?>) node.getLeft().accept(this, cx);
             Object rval = GetValue(node.getRight().accept(this, cx), cx);
+            currentLine = node.getBeginLine();
             PutValue(lref, rval, cx);
             return rval;
         } else {
             Reference<?, ?> lref = (Reference<?, ?>) node.getLeft().accept(this, cx);
             Object lval = GetValue(lref, cx);
             Object rval = GetValue(node.getRight().accept(this, cx), cx);
+            currentLine = node.getBeginLine();
             Object r;
             switch (node.getOperator()) {
             case ASSIGN_ADD:
-                r = ScriptRuntime.add(lval, rval, cx);
+                r = Operators.add(lval, rval, cx);
                 break;
             case ASSIGN_BITAND:
                 r = bitand(lval, rval, cx);
@@ -636,16 +744,16 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
 
     @Override
     public Object visit(BinaryExpression node, ExecutionContext cx) {
-        if (node.getOperator() == BinaryExpression.Operator.AND
-                || node.getOperator() == BinaryExpression.Operator.OR) {
+        if (node.getOperator() == BinaryExpression.Operator.AND || node.getOperator() == BinaryExpression.Operator.OR) {
             return visitAndOr(node, cx);
         }
         /* steps 1-? */
         Object lval = GetValue(node.getLeft().accept(this, cx), cx);
         Object rval = GetValue(node.getRight().accept(this, cx), cx);
+        currentLine = node.getBeginLine();
         switch (node.getOperator()) {
         case ADD:
-            return ScriptRuntime.add(lval, rval, cx);
+            return Operators.add(lval, rval, cx);
         case BITAND:
             return bitand(lval, rval, cx);
         case BITOR:
@@ -663,7 +771,7 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
         case GT:
             return greaterThan(lval, rval, cx);
         case IN:
-            return ScriptRuntime.in(lval, rval, cx);
+            return Operators.in(lval, rval, cx);
         case INSTANCEOF:
             return _instanceof(lval, rval, cx);
         case LE:
@@ -706,6 +814,7 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
     @Override
     public Object visit(UnaryExpression node, ExecutionContext cx) {
         Object val = node.getOperand().accept(this, cx);
+        currentLine = node.getBeginLine();
         switch (node.getOperator()) {
         case BITNOT:
             return bitnot(GetValue(val, cx), cx);
@@ -717,18 +826,28 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
             return not(GetValue(val, cx));
         case POS:
             return pos(GetValue(val, cx), cx);
-        case POST_DEC:
-            return postDecrement((Reference<?, ?>) val, cx);
-        case POST_INC:
-            return postIncrement((Reference<?, ?>) val, cx);
-        case PRE_DEC:
-            return preDecrement((Reference<?, ?>) val, cx);
-        case PRE_INC:
-            return preIncrement((Reference<?, ?>) val, cx);
         case TYPEOF:
-            return ScriptRuntime.typeof(val, cx);
+            return Operators.typeof(val, cx);
         case VOID:
             return _void(GetValue(val, cx));
+        default:
+            throw new AssertionError();
+        }
+    }
+
+    @Override
+    public Object visit(UpdateExpression node, ExecutionContext cx) {
+        Reference<?, ?> val = (Reference<?, ?>) node.getOperand().accept(this, cx);
+        currentLine = node.getBeginLine();
+        switch (node.getOperator()) {
+        case POST_DEC:
+            return postDecrement(val, cx);
+        case POST_INC:
+            return postIncrement(val, cx);
+        case PRE_DEC:
+            return preDecrement(val, cx);
+        case PRE_INC:
+            return preIncrement(val, cx);
         default:
             throw new AssertionError();
         }
@@ -762,6 +881,11 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
     }
 
     @Override
+    public Object visit(BigIntegerLiteral node, ExecutionContext value) {
+        return node.getValue();
+    }
+
+    @Override
     public Object visit(BooleanLiteral node, ExecutionContext cx) {
         return node.getValue();
     }
@@ -778,6 +902,7 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
 
     @Override
     public Object visit(RegularExpressionLiteral node, ExecutionContext cx) {
+        currentLine = node.getBeginLine();
         return RegExpConstructor.RegExpCreate(cx, node.getRegexp(), node.getFlags());
     }
 
@@ -796,12 +921,12 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
             Object value = GetValue(propertyValue.accept(this, cx), cx);
 
             if ("__proto__".equals(propName)
-                    && cx.getRealm().isEnabled(CompatibilityOption.ProtoInitializer)) {
-                ScriptRuntime.defineProtoProperty(obj, value, cx);
+                    && cx.getRuntimeContext().isEnabled(CompatibilityOption.ProtoInitializer)) {
+                ObjectOperations.defineProtoProperty(obj, value, cx);
             } else if (IndexedMap.isIndex(propIndex)) {
-                ScriptRuntime.defineProperty(obj, propIndex, value, cx);
+                ObjectOperations.defineProperty(obj, propIndex, value, cx);
             } else {
-                ScriptRuntime.defineProperty(obj, propName, value, cx);
+                ObjectOperations.defineProperty(obj, propName, value, cx);
             }
         }
         return obj;
@@ -816,7 +941,7 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
                 // Elision
             } else {
                 Object value = GetValue(element.accept(this, cx), cx);
-                ScriptRuntime.defineProperty(array, nextIndex, value);
+                ArrayOperations.defineProperty(array, nextIndex, value);
             }
             nextIndex += 1;
         }
@@ -827,13 +952,15 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
     @Override
     public Object visit(CallExpression node, ExecutionContext cx) {
         Object ref = node.getBase().accept(this, cx);
-        return EvaluateCall(ref, node.getArguments(), directEval(node), cx);
+        return EvaluateCall(node, ref, node.getArguments(), directEval(node), cx);
     }
 
     /**
      * 12.3.4.2 Runtime Semantics: EvaluateCall( ref, arguments, tailPosition )<br>
      * 12.3.4.3 Runtime Semantics: EvaluateDirectCall( func, thisValue, arguments, tailPosition )
      * 
+     * @param node
+     *            the function call node
      * @param ref
      *            the call base reference
      * @param arguments
@@ -844,7 +971,7 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
      *            the execution context
      * @return the return value after applying the call operation
      */
-    private Object EvaluateCall(Object ref, List<Expression> arguments, boolean directEval,
+    private Object EvaluateCall(CallExpression node, Object ref, List<Expression> arguments, boolean directEval,
             ExecutionContext cx) {
         /* steps 1-2 (EvaluateCall) */
         Object func = GetValue(ref, cx);
@@ -866,20 +993,30 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
         /* steps 1-2 (EvaluateDirectCall) */
         Object[] argList = ArgumentListEvaluation(arguments, cx);
         /* steps 3-4 (EvaluateDirectCall) */
+        currentLine = node.getBeginLine();
         Callable f = CheckCallable(func, cx);
         /* [12.3.4.1 Runtime Semantics: Evaluation - step 3] */
         if (directEval && IsBuiltinEval(ref, f, cx)) {
-            int evalFlags = EvalFlags.Direct.getValue();
+            int evalFlags = EvalFlags.toFlags(node.getEvalFlags());
             if (strict) {
+                // TODO: Remove this case when StrictDirectiveSimpleParameterList is the default.
                 evalFlags |= EvalFlags.Strict.getValue();
             }
-            evalFlags |= EvalFlags.toFlags(parserOptions);
+            if (parserOptions.contains(Parser.Option.EnclosedByWithStatement)) {
+                evalFlags |= EvalFlags.EnclosedByWithStatement.getValue();
+            }
+            if (parserOptions.contains(Parser.Option.EnclosedByCatchStatement)) {
+                evalFlags |= EvalFlags.EnclosedByCatchStatement.getValue();
+            }
+            if (parserOptions.contains(Parser.Option.EnclosedByLexicalDeclaration)) {
+                evalFlags |= EvalFlags.EnclosedByLexicalDeclaration.getValue();
+            }
             return Eval.directEval(argList, cx, evalFlags);
         }
-        if (directEval && ScriptRuntime.directEvalFallbackHook(cx) != null) {
-            argList = ScriptRuntime.directEvalFallbackArguments(f, cx, thisValue, argList);
-            thisValue = ScriptRuntime.directEvalFallbackThisArgument(cx);
-            f = ScriptRuntime.directEvalFallbackHook(cx);
+        if (directEval && CallOperations.directEvalFallbackHook(cx) != null) {
+            argList = CallOperations.directEvalFallbackArguments(f, cx, thisValue, argList);
+            thisValue = CallOperations.directEvalFallbackThisArgument(cx);
+            f = CallOperations.directEvalFallbackHook(cx);
         }
         /* steps 5, 7-8 (EvaluateDirectCall) (not applicable) */
         /* steps 6, 9 (EvaluateDirectCall) */
@@ -897,8 +1034,7 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
 
     private static boolean directEval(CallExpression node) {
         Expression base = node.getBase();
-        if (base instanceof IdentifierReference
-                && "eval".equals(((IdentifierReference) base).getName())) {
+        if (base instanceof IdentifierReference && "eval".equals(((IdentifierReference) base).getName())) {
             return true;
         }
         return false;
@@ -909,29 +1045,39 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
         Object constructor = node.getExpression().accept(this, cx);
         constructor = GetValue(constructor, cx);
         Object[] args = ArgumentListEvaluation(node.getArguments(), cx);
-        return CheckConstructor(constructor, cx).construct(cx, (Constructor) constructor, args);
+        currentLine = node.getBeginLine();
+        return CheckConstructor(constructor, cx).construct(cx, args);
+    }
+
+    @Override
+    public Object visit(NewTarget node, ExecutionContext cx) {
+        return Operators.GetNewTargetOrUndefined(cx);
     }
 
     @Override
     public Object visit(ElementAccessor node, ExecutionContext cx) {
         Object base = GetValue(node.getBase().accept(this, cx), cx);
         Object element = GetValue(node.getElement().accept(this, cx), cx);
-        return ScriptRuntime.getElement(base, element, cx, strict);
+        currentLine = node.getBeginLine();
+        return PropertyOperations.getElement(base, element, cx, strict);
     }
 
     @Override
     public Object visit(PropertyAccessor node, ExecutionContext cx) {
         Object base = GetValue(node.getBase().accept(this, cx), cx);
-        return ScriptRuntime.getProperty(base, node.getName(), cx, strict);
+        currentLine = node.getBeginLine();
+        return PropertyOperations.getProperty(base, node.getName(), cx, strict);
     }
 
     @Override
     public Object visit(IdentifierReference node, ExecutionContext cx) {
+        currentLine = node.getBeginLine();
         return cx.resolveBinding(node.getName(), strict);
     }
 
     @Override
     public Object visit(ThisExpression node, ExecutionContext cx) {
+        currentLine = node.getBeginLine();
         return cx.resolveThisBinding();
     }
 
@@ -1008,6 +1154,11 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
         }
 
         @Override
+        public Boolean visit(NewTarget node, Void value) {
+            return true;
+        }
+
+        @Override
         public Boolean visit(ConditionalExpression node, Void value) {
             return node.getTest().accept(this, value) && node.getThen().accept(this, value)
                     && node.getOtherwise().accept(this, value);
@@ -1065,8 +1216,7 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
 
         @Override
         public Boolean visit(PropertyValueDefinition node, Void value) {
-            return node.getPropertyName().accept(this, value)
-                    && node.getPropertyValue().accept(this, value);
+            return node.getPropertyName().accept(this, value) && node.getPropertyValue().accept(this, value);
         }
 
         @Override
@@ -1096,6 +1246,11 @@ public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionConte
 
         @Override
         public Boolean visit(UnaryExpression node, Void value) {
+            return node.getOperand().accept(this, value);
+        }
+
+        @Override
+        public Boolean visit(UpdateExpression node, Void value) {
             return node.getOperand().accept(this, value);
         }
     }

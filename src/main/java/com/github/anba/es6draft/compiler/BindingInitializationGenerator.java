@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -18,7 +18,7 @@ import java.util.List;
 
 import com.github.anba.es6draft.ast.*;
 import com.github.anba.es6draft.ast.scope.Name;
-import com.github.anba.es6draft.ast.scope.Scope;
+import com.github.anba.es6draft.ast.scope.ParameterScope;
 import com.github.anba.es6draft.compiler.DefaultCodeGenerator.ValType;
 import com.github.anba.es6draft.compiler.Labels.TempLabel;
 import com.github.anba.es6draft.compiler.StatementGenerator.Completion;
@@ -29,9 +29,11 @@ import com.github.anba.es6draft.compiler.assembler.MutableValue;
 import com.github.anba.es6draft.compiler.assembler.Type;
 import com.github.anba.es6draft.compiler.assembler.Value;
 import com.github.anba.es6draft.compiler.assembler.Variable;
+import com.github.anba.es6draft.runtime.DeclarativeEnvironmentRecord;
 import com.github.anba.es6draft.runtime.EnvironmentRecord;
 import com.github.anba.es6draft.runtime.FunctionEnvironmentRecord;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
+import com.github.anba.es6draft.runtime.internal.IndexedMap;
 import com.github.anba.es6draft.runtime.internal.ScriptIterator;
 
 /**
@@ -63,6 +65,9 @@ final class BindingInitializationGenerator {
         static final MethodName AbstractOperations_GetV = MethodName.findStatic(Types.AbstractOperations, "GetV",
                 Type.methodType(Types.Object, Types.ExecutionContext, Types.Object, Types.Object));
 
+        static final MethodName AbstractOperations_GetV_long = MethodName.findStatic(Types.AbstractOperations, "GetV",
+                Type.methodType(Types.Object, Types.ExecutionContext, Types.Object, Type.LONG_TYPE));
+
         static final MethodName AbstractOperations_GetV_String = MethodName.findStatic(Types.AbstractOperations, "GetV",
                 Type.methodType(Types.Object, Types.ExecutionContext, Types.Object, Types.String));
 
@@ -71,6 +76,9 @@ final class BindingInitializationGenerator {
                 Type.methodType(Types.Object, Types.ExecutionContext, Types.Object));
 
         // class: ExecutionContext
+        static final MethodName ExecutionContext_getVariableEnvironmentRecord = MethodName.findVirtual(
+                Types.ExecutionContext, "getVariableEnvironmentRecord", Type.methodType(Types.EnvironmentRecord));
+
         static final MethodName ExecutionContext_setVariableAndLexicalEnvironment = MethodName.findVirtual(
                 Types.ExecutionContext, "setVariableAndLexicalEnvironment",
                 Type.methodType(Type.VOID_TYPE, Types.LexicalEnvironment));
@@ -80,25 +88,27 @@ final class BindingInitializationGenerator {
                 Types.LexicalEnvironment, "newDeclarativeEnvironment",
                 Type.methodType(Types.LexicalEnvironment, Types.LexicalEnvironment));
 
-        // class: ScriptRuntime
-        static final MethodName ScriptRuntime_createRestArray = MethodName.findStatic(Types.ScriptRuntime,
+        // class: ArrayOperations
+        static final MethodName ArrayOperations_createRestArray = MethodName.findStatic(Types.ArrayOperations,
                 "createRestArray", Type.methodType(Types.ArrayObject, Types.Iterator, Types.ExecutionContext));
 
-        static final MethodName ScriptRuntime_createRestObject = MethodName.findStatic(Types.ScriptRuntime,
+        // class: ObjectOperations
+        static final MethodName ObjectOperations_createRestObject = MethodName.findStatic(Types.ObjectOperations,
                 "createRestObject",
                 Type.methodType(Types.OrdinaryObject, Types.Object, Types.Set, Types.ExecutionContext));
 
-        static final MethodName ScriptRuntime_iterate = MethodName.findStatic(Types.ScriptRuntime, "iterate",
+        // class: IteratorOperations
+        static final MethodName IteratorOperations_iterate = MethodName.findStatic(Types.IteratorOperations, "iterate",
                 Type.methodType(Types.ScriptIterator, Types.Object, Types.ExecutionContext));
 
-        static final MethodName ScriptRuntime_iteratorNextAndIgnore = MethodName.findStatic(Types.ScriptRuntime,
-                "iteratorNextAndIgnore", Type.methodType(Type.VOID_TYPE, Types.Iterator));
+        static final MethodName IteratorOperations_iteratorNextAndIgnore = MethodName.findStatic(
+                Types.IteratorOperations, "iteratorNextAndIgnore", Type.methodType(Type.VOID_TYPE, Types.Iterator));
 
-        static final MethodName ScriptRuntime_iteratorNextOrUndefined = MethodName.findStatic(Types.ScriptRuntime,
-                "iteratorNextOrUndefined", Type.methodType(Types.Object, Types.Iterator));
+        static final MethodName IteratorOperations_iteratorNextOrUndefined = MethodName.findStatic(
+                Types.IteratorOperations, "iteratorNextOrUndefined", Type.methodType(Types.Object, Types.Iterator));
 
         // class: HashSet
-        static final MethodName HashSet_init = MethodName.findConstructor(Types.HashSet,
+        static final MethodName HashSet_new = MethodName.findConstructor(Types.HashSet,
                 Type.methodType(Type.VOID_TYPE));
 
         static final MethodName HashSet_add = MethodName.findVirtual(Types.HashSet, "add",
@@ -106,28 +116,6 @@ final class BindingInitializationGenerator {
     }
 
     private BindingInitializationGenerator() {
-    }
-
-    /**
-     * 12.1.5.1 Runtime Semantics: InitializeBoundName(name, value, environment)
-     * <p>
-     * stack: [value] {@literal ->} []
-     * 
-     * @param node
-     *            the binding identifier
-     * @param mv
-     *            the code visitor
-     */
-    static <ENVREC extends EnvironmentRecord> void InitializeBoundName(BindingIdentifier node, CodeVisitor mv) {
-        IdReferenceOp op = IdReferenceOp.of(node);
-
-        /* steps 1-2 (not applicable) */
-        /* step 3 */
-        // stack: [value] -> [reference, value]
-        ValType refType = op.resolveBinding(node, mv);
-        mv.swap(ValType.Any, refType);
-        // stack: [reference, value] -> []
-        op.putValue(node, ValType.Any, mv);
     }
 
     /**
@@ -144,7 +132,7 @@ final class BindingInitializationGenerator {
      * @param mv
      *            the code visitor
      */
-    static <ENVREC extends EnvironmentRecord> void InitializeBoundName(Variable<? extends ENVREC> envRec, Name name,
+    static <ENVREC extends EnvironmentRecord> void InitializeBoundName(Value<? extends ENVREC> envRec, Name name,
             Value<?> value, CodeVisitor mv) {
         BindingOp<ENVREC> op = BindingOp.of(envRec, name);
         op.initializeBinding(envRec, name, value, mv);
@@ -177,33 +165,12 @@ final class BindingInitializationGenerator {
      */
     static <ENVREC extends EnvironmentRecord> void InitializeBoundNameWithInitializer(CodeGenerator codegen,
             Variable<? extends ENVREC> envRec, Name name, Expression initializer, CodeVisitor mv) {
-        InitializeBoundName(envRec, name, asm -> {
+        InitializeBoundName(envRec, name, __ -> {
             codegen.expressionBoxed(initializer, mv);
             if (IsAnonymousFunctionDefinition(initializer)) {
                 SetFunctionName(initializer, name, mv);
             }
         }, mv);
-    }
-
-    /**
-     * 12.1.5 Runtime Semantics: BindingInitialization<br>
-     * 13.3.3.5 Runtime Semantics: BindingInitialization
-     * <p>
-     * stack: [value] {@literal ->} []
-     * 
-     * @param codegen
-     *            the code generator
-     * @param node
-     *            the binding node
-     * @param mv
-     *            the code visitor
-     */
-    static void BindingInitialization(CodeGenerator codegen, Binding node, CodeVisitor mv) {
-        if (node instanceof BindingIdentifier) {
-            InitializeBoundName((BindingIdentifier) node, mv);
-        } else {
-            BindingInitialization(codegen, (BindingPattern) node, mv);
-        }
     }
 
     /**
@@ -311,8 +278,7 @@ final class BindingInitializationGenerator {
     static void BindingInitialization(CodeGenerator codegen, FunctionNode node,
             Variable<LexicalEnvironment<FunctionEnvironmentRecord>> env, Variable<Iterator<?>> iterator,
             CodeVisitor mv) {
-        FormalsIteratorBindingInitialization init = new FormalsIteratorBindingInitialization(
-                codegen, mv, env, null);
+        FormalsIteratorBindingInitialization init = new FormalsIteratorBindingInitialization(codegen, mv, env, null);
         node.getParameters().accept(init, iterator);
     }
 
@@ -337,13 +303,11 @@ final class BindingInitializationGenerator {
     static void BindingInitialization(CodeGenerator codegen, FunctionNode node,
             Variable<LexicalEnvironment<FunctionEnvironmentRecord>> env, Variable<? extends EnvironmentRecord> envRec,
             Variable<Iterator<?>> iterator, CodeVisitor mv) {
-        FormalsIteratorBindingInitialization init = new FormalsIteratorBindingInitialization(
-                codegen, mv, env, envRec);
+        FormalsIteratorBindingInitialization init = new FormalsIteratorBindingInitialization(codegen, mv, env, envRec);
         node.getParameters().accept(init, iterator);
     }
 
-    private static abstract class RuntimeSemantics<V> extends
-            com.github.anba.es6draft.ast.DefaultVoidNodeVisitor<V> {
+    private static abstract class RuntimeSemantics<V> extends com.github.anba.es6draft.ast.DefaultVoidNodeVisitor<V> {
         protected final CodeGenerator codegen;
         protected final CodeVisitor mv;
         protected final Variable<? extends EnvironmentRecord> envRec;
@@ -373,6 +337,11 @@ final class BindingInitializationGenerator {
             node.accept(new ComputedKeyedBindingInitialization(codegen, mv, envRec, value, propertyNames), key);
         }
 
+        protected final void RestBindingInitialization(Binding node, Variable<Object> value,
+                Variable<HashSet<?>> propertyNames) {
+            node.accept(new RestBindingInitialization(codegen, mv, envRec, value, propertyNames), null);
+        }
+
         @Override
         protected final void visit(Node node, V value) {
             throw new IllegalStateException();
@@ -386,34 +355,45 @@ final class BindingInitializationGenerator {
             return codegen.expressionBoxed(node, mv);
         }
 
-        protected final void emitDefaultInitializer(Expression initializer) {
-            // stack: [value] -> [value']
-            Jump undef = new Jump();
-            mv.dup();
-            mv.loadUndefined();
-            mv.ifacmpne(undef);
-            {
-                mv.pop();
-                expressionBoxed(initializer, mv);
+        protected final boolean isUndefined(Expression initializer) {
+            if (initializer instanceof UnaryExpression) {
+                UnaryExpression unary = (UnaryExpression) initializer;
+                return unary.getOperator() == UnaryExpression.Operator.VOID && unary.getOperand() instanceof Literal;
             }
-            mv.mark(undef);
+            return false;
         }
 
-        protected final void emitDefaultInitializer(Expression initializer,
-                BindingIdentifier bindingId) {
+        protected final void emitDefaultInitializer(Expression initializer) {
             // stack: [value] -> [value']
-            Jump undef = new Jump();
-            mv.dup();
-            mv.loadUndefined();
-            mv.ifacmpne(undef);
-            {
-                mv.pop();
-                expressionBoxed(initializer, mv);
-                if (IsAnonymousFunctionDefinition(initializer)) {
-                    SetFunctionName(initializer, bindingId.getName(), mv);
+            if (!isUndefined(initializer)) {
+                Jump undef = new Jump();
+                mv.dup();
+                mv.loadUndefined();
+                mv.ifacmpne(undef);
+                {
+                    mv.pop();
+                    expressionBoxed(initializer, mv);
                 }
+                mv.mark(undef);
             }
-            mv.mark(undef);
+        }
+
+        protected final void emitDefaultInitializer(Expression initializer, BindingIdentifier bindingId) {
+            // stack: [value] -> [value']
+            if (!isUndefined(initializer)) {
+                Jump undef = new Jump();
+                mv.dup();
+                mv.loadUndefined();
+                mv.ifacmpne(undef);
+                {
+                    mv.pop();
+                    expressionBoxed(initializer, mv);
+                    if (IsAnonymousFunctionDefinition(initializer)) {
+                        SetFunctionName(initializer, bindingId.getName(), mv);
+                    }
+                }
+                mv.mark(undef);
+            }
         }
     }
 
@@ -433,11 +413,10 @@ final class BindingInitializationGenerator {
             // steps 1-3:
             // stack: [value] -> []
             mv.enterVariableScope();
-            Variable<ScriptIterator<?>> iterator = mv.newVariable("iterator", ScriptIterator.class)
-                    .uncheckedCast();
+            Variable<ScriptIterator<?>> iterator = mv.newVariable("iterator", ScriptIterator.class).uncheckedCast();
             mv.loadExecutionContext();
             mv.lineInfo(node);
-            mv.invoke(Methods.ScriptRuntime_iterate);
+            mv.invoke(Methods.IteratorOperations_iterate);
             mv.store(iterator);
 
             new IterationGenerator<ArrayBindingPattern>(codegen) {
@@ -492,7 +471,7 @@ final class BindingInitializationGenerator {
             Variable<HashSet<?>> propertyNames;
             if (!node.getProperties().isEmpty() && node.getRest() != null) {
                 propertyNames = mv.newVariable("propertyNames", HashSet.class).uncheckedCast();
-                mv.anew(Types.HashSet, Methods.HashSet_init);
+                mv.anew(Methods.HashSet_new);
                 mv.store(propertyNames);
             } else {
                 propertyNames = null;
@@ -519,41 +498,10 @@ final class BindingInitializationGenerator {
 
             BindingRestProperty rest = node.getRest();
             if (rest != null) {
-                // FIXME: spec bug? - evaluation order for resolving ref and CopyDataProperties
-                // The current spec calls CopyDataProperties before resolving the reference.
-                BindingIdentifier identifier = rest.getBindingIdentifier();
-                if (envRec == null) {
-                    // stack: [] -> [ref]
-                    IdReferenceOp op = IdReferenceOp.of(identifier);
-                    op.resolveBinding(identifier, mv);
-
-                    // stack: [ref] -> [ref, object]
-                    emitCreateRestObject(node, val, propertyNames);
-
-                    // stack: [ref, object] -> []
-                    op.putValue(identifier, ValType.Any, mv);
-                } else {
-                    BindingOp<EnvironmentRecord> op = BindingOp.of(envRec, identifier.getName());
-                    op.initializeBinding(envRec, identifier.getName(),
-                            asm -> emitCreateRestObject(node, val, propertyNames), mv);
-                }
+                RestBindingInitialization(rest.getBinding(), val, propertyNames);
             }
 
             mv.exitVariableScope();
-        }
-
-        private void emitCreateRestObject(ObjectBindingPattern node, Variable<Object> val,
-                Variable<HashSet<?>> propertyNames) {
-            // stack: [] -> [object]
-            mv.load(val);
-            if (propertyNames != null) {
-                mv.load(propertyNames);
-            } else {
-                mv.get(Fields.Collections_EMPTY_SET);
-            }
-            mv.loadExecutionContext();
-            mv.lineInfo(node.getRest());
-            mv.invoke(Methods.ScriptRuntime_createRestObject);
         }
     }
 
@@ -565,8 +513,8 @@ final class BindingInitializationGenerator {
      * <li>14.2.14 Runtime Semantics: IteratorBindingInitialization
      * </ul>
      */
-    private static final class FormalsIteratorBindingInitialization extends
-            RuntimeSemantics<Variable<? extends Iterator<?>>> {
+    private static final class FormalsIteratorBindingInitialization
+            extends RuntimeSemantics<Variable<? extends Iterator<?>>> {
         private final Variable<LexicalEnvironment<FunctionEnvironmentRecord>> env;
         private final IteratorBindingInitialization iteratorBindingInit;
 
@@ -587,7 +535,7 @@ final class BindingInitializationGenerator {
 
         @Override
         public void visit(FormalParameter node, Variable<? extends Iterator<?>> iterator) {
-            Scope scope = node.getScope();
+            ParameterScope scope = node.getScope();
             if (scope != null) {
                 mv.enterScope(node);
             }
@@ -598,6 +546,16 @@ final class BindingInitializationGenerator {
                 /* steps 2-5 (not applicable) */
                 /* steps 6-8 */
                 newParameterEnvironment(env);
+                if (!scope.varDeclaredNames().isEmpty()) {
+                    Variable<DeclarativeEnvironmentRecord> paramEnvRec = mv.newVariable("paramEnvRec",
+                            DeclarativeEnvironmentRecord.class);
+                    getVariableEnvironmentRecord(paramEnvRec, mv);
+                    for (Name varName : scope.varDeclaredNames()) {
+                        BindingOp<DeclarativeEnvironmentRecord> op = BindingOp.of(paramEnvRec, varName);
+                        op.createMutableBinding(paramEnvRec, varName, false, mv);
+                        op.initializeBinding(paramEnvRec, varName, mv.undefinedValue(), mv);
+                    }
+                }
                 /* step 9 */
                 node.getElement().accept(iteratorBindingInit, iterator);
                 /* steps 10-11 */
@@ -623,6 +581,16 @@ final class BindingInitializationGenerator {
             mv.load(env);
             mv.invoke(Methods.ExecutionContext_setVariableAndLexicalEnvironment);
         }
+
+        private <R extends EnvironmentRecord> void getVariableEnvironmentRecord(Variable<? extends R> envRec,
+                CodeVisitor mv) {
+            mv.loadExecutionContext();
+            mv.invoke(Methods.ExecutionContext_getVariableEnvironmentRecord);
+            if (envRec.getType() != Types.EnvironmentRecord) {
+                mv.checkcast(envRec.getType());
+            }
+            mv.store(envRec);
+        }
     }
 
     /**
@@ -631,8 +599,7 @@ final class BindingInitializationGenerator {
      * <li>13.3.3.6 Runtime Semantics: IteratorBindingInitialization
      * </ul>
      */
-    private static final class IteratorBindingInitialization extends
-            RuntimeSemantics<Variable<? extends Iterator<?>>> {
+    private static final class IteratorBindingInitialization extends RuntimeSemantics<Variable<? extends Iterator<?>>> {
         IteratorBindingInitialization(CodeGenerator codegen, CodeVisitor mv,
                 Variable<? extends EnvironmentRecord> envRec) {
             super(codegen, mv, envRec);
@@ -649,7 +616,7 @@ final class BindingInitializationGenerator {
         public void visit(BindingElision node, Variable<? extends Iterator<?>> iterator) {
             mv.load(iterator);
             mv.lineInfo(node);
-            mv.invoke(Methods.ScriptRuntime_iteratorNextAndIgnore);
+            mv.invoke(Methods.IteratorOperations_iteratorNextAndIgnore);
         }
 
         @Override
@@ -705,7 +672,7 @@ final class BindingInitializationGenerator {
 
                 /* steps 2-3, 7-8 */
                 BindingOp<EnvironmentRecord> op = BindingOp.of(envRec, bindingId.getName());
-                op.initializeBinding(envRec, bindingId.getName(), asm -> {
+                op.initializeBinding(envRec, bindingId.getName(), __ -> {
                     /* steps 4-5 */
                     emitIteratorNext(node, iterator);
 
@@ -721,7 +688,7 @@ final class BindingInitializationGenerator {
         private void emitIteratorNext(BindingElement node, Variable<? extends Iterator<?>> iterator) {
             mv.load(iterator);
             mv.lineInfo(node);
-            mv.invoke(Methods.ScriptRuntime_iteratorNextOrUndefined);
+            mv.invoke(Methods.IteratorOperations_iteratorNextOrUndefined);
         }
 
         @Override
@@ -755,7 +722,7 @@ final class BindingInitializationGenerator {
             } else {
                 /* steps 1-2, 5.b */
                 BindingOp<EnvironmentRecord> op = BindingOp.of(envRec, identifier.getName());
-                op.initializeBinding(envRec, identifier.getName(), asm -> {
+                op.initializeBinding(envRec, identifier.getName(), __ -> {
                     /* steps 3-5 */
                     emitCreateRestArray(node, iterator);
                 }, mv);
@@ -767,7 +734,61 @@ final class BindingInitializationGenerator {
             mv.load(iterator);
             mv.loadExecutionContext();
             mv.lineInfo(node);
-            mv.invoke(Methods.ScriptRuntime_createRestArray);
+            mv.invoke(Methods.ArrayOperations_createRestArray);
+        }
+    }
+
+    private static final class RestBindingInitialization extends RuntimeSemantics<Void> {
+        private final Variable<Object> value;
+        private final Variable<HashSet<?>> propertyNames;
+
+        RestBindingInitialization(CodeGenerator codegen, CodeVisitor mv, Variable<? extends EnvironmentRecord> envRec,
+                Variable<Object> value, Variable<HashSet<?>> propertyNames) {
+            super(codegen, mv, envRec);
+            this.value = value;
+            this.propertyNames = propertyNames;
+        }
+
+        @Override
+        public void visit(BindingIdentifier node, Void value) {
+            // FIXME: spec bug? - evaluation order for resolving ref and CopyDataProperties
+            // The current spec calls CopyDataProperties before resolving the reference.
+            if (envRec == null) {
+                // stack: [] -> [ref]
+                IdReferenceOp op = IdReferenceOp.of(node);
+                op.resolveBinding(node, mv);
+
+                // stack: [ref] -> [ref, object]
+                emitCreateRestObject(node);
+
+                // stack: [ref, object] -> []
+                op.putValue(node, ValType.Any, mv);
+            } else {
+                BindingOp<EnvironmentRecord> op = BindingOp.of(envRec, node.getName());
+                op.initializeBinding(envRec, node.getName(), __ -> emitCreateRestObject(node), mv);
+            }
+        }
+
+        @Override
+        protected void visit(BindingPattern node, Void value) {
+            // stack: [] -> [object]
+            emitCreateRestObject(node);
+
+            // stack: [object] -> []
+            BindingInitialization(node);
+        }
+
+        private void emitCreateRestObject(Node node) {
+            // stack: [] -> [object]
+            mv.load(value);
+            if (propertyNames != null) {
+                mv.load(propertyNames);
+            } else {
+                mv.get(Fields.Collections_EMPTY_SET);
+            }
+            mv.loadExecutionContext();
+            mv.lineInfo(node);
+            mv.invoke(Methods.ObjectOperations_createRestObject);
         }
     }
 
@@ -777,8 +798,7 @@ final class BindingInitializationGenerator {
      * <li>13.3.3.7 Runtime Semantics: KeyedBindingInitialization
      * </ul>
      */
-    private static abstract class KeyedBindingInitialization<PROPERTYNAME> extends
-            RuntimeSemantics<PROPERTYNAME> {
+    private static abstract class KeyedBindingInitialization<PROPERTYNAME> extends RuntimeSemantics<PROPERTYNAME> {
         private final Variable<Object> value;
 
         KeyedBindingInitialization(CodeGenerator codegen, CodeVisitor mv, Variable<? extends EnvironmentRecord> envRec,
@@ -791,22 +811,28 @@ final class BindingInitializationGenerator {
 
         abstract boolean isSimplePropertyName(PROPERTYNAME propertyName);
 
-        final boolean isSimplePropertyNameOrTarget(BindingIdentifier target,
-                PROPERTYNAME propertyName) {
+        final boolean isSimplePropertyNameOrTarget(BindingIdentifier target, PROPERTYNAME propertyName) {
             if (isSimplePropertyName(propertyName)) {
                 return true;
             }
-            Name resolvedName = target.getResolvedName();
-            return resolvedName != null && resolvedName.isLocal();
+            return false;
         }
 
         final void emitGetV(BindingProperty node, ValType type) {
             // stack: [cx, value, propertyName] -> [v]
             mv.lineInfo(node);
-            if (type == ValType.String) {
+            switch (type) {
+            case Number_uint:
+                mv.invoke(Methods.AbstractOperations_GetV_long);
+                break;
+            case String:
                 mv.invoke(Methods.AbstractOperations_GetV_String);
-            } else {
+                break;
+            case Any:
                 mv.invoke(Methods.AbstractOperations_GetV);
+                break;
+            default:
+                throw new AssertionError();
             }
         }
 
@@ -863,8 +889,7 @@ final class BindingInitializationGenerator {
                     /* steps 1-2 (Runtime Semantics: BindingInitialization 13.3.3.5) */
                     // stack: [] -> []
                     type = evaluatePropertyName(propertyName);
-                    Variable<?> propertyNameVar = mv.newScratchVariable(type.toClass());
-                    mv.store(propertyNameVar);
+                    Value<?> propertyNameVar = mv.storeTemporary(type.toClass());
 
                     /* steps 2-3 */
                     // stack: [] -> [ref]
@@ -874,7 +899,6 @@ final class BindingInitializationGenerator {
                     mv.loadExecutionContext();
                     mv.load(value);
                     mv.load(propertyNameVar);
-                    mv.freeVariable(propertyNameVar);
                 }
 
                 /* steps 4-5 */
@@ -895,7 +919,7 @@ final class BindingInitializationGenerator {
                 BindingIdentifier bindingId = (BindingIdentifier) binding;
                 /* steps 2-3, 7-8 */
                 BindingOp<EnvironmentRecord> op = BindingOp.of(envRec, bindingId.getName());
-                op.initializeBinding(envRec, bindingId.getName(), asm -> {
+                op.initializeBinding(envRec, bindingId.getName(), __ -> {
                     // stack: [] -> [cx, value]
                     mv.loadExecutionContext();
                     mv.load(value);
@@ -924,8 +948,7 @@ final class BindingInitializationGenerator {
      * <li>13.3.3.7 Runtime Semantics: KeyedBindingInitialization
      * </ul>
      */
-    private static final class LiteralKeyedBindingInitialization extends
-            KeyedBindingInitialization<String> {
+    private static final class LiteralKeyedBindingInitialization extends KeyedBindingInitialization<String> {
         private final Variable<HashSet<?>> propertyNames;
 
         LiteralKeyedBindingInitialization(CodeGenerator codegen, CodeVisitor mv,
@@ -943,6 +966,11 @@ final class BindingInitializationGenerator {
                 mv.invoke(Methods.HashSet_add);
                 mv.pop();
             }
+            long index = IndexedMap.toIndex(propertyName);
+            if (IndexedMap.isIndex(index)) {
+                mv.lconst(index);
+                return ValType.Number_uint;
+            }
             mv.aconst(propertyName);
             return ValType.String;
         }
@@ -959,8 +987,8 @@ final class BindingInitializationGenerator {
      * <li>13.3.3.7 Runtime Semantics: KeyedBindingInitialization
      * </ul>
      */
-    private static final class ComputedKeyedBindingInitialization extends
-            KeyedBindingInitialization<ComputedPropertyName> {
+    private static final class ComputedKeyedBindingInitialization
+            extends KeyedBindingInitialization<ComputedPropertyName> {
         private final Variable<HashSet<?>> propertyNames;
 
         ComputedKeyedBindingInitialization(CodeGenerator codegen, CodeVisitor mv,
@@ -978,13 +1006,13 @@ final class BindingInitializationGenerator {
             // Runtime Semantics: Evaluation
             // ComputedPropertyName : [ AssignmentExpression ]
             ValType propType = expression(propertyName.getExpression(), mv);
-            ValType keyType = ToPropertyKey(propType, mv);
+            ToPropertyKey(propType, mv);
             if (propertyNames != null) {
                 mv.dupX1();
                 mv.invoke(Methods.HashSet_add);
                 mv.pop();
             }
-            return keyType;
+            return ValType.Any;
         }
 
         @Override

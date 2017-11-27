@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -25,8 +25,8 @@ import com.github.anba.es6draft.runtime.internal.ScriptException;
  */
 abstract class AbstractIterationGenerator<NODE extends Node, ITERATOR> {
     private static final class Methods {
-        // class: ScriptRuntime
-        static final MethodName ScriptRuntime_stackOverflowError = MethodName.findStatic(Types.ScriptRuntime,
+        // class: ErrorOperations
+        static final MethodName ErrorOperations_stackOverflowError = MethodName.findStatic(Types.ErrorOperations,
                 "stackOverflowError", Type.methodType(Types.StackOverflowError, Types.Error));
     }
 
@@ -140,10 +140,10 @@ abstract class AbstractIterationGenerator<NODE extends Node, ITERATOR> {
         List<TempLabel> tempLabels = exitIteration(node, mv);
 
         // Emit throw handler
-        Completion throwResult = emitThrowHandler(node, iterator, handlerCatch, handlerCatchStackOverflow, mv);
+        emitThrowHandler(node, iterator, handlerCatch, handlerCatchStackOverflow, mv);
 
         // Emit return handler
-        Completion returnResult = emitReturnHandler(node, iterator, completion, tempLabels, mv);
+        emitReturnHandler(node, iterator, completion, tempLabels, mv);
 
         mv.exitVariableScope();
         mv.tryCatch(startIteration, endIteration, handlerCatch, Types.ScriptException);
@@ -156,14 +156,10 @@ abstract class AbstractIterationGenerator<NODE extends Node, ITERATOR> {
             epilogue(node, iterator, mv);
         }
 
-        if (tempLabels.isEmpty()) {
-            // No Return handler installed
-            return throwResult.select(loopBodyResult);
-        }
-        return returnResult.select(throwResult.select(loopBodyResult));
+        return loopBodyResult;
     }
 
-    private Completion emitThrowHandler(NODE node, Variable<ITERATOR> iterator, TryCatchLabel handlerCatch,
+    private void emitThrowHandler(NODE node, Variable<ITERATOR> iterator, TryCatchLabel handlerCatch,
             TryCatchLabel handlerCatchStackOverflow, CodeVisitor mv) {
         mv.enterVariableScope();
         Variable<? extends Throwable> throwable;
@@ -175,7 +171,7 @@ abstract class AbstractIterationGenerator<NODE extends Node, ITERATOR> {
 
         if (handlerCatchStackOverflow != null) {
             mv.catchHandler(handlerCatchStackOverflow, Types.Error);
-            mv.invoke(Methods.ScriptRuntime_stackOverflowError);
+            mv.invoke(Methods.ErrorOperations_stackOverflowError);
         }
         mv.catchHandler(handlerCatch, Types.ScriptException);
         mv.store(throwable);
@@ -185,14 +181,11 @@ abstract class AbstractIterationGenerator<NODE extends Node, ITERATOR> {
         mv.load(throwable);
         mv.athrow();
         mv.exitVariableScope();
-
-        return Completion.Throw;
     }
 
-    private Completion emitReturnHandler(NODE node, Variable<ITERATOR> iterator, Value<Object> completion,
+    private void emitReturnHandler(NODE node, Variable<ITERATOR> iterator, Value<Object> completion,
             List<TempLabel> tempLabels, CodeVisitor mv) {
         // (1) Intercept return instructions
-        assert tempLabels.isEmpty() || completion != null;
         for (TempLabel temp : tempLabels) {
             if (temp.isTarget()) {
                 mv.mark(temp);
@@ -202,8 +195,6 @@ abstract class AbstractIterationGenerator<NODE extends Node, ITERATOR> {
                 mv.goTo(temp, completion);
             }
         }
-
-        return Completion.Abrupt; // Return or Break
     }
 
     protected abstract void IteratorClose(NODE node, Variable<ITERATOR> iterator,

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -10,21 +10,29 @@ import java.util.HashMap;
 
 import com.github.anba.es6draft.Executable;
 import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
+import com.github.anba.es6draft.runtime.internal.Source;
 import com.github.anba.es6draft.runtime.types.builtins.ArrayObject;
 
 /**
  * Base class for compiled objects.
  */
 public class CompiledObject implements Executable {
-    private final RuntimeInfo.SourceObject sourceObject;
+    private final Source source;
+    private final RuntimeInfo.RuntimeObject sourceObject;
     private HashMap<Integer, ArrayObject> templateObjects;
 
-    protected CompiledObject(RuntimeInfo.SourceObject sourceObject) {
+    protected CompiledObject(Source source, RuntimeInfo.RuntimeObject sourceObject) {
+        this.source = source;
         this.sourceObject = sourceObject;
     }
 
     @Override
-    public final RuntimeInfo.SourceObject getSourceObject() {
+    public final Source getSource() {
+        return source;
+    }
+
+    @Override
+    public final RuntimeInfo.RuntimeObject getRuntimeObject() {
         return sourceObject;
     }
 

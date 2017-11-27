@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -24,9 +24,8 @@ public final class ForOfStatement extends IterationStatement implements ForItera
     private final Expression expression;
     private Statement statement;
 
-    public ForOfStatement(long beginPosition, long endPosition, BlockScope scope,
-            EnumSet<Abrupt> abrupt, Set<String> labelSet, Node head, Expression expression,
-            Statement stmt) {
+    public ForOfStatement(long beginPosition, long endPosition, BlockScope scope, EnumSet<Abrupt> abrupt,
+            Set<String> labelSet, Node head, Expression expression, Statement stmt) {
         super(beginPosition, endPosition, abrupt, labelSet);
         this.scope = scope;
         this.head = head;

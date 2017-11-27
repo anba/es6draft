@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -8,7 +8,9 @@ package com.github.anba.es6draft.runtime.objects.intl;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.*;
 import static com.github.anba.es6draft.runtime.internal.Errors.newRangeError;
+import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
+import static com.github.anba.es6draft.runtime.language.Operators.InstanceofOperator;
 import static com.github.anba.es6draft.runtime.objects.intl.IntlAbstractOperations.*;
 import static com.github.anba.es6draft.runtime.types.builtins.ArrayObject.ArrayCreate;
 import static java.util.Arrays.asList;
@@ -21,15 +23,18 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
+import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.Initializable;
 import com.github.anba.es6draft.runtime.internal.Lazy;
 import com.github.anba.es6draft.runtime.internal.Messages;
+import com.github.anba.es6draft.runtime.internal.Permission;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
@@ -44,6 +49,7 @@ import com.github.anba.es6draft.runtime.objects.intl.IntlAbstractOperations.Opti
 import com.github.anba.es6draft.runtime.objects.intl.IntlAbstractOperations.ResolvedLocale;
 import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
+import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.ArrayObject;
@@ -89,12 +95,14 @@ public final class DateTimeFormatConstructor extends BuiltinConstructor implemen
     }
 
     /** [[relevantExtensionKeys]] */
-    private static final List<ExtensionKey> relevantExtensionKeys = asList(ExtensionKey.ca, ExtensionKey.nu);
+    private static final List<ExtensionKey> relevantExtensionKeys = asList(ExtensionKey.ca, ExtensionKey.hc,
+            ExtensionKey.nu);
 
     /**
-     * Calendar algorithm keys (BCP 47; CLDR, version 28)
+     * Calendar algorithm keys (BCP 47; CLDR, version 32)
      */
-    private enum CalendarAlgorithm {/* @formatter:off */
+    private enum CalendarAlgorithm {
+        /* @formatter:off */
         buddhist("buddhist"),
         chinese("chinese"),
         coptic("coptic"),
@@ -159,6 +167,7 @@ public final class DateTimeFormatConstructor extends BuiltinConstructor implemen
 
     /** [[localeData]] */
     private static final class DateTimeFormatLocaleDataInfo implements LocaleDataInfo {
+        private static final boolean ICU_NUMBERING_SYSTEMS = true;
         private final ULocale locale;
 
         public DateTimeFormatLocaleDataInfo(ULocale locale) {
@@ -171,6 +180,8 @@ public final class DateTimeFormatConstructor extends BuiltinConstructor implemen
             case ca:
                 String[] values = Calendar.getKeywordValuesForLocale("calendar", locale, false);
                 return CalendarAlgorithm.forName(values[0]).getName();
+            case hc:
+                return null;
             case nu:
                 return NumberingSystem.getInstance(locale).getName();
             default:
@@ -183,6 +194,8 @@ public final class DateTimeFormatConstructor extends BuiltinConstructor implemen
             switch (extensionKey) {
             case ca:
                 return getCalendarInfo();
+            case hc:
+                return getHourCycleInfo();
             case nu:
                 return getNumberInfo();
             default:
@@ -193,7 +206,7 @@ public final class DateTimeFormatConstructor extends BuiltinConstructor implemen
         private List<String> getCalendarInfo() {
             String[] values = Calendar.getKeywordValuesForLocale("calendar", locale, false);
             ArrayList<String> result = new ArrayList<>(values.length);
-            for (int i = 0, len = values.length; i < len; ++i) {
+            for (int i = 0; i < values.length; ++i) {
                 String calendarName = values[i];
                 // Ignore "unknown" calendar entry in result set
                 if ("unknown".equals(calendarName)) {
@@ -208,13 +221,43 @@ public final class DateTimeFormatConstructor extends BuiltinConstructor implemen
             return result;
         }
 
+        private List<String> getHourCycleInfo() {
+            return asList(null, "h11", "h12", "h23", "h24");
+        }
+
         private List<String> getNumberInfo() {
             // ICU4J does not provide an API to retrieve the numbering systems per locale, go with
             // Spidermonkey instead and return default numbering system of locale + Table 2 entries
             String localeNumberingSystem = NumberingSystem.getInstance(locale).getName();
-            return asList(localeNumberingSystem, "arab", "arabtext", "bali", "beng", "deva", "fullwide", "gujr", "guru",
+            if (ICU_NUMBERING_SYSTEMS) {
+                ArrayList<String> list = new ArrayList<>(ICUNumberingSystems.available);
+                list.set(0, localeNumberingSystem);
+                return list;
+            }
+            return asList(localeNumberingSystem, "arab", "arabext", "bali", "beng", "deva", "fullwide", "gujr", "guru",
                     "hanidec", "khmr", "knda", "laoo", "latn", "limb", "mlym", "mong", "mymr", "orya", "tamldec",
                     "telu", "thai", "tibt");
+        }
+
+        private static final class ICUNumberingSystems {
+            private static final ArrayList<String> available;
+            static {
+                ArrayList<String> list = new ArrayList<>();
+                list.add(null);
+                for (String name : NumberingSystem.getAvailableNames()) {
+                    NumberingSystem ns;
+                    try {
+                        ns = NumberingSystem.getInstanceByName(name);
+                    } catch (IllegalArgumentException e) {
+                        // ICU4J throws an IllegalArgumentException if the numbering system digits are outside of BMP.
+                        continue;
+                    }
+                    if (!ns.isAlgorithmic()) {
+                        list.add(name);
+                    }
+                }
+                available = list;
+            }
         }
     }
 
@@ -231,11 +274,6 @@ public final class DateTimeFormatConstructor extends BuiltinConstructor implemen
     @Override
     public void initialize(Realm realm) {
         createProperties(realm, this, Properties.class);
-    }
-
-    @Override
-    public DateTimeFormatConstructor clone() {
-        return new DateTimeFormatConstructor(getRealm());
     }
 
     @SafeVarargs
@@ -272,39 +310,44 @@ public final class DateTimeFormatConstructor extends BuiltinConstructor implemen
         /* step 5, 7 */
         OptionsRecord opt = new OptionsRecord(OptionsRecord.MatcherType.forName(matcher));
         /* step 8 */
-        DateTimeFormatLocaleData localeData = new DateTimeFormatLocaleData();
+        String hc = GetStringOption(cx, options, "hourCycle", set("h11", "h12", "h23", "h24"), null);
         /* step 9 */
+        opt.set(ExtensionKey.hc, hc);
+        /* step 10 */
+        DateTimeFormatLocaleData localeData = new DateTimeFormatLocaleData();
+        /* step 11 */
         ResolvedLocale r = ResolveLocale(cx.getRealm(), getAvailableLocalesLazy(cx), requestedLocales, opt,
                 relevantExtensionKeys, localeData);
-        /* step 10 */
-        dateTimeFormat.setLocale(r.getLocale());
-        /* step 11 */
-        dateTimeFormat.setCalendar(r.getValue(ExtensionKey.ca));
         /* step 12 */
-        dateTimeFormat.setNumberingSystem(r.getValue(ExtensionKey.nu));
+        dateTimeFormat.setLocale(r.getLocale());
         /* step 13 */
+        dateTimeFormat.setCalendar(r.getValue(ExtensionKey.ca));
+        /* step 14 (not applicable) */
+        /* step 15 */
+        dateTimeFormat.setNumberingSystem(r.getValue(ExtensionKey.nu));
+        /* step 16 */
         String dataLocale = r.getDataLocale();
-        /* step 14 */
+        /* step 17 */
         Object tz = Get(cx, options, "timeZone");
-        /* steps 15-16 */
+        /* steps 18-19 */
         String timeZone;
         if (!Type.isUndefined(tz)) {
-            /* step 15.a */
+            /* step 18.a */
             timeZone = ToFlatString(cx, tz);
-            /* step 15.b */
+            /* step 18.b */
             if (!IsValidTimeZoneName(timeZone)) {
-                throw newRangeError(cx, Messages.Key.IntlInvalidOption, timeZone);
+                throw newRangeError(cx, Messages.Key.IntlInvalidTimeZone, timeZone);
             }
-            /* step 15.c */
+            /* step 18.c */
             timeZone = CanonicalizeTimeZoneName(timeZone);
         } else {
-            /* step 16.a */
+            /* step 19.a */
             timeZone = DefaultTimeZone(cx.getRealm());
         }
-        /* step 17 */
+        /* step 20 */
         dateTimeFormat.setTimeZone(timeZone);
-        /* step 18 (moved) */
-        /* step 19 */
+        /* step 21 (moved) */
+        /* step 22 */
         // FIXME: spec should propably define exact iteration order here
         String weekday = GetStringOption(cx, options, "weekday", set("narrow", "short", "long"), null);
         String era = GetStringOption(cx, options, "era", set("narrow", "short", "long"), null);
@@ -316,64 +359,27 @@ public final class DateTimeFormatConstructor extends BuiltinConstructor implemen
         String minute = GetStringOption(cx, options, "minute", set("2-digit", "numeric"), null);
         String second = GetStringOption(cx, options, "second", set("2-digit", "numeric"), null);
         String timeZoneName = GetStringOption(cx, options, "timeZoneName", set("short", "long"), null);
-        /* steps 20-21 (moved) */
-        /* step 22 */
+        /* steps 23-24 (moved) */
+        /* step 25 */
         String formatMatcher = GetStringOption(cx, options, "formatMatcher", set("basic", "best fit"), "best fit");
-        /* steps 23-26 (moved) */
-        /* step 27 */
+        /* steps 26-28 (moved) */
+        /* step 29 */
         Boolean hour12 = GetBooleanOption(cx, options, "hour12", null);
-        /* steps 18, 20-21, 23-26, 28-29 */
+        /* steps 21, 23-24, 26-28, 30-31 */
         FormatMatcherRecord formatRecord = new FormatMatcherRecord(weekday, era, year, month, day, hour, minute, second,
-                timeZoneName, hour12);
+                timeZoneName, hour12, hourCycleSymbol(r));
         Lazy<String> pattern;
         if ("basic".equals(formatMatcher)) {
-            pattern = new BasicFormatPattern(formatRecord, dataLocale);
+            pattern = Lazy.of(() -> BasicFormatMatcher(formatRecord, dataLocale));
         } else {
-            pattern = new BestFitFormatPattern(formatRecord, dataLocale);
+            pattern = Lazy.of(() -> BestFitFormatMatcher(formatRecord, dataLocale));
         }
-        /* step 30 */
+        /* step 32 */
         dateTimeFormat.setPattern(pattern);
-        /* step 31 */
+        /* step 33 */
         dateTimeFormat.setBoundFormat(null);
-        /* step 32 (FIXME: spec bug - unnecessary internal slot) */
-        /* step 33 (omitted) */
-    }
-
-    /**
-     * 12.1.1 InitializeDateTimeFormat (dateTimeFormat, locales, options)
-     * 
-     * @param realm
-     *            the realm instance
-     * @param dateTimeFormat
-     *            the date format object
-     */
-    public static void InitializeDefaultDateTimeFormat(Realm realm, DateTimeFormatObject dateTimeFormat) {
-        /* steps 1-2 (FIXME: spec bug - unnecessary internal slot) */
-        /* steps 3-7 (not applicable) */
-        /* step 8 */
-        DateTimeFormatLocaleData localeData = new DateTimeFormatLocaleData();
-        /* step 9 */
-        ResolvedLocale r = ResolveDefaultLocale(realm, relevantExtensionKeys, localeData);
-        /* step 10 */
-        dateTimeFormat.setLocale(r.getLocale());
-        /* step 11 */
-        dateTimeFormat.setCalendar(r.getValue(ExtensionKey.ca));
-        /* step 12 */
-        dateTimeFormat.setNumberingSystem(r.getValue(ExtensionKey.nu));
-        /* step 13 */
-        String dataLocale = r.getDataLocale();
-        /* steps 14-17 */
-        dateTimeFormat.setTimeZone(DefaultTimeZone(realm));
-        /* steps 18-29 */
-        FormatMatcherRecord formatRecord = new FormatMatcherRecord(null, null, "numeric", "numeric", "numeric", null,
-                null, null, null, null);
-        Lazy<String> pattern = new BestFitFormatPattern(formatRecord, dataLocale);
-        /* step 30 */
-        dateTimeFormat.setPattern(pattern);
-        /* step 31 */
-        dateTimeFormat.setBoundFormat(null);
-        /* step 32 (FIXME: spec bug - unnecessary internal slot) */
-        /* step 33 (omitted) */
+        /* step 34 (FIXME: spec bug - unnecessary internal slot) */
+        /* step 35 (omitted) */
     }
 
     /**
@@ -430,33 +436,26 @@ public final class DateTimeFormatConstructor extends BuiltinConstructor implemen
         return options;
     }
 
-    private static final class BasicFormatPattern extends Lazy<String> {
-        private final FormatMatcherRecord record;
-        private final String dataLocale;
-
-        BasicFormatPattern(FormatMatcherRecord record, String dataLocale) {
-            this.record = record;
-            this.dataLocale = dataLocale;
+    private static char hourCycleSymbol(ResolvedLocale locale) {
+        String hourCycle = locale.getValue(ExtensionKey.hc);
+        if (hourCycle == null) {
+            return 0;
         }
-
-        @Override
-        protected String computeValue() {
-            return BasicFormatMatcher(record, dataLocale);
-        }
-    }
-
-    private static final class BestFitFormatPattern extends Lazy<String> {
-        private final FormatMatcherRecord record;
-        private final String dataLocale;
-
-        BestFitFormatPattern(FormatMatcherRecord record, String dataLocale) {
-            this.record = record;
-            this.dataLocale = dataLocale;
-        }
-
-        @Override
-        protected String computeValue() {
-            return BestFitFormatMatcher(record, dataLocale);
+        switch (hourCycle) {
+        case "h11":
+            // 0-11
+            return 'K';
+        case "h12":
+            // 1-12
+            return 'h';
+        case "h23":
+            // 0-23
+            return 'H';
+        case "h24":
+            // 1-24
+            return 'k';
+        default:
+            throw new AssertionError();
         }
     }
 
@@ -471,9 +470,10 @@ public final class DateTimeFormatConstructor extends BuiltinConstructor implemen
         private final FieldWeight second;
         private final FieldWeight timeZoneName;
         private final Boolean hour12;
+        private final char hourCycle;
 
         FormatMatcherRecord(String weekday, String era, String year, String month, String day, String hour,
-                String minute, String second, String timeZoneName, Boolean hour12) {
+                String minute, String second, String timeZoneName, Boolean hour12, char hourCycle) {
             this.weekday = FieldWeight.forName(weekday);
             this.era = FieldWeight.forName(era);
             this.year = FieldWeight.forName(year);
@@ -484,22 +484,49 @@ public final class DateTimeFormatConstructor extends BuiltinConstructor implemen
             this.second = FieldWeight.forName(second);
             this.timeZoneName = FieldWeight.forName(timeZoneName);
             this.hour12 = hour12;
+            this.hourCycle = hourCycle;
         }
 
         boolean isDate() {
-            return (year != null || month != null || day != null);
+            return (weekday != null || era != null || year != null || month != null || day != null);
         }
 
         boolean isTime() {
-            return (hour != null || minute != null || second != null);
+            return (hour != null || minute != null || second != null || timeZoneName != null);
         }
 
         boolean isHour12(ULocale locale) {
             if (hour12 != null) {
                 return hour12;
             }
-            char hourFormat = defaultHourFormat(locale);
+            char hourFormat;
+            if (hourCycle != 0) {
+                hourFormat = hourCycle;
+            } else {
+                hourFormat = defaultHourFormat(locale);
+            }
             return (hourFormat == 'h' || hourFormat == 'K');
+        }
+
+        Boolean hour12OrDefault() {
+            if (hour12 != null) {
+                return hour12;
+            }
+            if (hourCycle != 0) {
+                return (hourCycle == 'h' || hourCycle == 'K');
+            }
+            return null;
+        }
+
+        boolean hasNonDefaultHourCycle(ULocale locale) {
+            if (hour12 != null || hourCycle == 0) {
+                return false;
+            }
+            return hourCycle != defaultHourFormat(locale);
+        }
+
+        char hourCycle() {
+            return hourCycle;
         }
 
         FieldWeight getWeight(DateField field) {
@@ -540,7 +567,7 @@ public final class DateTimeFormatConstructor extends BuiltinConstructor implemen
             DateField.Year.append(sb, year);
             DateField.Month.append(sb, month);
             DateField.Day.append(sb, day);
-            DateField.Hour.append(sb, hour, hour12);
+            DateField.Hour.append(sb, hour, hour12OrDefault());
             DateField.Minute.append(sb, minute);
             DateField.Second.append(sb, second);
             DateField.Timezone.append(sb, timeZoneName);
@@ -573,29 +600,32 @@ public final class DateTimeFormatConstructor extends BuiltinConstructor implemen
         boolean optDateTime = optDate && optTime;
 
         // get the preferred hour representation (12-hour-cycle or 24-hour-cycle)
-        boolean optHour12 = formatRecord.isHour12(locale);
+        boolean optHour12 = optTime && formatRecord.isHour12(locale);
 
         // handle date and time patterns separately
-        int bestDateScore = Integer.MIN_VALUE, bestTimeScore = Integer.MIN_VALUE;
-        String bestDateFormat = null, bestTimeFormat = null;
+        int bestDateScore = Integer.MIN_VALUE;
+        int bestTimeScore = Integer.MIN_VALUE;
+        String bestDateFormat = null;
+        String bestTimeFormat = null;
 
         Map<String, String> skeletons = addCanonicalSkeletons(generator.getSkeletons(null));
+        Set<Skeleton> hourSkeletons = null;
         for (Map.Entry<String, String> entry : skeletons.entrySet()) {
-            Skeleton skeleton = new Skeleton(entry.getKey());
+            Skeleton skeleton = Skeleton.fromSkeleton(entry.getKey());
             // getSkeletons() does not return any date+time skeletons
             assert !(skeleton.isDate() && skeleton.isTime());
             // skip skeleton if it contains unsupported fields
-            if (skeleton.has(DateField.Quarter) || skeleton.has(DateField.Week)) {
+            if (!isSupported(skeleton)) {
                 continue;
             }
-            if (skeleton.has(DateField.Year) && skeleton.getSymbol(DateField.Year) != 'y') {
-                continue;
-            }
-            if (skeleton.has(DateField.Day) && skeleton.getSymbol(DateField.Day) != 'd') {
-                continue;
-            }
-            if (skeleton.has(DateField.Second) && skeleton.getSymbol(DateField.Second) != 's') {
-                continue;
+            // skip skeleton if no matching skeleton with opposite hour representation is present
+            if (optTime && skeleton.has(DateField.Hour)) {
+                if (hourSkeletons == null) {
+                    hourSkeletons = validHourSkeletons(skeletons);
+                }
+                if (!hourSkeletons.contains(skeleton)) {
+                    continue;
+                }
             }
             if (optDateTime) {
                 // skip time-skeletons with weekdays if date+time was requested, weekday gets into
@@ -653,9 +683,18 @@ public final class DateTimeFormatConstructor extends BuiltinConstructor implemen
                 }
             }
         }
+
+        // Ensure at least one pattern was found.
         assert !optDate || bestDateFormat != null;
         assert !optTime || bestTimeFormat != null;
         assert !(!optDate && !optTime) || bestDateFormat != null;
+
+        // Fixup the hour representation to match the expected hour cycle.
+        if (optTime && formatRecord.hasNonDefaultHourCycle(locale)) {
+            bestTimeFormat = modifyHour(formatRecord, bestTimeFormat);
+        }
+
+        // Return the matched pattern.
         if (optDateTime) {
             String dateTimeFormat = generator.getDateTimeFormat();
             return MessageFormat.format(dateTimeFormat, bestTimeFormat, bestDateFormat);
@@ -675,18 +714,12 @@ public final class DateTimeFormatConstructor extends BuiltinConstructor implemen
      * @see <a href="http://bugs.icu-project.org/trac/ticket/9997">ICU bug 9997</a>
      */
     private static char defaultHourFormat(ULocale locale) {
-        // use short time format, just as ICU4J does internally
-        final int style = DateFormat.SHORT;
-        SimpleDateFormat df = (SimpleDateFormat) DateFormat.getTimeInstance(style, locale);
-        String pattern = df.toPattern();
-        boolean quote = false;
-        for (int i = 0, len = pattern.length(); i < len; ++i) {
-            char c = pattern.charAt(i);
-            if (!quote && (c == 'h' || c == 'H' || c == 'k' || c == 'K')) {
-                return c;
-            } else if (c == '\'') {
-                quote = !quote;
-            }
+        // Use short time format, just as ICU4J does internally. And as suggested in
+        // <http://unicode.org/reports/tr35/tr35-dates.html#availableFormats_appendItems>.
+        SimpleDateFormat df = (SimpleDateFormat) DateFormat.getTimeInstance(DateFormat.SHORT, locale);
+        Skeleton skeleton = Skeleton.fromPattern(df.toPattern());
+        if (skeleton.has(DateField.Hour)) {
+            return skeleton.getSymbol(DateField.Hour);
         }
         return 'H';
     }
@@ -701,13 +734,74 @@ public final class DateTimeFormatConstructor extends BuiltinConstructor implemen
      */
     private static Map<String, String> addCanonicalSkeletons(Map<String, String> skeletons) {
         final String source = "GyQMwWEdDFHmsSv"; // see DateTimePatternGenerator#CANONICAL_ITEMS
-        for (int i = 0, len = source.length(); i < len; ++i) {
+        for (int i = 0; i < source.length(); ++i) {
             String k = String.valueOf(source.charAt(i));
             if (!skeletons.containsKey(k)) {
                 skeletons.put(k, k);
             }
         }
         return skeletons;
+    }
+
+    private static boolean isSupported(Skeleton skeleton) {
+        if (skeleton.has(DateField.Quarter) || skeleton.has(DateField.Week)) {
+            return false;
+        }
+        if (skeleton.has(DateField.Year) && skeleton.getSymbol(DateField.Year) != 'y') {
+            return false;
+        }
+        if (skeleton.has(DateField.Day) && skeleton.getSymbol(DateField.Day) != 'd') {
+            return false;
+        }
+        if (skeleton.has(DateField.Second) && skeleton.getSymbol(DateField.Second) != 's') {
+            return false;
+        }
+        return true;
+    }
+
+    private static Set<Skeleton> validHourSkeletons(Map<String, String> skeletons) {
+        LinkedHashSet<Skeleton> hour12 = new LinkedHashSet<>(), hour24 = new LinkedHashSet<>();
+        for (String key : skeletons.keySet()) {
+            Skeleton skeleton = Skeleton.fromSkeleton(key);
+            if (!skeleton.has(DateField.Hour) || !isSupported(skeleton)) {
+                continue;
+            }
+            if (skeleton.isHour12()) {
+                hour12.add(skeleton);
+            } else {
+                hour24.add(skeleton);
+            }
+        }
+
+        // TODO: Create matching hour24 pattern instead of removing the skeleton.
+        hour12.removeIf(s -> !hour24.contains(s.hour24()));
+        hour24.removeIf(s -> !hour12.contains(s.hour12()));
+
+        HashSet<Skeleton> hourSkeletons = new HashSet<>();
+        hourSkeletons.addAll(hour12);
+        hourSkeletons.addAll(hour24);
+        return hourSkeletons;
+    }
+
+    private static String modifyHour(FormatMatcherRecord formatRecord, String pattern) {
+        assert formatRecord.hourCycle() != 0;
+        char[] result = pattern.toCharArray();
+        boolean quote = false;
+        for (int i = 0; i < result.length; ++i) {
+            char sym = result[i];
+            if (quote || !(sym == 'h' || sym == 'H' || sym == 'k' || sym == 'K')) {
+                if (sym == '\'') {
+                    if (i + 1 < result.length && result[i + 1] == '\'') {
+                        i += 1;
+                    } else {
+                        quote = !quote;
+                    }
+                }
+                continue;
+            }
+            result[i] = formatRecord.hourCycle();
+        }
+        return new String(result);
     }
 
     /**
@@ -802,7 +896,13 @@ public final class DateTimeFormatConstructor extends BuiltinConstructor implemen
         // Let ICU4J compute the best applicable pattern for the requested input values
         ULocale locale = ULocale.forLanguageTag(dataLocale);
         DateTimePatternGenerator generator = DateTimePatternGenerator.getInstance(locale);
-        return generator.getBestPattern(formatRecord.toSkeleton());
+        String pattern = generator.getBestPattern(formatRecord.toSkeleton());
+
+        // Fixup the hour representation to match the expected hour cycle.
+        if (formatRecord.isTime() && formatRecord.hasNonDefaultHourCycle(locale)) {
+            pattern = modifyHour(formatRecord, pattern);
+        }
+        return pattern;
     }
 
     /**
@@ -821,6 +921,7 @@ public final class DateTimeFormatConstructor extends BuiltinConstructor implemen
         if (Double.isInfinite(x) || Double.isNaN(x)) {
             throw newRangeError(cx, Messages.Key.InvalidDateValue);
         }
+        // FIXME: spec bug - Apply TimeClip to x.
         /* steps 2-15 */
         return dateTimeFormat.getDateFormat().format(new Date((long) x));
     }
@@ -847,7 +948,7 @@ public final class DateTimeFormatConstructor extends BuiltinConstructor implemen
                 if (keyIterator.hasNext()) {
                     key = fieldToString((DateFormat.Field) keyIterator.next());
                 } else {
-                    key = "separator";
+                    key = "literal";
                 }
                 String value = sb.toString();
                 sb.setLength(0);
@@ -895,11 +996,10 @@ public final class DateTimeFormatConstructor extends BuiltinConstructor implemen
             return "timeZoneName";
         }
         if (field == DateFormat.Field.AM_PM) {
-            // FIXME: spec issue - rename to "dayPeriod" for consistency with "timeZoneName"?
-            return "dayperiod";
+            return "dayPeriod";
         }
-        // Report unsupported/unexpected date fields as separators.
-        return "separator";
+        // Report unsupported/unexpected date fields as literals.
+        return "literal";
     }
 
     /**
@@ -917,6 +1017,7 @@ public final class DateTimeFormatConstructor extends BuiltinConstructor implemen
         if (Double.isInfinite(x) || Double.isNaN(x)) {
             throw newRangeError(cx, Messages.Key.InvalidDateValue);
         }
+        // FIXME: spec bug - Apply TimeClip to x.
         /* step 1 */
         List<Map.Entry<String, String>> parts = CreateDateTimeParts(dateTimeFormat, new Date((long) x));
         /* step 2 */
@@ -947,15 +1048,6 @@ public final class DateTimeFormatConstructor extends BuiltinConstructor implemen
             createDefaultFunctionProperties();
         }
 
-        private FormatFunction(Realm realm, Void ignore) {
-            super(realm, "format", 1);
-        }
-
-        @Override
-        public FormatFunction clone() {
-            return new FormatFunction(getRealm(), null);
-        }
-
         @Override
         public String call(ExecutionContext callerContext, Object thisValue, Object... args) {
             ExecutionContext calleeContext = calleeContext();
@@ -968,6 +1060,9 @@ public final class DateTimeFormatConstructor extends BuiltinConstructor implemen
             double x;
             if (Type.isUndefined(date)) {
                 /* step 3 */
+                if (!calleeContext.getRealm().isGranted(Permission.CurrentTime)) {
+                    throw newTypeError(calleeContext, Messages.Key.NoPermission, "format");
+                }
                 x = System.currentTimeMillis();
             } else {
                 /* step 4 */
@@ -979,43 +1074,31 @@ public final class DateTimeFormatConstructor extends BuiltinConstructor implemen
     }
 
     /**
-     * DateTime FormatToParts Functions
+     * 12.1.10 UnwrapDateTimeFormat( dtf )
+     * 
+     * @param cx
+     *            the execution context
+     * @param dtf
+     *            the date-time format object
+     * @param method
+     *            the caller method
+     * @return the unwrapped date-time format object
      */
-    public static final class FormatToPartsFunction extends BuiltinFunction {
-        public FormatToPartsFunction(Realm realm) {
-            super(realm, "formatToParts", 1);
-            createDefaultFunctionProperties();
-        }
-
-        private FormatToPartsFunction(Realm realm, Void ignore) {
-            super(realm, "formatToParts", 1);
-        }
-
-        @Override
-        public FormatToPartsFunction clone() {
-            return new FormatToPartsFunction(getRealm(), null);
-        }
-
-        @Override
-        public ArrayObject call(ExecutionContext callerContext, Object thisValue, Object... args) {
-            ExecutionContext calleeContext = calleeContext();
-            Object date = argument(args, 0);
-
-            /* steps 1-2 */
-            assert thisValue instanceof DateTimeFormatObject;
-            DateTimeFormatObject dtf = (DateTimeFormatObject) thisValue;
-            /* steps 3-4 */
-            double x;
-            if (Type.isUndefined(date)) {
-                /* step 3 */
-                x = System.currentTimeMillis();
-            } else {
-                /* step 4 */
-                x = ToNumber(calleeContext, date);
+    public static DateTimeFormatObject UnwrapDateTimeFormat(ExecutionContext cx, Object dtf, String method) {
+        /* step 1 */
+        if (cx.getRuntimeContext().isEnabled(CompatibilityOption.IntlConstructorLegacyFallback)) {
+            if (Type.isObject(dtf) && !(dtf instanceof DateTimeFormatObject)
+                    && InstanceofOperator(dtf, cx.getIntrinsic(Intrinsics.Intl_DateTimeFormat), cx)) {
+                dtf = Get(cx, Type.objectValue(dtf),
+                        cx.getIntrinsic(Intrinsics.Intl, IntlObject.class).getFallbackSymbol());
             }
-            /* step 5 */
-            return FormatToPartDateTime(calleeContext, dtf, x);
         }
+        /* step 2 */
+        if (!(dtf instanceof DateTimeFormatObject)) {
+            throw newTypeError(cx, Messages.Key.IncompatibleThis, method, Type.of(dtf).toString());
+        }
+        /* step 3 */
+        return (DateTimeFormatObject) dtf;
     }
 
     /**
@@ -1023,8 +1106,27 @@ public final class DateTimeFormatConstructor extends BuiltinConstructor implemen
      */
     @Override
     public ScriptObject call(ExecutionContext callerContext, Object thisValue, Object... args) {
-        /* steps 1-3 */
-        return construct(callerContext, this, args);
+        ExecutionContext calleeContext = calleeContext();
+        Object locales = argument(args, 0);
+        Object options = argument(args, 1);
+
+        /* step 1 (not applicable) */
+        /* step 2 */
+        DateTimeFormatObject obj = OrdinaryCreateFromConstructor(calleeContext, this,
+                Intrinsics.Intl_DateTimeFormatPrototype, DateTimeFormatObject::new);
+        /* step 3 */
+        InitializeDateTimeFormat(calleeContext, obj, locales, options);
+        /* steps 4-5 */
+        if (calleeContext.getRuntimeContext().isEnabled(CompatibilityOption.IntlConstructorLegacyFallback)) {
+            if (Type.isObject(thisValue) && InstanceofOperator(thisValue, this, calleeContext)) {
+                PropertyDescriptor desc = new PropertyDescriptor(obj, false, false, false);
+                DefinePropertyOrThrow(calleeContext, Type.objectValue(thisValue),
+                        calleeContext.getIntrinsic(Intrinsics.Intl, IntlObject.class).getFallbackSymbol(), desc);
+                return Type.objectValue(thisValue);
+            }
+        }
+        /* step 6 */
+        return obj;
     }
 
     /**
@@ -1042,6 +1144,8 @@ public final class DateTimeFormatConstructor extends BuiltinConstructor implemen
                 Intrinsics.Intl_DateTimeFormatPrototype, DateTimeFormatObject::new);
         /* step 3 */
         InitializeDateTimeFormat(calleeContext, obj, locales, options);
+        /* steps 4-5 (not applicable) */
+        /* step 6 */
         return obj;
     }
 
@@ -1063,8 +1167,7 @@ public final class DateTimeFormatConstructor extends BuiltinConstructor implemen
         /**
          * 12.3.1 Intl.DateTimeFormat.prototype
          */
-        @Value(name = "prototype",
-                attributes = @Attributes(writable = false, enumerable = false, configurable = false))
+        @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false, configurable = false))
         public static final Intrinsics prototype = Intrinsics.Intl_DateTimeFormatPrototype;
 
         /**

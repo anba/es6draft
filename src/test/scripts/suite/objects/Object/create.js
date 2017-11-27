@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -61,7 +61,7 @@ assertBuiltinFunction(Object.create, "create", 2);
 // Intermediate exceptions during install do not stop property traversal, first exception is reported
 {
   // Precondition: [[OwnKeys]] for Proxies can return the same key multiple times
-  assertSame(2, [for (k of Reflect.ownKeys(new Proxy({}, {ownKeys: () => ["a", "a"]}))) k].length);
+  assertThrows(TypeError, () => Reflect.ownKeys(new Proxy({}, {ownKeys: () => ["a", "a"]})));
 
   let value = 0;
   let props = new Proxy({a: -1}, {
@@ -69,7 +69,7 @@ assertBuiltinFunction(Object.create, "create", 2);
     ownKeys: () => ["a", "a", "a"]
   });
   assertThrows(TypeError, () => Object.create(null, props));
-  assertSame(3, value);
+  assertSame(0, value);
 }
 
 // Exceptions during property descriptor retrieval are reported immediately (1)

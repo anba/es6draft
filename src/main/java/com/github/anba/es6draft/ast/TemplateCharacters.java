@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -26,7 +26,7 @@ public final class TemplateCharacters extends Expression {
     /**
      * Returns the cooked template value.
      * 
-     * @return the template value
+     * @return the template value or {@code null}
      */
     public String getValue() {
         return value;

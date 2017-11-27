@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -20,8 +20,8 @@ public final class DoWhileStatement extends IterationStatement {
     private final Expression test;
     private Statement statement;
 
-    public DoWhileStatement(long beginPosition, long endPosition, EnumSet<Abrupt> abrupt,
-            Set<String> labelSet, Expression test, Statement statement) {
+    public DoWhileStatement(long beginPosition, long endPosition, EnumSet<Abrupt> abrupt, Set<String> labelSet,
+            Expression test, Statement statement) {
         super(beginPosition, endPosition, abrupt, labelSet);
         this.test = test;
         this.statement = statement;

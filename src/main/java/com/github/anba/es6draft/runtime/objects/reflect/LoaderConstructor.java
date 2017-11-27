@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -44,11 +44,6 @@ public final class LoaderConstructor extends BuiltinConstructor implements Initi
         createProperties(realm, this, Properties.class);
     }
 
-    @Override
-    public LoaderConstructor clone() {
-        return new LoaderConstructor(getRealm());
-    }
-
     /**
      * 26.?.1.1 Reflect.Loader (options = { })
      */
@@ -61,9 +56,8 @@ public final class LoaderConstructor extends BuiltinConstructor implements Initi
      * 26.?.1.1 Reflect.Loader (options = { })
      */
     @Override
-    public LoaderObject construct(ExecutionContext callerContext, Constructor newTarget,
-            Object... args) {
-        throw newTypeError(calleeContext(), Messages.Key.IncompatibleObject);
+    public LoaderObject construct(ExecutionContext callerContext, Constructor newTarget, Object... args) {
+        throw newTypeError(calleeContext(), Messages.Key.InvalidConstruct, "Loader");
     }
 
     /**
@@ -75,19 +69,16 @@ public final class LoaderConstructor extends BuiltinConstructor implements Initi
         @Prototype
         public static final Intrinsics __proto__ = Intrinsics.FunctionPrototype;
 
-        @Value(name = "length", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = true))
+        @Value(name = "length", attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static final int length = 0;
 
-        @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = true))
+        @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static final String name = "Loader";
 
         /**
          * 26.?.2.1 Reflect.Loader.prototype
          */
-        @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = false))
+        @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false, configurable = false))
         public static final Intrinsics prototype = Intrinsics.LoaderPrototype;
     }
 }

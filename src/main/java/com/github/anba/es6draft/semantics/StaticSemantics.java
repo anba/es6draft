@@ -1,11 +1,12 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
  */
 package com.github.anba.es6draft.semantics;
 
+import static java.util.Collections.emptyList;
 import static java.util.Collections.emptySet;
 import static java.util.Collections.singleton;
 import static java.util.Collections.singletonList;
@@ -18,10 +19,15 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Consumer;
+import java.util.stream.Stream;
 
 import com.github.anba.es6draft.ast.*;
+import com.github.anba.es6draft.ast.Module;
 import com.github.anba.es6draft.ast.scope.BlockScope;
 import com.github.anba.es6draft.ast.scope.Name;
+import com.github.anba.es6draft.ast.synthetic.MethodDefinitionsMethod;
+import com.github.anba.es6draft.ast.synthetic.PropertyDefinitionsMethod;
 import com.github.anba.es6draft.runtime.internal.InlineArrayList;
 import com.github.anba.es6draft.runtime.modules.ExportEntry;
 import com.github.anba.es6draft.runtime.modules.ImportEntry;
@@ -161,7 +167,12 @@ public final class StaticSemantics {
      * @return the bound names
      */
     public static List<Name> BoundNames(List<FormalParameter> formals) {
-        // TODO: Some callers expect the returned list to be mutable.
+        if (formals.isEmpty()) {
+            return emptyList();
+        }
+        if (formals.size() == 1) {
+            return BoundNames(formals.get(0));
+        }
         InlineArrayList<Name> list = new InlineArrayList<>();
         for (FormalParameter formalParameter : formals) {
             formalParameter.accept(BoundNames.INSTANCE, list);
@@ -211,7 +222,20 @@ public final class StaticSemantics {
         if (node instanceof ExportDefaultExpression) {
             return BoundNames(((ExportDefaultExpression) node).getBinding());
         }
-        assert node instanceof LexicalDeclaration;
+        return BoundNames((LexicalDeclaration) node);
+    }
+
+    /**
+     * 13.3.2.1 Static Semantics: BoundNames
+     * 
+     * @param node
+     *            the lexical declaration
+     * @return the bound names
+     */
+    public static List<Name> BoundNames(LexicalDeclaration node) {
+        if (node.getElements().size() == 1) {
+            return BoundNames(node.getElements().get(0).getBinding());
+        }
         return node.accept(BoundNames.INSTANCE, new InlineArrayList<>());
     }
 
@@ -223,6 +247,9 @@ public final class StaticSemantics {
      * @return the bound names
      */
     public static List<Name> BoundNames(VariableStatement node) {
+        if (node.getElements().size() == 1) {
+            return BoundNames(node.getElements().get(0));
+        }
         return node.accept(BoundNames.INSTANCE, new InlineArrayList<>());
     }
 
@@ -838,20 +865,17 @@ public final class StaticSemantics {
                     break;
                 case DefaultHoistableDeclaration: {
                     Name localName = BoundName(exportDecl.getHoistableDeclaration());
-                    entries.add(new ExportEntry(item, null, null, localName.getIdentifier(),
-                            "default"));
+                    entries.add(new ExportEntry(item, null, null, localName.getIdentifier(), "default"));
                     break;
                 }
                 case DefaultClassDeclaration: {
                     Name localName = BoundName(exportDecl.getClassDeclaration());
-                    entries.add(new ExportEntry(item, null, null, localName.getIdentifier(),
-                            "default"));
+                    entries.add(new ExportEntry(item, null, null, localName.getIdentifier(), "default"));
                     break;
                 }
                 case DefaultExpression: {
                     Name localName = BoundName(exportDecl.getExpression().getBinding());
-                    entries.add(new ExportEntry(item, null, null, localName.getIdentifier(),
-                            "default"));
+                    entries.add(new ExportEntry(item, null, null, localName.getIdentifier(), "default"));
                     break;
                 }
                 default:
@@ -872,8 +896,7 @@ public final class StaticSemantics {
      * @param entries
      *            the list of export entries
      */
-    private static void ExportEntriesForModule(ExportClause node, String module,
-            List<ExportEntry> entries) {
+    private static void ExportEntriesForModule(ExportClause node, String module, List<ExportEntry> entries) {
         if (module == null) {
             assert node.getDefaultEntry() == null;
             assert node.getNameSpace() == null;
@@ -943,8 +966,7 @@ public final class StaticSemantics {
      * @param entries
      *            the list of import entries
      */
-    private static void ImportEntriesForModule(ImportClause node, String module,
-            List<ImportEntry> entries) {
+    private static void ImportEntriesForModule(ImportClause node, String module, List<ImportEntry> entries) {
         BindingIdentifier defaultEntry = node.getDefaultEntry();
         if (defaultEntry != null) {
             String localName = defaultEntry.getName().getIdentifier();
@@ -1096,14 +1118,12 @@ public final class StaticSemantics {
         switch (node.getType()) {
         case AsyncFunction:
         case AsyncGenerator:
-        case ConstructorGenerator:
         case Generator:
         case Getter:
         case Setter:
             return true;
-        case BaseConstructor:
-        case DerivedConstructor:
         case CallConstructor:
+        case ClassConstructor:
         case Function:
             return false;
         default:
@@ -1112,39 +1132,106 @@ public final class StaticSemantics {
     }
 
     /**
-     * Returns {@code true} if any method definition of {@code node} has a decorator.
+     * Returns the list of decorated methods.
      * 
-     * @param node
-     *            the object literal
-     * @return {@code true} if a decorator was found
+     * @param properties
+     *            the list of properties
+     * @return the list of decorated methods
      */
-    public static boolean HasDecorators(ObjectLiteral node) {
-        for (PropertyDefinition property : node.getProperties()) {
-            if (!(property instanceof MethodDefinition)) {
-                continue;
-            }
-            if (!((MethodDefinition) property).getDecorators().isEmpty()) {
-                return true;
-            }
-        }
-        return false;
+    public static List<MethodDefinition> DecoratedMethods(List<? extends PropertyDefinition> properties) {
+        InlineArrayList<MethodDefinition> decoratedMethods = new InlineArrayList<>();
+        DecoratedMethods(properties, decoratedMethods::add);
+        return decoratedMethods;
     }
 
     /**
-     * Returns {@code true} if any method definition of {@code node} has a decorator.
+     * Applies the given consumer on each decorated method.
+     * 
+     * @param properties
+     *            the list of properties
+     * @param consumer
+     *            the consumer to apply on decorated methods
+     */
+    public static void DecoratedMethods(List<? extends PropertyDefinition> properties,
+            Consumer<MethodDefinition> consumer) {
+        for (PropertyDefinition property : properties) {
+            if (property instanceof MethodDefinition) {
+                MethodDefinition method = (MethodDefinition) property;
+                if (!method.getDecorators().isEmpty()) {
+                    consumer.accept(method);
+                }
+            } else if (property instanceof PropertyDefinitionsMethod) {
+                DecoratedMethods(((PropertyDefinitionsMethod) property).getProperties(), consumer);
+            } else if (property instanceof MethodDefinitionsMethod) {
+                DecoratedMethods(((MethodDefinitionsMethod) property).getProperties(), consumer);
+            }
+        }
+    }
+
+    /**
+     * Tests if {@code node} has any instance fields or methods.
      * 
      * @param node
      *            the class definition
-     * @return {@code true} if a decorator was found
+     * @return {@code true} if the class has any instance fields or methods
      */
-    public static boolean HasDecorators(ClassDefinition node) {
-        for (PropertyDefinition property : node.getProperties()) {
-            if (property instanceof MethodDefinition
-                    && !((MethodDefinition) property).getDecorators().isEmpty()) {
-                return true;
+    public static boolean HasClassInstanceDefinitions(ClassDefinition node) {
+        return ClassProperties(node.getProperties()).anyMatch(p -> {
+            assert p instanceof MethodDefinition || p instanceof ClassFieldDefinition;
+            if (p instanceof ClassFieldDefinition) {
+                return !((ClassFieldDefinition) p).isStatic();
+            }
+            MethodDefinition m = (MethodDefinition) p;
+            return !m.isStatic() && m.getClassElementName() instanceof PrivateNameProperty;
+        });
+    }
+
+    /**
+     * Returns the flattened list of all instance class properties.
+     * 
+     * @param properties
+     *            the list of properties
+     * @return the list of instance class properties
+     */
+    public static Stream<PropertyDefinition> ClassProperties(List<PropertyDefinition> properties) {
+        return properties.stream().flatMap(p -> {
+            if (p instanceof MethodDefinitionsMethod) {
+                return ClassProperties(((MethodDefinitionsMethod) p).getProperties());
+            }
+            assert p instanceof MethodDefinition || p instanceof ClassFieldDefinition;
+            return Stream.of(p);
+        });
+    }
+
+    /**
+     * Returns the list of private bound names.
+     * 
+     * @param node
+     *            the class definition
+     * @return the list of private bound names
+     */
+    public static List<Name> PrivateBoundNames(ClassDefinition node) {
+        InlineArrayList<Name> list = new InlineArrayList<>();
+        PrivateBoundNames(node.getProperties(), list);
+        return list;
+    }
+
+    private static void PrivateBoundNames(List<PropertyDefinition> properties, InlineArrayList<Name> list) {
+        for (PropertyDefinition property : properties) {
+            if (property instanceof MethodDefinition) {
+                ClassElementName classElementName = ((MethodDefinition) property).getClassElementName();
+                if (classElementName instanceof PrivateNameProperty) {
+                    list.add(((PrivateNameProperty) classElementName).getName());
+                }
+            } else if (property instanceof ClassFieldDefinition) {
+                ClassElementName classElementName = ((ClassFieldDefinition) property).getClassElementName();
+                if (classElementName instanceof PrivateNameProperty) {
+                    list.add(((PrivateNameProperty) classElementName).getName());
+                }
+            } else if (property instanceof MethodDefinitionsMethod) {
+                PrivateBoundNames(((MethodDefinitionsMethod) property).getProperties(), list);
             }
         }
-        return false;
     }
 
     /**

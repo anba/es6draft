@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -29,14 +29,14 @@ let tests = [
     cases: [
       {compareTo: "\u0049", expected: false},
       {compareTo: "\u0069", expected: false},
-      {compareTo: "\u004B", expected: true},
-      {compareTo: "\u006B", expected: true},
-      {compareTo: "\u0053", expected: true},
-      {compareTo: "\u0073", expected: true},
+      {compareTo: "\u004B", expected: false},
+      {compareTo: "\u006B", expected: false},
+      {compareTo: "\u0053", expected: false},
+      {compareTo: "\u0073", expected: false},
       {compareTo: "\u0130", expected: true},
       {compareTo: "\u0131", expected: true},
-      {compareTo: "\u017f", expected: true},
-      {compareTo: "\u212a", expected: true},
+      {compareTo: "\u017f", expected: false},
+      {compareTo: "\u212a", expected: false},
     ],
   },
   {
@@ -59,14 +59,14 @@ let tests = [
     cases: [
       {compareTo: "\u0049", expected: false},
       {compareTo: "\u0069", expected: false},
-      {compareTo: "\u004B", expected: true},
-      {compareTo: "\u006B", expected: true},
-      {compareTo: "\u0053", expected: true},
-      {compareTo: "\u0073", expected: true},
+      {compareTo: "\u004B", expected: false},
+      {compareTo: "\u006B", expected: false},
+      {compareTo: "\u0053", expected: false},
+      {compareTo: "\u0073", expected: false},
       {compareTo: "\u0130", expected: true},
       {compareTo: "\u0131", expected: true},
-      {compareTo: "\u017f", expected: true},
-      {compareTo: "\u212a", expected: true},
+      {compareTo: "\u017f", expected: false},
+      {compareTo: "\u212a", expected: false},
     ],
   },
   {
@@ -89,14 +89,14 @@ let tests = [
     cases: [
       {compareTo: "\u0049", expected: true},
       {compareTo: "\u0069", expected: true},
-      {compareTo: "\u004B", expected: false},
-      {compareTo: "\u006B", expected: false},
-      {compareTo: "\u0053", expected: false},
-      {compareTo: "\u0073", expected: false},
+      {compareTo: "\u004B", expected: true},
+      {compareTo: "\u006B", expected: true},
+      {compareTo: "\u0053", expected: true},
+      {compareTo: "\u0073", expected: true},
       {compareTo: "\u0130", expected: false},
       {compareTo: "\u0131", expected: false},
-      {compareTo: "\u017f", expected: false},
-      {compareTo: "\u212a", expected: false},
+      {compareTo: "\u017f", expected: true},
+      {compareTo: "\u212a", expected: true},
     ],
   },
   {

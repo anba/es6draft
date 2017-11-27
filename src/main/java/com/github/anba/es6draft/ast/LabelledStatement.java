@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -20,8 +20,8 @@ public final class LabelledStatement extends Statement implements AbruptNode {
     private final Set<String> labels;
     private final Statement statement;
 
-    public LabelledStatement(long beginPosition, long endPosition, EnumSet<Abrupt> abrupt,
-            Set<String> labels, Statement statement) {
+    public LabelledStatement(long beginPosition, long endPosition, EnumSet<Abrupt> abrupt, Set<String> labels,
+            Statement statement) {
         super(beginPosition, endPosition);
         this.abrupt = abrupt;
         this.labels = labels;

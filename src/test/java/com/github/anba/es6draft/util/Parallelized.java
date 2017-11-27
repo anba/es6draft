@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -10,16 +10,16 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.commons.configuration.Configuration;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Suite;
 import org.junit.runners.model.RunnerScheduler;
 
 /**
- * JUnit {@link Suite} implementation similar to {@link Parameterized} with support for multiple
- * threads
+ * JUnit {@link Suite} implementation similar to {@link Parameterized} with support for multiple threads
  * 
- * @see <a href="http://hwellmann.blogspot.de/2009/12/running-parameterized-junit-tests-in.html">
- *      http://hwellmann.blogspot.de/2009/12/running-parameterized-junit-tests-in.html</a>
+ * @see <a href="http://hwellmann.blogspot.de/2009/12/running-parameterized-junit-tests-in.html"> http://hwellmann.
+ *      blogspot.de/2009/12/running-parameterized-junit-tests-in.html</a>
  */
 public class Parallelized extends Parameterized {
     private static final class ThreadPoolScheduler implements RunnerScheduler {
@@ -33,7 +33,7 @@ public class Parallelized extends Parameterized {
         public void finished() {
             executor.shutdown();
             try {
-                executor.awaitTermination(10, TimeUnit.MINUTES);
+                executor.awaitTermination(60, TimeUnit.MINUTES);
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
@@ -69,6 +69,24 @@ public class Parallelized extends Parameterized {
             maxThreads = getDefaultValue(Concurrency.class, "maxThreads", Integer.class);
             factor = getDefaultValue(Concurrency.class, "factor", Float.class);
         }
+
+        TestConfiguration testConfiguration = klass.getAnnotation(TestConfiguration.class);
+        if (testConfiguration != null) {
+            Configuration configuration = Resources.loadConfiguration(testConfiguration);
+            int configThreads = configuration.getInt("concurrency.threads", -1);
+            if (configThreads > 0) {
+                threads = configThreads;
+            }
+            int configMaxThreads = configuration.getInt("concurrency.maxThreads", -1);
+            if (configMaxThreads > 0) {
+                factor = configMaxThreads;
+            }
+            float configFactor = configuration.getFloat("concurrency.factor", -1f);
+            if (configFactor > 0) {
+                factor = configFactor;
+            }
+        }
+
         threads = threads > 0 ? threads : Runtime.getRuntime().availableProcessors();
         maxThreads = Math.max(maxThreads, 1);
         factor = Math.max(factor, 0);

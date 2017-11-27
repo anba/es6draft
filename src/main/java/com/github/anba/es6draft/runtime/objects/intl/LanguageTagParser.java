@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -86,11 +86,12 @@ final class LanguageTagParser {
 
             String redundant = LanguageSubtagRegistryData.redundant(input);
             if (redundant != null) {
+                // TODO: handle extensions "sgn-za-u-nu-latn" -> "sfs-u-nu-latn"
                 // replace complete tag if redundant
                 return redundant;
             }
 
-            StringBuilder sb = new StringBuilder();
+            StringBuilder sb = new StringBuilder(input.length());
             String lang = LanguageSubtagRegistryData.language(language);
             sb.append(lang);
             if (extLang1 != null) {

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -24,6 +24,7 @@ import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Property;
+import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.BoundFunctionObject;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
@@ -34,7 +35,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>10.3 Properties of the Intl.Collator Prototype Object
  * </ul>
  */
-public final class CollatorPrototype extends CollatorObject implements Initializable {
+public final class CollatorPrototype extends OrdinaryObject implements Initializable {
     /**
      * Constructs a new Collator prototype object.
      * 
@@ -48,9 +49,6 @@ public final class CollatorPrototype extends CollatorObject implements Initializ
     @Override
     public void initialize(Realm realm) {
         createProperties(realm, this, Properties.class);
-
-        // Initialize Intl.Collator.prototype's internal state.
-        CollatorConstructor.InitializeDefaultCollator(realm, this);
     }
 
     /**
@@ -59,11 +57,11 @@ public final class CollatorPrototype extends CollatorObject implements Initializ
     public enum Properties {
         ;
 
-        private static CollatorObject thisCollatorObject(ExecutionContext cx, Object object) {
-            if (object instanceof CollatorObject) {
-                return (CollatorObject) object;
+        private static CollatorObject thisCollatorObject(ExecutionContext cx, Object value, String method) {
+            if (value instanceof CollatorObject) {
+                return (CollatorObject) value;
             }
-            throw newTypeError(cx, Messages.Key.IncompatibleObject);
+            throw newTypeError(cx, Messages.Key.IncompatibleThis, method, Type.of(value).toString());
         }
 
         @Prototype
@@ -94,7 +92,7 @@ public final class CollatorPrototype extends CollatorObject implements Initializ
         @Accessor(name = "compare", type = Accessor.Type.Getter)
         public static Object compare(ExecutionContext cx, Object thisValue) {
             /* steps 1-3 */
-            CollatorObject collator = thisCollatorObject(cx, thisValue);
+            CollatorObject collator = thisCollatorObject(cx, thisValue, "Intl.Collator.prototype.compare");
             /* step 4 */
             if (collator.getBoundCompare() == null) {
                 /* step 4.a */
@@ -121,7 +119,7 @@ public final class CollatorPrototype extends CollatorObject implements Initializ
          */
         @Function(name = "resolvedOptions", arity = 0)
         public static Object resolvedOptions(ExecutionContext cx, Object thisValue) {
-            CollatorObject collator = thisCollatorObject(cx, thisValue);
+            CollatorObject collator = thisCollatorObject(cx, thisValue, "Intl.Collator.prototype.resolvedOptions");
             OrdinaryObject object = ObjectCreate(cx, Intrinsics.ObjectPrototype);
             CreateDataProperty(cx, object, "locale", collator.getLocale());
             CreateDataProperty(cx, object, "usage", collator.getUsage());
@@ -156,15 +154,6 @@ public final class CollatorPrototype extends CollatorObject implements Initializ
         public CompareFunction(Realm realm) {
             super(realm, "compare", 2);
             createDefaultFunctionProperties();
-        }
-
-        private CompareFunction(Realm realm, Void ignore) {
-            super(realm, "compare", 2);
-        }
-
-        @Override
-        public CompareFunction clone() {
-            return new CompareFunction(getRealm(), null);
         }
 
         @Override

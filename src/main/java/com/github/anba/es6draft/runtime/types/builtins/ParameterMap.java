@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -14,7 +14,7 @@ import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
 
 /**
  * <h1>9 Ordinary and Exotic Objects Behaviours</h1><br>
- * <h2>9.4 Built-in Exotic Object Internal Methods and Data Fields</h2>
+ * <h2>9.4 Built-in Exotic Object Internal Methods and Slots</h2>
  * <ul>
  * <li>9.4.4 Exotic Arguments Objects
  * </ul>
@@ -51,12 +51,12 @@ final class ParameterMap {
      *            the property key
      * @return the integer index or {@code -1}
      */
-    static int toArgumentIndex(long p) {
+    private static int toArgumentIndex(long p) {
         return 0 <= p && p < MAX_LENGTH ? (int) p : -1;
     }
 
     /**
-     * 9.4.4.7 CreateMappedArgumentsObject ( func, formals, argumentsList, env )
+     * 9.4.4.8 CreateMappedArgumentsObject ( func, formals, argumentsList, env )
      * <p>
      * Returns a new {@link ParameterMap} if there are any mapped arguments, otherwise <code>null</code>.
      * 
@@ -75,7 +75,7 @@ final class ParameterMap {
         if (len == 0) {
             return null;
         }
-        /* steps 17-20 */
+        /* steps 20-22 */
         String[] parameterNames = func.getCode().parameters();
         for (int index = Math.min(len, parameterNames.length) - 1; index >= 0; --index) {
             if (parameterNames[index] != null) {
@@ -103,7 +103,7 @@ final class ParameterMap {
     }
 
     /**
-     * 9.4.4.7.1 MakeArgGetter (name, env)
+     * 9.4.4.8.1 MakeArgGetter (name, env)
      * 
      * @param propertyKey
      *            the property key
@@ -118,7 +118,7 @@ final class ParameterMap {
     }
 
     /**
-     * 9.4.4.7.2 MakeArgSetter (name, env)
+     * 9.4.4.8.2 MakeArgSetter (name, env)
      * 
      * @param propertyKey
      *            the property key

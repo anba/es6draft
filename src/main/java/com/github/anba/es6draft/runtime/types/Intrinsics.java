@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -14,7 +14,8 @@ package com.github.anba.es6draft.runtime.types;
  * <li>6.1.7.4 Well-Known Intrinsic Objects
  * </ul>
  */
-public enum Intrinsics {/* @formatter:off */
+public enum Intrinsics {
+    /* @formatter:off */
     /** Intrinsic: <code>%Array%</code> */
     Array,
     /** Intrinsic: <code>%ArrayBuffer%</code> */
@@ -219,16 +220,22 @@ public enum Intrinsics {/* @formatter:off */
     Intl_PluralRules,
     /** Intrinsic: <code>%Intl_PluralRulesPrototype%</code> */
     Intl_PluralRulesPrototype,
+    /** Intrinsic: <code>%Intl_Segmenter%</code> */
+    Intl_Segmenter,
+    /** Intrinsic: <code>%Intl_SegmenterPrototype%</code> */
+    Intl_SegmenterPrototype,
+    /** Intrinsic: <code>%Intl_SegmentIteratorPrototype%</code> */
+    Intl_SegmentIteratorPrototype,
+    /** Intrinsic: <code>%Intl_ListFormat%</code> */
+    Intl_ListFormat,
+    /** Intrinsic: <code>%Intl_ListFormatPrototype%</code> */
+    Intl_ListFormatPrototype,
 
     // internal
     /** Intrinsic: <code>%InternalError%</code> */
     InternalError,
     /** Intrinsic: <code>%InternalErrorPrototype%</code> */
     InternalErrorPrototype,
-
-    // legacy
-    /** Intrinsic: <code>%LegacyGeneratorPrototype%</code> */
-    LegacyGeneratorPrototype,
 
     // Extension: Async Function Definitions
     /** Intrinsic: <code>%AsyncFunction%</code> */
@@ -245,6 +252,8 @@ public enum Intrinsics {/* @formatter:off */
     AsyncGeneratorPrototype,
     /** Intrinsic: <code>%AsyncIteratorPrototype%</code> */
     AsyncIteratorPrototype,
+    /** Intrinsic: <code>%AsyncFromSyncIteratorPrototype%</code> */
+    AsyncFromSyncIteratorPrototype,
 
     // Extension: Realm Objects
     /** Intrinsic: <code>%Realm%</code> */
@@ -337,6 +346,27 @@ public enum Intrinsics {/* @formatter:off */
     /** Intrinsic: <code>%SharedArrayBufferPrototype%</code> */
     SharedArrayBufferPrototype,
 
+    // Extension: Weak References
+    WeakRefPrototype,
+
+    // Extension: Zones
+    Zone,
+    ZonePrototype,
+
+    // Extension: BigInt
+    /** Intrinsic: <code>%BigInt%</code> */
+    BigInt,
+    /** Intrinsic: <code>%BigIntPrototype%</code> */
+    BigIntPrototype,
+    /** Intrinsic: <code>%BigInt64Array%</code> */
+    BigInt64Array,
+    /** Intrinsic: <code>%BigInt64ArrayPrototype%</code> */
+    BigInt64ArrayPrototype,
+    /** Intrinsic: <code>%BigUint64Array%</code> */
+    BigUint64Array,
+    /** Intrinsic: <code>%BigUint64ArrayPrototype%</code> */
+    BigUint64ArrayPrototype,
+
     /* @formatter:on */
     ;
 
@@ -358,7 +388,6 @@ public enum Intrinsics {/* @formatter:off */
         switch (this) {
         case InternalError:
         case InternalErrorPrototype:
-        case LegacyGeneratorPrototype:
             return true;
         default:
             return false;

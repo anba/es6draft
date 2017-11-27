@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -7,10 +7,9 @@
 package com.github.anba.es6draft.runtime.objects.atomics;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.SpeciesConstructor;
-import static com.github.anba.es6draft.runtime.AbstractOperations.ToInteger;
+import static com.github.anba.es6draft.runtime.AbstractOperations.ToNumber;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
-import static com.github.anba.es6draft.runtime.objects.atomics.SharedArrayBufferConstructor.SharedDataBlockID;
 import static com.github.anba.es6draft.runtime.objects.binary.ArrayBufferConstructor.CopyDataBlockBytes;
 
 import java.nio.ByteBuffer;
@@ -27,14 +26,15 @@ import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
+import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
- * <h1>Shared Memory and Atomics</h1><br>
- * <h2>SharedArrayBuffer Objects</h2>
+ * <h1>24 Structured Data</h1><br>
+ * <h2>24.2 SharedArrayBuffer Objects</h2>
  * <ul>
- * <li>Properties of the SharedArrayBuffer Prototype Object
+ * <li>24.2.4 Properties of the SharedArrayBuffer Prototype Object
  * </ul>
  */
 public final class SharedArrayBufferPrototype extends OrdinaryObject implements Initializable {
@@ -54,29 +54,30 @@ public final class SharedArrayBufferPrototype extends OrdinaryObject implements 
     }
 
     /**
-     * Properties of the SharedArrayBuffer Prototype Object
+     * 24.2.4 Properties of the SharedArrayBuffer Prototype Object
      */
     public enum Properties {
         ;
 
-        private static SharedArrayBufferObject thisSharedArrayBufferObject(ExecutionContext cx, Object m) {
-            if (m instanceof SharedArrayBufferObject) {
-                return (SharedArrayBufferObject) m;
+        private static SharedArrayBufferObject thisSharedArrayBufferObject(ExecutionContext cx, Object value,
+                String method) {
+            if (value instanceof SharedArrayBufferObject) {
+                return (SharedArrayBufferObject) value;
             }
-            throw newTypeError(cx, Messages.Key.IncompatibleObject);
+            throw newTypeError(cx, Messages.Key.IncompatibleThis, method, Type.of(value).toString());
         }
 
         @Prototype
         public static final Intrinsics __proto__ = Intrinsics.ObjectPrototype;
 
         /**
-         * SharedArrayBuffer.prototype.constructor
+         * 24.2.4.2 SharedArrayBuffer.prototype.constructor
          */
         @Value(name = "constructor")
         public static final Intrinsics constructor = Intrinsics.SharedArrayBuffer;
 
         /**
-         * get SharedArrayBuffer.prototype.byteLength
+         * 24.2.4.1 get SharedArrayBuffer.prototype.byteLength
          * 
          * @param cx
          *            the execution context
@@ -86,14 +87,15 @@ public final class SharedArrayBufferPrototype extends OrdinaryObject implements 
          */
         @Accessor(name = "byteLength", type = Accessor.Type.Getter)
         public static Object byteLength(ExecutionContext cx, Object thisValue) {
-            /* steps 1-3 */
-            SharedArrayBufferObject obj = thisSharedArrayBufferObject(cx, thisValue);
-            /* steps 4-5 */
+            /* steps 1-4 */
+            SharedArrayBufferObject obj = thisSharedArrayBufferObject(cx, thisValue,
+                    "SharedArrayBuffer.prototype.byteLength");
+            /* steps 5-6 */
             return obj.getByteLength();
         }
 
         /**
-         * SharedArrayBuffer.prototype.slice (start, end)
+         * 24.2.4.3 SharedArrayBuffer.prototype.slice( start, end )
          * 
          * @param cx
          *            the execution context
@@ -107,55 +109,54 @@ public final class SharedArrayBufferPrototype extends OrdinaryObject implements 
          */
         @Function(name = "slice", arity = 2)
         public static Object slice(ExecutionContext cx, Object thisValue, Object start, Object end) {
-            /* steps 1-3 */
-            SharedArrayBufferObject obj = thisSharedArrayBufferObject(cx, thisValue);
-            /* step 4 */
+            /* steps 1-4 */
+            SharedArrayBufferObject obj = thisSharedArrayBufferObject(cx, thisValue,
+                    "SharedArrayBuffer.prototype.slice");
+            /* step 5 */
             long len = obj.getByteLength();
-            /* steps 5-6 */
-            double relativeStart = ToInteger(cx, start);
+            /* step 6 */
+            long relativeStart = (long) ToNumber(cx, start); // ToInteger
             /* step 7 */
-            long first = (long) (relativeStart < 0 ? Math.max((len + relativeStart), 0) : Math.min(relativeStart, len));
-            /* steps 8-9 */
-            double relativeEnd = Type.isUndefined(end) ? len : ToInteger(cx, end);
+            long first = (relativeStart < 0 ? Math.max((len + relativeStart), 0) : Math.min(relativeStart, len));
+            /* step 8 */
+            long relativeEnd = Type.isUndefined(end) ? len : (long) ToNumber(cx, end); // ToInteger
+            /* step 9 */
+            long _final = (relativeEnd < 0 ? Math.max((len + relativeEnd), 0) : Math.min(relativeEnd, len));
             /* step 10 */
-            long _final = (long) (relativeEnd < 0 ? Math.max((len + relativeEnd), 0) : Math.min(relativeEnd, len));
-            /* step 11 */
             long newLen = Math.max(_final - first, 0);
-            /* steps 12-13 */
+            /* step 11 */
             Constructor ctor = SpeciesConstructor(cx, obj, Intrinsics.SharedArrayBuffer);
-            /* steps 14-16 */
-            SharedArrayBufferObject _new = thisSharedArrayBufferObject(cx, ctor.construct(cx, ctor, newLen));
-            /* step 17 */
-            if (_new == obj) {
-                // TODO: better error message
+            /* step 12 */
+            ScriptObject newObj = ctor.construct(cx, newLen);
+            /* steps 13-14 */
+            if (!(newObj instanceof SharedArrayBufferObject)) {
+                throw newTypeError(cx, Messages.Key.IncompatibleNewObject, "SharedArrayBuffer.prototype.slice",
+                        Type.of(newObj).toString());
+            }
+            SharedArrayBufferObject _new = (SharedArrayBufferObject) newObj;
+            /* step 15 */
+            if (_new.sameData(obj)) {
                 throw newTypeError(cx, Messages.Key.BufferInvalid);
             }
-            /* step 18 */
+            /* step 16 */
             if (_new.getByteLength() < newLen) {
                 throw newTypeError(cx, Messages.Key.InvalidBufferSize);
             }
-            // FIXME: spec bug - missing shareddata-block-id check
-            Object srcId = SharedDataBlockID(obj.getData());
-            Object targetId = SharedDataBlockID(_new.getData());
-            if (srcId == targetId) {
-                // TODO: better error message
-                throw newTypeError(cx, Messages.Key.BufferInvalid);
-            }
-            /* step 19 */
+            /* step 17 */
             ByteBuffer fromBuf = obj.getData();
-            /* step 20 */
+            /* step 18 */
             ByteBuffer toBuf = _new.getData();
-            /* step 21 */
+            /* step 19 */
             CopyDataBlockBytes(toBuf, 0, fromBuf, first, newLen);
-            /* step 22 */
+            /* step 20 */
             return _new;
         }
 
         /**
-         * SharedArrayBuffer.prototype[ @@toStringTag ]
+         * 24.2.4.4 SharedArrayBuffer.prototype [ @@toStringTag ]
          */
         @Value(name = "[Symbol.toStringTag]", symbol = BuiltinSymbol.toStringTag,
-                attributes = @Attributes(writable = false, enumerable = false, configurable = true) )
+                attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static final String toStringTag = "SharedArrayBuffer";
     }
 }

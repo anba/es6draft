@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -13,7 +13,7 @@ package com.github.anba.es6draft.ast;
  * </ul>
  */
 public final class EmptyExpression extends Expression {
-    /*package*/static final EmptyExpression EMPTY = new EmptyExpression(0, 0);
+    static final EmptyExpression EMPTY = new EmptyExpression(0, 0);
 
     public EmptyExpression(long beginPosition, long endPosition) {
         super(beginPosition, endPosition);

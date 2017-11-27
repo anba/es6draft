@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -7,11 +7,14 @@
 package com.github.anba.es6draft.runtime.internal;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.*;
+import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
+import static com.github.anba.es6draft.runtime.objects.binary.ArrayBufferConstructor.IsDetachedBuffer;
 import static com.github.anba.es6draft.runtime.objects.iteration.GeneratorAbstractOperations.GeneratorResume;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import java.util.Iterator;
 import java.util.Map.Entry;
+import java.util.function.Consumer;
 
 import org.mozilla.javascript.ConsString;
 
@@ -19,6 +22,7 @@ import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.objects.ArrayIteratorObject;
 import com.github.anba.es6draft.runtime.objects.ArrayIteratorPrototype;
 import com.github.anba.es6draft.runtime.objects.ArrayPrototype;
+import com.github.anba.es6draft.runtime.objects.async.iteration.AsyncFromSyncIteratorObject;
 import com.github.anba.es6draft.runtime.objects.binary.TypedArrayObject;
 import com.github.anba.es6draft.runtime.objects.binary.TypedArrayPrototypePrototype;
 import com.github.anba.es6draft.runtime.objects.collection.MapIteratorObject;
@@ -32,7 +36,7 @@ import com.github.anba.es6draft.runtime.objects.collection.SetPrototype;
 import com.github.anba.es6draft.runtime.objects.iteration.GeneratorObject;
 import com.github.anba.es6draft.runtime.objects.iteration.GeneratorPrototype;
 import com.github.anba.es6draft.runtime.objects.iteration.IteratorPrototype;
-import com.github.anba.es6draft.runtime.objects.iteration.ListIterator;
+import com.github.anba.es6draft.runtime.objects.text.StringIteratorObject;
 import com.github.anba.es6draft.runtime.objects.text.StringIteratorPrototype;
 import com.github.anba.es6draft.runtime.objects.text.StringPrototype;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
@@ -53,26 +57,87 @@ public final class ScriptIterators {
     }
 
     /**
+     * Returns {@code true} if the object uses the built-in array iterator.
+     * 
+     * @param cx
+     *            the execution context
+     * @param object
+     *            the object
+     * @param length
+     *            the length value
+     * @return {@code true} if the built-in array iterator is used
+     */
+    public static boolean isBuiltinArrayIterator(ExecutionContext cx, OrdinaryObject object, long length) {
+        return ArrayScriptIterator.isBuiltinIterator(cx, object, length);
+    }
+
+    /**
+     * Returns {@code true} if the array uses the built-in array iterator.
+     * 
+     * @param cx
+     *            the execution context
+     * @param array
+     *            the array object
+     * @param method
+     *            the iterator method
+     * @return {@code true} if the built-in array iterator is used
+     */
+    public static boolean isBuiltinArrayIterator(ExecutionContext cx, ArrayObject array, Callable method) {
+        return ArrayScriptIterator.isBuiltinIterator(cx, array, method);
+    }
+
+    /**
+     * Returns {@code true} if the object uses the built-in typed array iterator.
+     * 
+     * @param cx
+     *            the execution context
+     * @param typedArray
+     *            the typed array object
+     * @return {@code true} if the built-in typed array iterator is used
+     */
+    public static boolean isBuiltinTypedArrayIterator(ExecutionContext cx, TypedArrayObject typedArray) {
+        return TypedArrayScriptIterator.isBuiltinIterator(cx, typedArray);
+    }
+
+    /**
+     * Returns {@code true} if the object uses the built-in typed array iterator.
+     * 
+     * @param cx
+     *            the execution context
+     * @param typedArray
+     *            the typed array object
+     * @param method
+     *            the iterator method
+     * @return {@code true} if the built-in typed array iterator is used
+     */
+    public static boolean isBuiltinTypedArrayIterator(ExecutionContext cx, TypedArrayObject typedArray,
+            Callable method) {
+        return TypedArrayScriptIterator.isBuiltinIterator(cx, typedArray, method);
+    }
+
+    /**
+     * Returns {@code true} if the object uses the built-in map iterator.
      * 
      * @param cx
      *            the execution context
      * @param map
      *            the map object
-     * @return {@code true}
+     * @return {@code true} if the built-in map iterator is used
      */
-    public static boolean isBuiltinIterator(ExecutionContext cx, MapObject map) {
+    public static boolean isBuiltinMapIterator(ExecutionContext cx, MapObject map) {
         return MapScriptIterator.isBuiltinIterator(cx, map);
     }
 
     /**
+     * Returns {@code true} if the object uses the built-in set iterator.
      * 
      * @param cx
      *            the execution context
      * @param set
      *            the set object
-     * @return {@code true}
+     * @return {@code true} if the built-in set iterator is used
      */
-    public static boolean isBuiltinIterator(ExecutionContext cx, SetObject set) {
+    public static boolean isBuiltinSetIterator(ExecutionContext cx, SetObject set) {
         return SetScriptIterator.isBuiltinIterator(cx, set);
     }
 
@@ -83,7 +148,7 @@ public final class ScriptIterators {
      *            the execution context
      * @param iterable
      *            the iterable object
-     * @return the iterator object
+     * @return the iterator object or {@code null}
      */
     public static ScriptIterator<?> GetScriptIterator(ExecutionContext cx, Object iterable) {
         if (iterable instanceof ArrayObject) {
@@ -130,18 +195,13 @@ public final class ScriptIterators {
             if (ArgumentsScriptIterator.isBuiltinIterator(cx, arguments)) {
                 return new ArgumentsScriptIterator(cx, arguments);
             }
-        } else if (iterable instanceof ListIterator<?>) {
-            ListIterator<?> listIterator = (ListIterator<?>) iterable;
-            if (ListIteratorScriptIterator.isBuiltinIterator(cx, listIterator)) {
-                return new ListIteratorScriptIterator(cx, listIterator);
-            }
         } else if (iterable instanceof GeneratorObject) {
             GeneratorObject generator = (GeneratorObject) iterable;
             if (GeneratorScriptIterator.isBuiltinIterator(cx, generator)) {
                 return new GeneratorScriptIterator(cx, generator);
             }
         }
-        return new ScriptIteratorImpl(cx, GetIterator(cx, iterable));
+        return null;
     }
 
     /**
@@ -153,7 +213,7 @@ public final class ScriptIterators {
      *            the iterable object
      * @param method
      *            the iterator method
-     * @return the iterator object
+     * @return the iterator object or {@code null}
      */
     public static ScriptIterator<?> GetScriptIterator(ExecutionContext cx, Object iterable, Callable method) {
         if (iterable instanceof ArrayObject) {
@@ -186,7 +246,7 @@ public final class ScriptIterators {
                 return new ArgumentsScriptIterator(cx, arguments);
             }
         }
-        return new ScriptIteratorImpl(cx, GetIterator(cx, iterable, method));
+        return null;
     }
 
     /**
@@ -197,27 +257,59 @@ public final class ScriptIterators {
      *            the execution context
      * @param iterator
      *            the script iterator object
+     * @param nextMethod
+     *            the next method
      * @return the iterator object
      */
-    public static ScriptIterator<?> ToScriptIterator(ExecutionContext cx, ScriptObject iterator) {
-        return new ScriptIteratorImpl(cx, iterator);
+    public static ScriptIterator<?> ToScriptIterator(ExecutionContext cx, ScriptObject iterator, Object nextMethod) {
+        return new ScriptIteratorImpl(cx, iterator, nextMethod);
+    }
+
+    /**
+     * Returns a {@link ScriptIterator} for {@code iterator}.
+     * 
+     * @param cx
+     *            the execution context
+     * @param iterator
+     *            the script iterator object
+     * @return the iterator object
+     */
+    public static ScriptIterator<?> GetAsyncScriptIterator(ExecutionContext cx, AsyncFromSyncIteratorObject iterator) {
+        return new AsyncFromSyncScriptIterator(cx, iterator);
     }
 
     private static final class ScriptIteratorImpl extends SimpleIterator<Object> implements ScriptIterator<Object> {
         private final ExecutionContext cx;
         private final ScriptObject iterator;
+        private final Object nextMethod;
         private boolean done = false;
 
-        ScriptIteratorImpl(ExecutionContext cx, ScriptObject iterator) {
+        ScriptIteratorImpl(ExecutionContext cx, ScriptObject iterator, Object nextMethod) {
             this.cx = cx;
             this.iterator = iterator;
+            this.nextMethod = nextMethod;
+        }
+
+        @Override
+        public ScriptObject getScriptObject() {
+            return iterator;
+        }
+
+        @Override
+        public Object nextIterResult() throws ScriptException {
+            return Call(cx, nextMethod, iterator);
+        }
+
+        @Override
+        public Object nextIterResult(Object value) throws ScriptException {
+            return Call(cx, nextMethod, iterator, value);
         }
 
         @Override
         protected Object findNext() throws ScriptException {
             if (!done) {
                 try {
-                    ScriptObject next = IteratorStep(cx, iterator);
+                    ScriptObject next = IteratorStep(cx, this);
                     if (next != null) {
                         return IteratorValue(cx, next);
                     }
@@ -233,26 +325,31 @@ public final class ScriptIterators {
         @Override
         public void close() throws ScriptException {
             if (!done) {
-                IteratorClose(cx, iterator);
+                IteratorClose(cx, this);
             }
         }
 
         @Override
         public void close(Throwable cause) throws ScriptException {
             if (!done) {
-                IteratorClose(cx, iterator, cause);
+                IteratorClose(cx, this, cause);
             }
         }
     }
 
-    private static abstract class BuiltinScriptIterator extends SimpleIterator<Object>
+    private static abstract class BuiltinScriptIterator<ITER extends ScriptObject> extends SimpleIterator<Object>
             implements ScriptIterator<Object> {
         protected final ExecutionContext cx;
-        protected ScriptObject iteratorObject;
+        private ITER iteratorObject;
         protected boolean done = false;
 
         protected BuiltinScriptIterator(ExecutionContext cx) {
             this.cx = cx;
+        }
+
+        protected BuiltinScriptIterator(ExecutionContext cx, ITER iteratorObject) {
+            this.cx = cx;
+            this.iteratorObject = iteratorObject;
         }
 
         protected static final Property findNextProperty(OrdinaryObject object) {
@@ -293,50 +390,118 @@ public final class ScriptIterators {
          * 
          * @return the iterator prototype
          */
-        protected abstract Intrinsics getIntrinsic();
+        protected Intrinsics getIntrinsic() {
+            throw new AssertionError();
+        }
 
         /**
          * Creates an iterator object.
          * 
          * @return the new iterator object
          */
-        protected abstract OrdinaryObject createIteratorObject();
-
-        /**
-         * Slow path: Perform iteration with an iterator object.
-         * 
-         * @return the new iterator result or {@code null}
-         */
-        protected final Object slowNext() {
-            assert !done;
-            try {
-                ScriptObject next = IteratorStep(cx, getScriptObject());
-                if (next != null) {
-                    return IteratorValue(cx, next);
-                }
-            } catch (ScriptException e) {
-                done = true;
-                throw e;
-            }
-            done = true;
-            return null;
+        protected ITER createIteratorObject() {
+            throw new AssertionError();
         }
 
         @Override
         public final void close() throws ScriptException {
             if (!done && hasReturn()) {
-                IteratorClose(cx, getScriptObject());
+                IteratorClose(cx, this);
             }
         }
 
         @Override
         public final void close(Throwable cause) throws ScriptException {
             if (!done && hasReturn()) {
-                IteratorClose(cx, getScriptObject(), cause);
+                IteratorClose(cx, this, cause);
             }
         }
 
-        private ScriptObject getScriptObject() {
+        protected ScriptObject nextIterResultValue(Object value) {
+            if (hasNext()) {
+                Object iterValue = next();
+                assert iterValue != null;
+                return CreateIterResultObject(cx, iterValue, false);
+            }
+            return null;
+        }
+
+        @Override
+        public final ScriptObject nextIterResult() throws ScriptException {
+            return nextIterResult(UNDEFINED);
+        }
+
+        @Override
+        public final ScriptObject nextIterResult(Object value) throws ScriptException {
+            if (!done) {
+                try {
+                    ScriptObject result = nextIterResultValue(value);
+                    if (result != null) {
+                        return result;
+                    }
+                } catch (ScriptException e) {
+                    done = true;
+                    throw e;
+                }
+                done = true;
+            }
+            return CreateIterResultObject(cx, UNDEFINED, true);
+        }
+
+        protected abstract Object nextValue();
+
+        @Override
+        protected final Object findNext() {
+            if (!done) {
+                try {
+                    Object value = nextValue();
+                    if (value != null) {
+                        return value;
+                    }
+                } catch (ScriptException e) {
+                    done = true;
+                    throw e;
+                }
+                done = true;
+            }
+            return null;
+        }
+
+        protected final boolean hasScriptObject() {
+            return iteratorObject != null;
+        }
+
+        protected final void forEachRemainingDefault(Consumer<? super Object> action) {
+            super.forEachRemaining(action);
+        }
+
+        protected void forEachRemainingValue(Consumer<? super Object> action) {
+            forEachRemainingDefault(action);
+        }
+
+        protected boolean callForEachRemainingValue() {
+            return !hasScriptObject();
+        }
+
+        @Override
+        public final void forEachRemaining(Consumer<? super Object> action) {
+            if (!done) {
+                if (callForEachRemainingValue()) {
+                    try {
+                        forEachRemainingValue(action);
+                    } catch (ScriptException e) {
+                        done = true;
+                        throw e;
+                    }
+                } else {
+                    super.forEachRemaining(action);
+                }
+                done = true;
+            }
+        }
+
+        @Override
+        public final ITER getScriptObject() {
             if (iteratorObject == null) {
                 iteratorObject = createIteratorObject();
             }
@@ -364,7 +529,7 @@ public final class ScriptIterators {
         }
     }
 
-    private static final class ArrayScriptIterator extends BuiltinScriptIterator {
+    private static final class ArrayScriptIterator extends BuiltinScriptIterator<ArrayIteratorObject> {
         private final ArrayObject array;
         private long index;
 
@@ -375,14 +540,38 @@ public final class ScriptIterators {
         }
 
         static boolean isBuiltinIterator(ExecutionContext cx, ArrayObject array) {
+            if (!array.isDenseArray()) {
+                return false;
+            }
+            // Test 1: Is array[Symbol.iterator] == %ArrayPrototype%.values?
             Property iterProp = findIteratorProperty(array);
-            return iterProp != null && isBuiltinIterator(cx, array, iterProp.getValue());
+            if (iterProp == null || !ArrayPrototype.isBuiltinValues(cx.getRealm(), iterProp.getValue())) {
+                return false;
+            }
+            // Test 2: Is %ArrayIteratorPrototype%.next the built-in next method?
+            return isBuiltinNext(cx);
         }
 
         static boolean isBuiltinIterator(ExecutionContext cx, ArrayObject array, Object method) {
+            if (!array.isDenseArray()) {
+                return false;
+            }
             // Test 1: Is array[Symbol.iterator] == %ArrayPrototype%.values?
             // Test 2: Is %ArrayIteratorPrototype%.next the built-in next method?
-            return array.isDenseArray() && ArrayPrototype.isBuiltinValues(cx.getRealm(), method) && isBuiltinNext(cx);
+            return ArrayPrototype.isBuiltinValues(cx.getRealm(), method) && isBuiltinNext(cx);
+        }
+
+        static boolean isBuiltinIterator(ExecutionContext cx, OrdinaryObject array, long length) {
+            if (!array.isDenseArray(length)) {
+                return false;
+            }
+            // Test 1: Is array[Symbol.iterator] == %ArrayPrototype%.values?
+            Property iterProp = findIteratorProperty(array);
+            if (iterProp == null || !ArrayPrototype.isBuiltinValues(cx.getRealm(), iterProp.getValue())) {
+                return false;
+            }
+            // Test 2: Is %ArrayIteratorPrototype%.next the built-in next method?
+            return isBuiltinNext(cx);
         }
 
         private static boolean isBuiltinNext(ExecutionContext cx) {
@@ -391,7 +580,7 @@ public final class ScriptIterators {
         }
 
         @Override
-        protected OrdinaryObject createIteratorObject() {
+        protected ArrayIteratorObject createIteratorObject() {
             return ArrayIteratorPrototype.CreateArrayIterator(cx, array, index,
                     ArrayIteratorObject.ArrayIterationKind.Value);
         }
@@ -401,29 +590,36 @@ public final class ScriptIterators {
             return Intrinsics.ArrayIteratorPrototype;
         }
 
+        private Object getNextElement() {
+            if (array.isDenseArray()) {
+                return array.getDenseElement(index++);
+            }
+            return Get(cx, array, index++);
+        }
+
         @Override
-        protected Object findNext() throws ScriptException {
-            if (!done) {
-                if (iteratorObject == null && isBuiltinNext(cx) && array.isDenseArray()) {
-                    if (index < array.getLength()) {
-                        return array.getDenseElement(index++);
-                    }
-                    done = true;
-                    return null;
-                }
-                return slowNext();
+        protected Object nextValue() {
+            if (hasScriptObject()) {
+                // Call the ArrayIterator implementation if the iterator object has escaped.
+                return ArrayIteratorScriptIterator.next(this);
+            }
+            if (index < array.getLength()) {
+                return getNextElement();
             }
             return null;
         }
+
+        @Override
+        protected void forEachRemainingValue(Consumer<? super Object> action) {
+            while (index < array.getLength()) {
+                action.accept(getNextElement());
+            }
+        }
     }
 
-    private static final class ArrayIteratorScriptIterator extends BuiltinScriptIterator {
-        private final ArrayIteratorObject arrayIterator;
-
+    private static final class ArrayIteratorScriptIterator extends BuiltinScriptIterator<ArrayIteratorObject> {
         ArrayIteratorScriptIterator(ExecutionContext cx, ArrayIteratorObject arrayIterator) {
-            super(cx);
-            this.arrayIterator = arrayIterator;
-            this.iteratorObject = arrayIterator;
+            super(cx, arrayIterator);
         }
 
         static boolean isBuiltinIterator(ExecutionContext cx, ArrayIteratorObject arrayIterator) {
@@ -433,74 +629,57 @@ public final class ScriptIterators {
 
         static boolean isBuiltinIterator(ExecutionContext cx, ArrayIteratorObject arrayIterator, Object method) {
             // Test 1: Is arrayIterator[Symbol.iterator] == %IteratorPrototype%[Symbol.iterator]?
-            // Test 2: Is %ArrayIteratorPrototype%.next the built-in next method?
-            return IteratorPrototype.isBuiltinIterator(cx.getRealm(), method) && isBuiltinNext(cx, arrayIterator);
-        }
-
-        private static boolean isBuiltinNext(ExecutionContext cx, ArrayIteratorObject arrayIterator) {
-            Property iterNextProp = findNextProperty(arrayIterator);
-            return iterNextProp != null && ArrayIteratorPrototype.isBuiltinNext(cx.getRealm(), iterNextProp.getValue());
-        }
-
-        @Override
-        protected OrdinaryObject createIteratorObject() {
-            throw new AssertionError();
-        }
-
-        @Override
-        protected Intrinsics getIntrinsic() {
-            return Intrinsics.ArrayIteratorPrototype;
-        }
-
-        @Override
-        protected Object findNext() throws ScriptException {
-            if (!done) {
-                if (isBuiltinNext(cx, arrayIterator)) {
-                    try {
-                        ArrayIteratorObject iter = arrayIterator;
-                        ScriptObject array = iter.getIteratedObject();
-                        if (array == null) {
-                            done = true;
-                            return null;
-                        }
-                        long index = iter.getNextIndex();
-                        long len;
-                        if (array instanceof TypedArrayObject) {
-                            len = ((TypedArrayObject) array).getArrayLength();
-                        } else if (array instanceof ArrayObject) {
-                            len = ((ArrayObject) array).getLength();
-                        } else {
-                            len = ToLength(cx, Get(cx, array, "length"));
-                        }
-                        if (index >= len) {
-                            iter.setIteratedObject(null);
-                            done = true;
-                            return null;
-                        }
-                        iter.setNextIndex(index + 1);
-                        switch (iter.getIterationKind()) {
-                        case Key:
-                            return index;
-                        case KeyValue:
-                            return CreateArrayFromList(cx, index, Get(cx, array, index));
-                        case Value:
-                            return Get(cx, array, index);
-                        default:
-                            throw new AssertionError();
-                        }
-                    } catch (ScriptException e) {
-                        // Don't call `iter.setIteratedObject(null)`, other iterations may reuse the iterator.
-                        done = true;
-                        throw e;
-                    }
-                }
-                return slowNext();
+            if (IteratorPrototype.isBuiltinIterator(cx.getRealm(), method)) {
+                // Test 2: Is %ArrayIteratorPrototype%.next the built-in next method?
+                Property iterNext = findNextProperty(arrayIterator);
+                return iterNext != null && ArrayIteratorPrototype.isBuiltinNext(cx.getRealm(), iterNext.getValue());
             }
-            return null;
+            return false;
+        }
+
+        static Object next(BuiltinScriptIterator<ArrayIteratorObject> builtinIter) {
+            ArrayIteratorObject iter = builtinIter.getScriptObject();
+            ScriptObject array = iter.getIteratedObject();
+            if (array == null) {
+                return null;
+            }
+            long index = iter.getNextIndex();
+            long len;
+            if (array instanceof TypedArrayObject) {
+                TypedArrayObject typedArray = (TypedArrayObject) array;
+                if (IsDetachedBuffer(typedArray.getBuffer())) {
+                    throw newTypeError(builtinIter.cx, Messages.Key.BufferDetached);
+                }
+                len = typedArray.getArrayLength();
+            } else if (array instanceof ArrayObject) {
+                len = ((ArrayObject) array).getLength();
+            } else {
+                len = ToLength(builtinIter.cx, Get(builtinIter.cx, array, "length"));
+            }
+            if (index >= len) {
+                iter.setIteratedObject(null);
+                return null;
+            }
+            iter.setNextIndex(index + 1);
+            switch (iter.getIterationKind()) {
+            case Key:
+                return index;
+            case KeyValue:
+                return CreateArrayFromList(builtinIter.cx, index, Get(builtinIter.cx, array, index));
+            case Value:
+                return Get(builtinIter.cx, array, index);
+            default:
+                throw new AssertionError();
+            }
+        }
+
+        @Override
+        protected Object nextValue() {
+            return next(this);
         }
     }
 
-    private static final class TypedArrayScriptIterator extends BuiltinScriptIterator {
+    private static final class TypedArrayScriptIterator extends BuiltinScriptIterator<ArrayIteratorObject> {
         private final TypedArrayObject typedArray;
         private long index;
 
@@ -511,8 +690,16 @@ public final class ScriptIterators {
         }
 
         static boolean isBuiltinIterator(ExecutionContext cx, TypedArrayObject typedArray) {
+            if (typedArray.getBuffer().isDetached()) {
+                return false;
+            }
+            // Test 1: Is typedArray[Symbol.iterator] == %TypedArrayPrototype%.values?
             Property iterProp = findIteratorProperty(typedArray);
-            return iterProp != null && isBuiltinIterator(cx, typedArray, iterProp.getValue());
+            if (iterProp == null || !TypedArrayPrototypePrototype.isBuiltinValues(cx.getRealm(), iterProp.getValue())) {
+                return false;
+            }
+            // Test 2: Is %ArrayIteratorPrototype%.next the built-in next method?
+            return isBuiltinNext(cx);
         }
 
         static boolean isBuiltinIterator(ExecutionContext cx, TypedArrayObject typedArray, Object method) {
@@ -528,7 +715,7 @@ public final class ScriptIterators {
         }
 
         @Override
-        protected OrdinaryObject createIteratorObject() {
+        protected ArrayIteratorObject createIteratorObject() {
             return ArrayIteratorPrototype.CreateArrayIterator(cx, typedArray, index,
                     ArrayIteratorObject.ArrayIterationKind.Value);
         }
@@ -539,22 +726,32 @@ public final class ScriptIterators {
         }
 
         @Override
-        protected Object findNext() throws ScriptException {
-            if (!done) {
-                if (iteratorObject == null && isBuiltinNext(cx) && !typedArray.getBuffer().isDetached()) {
-                    if (index < typedArray.getArrayLength()) {
-                        return typedArray.get(cx, index++, typedArray);
-                    }
-                    done = true;
-                    return null;
-                }
-                return slowNext();
+        protected Object nextValue() {
+            if (hasScriptObject()) {
+                // Call the ArrayIterator implementation if the iterator object has escaped.
+                return ArrayIteratorScriptIterator.next(this);
+            }
+            if (typedArray.getBuffer().isDetached()) {
+                throw newTypeError(cx, Messages.Key.BufferDetached);
+            }
+            if (index < typedArray.getArrayLength()) {
+                return typedArray.get(cx, index++, typedArray);
             }
             return null;
         }
+
+        @Override
+        protected void forEachRemainingValue(Consumer<? super Object> action) {
+            if (typedArray.getBuffer().isDetached()) {
+                throw newTypeError(cx, Messages.Key.BufferDetached);
+            }
+            while (index < typedArray.getArrayLength()) {
+                action.accept(typedArray.get(cx, index++, typedArray));
+            }
+        }
     }
 
-    private static final class ArgumentsScriptIterator extends BuiltinScriptIterator {
+    private static final class ArgumentsScriptIterator extends BuiltinScriptIterator<ArrayIteratorObject> {
         private final ArgumentsObject arguments;
         private long index;
 
@@ -582,7 +779,7 @@ public final class ScriptIterators {
         }
 
         @Override
-        protected OrdinaryObject createIteratorObject() {
+        protected ArrayIteratorObject createIteratorObject() {
             return ArrayIteratorPrototype.CreateArrayIterator(cx, arguments, index,
                     ArrayIteratorObject.ArrayIterationKind.Value);
         }
@@ -593,25 +790,32 @@ public final class ScriptIterators {
         }
 
         @Override
-        protected Object findNext() throws ScriptException {
-            if (!done) {
-                if (iteratorObject == null && isBuiltinNext(cx)) {
-                    long length = arguments.getLength();
-                    if (arguments.isDenseArray(length)) {
-                        if (index < length) {
-                            return arguments.get(cx, index++, arguments);
-                        }
-                        done = true;
-                        return null;
-                    }
-                }
-                return slowNext();
+        protected Object nextValue() {
+            if (hasScriptObject()) {
+                // Call the ArrayIterator implementation if the iterator object has escaped.
+                return ArrayIteratorScriptIterator.next(this);
+            }
+            long len = ToLength(cx, Get(cx, arguments, "length"));
+            if (index < len) {
+                return Get(cx, arguments, index++);
             }
             return null;
         }
+
+        @Override
+        protected void forEachRemainingValue(Consumer<? super Object> action) {
+            long length = arguments.getLength();
+            if (!arguments.isDenseArray(length)) {
+                forEachRemainingDefault(action);
+            } else {
+                while (index < length) {
+                    action.accept(arguments.get(cx, index++, arguments));
+                }
+            }
+        }
     }
 
-    private static final class StringScriptIterator extends BuiltinScriptIterator {
+    private static final class StringScriptIterator extends BuiltinScriptIterator<StringIteratorObject> {
         private final String string;
         private int index;
 
@@ -639,7 +843,7 @@ public final class ScriptIterators {
         }
 
         @Override
-        protected OrdinaryObject createIteratorObject() {
+        protected StringIteratorObject createIteratorObject() {
             return StringIteratorPrototype.CreateStringIterator(cx, string, index);
         }
 
@@ -649,24 +853,60 @@ public final class ScriptIterators {
         }
 
         @Override
-        protected Object findNext() throws ScriptException {
-            if (!done) {
-                if (iteratorObject == null && isBuiltinNext(cx)) {
-                    if (index < string.length()) {
-                        int cp = string.codePointAt(index);
-                        index += Character.charCount(cp);
-                        return Strings.fromCodePoint(cp);
-                    }
-                    done = true;
-                    return null;
-                }
-                return slowNext();
+        protected Object nextValue() {
+            if (hasScriptObject()) {
+                // Call the StringIterator implementation if the iterator object has escaped.
+                return StringIteratorScriptIterator.next(this);
+            }
+            if (index < string.length()) {
+                int cp = string.codePointAt(index);
+                index += Character.charCount(cp);
+                return Strings.fromCodePoint(cp);
             }
             return null;
         }
+
+        @Override
+        protected void forEachRemainingValue(Consumer<? super Object> action) {
+            while (index < string.length()) {
+                int cp = string.codePointAt(index);
+                index += Character.charCount(cp);
+                action.accept(Strings.fromCodePoint(cp));
+            }
+        }
     }
 
-    private static final class MapScriptIterator extends BuiltinScriptIterator {
+    private static final class StringIteratorScriptIterator extends BuiltinScriptIterator<StringIteratorObject> {
+        StringIteratorScriptIterator(ExecutionContext cx, StringIteratorObject stringIterator) {
+            super(cx, stringIterator);
+        }
+
+        static Object next(BuiltinScriptIterator<StringIteratorObject> builtinIter) {
+            StringIteratorObject iterator = builtinIter.getScriptObject();
+            String string = iterator.getIteratedString();
+            if (string == null) {
+                return null;
+            }
+            int position = iterator.getNextIndex();
+            int len = string.length();
+            if (position >= len) {
+                iterator.setIteratedString(null);
+                return null;
+            }
+            int cp = string.codePointAt(position);
+            String resultString = Strings.fromCodePoint(cp);
+            int resultSize = Character.charCount(cp);
+            iterator.setNextIndex(position + resultSize);
+            return resultString;
+        }
+
+        @Override
+        protected Object nextValue() {
+            return next(this);
+        }
+    }
+
+    private static final class MapScriptIterator extends BuiltinScriptIterator<MapIteratorObject> {
         private final Iterator<Entry<Object, Object>> iterator;
 
         MapScriptIterator(ExecutionContext cx, MapObject map) {
@@ -691,7 +931,7 @@ public final class ScriptIterators {
         }
 
         @Override
-        protected OrdinaryObject createIteratorObject() {
+        protected MapIteratorObject createIteratorObject() {
             return MapIteratorPrototype.CreateMapIterator(cx, iterator, MapIteratorObject.MapIterationKind.KeyValue);
         }
 
@@ -701,29 +941,30 @@ public final class ScriptIterators {
         }
 
         @Override
-        protected Object findNext() throws ScriptException {
-            if (!done) {
-                if (iteratorObject == null && isBuiltinNext(cx)) {
-                    if (iterator.hasNext()) {
-                        Entry<Object, Object> e = iterator.next();
-                        return CreateArrayFromList(cx, e.getKey(), e.getValue());
-                    }
-                    done = true;
-                    return null;
-                }
-                return slowNext();
+        protected Object nextValue() {
+            if (hasScriptObject()) {
+                // Call the MapIterator implementation if the iterator object has escaped.
+                return MapIteratorScriptIterator.next(this);
+            }
+            if (iterator.hasNext()) {
+                Entry<Object, Object> e = iterator.next();
+                return CreateArrayFromList(cx, e.getKey(), e.getValue());
             }
             return null;
         }
+
+        @Override
+        protected void forEachRemainingValue(Consumer<? super Object> action) {
+            while (iterator.hasNext()) {
+                Entry<Object, Object> e = iterator.next();
+                action.accept(CreateArrayFromList(cx, e.getKey(), e.getValue()));
+            }
+        }
     }
 
-    private static final class MapIteratorScriptIterator extends BuiltinScriptIterator {
-        private final MapIteratorObject mapIterator;
-
+    private static final class MapIteratorScriptIterator extends BuiltinScriptIterator<MapIteratorObject> {
         MapIteratorScriptIterator(ExecutionContext cx, MapIteratorObject mapIterator) {
-            super(cx);
-            this.mapIterator = mapIterator;
-            this.iteratorObject = mapIterator;
+            super(cx, mapIterator);
         }
 
         static boolean isBuiltinIterator(ExecutionContext cx, MapIteratorObject mapIterator) {
@@ -733,59 +974,75 @@ public final class ScriptIterators {
 
         static boolean isBuiltinIterator(ExecutionContext cx, MapIteratorObject mapIterator, Object method) {
             // Test 1: Is mapIterator[Symbol.iterator] == %IteratorPrototype%[Symbol.iterator]?
-            // Test 2: Is %MapIteratorPrototype%.next the built-in next method?
-            return IteratorPrototype.isBuiltinIterator(cx.getRealm(), method) && isBuiltinNext(cx, mapIterator);
-        }
-
-        private static boolean isBuiltinNext(ExecutionContext cx, MapIteratorObject mapIterator) {
-            Property iterNextProp = findNextProperty(mapIterator);
-            return iterNextProp != null && MapIteratorPrototype.isBuiltinNext(cx.getRealm(), iterNextProp.getValue());
-        }
-
-        @Override
-        protected OrdinaryObject createIteratorObject() {
-            throw new AssertionError();
-        }
-
-        @Override
-        protected Intrinsics getIntrinsic() {
-            return Intrinsics.MapIteratorPrototype;
-        }
-
-        @Override
-        protected Object findNext() throws ScriptException {
-            if (!done) {
-                if (isBuiltinNext(cx, mapIterator)) {
-                    MapIteratorObject mapIter = mapIterator;
-                    Iterator<Entry<Object, Object>> iter = mapIter.getIterator();
-                    if (iter == null) {
-                        done = true;
-                        return null;
-                    }
-                    if (iter.hasNext()) {
-                        Entry<Object, Object> e = iter.next();
-                        switch (mapIter.getIterationKind()) {
-                        case Key:
-                            return e.getKey();
-                        case Value:
-                            return e.getValue();
-                        case KeyValue:
-                            return CreateArrayFromList(cx, e.getKey(), e.getValue());
-                        default:
-                            throw new AssertionError();
-                        }
-                    }
-                    mapIter.setIterator(null);
-                    done = true;
-                    return null;
-                }
-                return slowNext();
+            if (IteratorPrototype.isBuiltinIterator(cx.getRealm(), method)) {
+                // Test 2: Is %MapIteratorPrototype%.next the built-in next method?
+                Property iterNext = findNextProperty(mapIterator);
+                return iterNext != null && MapIteratorPrototype.isBuiltinNext(cx.getRealm(), iterNext.getValue());
             }
+            return false;
+        }
+
+        static Object next(BuiltinScriptIterator<MapIteratorObject> builtinIter) {
+            MapIteratorObject mapIter = builtinIter.getScriptObject();
+            Iterator<Entry<Object, Object>> iter = mapIter.getIterator();
+            if (iter == null) {
+                return null;
+            }
+            if (iter.hasNext()) {
+                Entry<Object, Object> e = iter.next();
+                switch (mapIter.getIterationKind()) {
+                case Key:
+                    return e.getKey();
+                case Value:
+                    return e.getValue();
+                case KeyValue:
+                    return CreateArrayFromList(builtinIter.cx, e.getKey(), e.getValue());
+                default:
+                    throw new AssertionError();
+                }
+            }
+            mapIter.setIterator(null);
             return null;
+        }
+
+        @Override
+        protected Object nextValue() {
+            return next(this);
+        }
+
+        @Override
+        protected boolean callForEachRemainingValue() {
+            return true;
+        }
+
+        @Override
+        protected void forEachRemainingValue(Consumer<? super Object> action) {
+            MapIteratorObject mapIter = getScriptObject();
+            Iterator<Entry<Object, Object>> iter = mapIter.getIterator();
+            if (iter == null) {
+                return;
+            }
+            while (iter.hasNext()) {
+                Entry<Object, Object> e = iter.next();
+                switch (mapIter.getIterationKind()) {
+                case Key:
+                    action.accept(e.getKey());
+                    break;
+                case Value:
+                    action.accept(e.getValue());
+                    break;
+                case KeyValue:
+                    action.accept(CreateArrayFromList(cx, e.getKey(), e.getValue()));
+                    break;
+                default:
+                    throw new AssertionError();
+                }
+            }
+            mapIter.setIterator(null);
         }
     }
 
-    private static final class SetScriptIterator extends BuiltinScriptIterator {
+    private static final class SetScriptIterator extends BuiltinScriptIterator<SetIteratorObject> {
         private final Iterator<Entry<Object, Void>> iterator;
 
         SetScriptIterator(ExecutionContext cx, SetObject set) {
@@ -810,7 +1067,7 @@ public final class ScriptIterators {
         }
 
         @Override
-        protected OrdinaryObject createIteratorObject() {
+        protected SetIteratorObject createIteratorObject() {
             return SetIteratorPrototype.CreateSetIterator(cx, iterator, SetIteratorObject.SetIterationKind.Value);
         }
 
@@ -820,29 +1077,30 @@ public final class ScriptIterators {
         }
 
         @Override
-        protected Object findNext() throws ScriptException {
-            if (!done) {
-                if (iteratorObject == null && isBuiltinNext(cx)) {
-                    if (iterator.hasNext()) {
-                        Entry<Object, Void> e = iterator.next();
-                        return e.getKey();
-                    }
-                    done = true;
-                    return null;
-                }
-                return slowNext();
+        protected Object nextValue() {
+            if (hasScriptObject()) {
+                // Call the SetIterator implementation if the iterator object has escaped.
+                return SetIteratorScriptIterator.next(this);
+            }
+            if (iterator.hasNext()) {
+                Entry<Object, Void> e = iterator.next();
+                return e.getKey();
             }
             return null;
         }
+
+        @Override
+        protected void forEachRemainingValue(Consumer<? super Object> action) {
+            while (iterator.hasNext()) {
+                Entry<Object, Void> e = iterator.next();
+                action.accept(e.getKey());
+            }
+        }
     }
 
-    private static final class SetIteratorScriptIterator extends BuiltinScriptIterator {
-        private final SetIteratorObject setIterator;
-
+    private static final class SetIteratorScriptIterator extends BuiltinScriptIterator<SetIteratorObject> {
         SetIteratorScriptIterator(ExecutionContext cx, SetIteratorObject setIterator) {
-            super(cx);
-            this.setIterator = setIterator;
-            this.iteratorObject = setIterator;
+            super(cx, setIterator);
         }
 
         static boolean isBuiltinIterator(ExecutionContext cx, SetIteratorObject setIterator) {
@@ -852,116 +1110,74 @@ public final class ScriptIterators {
 
         static boolean isBuiltinIterator(ExecutionContext cx, SetIteratorObject setIterator, Object method) {
             // Test 1: Is setIterator[Symbol.iterator] == %IteratorPrototype%[Symbol.iterator]?
-            // Test 2: Is %SetIteratorPrototype%.next the built-in next method?
-            return IteratorPrototype.isBuiltinIterator(cx.getRealm(), method) && isBuiltinNext(cx, setIterator);
-        }
-
-        private static boolean isBuiltinNext(ExecutionContext cx, SetIteratorObject setIterator) {
-            Property iterNextProp = findNextProperty(setIterator);
-            return iterNextProp != null && SetIteratorPrototype.isBuiltinNext(cx.getRealm(), iterNextProp.getValue());
-        }
-
-        @Override
-        protected OrdinaryObject createIteratorObject() {
-            throw new AssertionError();
-        }
-
-        @Override
-        protected Intrinsics getIntrinsic() {
-            return Intrinsics.SetIteratorPrototype;
-        }
-
-        @Override
-        protected Object findNext() throws ScriptException {
-            if (!done) {
-                if (isBuiltinNext(cx, setIterator)) {
-                    SetIteratorObject setIter = setIterator;
-                    Iterator<Entry<Object, Void>> iter = setIter.getIterator();
-                    if (iter == null) {
-                        done = true;
-                        return null;
-                    }
-                    if (iter.hasNext()) {
-                        Entry<Object, Void> e = iter.next();
-                        switch (setIter.getIterationKind()) {
-                        case Key:
-                        case Value:
-                            return e.getKey();
-                        case KeyValue:
-                            return CreateArrayFromList(cx, e.getKey(), e.getKey());
-                        default:
-                            throw new AssertionError();
-                        }
-                    }
-                    setIter.setIterator(null);
-                    done = true;
-                    return null;
-                }
-                return slowNext();
+            if (IteratorPrototype.isBuiltinIterator(cx.getRealm(), method)) {
+                // Test 2: Is %SetIteratorPrototype%.next the built-in next method?
+                Property iterNext = findNextProperty(setIterator);
+                return iterNext != null && SetIteratorPrototype.isBuiltinNext(cx.getRealm(), iterNext.getValue());
             }
+            return false;
+        }
+
+        static Object next(BuiltinScriptIterator<SetIteratorObject> builtinIter) {
+            SetIteratorObject setIter = builtinIter.getScriptObject();
+            Iterator<Entry<Object, Void>> iter = setIter.getIterator();
+            if (iter == null) {
+                return null;
+            }
+            if (iter.hasNext()) {
+                Entry<Object, Void> e = iter.next();
+                switch (setIter.getIterationKind()) {
+                case Key:
+                case Value:
+                    return e.getKey();
+                case KeyValue:
+                    return CreateArrayFromList(builtinIter.cx, e.getKey(), e.getKey());
+                default:
+                    throw new AssertionError();
+                }
+            }
+            setIter.setIterator(null);
             return null;
+        }
+
+        @Override
+        protected Object nextValue() {
+            return next(this);
+        }
+
+        @Override
+        protected boolean callForEachRemainingValue() {
+            return true;
+        }
+
+        @Override
+        protected void forEachRemainingValue(Consumer<? super Object> action) {
+            SetIteratorObject setIter = getScriptObject();
+            Iterator<Entry<Object, Void>> iter = setIter.getIterator();
+            if (iter == null) {
+                return;
+            }
+            while (iter.hasNext()) {
+                Entry<Object, Void> e = iter.next();
+                switch (setIter.getIterationKind()) {
+                case Key:
+                case Value:
+                    action.accept(e.getKey());
+                    break;
+                case KeyValue:
+                    action.accept(CreateArrayFromList(cx, e.getKey(), e.getKey()));
+                    break;
+                default:
+                    throw new AssertionError();
+                }
+            }
+            setIter.setIterator(null);
         }
     }
 
-    private static final class ListIteratorScriptIterator extends BuiltinScriptIterator {
-        private final ListIterator<?> listIterator;
-
-        ListIteratorScriptIterator(ExecutionContext cx, ListIterator<?> listIterator) {
-            super(cx);
-            this.listIterator = listIterator;
-            this.iteratorObject = listIterator;
-        }
-
-        static boolean isBuiltinIterator(ExecutionContext cx, ListIterator<?> listIterator) {
-            Property iterProp = findIteratorProperty(listIterator);
-            return iterProp != null && isBuiltinIterator(cx, listIterator, iterProp.getValue());
-        }
-
-        static boolean isBuiltinIterator(ExecutionContext cx, ListIterator<?> listIterator, Object method) {
-            // Test 1: Is listIterator[Symbol.iterator] == %IteratorPrototype%[Symbol.iterator]?
-            // Test 2: Is listIterator.next the built-in next method?
-            return IteratorPrototype.isBuiltinIterator(cx.getRealm(), method) && isBuiltinNext(cx, listIterator);
-        }
-
-        private static boolean isBuiltinNext(ExecutionContext cx, ListIterator<?> listIterator) {
-            Property iterNextProp = listIterator.lookupOwnProperty("next");
-            return iterNextProp != null && iterNextProp.getValue() == listIterator.getIteratorNext();
-        }
-
-        @Override
-        protected OrdinaryObject createIteratorObject() {
-            throw new AssertionError();
-        }
-
-        @Override
-        protected Intrinsics getIntrinsic() {
-            return Intrinsics.IteratorPrototype;
-        }
-
-        @Override
-        protected Object findNext() throws ScriptException {
-            if (!done) {
-                if (isBuiltinNext(cx, listIterator)) {
-                    Iterator<?> iterator = listIterator.getIterator();
-                    if (iterator.hasNext()) {
-                        return iterator.next();
-                    }
-                    done = true;
-                    return null;
-                }
-                return slowNext();
-            }
-            return null;
-        }
-    }
-
-    private static final class GeneratorScriptIterator extends BuiltinScriptIterator {
-        private final GeneratorObject generator;
-
+    private static final class GeneratorScriptIterator extends BuiltinScriptIterator<GeneratorObject> {
         GeneratorScriptIterator(ExecutionContext cx, GeneratorObject generator) {
-            super(cx);
-            this.generator = generator;
-            this.iteratorObject = generator;
+            super(cx, generator);
         }
 
         static boolean isBuiltinIterator(ExecutionContext cx, GeneratorObject generator) {
@@ -971,48 +1187,51 @@ public final class ScriptIterators {
 
         static boolean isBuiltinIterator(ExecutionContext cx, GeneratorObject generator, Object method) {
             // Test 1: Is generator[Symbol.iterator] == %IteratorPrototype%[Symbol.iterator]?
-            // Test 2: Is %GeneratorPrototype%.next the built-in next method?
-            return IteratorPrototype.isBuiltinIterator(cx.getRealm(), method) && isBuiltinNext(cx, generator);
-        }
-
-        private static boolean isBuiltinNext(ExecutionContext cx, GeneratorObject generator) {
-            Property iterNextProp = findNextProperty(generator);
-            return iterNextProp != null && GeneratorPrototype.isBuiltinNext(cx.getRealm(), iterNextProp.getValue());
-        }
-
-        @Override
-        protected OrdinaryObject createIteratorObject() {
-            throw new AssertionError();
+            if (IteratorPrototype.isBuiltinIterator(cx.getRealm(), method)) {
+                // Test 2: Is %GeneratorPrototype%.next the built-in next method?
+                Property iterNext = findNextProperty(generator);
+                return iterNext != null && GeneratorPrototype.isBuiltinNext(cx.getRealm(), iterNext.getValue());
+            }
+            return false;
         }
 
         @Override
-        protected Intrinsics getIntrinsic() {
-            return Intrinsics.GeneratorPrototype;
-        }
-
-        @Override
-        protected Object findNext() throws ScriptException {
-            if (!done) {
-                if (isBuiltinNext(cx, generator)) {
-                    GeneratorObject gen = generator;
-                    if (gen.getState() != GeneratorObject.GeneratorState.Completed) {
-                        // TODO: Remove iterator result boxing.
-                        try {
-                            ScriptObject result = GeneratorResume(cx, gen, UNDEFINED);
-                            if (!IteratorComplete(cx, result)) {
-                                return IteratorValue(cx, result);
-                            }
-                        } catch (ScriptException e) {
-                            done = true;
-                            throw e;
-                        }
-                    }
-                    done = true;
-                    return null;
-                }
-                return slowNext();
+        public ScriptObject nextIterResultValue(Object value) {
+            GeneratorObject gen = getScriptObject();
+            if (gen.getState() != GeneratorObject.GeneratorState.Completed) {
+                return GeneratorResume(cx, gen, value, "Generator.prototype.next");
             }
             return null;
+        }
+
+        @Override
+        protected Object nextValue() {
+            GeneratorObject gen = getScriptObject();
+            if (gen.getState() != GeneratorObject.GeneratorState.Completed) {
+                // TODO: Remove iterator result boxing.
+                ScriptObject result = GeneratorResume(cx, gen, UNDEFINED, "Generator.prototype.next");
+                if (!IteratorComplete(cx, result)) {
+                    return IteratorValue(cx, result);
+                }
+            }
+            return null;
+        }
+    }
+
+    private static final class AsyncFromSyncScriptIterator extends BuiltinScriptIterator<AsyncFromSyncIteratorObject> {
+        AsyncFromSyncScriptIterator(ExecutionContext cx, AsyncFromSyncIteratorObject iteratorObject) {
+            super(cx, iteratorObject);
+        }
+
+        @Override
+        public ScriptObject nextIterResultValue(Object value) {
+            return getScriptObject().next(cx, value);
+        }
+
+        @Override
+        protected Object nextValue() {
+            // Async-from-sync iterators aren't used for normal iteration.
+            throw new AssertionError();
         }
     }
 }

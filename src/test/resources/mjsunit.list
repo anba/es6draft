@@ -1,121 +1,143 @@
 #
-# Copyright (c) 2012-2016 André Bargull
+# Copyright (c) André Bargull
 # Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
 #
 # <https://github.com/anba/es6draft>
 #
 
-# TypedArray implementation vs. spec issues:
-# - offsets/lengths with fractional part is a RangeError
-# - no simple ToNumber() conversion for offsets/lengths values
-# - invalid offsets throw RangeError instead of TypeError
-# - DataView is callable without `new`
+# ES6: TypedArray.prototype.set applies ToObject on input source
+# ES6: typedArray[<negative-index>] should throw in strict-mode
 es6/typedarray.js
 
-# V8 does not implement %TypedArray% prototype object
-es6/typed-array-iterator.js
-
-# non-strict equality fails when comparing symbols and primitive values against each other
-es6/iteration-semantics.js
-
-# spec issue/invalid test, GetViewValue() throws RangeError instead of TypeError for invalid indices
-harmony/dataview-accessors.js
-
-# invalid test, ToDateTimeOptions does not alter input options object
-regress/regress-builtinbust-7.js
-
-# direct eval() and lexical declarations
-regress/regress-1213575.js
-
 # GetBindingValue invokes HasBinding for Object Environment Records, not supported in V8
-harmony/proxies-with-unscopables.js
+es6/proxies-with-unscopables.js
 
-# v8 does not add inferred name to classes
+# tail-call semantics change test setup
 es6/classes.js
-
-# let, etc. restricted to strict-mode in v8
-es6/block-early-errors.js
-es6/block-non-strict-errors.js
 
 # v8 bug - \8 and \9 are not allowed in template literals
 es6/templates.js
 
-# invalid test, `Object.defineProperty(new Int32Array(), 0, {get(){}})` doesn't throw in v8
-element-accessor.js
+# legacy function hoisting in global/eval code, see todo in test file
+es6/block-sloppy-function.js
 
-# properties added in wrong order, see todo note in test file
-es6/computed-property-names-classes.js
+# Proxy doesn't support infinite prototype chain in V8 when for-in statement
+es6/proxies-prototype-target-stackoverflow.js
 
-# legacy function hoisting in global/eval code
-harmony/block-sloppy-function.js
-harmony/block-eval-var-over-let.js
-
-# RegExp: Changing flags does not change internal flags in V8
-es6/regexp-flags.js
-
-# invalid test, ES2015 21.2.3.1 step 6 not supported in V8
-es6/regexp-constructor.js
-
-# invalid test, ends up calling new Proxy(null, x)
-harmony/proxies-example-membrane.js
-
-# lookbehind not supported
-harmony/regexp-lookbehind.js
-
-# ES2016: generators are no longer constructors
-harmony/reflect-construct.js
-
-# v8 legacy const allows const-declaration without initializer
-regress/regress-4576.js
-
-# Invalid test: Proxy revocation doesn't affect current proxy operation
-es6/object-tostring.js
-
-# Symbol.species not implemented in V8
-es6/array-concat.js
-
-# Proxy not allowed on Object.prototype chain in V8
-harmony/proxies-global-reference.js
-
-# RegExp with lookbehind
-regress/regress-crbug-570241.js
-
-# Proxy enumerate trap doesn't support infinite prototype chain in V8
-harmony/proxies-prototype-target-stackoverflow.js
-
-# `/\ud808\udf45{3}/u.test("\u{12345}\udf45\udf45")` returns true in v8
-harmony/unicode-escapes-in-regexps.js
-
-# `[1].concat(new Array(0xffffffff))` should throw type error
+# `[1].concat(new Array(0xffffffff))` should throw RangeError
 regress/regress-crbug-387031.js
 
-# Mongolian vowel separator still recognised as whitespace in v8
-whitespaces.js
-
-# `new SharedArrayBuffer(2.567)` does not throw in v8
+# SharedArrayBuffer.prototype.slice not defined in V8
 harmony/sharedarraybuffer.js
 
-# `Atomics.compareExchange(new Int32Array(new SharedArrayBuffer(4)), 10, 0, 0)` does not throw in v8
-regress/regress-crbug-501809.js
-
-# ` Atomics.compareExchange(new Int32Array(new SharedArrayBuffer(4)), "", 0, 0)` does not throw in v8
+# Atomics operations use ToIndex to convert the index argument
 harmony/atomics.js
-
-# ES2016: %ObjectPrototype% is an immutable prototype object
-regress/regress-1403.js
-regress/regress-crbug-571517.js
 
 # v8 also sets function.sent for throw completions.
 harmony/function-sent.js
 
-# missing proxy invariant checks?
-harmony/proxies-ownkeys.js
+# v8 throws RangeError when length property of ownKeys result exceeds internal limits
+es6/proxies-ownkeys.js
 
-# TypedArray.subarray web-compat workaround in v8
-regress/regress-4665-2.js
+# ES2016 removed receiver checks in [[Get]] and [[Set]] of typed arrays
+es6/reflect.js
 
-# https://github.com/tc39/ecma262/issues/347
-regress/regress-integer-indexed-element.js
+# ES2017: __define[GS]etter__ does not convert undefined this-value to global object
+global-accessors.js
+
+# invalid test: for-in enumerability should be checked for holder object
+es6/proxies-for.js
+
+# global [[Prototype]] isn't Object.prototype in v8
+regress/regress-1170.js
+
+# v8 throws RangeError when length of array exceeds internal limits in stringify
+es6/proxies-json.js
+
+# invalid: see todo in test file
+es8/async-function-stacktrace.js
+
+# invalid: Missing detached array buffer checks
+es6/typedarray-every.js
+es6/typedarray-foreach.js
+es6/regress/regress-5929-1.js
+regress/regress-353004.js
+regress/regress-707410.js
+regress/regress-crbug-691323.js
+
+# invalid: new Int8Array(10).set(0) should not throw
+external-array.js
+
+# invalid: `[] instanceof Proxy` should throw TypeError
+regress/regress-5085.js
+
+# invalid: `function NaN(){}` should throw TypeError, not SyntaxError
+regress/redeclaration-error-types.js
+
+# invalid: Array.prototype.toLocaleString passes locales and options when Intl is supported
+array-tostring.js
+es6/typedarray-tostring.js
+
+# Open issue: https://github.com/tc39/test262/issues/740
+es8/async-await-species.js
+
+# invalid: `new Int8Array(10).set(0)` is allowed per spec
+es6/typedarray-neutered.js
+
+# vars declared in parameter do-expr are accessible in function body
+harmony/default-parameter-do-expression.js
+
+# Legacy RegExp properties non-enumerable in v8
+regress/regress-5566.js
+
+# `Number.MIN_VALUE.toString(35)` prints only "0" in v8
+regress/regress-5767.js
+
+# invalid: `Function("a=`","`,xss=1){alert(xss)")` should throw SyntaxError
+regress/regress-crbug-663410.js
+
+# invalid: tdz for export const throws TypeError in v8?
+modules-init3.js
+
+# different result for `(1.2345e+27).toString(5)`
+number-tostring-big-integer.js
+
+# v8 doesn't allow to call Function.prototype.toString on proxies
+es6/proxies.js
+
+# v8 doesn't yet implement Function.prototype.toString update by default
+harmony/async-generators-basic.js
+
+# https://github.com/tc39/ecma262/pull/469
+es8/constructor-returning-primitive.js
+
+# invalid: in bmp-mode identifiers cannot contain non-bmp code points
+harmony/regexp-named-captures.js
+
+# support file not loaded correctly in test runner
+compiler/constructor-inlining-no-harmony-restrict-constructor-return.js
+es6/typedarray-construct-by-array-like-prototype-element-added.js
+regress/regress-740694.js
+regress/regress-746909.js
+
+# harmony-restrict-constructor-return test file
+compiler/constructor-inlining.js
+
+# file not loaded correctly?
+harmony/import-from-evaluation-errored.js
+harmony/import-from-fetch-errored.js
+harmony/import-from-instantiation-errored.js
+
+# https://github.com/tc39/ecma262/issues/913
+regress/regress-4693.js
+
+# iteration protocol change to access "next" only once
+es6/call-with-spread-modify-next.js
+es6/spread-call.js
+es6/super-with-spread-modify-next.js
+
+# v8 not yet updated to icu60
+harmony/intl-numberformat-formattoparts.js
 
 
 ###################
@@ -136,20 +158,6 @@ regress/regress-126412.js
 
 
 ############################################
-# Misc proxy implementation isssues        #
-############################################
-
-# old Proxy API not completly emulated
-harmony/proxies.js
-
-# enumerate() does not allow non-strings in V8
-harmony/proxies-enumerate.js
-
-# Object.keys() calls getOwnPropertyDescriptor() even if ownKeys() is not present, v8 does not comply
-harmony/proxies-keys.js
-
-
-############################################
 # Implementation specific differences      #
 ############################################
 
@@ -158,33 +166,49 @@ apply.js
 array-reduce.js
 big-array-literal.js
 big-object-literal.js
+duplicate-parameters.js
 error-accessors.js
 function-call.js
+json-errors.js
 messages.js
+mjsunit-assertion-error.js
 object-create.js
 object-define-properties.js
-object-freeze.js
+object-define-property.js
 object-get-own-property-names.js
-object-prevent-extensions.js
-object-seal.js
+optimized-foreach.js
+compiler/regress-stacktrace-methods.js
+es6/array-iterator-detached.js
 es6/block-conflicts.js
+es6/catch-parameter-redeclaration.js
+es6/for-each-in-catch.js
+es6/iteration-semantics.js
+es6/proxies-get.js
+es6/reflect-construct.js
+es6/reflect-define-property.js
 es6/regexp-tostring.js
 es6/super.js
 es6/typedarray-reduce.js
-harmony/block-conflicts-sloppy.js
+es6/block-conflicts-sloppy.js
+harmony/array-sort-comparefn.js
+harmony/async-for-of-non-iterable.js
+harmony/modules-import-8.js
+harmony/modules-import-15.js
+ignition/optimized-stack-trace.js
 ignition/stack-trace-source-position.js
 regress/regress-1591.js
 regress/regress-1980.js
 regress/regress-3159.js
+regress/regress-4266.js
+regress/regress-4815.js
+regress/regress-5173.js
+regress/regress-6142.js
 regress/regress-475705.js
+regress/regress-633998.js
 regress/regress-crbug-109362.js
 regress/regress-crbug-523308.js
-
-# forward-slash not escaped in RegExp
-regress/regress-3229.js
-
-# \n\r are two separate line terminators
-newline-in-string.js
+regress/regress-crbug-770581.js
+regress/regress-string-from-char-code-tonumber.js
 
 # Date.parse incompatibility
 date.js
@@ -197,14 +221,8 @@ regress/regress-crbug-422858.js
 # for-in order
 enumeration-order.js
 
-# __defineGetter__ does not throw in V8
-regress/regress-1240.js
-
 # truncate vs. rounding in milliseconds field of iso-date
 regress/regress-944.js
-
-# Date.prototype.toUTCString and Date.prototype.toGMTString distinct objects in V8
-function-names.js
 
 # Error.prototype.message is limited to 350 characters in V8
 error-tostring-omit.js
@@ -217,29 +235,27 @@ regress/regress-crbug-352586.js
 es6/math-hypot.js
 
 # V8 throws RangeError if strings exceed internal limit
+compiler/string-add-try-catch.js
 regress/regress-336820.js
 string-oom-array-join.js
 string-oom-concat.js
 string-oom-replace-global-regexp-with-string.js
 string-oom-replace-regexp-global-with-function.js
 
+# string size limitation
+regress/regress-5404.js
+regress/regress-crbug-160010.js
+
 # .stack is an own accessor property on error objects in V8
 error-constructors.js
 stack-traces-overflow.js
 regress/regress-3404.js
 
-# v8 restriction test
-regexp-not-sticky-yet.js
-
-# v8 restriction test for Unicode RegExp
-es6/no-unicode-regexp-flag.js
-
-# v8 restriction test for --noharmony-species
-es6/legacy-subclassing.js
-regress/regress-4665.js
-
 # Function.arguments and Function.caller non-writable in V8
 regress/regress-1530.js
+
+# Function.arguments mapped in optimized functions?
+regress/regress-2989.js
 
 # RegExp statics in String.prototype.replace/RegExp.prototype[@@replace] only provide last match in V8
 regexp-static.js
@@ -249,7 +265,43 @@ string-replace.js
 regress/regress-578775.js
 
 # v8 restriction test when ICU not available
-harmony/unicode-regexp-ignore-case-noi18n.js
+es6/unicode-regexp-ignore-case-noi18n.js
+
+# implementation specific behaviour in Array.prototype.sort
+array-sort.js
+
+# abrupt completions in jobs ignored in V8
+regress/regress-3641.js
+
+# cross-realm restrictions
+cross-realm-global-prototype.js
+lookup-behind-property.js
+realm-property-access.js
+es6/proxies-accesschecks.js
+es6/proxies-cross-realm-exception.js
+es6/regress/regress-576662.js
+
+# conflicts with --harmony-trailing-commas
+regress/regress-2470.js
+
+# override/handle quit() function in test runner?
+regress/regress-crbug-501711.js
+
+# icu-date tests
+icu-date-lord-howe.js
+icu-date-to-string.js
+
+# Proxy chain limitation test.
+array-isarray.js
+
+# v8 limitation test for packaged locales
+regress/regress-6288.js
+
+# uninteresting regression test when calling v8 native functions
+regress/regress-crbug-754177.js
+
+# different limit for BigInt
+harmony/bigint/too-big-literal.js
 
 
 ############################################
@@ -260,147 +312,176 @@ harmony/unicode-regexp-ignore-case-noi18n.js
 regress/regress-crbug-393988.js
 regress/regress-crbug-489597.js
 regress/regress-crbug-505370.js
-regress/regress-crbug-570651.js
+regress/regress-crbug-599067.js
+regress/regress-crbug-610207.js
 regress/regress-2564.js
 regress/regress-3718.js
+regress/regress-5216.js
+regress/regress-5245.js
+regress/regress-5342.js
+regress/regress-596718.js
 regress/regress-conditional-position.js
 stack-traces.js
 stack-traces-2.js
 stack-traces-custom.js
 eval-stack-trace.js
-callsite.js
-
-# V8 Realm API
-array-constructor.js
-call-cross-realm.js
-contextual-calls.js
+eval-origin.js
 cross-realm-filtering.js
-harmony/array-species.js
-harmony/proxies-accesschecks.js
-harmony/proxies-construct.js
-harmony/regress/regress-576662.js
-regress/regress-280531.js
-regress/regress-4509-Class-constructor-typeerror-realm.js
-regress/regress-crbug-501711.js
-regress/regress-crbug-501808.js
 
 # readbuffer function
 regress/d8-readbuffer.js
 
-# Object.observe
-es7/regress/regress-443982.js
-regress/regress-3315.js
-regress/regress-356589.js
-regress/regress-417709a.js
-regress/regress-417709b.js
-regress/regress-observe-map-cache.js
-es6/regress/regress-3750.js
+# getIgnitionDispatchCounters
+ignition/ignition-statistics-extension.js
 
-# Promise.defer
-es6/promise-internal-setter.js
+# version
+regress/regress-v8-5009.js
+
+# printErr
+print.js
+
+# %GetOptimizationStatus
+array-bounds-check-removal.js
+array-push5.js
+array-shift4.js
+array-store-and-grow.js
+constant-folding-2.js
+deopt-minus-zero.js
+deopt-with-fp-regs.js
+deserialize-optimize-inner.js
+div-mul-minus-one.js
+elements-transition-hoisting.js
+field-type-tracking.js
+getters-on-elements.js
+keyed-load-hole-to-undefined.js
+keyed-load-with-string-key.js
+keyed-load-with-symbol-key.js
+math-floor-of-div-minus-zero.js
+modules-turbo1.js
+never-optimize.js
+noopt.js
+optimized-filter.js
+setters-on-elements.js
+shared-function-tier-up-turbo.js
+shift-for-integer-div.js
+sin-cos.js
+strong-rooted-literals.js
+unary-minus-deopt.js
+harmony/do-expressions.js
+compiler/array-push-3.js
+compiler/constant-fold-cow-array.js
+compiler/deopt-inlined-from-call.js
+compiler/deopt-numberoroddball-binop.js
+compiler/deopt-string-outofbounds.js
+compiler/increment-typefeedback.js
+compiler/inlined-array-pop-opt.js
+compiler/inlined-call.js
+compiler/integral32-add-sub.js
+compiler/opt-next-call-turbo.js
+compiler/opt-next-call.js
+compiler/optimized-float32array-length.js
+compiler/optimized-float64array-length.js
+compiler/optimized-int32array-length.js
+compiler/optimized-uint32array-length.js
+compiler/regress-compare-negate.js
+compiler/regress-5320.js
+compiler/stress-deopt-count-1.js
+compiler/stress-deopt-count-2.js
+compiler/uint8-clamped-array.js
+ignition/throw-if-hole.js
+ignition/throw-if-not-hole.js
+ignition/throw-super-not-called.js
+es6/block-let-crankshaft.js
+es6/block-let-crankshaft-sloppy.js
+es6/block-scoping.js
+es6/block-scoping-sloppy.js
+regress/regress-2132.js
+regress/regress-2250.js
+regress/regress-2315.js
+regress/regress-2339.js
+regress/regress-2451.js
+regress/regress-2618.js
+regress/regress-3176.js
+regress/regress-3650-3.js
+regress/regress-3709.js
+regress/regress-385565.js
+regress/regress-4380.js
+regress/regress-5790.js
+regress/regress-6607-1.js
+regress/regress-6607-2.js
+regress/regress-6941.js
+regress/regress-6948.js
+regress/regress-6989.js
+regress/regress-6991.js
+regress/regress-7014-1.js
+regress/regress-7014-2.js
+regress/regress-crbug-500497.js
+regress/regress-crbug-554831.js
+regress/regress-crbug-587068.js
+regress/regress-crbug-594183.js
+regress/regress-map-invalidation-2.js
+regress/regress-param-local-type.js
+regress/regress-store-uncacheable.js
+regress/regress-unlink-closures-on-deopt.js
+regress/regress-v8-5697.js
 
 # wasm
-regress/regress-575364.js
+regress/regress-5888.js
+regress/regress-5911.js
+
+# Realm.navigate
+regress/regress-crbug-683667.js
+
+# getGlobal
+es6/global-proto-proxy.js
+
+# Worker
+harmony/atomics-value-check.js
+regress/regress-crbug-722871.js
+
+# TestCoverageNoGC
+code-coverage-ad-hoc.js
+
+# v8BreakIterator
+test-builtins-setup.js
+regress/regress-crbug-714696.js
+
+# console
+console.js
+
+# arguments
+regress/regress-crbug-781116-1.js
+regress/regress-crbug-781116-2.js
 
 
 #######################################
 # Test for syntax extensions          #
 #######################################
 
-# Inline module syntax
-harmony/module-linking.js
-harmony/module-recompile.js
-harmony/module-resolution.js
-
-# Legacy const declarations
-es6/block-eval-var-over-legacy-const.js
-es6/block-let-contextual-sloppy.js
-
 # RegExp lookbehind
-harmony/unicode-character-ranges.js
-harmony/unicode-regexp-backrefs.js
-
-# RegExp \p property classes
-harmony/unicode-regexp-property-class.js
-
-# Duplicate block-scoped function declarations in non-strict mode
-regress/regress-4693.js
-
-
-#######################################
-# ES6 related runtime changes         #
-#######################################
-
-# built-in function poisoned
-fuzz-accessors.js
-
-# built-in functions not exposed in caller
-function-caller.js
-
-# RegExp.prototype.compile requires extensible object
-regress/regress-349870.js
-
-# RegExp.prototype.test fetches "exec" dynamically
-regexp-string-methods.js
-
-# "get " prefix for getter accessor function names
-object-literal.js
-
-# %TypedArray% intrinsic not available in V8
-es6/typedarray-of.js
-
-# assignment to const binding is always a runtime error, regardless of strict mode
-const.js
-constant-folding.js
+harmony/regexp-lookbehind.js
+es6/unicode-character-ranges.js
+es6/unicode-regexp-backrefs.js
 
 
 #######################################
 # ES6 related syntax changes          #
 #######################################
 
-# various strict-mode restrictions which only apply to ES5
-strict-mode.js
-
 # function declaration not in block
-regress/regress-220.js
-regress/regress-536751.js
-regress/regress-542099.js
-regress/regress-542100.js
-
-# temp dead zone const, const redeclarations etc.
-const-declaration.js
-const-redecl.js
-
-# different scope for const
-declare-locally.js
-regress/regress-1170.js
-regress/regress-1178598.js
-regress/regress-1182832.js
-regress/regress-186.js
-regress/regress-3138.js
-regress/regress-641.js
-regress/regress-88591.js
-
-# const without initializer
-global-const-var-conflicts.js
-property-load-across-eval.js
-regress/regress-1201933.js
-regress/regress-1207276.js
-regress/regress-799761.js
-regress/regress-handle-illegal-redeclaration.js
+regress/regress-crbug-412208.js
 
 # Static Semantics: Early errors invalid LHS
 invalid-lhs.js
 serialize-embedded-error.js
+es7/exponentiation-operator.js
+regress/regress-436893.js
 
 # Static Semantics: Early Error for invalid RegExp flags (unicode escaped)
 regress/regress-136048.js
 
 # Static Semantics: Early Error for RegExp pattern
 regress/regress-crbug-435825.js
-
-# for-in with initializer
-for-in.js
 
 # for-in with invalid assignment target
 ignition/dead-code-source-position.js
@@ -414,12 +495,21 @@ regress/regress-1119.js
 #######################################
 
 # Method code too large
-# too many arguments
+# too many arguments/locals
 regress/regress-492.js
 regress/regress-1122.js
+regress/regress-2612.js
+regress/regress-605470.js
+regress/regress-655573.js
+regress/regress-725858.js
+regress/regress-crbug-724153.js
 
 # Different maximal stack depth
 regress/regress-353551.js
+
+# StackOverflowError
+div-mod.js
+regress/regress-crbug-647217.js
 
 # StackOverflowError during invokedynamic linking (intermittent)
 regress/regress-1132.js
@@ -431,11 +521,23 @@ regress/regress-crbug-178790.js
 
 # OutOfMemory: Java heap space
 compiler/regress-445907.js
+regress/regress-599414-array-concat-fast-path.js
+regress/regress-crbug-779344.js
 
 # Timeout (slow)
 json-parser-recursive.js
+math-floor-part1.js
+math-floor-part2.js
+math-floor-part3.js
+math-floor-part4.js
 unicodelctest.js
 unicodelctest-no-optimization.js
+compiler/division-by-constant.js
+es6/math-trunc.js
+regress/regress-3976.js
+regress/regress-85177.js
+regress/regress-707187.js
+regress/regress-crbug-319860.js
 
 # TODO: slow - investigate
 es6/block-const-assign.js
@@ -453,8 +555,10 @@ mul-exhaustive-part8.js
 mul-exhaustive-part9.js
 mul-exhaustive-part10.js
 regexp-capture-3.js
+whitespaces.js
 regress/regress-1200351.js
 regress/regress-581.js
+regress/regress-678917.js
 regress/regress-685.js
 regress/regress-crbug-482998.js
 regress/regress-deep-proto.js
@@ -463,3 +567,4 @@ compiler/expression-trees.js
 compiler/regress-4.js
 compiler/regress-arguments.js
 compiler/regress-rep-change.js
+es6/instanceof-proxies.js

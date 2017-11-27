@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -7,14 +7,16 @@
 package com.github.anba.es6draft.runtime.internal;
 
 import java.nio.file.Path;
-import java.nio.file.Paths;
+
+import com.github.anba.es6draft.runtime.modules.SourceIdentifier;
+import com.github.anba.es6draft.runtime.modules.loader.FileSourceIdentifier;
 
 /**
  * Class representing script source code information.
  */
 public final class Source {
-    private final Path filePath;
-    private final String fileName;
+    private final SourceIdentifier sourceId;
+    private final Path file;
     private final String name;
     private final int line;
 
@@ -27,8 +29,22 @@ public final class Source {
      *            the source start line offset
      */
     public Source(String name, int line) {
-        this.filePath = null;
-        this.fileName = null;
+        this((SourceIdentifier) null, name, line);
+    }
+
+    /**
+     * Constructs a new {@link Source} object.
+     * 
+     * @param sourceId
+     *            the source identifier
+     * @param name
+     *            the source name
+     * @param line
+     *            the source start line offset
+     */
+    public Source(SourceIdentifier sourceId, String name, int line) {
+        this.sourceId = sourceId;
+        this.file = null;
         this.name = name;
         this.line = line;
     }
@@ -44,9 +60,9 @@ public final class Source {
      *            the source start line offset
      */
     public Source(Path file, String name, int line) {
-        assert file == null || file.isAbsolute() : "File not absolute: " + file.toString();
-        this.filePath = file;
-        this.fileName = null;
+        assert file.isAbsolute() : "File not absolute: " + file.toString();
+        this.sourceId = new FileSourceIdentifier(file);
+        this.file = file;
         this.name = name;
         this.line = line;
     }
@@ -62,27 +78,19 @@ public final class Source {
      *            the source start line offset
      */
     public Source(Source base, String name, int line) {
-        this.filePath = base != null ? base.filePath : null;
-        this.fileName = base != null ? base.fileName : null;
+        this.sourceId = base != null ? base.sourceId : null;
+        this.file = base != null ? base.file : null;
         this.name = name;
         this.line = line;
     }
 
     /**
-     * Constructs a new {@link Source} object.
+     * Returns the source identifier if available.
      * 
-     * @param file
-     *            the source file
-     * @param name
-     *            the source name
-     * @param line
-     *            the source start line offset
+     * @return the source identifier or {@code null} if not available
      */
-    /*package*/Source(String file, String name, int line) {
-        this.filePath = null;
-        this.fileName = file;
-        this.name = name;
-        this.line = line;
+    public SourceIdentifier getSourceId() {
+        return sourceId;
     }
 
     /**
@@ -91,28 +99,7 @@ public final class Source {
      * @return the source file or {@code null} if not available
      */
     public Path getFile() {
-        if (filePath != null) {
-            return filePath;
-        }
-        if (fileName != null) {
-            return Paths.get(fileName);
-        }
-        return null;
-    }
-
-    /**
-     * Returns the script file path if available.
-     * 
-     * @return the source file or {@code null} if not available
-     */
-    public String getFileString() {
-        if (filePath != null) {
-            return filePath.toString();
-        }
-        if (fileName != null) {
-            return fileName;
-        }
-        return null;
+        return file;
     }
 
     /**
@@ -135,7 +122,6 @@ public final class Source {
 
     @Override
     public String toString() {
-        String file = getFileString();
         if (file == null) {
             return String.format("Source {name='%s', line=%d}", name, line);
         }

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -21,8 +21,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.BiFunction;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 import com.github.anba.es6draft.ast.*;
+import com.github.anba.es6draft.ast.Module;
 import com.github.anba.es6draft.ast.scope.Scope;
 import com.github.anba.es6draft.compiler.DefaultCodeGenerator.ValType;
 import com.github.anba.es6draft.compiler.Labels.BreakLabel;
@@ -35,7 +39,7 @@ import com.github.anba.es6draft.compiler.assembler.Code.MethodCode;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.internal.InlineArrayList;
 import com.github.anba.es6draft.runtime.internal.ResumptionPoint;
-import com.github.anba.es6draft.runtime.internal.ScriptRuntime;
+import com.github.anba.es6draft.runtime.language.Operators;
 
 /**
  * 
@@ -119,13 +123,13 @@ abstract class CodeVisitor extends InstructionVisitor {
         }
 
         Jump returnLabel() {
-            Jump lbl = returnLabel;
-            if (lbl == null) {
+            Jump label = returnLabel;
+            if (label == null) {
                 assert parent != null : "return outside of function";
-                lbl = newTemp(parent.returnLabel());
-                returnLabel = lbl;
+                label = newTemp(parent.returnLabel());
+                returnLabel = label;
             }
-            return lbl;
+            return label;
         }
 
         Jump breakLabel(String name) {
@@ -158,6 +162,7 @@ abstract class CodeVisitor extends InstructionVisitor {
         assert RESUME_SLOT < MIN_RECOVER_SLOT;
     }
 
+    private final CodeVisitor root;
     private final CodeVisitor parent;
     private final TopLevelNode<?> topLevelNode;
     private final boolean strict;
@@ -170,12 +175,16 @@ abstract class CodeVisitor extends InstructionVisitor {
     private int wrapped = 0;
     private Set<Expression> tailCallNodes = Collections.emptySet();
 
+    // helper methods
+    private final HashMap<Object, Object> methods;
+
     private Variable<ExecutionContext> executionContext;
     private MutableValue<Object> completionValue;
     private boolean hasCompletion;
 
     protected CodeVisitor(MethodCode method, CodeVisitor parent) {
-        super(method);
+        super(method, createStack(parent.topLevelNode));
+        this.root = parent.root;
         this.parent = parent;
         this.topLevelNode = parent.topLevelNode;
         this.strict = parent.strict;
@@ -183,15 +192,18 @@ abstract class CodeVisitor extends InstructionVisitor {
         this.scope = parent.scope;
         this.wrapped = parent.wrapped;
         this.tailCallNodes = parent.tailCallNodes;
+        this.methods = parent.methods;
         // no return in script/module code
         this.labels.returnLabel = isFunction() ? new ReturnLabel() : null;
     }
 
     protected CodeVisitor(MethodCode method, TopLevelNode<?> topLevelNode) {
-        super(method);
+        super(method, createStack(topLevelNode));
+        this.root = this;
         this.parent = null;
         this.topLevelNode = topLevelNode;
         this.strict = isStrict(topLevelNode);
+        this.methods = new HashMap<>();
         // no return in script/module code
         this.labels.returnLabel = isFunction() ? new ReturnLabel() : null;
     }
@@ -207,10 +219,19 @@ abstract class CodeVisitor extends InstructionVisitor {
         return IsStrict((FunctionNode) node);
     }
 
+    private static Stack createStack(TopLevelNode<?> node) {
+        if (node instanceof FunctionNode) {
+            if (((FunctionNode) node).isGenerator() || ((FunctionNode) node).isAsync()) {
+                return new TypedStack();
+            }
+        }
+        return new Stack();
+    }
+
     @Override
     public void begin() {
         super.begin();
-        this.executionContext = getParameter(CONTEXT_SLOT, ExecutionContext.class);
+        this.executionContext = executionContextParameter();
         this.completionValue = createCompletionVariable();
         this.hasCompletion = hasCompletionValue();
         assert !(hasCompletion && completionValue == null);
@@ -224,12 +245,13 @@ abstract class CodeVisitor extends InstructionVisitor {
         super.end();
     }
 
-    @Override
-    protected final Stack createStack(Variables variables) {
-        if (isGeneratorOrAsync()) {
-            return new StackImpl(variables);
-        }
-        return super.createStack(variables);
+    /**
+     * Returns the execution context parameter.
+     * 
+     * @return the execution context parameter
+     */
+    protected Variable<ExecutionContext> executionContextParameter() {
+        return getParameter(CONTEXT_SLOT, ExecutionContext.class);
     }
 
     /**
@@ -257,6 +279,15 @@ abstract class CodeVisitor extends InstructionVisitor {
      */
     protected final CodeVisitor getParent() {
         return parent;
+    }
+
+    /**
+     * Returns the root visitor
+     * 
+     * @return the root visitor
+     */
+    protected final CodeVisitor getRoot() {
+        return root;
     }
 
     /**
@@ -350,6 +381,18 @@ abstract class CodeVisitor extends InstructionVisitor {
     final boolean isGeneratorOrAsync() {
         if (topLevelNode instanceof FunctionNode) {
             return ((FunctionNode) topLevelNode).isGenerator() || ((FunctionNode) topLevelNode).isAsync();
+        }
+        return false;
+    }
+
+    /**
+     * Returns {@code true} if compiling async generator function code.
+     * 
+     * @return {@code true} if compiling async generator function code
+     */
+    final boolean isAsyncGenerator() {
+        if (topLevelNode instanceof FunctionNode) {
+            return ((FunctionNode) topLevelNode).isAsync() && ((FunctionNode) topLevelNode).isGenerator();
         }
         return false;
     }
@@ -631,8 +674,7 @@ abstract class CodeVisitor extends InstructionVisitor {
      */
     final void storeCompletionValue(Value<Object> completionValue) {
         if (hasCompletion()) {
-            load(completionValue);
-            store(completionValue());
+            store(completionValue(), completionValue);
         }
     }
 
@@ -641,21 +683,17 @@ abstract class CodeVisitor extends InstructionVisitor {
      */
     final void storeUndefinedAsCompletionValue() {
         if (hasCompletion()) {
-            loadUndefined();
-            store(completionValue());
+            store(completionValue(), undefinedValue());
         }
     }
 
     /**
      * Enters iteration code.
      * 
-     * @return the temporary completion value variable or {@code null} if not applicable for the current method
+     * @return the temporary completion value variable
      */
     final MutableValue<Object> enterIteration() {
-        if (isGeneratorOrAsync()) {
-            return enterAbruptRegion(false);
-        }
-        return null;
+        return enterAbruptRegion(false);
     }
 
     /**
@@ -664,10 +702,7 @@ abstract class CodeVisitor extends InstructionVisitor {
      * @return the list of generated labels
      */
     final List<TempLabel> exitIteration() {
-        if (isGeneratorOrAsync()) {
-            return exitAbruptRegion();
-        }
-        return Collections.emptyList();
+        return exitAbruptRegion();
     }
 
     /**
@@ -873,6 +908,134 @@ abstract class CodeVisitor extends InstructionVisitor {
         return labels.continueLabel(name);
     }
 
+    interface HashKey {
+        @Override
+        boolean equals(Object other);
+
+        @Override
+        int hashCode();
+    }
+
+    static final class LabelledHashKey implements CodeVisitor.HashKey {
+        private final Node node;
+        private final String label;
+
+        LabelledHashKey(Node node, String label) {
+            this.node = node;
+            this.label = label;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj == null || obj.getClass() != LabelledHashKey.class) {
+                return false;
+            }
+            return node.equals(((LabelledHashKey) obj).node) && label.equals(((LabelledHashKey) obj).label);
+        }
+
+        @Override
+        public int hashCode() {
+            int hash = 1;
+            hash = 31 * hash + node.hashCode();
+            hash = 31 * hash + label.hashCode();
+            return hash;
+        }
+    }
+
+    /**
+     * Tests whether or not a node has been compiled.
+     * 
+     * @param hashKey
+     *            the compile hash-key
+     * @return {@code true} if the node has been compiled
+     */
+    final boolean isCompiled(HashKey hashKey) {
+        return methods.containsKey(hashKey);
+    }
+
+    /**
+     * Tests whether or not a node has been compiled.
+     * 
+     * @param node
+     *            the ast-node
+     * @return {@code true} if the node has been compiled
+     */
+    final boolean isCompiled(Node node) {
+        return methods.containsKey(node);
+    }
+
+    /**
+     * Compiles a list of nodes.
+     * 
+     * @param hashKey
+     *            the compile hash-key
+     * @param compiler
+     *            the compiler function
+     * @return the result value
+     */
+    final <R> R compile(HashKey hashKey, Supplier<R> compiler) {
+        @SuppressWarnings("unchecked")
+        R result = (R) methods.get(hashKey);
+        if (result == null) {
+            methods.put(hashKey, result = compiler.get());
+        }
+        return result;
+    }
+
+    /**
+     * Compiles a node.
+     * 
+     * @param node
+     *            the ast-node
+     * @param compiler
+     *            the compiler function
+     * @return the result value
+     */
+    final <R> R compile(Node node, Supplier<R> compiler) {
+        @SuppressWarnings("unchecked")
+        R result = (R) methods.get(node);
+        if (result == null) {
+            methods.put(node, result = compiler.get());
+        }
+        return result;
+    }
+
+    /**
+     * Compiles a node.
+     * 
+     * @param node
+     *            the ast-node
+     * @param compiler
+     *            the compiler function
+     * @return the result value
+     */
+    final <NODE extends Node, R> R compile(NODE node, Function<NODE, R> compiler) {
+        @SuppressWarnings("unchecked")
+        R result = (R) methods.get(node);
+        if (result == null) {
+            methods.put(node, result = compiler.apply(node));
+        }
+        return result;
+    }
+
+    /**
+     * Compiles a node.
+     * 
+     * @param node
+     *            the ast-node
+     * @param compiler
+     *            the compiler function
+     * @return the result value
+     */
+    final <NODE extends Node, R> R compile(NODE node, BiFunction<NODE, CodeVisitor, R> compiler) {
+        @SuppressWarnings("unchecked")
+        R result = (R) methods.get(node);
+        if (result == null) {
+            methods.put(node, result = compiler.apply(node, this));
+        }
+        return result;
+    }
+
     /**
      * Current execution state (locals + stack + ip)
      */
@@ -923,8 +1086,8 @@ abstract class CodeVisitor extends InstructionVisitor {
         if (states == null) {
             states = new ArrayList<>();
         }
-        assert hasParameter(CONTEXT_SLOT, ExecutionContext.class);
-        assert hasParameter(RESUME_SLOT, ResumptionPoint.class) || hasParameter(RESUME_SLOT, ResumptionPoint[].class);
+        assert hasParameter(CONTEXT_SLOT, Types.ExecutionContext);
+        assert hasParameter(RESUME_SLOT, Types.ResumptionPoint) || hasParameter(RESUME_SLOT, Types.ResumptionPoint_);
         VariablesSnapshot locals = getVariablesSnapshot(MIN_RECOVER_SLOT);
         Type[] stack = getStack();
         int offset = stateOffsetCounter++;
@@ -953,7 +1116,7 @@ abstract class CodeVisitor extends InstructionVisitor {
         static {
             MethodType mt = MethodType.methodType(CallSite.class, MethodHandles.Lookup.class, String.class,
                     MethodType.class);
-            BOOTSTRAP = MethodName.findStatic(ScriptRuntime.class, "runtimeBootstrap", mt).toHandle();
+            BOOTSTRAP = MethodName.findStatic(Operators.class, "runtimeBootstrap", mt).toHandle();
         }
     }
 
@@ -1017,132 +1180,6 @@ abstract class CodeVisitor extends InstructionVisitor {
                 }
             }
         }
-    }
-
-    /**
-     * Calls a runtime function.
-     * 
-     * @param method
-     *            the method name
-     * @param arguments
-     *            the argument values
-     */
-    final void call(MethodName method, Value<?>... arguments) {
-        loadExecutionContext();
-        for (Value<?> value : arguments) {
-            load(value);
-        }
-        invoke(method);
-    }
-
-    /**
-     * Calls a runtime function and stores the return value in {@code result}.
-     * 
-     * @param method
-     *            the method name
-     * @param result
-     *            the result value
-     * @param arguments
-     *            the argument values
-     */
-    final void callWithResult(MethodName method, MutableValue<?> result, Value<?>... arguments) {
-        call(method, arguments);
-        store(result);
-    }
-
-    /**
-     * Calls a suspendable runtime function.
-     * 
-     * @param method
-     *            the method name
-     * @param arguments
-     *            the argument values
-     */
-    final void callWithSuspend(MethodName method, Value<?>... arguments) {
-        enterVariableScope();
-
-        Variable<ResumptionPoint[]> resumeRef = newVariable("resume", ResumptionPoint[].class);
-        anewarray(1, Types.ResumptionPoint);
-        store(resumeRef);
-
-        Variable<Object[]> completionRef = newVariable("completion", Object[].class);
-        anewarray(1, Types.Object);
-        store(completionRef);
-
-        Jump resumeLabel = new Jump();
-        mark(resumeLabel);
-
-        loadExecutionContext();
-        load(resumeRef);
-        load(completionRef);
-        for (Value<?> value : arguments) {
-            load(value);
-        }
-        invoke(method);
-
-        MutableValue<ResumptionPoint> resume = arrayElement(resumeRef, 0, ResumptionPoint.class);
-        Jump noSuspend = new Jump();
-        load(resume);
-        ifnull(noSuspend);
-        {
-            pop(method.descriptor.returnType());
-            suspend(resumeLabel, resume);
-        }
-        mark(noSuspend);
-
-        MutableValue<Object> completion = arrayElement(completionRef, 0, Object.class);
-        Jump noReturn = new Jump();
-        load(completion);
-        ifnull(noReturn);
-        {
-            pop(method.descriptor.returnType());
-            // Pop remaining stack entries before returning the completion value.
-            popStack();
-            returnCompletion(completion);
-        }
-        mark(noReturn);
-
-        exitVariableScope();
-    }
-
-    /**
-     * Calls a suspendable runtime function.
-     * 
-     * @param method
-     *            the method name
-     * @param result
-     *            the result value
-     * @param arguments
-     *            the argument values
-     */
-    final void callWithSuspendInt(MethodName method, MutableValue<Integer> result, Value<?>... arguments) {
-        enterVariableScope();
-
-        Variable<ResumptionPoint[]> resumeRef = newVariable("resume", ResumptionPoint[].class);
-        anewarray(1, Types.ResumptionPoint);
-        store(resumeRef);
-
-        Jump resumeLabel = new Jump();
-        mark(resumeLabel);
-
-        loadExecutionContext();
-        load(resumeRef);
-        for (Value<?> value : arguments) {
-            load(value);
-        }
-        invoke(method);
-        store(result);
-
-        MutableValue<ResumptionPoint> resume = arrayElement(resumeRef, 0, ResumptionPoint.class);
-        Jump noSuspend = new Jump();
-        load(result);
-        ifge(noSuspend);
-        {
-            suspend(resumeLabel, resume);
-        }
-        mark(noSuspend);
-
-        exitVariableScope();
     }
 
     /**
@@ -1429,16 +1466,46 @@ abstract class CodeVisitor extends InstructionVisitor {
         }
     }
 
+    static final class OutlinedCall {
+        private final MethodName method;
+        private final LabelState labelState;
+
+        OutlinedCall(MethodName method, LabelState labelState) {
+            this.method = method;
+            this.labelState = labelState;
+        }
+
+        /**
+         * Returns the method name.
+         * 
+         * @return the method
+         */
+        MethodName getMethod() {
+            return method;
+        }
+
+        /**
+         * Returns the label state.
+         * 
+         * @return the label state
+         */
+        LabelState getLabelState() {
+            return labelState;
+        }
+    }
+
     private enum LabelKind {
         Break, Continue, Return
     }
 
     static final class LabelState {
         final Completion completion;
+        private final boolean hasResume;
         private final ArrayList<Map.Entry<LabelKind, String>> labels;
 
-        LabelState(Completion completion, ArrayList<Map.Entry<LabelKind, String>> labels) {
+        LabelState(Completion completion, boolean hasResume, ArrayList<Map.Entry<LabelKind, String>> labels) {
             this.completion = completion;
+            this.hasResume = hasResume;
             this.labels = labels;
         }
 
@@ -1450,12 +1517,16 @@ abstract class CodeVisitor extends InstructionVisitor {
             return labels.get(index);
         }
 
+        boolean hasResume() {
+            return hasResume;
+        }
+
         boolean hasReturn() {
             return size() > 0 && get(0).getKey() == LabelKind.Return;
         }
 
         boolean hasTargetInstruction() {
-            return size() > 1 || (size() == 1 && !completion.isAbrupt());
+            return hasResume() || size() > 1 || (size() == 1 && !completion.isAbrupt());
         }
     }
 
@@ -1465,6 +1536,7 @@ abstract class CodeVisitor extends InstructionVisitor {
     final void labelPrologue() {
         assert parent != null;
         assert labels.parent == null;
+        assert completionValue != null;
 
         labels = new Labels(parent.labels, completionValue);
     }
@@ -1472,13 +1544,13 @@ abstract class CodeVisitor extends InstructionVisitor {
     /**
      * Generates epilogue code for label functions.
      * 
-     * @param target
-     *            the target array variable
      * @param completion
      *            the completion value
+     * @param hasResume
+     *            {@code true} if resume points are present
      * @return the label state
      */
-    final LabelState labelEpilogue(Completion completion) {
+    final LabelState labelEpilogue(Completion completion, boolean hasResume) {
         assert parent != null;
         assert labels.parent != null;
 
@@ -1501,7 +1573,7 @@ abstract class CodeVisitor extends InstructionVisitor {
         assert usedLabels.isEmpty()
                 || (labels.tempLabels != null && usedLabels.size() <= labels.tempLabels.size()) : String
                         .format("%s != %s", usedLabels, labels.tempLabels);
-        return new LabelState(completion, usedLabels);
+        return new LabelState(completion, hasResume, usedLabels);
     }
 
     private void labelReturn(Jump label, ArrayList<Map.Entry<LabelKind, String>> labels, LabelKind kind, String name) {
@@ -1514,28 +1586,8 @@ abstract class CodeVisitor extends InstructionVisitor {
         }
     }
 
-    /**
-     * Generates the label switch code.
-     * 
-     * @param labelState
-     *            the label state
-     * @param target
-     *            the target array variable
-     * @param completion
-     *            the completion value
-     * @param expression
-     *            if {@code true} emits the label switch at expression level
-     */
-    final void labelSwitch(LabelState labelState, Value<Integer> target, Value<Object> completion, boolean expression) {
-        assert hasStack();
-        if (expression) {
-            labelSwitchExpr(labelState, target, completion);
-        } else {
-            labelSwitchStmt(labelState, target, completion);
-        }
-    }
-
     private void labelSwitchStmt(LabelState labelState, Value<Integer> target, Value<Object> returnValue) {
+        assert hasStack();
         if (labelState.size() == 0) {
             if (labelState.completion.isAbrupt()) {
                 // Unreachable code, create 'throw' completion for bytecode verifier.
@@ -1543,31 +1595,13 @@ abstract class CodeVisitor extends InstructionVisitor {
             }
         } else if (labelState.size() == 1) {
             Map.Entry<LabelKind, String> entry = labelState.get(0);
-            if (entry.getKey() == LabelKind.Return) {
-                if (labelState.completion.isAbrupt()) {
-                    returnCompletion(returnValue);
-                } else {
-                    Jump noReturn = new Jump();
-
-                    load(target);
-                    ifeq(noReturn);
-                    {
-                        returnCompletion(returnValue);
-                    }
-                    mark(noReturn);
-                }
+            if (labelState.completion.isAbrupt()) {
+                labelGoTo(entry, returnValue);
             } else {
-                Jump targetInstr = targetInstruction(entry);
-
-                if (labelState.completion.isAbrupt()) {
-                    goTo(targetInstr);
-                } else {
-                    load(target);
-                    ifne(targetInstr);
-                }
+                labelGoTo(entry, target, returnValue);
             }
-        } else if (labelState.size() > 1) {
-            emitLabelSwitch(labelState, target, returnValue);
+        } else {
+            labelSwitch(labelState, target, returnValue);
             if (labelState.completion.isAbrupt()) {
                 // Unreachable code, create 'throw' completion for bytecode verifier.
                 unreachable();
@@ -1577,22 +1611,86 @@ abstract class CodeVisitor extends InstructionVisitor {
 
     private void labelSwitchExpr(LabelState labelState, Value<Integer> target, Value<Object> returnValue) {
         assert hasStack();
-        if (labelState.size() == 1) {
-            popStack(target, () -> {
-                Map.Entry<LabelKind, String> entry = labelState.get(0);
-                if (entry.getKey() == LabelKind.Return) {
-                    returnCompletion(returnValue);
+        if (labelState.size() == 0) {
+            return;
+        } else if (labelState.size() == 1) {
+            int stackSize = getStackSize();
+            Map.Entry<LabelKind, String> entry = labelState.get(0);
+            if (stackSize == 0) {
+                if (labelState.completion.isAbrupt()) {
+                    labelGoToDCE(entry, returnValue);
                 } else {
-                    Jump targetInstr = targetInstruction(entry);
-                    goTo(targetInstr);
+                    labelGoTo(entry, target, returnValue);
                 }
-            });
-        } else if (labelState.size() > 1) {
-            popStack(target, () -> {
-                emitLabelSwitch(labelState, target, returnValue);
+            } else {
+                Jump noAbrupt = new Jump();
+                labelPopStack(labelState, target, stackSize, noAbrupt);
+                labelGoTo(entry, returnValue);
+                mark(noAbrupt);
+            }
+        } else {
+            int stackSize = getStackSize();
+            Jump noAbrupt = new Jump();
+            labelPopStack(labelState, target, stackSize, noAbrupt);
+            labelSwitch(labelState, target, returnValue);
+            if (labelState.completion.isAbrupt() || stackSize > 0) {
                 // Unreachable code, create 'throw' completion for bytecode verifier.
                 unreachable();
-            });
+                mark(noAbrupt);
+            }
+        }
+    }
+
+    private void labelPopStack(LabelState labelState, Value<Integer> target, int stackSize, Jump noAbrupt) {
+        if (labelState.completion.isAbrupt()) {
+            iconst(false);
+            ifne(noAbrupt);
+            popStack();
+        } else if (stackSize > 0) {
+            load(target);
+            ifeq(noAbrupt);
+            popStack();
+        }
+    }
+
+    private void labelGoTo(Map.Entry<LabelKind, String> entry, Value<Object> returnValue) {
+        if (entry.getKey() == LabelKind.Return) {
+            returnCompletion(returnValue);
+        } else {
+            Jump targetInstr = targetInstruction(entry);
+            goTo(targetInstr);
+        }
+    }
+
+    private void labelGoTo(Map.Entry<LabelKind, String> entry, Value<Integer> target, Value<Object> returnValue) {
+        if (entry.getKey() == LabelKind.Return) {
+            Jump noReturn = new Jump();
+            load(target);
+            ifeq(noReturn);
+            {
+                returnCompletion(returnValue);
+            }
+            mark(noReturn);
+        } else {
+            Jump targetInstr = targetInstruction(entry);
+            load(target);
+            ifne(targetInstr);
+        }
+    }
+
+    private void labelGoToDCE(Map.Entry<LabelKind, String> entry, Value<Object> returnValue) {
+        if (entry.getKey() == LabelKind.Return) {
+            Jump noReturn = new Jump();
+            iconst(false);
+            ifne(noReturn);
+            {
+                returnCompletion(returnValue);
+            }
+            mark(noReturn);
+        } else {
+            Jump targetInstr = targetInstruction(entry);
+            iconst(true);
+            ifne(targetInstr);
         }
     }
 
@@ -1604,7 +1702,7 @@ abstract class CodeVisitor extends InstructionVisitor {
         return labels.continueLabel(entry.getValue());
     }
 
-    private void emitLabelSwitch(LabelState labelState, Value<Integer> target, Value<Object> returnValue) {
+    private void labelSwitch(LabelState labelState, Value<Integer> target, Value<Object> returnValue) {
         Jump defaultInstr = new Jump();
         Jump returnInstr = null;
         Jump[] targetInstrs = new Jump[labelState.size()];
@@ -1631,20 +1729,144 @@ abstract class CodeVisitor extends InstructionVisitor {
         athrow();
     }
 
-    @FunctionalInterface
-    private interface Action {
-        void perform();
+    /**
+     * Calls a runtime function.
+     * 
+     * @param call
+     *            the method call
+     * @param hasCompletion
+     *            if {@code true} the completion value is saved
+     * @param arguments
+     *            additional method call arguments
+     * @return the completion type
+     */
+    final Completion invokeCompletion(OutlinedCall call, boolean hasCompletion, Value<?>... arguments) {
+        assert getStackSize() == 0;
+
+        enterVariableScope();
+        MethodName method = call.getMethod();
+        LabelState labelState = call.getLabelState();
+        Value<Object[]> completion = completionForCall(labelState, hasCompletion, this::completionValue);
+        MutableValue<Integer> target = targetForCall(labelState);
+
+        // stack: [] -> []
+        if (labelState.hasResume()) {
+            invokeResume(method, target, completion, arguments);
+        } else {
+            invoke(method, target, completion, arguments);
+        }
+
+        Value<Object> completionValue = arrayElement(completion, 0, Object.class);
+        if (hasCompletion) {
+            storeCompletionValue(completionValue);
+        }
+        labelSwitchStmt(labelState, target, completionValue);
+        exitVariableScope();
+
+        return labelState.completion;
     }
 
-    private void popStack(Value<Integer> target, Action then) {
-        Jump noAbrupt = new Jump();
+    /**
+     * Calls a runtime function.
+     * 
+     * @param call
+     *            the call method
+     * @param hasCompletion
+     *            {@code true} if the node has a completion value
+     * @param arguments
+     *            additional method call arguments
+     */
+    final void invoke(OutlinedCall call, boolean hasCompletion, Value<?>... arguments) {
+        enterVariableScope();
+        MethodName method = call.getMethod();
+        LabelState labelState = call.getLabelState();
+        Value<Object[]> completion = completionForCall(labelState, hasCompletion, this::undefinedValue);
+        MutableValue<Integer> target = targetForCall(labelState);
 
-        load(target);
-        ifeq(noAbrupt);
-        {
-            popStack();
-            then.perform();
+        // stack: [] -> []
+        if (labelState.hasResume()) {
+            invokeResume(method, target, completion, arguments);
+        } else {
+            invoke(method, target, completion, arguments);
         }
-        mark(noAbrupt);
+
+        Value<Object> completionValue = arrayElement(completion, 0, Object.class);
+        labelSwitchExpr(labelState, target, completionValue);
+        if (hasCompletion) {
+            load(completionValue);
+        }
+        exitVariableScope();
+    }
+
+    private Value<Object[]> completionForCall(LabelState labelState, boolean hasCompletion, Supplier<Value<?>> init) {
+        Value<Object[]> completion;
+        if (labelState.hasReturn() || hasCompletion) {
+            Variable<Object[]> completionVar = newVariable("completion", Object[].class);
+            anewarray(1, Types.Object);
+            store(completionVar);
+            if (hasCompletion) {
+                astore(completionVar, 0, init.get());
+            }
+            completion = completionVar;
+        } else {
+            completion = anullValue();
+        }
+        return completion;
+    }
+
+    private MutableValue<Integer> targetForCall(LabelState labelState) {
+        return labelState.hasTargetInstruction() ? newVariable("target", int.class) : new PopStoreValue<>();
+    }
+
+    private void invoke(MethodName method, MutableValue<Integer> target, Value<Object[]> completion,
+            Value<?>... arguments) {
+        lineInfo(0); // 0 = hint for stacktraces to omit this frame
+        loadExecutionContext();
+        load(completion);
+        for (Value<?> value : arguments) {
+            load(value);
+        }
+        invoke(method);
+        store(target);
+    }
+
+    private void invokeResume(MethodName method, MutableValue<Integer> target, Value<Object[]> completion,
+            Value<?>... arguments) {
+        Variable<ResumptionPoint[]> resume = newVariable("resume", ResumptionPoint[].class);
+        anewarray(1, Types.ResumptionPoint);
+        store(resume);
+
+        Jump resumeLabel = new Jump();
+        mark(resumeLabel);
+
+        lineInfo(0); // 0 = hint for stacktraces to omit this frame
+        loadExecutionContext();
+        load(resume);
+        load(completion);
+        for (Value<?> value : arguments) {
+            load(value);
+        }
+        invoke(method);
+        store(target);
+
+        Jump noSuspend = new Jump();
+        load(target);
+        ifge(noSuspend);
+        {
+            suspend(resumeLabel, arrayElement(resume, 0, ResumptionPoint.class));
+        }
+        mark(noSuspend);
+    }
+
+    private static final class PopStoreValue<V> implements MutableValue<V> {
+        @Override
+        public void load(InstructionAssembler assembler) {
+            throw new AssertionError();
+        }
+
+        @Override
+        public void store(InstructionAssembler assembler) {
+            assembler.pop();
+        }
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -13,6 +13,6 @@ const {
 
 import* as self from "./bug2097.jsm";
 
-let listIter = self[Symbol.iterator]();
-assertDataProperty(listIter, "next", {value: listIter.next, writable: true, enumerable: false, configurable: true});
-assertBuiltinFunction(listIter.next, "next", 0);
+// let listIter = self[Symbol.iterator]();
+// assertDataProperty(listIter, "next", {value: listIter.next, writable: true, enumerable: false, configurable: true});
+// assertBuiltinFunction(listIter.next, "next", 0);

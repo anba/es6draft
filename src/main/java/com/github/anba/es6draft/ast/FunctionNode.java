@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -82,18 +82,11 @@ public interface FunctionNode extends TopLevelNode<StatementListItem>, ScopedNod
     void setStrictMode(StrictMode strictMode);
 
     /**
-     * Returns the source string representation for the function's header.
+     * Returns the source string for this function.
      * 
-     * @return the header source string
+     * @return the source string
      */
-    String getHeaderSource();
-
-    /**
-     * Returns the source string representation for the function's body.
-     * 
-     * @return the body source string
-     */
-    String getBodySource();
+    String getSource();
 
     @Override
     List<StatementListItem> getStatements();
@@ -131,4 +124,13 @@ public interface FunctionNode extends TopLevelNode<StatementListItem>, ScopedNod
      * @return <code>true</code> if this node is a constructor function
      */
     boolean isConstructor();
+
+    /**
+     * Returns <code>true</code> if this function is inlineable.
+     * 
+     * @return <code>true</code> if this node is inlineable
+     */
+    default boolean isInline() {
+        return Functions.isInlinable(this);
+    }
 }

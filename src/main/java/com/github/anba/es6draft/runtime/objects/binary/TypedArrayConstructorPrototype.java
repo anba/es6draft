@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -11,8 +11,8 @@ import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.objects.binary.TypedArrayConstructor.TypedArrayCreate;
 
-import java.util.AbstractList;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
@@ -25,12 +25,14 @@ import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.internal.ScriptIterator;
+import com.github.anba.es6draft.runtime.internal.ScriptIterators;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
+import com.github.anba.es6draft.runtime.types.builtins.ArrayObject;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
 
 /**
@@ -57,11 +59,6 @@ public final class TypedArrayConstructorPrototype extends BuiltinConstructor imp
         createProperties(realm, this, Properties.class);
     }
 
-    @Override
-    public TypedArrayConstructorPrototype clone() {
-        return new TypedArrayConstructorPrototype(getRealm());
-    }
-
     /**
      * 22.2.1.1 %TypedArray% ( )
      */
@@ -75,21 +72,8 @@ public final class TypedArrayConstructorPrototype extends BuiltinConstructor imp
      */
     @Override
     public ScriptObject construct(ExecutionContext callerContext, Constructor newTarget, Object... args) {
-        ExecutionContext calleeContext = calleeContext();
-        /* step 1 (not applicable) */
-        /* step 2 (omitted) */
-        /* step 3 */
-        if (newTarget == this) {
-            throw newTypeError(calleeContext, Messages.Key.TypedArrayCreate);
-        }
-        /* step 4 */
-        ScriptObject super_ = getPrototypeOf(calleeContext);
-        /* step 5 */
-        if (!IsConstructor(super_)) {
-            throw newTypeError(calleeContext, Messages.Key.NotConstructor);
-        }
-        /* steps 6-7 */
-        return ((Constructor) super_).construct(calleeContext, newTarget, args);
+        /* step 1 */
+        throw newTypeError(calleeContext(), Messages.Key.TypedArrayCreate);
     }
 
     /**
@@ -110,8 +94,7 @@ public final class TypedArrayConstructorPrototype extends BuiltinConstructor imp
         /**
          * 22.2.2.3 %TypedArray%.prototype
          */
-        @Value(name = "prototype",
-                attributes = @Attributes(writable = false, enumerable = false, configurable = false))
+        @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false, configurable = false))
         public static final Intrinsics prototype = Intrinsics.TypedArrayPrototype;
 
         /**
@@ -152,28 +135,59 @@ public final class TypedArrayConstructorPrototype extends BuiltinConstructor imp
             }
             /* step 5 (omitted) */
             /* step 6 */
-            List<Object> arrayLike = IterableToArrayLike(cx, source);
+            Callable usingIterator = GetMethod(cx, source, BuiltinSymbol.iterator.get());
             /* step 7 */
-            int len = arrayLike.size();
-            /* step 8 */
-            TypedArrayObject targetObj = TypedArrayCreate(cx, (Constructor) c, len);
-            /* steps 9-10 */
-            for (int k = 0; k < len; ++k) {
-                /* step 10.a */
-                int pk = k;
-                /* step 10.b */
-                Object kValue = arrayLike.get(pk);
-                /* steps 10.c-d */
+            if (usingIterator != null) {
+                /* step 7.a */
+                List<?> values = IterableToList(cx, source, usingIterator);
+                /* step 7.b */
+                int len = values.size();
+                /* step 7.c */
+                TypedArrayObject targetObj = TypedArrayCreate(cx, "%TypedArray%.from", (Constructor) c, len);
+                /* steps 7.d-e */
+                for (int k = 0; k < len; ++k) {
+                    /* step 7.e.i */
+                    int pk = k;
+                    /* step 7.e.ii */
+                    Object kValue = values.get(pk);
+                    /* steps 7.e.iii-iv */
+                    Object mappedValue;
+                    if (mapping) {
+                        mappedValue = mapper.call(cx, thisArg, kValue, k);
+                    } else {
+                        mappedValue = kValue;
+                    }
+                    /* step 7.e.v */
+                    targetObj.elementSetMaybeDetached(cx, pk, mappedValue);
+                }
+                /* step 7.f (not applicable) */
+                /* step 7.g */
+                return targetObj;
+            }
+            /* step 8 (note) */
+            /* step 9 */
+            ScriptObject arrayLike = ToObject(cx, source);
+            /* step 10 */
+            long len = ToLength(cx, Get(cx, arrayLike, "length"));
+            /* step 11 */
+            TypedArrayObject targetObj = TypedArrayCreate(cx, "%TypedArray%.from", (Constructor) c, len);
+            /* steps 12-13 */
+            for (long k = 0; k < len; ++k) {
+                /* step 13.a */
+                long pk = k;
+                /* step 13.b */
+                Object kValue = Get(cx, arrayLike, pk);
+                /* steps 13.c-d */
                 Object mappedValue;
                 if (mapping) {
                     mappedValue = mapper.call(cx, thisArg, kValue, k);
                 } else {
                     mappedValue = kValue;
                 }
-                /* step 10.e */
-                targetObj.elementSetDirect(cx, pk, ToNumber(cx, mappedValue));
+                /* step 13.e */
+                targetObj.elementSetMaybeDetached(cx, pk, mappedValue);
             }
-            /* step 11 */
+            /* step 14 */
             return targetObj;
         }
 
@@ -199,15 +213,11 @@ public final class TypedArrayConstructorPrototype extends BuiltinConstructor imp
                 throw newTypeError(cx, Messages.Key.NotConstructor);
             }
             /* step 5 */
-            TypedArrayObject newObj = TypedArrayCreate(cx, (Constructor) c, len);
+            TypedArrayObject newObj = TypedArrayCreate(cx, "%TypedArray%.of", (Constructor) c, len);
             /* steps 6-7 */
             for (int k = 0; k < len; ++k) {
-                /* step 7.a */
-                Object value = items[k];
-                /* step 7.b */
-                int pk = k;
-                /* step 7.c */
-                newObj.elementSetDirect(cx, pk, ToNumber(cx, value));
+                /* steps 7.a-c */
+                newObj.elementSetMaybeDetached(cx, k, items[k]);
             }
             /* step 8 */
             return newObj;
@@ -230,58 +240,35 @@ public final class TypedArrayConstructorPrototype extends BuiltinConstructor imp
     }
 
     /**
-     * 22.2.2.1.1 Runtime Semantics: IterableToArrayLike( items )
+     * 22.2.2.1.1 Runtime Semantics: IterableToList( items, method )
      * 
      * @param cx
      *            the execution context
      * @param items
      *            the items object
+     * @param method
+     *            the iterator method
      * @return the items list
      */
-    public static List<Object> IterableToArrayLike(ExecutionContext cx, Object items) {
+    public static List<?> IterableToList(ExecutionContext cx, Object items, Callable method) {
+        if (items instanceof ArrayObject) {
+            ArrayObject array = (ArrayObject) items;
+            if (ScriptIterators.isBuiltinArrayIterator(cx, array, method)) {
+                return Arrays.asList(array.toArray());
+            }
+        } else if (items instanceof TypedArrayObject) {
+            TypedArrayObject array = (TypedArrayObject) items;
+            if (ScriptIterators.isBuiltinTypedArrayIterator(cx, array, method)) {
+                return array.toList();
+            }
+        }
         /* step 1 */
-        Callable usingIterator = GetMethod(cx, items, BuiltinSymbol.iterator.get());
+        ScriptIterator<?> iterator = GetIterator(cx, items, method);
         /* step 2 */
-        if (usingIterator != null) {
-            /* step 2.a */
-            ScriptIterator<?> iterator = GetScriptIterator(cx, items, usingIterator);
-            /* step 2.b */
-            ArrayList<Object> values = new ArrayList<>();
-            /* steps 2.c-d */
-            while (iterator.hasNext()) {
-                Object nextValue = iterator.next();
-                values.add(nextValue);
-            }
-            /* step 2.e */
-            return values;
-        }
-        /* step 3 (note) */
-        /* step 4 */
-        return new ScriptArrayList(cx, ToObject(cx, items));
-    }
-
-    private final static class ScriptArrayList extends AbstractList<Object> {
-        private final ExecutionContext cx;
-        private final ScriptObject arrayLike;
-        private final long length;
-
-        ScriptArrayList(ExecutionContext cx, ScriptObject arrayLike) {
-            this.cx = cx;
-            this.arrayLike = arrayLike;
-            this.length = ToLength(cx, Get(cx, arrayLike, "length"));
-        }
-
-        @Override
-        public int size() {
-            return (int) Math.min(length, Integer.MAX_VALUE);
-        }
-
-        @Override
-        public Object get(int index) {
-            if (index < 0 || index >= length) {
-                throw new IndexOutOfBoundsException();
-            }
-            return Get(cx, arrayLike, index);
-        }
+        ArrayList<Object> values = new ArrayList<>();
+        /* steps 3-4 */
+        iterator.forEachRemaining(values::add);
+        /* step 5 */
+        return values;
     }
 }

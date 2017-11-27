@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -32,9 +32,9 @@ public @interface Concurrency {
     int maxThreads() default 12;
 
     /**
-     * Multiplicator for {@link #threads()}, defaults to {@code 1.5}.
+     * Multiplicator for {@link #threads()}, defaults to {@code 1}.
      * 
      * @return thread multiplicator
      */
-    float factor() default 1.5f;
+    float factor() default 1f;
 }

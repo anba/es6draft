@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -10,7 +10,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 
 import com.github.anba.es6draft.runtime.modules.MalformedNameException;
-import com.github.anba.es6draft.runtime.modules.SourceIdentifier;
 
 /**
  *
@@ -25,15 +24,19 @@ final class SourceIdentifiers {
      * @param unnormalizedName
      *            the unnormalized module name
      * @param referrerId
-     *            the identifier of the including module or {@code null}
+     *            the referrer uri to resolve relative modules
+     * @param base
+     *            the base uri to resolve non-relative modules
      * @return the normalized source identifier {@link URI}
      * @throws MalformedNameException
      *             if the name cannot be normalized
      */
-    static URI normalize(String unnormalizedName, SourceIdentifier referrerId) throws MalformedNameException {
+    static URI normalize(String unnormalizedName, URI referrerId, URI base) throws MalformedNameException {
         URI moduleName = parse(unnormalizedName);
         if (referrerId != null && isRelative(moduleName)) {
-            moduleName = referrerId.toUri().resolve(moduleName);
+            moduleName = referrerId.resolve(moduleName);
+        } else {
+            moduleName = base.resolve(moduleName);
         }
         return moduleName.normalize();
     }

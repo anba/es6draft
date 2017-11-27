@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -12,7 +12,10 @@ const {
 
 function A1_1() { { var a; var a; } }
 assertSyntaxError(`function A1_2() { { let a; let a; } }`);
-assertSyntaxError(`function A1_3() { { function a(){}; function a(){}; } }`);
+function A1_3() { { function a(){}; function a(){}; } }
+assertSyntaxError(`function A1_4() { { function a(){}; function* a(){}; } }`);
+assertSyntaxError(`function A1_5() { { function* a(){}; function a(){}; } }`);
+assertSyntaxError(`function A1_6() { { function* a(){}; function* a(){}; } }`);
 
 function B1_1() { { var a; { var a; } } }
 function B1_2() { { let a; { let a; } } }

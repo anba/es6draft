@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -16,8 +16,7 @@ public abstract class BreakableStatement extends Statement implements AbruptNode
     private final EnumSet<Abrupt> abrupt;
     private final Set<String> labelSet;
 
-    protected BreakableStatement(long beginPosition, long endPosition, EnumSet<Abrupt> abrupt,
-            Set<String> labelSet) {
+    protected BreakableStatement(long beginPosition, long endPosition, EnumSet<Abrupt> abrupt, Set<String> labelSet) {
         super(beginPosition, endPosition);
         this.abrupt = abrupt;
         this.labelSet = labelSet;

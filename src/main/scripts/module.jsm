@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -7,14 +7,7 @@
 const defineProperty = Reflect.defineProperty;
 
 function isPrimitive(v) {
-  switch (typeof v) {
-    case "object":
-      return v === null;
-    case "function":
-      return false;
-    default:
-      return true;
-  }
+  return (v === null || typeof v !== "object") && typeof v !== "function";
 }
 
 export default class Module {

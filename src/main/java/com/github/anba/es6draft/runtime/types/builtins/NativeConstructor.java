@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -21,9 +21,9 @@ import com.github.anba.es6draft.runtime.types.ScriptObject;
  * </ul>
  */
 public final class NativeConstructor extends BuiltinConstructor {
-    // (ExecutionContext, Object, Object[]) -> Object
+    // (ExecutionContext, ExecutionContext, Object, Object[]) -> Object
     private final MethodHandle callMethod;
-    // (ExecutionContext, Constructor, Object[]) -> Object
+    // (ExecutionContext, ExecutionContext, Constructor, Object[]) -> Object
     private final MethodHandle constructMethod;
 
     /**
@@ -48,25 +48,16 @@ public final class NativeConstructor extends BuiltinConstructor {
         createDefaultFunctionProperties();
     }
 
-    private NativeConstructor(NativeConstructor original) {
-        super(original.getRealm(), original.getName(), original.getArity());
-        this.callMethod = original.callMethod;
-        this.constructMethod = original.constructMethod;
-    }
-
-    @Override
-    public NativeConstructor clone() {
-        return new NativeConstructor(this);
-    }
-
     @Override
     public MethodHandle getCallMethod() {
-        return MethodHandles.dropArguments(callMethod, 0, NativeConstructor.class);
+        MethodHandle mh = MethodHandles.insertArguments(callMethod, 0, getRealm().defaultContext());
+        return MethodHandles.dropArguments(mh, 0, NativeConstructor.class);
     }
 
     @Override
     public MethodHandle getConstructMethod() {
-        return MethodHandles.dropArguments(callMethod, 0, NativeConstructor.class);
+        MethodHandle mh = MethodHandles.insertArguments(constructMethod, 0, getRealm().defaultContext());
+        return MethodHandles.dropArguments(mh, 0, NativeConstructor.class);
     }
 
     /**
@@ -75,7 +66,7 @@ public final class NativeConstructor extends BuiltinConstructor {
     @Override
     public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
         try {
-            return callMethod.invokeExact(callerContext, thisValue, args);
+            return callMethod.invokeExact(getRealm().defaultContext(), callerContext, thisValue, args);
         } catch (Throwable e) {
             throw NativeConstructor.<RuntimeException> rethrow(e);
         }
@@ -87,7 +78,8 @@ public final class NativeConstructor extends BuiltinConstructor {
     @Override
     public ScriptObject construct(ExecutionContext callerContext, Constructor newTarget, Object... args) {
         try {
-            return (ScriptObject) constructMethod.invokeExact(callerContext, newTarget, args);
+            return (ScriptObject) constructMethod.invokeExact(getRealm().defaultContext(), callerContext, newTarget,
+                    args);
         } catch (Throwable e) {
             throw NativeConstructor.<RuntimeException> rethrow(e);
         }

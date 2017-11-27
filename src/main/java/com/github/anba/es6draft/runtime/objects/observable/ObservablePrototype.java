@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -16,8 +16,6 @@ import static com.github.anba.es6draft.runtime.objects.observable.SubscriptionAb
 import static com.github.anba.es6draft.runtime.objects.observable.SubscriptionAbstractOperations.CreateSubscription;
 import static com.github.anba.es6draft.runtime.objects.observable.SubscriptionAbstractOperations.SubscriptionClosed;
 import static com.github.anba.es6draft.runtime.objects.observable.SubscriptionObserverAbstractOperations.CreateSubscriptionObserver;
-import static com.github.anba.es6draft.runtime.objects.promise.PromiseAbstractOperations.PromiseBuiltinCapability;
-import static com.github.anba.es6draft.runtime.objects.promise.PromiseCapability.IfAbruptRejectPromise;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
@@ -28,8 +26,6 @@ import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
-import com.github.anba.es6draft.runtime.objects.promise.PromiseCapability;
-import com.github.anba.es6draft.runtime.objects.promise.PromiseObject;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
@@ -84,103 +80,88 @@ public final class ObservablePrototype extends OrdinaryObject implements Initial
          *            the function this-value
          * @param observer
          *            the observer object
+         * @param errorCallback
+         *            the optional error callback
+         * @param completeCallback
+         *            the optional complete callback
          * @return the new subscription object
          */
         @Function(name = "subscribe", arity = 1)
-        public static Object subscribe(ExecutionContext cx, Object thisValue, Object observer) {
+        public static Object subscribe(ExecutionContext cx, Object thisValue, Object observer, Object errorCallback,
+                Object completeCallback) {
             /* steps 2-3 */
             if (!(thisValue instanceof ObservableObject)) {
-                throw newTypeError(cx, Messages.Key.IncompatibleObject);
+                throw newTypeError(cx, Messages.Key.IncompatibleThis, "Observable.prototype.subscribe",
+                        Type.of(thisValue).toString());
             }
             /* step 1 */
             ObservableObject observable = (ObservableObject) thisValue;
-            /* step 4 */
-            if (!Type.isObject(observer)) {
-                throw newTypeError(cx, Messages.Key.NotObjectType);
-            }
-            ScriptObject observerObj = Type.objectValue(observer);
-            /* steps 5-6 */
-            // FIXME: spec bug - unnecessary ReturnIfAbrupt
-            SubscriptionObject subscription = CreateSubscription(cx, observerObj);
-            /* steps 7-8 */
-            // FIXME: spec bug - unnecessary ReturnIfAbrupt
-            SubscriptionObserverObject subscriptionObserver = CreateSubscriptionObserver(cx, subscription);
-            /* step 9 */
-            Callable subscriber = observable.getSubscriber();
-            /* step 10 (implicit) */
-            /* steps 11-13 */
-            try {
-                /* step 11 */
-                Callable subscriberResult = ExecuteSubscriber(cx, subscriber, subscriptionObserver);
-                /* step 13 */
-                // FIXME: spec bug - typo 'observer'
-                subscription.setCleanup(subscriberResult);
-            } catch (ScriptException e) {
-                /* step 12 */
-                Invoke(cx, subscriptionObserver, "error", e.getValue());
-            }
-            /* step 14 */
-            if (SubscriptionClosed(subscription)) {
-                CleanupSubscription(cx, subscription);
-            }
-            /* step 15 */
-            return subscription;
-        }
-
-        /**
-         * Observable.prototype.forEach ( callbackFn [, thisArg] )
-         * 
-         * @param cx
-         *            the execution context
-         * @param thisValue
-         *            the function this-value
-         * @param callbackFn
-         *            the callback function
-         * @param thisArg
-         *            the optional this-argument for the callback function
-         * @return the new promise object
-         */
-        @Function(name = "forEach", arity = 1)
-        public static Object forEach(ExecutionContext cx, Object thisValue, Object callbackFn, Object thisArg) {
-            /* step 2 */
-            if (!Type.isObject(thisValue)) {
-                throw newTypeError(cx, Messages.Key.NotObjectType);
-            }
-            /* step 1 */
-            ScriptObject o = Type.objectValue(thisValue);
-            /* steps 3-4 */
-            PromiseCapability<PromiseObject> promiseCapability = PromiseBuiltinCapability(cx);
-            /* step 5 */
-            if (!IsCallable(callbackFn)) {
-                /* step 5.a */
-                ScriptException r = newTypeError(cx, Messages.Key.NotCallable);
-                /* step 5.b */
-                // FIXME: spec bug - missing ThisValue in Call()
-                promiseCapability.getReject().call(cx, UNDEFINED, r.getValue());
-                /* step 5.c */
-                return promiseCapability.getPromise();
+            /* steps 4-5 */
+            ScriptObject observerObj;
+            if (IsCallable(observer)) {
+                /* step 4.a-g (omitted) */
+                Object nextCallback = observer;
+                // FIXME: spec issue - overly complicated, just make both callback optional
+                /* step 4.h */
+                observerObj = ObjectCreate(cx, Intrinsics.ObjectPrototype);
+                /* step 4.i */
+                CreateDataProperty(cx, observerObj, "next", nextCallback);
+                /* step 4.j */
+                CreateDataProperty(cx, observerObj, "error", errorCallback);
+                /* step 4.k */
+                CreateDataProperty(cx, observerObj, "complete", completeCallback);
+            } else if (!Type.isObject(observable)) {
+                /* step 5 */
+                observerObj = ObjectCreate(cx, Intrinsics.ObjectPrototype);
+            } else {
+                observerObj = Type.objectValue(observable);
             }
             /* step 6 */
-            OrdinaryObject observer = ObjectCreate(cx, Intrinsics.ObjectPrototype);
-            /* steps 7-9 */
-            ObserverablePrototypeForEachNextFunction next = new ObserverablePrototypeForEachNextFunction(cx.getRealm(),
-                    (Callable) callbackFn, thisArg, promiseCapability.getReject());
-            /* step 12 */
-            CreateDataProperty(cx, observer, "next", next);
-            /* step 13 */
-            CreateDataProperty(cx, observer, "error", promiseCapability.getReject());
-            /* step 14 */
-            CreateDataProperty(cx, observer, "complete", promiseCapability.getResolve());
-            /* steps 15-16 */
+            // FIXME: spec bug - unnecessary ReturnIfAbrupt
+            SubscriptionObject subscription = CreateSubscription(cx, observerObj);
+            Callable start;
             try {
-                /* step 15 */
-                Invoke(cx, o, "subscribe", observer);
+                /* steps 7-8, 8.a (implicit) */
+                start = GetMethod(cx, observerObj, "start");
+                /* step 8.b */
+                if (start != null) {
+                    /* step 8.b.i */
+                    start.call(cx, observerObj, subscription);
+                    /* step 8.b.iii */
+                    if (SubscriptionClosed(subscription)) {
+                        return subscription;
+                    }
+                }
             } catch (ScriptException e) {
+                /* steps 9, 8.b.ii */
+                cx.getRuntimeContext().getErrorReporter().accept(cx, e);
+            }
+            /* step 10 */
+            // FIXME: spec bug - result not necessarly defined at this point; HostReportErrors already called
+            /* step 11 */
+            // FIXME: spec bug - unnecessary ReturnIfAbrupt
+            SubscriptionObserverObject subscriptionObserver = CreateSubscriptionObserver(cx, subscription);
+            /* step 12 */
+            Callable subscriber = observable.getSubscriber();
+            /* step 13 (implicit) */
+            /* steps 14-16 */
+            try {
+                /* step 14 */
+                Callable subscriberResult = ExecuteSubscriber(cx, subscriber, subscriptionObserver);
                 /* step 16 */
-                return IfAbruptRejectPromise(cx, e, promiseCapability);
+                // FIXME: spec bug - typo 'observer' -> 'subscription'
+                subscription.setCleanup(subscriberResult);
+            } catch (ScriptException e) {
+                /* step 15 */
+                Invoke(cx, subscriptionObserver, "error", e.getValue());
             }
             /* step 17 */
-            return promiseCapability.getPromise();
+            if (SubscriptionClosed(subscription)) {
+                /* step 17.a */
+                CleanupSubscription(cx, subscription);
+            }
+            /* step 18 */
+            return subscription;
         }
 
         /**
@@ -213,26 +194,25 @@ public final class ObservablePrototype extends OrdinaryObject implements Initial
     public static Callable ExecuteSubscriber(ExecutionContext cx, Callable subscriber,
             SubscriptionObserverObject observer) {
         /* steps 1-2 (implicit) */
-        /* steps 3-4 */
+        /* step 3 */
         Object subscriberResult = subscriber.call(cx, UNDEFINED, observer);
-        /* step 5 */
+        /* step 4 */
         if (Type.isUndefinedOrNull(subscriberResult)) {
             return null;
         }
-        /* step 6 */
+        /* step 5 */
         if (IsCallable(subscriberResult)) {
             return (Callable) subscriberResult;
         }
-        /* steps 7-8 */
+        /* step 6 */
         Callable result = GetMethod(cx, subscriberResult, "unsubscribe");
-        /* step 9 */
+        /* step 7 */
         if (result == null) {
             throw newTypeError(cx, Messages.Key.PropertyNotCallable, "unsubscribe");
         }
-        /* steps 10-11 */
+        /* steps 8-9 */
         SubscriptionCleanupFunction cleanupFunction = new SubscriptionCleanupFunction(cx.getRealm(), subscriberResult);
-        /* step 12 */
-        // FIXME: spec bug - typo 'cancelFunction'
+        /* step 10 */
         return cleanupFunction;
     }
 
@@ -244,18 +224,9 @@ public final class ObservablePrototype extends OrdinaryObject implements Initial
         private final Object subscription;
 
         public SubscriptionCleanupFunction(Realm realm, Object subscription) {
-            this(realm, subscription, null);
-            createDefaultFunctionProperties();
-        }
-
-        private SubscriptionCleanupFunction(Realm realm, Object subscription, Void ignore) {
             super(realm, ANONYMOUS, 0);
             this.subscription = subscription;
-        }
-
-        @Override
-        protected SubscriptionCleanupFunction clone() {
-            return new SubscriptionCleanupFunction(getRealm(), subscription, null);
+            createDefaultFunctionProperties();
         }
 
         @Override
@@ -267,63 +238,6 @@ public final class ObservablePrototype extends OrdinaryObject implements Initial
             Object subscription = this.subscription;
             /* step 3 */
             return Invoke(calleeContext, subscription, "unsubscribe");
-        }
-    }
-
-    /**
-     * Observable.prototype.forEach Next Functions
-     */
-    public static final class ObserverablePrototypeForEachNextFunction extends BuiltinFunction {
-        /** [[Subscription]] */
-        private final Callable callbackFn;
-        /** [[ThisArg]] */
-        private Object thisArg;
-        /** [[Subscription]] */
-        private final Callable reject;
-
-        public ObserverablePrototypeForEachNextFunction(Realm realm, Callable callbackFn, Object thisArg,
-                Callable reject) {
-            this(realm, callbackFn, thisArg, reject, null);
-            createDefaultFunctionProperties();
-        }
-
-        private ObserverablePrototypeForEachNextFunction(Realm realm, Callable callbackFn, Object thisArg,
-                Callable reject, Void ignore) {
-            // FIXME: spec bug - missing length definition
-            super(realm, ANONYMOUS, 1);
-            this.callbackFn = callbackFn;
-            this.thisArg = thisArg;
-            this.reject = reject;
-        }
-
-        @Override
-        protected ObserverablePrototypeForEachNextFunction clone() {
-            return new ObserverablePrototypeForEachNextFunction(getRealm(), callbackFn, thisArg, reject, null);
-        }
-
-        @Override
-        public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
-            ExecutionContext calleeContext = calleeContext();
-            Object x = argument(args, 0);
-            /* step 1 */
-            Callable callbackFn = this.callbackFn;
-            /* step 2 */
-            Object thisArg = this.thisArg;
-            /* step 3 */
-            Callable promiseReject = this.reject;
-            /* steps 4-5 */
-            Object result;
-            try {
-                /* step 4 */
-                result = callbackFn.call(calleeContext, thisArg, x);
-            } catch (ScriptException e) {
-                /* steps 5.a-b */
-                promiseReject.call(calleeContext, UNDEFINED, e.getValue());
-                /* step 5.c */
-                return UNDEFINED;
-            }
-            /* step 6 */
-            return result;
         }
     }
 }

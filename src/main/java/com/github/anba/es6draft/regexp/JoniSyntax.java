@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -30,7 +30,7 @@ final class JoniSyntax implements SyntaxProperties {
 
     // - OP2_OPTION_ECMASCRIPT is not enabled, because it breaks nested repeats
     private static final int op2 = OP2_QMARK_GROUP_EFFECT | OP2_OPTION_PERL | OP2_ESC_V_VTAB | OP2_ESC_U_HEX4
-            | OP2_ESC_P_BRACE_CHAR_PROPERTY;
+            | OP2_ESC_P_BRACE_CHAR_PROPERTY | OP2_PLUS_POSSESSIVE_REPEAT | OP2_PLUS_POSSESSIVE_INTERVAL;
 
     private static final int behaviour = BACKSLASH_ESCAPE_IN_CC | ALLOW_EMPTY_RANGE_IN_CC
             | DIFFERENT_LEN_ALT_LOOK_BEHIND;
@@ -42,5 +42,5 @@ final class JoniSyntax implements SyntaxProperties {
                     INEFFECTIVE_META_CHAR, /* zero or one time '?' */
                     INEFFECTIVE_META_CHAR, /* one or more time '+' */
                     INEFFECTIVE_META_CHAR /* anychar anytime */
-    ));
+            ));
 }

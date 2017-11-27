@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -105,84 +105,111 @@ abstract class ConstantPool {
         return constants;
     }
 
-    private boolean isConstantPoolFull() {
-        return constantsMap.size() >= limit;
-    }
-
-    private int getConstantIndex(Object cst) {
-        Integer index = constantsMap.get(cst);
-        return index != null ? index : -1;
-    }
-
-    private void putConstant(Object cst, int index) {
-        constantsMap.put(cst, index);
-    }
-
-    private ConstantPool getNext() {
+    private ConstantPool next() {
         if (next == null) {
             next = newConstantPool();
         }
         return next;
     }
 
+    /**
+     * Adds and loads the given integer constant.
+     * 
+     * @param assembler
+     *            the instruction assembler
+     * @param cst
+     *            the integer constant
+     */
     public final void iconst(InstructionAssembler assembler, Integer cst) {
-        int index = getConstantIndex(cst);
-        if (index < 0) {
-            if (isConstantPoolFull()) {
-                getNext().iconst(assembler, cst);
-                return;
+        ConstantPool cp = this;
+        int index;
+        for (; (index = cp.constantsMap.getOrDefault(cst, -1)) < 0; cp = cp.next()) {
+            if (cp.constantsMap.size() < cp.limit) {
+                cp.constantsMap.put(cst, index = cp.integers++);
+                break;
             }
-            putConstant(cst, index = integers++);
         }
-        iconst(assembler, cst, index);
+        cp.iconst(assembler, cst, index);
     }
 
+    /**
+     * Adds and loads the given long constant.
+     * 
+     * @param assembler
+     *            the instruction assembler
+     * @param cst
+     *            the long constant
+     */
     public final void lconst(InstructionAssembler assembler, Long cst) {
-        int index = getConstantIndex(cst);
-        if (index < 0) {
-            if (isConstantPoolFull()) {
-                getNext().lconst(assembler, cst);
-                return;
+        ConstantPool cp = this;
+        int index;
+        for (; (index = cp.constantsMap.getOrDefault(cst, -1)) < 0; cp = cp.next()) {
+            if (cp.constantsMap.size() < cp.limit) {
+                cp.constantsMap.put(cst, index = cp.longs++);
+                break;
             }
-            putConstant(cst, index = longs++);
         }
-        lconst(assembler, cst, index);
+        cp.lconst(assembler, cst, index);
     }
 
+    /**
+     * Adds and loads the given float constant.
+     * 
+     * @param assembler
+     *            the instruction assembler
+     * @param cst
+     *            the float constant
+     */
     public final void fconst(InstructionAssembler assembler, Float cst) {
-        int index = getConstantIndex(cst);
-        if (index < 0) {
-            if (isConstantPoolFull()) {
-                getNext().fconst(assembler, cst);
-                return;
+        ConstantPool cp = this;
+        int index;
+        for (; (index = cp.constantsMap.getOrDefault(cst, -1)) < 0; cp = cp.next()) {
+            if (cp.constantsMap.size() < cp.limit) {
+                cp.constantsMap.put(cst, index = cp.floats++);
+                break;
             }
-            putConstant(cst, index = floats++);
         }
-        fconst(assembler, cst, index);
+        cp.fconst(assembler, cst, index);
     }
 
+    /**
+     * Adds and loads the given double constant.
+     * 
+     * @param assembler
+     *            the instruction assembler
+     * @param cst
+     *            the double constant
+     */
     public final void dconst(InstructionAssembler assembler, Double cst) {
-        int index = getConstantIndex(cst);
-        if (index < 0) {
-            if (isConstantPoolFull()) {
-                getNext().dconst(assembler, cst);
-                return;
+        ConstantPool cp = this;
+        int index;
+        for (; (index = cp.constantsMap.getOrDefault(cst, -1)) < 0; cp = cp.next()) {
+            if (cp.constantsMap.size() < cp.limit) {
+                cp.constantsMap.put(cst, index = cp.doubles++);
+                break;
             }
-            putConstant(cst, index = doubles++);
         }
-        dconst(assembler, cst, index);
+        cp.dconst(assembler, cst, index);
     }
 
+    /**
+     * Adds and loads the given string constant.
+     * 
+     * @param assembler
+     *            the instruction assembler
+     * @param cst
+     *            the string constant
+     */
     public final void aconst(InstructionAssembler assembler, String cst) {
-        int index = getConstantIndex(cst);
-        if (index < 0) {
-            if (isConstantPoolFull()) {
-                getNext().aconst(assembler, cst);
-                return;
+        ConstantPool cp = this;
+        int index;
+        for (; (index = cp.constantsMap.getOrDefault(cst, -1)) < 0; cp = cp.next()) {
+            if (cp.constantsMap.size() < cp.limit) {
+                cp.constantsMap.put(cst, index = cp.strings++);
+                break;
             }
-            putConstant(cst, index = strings++);
         }
-        aconst(assembler, cst, index);
+        cp.aconst(assembler, cst, index);
     }
 
     /**

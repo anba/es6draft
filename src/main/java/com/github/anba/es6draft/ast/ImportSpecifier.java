@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -17,8 +17,7 @@ public final class ImportSpecifier extends AstNode {
     private final String importName;
     private final BindingIdentifier localName;
 
-    public ImportSpecifier(long beginPosition, long endPosition, String importName,
-            BindingIdentifier localName) {
+    public ImportSpecifier(long beginPosition, long endPosition, String importName, BindingIdentifier localName) {
         super(beginPosition, endPosition);
         this.importName = importName;
         this.localName = localName;

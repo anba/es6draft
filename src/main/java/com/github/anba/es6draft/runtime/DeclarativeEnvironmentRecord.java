@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -81,8 +81,8 @@ public class DeclarativeEnvironmentRecord implements EnvironmentRecord {
 
         @Override
         public String toString() {
-            return String.format("{mutable = %b, deletable = %b, strict = %b, value = %s}",
-                    mutable, deletable, strict, Objects.toString(value, "<uninitialized>"));
+            return String.format("{mutable = %b, deletable = %b, strict = %b, value = %s}", mutable, deletable, strict,
+                    Objects.toString(value, "<uninitialized>"));
         }
 
         @Override
@@ -150,11 +150,10 @@ public class DeclarativeEnvironmentRecord implements EnvironmentRecord {
 
     @Override
     public String toString() {
-        return String.format("%s: {%n\tbindings=%s%n}", getClass().getSimpleName(),
-                bindingsToString());
+        return String.format("%s: {%n\tbindings=%s%n}", getClass().getSimpleName(), bindingsToString());
     }
 
-    /*package*/String bindingsToString() {
+    String bindingsToString() {
         if (bindings.isEmpty()) {
             return "{}";
         }
@@ -193,8 +192,7 @@ public class DeclarativeEnvironmentRecord implements EnvironmentRecord {
     }
 
     @Override
-    public final Reference<DeclarativeEnvironmentRecord, String> getReferenceOrNull(String name,
-            boolean strict) {
+    public final Reference<DeclarativeEnvironmentRecord, String> getReferenceOrNull(String name, boolean strict) {
         Binding b = getBinding(name);
         if (b == null) {
             return null;
@@ -223,8 +221,9 @@ public class DeclarativeEnvironmentRecord implements EnvironmentRecord {
         /* step 1 (omitted) */
         /* step 2 */
         assert !hasBinding(name) : "binding redeclaration: " + name;
-        /* steps 3-4 */
+        /* step 3 */
         createBinding(name, new DirectBinding(true, deletable, false));
+        /* step 4 (return) */
     }
 
     /**
@@ -308,7 +307,7 @@ public class DeclarativeEnvironmentRecord implements EnvironmentRecord {
         Binding b = getBinding(name);
         /* step 1 (omitted) */
         /* step 2 */
-        assert b != null;
+        assert b != null : "binding not found: " + name;
         /* step 3 */
         if (!b.deletable) {
             return false;

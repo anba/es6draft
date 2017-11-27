@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -8,6 +8,8 @@ package com.github.anba.es6draft.parser;
 
 import static com.github.anba.es6draft.parser.Characters.digit;
 import static com.github.anba.es6draft.parser.Characters.hexDigit;
+
+import java.math.BigInteger;
 
 import org.mozilla.javascript.StringToNumber;
 
@@ -185,6 +187,11 @@ public final class NumberParser {
         return Double.parseDouble(s.substring(0, end));
     }
 
+    static BigInteger parseBigInt(char[] cbuf, int length) {
+        String string = new String(cbuf, 0, length);
+        return new BigInteger(string);
+    }
+
     /**
      * Parse a binary integer literal.
      * 
@@ -214,6 +221,11 @@ public final class NumberParser {
             String string = new String(cbuf, 0, length);
             return StringToNumber.stringToNumber(string, 0, 2);
         }
+    }
+
+    static BigInteger parseBigIntBinary(char[] cbuf, int length) {
+        String string = new String(cbuf, 0, length);
+        return new BigInteger(string, 2);
     }
 
     /**
@@ -277,6 +289,11 @@ public final class NumberParser {
         }
     }
 
+    static BigInteger parseBigIntOctal(char[] cbuf, int length) {
+        String string = new String(cbuf, 0, length);
+        return new BigInteger(string, 8);
+    }
+
     /**
      * Parse an octal integer literal.
      * 
@@ -336,6 +353,11 @@ public final class NumberParser {
             String string = new String(cbuf, 0, length);
             return StringToNumber.stringToNumber(string, 0, 16);
         }
+    }
+
+    static BigInteger parseBigIntHex(char[] cbuf, int length) {
+        String string = new String(cbuf, 0, length);
+        return new BigInteger(string, 16);
     }
 
     /**

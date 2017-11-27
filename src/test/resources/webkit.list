@@ -1,16 +1,12 @@
 #
-# Copyright (c) 2012-2016 André Bargull
+# Copyright (c) André Bargull
 # Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
 #
 # <https://github.com/anba/es6draft>
 #
 
 
-# Spread does not use Symbol.iterator in WebKit
-js/script-tests/basic-spread.js
-
 # invalid tests
-js/script-tests/JSON-parse-reviver.js
 js/script-tests/typedarray-set-overlapping-elements-of-same-size.js
 
 # ES6: SetFunctionName not implemented in WebKit
@@ -27,12 +23,6 @@ js/script-tests/octal-literals.js
 
 # invalid test, const declaration cannot appear directly in with statement
 js/script-tests/const.js
-
-# invalid test, https://webkit.org/b/142934
-js/script-tests/object-literal-duplicate-properties.js
-
-# invalid test, various issues
-js/script-tests/regexp-toString.js
 
 # invalid test, `(class { super(){} })` is valid syntax
 js/script-tests/class-syntax-super.js
@@ -51,6 +41,22 @@ js/script-tests/class-syntax-method-names.js
 js/script-tests/parseFloat.js
 js/script-tests/ToNumber.js
 
+# invalid: unicode case insensitive only uses simple and common case mappings
+js/script-tests/regexp-unicode.js
+
+# invalid: anonymous functions don't have an own "name" property
+js/script-tests/function-toString-vs-name.js
+
+# invalid: Int8Array.length is 3
+js/script-tests/typedarray-constructors.js
+
+# Precision ranges extended in ES2018
+js/kde/script-tests/Number.js
+js/script-tests/number-toExponential.js
+
+# https://github.com/tc39/ecma262/issues/913
+js/script-tests/function-declarations-in-switch-statement.js
+
 
 ###################
 # Misc issues     #
@@ -63,11 +69,6 @@ js/script-tests/regexp-zero-length-alternatives.js
 ############################################
 # Implementation specific differences      #
 ############################################
-
-# RegExp.prototype.compile
-# - .compile(undefined) vs. .compile()
-# - SpiderMonkey treats both the same, JSC/V8 treat .compile(undefined) as .compile('undefined')
-js/script-tests/regexp-compile.js
 
 # different completion result with try-finally
 js/script-tests/eval-throw-return.js
@@ -84,6 +85,8 @@ js/script-tests/basic-strict-mode.js
 js/script-tests/numeric-escapes-in-string-literals.js
 
 # different error message
+js/script-tests/arrowfunction-supercall.js
+js/script-tests/arrowfunction-superproperty.js
 js/script-tests/arrowfunction-syntax-errors.js
 js/script-tests/caller-property.js
 js/script-tests/class-syntax-call.js
@@ -92,6 +95,7 @@ js/script-tests/class-syntax-expression.js
 js/script-tests/class-syntax-prototype.js
 js/script-tests/class-syntax-semicolon.js
 js/script-tests/class-syntax-string-and-numeric-names.js
+js/script-tests/cyclic-prototypes.js
 js/script-tests/date-proto-generic-invocation.js
 js/script-tests/exception-expression-offset.js
 js/script-tests/function-constructor-error.js
@@ -115,7 +119,16 @@ js/script-tests/date-toLocaleString.js
 js/script-tests/number-toLocaleString.js
 js/script-tests/string-toLocaleLowerCase.js
 js/script-tests/string-toLocaleUpperCase.js
+js/script-tests/regexp-old-regexp-new-flags.js
 js/script-tests/string-localeCompare.js
+js/script-tests/stack-overflow-regexp.js
+js/script-tests/typedarray-prototype.js
+js/script-tests/typed-array-includes.js
+js/script-tests/string-padend.js
+js/script-tests/string-padstart.js
+js/script-tests/non-strict-function-properties.js
+js/script-tests/regexp-named-capture-groups.js
+js/script-tests/regexp-unicode-properties.js
 
 # Date.parse incompatibility
 js/script-tests/date-constructor.js
@@ -126,10 +139,6 @@ js/script-tests/date-toisostring.js
 # different function source representation
 js/kde/script-tests/function.js
 js/script-tests/object-literal-methods.js
-js/script-tests/class-syntax-name.js
-
-# Date.prototype.toUTCString and Date.prototype.toGMTString distinct objects in JSC
-js/kde/script-tests/inbuilt_function_tostring.js
 
 # error objects have non-standard 'line' and 'sourceURL' properties in JSC
 js/script-tests/exception-properties.js
@@ -140,9 +149,6 @@ js/kde/script-tests/evil-n.js
 
 # JSC ignores empty lines in multi-line string literal
 js/script-tests/parse-backslash-before-newline.js
-
-# RegExp.input has a setter in JSC
-js/script-tests/static-put-in-prototype-chain.js
 
 # Requires proper numberOfDFGCompiles() support
 js/script-tests/dfg-min-max.js
@@ -163,6 +169,15 @@ js/script-tests/dfg-inline-arguments-reset.js
 js/script-tests/dfg-inline-arguments-reset-changetype.js
 js/script-tests/function-dot-arguments.js
 
+# Different property order for built-ins
+js/script-tests/es6-function-properties.js
+
+# todo: Need to remove global 'window' property to run this test in shell mode
+js/script-tests/prototype-assignment.js
+
+# global object has immutable prototype in jsc
+js/script-tests/object-literal-shorthand-construction.js
+
 
 ###############################################################
 # ES6 <Object>.prototype no longer instance of <Type>         #
@@ -170,9 +185,6 @@ js/script-tests/function-dot-arguments.js
 
 # (String|Number|Boolean).prototype no longer instanceof (String|Number|Boolean)
 js/kde/script-tests/prototype_length.js
-
-# RegExp.prototype no longer instanceof RegExp
-js/kde/script-tests/RegExp.js
 
 
 #######################################
@@ -201,15 +213,6 @@ js/script-tests/toString-prefix-postfix-preserve-parens.js
 js/script-tests/function-toString-parentheses.js
 js/script-tests/modify-non-references.js
 js/script-tests/dfg-activation-register-overwritten-in-throw.js
-
-# block-scoped function declaration activated at definition
-js/kde/script-tests/func-decl.js
-
-# function declaration not in block
-js/script-tests/function-declaration-statement.js
-
-# function declaration redeclaration at block-level not allowed
-js/script-tests/function-declarations-in-switch-statement.js
 
 # assignment to non-simple target is early ReferenceError
 js/script-tests/parser-syntax-check.js
@@ -245,3 +248,7 @@ js/script-tests/function-apply-many-args.js
 
 # Intermittent failures
 js/script-tests/stack-overflow-arrity-catch.js
+
+# OOM
+js/script-tests/array-join.js
+js/script-tests/stringimpl-to-jsstring-on-large-strings-1.js

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -14,11 +14,6 @@ import static com.github.anba.es6draft.runtime.internal.Properties.createPropert
 import static com.github.anba.es6draft.runtime.objects.Eval.indirectEval;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
-import java.io.IOException;
-import java.net.URISyntaxException;
-
-import com.github.anba.es6draft.compiler.CompilationException;
-import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
@@ -28,7 +23,7 @@ import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.CompatibilityExtension;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
-import com.github.anba.es6draft.runtime.internal.RuntimeContext;
+import com.github.anba.es6draft.runtime.internal.StrBuilder;
 import com.github.anba.es6draft.runtime.internal.Strings;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Undefined;
@@ -43,7 +38,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>18.4 Other Properties of the Global Object
  * </ul>
  */
-public class GlobalObject extends OrdinaryObject implements Initializable {
+public final class GlobalObject extends OrdinaryObject implements Initializable {
     private final Realm realm;
 
     /**
@@ -58,56 +53,21 @@ public class GlobalObject extends OrdinaryObject implements Initializable {
     }
 
     @Override
-    public final void initialize(Realm realm) {
+    public void initialize(Realm realm) {
         createProperties(realm, this, ValueProperties.class);
         createProperties(realm, this, FunctionProperties.class);
         createProperties(realm, this, ConstructorProperties.class);
         createProperties(realm, this, OtherProperties.class);
-        if (realm.isEnabled(CompatibilityOption.System) || realm.isEnabled(CompatibilityOption.SystemGlobal)) {
+        if (realm.getRuntimeContext().isEnabled(CompatibilityOption.System)
+                || realm.getRuntimeContext().isEnabled(CompatibilityOption.SystemGlobal)) {
             createProperties(realm, this, SystemProperty.class);
         }
         createProperties(realm, this, SIMDProperty.class);
         createProperties(realm, this, ObservableProperty.class);
-        createProperties(realm, this, AtomicsProperties.class);
+        createProperties(realm, this, ZoneProperty.class);
+        createProperties(realm, this, GlobalProperty.class);
+        createProperties(realm, this, BigIntProperties.class);
         createProperties(realm, this, AdditionalProperties.class);
-    }
-
-    /**
-     * Executes any initialization scripts which should be run for this global instance.
-     * 
-     * @throws IOException
-     *             if there was any I/O error
-     * @throws URISyntaxException
-     *             the URL is not a valid URI
-     * @throws ParserException
-     *             if the source contains any syntax errors
-     * @throws CompilationException
-     *             if the parsed source could not be compiled
-     */
-    public void initializeScripted() throws IOException, URISyntaxException, ParserException, CompilationException {
-        /* empty */
-    }
-
-    /**
-     * Initializes implementation defined extensions.
-     */
-    public void initializeExtensions() {
-        /* empty */
-    }
-
-    /**
-     * Creates user-defined native global functions.
-     * 
-     * @param <T>
-     *            the owner type
-     * @param object
-     *            the owner object instance
-     * @param clazz
-     *            the class which holds the properties
-     * @return the owner object
-     */
-    public final <T> T createGlobalProperties(T object, Class<T> clazz) {
-        return getRealm().createGlobalProperties(object, clazz);
     }
 
     /**
@@ -115,17 +75,8 @@ public class GlobalObject extends OrdinaryObject implements Initializable {
      * 
      * @return the realm instance
      */
-    public final Realm getRealm() {
+    public Realm getRealm() {
         return realm;
-    }
-
-    /**
-     * Returns the {@link RuntimeContext} of this global object.
-     * 
-     * @return the runtime context instance
-     */
-    public final RuntimeContext getRuntimeContext() {
-        return getRealm().getWorld().getContext();
     }
 
     /**
@@ -137,22 +88,19 @@ public class GlobalObject extends OrdinaryObject implements Initializable {
         /**
          * 18.1.2 NaN
          */
-        @Value(name = "NaN", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = false))
+        @Value(name = "NaN", attributes = @Attributes(writable = false, enumerable = false, configurable = false))
         public static final Double NaN = Double.NaN;
 
         /**
          * 18.1.1 Infinity
          */
-        @Value(name = "Infinity", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = false))
+        @Value(name = "Infinity", attributes = @Attributes(writable = false, enumerable = false, configurable = false))
         public static final Double Infinity = Double.POSITIVE_INFINITY;
 
         /**
          * 18.1.3 undefined
          */
-        @Value(name = "undefined", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = false))
+        @Value(name = "undefined", attributes = @Attributes(writable = false, enumerable = false, configurable = false))
         public static final Undefined undefined = UNDEFINED;
     }
 
@@ -176,8 +124,9 @@ public class GlobalObject extends OrdinaryObject implements Initializable {
          * @return the evaluation result
          */
         @Function(name = "eval", arity = 1)
-        public static Object eval(ExecutionContext cx, ExecutionContext caller, Object thisValue,
-                Object... args) {
+        public static Object eval(ExecutionContext cx, ExecutionContext caller, Object thisValue, Object... args) {
+            /* steps 1-3 (not applicable) */
+            /* step 4 */
             return indirectEval(cx, caller, args);
         }
 
@@ -194,13 +143,13 @@ public class GlobalObject extends OrdinaryObject implements Initializable {
          */
         @Function(name = "isFinite", arity = 1)
         public static Object isFinite(ExecutionContext cx, Object thisValue, Object number) {
-            /* steps 1-2 */
+            /* step 1 */
             double num = ToNumber(cx, number);
-            /* step 3 */
+            /* step 2 */
             if (Double.isNaN(num) || Double.isInfinite(num)) {
                 return false;
             }
-            /* step 4 */
+            /* step 3 */
             return true;
         }
 
@@ -217,13 +166,13 @@ public class GlobalObject extends OrdinaryObject implements Initializable {
          */
         @Function(name = "isNaN", arity = 1)
         public static Object isNaN(ExecutionContext cx, Object thisValue, Object number) {
-            /* steps 1-2 */
+            /* step 1 */
             double num = ToNumber(cx, number);
-            /* step 3 */
+            /* step 2 */
             if (Double.isNaN(num)) {
                 return true;
             }
-            /* step 4 */
+            /* step 3 */
             return false;
         }
 
@@ -265,10 +214,10 @@ public class GlobalObject extends OrdinaryObject implements Initializable {
          */
         @Function(name = "decodeURI", arity = 1)
         public static Object decodeURI(ExecutionContext cx, Object thisValue, Object encodedURI) {
-            /* steps 1-2 */
+            /* step 1 */
             String uriString = ToFlatString(cx, encodedURI);
-            /* steps 3-4 */
-            String decoded = URIFunctions.decodeURI(uriString);
+            /* steps 2-3 */
+            String decoded = URIFunctions.decodeURI(cx, uriString);
             if (decoded == null) {
                 throw newURIError(cx, Messages.Key.MalformedURI);
             }
@@ -288,12 +237,11 @@ public class GlobalObject extends OrdinaryObject implements Initializable {
          * @return the decoded URI component
          */
         @Function(name = "decodeURIComponent", arity = 1)
-        public static Object decodeURIComponent(ExecutionContext cx, Object thisValue,
-                Object encodedURIComponent) {
-            /* steps 1-2 */
+        public static Object decodeURIComponent(ExecutionContext cx, Object thisValue, Object encodedURIComponent) {
+            /* step 1 */
             String componentString = ToFlatString(cx, encodedURIComponent);
-            /* steps 3-4 */
-            String decoded = URIFunctions.decodeURIComponent(componentString);
+            /* steps 2-3 */
+            String decoded = URIFunctions.decodeURIComponent(cx, componentString);
             if (decoded == null) {
                 throw newURIError(cx, Messages.Key.MalformedURI);
             }
@@ -314,10 +262,10 @@ public class GlobalObject extends OrdinaryObject implements Initializable {
          */
         @Function(name = "encodeURI", arity = 1)
         public static Object encodeURI(ExecutionContext cx, Object thisValue, Object uri) {
-            /* steps 1-2 */
+            /* step 1 */
             String uriString = ToFlatString(cx, uri);
-            /* steps 3-4 */
-            String encoded = URIFunctions.encodeURI(uriString);
+            /* steps 2-3 */
+            String encoded = URIFunctions.encodeURI(cx, uriString);
             if (encoded == null) {
                 throw newURIError(cx, Messages.Key.MalformedURI);
             }
@@ -337,12 +285,11 @@ public class GlobalObject extends OrdinaryObject implements Initializable {
          * @return the encoded URI component
          */
         @Function(name = "encodeURIComponent", arity = 1)
-        public static Object encodeURIComponent(ExecutionContext cx, Object thisValue,
-                Object uriComponent) {
-            /* steps 1-2 */
+        public static Object encodeURIComponent(ExecutionContext cx, Object thisValue, Object uriComponent) {
+            /* step 1 */
             String componentString = ToFlatString(cx, uriComponent);
-            /* steps 3-4 */
-            String encoded = URIFunctions.encodeURIComponent(componentString);
+            /* steps 2-3 */
+            String encoded = URIFunctions.encodeURIComponent(cx, componentString);
             if (encoded == null) {
                 throw newURIError(cx, Messages.Key.MalformedURI);
             }
@@ -488,6 +435,9 @@ public class GlobalObject extends OrdinaryObject implements Initializable {
         @Value(name = "Set")
         public static final Intrinsics Set = Intrinsics.Set;
 
+        @Value(name = "SharedArrayBuffer")
+        public static final Intrinsics SharedArrayBuffer = Intrinsics.SharedArrayBuffer;
+
         /**
          * 18.3.23 String ( . . . )
          */
@@ -565,6 +515,9 @@ public class GlobalObject extends OrdinaryObject implements Initializable {
     public enum OtherProperties {
         ;
 
+        @Value(name = "Atomics")
+        public static final Intrinsics Atomics = Intrinsics.Atomics;
+
         /**
          * 18.4.1 JSON
          */
@@ -612,15 +565,49 @@ public class GlobalObject extends OrdinaryObject implements Initializable {
         public static final Intrinsics Observable = Intrinsics.Observable;
     }
 
-    @CompatibilityExtension(CompatibilityOption.Atomics)
-    public enum AtomicsProperties {
+    @CompatibilityExtension(CompatibilityOption.Zones)
+    public enum ZoneProperty {
         ;
 
-        @Value(name = "Atomics")
-        public static final Intrinsics Atomics = Intrinsics.Atomics;
+        @Value(name = "Zone")
+        public static final Intrinsics Zone = Intrinsics.Zone;
+    }
 
-        @Value(name = "SharedArrayBuffer")
-        public static final Intrinsics SharedArrayBuffer = Intrinsics.SharedArrayBuffer;
+    @CompatibilityExtension(CompatibilityOption.GlobalProperty)
+    public enum GlobalProperty {
+        ;
+
+        /**
+         * global
+         * 
+         * @param cx
+         *            the execution context
+         * @return the global object
+         */
+        @Value(name = "global", attributes = @Attributes(writable = true, enumerable = false, configurable = true))
+        public static Object global(ExecutionContext cx) {
+            return cx.getRealm().getGlobalThis();
+        }
+    }
+
+    @CompatibilityExtension(CompatibilityOption.BigInt)
+    public enum BigIntProperties {
+        ;
+
+        @Value(name = "BigInt")
+        public static final Intrinsics BigInt = Intrinsics.BigInt;
+
+        /**
+         * BigInt64Array ( . . . )
+         */
+        @Value(name = "BigInt64Array")
+        public static final Intrinsics BigInt64Array = Intrinsics.BigInt64Array;
+
+        /**
+         * BigUInt64Array ( . . . )
+         */
+        @Value(name = "BigUint64Array")
+        public static final Intrinsics BigUint64Array = Intrinsics.BigUint64Array;
     }
 
     /**
@@ -658,27 +645,26 @@ public class GlobalObject extends OrdinaryObject implements Initializable {
          */
         @Function(name = "escape", arity = 1)
         public static Object escape(ExecutionContext cx, Object thisValue, Object string) {
-            /* steps 1-2 */
+            /* step 1 */
             String s = ToFlatString(cx, string);
-            /* step 3 */
+            /* step 2 */
             int length = s.length();
-            /* step 4 */
-            StringBuilder r = new StringBuilder(length);
-            /* steps 5-6 */
+            /* step 3 */
+            StrBuilder r = new StrBuilder(cx, length);
+            /* steps 4-5 */
             for (int k = 0; k < length; ++k) {
                 char c = s.charAt(k);
-                if ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9')
-                        || c == '@' || c == '*' || c == '_' || c == '+' || c == '-' || c == '.'
-                        || c == '/') {
+                if ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '@' || c == '*'
+                        || c == '_' || c == '+' || c == '-' || c == '.' || c == '/') {
                     r.append(c);
                 } else if (c < 256) {
                     r.append('%').append(toHexDigit(c, 4)).append(toHexDigit(c, 0));
                 } else {
-                    r.append("%u").append(toHexDigit(c, 12)).append(toHexDigit(c, 8))
-                            .append(toHexDigit(c, 4)).append(toHexDigit(c, 0));
+                    r.append("%u").append(toHexDigit(c, 12)).append(toHexDigit(c, 8)).append(toHexDigit(c, 4))
+                            .append(toHexDigit(c, 0));
                 }
             }
-            /* step 7 */
+            /* step 6 */
             return r.toString();
         }
 
@@ -695,13 +681,13 @@ public class GlobalObject extends OrdinaryObject implements Initializable {
          */
         @Function(name = "unescape", arity = 1)
         public static Object unescape(ExecutionContext cx, Object thisValue, Object string) {
-            /* steps 1-2 */
+            /* step 1 */
             String s = ToFlatString(cx, string);
-            /* step 3 */
+            /* step 2 */
             int length = s.length();
-            /* step 4 */
-            StringBuilder r = new StringBuilder(length);
-            /* steps 5-6 */
+            /* step 3 */
+            StrBuilder r = new StrBuilder(cx, length);
+            /* steps 4-5 */
             for (int k = 0; k < length; ++k) {
                 char c = s.charAt(k);
                 if (c == '%') {
@@ -710,8 +696,8 @@ public class GlobalObject extends OrdinaryObject implements Initializable {
                         char c3 = s.charAt(k + 3);
                         char c4 = s.charAt(k + 4);
                         char c5 = s.charAt(k + 5);
-                        int h = fromHexDigit(c2) << 12 | fromHexDigit(c3) << 8
-                                | fromHexDigit(c4) << 4 | fromHexDigit(c5);
+                        int h = fromHexDigit(c2) << 12 | fromHexDigit(c3) << 8 | fromHexDigit(c4) << 4
+                                | fromHexDigit(c5);
                         if (h >= 0) {
                             k += 5;
                             c = (char) h;
@@ -728,7 +714,7 @@ public class GlobalObject extends OrdinaryObject implements Initializable {
                 }
                 r.append(c);
             }
-            /* step 7 */
+            /* step 6 */
             return r.toString();
         }
     }
@@ -743,45 +729,53 @@ public class GlobalObject extends OrdinaryObject implements Initializable {
         /**
          * 18.2.6.2 decodeURI (encodedURI)
          * 
+         * @param cx
+         *            the execution context
          * @param encodedURI
          *            the encoded URI
          * @return the decoded URI or {@code null} if invalid
          */
-        public static String decodeURI(String encodedURI) {
-            return decode(encodedURI, RESERVED_LO | HASH, RESERVED_HI);
+        public static String decodeURI(ExecutionContext cx, String encodedURI) {
+            return decode(cx, encodedURI, RESERVED_LO | HASH, RESERVED_HI);
         }
 
         /**
          * 18.2.6.3 decodeURIComponent (encodedURIComponent)
          * 
+         * @param cx
+         *            the execution context
          * @param encodedURIComponent
          *            the encoded URI component
          * @return the decoded URI component or {@code null} if invalid
          */
-        public static String decodeURIComponent(String encodedURIComponent) {
-            return decode(encodedURIComponent, 0, 0);
+        public static String decodeURIComponent(ExecutionContext cx, String encodedURIComponent) {
+            return decode(cx, encodedURIComponent, 0, 0);
         }
 
         /**
          * 18.2.6.4 encodeURI (uri)
          * 
+         * @param cx
+         *            the execution context
          * @param uri
          *            the URI
          * @return the encoded URI or {@code null} if invalid
          */
-        public static String encodeURI(String uri) {
-            return encode(uri, RESERVED_LO | UNESCAPED_LO | HASH, RESERVED_HI | UNESCAPED_HI);
+        public static String encodeURI(ExecutionContext cx, String uri) {
+            return encode(cx, uri, RESERVED_LO | UNESCAPED_LO | HASH, RESERVED_HI | UNESCAPED_HI);
         }
 
         /**
          * 18.2.6.5 encodeURIComponent (uriComponent)
          * 
+         * @param cx
+         *            the execution context
          * @param uriComponent
          *            the URI component
          * @return the encoded URI component or {@code null} if invalid
          */
-        public static String encodeURIComponent(String uriComponent) {
-            return encode(uriComponent, UNESCAPED_LO, UNESCAPED_HI);
+        public static String encodeURIComponent(ExecutionContext cx, String uriComponent) {
+            return encode(cx, uriComponent, UNESCAPED_LO, UNESCAPED_HI);
         }
 
         // reserved = ; / ? : @ & = + $ ,
@@ -837,12 +831,12 @@ public class GlobalObject extends OrdinaryObject implements Initializable {
             return (readNibble(s.charAt(i + 1)) << 4) | readNibble(s.charAt(i + 2));
         }
 
-        private static StringBuilder writeByte(StringBuilder sb, int b) {
+        private static void writeByte(StrBuilder sb, int b) {
             int b0 = (b >> 4) & 0b1111;
             int b1 = b & 0b1111;
             b0 = b0 + (b0 < 0x0A ? '0' : ('A' - 10));
             b1 = b1 + (b1 < 0x0A ? '0' : ('A' - 10));
-            return sb.append('%').append((char) b0).append((char) b1);
+            sb.append('%').append((char) b0).append((char) b1);
         }
 
         /**
@@ -850,6 +844,8 @@ public class GlobalObject extends OrdinaryObject implements Initializable {
          * <p>
          * Returns the encoded string or {@code null} on error.
          * 
+         * @param cx
+         *            the execution context
          * @param s
          *            the string
          * @param low
@@ -858,10 +854,10 @@ public class GlobalObject extends OrdinaryObject implements Initializable {
          *            the high bit set
          * @return the encoded string
          */
-        private static String encode(String s, long low, long high) {
+        private static String encode(ExecutionContext cx, String s, long low, long high) {
             final int length = s.length();
             int j = 0;
-            StringBuilder sb = null;
+            StrBuilder sb = null;
             for (int i = 0; i < length; ++i) {
                 char c = s.charAt(i);
                 if (masked(c, low, high)) {
@@ -869,7 +865,7 @@ public class GlobalObject extends OrdinaryObject implements Initializable {
                 }
                 if (sb == null) {
                     // 10 = 5 * encoded ASCII or 1 * encoded supplementary character
-                    sb = new StringBuilder(length + 10);
+                    sb = new StrBuilder(cx, length + 10);
                 }
                 if (j < i) {
                     sb.append(s, j, i);
@@ -916,6 +912,8 @@ public class GlobalObject extends OrdinaryObject implements Initializable {
          * <p>
          * Returns the decoded string or {@code null} on error.
          * 
+         * @param cx
+         *            the execution context
          * @param s
          *            the string
          * @param low
@@ -924,14 +922,14 @@ public class GlobalObject extends OrdinaryObject implements Initializable {
          *            the high bit set
          * @return the decoded string
          */
-        private static String decode(String s, long low, long high) {
+        private static String decode(ExecutionContext cx, String s, long low, long high) {
             int i = s.indexOf('%');
             if (i < 0) {
                 return s;
             }
             final int length = s.length();
             int j = 0;
-            StringBuilder sb = null;
+            StrBuilder sb = null;
             while (i >= 0) {
                 if (i + 2 >= length)
                     return null;
@@ -974,7 +972,7 @@ public class GlobalObject extends OrdinaryObject implements Initializable {
                         // Single character escape
                         return Strings.fromCodePoint(cp);
                     }
-                    sb = new StringBuilder(length);
+                    sb = new StrBuilder(cx, length);
                 }
                 if (j < i) {
                     // append substring before '%'
@@ -995,12 +993,8 @@ public class GlobalObject extends OrdinaryObject implements Initializable {
         }
 
         private static int decodeNonASCII(int c0, String s, int i, int len) {
-            if (c0 < 0)
-                return -1;
-            if (c0 <= 0b01111111) {
-                // US-ASCII (handled in caller)
-                return -1;
-            } else if (c0 <= 0b10111111) {
+            assert c0 > 0b01111111 : "Caller should handle US-ASCII";
+            if (c0 <= 0b10111111) {
                 // illegal (byte sequence part)
                 return -1;
             } else if (c0 <= 0b11000001) {
@@ -1039,12 +1033,8 @@ public class GlobalObject extends OrdinaryObject implements Initializable {
                 if (c2 < 0x80 || c3 < 0x80 || c2 > 0xBF || c3 > 0xBF)
                     return -1;
                 int cp = ((c0 & 0b111) << 18 | (c1 & 0b111111) << 12 | (c2 & 0b111111) << 6 | (c3 & 0b111111));
-                if (cp <= Character.MAX_CODE_POINT) {
-                    return cp;
-                } else {
-                    // illegal code point
-                    return -1;
-                }
+                assert cp <= Character.MAX_CODE_POINT;
+                return cp;
             } else {
                 // illegal (cf. RFC-3629)
                 return -1;
@@ -1054,15 +1044,11 @@ public class GlobalObject extends OrdinaryObject implements Initializable {
         /* embedded BitMaskUtil */
 
         private static boolean masked(char c, long low, long high) {
-            return (c == 0) ? false : //
-                    (c < 64) ? ((1L << c) & low) != 0 : //
-                            (c < 128) ? ((1L << (c - 64)) & high) != 0 : false;
+            return (c != 0) && ((c < 64) ? ((1L << c) & low) != 0 : (c < 128) && ((1L << (c - 64)) & high) != 0);
         }
 
         private static boolean masked(int c, long low, long high) {
-            return (c == 0) ? false : //
-                    (c < 64) ? ((1L << c) & low) != 0 : //
-                            (c < 128) ? ((1L << (c - 64)) & high) != 0 : false;
+            return (c != 0) && ((c < 64) ? ((1L << c) & low) != 0 : (c < 128) && ((1L << (c - 64)) & high) != 0);
         }
 
         private static long low(String s) {

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -17,8 +17,7 @@ public final class TemplateCallExpression extends Expression {
     private final Expression base;
     private final TemplateLiteral template;
 
-    public TemplateCallExpression(long beginPosition, long endPosition, Expression base,
-            TemplateLiteral template) {
+    public TemplateCallExpression(long beginPosition, long endPosition, Expression base, TemplateLiteral template) {
         super(beginPosition, endPosition);
         this.base = base;
         this.template = template;

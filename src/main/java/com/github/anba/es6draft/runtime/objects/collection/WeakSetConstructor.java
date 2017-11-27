@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -7,16 +7,20 @@
 package com.github.anba.es6draft.runtime.objects.collection;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.Get;
-import static com.github.anba.es6draft.runtime.AbstractOperations.GetScriptIterator;
+import static com.github.anba.es6draft.runtime.AbstractOperations.GetIterator;
 import static com.github.anba.es6draft.runtime.AbstractOperations.IsCallable;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
+import static com.github.anba.es6draft.runtime.objects.collection.CollectionAbstractOperations.CollectionCreate;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
+import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.Initializable;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
+import com.github.anba.es6draft.runtime.internal.Properties.CompatibilityExtension;
+import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
@@ -49,11 +53,7 @@ public final class WeakSetConstructor extends BuiltinConstructor implements Init
     @Override
     public void initialize(Realm realm) {
         createProperties(realm, this, Properties.class);
-    }
-
-    @Override
-    public WeakSetConstructor clone() {
-        return new WeakSetConstructor(getRealm());
+        createProperties(realm, this, OfAndFromProperties.class);
     }
 
     /**
@@ -69,31 +69,42 @@ public final class WeakSetConstructor extends BuiltinConstructor implements Init
      * 23.4.1.1 WeakSet ([ iterable ])
      */
     @Override
-    public WeakSetObject construct(ExecutionContext callerContext, Constructor newTarget,
-            Object... args) {
+    public WeakSetObject construct(ExecutionContext callerContext, Constructor newTarget, Object... args) {
         ExecutionContext calleeContext = calleeContext();
         Object iterable = argument(args, 0);
 
         /* step 1 (not applicable) */
-        /* steps 2-4 */
+        /* steps 2-3 */
         WeakSetObject set = OrdinaryCreateFromConstructor(calleeContext, newTarget, Intrinsics.WeakSetPrototype,
                 WeakSetObject::new);
-        /* steps 5-6, 8 */
+        /* steps 4-5, 7 */
         if (Type.isUndefinedOrNull(iterable)) {
             return set;
         }
-        /* step 7 */
+        /* step 6 */
         Object _adder = Get(calleeContext, set, "add");
         if (!IsCallable(_adder)) {
             throw newTypeError(calleeContext, Messages.Key.PropertyNotCallable, "add");
         }
         Callable adder = (Callable) _adder;
-        ScriptIterator<?> iter = GetScriptIterator(calleeContext, iterable);
-        /* step 9 */
+        boolean isBuiltin = WeakSetPrototype.isBuiltinAdd(adder);
+        ScriptIterator<?> iter = GetIterator(calleeContext, iterable);
+        /* step 8 */
         try {
-            while (iter.hasNext()) {
-                Object nextValue = iter.next();
-                adder.call(calleeContext, set, nextValue);
+            if (isBuiltin) {
+                iter.forEachRemaining(nextValue -> {
+                    if (!Type.isObject(nextValue)) {
+                        throw newTypeError(calleeContext, Messages.Key.WeakSetKeyNotObject);
+                    }
+                    set.getWeakSetData().put(Type.objectValue(nextValue), Boolean.TRUE);
+                });
+            } else {
+                while (iter.hasNext()) {
+                    /* steps 8.a-c */
+                    Object nextValue = iter.next();
+                    /* steps 8.d-e */
+                    adder.call(calleeContext, set, nextValue);
+                }
             }
             return set;
         } catch (ScriptException e) {
@@ -111,19 +122,62 @@ public final class WeakSetConstructor extends BuiltinConstructor implements Init
         @Prototype
         public static final Intrinsics __proto__ = Intrinsics.FunctionPrototype;
 
-        @Value(name = "length", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = true))
+        @Value(name = "length", attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static final int length = 0;
 
-        @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = true))
+        @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static final String name = "WeakSet";
 
         /**
          * 23.4.2.1 WeakSet.prototype
          */
-        @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = false))
+        @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false, configurable = false))
         public static final Intrinsics prototype = Intrinsics.WeakSetPrototype;
+    }
+
+    /**
+     * Properties of the WeakSet Constructor
+     */
+    @CompatibilityExtension(CompatibilityOption.CollectionsOfAndFrom)
+    public enum OfAndFromProperties {
+        ;
+
+        /**
+         * WeakSet.of ( ...items )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param items
+         *            the element values
+         * @return the new WeakSet object
+         */
+        @Function(name = "of", arity = 1)
+        public static Object of(ExecutionContext cx, Object thisValue, Object... items) {
+            /* steps 1-4 */
+            return CollectionCreate(cx, thisValue, items);
+        }
+
+        /**
+         * WeakSet.from ( source [ , mapFn [ , thisArg ] ] )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param source
+         *            the source object
+         * @param mapfn
+         *            the optional mapper function
+         * @param thisArg
+         *            the optional this-argument for the mapper
+         * @return the new WeakSet object
+         */
+        @Function(name = "from", arity = 1)
+        public static Object from(ExecutionContext cx, Object thisValue, Object source, Object mapfn, Object thisArg) {
+            /* steps 1-2 */
+            return CollectionCreate(cx, thisValue, source, mapfn, thisArg);
+        }
     }
 }

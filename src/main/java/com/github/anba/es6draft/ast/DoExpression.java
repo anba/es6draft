@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -11,13 +11,11 @@ package com.github.anba.es6draft.ast;
  */
 public final class DoExpression extends Expression {
     private final BlockStatement statement;
-    private final boolean yieldOrAwait;
     private boolean completion = true;
 
-    public DoExpression(long beginPosition, long endPosition, BlockStatement statement, boolean yieldOrAwait) {
+    public DoExpression(long beginPosition, long endPosition, BlockStatement statement) {
         super(beginPosition, endPosition);
         this.statement = statement;
-        this.yieldOrAwait = yieldOrAwait;
     }
 
     /**
@@ -27,15 +25,6 @@ public final class DoExpression extends Expression {
      */
     public BlockStatement getStatement() {
         return statement;
-    }
-
-    /**
-     * Returns {@code true} if a {@code yield} or {@code await} expression is nested in this expression.
-     * 
-     * @return {@code true} if this expression contains a {@code yield} or {@code await} expression
-     */
-    public boolean hasYieldOrAwait() {
-        return yieldOrAwait;
     }
 
     @Override

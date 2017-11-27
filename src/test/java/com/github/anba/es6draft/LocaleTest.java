@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -8,52 +8,44 @@ package com.github.anba.es6draft;
 
 import static org.junit.Assert.assertEquals;
 
+import java.util.EnumSet;
 import java.util.Locale;
 
 import org.junit.Test;
 
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.World;
+import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.RuntimeContext;
-import com.github.anba.es6draft.runtime.internal.Source;
+import com.github.anba.es6draft.runtime.internal.ScriptLoading;
 
 /**
  *
  */
 public final class LocaleTest {
-    private static World newWorld(Locale locale) {
-        /* @formatter:off */
-        RuntimeContext context = new RuntimeContext.Builder()
-                                                   .setLocale(locale)
-                                                   .build();
-        /* @formatter:on */
-
-        return new World(context);
-    }
+    private static final EnumSet<CompatibilityOption> intlExtensions = EnumSet.of(CompatibilityOption.PluralRules,
+            CompatibilityOption.IntlSegmenter, CompatibilityOption.IntlListFormat);
 
     private static Realm newRealm(String languageTag) throws Exception {
         Locale locale = new Locale.Builder().setLanguageTag(languageTag).build();
-        return newWorld(locale).newInitializedRealm();
-    }
-
-    private static Object eval(Realm realm, String sourceCode) {
-        Source source = new Source("eval-locale-test", 1);
-        return realm.getScriptLoader().script(source, sourceCode).evaluate(realm);
+        RuntimeContext context = new RuntimeContext.Builder().setLocale(locale).setOptions(intlExtensions).build();
+        World world = new World(context);
+        return Realm.InitializeHostDefinedRealm(world);
     }
 
     private enum Intl {
-        Collator, DateTimeFormat, NumberFormat
+        Collator, DateTimeFormat, ListFormat, NumberFormat, PluralRules, Segmenter
     }
 
     private static String resolvedLocale(Realm realm, Intl constructor) {
         String sourceCode = String.format("new Intl.%s().resolvedOptions().locale", constructor);
-        return (String) eval(realm, sourceCode);
+        return (String) ScriptLoading.eval(realm, "eval-locale-test", sourceCode);
     }
 
     private static String resolvedLocaleLookup(Realm realm, Intl constructor) {
         String sourceCode = String.format("new Intl.%s({localeMatcher: 'lookup'}).resolvedOptions().locale",
                 constructor);
-        return (String) eval(realm, sourceCode);
+        return (String) ScriptLoading.eval(realm, "eval-locale-test", sourceCode);
     }
 
     @Test
@@ -62,9 +54,9 @@ public final class LocaleTest {
         Realm realm = newRealm(languageTag);
 
         assertEquals(languageTag, realm.getLocale().toLanguageTag());
-        assertEquals("de", resolvedLocale(realm, Intl.Collator));
-        assertEquals("de", resolvedLocale(realm, Intl.DateTimeFormat));
-        assertEquals("de", resolvedLocale(realm, Intl.NumberFormat));
+        for (Intl constructor : Intl.values()) {
+            assertEquals("de", resolvedLocale(realm, constructor));
+        }
     }
 
     @Test
@@ -73,9 +65,9 @@ public final class LocaleTest {
         Realm realm = newRealm(languageTag);
 
         assertEquals(languageTag, realm.getLocale().toLanguageTag());
-        assertEquals("de-AT", resolvedLocale(realm, Intl.Collator));
-        assertEquals("de-AT", resolvedLocale(realm, Intl.DateTimeFormat));
-        assertEquals("de-AT", resolvedLocale(realm, Intl.NumberFormat));
+        for (Intl constructor : Intl.values()) {
+            assertEquals("de-AT", resolvedLocale(realm, constructor));
+        }
     }
 
     @Test
@@ -84,9 +76,9 @@ public final class LocaleTest {
         Realm realm = newRealm(languageTag);
 
         assertEquals(languageTag, realm.getLocale().toLanguageTag());
-        assertEquals("de", resolvedLocale(realm, Intl.Collator));
-        assertEquals("de", resolvedLocale(realm, Intl.DateTimeFormat));
-        assertEquals("de", resolvedLocale(realm, Intl.NumberFormat));
+        for (Intl constructor : Intl.values()) {
+            assertEquals("de", resolvedLocale(realm, constructor));
+        }
     }
 
     @Test
@@ -95,9 +87,9 @@ public final class LocaleTest {
         Realm realm = newRealm(languageTag);
 
         assertEquals(languageTag, realm.getLocale().toLanguageTag());
-        assertEquals("de-AT", resolvedLocale(realm, Intl.Collator));
-        assertEquals("de-AT", resolvedLocale(realm, Intl.DateTimeFormat));
-        assertEquals("de-AT", resolvedLocale(realm, Intl.NumberFormat));
+        for (Intl constructor : Intl.values()) {
+            assertEquals("de-AT", resolvedLocale(realm, constructor));
+        }
     }
 
     @Test
@@ -106,9 +98,9 @@ public final class LocaleTest {
         Realm realm = newRealm(languageTag);
 
         assertEquals(languageTag, realm.getLocale().toLanguageTag());
-        assertEquals("de-AT", resolvedLocale(realm, Intl.Collator));
-        assertEquals("de-AT", resolvedLocale(realm, Intl.DateTimeFormat));
-        assertEquals("de-AT", resolvedLocale(realm, Intl.NumberFormat));
+        for (Intl constructor : Intl.values()) {
+            assertEquals("de-AT", resolvedLocale(realm, constructor));
+        }
     }
 
     @Test
@@ -117,9 +109,9 @@ public final class LocaleTest {
         Realm realm = newRealm(languageTag);
 
         assertEquals(languageTag, realm.getLocale().toLanguageTag());
-        assertEquals("de", resolvedLocale(realm, Intl.Collator));
-        assertEquals("de", resolvedLocale(realm, Intl.DateTimeFormat));
-        assertEquals("de", resolvedLocale(realm, Intl.NumberFormat));
+        for (Intl constructor : Intl.values()) {
+            assertEquals("de", resolvedLocale(realm, constructor));
+        }
     }
 
     @Test
@@ -128,9 +120,9 @@ public final class LocaleTest {
         Realm realm = newRealm(languageTag);
 
         assertEquals(languageTag, realm.getLocale().toLanguageTag());
-        assertEquals("de-AT", resolvedLocale(realm, Intl.Collator));
-        assertEquals("de-AT", resolvedLocale(realm, Intl.DateTimeFormat));
-        assertEquals("de-AT", resolvedLocale(realm, Intl.NumberFormat));
+        for (Intl constructor : Intl.values()) {
+            assertEquals("de-AT", resolvedLocale(realm, constructor));
+        }
     }
 
     @Test
@@ -139,9 +131,9 @@ public final class LocaleTest {
         Realm realm = newRealm(languageTag);
 
         assertEquals(languageTag, realm.getLocale().toLanguageTag());
-        assertEquals("de", resolvedLocale(realm, Intl.Collator));
-        assertEquals("de", resolvedLocale(realm, Intl.DateTimeFormat));
-        assertEquals("de", resolvedLocale(realm, Intl.NumberFormat));
+        for (Intl constructor : Intl.values()) {
+            assertEquals("de", resolvedLocale(realm, constructor));
+        }
     }
 
     @Test
@@ -150,9 +142,9 @@ public final class LocaleTest {
         Realm realm = newRealm(languageTag);
 
         assertEquals(languageTag, realm.getLocale().toLanguageTag());
-        assertEquals("en", resolvedLocale(realm, Intl.Collator));
-        assertEquals("en", resolvedLocale(realm, Intl.DateTimeFormat));
-        assertEquals("en", resolvedLocale(realm, Intl.NumberFormat));
+        for (Intl constructor : Intl.values()) {
+            assertEquals("en", resolvedLocale(realm, constructor));
+        }
     }
 
     @Test
@@ -161,9 +153,9 @@ public final class LocaleTest {
         Realm realm = newRealm(languageTag);
 
         assertEquals(languageTag, realm.getLocale().toLanguageTag());
-        assertEquals("en", resolvedLocale(realm, Intl.Collator));
-        assertEquals("en", resolvedLocale(realm, Intl.DateTimeFormat));
-        assertEquals("en", resolvedLocale(realm, Intl.NumberFormat));
+        for (Intl constructor : Intl.values()) {
+            assertEquals("en", resolvedLocale(realm, constructor));
+        }
     }
 
     @Test
@@ -172,20 +164,12 @@ public final class LocaleTest {
         Realm realm = newRealm(languageTag);
 
         assertEquals(languageTag, realm.getLocale().toLanguageTag());
-        assertEquals("en-GB", resolvedLocale(realm, Intl.Collator));
-        assertEquals("en-GB", resolvedLocale(realm, Intl.DateTimeFormat));
-        assertEquals("en-GB", resolvedLocale(realm, Intl.NumberFormat));
-    }
-
-    @Test
-    public void testLookup_en_GB() throws Exception {
-        String languageTag = "en-GB";
-        Realm realm = newRealm(languageTag);
-
-        assertEquals(languageTag, realm.getLocale().toLanguageTag());
-        assertEquals("en-GB", resolvedLocaleLookup(realm, Intl.Collator));
-        assertEquals("en-GB", resolvedLocaleLookup(realm, Intl.DateTimeFormat));
-        assertEquals("en-GB", resolvedLocaleLookup(realm, Intl.NumberFormat));
+        for (Intl constructor : Intl.values()) {
+            assertEquals("en-GB", resolvedLocale(realm, constructor));
+        }
+        for (Intl constructor : Intl.values()) {
+            assertEquals("en-GB", resolvedLocaleLookup(realm, constructor));
+        }
     }
 
     @Test
@@ -194,19 +178,56 @@ public final class LocaleTest {
         Realm realm = newRealm(languageTag);
 
         assertEquals(languageTag, realm.getLocale().toLanguageTag());
-        assertEquals("de-CH", resolvedLocale(realm, Intl.Collator));
-        assertEquals("de-CH", resolvedLocale(realm, Intl.DateTimeFormat));
-        assertEquals("de-CH", resolvedLocale(realm, Intl.NumberFormat));
+        for (Intl constructor : Intl.values()) {
+            assertEquals("de-CH", resolvedLocale(realm, constructor));
+        }
+        for (Intl constructor : Intl.values()) {
+            assertEquals("de-CH", resolvedLocaleLookup(realm, constructor));
+        }
     }
 
     @Test
-    public void testLookup_de_CH() throws Exception {
-        String languageTag = "de-CH";
+    public void test_br() throws Exception {
+        // 'br' is not supported by Collator, fallback is 'fr'.
+        String languageTag = "br";
         Realm realm = newRealm(languageTag);
 
         assertEquals(languageTag, realm.getLocale().toLanguageTag());
-        assertEquals("de-CH", resolvedLocaleLookup(realm, Intl.Collator));
-        assertEquals("de-CH", resolvedLocaleLookup(realm, Intl.DateTimeFormat));
-        assertEquals("de-CH", resolvedLocaleLookup(realm, Intl.NumberFormat));
+        for (Intl constructor : Intl.values()) {
+            assertEquals("fr", resolvedLocale(realm, constructor));
+        }
+        for (Intl constructor : Intl.values()) {
+            assertEquals("fr", resolvedLocaleLookup(realm, constructor));
+        }
+    }
+
+    @Test
+    public void test_ce() throws Exception {
+        // 'ce' is not supported by Collator, no fallback is available, hence defaults to 'en'.
+        String languageTag = "ce";
+        Realm realm = newRealm(languageTag);
+
+        assertEquals(languageTag, realm.getLocale().toLanguageTag());
+        for (Intl constructor : Intl.values()) {
+            assertEquals("en", resolvedLocale(realm, constructor));
+        }
+        for (Intl constructor : Intl.values()) {
+            assertEquals("en", resolvedLocaleLookup(realm, constructor));
+        }
+    }
+
+    @Test
+    public void test_kok() throws Exception {
+        // 'kok' is not supported by PluralRules, no fallback is available, hence defaults to 'en'.
+        String languageTag = "kok";
+        Realm realm = newRealm(languageTag);
+
+        assertEquals(languageTag, realm.getLocale().toLanguageTag());
+        for (Intl constructor : Intl.values()) {
+            assertEquals("en", resolvedLocale(realm, constructor));
+        }
+        for (Intl constructor : Intl.values()) {
+            assertEquals("en", resolvedLocaleLookup(realm, constructor));
+        }
     }
 }

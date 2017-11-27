@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -41,5 +41,5 @@ var obj = {
 };
 
 assertSame("ok", obj.m());
-assertThrows(ReferenceError, () => obj.f());
-assertThrows(ReferenceError, () => obj.g().next());
+assertThrows(SyntaxError, () => obj.f());
+assertThrows(SyntaxError, () => obj.g().next());

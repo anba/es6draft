@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -70,8 +70,7 @@ public final class TypeConversionTest {
 
         engine.put("nullValue", null);
         assertThat(engine.eval("typeof nullValue"), instanceOfWith(String.class, is("object")));
-        assertThat(engine.eval("nullValue === null"),
-                instanceOfWith(Boolean.class, sameInstance(Boolean.TRUE)));
+        assertThat(engine.eval("nullValue === null"), instanceOfWith(Boolean.class, sameInstance(Boolean.TRUE)));
         assertThat(engine.eval("nullValue"), nullValue());
     }
 
@@ -88,12 +87,9 @@ public final class TypeConversionTest {
         assertThat(engine.eval("javaObject"), nullValue());
 
         assertThat(engine.eval("typeof javaObject"), instanceOfWith(String.class, is("object")));
-        assertThat(engine.eval("javaObject == null"),
-                instanceOfWith(Boolean.class, sameInstance(Boolean.TRUE)));
-        assertThat(engine.eval("javaObject === void 0"),
-                instanceOfWith(Boolean.class, sameInstance(Boolean.FALSE)));
-        assertThat(engine.eval("javaObject === null"),
-                instanceOfWith(Boolean.class, sameInstance(Boolean.TRUE)));
+        assertThat(engine.eval("javaObject == null"), instanceOfWith(Boolean.class, sameInstance(Boolean.TRUE)));
+        assertThat(engine.eval("javaObject === void 0"), instanceOfWith(Boolean.class, sameInstance(Boolean.FALSE)));
+        assertThat(engine.eval("javaObject === null"), instanceOfWith(Boolean.class, sameInstance(Boolean.TRUE)));
     }
 
     @Test
@@ -106,8 +102,7 @@ public final class TypeConversionTest {
         assertThat(bindings.get("javaObject"), nullValue());
         assertThat(engine.eval("javaObject", bindings), nullValue());
 
-        assertThat(engine.eval("typeof javaObject", bindings),
-                instanceOfWith(String.class, is("object")));
+        assertThat(engine.eval("typeof javaObject", bindings), instanceOfWith(String.class, is("object")));
         assertThat(engine.eval("javaObject == null", bindings),
                 instanceOfWith(Boolean.class, sameInstance(Boolean.TRUE)));
         assertThat(engine.eval("javaObject === void 0", bindings),
@@ -126,8 +121,7 @@ public final class TypeConversionTest {
         assertThat(bindings.get("javaObject"), sameInstance(javaObject));
         assertThat(engine.eval("javaObject", bindings), nullValue());
 
-        assertThat(engine.eval("typeof javaObject", bindings),
-                instanceOfWith(String.class, is("object")));
+        assertThat(engine.eval("typeof javaObject", bindings), instanceOfWith(String.class, is("object")));
         assertThat(engine.eval("javaObject == null", bindings),
                 instanceOfWith(Boolean.class, sameInstance(Boolean.TRUE)));
         assertThat(engine.eval("javaObject === void 0", bindings),

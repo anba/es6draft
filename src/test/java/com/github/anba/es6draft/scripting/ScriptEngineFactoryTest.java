@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -26,7 +26,7 @@ import org.junit.Test;
  */
 public final class ScriptEngineFactoryTest {
     private static final String ENGINE_NAME = "es6draft";
-    private static final String LANGUAGE_VERSION = "ECMAScript 2015";
+    private static final String LANGUAGE_VERSION = "ECMAScript 2016";
     private static final String LANGUAGE_NAME = "ECMAScript";
     private static final String COMMON_NAME = "JavaScript";
 
@@ -63,10 +63,8 @@ public final class ScriptEngineFactoryTest {
     @Test
     public void testGetMimeTypes() {
         List<String> mimeTypes = factory.getMimeTypes();
-        assertThat(
-                mimeTypes,
-                containsInAnyOrder("application/javascript", "application/ecmascript",
-                        "text/javascript", "text/ecmascript"));
+        assertThat(mimeTypes, containsInAnyOrder("application/javascript", "application/ecmascript", "text/javascript",
+                "text/ecmascript"));
     }
 
     @Test
@@ -90,20 +88,16 @@ public final class ScriptEngineFactoryTest {
     @Test
     public void testGetParameter() {
         // getNames()
-        assertThat(factory.getParameter(ScriptEngine.NAME),
-                instanceOfWith(String.class, is(ENGINE_NAME)));
+        assertThat(factory.getParameter(ScriptEngine.NAME), instanceOfWith(String.class, is(ENGINE_NAME)));
 
         // getEngineName()
-        assertThat(factory.getParameter(ScriptEngine.ENGINE),
-                instanceOfWith(String.class, is(ENGINE_NAME)));
+        assertThat(factory.getParameter(ScriptEngine.ENGINE), instanceOfWith(String.class, is(ENGINE_NAME)));
 
         // getEngineVersion()
-        assertThat(factory.getParameter(ScriptEngine.ENGINE_VERSION),
-                instanceOfWith(String.class, notNullValue()));
+        assertThat(factory.getParameter(ScriptEngine.ENGINE_VERSION), instanceOfWith(String.class, notNullValue()));
 
         // getLanguageName
-        assertThat(factory.getParameter(ScriptEngine.LANGUAGE),
-                instanceOfWith(String.class, is(LANGUAGE_NAME)));
+        assertThat(factory.getParameter(ScriptEngine.LANGUAGE), instanceOfWith(String.class, is(LANGUAGE_NAME)));
 
         // getLanguageVersion
         assertThat(factory.getParameter(ScriptEngine.LANGUAGE_VERSION),

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -57,11 +57,6 @@ public final class ArrayConstructor extends BuiltinConstructor implements Initia
         createProperties(realm, this, Properties.class);
     }
 
-    @Override
-    public ArrayConstructor clone() {
-        return new ArrayConstructor(getRealm());
-    }
-
     /**
      * 22.1.1.1 Array ( )<br>
      * 22.1.1.2 Array (len)<br>
@@ -79,23 +74,21 @@ public final class ArrayConstructor extends BuiltinConstructor implements Initia
      * 22.1.1.3 Array (...items )
      */
     @Override
-    public ArrayObject construct(ExecutionContext callerContext, Constructor newTarget,
-            Object... args) {
+    public ArrayObject construct(ExecutionContext callerContext, Constructor newTarget, Object... args) {
         ExecutionContext calleeContext = calleeContext();
         /* step 1 */
         int numberOfArgs = args.length;
         /* steps 2-3 (not applicable) */
-        /* steps 4-5 */
-        ScriptObject proto = GetPrototypeFromConstructor(calleeContext, newTarget,
-                Intrinsics.ArrayPrototype);
+        /* step 4 */
+        ScriptObject proto = GetPrototypeFromConstructor(calleeContext, newTarget, Intrinsics.ArrayPrototype);
         if (numberOfArgs == 0) {
             // [22.1.1.1]
-            /* step 6 */
+            /* step 5 */
             return ArrayCreate(calleeContext, 0, proto);
         } else if (numberOfArgs == 1) {
             // [22.1.1.2]
             Object len = args[0];
-            /* steps 6-11 */
+            /* steps 5-9 */
             if (!Type.isNumber(len)) {
                 return DenseArrayCreate(calleeContext, proto, len);
             } else {
@@ -108,7 +101,7 @@ public final class ArrayConstructor extends BuiltinConstructor implements Initia
             }
         } else {
             // [22.1.1.3]
-            /* steps 6-12 */
+            /* steps 5-10 */
             return DenseArrayCreate(calleeContext, proto, args);
         }
     }
@@ -124,19 +117,16 @@ public final class ArrayConstructor extends BuiltinConstructor implements Initia
         @Prototype
         public static final Intrinsics __proto__ = Intrinsics.FunctionPrototype;
 
-        @Value(name = "length", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = true))
+        @Value(name = "length", attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static final int length = 1;
 
-        @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = true))
+        @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static final String name = "Array";
 
         /**
          * 22.1.2.4 Array.prototype
          */
-        @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = false))
+        @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false, configurable = false))
         public static final Intrinsics prototype = Intrinsics.ArrayPrototype;
 
         /**
@@ -173,22 +163,22 @@ public final class ArrayConstructor extends BuiltinConstructor implements Initia
             int len = items.length;
             /* step 3 */
             Object c = thisValue;
-            /* steps 4-6 */
+            /* steps 4-5 */
             ScriptObject a;
             if (IsConstructor(c)) {
-                a = ((Constructor) c).construct(cx, (Constructor) c, len);
+                a = ((Constructor) c).construct(cx, len);
             } else {
                 a = ArrayCreate(cx, len);
             }
-            /* steps 7-8 */
+            /* steps 6-7 */
             for (int k = 0; k < len; ++k) {
                 int pk = k;
                 Object kValue = items[k];
                 CreateDataPropertyOrThrow(cx, a, pk, kValue);
             }
-            /* steps 9-10 */
+            /* step 8 */
             Set(cx, a, "length", len, true);
-            /* step 11 */
+            /* step 9 */
             return a;
         }
 
@@ -208,8 +198,7 @@ public final class ArrayConstructor extends BuiltinConstructor implements Initia
          * @return the new array object
          */
         @Function(name = "from", arity = 1)
-        public static Object from(ExecutionContext cx, Object thisValue, Object items,
-                Object mapfn, Object thisArg) {
+        public static Object from(ExecutionContext cx, Object thisValue, Object items, Object mapfn, Object thisArg) {
             /* step 1 */
             Object c = thisValue;
             /* steps 2-3 */
@@ -225,24 +214,23 @@ public final class ArrayConstructor extends BuiltinConstructor implements Initia
                 mapper = (Callable) mapfn;
                 mapping = true;
             }
-            /* steps 4-5 */
+            /* step 4 */
             Callable usingIterator = GetMethod(cx, items, BuiltinSymbol.iterator.get());
-            /* step 6 */
+            /* step 5 */
             if (usingIterator != null) {
-                /* steps 6.a-c */
+                /* steps 5.a-b */
                 ScriptObject a;
                 if (IsConstructor(c)) {
-                    a = ((Constructor) c).construct(cx, (Constructor) c);
+                    a = ((Constructor) c).construct(cx);
                 } else {
                     a = ArrayCreate(cx, 0);
                 }
-                /* steps 6.d-e */
-                ScriptIterator<?> iterator = GetScriptIterator(cx, items, usingIterator);
-                /* steps 6.f-g */
+                /* step 5.c */
+                ScriptIterator<?> iterator = GetIterator(cx, items, usingIterator);
+                /* steps 5.d-e */
                 long k = 0;
                 try {
                     for (; iterator.hasNext(); ++k) {
-                        // FIXME: spec bug - throw if `k` exceeds 2^53-1 limit
                         if (k >= ARRAY_LENGTH_LIMIT) {
                             throw newTypeError(cx, Messages.Key.InvalidArrayLength);
                         }
@@ -260,24 +248,24 @@ public final class ArrayConstructor extends BuiltinConstructor implements Initia
                     iterator.close(e);
                     throw e;
                 }
-                /* step 6.g.iv */
+                /* step 5.e.iv */
                 assert k <= ARRAY_LENGTH_LIMIT;
                 Set(cx, a, "length", k, true);
                 return a;
             }
-            /* step 7 (?) */
-            /* steps 8-9 */
+            /* step 6 (note) */
+            /* step 7 */
             ScriptObject arrayLike = ToObject(cx, items);
-            /* steps 10-11 */
+            /* step 8 */
             long len = ToLength(cx, Get(cx, arrayLike, "length"));
-            /* steps 12-14 */
+            /* steps 9-10 */
             ScriptObject a;
             if (IsConstructor(c)) {
-                a = ((Constructor) c).construct(cx, (Constructor) c, len);
+                a = ((Constructor) c).construct(cx, len);
             } else {
                 a = ArrayCreate(cx, len);
             }
-            /* steps 15-16 */
+            /* steps 11-12 */
             for (long k = 0; k < len; ++k) {
                 long pk = k;
                 Object kValue = Get(cx, arrayLike, pk);
@@ -289,9 +277,9 @@ public final class ArrayConstructor extends BuiltinConstructor implements Initia
                 }
                 CreateDataPropertyOrThrow(cx, a, pk, mappedValue);
             }
-            /* steps 17-18 */
+            /* step 13 */
             Set(cx, a, "length", len, true);
-            /* step 19 */
+            /* step 14 */
             return a;
         }
 
@@ -304,8 +292,7 @@ public final class ArrayConstructor extends BuiltinConstructor implements Initia
          *            the function this-value
          * @return the species object
          */
-        @Accessor(name = "get [Symbol.species]", symbol = BuiltinSymbol.species,
-                type = Accessor.Type.Getter)
+        @Accessor(name = "get [Symbol.species]", symbol = BuiltinSymbol.species, type = Accessor.Type.Getter)
         public static Object species(ExecutionContext cx, Object thisValue) {
             /* step 1 */
             return thisValue;

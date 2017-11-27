@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -44,31 +44,25 @@ public final class BooleanConstructor extends BuiltinConstructor implements Init
         createProperties(realm, this, Properties.class);
     }
 
-    @Override
-    public BooleanConstructor clone() {
-        return new BooleanConstructor(getRealm());
-    }
-
     /**
      * 19.3.1.1 Boolean (value)
      */
     @Override
     public Boolean call(ExecutionContext callerContext, Object thisValue, Object... args) {
         /* steps 1-2 */
-        return args.length > 0 ? ToBoolean(args[0]) : false;
+        return args.length > 0 && ToBoolean(args[0]);
     }
 
     /**
      * 19.3.1.1 Boolean (value)
      */
     @Override
-    public BooleanObject construct(ExecutionContext callerContext, Constructor newTarget,
-            Object... args) {
+    public BooleanObject construct(ExecutionContext callerContext, Constructor newTarget, Object... args) {
         ExecutionContext calleeContext = calleeContext();
         /* step 1 */
-        boolean b = args.length > 0 ? ToBoolean(args[0]) : false;
+        boolean b = args.length > 0 && ToBoolean(args[0]);
         /* step 2 (not applicable) */
-        /* steps 3-6 */
+        /* steps 3-5 */
         return BooleanCreate(calleeContext, b,
                 GetPrototypeFromConstructor(calleeContext, newTarget, Intrinsics.BooleanPrototype));
     }
@@ -82,19 +76,16 @@ public final class BooleanConstructor extends BuiltinConstructor implements Init
         @Prototype
         public static final Intrinsics __proto__ = Intrinsics.FunctionPrototype;
 
-        @Value(name = "length", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = true))
+        @Value(name = "length", attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static final int length = 1;
 
-        @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = true))
+        @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static final String name = "Boolean";
 
         /**
          * 19.3.2.1 Boolean.prototype
          */
-        @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = false))
+        @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false, configurable = false))
         public static final Intrinsics prototype = Intrinsics.BooleanPrototype;
     }
 }

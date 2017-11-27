@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -12,8 +12,8 @@ import com.github.anba.es6draft.compiler.assembler.Code.ClassCode;
 import com.github.anba.es6draft.compiler.assembler.Code.MethodCode;
 
 /**
- * Concrete {@link ConstantPool} implementation which handles all constant values as extern
- * constants, i.e. the constant value is retrieved from an external class.
+ * Concrete {@link ConstantPool} implementation which handles all constant values as extern constants, i.e. the constant
+ * value is retrieved from an external class.
  */
 final class ExternConstantPool extends ConstantPool {
     private static final int EXTERN_CONSTANTS_LIMIT = 0x6000;
@@ -46,12 +46,7 @@ final class ExternConstantPool extends ConstantPool {
 
     private static final class ConstantClassAssembler extends InstructionAssembler {
         public ConstantClassAssembler(MethodCode method) {
-            super(method);
-        }
-
-        @Override
-        protected Stack createStack(Variables variables) {
-            return new EmptyStack(variables);
+            super(method, new EmptyStack());
         }
     }
 
@@ -102,8 +97,7 @@ final class ExternConstantPool extends ConstantPool {
             asm.sipush(to);
             asm.ificmpge(jump);
             asm.loadParameter(0, Type.INT_TYPE);
-            asm.invokestatic(classCode.classType, spec.methodName(index), spec.methodDescriptor,
-                    false);
+            asm.invokestatic(classCode.classType, spec.methodName(index), spec.methodDescriptor, false);
             asm._return();
             asm.mark(jump);
         }
@@ -138,8 +132,8 @@ final class ExternConstantPool extends ConstantPool {
     }
 
     private <T> ConstantClassAssembler newMethod(String methodName, TypeSpec<T> spec) {
-        MethodCode method = classCode.newMethod(Modifier.PUBLIC | Modifier.STATIC, methodName,
-                spec.methodDescriptor, null, null);
+        int modifier = Modifier.PUBLIC | Modifier.STATIC;
+        MethodCode method = classCode.newMethod(modifier, methodName, spec.methodDescriptor, null, null);
         return new ConstantClassAssembler(method);
     }
 

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -20,8 +20,7 @@ public interface ForIterationNode extends ScopedNode {
     BlockScope getScope();
 
     /**
-     * Returns the <code>for in/of/each</code>-statement's head node. The head node is one of the
-     * following types:
+     * Returns the <code>for in/of/each</code>-statement's head node. The head node is one of the following types:
      * <ul>
      * <li>{@link VariableStatement}:&emsp;{@code for (var decl in/of expr)}
      * <li>{@link LexicalDeclaration}:&emsp;{@code for (let/const decl in/of expr)}

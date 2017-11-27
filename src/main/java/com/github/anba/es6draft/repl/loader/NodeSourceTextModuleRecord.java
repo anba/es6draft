@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -19,10 +19,10 @@ import com.github.anba.es6draft.runtime.ModuleEnvironmentRecord;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.ScriptLoader;
 import com.github.anba.es6draft.runtime.modules.MalformedNameException;
-import com.github.anba.es6draft.runtime.modules.ModuleExport;
 import com.github.anba.es6draft.runtime.modules.ModuleRecord;
 import com.github.anba.es6draft.runtime.modules.ModuleSource;
 import com.github.anba.es6draft.runtime.modules.ResolutionException;
+import com.github.anba.es6draft.runtime.modules.ResolvedBinding;
 import com.github.anba.es6draft.runtime.modules.SourceIdentifier;
 import com.github.anba.es6draft.runtime.modules.SourceTextModuleRecord;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
@@ -76,13 +76,13 @@ public final class NodeSourceTextModuleRecord implements ModuleRecord, Cloneable
     }
 
     @Override
-    public boolean isEvaluated() {
-        return module.isEvaluated();
+    public ScriptObject getMeta() {
+        return module.getMeta();
     }
 
     @Override
-    public boolean isInstantiated() {
-        return module.isInstantiated();
+    public void setMeta(ScriptObject meta) {
+        module.setMeta(meta);
     }
 
     @Override
@@ -92,17 +92,19 @@ public final class NodeSourceTextModuleRecord implements ModuleRecord, Cloneable
     }
 
     @Override
-    public ModuleExport resolveExport(String exportName, Map<ModuleRecord, Set<String>> resolveSet,
-            Set<ModuleRecord> exportStarSet) throws IOException, MalformedNameException, ResolutionException {
-        return module.resolveExport(exportName, resolveSet, exportStarSet);
+    public ResolvedBinding resolveExport(String exportName, Map<ModuleRecord, Set<String>> resolveSet)
+            throws IOException, MalformedNameException, ResolutionException {
+        return module.resolveExport(exportName, resolveSet);
     }
 
     @Override
     public void instantiate() throws IOException, MalformedNameException, ResolutionException {
-        boolean isInstantiated = module.isInstantiated();
+        SourceTextModuleRecord.Status previousState = module.getStatus();
         module.instantiate();
+        SourceTextModuleRecord.Status newState = module.getStatus();
+
         // Add "require" function when module is instantiated.
-        if (!isInstantiated && module.isInstantiated()) {
+        if (newState != previousState && newState == SourceTextModuleRecord.Status.Instantiated) {
             ModuleEnvironmentRecord envRec = module.getEnvironment().getEnvRec();
             if (!envRec.hasBinding("require")) {
                 envRec.createImmutableBinding("require", true);

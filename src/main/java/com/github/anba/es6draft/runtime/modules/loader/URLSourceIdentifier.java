@@ -1,17 +1,14 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
  */
 package com.github.anba.es6draft.runtime.modules.loader;
 
-import java.net.MalformedURLException;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URL;
 
-import com.github.anba.es6draft.runtime.modules.MalformedNameException;
 import com.github.anba.es6draft.runtime.modules.SourceIdentifier;
 
 /**
@@ -24,14 +21,10 @@ public final class URLSourceIdentifier implements SourceIdentifier {
      * Constructs a new url source identifier.
      * 
      * @param unnormalizedName
-     *            the unnormalized module name
-     * @param referrerId
-     *            the identifier of the including module or {@code null}
-     * @throws MalformedNameException
-     *             if the name cannot be normalized
+     *            the normalized module name
      */
-    public URLSourceIdentifier(String unnormalizedName, SourceIdentifier referrerId) throws MalformedNameException {
-        this.uri = SourceIdentifiers.normalize(unnormalizedName, referrerId);
+    URLSourceIdentifier(URI uri) {
+        this.uri = uri.normalize();
     }
 
     /**
@@ -39,15 +32,9 @@ public final class URLSourceIdentifier implements SourceIdentifier {
      * 
      * @param url
      *            the module url
-     * @throws URISyntaxException
-     *             if the url cannot be converted to a uri
      */
-    public URLSourceIdentifier(URL url) throws URISyntaxException {
-        this.uri = url.toURI();
-    }
-
-    public URL getURL() throws MalformedURLException {
-        return uri.toURL();
+    public URLSourceIdentifier(URL url) {
+        this.uri = URI.create(url.toString()).normalize();
     }
 
     @Override

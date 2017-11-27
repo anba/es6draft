@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -12,7 +12,6 @@ import static com.github.anba.es6draft.runtime.internal.Errors.newRangeError;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Messages;
-import com.github.anba.es6draft.runtime.internal.ScriptRuntime;
 import com.github.anba.es6draft.runtime.objects.FunctionPrototype;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Constructor;
@@ -20,7 +19,7 @@ import com.github.anba.es6draft.runtime.types.ScriptObject;
 
 /**
  * <h1>9 Ordinary and Exotic Objects Behaviours</h1><br>
- * <h2>9.4 Built-in Exotic Object Internal Methods and Data Fields</h2>
+ * <h2>9.4 Built-in Exotic Object Internal Methods and Slots</h2>
  * <ul>
  * <li>9.4.1 Bound Function Exotic Objects
  * </ul>
@@ -42,9 +41,11 @@ public class BoundFunctionObject extends OrdinaryObject implements Callable {
          * 
          * @param realm
          *            the realm object
+         * @param prototype
+         *            the prototype object
          */
-        public ConstructorBoundFunctionObject(Realm realm) {
-            super(realm);
+        ConstructorBoundFunctionObject(Realm realm, ScriptObject prototype) {
+            super(realm, prototype);
         }
 
         /**
@@ -63,9 +64,22 @@ public class BoundFunctionObject extends OrdinaryObject implements Callable {
             /* step 5 */
             if (this == newTarget) {
                 newTarget = (Constructor) target;
+            } else if (isFlattened()) {
+                newTarget = newTargetFromBound(newTarget);
             }
             /* step 6 */
             return ((Constructor) target).construct(callerContext, newTarget, args);
+        }
+
+        private Constructor newTargetFromBound(Constructor newTarget) {
+            for (Callable target = getBoundTargetFunction(); target instanceof ConstructorBoundFunctionObject;) {
+                ConstructorBoundFunctionObject bound = (ConstructorBoundFunctionObject) target;
+                if (bound == newTarget) {
+                    return (Constructor) getFlattenedTargetFunction();
+                }
+                target = bound.getBoundTargetFunction();
+            }
+            return newTarget;
         }
     }
 
@@ -74,9 +88,11 @@ public class BoundFunctionObject extends OrdinaryObject implements Callable {
      * 
      * @param realm
      *            the realm object
+     * @param prototype
+     *            the prototype object
      */
-    public BoundFunctionObject(Realm realm) {
-        super(realm);
+    private BoundFunctionObject(Realm realm, ScriptObject prototype) {
+        super(realm, prototype);
     }
 
     /**
@@ -108,6 +124,10 @@ public class BoundFunctionObject extends OrdinaryObject implements Callable {
 
     protected final Callable getFlattenedTargetFunction() {
         return flattenedTargetFunction;
+    }
+
+    protected final boolean isFlattened() {
+        return boundTargetFunction != flattenedTargetFunction;
     }
 
     @Override
@@ -151,25 +171,6 @@ public class BoundFunctionObject extends OrdinaryObject implements Callable {
     }
 
     @Override
-    public final BoundFunctionObject clone(ExecutionContext cx) {
-        /* step 1 (not applicable) */
-        /* steps 2-4 */
-        BoundFunctionObject clone;
-        if (this instanceof ConstructorBoundFunctionObject) {
-            clone = new ConstructorBoundFunctionObject(cx.getRealm());
-        } else {
-            clone = new BoundFunctionObject(cx.getRealm());
-        }
-        clone.setPrototype(getPrototype());
-        clone.boundTargetFunction = boundTargetFunction;
-        clone.flattenedTargetFunction = flattenedTargetFunction;
-        clone.boundThis = boundThis;
-        clone.boundArguments = boundArguments;
-        /* step 5 */
-        return clone;
-    }
-
-    @Override
     public final Realm getRealm(ExecutionContext cx) {
         /* 7.3.22 GetFunctionRealm ( obj ) */
         return getFlattenedTargetFunction().getRealm(cx);
@@ -191,38 +192,35 @@ public class BoundFunctionObject extends OrdinaryObject implements Callable {
     public static BoundFunctionObject BoundFunctionCreate(ExecutionContext cx, Callable targetFunction,
             Object boundThis, Object... boundArgs) {
         /* step 1 (not applicable) */
-        /* steps 2-3 */
+        /* step 2 */
         ScriptObject proto = targetFunction.getPrototypeOf(cx);
-        /* steps 4-7 (implicit) */
+        /* steps 3-8 */
         BoundFunctionObject obj;
         if (IsConstructor(targetFunction)) {
-            obj = new ConstructorBoundFunctionObject(cx.getRealm());
+            obj = new ConstructorBoundFunctionObject(cx.getRealm(), proto);
         } else {
-            obj = new BoundFunctionObject(cx.getRealm());
+            obj = new BoundFunctionObject(cx.getRealm(), proto);
         }
-        /* step 8 */
-        obj.setPrototype(proto);
-        /* step 9 (implicit) */
         // Flatten chain of bound function objects.
         if (targetFunction instanceof BoundFunctionObject) {
             BoundFunctionObject target = (BoundFunctionObject) targetFunction;
-            /* step 10 */
+            /* step 9 */
             obj.boundTargetFunction = target;
             obj.flattenedTargetFunction = target.flattenedTargetFunction;
-            /* step 11 */
+            /* step 10 */
             obj.boundThis = target.boundThis;
-            /* step 12 */
+            /* step 11 */
             obj.boundArguments = concatArguments(cx, target.boundArguments, intern(boundArgs));
         } else {
-            /* step 10 */
+            /* step 9 */
             obj.boundTargetFunction = targetFunction;
             obj.flattenedTargetFunction = targetFunction;
-            /* step 11 */
+            /* step 10 */
             obj.boundThis = boundThis;
-            /* step 12 */
+            /* step 11 */
             obj.boundArguments = intern(boundArgs);
         }
-        /* step 13 */
+        /* step 12 */
         return obj;
     }
 
@@ -243,7 +241,9 @@ public class BoundFunctionObject extends OrdinaryObject implements Callable {
         return args;
     }
 
+    private static final Object[] EMPTY_ARRAY = new Object[0];
+
     private static Object[] intern(Object[] arguments) {
-        return arguments.length > 0 ? arguments : ScriptRuntime.EMPTY_ARRAY;
+        return arguments.length > 0 ? arguments : EMPTY_ARRAY;
     }
 }

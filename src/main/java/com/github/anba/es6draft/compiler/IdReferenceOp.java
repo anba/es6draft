@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -59,8 +59,8 @@ abstract class IdReferenceOp {
 
     private static final class Methods {
         // class: Reference
-        static final MethodName Reference_putValue = MethodName.findVirtual(Types.Reference,
-                "putValue", Type.methodType(Type.VOID_TYPE, Types.Object, Types.ExecutionContext));
+        static final MethodName Reference_putValue = MethodName.findVirtual(Types.Reference, "putValue",
+                Type.methodType(Type.VOID_TYPE, Types.Object, Types.ExecutionContext));
     }
 
     /**

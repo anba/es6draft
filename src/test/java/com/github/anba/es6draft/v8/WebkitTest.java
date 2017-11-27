@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -11,12 +11,10 @@ import static com.github.anba.es6draft.util.Resources.loadTests;
 import static org.junit.Assume.assumeTrue;
 
 import java.io.IOException;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.configuration.Configuration;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -29,15 +27,18 @@ import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
 import org.junit.runners.Parameterized.UseParametersRunnerFactory;
 
+import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
+import com.github.anba.es6draft.runtime.internal.ScriptLoading;
 import com.github.anba.es6draft.runtime.internal.Strings;
 import com.github.anba.es6draft.util.NullConsole;
 import com.github.anba.es6draft.util.Parallelized;
 import com.github.anba.es6draft.util.ParameterizedRunnerFactory;
 import com.github.anba.es6draft.util.TestAssertions;
 import com.github.anba.es6draft.util.TestConfiguration;
-import com.github.anba.es6draft.util.TestGlobals;
 import com.github.anba.es6draft.util.TestInfo;
+import com.github.anba.es6draft.util.TestRealm;
+import com.github.anba.es6draft.util.TestRealms;
 import com.github.anba.es6draft.util.rules.ExceptionHandlers.ScriptExceptionHandler;
 import com.github.anba.es6draft.util.rules.ExceptionHandlers.StandardErrorHandler;
 
@@ -56,13 +57,12 @@ public final class WebkitTest {
     }
 
     @BeforeClass
-    public static void setUpClass() throws IOException {
-        V8TestGlobalObject.testLoadInitializationScript();
+    public static void setUpClass() {
+        V8TestRealmData.testLoadInitializationScript();
     }
 
     @ClassRule
-    public static TestGlobals<V8TestGlobalObject, TestInfo> globals = new TestGlobals<V8TestGlobalObject, TestInfo>(
-            configuration, V8TestGlobalObject::new);
+    public static TestRealms<TestInfo> realms = new TestRealms<>(configuration, V8TestRealmData::new);
 
     @Rule
     public Timeout maxTime = new Timeout(120, TimeUnit.SECONDS);
@@ -79,32 +79,30 @@ public final class WebkitTest {
     @Parameter(0)
     public TestInfo test;
 
-    private V8TestGlobalObject global;
+    @Rule
+    public TestRealm<TestInfo> realm = new TestRealm<>(realms);
 
     @Before
     public void setUp() throws Throwable {
         assumeTrue("Test disabled", test.isEnabled());
 
-        global = globals.newGlobal(new NullConsole(), test);
-        global.createGlobalProperties(new Print(), Print.class);
-        exceptionHandler.setExecutionContext(global.getRealm().defaultContext());
-    }
-
-    @After
-    public void tearDown() {
-        globals.release(global);
+        realm.initialize(new NullConsole(), test);
+        realm.get().createGlobalProperties(new Print(), Print.class);
+        exceptionHandler.setExecutionContext(realm.get().defaultContext());
     }
 
     @Test
     public void runTest() throws Throwable {
+        Realm realm = this.realm.get();
+
         // Evaluate actual test-script
         // - load and execute pre and post before resp. after test-script
-        global.include(Paths.get("resources/standalone-pre.js"));
-        global.eval(test.getScript(), test.toFile());
-        global.include(Paths.get("resources/standalone-post.js"));
+        ScriptLoading.include(realm, test.getBaseDir().resolve("resources/standalone-pre.js"));
+        ScriptLoading.eval(realm, test.getScript(), test.toFile());
+        ScriptLoading.include(realm, test.getBaseDir().resolve("resources/standalone-post.js"));
 
-        // Wait for pending tasks to finish
-        global.getRealm().getWorld().runEventLoop();
+        // Wait for pending jobs to finish
+        realm.getWorld().runEventLoop();
     }
 
     public final class Print {

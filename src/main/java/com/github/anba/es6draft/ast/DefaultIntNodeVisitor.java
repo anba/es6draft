@@ -1,15 +1,15 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
  */
 package com.github.anba.es6draft.ast;
 
+import com.github.anba.es6draft.ast.synthetic.ClassFieldInitializer;
 import com.github.anba.es6draft.ast.synthetic.ExpressionMethod;
 import com.github.anba.es6draft.ast.synthetic.MethodDefinitionsMethod;
 import com.github.anba.es6draft.ast.synthetic.PropertyDefinitionsMethod;
-import com.github.anba.es6draft.ast.synthetic.SpreadArrayLiteral;
 import com.github.anba.es6draft.ast.synthetic.SpreadElementMethod;
 import com.github.anba.es6draft.ast.synthetic.StatementListMethod;
 
@@ -64,10 +64,6 @@ public abstract class DefaultIntNodeVisitor<V> implements IntNodeVisitor<V> {
         return visit((Expression) node, value);
     }
 
-    protected int visit(ArrayInitializer node, V value) {
-        return visit((Expression) node, value);
-    }
-
     protected int visit(ModuleItem node, V value) {
         return visit((Node) node, value);
     }
@@ -110,12 +106,12 @@ public abstract class DefaultIntNodeVisitor<V> implements IntNodeVisitor<V> {
 
     @Override
     public int visit(ArrayComprehension node, V value) {
-        return visit((ArrayInitializer) node, value);
+        return visit((Expression) node, value);
     }
 
     @Override
     public int visit(ArrayLiteral node, V value) {
-        return visit((ArrayInitializer) node, value);
+        return visit((Expression) node, value);
     }
 
     @Override
@@ -176,6 +172,11 @@ public abstract class DefaultIntNodeVisitor<V> implements IntNodeVisitor<V> {
     @Override
     public int visit(AwaitExpression node, V value) {
         return visit((Expression) node, value);
+    }
+
+    @Override
+    public int visit(BigIntegerLiteral node, V value) {
+        return visit((ValueLiteral<?>) node, value);
     }
 
     @Override
@@ -251,6 +252,16 @@ public abstract class DefaultIntNodeVisitor<V> implements IntNodeVisitor<V> {
     @Override
     public int visit(ClassExpression node, V value) {
         return visit((Expression) node, value);
+    }
+
+    @Override
+    public int visit(ClassFieldDefinition node, V value) {
+        return visit((PropertyDefinition) node, value);
+    }
+
+    @Override
+    public int visit(ClassFieldInitializer node, V value) {
+        return visit((Statement) node, value);
     }
 
     @Override
@@ -359,11 +370,6 @@ public abstract class DefaultIntNodeVisitor<V> implements IntNodeVisitor<V> {
     }
 
     @Override
-    public int visit(ForEachStatement node, V value) {
-        return visit((IterationStatement) node, value);
-    }
-
-    @Override
     public int visit(ForInStatement node, V value) {
         return visit((IterationStatement) node, value);
     }
@@ -439,6 +445,11 @@ public abstract class DefaultIntNodeVisitor<V> implements IntNodeVisitor<V> {
     }
 
     @Override
+    public int visit(ImportCallExpression node, V value) {
+        return visit((Expression) node, value);
+    }
+
+    @Override
     public int visit(ImportClause node, V value) {
         return visit((Node) node, value);
     }
@@ -446,6 +457,11 @@ public abstract class DefaultIntNodeVisitor<V> implements IntNodeVisitor<V> {
     @Override
     public int visit(ImportDeclaration node, V value) {
         return visit((ModuleItem) node, value);
+    }
+
+    @Override
+    public int visit(ImportMeta node, V value) {
+        return visit((Expression) node, value);
     }
 
     @Override
@@ -460,36 +476,6 @@ public abstract class DefaultIntNodeVisitor<V> implements IntNodeVisitor<V> {
 
     @Override
     public int visit(LabelledStatement node, V value) {
-        return visit((Statement) node, value);
-    }
-
-    @Override
-    public int visit(LegacyComprehension node, V value) {
-        return visit((Comprehension) node, value);
-    }
-
-    @Override
-    public int visit(LegacyComprehensionFor node, V value) {
-        return visit((ComprehensionQualifier) node, value);
-    }
-
-    @Override
-    public int visit(LegacyGeneratorDeclaration node, V value) {
-        return visit((GeneratorDeclaration) node, value);
-    }
-
-    @Override
-    public int visit(LegacyGeneratorExpression node, V value) {
-        return visit((GeneratorExpression) node, value);
-    }
-
-    @Override
-    public int visit(LetExpression node, V value) {
-        return visit((Expression) node, value);
-    }
-
-    @Override
-    public int visit(LetStatement node, V value) {
         return visit((Statement) node, value);
     }
 
@@ -559,6 +545,16 @@ public abstract class DefaultIntNodeVisitor<V> implements IntNodeVisitor<V> {
     }
 
     @Override
+    public int visit(PrivateNameProperty node, V value) {
+        return visit((Node) node, value);
+    }
+
+    @Override
+    public int visit(PrivatePropertyAccessor node, V value) {
+        return visit((Expression) node, value);
+    }
+
+    @Override
     public int visit(PropertyAccessor node, V value) {
         return visit((Expression) node, value);
     }
@@ -594,18 +590,13 @@ public abstract class DefaultIntNodeVisitor<V> implements IntNodeVisitor<V> {
     }
 
     @Override
-    public int visit(SpreadArrayLiteral node, V value) {
-        return visit((ArrayLiteral) node, value);
-    }
-
-    @Override
     public int visit(SpreadElement node, V value) {
         return visit((Expression) node, value);
     }
 
     @Override
     public int visit(SpreadElementMethod node, V value) {
-        return visit((SpreadElement) node, value);
+        return visit((Expression) node, value);
     }
 
     @Override
@@ -674,6 +665,11 @@ public abstract class DefaultIntNodeVisitor<V> implements IntNodeVisitor<V> {
     }
 
     @Override
+    public int visit(ThrowExpression node, V value) {
+        return visit((Expression) node, value);
+    }
+
+    @Override
     public int visit(ThrowStatement node, V value) {
         return visit((Statement) node, value);
     }
@@ -685,6 +681,11 @@ public abstract class DefaultIntNodeVisitor<V> implements IntNodeVisitor<V> {
 
     @Override
     public int visit(UnaryExpression node, V value) {
+        return visit((Expression) node, value);
+    }
+
+    @Override
+    public int visit(UpdateExpression node, V value) {
         return visit((Expression) node, value);
     }
 

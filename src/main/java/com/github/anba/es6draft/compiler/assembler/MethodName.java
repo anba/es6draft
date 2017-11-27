@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -36,7 +36,7 @@ public final class MethodName {
      */
     public final MethodTypeDescriptor descriptor;
 
-    private MethodName(MethodName.Invoke invoke, Type owner, String name, MethodTypeDescriptor descriptor) {
+    MethodName(MethodName.Invoke invoke, Type owner, String name, MethodTypeDescriptor descriptor) {
         this.invoke = invoke;
         this.owner = owner;
         this.name = name;

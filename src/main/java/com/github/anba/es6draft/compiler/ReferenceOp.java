@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -8,20 +8,13 @@ package com.github.anba.es6draft.compiler;
 
 import static com.github.anba.es6draft.compiler.DefaultCodeGenerator.ToPropertyKey;
 
-import com.github.anba.es6draft.ast.ElementAccessor;
-import com.github.anba.es6draft.ast.Expression;
-import com.github.anba.es6draft.ast.IdentifierReference;
-import com.github.anba.es6draft.ast.LeftHandSideExpression;
-import com.github.anba.es6draft.ast.Literal;
-import com.github.anba.es6draft.ast.PropertyAccessor;
-import com.github.anba.es6draft.ast.StringLiteral;
-import com.github.anba.es6draft.ast.SuperElementAccessor;
-import com.github.anba.es6draft.ast.SuperPropertyAccessor;
+import com.github.anba.es6draft.ast.*;
 import com.github.anba.es6draft.compiler.DefaultCodeGenerator.ValType;
+import com.github.anba.es6draft.compiler.assembler.InstructionAssembler;
 import com.github.anba.es6draft.compiler.assembler.Jump;
 import com.github.anba.es6draft.compiler.assembler.MethodName;
 import com.github.anba.es6draft.compiler.assembler.Type;
-import com.github.anba.es6draft.compiler.assembler.Variable;
+import com.github.anba.es6draft.compiler.assembler.Value;
 
 /**
  *
@@ -70,7 +63,7 @@ abstract class ReferenceOp<NODE extends LeftHandSideExpression> {
      * @param node
      *            the reference node
      * @param update
-     *            if {@code true} duplicate reference
+     *            if {@code true} duplicates reference
      * @param mv
      *            the code visitor
      * @param gen
@@ -126,12 +119,13 @@ abstract class ReferenceOp<NODE extends LeftHandSideExpression> {
      *            if {@code true} keep a copy of the new value on the stack
      * @param mv
      *            the code visitor
+     * @return the stack top value or empty
      */
     final ValType putValue(NODE node, ValType ref, ValType value, boolean completion, CodeVisitor mv) {
         if (completion) {
-            Variable<?> saved = saveValue(ref, value, mv);
+            Value<?> currentValue = dupOrStoreValue(ref, value, mv);
             putValue(node, ref, value, mv);
-            restoreValue(saved, mv);
+            mv.load(currentValue);
             return value;
         }
         putValue(node, ref, value, mv);
@@ -139,9 +133,9 @@ abstract class ReferenceOp<NODE extends LeftHandSideExpression> {
     }
 
     /**
-     * Evaluates {@code node} and pushes the resolved reference object on the stack.
+     * Evaluates {@code node} and pushes the result value on the stack.
      * <p>
-     * stack: [] -> []
+     * stack: [] -> [{@literal <result>}]
      * 
      * @param node
      *            the reference node
@@ -149,7 +143,7 @@ abstract class ReferenceOp<NODE extends LeftHandSideExpression> {
      *            the code visitor
      * @param gen
      *            the code generator
-     * @return the stack top value or empty
+     * @return the result value type
      */
     abstract ValType delete(NODE node, CodeVisitor mv, CodeGenerator gen);
 
@@ -215,7 +209,7 @@ abstract class ReferenceOp<NODE extends LeftHandSideExpression> {
      * stack: [{@literal <reference>}, {@literal <value>}] -> [{@literal <value>}, {@literal 
      * <reference>}, {@literal <value>}]<br>
      * or: [{@literal <reference>}, {@literal <value>}] -> [{@literal <reference>}, {@literal 
-     * <value>}] and returns a non-null {@link Variable} object.
+     * <value>}] and stores the top stack value in the returned {@link Value} object.
      * 
      * @param ref
      *            the reference value type
@@ -223,22 +217,30 @@ abstract class ReferenceOp<NODE extends LeftHandSideExpression> {
      *            the top stack value type
      * @param mv
      *            the code visitor
-     * @return the variable to hold the value or {@code null} if saved on stack
+     * @return the top stack {@link Value}
      */
-    abstract Variable<?> saveValue(ValType ref, ValType value, CodeVisitor mv);
+    final Value<?> dupOrStoreValue(ValType ref, ValType value, CodeVisitor mv) {
+        int refSize = referenceSize(ref);
+        if (refSize > 2) {
+            mv.dup(value);
+            return mv.storeTemporary(value.toClass());
+        }
+        mv.dupX(refSize, value.size());
+        return ReferenceOp::emptyValue;
+    }
+
+    private static void emptyValue(InstructionAssembler asm) {
+        // Value already loaded on stack.
+    }
 
     /**
-     * Restores the top stack value. This operation is a no-op if <var>variable</var> is
-     * {@code null}.
-     * <p>
-     * stack: [] -> [{@literal <value>}]
+     * Returns the reference type size.
      * 
-     * @param variable
-     *            the variable or {@code null}
-     * @param mv
-     *            the code visitor
+     * @param ref
+     *            the reference value type
+     * @return the reference type size
      */
-    abstract void restoreValue(Variable<?> variable, CodeVisitor mv);
+    protected abstract int referenceSize(ValType ref);
 
     /**
      * Returns the {@code ReferenceOp} implementation for the left-hand side expression.
@@ -287,342 +289,187 @@ abstract class ReferenceOp<NODE extends LeftHandSideExpression> {
         if (lhs instanceof SuperPropertyAccessor) {
             return (ReferenceOp<NODE>) ReferenceOp.SUPER_PROPERTY;
         }
+        if (lhs instanceof PrivatePropertyAccessor) {
+            return (ReferenceOp<NODE>) ReferenceOp.PRIVATE_PROPERTY;
+        }
         throw new AssertionError();
     }
 
     private static final class Methods {
         // EnvironmentRecord
-        static final MethodName EnvironmentRecord_withBaseObject = MethodName.findInterface(
-                Types.EnvironmentRecord, "withBaseObject", Type.methodType(Types.ScriptObject));
+        static final MethodName EnvironmentRecord_withBaseObject = MethodName.findInterface(Types.EnvironmentRecord,
+                "withBaseObject", Type.methodType(Types.ScriptObject));
 
         // class: Reference
-        static final MethodName Reference_getValue = MethodName.findVirtual(Types.Reference,
-                "getValue", Type.methodType(Types.Object, Types.ExecutionContext));
+        static final MethodName Reference_getValue = MethodName.findVirtual(Types.Reference, "getValue",
+                Type.methodType(Types.Object, Types.ExecutionContext));
 
-        static final MethodName Reference_putValue = MethodName.findVirtual(Types.Reference,
-                "putValue", Type.methodType(Type.VOID_TYPE, Types.Object, Types.ExecutionContext));
+        static final MethodName Reference_putValue = MethodName.findVirtual(Types.Reference, "putValue",
+                Type.methodType(Type.VOID_TYPE, Types.Object, Types.ExecutionContext));
 
         static final MethodName Reference_delete = MethodName.findVirtual(Types.Reference, "delete",
                 Type.methodType(Type.BOOLEAN_TYPE, Types.ExecutionContext));
 
-        static final MethodName Reference_getBase = MethodName.findVirtual(Types.Reference,
-                "getBase", Type.methodType(Types.Object));
+        static final MethodName Reference_getBase = MethodName.findVirtual(Types.Reference, "getBase",
+                Type.methodType(Types.Object));
 
-        // class: ScriptRuntime
-        static final MethodName ScriptRuntime_GetSuperEnvironmentRecord = MethodName.findStatic(Types.ScriptRuntime,
-                "GetSuperEnvironmentRecord", Type.methodType(Types.FunctionEnvironmentRecord, Types.ExecutionContext));
+        // class: PropertyOperations (super property operations)
+        static final MethodName PropertyOperations_GetSuperEnvironmentRecord = MethodName.findStatic(
+                Types.PropertyOperations, "GetSuperEnvironmentRecord",
+                Type.methodType(Types.FunctionEnvironmentRecord, Types.ExecutionContext));
 
-        static final MethodName ScriptRuntime_GetSuperThis = MethodName.findStatic(Types.ScriptRuntime, "GetSuperThis",
-                Type.methodType(Types.Object, Types.FunctionEnvironmentRecord, Types.ExecutionContext));
+        static final MethodName PropertyOperations_GetSuperThis = MethodName.findStatic(Types.PropertyOperations,
+                "GetSuperThis", Type.methodType(Types.Object, Types.FunctionEnvironmentRecord, Types.ExecutionContext));
 
-        static final MethodName ScriptRuntime_GetSuperBase = MethodName.findStatic(Types.ScriptRuntime, "GetSuperBase",
+        static final MethodName PropertyOperations_GetSuperBase = MethodName.findStatic(Types.PropertyOperations,
+                "GetSuperBase",
                 Type.methodType(Types.ScriptObject, Types.FunctionEnvironmentRecord, Types.ExecutionContext));
 
-        static final MethodName ScriptRuntime_getSuperProperty = MethodName.findStatic(Types.ScriptRuntime,
-                "getSuperProperty",
+        static final MethodName PropertyOperations_getSuperElement = MethodName.findStatic(Types.PropertyOperations,
+                "getSuperElement",
                 Type.methodType(Types.Object, Types.Object, Types.Object, Types.ScriptObject, Types.ExecutionContext));
 
-        static final MethodName ScriptRuntime_getSuperProperty_String = MethodName.findStatic(Types.ScriptRuntime,
+        static final MethodName PropertyOperations_getSuperProperty = MethodName.findStatic(Types.PropertyOperations,
                 "getSuperProperty",
                 Type.methodType(Types.Object, Types.String, Types.Object, Types.ScriptObject, Types.ExecutionContext));
 
-        static final MethodName ScriptRuntime_setSuperProperty = MethodName.findStatic(Types.ScriptRuntime,
-                "setSuperProperty", Type.methodType(Type.VOID_TYPE, Types.Object, Types.Object, Types.ScriptObject,
+        static final MethodName PropertyOperations_setSuperElement = MethodName.findStatic(Types.PropertyOperations,
+                "setSuperElement", Type.methodType(Type.VOID_TYPE, Types.Object, Types.Object, Types.ScriptObject,
                         Types.Object, Types.ExecutionContext, Type.BOOLEAN_TYPE));
 
-        static final MethodName ScriptRuntime_setSuperProperty_String = MethodName.findStatic(Types.ScriptRuntime,
+        static final MethodName PropertyOperations_setSuperProperty = MethodName.findStatic(Types.PropertyOperations,
                 "setSuperProperty", Type.methodType(Type.VOID_TYPE, Types.String, Types.Object, Types.ScriptObject,
                         Types.Object, Types.ExecutionContext, Type.BOOLEAN_TYPE));
 
-        static final MethodName ScriptRuntime_deleteSuperProperty = MethodName.findStatic(Types.ScriptRuntime,
-                "deleteSuperProperty", Type.methodType(Type.BOOLEAN_TYPE, Types.ExecutionContext));
+        static final MethodName PropertyOperations_deleteSuperElement = MethodName.findStatic(Types.PropertyOperations,
+                "deleteSuperElement", Type.methodType(Type.BOOLEAN_TYPE, Types.Object, Types.ExecutionContext));
 
-        // ScriptRuntime#checkAccessProperty
-        static final MethodName ScriptRuntime_checkAccessElement = MethodName.findStatic(
-                Types.ScriptRuntime, "checkAccessElement",
+        static final MethodName PropertyOperations_deleteSuperProperty = MethodName.findStatic(Types.PropertyOperations,
+                "deleteSuperProperty", Type.methodType(Type.BOOLEAN_TYPE, Types.String, Types.ExecutionContext));
+
+        // class: PropertyOperations (private property operations)
+        static final MethodName PropertyOperations_getPrivateValue = MethodName.findStatic(Types.PropertyOperations,
+                "getPrivateValue", Type.methodType(Types.Object, Types.Object, Types.String, Types.ExecutionContext));
+
+        static final MethodName PropertyOperations_setPrivateValue = MethodName.findStatic(Types.PropertyOperations,
+                "setPrivateValue",
+                Type.methodType(Type.VOID_TYPE, Types.Object, Types.String, Types.Object, Types.ExecutionContext));
+
+        // PropertyOperations#checkAccessElement, #checkAccessProperty
+        static final MethodName PropertyOperations_checkAccessElement = MethodName.findStatic(Types.PropertyOperations,
+                "checkAccessElement",
                 Type.methodType(Types.Object, Types.Object, Types.Object, Types.ExecutionContext));
 
-        static final MethodName ScriptRuntime_checkAccessProperty = MethodName.findStatic(
-                Types.ScriptRuntime, "checkAccessProperty",
-                Type.methodType(Types.Object, Types.Object, Types.ExecutionContext));
+        static final MethodName PropertyOperations_checkAccessElement_int = MethodName.findStatic(
+                Types.PropertyOperations, "checkAccessElement",
+                Type.methodType(Type.INT_TYPE, Types.Object, Type.INT_TYPE, Types.ExecutionContext));
 
-        static final MethodName ScriptRuntime_checkAccessProperty_String = MethodName.findStatic(
-                Types.ScriptRuntime, "checkAccessProperty",
+        static final MethodName PropertyOperations_checkAccessElement_long = MethodName.findStatic(
+                Types.PropertyOperations, "checkAccessElement",
+                Type.methodType(Type.LONG_TYPE, Types.Object, Type.LONG_TYPE, Types.ExecutionContext));
+
+        static final MethodName PropertyOperations_checkAccessElement_String = MethodName.findStatic(
+                Types.PropertyOperations, "checkAccessElement",
                 Type.methodType(Types.String, Types.Object, Types.String, Types.ExecutionContext));
 
-        static final MethodName ScriptRuntime_checkAccessProperty_int = MethodName.findStatic(
-                Types.ScriptRuntime, "checkAccessProperty", Type.methodType(Type.INT_TYPE,
-                        Types.Object, Type.INT_TYPE, Types.ExecutionContext));
+        static final MethodName PropertyOperations_checkAccessElement_double = MethodName.findStatic(
+                Types.PropertyOperations, "checkAccessElement",
+                Type.methodType(Type.DOUBLE_TYPE, Types.Object, Type.DOUBLE_TYPE, Types.ExecutionContext));
 
-        static final MethodName ScriptRuntime_checkAccessProperty_long = MethodName.findStatic(
-                Types.ScriptRuntime, "checkAccessProperty", Type.methodType(Type.LONG_TYPE,
-                        Types.Object, Type.LONG_TYPE, Types.ExecutionContext));
+        static final MethodName PropertyOperations_checkAccessProperty = MethodName.findStatic(Types.PropertyOperations,
+                "checkAccessProperty", Type.methodType(Types.Object, Types.Object, Types.ExecutionContext));
 
-        static final MethodName ScriptRuntime_checkAccessProperty_double = MethodName.findStatic(
-                Types.ScriptRuntime, "checkAccessProperty", Type.methodType(Type.DOUBLE_TYPE,
-                        Types.Object, Type.DOUBLE_TYPE, Types.ExecutionContext));
+        // PropertyOperations#getElementValue, #getPropertyValue
+        static final MethodName PropertyOperations_getElementValue = MethodName.findStatic(Types.PropertyOperations,
+                "getElementValue", Type.methodType(Types.Object, Types.Object, Types.Object, Types.ExecutionContext));
 
-        // ScriptRuntime#getPropertyValue
-        static final MethodName ScriptRuntime_getElementValue = MethodName.findStatic(
-                Types.ScriptRuntime, "getElementValue",
-                Type.methodType(Types.Object, Types.Object, Types.Object, Types.ExecutionContext));
+        static final MethodName PropertyOperations_getElementValue_int = MethodName.findStatic(Types.PropertyOperations,
+                "getElementValue", Type.methodType(Types.Object, Types.Object, Type.INT_TYPE, Types.ExecutionContext));
 
-        static final MethodName ScriptRuntime_getPropertyValue_String = MethodName.findStatic(
-                Types.ScriptRuntime, "getPropertyValue",
+        static final MethodName PropertyOperations_getElementValue_long = MethodName.findStatic(
+                Types.PropertyOperations, "getElementValue",
+                Type.methodType(Types.Object, Types.Object, Type.LONG_TYPE, Types.ExecutionContext));
+
+        static final MethodName PropertyOperations_getElementValue_double = MethodName.findStatic(
+                Types.PropertyOperations, "getElementValue",
+                Type.methodType(Types.Object, Types.Object, Type.DOUBLE_TYPE, Types.ExecutionContext));
+
+        static final MethodName PropertyOperations_getElementValue_String = MethodName.findStatic(
+                Types.PropertyOperations, "getElementValue",
                 Type.methodType(Types.Object, Types.Object, Types.String, Types.ExecutionContext));
 
-        static final MethodName ScriptRuntime_getPropertyValue_int = MethodName.findStatic(
-                Types.ScriptRuntime, "getPropertyValue",
-                Type.methodType(Types.Object, Types.Object, Type.INT_TYPE, Types.ExecutionContext));
+        static final MethodName PropertyOperations_getPropertyValue = MethodName.findStatic(Types.PropertyOperations,
+                "getPropertyValue", Type.methodType(Types.Object, Types.Object, Types.String, Types.ExecutionContext));
 
-        static final MethodName ScriptRuntime_getPropertyValue_long = MethodName
-                .findStatic(Types.ScriptRuntime, "getPropertyValue", Type.methodType(Types.Object,
-                        Types.Object, Type.LONG_TYPE, Types.ExecutionContext));
-
-        static final MethodName ScriptRuntime_getPropertyValue_double = MethodName
-                .findStatic(Types.ScriptRuntime, "getPropertyValue", Type.methodType(Types.Object,
-                        Types.Object, Type.DOUBLE_TYPE, Types.ExecutionContext));
-
-        // ScriptRuntime#setPropertyValue
-        static final MethodName ScriptRuntime_setElementValue = MethodName.findStatic(
-                Types.ScriptRuntime, "setElementValue",
-                Type.methodType(Type.VOID_TYPE, Types.Object, Types.Object, Types.Object,
+        // PropertyOperations#setElementValue, #setPropertyValue
+        static final MethodName PropertyOperations_setElementValue = MethodName.findStatic(Types.PropertyOperations,
+                "setElementValue", Type.methodType(Type.VOID_TYPE, Types.Object, Types.Object, Types.Object,
                         Types.ExecutionContext, Type.BOOLEAN_TYPE));
 
-        static final MethodName ScriptRuntime_setPropertyValue_String = MethodName.findStatic(
-                Types.ScriptRuntime, "setPropertyValue",
-                Type.methodType(Type.VOID_TYPE, Types.Object, Types.String, Types.Object,
+        static final MethodName PropertyOperations_setElementValue_int = MethodName.findStatic(Types.PropertyOperations,
+                "setElementValue", Type.methodType(Type.VOID_TYPE, Types.Object, Type.INT_TYPE, Types.Object,
                         Types.ExecutionContext, Type.BOOLEAN_TYPE));
 
-        static final MethodName ScriptRuntime_setPropertyValue_int = MethodName.findStatic(
-                Types.ScriptRuntime, "setPropertyValue",
-                Type.methodType(Type.VOID_TYPE, Types.Object, Type.INT_TYPE, Types.Object,
+        static final MethodName PropertyOperations_setElementValue_long = MethodName
+                .findStatic(Types.PropertyOperations, "setElementValue", Type.methodType(Type.VOID_TYPE, Types.Object,
+                        Type.LONG_TYPE, Types.Object, Types.ExecutionContext, Type.BOOLEAN_TYPE));
+
+        static final MethodName PropertyOperations_setElementValue_double = MethodName
+                .findStatic(Types.PropertyOperations, "setElementValue", Type.methodType(Type.VOID_TYPE, Types.Object,
+                        Type.DOUBLE_TYPE, Types.Object, Types.ExecutionContext, Type.BOOLEAN_TYPE));
+
+        static final MethodName PropertyOperations_setElementValue_String = MethodName
+                .findStatic(Types.PropertyOperations, "setElementValue", Type.methodType(Type.VOID_TYPE, Types.Object,
+                        Types.String, Types.Object, Types.ExecutionContext, Type.BOOLEAN_TYPE));
+
+        static final MethodName PropertyOperations_setPropertyValue = MethodName.findStatic(Types.PropertyOperations,
+                "setPropertyValue", Type.methodType(Type.VOID_TYPE, Types.Object, Types.String, Types.Object,
                         Types.ExecutionContext, Type.BOOLEAN_TYPE));
 
-        static final MethodName ScriptRuntime_setPropertyValue_long = MethodName.findStatic(
-                Types.ScriptRuntime, "setPropertyValue",
-                Type.methodType(Type.VOID_TYPE, Types.Object, Type.LONG_TYPE, Types.Object,
+        // PropertyOperations#deleteProperty
+        static final MethodName PropertyOperations_deleteElement = MethodName.findStatic(Types.PropertyOperations,
+                "deleteElement", Type.methodType(Type.BOOLEAN_TYPE, Types.Object, Types.Object, Types.ExecutionContext,
+                        Type.BOOLEAN_TYPE));
+
+        static final MethodName PropertyOperations_deleteElement_int = MethodName.findStatic(Types.PropertyOperations,
+                "deleteElement", Type.methodType(Type.BOOLEAN_TYPE, Types.Object, Type.INT_TYPE, Types.ExecutionContext,
+                        Type.BOOLEAN_TYPE));
+
+        static final MethodName PropertyOperations_deleteElement_long = MethodName.findStatic(Types.PropertyOperations,
+                "deleteElement", Type.methodType(Type.BOOLEAN_TYPE, Types.Object, Type.LONG_TYPE,
                         Types.ExecutionContext, Type.BOOLEAN_TYPE));
 
-        static final MethodName ScriptRuntime_setPropertyValue_double = MethodName.findStatic(
-                Types.ScriptRuntime, "setPropertyValue",
-                Type.methodType(Type.VOID_TYPE, Types.Object, Type.DOUBLE_TYPE, Types.Object,
-                        Types.ExecutionContext, Type.BOOLEAN_TYPE));
+        static final MethodName PropertyOperations_deleteElement_double = MethodName
+                .findStatic(Types.PropertyOperations, "deleteElement", Type.methodType(Type.BOOLEAN_TYPE, Types.Object,
+                        Type.DOUBLE_TYPE, Types.ExecutionContext, Type.BOOLEAN_TYPE));
 
-        // ScriptRuntime#deleteProperty
-        static final MethodName ScriptRuntime_deleteElement = MethodName
-                .findStatic(Types.ScriptRuntime, "deleteElement", Type.methodType(Type.BOOLEAN_TYPE,
-                        Types.Object, Types.Object, Types.ExecutionContext, Type.BOOLEAN_TYPE));
+        static final MethodName PropertyOperations_deleteElement_String = MethodName
+                .findStatic(Types.PropertyOperations, "deleteElement", Type.methodType(Type.BOOLEAN_TYPE, Types.Object,
+                        Types.String, Types.ExecutionContext, Type.BOOLEAN_TYPE));
 
-        static final MethodName ScriptRuntime_deleteProperty_String = MethodName.findStatic(
-                Types.ScriptRuntime, "deleteProperty", Type.methodType(Type.BOOLEAN_TYPE,
-                        Types.Object, Types.String, Types.ExecutionContext, Type.BOOLEAN_TYPE));
-
-        static final MethodName ScriptRuntime_deleteProperty_int = MethodName.findStatic(
-                Types.ScriptRuntime, "deleteProperty", Type.methodType(Type.BOOLEAN_TYPE,
-                        Types.Object, Type.INT_TYPE, Types.ExecutionContext, Type.BOOLEAN_TYPE));
-
-        static final MethodName ScriptRuntime_deleteProperty_long = MethodName.findStatic(
-                Types.ScriptRuntime, "deleteProperty", Type.methodType(Type.BOOLEAN_TYPE,
-                        Types.Object, Type.LONG_TYPE, Types.ExecutionContext, Type.BOOLEAN_TYPE));
-
-        static final MethodName ScriptRuntime_deleteProperty_double = MethodName.findStatic(
-                Types.ScriptRuntime, "deleteProperty", Type.methodType(Type.BOOLEAN_TYPE,
-                        Types.Object, Type.DOUBLE_TYPE, Types.ExecutionContext, Type.BOOLEAN_TYPE));
-    }
-
-    private static ValType GetValue(LeftHandSideExpression node, ValType type, CodeVisitor mv) {
-        assert type == ValType.Reference : "type is not reference: " + type;
-        mv.loadExecutionContext();
-        mv.lineInfo(node);
-        mv.invoke(Methods.Reference_getValue);
-        return ValType.Any;
-    }
-
-    private static void PutValue(LeftHandSideExpression node, ValType type, ValType value, CodeVisitor mv) {
-        assert type == ValType.Reference : "type is not reference: " + type;
-        mv.toBoxed(value);
-        mv.loadExecutionContext();
-        mv.lineInfo(node);
-        mv.invoke(Methods.Reference_putValue);
-    }
-
-    private static ValType Delete(LeftHandSideExpression node, ValType type, CodeVisitor mv) {
-        assert type == ValType.Reference : "type is not reference: " + type;
-        mv.loadExecutionContext();
-        mv.lineInfo(node);
-        mv.invoke(Methods.Reference_delete);
-        return ValType.Boolean;
-    }
-
-    private static ValType getElement(LeftHandSideExpression node, ValType elementType, CodeVisitor mv) {
-        // stack: [base, key] -> [value]
-        mv.loadExecutionContext();
-        mv.lineInfo(node);
-        mv.invoke(elementGetMethod(elementType));
-        return ValType.Any;
-    }
-
-    private static ValType setElement(LeftHandSideExpression node, ValType elementType, ValType value, CodeVisitor mv) {
-        // stack: [base, key, value] -> []
-        mv.toBoxed(value);
-        mv.loadExecutionContext();
-        mv.iconst(mv.isStrict());
-        mv.lineInfo(node);
-        mv.invoke(elementSetMethod(elementType));
-        return ValType.Empty;
-    }
-
-    private static ValType deleteElement(LeftHandSideExpression node, ValType elementType, CodeVisitor mv) {
-        // stack: [base, key] -> [result]
-        mv.loadExecutionContext();
-        mv.iconst(mv.isStrict());
-        mv.lineInfo(node);
-        mv.invoke(elementDeleteMethod(elementType));
-        return ValType.Boolean;
-    }
-
-    private static MethodName checkAccessMethod(ValType elementType) {
-        switch (elementType) {
-        case Empty:
-            return Methods.ScriptRuntime_checkAccessProperty;
-        case Number:
-            return Methods.ScriptRuntime_checkAccessProperty_double;
-        case Number_int:
-            return Methods.ScriptRuntime_checkAccessProperty_int;
-        case Number_uint:
-            return Methods.ScriptRuntime_checkAccessProperty_long;
-        case String:
-            return Methods.ScriptRuntime_checkAccessProperty_String;
-        case Any:
-        case Object:
-            return Methods.ScriptRuntime_checkAccessElement;
-        default:
-            throw new AssertionError();
-        }
-    }
-
-    private static MethodName elementGetMethod(ValType elementType) {
-        switch (elementType) {
-        case Number:
-            return Methods.ScriptRuntime_getPropertyValue_double;
-        case Number_int:
-            return Methods.ScriptRuntime_getPropertyValue_int;
-        case Number_uint:
-            return Methods.ScriptRuntime_getPropertyValue_long;
-        case String:
-            return Methods.ScriptRuntime_getPropertyValue_String;
-        case Any:
-        case Object:
-            return Methods.ScriptRuntime_getElementValue;
-        default:
-            throw new AssertionError();
-        }
-    }
-
-    private static MethodName elementSetMethod(ValType elementType) {
-        switch (elementType) {
-        case Number:
-            return Methods.ScriptRuntime_setPropertyValue_double;
-        case Number_int:
-            return Methods.ScriptRuntime_setPropertyValue_int;
-        case Number_uint:
-            return Methods.ScriptRuntime_setPropertyValue_long;
-        case String:
-            return Methods.ScriptRuntime_setPropertyValue_String;
-        case Any:
-        case Object:
-            return Methods.ScriptRuntime_setElementValue;
-        default:
-            throw new AssertionError();
-        }
-    }
-
-    private static MethodName elementDeleteMethod(ValType elementType) {
-        switch (elementType) {
-        case Number:
-            return Methods.ScriptRuntime_deleteProperty_double;
-        case Number_int:
-            return Methods.ScriptRuntime_deleteProperty_int;
-        case Number_uint:
-            return Methods.ScriptRuntime_deleteProperty_long;
-        case String:
-            return Methods.ScriptRuntime_deleteProperty_String;
-        case Any:
-        case Object:
-            return Methods.ScriptRuntime_deleteElement;
-        default:
-            throw new AssertionError();
-        }
+        static final MethodName PropertyOperations_deleteProperty = MethodName.findStatic(Types.PropertyOperations,
+                "deleteProperty", Type.methodType(Type.BOOLEAN_TYPE, Types.Object, Types.String, Types.ExecutionContext,
+                        Type.BOOLEAN_TYPE));
     }
 
     private static void GetSuperEnvironment(LeftHandSideExpression node, CodeVisitor mv) {
         mv.loadExecutionContext();
         mv.lineInfo(node);
-        mv.invoke(Methods.ScriptRuntime_GetSuperEnvironmentRecord);
+        mv.invoke(Methods.PropertyOperations_GetSuperEnvironmentRecord);
         mv.dup();
     }
 
     private static void GetSuperThis(CodeVisitor mv) {
         // stack: [env] -> [thisValue]
         mv.loadExecutionContext();
-        mv.invoke(Methods.ScriptRuntime_GetSuperThis);
+        mv.invoke(Methods.PropertyOperations_GetSuperThis);
     }
 
     private static void GetSuperBase(CodeVisitor mv) {
         // stack: [env, thisValue] -> [thisValue, baseValue]
         mv.swap();
         mv.loadExecutionContext();
-        mv.invoke(Methods.ScriptRuntime_GetSuperBase);
-    }
-
-    private static ValType GetSuperElement(LeftHandSideExpression node, ValType elementType, CodeVisitor mv) {
-        // stack: [pk, thisValue, baseValue] -> [value]
-        mv.loadExecutionContext();
-        mv.lineInfo(node);
-        if (elementType == ValType.String) {
-            mv.invoke(Methods.ScriptRuntime_getSuperProperty_String);
-        } else {
-            assert elementType == ValType.Any;
-            mv.invoke(Methods.ScriptRuntime_getSuperProperty);
-        }
-        return ValType.Any;
-    }
-
-    private static ValType SetSuperElement(LeftHandSideExpression node, ValType elementType, ValType value,
-            CodeVisitor mv) {
-        // stack: [pk, thisValue, baseValue, value] -> []
-        mv.toBoxed(value);
-        mv.loadExecutionContext();
-        mv.iconst(mv.isStrict());
-        mv.lineInfo(node);
-        if (elementType == ValType.String) {
-            mv.invoke(Methods.ScriptRuntime_setSuperProperty_String);
-        } else {
-            assert elementType == ValType.Any;
-            mv.invoke(Methods.ScriptRuntime_setSuperProperty);
-        }
-        return ValType.Empty;
-    }
-
-    private static ValType DeleteSuperElement(LeftHandSideExpression node, ValType elementType, CodeVisitor mv) {
-        mv.pop(elementType);
-        mv.loadExecutionContext();
-        mv.lineInfo(node);
-        mv.invoke(Methods.ScriptRuntime_deleteSuperProperty);
-        return ValType.Boolean;
-    }
-
-    private static Variable<?> saveToVariable(ValType value, CodeVisitor mv) {
-        Variable<?> result = mv.newScratchVariable(value.toClass());
-        mv.dup(value);
-        mv.store(result);
-        return result;
-    }
-
-    private static void loadFromVariable(Variable<?> variable, CodeVisitor mv) {
-        mv.load(variable);
-        mv.freeVariable(variable);
+        mv.invoke(Methods.PropertyOperations_GetSuperBase);
     }
 
     /**
@@ -645,19 +492,31 @@ abstract class ReferenceOp<NODE extends LeftHandSideExpression> {
         @Override
         ValType getValue(IdentifierReference node, ValType ref, CodeVisitor mv) {
             // stack: [ref] -> [value]
-            return GetValue(node, ref, mv);
+            assert ref == ValType.Reference : "type is not reference: " + ref;
+            mv.loadExecutionContext();
+            mv.lineInfo(node);
+            mv.invoke(Methods.Reference_getValue);
+            return ValType.Any;
         }
 
         @Override
         void putValue(IdentifierReference node, ValType ref, ValType value, CodeVisitor mv) {
             // stack: [ref, value] -> []
-            PutValue(node, ref, value, mv);
+            assert ref == ValType.Reference : "type is not reference: " + ref;
+            mv.toBoxed(value);
+            mv.loadExecutionContext();
+            mv.lineInfo(node);
+            mv.invoke(Methods.Reference_putValue);
         }
 
         @Override
         ValType delete(IdentifierReference node, CodeVisitor mv, CodeGenerator gen) {
             ValType ref = reference(node, false, mv, gen);
-            return Delete(node, ref, mv);
+            assert ref == ValType.Reference : "type is not reference: " + ref;
+            mv.loadExecutionContext();
+            mv.lineInfo(node);
+            mv.invoke(Methods.Reference_delete);
+            return ValType.Boolean;
         }
 
         @Override
@@ -689,15 +548,9 @@ abstract class ReferenceOp<NODE extends LeftHandSideExpression> {
         }
 
         @Override
-        Variable<?> saveValue(ValType ref, ValType value, CodeVisitor mv) {
-            // stack: [ref, value] -> [value, ref, value]
-            mv.dupX(ref, value);
-            return null;
-        }
-
-        @Override
-        void restoreValue(Variable<?> result, CodeVisitor mv) {
-            // stack: [] -> []
+        protected int referenceSize(ValType ref) {
+            // ref
+            return 1;
         }
     };
 
@@ -710,16 +563,15 @@ abstract class ReferenceOp<NODE extends LeftHandSideExpression> {
         @Override
         protected ValType reference(PropertyAccessor node, boolean update, CodeVisitor mv, CodeGenerator gen) {
             // stack: [] -> [base, key]
-            /* steps 1-3 */
+            /* steps 1-2 */
             gen.expressionBoxed(node.getBase(), mv);
-            /* steps 4-6 (not applicable) */
-            /* steps 7-8 */
+            /* step 3 */
             mv.loadExecutionContext();
             mv.lineInfo(node);
-            mv.invoke(checkAccessMethod(ValType.Empty));
-            /* steps 9-10 */
+            mv.invoke(Methods.PropertyOperations_checkAccessProperty);
+            /* step 4 */
             mv.aconst(node.getName());
-            /* steps 11-12 (not applicable) */
+            /* steps 5-6 (not applicable) */
             if (update) {
                 // stack: [base, key] -> [base, key, base, key]
                 mv.dup2();
@@ -730,13 +582,20 @@ abstract class ReferenceOp<NODE extends LeftHandSideExpression> {
         @Override
         ValType getValue(PropertyAccessor node, ValType ref, CodeVisitor mv) {
             // stack: [base, key] -> [value]
-            return getElement(node, ValType.String, mv);
+            mv.loadExecutionContext();
+            mv.lineInfo(node);
+            mv.invoke(Methods.PropertyOperations_getPropertyValue);
+            return ValType.Any;
         }
 
         @Override
         void putValue(PropertyAccessor node, ValType ref, ValType value, CodeVisitor mv) {
             // stack: [base, key, value] -> []
-            setElement(node, ValType.String, value, mv);
+            mv.toBoxed(value);
+            mv.loadExecutionContext();
+            mv.iconst(mv.isStrict());
+            mv.lineInfo(node);
+            mv.invoke(Methods.PropertyOperations_setPropertyValue);
         }
 
         @Override
@@ -746,7 +605,11 @@ abstract class ReferenceOp<NODE extends LeftHandSideExpression> {
             // stack: [base] -> [base, key]
             mv.aconst(node.getName());
             // stack: [base, key] -> [result]
-            return deleteElement(node, ValType.String, mv);
+            mv.loadExecutionContext();
+            mv.iconst(mv.isStrict());
+            mv.lineInfo(node);
+            mv.invoke(Methods.PropertyOperations_deleteProperty);
+            return ValType.Boolean;
         }
 
         @Override
@@ -758,7 +621,7 @@ abstract class ReferenceOp<NODE extends LeftHandSideExpression> {
             mv.aconst(node.getName());
             mv.loadExecutionContext();
             mv.lineInfo(node);
-            mv.invoke(elementGetMethod(ValType.String));
+            mv.invoke(Methods.PropertyOperations_getPropertyValue);
             if (withThis) {
                 // stack: [thisValue, func] -> [func, thisValue]
                 mv.swap();
@@ -767,16 +630,9 @@ abstract class ReferenceOp<NODE extends LeftHandSideExpression> {
         }
 
         @Override
-        Variable<?> saveValue(ValType ref, ValType value, CodeVisitor mv) {
-            // stack: [base, key, value] -> [value, base, key, value]
-            // ValType.Number to represent (base, key) tuple
-            mv.dupX(ValType.Number, value);
-            return null;
-        }
-
-        @Override
-        void restoreValue(Variable<?> variable, CodeVisitor mv) {
-            // stack: [] -> []
+        protected int referenceSize(ValType ref) {
+            // base + key
+            return 2;
         }
     };
 
@@ -797,6 +653,7 @@ abstract class ReferenceOp<NODE extends LeftHandSideExpression> {
             case Boolean:
             case Null:
             case Undefined:
+            case BigInt:
                 DefaultCodeGenerator.ToFlatString(elementType, mv);
                 return ValType.String;
             default:
@@ -804,14 +661,88 @@ abstract class ReferenceOp<NODE extends LeftHandSideExpression> {
             }
         }
 
+        private MethodName checkAccessMethod(ValType elementType) {
+            switch (elementType) {
+            case Empty:
+                return Methods.PropertyOperations_checkAccessProperty;
+            case Number:
+                return Methods.PropertyOperations_checkAccessElement_double;
+            case Number_int:
+                return Methods.PropertyOperations_checkAccessElement_int;
+            case Number_uint:
+                return Methods.PropertyOperations_checkAccessElement_long;
+            case String:
+                return Methods.PropertyOperations_checkAccessElement_String;
+            case Any:
+            case Object:
+                return Methods.PropertyOperations_checkAccessElement;
+            default:
+                throw new AssertionError();
+            }
+        }
+
+        private MethodName elementGetMethod(ValType elementType) {
+            switch (elementType) {
+            case Number:
+                return Methods.PropertyOperations_getElementValue_double;
+            case Number_int:
+                return Methods.PropertyOperations_getElementValue_int;
+            case Number_uint:
+                return Methods.PropertyOperations_getElementValue_long;
+            case String:
+                return Methods.PropertyOperations_getElementValue_String;
+            case Any:
+            case Object:
+                return Methods.PropertyOperations_getElementValue;
+            default:
+                throw new AssertionError();
+            }
+        }
+
+        private MethodName elementDeleteMethod(ValType elementType) {
+            switch (elementType) {
+            case Number:
+                return Methods.PropertyOperations_deleteElement_double;
+            case Number_int:
+                return Methods.PropertyOperations_deleteElement_int;
+            case Number_uint:
+                return Methods.PropertyOperations_deleteElement_long;
+            case String:
+                return Methods.PropertyOperations_deleteElement_String;
+            case Any:
+            case Object:
+                return Methods.PropertyOperations_deleteElement;
+            default:
+                throw new AssertionError();
+            }
+        }
+
+        private MethodName elementSetMethod(ValType elementType) {
+            switch (elementType) {
+            case Number:
+                return Methods.PropertyOperations_setElementValue_double;
+            case Number_int:
+                return Methods.PropertyOperations_setElementValue_int;
+            case Number_uint:
+                return Methods.PropertyOperations_setElementValue_long;
+            case String:
+                return Methods.PropertyOperations_setElementValue_String;
+            case Any:
+            case Object:
+                return Methods.PropertyOperations_setElementValue;
+            default:
+                throw new AssertionError();
+            }
+        }
+
         @Override
         protected ValType reference(ElementAccessor node, boolean update, CodeVisitor mv, CodeGenerator gen) {
             // stack: [] -> [base, base?, key]
-            /* steps 1-3 */
+            /* steps 1-2 */
             gen.expressionBoxed(node.getBase(), mv);
             boolean isLiteral = node.getElement() instanceof Literal;
             if (isLiteral) {
-                /* steps 7-10 */
+                /* steps 5-6 */
                 mv.loadExecutionContext();
                 mv.lineInfo(node);
                 mv.invoke(checkAccessMethod(ValType.Empty));
@@ -821,15 +752,15 @@ abstract class ReferenceOp<NODE extends LeftHandSideExpression> {
             if (update) {
                 mv.dup();
             }
-            /* steps 4-6 */
+            /* steps 3-4 */
             ValType elementType = evalPropertyKey(node.getElement(), mv, gen);
             if (!isLiteral) {
-                /* steps 7-10 */
+                /* steps 5-6 */
                 mv.loadExecutionContext();
                 mv.lineInfo(node);
                 mv.invoke(checkAccessMethod(elementType));
             }
-            /* steps 11-12 (not applicable) */
+            /* steps 7-8 (not applicable) */
             if (update) {
                 // stack: [base, base, key] -> [base, key, base, key]
                 mv.dupX(ValType.Any, elementType);
@@ -840,13 +771,20 @@ abstract class ReferenceOp<NODE extends LeftHandSideExpression> {
         @Override
         ValType getValue(ElementAccessor node, ValType ref, CodeVisitor mv) {
             // stack: [base, key] -> [value]
-            return getElement(node, ref, mv);
+            mv.loadExecutionContext();
+            mv.lineInfo(node);
+            mv.invoke(elementGetMethod(ref));
+            return ValType.Any;
         }
 
         @Override
         void putValue(ElementAccessor node, ValType ref, ValType value, CodeVisitor mv) {
             // stack: [base, key, value] -> []
-            setElement(node, ref, value, mv);
+            mv.toBoxed(value);
+            mv.loadExecutionContext();
+            mv.iconst(mv.isStrict());
+            mv.lineInfo(node);
+            mv.invoke(elementSetMethod(ref));
         }
 
         @Override
@@ -856,19 +794,27 @@ abstract class ReferenceOp<NODE extends LeftHandSideExpression> {
             // stack: [base] -> [base, key]
             ValType elementType = evalPropertyKey(node.getElement(), mv, gen);
             // stack: [base, key] -> [result]
-            return deleteElement(node, elementType, mv);
+            mv.loadExecutionContext();
+            mv.iconst(mv.isStrict());
+            mv.lineInfo(node);
+            mv.invoke(elementDeleteMethod(elementType));
+            return ValType.Boolean;
         }
 
         @Override
         protected ValType referenceValue(ElementAccessor node, boolean withThis, CodeVisitor mv, CodeGenerator gen) {
+            // stack: [] -> [base?, base]
             gen.expressionBoxed(node.getBase(), mv);
             if (withThis) {
                 mv.dup();
             }
+            // stack: [base?, base] -> [base?, base, key]
             ValType elementType = evalPropertyKey(node.getElement(), mv, gen);
+            // stack: [base?, base, key] -> [base?, result]
             mv.loadExecutionContext();
             mv.lineInfo(node);
             mv.invoke(elementGetMethod(elementType));
+            // stack: [] -> [result, base?]
             if (withThis) {
                 mv.swap();
             }
@@ -876,21 +822,9 @@ abstract class ReferenceOp<NODE extends LeftHandSideExpression> {
         }
 
         @Override
-        Variable<?> saveValue(ValType ref, ValType value, CodeVisitor mv) {
-            // stack: [base, key, value] -> [value, base, key, value]
-            if (ref.size() == 1) {
-                // ValType.Number to represent (base, key) tuple
-                mv.dupX(ValType.Number, value);
-                return null;
-            }
-            return saveToVariable(value, mv);
-        }
-
-        @Override
-        void restoreValue(Variable<?> variable, CodeVisitor mv) {
-            if (variable != null) {
-                loadFromVariable(variable, mv);
-            }
+        protected int referenceSize(ValType ref) {
+            // base + key
+            return 1 + ref.size();
         }
     };
 
@@ -922,18 +856,29 @@ abstract class ReferenceOp<NODE extends LeftHandSideExpression> {
         @Override
         ValType getValue(SuperPropertyAccessor node, ValType ref, CodeVisitor mv) {
             // stack: [pk, thisValue, baseValue] -> [value]
-            return GetSuperElement(node, ref, mv);
+            mv.loadExecutionContext();
+            mv.lineInfo(node);
+            mv.invoke(Methods.PropertyOperations_getSuperProperty);
+            return ValType.Any;
         }
 
         @Override
         void putValue(SuperPropertyAccessor node, ValType ref, ValType value, CodeVisitor mv) {
             // stack: [pk, thisValue, baseValue, value] -> []
-            SetSuperElement(node, ref, value, mv);
+            mv.toBoxed(value);
+            mv.loadExecutionContext();
+            mv.iconst(mv.isStrict());
+            mv.lineInfo(node);
+            mv.invoke(Methods.PropertyOperations_setSuperProperty);
         }
 
         @Override
         ValType delete(SuperPropertyAccessor node, CodeVisitor mv, CodeGenerator gen) {
-            return DeleteSuperElement(node, ValType.Empty, mv);
+            mv.aconst(node.getName());
+            mv.loadExecutionContext();
+            mv.lineInfo(node);
+            mv.invoke(Methods.PropertyOperations_deleteSuperProperty);
+            return ValType.Boolean;
         }
 
         @Override
@@ -951,9 +896,12 @@ abstract class ReferenceOp<NODE extends LeftHandSideExpression> {
                 mv.dupX2();
             }
             GetSuperBase(mv);
+            // stack: [pk, thisValue, baseValue] -> [value]
+            mv.loadExecutionContext();
+            mv.lineInfo(node);
+            mv.invoke(Methods.PropertyOperations_getSuperProperty);
 
             // stack: [thisValue?, pk, thisValue, baseValue] -> [thisValue?, value]
-            GetSuperElement(node, ValType.String, mv);
             if (withThis) {
                 // stack: [thisValue, value] -> [value, thisValue]
                 mv.swap();
@@ -962,15 +910,9 @@ abstract class ReferenceOp<NODE extends LeftHandSideExpression> {
         }
 
         @Override
-        Variable<?> saveValue(ValType ref, ValType value, CodeVisitor mv) {
-            // stack: [pk, thisValue, baseValue, value] -> [pk, thisValue, baseValue, value]
-            return saveToVariable(value, mv);
-        }
-
-        @Override
-        void restoreValue(Variable<?> variable, CodeVisitor mv) {
-            // stack: [] -> [value]
-            loadFromVariable(variable, mv);
+        protected int referenceSize(ValType ref) {
+            // propertyKey + thisValue + baseValue
+            return 3;
         }
     };
 
@@ -1003,19 +945,30 @@ abstract class ReferenceOp<NODE extends LeftHandSideExpression> {
         @Override
         ValType getValue(SuperElementAccessor node, ValType ref, CodeVisitor mv) {
             // stack: [pk, thisValue, baseValue] -> [value]
-            return GetSuperElement(node, ref, mv);
+            mv.loadExecutionContext();
+            mv.lineInfo(node);
+            mv.invoke(Methods.PropertyOperations_getSuperElement);
+            return ValType.Any;
         }
 
         @Override
         void putValue(SuperElementAccessor node, ValType ref, ValType value, CodeVisitor mv) {
             // stack: [pk, thisValue, baseValue, value] -> []
-            SetSuperElement(node, ref, value, mv);
+            mv.toBoxed(value);
+            mv.loadExecutionContext();
+            mv.iconst(mv.isStrict());
+            mv.lineInfo(node);
+            mv.invoke(Methods.PropertyOperations_setSuperElement);
         }
 
         @Override
         ValType delete(SuperElementAccessor node, CodeVisitor mv, CodeGenerator gen) {
-            ValType type = gen.expression(node.getElement().emptyCompletion(), mv);
-            return DeleteSuperElement(node, type, mv);
+            ValType type = gen.expression(node.getElement(), mv);
+            mv.toBoxed(type);
+            mv.loadExecutionContext();
+            mv.lineInfo(node);
+            mv.invoke(Methods.PropertyOperations_deleteSuperElement);
+            return ValType.Boolean;
         }
 
         @Override
@@ -1023,7 +976,7 @@ abstract class ReferenceOp<NODE extends LeftHandSideExpression> {
                 CodeGenerator gen) {
             // stack: [] -> [pk]
             ValType type = gen.expression(node.getElement(), mv);
-            type = ToPropertyKey(type, mv);
+            ToPropertyKey(type, mv);
 
             // stack: [pk] -> [pk, env, env]
             GetSuperEnvironment(node, mv);
@@ -1034,9 +987,12 @@ abstract class ReferenceOp<NODE extends LeftHandSideExpression> {
                 mv.dupX2();
             }
             GetSuperBase(mv);
+            // stack: [pk, thisValue, baseValue] -> [value]
+            mv.loadExecutionContext();
+            mv.lineInfo(node);
+            mv.invoke(Methods.PropertyOperations_getSuperElement);
 
             // stack: [thisValue?, pk, thisValue, baseValue] -> [thisValue?, value]
-            GetSuperElement(node, type, mv);
             if (withThis) {
                 // stack: [thisValue, value] -> [value, thisValue]
                 mv.swap();
@@ -1045,15 +1001,83 @@ abstract class ReferenceOp<NODE extends LeftHandSideExpression> {
         }
 
         @Override
-        Variable<?> saveValue(ValType ref, ValType value, CodeVisitor mv) {
-            // stack: [pk, thisValue, baseValue, value] -> [pk, thisValue, baseValue, value]
-            return saveToVariable(value, mv);
+        protected int referenceSize(ValType ref) {
+            // propertyKey + thisValue + baseValue
+            return ref.size() + 2;
+        }
+    };
+
+    /**
+     * Extension: Private Fields
+     */
+    static final ReferenceOp<PrivatePropertyAccessor> PRIVATE_PROPERTY = new ReferenceOp<PrivatePropertyAccessor>() {
+        @Override
+        protected ValType reference(PrivatePropertyAccessor node, boolean update, CodeVisitor mv, CodeGenerator gen) {
+            // stack: [] -> [base, key]
+            /* steps 1-2 */
+            gen.expressionBoxed(node.getBase(), mv);
+            /* step 3 */
+            mv.loadExecutionContext();
+            mv.lineInfo(node);
+            mv.invoke(Methods.PropertyOperations_checkAccessProperty);
+            /* step 4 */
+            mv.aconst(node.getPrivateName().getName());
+            /* step 5 (not applicable) */
+            if (update) {
+                // stack: [base, key] -> [base, key, base, key]
+                mv.dup2();
+            }
+            return ValType.String;
         }
 
         @Override
-        void restoreValue(Variable<?> variable, CodeVisitor mv) {
-            // stack: [] -> [value]
-            loadFromVariable(variable, mv);
+        ValType getValue(PrivatePropertyAccessor node, ValType ref, CodeVisitor mv) {
+            // stack: [base, key] -> [value]
+            mv.loadExecutionContext();
+            mv.lineInfo(node);
+            mv.invoke(Methods.PropertyOperations_getPrivateValue);
+            return ValType.Any;
+        }
+
+        @Override
+        void putValue(PrivatePropertyAccessor node, ValType ref, ValType value, CodeVisitor mv) {
+            // stack: [base, key, value] -> []
+            mv.toBoxed(value);
+            mv.loadExecutionContext();
+            mv.lineInfo(node);
+            mv.invoke(Methods.PropertyOperations_setPrivateValue);
+        }
+
+        @Override
+        ValType delete(PrivatePropertyAccessor node, CodeVisitor mv, CodeGenerator gen) {
+            throw new AssertionError();
+        }
+
+        @Override
+        protected ValType referenceValue(PrivatePropertyAccessor node, boolean withThis, CodeVisitor mv,
+                CodeGenerator gen) {
+            gen.expressionBoxed(node.getBase(), mv);
+            mv.loadExecutionContext();
+            mv.lineInfo(node);
+            mv.invoke(Methods.PropertyOperations_checkAccessProperty);
+            if (withThis) {
+                mv.dup();
+            }
+            mv.aconst(node.getPrivateName().getName());
+            mv.loadExecutionContext();
+            mv.lineInfo(node);
+            mv.invoke(Methods.PropertyOperations_getPrivateValue);
+            if (withThis) {
+                // stack: [thisValue, func] -> [func, thisValue]
+                mv.swap();
+            }
+            return ValType.Any;
+        }
+
+        @Override
+        protected int referenceSize(ValType ref) {
+            // base + key
+            return 2;
         }
     };
 }

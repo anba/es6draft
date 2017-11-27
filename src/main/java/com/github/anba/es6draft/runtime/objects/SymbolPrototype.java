@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -22,6 +22,7 @@ import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Symbol;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
+import com.github.anba.es6draft.runtime.types.builtins.StringObject;
 
 /**
  * <h1>19 Fundamental Objects</h1><br>
@@ -49,11 +50,13 @@ public final class SymbolPrototype extends OrdinaryObject implements Initializab
     /**
      * 19.4.3.2.1 Runtime Semantics: SymbolDescriptiveString ( sym )
      * 
+     * @param cx
+     *            the execution context
      * @param sym
      *            the symbol value
      * @return the descriptive string
      */
-    public static String SymbolDescriptiveString(Symbol sym) {
+    public static String SymbolDescriptiveString(ExecutionContext cx, Symbol sym) {
         /* step 1 (not applicable) */
         /* step 2 */
         String desc = sym.getDescription();
@@ -62,8 +65,8 @@ public final class SymbolPrototype extends OrdinaryObject implements Initializab
             desc = "";
         }
         /* step 4 (not applicable) */
-        /* steps 5-6 */
-        return "Symbol(" + desc + ")";
+        /* step 5 */
+        return StringObject.validateLength(cx, "Symbol(" + desc + ")");
     }
 
     /**
@@ -77,18 +80,20 @@ public final class SymbolPrototype extends OrdinaryObject implements Initializab
          * 
          * @param cx
          *            the execution context
-         * @param object
-         *            the symbol object
+         * @param value
+         *            the value
+         * @param method
+         *            the method
          * @return the symbol value
          */
-        private static Symbol thisSymbolValue(ExecutionContext cx, Object object) {
-            if (Type.isSymbol(object)) {
-                return (Symbol) object;
+        private static Symbol thisSymbolValue(ExecutionContext cx, Object value, String method) {
+            if (Type.isSymbol(value)) {
+                return (Symbol) value;
             }
-            if (object instanceof SymbolObject) {
-                return ((SymbolObject) object).getSymbolData();
+            if (value instanceof SymbolObject) {
+                return ((SymbolObject) value).getSymbolData();
             }
-            throw newTypeError(cx, Messages.Key.IncompatibleObject);
+            throw newTypeError(cx, Messages.Key.IncompatibleThis, method, Type.of(value).toString());
         }
 
         @Prototype
@@ -112,9 +117,9 @@ public final class SymbolPrototype extends OrdinaryObject implements Initializab
         @Function(name = "toString", arity = 0)
         public static Object toString(ExecutionContext cx, Object thisValue) {
             /* steps 1-3 */
-            Symbol sym = thisSymbolValue(cx, thisValue);
+            Symbol sym = thisSymbolValue(cx, thisValue, "Symbol.prototype.toString");
             /* step 4 */
-            return SymbolDescriptiveString(sym);
+            return SymbolDescriptiveString(cx, sym);
         }
 
         /**
@@ -129,7 +134,7 @@ public final class SymbolPrototype extends OrdinaryObject implements Initializab
         @Function(name = "valueOf", arity = 0)
         public static Object valueOf(ExecutionContext cx, Object thisValue) {
             /* steps 1-5 */
-            return thisSymbolValue(cx, thisValue);
+            return thisSymbolValue(cx, thisValue, "Symbol.prototype.valueOf");
         }
 
         /**
@@ -147,7 +152,7 @@ public final class SymbolPrototype extends OrdinaryObject implements Initializab
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static Object toPrimitive(ExecutionContext cx, Object thisValue, Object hint) {
             /* steps 1-5 */
-            return thisSymbolValue(cx, thisValue);
+            return thisSymbolValue(cx, thisValue, "Symbol.prototype[@@toPrimitive]");
         }
 
         /**

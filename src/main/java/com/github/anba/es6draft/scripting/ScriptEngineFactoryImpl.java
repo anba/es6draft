@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -57,7 +57,7 @@ public final class ScriptEngineFactoryImpl implements ScriptEngineFactory {
 
     @Override
     public String getLanguageVersion() {
-        return "ECMAScript 2015";
+        return "ECMAScript 2016";
     }
 
     @Override

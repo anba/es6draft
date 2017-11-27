@@ -1,46 +1,15 @@
 es6draft
 ========
 
-ECMAScript 2015/2016 compiler and runtime written in Java.
+ECMAScript compiler and runtime written in Java.
 
 [![Build Status](https://travis-ci.org/anba/es6draft.png?branch=master)](https://travis-ci.org/anba/es6draft)
 
 ## Implementation Status ##
 
-Complete implementation of [ECMAScript® 2015] [es2015].
+Implements [ES2018 Draft 2018-10-25] [ecma262], [ES2018 Intl Draft 2018-10-24] [ecma402], and some of the current [proposals] [proposals].
 
-Complete implementation of [ECMAScript® 2015 Internationalization API, ECMA-402 2nd edition] [intl].
-
-Implements [ES2016 Draft 2016-01-20] [es2016].
-
-Supports the following [ECMAScript proposals] [proposals]:
-* Stage 4:
-  * Array.prototype.includes
-  * Exponentiation Operator
-* Stage 3:
-  * Async Functions
-  * Object.values/Object.entries
-  * Object.getOwnPropertyDescriptors
-  * SIMD.JS
-  * String padding
-  * Trailing commas in function parameter lists and calls
-* Stage 2:
-  * function.sent metaproperty
-  * Rest/Spread Properties
-  * Shared memory and atomics
-* Stage 1:
-  * Additional export-from Statements
-  * ArrayBuffer.transfer
-  * Callable class constructors
-  * Class and Property Decorators
-  * Class Property Declarations (Only class static properties are currently supported)
-  * Observable
-  * String.prototype.{trimLeft,trimRight}
-  * String.prototype.matchAll
-  * System.global
-  * Async Generator Functions
-
-ECMAScript proposals are not enabled by default. To enable them use the `--stage` command line parameter.
+ECMAScript proposals below stage 3 are not enabled by default. To enable them use the `--stage` command line parameter.
 
 Note: Support of stage 2 (or below) proposals is highly experimental (cf. [TC39 Process] [process]), implementation incompatibilities are to be expected.
 
@@ -64,12 +33,6 @@ Note: Support of stage 2 (or below) proposals is highly experimental (cf. [TC39 
 
 
 ## Test Suites ##
-
-### Built-in Test Suite ###
-
-The built-in test suite is run when no other Maven profile was selected. In other words, it is run
-when the command `mvn test` is used.
-
 
 ### Test262 Test Suite ###
 
@@ -96,36 +59,41 @@ The `-Dtest262.exclude` parameter allows to exclude test cases:
 mvn test -P test262 -Dtest262.exclude="test/built-ins/**/*.js"
 ```
 
+See [here](src/test/resources/test-configuration.properties) for the test262 default configuration.
 
-### External Tests ###
 
-Additional test suites are available to run tests from [ChakraCore] [chakra], [Mozilla] [mozilla], [Traceur] [traceur], [V8] [v8] and [WebKit] [webkit] using the `external` Maven profile.
+### External Test Suites ###
+
+Additional test suites are available to run tests from [ChakraCore] [chakra], [Mozilla] [mozilla], [V8] [v8], and [WebKit] [webkit] using the `external` Maven profile.
 
 The following environment variables need to be set to run these tests:
 * `CHAKRA_PATH`: ChakraCore main directory
 * `MOZILLA_PATH`: Mozilla-Central main directory
-* `TRACEUR_PATH`: Traceur main directory
 * `V8_PATH`: V8 main directory
 * `WEBKIT_PATH`: WebKit main directory
 
-Alternatively, the `-Dchakra.path=...`, `-Dmozilla.path=...`, `-Dtraceur.path=...`, `-Dv8.path=...` and `-Dwebkit.path=...` parameters can be used.
+Alternatively, the `-Dchakra.path=...`, `-Dmozilla.path=...`, `-Dv8.path=...`, and `-Dwebkit.path=...` parameters can be used.
 
-To skip an external test, use `-D<name>.skip=true`. For example to run only the Traceur feature tests, use:
+To skip an external test, use `-D<name>.skip=true`. For example to run only the Mozilla tests, use:
 ```
-mvn test -P external -Dtraceur.path=<...> -Dchakra.skip=true -Dmozilla.skip=true -Dv8.skip=true -Dwebkit.skip=true
+mvn test -P external -Dmozilla.path=<...> -Dchakra.skip=true -Dv8.skip=true -Dwebkit.skip=true
 ```
 
-[es2015]: http://ecma-international.org/publications/standards/Ecma-262.htm "ECMAScript® 2015 Language Specification"
-[es2016]: https://github.com/tc39/ecma262/releases
-[intl]: http://ecma-international.org/publications/standards/Ecma-402.htm "ECMAScript® 2015 Internationalization API Specification"
-[proposals]: https://github.com/tc39/ecma262#current-proposals
+
+### Built-in Test Suite ###
+
+The built-in test suite is run when no other Maven profile was selected. In other words, it is run
+when the command `mvn test` is used.
+
+
+[ecma262]: https://tc39.github.io/ecma262/
+[ecma402]: https://tc39.github.io/ecma402/
+[proposals]: https://github.com/tc39/proposals
 [process]: https://tc39.github.io/process-document/
-[icu]: http://site.icu-project.org/
-[java]: http://java.sun.com/
+[java]: https://java.sun.com/
 [maven]: https://maven.apache.org/download.cgi
 [test262]: https://github.com/tc39/test262/
 [chakra]: https://github.com/Microsoft/ChakraCore/
 [mozilla]: https://github.com/mozilla/gecko-dev/
-[traceur]: https://github.com/google/traceur-compiler/
 [v8]: https://github.com/v8/v8/
 [webkit]: https://www.webkit.org/building/checkout.html

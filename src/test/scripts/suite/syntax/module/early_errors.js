@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -26,38 +26,46 @@ const lexicalDeclarations = ["let a = 0", "const a = 0", "class a{}", "function 
 const importDeclarations = ["import* as a from 'dummy'", "import a from 'dummy'", "import a, {} from 'dummy'", "import {a} from 'dummy'", "import {b as a} from 'dummy'"];
 const declarations = [...lexicalDeclarations, ...importDeclarations];
 
-const exportVarDeclarations = [for (d of varDeclarations) `export ${d}`];
-const exportLexicalDeclarations = [for (d of lexicalDeclarations) `export ${d}`];
+const exportVarDeclarations = varDeclarations.map(d => `export ${d}`);
+const exportLexicalDeclarations = lexicalDeclarations.map(d => `export ${d}`);
 const exportSpecifiers = ["export {a}", "export {b as a}", "export {a} from 'dummy'", "export {b as a} from 'dummy'"];
 const exportDeclarations = [...exportLexicalDeclarations, ...exportVarDeclarations, ...exportSpecifiers];
 
 // Duplicate lexically declared names (let, const, class, function, function*, import)
 {
-  for (let [decl1, decl2] of [for (d1 of declarations) for (d2 of declarations) [d1, d2]]) {
-    assertSyntaxError(`${decl1}; ${decl2};`);
+  for (let decl1 of declarations) {
+    for (let decl2 of declarations) {
+      assertSyntaxError(`${decl1}; ${decl2};`);
+    }
   }
 }
 
 // Duplicate lexically declared names, one in export (let, const, class, function, function*)
 {
-  for (let [exp, decl] of [for (e of exportLexicalDeclarations) for (d of declarations) [e, d]]) {
-    assertSyntaxError(`${exp}; ${decl};`);
-    assertSyntaxError(`${decl}; ${exp};`);
+  for (let exp of exportLexicalDeclarations) {
+    for (let decl of declarations) {
+      assertSyntaxError(`${exp}; ${decl};`);
+      assertSyntaxError(`${decl}; ${exp};`);
+    }
   }
 }
 
 // Duplicate exported bindings
 {
-  for (let [exp1, exp2] of [for (e1 of exportDeclarations) for (e2 of exportDeclarations) [e1, e2]]) {
-    assertSyntaxError(`${exp1}; ${exp2};`);
+  for (let exp1 of exportDeclarations) {
+    for (let exp2 of exportDeclarations) {
+      assertSyntaxError(`${exp1}; ${exp2};`);
+    }
   }
 }
 
 // Intersection of lexically declared and var declared names must be empty
 {
-  for (let [vdecl, decl] of [for (v of [...varDeclarations, ...exportVarDeclarations]) for (d of [...declarations, ...exportLexicalDeclarations]) [v, d]]) {
-    assertSyntaxError(`${vdecl}; ${decl};`);
-    assertSyntaxError(`${decl}; ${vdecl};`);
+  for (let vdecl of [...varDeclarations, ...exportVarDeclarations]) {
+    for (let decl of [...declarations, ...exportLexicalDeclarations]) {
+      assertSyntaxError(`${vdecl}; ${decl};`);
+      assertSyntaxError(`${decl}; ${vdecl};`);
+    }
   }
 }
 
@@ -72,8 +80,10 @@ const exportDeclarations = [...exportLexicalDeclarations, ...exportVarDeclaratio
 // Duplicate default exports
 {
   let exports = ["default 1", "function default(){}", "function* default(){}", "class default{}"];
-  for (let [export1, export2] of [for (e1 of exports) for (e2 of exports) [e1, e2]]) {
-    assertSyntaxError(`export ${export1}; export ${export2}`);
+  for (let export1 of exports) {
+    for (let export2 of exports) {
+      assertSyntaxError(`export ${export1}; export ${export2}`);
+    }
   }
 }
 

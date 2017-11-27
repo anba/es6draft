@@ -1,0 +1,42 @@
+#
+# Copyright (c) André Bargull
+# Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
+#
+# <https://github.com/anba/es6draft>
+#
+
+# Probably all invalid, but the "new improved names" make it unnecessarily hard to map the already classified
+# failures to the hash names.
+early/12a74c60f52a60de.js
+early/1aff49273f3e3a98.js
+early/be7329119eaa3d47.js
+early/ec31fa5e521c5df4.js
+fail/0d5e450f1da8a92a.js
+fail/569a2c1bad3beeb2.js
+fail/748656edbfb2d0bb.js
+fail/79f882da06f88c9f.js
+fail/92b6af54adef3624.js
+fail/98204d734f8c72b3.js
+fail/e3fbcf63d7e43ead.js
+fail/ef81b93cf9bdb4ec.js
+pass/050a006ae573e260.js
+pass/2c0f785914da9d0b.js
+pass/3dbb6e166b14a6c0.js
+pass/574ea84fc61bdc31.js
+pass/66e383bfd18e66ab.js
+pass/6c4fe38464c16309.js
+pass/78c215fabdf13bae.js
+pass/8643da76fe7e95c7.js
+pass/bf49ec8d96884562.js
+pass/e0c3d30b6fe96812.js
+pass/e4a43066905a597b.js
+pass-explicit/050a006ae573e260.js
+pass-explicit/2c0f785914da9d0b.js
+pass-explicit/574ea84fc61bdc31.js
+pass-explicit/66e383bfd18e66ab.js
+pass-explicit/6c4fe38464c16309.js
+pass-explicit/78c215fabdf13bae.js
+pass-explicit/8643da76fe7e95c7.js
+pass-explicit/bf49ec8d96884562.js
+pass-explicit/e0c3d30b6fe96812.js
+pass-explicit/e4a43066905a597b.js

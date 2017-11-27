@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -28,8 +28,7 @@ public final class ExportEntry {
 
     private final long sourcePosition;
 
-    public ExportEntry(Node node, String moduleRequest, String importName, String localName,
-            String exportName) {
+    public ExportEntry(Node node, String moduleRequest, String importName, String localName, String exportName) {
         this.moduleRequest = moduleRequest;
         this.importName = importName;
         this.localName = localName;
@@ -37,8 +36,8 @@ public final class ExportEntry {
         this.sourcePosition = node.getBeginPosition();
     }
 
-    public ExportEntry(long sourcePosition, String moduleRequest, String importName,
-            String localName, String exportName) {
+    public ExportEntry(long sourcePosition, String moduleRequest, String importName, String localName,
+            String exportName) {
         this.moduleRequest = moduleRequest;
         this.importName = importName;
         this.localName = localName;
@@ -48,9 +47,9 @@ public final class ExportEntry {
 
     @Override
     public String toString() {
-        return String
-                .format("ExportEntry {moduleRequest=%s, importName=%s, localName=%s, exportName=%s, moduleRequest=%s}",
-                        moduleRequest, importName, localName, exportName, moduleRequest);
+        return String.format(
+                "ExportEntry {moduleRequest=%s, importName=%s, localName=%s, exportName=%s, moduleRequest=%s}",
+                moduleRequest, importName, localName, exportName, moduleRequest);
     }
 
     /**

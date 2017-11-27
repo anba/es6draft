@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -8,11 +8,8 @@ const {
   assertSame
 } = Assert;
 
-// 19.2.4.6 Function.prototype[ @@create ] ( )
-
 {
   const foreignRealm = new Reflect.Realm();
-  const create = Function.prototype[Symbol.create];
 
   // foreign constructor function whose .prototype is not an object
   const foreignConstructor = foreignRealm.eval("function F(){}; F");

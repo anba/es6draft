@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -34,9 +34,8 @@ public final class SIMDObject extends OrdinaryObject {
      *            the prototype object
      */
     public SIMDObject(Realm realm, SIMDValue data, ScriptObject prototype) {
-        super(realm);
+        super(realm, prototype);
         this.data = data;
-        setPrototype(prototype);
     }
 
     /**
@@ -105,5 +104,10 @@ public final class SIMDObject extends OrdinaryObject {
         default:
             throw new AssertionError();
         }
+    }
+
+    @Override
+    public String toString() {
+        return String.format("%s, data=%s", super.toString(), data);
     }
 }

@@ -1,25 +1,22 @@
 #
-# Copyright (c) 2012-2016 André Bargull
+# Copyright (c) André Bargull
 # Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
 #
 # <https://github.com/anba/es6draft>
 #
 
 
-# ES5.1/6 spec vs. browser reality
-# - Object.defineProperty(/x/,"lastIndex",{writable:false}).exec("")
-# - browsers return `null`, whereas spec says to throw a TypeError
-fast/regex/lastIndex.js
-
 # invalid tests
 fast/js/toString-overrides.js
 
-# invalid test, `JSON.stringify(Object.assign(new Boolean(true), {valueOf(){ return 2 }}))` is "true"
+# test runner uses wrong base directory
 run-json-stringify.js
 
-# Mongolian vowel separator still recognised as whitespace in v8
-parseFloat.js
-ToNumber.js
+# Precision ranges extended in ES2018
+fast/js/kde/Number.js
+fast/js/number-tofixed.js
+fast/js/number-toprecision.js
+number-toExponential.js
 
 
 ###################
@@ -45,15 +42,6 @@ array-holes.js
  
 # [[Prototype]] of global object is not %Object.prototype% in V8
 fast/js/Object-defineProperty.js
-
-# RegExp.prototype.toString(): escape single / in character class
-# - SpiderMonkeys escapes it, JSC/V8 don't escape it
-fast/regex/toString.js
-
-# different html-comments parser
-# Function("1/*\n*/-->")
-# Allowed in SpiderMonkey, not allowed in V8/JSC
-parser-xml-close-comment.js
 
 # `'use strict'; delete void 0;` is an early error in JSC
 fast/js/basic-strict-mode.js
@@ -86,7 +74,6 @@ date-parse-comments-test.js
 fast/js/date-toisostring.js
 
 # different function source representation
-class-syntax-name.js
 fast/js/function-toString-semicolon-insertion.js
 
 # String.prototype.trim() removes \u200B in V8
@@ -124,7 +111,6 @@ fast/js/kde/RegExp.js
 #######################################
 
 # for-in with initializer
-toString-for-var-decl.js
 fast/js/parser-syntax-check.js
 
 # Static Semantics: Early errors invalid LHS
@@ -134,16 +120,8 @@ fast/js/modify-non-references.js
 # block-scoped function declaration activated at definition
 fast/js/kde/func-decl.js
 
-# function declaration not in block
-function-declaration-statement.js
-
 # function declaration redeclaration at block-level not allowed
 function-declarations-in-switch-statement.js
-
-# const without initializer
-const-without-initializer.js
-constant-count.js
-fast/js/arguments.js
 
 
 #######################################
@@ -168,6 +146,3 @@ sort-with-side-effecting-comparisons.js
 
 # OutOfMemory
 string-replacement-outofmemory.js
-
-# Intermittent failures
-fast/js/stack-overflow-arrity-catch.js

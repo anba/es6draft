@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -7,14 +7,19 @@
 package com.github.anba.es6draft.compiler;
 
 import static com.github.anba.es6draft.compiler.ClassPropertyGenerator.ClassPropertyEvaluation;
-import static com.github.anba.es6draft.semantics.StaticSemantics.ConstructorMethod;
-import static com.github.anba.es6draft.semantics.StaticSemantics.HasDecorators;
+import static com.github.anba.es6draft.semantics.StaticSemantics.DecoratedMethods;
+import static com.github.anba.es6draft.semantics.StaticSemantics.PrivateBoundNames;
 
-import java.util.ArrayList;
+import java.math.BigInteger;
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.List;
+import java.util.PrimitiveIterator;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.stream.IntStream;
 
 import com.github.anba.es6draft.ast.*;
 import com.github.anba.es6draft.ast.AbruptNode.Abrupt;
@@ -24,21 +29,25 @@ import com.github.anba.es6draft.ast.scope.Name;
 import com.github.anba.es6draft.ast.scope.Scope;
 import com.github.anba.es6draft.ast.scope.ScriptScope;
 import com.github.anba.es6draft.ast.scope.WithScope;
-import com.github.anba.es6draft.compiler.assembler.FieldName;
-import com.github.anba.es6draft.compiler.assembler.Jump;
-import com.github.anba.es6draft.compiler.assembler.MethodName;
-import com.github.anba.es6draft.compiler.assembler.TryCatchLabel;
-import com.github.anba.es6draft.compiler.assembler.Type;
-import com.github.anba.es6draft.compiler.assembler.Value;
-import com.github.anba.es6draft.compiler.assembler.Variable;
+import com.github.anba.es6draft.ast.synthetic.MethodDefinitionsMethod;
+import com.github.anba.es6draft.compiler.CodeVisitor.GeneratorState;
+import com.github.anba.es6draft.compiler.CodeVisitor.LabelState;
+import com.github.anba.es6draft.compiler.CodeVisitor.LabelledHashKey;
+import com.github.anba.es6draft.compiler.CodeVisitor.OutlinedCall;
+import com.github.anba.es6draft.compiler.StatementGenerator.Completion;
+import com.github.anba.es6draft.compiler.assembler.*;
+import com.github.anba.es6draft.compiler.assembler.Code.MethodCode;
 import com.github.anba.es6draft.runtime.DeclarativeEnvironmentRecord;
 import com.github.anba.es6draft.runtime.EnvironmentRecord;
+import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.GlobalEnvironmentRecord;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.ModuleEnvironmentRecord;
 import com.github.anba.es6draft.runtime.ObjectEnvironmentRecord;
 import com.github.anba.es6draft.runtime.internal.Bootstrap;
+import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
+import com.github.anba.es6draft.runtime.internal.ScriptIterator;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Null;
 import com.github.anba.es6draft.runtime.types.Reference;
@@ -54,106 +63,101 @@ abstract class DefaultCodeGenerator<RETURN> extends DefaultNodeVisitor<RETURN, C
     private static final class Fields {
         static final FieldName Double_NaN = FieldName.findStatic(Types.Double, "NaN", Type.DOUBLE_TYPE);
 
-        static final FieldName ScriptRuntime_EMPTY_ARRAY = FieldName.findStatic(Types.ScriptRuntime, "EMPTY_ARRAY",
+        static final FieldName CallOperations_EMPTY_ARRAY = FieldName.findStatic(Types.CallOperations, "EMPTY_ARRAY",
                 Types.Object_);
     }
 
     private static final class Methods {
         // class: AbstractOperations
         static final MethodName AbstractOperations_CreateIterResultObject = MethodName.findStatic(
-                Types.AbstractOperations, "CreateIterResultObject", Type.methodType(
-                        Types.OrdinaryObject, Types.ExecutionContext, Types.Object,
-                        Type.BOOLEAN_TYPE));
+                Types.AbstractOperations, "CreateIterResultObject",
+                Type.methodType(Types.OrdinaryObject, Types.ExecutionContext, Types.Object, Type.BOOLEAN_TYPE));
 
-        static final MethodName AbstractOperations_HasOwnProperty = MethodName.findStatic(
-                Types.AbstractOperations, "HasOwnProperty", Type.methodType(Type.BOOLEAN_TYPE,
-                        Types.ExecutionContext, Types.ScriptObject, Types.String));
-
-        static final MethodName AbstractOperations_GetIterator = MethodName.findStatic(
-                Types.AbstractOperations, "GetIterator",
-                Type.methodType(Types.ScriptObject, Types.ExecutionContext, Types.Object));
+        static final MethodName AbstractOperations_HasOwnProperty = MethodName.findStatic(Types.AbstractOperations,
+                "HasOwnProperty",
+                Type.methodType(Type.BOOLEAN_TYPE, Types.ExecutionContext, Types.ScriptObject, Types.String));
 
         static final MethodName AbstractOperations_GetMethod = MethodName.findStatic(Types.AbstractOperations,
                 "GetMethod", Type.methodType(Types.Callable, Types.ExecutionContext, Types.ScriptObject, Types.String));
 
-        static final MethodName AbstractOperations_IteratorComplete = MethodName.findStatic(
-                Types.AbstractOperations, "IteratorComplete",
-                Type.methodType(Type.BOOLEAN_TYPE, Types.ExecutionContext, Types.ScriptObject));
+        static final MethodName AbstractOperations_Invoke = MethodName.findStatic(Types.AbstractOperations, "Invoke",
+                Type.methodType(Types.Object, Types.ExecutionContext, Types.ScriptObject, Types.String, Types.Object_));
 
-        static final MethodName AbstractOperations_IteratorNext = MethodName.findStatic(
-                Types.AbstractOperations, "IteratorNext", Type.methodType(Types.ScriptObject,
-                        Types.ExecutionContext, Types.ScriptObject));
+        static final MethodName AbstractOperations_IteratorComplete = MethodName.findStatic(Types.AbstractOperations,
+                "IteratorComplete", Type.methodType(Type.BOOLEAN_TYPE, Types.ExecutionContext, Types.ScriptObject));
 
-        static final MethodName AbstractOperations_IteratorNext_Object = MethodName.findStatic(
-                Types.AbstractOperations, "IteratorNext", Type.methodType(Types.ScriptObject,
-                        Types.ExecutionContext, Types.ScriptObject, Types.Object));
+        static final MethodName AbstractOperations_IteratorNext_Object = MethodName.findStatic(Types.AbstractOperations,
+                "IteratorNext",
+                Type.methodType(Types.ScriptObject, Types.ExecutionContext, Types.ScriptIterator, Types.Object));
 
-        static final MethodName AbstractOperations_IteratorValue = MethodName.findStatic(
-                Types.AbstractOperations, "IteratorValue",
-                Type.methodType(Types.Object, Types.ExecutionContext, Types.ScriptObject));
+        static final MethodName AbstractOperations_IteratorValue = MethodName.findStatic(Types.AbstractOperations,
+                "IteratorValue", Type.methodType(Types.Object, Types.ExecutionContext, Types.ScriptObject));
 
-        static final MethodName AbstractOperations_ToPrimitive = MethodName.findStatic(
-                Types.AbstractOperations, "ToPrimitive",
-                Type.methodType(Types.Object, Types.ExecutionContext, Types.Object));
+        static final MethodName AbstractOperations_ToPrimitive = MethodName.findStatic(Types.AbstractOperations,
+                "ToPrimitive", Type.methodType(Types.Object, Types.ExecutionContext, Types.Object));
 
-        static final MethodName AbstractOperations_ToBoolean = MethodName.findStatic(
-                Types.AbstractOperations, "ToBoolean",
-                Type.methodType(Type.BOOLEAN_TYPE, Types.Object));
+        static final MethodName AbstractOperations_ToBoolean = MethodName.findStatic(Types.AbstractOperations,
+                "ToBoolean", Type.methodType(Type.BOOLEAN_TYPE, Types.Object));
 
-        static final MethodName AbstractOperations_ToBoolean_double = MethodName.findStatic(
-                Types.AbstractOperations, "ToBoolean",
-                Type.methodType(Type.BOOLEAN_TYPE, Type.DOUBLE_TYPE));
+        static final MethodName AbstractOperations_ToBoolean_int = MethodName.findStatic(Types.AbstractOperations,
+                "ToBoolean", Type.methodType(Type.BOOLEAN_TYPE, Type.INT_TYPE));
 
-        static final MethodName AbstractOperations_ToFlatString = MethodName.findStatic(
-                Types.AbstractOperations, "ToFlatString",
-                Type.methodType(Types.String, Types.ExecutionContext, Types.Object));
+        static final MethodName AbstractOperations_ToBoolean_long = MethodName.findStatic(Types.AbstractOperations,
+                "ToBoolean", Type.methodType(Type.BOOLEAN_TYPE, Type.LONG_TYPE));
 
-        static final MethodName AbstractOperations_ToNumber = MethodName.findStatic(
-                Types.AbstractOperations, "ToNumber",
-                Type.methodType(Type.DOUBLE_TYPE, Types.ExecutionContext, Types.Object));
+        static final MethodName AbstractOperations_ToBoolean_double = MethodName.findStatic(Types.AbstractOperations,
+                "ToBoolean", Type.methodType(Type.BOOLEAN_TYPE, Type.DOUBLE_TYPE));
+
+        static final MethodName AbstractOperations_ToBoolean_BigInteger = MethodName.findStatic(
+                Types.AbstractOperations, "ToBoolean", Type.methodType(Type.BOOLEAN_TYPE, Types.BigInteger));
+
+        static final MethodName AbstractOperations_ToFlatString = MethodName.findStatic(Types.AbstractOperations,
+                "ToFlatString", Type.methodType(Types.String, Types.ExecutionContext, Types.Object));
+
+        static final MethodName AbstractOperations_ToNumber = MethodName.findStatic(Types.AbstractOperations,
+                "ToNumber", Type.methodType(Type.DOUBLE_TYPE, Types.ExecutionContext, Types.Object));
 
         static final MethodName AbstractOperations_ToNumber_CharSequence = MethodName.findStatic(
-                Types.AbstractOperations, "ToNumber",
-                Type.methodType(Type.DOUBLE_TYPE, Types.CharSequence));
+                Types.AbstractOperations, "ToNumber", Type.methodType(Type.DOUBLE_TYPE, Types.CharSequence));
 
-        static final MethodName AbstractOperations_ToInt32 = MethodName.findStatic(
-                Types.AbstractOperations, "ToInt32",
+        static final MethodName AbstractOperations_ToNumeric = MethodName.findStatic(Types.AbstractOperations,
+                "ToNumeric", Type.methodType(Types.Number, Types.ExecutionContext, Types.Object));
+
+        static final MethodName AbstractOperations_ToNumericInt32 = MethodName.findStatic(Types.AbstractOperations,
+                "ToNumericInt32", Type.methodType(Types.Number, Types.ExecutionContext, Types.Object));
+
+        static final MethodName AbstractOperations_ToInt32 = MethodName.findStatic(Types.AbstractOperations, "ToInt32",
                 Type.methodType(Type.INT_TYPE, Types.ExecutionContext, Types.Object));
 
-        static final MethodName AbstractOperations_ToInt32_double = MethodName.findStatic(
-                Types.AbstractOperations, "ToInt32",
-                Type.methodType(Type.INT_TYPE, Type.DOUBLE_TYPE));
+        static final MethodName AbstractOperations_ToInt32_double = MethodName.findStatic(Types.AbstractOperations,
+                "ToInt32", Type.methodType(Type.INT_TYPE, Type.DOUBLE_TYPE));
 
-        static final MethodName AbstractOperations_ToUint32 = MethodName.findStatic(
-                Types.AbstractOperations, "ToUint32",
-                Type.methodType(Type.LONG_TYPE, Types.ExecutionContext, Types.Object));
+        static final MethodName AbstractOperations_ToUint32 = MethodName.findStatic(Types.AbstractOperations,
+                "ToUint32", Type.methodType(Type.LONG_TYPE, Types.ExecutionContext, Types.Object));
 
-        static final MethodName AbstractOperations_ToUint32_double = MethodName.findStatic(
-                Types.AbstractOperations, "ToUint32",
-                Type.methodType(Type.LONG_TYPE, Type.DOUBLE_TYPE));
+        static final MethodName AbstractOperations_ToUint32_double = MethodName.findStatic(Types.AbstractOperations,
+                "ToUint32", Type.methodType(Type.LONG_TYPE, Type.DOUBLE_TYPE));
 
-        static final MethodName AbstractOperations_ToObject = MethodName.findStatic(
-                Types.AbstractOperations, "ToObject",
-                Type.methodType(Types.ScriptObject, Types.ExecutionContext, Types.Object));
+        static final MethodName AbstractOperations_ToObject = MethodName.findStatic(Types.AbstractOperations,
+                "ToObject", Type.methodType(Types.ScriptObject, Types.ExecutionContext, Types.Object));
 
-        static final MethodName AbstractOperations_ToPropertyKey = MethodName.findStatic(
-                Types.AbstractOperations, "ToPropertyKey",
-                Type.methodType(Types.Object, Types.ExecutionContext, Types.Object));
+        static final MethodName AbstractOperations_ToPropertyKey = MethodName.findStatic(Types.AbstractOperations,
+                "ToPropertyKey", Type.methodType(Types.Object, Types.ExecutionContext, Types.Object));
 
-        static final MethodName AbstractOperations_ToString = MethodName.findStatic(
-                Types.AbstractOperations, "ToString",
-                Type.methodType(Types.CharSequence, Types.ExecutionContext, Types.Object));
+        static final MethodName AbstractOperations_ToString = MethodName.findStatic(Types.AbstractOperations,
+                "ToString", Type.methodType(Types.CharSequence, Types.ExecutionContext, Types.Object));
 
-        static final MethodName AbstractOperations_ToString_int = MethodName.findStatic(
-                Types.AbstractOperations, "ToString", Type.methodType(Types.String, Type.INT_TYPE));
+        static final MethodName AbstractOperations_ToString_int = MethodName.findStatic(Types.AbstractOperations,
+                "ToString", Type.methodType(Types.String, Type.INT_TYPE));
 
-        static final MethodName AbstractOperations_ToString_long = MethodName
-                .findStatic(Types.AbstractOperations, "ToString",
-                        Type.methodType(Types.String, Type.LONG_TYPE));
+        static final MethodName AbstractOperations_ToString_long = MethodName.findStatic(Types.AbstractOperations,
+                "ToString", Type.methodType(Types.String, Type.LONG_TYPE));
 
-        static final MethodName AbstractOperations_ToString_double = MethodName.findStatic(
-                Types.AbstractOperations, "ToString",
-                Type.methodType(Types.String, Type.DOUBLE_TYPE));
+        static final MethodName AbstractOperations_ToString_double = MethodName.findStatic(Types.AbstractOperations,
+                "ToString", Type.methodType(Types.String, Type.DOUBLE_TYPE));
+
+        static final MethodName AbstractOperations_ToString_BigInteger = MethodName.findStatic(Types.AbstractOperations,
+                "ToString", Type.methodType(Types.String, Types.BigInteger));
 
         // class: AsyncAbstractOperations
         static final MethodName AsyncAbstractOperations_AsyncFunctionAwait = MethodName.findStatic(
@@ -165,135 +169,153 @@ abstract class DefaultCodeGenerator<RETURN> extends DefaultNodeVisitor<RETURN, C
                 Type.methodType(Types.String, Type.BOOLEAN_TYPE));
 
         // class: CharSequence
-        static final MethodName CharSequence_length = MethodName.findInterface(Types.CharSequence,
-                "length", Type.methodType(Type.INT_TYPE));
-        static final MethodName CharSequence_toString = MethodName.findInterface(
-                Types.CharSequence, "toString", Type.methodType(Types.String));
+        static final MethodName CharSequence_length = MethodName.findInterface(Types.CharSequence, "length",
+                Type.methodType(Type.INT_TYPE));
+        static final MethodName CharSequence_toString = MethodName.findInterface(Types.CharSequence, "toString",
+                Type.methodType(Types.String));
 
         // class: ExecutionContext
-        static final MethodName ExecutionContext_getLexicalEnvironment = MethodName.findVirtual(
-                Types.ExecutionContext, "getLexicalEnvironment",
-                Type.methodType(Types.LexicalEnvironment));
+        static final MethodName ExecutionContext_getLexicalEnvironment = MethodName.findVirtual(Types.ExecutionContext,
+                "getLexicalEnvironment", Type.methodType(Types.LexicalEnvironment));
 
-        static final MethodName ExecutionContext_getLexicalEnvironmentRecord = MethodName
-                .findVirtual(Types.ExecutionContext, "getLexicalEnvironmentRecord",
-                        Type.methodType(Types.EnvironmentRecord));
+        static final MethodName ExecutionContext_getLexicalEnvironmentRecord = MethodName.findVirtual(
+                Types.ExecutionContext, "getLexicalEnvironmentRecord", Type.methodType(Types.EnvironmentRecord));
 
-        static final MethodName ExecutionContext_getVariableEnvironmentRecord = MethodName
-                .findVirtual(Types.ExecutionContext, "getVariableEnvironmentRecord",
-                        Type.methodType(Types.EnvironmentRecord));
+        static final MethodName ExecutionContext_getVariableEnvironmentRecord = MethodName.findVirtual(
+                Types.ExecutionContext, "getVariableEnvironmentRecord", Type.methodType(Types.EnvironmentRecord));
 
-        static final MethodName ExecutionContext_pushLexicalEnvironment = MethodName.findVirtual(
-                Types.ExecutionContext, "pushLexicalEnvironment",
+        static final MethodName ExecutionContext_pushLexicalEnvironment = MethodName.findVirtual(Types.ExecutionContext,
+                "pushLexicalEnvironment", Type.methodType(Type.VOID_TYPE, Types.LexicalEnvironment));
+
+        static final MethodName ExecutionContext_popLexicalEnvironment = MethodName.findVirtual(Types.ExecutionContext,
+                "popLexicalEnvironment", Type.methodType(Type.VOID_TYPE));
+
+        static final MethodName ExecutionContext_replaceLexicalEnvironment = MethodName.findVirtual(
+                Types.ExecutionContext, "replaceLexicalEnvironment",
                 Type.methodType(Type.VOID_TYPE, Types.LexicalEnvironment));
 
-        static final MethodName ExecutionContext_popLexicalEnvironment = MethodName.findVirtual(
-                Types.ExecutionContext, "popLexicalEnvironment", Type.methodType(Type.VOID_TYPE));
-
-        static final MethodName ExecutionContext_replaceLexicalEnvironment = MethodName
-                .findVirtual(Types.ExecutionContext, "replaceLexicalEnvironment",
-                        Type.methodType(Type.VOID_TYPE, Types.LexicalEnvironment));
-
-        static final MethodName ExecutionContext_restoreLexicalEnvironment = MethodName
-                .findVirtual(Types.ExecutionContext, "restoreLexicalEnvironment",
-                        Type.methodType(Type.VOID_TYPE, Types.LexicalEnvironment));
+        static final MethodName ExecutionContext_restoreLexicalEnvironment = MethodName.findVirtual(
+                Types.ExecutionContext, "restoreLexicalEnvironment",
+                Type.methodType(Type.VOID_TYPE, Types.LexicalEnvironment));
 
         // class: LexicalEnvironment
-        static final MethodName LexicalEnvironment_getEnvRec = MethodName.findVirtual(
-                Types.LexicalEnvironment, "getEnvRec", Type.methodType(Types.EnvironmentRecord));
+        static final MethodName LexicalEnvironment_getEnvRec = MethodName.findVirtual(Types.LexicalEnvironment,
+                "getEnvRec", Type.methodType(Types.EnvironmentRecord));
 
-        static final MethodName LexicalEnvironment_cloneDeclarativeEnvironment = MethodName
-                .findStatic(Types.LexicalEnvironment, "cloneDeclarativeEnvironment",
-                        Type.methodType(Types.LexicalEnvironment, Types.LexicalEnvironment));
+        static final MethodName LexicalEnvironment_cloneDeclarativeEnvironment = MethodName.findStatic(
+                Types.LexicalEnvironment, "cloneDeclarativeEnvironment",
+                Type.methodType(Types.LexicalEnvironment, Types.LexicalEnvironment));
 
-        static final MethodName LexicalEnvironment_newDeclarativeEnvironment = MethodName
-                .findStatic(Types.LexicalEnvironment, "newDeclarativeEnvironment",
-                        Type.methodType(Types.LexicalEnvironment, Types.LexicalEnvironment));
+        static final MethodName LexicalEnvironment_newDeclarativeEnvironment = MethodName.findStatic(
+                Types.LexicalEnvironment, "newDeclarativeEnvironment",
+                Type.methodType(Types.LexicalEnvironment, Types.LexicalEnvironment));
 
-        static final MethodName LexicalEnvironment_newCatchDeclarativeEnvironment = MethodName
-                .findStatic(Types.LexicalEnvironment, "newCatchDeclarativeEnvironment",
-                        Type.methodType(Types.LexicalEnvironment, Types.LexicalEnvironment));
+        static final MethodName LexicalEnvironment_newCatchDeclarativeEnvironment = MethodName.findStatic(
+                Types.LexicalEnvironment, "newCatchDeclarativeEnvironment",
+                Type.methodType(Types.LexicalEnvironment, Types.LexicalEnvironment));
 
-        static final MethodName LexicalEnvironment_newObjectEnvironment = MethodName.findStatic(
-                Types.LexicalEnvironment, "newObjectEnvironment", Type.methodType(
-                        Types.LexicalEnvironment, Types.ScriptObject, Types.LexicalEnvironment,
-                        Type.BOOLEAN_TYPE));
+        static final MethodName LexicalEnvironment_newObjectEnvironment = MethodName
+                .findStatic(Types.LexicalEnvironment, "newObjectEnvironment", Type.methodType(Types.LexicalEnvironment,
+                        Types.ScriptObject, Types.LexicalEnvironment, Type.BOOLEAN_TYPE));
 
-        // class: OrdinaryFunction
-        static final MethodName OrdinaryFunction_SetFunctionName_String = MethodName.findStatic(
-                Types.OrdinaryFunction, "SetFunctionName",
-                Type.methodType(Type.VOID_TYPE, Types.OrdinaryObject, Types.String));
+        // class: FunctionObject
+        static final MethodName FunctionObject_SetFunctionName = MethodName.findStatic(Types.FunctionObject,
+                "SetFunctionName", Type.methodType(Type.VOID_TYPE, Types.OrdinaryObject, Types.Object));
 
-        static final MethodName OrdinaryFunction_SetFunctionName_Symbol = MethodName.findStatic(
-                Types.OrdinaryFunction, "SetFunctionName",
-                Type.methodType(Type.VOID_TYPE, Types.OrdinaryObject, Types.Symbol));
+        static final MethodName FunctionObject_SetFunctionName_String = MethodName.findStatic(Types.FunctionObject,
+                "SetFunctionName", Type.methodType(Type.VOID_TYPE, Types.OrdinaryObject, Types.String));
 
         // class: ReturnValue
-        static final MethodName ReturnValue_getValue = MethodName.findVirtual(Types.ReturnValue,
-                "getValue", Type.methodType(Types.Object));
+        static final MethodName ReturnValue_new = MethodName.findConstructor(Types.ReturnValue,
+                Type.methodType(Type.VOID_TYPE, Types.Object));
+
+        static final MethodName ReturnValue_getValue = MethodName.findVirtual(Types.ReturnValue, "getValue",
+                Type.methodType(Types.Object));
 
         // class: ScriptException
-        static final MethodName ScriptException_getValue = MethodName.findVirtual(Types.ScriptException,
-                "getValue", Type.methodType(Types.Object));
+        static final MethodName ScriptException_getValue = MethodName.findVirtual(Types.ScriptException, "getValue",
+                Type.methodType(Types.Object));
 
-        // class: ScriptRuntime
-        static final MethodName ScriptRuntime_CheckCallable = MethodName.findStatic(
-                Types.ScriptRuntime, "CheckCallable",
-                Type.methodType(Types.Callable, Types.Object, Types.ExecutionContext));
+        // class: CallOperations
+        static final MethodName CallOperations_CheckCallable = MethodName.findStatic(Types.CallOperations,
+                "CheckCallable", Type.methodType(Types.Callable, Types.Object, Types.ExecutionContext));
 
-        static final MethodName ScriptRuntime_EvaluateConstructorMethod = MethodName.findStatic(
-                Types.ScriptRuntime, "EvaluateConstructorMethod", Type.methodType(
-                        Types.OrdinaryConstructorFunction, Types.ScriptObject,
-                        Types.OrdinaryObject, Types.RuntimeInfo$Function, Type.BOOLEAN_TYPE,
+        // class: ClassOperations
+        static final MethodName ClassOperations_CreateStaticClassFieldInitializer = MethodName.findStatic(
+                Types.ClassOperations, "CreateStaticClassFieldInitializer", Type.methodType(Types.OrdinaryFunction,
+                        Types.ScriptObject, Types.RuntimeInfo$Function, Types.Object_, Types.ExecutionContext));
+
+        static final MethodName ClassOperations_CreateClassFieldInitializer = MethodName.findStatic(
+                Types.ClassOperations, "CreateClassFieldInitializer",
+                Type.methodType(Types.OrdinaryFunction, Types.ScriptObject, Types.RuntimeInfo$Function, Types.Object_,
+                        Types.ClassOperations$InstanceMethod_, Types.ExecutionContext));
+
+        static final MethodName ClassOperations_EvaluateConstructorMethod = MethodName.findStatic(Types.ClassOperations,
+                "EvaluateConstructorMethod", Type.methodType(Types.OrdinaryConstructorFunction, Types.ScriptObject,
+                        Types.OrdinaryObject, Types.RuntimeInfo$Function, Type.BOOLEAN_TYPE, Types.ExecutionContext));
+
+        static final MethodName ClassOperations_createProto = MethodName.findStatic(Types.ClassOperations,
+                "createProto", Type.methodType(Types.OrdinaryObject, Types.ScriptObject, Types.ExecutionContext));
+
+        static final MethodName ClassOperations_getClassProto = MethodName.findStatic(Types.ClassOperations,
+                "getClassProto", Type.methodType(Types.ScriptObject_, Types.Object, Types.ExecutionContext));
+
+        static final MethodName ClassOperations_getClassProto_Null = MethodName.findStatic(Types.ClassOperations,
+                "getClassProto", Type.methodType(Types.ScriptObject_, Types.ExecutionContext));
+
+        static final MethodName ClassOperations_getDefaultClassProto = MethodName.findStatic(Types.ClassOperations,
+                "getDefaultClassProto", Type.methodType(Types.ScriptObject_, Types.ExecutionContext));
+
+        static final MethodName ClassOperations_setInstanceFieldsInitializer = MethodName.findStatic(
+                Types.ClassOperations, "setInstanceFieldsInitializer",
+                Type.methodType(Type.VOID_TYPE, Types.OrdinaryConstructorFunction, Types.OrdinaryFunction));
+
+        // class: DecoratorOperations
+        static final MethodName DecoratorOperations_propertyDescriptor = MethodName.findStatic(
+                Types.DecoratorOperations, "propertyDescriptor",
+                Type.methodType(Types.Object, Types.OrdinaryObject, Types.Object, Types.ExecutionContext));
+
+        static final MethodName DecoratorOperations_defineProperty = MethodName.findStatic(Types.DecoratorOperations,
+                "defineProperty", Type.methodType(Type.VOID_TYPE, Types.OrdinaryObject, Types.Object, Types.Object,
                         Types.ExecutionContext));
 
-        static final MethodName ScriptRuntime_EvaluateClassDecorators = MethodName
-                .findStatic(Types.ScriptRuntime, "EvaluateClassDecorators", Type.methodType(
-                        Type.VOID_TYPE, Types.OrdinaryConstructorFunction, Types.ArrayList,
-                        Types.ExecutionContext));
+        // class: IteratorOperations
+        static final MethodName IteratorOperations_iterate = MethodName.findStatic(Types.IteratorOperations, "iterate",
+                Type.methodType(Types.ScriptIterator, Types.Object, Types.ExecutionContext));
 
-        static final MethodName ScriptRuntime_EvaluateClassMethodDecorators = MethodName
-                .findStatic(Types.ScriptRuntime, "EvaluateClassMethodDecorators",
-                        Type.methodType(Type.VOID_TYPE, Types.ArrayList, Types.ExecutionContext));
+        static final MethodName IteratorOperations_asyncIterate = MethodName.findStatic(Types.IteratorOperations,
+                "asyncIterate", Type.methodType(Types.ScriptIterator, Types.Object, Types.ExecutionContext));
 
-        static final MethodName ScriptRuntime_getClassProto = MethodName.findStatic(
-                Types.ScriptRuntime, "getClassProto",
-                Type.methodType(Types.ScriptObject_, Types.Object, Types.ExecutionContext));
+        // class: Operators
+        static final MethodName Operators_yieldThrowCompletion = MethodName.findStatic(Types.Operators,
+                "yieldThrowCompletion",
+                Type.methodType(Types.ScriptObject, Types.ExecutionContext, Types.ScriptObject, Types.ScriptException));
 
-        static final MethodName ScriptRuntime_getClassProto_Null = MethodName.findStatic(
-                Types.ScriptRuntime, "getClassProto",
-                Type.methodType(Types.ScriptObject_, Types.ExecutionContext));
+        static final MethodName Operators_yieldReturnCompletion = MethodName.findStatic(Types.Operators,
+                "yieldReturnCompletion",
+                Type.methodType(Types.ScriptObject, Types.ExecutionContext, Types.ScriptObject, Types.ReturnValue));
 
-        static final MethodName ScriptRuntime_getDefaultClassProto = MethodName.findStatic(
-                Types.ScriptRuntime, "getDefaultClassProto",
-                Type.methodType(Types.ScriptObject_, Types.ExecutionContext));
-
-        static final MethodName ScriptRuntime_yieldThrowCompletion = MethodName.findStatic(
-                Types.ScriptRuntime, "yieldThrowCompletion", Type.methodType(Types.ScriptObject,
-                        Types.ExecutionContext, Types.ScriptObject, Types.ScriptException));
-
-        static final MethodName ScriptRuntime_yieldReturnCompletion = MethodName.findStatic(
-                Types.ScriptRuntime, "yieldReturnCompletion", Type.methodType(Types.ScriptObject,
-                        Types.ExecutionContext, Types.ScriptObject, Types.ReturnValue));
-
-        static final MethodName ScriptRuntime_reportPropertyNotCallable = MethodName.findStatic(Types.ScriptRuntime,
+        static final MethodName Operators_reportPropertyNotCallable = MethodName.findStatic(Types.Operators,
                 "reportPropertyNotCallable",
                 Type.methodType(Types.ScriptException, Types.String, Types.ExecutionContext));
 
-        static final MethodName ScriptRuntime_requireObjectResult = MethodName.findStatic(Types.ScriptRuntime,
+        static final MethodName Operators_requireObjectResult = MethodName.findStatic(Types.Operators,
                 "requireObjectResult",
                 Type.methodType(Types.ScriptObject, Types.Object, Types.String, Types.ExecutionContext));
 
         // class: Type
-        static final MethodName Type_isUndefinedOrNull = MethodName.findStatic(Types._Type,
-                "isUndefinedOrNull", Type.methodType(Type.BOOLEAN_TYPE, Types.Object));
-
-        // class: ArrayList
-        static final MethodName ArrayList_init = MethodName.findConstructor(Types.ArrayList,
-                Type.methodType(Type.VOID_TYPE));
-
-        static final MethodName ArrayList_add = MethodName.findVirtual(Types.ArrayList, "add",
+        static final MethodName Type_isObject = MethodName.findStatic(Types._Type, "isObject",
                 Type.methodType(Type.BOOLEAN_TYPE, Types.Object));
+
+        static final MethodName Type_isUndefinedOrNull = MethodName.findStatic(Types._Type, "isUndefinedOrNull",
+                Type.methodType(Type.BOOLEAN_TYPE, Types.Object));
+
+        // class: ScriptIterator
+        static final MethodName ScriptIterator_getScriptObject = MethodName.findInterface(Types.ScriptIterator,
+                "getScriptObject", Type.methodType(Types.ScriptObject));
+
+        static final MethodName ScriptIterator_nextIterResult = MethodName.findInterface(Types.ScriptIterator,
+                "nextIterResult", Type.methodType(Types.Object, Types.Object));
 
         // class: Throwable
         static final MethodName Throwable_addSuppressed = MethodName.findVirtual(Types.Throwable, "addSuppressed",
@@ -336,6 +358,32 @@ abstract class DefaultCodeGenerator<RETURN> extends DefaultNodeVisitor<RETURN, C
      * stack: [] {@literal ->} []
      * 
      * @param node
+     *            the module-item node
+     * @param mv
+     *            the code visitor
+     * @return the completion type
+     */
+    protected final Completion statement(ModuleItem node, CodeVisitor mv) {
+        return codegen.statement(node, mv);
+    }
+
+    /**
+     * stack: [] {@literal ->} []
+     * 
+     * @param statements
+     *            the statements list
+     * @param mv
+     *            the code visitor
+     * @return the completion type
+     */
+    protected final Completion statements(List<? extends ModuleItem> statements, CodeVisitor mv) {
+        return codegen.statements(statements, mv);
+    }
+
+    /**
+     * stack: [] {@literal ->} []
+     * 
+     * @param node
      *            the abrupt node
      * @param mv
      *            the code visitor
@@ -357,8 +405,7 @@ abstract class DefaultCodeGenerator<RETURN> extends DefaultNodeVisitor<RETURN, C
      * @return the variable holding the saved environment
      */
     protected final Variable<LexicalEnvironment<?>> saveEnvironment(CodeVisitor mv) {
-        Variable<LexicalEnvironment<?>> savedEnv = mv.newVariable("savedEnv",
-                LexicalEnvironment.class).uncheckedCast();
+        Variable<LexicalEnvironment<?>> savedEnv = mv.newVariable("savedEnv", LexicalEnvironment.class).uncheckedCast();
         getLexicalEnvironment(mv);
         mv.store(savedEnv);
         return savedEnv;
@@ -432,7 +479,7 @@ abstract class DefaultCodeGenerator<RETURN> extends DefaultNodeVisitor<RETURN, C
      *            the code visitor
      */
     protected final <R extends EnvironmentRecord> Value<R> getLexicalEnvironmentRecord(Type type, CodeVisitor mv) {
-        return asm -> {
+        return __ -> {
             mv.loadExecutionContext();
             mv.invoke(Methods.ExecutionContext_getLexicalEnvironmentRecord);
             if (type != Types.EnvironmentRecord) {
@@ -470,7 +517,7 @@ abstract class DefaultCodeGenerator<RETURN> extends DefaultNodeVisitor<RETURN, C
      *            the code visitor
      */
     protected final <R extends EnvironmentRecord> Value<R> getVariableEnvironmentRecord(Type type, CodeVisitor mv) {
-        return asm -> {
+        return __ -> {
             mv.loadExecutionContext();
             mv.invoke(Methods.ExecutionContext_getVariableEnvironmentRecord);
             if (type != Types.EnvironmentRecord) {
@@ -621,8 +668,7 @@ abstract class DefaultCodeGenerator<RETURN> extends DefaultNodeVisitor<RETURN, C
      * @param mv
      *            the instruction visitor
      */
-    protected final <R extends EnvironmentRecord> void getEnvRec(Variable<? extends R> envRec,
-            InstructionVisitor mv) {
+    protected final <R extends EnvironmentRecord> void getEnvRec(Variable<? extends R> envRec, InstructionVisitor mv) {
         mv.dup(); // TODO: Remove dup?!
         mv.invoke(Methods.LexicalEnvironment_getEnvRec);
         if (envRec.getType() != Types.EnvironmentRecord) {
@@ -642,8 +688,7 @@ abstract class DefaultCodeGenerator<RETURN> extends DefaultNodeVisitor<RETURN, C
     }
 
     enum ValType {
-        Undefined, Null, Boolean, Number, Number_int, Number_uint, String, Object, Reference, Any,
-        Empty;
+        Undefined, Null, Boolean, Number, Number_int, Number_uint, BigInt, String, Object, Reference, Any, Empty;
 
         public int size() {
             switch (this) {
@@ -651,6 +696,7 @@ abstract class DefaultCodeGenerator<RETURN> extends DefaultNodeVisitor<RETURN, C
             case Number_uint:
                 return 2;
             case Number_int:
+            case BigInt:
             case Undefined:
             case Null:
             case Boolean:
@@ -670,7 +716,28 @@ abstract class DefaultCodeGenerator<RETURN> extends DefaultNodeVisitor<RETURN, C
             case Number:
             case Number_int:
             case Number_uint:
+            case BigInt:
                 return true;
+            case Undefined:
+            case Null:
+            case Boolean:
+            case String:
+            case Object:
+            case Reference:
+            case Any:
+            case Empty:
+            default:
+                return false;
+            }
+        }
+
+        public boolean isNumber() {
+            switch (this) {
+            case Number:
+            case Number_int:
+            case Number_uint:
+                return true;
+            case BigInt:
             case Undefined:
             case Null:
             case Boolean:
@@ -692,6 +759,7 @@ abstract class DefaultCodeGenerator<RETURN> extends DefaultNodeVisitor<RETURN, C
             case Number:
             case Number_int:
             case Number_uint:
+            case BigInt:
             case String:
                 return true;
             case Object:
@@ -710,6 +778,7 @@ abstract class DefaultCodeGenerator<RETURN> extends DefaultNodeVisitor<RETURN, C
             case Number_int:
             case Number_uint:
                 return true;
+            case BigInt:
             case Undefined:
             case Null:
             case String:
@@ -734,6 +803,8 @@ abstract class DefaultCodeGenerator<RETURN> extends DefaultNodeVisitor<RETURN, C
                 return int.class;
             case Number_uint:
                 return long.class;
+            case BigInt:
+                return BigInteger.class;
             case Object:
                 return ScriptObject.class;
             case Reference:
@@ -762,6 +833,8 @@ abstract class DefaultCodeGenerator<RETURN> extends DefaultNodeVisitor<RETURN, C
                 return Type.INT_TYPE;
             case Number_uint:
                 return Type.LONG_TYPE;
+            case BigInt:
+                return Types.BigInteger;
             case Object:
                 return Types.ScriptObject;
             case Reference:
@@ -790,6 +863,8 @@ abstract class DefaultCodeGenerator<RETURN> extends DefaultNodeVisitor<RETURN, C
                 return Types.Integer;
             case Number_uint:
                 return Types.Long;
+            case BigInt:
+                return Types.BigInteger;
             case Object:
                 return Types.ScriptObject;
             case Reference:
@@ -834,6 +909,9 @@ abstract class DefaultCodeGenerator<RETURN> extends DefaultNodeVisitor<RETURN, C
             if (Types.Double.equals(type)) {
                 return ValType.Number;
             }
+            if (Types.BigInteger.equals(type)) {
+                return ValType.BigInt;
+            }
             if (Types.Null.equals(type)) {
                 return ValType.Null;
             }
@@ -867,6 +945,7 @@ abstract class DefaultCodeGenerator<RETURN> extends DefaultNodeVisitor<RETURN, C
         case Number:
         case Number_int:
         case Number_uint:
+        case BigInt:
         case Undefined:
         case Null:
         case Boolean:
@@ -893,18 +972,19 @@ abstract class DefaultCodeGenerator<RETURN> extends DefaultNodeVisitor<RETURN, C
      * @param mv
      *            the code visitor
      */
-    protected static final void ToBoolean(ValType from, CodeVisitor mv) {
+    protected final void ToBoolean(ValType from, CodeVisitor mv) {
         switch (from) {
         case Number:
             mv.invoke(Methods.AbstractOperations_ToBoolean_double);
             return;
         case Number_int:
-            mv.i2d();
-            mv.invoke(Methods.AbstractOperations_ToBoolean_double);
+            mv.invoke(Methods.AbstractOperations_ToBoolean_int);
             return;
         case Number_uint:
-            mv.l2d();
-            mv.invoke(Methods.AbstractOperations_ToBoolean_double);
+            mv.invoke(Methods.AbstractOperations_ToBoolean_long);
+            return;
+        case BigInt:
+            mv.invoke(Methods.AbstractOperations_ToBoolean_BigInteger);
             return;
         case Undefined:
         case Null:
@@ -925,8 +1005,13 @@ abstract class DefaultCodeGenerator<RETURN> extends DefaultNodeVisitor<RETURN, C
             return;
         }
         case Object:
-            mv.pop();
-            mv.iconst(true);
+            if (codegen.isEnabled(CompatibilityOption.IsHTMLDDAObjects)) {
+                mv.instanceOf(Types.HTMLDDAObject);
+                mv.not();
+            } else {
+                mv.pop();
+                mv.iconst(true);
+            }
             return;
         case Any:
             mv.invoke(Methods.AbstractOperations_ToBoolean);
@@ -970,12 +1055,83 @@ abstract class DefaultCodeGenerator<RETURN> extends DefaultNodeVisitor<RETURN, C
         case String:
             mv.invoke(Methods.AbstractOperations_ToNumber_CharSequence);
             return;
+        case BigInt:
         case Object:
         case Any:
             mv.loadExecutionContext();
             mv.swap();
             mv.invoke(Methods.AbstractOperations_ToNumber);
             return;
+        case Empty:
+        case Reference:
+        default:
+            throw new AssertionError();
+        }
+    }
+
+    /**
+     * stack: [Object] {@literal ->} [double or BigInteger]
+     * 
+     * @param from
+     *            the input value type
+     * @param mv
+     *            the code visitor
+     * @return the returned value type
+     */
+    protected static final ValType ToNumeric(ValType from, CodeVisitor mv) {
+        switch (from) {
+        case Number:
+        case Number_int:
+        case Number_uint:
+        case Undefined:
+        case Null:
+        case Boolean:
+        case String:
+            ToNumber(from, mv);
+            return ValType.Number;
+        case BigInt:
+            return ValType.BigInt;
+        case Object:
+        case Any:
+            mv.loadExecutionContext();
+            mv.swap();
+            mv.invoke(Methods.AbstractOperations_ToNumeric);
+            return ValType.Any;
+        case Empty:
+        case Reference:
+        default:
+            throw new AssertionError();
+        }
+    }
+
+    /**
+     * stack: [Object] {@literal ->} [double or BigInteger]
+     * 
+     * @param from
+     *            the input value type
+     * @param mv
+     *            the code visitor
+     * @return the returned value type
+     */
+    protected static final ValType ToNumericInt32(ValType from, CodeVisitor mv) {
+        switch (from) {
+        case Number:
+        case Number_int:
+        case Number_uint:
+        case Undefined:
+        case Null:
+        case Boolean:
+        case String:
+            ToInt32(from, mv);
+            return ValType.Number_int;
+        case BigInt:
+            return ValType.BigInt;
+        case Object:
+        case Any:
+            mv.loadExecutionContext();
+            mv.swap();
+            mv.invoke(Methods.AbstractOperations_ToNumericInt32);
+            return ValType.Any;
         case Empty:
         case Reference:
         default:
@@ -1012,6 +1168,7 @@ abstract class DefaultCodeGenerator<RETURN> extends DefaultNodeVisitor<RETURN, C
             mv.invoke(Methods.AbstractOperations_ToNumber_CharSequence);
             mv.invoke(Methods.AbstractOperations_ToInt32_double);
             return;
+        case BigInt:
         case Object:
         case Any:
             mv.loadExecutionContext();
@@ -1057,6 +1214,7 @@ abstract class DefaultCodeGenerator<RETURN> extends DefaultNodeVisitor<RETURN, C
             mv.invoke(Methods.AbstractOperations_ToNumber_CharSequence);
             mv.invoke(Methods.AbstractOperations_ToUint32_double);
             return;
+        case BigInt:
         case Object:
         case Any:
             mv.loadExecutionContext();
@@ -1088,6 +1246,9 @@ abstract class DefaultCodeGenerator<RETURN> extends DefaultNodeVisitor<RETURN, C
             return;
         case Number_uint:
             mv.invoke(Methods.AbstractOperations_ToString_long);
+            return;
+        case BigInt:
+            mv.invoke(Methods.AbstractOperations_ToString_BigInteger);
             return;
         case Undefined:
             mv.pop();
@@ -1133,6 +1294,9 @@ abstract class DefaultCodeGenerator<RETURN> extends DefaultNodeVisitor<RETURN, C
             return;
         case Number_uint:
             mv.invoke(Methods.AbstractOperations_ToString_long);
+            return;
+        case BigInt:
+            mv.invoke(Methods.AbstractOperations_ToString_BigInteger);
             return;
         case Undefined:
             mv.pop();
@@ -1182,6 +1346,7 @@ abstract class DefaultCodeGenerator<RETURN> extends DefaultNodeVisitor<RETURN, C
         case Undefined:
         case Null:
         case String:
+        case BigInt:
         case Any:
             break;
         case Empty:
@@ -1218,6 +1383,7 @@ abstract class DefaultCodeGenerator<RETURN> extends DefaultNodeVisitor<RETURN, C
         case Undefined:
         case Null:
         case String:
+        case BigInt:
         case Any:
             break;
         case Empty:
@@ -1251,6 +1417,9 @@ abstract class DefaultCodeGenerator<RETURN> extends DefaultNodeVisitor<RETURN, C
         case Number_uint:
             mv.invoke(Methods.AbstractOperations_ToString_long);
             return ValType.String;
+        case BigInt:
+            mv.invoke(Methods.AbstractOperations_ToString_BigInteger);
+            return ValType.String;
         case Undefined:
             mv.pop();
             mv.aconst("undefined");
@@ -1266,10 +1435,6 @@ abstract class DefaultCodeGenerator<RETURN> extends DefaultNodeVisitor<RETURN, C
             mv.invoke(Methods.CharSequence_toString);
             return ValType.String;
         case Object:
-            mv.loadExecutionContext();
-            mv.swap();
-            mv.invoke(Methods.AbstractOperations_ToFlatString);
-            return ValType.String;
         case Any:
             mv.loadExecutionContext();
             mv.swap();
@@ -1292,7 +1457,7 @@ abstract class DefaultCodeGenerator<RETURN> extends DefaultNodeVisitor<RETURN, C
      * @param mv
      *            the code visitor
      */
-    protected static void SetFunctionName(Node node, ValType propertyKeyType, CodeVisitor mv) {
+    protected static final void SetFunctionName(Node node, ValType propertyKeyType, CodeVisitor mv) {
         Jump hasOwnName = null;
         switch (hasOwnNameProperty(node)) {
         case HasOwn:
@@ -1310,25 +1475,12 @@ abstract class DefaultCodeGenerator<RETURN> extends DefaultNodeVisitor<RETURN, C
         mv.swap();
 
         if (propertyKeyType == ValType.String) {
-            mv.invoke(Methods.OrdinaryFunction_SetFunctionName_String);
+            mv.invoke(Methods.FunctionObject_SetFunctionName_String);
         } else {
             assert propertyKeyType == ValType.Any;
-            Jump isString = new Jump(), afterSetFunctionName = new Jump();
-            mv.dup();
-            mv.instanceOf(Types.String);
-            mv.ifeq(isString);
-            {
-                // stack: [propertyKey, function, function, propertyKey] -> [propertyKey, function]
-                mv.checkcast(Types.String);
-                mv.invoke(Methods.OrdinaryFunction_SetFunctionName_String);
-                mv.goTo(afterSetFunctionName);
-            }
-            {
-                mv.mark(isString);
-                mv.checkcast(Types.Symbol);
-                mv.invoke(Methods.OrdinaryFunction_SetFunctionName_Symbol);
-            }
-            mv.mark(afterSetFunctionName);
+
+            // stack: [propertyKey, function, function, propertyKey] -> [propertyKey, function]
+            mv.invoke(Methods.FunctionObject_SetFunctionName);
         }
 
         if (hasOwnName != null) {
@@ -1346,7 +1498,7 @@ abstract class DefaultCodeGenerator<RETURN> extends DefaultNodeVisitor<RETURN, C
      * @param mv
      *            the code visitor
      */
-    protected static void SetFunctionName(Node node, Name name, CodeVisitor mv) {
+    protected static final void SetFunctionName(Node node, Name name, CodeVisitor mv) {
         SetFunctionName(node, name.getIdentifier(), mv);
     }
 
@@ -1360,7 +1512,7 @@ abstract class DefaultCodeGenerator<RETURN> extends DefaultNodeVisitor<RETURN, C
      * @param mv
      *            the code visitor
      */
-    protected static void SetFunctionName(Node node, String name, CodeVisitor mv) {
+    protected static final void SetFunctionName(Node node, String name, CodeVisitor mv) {
         Jump hasOwnName = null;
         switch (hasOwnNameProperty(node)) {
         case HasOwn:
@@ -1377,7 +1529,7 @@ abstract class DefaultCodeGenerator<RETURN> extends DefaultNodeVisitor<RETURN, C
         mv.dup();
         mv.aconst(name);
         // stack: [function, function, name] -> [function]
-        mv.invoke(Methods.OrdinaryFunction_SetFunctionName_String);
+        mv.invoke(Methods.FunctionObject_SetFunctionName_String);
 
         if (hasOwnName != null) {
             mv.mark(hasOwnName);
@@ -1420,16 +1572,25 @@ abstract class DefaultCodeGenerator<RETURN> extends DefaultNodeVisitor<RETURN, C
                     // Decorator expressions are like computed names.
                     return NameProperty.HasComputed;
                 }
-            } else if (property instanceof PropertyValueDefinition) {
-                // Only static class properties are supported.
-                PropertyValueDefinition valueDefinition = (PropertyValueDefinition) property;
-                String methodName = valueDefinition.getPropertyName().getName();
-                if (methodName == null) {
-                    return NameProperty.HasComputed;
+            } else if (property instanceof ClassFieldDefinition) {
+                ClassFieldDefinition fieldDefinition = (ClassFieldDefinition) property;
+                if (fieldDefinition.isStatic()) {
+                    String fieldName = fieldDefinition.getPropertyName().getName();
+                    if (fieldName == null) {
+                        return NameProperty.HasComputed;
+                    }
+                    if ("name".equals(fieldName)) {
+                        return NameProperty.HasOwn;
+                    }
+                    if (fieldDefinition.getInitializer() != null) {
+                        // Initializer expression can define "name" property.
+                        return NameProperty.HasComputed;
+                    }
                 }
-                if ("name".equals(methodName)) {
-                    return NameProperty.HasOwn;
-                }
+            } else {
+                // Take the slow path when the class was split into multiple methods.
+                assert property instanceof MethodDefinitionsMethod;
+                return NameProperty.HasComputed;
             }
         }
         return NameProperty.None;
@@ -1447,11 +1608,21 @@ abstract class DefaultCodeGenerator<RETURN> extends DefaultNodeVisitor<RETURN, C
      */
     protected final void ClassDefinitionEvaluation(ClassDefinition def, Name className, CodeVisitor mv) {
         mv.enterVariableScope();
-        Variable<ArrayList<Callable>> classDecorators = null;
-        boolean hasClassDecorators = !def.getDecorators().isEmpty();
-        if (hasClassDecorators) {
-            classDecorators = newDecoratorVariable("classDecorators", mv);
-            evaluateDecorators(classDecorators, def.getDecorators(), mv);
+
+        List<Expression> classDecoratorsList = def.getDecorators();
+        Variable<Callable[]> classDecorators = null;
+        if (!classDecoratorsList.isEmpty()) {
+            classDecorators = mv.newVariable("classDecorators", Callable[].class);
+            mv.anewarray(classDecoratorsList.size(), Types.Callable);
+            mv.store(classDecorators);
+
+            int index = 0;
+            for (Expression decorator : classDecoratorsList) {
+                mv.astore(classDecorators, index++, __ -> {
+                    expressionBoxed(decorator, mv);
+                    CheckCallable(decorator, mv);
+                });
+            }
         }
 
         mv.enterClassDefinition();
@@ -1459,23 +1630,27 @@ abstract class DefaultCodeGenerator<RETURN> extends DefaultNodeVisitor<RETURN, C
         // step 1 (not applicable)
         // steps 2-4
         BlockScope scope = def.getScope();
-        assert (scope != null && scope.isPresent()) == (className != null);
         Variable<DeclarativeEnvironmentRecord> classScopeEnvRec = null;
-        if (className != null) {
-            // stack: [] -> [classScope]
-            newDeclarativeEnvironment(scope, mv);
+        if (scope != null) {
+            assert scope.isPresent() == (className != null);
 
-            classScopeEnvRec = mv.newVariable("classScopeEnvRec",
-                    DeclarativeEnvironmentRecord.class);
-            getEnvRec(classScopeEnvRec, mv);
+            if (scope.isPresent()) {
+                // stack: [] -> [classScope]
+                newDeclarativeEnvironment(scope, mv);
 
-            // stack: [classScope] -> [classScope]
-            Name innerName = scope.resolveName(className, false);
-            BindingOp<DeclarativeEnvironmentRecord> op = BindingOp.of(classScopeEnvRec, innerName);
-            op.createImmutableBinding(classScopeEnvRec, innerName, true, mv);
+                classScopeEnvRec = mv.newVariable("classScopeEnvRec", DeclarativeEnvironmentRecord.class);
+                getEnvRec(classScopeEnvRec, mv);
 
-            // stack: [classScope] -> []
-            pushLexicalEnvironment(mv);
+                if (className != null) {
+                    // stack: [classScope] -> [classScope]
+                    Name innerName = scope.resolveName(className);
+                    BindingOp<DeclarativeEnvironmentRecord> op = BindingOp.of(classScopeEnvRec, innerName);
+                    op.createImmutableBinding(classScopeEnvRec, innerName, true, mv);
+                }
+
+                // stack: [classScope] -> []
+                pushLexicalEnvironment(mv);
+            }
             mv.enterScope(def);
         }
 
@@ -1484,33 +1659,61 @@ abstract class DefaultCodeGenerator<RETURN> extends DefaultNodeVisitor<RETURN, C
         Expression classHeritage = def.getHeritage();
         if (classHeritage == null) {
             mv.loadExecutionContext();
-            mv.invoke(Methods.ScriptRuntime_getDefaultClassProto);
+            mv.invoke(Methods.ClassOperations_getDefaultClassProto);
         } else if (classHeritage instanceof NullLiteral) {
             mv.loadExecutionContext();
-            mv.invoke(Methods.ScriptRuntime_getClassProto_Null);
+            mv.invoke(Methods.ClassOperations_getClassProto_Null);
         } else {
             expressionBoxed(classHeritage, mv);
             mv.loadExecutionContext();
             mv.lineInfo(def);
-            mv.invoke(Methods.ScriptRuntime_getClassProto);
+            mv.invoke(Methods.ClassOperations_getClassProto);
         }
 
-        // stack: [<constructorParent,proto>] -> [<constructorParent,proto>]
+        // stack: [<protoParent,constructorParent>] -> [<protoParent,constructorParent>]
         Variable<OrdinaryObject> proto = mv.newVariable("proto", OrdinaryObject.class);
         mv.dup();
-        mv.aload(1, Types.ScriptObject);
-        mv.checkcast(Types.OrdinaryObject);
+        mv.aload(0, Types.ScriptObject);
+        mv.loadExecutionContext();
+        mv.invoke(Methods.ClassOperations_createProto);
         mv.store(proto);
 
-        // stack: [<constructorParent,proto>] -> [constructorParent, proto]
-        mv.aload(0, Types.ScriptObject);
+        // stack: [<protoParent,constructorParent>] -> [constructorParent, proto]
+        mv.aload(1, Types.ScriptObject);
         mv.load(proto);
+
+        // Push the private-name environment to ensure private names are accessible in the constructor.
+        BlockScope bodyScope = def.getBodyScope();
+        if (bodyScope != null) {
+            List<Name> privateBoundNames = PrivateBoundNames(def);
+            assert bodyScope.isPresent() == !privateBoundNames.isEmpty();
+
+            if (bodyScope.isPresent()) {
+                // stack: [] -> [classPrivateEnv]
+                newDeclarativeEnvironment(bodyScope, mv);
+
+                Variable<DeclarativeEnvironmentRecord> classPrivateEnvRec = mv.newVariable("classPrivateEnvRec",
+                        DeclarativeEnvironmentRecord.class);
+                getEnvRec(classPrivateEnvRec, mv);
+
+                HashSet<Name> declaredPrivateNames = new HashSet<>();
+                for (Name name : privateBoundNames) {
+                    // FIXME: spec bug - missing check for already declared private names for getter/setter pairs
+                    if (declaredPrivateNames.add(name)) {
+                        BindingOp<DeclarativeEnvironmentRecord> op = BindingOp.of(classPrivateEnvRec, name);
+                        op.createImmutableBinding(classPrivateEnvRec, name, true, mv);
+                    }
+                }
+
+                // stack: [classPrivateEnv] -> []
+                pushLexicalEnvironment(mv);
+            }
+            mv.enterScope(bodyScope);
+        }
 
         // steps 8-9
         // stack: [constructorParent, proto] -> [constructorParent, proto, <rti>]
-        MethodDefinition constructor = ConstructorMethod(def);
-        assert constructor != null;
-        MethodName method = codegen.compile(def);
+        MethodName method = mv.compile(def, codegen::classDefinition);
         // Runtime Semantics: Evaluation -> MethodDefinition
         mv.invoke(method);
 
@@ -1520,52 +1723,96 @@ abstract class DefaultCodeGenerator<RETURN> extends DefaultNodeVisitor<RETURN, C
         mv.iconst(classHeritage != null);
         mv.loadExecutionContext();
         mv.lineInfo(def);
-        mv.invoke(Methods.ScriptRuntime_EvaluateConstructorMethod);
+        mv.invoke(Methods.ClassOperations_EvaluateConstructorMethod);
 
         // stack: [F] -> []
-        Variable<OrdinaryConstructorFunction> F = mv.newVariable("F",
-                OrdinaryConstructorFunction.class);
+        Variable<OrdinaryConstructorFunction> F = mv.newVariable("F", OrdinaryConstructorFunction.class);
         mv.store(F);
 
-        Variable<ArrayList<Object>> methodDecorators = null;
-        boolean hasMethodDecorators = HasDecorators(def);
-        if (hasMethodDecorators) {
-            methodDecorators = newDecoratorVariable("methodDecorators", mv);
-        }
-
-        if (!constructor.getDecorators().isEmpty()) {
-            addDecoratorObject(methodDecorators, proto, mv);
-            evaluateDecorators(methodDecorators, constructor.getDecorators(), mv);
-            addDecoratorKey(methodDecorators, "constructor", mv);
-        }
-
         // steps 19-21
-        ClassPropertyEvaluation(codegen, def.getProperties(), F, proto, methodDecorators, mv);
+        ClassPropertyGenerator.Result result = ClassPropertyEvaluation(codegen, def, F, proto, mv);
+        Variable<Object[]> methodDecorators = result.methodDecorators;
 
-        if (hasClassDecorators) {
+        if (!classDecoratorsList.isEmpty()) {
+            int index = 0;
+            for (Expression decorator : classDecoratorsList) {
+                mv.aload(classDecorators, index++, Types.Callable);
+                invokeDynamicCall(mv, decorator, mv.executionContext(), mv.undefinedValue(), F);
+                mv.pop();
+            }
+        }
+
+        if (methodDecorators != null) {
+            LabelledHashKey hashKey = new LabelledHashKey(def, "decorators");
+            MethodName decoratorsMethod = mv.compile(hashKey, () -> classMethodDecorators(def, mv));
+            mv.lineInfo(0); // 0 = hint for stacktraces to omit this frame
+            mv.invoke(decoratorsMethod, mv.executionContext(), F, proto, methodDecorators);
+        }
+
+        if (scope != null) {
+            // steps 22-23 (moved)
+            if (className != null) {
+                // stack: [] -> []
+                Name innerName = scope.resolveName(className);
+                BindingOp<DeclarativeEnvironmentRecord> op = BindingOp.of(classScopeEnvRec, innerName);
+                op.initializeBinding(classScopeEnvRec, innerName, F, mv);
+            }
+        }
+
+        if (result.instanceClassField != null || result.instanceClassMethods != null) {
+            MethodName initializer = compileClassFieldInitializer(def, MethodDefinition.MethodAllocation.Prototype, mv);
+
+            // stack: [] -> [F]
             mv.load(F);
-            mv.load(classDecorators);
+
+            // stack: [F] -> [F, initializer]
+            mv.load(proto);
+            mv.invoke(initializer);
+            if (result.instanceClassField != null) {
+                mv.load(result.instanceClassField);
+            } else {
+                mv.anull();
+            }
+            if (result.instanceClassMethods != null) {
+                mv.load(result.instanceClassMethods);
+            } else {
+                mv.anull();
+            }
             mv.loadExecutionContext();
-            mv.lineInfo(def);
-            mv.invoke(Methods.ScriptRuntime_EvaluateClassDecorators);
+            mv.invoke(Methods.ClassOperations_CreateClassFieldInitializer);
+
+            // stack: [F, initializer] -> []
+            mv.invoke(Methods.ClassOperations_setInstanceFieldsInitializer);
         }
 
-        if (hasMethodDecorators) {
-            mv.load(methodDecorators);
+        // Class fields: Call InitializeStaticFields.
+        if (result.staticClassField != null) {
+            MethodName initializer = compileClassFieldInitializer(def, MethodDefinition.MethodAllocation.Class, mv);
+
+            // stack: [] -> [staticInitializer]
+            mv.load(F);
+            mv.invoke(initializer);
+            mv.load(result.staticClassField);
             mv.loadExecutionContext();
-            mv.lineInfo(def);
-            mv.invoke(Methods.ScriptRuntime_EvaluateClassMethodDecorators);
+            mv.invoke(Methods.ClassOperations_CreateStaticClassFieldInitializer);
+
+            // stack: [staticInitializer] -> []
+            invokeDynamicCall(mv, def, mv.executionContext(), F);
+            mv.pop(ValType.Any);
         }
 
-        // steps 22-23 (moved)
-        if (className != null) {
-            // stack: [] -> []
-            Name innerName = scope.resolveName(className, false);
-            BindingOp<DeclarativeEnvironmentRecord> op = BindingOp.of(classScopeEnvRec, innerName);
-            op.initializeBinding(classScopeEnvRec, innerName, F, mv);
-
+        if (bodyScope != null) {
             mv.exitScope();
-            popLexicalEnvironment(mv);
+            if (bodyScope.isPresent()) {
+                popLexicalEnvironment(mv);
+            }
+        }
+
+        if (scope != null) {
+            mv.exitScope();
+            if (scope.isPresent()) {
+                popLexicalEnvironment(mv);
+            }
         }
 
         // stack: [] -> [F]
@@ -1577,46 +1824,212 @@ abstract class DefaultCodeGenerator<RETURN> extends DefaultNodeVisitor<RETURN, C
         mv.exitClassDefinition();
     }
 
-    protected final <T> Variable<ArrayList<T>> newDecoratorVariable(String name, CodeVisitor mv) {
-        Variable<ArrayList<T>> var = mv.newVariable(name, ArrayList.class).uncheckedCast();
-        mv.anew(Types.ArrayList, Methods.ArrayList_init);
-        mv.store(var);
-        return var;
-    }
-
-    protected final void addDecoratorObject(Variable<ArrayList<Object>> var, Variable<? extends ScriptObject> object,
+    private MethodName compileClassFieldInitializer(ClassDefinition def, MethodDefinition.MethodAllocation allocation,
             CodeVisitor mv) {
-        mv.load(var);
-        mv.load(object);
-        mv.invoke(Methods.ArrayList_add);
-        mv.pop();
+        Predicate<MethodDefinition> p = f -> f.isSynthetic() && f.getAllocation() == allocation
+                && f.getType() == MethodDefinition.MethodType.Function;
+        assert def.getMethods().stream().filter(p).count() == 1;
+
+        MethodDefinition initializer = def.getMethods().stream().filter(p).findAny().get();
+        return mv.compile(initializer, codegen::methodDefinition);
     }
 
-    protected final void addDecoratorKey(Variable<ArrayList<Object>> var, String propertyKey, CodeVisitor mv) {
-        mv.load(var);
-        mv.aconst(propertyKey);
-        mv.invoke(Methods.ArrayList_add);
-        mv.pop();
+    protected static final void invokeDynamicCall(InstructionVisitor mv, Node node, Value<ExecutionContext> cx,
+            Value<?> thisValue, Value<?>... arguments) {
+        mv.load(cx);
+        mv.load(thisValue);
+        mv.anewarray(Types.Object, arguments);
+        mv.lineInfo(node);
+
+        // stack: [func(Callable), cx, thisValue, args] -> [result]
+        mv.invokedynamic(Bootstrap.getCallName(), Bootstrap.getCallMethodDescriptor(), Bootstrap.getCallBootstrap());
     }
 
-    protected final void addDecoratorKey(Variable<ArrayList<Object>> var, ValType type, CodeVisitor mv) {
-        mv.dup(type);
-        mv.load(var);
-        mv.swap(type.toType(), Types.ArrayList);
-        mv.invoke(Methods.ArrayList_add);
-        mv.pop();
+    protected static final void invokeDynamicCall(InstructionVisitor mv, Node node, Value<?> function,
+            Value<ExecutionContext> cx, Value<?> thisValue, Value<?>... arguments) {
+        mv.load(function);
+        mv.load(cx);
+        mv.load(thisValue);
+        mv.anewarray(Types.Object, arguments);
+        mv.lineInfo(node);
+
+        // stack: [func(Callable), cx, thisValue, args] -> [result]
+        mv.invokedynamic(Bootstrap.getCallName(), Bootstrap.getCallMethodDescriptor(), Bootstrap.getCallBootstrap());
     }
 
-    protected final <T> void evaluateDecorators(Variable<ArrayList<T>> var, List<Expression> decorators,
-            CodeVisitor mv) {
-        for (Expression decorator : decorators) {
-            mv.load(var);
-            expressionBoxed(decorator, mv);
-            mv.loadExecutionContext();
-            mv.lineInfo(decorator);
-            mv.invoke(Methods.ScriptRuntime_CheckCallable);
-            mv.invoke(Methods.ArrayList_add);
-            mv.pop();
+    /**
+     * Checks if the top-stack element is callable by invoking {@code CallOperations.CheckCallable(...)}.
+     * 
+     * @param node
+     *            the ast node
+     * @param mv
+     *            the code visitor
+     */
+    protected static final void CheckCallable(Node node, CodeVisitor mv) {
+        // stack: [object] -> [Callable<object>]
+        mv.loadExecutionContext();
+        mv.lineInfo(node);
+        mv.invoke(Methods.CallOperations_CheckCallable);
+    }
+
+    private MethodName classMethodDecorators(ClassDefinition node, CodeVisitor parent) {
+        MethodTypeDescriptor descriptor = ClassMethodDecoratorsVisitor.methodDescriptor();
+        MethodCode method = codegen.method(parent, "classdecorators", descriptor);
+
+        ClassMethodDecoratorsVisitor mv = new ClassMethodDecoratorsVisitor(method);
+        mv.begin();
+        Variable<ExecutionContext> cx = mv.getExecutionContext();
+        Variable<OrdinaryConstructorFunction> constructor = mv.getConstructor();
+        Variable<OrdinaryObject> prototype = mv.getPrototype();
+        // List of <1..n callable, property key>.
+        Variable<Object[]> decorators = mv.getDecorators();
+
+        Variable<Object> propertyKey = mv.newVariable("propertyKey", Object.class);
+        Variable<Object> propertyDesc = mv.newVariable("propertyDesc", Object.class);
+        Variable<Object> result = mv.newVariable("result", Object.class);
+
+        int index = 0;
+        for (MethodDefinition methodDef : DecoratedMethods(node.getMethods())) {
+            List<Expression> decoratorsList = methodDef.getDecorators();
+            assert !decoratorsList.isEmpty();
+            assert !methodDef.isCallConstructor();
+            Variable<? extends OrdinaryObject> object;
+            if (methodDef.isStatic()) {
+                object = constructor;
+            } else {
+                object = prototype;
+            }
+
+            mv.store(propertyKey, mv.arrayElement(decorators, index + decoratorsList.size(), Object.class));
+
+            mv.lineInfo(methodDef);
+            mv.invoke(Methods.DecoratorOperations_propertyDescriptor, object, propertyKey, cx);
+            mv.store(propertyDesc);
+
+            for (Expression decoratorExpr : decoratorsList) {
+                Value<Object> decorator = mv.arrayElement(decorators, index++, Object.class);
+                invokeDynamicCall(mv, decoratorExpr, decorator, cx, mv.undefinedValue(), object, propertyKey,
+                        propertyDesc);
+                mv.store(result);
+
+                Jump isObject = new Jump();
+                mv.invoke(Methods.Type_isObject, result);
+                mv.ifeq(isObject);
+                {
+                    mv.store(propertyDesc, result);
+                }
+                mv.mark(isObject);
+            }
+
+            Jump isObject = new Jump();
+            mv.invoke(Methods.Type_isObject, propertyDesc);
+            mv.ifeq(isObject);
+            {
+                mv.lineInfo(methodDef);
+                mv.invoke(Methods.DecoratorOperations_defineProperty, object, propertyKey, propertyDesc, cx);
+            }
+            mv.mark(isObject);
+
+            index += 1; // Skip over property key element.
+        }
+        mv._return();
+        mv.end();
+
+        return method.name();
+    }
+
+    private static final class ClassMethodDecoratorsVisitor extends InstructionVisitor {
+        ClassMethodDecoratorsVisitor(MethodCode method) {
+            super(method);
+        }
+
+        @Override
+        public void begin() {
+            super.begin();
+            setParameterName("cx", 0, Types.ExecutionContext);
+            setParameterName("constructor", 1, Types.OrdinaryConstructorFunction);
+            setParameterName("prototype", 2, Types.OrdinaryObject);
+            setParameterName("decorators", 3, Types.Object_);
+        }
+
+        Variable<ExecutionContext> getExecutionContext() {
+            return getParameter(0, ExecutionContext.class);
+        }
+
+        Variable<OrdinaryConstructorFunction> getConstructor() {
+            return getParameter(1, OrdinaryConstructorFunction.class);
+        }
+
+        Variable<OrdinaryObject> getPrototype() {
+            return getParameter(2, OrdinaryObject.class);
+        }
+
+        Variable<Object[]> getDecorators() {
+            return getParameter(3, Object[].class);
+        }
+
+        static MethodTypeDescriptor methodDescriptor() {
+            return Type.methodType(Type.VOID_TYPE, Types.ExecutionContext, Types.OrdinaryConstructorFunction,
+                    Types.OrdinaryObject, Types.Object_);
+        }
+    }
+
+    static final class StoreToArray<T> implements Value<T> {
+        final Variable<T[]> array;
+        final PrimitiveIterator.OfInt index;
+
+        private StoreToArray(Variable<T[]> array, PrimitiveIterator.OfInt index) {
+            this.array = array;
+            this.index = index;
+        }
+
+        @Override
+        public void load(InstructionAssembler assembler) {
+            if (isEmpty()) {
+                assembler.anull();
+            } else {
+                assembler.load(array);
+            }
+        }
+
+        void store(Value<? extends T> value, CodeVisitor mv) {
+            assert !isEmpty();
+            mv.astore(array, index.nextInt(), value);
+        }
+
+        MutableValue<T> element(Class<T> clazz, CodeVisitor mv) {
+            return mv.arrayElement(array, index.nextInt(), clazz);
+        }
+
+        void skip(int n) {
+            for (int i = 0; i < n; ++i) {
+                index.nextInt();
+            }
+        }
+
+        boolean isEmpty() {
+            return array == null;
+        }
+
+        StoreToArray<T> from(Variable<T[]> array) {
+            if (isEmpty()) {
+                return new StoreToArray<>(null, null);
+            }
+            return new StoreToArray<>(array, index);
+        }
+
+        static <T> StoreToArray<T> empty() {
+            return new StoreToArray<>(null, null);
+        }
+
+        static <T> StoreToArray<T> create(String name, int length, Class<T[]> clazz, CodeVisitor mv) {
+            if (length == 0) {
+                return empty();
+            }
+            Variable<T[]> array = mv.newVariable(name, clazz);
+            mv.anewarray(length, Type.of(clazz.getComponentType()));
+            mv.store(array);
+            return new StoreToArray<>(array, IntStream.range(0, length).iterator());
         }
     }
 
@@ -1637,28 +2050,50 @@ abstract class DefaultCodeGenerator<RETURN> extends DefaultNodeVisitor<RETURN, C
      */
     protected final void delegatedYield(Expression node, CodeVisitor mv) {
         if (!mv.isAsync()) {
-            delegatedYield(node, (iterator, received) -> {
-                IteratorNext(node, iterator, received, mv);
-            } , (iterator, received) -> {
+            delegatedYield(node, () -> {
+                mv.loadExecutionContext();
+                mv.invoke(Methods.IteratorOperations_iterate);
+            }, (iterator, received) -> {
+                mv.loadExecutionContext();
+                mv.load(iterator);
+                mv.load(received);
+                mv.lineInfo(node);
+                mv.invoke(Methods.AbstractOperations_IteratorNext_Object);
+            }, (iterator, received) -> {
                 mv.loadExecutionContext();
                 mv.load(iterator);
                 mv.load(received);
                 mv.checkcast(Types.ScriptException);
-                mv.invoke(Methods.ScriptRuntime_yieldThrowCompletion);
-            } , (iterator, received) -> {
+                mv.invoke(Methods.Operators_yieldThrowCompletion);
+            }, (iterator, received) -> {
                 mv.loadExecutionContext();
                 mv.load(iterator);
                 mv.load(received);
                 mv.checkcast(Types.ReturnValue);
-                mv.invoke(Methods.ScriptRuntime_yieldReturnCompletion);
-            } , mv);
+                mv.invoke(Methods.Operators_yieldReturnCompletion);
+            }, (result, received) -> {
+                // force stack top to Object-type
+                mv.load(result);
+                mv.checkcast(Types.Object);
+                mv.suspend();
+                mv.store(received);
+            }, received -> {
+                mv.load(received);
+                mv.checkcast(Types.ReturnValue);
+                mv.invoke(Methods.ReturnValue_getValue);
+                mv.store(received);
+            }, mv);
         } else {
-            delegatedYield(node, (iterator, received) -> {
-                IteratorNext(node, iterator, received, mv);
+            delegatedYield(node, () -> {
+                mv.loadExecutionContext();
+                mv.invoke(Methods.IteratorOperations_asyncIterate);
+            }, (iterator, received) -> {
+                mv.load(iterator);
+                mv.load(received);
+                mv.invoke(Methods.ScriptIterator_nextIterResult);
                 await(node, mv);
-                // FIXME: spec bug - missing type check
                 requireObjectResult(node, "next", mv);
-            } , (iterator, received) -> {
+            }, (iterator, received) -> {
                 mv.enterVariableScope();
                 Variable<Callable> throwMethod = mv.newVariable("throwMethod", Callable.class);
 
@@ -1682,13 +2117,16 @@ abstract class DefaultCodeGenerator<RETURN> extends DefaultNodeVisitor<RETURN, C
                 {
                     asyncIteratorClose(node, iterator, mv);
 
-                    reportPropertyNotCallable(node, "throw", mv);
+                    mv.aconst("throw");
+                    mv.loadExecutionContext();
+                    mv.lineInfo(node);
+                    mv.invoke(Methods.Operators_reportPropertyNotCallable);
                     mv.athrow();
                 }
                 mv.mark(nextYield);
 
                 mv.exitVariableScope();
-            } , (iterator, received) -> {
+            }, (iterator, received) -> {
                 mv.enterVariableScope();
                 Variable<Callable> returnMethod = mv.newVariable("returnMethod", Callable.class);
 
@@ -1715,105 +2153,161 @@ abstract class DefaultCodeGenerator<RETURN> extends DefaultNodeVisitor<RETURN, C
                 mv.mark(nextYield);
 
                 mv.exitVariableScope();
-            } , mv);
+            }, (result, received) -> {
+                Jump storeReceived = new Jump();
+                Runnable await = () -> {
+                    // stack: [value] -> [value']
+                    mv.loadExecutionContext();
+                    mv.swap();
+                    mv.lineInfo(node);
+                    mv.invoke(Methods.AsyncAbstractOperations_AsyncFunctionAwait);
+
+                    // Reserve stack space for await return value.
+                    mv.anull();
+                    mv.suspend();
+
+                    // check for exception
+                    mv.dup();
+                    mv.instanceOf(Types.ScriptException);
+                    mv.ifne(storeReceived);
+                };
+                Runnable asyncYield = () -> {
+                    // stack: [value] -> [value']
+                    await.run();
+
+                    // force stack top to Object-type
+                    mv.checkcast(Types.Object);
+                    mv.suspend();
+
+                    // check for return value
+                    mv.dup();
+                    mv.instanceOf(Types.ReturnValue);
+                    mv.ifeq(storeReceived);
+                    {
+                        mv.checkcast(Types.ReturnValue);
+                        mv.invoke(Methods.ReturnValue_getValue);
+
+                        // stack: [value] -> [value']
+                        await.run();
+
+                        // stack: [value'] -> [ReturnValue(value')]
+                        mv.anew(Types.ReturnValue);
+                        mv.dup();
+                        mv.swap1_2();
+                        mv.invoke(Methods.ReturnValue_new);
+                    }
+                };
+
+                IteratorValue(node, result, mv);
+                asyncYield.run();
+                mv.mark(storeReceived);
+                mv.store(received);
+            }, received -> {
+                mv.load(received);
+                mv.checkcast(Types.ReturnValue);
+                mv.invoke(Methods.ReturnValue_getValue);
+                await(node, mv);
+                mv.store(received);
+            }, mv);
         }
     }
 
-    private void delegatedYield(Expression node, BiConsumer<Variable<ScriptObject>, Variable<Object>> iterNext,
+    private void delegatedYield(Expression node, Runnable getIterator,
+            BiConsumer<Variable<ScriptIterator<?>>, Variable<Object>> iterNext,
             BiConsumer<Variable<ScriptObject>, Variable<Object>> iterThrow,
-            BiConsumer<Variable<ScriptObject>, Variable<Object>> iterReturn, CodeVisitor mv) {
+            BiConsumer<Variable<ScriptObject>, Variable<Object>> iterReturn,
+            BiConsumer<Variable<ScriptObject>, Variable<Object>> yield, Consumer<Variable<Object>> returnValue,
+            CodeVisitor mv) {
         Jump iteratorNext = new Jump();
         Jump generatorYield = new Jump();
-        Jump generatorYieldOrReturn = new Jump();
         Jump done = new Jump();
 
         mv.lineInfo(node);
         mv.enterVariableScope();
+        Variable<ScriptIterator<?>> iteratorRec = mv.newVariable("iteratorRec", ScriptIterator.class).uncheckedCast();
         Variable<ScriptObject> iterator = mv.newVariable("iterator", ScriptObject.class);
         Variable<ScriptObject> innerResult = mv.newVariable("innerResult", ScriptObject.class);
         Variable<Object> received = mv.newVariable("received", Object.class);
 
-        /* steps 3-4 */
+        /* steps 1-2 (callers) */
+        /* step 3 */
         // stack: [value] -> []
-        mv.loadExecutionContext();
-        mv.swap();
-        mv.invoke(Methods.AbstractOperations_GetIterator);
+        getIterator.run();
+        mv.store(iteratorRec);
+
+        mv.load(iteratorRec);
+        mv.invoke(Methods.ScriptIterator_getScriptObject);
         mv.store(iterator);
 
-        /* step 5 */
+        /* step 4 */
         // stack: [] -> []
         mv.loadUndefined();
         mv.store(received);
 
-        /* step 6.a.i-6.a.ii */
+        /* step 5.a.i */
         // stack: [] -> []
         mv.mark(iteratorNext);
-        iterNext.accept(iterator, received);
+        iterNext.accept(iteratorRec, received);
         mv.store(innerResult);
 
-        /* steps 6.a.iii-6.a.v */
+        /* steps 5.a.ii-iii */
         // stack: [] -> []
         IteratorComplete(node, innerResult, mv);
         mv.ifne(done);
 
-        /* step 6.a.vi */
-        // stack: [] -> [Object(innerResult)]
-        // force stack top to Object-type
+        /* steps 5.a.iv, 5.b.ii.6, 5.c.viii */
         mv.mark(generatorYield);
-        mv.load(innerResult);
-        mv.checkcast(Types.Object);
-        mv.suspend();
-        mv.store(received);
+        yield.accept(innerResult, received);
 
-        /* step 6.b */
+        /* step 5.b */
         Jump isException = new Jump();
         mv.load(received);
         mv.instanceOf(Types.ScriptException);
         mv.ifeq(isException);
         {
-            /* steps 6.b.iii.1-4, 6.b.iv */
+            /* steps 5.b.i, 5.b.ii.1-3, 5.b.iii */
             iterThrow.accept(iterator, received);
             mv.store(innerResult);
 
-            mv.goTo(generatorYieldOrReturn);
+            /* steps 5.b.ii.4-6 */
+            IteratorComplete(node, innerResult, mv);
+            mv.ifeq(generatorYield);
+            mv.goTo(done);
         }
         mv.mark(isException);
 
-        /* step 6.c */
+        /* step 5.c */
         mv.load(received);
         mv.instanceOf(Types.ReturnValue);
         mv.ifeq(iteratorNext);
         {
-            /* steps 6.c.i-vii */
+            /* steps 5.c.i-v */
+            Jump returnCompletion = new Jump(), returnIterResult = new Jump();
             iterReturn.accept(iterator, received);
             mv.store(innerResult);
-
             mv.load(innerResult);
-            mv.ifnonnull(generatorYieldOrReturn);
-            {
-                /* step 6.c.iv */
-                mv.popStack();
-                mv.returnCompletion(__ -> {
-                    mv.load(received);
-                    mv.checkcast(Types.ReturnValue);
-                    mv.invoke(Methods.ReturnValue_getValue);
-                });
-            }
+            mv.ifnonnull(returnIterResult);
+
+            /* step 5.c.iii */
+            returnValue.accept(received);
+            mv.goTo(returnCompletion);
+
+            /* steps 5.c.vi-viii */
+            mv.mark(returnIterResult);
+            IteratorComplete(node, innerResult, mv);
+            mv.ifeq(generatorYield);
+
+            /* step 5.c.vii.1 */
+            IteratorValue(node, innerResult, mv);
+            mv.store(received);
+
+            /* steps 5.c.iii, step 5.c.vii */
+            mv.mark(returnCompletion);
+            mv.popStack();
+            mv.returnCompletion(received);
         }
 
-        mv.mark(generatorYieldOrReturn);
-
-        /* steps 6.b.iii.5-6, 6.c.viii-ix */
-        IteratorComplete(node, innerResult, mv);
-        mv.ifeq(generatorYield);
-
-        /* step 6.b.iii.7, 6.c.x */
-        mv.popStack();
-        mv.returnCompletion(__ -> {
-            IteratorValue(node, innerResult, mv);
-        });
-
-        /* step 6.a.v */
+        /* steps 5.a.iii, 5.b.ii.5 */
         mv.mark(done);
         IteratorValue(node, innerResult, mv);
 
@@ -1837,11 +2331,18 @@ abstract class DefaultCodeGenerator<RETURN> extends DefaultNodeVisitor<RETURN, C
      *            the code visitor
      */
     protected final void yield(Expression node, CodeVisitor mv) {
-        mv.lineInfo(node);
-        mv.loadExecutionContext();
-        mv.swap();
-        mv.iconst(false);
-        mv.invoke(Methods.AbstractOperations_CreateIterResultObject);
+        assert mv.isGenerator();
+
+        if (!mv.isAsync()) {
+            mv.lineInfo(node);
+            mv.loadExecutionContext();
+            mv.swap();
+            mv.iconst(false);
+            mv.invoke(Methods.AbstractOperations_CreateIterResultObject);
+        } else {
+            // TODO: Move awaiting before and after yield to runtime?
+            await(node, mv);
+        }
 
         // force stack top to Object-type
         mv.checkcast(Types.Object);
@@ -1851,7 +2352,7 @@ abstract class DefaultCodeGenerator<RETURN> extends DefaultNodeVisitor<RETURN, C
         throwAfterResume(mv);
 
         // check for return value
-        returnAfterResume(mv);
+        returnAfterResume(node, mv);
     }
 
     /**
@@ -1891,7 +2392,7 @@ abstract class DefaultCodeGenerator<RETURN> extends DefaultNodeVisitor<RETURN, C
         mv.mark(isException);
     }
 
-    private void returnAfterResume(CodeVisitor mv) {
+    private void returnAfterResume(Node node, CodeVisitor mv) {
         Jump isReturn = new Jump();
         mv.dup();
         mv.instanceOf(Types.ReturnValue);
@@ -1899,6 +2400,11 @@ abstract class DefaultCodeGenerator<RETURN> extends DefaultNodeVisitor<RETURN, C
         {
             mv.checkcast(Types.ReturnValue);
             mv.invoke(Methods.ReturnValue_getValue);
+
+            if (mv.isAsyncGenerator()) {
+                await(node, mv);
+            }
+
             if (mv.getStackSize() == 1) {
                 mv.returnCompletion();
             } else {
@@ -1914,44 +2420,9 @@ abstract class DefaultCodeGenerator<RETURN> extends DefaultNodeVisitor<RETURN, C
     }
 
     /**
-     * IteratorNext ( iterator, value )
-     * 
-     * @param node
-     *            the ast node
-     * @param iterator
-     *            the script iterator object
-     * @param mv
-     *            the code visitor
-     */
-    protected final void IteratorNext(Node node, Variable<ScriptObject> iterator, CodeVisitor mv) {
-        mv.loadExecutionContext();
-        mv.load(iterator);
-        mv.lineInfo(node);
-        mv.invoke(Methods.AbstractOperations_IteratorNext);
-    }
-
-    /**
-     * IteratorNext ( iterator, value )
-     * 
-     * @param node
-     *            the ast node
-     * @param iterator
-     *            the script iterator object
-     * @param value
-     *            the value to pass to the next() function
-     * @param mv
-     *            the code visitor
-     */
-    protected final void IteratorNext(Node node, Variable<ScriptObject> iterator, Value<Object> value, CodeVisitor mv) {
-        mv.loadExecutionContext();
-        mv.load(iterator);
-        mv.load(value);
-        mv.lineInfo(node);
-        mv.invoke(Methods.AbstractOperations_IteratorNext_Object);
-    }
-
-    /**
      * IteratorComplete (iterResult)
+     * <p>
+     * stack: [] {@literal ->} [complete]
      * 
      * @param node
      *            the ast node
@@ -1969,6 +2440,8 @@ abstract class DefaultCodeGenerator<RETURN> extends DefaultNodeVisitor<RETURN, C
 
     /**
      * IteratorValue (iterResult)
+     * <p>
+     * stack: [] {@literal ->} [value]
      * 
      * @param node
      *            the ast node
@@ -1986,6 +2459,8 @@ abstract class DefaultCodeGenerator<RETURN> extends DefaultNodeVisitor<RETURN, C
 
     /**
      * GetMethod (O, P)
+     * <p>
+     * stack: [] {@literal ->} [method]
      * 
      * @param node
      *            the ast node
@@ -1996,7 +2471,7 @@ abstract class DefaultCodeGenerator<RETURN> extends DefaultNodeVisitor<RETURN, C
      * @param mv
      *            the code visitor
      */
-    final void GetMethod(Node node, Variable<ScriptObject> object, String methodName, CodeVisitor mv) {
+    private void GetMethod(Node node, Variable<ScriptObject> object, String methodName, CodeVisitor mv) {
         mv.loadExecutionContext();
         mv.load(object);
         mv.aconst(methodName);
@@ -2018,18 +2493,48 @@ abstract class DefaultCodeGenerator<RETURN> extends DefaultNodeVisitor<RETURN, C
      * @param arguments
      *            the method call arguments
      */
-    final void InvokeMethod(Node node, CodeVisitor mv, Value<Callable> method, Value<?> thisValue,
+    private void InvokeMethod(Node node, CodeVisitor mv, Value<Callable> method, Value<?> thisValue,
             Value<?>... arguments) {
         mv.load(method);
         mv.loadExecutionContext();
         mv.load(thisValue);
         if (arguments.length == 0) {
-            mv.get(Fields.ScriptRuntime_EMPTY_ARRAY);
+            mv.get(Fields.CallOperations_EMPTY_ARRAY);
         } else {
             mv.anewarray(Types.Object, arguments);
         }
         mv.lineInfo(node);
         mv.invokedynamic(Bootstrap.getCallName(), Bootstrap.getCallMethodDescriptor(), Bootstrap.getCallBootstrap());
+    }
+
+    /**
+     * Invoke(O, P, [argumentsList])
+     * <p>
+     * stack: [] {@literal ->} [value]
+     * 
+     * @param node
+     *            the ast node
+     * @param mv
+     *            the code visitor
+     * @param object
+     *            the script object
+     * @param methodName
+     *            the method name
+     * @param arguments
+     *            the method call arguments
+     */
+    protected final void Invoke(Node node, CodeVisitor mv, Variable<ScriptObject> object, String methodName,
+            Value<?>... arguments) {
+        mv.loadExecutionContext();
+        mv.load(object);
+        mv.aconst(methodName);
+        if (arguments.length == 0) {
+            mv.get(Fields.CallOperations_EMPTY_ARRAY);
+        } else {
+            mv.anewarray(Types.Object, arguments);
+        }
+        mv.lineInfo(node);
+        mv.invoke(Methods.AbstractOperations_Invoke);
     }
 
     /**
@@ -2054,12 +2559,19 @@ abstract class DefaultCodeGenerator<RETURN> extends DefaultNodeVisitor<RETURN, C
      *            the code visitor
      */
     final void asyncIteratorClose(Node node, Variable<ScriptObject> iterator, CodeVisitor mv) {
+        /* steps 1-2 (not applicable) */
+        /* steps 3-4 */
         IteratorClose(node, iterator, returnMethod -> {
+            /* step 5 */
             InvokeMethod(node, mv, returnMethod, iterator);
+            /* step 6 */
             await(node, mv);
+            /* step 7 (not applicable) */
+            /* step 8 (implicit) */
+            /* step 9 */
             requireObjectResult(node, "return", mv);
             mv.pop();
-        } , mv);
+        }, mv);
     }
 
     /**
@@ -2088,6 +2600,8 @@ abstract class DefaultCodeGenerator<RETURN> extends DefaultNodeVisitor<RETURN, C
      */
     final void asyncIteratorClose(Node node, Variable<ScriptObject> iterator, Variable<? extends Throwable> throwable,
             CodeVisitor mv) {
+        /* steps 1-2 (not applicable) */
+        /* steps 3-4 */
         IteratorClose(node, iterator, returnMethod -> {
             TryCatchLabel startCatch = new TryCatchLabel();
             TryCatchLabel endCatch = new TryCatchLabel(), handlerCatch = new TryCatchLabel();
@@ -2095,7 +2609,9 @@ abstract class DefaultCodeGenerator<RETURN> extends DefaultNodeVisitor<RETURN, C
 
             mv.mark(startCatch);
             {
+                /* step 5 */
                 InvokeMethod(node, mv, returnMethod, iterator);
+                /* step 6 */
                 await(node, mv);
                 mv.pop();
 
@@ -2122,7 +2638,10 @@ abstract class DefaultCodeGenerator<RETURN> extends DefaultNodeVisitor<RETURN, C
             }
             mv.tryCatch(startCatch, endCatch, handlerCatch, Types.ScriptException);
             mv.mark(noException);
-        } , mv);
+
+            /* step 7 (in caller) */
+            /* steps 8-10 (not applicable) */
+        }, mv);
     }
 
     /**
@@ -2142,7 +2661,7 @@ abstract class DefaultCodeGenerator<RETURN> extends DefaultNodeVisitor<RETURN, C
      * @param mv
      *            the code visitor
      */
-    final void IteratorClose(Node node, Variable<ScriptObject> iterator, Consumer<Variable<Callable>> invokeReturn,
+    private void IteratorClose(Node node, Variable<ScriptObject> iterator, Consumer<Variable<Callable>> invokeReturn,
             CodeVisitor mv) {
         mv.enterVariableScope();
         Variable<Callable> returnMethod = mv.newVariable("returnMethod", Callable.class);
@@ -2177,13 +2696,102 @@ abstract class DefaultCodeGenerator<RETURN> extends DefaultNodeVisitor<RETURN, C
         mv.aconst(methodName);
         mv.loadExecutionContext();
         mv.lineInfo(node);
-        mv.invoke(Methods.ScriptRuntime_requireObjectResult);
+        mv.invoke(Methods.Operators_requireObjectResult);
     }
 
-    private void reportPropertyNotCallable(Node node, String methodName, CodeVisitor mv) {
-        mv.aconst(methodName);
-        mv.loadExecutionContext();
-        mv.lineInfo(node);
-        mv.invoke(Methods.ScriptRuntime_reportPropertyNotCallable);
+    /**
+     * Compiles an outlined method.
+     * 
+     * @param mv
+     *            the code visitor
+     * @param compiler
+     *            the compiler function
+     * @return the outlined-call object
+     */
+    protected final <VISITOR extends OutlinedCodeVisitor> OutlinedCall outlined(VISITOR mv,
+            Function<VISITOR, Completion> compiler) {
+        mv.lineInfo(mv.getNode());
+        mv.nop(); // force line-number entry
+        mv.begin();
+        GeneratorState generatorState = null;
+        if (mv.hasResume()) {
+            generatorState = mv.generatorPrologue();
+        }
+        mv.labelPrologue();
+
+        Completion result = compiler.apply(mv);
+        if (!result.isAbrupt()) {
+            // fall-thru, return `0`.
+            mv.iconst(0);
+            mv._return();
+        }
+
+        LabelState labelState = mv.labelEpilogue(result, mv.hasResume());
+        if (generatorState != null) {
+            mv.generatorEpilogue(generatorState);
+        }
+        mv.end();
+        return new OutlinedCall(mv.getMethod().name(), labelState);
+    }
+
+    /**
+     * If <var>node</var> evaluates to {@code true}, continue execution; otherwise jump to <var>ifFalse</var>.
+     * 
+     * @param node
+     *            the expression node
+     * @param ifFalse
+     *            the target label
+     * @param mv
+     *            the code visitor
+     */
+    protected final void testExpressionBailout(Expression node, Jump ifFalse, CodeVisitor mv) {
+        Jump ifTrue = new Jump();
+        if (testExpression(node, ifTrue, ifFalse, mv)) {
+            mv.ifeq(ifFalse);
+        } else {
+            mv.ifne(ifFalse);
+        }
+        mv.mark(ifTrue);
+    }
+
+    /**
+     * If <var>node</var> evaluates to {@code true}, jump to <var>ifTrue</var>; otherwise continue execution.
+     * 
+     * @param node
+     *            the expression node
+     * @param ifFalse
+     *            the target label
+     * @param mv
+     *            the code visitor
+     */
+    protected final void testExpressionFallthrough(Expression node, Jump ifTrue, CodeVisitor mv) {
+        Jump ifFalse = new Jump();
+        if (testExpression(node, ifTrue, ifFalse, mv)) {
+            mv.ifne(ifTrue);
+        } else {
+            mv.ifeq(ifTrue);
+        }
+        mv.mark(ifFalse);
+    }
+
+    private boolean testExpression(Expression node, Jump ifTrue, Jump ifFalse, CodeVisitor mv) {
+        if (node instanceof BinaryExpression) {
+            BinaryExpression binary = (BinaryExpression) node;
+            if (binary.getOperator() == BinaryExpression.Operator.AND) {
+                testExpressionBailout(binary.getLeft(), ifFalse, mv);
+                return testExpression(binary.getRight(), ifTrue, ifFalse, mv);
+            } else if (binary.getOperator() == BinaryExpression.Operator.OR) {
+                testExpressionFallthrough(binary.getLeft(), ifTrue, mv);
+                return testExpression(binary.getRight(), ifTrue, ifFalse, mv);
+            }
+        } else if (node instanceof UnaryExpression) {
+            UnaryExpression unary = (UnaryExpression) node;
+            if (unary.getOperator() == UnaryExpression.Operator.NOT) {
+                return !testExpression(unary.getOperand(), ifFalse, ifTrue, mv);
+            }
+        }
+        ValType type = codegen.expression(node, mv);
+        ToBoolean(type, mv);
+        return true;
     }
 }

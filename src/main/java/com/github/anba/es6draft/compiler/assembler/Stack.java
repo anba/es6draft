@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -17,12 +17,10 @@ public class Stack {
     private static final Type STRING_TYPE = Types.String;
     private static final Type[] EMPTY_STACK = new Type[0];
 
-    private final Variables variables;
     private Type[] stack;
     private int sp;
 
-    public Stack(Variables variables) {
-        this.variables = variables;
+    public Stack() {
         newStack();
     }
 
@@ -291,30 +289,29 @@ public class Stack {
 
     /* local load instructions */
 
-    private void load(int var, Type type) {
-        Type t = variables.getVariable(var);
-        assert compatibleTypes(type, t);
-        push(t);
+    private void load(int var, Type type, Type kind) {
+        assert compatibleTypes(type, kind) : String.format("%s != %s [%d]", type, kind, var);
+        push(type);
     }
 
-    public final void iload(int var) {
-        load(var, Type.INT_TYPE);
+    public final void iload(int var, Type type) {
+        load(var, type, Type.INT_TYPE);
     }
 
-    public final void lload(int var) {
-        load(var, Type.LONG_TYPE);
+    public final void lload(int var, Type type) {
+        load(var, type, Type.LONG_TYPE);
     }
 
-    public final void fload(int var) {
-        load(var, Type.FLOAT_TYPE);
+    public final void fload(int var, Type type) {
+        load(var, type, Type.FLOAT_TYPE);
     }
 
-    public final void dload(int var) {
-        load(var, Type.DOUBLE_TYPE);
+    public final void dload(int var, Type type) {
+        load(var, type, Type.DOUBLE_TYPE);
     }
 
-    public final void aload(int var) {
-        load(var, OBJECT_TYPE);
+    public final void aload(int var, Type type) {
+        load(var, type, OBJECT_TYPE);
     }
 
     /* array load instructions */
@@ -359,30 +356,29 @@ public class Stack {
 
     /* local store instructions */
 
-    private void store(int var, Type type) {
-        Type t = variables.getVariable(var);
-        assert compatibleTypes(type, t);
+    private void store(int var, Type type, Type kind) {
+        assert compatibleTypes(type, kind) : String.format("%s != %s [%d]", type, kind, var);
         pop(type);
     }
 
-    public final void istore(int var) {
-        store(var, Type.INT_TYPE);
+    public final void istore(int var, Type type) {
+        store(var, type, Type.INT_TYPE);
     }
 
-    public final void lstore(int var) {
-        store(var, Type.LONG_TYPE);
+    public final void lstore(int var, Type type) {
+        store(var, type, Type.LONG_TYPE);
     }
 
-    public final void fstore(int var) {
-        store(var, Type.FLOAT_TYPE);
+    public final void fstore(int var, Type type) {
+        store(var, type, Type.FLOAT_TYPE);
     }
 
-    public final void dstore(int var) {
-        store(var, Type.DOUBLE_TYPE);
+    public final void dstore(int var, Type type) {
+        store(var, type, Type.DOUBLE_TYPE);
     }
 
-    public final void astore(int var) {
-        store(var, OBJECT_TYPE);
+    public final void astore(int var, Type type) {
+        store(var, type, OBJECT_TYPE);
     }
 
     /* array store instructions */
@@ -1143,10 +1139,7 @@ public class Stack {
 
     /* return instructions */
 
-    private void areturn(Type type) {
-        if (type.getSort() != Type.Sort.VOID) {
-            pop(type);
-        }
+    private void _return() {
         assert sp == 0 : String.format("sp=%d, stack=%s", sp, getStackString());
         discardStack();
     }
@@ -1155,42 +1148,47 @@ public class Stack {
      * {@code ireturn} bytecode instruction.
      */
     public final void ireturn() {
-        areturn(Type.INT_TYPE);
+        pop(Type.INT_TYPE);
+        _return();
     }
 
     /**
      * {@code lreturn} bytecode instruction.
      */
     public final void lreturn() {
-        areturn(Type.LONG_TYPE);
+        pop(Type.LONG_TYPE);
+        _return();
     }
 
     /**
      * {@code freturn} bytecode instruction.
      */
     public final void freturn() {
-        areturn(Type.FLOAT_TYPE);
+        pop(Type.FLOAT_TYPE);
+        _return();
     }
 
     /**
      * {@code dreturn} bytecode instruction.
      */
     public final void dreturn() {
-        areturn(Type.DOUBLE_TYPE);
+        pop(Type.DOUBLE_TYPE);
+        _return();
     }
 
     /**
      * {@code areturn} bytecode instruction.
      */
     public final void areturn() {
-        areturn(OBJECT_TYPE);
+        pop(OBJECT_TYPE);
+        _return();
     }
 
     /**
      * {@code return} bytecode instruction.
      */
     public final void voidreturn() {
-        areturn(Type.VOID_TYPE);
+        _return();
     }
 
     /* field instructions */

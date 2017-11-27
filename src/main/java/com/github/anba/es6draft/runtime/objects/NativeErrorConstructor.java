@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -90,11 +90,6 @@ public final class NativeErrorConstructor extends BuiltinConstructor implements 
         createProperties(realm, this, propertiesForType(type));
     }
 
-    @Override
-    public NativeErrorConstructor clone() {
-        return new NativeErrorConstructor(getRealm(), type);
-    }
-
     /**
      * 19.5.6.1.1 NativeError (message)
      * <p>
@@ -112,14 +107,13 @@ public final class NativeErrorConstructor extends BuiltinConstructor implements 
      * <strong>Extension</strong>: NativeError (message, fileName, lineNumber, columnNumber)
      */
     @Override
-    public ErrorObject construct(ExecutionContext callerContext, Constructor newTarget,
-            Object... args) {
+    public ErrorObject construct(ExecutionContext callerContext, Constructor newTarget, Object... args) {
         ExecutionContext calleeContext = calleeContext();
         Object message = argument(args, 0);
         /* step 1 (not applicable) */
-        /* steps 2-3 */
+        /* step 2 */
         ErrorObject obj = OrdinaryCreateFromConstructor(calleeContext, newTarget, type.prototype(), ErrorObject::new);
-        /* step 4 */
+        /* step 3 */
         if (!Type.isUndefined(message)) {
             CharSequence msg = ToString(calleeContext, message);
             obj.defineErrorProperty("message", msg, false);
@@ -139,7 +133,7 @@ public final class NativeErrorConstructor extends BuiltinConstructor implements 
             obj.defineErrorProperty("columnNumber", column, true);
         }
 
-        /* step 5 */
+        /* step 4 */
         return obj;
     }
 
@@ -173,19 +167,16 @@ public final class NativeErrorConstructor extends BuiltinConstructor implements 
         @Prototype
         public static final Intrinsics __proto__ = Intrinsics.Error;
 
-        @Value(name = "length", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = true))
+        @Value(name = "length", attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static final int length = 1;
 
-        @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = true))
+        @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static final String name = "EvalError";
 
         /**
          * 19.5.6.2.1 NativeError.prototype
          */
-        @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = false))
+        @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false, configurable = false))
         public static final Intrinsics prototype = Intrinsics.EvalErrorPrototype;
     }
 
@@ -198,19 +189,16 @@ public final class NativeErrorConstructor extends BuiltinConstructor implements 
         @Prototype
         public static final Intrinsics __proto__ = Intrinsics.Error;
 
-        @Value(name = "length", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = true))
+        @Value(name = "length", attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static final int length = 1;
 
-        @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = true))
+        @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static final String name = "RangeError";
 
         /**
          * 19.5.6.2.1 NativeError.prototype
          */
-        @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = false))
+        @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false, configurable = false))
         public static final Intrinsics prototype = Intrinsics.RangeErrorPrototype;
     }
 
@@ -223,19 +211,16 @@ public final class NativeErrorConstructor extends BuiltinConstructor implements 
         @Prototype
         public static final Intrinsics __proto__ = Intrinsics.Error;
 
-        @Value(name = "length", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = true))
+        @Value(name = "length", attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static final int length = 1;
 
-        @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = true))
+        @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static final String name = "ReferenceError";
 
         /**
          * 19.5.6.2.1 NativeError.prototype
          */
-        @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = false))
+        @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false, configurable = false))
         public static final Intrinsics prototype = Intrinsics.ReferenceErrorPrototype;
     }
 
@@ -248,19 +233,16 @@ public final class NativeErrorConstructor extends BuiltinConstructor implements 
         @Prototype
         public static final Intrinsics __proto__ = Intrinsics.Error;
 
-        @Value(name = "length", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = true))
+        @Value(name = "length", attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static final int length = 1;
 
-        @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = true))
+        @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static final String name = "SyntaxError";
 
         /**
          * 19.5.6.2.1 NativeError.prototype
          */
-        @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = false))
+        @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false, configurable = false))
         public static final Intrinsics prototype = Intrinsics.SyntaxErrorPrototype;
     }
 
@@ -273,19 +255,16 @@ public final class NativeErrorConstructor extends BuiltinConstructor implements 
         @Prototype
         public static final Intrinsics __proto__ = Intrinsics.Error;
 
-        @Value(name = "length", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = true))
+        @Value(name = "length", attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static final int length = 1;
 
-        @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = true))
+        @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static final String name = "TypeError";
 
         /**
          * 19.5.6.2.1 NativeError.prototype
          */
-        @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = false))
+        @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false, configurable = false))
         public static final Intrinsics prototype = Intrinsics.TypeErrorPrototype;
     }
 
@@ -298,19 +277,16 @@ public final class NativeErrorConstructor extends BuiltinConstructor implements 
         @Prototype
         public static final Intrinsics __proto__ = Intrinsics.Error;
 
-        @Value(name = "length", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = true))
+        @Value(name = "length", attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static final int length = 1;
 
-        @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = true))
+        @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static final String name = "URIError";
 
         /**
          * 19.5.6.2.1 NativeError.prototype
          */
-        @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = false))
+        @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false, configurable = false))
         public static final Intrinsics prototype = Intrinsics.URIErrorPrototype;
     }
 
@@ -323,19 +299,16 @@ public final class NativeErrorConstructor extends BuiltinConstructor implements 
         @Prototype
         public static final Intrinsics __proto__ = Intrinsics.Error;
 
-        @Value(name = "length", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = true))
+        @Value(name = "length", attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static final int length = 1;
 
-        @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = true))
+        @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static final String name = "InternalError";
 
         /**
          * 19.5.6.2.1 NativeError.prototype
          */
-        @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = false))
+        @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false, configurable = false))
         public static final Intrinsics prototype = Intrinsics.InternalErrorPrototype;
     }
 }

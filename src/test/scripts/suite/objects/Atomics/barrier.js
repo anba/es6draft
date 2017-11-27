@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -33,14 +33,14 @@ loadRelativeToScript("./resources/concurrent.js");
       b.wait();
 
       if (Atomics.sub(ta, 4, 1) === 1) {
-        while (Atomics.futexWake(ta, 5, 1) !== 1) ;
+        while (Atomics.wake(ta, 5, 1) !== 1) ;
       }
     `);
     assertTrue(started);
   }
 
-  let r = Atomics.futexWait(ta, 5, 0);
-  assertSame(Atomics.OK, r);
+  let r = Atomics.wait(ta, 5, 0);
+  assertSame("ok", r);
   assertSame(Atomics.load(ta, 4), 0);
 
   setSharedArrayBuffer(null);

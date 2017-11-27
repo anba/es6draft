@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -18,12 +18,12 @@ import com.github.anba.es6draft.runtime.modules.ModuleSource;
  * 
  */
 public final class FileModuleSource implements ModuleSource {
-    private final FileSourceIdentifier sourceId;
     private final Path sourceFile;
+    private final String sourceName;
 
-    public FileModuleSource(FileSourceIdentifier sourceId, Path sourceFile) {
-        this.sourceId = sourceId;
+    public FileModuleSource(Path sourceFile, String sourceName) {
         this.sourceFile = sourceFile;
+        this.sourceName = sourceName;
     }
 
     @Override
@@ -33,6 +33,6 @@ public final class FileModuleSource implements ModuleSource {
 
     @Override
     public Source toSource() {
-        return new Source(sourceFile, sourceId.getFile(), 1);
+        return new Source(sourceFile, sourceName, 1);
     }
 }

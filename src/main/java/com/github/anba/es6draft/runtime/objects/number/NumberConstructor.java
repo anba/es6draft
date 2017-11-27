@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -8,8 +8,7 @@ package com.github.anba.es6draft.runtime.objects.number;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToFlatString;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToInt32;
-import static com.github.anba.es6draft.runtime.AbstractOperations.ToInteger;
-import static com.github.anba.es6draft.runtime.AbstractOperations.ToNumber;
+import static com.github.anba.es6draft.runtime.AbstractOperations.ToNumeric;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.objects.number.NumberObject.NumberCreate;
 
@@ -53,34 +52,48 @@ public final class NumberConstructor extends BuiltinConstructor implements Initi
         createProperties(realm, this, Properties.class);
     }
 
-    @Override
-    public NumberConstructor clone() {
-        return new NumberConstructor(getRealm());
-    }
-
     /**
      * 20.1.1.1 Number ( [ value ] )
      */
     @Override
     public Double call(ExecutionContext callerContext, Object thisValue, Object... args) {
         ExecutionContext calleeContext = calleeContext();
-        /* step 1 (omitted) */
-        /* steps 1-4 */
-        return args.length > 0 ? ToNumber(calleeContext, args[0]) : 0d;
-        /* steps 6-8 (not applicable) */
+        /* steps 1-3 */
+        if (args.length == 0) {
+            return 0d;
+        }
+
+        // Extension: BigInt:
+        Number prim = ToNumeric(calleeContext, args[0]);
+        if (Type.isBigInt(prim)) {
+            return Type.bigIntValue(prim).doubleValue();
+        }
+
+        return prim.doubleValue();
+        /* steps 4-6 (not applicable) */
     }
 
     /**
      * 20.1.1.1 Number ( [ value ] )
      */
     @Override
-    public NumberObject construct(ExecutionContext callerContext, Constructor newTarget,
-            Object... args) {
+    public NumberObject construct(ExecutionContext callerContext, Constructor newTarget, Object... args) {
         ExecutionContext calleeContext = calleeContext();
-        /* steps 1-3 */
-        double n = args.length > 0 ? ToNumber(calleeContext, args[0]) : 0d;
-        /* step 4 (not applicable) */
-        /* steps 5-8 */
+        /* steps 1-2 */
+        double n;
+        if (args.length == 0) {
+            n = 0d;
+        } else {
+            // Extension: BigInt:
+            Number prim = ToNumeric(calleeContext, args[0]);
+            if (Type.isBigInt(prim)) {
+                n = Type.bigIntValue(prim).doubleValue();
+            } else {
+                n = prim.doubleValue();
+            }
+        }
+        /* step 3 (not applicable) */
+        /* steps 4-6 */
         return NumberCreate(calleeContext, n,
                 GetPrototypeFromConstructor(calleeContext, newTarget, Intrinsics.NumberPrototype));
     }
@@ -94,75 +107,68 @@ public final class NumberConstructor extends BuiltinConstructor implements Initi
         @Prototype
         public static final Intrinsics __proto__ = Intrinsics.FunctionPrototype;
 
-        @Value(name = "length", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = true))
+        @Value(name = "length", attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static final int length = 1;
 
-        @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = true))
+        @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static final String name = "Number";
 
         /**
          * 20.1.2.15 Number.prototype
          */
-        @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = false))
+        @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false, configurable = false))
         public static final Intrinsics prototype = Intrinsics.NumberPrototype;
 
         /**
          * 20.1.2.7 Number.MAX_VALUE
          */
-        @Value(name = "MAX_VALUE", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = false))
+        @Value(name = "MAX_VALUE", attributes = @Attributes(writable = false, enumerable = false, configurable = false))
         public static final Double MAX_VALUE = Double.MAX_VALUE;
 
         /**
          * 20.1.2.11 Number.MIN_VALUE
          */
-        @Value(name = "MIN_VALUE", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = false))
+        @Value(name = "MIN_VALUE", attributes = @Attributes(writable = false, enumerable = false, configurable = false))
         public static final Double MIN_VALUE = Double.MIN_VALUE;
 
         /**
          * 20.1.2.8 Number.NaN
          */
-        @Value(name = "NaN", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = false))
+        @Value(name = "NaN", attributes = @Attributes(writable = false, enumerable = false, configurable = false))
         public static final Double NaN = Double.NaN;
 
         /**
          * 20.1.2.9 Number.NEGATIVE_INFINITY
          */
-        @Value(name = "NEGATIVE_INFINITY", attributes = @Attributes(writable = false,
-                enumerable = false, configurable = false))
+        @Value(name = "NEGATIVE_INFINITY",
+                attributes = @Attributes(writable = false, enumerable = false, configurable = false))
         public static final Double NEGATIVE_INFINITY = Double.NEGATIVE_INFINITY;
 
         /**
          * 20.1.2.14 Number.POSITIVE_INFINITY
          */
-        @Value(name = "POSITIVE_INFINITY", attributes = @Attributes(writable = false,
-                enumerable = false, configurable = false))
+        @Value(name = "POSITIVE_INFINITY",
+                attributes = @Attributes(writable = false, enumerable = false, configurable = false))
         public static final Double POSITIVE_INFINITY = Double.POSITIVE_INFINITY;
 
         /**
          * 20.1.2.1 Number.EPSILON
          */
-        @Value(name = "EPSILON", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = false))
+        @Value(name = "EPSILON", attributes = @Attributes(writable = false, enumerable = false, configurable = false))
         public static final Double EPSILON = Math.ulp(1.0);
 
         /**
          * 20.1.2.6 Number.MAX_SAFE_INTEGER
          */
-        @Value(name = "MAX_SAFE_INTEGER", attributes = @Attributes(writable = false,
-                enumerable = false, configurable = false))
+        @Value(name = "MAX_SAFE_INTEGER",
+                attributes = @Attributes(writable = false, enumerable = false, configurable = false))
         public static final Double MAX_SAFE_INTEGER = 0x1F_FFFF_FFFF_FFFFp0;
 
         /**
          * 20.1.2.10 Number.MIN_SAFE_INTEGER
          */
-        @Value(name = "MIN_SAFE_INTEGER", attributes = @Attributes(writable = false,
-                enumerable = false, configurable = false))
+        @Value(name = "MIN_SAFE_INTEGER",
+                attributes = @Attributes(writable = false, enumerable = false, configurable = false))
         public static final Double MIN_SAFE_INTEGER = -0x1F_FFFF_FFFF_FFFFp0;
 
         /**
@@ -179,43 +185,42 @@ public final class NumberConstructor extends BuiltinConstructor implements Initi
          * @return the parsed integer
          */
         @Function(name = "parseInt", arity = 2)
-        public static Object parseInt(ExecutionContext cx, Object thisValue, Object string,
-                Object radix) {
-            /* steps 1-2 */
+        public static Object parseInt(ExecutionContext cx, Object thisValue, Object string, Object radix) {
+            /* step 1 */
             String inputString = ToFlatString(cx, string);
-            /* step 3 */
+            /* step 2 */
             String s = Strings.trimLeft(inputString);
             int len = s.length();
             int index = 0;
-            /* steps 4-6 */
+            /* steps 3-5 */
             boolean isPos = true;
             if (index < len && (s.charAt(index) == '+' || s.charAt(index) == '-')) {
                 isPos = s.charAt(index) == '+';
                 index += 1;
             }
-            /* steps 7-8 */
+            /* step 6 */
             int r = ToInt32(cx, radix);
-            /* step 9 */
+            /* step 7 */
             boolean stripPrefix = true;
             if (r != 0) {
-                /* step 10 */
+                /* step 8 */
                 if (r < 2 || r > 36) {
                     return Double.NaN;
                 }
                 stripPrefix = r == 16;
             } else {
-                /* step 11 */
+                /* step 9 */
                 r = 10;
             }
-            /* step 12 */
+            /* step 10 */
             if (stripPrefix && index + 1 < len && s.charAt(index) == '0'
                     && (s.charAt(index + 1) == 'x' || s.charAt(index + 1) == 'X')) {
                 r = 16;
                 index += 2;
             }
-            /* steps 13-15 */
+            /* steps 11-13 */
             double number = StringToNumber.stringToNumber(s, index, r);
-            /* steps 16-18 */
+            /* steps 14-16 */
             return isPos ? number : -number;
         }
 
@@ -232,15 +237,15 @@ public final class NumberConstructor extends BuiltinConstructor implements Initi
          */
         @Function(name = "parseFloat", arity = 1)
         public static Object parseFloat(ExecutionContext cx, Object thisValue, Object string) {
-            /* steps 1-2 */
+            /* step 1 */
             String inputString = ToFlatString(cx, string);
-            /* step 3 */
+            /* step 2 */
             String trimmedString = Strings.trimLeft(inputString);
-            /* step 4 */
+            /* step 3 */
             if (trimmedString.isEmpty()) {
                 return Double.NaN;
             }
-            /* steps 5-8 */
+            /* steps 4-7 */
             return readDecimalLiteralPrefix(trimmedString);
         }
 
@@ -309,10 +314,8 @@ public final class NumberConstructor extends BuiltinConstructor implements Initi
             if (Double.isNaN(num) || Double.isInfinite(num)) {
                 return false;
             }
-            /* step 3 */
-            double integer = ToInteger(num);
-            /* steps 4-5 */
-            return integer == num;
+            /* steps 3-5 */
+            return Math.rint(num) == num;
         }
 
         /**
@@ -337,14 +340,12 @@ public final class NumberConstructor extends BuiltinConstructor implements Initi
             if (Double.isNaN(num) || Double.isInfinite(num)) {
                 return false;
             }
-            /* step 3 */
-            double integer = ToInteger(num);
-            /* step 4 */
-            if (integer != num) {
+            /* steps 3-4 */
+            if (Math.rint(num) != num) {
                 return false;
             }
             /* steps 5-6 */
-            return Math.abs(integer) <= 0x1F_FFFF_FFFF_FFFFp0;
+            return Math.abs(num) <= 0x1F_FFFF_FFFF_FFFFp0;
         }
     }
 
@@ -363,8 +364,7 @@ public final class NumberConstructor extends BuiltinConstructor implements Initi
         }
         if (c == 'I') {
             // Infinity
-            if (index - 1 + Infinity_length <= end
-                    && s.regionMatches(index - 1, "Infinity", 0, Infinity_length)) {
+            if (index - 1 + Infinity_length <= end && s.regionMatches(index - 1, "Infinity", 0, Infinity_length)) {
                 return isPos ? Double.POSITIVE_INFINITY : Double.NEGATIVE_INFINITY;
             }
             return Double.NaN;

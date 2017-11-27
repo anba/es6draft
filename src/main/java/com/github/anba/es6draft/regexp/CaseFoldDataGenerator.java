@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -36,7 +36,7 @@ final class CaseFoldDataGenerator {
     }
 
     public static void main(String[] args) throws IOException {
-        Path unicode = Paths.get(args.length > 0 ? args[0] : "/tmp/unicode/Unicode8.0");
+        Path unicode = Paths.get(args.length > 0 ? args[0] : "/tmp/unicode/Unicode10.0");
 
         // String range = generateSpaceRange(unicode);
         // System.out.println(range);

@@ -1,15 +1,15 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
  */
 package com.github.anba.es6draft.ast;
 
+import com.github.anba.es6draft.ast.synthetic.ClassFieldInitializer;
 import com.github.anba.es6draft.ast.synthetic.ExpressionMethod;
 import com.github.anba.es6draft.ast.synthetic.MethodDefinitionsMethod;
 import com.github.anba.es6draft.ast.synthetic.PropertyDefinitionsMethod;
-import com.github.anba.es6draft.ast.synthetic.SpreadArrayLiteral;
 import com.github.anba.es6draft.ast.synthetic.SpreadElementMethod;
 import com.github.anba.es6draft.ast.synthetic.StatementListMethod;
 
@@ -64,10 +64,6 @@ public abstract class DefaultNodeVisitor<R, V> implements NodeVisitor<R, V> {
         return visit((Expression) node, value);
     }
 
-    protected R visit(ArrayInitializer node, V value) {
-        return visit((Expression) node, value);
-    }
-
     protected R visit(ModuleItem node, V value) {
         return visit((Node) node, value);
     }
@@ -110,12 +106,12 @@ public abstract class DefaultNodeVisitor<R, V> implements NodeVisitor<R, V> {
 
     @Override
     public R visit(ArrayComprehension node, V value) {
-        return visit((ArrayInitializer) node, value);
+        return visit((Expression) node, value);
     }
 
     @Override
     public R visit(ArrayLiteral node, V value) {
-        return visit((ArrayInitializer) node, value);
+        return visit((Expression) node, value);
     }
 
     @Override
@@ -176,6 +172,11 @@ public abstract class DefaultNodeVisitor<R, V> implements NodeVisitor<R, V> {
     @Override
     public R visit(AwaitExpression node, V value) {
         return visit((Expression) node, value);
+    }
+
+    @Override
+    public R visit(BigIntegerLiteral node, V value) {
+        return visit((ValueLiteral<?>) node, value);
     }
 
     @Override
@@ -251,6 +252,16 @@ public abstract class DefaultNodeVisitor<R, V> implements NodeVisitor<R, V> {
     @Override
     public R visit(ClassExpression node, V value) {
         return visit((Expression) node, value);
+    }
+
+    @Override
+    public R visit(ClassFieldDefinition node, V value) {
+        return visit((PropertyDefinition) node, value);
+    }
+
+    @Override
+    public R visit(ClassFieldInitializer node, V value) {
+        return visit((Statement) node, value);
     }
 
     @Override
@@ -359,11 +370,6 @@ public abstract class DefaultNodeVisitor<R, V> implements NodeVisitor<R, V> {
     }
 
     @Override
-    public R visit(ForEachStatement node, V value) {
-        return visit((IterationStatement) node, value);
-    }
-
-    @Override
     public R visit(ForInStatement node, V value) {
         return visit((IterationStatement) node, value);
     }
@@ -439,6 +445,11 @@ public abstract class DefaultNodeVisitor<R, V> implements NodeVisitor<R, V> {
     }
 
     @Override
+    public R visit(ImportCallExpression node, V value) {
+        return visit((Expression) node, value);
+    }
+
+    @Override
     public R visit(ImportClause node, V value) {
         return visit((Node) node, value);
     }
@@ -446,6 +457,11 @@ public abstract class DefaultNodeVisitor<R, V> implements NodeVisitor<R, V> {
     @Override
     public R visit(ImportDeclaration node, V value) {
         return visit((ModuleItem) node, value);
+    }
+
+    @Override
+    public R visit(ImportMeta node, V value) {
+        return visit((Expression) node, value);
     }
 
     @Override
@@ -460,36 +476,6 @@ public abstract class DefaultNodeVisitor<R, V> implements NodeVisitor<R, V> {
 
     @Override
     public R visit(LabelledStatement node, V value) {
-        return visit((Statement) node, value);
-    }
-
-    @Override
-    public R visit(LegacyComprehension node, V value) {
-        return visit((Comprehension) node, value);
-    }
-
-    @Override
-    public R visit(LegacyComprehensionFor node, V value) {
-        return visit((ComprehensionQualifier) node, value);
-    }
-
-    @Override
-    public R visit(LegacyGeneratorDeclaration node, V value) {
-        return visit((GeneratorDeclaration) node, value);
-    }
-
-    @Override
-    public R visit(LegacyGeneratorExpression node, V value) {
-        return visit((GeneratorExpression) node, value);
-    }
-
-    @Override
-    public R visit(LetExpression node, V value) {
-        return visit((Expression) node, value);
-    }
-
-    @Override
-    public R visit(LetStatement node, V value) {
         return visit((Statement) node, value);
     }
 
@@ -559,6 +545,16 @@ public abstract class DefaultNodeVisitor<R, V> implements NodeVisitor<R, V> {
     }
 
     @Override
+    public R visit(PrivateNameProperty node, V value) {
+        return visit((Node) node, value);
+    }
+
+    @Override
+    public R visit(PrivatePropertyAccessor node, V value) {
+        return visit((Expression) node, value);
+    }
+
+    @Override
     public R visit(PropertyAccessor node, V value) {
         return visit((Expression) node, value);
     }
@@ -594,18 +590,13 @@ public abstract class DefaultNodeVisitor<R, V> implements NodeVisitor<R, V> {
     }
 
     @Override
-    public R visit(SpreadArrayLiteral node, V value) {
-        return visit((ArrayLiteral) node, value);
-    }
-
-    @Override
     public R visit(SpreadElement node, V value) {
         return visit((Expression) node, value);
     }
 
     @Override
     public R visit(SpreadElementMethod node, V value) {
-        return visit((SpreadElement) node, value);
+        return visit((Expression) node, value);
     }
 
     @Override
@@ -674,6 +665,11 @@ public abstract class DefaultNodeVisitor<R, V> implements NodeVisitor<R, V> {
     }
 
     @Override
+    public R visit(ThrowExpression node, V value) {
+        return visit((Expression) node, value);
+    }
+
+    @Override
     public R visit(ThrowStatement node, V value) {
         return visit((Statement) node, value);
     }
@@ -685,6 +681,11 @@ public abstract class DefaultNodeVisitor<R, V> implements NodeVisitor<R, V> {
 
     @Override
     public R visit(UnaryExpression node, V value) {
+        return visit((Expression) node, value);
+    }
+
+    @Override
+    public R visit(UpdateExpression node, V value) {
         return visit((Expression) node, value);
     }
 

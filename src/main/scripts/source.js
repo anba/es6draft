@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -7,69 +7,37 @@
 (function ToSource() {
 "use strict";
 
-const global = %GlobalTemplate();
+const TypeError = %Intrinsic("TypeError");
 
-const {
-  Object, Function, Array, String, Boolean,
-  Number, Math, Date, RegExp, Error, Symbol,
-  TypeError, JSON, Intl, WeakSet,
-} = global;
-
+const Object = %Intrinsic("Object");
 const {
   getOwnPropertyDescriptor: Object_getOwnPropertyDescriptor,
-  getOwnPropertyNames: Object_getOwnPropertyNames,
-  getOwnPropertySymbols: Object_getOwnPropertySymbols,
   prototype: {
     hasOwnProperty: Object_prototype_hasOwnProperty
   }
 } = Object;
 
-const {
-  join: Array_prototype_join
-} = Array.prototype;
+const NumberPrototype = %Intrinsic("NumberPrototype");
+const Number_prototype_toString = NumberPrototype.toString;
 
-const {
-  toString: Boolean_prototype_toString
-} = Boolean.prototype;
+const Reflect_ownKeys = %Intrinsic("Reflect").ownKeys;
 
+const StringPrototype = %Intrinsic("StringPrototype");
 const {
-  toString: Date_prototype_toString
-} = Date.prototype;
-
-const {
-  toString: Function_prototype_toString
-} = Function.prototype;
-
-const {
-  toString: Number_prototype_toString
-} = Number.prototype;
-
-const {
-  toString: RegExp_prototype_toString
-} = RegExp.prototype;
-
-const {
-  charAt: String_prototype_charAt,
   charCodeAt: String_prototype_charCodeAt,
   indexOf: String_prototype_indexOf,
   substring: String_prototype_substring,
-  toString: String_prototype_toString,
   toUpperCase: String_prototype_toUpperCase,
-} = String.prototype;
+} = StringPrototype;
 
-const {
-  keyFor: Symbol_keyFor,
-  prototype: {
-    toString: Symbol_prototype_toString,
-    valueOf: Symbol_prototype_valueOf,
-  }
-} = Symbol;
+const Symbol_keyFor = %Intrinsic("Symbol").keyFor;
 
+const Set = %Intrinsic("Set");
 const {
-  add: WeakSet_prototype_add,
-  delete: WeakSet_prototype_delete,
-  has: WeakSet_prototype_has,
-} = WeakSet.prototype;
+  add: Set_prototype_add,
+  delete: Set_prototype_delete,
+  has: Set_prototype_has,
+} = Set.prototype;
 
 function ToHexString(c) {
   return %CallFunction(String_prototype_toUpperCase, %CallFunction(Number_prototype_toString, c, 16));
@@ -93,7 +61,7 @@ function Quote(s, qc = '"') {
     } else if (c < 0x20) {
       r += "\\x" + (c < 0x10 ? "0" : "") + ToHexString(c);
     } else if (c < 0x7F) {
-      r += %CallFunction(String_prototype_charAt, s, i);
+      r += s[i];
     } else if (c < 0x100) {
       r += "\\x" + ToHexString(c);
     } else {
@@ -105,15 +73,8 @@ function Quote(s, qc = '"') {
 
 function SymbolToSource(sym) {
   // Well-known symbols
-  if (sym === Symbol.hasInstance) return "Symbol.hasInstance";
-  if (sym === Symbol.isConcatSpreadable) return "Symbol.isConcatSpreadable";
-  if (sym === Symbol.isRegExp) return "Symbol.isRegExp";
-  if (sym === Symbol.iterator) return "Symbol.iterator";
-  if (sym === Symbol.toPrimitive) return "Symbol.toPrimitive";
-  if (sym === Symbol.toStringTag) return "Symbol.toStringTag";
-  if (sym === Symbol.unscopables) return "Symbol.unscopables";
-  if (%IsCompatibilityOptionEnabled("Observable")) {
-    if (sym === Symbol.observable) return "Symbol.observable";
+  if (%IsWellKnownSymbol(sym)) {
+    return %SymbolDescription(sym);
   }
   // Registered symbols
   let key = Symbol_keyFor(sym);
@@ -129,33 +90,108 @@ function SymbolToSource(sym) {
 }
 
 const ASCII_Ident = /^[_$a-zA-Z][_$a-zA-Z0-9]*$/;
-const functionSource = /^\(?function /;
-const accessorSource = /^(?:get|set) [_$a-zA-Z0-9]+/;
-
-function toAccessorFunctionString(source) {
-  if (%RegExpTest(functionSource, source)) {
-    let leadingParen = (%CallFunction(String_prototype_charAt, source, 0) === '(');
-    let start = %CallFunction(String_prototype_indexOf, source, '(', 0 + leadingParen);
-    return %CallFunction(String_prototype_substring, source, start, source.length - leadingParen);
-  }
-  if (%RegExpTest(accessorSource, source)) {
-    let start = %CallFunction(String_prototype_indexOf, source, '(', 0);
-    return %CallFunction(String_prototype_substring, source, start);
-  }
-}
 
 function IsInt32(name) {
   return ((name | 0) >= 0 && (name | 0) <= 0x7fffffff && (name | 0) + "" == name);
 }
 
-function ToPropertyName(name) {
-  if (typeof name === 'symbol') {
-    return `[${SymbolToSource(name)}]`;
+function ToPropertyName(propertyKey) {
+  if (typeof propertyKey === 'symbol') {
+    return `[${SymbolToSource(propertyKey)}]`;
   }
-  if (%RegExpTest(ASCII_Ident, name) || IsInt32(name)) {
-    return name;
+  if (%RegExpTest(ASCII_Ident, propertyKey) || IsInt32(propertyKey)) {
+    return propertyKey;
   }
-  return Quote(name, "'");
+  return Quote(propertyKey, "'");
+}
+
+function FunctionArgsAndBody(source) {
+  let len = source.length;
+  if (len === 0)
+    return;
+
+  let start = 0, end = len;
+  if (source[start] === '(' && source[end - 1] === ')') {
+    start++;
+    end--;
+  }
+
+  function Consume(s) {
+    if (start + s.length >= end)
+      return false;
+    for (let i = 0; i < s.length; ++i) {
+      if (source[start + i] !== s[i]) {
+        return false;
+      }
+    }
+    start += s.length;
+    return true;
+  }
+  function ConsumeSpaces() {
+    while (start < end && source[start] === ' ') {
+      start++;
+    }
+  }
+
+  Consume("async");
+  ConsumeSpaces();
+  Consume("function") || Consume("get") || Consume("set");
+  ConsumeSpaces();
+  Consume("*");
+  ConsumeSpaces();
+
+  if (Consume("[")) {
+    start = %CallFunction(String_prototype_indexOf, source, "]", start);
+    if (start < 0)
+      return;
+    start++;
+    ConsumeSpaces();
+    if (start < end && source[start] !== "(")
+      return;
+  } else {
+    start = %CallFunction(String_prototype_indexOf, source, "(", start);
+    if (start < 0)
+      return;
+  }
+
+  return %CallFunction(String_prototype_substring, source, start, end);
+}
+
+function PropertySource(kind, propertyKey, value) {
+  let name = ToPropertyName(propertyKey);
+  let valueSource = ToSource(value);
+
+  if (typeof value === "function") {
+    if (kind === "get" || kind === "set") {
+      if (kind === %MethodKind(value) && name === %FunctionName(value) && typeof propertyKey !== 'symbol') {
+        return valueSource;
+      }
+
+      let argsAndBody = FunctionArgsAndBody(valueSource);
+      if (argsAndBody) {
+        return `${kind} ${name}${argsAndBody}`;
+      }
+    } else {
+      let methodKind = %MethodKind(value);
+      if (methodKind) {
+        if (methodKind !== "get" && methodKind !== "set" && name === %FunctionName(value) && typeof propertyKey !== 'symbol') {
+          return valueSource;
+        }
+
+        let argsAndBody = FunctionArgsAndBody(valueSource);
+        if (argsAndBody) {
+          let methodPrefix = methodKind === "async*" || methodKind === "async"
+                             ? methodKind + " "
+                             : methodKind === "*"
+                             ? methodKind
+                             : "";
+          return `${methodPrefix}${name}${argsAndBody}`;
+        }
+      }
+    }
+  }
+
+  return `${name}:${valueSource}`;
 }
 
 function ToSource(o) {
@@ -164,6 +200,7 @@ function ToSource(o) {
       return "(void 0)";
     case 'boolean':
     case 'number':
+    case 'bigint':
       return "" + o;
     case 'string':
       return Quote(o);
@@ -179,54 +216,40 @@ function ToSource(o) {
   }
 }
 
-// weakset for cycle detection
-const weakset = new WeakSet();
+// set for cycle detection
+const set = new Set();
 var depth = 0;
 
 function ObjectToSource(o) {
   if (o == null) throw TypeError();
   var obj = Object(o);
-  if (%CallFunction(WeakSet_prototype_has, weakset, obj)) {
+  if (%CallFunction(Set_prototype_has, set, obj)) {
     return "{}";
   }
-  %CallFunction(WeakSet_prototype_add, weakset, obj);
+  %CallFunction(Set_prototype_add, set, obj);
   depth += 1;
   try {
     var s = "";
-    for (var i = 0; i < 2; ++i) {
-      var names = (i === 0 ? Object_getOwnPropertyNames : Object_getOwnPropertySymbols)(obj);
-      for (var j = 0, len = names.length; j < len; ++j) {
-        var name = names[j];
-        var desc = Object_getOwnPropertyDescriptor(obj, name);
-        if (desc == null || !desc.enumerable) {
-          // ignore removed or non-enumerable properties
-          continue;
+    var propertyKeys = Reflect_ownKeys(obj);
+    for (var i = 0; i < propertyKeys.length; ++i) {
+      var propertyKey = propertyKeys[i];
+      var desc = Object_getOwnPropertyDescriptor(obj, propertyKey);
+      if (desc == null || !desc.enumerable) {
+        // ignore removed or non-enumerable properties
+        continue;
+      }
+      if (s.length) {
+        s += ", ";
+      }
+      if ("value" in desc) {
+        s += PropertySource("value", propertyKey, desc.value);
+      } else {
+        if (desc.get !== void 0) {
+          s += PropertySource("get", propertyKey, desc.get);
+          if (desc.set !== void 0) s += ", ";
         }
-        if (s.length) {
-          s += ", ";
-        }
-        if ('value' in desc) {
-          s += `${ToPropertyName(name)}:${ToSource(desc.value)}`;
-        } else {
-          if (desc.get !== void 0) {
-            let getterSource = ToSource(desc.get);
-            let accessorSource = toAccessorFunctionString(getterSource);
-            if (accessorSource) {
-              s += `get ${ToPropertyName(name)} ${accessorSource}`;
-            } else {
-              s += `${ToPropertyName(name)}:${getterSource}`;
-            }
-            if (desc.set !== void 0) s += ", ";
-          }
-          if (desc.set !== void 0) {
-            let setterSource = ToSource(desc.set);
-            let accessorSource = toAccessorFunctionString(setterSource);
-            if (accessorSource) {
-              s += `set ${ToPropertyName(name)} ${accessorSource}`;
-            } else {
-              s += `${ToPropertyName(name)}:${setterSource}`;
-            }
-          }
+        if (desc.set !== void 0) {
+          s += PropertySource("set", propertyKey, desc.set);
         }
       }
     }
@@ -235,50 +258,27 @@ function ObjectToSource(o) {
     }
     return "({" + s + "})";
   } finally {
-    %CallFunction(WeakSet_prototype_delete, weakset, obj);
+    %CallFunction(Set_prototype_delete, set, obj);
     depth -= 1;
   }
 }
 
-Object.defineProperty(Object.assign(global, {
+%CreateMethodProperties(%GlobalProperties(), {
   uneval(o) {
     return ToSource(o);
   }
-}), "uneval", {enumerable: false});
+});
 
-// duplicated definition from cyclic.js to access shared 'weakset'
-Object.defineProperty(Object.assign(Array.prototype, {
-  join(separator) {
-    const isObject = typeof this == 'function' || typeof this == 'object' && this !== null;
-    if (isObject) {
-      if (%CallFunction(WeakSet_prototype_has, weakset, this)) {
-        return "";
-      }
-      %CallFunction(WeakSet_prototype_add, weakset, this);
-    }
-    try {
-      return %CallFunction(Array_prototype_join, this, separator);
-    } finally {
-      if (isObject) {
-        %CallFunction(WeakSet_prototype_delete, weakset, this);
-      }
-    }
-  }
-}), "join", {enumerable: false});
-
-Object.defineProperty(Object.assign(String.prototype, {
-  quote() {
-    return Quote(%CallFunction(String_prototype_toString, this));
-  }
-}), "quote", {enumerable: false});
-
-Object.defineProperty(Object.assign(Object.prototype, {
+%CreateMethodProperties(Object.prototype, {
   toSource() {
     return ObjectToSource(this);
   }
-}), "toSource", {enumerable: false});
+});
 
-Object.defineProperty(Object.assign(Function.prototype, {
+const FunctionPrototype = %Intrinsic("FunctionPrototype");
+const Function_prototype_toString = FunctionPrototype.toString;
+
+%CreateMethodProperties(FunctionPrototype, {
   toSource() {
     if (typeof this != 'function') {
       return ObjectToSource(this);
@@ -289,15 +289,36 @@ Object.defineProperty(Object.assign(Function.prototype, {
     }
     return source;
   }
-}), "toSource", {enumerable: false});
+});
 
-Object.defineProperty(Object.assign(Array.prototype, {
+const ArrayPrototype = %Intrinsic("ArrayPrototype");
+const Array_prototype_join = ArrayPrototype.join;
+
+%CreateMethodProperties(ArrayPrototype, {
+  // Duplicated definition from cyclic.js to access shared 'set'.
+  join(separator) {
+    if (typeof this == 'function' || typeof this == 'object' && this !== null) {
+      if (%CallFunction(Set_prototype_has, set, this)) {
+        return "";
+      }
+      %CallFunction(Set_prototype_add, set, this);
+    }
+    try {
+      return %CallFunction(Array_prototype_join, this, separator);
+    } finally {
+      if (typeof this == 'function' || typeof this == 'object' && this !== null) {
+        %CallFunction(Set_prototype_delete, set, this);
+      }
+    }
+  },
   toSource() {
-    if (!(typeof this == 'function' || typeof this == 'object' && this !== null)) throw TypeError();
-    if (%CallFunction(WeakSet_prototype_has, weakset, this)) {
+    if (!(typeof this == 'function' || typeof this == 'object' && this !== null)) {
+      throw TypeError();
+    }
+    if (%CallFunction(Set_prototype_has, set, this)) {
       return "[]";
     }
-    %CallFunction(WeakSet_prototype_add, weakset, this);
+    %CallFunction(Set_prototype_add, set, this);
     depth += 1;
     try {
       var s = "";
@@ -312,70 +333,99 @@ Object.defineProperty(Object.assign(Array.prototype, {
       }
       return "[" + s + "]";
     } finally {
-      %CallFunction(WeakSet_prototype_delete, weakset, this);
+      %CallFunction(Set_prototype_delete, set, this);
       depth -= 1;
     }
   }
-}), "toSource", {enumerable: false});
+});
 
-Object.defineProperty(Object.assign(String.prototype, {
+const String_prototype_toString = StringPrototype.toString;
+
+%CreateMethodProperties(StringPrototype, {
   toSource() {
     return `(new String(${ Quote(%CallFunction(String_prototype_toString, this)) }))`;
   }
-}), "toSource", {enumerable: false});
+});
 
-Object.defineProperty(Object.assign(Boolean.prototype, {
+const BooleanPrototype = %Intrinsic("BooleanPrototype");
+const Boolean_prototype_toString = BooleanPrototype.toString;
+
+%CreateMethodProperties(BooleanPrototype, {
   toSource() {
     return `(new Boolean(${ %CallFunction(Boolean_prototype_toString, this) }))`;
   }
-}), "toSource", {enumerable: false});
+});
 
-Object.defineProperty(Object.assign(Number.prototype, {
+%CreateMethodProperties(NumberPrototype, {
   toSource() {
     return `(new Number(${ %CallFunction(Number_prototype_toString, this) }))`;
   }
-}), "toSource", {enumerable: false});
+});
 
-Object.defineProperty(Object.assign(Math, {
+%CreateMethodProperties(%Intrinsic("Math"), {
   toSource() {
     return "Math";
   }
-}), "toSource", {enumerable: false});
+});
 
-Object.defineProperty(Object.assign(Date.prototype, {
+const DatePrototype = %Intrinsic("DatePrototype");
+const Date_prototype_toString = DatePrototype.toString;
+
+%CreateMethodProperties(DatePrototype, {
   toSource() {
     return `(new Date(${ %CallFunction(Date_prototype_toString, this) }))`;
   }
-}), "toSource", {enumerable: false});
+});
 
-Object.defineProperty(Object.assign(RegExp.prototype, {
+const RegExpPrototype = %Intrinsic("RegExpPrototype");
+const RegExp_prototype_toString = RegExpPrototype.toString;
+
+%CreateMethodProperties(RegExpPrototype, {
   toSource() {
     return %CallFunction(RegExp_prototype_toString, this);
   }
-}), "toSource", {enumerable: false});
+});
 
-Object.defineProperty(Object.assign(Error.prototype, {
+%CreateMethodProperties(%Intrinsic("ErrorPrototype"), {
   toSource() {
     return `(new ${this.name}(${ToSource(this.message)}, ${ToSource(this.fileName)}, ${ToSource(this.lineNumber)}))`;
   }
-}), "toSource", {enumerable: false});
+});
 
-Object.defineProperty(Object.assign(JSON, {
+%CreateMethodProperties(%Intrinsic("JSON"), {
   toSource() {
     return "JSON";
   }
-}), "toSource", {enumerable: false});
+});
 
-Object.defineProperty(Object.assign(Intl, {
+%CreateMethodProperties(%Intrinsic("Intl"), {
   toSource() {
     return "Intl";
   }
-}), "toSource", {enumerable: false});
+});
 
-Object.defineProperty(Object.assign(Symbol.prototype, {
+const SymbolPrototype = %Intrinsic("SymbolPrototype");
+const Symbol_prototype_valueOf = SymbolPrototype.valueOf;
+
+%CreateMethodProperties(SymbolPrototype, {
   toSource() {
     return SymbolToSource(%CallFunction(Symbol_prototype_valueOf, this));
   }
-}), "toSource", {enumerable: false});
+});
+
+for (const name of [
+  "Float64x2", "Float32x4",
+  "Int32x4", "Int16x8", "Int8x16",
+  "Uint32x4", "Uint16x8", "Uint8x16",
+  "Bool64x2", "Bool32x4", "Bool16x8", "Bool8x16",
+]) {
+  const proto = %Intrinsic(`SIMD_${name}Prototype`);
+  const toString = proto.toString;
+  %CreateMethodProperties(proto, {
+    toSource() {
+      return %CallFunction(toString, this);
+    }
+  });
+}
 
 })();

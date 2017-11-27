@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -89,6 +89,21 @@ public enum CompatibilityOption {
     CatchVarStatement,
 
     /**
+     * B.3.6 Allow initializer expression in for-in variable declarations.
+     */
+    ForInVarInitializer,
+
+    /**
+     * B.3.7 The [[IsHTMLDDA]] Internal Slot
+     */
+    IsHTMLDDAObjects,
+
+    /**
+     * Intl - Normative optional: Intl constructor fallbacks
+     */
+    IntlConstructorLegacyFallback,
+
+    /**
      * Web-Extension: RegExp statics
      */
     RegExpStatics,
@@ -104,16 +119,6 @@ public enum CompatibilityOption {
     FunctionCaller,
 
     /**
-     * Web-Extension: arguments.caller (not implemented)
-     */
-    ArgumentsCaller,
-
-    /**
-     * Moz-Extension: for-each statement
-     */
-    ForEachStatement,
-
-    /**
      * Moz-Extension: guarded catch
      */
     GuardedCatch,
@@ -124,54 +129,9 @@ public enum CompatibilityOption {
     ExpressionClosure,
 
     /**
-     * Moz-Extension: legacy (star-less) generators
-     */
-    LegacyGenerator,
-
-    /**
      * Moz-Extension: Reflect.parse() function
      */
     ReflectParse,
-
-    /**
-     * Moz-Extension: Extended precision for toFixed, toExponential, toPrecision
-     */
-    ExtendedPrecision,
-
-    /**
-     * Moz-Extension: Implicit strict functions include {@code "use strict;"} directive in source
-     */
-    ImplicitStrictDirective,
-
-    /**
-     * Moz-Extension: Allow initializer expression in for-in variable declarations.
-     */
-    ForInVarInitializer,
-
-    /**
-     * Moz-Extension: legacy comprehension forms (disabled)
-     */
-    LegacyComprehension,
-
-    /**
-     * Moz-Extension: let expression (disabled)
-     */
-    LetExpression,
-
-    /**
-     * Moz-Extension: let statement (disabled)
-     */
-    LetStatement,
-
-    /**
-     * Exponentiation operator {@code **} (Stage 4 proposal)
-     */
-    Exponentiation,
-
-    /**
-     * Array.prototype.includes (Stage 4 proposal)
-     */
-    ArrayIncludes,
 
     /**
      * {@code function.sent} meta property (Stage 2 proposal)
@@ -179,67 +139,47 @@ public enum CompatibilityOption {
     FunctionSent,
 
     /**
-     * Async Function Definitions (Stage 3 proposal)
+     * {@code export namspace from} statements (Stage 1 proposal)
      */
-    AsyncFunction,
+    ExportNamespaceFrom,
 
     /**
-     * {@code export from} additions (Stage 1 proposal)
+     * {@code export default from} statements (Stage 1 proposal)
      */
-    ExportFrom,
+    ExportDefaultFrom,
 
     /**
-     * ArrayBuffer.transfer (Stage 1 proposal)
+     * ArrayBuffer.transfer (Stage 0 proposal)
      */
     ArrayBufferTransfer,
 
     /**
-     * Decorators (Stage 1 proposal)
+     * Decorators (Stage 2 proposal)
      */
     Decorator,
 
     /**
-     * Object Rest Destructuring (Stage 2 proposal)
+     * Object Rest/Spread Properties (Stage 3 proposal)
      */
-    ObjectRestDestructuring,
+    ObjectRestSpreadProperties,
 
     /**
-     * Object Spread Initializer (Stage 2 proposal)
-     */
-    ObjectSpreadInitializer,
-
-    /**
-     * Trailing comma in function calls (Stage 3 proposal)
-     */
-    FunctionCallTrailingComma,
-
-    /**
-     * String.prototype.trimLeft and trimRight (Stage 1 proposal)
+     * String.prototype.trimStart and trimEnd (Stage 2 proposal)
      */
     StringTrim,
 
     /**
-     * Class Property Declarations (static properties) (Stage 1 proposal)
+     * Class Fields (Stage 3 proposal)
      */
-    StaticClassProperties,
+    ClassFields,
 
     /**
-     * Object.values and Object.entries functions (Stage 3 proposal)
-     */
-    ObjectValuesEntries,
-
-    /**
-     * String.prototype.padStart and padEnd (Stage 3 proposal)
-     */
-    StringPad,
-
-    /**
-     * String.prototype.matchAll (Stage 1 proposal)
+     * String.prototype.matchAll (Stage 2 proposal)
      */
     StringMatchAll,
 
     /**
-     * Call constructor (Stage 1 proposal)
+     * Call constructor [withdrawn]
      */
     CallConstructor,
 
@@ -249,39 +189,14 @@ public enum CompatibilityOption {
     Observable,
 
     /**
-     * System.global (Stage 1 proposal)
-     */
-    SystemGlobal,
-
-    /**
-     * Shared Memory and Atomics (Stage 2 proposal)
-     */
-    Atomics,
-
-    /**
-     * SIMD (Stage 3 proposal)
-     */
-    SIMD,
-
-    /**
-     * {@code do}-expressions (Stage 0 proposal)
+     * {@code do}-expressions (Stage 1 proposal)
      */
     DoExpression,
 
     /**
-     * Object.getOwnPropertyDescriptors function (Stage 3 proposal)
-     */
-    ObjectGetOwnPropertyDescriptors,
-
-    /**
-     * Intl.PluralRules (Stage 2 proposal)
+     * Intl.PluralRules (Stage 4 proposal)
      */
     PluralRules,
-
-    /**
-     * Intl.DateTimeFormat.prototype.formatToParts (Stage 2 proposal)
-     */
-    FormatToParts,
 
     /**
      * Locale Operations (Stage 2 proposal)
@@ -289,14 +204,160 @@ public enum CompatibilityOption {
     Locale,
 
     /**
-     * Async Generators Functions (Stage 1 proposal)
+     * Asynchronous Iteration (Stage 3 proposal)
      */
-    AsyncGenerator,
+    AsyncIteration,
 
     /**
-     * Atomics.fence() function
+     * Function.prototype.toString revision (Stage 3 proposal)
      */
-    AtomicsFence,
+    FunctionToString,
+
+    /**
+     * RegExp Lookbehind Assertions (Stage 3 proposal)<br>
+     * <strong>NOTE: Only a very rudimentary implementation is available due to Joni limitations.</strong>
+     */
+    RegExpLookBehind,
+
+    /**
+     * RegExp Named Capture Groups (Stage 3 proposal)
+     */
+    RegExpNamedCapture,
+
+    /**
+     * RegExp Unicode Properties (Stage 3 proposal)
+     */
+    RegExpUnicodeProperties,
+
+    /**
+     * RegExp Possessive Quantifier (not proposed)
+     */
+    RegExpPossessive,
+
+    /**
+     * Weak references (Stage 1 proposal)
+     */
+    WeakReference,
+
+    /**
+     * Frozen Realms (Stage 1 proposal)
+     */
+    FrozenRealm,
+
+    /**
+     * Syntactic Tail Calls (inactive)
+     */
+    SyntacticTailCalls,
+
+    /**
+     * String.prototype.at (Stage 0 proposal)
+     */
+    StringAt,
+
+    /**
+     * Zones (Stage 0 proposal)
+     */
+    Zones,
+
+    /**
+     * Math Extensions (Stage 1 proposal)
+     */
+    MathExtensions,
+
+    /**
+     * Promise.prototype.finally (Stage 3 proposal)
+     */
+    PromiseFinally,
+
+    /**
+     * Global (Stage 3 proposal)
+     */
+    GlobalProperty,
+
+    /**
+     * Dynamic import (Stage 3 proposal)
+     */
+    DynamicImport,
+
+    /**
+     * Legacy RegExp features in JavaScript (Stage 3 proposal)
+     */
+    LegacyRegExp,
+
+    /**
+     * Intl.Segmenter (Stage 3 proposal)
+     */
+    IntlSegmenter,
+
+    /**
+     * Intl.ListFormat (Stage 2 proposal)
+     */
+    IntlListFormat,
+
+    /**
+     * Error Stacks (Stage 1 proposal)
+     */
+    ErrorStacks,
+
+    /**
+     * Math.signbit (Stage 1 proposal)
+     */
+    MathSignbit,
+
+    /**
+     * Promise.try (Stage 1 proposal)
+     */
+    PromiseTry,
+
+    /**
+     * Set and Map .of and .from (Stage 1 proposal)
+     */
+    CollectionsOfAndFrom,
+
+    /**
+     * s/dotAll flag for regular expressions (Stage 3 proposal)
+     */
+    RegExpDotAll,
+
+    /**
+     * Optional catch binding (Stage 3 proposal)
+     */
+    OptionalCatchBinding,
+
+    /**
+     * BigInt (Stage 3 proposal)
+     */
+    BigInt,
+
+    /**
+     * Numeric Separators (Stage 2 proposal)
+     */
+    NumericSeparators,
+
+    /**
+     * Private methods and accessors (Stage 3 proposal)
+     */
+    PrivateMethods,
+
+    /**
+     * import.meta (Stage 3 proposal)
+     */
+    ImportMeta,
+
+    /**
+     * Array.prototype.flat{Map,ten} (Stage 2 proposal)
+     */
+    ArrayPrototypeFlatMapFlatten,
+
+    /**
+     * Throw expressions (Stage 2 proposal)
+     */
+    ThrowExpression,
+
+    /**
+     * SIMD (deferred)
+     */
+    SIMD,
 
     /**
      * SIMD (Float64x2, Bool64x2, selectBits)
@@ -304,14 +365,14 @@ public enum CompatibilityOption {
     SIMD_Phase2,
 
     /**
+     * Atomics.fence() function
+     */
+    AtomicsFence,
+
+    /**
      * Type annotations (limited parser support only).
      */
     TypeAnnotation,
-
-    /**
-     * Function.prototype.toMethod (deferred extension)
-     */
-    FunctionToMethod,
 
     /**
      * Array and Generator Comprehension (deferred extension)
@@ -339,39 +400,14 @@ public enum CompatibilityOption {
     System,
 
     /**
-     * ES2015: [[Enumerate]] internal method
+     * System.global (deferred)
      */
-    Enumerate,
-
-    /**
-     * ES2016: 'use strict' directive only allowed for functions with simple parameter lists.
-     */
-    StrictDirectiveSimpleParameterList,
-
-    /**
-     * ES2016: BindingPattern in rest position
-     */
-    RestBindingPattern,
-
-    /**
-     * ES2016: Report error for variable redeclaration if CatchParameter is a binding pattern.
-     */
-    CatchVarPattern,
-
-    /**
-     * ES2016: Don't assign [[Construct]] for generator functions.
-     */
-    GeneratorNonConstructor,
+    SystemGlobal,
 
     /**
      * Track unhandled rejected promise objects
      */
     PromiseRejection,
-
-    /**
-     * ArrayBuffer: Missing length parameter in constructor call
-     */
-    ArrayBufferMissingLength,
 
     ;
 
@@ -400,7 +436,8 @@ public enum CompatibilityOption {
      */
     public static final Set<CompatibilityOption> MozCompatibility() {
         return addAll(WebCompatibility(), MozExtensions(),
-                EnumSet.of(Comprehension, SIMD, SIMD_Phase2, Atomics, AtomicsFence));
+                EnumSet.of(Comprehension, SIMD, SIMD_Phase2, AtomicsFence, StringTrim, FunctionToString, AsyncIteration,
+                        ObjectRestSpreadProperties, PluralRules, PromiseFinally, OptionalCatchBinding));
     }
 
     /**
@@ -409,7 +446,7 @@ public enum CompatibilityOption {
      * @return the options set for mozilla extensions
      */
     public static final Set<CompatibilityOption> MozExtensions() {
-        return EnumSet.range(ForEachStatement, ForInVarInitializer);
+        return EnumSet.of(GuardedCatch, ExpressionClosure, ReflectParse);
     }
 
     /**
@@ -418,7 +455,7 @@ public enum CompatibilityOption {
      * @return the options set for Annex B features
      */
     public static final Set<CompatibilityOption> AnnexB() {
-        return EnumSet.range(LegacyOctalIntegerLiteral, CatchVarStatement);
+        return EnumSet.range(LegacyOctalIntegerLiteral, IntlConstructorLegacyFallback);
     }
 
     /**
@@ -480,18 +517,20 @@ public enum CompatibilityOption {
     public static final Set<CompatibilityOption> of(Stage stage) {
         switch (stage) {
         case Strawman:
-            return EnumSet.of(DoExpression);
+            return EnumSet.of(StringAt, Zones, ArrayBufferTransfer);
         case Proposal:
-            return EnumSet.of(ArrayBufferTransfer, AsyncGenerator, ExportFrom, Decorator, StringTrim, StringMatchAll,
-                    StaticClassProperties, CallConstructor, Observable, SystemGlobal);
+            return EnumSet.of(ExportNamespaceFrom, ExportDefaultFrom, Observable, WeakReference, FrozenRealm,
+                    MathExtensions, CollectionsOfAndFrom, PromiseTry, MathSignbit, ErrorStacks, DoExpression);
         case Draft:
-            return EnumSet.of(Atomics, FormatToParts, FunctionSent, Locale, ObjectRestDestructuring,
-                    ObjectSpreadInitializer, PluralRules);
+            return EnumSet.of(FunctionSent, StringTrim, Decorator, NumericSeparators, ArrayPrototypeFlatMapFlatten,
+                    ThrowExpression, StringMatchAll, IntlListFormat, Locale);
         case Candidate:
-            return EnumSet.of(AsyncFunction, FunctionCallTrailingComma, ObjectGetOwnPropertyDescriptors,
-                    ObjectValuesEntries, StringPad, SIMD);
+            return EnumSet.of(FunctionToString, GlobalProperty, ObjectRestSpreadProperties, AsyncIteration,
+                    DynamicImport, RegExpLookBehind, RegExpUnicodeProperties, RegExpNamedCapture, RegExpDotAll,
+                    LegacyRegExp, PromiseFinally, BigInt, ClassFields, OptionalCatchBinding, ImportMeta, PrivateMethods,
+                    IntlSegmenter);
         case Finished:
-            return EnumSet.of(ArrayIncludes, Exponentiation);
+            return EnumSet.of(PluralRules);
         default:
             throw new AssertionError();
         }
@@ -527,14 +566,9 @@ public enum CompatibilityOption {
      */
     public enum Version {
         /**
-         * ECMAScript 2015
+         * ECMAScript 2018
          */
-        ECMAScript2015,
-
-        /**
-         * ECMAScript 2016
-         */
-        ECMAScript2016,
+        ECMAScript2018,
 
         ;
     }
@@ -546,16 +580,32 @@ public enum CompatibilityOption {
      *            the language version
      * @return the options set for the language version
      */
-    public static final Set<CompatibilityOption> Version(Version version) {
+    public static final Set<CompatibilityOption> of(Version version) {
         switch (version) {
-        case ECMAScript2015:
-            return EnumSet.of(Enumerate);
-        case ECMAScript2016:
-            return EnumSet.of(StrictDirectiveSimpleParameterList, RestBindingPattern, CatchVarPattern,
-                    GeneratorNonConstructor);
+        case ECMAScript2018:
+            return EnumSet.noneOf(CompatibilityOption.class);
         default:
             throw new AssertionError();
         }
+    }
+
+    /**
+     * Returns a set of all options for the requested language version.
+     * 
+     * @param version
+     *            the language version
+     * @return the options set for the language version
+     */
+    public static final Set<CompatibilityOption> Version(Version version) {
+        EnumSet<CompatibilityOption> options = EnumSet.noneOf(CompatibilityOption.class);
+        switch (version) {
+        case ECMAScript2018:
+            options.addAll(of(Version.ECMAScript2018));
+            break;
+        default:
+            throw new AssertionError();
+        }
+        return options;
     }
 
     /**
@@ -564,7 +614,7 @@ public enum CompatibilityOption {
      * @return the options set for experimental features
      */
     public static final Set<CompatibilityOption> Experimental() {
-        return EnumSet.range(SIMD_Phase2, System);
+        return EnumSet.range(SIMD, SystemGlobal);
     }
 
     @SafeVarargs

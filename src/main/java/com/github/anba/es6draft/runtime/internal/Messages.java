@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -86,11 +86,17 @@ public final class Messages {
     /**
      * Message key enumeration
      */
-    public enum Key {/* @formatter:off */
+    public enum Key {
+        /* @formatter:off */
         // internal
         InternalError("internal.error"),
         StackOverflow("internal.stackoverflow"),
         ToStringFailed("internal.tostring_failed"),
+        CodeSizeExceeded("internal.code_size_exceeded"),
+        TooManyParameters("internal.too_many_parameters"),
+        TooManyLocals("internal.too_many_locals"),
+        TooManySwitchCases("internal.too_many_switch_cases"),
+        InvalidStringSize("internal.invalid_string_size"),
 
         // TokenStream
         InvalidNumberLiteral("parser.invalid_number_literal"),
@@ -115,6 +121,7 @@ public final class Messages {
         UnexpectedCharacter("parser.unexpected_character"),
         UnicodeEscapeInRegExpFlags("parser.unicode_escape_in_regexp_flags"),
         OctalEscapeSequence("parser.octal_escape_sequence"),
+        UnterminatedPrivateName("parser.unterminated_private_name"),
 
         // Parser
         InvalidFormalParameterList("parser.invalid_formal_parameter_list"),
@@ -157,7 +164,14 @@ public final class Messages {
         InvalidCallConstructorDecorator("parser.invalid_call_constructor_decorator"),
         InvalidPropertyDecorator("parser.invalid_property_decorator"),
         InvalidPrototypeProperty("parser.invalid_prototype_property"),
+        InvalidClassFieldName("parser.invalid_class_field_name"),
+        InvalidArgumentsAccess("parser.invalid_arguments_access"),
+        UndeclaredPrivateName("parser.undeclared_private_name"),
         InvalidUseStrictDirective("parser.invalid_use_strict_directive"),
+        PrivateDelete("parser.private_delete"),
+        InvalidTailCall("parser.invalid_tail_call"),
+        InvalidExponentiationExpression("parser.invalid_exponentiation_expression"),
+        InvalidImportMeta("parser.invalid_import_meta"),
 
         // strict mode TokenStream/Parser errors
         StrictModeRestrictedIdentifier("parser.strict.restricted_identifier"),
@@ -180,6 +194,7 @@ public final class Messages {
         UnresolvableReference("reference.unresolvable_reference"),
         InvalidReference("reference.invalid_reference"),
         UninitializedThis("reference.uninitialized_this"),
+        UnresolvablePrivateField("reference.unresolvable_private_field"),
         // TypeError
         ImmutableBinding("type.immutable_binding"),
         PropertyNotModifiable("type.property_not_modifiable"),
@@ -197,6 +212,10 @@ public final class Messages {
         NotString("type.not_string"),
         NotExtensible("type.not_extensible"),
         IncompatibleObject("type.incompatible_object"),
+        IncompatibleThis("type.incompatible_this"),
+        IncompatibleNewObject("type.incompatible_new_object"),
+        IncompatibleArgument("type.incompatible_argument"),
+        MissingArgument("type.missing_argument"),
         SymbolString("type.symbol_string"),
         SymbolNumber("type.symbol_number"),
         SymbolCreate("type.symbol_create"),
@@ -207,6 +226,7 @@ public final class Messages {
         PropertyNotConstructor("type.property_not_constructor"),
         InvalidSuperClass("type.invalid_super_class"),
         InvalidCall("type.invalid_call"),
+        InvalidConstruct("type.invalid_construct"),
         InvalidCallClass("type.invalid_call_class"),
         MissingNewTarget("type.missing_new_target"),
         NotObjectTypeFromConstructor("type.not_object_type_from_constructor"),
@@ -215,6 +235,14 @@ public final class Messages {
         InstanceofNotObject("type.instanceof_not_object"),
         InstanceofNotCallable("type.instanceof_not_callable"),
         InNotObject("type.in_not_object"),
+        PrivateFieldPresent("type.private_property_present"),
+        PrivateFieldNotPresent("type.private_property_not_present"),
+        PrivateFieldNoGetter("type.private_property_no_getter"),
+        PrivateFieldNoSetter("type.private_property_no_setter"),
+        NoPermission("type.no_permission"),
+        // RangeError
+        NegativeArrayIndex("range.negative_array_index"),
+        InvalidArrayIndex("range.invalid_array_index"),
 
         // 6.2.4 The Property Descriptor Specification Type
         InvalidGetter("propertydescriptor.invalid_getter"),
@@ -230,7 +258,6 @@ public final class Messages {
         ModulesInvalidName("modules.invalid_name"),
         ModulesAmbiguousExport("modules.ambiguous_export"),
         ModulesAmbiguousImport("modules.ambiguous_import"),
-        ModulesMissingDefaultExport("modules.missing_default_export"),
         ModulesUnresolvedExport("modules.unresolved_export"),
         ModulesUnresolvedImport("modules.unresolved_import"),
         ModulesUnresolvedModule("modules.unresolved_module"),
@@ -271,6 +298,16 @@ public final class Messages {
         RegExpUnexpectedCharacter("regexp.unexpected_character"),
         RegExpDuplicateFlag("regexp.duplicate_flag"),
         RegExpInvalidFlag("regexp.invalid_flag"),
+        RegExpInvalidGroup("regexp.invalid_group"),
+        RegExpDuplicateGroup("regexp.duplicate_group"),
+        RegExpUnknownGroup("regexp.unknown_group"),
+        RegExpInvalidUnicodeProperty("regexp.invalid_unicode_property"),
+        RegExpInvalidUnicodeCategory("regexp.invalid_unicode_category"),
+        RegExpInvalidUnicodePropertyValue("regexp.invalid_unicode_property_value"),
+        RegExpMissingUnicodePropertyValue("regexp.missing_unicode_property_value"),
+        RegExpBackreferenceInLookbehind("regexp.backreference_in_lookbehind"),
+        RegExpCaptureInLookbehind("regexp.capture_in_lookbehind"),
+        RegExpAssertionInLookbehind("regexp.assertion_in_lookbehind"),
 
         // 22.1 Array Objects
         InvalidArrayLength("array.invalid_array_length"),
@@ -293,7 +330,6 @@ public final class Messages {
         InvalidByteLength("binary.invalid_bytelength"),
         InvalidByteOffset("binary.invalid_byteoffset"),
         InvalidBufferSize("binary.invalid_buffersize"),
-        InvalidTypedArrayConstructor("binary.invalid_typed_array_constructor"),
         InvalidTypedArrayLength("binary.invalid_typed_array_length"),
         TypedArrayCreate("binary.typed_array_create"),
 
@@ -320,6 +356,7 @@ public final class Messages {
         ProxyAbsentOrConfigurable("proxy.absent_or_configurable"),
         ProxyAbsentNotExtensible("proxy.absent_not_extensible"),
         ProxyPropertyKey("proxy.property_key"),
+        ProxyDuplicateKeys("proxy.duplicate_keys"),
 
         // 23 Keyed Collection
         MapPairNotObject("collection.map_pair_not_object"),
@@ -330,11 +367,17 @@ public final class Messages {
         // Intl
         IntlStructurallyInvalidLanguageTag("intl.structurally_invalid_language_tag"),
         IntlInvalidOption("intl.invalid_option"),
+        IntlInvalidValue("intl.invalid_value"),
         IntlInvalidCurrency("intl.invalid_currency"),
+        IntlMissingCurrency("intl.missing_currency"),
+        IntlInvalidTimeZone("intl.invalid_timezone"),
         IntlInvalidLanguageTagType("intl.invalid_language_tag_type"),
+        IntlInvalidStringIndex("intl.invalid_string_index"),
 
         // SIMD
         SIMDCreate("simd.create"),
+        SIMDInvalidThis("simd.invalid_this"),
+        SIMDInvalidObject("simd.invalid_object"),
         SIMDInvalidType("simd.invalid_type"),
         SIMDInvalidLane("simd.invalid_lane"),
         SIMDOutOfRange("simd.out_of_range"),
@@ -345,6 +388,21 @@ public final class Messages {
         AtomicsInt32ArrayType("atomics.int32_array_type"),
         AtomicsNotSharedBuffer("atomics.not_shared_buffer"),
         AtomicsInvalidArrayIndex("atomics.invalid_array_index"),
+
+        // BigInt
+        BigIntCreate("bigint.create"),
+        BigIntNumber("bigint.number"),
+        BigIntFromNumber("bigint.from_number"),
+        BigIntFromInvalidNumber("bigint.from_invalid_number"),
+        BigIntFromInvalidString("bigint.from_invalid_string"),
+        BigIntFromUndefinedOrNull("bigint.from_undefined_or_null"),
+        BigIntFromSymbol("bigint.from_symbol"),
+        BigIntFromSIMD("bigint.from_simd"),
+        BigIntDivideByZero("bigint.divide_by_zero"),
+        BigIntNegativeExponent("bigint.negative_exponent"),
+        BigIntExponentTooLarge("bigint.exponent_too_large"),
+        BigIntUnsignedRightShift("bigint.unsigned_right_shift"),
+        BigIntCannotJSONStringify("bigint.cannot_json_stringify"),
 
         ;
         /* @formatter:on */

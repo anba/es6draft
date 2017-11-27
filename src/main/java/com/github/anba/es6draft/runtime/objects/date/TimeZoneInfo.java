@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -22,7 +22,6 @@ import com.ibm.icu.util.ULocale;
  * @see https://bugs.openjdk.java.net/browse/JDK-4255109
  */
 abstract class TimeZoneInfo {
-    private static final long TODAY = System.currentTimeMillis();
     private static final TimeZoneInfo INSTANCE = new JodaTimeZoneInfo();
 
     /**
@@ -70,8 +69,8 @@ abstract class TimeZoneInfo {
     public abstract boolean inDaylightTime(TimeZone tz, long date);
 
     /**
-     * Returns the amount of saved daylight savings time, typically one hour. If the given date is
-     * not in DST, this method returns {@code 0}.
+     * Returns the amount of saved daylight savings time, typically one hour. If the given date is not in DST, this
+     * method returns {@code 0}.
      * 
      * @param tz
      *            the timezone
@@ -181,7 +180,7 @@ abstract class TimeZoneInfo {
 
         @Override
         public int getRawOffset(TimeZone tz) {
-            return getRawOffset(tz, TODAY);
+            return getRawOffset(tz, System.currentTimeMillis());
         }
 
         @Override
@@ -200,8 +199,7 @@ abstract class TimeZoneInfo {
     }
 
     static final class ICUTimeZoneInfo extends TimeZoneInfo {
-        private static TimeZoneRef<com.ibm.icu.util.TimeZone> lastTimeZone = new TimeZoneRef<>(
-                null, null);
+        private static TimeZoneRef<com.ibm.icu.util.TimeZone> lastTimeZone = new TimeZoneRef<>(null, null);
 
         private static com.ibm.icu.util.TimeZone toICUTimeZone(TimeZone tz) {
             TimeZoneRef<com.ibm.icu.util.TimeZone> ref = lastTimeZone;
@@ -282,9 +280,9 @@ abstract class TimeZoneInfo {
         private static final long LOCAL_LAST_LMT_TRANSITION = -631152000000L;
         private static final boolean IGNORE_LMT = false;
 
-        // Last transition from local time (Africa/Monrovia on 01 May, 1972).
-        private static final long LAST_LOCAL_TRANSITION = 73529070000L;
-        private static final long LOCAL_LAST_LOCAL_TRANSITION = 73526400000L;
+        // Last transition from local time (Africa/Monrovia on 07 January, 1972).
+        private static final long LAST_LOCAL_TRANSITION = 63593070000L;
+        private static final long LOCAL_LAST_LOCAL_TRANSITION = 63590400000L;
         private static final boolean IGNORE_LOCAL = false;
 
         // Start of the epoch (01 January, 1970).
@@ -292,7 +290,8 @@ abstract class TimeZoneInfo {
         private static final boolean IGNORE_LOCAL_BEFORE_EPOCH = true;
 
         static {
-            assert !((IGNORE_LMT | IGNORE_LOCAL) & (IGNORE_LMT | IGNORE_LOCAL_BEFORE_EPOCH) & (IGNORE_LOCAL | IGNORE_LOCAL_BEFORE_EPOCH));
+            assert !((IGNORE_LMT | IGNORE_LOCAL) & (IGNORE_LMT | IGNORE_LOCAL_BEFORE_EPOCH)
+                    & (IGNORE_LOCAL | IGNORE_LOCAL_BEFORE_EPOCH));
         }
 
         private static TimeZoneRef<DateTimeZone> lastTimeZone = new TimeZoneRef<>(null, null);
@@ -329,8 +328,7 @@ abstract class TimeZoneInfo {
             while (!isNormalizedOffset(timeZone.getOffset(normalized))) {
                 normalized = timeZone.nextTransition(normalized);
             }
-            if (normalized != date
-                    && timeZone.isStandardOffset(date) != timeZone.isStandardOffset(normalized)) {
+            if (normalized != date && timeZone.isStandardOffset(date) != timeZone.isStandardOffset(normalized)) {
                 long next = timeZone.nextTransition(normalized);
                 if (timeZone.isStandardOffset(date) == timeZone.isStandardOffset(next)) {
                     normalized = next;
@@ -445,7 +443,7 @@ abstract class TimeZoneInfo {
 
         @Override
         public int getRawOffset(TimeZone tz) {
-            return toDateTimeZone(tz).getStandardOffset(TODAY);
+            return toDateTimeZone(tz).getStandardOffset(System.currentTimeMillis());
         }
 
         @Override
@@ -488,7 +486,8 @@ abstract class TimeZoneInfo {
                 return displayName;
             }
             boolean daylightSavings = !timeZone.isStandardOffset(date);
-            if (!daylightSavings && timeZone.getOffset(date) != timeZone.getStandardOffset(TODAY)) {
+            if (!daylightSavings
+                    && timeZone.getOffset(date) != timeZone.getStandardOffset(System.currentTimeMillis())) {
                 daylightSavings = timeZone.nextTransition(date) != date;
             }
             return tz.getDisplayName(daylightSavings, TimeZone.SHORT, Locale.US);

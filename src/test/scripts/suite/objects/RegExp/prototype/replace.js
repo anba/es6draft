@@ -1,11 +1,11 @@
 /*
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
  */
 const {
-  assertSame
+  assertSame, assertEquals, assertThrows
 } = Assert;
 
 assertSame("undefined".length, "replaceme".length);
@@ -33,3 +33,33 @@ var regexpLike = {
   global: true
 };
 assertSame("ok-ok", RegExp.prototype[Symbol.replace].call(regexpLike, "replaceme-replaceme", "ok"));
+
+class Err extends Error {}
+var log, regexpLike = {
+  lastIndex: 0,
+  global: false,
+  unicode: false,
+  exec() {
+    return {
+      get 0() {
+        log.push("get 0");
+      },
+      get 1() {
+        log.push("get 1");
+      },
+      get 2() {
+        throw new Err();
+      },
+      length: 0xffffffff
+    };
+  },
+  replace: RegExp.prototype[Symbol.replace]
+}
+
+log = [];
+assertThrows(Err, () => RegExp.prototype[Symbol.replace].call(regexpLike, "", ""));
+assertEquals(["get 0", "get 1"], log);
+
+log = [];
+assertThrows(Err, () => RegExp.prototype[Symbol.replace].call(regexpLike, "", () => ""));
+assertEquals(["get 0", "get 1"], log);

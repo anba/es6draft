@@ -1,12 +1,11 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
  */
 package com.github.anba.es6draft.runtime.types;
 
-import static com.github.anba.es6draft.runtime.AbstractOperations.SameValue;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 /**
@@ -224,45 +223,6 @@ public final class Property implements Cloneable {
      */
     public boolean isDataDescriptor() {
         return type == PropertyType.Data;
-    }
-
-    /**
-     * Returns {@code true} if every field of {@code desc} also occurs in this property descriptor and every present
-     * field has the same value. That means {@code true} is returned iff {@code desc} &#8838; {@code this} holds.
-     * 
-     * @param desc
-     *            the property descriptor
-     * @return {@code true} if <var>desc</var> if a subset of this property
-     */
-    public boolean isSubset(PropertyDescriptor desc) {
-        if (isDataDescriptor()) {
-            if (desc.hasValue() && !SameValue(desc.getValue(), value)) {
-                return false;
-            }
-            if (desc.hasWritable() && desc.isWritable() != writable) {
-                return false;
-            }
-            if (desc.isAccessorDescriptor()) {
-                return false;
-            }
-        } else {
-            if (desc.hasGetter() && desc.getGetter() != getter) {
-                return false;
-            }
-            if (desc.hasSetter() && desc.getSetter() != setter) {
-                return false;
-            }
-            if (desc.isDataDescriptor()) {
-                return false;
-            }
-        }
-        if (desc.hasEnumerable() && desc.isEnumerable() != enumerable) {
-            return false;
-        }
-        if (desc.hasConfigurable() && desc.isConfigurable() != configurable) {
-            return false;
-        }
-        return true;
     }
 
     /**

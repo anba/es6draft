@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -20,7 +20,6 @@ import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
-import com.github.anba.es6draft.runtime.internal.Ref;
 import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Undefined;
@@ -53,11 +52,6 @@ public final class ProxyConstructor extends BuiltinConstructor implements Initia
         createProperties(realm, this, Properties.class);
     }
 
-    @Override
-    public ProxyConstructor clone() {
-        return new ProxyConstructor(getRealm());
-    }
-
     /**
      * 26.2.1.1 Proxy (target, handler)
      */
@@ -71,8 +65,7 @@ public final class ProxyConstructor extends BuiltinConstructor implements Initia
      * 26.2.1.1 Proxy (target, handler)
      */
     @Override
-    public ProxyObject construct(ExecutionContext callerContext, Constructor newTarget,
-            Object... args) {
+    public ProxyObject construct(ExecutionContext callerContext, Constructor newTarget, Object... args) {
         Object target = argument(args, 0);
         Object handler = argument(args, 1);
         /* step 1 (not applicable) */
@@ -89,12 +82,10 @@ public final class ProxyConstructor extends BuiltinConstructor implements Initia
         @Prototype
         public static final Intrinsics __proto__ = Intrinsics.FunctionPrototype;
 
-        @Value(name = "length", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = true))
+        @Value(name = "length", attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static final int length = 2;
 
-        @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = true))
+        @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static final String name = "Proxy";
 
         /**
@@ -111,19 +102,18 @@ public final class ProxyConstructor extends BuiltinConstructor implements Initia
          * @return the revocable proxy
          */
         @Function(name = "revocable", arity = 2)
-        public static Object revocable(ExecutionContext cx, Object thisValue, Object target,
-                Object handler) {
-            /* steps 1-2 */
+        public static Object revocable(ExecutionContext cx, Object thisValue, Object target, Object handler) {
+            /* step 1 */
             ProxyObject p = ProxyCreate(cx, target, handler);
-            /* steps 3-4 */
+            /* steps 2-3 */
             ProxyRevocationFunction revoker = new ProxyRevocationFunction(cx.getRealm(), p);
-            /* step 5 */
+            /* step 4 */
             OrdinaryObject result = ObjectCreate(cx, Intrinsics.ObjectPrototype);
-            /* step 6 */
+            /* step 5 */
             CreateDataProperty(cx, result, "proxy", p);
-            /* step 7 */
+            /* step 6 */
             CreateDataProperty(cx, result, "revoke", revoker);
-            /* step 8 */
+            /* step 7 */
             return result;
         }
     }
@@ -133,40 +123,27 @@ public final class ProxyConstructor extends BuiltinConstructor implements Initia
      */
     public static final class ProxyRevocationFunction extends BuiltinFunction {
         /** [[RevocableProxy]] */
-        private Ref<ProxyObject> revocableProxy;
+        private ProxyObject revocableProxy;
 
         public ProxyRevocationFunction(Realm realm, ProxyObject revocableProxy) {
-            this(realm, new Ref<>(revocableProxy));
-            createDefaultFunctionProperties();
-        }
-
-        private ProxyRevocationFunction(Realm realm, Ref<ProxyObject> revocableProxy) {
             super(realm, ANONYMOUS, 0);
             this.revocableProxy = revocableProxy;
-        }
-
-        @Override
-        public ProxyRevocationFunction clone() {
-            return new ProxyRevocationFunction(getRealm(), revocableProxy);
+            createDefaultFunctionProperties();
         }
 
         @Override
         public Undefined call(ExecutionContext callerContext, Object thisValue, Object... args) {
             /* step 1 */
-            Ref<ProxyObject> p = revocableProxy;
+            ProxyObject proxy = revocableProxy;
             /* step 2 */
-            if (p == null) {
+            if (proxy == null) {
                 return UNDEFINED;
             }
             /* step 3 */
             revocableProxy = null;
             /* step 4 (implicit) */
-            ProxyObject proxy = p.get();
             /* steps 5-6 */
-            if (proxy != null) {
-                p.clear();
-                proxy.revoke();
-            }
+            proxy.revoke();
             /* step 7 */
             return UNDEFINED;
         }

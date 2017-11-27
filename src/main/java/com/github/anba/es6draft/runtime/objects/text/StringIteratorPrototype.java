@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -22,6 +22,7 @@ import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.internal.Strings;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
+import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.NativeFunction;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
@@ -57,7 +58,7 @@ public final class StringIteratorPrototype extends OrdinaryObject implements Ini
      *            the string value
      * @return the new string iterator
      */
-    public static OrdinaryObject CreateStringIterator(ExecutionContext cx, String string) {
+    public static StringIteratorObject CreateStringIterator(ExecutionContext cx, String string) {
         /* step 1 (not applicable) */
         /* steps 2-5 */
         return new StringIteratorObject(cx.getRealm(), string, cx.getIntrinsic(Intrinsics.StringIteratorPrototype));
@@ -74,7 +75,7 @@ public final class StringIteratorPrototype extends OrdinaryObject implements Ini
      *            the start index
      * @return the new string iterator
      */
-    public static OrdinaryObject CreateStringIterator(ExecutionContext cx, String string, int index) {
+    public static StringIteratorObject CreateStringIterator(ExecutionContext cx, String string, int index) {
         assert 0 <= index && index <= string.length();
         /* step 1 (not applicable) */
         /* steps 2-5 */
@@ -124,7 +125,8 @@ public final class StringIteratorPrototype extends OrdinaryObject implements Ini
         public static Object next(ExecutionContext cx, Object thisValue) {
             /* steps 1-3 */
             if (!(thisValue instanceof StringIteratorObject)) {
-                throw newTypeError(cx, Messages.Key.IncompatibleObject);
+                throw newTypeError(cx, Messages.Key.IncompatibleThis, "%StringIteratorPrototype%.next",
+                        Type.of(thisValue).toString());
             }
             StringIteratorObject iterator = (StringIteratorObject) thisValue;
             /* step 4 */

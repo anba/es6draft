@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -35,11 +35,11 @@ function testDefine(description, object, propertyKey) {
   CreateDataPropertyOrThrow(object, propertyKey, 0);
 
   setPropertyValue(description, object, propertyKey, 0/0);
-  setPropertyValue(description, object, propertyKey, NaN, 0/0);
-  setPropertyValue(description, object, propertyKey, Number.NaN, 0/0);
-  setPropertyValue(description, object, propertyKey, Math.sqrt(-1), 0/0);
-  setPropertyValue(description, object, propertyKey, Math.sin(Infinity), 0/0);
-  setPropertyValue(description, object, propertyKey, Math.abs(0/0), 0/0);
+  setPropertyValue(description, object, propertyKey, NaN);
+  setPropertyValue(description, object, propertyKey, Number.NaN);
+  setPropertyValue(description, object, propertyKey, Math.sqrt(-1));
+  setPropertyValue(description, object, propertyKey, Math.sin(Infinity));
+  setPropertyValue(description, object, propertyKey, Math.abs(0/0));
 }
 
 function testDefineMappedArguments(description, object, propertyKey) {

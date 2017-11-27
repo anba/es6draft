@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -17,30 +17,21 @@ import com.github.anba.es6draft.ast.VoidNodeVisitor;
 /**
  * {@link SpreadElement} as an external Java method.
  */
-public final class SpreadElementMethod extends SpreadElement implements SyntheticNode {
-    private boolean resumePoint;
+public final class SpreadElementMethod extends Expression {
+    private final List<Expression> elements;
 
     public SpreadElementMethod(List<Expression> elements) {
-        this(new SpreadArrayLiteral(elements));
+        super(first(elements).getBeginPosition(), last(elements).getEndPosition());
+        this.elements = elements;
     }
 
-    public SpreadElementMethod(SpreadArrayLiteral array) {
-        super(array.getBeginPosition(), array.getEndPosition(), array);
-    }
-
-    @Override
-    public SpreadArrayLiteral getExpression() {
-        return (SpreadArrayLiteral) super.getExpression();
-    }
-
-    @Override
-    public boolean hasResumePoint() {
-        return resumePoint;
-    }
-
-    @Override
-    public void setResumePoint(boolean resumePoint) {
-        this.resumePoint = resumePoint;
+    /**
+     * Returns the spreaded array elements.
+     * 
+     * @return the array elements
+     */
+    public List<Expression> getElements() {
+        return elements;
     }
 
     @Override
@@ -56,5 +47,15 @@ public final class SpreadElementMethod extends SpreadElement implements Syntheti
     @Override
     public <V> void accept(VoidNodeVisitor<V> visitor, V value) {
         visitor.visit(this, value);
+    }
+
+    private static Expression first(List<Expression> elements) {
+        assert !elements.isEmpty();
+        return elements.get(0);
+    }
+
+    private static Expression last(List<Expression> elements) {
+        assert !elements.isEmpty();
+        return elements.get(elements.size() - 1);
     }
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -52,15 +52,14 @@ public final class GeneratorFunctionPrototype extends OrdinaryObject implements 
         /**
          * 25.2.3.1 GeneratorFunction.prototype.constructor
          */
-        @Value(name = "constructor", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = true))
+        @Value(name = "constructor",
+                attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static final Intrinsics constructor = Intrinsics.GeneratorFunction;
 
         /**
          * 25.2.3.2 GeneratorFunction.prototype.prototype
          */
-        @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = true))
+        @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static final Intrinsics prototype = Intrinsics.GeneratorPrototype;
 
         /**

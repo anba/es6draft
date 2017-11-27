@@ -1,22 +1,22 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
  */
 package com.github.anba.es6draft.runtime.types.builtins;
 
-import static com.github.anba.es6draft.runtime.AbstractOperations.CreateListIterator;
+import static com.github.anba.es6draft.runtime.AbstractOperations.SameValue;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToString;
 import static com.github.anba.es6draft.runtime.internal.Errors.newReferenceError;
 import static com.github.anba.es6draft.runtime.modules.ModuleSemantics.GetModuleNamespace;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
+import static com.github.anba.es6draft.runtime.types.builtins.ImmutablePrototypeObject.SetImmutablePrototype;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -26,23 +26,21 @@ import com.github.anba.es6draft.runtime.EnvironmentRecord;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.Errors;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.modules.MalformedNameException;
-import com.github.anba.es6draft.runtime.modules.ModuleExport;
 import com.github.anba.es6draft.runtime.modules.ModuleRecord;
 import com.github.anba.es6draft.runtime.modules.ResolutionException;
+import com.github.anba.es6draft.runtime.modules.ResolvedBinding;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Property;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Symbol;
-import com.github.anba.es6draft.runtime.types.Type;
 
 /**
  * <h1>9 Ordinary and Exotic Objects Behaviours</h1><br>
- * <h2>9.4 Built-in Exotic Object Internal Methods and Data Fields</h2>
+ * <h2>9.4 Built-in Exotic Object Internal Methods and Slots</h2>
  * <ul>
  * <li>9.4.6 Module Namespace Exotic Objects
  * </ul>
@@ -109,133 +107,157 @@ public final class ModuleNamespaceObject extends OrdinaryObject {
         return true;
     }
 
-    /** 9.4.6.1 [[GetPrototypeOf]] ( ) */
-    @Override
-    public ScriptObject getPrototypeOf(ExecutionContext cx) {
-        return null;
-    }
-
-    /** 9.4.6.2 [[SetPrototypeOf]] (V) */
+    /** 9.4.6.1 [[SetPrototypeOf]] (V) */
     @Override
     public boolean setPrototypeOf(ExecutionContext cx, ScriptObject prototype) {
-        return false;
+        return SetImmutablePrototype(this, prototype);
     }
 
-    /** 9.4.6.3 [[IsExtensible]] ( ) */
+    /** 9.4.6.2 [[IsExtensible]] ( ) */
     @Override
     public boolean isExtensible(ExecutionContext cx) {
         return false;
     }
 
-    /** 9.4.6.4 [[PreventExtensions]] ( ) */
+    /** 9.4.6.3 [[PreventExtensions]] ( ) */
     @Override
     public boolean preventExtensions(ExecutionContext cx) {
         return true;
     }
 
     @Override
-    protected boolean hasOwnProperty(ExecutionContext cx, long propertyKey) {
+    public boolean hasOwnProperty(ExecutionContext cx, long propertyKey) {
         return hasOwnProperty(cx, ToString(propertyKey));
     }
 
     @Override
-    protected boolean hasOwnProperty(ExecutionContext cx, String propertyKey) {
+    public boolean hasOwnProperty(ExecutionContext cx, String propertyKey) {
         if (!exports.contains(propertyKey)) {
             return false;
         }
-        getValue(cx, propertyKey, this);
+        get(cx, propertyKey, this);
         return true;
     }
 
     @Override
-    protected boolean hasOwnProperty(ExecutionContext cx, Symbol propertyKey) {
+    public boolean hasOwnProperty(ExecutionContext cx, Symbol propertyKey) {
         return ordinaryHasOwnProperty(propertyKey);
     }
 
-    /** 9.4.6.5 [[GetOwnProperty]] (P) */
+    /** 9.4.6.4 [[GetOwnProperty]] (P) */
     @Override
-    protected Property getProperty(ExecutionContext cx, long propertyKey) {
+    public Property getOwnProperty(ExecutionContext cx, long propertyKey) {
         /* step 1 (not applicable) */
-        /* steps 2-6 */
-        return getProperty(cx, ToString(propertyKey));
+        /* steps 2-5 */
+        return getOwnProperty(cx, ToString(propertyKey));
     }
 
-    /** 9.4.6.5 [[GetOwnProperty]] (P) */
+    /** 9.4.6.4 [[GetOwnProperty]] (P) */
     @Override
-    protected Property getProperty(ExecutionContext cx, String propertyKey) {
+    public Property getOwnProperty(ExecutionContext cx, String propertyKey) {
         /* step 1 (not applicable) */
         /* steps 2-3 */
         if (!exports.contains(propertyKey)) {
             return null;
         }
-        /* steps 4-5 */
-        Object value = getValue(cx, propertyKey, this);
-        /* step 6 */
+        /* step 4 */
+        Object value = get(cx, propertyKey, this);
+        /* step 5 */
         return new Property(value, true, true, false);
     }
 
-    /** 9.4.6.5 [[GetOwnProperty]] (P) */
+    /** 9.4.6.4 [[GetOwnProperty]] (P) */
     @Override
-    protected Property getProperty(ExecutionContext cx, Symbol propertyKey) {
+    public Property getOwnProperty(ExecutionContext cx, Symbol propertyKey) {
         /* step 1 */
-        /* step 2 (not applicable) */
+        /* steps 2-5 (not applicable) */
         return ordinaryGetOwnProperty(propertyKey);
     }
 
-    /** 9.4.6.6 [[DefineOwnProperty]] (P, Desc) */
+    /** 9.4.6.5 [[DefineOwnProperty]] (P, Desc) */
     @Override
-    protected boolean defineProperty(ExecutionContext cx, long propertyKey, PropertyDescriptor desc) {
+    public boolean defineOwnProperty(ExecutionContext cx, long propertyKey, PropertyDescriptor desc) {
+        /* step 1 (not applicable) */
+        /* steps 2-9 */
+        return defineOwnProperty(cx, ToString(propertyKey), desc);
+    }
+
+    /** 9.4.6.5 [[DefineOwnProperty]] (P, Desc) */
+    @Override
+    public boolean defineOwnProperty(ExecutionContext cx, String propertyKey, PropertyDescriptor desc) {
+        /* step 1 (not applicable) */
+        /* step 2 */
+        Property current = getOwnProperty(cx, propertyKey);
+        /* step 3 */
+        if (current == null) {
+            return false;
+        }
+        /* step 4 */
+        if (desc.isAccessorDescriptor()) {
+            return false;
+        }
+        /* step 5 */
+        if (desc.hasWritable() && !desc.isWritable()) {
+            return false;
+        }
+        /* step 6 */
+        if (desc.hasEnumerable() && !desc.isEnumerable()) {
+            return false;
+        }
+        /* step 7 */
+        if (desc.hasConfigurable() && desc.isConfigurable()) {
+            return false;
+        }
+        /* step 8 */
+        if (desc.hasValue() && !SameValue(desc.getValue(), current.getValue())) {
+            return false;
+        }
+        /* step 9 */
+        return true;
+    }
+
+    /** 9.4.6.5 [[DefineOwnProperty]] (P, Desc) */
+    @Override
+    public boolean defineOwnProperty(ExecutionContext cx, Symbol propertyKey, PropertyDescriptor desc) {
         /* step 1 */
-        return false;
+        /* steps 2-9 (not applicable) */
+        return ordinaryDefineOwnProperty(cx, propertyKey, desc);
     }
 
-    /** 9.4.6.6 [[DefineOwnProperty]] (P, Desc) */
+    /** 9.4.6.6 [[HasProperty]] (P) */
     @Override
-    protected boolean defineProperty(ExecutionContext cx, String propertyKey, PropertyDescriptor desc) {
-        /* step 1 */
-        return false;
+    public boolean hasProperty(ExecutionContext cx, long propertyKey) {
+        /* steps 1-4 */
+        return hasProperty(cx, ToString(propertyKey));
     }
 
-    /** 9.4.6.6 [[DefineOwnProperty]] (P, Desc) */
+    /** 9.4.6.6 [[HasProperty]] (P) */
     @Override
-    protected boolean defineProperty(ExecutionContext cx, Symbol propertyKey, PropertyDescriptor desc) {
-        /* step 1 */
-        return false;
-    }
-
-    /** 9.4.6.7 [[HasProperty]] (P) */
-    @Override
-    protected boolean has(ExecutionContext cx, long propertyKey) {
-        return has(cx, ToString(propertyKey));
-    }
-
-    /** 9.4.6.7 [[HasProperty]] (P) */
-    @Override
-    protected boolean has(ExecutionContext cx, String propertyKey) {
+    public boolean hasProperty(ExecutionContext cx, String propertyKey) {
         /* step 1 (not applicable) */
         /* steps 2-4 */
         return exports.contains(propertyKey);
     }
 
-    /** 9.4.6.7 [[HasProperty]] (P) */
+    /** 9.4.6.6 [[HasProperty]] (P) */
     @Override
-    protected boolean has(ExecutionContext cx, Symbol propertyKey) {
+    public boolean hasProperty(ExecutionContext cx, Symbol propertyKey) {
         /* step 1 */
         /* steps 2-4 (not applicable) */
         return ordinaryHasProperty(cx, propertyKey);
     }
 
-    /** 9.4.6.8 [[Get]] (P, Receiver) */
+    /** 9.4.6.7 [[Get]] (P, Receiver) */
     @Override
-    protected Object getValue(ExecutionContext cx, long propertyKey, Object receiver) {
-        return getValue(cx, ToString(propertyKey), receiver);
+    public Object get(ExecutionContext cx, long propertyKey, Object receiver) {
+        /* steps 1-13 */
+        return get(cx, ToString(propertyKey), receiver);
     }
 
-    /** 9.4.6.8 [[Get]] (P, Receiver) */
+    /** 9.4.6.7 [[Get]] (P, Receiver) */
     @Override
-    protected Object getValue(ExecutionContext cx, String propertyKey, Object receiver) {
-        /* step 1 (not applicable) */
-        /* step 2 (not applicable) */
+    public Object get(ExecutionContext cx, String propertyKey, Object receiver) {
+        /* steps 1-2 (not applicable) */
         /* step 3 */
         Set<String> exports = this.exports;
         /* step 4 */
@@ -244,30 +266,24 @@ public final class ModuleNamespaceObject extends OrdinaryObject {
         }
         /* step 5 */
         ModuleRecord m = this.module;
-        /* steps 6-8 */
-        ModuleExport binding;
+        /* step 6 */
+        ResolvedBinding binding;
         try {
-            /* steps 6, 8 */
-            binding = m.resolveExport(propertyKey, new HashMap<>(), new HashSet<>());
+            binding = m.resolveExport(propertyKey, new HashMap<>());
         } catch (IOException e) {
-            /* step 7 */
             throw Errors.newInternalError(cx, e, Messages.Key.ModulesIOException, e.getMessage());
-        } catch (ResolutionException | MalformedNameException e) {
-            /* step 7 */
-            throw e.toScriptException(cx);
-        } catch (ParserException | CompilationException e) {
-            /* step 7 */
+        } catch (ResolutionException | MalformedNameException | ParserException | CompilationException e) {
             throw e.toScriptException(cx);
         }
-        /* step 8 */
+        /* step 7 */
         assert binding != null && !binding.isAmbiguous();
-        /* step 9 */
+        /* step 8 */
         ModuleRecord targetModule = binding.getModule();
-        /* step 10 */
+        /* step 9 */
         assert targetModule != null;
-        /* step 11 */
+        /* step 10 */
         LexicalEnvironment<?> targetEnv = targetModule.getEnvironment();
-        /* step 12 */
+        /* step 11 */
         if (targetEnv == null) {
             throw newReferenceError(cx, Messages.Key.UninitializedBinding, binding.getBindingName());
         }
@@ -281,89 +297,72 @@ public final class ModuleNamespaceObject extends OrdinaryObject {
                 throw e.toScriptException(cx);
             }
         }
-        /* step 13 */
+        /* step 12 */
         EnvironmentRecord targetEnvRec = targetEnv.getEnvRec();
-        /* step 14 */
+        /* step 13 */
         return targetEnvRec.getBindingValue(binding.getBindingName(), true);
     }
 
-    /** 9.4.6.8 [[Get]] (P, Receiver) */
+    /** 9.4.6.7 [[Get]] (P, Receiver) */
     @Override
-    protected Object getValue(ExecutionContext cx, Symbol propertyKey, Object receiver) {
-        /* step 1 (not applicable) */
+    public Object get(ExecutionContext cx, Symbol propertyKey, Object receiver) {
+        /* steps 1, 3-13 (not applicable) */
         /* step 2 */
-        /* steps 3-16 (not applicable) */
-        return super.getValue(cx, propertyKey, receiver);
+        return ordinaryGet(cx, propertyKey, receiver);
     }
 
-    /** 9.4.6.9 [[Set]] ( P, V, Receiver) */
+    /** 9.4.6.8 [[Set]] ( P, V, Receiver) */
     @Override
-    protected boolean setValue(ExecutionContext cx, long propertyKey, Object value, Object receiver) {
+    public boolean set(ExecutionContext cx, long propertyKey, Object value, Object receiver) {
         /* step 1 */
         return false;
     }
 
-    /** 9.4.6.9 [[Set]] ( P, V, Receiver) */
+    /** 9.4.6.8 [[Set]] ( P, V, Receiver) */
     @Override
-    protected boolean setValue(ExecutionContext cx, String propertyKey, Object value, Object receiver) {
+    public boolean set(ExecutionContext cx, String propertyKey, Object value, Object receiver) {
         /* step 1 */
         return false;
     }
 
-    /** 9.4.6.9 [[Set]] ( P, V, Receiver) */
+    /** 9.4.6.8 [[Set]] ( P, V, Receiver) */
     @Override
-    protected boolean setValue(ExecutionContext cx, Symbol propertyKey, Object value, Object receiver) {
+    public boolean set(ExecutionContext cx, Symbol propertyKey, Object value, Object receiver) {
         /* step 1 */
         return false;
     }
 
-    /** 9.4.6.10 [[Delete]] (P) */
+    /** 9.4.6.9 [[Delete]] (P) */
     @Override
-    protected boolean deleteProperty(ExecutionContext cx, long propertyKey) {
-        return deleteProperty(cx, ToString(propertyKey));
+    public boolean delete(ExecutionContext cx, long propertyKey) {
+        /* steps 1-5 */
+        return delete(cx, ToString(propertyKey));
     }
 
-    /** 9.4.6.10 [[Delete]] (P) */
+    /** 9.4.6.9 [[Delete]] (P) */
     @Override
-    protected boolean deleteProperty(ExecutionContext cx, String propertyKey) {
-        /* step 1 (not applicable) */
-        /* steps 2-4 */
+    public boolean delete(ExecutionContext cx, String propertyKey) {
+        /* steps 1-2 (not applicable) */
+        /* steps 3-5 */
         return !exports.contains(propertyKey);
     }
 
-    /** 9.4.6.10 [[Delete]] (P) */
+    /** 9.4.6.9 [[Delete]] (P) */
     @Override
-    protected boolean deleteProperty(ExecutionContext cx, Symbol propertyKey) {
-        return true;
+    public boolean delete(ExecutionContext cx, Symbol propertyKey) {
+        /* steps 1, 3-5 (not applicable) */
+        /* step 2 */
+        return ordinaryDelete(cx, propertyKey);
     }
 
-    /** 9.4.6.11 [[Enumerate]] () */
+    /** 9.4.6.10 [[OwnPropertyKeys]] ( ) */
     @Override
-    protected List<String> getEnumerableKeys(ExecutionContext cx) {
-        return getSortedExports();
-    }
-
-    @Override
-    protected Enumerability isEnumerableOwnProperty(String propertyKey) {
-        assert exports.contains(propertyKey) : String.format("'%s' is not an exported binding", propertyKey);
-        return Enumerability.Enumerable;
-    }
-
-    /** 9.4.6.12 [[OwnPropertyKeys]] ( ) */
-    @Override
-    protected List<Object> getOwnPropertyKeys(ExecutionContext cx) {
-        int totalSize = countProperties(true) + exports.size();
-        /* step 1 */
-        ArrayList<Object> exports = new ArrayList<>(totalSize);
-        exports.addAll(getSortedExports());
-        /* steps 2-3 */
-        appendSymbolProperties(exports);
-        /* step 4 */
-        return exports;
+    protected void ownPropertyNames(List<? super String> list) {
+        list.addAll(getSortedExports());
     }
 
     /**
-     * 9.4.6.13 ModuleNamespaceCreate (module, exports)
+     * 9.4.6.11 ModuleNamespaceCreate (module, exports)
      *
      * @param cx
      *            the execution context
@@ -379,85 +378,16 @@ public final class ModuleNamespaceObject extends OrdinaryObject {
         /* step 2 */
         assert module.getNamespace() == null;
         /* step 3 (not applicable) */
-        /* steps 4-7 */
+        /* steps 4-8 */
         ModuleNamespaceObject m = new ModuleNamespaceObject(cx.getRealm(), module, exports);
-        /* step 8 */
-        // 26.3.1 @@toStringTag
-        m.infallibleDefineOwnProperty(BuiltinSymbol.toStringTag.get(), new Property("Module", false, false, true));
-        // 26.3.2 [ @@iterator ] ( )
-        BuiltinFunction iterator;
-        if (cx.getRealm().isEnabled(CompatibilityOption.Enumerate)) {
-            iterator = new ModuleIteratorFunction(cx.getRealm());
-        } else {
-            iterator = new ModuleExportsIteratorFunction(cx.getRealm());
-        }
-        m.infallibleDefineOwnProperty(BuiltinSymbol.iterator.get(), new Property(iterator, true, false, true));
         /* step 9 */
-        module.setNamespace(m);
+        // 26.3.1 @@toStringTag
+        m.infallibleDefineOwnProperty(BuiltinSymbol.toStringTag.get(), new Property("Module", false, false, false));
+        // TODO: spec issue - add [[Extensible]] and set to false.
+        m.setExtensible(false);
         /* step 10 */
+        module.setNamespace(m);
+        /* step 11 */
         return m;
-    }
-
-    /**
-     * 26.3.2 [ @@iterator ] ( )
-     */
-    public static final class ModuleIteratorFunction extends BuiltinFunction {
-        public ModuleIteratorFunction(Realm realm) {
-            super(realm, "[Symbol.iterator]", 0);
-            createDefaultFunctionProperties();
-        }
-
-        private ModuleIteratorFunction(Realm realm, Void ignore) {
-            super(realm, "[Symbol.iterator]", 0);
-        }
-
-        @Override
-        public ModuleIteratorFunction clone() {
-            return new ModuleIteratorFunction(getRealm(), null);
-        }
-
-        @Override
-        public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
-            ExecutionContext calleeContext = calleeContext();
-            /* step 1 (not applicable) */
-            /* step 2 */
-            if (!Type.isObject(thisValue)) {
-                throw Errors.newTypeError(calleeContext, Messages.Key.NotObjectType);
-            }
-            /* step 3 */
-            return Type.objectValue(thisValue).enumerate(calleeContext);
-        }
-    }
-
-    /**
-     * 26.3.2 [ @@iterator ] ( )
-     */
-    public static final class ModuleExportsIteratorFunction extends BuiltinFunction {
-        public ModuleExportsIteratorFunction(Realm realm) {
-            super(realm, "[Symbol.iterator]", 0);
-            createDefaultFunctionProperties();
-        }
-
-        private ModuleExportsIteratorFunction(Realm realm, Void ignore) {
-            super(realm, "[Symbol.iterator]", 0);
-        }
-
-        @Override
-        public ModuleIteratorFunction clone() {
-            return new ModuleIteratorFunction(getRealm(), null);
-        }
-
-        @Override
-        public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
-            ExecutionContext calleeContext = calleeContext();
-            /* step 1 (not applicable) */
-            /* step 2 */
-            if (!(thisValue instanceof ModuleNamespaceObject)) {
-                throw Errors.newTypeError(calleeContext, Messages.Key.IncompatibleObject);
-            }
-            ModuleNamespaceObject module = (ModuleNamespaceObject) thisValue;
-            /* steps 3-4 */
-            return CreateListIterator(calleeContext, module.getSortedExports());
-        }
     }
 }

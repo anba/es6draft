@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -49,8 +49,6 @@ public final class RuntimeInfo {
      *            the parameter names or {@code null}
      * @param source
      *            the encoded source string
-     * @param bodySourceStart
-     *            the body source start index
      * @param handle
      *            the method handle
      * @param callMethod
@@ -60,10 +58,10 @@ public final class RuntimeInfo {
      * @return the new function object
      */
     public static Function newFunction(Object methodInfo, String functionName, int functionFlags,
-            int expectedArgumentCount, String[] parameters, String source, int bodySourceStart, MethodHandle handle,
-            MethodHandle callMethod, MethodHandle constructMethod) {
+            int expectedArgumentCount, String[] parameters, String source, MethodHandle handle, MethodHandle callMethod,
+            MethodHandle constructMethod) {
         return new CompiledFunction(methodInfo, functionName, functionFlags, expectedArgumentCount, parameters, source,
-                bodySourceStart, handle, callMethod, constructMethod, null);
+                handle, callMethod, constructMethod, null);
     }
 
     /**
@@ -81,8 +79,6 @@ public final class RuntimeInfo {
      *            the parameter names or {@code null}
      * @param source
      *            the encoded source string
-     * @param bodySourceStart
-     *            the body source start index
      * @param handle
      *            the method handle
      * @param callMethod
@@ -94,37 +90,28 @@ public final class RuntimeInfo {
      * @return the new function object
      */
     public static Function newFunction(Object methodInfo, String functionName, int functionFlags,
-            int expectedArgumentCount, String[] parameters, String source, int bodySourceStart, MethodHandle handle,
-            MethodHandle callMethod, MethodHandle constructMethod, MethodHandle debugInfo) {
+            int expectedArgumentCount, String[] parameters, String source, MethodHandle handle, MethodHandle callMethod,
+            MethodHandle constructMethod, MethodHandle debugInfo) {
         return new CompiledFunction(methodInfo, functionName, functionFlags, expectedArgumentCount, parameters, source,
-                bodySourceStart, handle, callMethod, constructMethod, debugInfo);
+                handle, callMethod, constructMethod, debugInfo);
     }
 
     /**
      * Returns a new {@link ModuleBody} object.
      * 
-     * @param sourceName
-     *            the source name
-     * @param sourcePath
-     *            the source path
      * @param initialization
      *            the initialization method handle
      * @param handle
      *            the code method handle
      * @return the new module object
      */
-    public static ModuleBody newModuleBody(String sourceName, String sourcePath,
-            MethodHandle initialization, MethodHandle handle) {
-        return new CompiledModuleBody(sourceName, sourcePath, initialization, handle, null);
+    public static ModuleBody newModuleBody(MethodHandle initialization, MethodHandle handle) {
+        return new CompiledModuleBody(initialization, handle, null);
     }
 
     /**
      * Returns a new {@link ModuleBody} object.
      * 
-     * @param sourceName
-     *            the source name
-     * @param sourcePath
-     *            the source path
      * @param initialization
      *            the initialization method handle
      * @param handle
@@ -133,56 +120,38 @@ public final class RuntimeInfo {
      *            the debug info method handle
      * @return the new module object
      */
-    public static ModuleBody newModuleBody(String sourceName, String sourcePath,
-            MethodHandle initialization, MethodHandle handle, MethodHandle debugInfo) {
-        return new CompiledModuleBody(sourceName, sourcePath, initialization, handle, debugInfo);
+    public static ModuleBody newModuleBody(MethodHandle initialization, MethodHandle handle, MethodHandle debugInfo) {
+        return new CompiledModuleBody(initialization, handle, debugInfo);
     }
 
     /**
      * Returns a new {@link ScriptBody} object.
      * 
-     * @param sourceName
-     *            the source name
-     * @param sourcePath
-     *            the source path
      * @param evaluation
      *            the script evaluation method handle
      * @return the new script object
      */
-    public static ScriptBody newScriptBody(String sourceName, String sourcePath,
-            MethodHandle evaluation) {
-        return new CompiledScriptBody(sourceName, sourcePath, evaluation, null);
+    public static ScriptBody newScriptBody(MethodHandle evaluation) {
+        return new CompiledScriptBody(evaluation, null);
     }
 
     /**
      * Returns a new {@link ScriptBody} object.
      * 
-     * @param sourceName
-     *            the source name
-     * @param sourcePath
-     *            the source path
      * @param evaluation
      *            the script evaluation method handle
      * @param debugInfo
      *            the debug info method handle
      * @return the new script object
      */
-    public static ScriptBody newScriptBody(String sourceName, String sourcePath,
-            MethodHandle evaluation, MethodHandle debugInfo) {
-        return new CompiledScriptBody(sourceName, sourcePath, evaluation, debugInfo);
+    public static ScriptBody newScriptBody(MethodHandle evaluation, MethodHandle debugInfo) {
+        return new CompiledScriptBody(evaluation, debugInfo);
     }
 
     /**
-     * Compiled source object.
+     * The runtime object.
      */
-    public interface SourceObject {
-        /**
-         * Returns the source information for this object.
-         * 
-         * @return the source object
-         */
-        Source toSource();
-
+    public interface RuntimeObject {
         /**
          * Returns the debug information or {@code null} if not available.
          * 
@@ -194,7 +163,7 @@ public final class RuntimeInfo {
     /**
      * Compiled script body information.
      */
-    public interface ScriptBody extends SourceObject {
+    public interface ScriptBody extends RuntimeObject {
         /**
          * Evaluates the script.
          * 
@@ -213,22 +182,12 @@ public final class RuntimeInfo {
     }
 
     private static final class CompiledScriptBody implements ScriptBody {
-        private final String sourceName;
-        private final String sourceFile;
         private final MethodHandle evaluation;
         private final MethodHandle debugInfo;
 
-        CompiledScriptBody(String sourceName, String sourceFile, MethodHandle evaluation,
-                MethodHandle debugInfo) {
-            this.sourceName = sourceName;
-            this.sourceFile = sourceFile;
+        CompiledScriptBody(MethodHandle evaluation, MethodHandle debugInfo) {
             this.evaluation = evaluation;
             this.debugInfo = debugInfo;
-        }
-
-        @Override
-        public Source toSource() {
-            return new Source(sourceFile, sourceName, 1);
         }
 
         @Override
@@ -256,7 +215,7 @@ public final class RuntimeInfo {
     /**
      * Compiled module information.
      */
-    public interface ModuleBody extends SourceObject {
+    public interface ModuleBody extends RuntimeObject {
         /**
          * Performs 15.2.1.16.4 ModuleDeclarationInstantiation( ) Concrete Method.
          * 
@@ -274,8 +233,8 @@ public final class RuntimeInfo {
          *             if any module specifier cannot be normalized
          */
         void moduleDeclarationInstantiation(ExecutionContext cx, SourceTextModuleRecord module,
-                LexicalEnvironment<ModuleEnvironmentRecord> env) throws IOException,
-                ResolutionException, MalformedNameException;
+                LexicalEnvironment<ModuleEnvironmentRecord> env)
+                throws IOException, ResolutionException, MalformedNameException;
 
         /**
          * Performs 15.2.1.16.5 ModuleEvaluation() Concrete Method.
@@ -288,29 +247,19 @@ public final class RuntimeInfo {
     }
 
     private static final class CompiledModuleBody implements ModuleBody {
-        private final String sourceName;
-        private final String sourceFile;
         private final MethodHandle initialization;
         private final MethodHandle handle;
         private final MethodHandle debugInfo;
 
-        CompiledModuleBody(String sourceName, String sourceFile, MethodHandle initialization,
-                MethodHandle handle, MethodHandle debugInfo) {
-            this.sourceName = sourceName;
-            this.sourceFile = sourceFile;
+        CompiledModuleBody(MethodHandle initialization, MethodHandle handle, MethodHandle debugInfo) {
             this.initialization = initialization;
             this.handle = handle;
             this.debugInfo = debugInfo;
         }
 
         @Override
-        public Source toSource() {
-            return new Source(sourceFile, sourceName, 1);
-        }
-
-        @Override
-        public void moduleDeclarationInstantiation(ExecutionContext cx,
-                SourceTextModuleRecord module, LexicalEnvironment<ModuleEnvironmentRecord> env)
+        public void moduleDeclarationInstantiation(ExecutionContext cx, SourceTextModuleRecord module,
+                LexicalEnvironment<ModuleEnvironmentRecord> env)
                 throws IOException, ResolutionException, MalformedNameException {
             try {
                 initialization.invokeExact(cx, module, env);
@@ -351,9 +300,9 @@ public final class RuntimeInfo {
         Strict(0x0001),
 
         /**
-         * Flag for implicit strict functions.
+         * Unused.
          */
-        ImplicitStrict(0x0002),
+        Unused4(0x0002),
 
         /**
          * Flag for generator functions.
@@ -381,24 +330,24 @@ public final class RuntimeInfo {
         Expression(0x0040),
 
         /**
-         * Flag for functions with concise, braceless body.
-         */
-        ConciseBody(0x0080),
-
-        /**
          * Flag for method definitions.
          */
-        Method(0x0100),
+        Method(0x0080),
 
         /**
-         * Flag for static method definitions.
+         * Flag for getter accessor methods.
          */
-        Static(0x0200),
+        Getter(0x0100),
 
         /**
-         * Flag for legacy generator functions.
+         * Flag for setter accessor methods.
          */
-        LegacyGenerator(0x0400),
+        Setter(0x0200),
+
+        /**
+         * Unused.
+         */
+        Unused2(0x0400),
 
         /**
          * Flag for legacy functions.
@@ -411,9 +360,9 @@ public final class RuntimeInfo {
         ScopedName(0x1000),
 
         /**
-         * Flag for functions with super-binding.
+         * Unused.
          */
-        Super(0x2000),
+        Unused3(0x2000),
 
         /**
          * Unused.
@@ -441,7 +390,7 @@ public final class RuntimeInfo {
         TailConstruct(0x40000),
 
         /**
-         * Flag for class functions.
+         * Flag for class constructor functions.
          */
         Class(0x80000),
 
@@ -484,12 +433,10 @@ public final class RuntimeInfo {
      */
     public static final class FunctionSource {
         private String source;
-        private final int bodyStart;
         private boolean compressed = true;
 
-        FunctionSource(String source, int bodyStart) {
+        FunctionSource(String source) {
             this.source = source;
-            this.bodyStart = bodyStart;
         }
 
         /**
@@ -497,7 +444,8 @@ public final class RuntimeInfo {
          * 
          * @return the function source string
          */
-        public synchronized String sourceString() {
+        @Override
+        public synchronized String toString() {
             if (compressed) {
                 try {
                     source = SourceCompressor.decompress(source);
@@ -508,30 +456,12 @@ public final class RuntimeInfo {
             }
             return source;
         }
-
-        /**
-         * Returns the function parameters source string.
-         * 
-         * @return the function parameters source string
-         */
-        public String parameters() {
-            return sourceString().substring(0, bodyStart);
-        }
-
-        /**
-         * Returns the function body source string.
-         * 
-         * @return the function body source string
-         */
-        public String body() {
-            return sourceString().substring(bodyStart);
-        }
     }
 
     /**
      * Compiled function information
      */
-    public interface Function {
+    public interface Function extends RuntimeObject {
         /**
          * Returns the method info object.
          * 
@@ -631,13 +561,6 @@ public final class RuntimeInfo {
          * @return the method handle for the function body
          */
         MethodHandle handle();
-
-        /**
-         * Returns the debug information or {@code null} if not available.
-         * 
-         * @return the debug information
-         */
-        DebugInfo debugInfo();
     }
 
     private static final class CompiledFunction implements Function {
@@ -653,14 +576,14 @@ public final class RuntimeInfo {
         private final MethodHandle debugInfo;
 
         CompiledFunction(Object methodInfo, String functionName, int functionFlags, int expectedArgumentCount,
-                String[] parameters, String source, int bodySourceStart, MethodHandle handle, MethodHandle callMethod,
+                String[] parameters, String source, MethodHandle handle, MethodHandle callMethod,
                 MethodHandle constructMethod, MethodHandle debugInfo) {
             this.methodInfo = methodInfo;
             this.functionName = functionName;
             this.functionFlags = functionFlags;
             this.expectedArgumentCount = expectedArgumentCount;
             this.parameters = parameters;
-            this.source = source != null ? new FunctionSource(source, bodySourceStart) : null;
+            this.source = source != null ? new FunctionSource(source) : null;
             this.handle = handle;
             this.callMethod = callMethod;
             this.constructMethod = constructMethod;

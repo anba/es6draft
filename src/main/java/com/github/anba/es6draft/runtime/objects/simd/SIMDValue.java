@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -35,7 +35,7 @@ public final class SIMDValue {
      * @param elements
      *            the SIMD elements
      */
-    /*package*/ SIMDValue(SIMDType type, Object elements) {
+    SIMDValue(SIMDType type, Object elements) {
         assert elements.getClass() == classForSIMD(type);
         this.type = type;
         this.elements = elements;
@@ -155,30 +155,17 @@ public final class SIMDValue {
     public String toString() {
         // String representation per SIMD ToString() specification.
         Stream<String> content;
-        switch (type) {
-        case Float64x2:
-        case Float32x4:
+        if (elements instanceof double[]) {
             content = Arrays.stream((double[]) elements).mapToObj(AbstractOperations::ToString);
-            break;
-        case Int32x4:
-        case Int16x8:
-        case Int8x16:
-        case Uint16x8:
-        case Uint8x16:
-            content = Arrays.stream((int[]) elements).mapToObj(AbstractOperations::ToString);
-            break;
-        case Uint32x4:
-            content = Arrays.stream((int[]) elements).mapToLong(Integer::toUnsignedLong)
-                    .mapToObj(AbstractOperations::ToString);
-            break;
-        case Bool64x2:
-        case Bool32x4:
-        case Bool16x8:
-        case Bool8x16:
+        } else if (elements instanceof int[]) {
+            if (type == SIMDType.Uint32x4) {
+                content = Arrays.stream((int[]) elements).mapToLong(Integer::toUnsignedLong)
+                        .mapToObj(AbstractOperations::ToString);
+            } else {
+                content = Arrays.stream((int[]) elements).mapToObj(AbstractOperations::ToString);
+            }
+        } else {
             content = booleanStream((boolean[]) elements).map(b -> Boolean.toString(b));
-            break;
-        default:
-            throw new AssertionError();
         }
         return content.collect(Collectors.joining(", ", "SIMD." + type.name() + "(", ")"));
     }

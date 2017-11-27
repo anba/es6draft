@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -15,17 +15,13 @@ import com.github.anba.es6draft.runtime.modules.SourceIdentifier;
  */
 public final class StringModuleSource implements ModuleSource {
     private final SourceIdentifier sourceId;
+    private final String sourceName;
     private final String sourceCode;
-    private final int sourceLine;
 
-    public StringModuleSource(SourceIdentifier sourceId, String sourceCode) {
-        this(sourceId, sourceCode, 1);
-    }
-
-    public StringModuleSource(SourceIdentifier sourceId, String sourceCode, int sourceLine) {
+    public StringModuleSource(SourceIdentifier sourceId, String sourceName, String sourceCode) {
         this.sourceId = sourceId;
+        this.sourceName = sourceName;
         this.sourceCode = sourceCode;
-        this.sourceLine = sourceLine;
     }
 
     @Override
@@ -35,6 +31,6 @@ public final class StringModuleSource implements ModuleSource {
 
     @Override
     public Source toSource() {
-        return new Source(sourceId.toString(), sourceLine);
+        return new Source(sourceId, sourceName, 1);
     }
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -31,11 +31,12 @@ import java.util.LinkedHashMap;
 import java.util.Map.Entry;
 import java.util.Objects;
 
-import com.github.anba.es6draft.Script;
-import com.github.anba.es6draft.repl.global.StopExecutionException;
+import com.github.anba.es6draft.repl.functions.StopExecutionException;
 import com.github.anba.es6draft.runtime.AbstractOperations;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
+import com.github.anba.es6draft.runtime.language.CallOperations;
+import com.github.anba.es6draft.runtime.language.ClassOperations;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Constructor;
@@ -65,7 +66,7 @@ public final class Properties {
     @Documented
     @Target({ ElementType.TYPE })
     @Retention(RetentionPolicy.RUNTIME)
-    public static @interface CompatibilityExtension {
+    public @interface CompatibilityExtension {
         CompatibilityOption value();
     }
 
@@ -75,7 +76,7 @@ public final class Properties {
     @Documented
     @Target({ ElementType.FIELD })
     @Retention(RetentionPolicy.RUNTIME)
-    public static @interface Prototype {
+    public @interface Prototype {
     }
 
     /**
@@ -84,7 +85,7 @@ public final class Properties {
     @Documented
     @Target({ ElementType.METHOD })
     @Retention(RetentionPolicy.RUNTIME)
-    public static @interface Function {
+    public @interface Function {
         /**
          * Returns the function name.
          * 
@@ -112,8 +113,7 @@ public final class Properties {
          * 
          * @return the function attributes
          */
-        Attributes attributes() default @Attributes(writable = true, enumerable = false,
-                configurable = true);
+        Attributes attributes() default @Attributes(writable = true, enumerable = false, configurable = true);
 
         /**
          * Returns the optional native function identifier.
@@ -129,7 +129,7 @@ public final class Properties {
     @Documented
     @Target({ ElementType.FIELD, ElementType.METHOD })
     @Retention(RetentionPolicy.RUNTIME)
-    public static @interface Value {
+    public @interface Value {
         /**
          * Returns the value name.
          * 
@@ -150,8 +150,7 @@ public final class Properties {
          * 
          * @return the value attributes
          */
-        Attributes attributes() default @Attributes(writable = true, enumerable = false,
-                configurable = true);
+        Attributes attributes() default @Attributes(writable = true, enumerable = false, configurable = true);
     }
 
     /**
@@ -160,7 +159,7 @@ public final class Properties {
     @Documented
     @Target({ ElementType.METHOD })
     @Retention(RetentionPolicy.RUNTIME)
-    public static @interface Accessor {
+    public @interface Accessor {
         /**
          * Returns the accessor name.
          * 
@@ -192,8 +191,8 @@ public final class Properties {
          * 
          * @return the accessor attributes
          */
-        Attributes attributes() default @Attributes(writable = false /*unused*/,
-                enumerable = false, configurable = true);
+        Attributes attributes() default @Attributes(writable = false /*unused*/, enumerable = false,
+                configurable = true);
 
         /**
          * Returns the optional native function identifier.
@@ -210,7 +209,7 @@ public final class Properties {
     @Target({ ElementType.METHOD })
     @Retention(RetentionPolicy.RUNTIME)
     @Repeatable(AliasFunctions.class)
-    public static @interface AliasFunction {
+    public @interface AliasFunction {
         /**
          * Returns the function name.
          * 
@@ -231,8 +230,7 @@ public final class Properties {
          * 
          * @return the function attributes
          */
-        Attributes attributes() default @Attributes(writable = true, enumerable = false,
-                configurable = true);
+        Attributes attributes() default @Attributes(writable = true, enumerable = false, configurable = true);
     }
 
     /**
@@ -241,7 +239,7 @@ public final class Properties {
     @Documented
     @Target({ ElementType.METHOD })
     @Retention(RetentionPolicy.RUNTIME)
-    public static @interface AliasFunctions {
+    public @interface AliasFunctions {
         AliasFunction[] value();
     }
 
@@ -251,13 +249,13 @@ public final class Properties {
     @Documented
     @Target({ ElementType.METHOD })
     @Retention(RetentionPolicy.RUNTIME)
-    public static @interface TailCall {
+    public @interface TailCall {
     }
 
     @Documented
     @Target({ ElementType.ANNOTATION_TYPE })
     @Retention(RetentionPolicy.RUNTIME)
-    public static @interface Attributes {
+    public @interface Attributes {
         boolean writable();
 
         boolean enumerable();
@@ -268,7 +266,7 @@ public final class Properties {
     @Documented
     @Target(ElementType.PARAMETER)
     @Retention(RetentionPolicy.RUNTIME)
-    public static @interface Optional {
+    public @interface Optional {
         /**
          * Returns the default runtime type.
          * 
@@ -277,24 +275,21 @@ public final class Properties {
         Default value() default Default.Undefined;
 
         /**
-         * Returns the default boolean value, only applicable if {@code value()} is
-         * {@link Default#Boolean}.
+         * Returns the default boolean value, only applicable if {@code value()} is {@link Default#Boolean}.
          * 
          * @return the default boolean value
          */
         boolean booleanValue() default false;
 
         /**
-         * Returns the default string value, only applicable if {@code value()} is
-         * {@link Default#String}.
+         * Returns the default string value, only applicable if {@code value()} is {@link Default#String}.
          * 
          * @return the default string value
          */
         String stringValue() default "";
 
         /**
-         * Returns the default number value, only applicable if {@code value()} is
-         * {@link Default#Number}.
+         * Returns the default number value, only applicable if {@code value()} is {@link Default#Number}.
          * 
          * @return the default number value
          */
@@ -480,8 +475,7 @@ public final class Properties {
         final ArrayList<PropertyLayout> properties;
         final CompatibilityOption option;
 
-        CompactLayout(Object prototype, ArrayList<PropertyLayout> properties,
-                CompatibilityOption option) {
+        CompactLayout(Object prototype, ArrayList<PropertyLayout> properties, CompatibilityOption option) {
             this.prototype = prototype;
             this.properties = properties;
             this.option = option;
@@ -489,8 +483,8 @@ public final class Properties {
     }
 
     /**
-     * Sets the {@link Prototype} and creates own properties for {@link Value}, {@link Function} and
-     * {@link Accessor} fields.
+     * Sets the {@link Prototype} and creates own properties for {@link Value}, {@link Function} and {@link Accessor}
+     * fields.
      * 
      * @param realm
      *            the realm instance
@@ -505,8 +499,8 @@ public final class Properties {
     }
 
     /**
-     * Sets the {@link Prototype} and creates own properties for {@link Value}, {@link Function} and
-     * {@link Accessor} fields.
+     * Sets the {@link Prototype} and creates own properties for {@link Value}, {@link Function} and {@link Accessor}
+     * fields.
      * 
      * @param <OWNER>
      *            the owner class type
@@ -519,8 +513,8 @@ public final class Properties {
      * @param holder
      *            the class which holds the properties
      */
-    public static <OWNER> void createProperties(ExecutionContext cx, ScriptObject target,
-            OWNER owner, Class<OWNER> holder) {
+    public static <OWNER> void createProperties(ExecutionContext cx, ScriptObject target, OWNER owner,
+            Class<OWNER> holder) {
         assert !holder.getName().startsWith(INTERNAL_PACKAGE);
         createExternalProperties(cx, target, owner, holder);
     }
@@ -538,8 +532,7 @@ public final class Properties {
      *            the class which holds the properties
      * @return the new function object
      */
-    public static <OWNER> Callable createFunction(ExecutionContext cx, OWNER owner,
-            Class<OWNER> holder) {
+    public static <OWNER> Callable createFunction(ExecutionContext cx, OWNER owner, Class<OWNER> holder) {
         assert !holder.getName().startsWith(INTERNAL_PACKAGE);
         return createExternalFunction(cx, owner, holder);
     }
@@ -557,8 +550,8 @@ public final class Properties {
      *            the class which holds the prototype properties
      * @return the new native script class
      */
-    public static Constructor createClass(ExecutionContext cx, String className,
-            Class<?> constructorProperties, Class<?> prototypeProperties) {
+    public static Constructor createClass(ExecutionContext cx, String className, Class<?> constructorProperties,
+            Class<?> prototypeProperties) {
         assert !constructorProperties.getName().startsWith(INTERNAL_PACKAGE);
         assert !prototypeProperties.getName().startsWith(INTERNAL_PACKAGE);
         return createExternalClass(cx, className, constructorProperties, prototypeProperties);
@@ -573,7 +566,7 @@ public final class Properties {
 
         Converter(ExecutionContext cx) {
             this.cx = cx;
-            this.toScriptException = MethodHandles.insertArguments(ToScriptExceptionMH, 0, cx);
+            this.toScriptException = bindToContext(ToScriptExceptionMH);
         }
 
         MethodHandle toScriptException() {
@@ -584,27 +577,24 @@ public final class Properties {
             if (c == Object.class) {
                 return null;
             } else if (c == Double.TYPE) {
-                return MethodHandles.insertArguments(ToNumberMH, 0, cx);
+                return bindToContext(ToNumberMH);
             } else if (c == Integer.TYPE) {
-                return MethodHandles.insertArguments(ToInt32MH, 0, cx);
+                return bindToContext(ToInt32MH);
+            } else if (c == Number.class) {
+                return bindToContext(ToNumericMH);
             } else if (c == Boolean.TYPE) {
                 return ToBooleanMH;
             } else if (c == String.class) {
-                return MethodHandles.insertArguments(ToFlatStringMH, 0, cx);
+                return bindToContext(ToFlatStringMH);
             } else if (c == CharSequence.class) {
-                return MethodHandles.insertArguments(ToStringMH, 0, cx);
+                return bindToContext(ToStringMH);
             } else if (c == ScriptObject.class) {
-                return MethodHandles.insertArguments(ToObjectMH, 0, cx);
+                return bindToContext(ToObjectMH);
             } else if (c == Callable.class) {
-                return MethodHandles.insertArguments(ToCallableMH, 0, cx);
+                return bindToContext(ToCallableMH);
             } else if (ScriptObject.class.isAssignableFrom(c)) {
-                MethodHandle test = IsInstanceMH.bindTo(c);
-                MethodHandle target = MethodHandles.identity(c);
-                target = target.asType(target.type().changeParameterType(0, Object.class));
-                MethodHandle fallback = MethodHandles.insertArguments(ThrowTypeErrorIncompatibleMH,
-                        0, cx);
-                fallback = fallback.asType(fallback.type().changeReturnType(c));
-                return MethodHandles.guardWithTest(test, target, fallback);
+                return MethodHandles.guardWithTest(IsInstanceMH.bindTo(c), cast(c, Object.class),
+                        throwTypeErrorIncompatibleHandle(c, Object.class));
             }
             throw new IllegalArgumentException(c.toString());
         }
@@ -615,34 +605,33 @@ public final class Properties {
             if (c == Object.class) {
                 return null;
             } else if (c == Double.TYPE) {
-                return MethodHandles.insertArguments(ToNumberArrayMH, 0, cx);
+                return bindToContext(ToNumberArrayMH);
+            } else if (c == Number.class) {
+                return bindToContext(ToNumericArrayMH);
             } else if (c == Boolean.TYPE) {
                 return ToBooleanArrayMH;
             } else if (c == String.class) {
-                return MethodHandles.insertArguments(ToFlatStringArrayMH, 0, cx);
+                return bindToContext(ToFlatStringArrayMH);
             } else if (c == CharSequence.class) {
-                return MethodHandles.insertArguments(ToStringArrayMH, 0, cx);
+                return bindToContext(ToStringArrayMH);
             } else if (c == ScriptObject.class) {
-                return MethodHandles.insertArguments(ToObjectArrayMH, 0, cx);
+                return bindToContext(ToObjectArrayMH);
             } else if (c == Callable.class) {
-                return MethodHandles.insertArguments(ToCallableArrayMH, 0, cx);
+                return bindToContext(ToCallableArrayMH);
             }
             throw new IllegalArgumentException(c.toString());
         }
 
         MethodHandle returnHandle(MethodHandle handle, Class<?> returnType) {
-            if (returnType == Double.TYPE || returnType == Integer.TYPE
-                    || returnType == Boolean.TYPE) {
-                return MethodHandles.explicitCastArguments(handle,
-                        handle.type().changeReturnType(Object.class));
-            } else if (returnType == String.class
+            if (returnType == Double.TYPE || returnType == Integer.TYPE || returnType == Boolean.TYPE) {
+                return MethodHandles.explicitCastArguments(handle, handle.type().changeReturnType(Object.class));
+            } else if (returnType == String.class || returnType == Number.class
                     || ScriptObject.class.isAssignableFrom(returnType)) {
                 return MethodHandles.filterReturnValue(
-                        MethodHandles.explicitCastArguments(handle,
-                                handle.type().changeReturnType(Object.class)), nullFilter());
+                        MethodHandles.explicitCastArguments(handle, handle.type().changeReturnType(Object.class)),
+                        nullFilter());
             } else if (returnType == Void.TYPE) {
-                return MethodHandles.filterReturnValue(handle,
-                        MethodHandles.constant(Object.class, UNDEFINED));
+                return MethodHandles.filterReturnValue(handle, MethodHandles.constant(Object.class, UNDEFINED));
             } else if (returnType == Object.class) {
                 return MethodHandles.filterReturnValue(handle, typeFilter());
             }
@@ -652,48 +641,61 @@ public final class Properties {
         MethodHandle constructReturnHandle(MethodHandle handle, Class<?> returnType) {
             if (ScriptObject.class.isAssignableFrom(returnType)) {
                 return MethodHandles.filterReturnValue(
-                        handle.asType(handle.type().changeReturnType(ScriptObject.class)),
-                        nullObjectFilter());
+                        handle.asType(handle.type().changeReturnType(ScriptObject.class)), nullObjectFilter());
             } else if (returnType == Object.class) {
                 return MethodHandles.filterReturnValue(handle, objectFilter());
             }
             throw new IllegalArgumentException(returnType.toString());
         }
 
+        private MethodHandle bindToContext(MethodHandle mh) {
+            return MethodHandles.insertArguments(mh, 0, cx);
+        }
+
         private MethodHandle nullFilter() {
-            MethodHandle fallback = MethodHandles.dropArguments(
-                    MethodHandles.constant(Object.class, NULL), 0, Object.class);
             return MethodHandles.guardWithTest(isNotNullMH, MethodHandles.identity(Object.class),
-                    fallback);
+                    MethodHandles.dropArguments(MethodHandles.constant(Object.class, NULL), 0, Object.class));
         }
 
         private MethodHandle nullObjectFilter() {
-            MethodHandle fallback = MethodHandles.insertArguments(ThrowTypeErrorNotObjectMH, 0, cx);
-            fallback = fallback.asType(fallback.type().changeParameterType(0, ScriptObject.class));
-            fallback = fallback.asType(fallback.type().changeReturnType(ScriptObject.class));
-            return MethodHandles.guardWithTest(isNotNullMH.asType(isNotNullMH.type()
-                    .changeParameterType(0, ScriptObject.class)), MethodHandles
-                    .identity(ScriptObject.class), fallback);
+            return MethodHandles.guardWithTest(
+                    isNotNullMH.asType(isNotNullMH.type().changeParameterType(0, ScriptObject.class)),
+                    MethodHandles.identity(ScriptObject.class),
+                    throwTypeErrorNotObjectHandle(ScriptObject.class, ScriptObject.class));
         }
 
         private MethodHandle typeFilter() {
-            MethodHandle fallback = MethodHandles.insertArguments(ThrowTypeErrorIncompatibleMH, 0,
-                    cx);
-            fallback = fallback.asType(fallback.type().changeReturnType(Object.class));
             return MethodHandles.guardWithTest(isTypeMH, MethodHandles.identity(Object.class),
-                    fallback);
+                    throwTypeErrorIncompatibleHandle(Object.class, Object.class));
         }
 
         private MethodHandle objectFilter() {
-            MethodHandle target = MethodHandles.identity(ScriptObject.class);
-            target = target.asType(target.type().changeParameterType(0, Object.class));
-            MethodHandle fallback = MethodHandles.insertArguments(ThrowTypeErrorNotObjectMH, 0, cx);
-            fallback = fallback.asType(fallback.type().changeReturnType(ScriptObject.class));
-            return MethodHandles.guardWithTest(isObjectMH, target, fallback);
+            return MethodHandles.guardWithTest(isObjectMH, cast(ScriptObject.class, Object.class),
+                    throwTypeErrorNotObjectHandle(ScriptObject.class, Object.class));
         }
 
-        private static final MethodHandle ToBooleanMH, ToNumberMH, ToInt32MH, ToStringMH,
-                ToFlatStringMH, ToObjectMH, ToCallableMH, IsInstanceMH;
+        private MethodHandle throwTypeErrorNotObjectHandle(Class<?> returnType, Class<?>... parameters) {
+            MethodHandle mh = bindToContext(ThrowTypeErrorNotObjectMH);
+            mh = MethodHandles.dropArguments(mh, 0, parameters);
+            mh = mh.asType(mh.type().changeReturnType(returnType));
+            return mh;
+        }
+
+        private MethodHandle throwTypeErrorIncompatibleHandle(Class<?> returnType, Class<?>... parameters) {
+            MethodHandle mh = bindToContext(ThrowTypeErrorIncompatibleMH);
+            mh = MethodHandles.dropArguments(mh, 0, parameters);
+            mh = mh.asType(mh.type().changeReturnType(returnType));
+            return mh;
+        }
+
+        private static MethodHandle cast(Class<?> to, Class<?> from) {
+            MethodHandle target = MethodHandles.identity(to);
+            return target.asType(target.type().changeParameterType(0, from));
+        }
+
+        private static final MethodHandle ToBooleanMH, ToNumberMH, ToInt32MH, ToNumericMH, ToStringMH, ToFlatStringMH,
+                ToObjectMH, ToCallableMH, IsInstanceMH;
+
         static {
             MethodLookup lookup = new MethodLookup(MethodHandles.publicLookup());
             ToBooleanMH = lookup.findStatic(AbstractOperations.class, "ToBoolean",
@@ -702,56 +704,52 @@ public final class Properties {
                     MethodType.methodType(Double.TYPE, ExecutionContext.class, Object.class));
             ToInt32MH = lookup.findStatic(AbstractOperations.class, "ToInt32",
                     MethodType.methodType(Integer.TYPE, ExecutionContext.class, Object.class));
-            ToStringMH = lookup
-                    .findStatic(AbstractOperations.class, "ToString", MethodType.methodType(
-                            CharSequence.class, ExecutionContext.class, Object.class));
+            ToNumericMH = lookup.findStatic(AbstractOperations.class, "ToNumeric",
+                    MethodType.methodType(Number.class, ExecutionContext.class, Object.class));
+            ToStringMH = lookup.findStatic(AbstractOperations.class, "ToString",
+                    MethodType.methodType(CharSequence.class, ExecutionContext.class, Object.class));
             ToFlatStringMH = lookup.findStatic(AbstractOperations.class, "ToFlatString",
                     MethodType.methodType(String.class, ExecutionContext.class, Object.class));
-            ToObjectMH = lookup
-                    .findStatic(AbstractOperations.class, "ToObject", MethodType.methodType(
-                            ScriptObject.class, ExecutionContext.class, Object.class));
+            ToObjectMH = lookup.findStatic(AbstractOperations.class, "ToObject",
+                    MethodType.methodType(ScriptObject.class, ExecutionContext.class, Object.class));
 
-            ToCallableMH = MethodHandles.permuteArguments(lookup.findStatic(ScriptRuntime.class,
-                    "CheckCallable",
-                    MethodType.methodType(Callable.class, Object.class, ExecutionContext.class)),
-                    MethodType.methodType(Callable.class, ExecutionContext.class, Object.class), 1,
-                    0);
+            ToCallableMH = MethodHandles.permuteArguments(
+                    lookup.findStatic(CallOperations.class, "CheckCallable",
+                            MethodType.methodType(Callable.class, Object.class, ExecutionContext.class)),
+                    MethodType.methodType(Callable.class, ExecutionContext.class, Object.class), 1, 0);
 
             IsInstanceMH = lookup.findVirtual(Class.class, "isInstance",
                     MethodType.methodType(Boolean.TYPE, Object.class));
         }
 
-        private static final MethodHandle ToBooleanArrayMH, ToStringArrayMH, ToFlatStringArrayMH,
-                ToNumberArrayMH, ToObjectArrayMH, ToCallableArrayMH, ToScriptExceptionMH,
-                ThrowTypeErrorIncompatibleMH, ThrowTypeErrorNotObjectMH, isNotNullMH, isTypeMH,
-                isObjectMH;
+        private static final MethodHandle ToBooleanArrayMH, ToStringArrayMH, ToFlatStringArrayMH, ToNumberArrayMH,
+                ToNumericArrayMH, ToObjectArrayMH, ToCallableArrayMH, ToScriptExceptionMH, ThrowTypeErrorIncompatibleMH,
+                ThrowTypeErrorNotObjectMH, isNotNullMH, isTypeMH, isObjectMH;
+
         static {
             MethodLookup lookup = new MethodLookup(MethodHandles.lookup());
-            ToStringArrayMH = lookup.findStatic("ToString", MethodType.methodType(
-                    CharSequence[].class, ExecutionContext.class, Object[].class));
+            ToStringArrayMH = lookup.findStatic("ToString",
+                    MethodType.methodType(CharSequence[].class, ExecutionContext.class, Object[].class));
             ToFlatStringArrayMH = lookup.findStatic("ToFlatString",
                     MethodType.methodType(String[].class, ExecutionContext.class, Object[].class));
             ToNumberArrayMH = lookup.findStatic("ToNumber",
                     MethodType.methodType(double[].class, ExecutionContext.class, Object[].class));
-            ToBooleanArrayMH = lookup.findStatic("ToBoolean",
-                    MethodType.methodType(boolean[].class, Object[].class));
-            ToObjectArrayMH = lookup.findStatic("ToObject", MethodType.methodType(
-                    ScriptObject[].class, ExecutionContext.class, Object[].class));
-            ToCallableArrayMH = lookup
-                    .findStatic("ToCallable", MethodType.methodType(Callable[].class,
-                            ExecutionContext.class, Object[].class));
-            ToScriptExceptionMH = lookup.findStatic("ToScriptException", MethodType.methodType(
-                    ScriptException.class, ExecutionContext.class, Exception.class));
+            ToNumericArrayMH = lookup.findStatic("ToNumeric",
+                    MethodType.methodType(Number[].class, ExecutionContext.class, Object[].class));
+            ToBooleanArrayMH = lookup.findStatic("ToBoolean", MethodType.methodType(boolean[].class, Object[].class));
+            ToObjectArrayMH = lookup.findStatic("ToObject",
+                    MethodType.methodType(ScriptObject[].class, ExecutionContext.class, Object[].class));
+            ToCallableArrayMH = lookup.findStatic("ToCallable",
+                    MethodType.methodType(Callable[].class, ExecutionContext.class, Object[].class));
+            ToScriptExceptionMH = lookup.findStatic("ToScriptException",
+                    MethodType.methodType(ScriptException.class, ExecutionContext.class, Exception.class));
             ThrowTypeErrorIncompatibleMH = lookup.findStatic("throwTypeErrorIncompatible",
-                    MethodType.methodType(void.class, ExecutionContext.class, Object.class));
+                    MethodType.methodType(void.class, ExecutionContext.class));
             ThrowTypeErrorNotObjectMH = lookup.findStatic("throwTypeErrorNotObject",
-                    MethodType.methodType(void.class, ExecutionContext.class, Object.class));
-            isNotNullMH = lookup.findStatic("isNotNull",
-                    MethodType.methodType(boolean.class, Object.class));
-            isTypeMH = lookup.findStatic(Type.class, "isType",
-                    MethodType.methodType(boolean.class, Object.class));
-            isObjectMH = lookup.findStatic(Type.class, "isObject",
-                    MethodType.methodType(boolean.class, Object.class));
+                    MethodType.methodType(void.class, ExecutionContext.class));
+            isNotNullMH = lookup.findStatic("isNotNull", MethodType.methodType(boolean.class, Object.class));
+            isTypeMH = lookup.findStatic(Type.class, "isType", MethodType.methodType(boolean.class, Object.class));
+            isObjectMH = lookup.findStatic(Type.class, "isObject", MethodType.methodType(boolean.class, Object.class));
         }
 
         private static boolean[] ToBoolean(Object[] source) {
@@ -786,6 +784,14 @@ public final class Properties {
             return target;
         }
 
+        private static Number[] ToNumeric(ExecutionContext cx, Object[] source) {
+            Number[] target = new Number[source.length];
+            for (int i = 0; i < target.length; i++) {
+                target[i] = AbstractOperations.ToNumeric(cx, source[i]);
+            }
+            return target;
+        }
+
         private static ScriptObject[] ToObject(ExecutionContext cx, Object[] source) {
             ScriptObject[] target = new ScriptObject[source.length];
             for (int i = 0; i < target.length; i++) {
@@ -797,7 +803,7 @@ public final class Properties {
         private static Callable[] ToCallable(ExecutionContext cx, Object[] source) {
             Callable[] target = new Callable[source.length];
             for (int i = 0; i < target.length; i++) {
-                target[i] = ScriptRuntime.CheckCallable(source[i], cx);
+                target[i] = CallOperations.CheckCallable(source[i], cx);
             }
             return target;
         }
@@ -811,11 +817,11 @@ public final class Properties {
             return Errors.newInternalError(cx, cause, Messages.Key.InternalError, info);
         }
 
-        private static void throwTypeErrorIncompatible(ExecutionContext cx, Object ignore) {
+        private static void throwTypeErrorIncompatible(ExecutionContext cx) {
             throw Errors.newTypeError(cx, Messages.Key.IncompatibleObject);
         }
 
-        private static void throwTypeErrorNotObject(ExecutionContext cx, Object ignore) {
+        private static void throwTypeErrorNotObject(ExecutionContext cx) {
             throw Errors.newTypeError(cx, Messages.Key.NotObjectType);
         }
 
@@ -824,8 +830,8 @@ public final class Properties {
         }
     }
 
-    private static <OWNER> void createExternalProperties(ExecutionContext cx, ScriptObject target,
-            OWNER owner, Class<OWNER> holder) {
+    private static <OWNER> void createExternalProperties(ExecutionContext cx, ScriptObject target, OWNER owner,
+            Class<OWNER> holder) {
         ObjectLayout layout = externalLayouts.get(holder);
         Converter converter = new Converter(cx);
         if (layout.values != null) {
@@ -848,12 +854,12 @@ public final class Properties {
         Converter converter = new Converter(cx);
         Entry<Function, MethodHandle> entry = layout.functions.entrySet().iterator().next();
         Function function = entry.getKey();
-        MethodHandle handle = getInstanceMethodHandle(cx, converter, entry.getValue(), owner);
+        MethodHandle handle = getInstanceMethodHandle(converter, entry.getValue(), owner);
         return new NativeFunction(cx.getRealm(), function.name(), function.arity(), handle);
     }
 
-    private static <OWNER> void createExternalValues(ExecutionContext cx, ScriptObject target,
-            OWNER owner, ObjectLayout layout, Converter converter) {
+    private static <OWNER> void createExternalValues(ExecutionContext cx, ScriptObject target, OWNER owner,
+            ObjectLayout layout, Converter converter) {
         for (Entry<Value, Object> entry : layout.values.entrySet()) {
             Value val = entry.getKey();
             assert entry.getValue() instanceof MethodHandle;
@@ -862,20 +868,20 @@ public final class Properties {
         }
     }
 
-    private static <OWNER> void createExternalFunctions(ExecutionContext cx, ScriptObject target,
-            OWNER owner, ObjectLayout layout, Converter converter) {
+    private static <OWNER> void createExternalFunctions(ExecutionContext cx, ScriptObject target, OWNER owner,
+            ObjectLayout layout, Converter converter) {
         for (Entry<Function, MethodHandle> entry : layout.functions.entrySet()) {
-            MethodHandle handle = getInstanceMethodHandle(cx, converter, entry.getValue(), owner);
+            MethodHandle handle = getInstanceMethodHandle(converter, entry.getValue(), owner);
             createExternalFunction(cx, target, entry.getKey(), handle);
         }
     }
 
-    private static <OWNER> void createExternalAccessors(ExecutionContext cx, ScriptObject target,
-            OWNER owner, ObjectLayout layout, Converter converter) {
+    private static <OWNER> void createExternalAccessors(ExecutionContext cx, ScriptObject target, OWNER owner,
+            ObjectLayout layout, Converter converter) {
         LinkedHashMap<String, PropertyDescriptor> stringProps = new LinkedHashMap<>();
         EnumMap<BuiltinSymbol, PropertyDescriptor> symbolProps = new EnumMap<>(BuiltinSymbol.class);
         for (Entry<Accessor, MethodHandle> entry : layout.accessors.entrySet()) {
-            MethodHandle handle = getInstanceMethodHandle(cx, converter, entry.getValue(), owner);
+            MethodHandle handle = getInstanceMethodHandle(converter, entry.getValue(), owner);
             createExternalAccessor(cx, entry.getKey(), handle, stringProps, symbolProps);
         }
         defineProperties(cx, target, stringProps, symbolProps);
@@ -887,13 +893,13 @@ public final class Properties {
         ObjectLayout protoLayout = externalClassLayouts.get(prototypeProperties);
         Converter converter = new Converter(cx);
 
-        ScriptObject[] objects = ScriptRuntime.getDefaultClassProto(cx);
-        ScriptObject constructorParent = objects[0];
-        OrdinaryObject proto = (OrdinaryObject) objects[1];
+        ScriptObject[] objects = ClassOperations.getDefaultClassProto(cx);
+        ScriptObject protoParent = objects[0];
+        OrdinaryObject proto = ClassOperations.createProto(protoParent, cx);
+        ScriptObject constructorParent = objects[1];
         assert constructorParent == cx.getIntrinsic(Intrinsics.FunctionPrototype);
 
-        OrdinaryObject constructor = createConstructor(cx, className, proto, converter,
-                protoLayout);
+        OrdinaryObject constructor = createConstructor(cx, className, proto, converter, protoLayout);
         assert constructor instanceof Constructor;
         if (ctorLayout.functions != null) {
             createExternalFunctions(cx, constructor, ctorLayout, converter);
@@ -910,30 +916,24 @@ public final class Properties {
         return (Constructor) constructor;
     }
 
-    private static OrdinaryObject createConstructor(ExecutionContext cx, String className,
-            OrdinaryObject proto, Converter converter, ObjectLayout layout) {
+    private static OrdinaryObject createConstructor(ExecutionContext cx, String className, OrdinaryObject proto,
+            Converter converter, ObjectLayout layout) {
         Entry<Function, MethodHandle> constructorEntry = findConstructor(layout);
         if (constructorEntry != null) {
             // User supplied method, perform manual ClassDefinitionEvaluation for constructors
             Function function = constructorEntry.getKey();
             MethodHandle unreflect = constructorEntry.getValue();
-            MethodHandle callMethod = getConstructorStaticMethodHandle(cx, converter, unreflect,
-                    MethodKind.Call);
-            MethodHandle constructMethod = getConstructorStaticMethodHandle(cx, converter,
-                    unreflect, MethodKind.Construct);
-            NativeConstructor constructor = new NativeConstructor(cx.getRealm(), className,
-                    function.arity(), callMethod, constructMethod);
-            constructor.defineOwnProperty(cx, "prototype", new PropertyDescriptor(proto, false,
-                    false, false));
-            proto.defineOwnProperty(cx, "constructor", new PropertyDescriptor(constructor, true,
-                    false, true));
+            MethodHandle callMethod = getStaticMethodHandle(converter, unreflect, MethodKind.Call);
+            MethodHandle constructMethod = getStaticMethodHandle(converter, unreflect, MethodKind.Construct);
+            NativeConstructor constructor = new NativeConstructor(cx.getRealm(), className, function.arity(),
+                    callMethod, constructMethod);
+            constructor.defineOwnProperty(cx, "prototype", new PropertyDescriptor(proto, false, false, false));
+            proto.defineOwnProperty(cx, "constructor", new PropertyDescriptor(constructor, true, false, true));
             return constructor;
         }
         // Create default constructor
         String sourceText = String.format("(class %s { })", sanitizeName(className));
-        ScriptLoader scriptLoader = cx.getRealm().getScriptLoader();
-        Script script = scriptLoader.script(new Source("<Constructor>", 1), sourceText);
-        Object constructor = script.evaluate(cx);
+        Object constructor = ScriptLoading.eval(cx.getRealm(), "<Constructor>", sourceText);
         assert constructor instanceof OrdinaryConstructorFunction : constructor.getClass();
         return (OrdinaryConstructorFunction) constructor;
     }
@@ -945,8 +945,11 @@ public final class Properties {
         StringBuilder sb = new StringBuilder(className.length());
         for (int i = 0, codePoint; i < className.length(); i += Character.charCount(codePoint)) {
             codePoint = className.codePointAt(i);
-            sb.appendCodePoint((i == 0 ? Character.isJavaIdentifierStart(codePoint) : Character
-                    .isJavaIdentifierPart(codePoint)) ? codePoint : '_');
+            if (i == 0 ? Character.isJavaIdentifierStart(codePoint) : Character.isJavaIdentifierPart(codePoint)) {
+                sb.appendCodePoint(codePoint);
+            } else {
+                sb.append('_');
+            }
         }
         return sb.toString();
     }
@@ -962,27 +965,27 @@ public final class Properties {
         return null;
     }
 
-    private static void createExternalFunctions(ExecutionContext cx, OrdinaryObject target,
-            ObjectLayout layout, Converter converter) {
+    private static void createExternalFunctions(ExecutionContext cx, OrdinaryObject target, ObjectLayout layout,
+            Converter converter) {
         for (Entry<Function, MethodHandle> entry : layout.functions.entrySet()) {
-            MethodHandle handle = getStaticMethodHandle(cx, converter, entry.getValue());
+            MethodHandle handle = getStaticMethodHandle(converter, entry.getValue(), MethodKind.Default);
             createExternalFunction(cx, target, entry.getKey(), handle);
         }
     }
 
-    private static void createExternalAccessors(ExecutionContext cx, OrdinaryObject target,
-            ObjectLayout layout, Converter converter) {
+    private static void createExternalAccessors(ExecutionContext cx, OrdinaryObject target, ObjectLayout layout,
+            Converter converter) {
         LinkedHashMap<String, PropertyDescriptor> stringProps = new LinkedHashMap<>();
         EnumMap<BuiltinSymbol, PropertyDescriptor> symbolProps = new EnumMap<>(BuiltinSymbol.class);
         for (Entry<Accessor, MethodHandle> entry : layout.accessors.entrySet()) {
-            MethodHandle handle = getStaticMethodHandle(cx, converter, entry.getValue());
+            MethodHandle handle = getStaticMethodHandle(converter, entry.getValue(), MethodKind.Default);
             createExternalAccessor(cx, entry.getKey(), handle, stringProps, symbolProps);
         }
         defineProperties(cx, target, stringProps, symbolProps);
     }
 
-    private static <OWNER> Object resolveValue(ExecutionContext cx, Converter converter,
-            MethodHandle handle, OWNER owner) {
+    private static <OWNER> Object resolveValue(ExecutionContext cx, Converter converter, MethodHandle handle,
+            OWNER owner) {
         if (handle.type().parameterCount() == 1) {
             try {
                 return converter.returnHandle(handle, handle.type().returnType()).invoke(owner);
@@ -992,8 +995,7 @@ public final class Properties {
                 throw new RuntimeException(e);
             }
         }
-        if (handle.type().parameterCount() == 2
-                && handle.type().parameterType(1) == ExecutionContext.class) {
+        if (handle.type().parameterCount() == 2 && handle.type().parameterType(1) == ExecutionContext.class) {
             try {
                 return converter.returnHandle(handle, handle.type().returnType()).invoke(owner, cx);
             } catch (RuntimeException | Error e) {
@@ -1005,15 +1007,15 @@ public final class Properties {
         throw new IllegalArgumentException(handle.type().toString());
     }
 
-    private static void createExternalFunction(ExecutionContext cx, ScriptObject target,
-            Function function, MethodHandle handle) {
+    private static void createExternalFunction(ExecutionContext cx, ScriptObject target, Function function,
+            MethodHandle handle) {
         String name = function.name();
         NativeFunction fun = new NativeFunction(cx.getRealm(), name, function.arity(), handle);
         defineProperty(cx, target, name, function.symbol(), function.attributes(), fun);
     }
 
-    private static void createExternalAccessor(ExecutionContext cx, Accessor accessor,
-            MethodHandle mh, LinkedHashMap<String, PropertyDescriptor> stringProps,
+    private static void createExternalAccessor(ExecutionContext cx, Accessor accessor, MethodHandle handle,
+            LinkedHashMap<String, PropertyDescriptor> stringProps,
             EnumMap<BuiltinSymbol, PropertyDescriptor> symbolProps) {
         Accessor.Type type = accessor.type();
         String name = accessor.name();
@@ -1021,7 +1023,7 @@ public final class Properties {
         Attributes attributes = accessor.attributes();
         String functionName = accessorName(type, name, symbol);
         int arity = accessorArity(type);
-        NativeFunction fun = new NativeFunction(cx.getRealm(), functionName, arity, mh);
+        NativeFunction fun = new NativeFunction(cx.getRealm(), functionName, arity, handle);
 
         PropertyDescriptor existing;
         if (symbol == BuiltinSymbol.NONE) {
@@ -1035,8 +1037,7 @@ public final class Properties {
                     || attributes.configurable() != existing.isConfigurable()) {
                 throw new IllegalArgumentException();
             }
-            if (type == Accessor.Type.Getter ? existing.getGetter() != null
-                    : existing.getSetter() != null) {
+            if (type == Accessor.Type.Getter ? existing.getGetter() != null : existing.getSetter() != null) {
                 throw new IllegalArgumentException();
             }
             desc = existing;
@@ -1065,6 +1066,10 @@ public final class Properties {
                 Function function = method.getAnnotation(Function.class);
                 Accessor accessor = method.getAnnotation(Accessor.class);
                 Value value = method.getAnnotation(Value.class);
+                AliasFunction[] aliases = method.getAnnotationsByType(AliasFunction.class);
+                if (aliases.length > 0 && function == null) {
+                    throw new IllegalArgumentException();
+                }
                 if (function != null) {
                     if (accessor != null || value != null) {
                         throw new IllegalArgumentException();
@@ -1072,7 +1077,11 @@ public final class Properties {
                     if (layout.functions == null) {
                         layout.functions = new LinkedHashMap<>();
                     }
-                    layout.functions.put(function, lookup.unreflect(method));
+                    MethodHandle mh = lookup.unreflect(method);
+                    layout.functions.put(function, mh);
+                    for (AliasFunction alias : aliases) {
+                        layout.functions.put(createFunctionFromAlias(function, alias), mh);
+                    }
                 }
                 if (accessor != null) {
                     if (value != null) {
@@ -1094,6 +1103,40 @@ public final class Properties {
         } catch (IllegalAccessException e) {
             throw new IllegalArgumentException(e);
         }
+    }
+
+    private static Function createFunctionFromAlias(Function function, AliasFunction alias) {
+        return new Function() {
+            @Override
+            public Class<? extends Annotation> annotationType() {
+                return Function.class;
+            }
+
+            @Override
+            public String name() {
+                return alias.name();
+            }
+
+            @Override
+            public BuiltinSymbol symbol() {
+                return alias.symbol();
+            }
+
+            @Override
+            public int arity() {
+                return function.arity();
+            }
+
+            @Override
+            public Attributes attributes() {
+                return alias.attributes();
+            }
+
+            @Override
+            public Class<?> nativeId() {
+                return null;
+            }
+        };
     }
 
     private static CompactLayout createInternalObjectLayout(Class<?> holder) {
@@ -1162,29 +1205,33 @@ public final class Properties {
         return field.get(null);
     }
 
-    private static <OWNER> MethodHandle getInstanceMethodHandle(ExecutionContext cx,
-            Converter converter, MethodHandle unreflect, OWNER owner) {
+    private static <OWNER> MethodHandle getInstanceMethodHandle(Converter converter, MethodHandle unreflect,
+            OWNER owner) {
         // var-args collector flag is not preserved when applying method handle combinators
         boolean varargs = unreflect.isVarargsCollector();
         MethodHandle handle = unreflect.bindTo(owner);
+        boolean calleeContext = isCalleeSensitive(handle);
         boolean callerContext = isCallerSensitive(handle);
-        final int fixedArguments = callerContext ? 1 : 0;
+        final int fixedArguments = calleeContext && callerContext ? 2 : calleeContext ? 1 : 0;
 
-        handle = bindContext(handle, cx);
         handle = convertArguments(handle, fixedArguments, varargs, converter);
         handle = convertReturn(handle, converter);
         handle = catchExceptions(handle, converter);
         handle = toCanonical(handle, fixedArguments, varargs, null);
-        if (!callerContext) {
-            handle = MethodHandles.dropArguments(handle, 0, ExecutionContext.class, Object.class);
+        if (calleeContext && callerContext) {
+            handle = MethodHandles.dropArguments(handle, 2, Object.class);
+        } else if (calleeContext) {
+            handle = MethodHandles.dropArguments(handle, 1, ExecutionContext.class, Object.class);
         } else {
-            handle = MethodHandles.dropArguments(handle, 1, Object.class);
+            handle = MethodHandles.dropArguments(handle, 0, ExecutionContext.class, ExecutionContext.class,
+                    Object.class);
         }
 
-        assert handle.type().parameterCount() == 3;
+        assert handle.type().parameterCount() == 4;
         assert handle.type().parameterType(0) == ExecutionContext.class;
-        assert handle.type().parameterType(1) == Object.class;
-        assert handle.type().parameterType(2) == Object[].class;
+        assert handle.type().parameterType(1) == ExecutionContext.class;
+        assert handle.type().parameterType(2) == Object.class;
+        assert handle.type().parameterType(3) == Object[].class;
         assert handle.type().returnType() == Object.class;
 
         return handle;
@@ -1194,31 +1241,21 @@ public final class Properties {
         Default, Call, Construct
     }
 
-    private static MethodHandle getStaticMethodHandle(ExecutionContext cx, Converter converter,
-            MethodHandle unreflect) {
-        return getStaticMethodHandle(cx, converter, unreflect, MethodKind.Default);
-    }
-
-    private static MethodHandle getConstructorStaticMethodHandle(ExecutionContext cx,
-            Converter converter, MethodHandle unreflect, MethodKind methodKind) {
-        return getStaticMethodHandle(cx, converter, unreflect, methodKind);
-    }
-
-    private static MethodHandle getStaticMethodHandle(ExecutionContext cx, Converter converter,
-            MethodHandle unreflect, MethodKind methodKind) {
+    private static MethodHandle getStaticMethodHandle(Converter converter, MethodHandle unreflect,
+            MethodKind methodKind) {
         // var-args collector flag is not preserved when applying method handle combinators
         boolean varargs = unreflect.isVarargsCollector();
         MethodHandle handle = unreflect;
         boolean callerContext = isCallerSensitive(handle);
-        final int fixedArguments = callerContext ? 2 : 1;
-        final int constructorArgument = callerContext ? 1 : 0;
+        final int fixedArguments = callerContext ? 3 : 2;
+        final int constructorArgument = callerContext ? 2 : 1;
+        final int thisArgument = callerContext ? 2 : 1;
 
-        handle = bindContext(handle, cx);
         if (methodKind == MethodKind.Default) {
-            handle = convertThis(handle, callerContext, converter);
+            handle = convertThis(handle, thisArgument, converter);
         } else if (methodKind == MethodKind.Call) {
             handle = MethodHandles.insertArguments(handle, constructorArgument, (Constructor) null);
-            handle = convertThis(handle, callerContext, converter);
+            handle = convertThis(handle, thisArgument, converter);
         } else {
             assert methodKind == MethodKind.Construct;
             handle = MethodHandles.insertArguments(handle, constructorArgument + 1, (Object) null);
@@ -1232,32 +1269,31 @@ public final class Properties {
         handle = catchExceptions(handle, converter);
         handle = toCanonical(handle, fixedArguments, varargs, null);
         if (!callerContext) {
-            handle = MethodHandles.dropArguments(handle, 0, ExecutionContext.class);
+            handle = MethodHandles.dropArguments(handle, 1, ExecutionContext.class);
         }
 
         if (methodKind != MethodKind.Construct) {
-            assert handle.type().parameterCount() == 3;
+            assert handle.type().parameterCount() == 4;
             assert handle.type().parameterType(0) == ExecutionContext.class;
-            assert handle.type().parameterType(1) == Object.class;
-            assert handle.type().parameterType(2) == Object[].class;
+            assert handle.type().parameterType(1) == ExecutionContext.class;
+            assert handle.type().parameterType(2) == Object.class;
+            assert handle.type().parameterType(3) == Object[].class;
             assert handle.type().returnType() == Object.class;
         } else {
-            assert handle.type().parameterCount() == 3;
+            assert handle.type().parameterCount() == 4;
             assert handle.type().parameterType(0) == ExecutionContext.class;
-            assert handle.type().parameterType(1) == Constructor.class;
-            assert handle.type().parameterType(2) == Object[].class;
+            assert handle.type().parameterType(1) == ExecutionContext.class;
+            assert handle.type().parameterType(2) == Constructor.class;
+            assert handle.type().parameterType(3) == Object[].class;
             assert handle.type().returnType() == ScriptObject.class;
         }
 
         return handle;
     }
 
-    private static MethodHandle bindContext(MethodHandle handle, ExecutionContext cx) {
+    private static boolean isCalleeSensitive(MethodHandle handle) {
         MethodType type = handle.type();
-        if (type.parameterCount() > 0 && ExecutionContext.class.equals(type.parameterType(0))) {
-            handle = MethodHandles.insertArguments(handle, 0, cx);
-        }
-        return handle;
+        return type.parameterCount() > 0 && ExecutionContext.class.equals(type.parameterType(0));
     }
 
     private static boolean isCallerSensitive(MethodHandle handle) {
@@ -1265,9 +1301,7 @@ public final class Properties {
         return type.parameterCount() > 1 && ExecutionContext.class.equals(type.parameterType(1));
     }
 
-    private static MethodHandle convertThis(MethodHandle handle, boolean callerContext,
-            Converter converter) {
-        int thisArgument = callerContext ? 1 : 0;
+    private static MethodHandle convertThis(MethodHandle handle, int thisArgument, Converter converter) {
         if (handle.type().parameterCount() == thisArgument) {
             handle = MethodHandles.dropArguments(handle, thisArgument, Object.class);
         } else if (handle.type().parameterType(thisArgument) != Object.class) {
@@ -1277,8 +1311,8 @@ public final class Properties {
         return handle;
     }
 
-    private static MethodHandle convertArguments(MethodHandle handle, int fixedArguments,
-            boolean varargs, Converter converter) {
+    private static MethodHandle convertArguments(MethodHandle handle, int fixedArguments, boolean varargs,
+            Converter converter) {
         MethodType type = handle.type();
         int pcount = type.parameterCount();
         int actual = pcount - fixedArguments - (varargs ? 1 : 0);
@@ -1303,14 +1337,12 @@ public final class Properties {
     }
 
     private static MethodHandle catchExceptions(MethodHandle handle, Converter converter) {
-        MethodHandle thrower = MethodHandles.throwException(handle.type().returnType(),
-                ScriptException.class);
+        MethodHandle thrower = MethodHandles.throwException(handle.type().returnType(), ScriptException.class);
         thrower = MethodHandles.filterArguments(thrower, 0, converter.toScriptException());
         return MethodHandles.catchException(handle, Exception.class, thrower);
     }
 
-    private static MethodHandle toCanonical(MethodHandle handle, int fixedArguments,
-            boolean varargs, Method method) {
+    private static MethodHandle toCanonical(MethodHandle handle, int fixedArguments, boolean varargs, Method method) {
         assert !handle.isVarargsCollector();
         MethodType type = handle.type();
         int actual = type.parameterCount() - fixedArguments - (varargs ? 1 : 0);
@@ -1322,8 +1354,7 @@ public final class Properties {
         return spreader;
     }
 
-    private static MethodHandle getStaticMethodHandle(Lookup lookup, Method method)
-            throws IllegalAccessException {
+    private static MethodHandle getStaticMethodHandle(Lookup lookup, Method method) throws IllegalAccessException {
         MethodHandle handle = lookup.unreflect(method);
         MethodType type = handle.type();
         Class<?>[] params = type.parameterArray();
@@ -1412,8 +1443,7 @@ public final class Properties {
             }
             if (actual < filters.length) {
                 MethodHandle f = filters[actual];
-                return f != null ? f : (filters[actual] = MethodHandles.insertArguments(filter, 0,
-                        actual));
+                return f != null ? f : (filters[actual] = MethodHandles.insertArguments(filter, 0, actual));
             }
             return MethodHandles.insertArguments(filter, 0, actual);
         }
@@ -1423,13 +1453,13 @@ public final class Properties {
         private static final MethodHandle filterDefaults;
         private static final MethodHandle filterVarArgs;
         private static final MethodHandle filter;
+
         static {
             MethodLookup lookup = new MethodLookup(MethodHandles.lookup());
             filterVarArgsDefaults = lookup.findStatic(Parameters.class, "filterVarArgsDefaults",
-                    MethodType.methodType(Object[].class, Integer.TYPE, Object[].class,
-                            Object[].class));
-            filterDefaults = lookup.findStatic(Parameters.class, "filterDefaults", MethodType
-                    .methodType(Object[].class, Integer.TYPE, Object[].class, Object[].class));
+                    MethodType.methodType(Object[].class, Integer.TYPE, Object[].class, Object[].class));
+            filterDefaults = lookup.findStatic(Parameters.class, "filterDefaults",
+                    MethodType.methodType(Object[].class, Integer.TYPE, Object[].class, Object[].class));
             filterVarArgs = lookup.findStatic(Parameters.class, "filterVarArgs",
                     MethodType.methodType(Object[].class, Integer.TYPE, Object[].class));
             filter = lookup.findStatic(Parameters.class, "filter",
@@ -1493,7 +1523,7 @@ public final class Properties {
 
     private static void createInternalProperties(Realm realm, OrdinaryObject target, Class<?> holder) {
         CompactLayout layout = internalLayouts.get(holder);
-        if (layout.option != null && !realm.isEnabled(layout.option)) {
+        if (layout.option != null && !realm.getRuntimeContext().isEnabled(layout.option)) {
             // return if extension is not enabled
             return;
         }
@@ -1536,8 +1566,7 @@ public final class Properties {
         if (layout.isTailCall()) {
             fun = new NativeTailCallFunction(realm, layout.name, layout.arity, layout.methodHandle);
         } else {
-            fun = new NativeFunction(realm, layout.name, layout.arity, layout.nativeId,
-                    layout.methodHandle);
+            fun = new NativeFunction(realm, layout.name, layout.arity, layout.nativeId, layout.methodHandle);
         }
         defineProperty(target, layout, valueProperty(layout, fun));
     }
@@ -1559,8 +1588,7 @@ public final class Properties {
         }
     }
 
-    private static void createAliasFunction(Realm realm, OrdinaryObject target,
-            AliasFunctionLayout layout) {
+    private static void createAliasFunction(Realm realm, OrdinaryObject target, AliasFunctionLayout layout) {
         Object propertyKey = layout.propertyKey;
         Property fun;
         if (propertyKey instanceof String) {
@@ -1609,8 +1637,7 @@ public final class Properties {
         return defaults;
     }
 
-    private static void defineProperty(OrdinaryObject target, PropertyLayout layout,
-            Property property) {
+    private static void defineProperty(OrdinaryObject target, PropertyLayout layout, Property property) {
         if (layout.symbol == null) {
             target.infallibleDefineOwnProperty(layout.name, property);
         } else {
@@ -1626,10 +1653,15 @@ public final class Properties {
         }
     }
 
-    private static void defineProperty(ExecutionContext cx, ScriptObject target, String name,
-            BuiltinSymbol sym, Attributes attrs, Object value) {
+    private static void defineProperty(ExecutionContext cx, ScriptObject target, String name, BuiltinSymbol sym,
+            Attributes attrs, Object value) {
         if (sym == BuiltinSymbol.NONE) {
-            target.defineOwnProperty(cx, name, propertyDescriptor(value, attrs));
+            long index = IndexedMap.toIndex(name);
+            if (IndexedMap.isIndex(index)) {
+                target.defineOwnProperty(cx, index, propertyDescriptor(value, attrs));
+            } else {
+                target.defineOwnProperty(cx, name, propertyDescriptor(value, attrs));
+            }
         } else {
             target.defineOwnProperty(cx, sym.get(), propertyDescriptor(value, attrs));
         }
@@ -1639,7 +1671,13 @@ public final class Properties {
             LinkedHashMap<String, PropertyDescriptor> stringProperties,
             EnumMap<BuiltinSymbol, PropertyDescriptor> symbolProperties) {
         for (Entry<String, PropertyDescriptor> entry : stringProperties.entrySet()) {
-            target.defineOwnProperty(cx, entry.getKey(), entry.getValue());
+            String name = entry.getKey();
+            long index = IndexedMap.toIndex(name);
+            if (IndexedMap.isIndex(index)) {
+                target.defineOwnProperty(cx, index, entry.getValue());
+            } else {
+                target.defineOwnProperty(cx, name, entry.getValue());
+            }
         }
         for (Entry<BuiltinSymbol, PropertyDescriptor> entry : symbolProperties.entrySet()) {
             target.defineOwnProperty(cx, entry.getKey().get(), entry.getValue());
@@ -1659,29 +1697,23 @@ public final class Properties {
     }
 
     private static PropertyDescriptor propertyDescriptor(Object value, Attributes attrs) {
-        return new PropertyDescriptor(value, attrs.writable(), attrs.enumerable(),
-                attrs.configurable());
+        return new PropertyDescriptor(value, attrs.writable(), attrs.enumerable(), attrs.configurable());
     }
 
-    private static PropertyDescriptor propertyDescriptor(Callable getter, Callable setter,
-            Attributes attrs) {
+    private static PropertyDescriptor propertyDescriptor(Callable getter, Callable setter, Attributes attrs) {
         return new PropertyDescriptor(getter, setter, attrs.enumerable(), attrs.configurable());
     }
 
-    private static PropertyDescriptor accessorPropertyDescriptor(AccessorLayout layout,
-            NativeFunction accessor) {
+    private static PropertyDescriptor accessorPropertyDescriptor(AccessorLayout layout, NativeFunction accessor) {
         if (layout.type == Accessor.Type.Getter) {
-            return AccessorPropertyDescriptor(accessor, null, layout.enumerable(),
-                    layout.configurable());
+            return AccessorPropertyDescriptor(accessor, null, layout.enumerable(), layout.configurable());
         } else {
-            return AccessorPropertyDescriptor(null, accessor, layout.enumerable(),
-                    layout.configurable());
+            return AccessorPropertyDescriptor(null, accessor, layout.enumerable(), layout.configurable());
         }
     }
 
     private static String accessorName(Accessor.Type type, String name, BuiltinSymbol symbol) {
-        return symbol == BuiltinSymbol.NONE ? (type == Accessor.Type.Getter ? "get " : "set ")
-                + name : name;
+        return symbol == BuiltinSymbol.NONE ? (type == Accessor.Type.Getter ? "get " : "set ") + name : name;
     }
 
     private static String accessorName(Accessor.Type type, String name, Symbol symbol) {

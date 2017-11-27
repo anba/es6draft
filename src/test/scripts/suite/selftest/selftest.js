@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -101,14 +101,18 @@ for (let v of values) {
   fail("assertNotSame() failure");
 }
 
-for (let [a, b] of [for (a of values) for (b of values) if (!Object.is(a, b)) [a, b]]) {
-  assertNotSame(a, b);
-  try {
-    assertSame(a, b);
-  } catch (e) {
-    if (e instanceof AssertionError) continue;
+for (let a of values) {
+  for (let b of values) {
+    if (!Object.is(a, b)) {
+      assertNotSame(a, b);
+      try {
+        assertSame(a, b);
+      } catch (e) {
+        if (e instanceof AssertionError) continue;
+      }
+      fail("assertSame() failure");
+    }
   }
-  fail("assertSame() failure");
 }
 
 assertThrows(Error, () => {throw new Error});
@@ -135,23 +139,27 @@ L1: {
 }
 
 assertTrue(true);
-for (let v of [for (v of values) if (v !== true) v]) {
-  try {
-    assertTrue(v);
-  } catch (e) {
-    if (e instanceof AssertionError) continue;
+for (let v of values) {
+  if (v !== true) {
+    try {
+      assertTrue(v);
+    } catch (e) {
+      if (e instanceof AssertionError) continue;
+    }
+    fail("assertTrue() failure");
   }
-  fail("assertTrue() failure");
 }
 
 assertFalse(false);
-for (let v of [for (v of values) if (v !== false) v]) {
-  try {
-    assertFalse(v);
-  } catch (e) {
-    if (e instanceof AssertionError) continue;
+for (let v of values) {
+  if (v !== false) {
+    try {
+      assertFalse(v);
+    } catch (e) {
+      if (e instanceof AssertionError) continue;
+    }
+    fail("assertFalse() failure");
   }
-  fail("assertFalse() failure");
 }
 
 assertUndefined(void 0);
@@ -163,14 +171,16 @@ L1: {
   }
   fail("assertNotUndefined() failure");
 }
-for (let v of [for (v of values) if (v !== void 0) v]) {
-  assertNotUndefined(v);
-  try {
-    assertUndefined(v);
-  } catch (e) {
-    if (e instanceof AssertionError) continue;
+for (let v of values) {
+  if (v !== void 0) {
+    assertNotUndefined(v);
+    try {
+      assertUndefined(v);
+    } catch (e) {
+      if (e instanceof AssertionError) continue;
+    }
+    fail("assertUndefined() failure");
   }
-  fail("assertUndefined() failure");
 }
 
 assertNull(null);
@@ -182,28 +192,34 @@ L1: {
   }
   fail("assertNotNull() failure");
 }
-for (let v of [for (v of values) if (v !== null) v]) {
-  assertNotNull(v);
-  try {
-    assertNull(v);
-  } catch (e) {
-    if (e instanceof AssertionError) continue;
+for (let v of values) {
+  if (v !== null) {
+    assertNotNull(v);
+    try {
+      assertNull(v);
+    } catch (e) {
+      if (e instanceof AssertionError) continue;
+    }
+    fail("assertNull() failure");
   }
-  fail("assertNull() failure");
 }
 
-for (let c of [for (c of constructors) if (c !== Symbol) c]) {
-  assertInstanceOf(c, new c);
+for (let c of constructors) {
+  if (c !== Symbol) {
+    assertInstanceOf(c, new c);
+  }
 }
 assertInstanceOf(Symbol, Object(Symbol()));
 
-for (let [c, v] of [for (c of constructors) for (v of primitives) [c, v]]) {
-  try {
-    assertInstanceOf(c, v);
-  } catch (e) {
-    if (e instanceof AssertionError) continue;
+for (let c of constructors) {
+  for (let v of primitives) {
+    try {
+      assertInstanceOf(c, v);
+    } catch (e) {
+      if (e instanceof AssertionError) continue;
+    }
+    fail("assertInstanceOf() failure");
   }
-  fail("assertInstanceOf() failure");
 }
 
 for (let v of [...functions, ...constructors]) {
@@ -253,10 +269,16 @@ for (let v of [...primitives, ...objects, ...functions]) {
     enumerable: [true, false],
     configurable: [true, false]
   };
-  let ds = [
-    for (v of seed.value) for (w of seed.writable) for (e of seed.enumerable) for (c of seed.configurable)
-    {value: v, writable: w, enumerable: e, configurable: c}
-  ];
+  let ds = [];
+  for (let v of seed.value) {
+    for (let w of seed.writable) {
+      for (let e of seed.enumerable) {
+        for (let c of seed.configurable) {
+          ds.push({value: v, writable: w, enumerable: e, configurable: c});
+        }
+      }
+    }
+  }
   let o = {}, i = 0;
   for (let d of ds) {
     let pk = `p${i++}`;
@@ -278,10 +300,16 @@ for (let v of [...primitives, ...objects, ...functions]) {
     enumerable: [true, false],
     configurable: [true, false]
   };
-  let ds = [
-    for (g of seed.get) for (s of seed.set) for (e of seed.enumerable) for (c of seed.configurable)
-    {get: g, set: s, enumerable: e, configurable: c}
-  ];
+  let ds = [];
+  for (let g of seed.get) {
+    for (let s of seed.set) {
+      for (let e of seed.enumerable) {
+        for (let c of seed.configurable) {
+          ds.push({get: g, set: s, enumerable: e, configurable: c});
+        }
+      }
+    }
+  }
   let o = {}, i = 0;
   for (let d of ds) {
     let pk = `p${i++}`;
@@ -339,13 +367,17 @@ for (let v of values) {
   assertEquals(v, v);
 }
 
-for (let [a, b] of [for (a of values) for (b of values) if (!Object.is(a, b)) [a, b]]) {
-  try {
-    assertEquals(a, b);
-  } catch (e) {
-    if (e instanceof AssertionError) continue;
+for (let a of values) {
+  for (let b of values) {
+    if (!Object.is(a, b)) {
+      try {
+        assertEquals(a, b);
+      } catch (e) {
+        if (e instanceof AssertionError) continue;
+      }
+      fail("assertEquals() failure");
+    }
   }
-  fail("assertEquals() failure");
 }
 
 assertEquals({}, {});

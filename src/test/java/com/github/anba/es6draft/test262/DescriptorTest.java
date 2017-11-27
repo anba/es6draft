@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -41,10 +41,8 @@ public final class DescriptorTest {
 
     @Test
     public void test() throws IOException {
-        // Test readFileInformation() does not throw any exceptions
-        String sourceCode = test.readFileContent();
         try {
-            test.readFileInformation(sourceCode);
+            test.readFileStrict();
         } catch (Test262Info.MalformedDataException e) {
             fail(e.getMessage());
         }

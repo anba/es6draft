@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -9,19 +9,16 @@ package com.github.anba.es6draft.runtime.objects;
 import static com.github.anba.es6draft.runtime.AbstractOperations.*;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
-import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.EMPTY_ARRAY;
-import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.PrepareForTailCall;
+import static com.github.anba.es6draft.runtime.language.CallOperations.PrepareForTailCall;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.BoundFunctionObject.BoundFunctionCreate;
-import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.SetFunctionName;
+import static com.github.anba.es6draft.runtime.types.builtins.FunctionObject.SetFunctionName;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.Initializable;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
-import com.github.anba.es6draft.runtime.internal.Properties.CompatibilityExtension;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.TailCall;
@@ -34,7 +31,7 @@ import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.Undefined;
 import com.github.anba.es6draft.runtime.types.builtins.BoundFunctionObject;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
-import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
+import com.github.anba.es6draft.runtime.types.builtins.StringObject;
 
 /**
  * <h1>19 Fundamental Objects</h1><br>
@@ -45,6 +42,7 @@ import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
  * </ul>
  */
 public final class FunctionPrototype extends BuiltinFunction implements Initializable {
+    private static final Object[] EMPTY_ARRAY = new Object[0];
     private static final int MAX_ARGUMENTS = 0x1ffff;
 
     /**
@@ -60,12 +58,6 @@ public final class FunctionPrototype extends BuiltinFunction implements Initiali
     @Override
     public void initialize(Realm realm) {
         createProperties(realm, this, Properties.class);
-        createProperties(realm, this, AdditionalProperties.class);
-    }
-
-    @Override
-    public FunctionPrototype clone() {
-        return new FunctionPrototype(getRealm());
     }
 
     /**
@@ -91,15 +83,20 @@ public final class FunctionPrototype extends BuiltinFunction implements Initiali
     public enum Properties {
         ;
 
+        private static Callable thisFunctionObject(ExecutionContext cx, Object value, String method) {
+            if (value instanceof Callable) {
+                return (Callable) value;
+            }
+            throw newTypeError(cx, Messages.Key.IncompatibleThis, method, Type.of(value).toString());
+        }
+
         @Prototype
         public static final Intrinsics __proto__ = Intrinsics.ObjectPrototype;
 
-        @Value(name = "length", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = true))
+        @Value(name = "length", attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static final int length = 0;
 
-        @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = true))
+        @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static final String name = "";
 
         /**
@@ -107,25 +104,6 @@ public final class FunctionPrototype extends BuiltinFunction implements Initiali
          */
         @Value(name = "constructor")
         public static final Intrinsics constructor = Intrinsics.Function;
-
-        /**
-         * 19.2.3.5 Function.prototype.toString ( )
-         * 
-         * @param cx
-         *            the execution context
-         * @param thisValue
-         *            the function this-value
-         * @return the string representation
-         */
-        @Function(name = "toString", arity = 0)
-        public static Object toString(ExecutionContext cx, Object thisValue) {
-            /* steps 1-2 */
-            if (thisValue instanceof Callable) {
-                return ((Callable) thisValue).toSource(cx);
-            }
-            /* step 3 */
-            throw newTypeError(cx, Messages.Key.IncompatibleObject);
-        }
 
         /**
          * 19.2.3.1 Function.prototype.apply (thisArg, argArray)
@@ -142,21 +120,61 @@ public final class FunctionPrototype extends BuiltinFunction implements Initiali
          */
         @TailCall
         @Function(name = "apply", arity = 2)
-        public static Object apply(ExecutionContext cx, Object thisValue, Object thisArg,
-                Object argArray) {
+        public static Object apply(ExecutionContext cx, Object thisValue, Object thisArg, Object argArray) {
             /* step 1 */
-            if (!IsCallable(thisValue)) {
-                throw newTypeError(cx, Messages.Key.IncompatibleObject);
-            }
-            Callable func = (Callable) thisValue;
+            Callable func = thisFunctionObject(cx, thisValue, "Function.prototype.apply");
             /* step 2 */
             if (Type.isUndefinedOrNull(argArray)) {
                 return PrepareForTailCall(func, thisArg, EMPTY_ARRAY);
             }
-            /* steps 3-4 */
+            /* step 3 */
             Object[] argList = CreateListFromArrayLike(cx, argArray);
-            /* steps 5-6 */
+            /* steps 4-5 */
             return PrepareForTailCall(func, thisArg, argList);
+        }
+
+        /**
+         * 19.2.3.2 Function.prototype.bind (thisArg, ...args)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param thisArg
+         *            the this-argument
+         * @param args
+         *            the arguments array
+         * @return the bound function object
+         */
+        @Function(name = "bind", arity = 1)
+        public static Object bind(ExecutionContext cx, Object thisValue, Object thisArg, Object... args) {
+            /* steps 1-2 */
+            Callable target = thisFunctionObject(cx, thisValue, "Function.prototype.bind");
+            /* step 3 (not applicable) */
+            /* step 4 */
+            BoundFunctionObject f = BoundFunctionCreate(cx, target, thisArg, args);
+            /* step 5 */
+            boolean targetHasLength = HasOwnProperty(cx, target, "length");
+            /* steps 6-7 */
+            double l = 0;
+            if (targetHasLength) {
+                Object targetLen = Get(cx, target, "length");
+                if (Type.isNumber(targetLen)) {
+                    double intLength = ToInteger(Type.numberValue(targetLen));
+                    l = Math.max(0, intLength - args.length);
+                }
+            }
+            /* step 8 */
+            f.infallibleDefineOwnProperty("length", new Property(l, false, false, true));
+            /* step 9 */
+            Object targetName = Get(cx, target, "name");
+            /* step 10 */
+            String name = Type.isString(targetName) ? Type.stringValue(targetName).toString() : "";
+            StringObject.validateLength(cx, name.length() + 5);
+            /* step 11 */
+            SetFunctionName(f, name, "bound");
+            /* step 12 */
+            return f;
         }
 
         /**
@@ -174,65 +192,26 @@ public final class FunctionPrototype extends BuiltinFunction implements Initiali
          */
         @TailCall
         @Function(name = "call", arity = 1)
-        public static Object call(ExecutionContext cx, Object thisValue, Object thisArg,
-                Object... args) {
+        public static Object call(ExecutionContext cx, Object thisValue, Object thisArg, Object... args) {
             /* step 1 */
-            if (!IsCallable(thisValue)) {
-                throw newTypeError(cx, Messages.Key.IncompatibleObject);
-            }
-            Callable func = (Callable) thisValue;
+            Callable func = thisFunctionObject(cx, thisValue, "Function.prototype.call");
             /* steps 2-5 */
             return PrepareForTailCall(func, thisArg, args);
         }
 
         /**
-         * 19.2.3.2 Function.prototype.bind (thisArg, ...args)
+         * 19.2.3.5 Function.prototype.toString ( )
          * 
          * @param cx
          *            the execution context
          * @param thisValue
          *            the function this-value
-         * @param thisArg
-         *            the this-argument
-         * @param args
-         *            the arguments array
-         * @return the bound function object
+         * @return the string representation
          */
-        @Function(name = "bind", arity = 1)
-        public static Object bind(ExecutionContext cx, Object thisValue, Object thisArg,
-                Object... args) {
-            /* step 2 */
-            if (!IsCallable(thisValue)) {
-                throw newTypeError(cx, Messages.Key.IncompatibleObject);
-            }
-            /* step 1 */
-            Callable target = (Callable) thisValue;
-            /* step 3 (not applicable) */
-            /* steps 4-5 */
-            BoundFunctionObject f = BoundFunctionCreate(cx, target, thisArg, args);
-            /* steps 6-7 */
-            boolean targetHasLength = HasOwnProperty(cx, target, "length");
-            /* steps 8-9 */
-            double l = 0;
-            if (targetHasLength) {
-                Object targetLen = Get(cx, target, "length");
-                if (Type.isNumber(targetLen)) {
-                    double intLength = ToInteger(Type.numberValue(targetLen));
-                    l = Math.max(0, intLength - args.length);
-                }
-            }
-            /* steps 10-11 */
-            f.infallibleDefineOwnProperty("length", new Property(l, false, false, true));
-            /* steps 12-13 */
-            Object targetName = Get(cx, target, "name");
-            /* step 14 */
-            if (!Type.isString(targetName)) {
-                targetName = "";
-            }
-            /* step 15 */
-            SetFunctionName(f, Type.stringValue(targetName).toString(), "bound");
-            /* step 16 */
-            return f;
+        @Function(name = "toString", arity = 0)
+        public static Object toString(ExecutionContext cx, Object thisValue) {
+            /* steps 1-3 */
+            return thisFunctionObject(cx, thisValue, "Function.prototype.toString").toSource(cx);
         }
 
         /**
@@ -246,51 +225,11 @@ public final class FunctionPrototype extends BuiltinFunction implements Initiali
          *            the value
          * @return {@code true} if the value is an instance of this function
          */
-        @Function(
-                name = "[Symbol.hasInstance]",
-                arity = 1,
-                symbol = BuiltinSymbol.hasInstance,
+        @Function(name = "[Symbol.hasInstance]", arity = 1, symbol = BuiltinSymbol.hasInstance,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = false))
         public static Object hasInstance(ExecutionContext cx, Object thisValue, Object v) {
+            /* steps 1-2 */
             return OrdinaryHasInstance(cx, thisValue, v);
-        }
-    }
-
-    /**
-     * Proposed ECMAScript 7 additions
-     */
-    @CompatibilityExtension(CompatibilityOption.FunctionToMethod)
-    public enum AdditionalProperties {
-        ;
-
-        /**
-         * 19.2.3.? Function.prototype.toMethod (newHome)
-         * 
-         * @param cx
-         *            the execution context
-         * @param thisValue
-         *            the function this-value
-         * @param newHome
-         *            the new home object
-         * @return the new function object
-         */
-        @Function(name = "toMethod", arity = 1)
-        public static Object toMethod(ExecutionContext cx, Object thisValue, Object newHome) {
-            /* step 1 */
-            if (!(thisValue instanceof Callable)) {
-                throw newTypeError(cx, Messages.Key.IncompatibleObject);
-            }
-            Callable func = (Callable) thisValue;
-            /* step 2 */
-            if (!Type.isObject(newHome)) {
-                throw newTypeError(cx, Messages.Key.NotObjectType);
-            }
-            /* step 3 */
-            if (func instanceof FunctionObject) {
-                return ((FunctionObject) func).clone(cx, Type.objectValue(newHome));
-            }
-            /* steps 3-6 */
-            return func.clone(cx);
         }
     }
 }

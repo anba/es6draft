@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -22,19 +22,5 @@ const {
   };
 
   assertThrows(TypeError, () => { for (let v of iter) ; });
-  assertTrue(called);
-}
-
-{
-  let called = false;
-  let iter = {
-    [Symbol.iterator]() {
-      assertFalse(called);
-      called = true;
-      return "";
-    }
-  };
-
-  assertThrows(TypeError, () => { [for (v of iter) v] });
   assertTrue(called);
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -7,7 +7,6 @@
 package com.github.anba.es6draft.compiler;
 
 import com.github.anba.es6draft.ast.Script;
-import com.github.anba.es6draft.compiler.CodeGenerator.ScriptName;
 import com.github.anba.es6draft.compiler.assembler.Code.MethodCode;
 import com.github.anba.es6draft.compiler.assembler.MethodName;
 import com.github.anba.es6draft.compiler.assembler.TryCatchLabel;
@@ -25,79 +24,80 @@ import com.github.anba.es6draft.runtime.Realm;
 final class ScriptCodeGenerator {
     private static final class Methods {
         // ExecutionContext
-        static final MethodName ExecutionContext_newEvalExecutionContext = MethodName.findStatic(
-                Types.ExecutionContext, "newEvalExecutionContext",
-                Type.methodType(Types.ExecutionContext, Types.ExecutionContext, Types.Script,
+        static final MethodName ExecutionContext_newEvalExecutionContext = MethodName.findStatic(Types.ExecutionContext,
+                "newEvalExecutionContext", Type.methodType(Types.ExecutionContext, Types.ExecutionContext, Types.Script,
                         Types.LexicalEnvironment, Types.LexicalEnvironment));
 
         static final MethodName ExecutionContext_newScriptExecutionContext = MethodName.findStatic(
                 Types.ExecutionContext, "newScriptExecutionContext",
                 Type.methodType(Types.ExecutionContext, Types.Realm, Types.Script));
 
-        static final MethodName ExecutionContext_getLexicalEnvironment = MethodName.findVirtual(
-                Types.ExecutionContext, "getLexicalEnvironment",
-                Type.methodType(Types.LexicalEnvironment));
+        static final MethodName ExecutionContext_getLexicalEnvironment = MethodName.findVirtual(Types.ExecutionContext,
+                "getLexicalEnvironment", Type.methodType(Types.LexicalEnvironment));
 
-        static final MethodName ExecutionContext_setLexicalEnvironment = MethodName.findVirtual(
-                Types.ExecutionContext, "setLexicalEnvironment",
-                Type.methodType(Type.VOID_TYPE, Types.LexicalEnvironment));
+        static final MethodName ExecutionContext_setLexicalEnvironment = MethodName.findVirtual(Types.ExecutionContext,
+                "setLexicalEnvironment", Type.methodType(Type.VOID_TYPE, Types.LexicalEnvironment));
 
-        static final MethodName ExecutionContext_getVariableEnvironment = MethodName.findVirtual(
-                Types.ExecutionContext, "getVariableEnvironment",
-                Type.methodType(Types.LexicalEnvironment));
+        static final MethodName ExecutionContext_getVariableEnvironment = MethodName.findVirtual(Types.ExecutionContext,
+                "getVariableEnvironment", Type.methodType(Types.LexicalEnvironment));
 
-        static final MethodName ExecutionContext_getRealm = MethodName
-                .findVirtual(Types.ExecutionContext, "getRealm", Type.methodType(Types.Realm));
+        static final MethodName ExecutionContext_getRealm = MethodName.findVirtual(Types.ExecutionContext, "getRealm",
+                Type.methodType(Types.Realm));
 
         // class: LexicalEnvironment
-        static final MethodName LexicalEnvironment_newDeclarativeEnvironment = MethodName
-                .findStatic(Types.LexicalEnvironment, "newDeclarativeEnvironment", Type.methodType(
-                        Types.LexicalEnvironment, Types.LexicalEnvironment));
+        static final MethodName LexicalEnvironment_newDeclarativeEnvironment = MethodName.findStatic(
+                Types.LexicalEnvironment, "newDeclarativeEnvironment",
+                Type.methodType(Types.LexicalEnvironment, Types.LexicalEnvironment));
 
         // Realm
-        static final MethodName Realm_getGlobalEnv = MethodName.findVirtual(Types.Realm,
-                "getGlobalEnv", Type.methodType(Types.LexicalEnvironment));
+        static final MethodName Realm_getGlobalEnv = MethodName.findVirtual(Types.Realm, "getGlobalEnv",
+                Type.methodType(Types.LexicalEnvironment));
 
-        static final MethodName Realm_getScriptContext = MethodName.findVirtual(Types.Realm,
-                "getScriptContext", Type.methodType(Types.ExecutionContext));
+        static final MethodName Realm_getWorld = MethodName.findVirtual(Types.Realm, "getWorld",
+                Type.methodType(Types.World));
 
-        static final MethodName Realm_setScriptContext = MethodName.findVirtual(Types.Realm,
-                "setScriptContext", Type.methodType(Type.VOID_TYPE, Types.ExecutionContext));
+        // World
+        static final MethodName World_getScriptContext = MethodName.findVirtual(Types.World, "getScriptContext",
+                Type.methodType(Types.ExecutionContext));
+
+        static final MethodName World_setScriptContext = MethodName.findVirtual(Types.World, "setScriptContext",
+                Type.methodType(Type.VOID_TYPE, Types.ExecutionContext));
     }
 
-    private static final int EXECUTION_CONTEXT = 0;
-    private static final int SCRIPT = 1;
+    private ScriptCodeGenerator() {
+    }
 
-    private static final class ScriptEvalMethodGenerator extends InstructionVisitor {
-        ScriptEvalMethodGenerator(MethodCode method) {
+    private static final class ScriptEvalVisitor extends InstructionVisitor {
+        ScriptEvalVisitor(MethodCode method) {
             super(method);
         }
 
         @Override
         public void begin() {
             super.begin();
-            setParameterName("callerContext", EXECUTION_CONTEXT, Types.ExecutionContext);
-            setParameterName("script", SCRIPT, Types.Script);
+            setParameterName("callerContext", 0, Types.ExecutionContext);
+            setParameterName("script", 1, Types.Script);
+        }
+
+        Variable<ExecutionContext> getCallerContext() {
+            return getParameter(0, ExecutionContext.class);
+        }
+
+        Variable<com.github.anba.es6draft.Script> getScript() {
+            return getParameter(1, com.github.anba.es6draft.Script.class);
         }
     }
 
-    private final CodeGenerator codegen;
-
-    ScriptCodeGenerator(CodeGenerator codegen) {
-        this.codegen = codegen;
-    }
-
-    void generate(Script node) {
-        InstructionVisitor mv = new ScriptEvalMethodGenerator(
-                codegen.newMethod(node, ScriptName.Eval));
+    static void scriptEvaluation(Script node, MethodCode method, MethodName scriptInit, MethodName scriptBody) {
+        ScriptEvalVisitor mv = new ScriptEvalVisitor(method);
         mv.lineInfo(node);
         mv.begin();
         if (node.isScripting()) {
-            generateScriptingEvaluation(node, mv);
+            generateScriptingEvaluation(node, scriptInit, scriptBody, mv);
         } else if (node.isEvalScript()) {
-            generateEvalScriptEvaluation(node, mv);
+            generateEvalScriptEvaluation(node, scriptInit, scriptBody, mv);
         } else {
-            generateGlobalScriptEvaluation(node, mv);
+            generateGlobalScriptEvaluation(node, scriptInit, scriptBody, mv);
         }
         mv.end();
     }
@@ -107,18 +107,20 @@ final class ScriptCodeGenerator {
      * 
      * @param node
      *            the script node
+     * @param scriptInit
+     *            the script declaration instantiation method
+     * @param scriptBody
+     *            the script body method
      * @param mv
      *            the instruction visitor
      */
-    private void generateGlobalScriptEvaluation(Script node, InstructionVisitor mv) {
-        Variable<ExecutionContext> callerContext = mv.getParameter(EXECUTION_CONTEXT,
-                ExecutionContext.class);
-        Variable<com.github.anba.es6draft.Script> script = mv.getParameter(SCRIPT,
-                com.github.anba.es6draft.Script.class);
+    private static void generateGlobalScriptEvaluation(Script node, MethodName scriptInit, MethodName scriptBody,
+            ScriptEvalVisitor mv) {
+        Variable<ExecutionContext> callerContext = mv.getCallerContext();
+        Variable<com.github.anba.es6draft.Script> script = mv.getScript();
         Variable<Realm> realm = mv.newVariable("realm", Realm.class);
         Variable<ExecutionContext> scriptCxt = mv.newVariable("scriptCxt", ExecutionContext.class);
-        Variable<ExecutionContext> oldScriptContext = mv.newVariable("oldScriptContext",
-                ExecutionContext.class);
+        Variable<ExecutionContext> oldScriptContext = mv.newVariable("oldScriptContext", ExecutionContext.class);
         Variable<Object> result = mv.newVariable("result", Object.class);
         Variable<Throwable> throwable = mv.newVariable("throwable", Throwable.class);
 
@@ -137,10 +139,10 @@ final class ScriptCodeGenerator {
         {
             /* step 10 */
             mv.load(scriptCxt);
-            mv.invoke(codegen.methodDesc(node, ScriptName.Init));
+            mv.invoke(scriptInit);
             /* steps 11-12 */
             mv.load(scriptCxt);
-            mv.invoke(codegen.methodDesc(node, ScriptName.Code));
+            mv.invoke(scriptBody);
             mv.store(result);
             /* steps 13-15  */
             setScriptContext(realm, oldScriptContext, mv);
@@ -166,19 +168,22 @@ final class ScriptCodeGenerator {
      * 
      * @param node
      *            the script node
+     * @param scriptInit
+     *            the script declaration instantiation method
+     * @param scriptBody
+     *            the script body method
      * @param mv
      *            the instruction visitor
      */
-    private void generateEvalScriptEvaluation(Script node, InstructionVisitor mv) {
-        Variable<ExecutionContext> callerContext = mv.getParameter(EXECUTION_CONTEXT,
-                ExecutionContext.class);
-        Variable<com.github.anba.es6draft.Script> script = mv.getParameter(SCRIPT,
-                com.github.anba.es6draft.Script.class);
+    private static void generateEvalScriptEvaluation(Script node, MethodName scriptInit, MethodName scriptBody,
+            ScriptEvalVisitor mv) {
+        Variable<ExecutionContext> callerContext = mv.getCallerContext();
+        Variable<com.github.anba.es6draft.Script> script = mv.getScript();
         Variable<ExecutionContext> evalCxt = mv.newVariable("evalCxt", ExecutionContext.class);
-        Variable<? extends LexicalEnvironment<?>> varEnv = mv
-                .newVariable("varEnv", LexicalEnvironment.class).uncheckedCast();
-        Variable<? extends LexicalEnvironment<?>> lexEnv = mv
-                .newVariable("lexEnv", LexicalEnvironment.class).uncheckedCast();
+        Variable<? extends LexicalEnvironment<?>> varEnv = mv.newVariable("varEnv", LexicalEnvironment.class)
+                .uncheckedCast();
+        Variable<? extends LexicalEnvironment<?>> lexEnv = mv.newVariable("lexEnv", LexicalEnvironment.class)
+                .uncheckedCast();
 
         // Optimization: Skip creating lexical environment if no declarations are present.
         boolean noDeclarations = node.getScope().lexicallyDeclaredNames().isEmpty();
@@ -216,16 +221,16 @@ final class ScriptCodeGenerator {
         newEvalExecutionContext(callerContext, script, varEnv, lexEnv, evalCxt, mv);
         /* step 18 */
         mv.load(evalCxt);
-        mv.invoke(codegen.methodDesc(node, ScriptName.Init));
+        mv.invoke(scriptInit);
         /* steps 19-23 */
         mv.load(evalCxt);
-        mv.invoke(codegen.methodDesc(node, ScriptName.Code));
+        mv.invoke(scriptBody);
         mv._return();
     }
 
-    private void generateScriptingEvaluation(Script node, InstructionVisitor mv) {
-        Variable<ExecutionContext> context = mv.getParameter(EXECUTION_CONTEXT,
-                ExecutionContext.class);
+    private static void generateScriptingEvaluation(Script node, MethodName scriptInit, MethodName scriptBody,
+            ScriptEvalVisitor mv) {
+        Variable<ExecutionContext> context = mv.getCallerContext();
         Variable<LexicalEnvironment<DeclarativeEnvironmentRecord>> lexEnv = mv
                 .newVariable("lexEnv", LexicalEnvironment.class).uncheckedCast();
 
@@ -237,19 +242,18 @@ final class ScriptCodeGenerator {
 
         // Create local bindings.
         mv.load(context);
-        mv.invoke(codegen.methodDesc(node, ScriptName.Init));
+        mv.invoke(scriptInit);
 
         // Evaluate the actual script code.
         mv.load(context);
-        mv.invoke(codegen.methodDesc(node, ScriptName.Code));
+        mv.invoke(scriptBody);
         mv._return();
     }
 
     /**
      * Emit: {@code realm = context.getRealm()}
      */
-    private void getRealm(Variable<ExecutionContext> context, Variable<Realm> realm,
-            InstructionVisitor mv) {
+    private static void getRealm(Variable<ExecutionContext> context, Variable<Realm> realm, InstructionVisitor mv) {
         mv.load(context);
         mv.invoke(Methods.ExecutionContext_getRealm);
         mv.store(realm);
@@ -258,7 +262,7 @@ final class ScriptCodeGenerator {
     /**
      * Emit: {@code context = ExecutionContext.newScriptExecutionContext(realm, script)}
      */
-    private void newScriptExecutionContext(Variable<Realm> realm,
+    private static void newScriptExecutionContext(Variable<Realm> realm,
             Variable<com.github.anba.es6draft.Script> script, Variable<ExecutionContext> context,
             InstructionVisitor mv) {
         mv.load(realm);
@@ -268,12 +272,10 @@ final class ScriptCodeGenerator {
     }
 
     /**
-     * Emit:
-     * {@code context = ExecutionContext.newEvalExecutionContext(callerContext, script, varEnv, lexEnv)}
+     * Emit: {@code context = ExecutionContext.newEvalExecutionContext(callerContext, script, varEnv, lexEnv)}
      */
-    private void newEvalExecutionContext(Variable<ExecutionContext> callerContext,
-            Variable<com.github.anba.es6draft.Script> script,
-            Variable<? extends LexicalEnvironment<?>> varEnv,
+    private static void newEvalExecutionContext(Variable<ExecutionContext> callerContext,
+            Variable<com.github.anba.es6draft.Script> script, Variable<? extends LexicalEnvironment<?>> varEnv,
             Variable<? extends LexicalEnvironment<?>> lexEnv, Variable<ExecutionContext> context,
             InstructionVisitor mv) {
         mv.load(callerContext);
@@ -287,8 +289,8 @@ final class ScriptCodeGenerator {
     /**
      * Emit: {@code env = cx.getRealm().getGlobalEnv()}
      */
-    private void getGlobalEnv(Variable<ExecutionContext> context,
-            Variable<? extends LexicalEnvironment<?>> env, InstructionVisitor mv) {
+    private static void getGlobalEnv(Variable<ExecutionContext> context, Variable<? extends LexicalEnvironment<?>> env,
+            InstructionVisitor mv) {
         mv.load(context);
         mv.invoke(Methods.ExecutionContext_getRealm);
         mv.invoke(Methods.Realm_getGlobalEnv);
@@ -296,29 +298,31 @@ final class ScriptCodeGenerator {
     }
 
     /**
-     * Emit: {@code realm = realm.getScriptContext()}
+     * Emit: {@code context = realm.getWorld().getScriptContext()}
      */
-    private void getScriptContext(Variable<Realm> realm, Variable<ExecutionContext> context,
+    private static void getScriptContext(Variable<Realm> realm, Variable<ExecutionContext> context,
             InstructionVisitor mv) {
         mv.load(realm);
-        mv.invoke(Methods.Realm_getScriptContext);
+        mv.invoke(Methods.Realm_getWorld);
+        mv.invoke(Methods.World_getScriptContext);
         mv.store(context);
     }
 
     /**
-     * Emit: {@code realm.setScriptContext(context)}
+     * Emit: {@code realm.getWorld().setScriptContext(context)}
      */
-    private void setScriptContext(Variable<Realm> realm, Variable<ExecutionContext> context,
+    private static void setScriptContext(Variable<Realm> realm, Variable<ExecutionContext> context,
             InstructionVisitor mv) {
         mv.load(realm);
+        mv.invoke(Methods.Realm_getWorld);
         mv.load(context);
-        mv.invoke(Methods.Realm_setScriptContext);
+        mv.invoke(Methods.World_setScriptContext);
     }
 
     /**
      * Emit: {@code env = LexicalEnvironment.newDeclarativeEnvironment(outer)}
      */
-    private void newDeclarativeEnvironment(Value<? extends LexicalEnvironment<?>> outer,
+    private static void newDeclarativeEnvironment(Value<? extends LexicalEnvironment<?>> outer,
             Variable<? extends LexicalEnvironment<?>> env, InstructionVisitor mv) {
         mv.load(outer);
         mv.invoke(Methods.LexicalEnvironment_newDeclarativeEnvironment);
@@ -326,10 +330,9 @@ final class ScriptCodeGenerator {
     }
 
     /**
-     * Emit:
-     * {@code env = LexicalEnvironment.newDeclarativeEnvironment(context.getLexicalEnvironment())}
+     * Emit: {@code env = LexicalEnvironment.newDeclarativeEnvironment(context.getLexicalEnvironment())}
      */
-    private void newDeclarativeEnvironment(Variable<ExecutionContext> context,
+    private static void newDeclarativeEnvironment(Variable<ExecutionContext> context,
             Variable<? extends LexicalEnvironment<?>> env, InstructionVisitor mv) {
         mv.load(context);
         mv.invoke(Methods.ExecutionContext_getLexicalEnvironment);
@@ -340,7 +343,7 @@ final class ScriptCodeGenerator {
     /**
      * Emit: {@code env = context.getVariableEnvironment()}
      */
-    private void getVariableEnvironment(Variable<ExecutionContext> context,
+    private static void getVariableEnvironment(Variable<ExecutionContext> context,
             Variable<? extends LexicalEnvironment<?>> env, InstructionVisitor mv) {
         mv.load(context);
         mv.invoke(Methods.ExecutionContext_getVariableEnvironment);
@@ -350,7 +353,7 @@ final class ScriptCodeGenerator {
     /**
      * Emit: {@code env = context.getLexicalEnvironment()}
      */
-    private void getLexicalEnvironment(Variable<ExecutionContext> context,
+    private static void getLexicalEnvironment(Variable<ExecutionContext> context,
             Variable<? extends LexicalEnvironment<?>> env, InstructionVisitor mv) {
         mv.load(context);
         mv.invoke(Methods.ExecutionContext_getLexicalEnvironment);
@@ -360,7 +363,7 @@ final class ScriptCodeGenerator {
     /**
      * Emit: {@code context.setLexicalEnvironment(env)}
      */
-    private void setLexicalEnvironment(Variable<ExecutionContext> context,
+    private static void setLexicalEnvironment(Variable<ExecutionContext> context,
             Variable<LexicalEnvironment<DeclarativeEnvironmentRecord>> env, InstructionVisitor mv) {
         mv.load(context);
         mv.load(env);

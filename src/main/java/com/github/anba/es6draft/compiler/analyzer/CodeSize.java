@@ -1,25 +1,31 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
  */
 package com.github.anba.es6draft.compiler.analyzer;
 
+import static com.github.anba.es6draft.semantics.StaticSemantics.BoundNames;
+
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
 import com.github.anba.es6draft.ast.*;
+import com.github.anba.es6draft.ast.Module;
+import com.github.anba.es6draft.ast.synthetic.ClassFieldInitializer;
 import com.github.anba.es6draft.ast.synthetic.ExpressionMethod;
 import com.github.anba.es6draft.ast.synthetic.MethodDefinitionsMethod;
 import com.github.anba.es6draft.ast.synthetic.PropertyDefinitionsMethod;
-import com.github.anba.es6draft.ast.synthetic.SpreadArrayLiteral;
 import com.github.anba.es6draft.ast.synthetic.SpreadElementMethod;
 import com.github.anba.es6draft.ast.synthetic.StatementListMethod;
-import com.github.anba.es6draft.ast.synthetic.SyntheticNode;
+import com.github.anba.es6draft.compiler.CompilationException;
+import com.github.anba.es6draft.runtime.internal.Messages;
 
 /**
  * Estimates the generated code size and splits statements or expressions into sub-methods to avoid exceeding the 64K
@@ -36,18 +42,23 @@ public final class CodeSize implements IntNodeVisitor<CodeSize.State> {
     private static final int MAX_CLASS_PROPERTIES_SIZE = 2 * MAX_EXPRESSION_SIZE;
     private static final int MAX_OBJECT_PROPERTIES_SIZE = 2 * MAX_EXPRESSION_SIZE;
     private static final int MAX_TEMPLATE_ELEMENTS_SIZE = 2 * MAX_EXPRESSION_SIZE;
+    private static final int MAX_SWITCH_SIZE = 32767;
+    private static final int SWITCH_CASE_LIMIT = 100_000;
+    private static final int PARAMETERS_LIMIT = 0xffff;
+    private static final int ARGUMENTS_LIMIT = 0xffff;
+    private static final int LOCALS_LIMIT = 0xffff;
 
     /**
      * Splits statements or expressions into sub-methods to avoid exceeding the 64K bytecode size limit.
      * 
      * @param topLevelNode
      *            the top level node
-     * @throws CodeSizeException
+     * @throws CompilationException
      *             if the estimated code size exceeds the bytecode limit
      */
-    public static void analyze(TopLevelNode<?> topLevelNode) throws CodeSizeException {
-        topLevelNode.accept(new CodeSize(size -> {
-            throw new CodeSizeException(size);
+    public static void analyze(TopLevelNode<?> topLevelNode) throws CompilationException {
+        topLevelNode.accept(new CodeSize((key, size) -> {
+            throw new CompilationException(key, Integer.toString(size));
         }), null);
     }
 
@@ -59,15 +70,15 @@ public final class CodeSize implements IntNodeVisitor<CodeSize.State> {
      *            the top level node
      * @return the estimated code size
      */
-    public static int calculate(TopLevelNode<?> topLevelNode) {
-        return topLevelNode.accept(new CodeSize(size -> {
+    public static int compute(TopLevelNode<?> topLevelNode) {
+        return topLevelNode.accept(new CodeSize((key, size) -> {
             // Ignored.
         }), null);
     }
 
-    private final Consumer<Integer> onSizeViolation;
+    private final BiConsumer<Messages.Key, Integer> onSizeViolation;
 
-    private CodeSize(Consumer<Integer> onSizeViolation) {
+    private CodeSize(BiConsumer<Messages.Key, Integer> onSizeViolation) {
         this.onSizeViolation = onSizeViolation;
     }
 
@@ -77,22 +88,6 @@ public final class CodeSize implements IntNodeVisitor<CodeSize.State> {
 
         State(TopLevelNode<?> top) {
             this.top = top;
-        }
-
-        private boolean isGeneratorOrAsync() {
-            if (top instanceof FunctionNode) {
-                FunctionNode function = (FunctionNode) top;
-                return function.isGenerator() || function.isAsync();
-            }
-            return false;
-        }
-
-        void notifySyntheticNodes(Node newNode) {
-            if (isGeneratorOrAsync()) {
-                newNode.accept(new FindYieldOrAwait(), yieldOrAwait -> {
-                    ((SyntheticNode) newNode).setResumePoint(true);
-                });
-            }
         }
 
         Program program() {
@@ -137,7 +132,6 @@ public final class CodeSize implements IntNodeVisitor<CodeSize.State> {
         if (DEBUG)
             debug("Replace %s=%d [%s]%n", node.getClass().getSimpleName(), size, state.program().getSource());
         NODE newNode = mapper.apply(node);
-        state.notifySyntheticNodes(newNode);
         updater.accept(newNode);
         return newNode.accept(this, state);
     }
@@ -160,13 +154,25 @@ public final class CodeSize implements IntNodeVisitor<CodeSize.State> {
                 newNodes = new ArrayList<>(nodes);
             }
             newNodes.set(i, newNode);
-            state.notifySyntheticNodes(newNode);
             size += newNode.accept(this, state);
         }
         if (newNodes != null) {
             updater.accept(newNodes);
         }
         return size;
+    }
+
+    private <NODE extends Node> int acceptOrMap(List<NODE> nodes, State state, Function<List<NODE>, NODE> mapper,
+            Consumer<List<NODE>> updater, int limit) {
+        int size = accept(nodes, state);
+        if (size < limit) {
+            return size;
+        }
+        if (DEBUG)
+            debug("Replace %d [%s]%n", size, state.program().getSource());
+        NODE newNode = mapper.apply(nodes);
+        updater.accept(Collections.singletonList(newNode));
+        return newNode.accept(this, state);
     }
 
     private int expression(Expression expression, State state, Consumer<Expression> updater) {
@@ -252,13 +258,18 @@ public final class CodeSize implements IntNodeVisitor<CodeSize.State> {
         NODE newNode = mapper.apply(new ArrayList<>(view));
         view.clear();
         list.add(start, newNode);
-        state.notifySyntheticNodes(newNode);
         return newNode.accept(this, state);
     }
 
     private void checkValidSize(int size) {
         if (size > MAX_SIZE_ALLOWED) {
-            onSizeViolation.accept(size);
+            onSizeViolation.accept(Messages.Key.CodeSizeExceeded, size);
+        }
+    }
+
+    private void checkValidSize(Messages.Key key, int size, int limit) {
+        if (size > limit) {
+            onSizeViolation.accept(key, size);
         }
     }
 
@@ -386,6 +397,11 @@ public final class CodeSize implements IntNodeVisitor<CodeSize.State> {
     }
 
     @Override
+    public int visit(BigIntegerLiteral node, State state) {
+        return 10;
+    }
+
+    @Override
     public int visit(BinaryExpression node, State state) {
         int left = expression(node.getLeft(), state, node::setLeft);
         int right = expression(node.getRight(), state, node::setRight);
@@ -425,8 +441,8 @@ public final class CodeSize implements IntNodeVisitor<CodeSize.State> {
 
     @Override
     public int visit(BindingRestProperty node, State state) {
-        int bindingIdentifier = accept(node.getBindingIdentifier(), state);
-        return 25 + bindingIdentifier;
+        int binding = accept(node.getBinding(), state);
+        return 25 + binding;
     }
 
     @Override
@@ -447,6 +463,7 @@ public final class CodeSize implements IntNodeVisitor<CodeSize.State> {
 
     @Override
     public int visit(CallExpression node, State state) {
+        checkValidSize(Messages.Key.FunctionTooManyArguments, node.getArguments().size(), ARGUMENTS_LIMIT);
         int base = accept(node.getBase(), state);
         int arguments = accept(node.getArguments(), state);
         return 30 + base + arguments + listSize(node.getArguments(), 5);
@@ -460,7 +477,7 @@ public final class CodeSize implements IntNodeVisitor<CodeSize.State> {
 
     @Override
     public int visit(CatchNode node, State state) {
-        int catchParameter = accept(node.getCatchParameter(), state);
+        int catchParameter = acceptIfPresent(node.getCatchParameter(), state);
         int catchBlock = accept(node.getCatchBlock(), state);
         return 35 + catchParameter + catchBlock;
     }
@@ -485,6 +502,18 @@ public final class CodeSize implements IntNodeVisitor<CodeSize.State> {
         }
         return 50 + heritage + decorators + properties + listSize(node.getDecorators(), 10)
                 + listSize(node.getProperties(), 10);
+    }
+
+    @Override
+    public int visit(ClassFieldDefinition node, State state) {
+        int propertyName = accept(node.getPropertyName(), state);
+        return 5 + propertyName;
+    }
+
+    @Override
+    public int visit(ClassFieldInitializer node, State state) {
+        int initializer = acceptIfPresent(node.getField().getInitializer(), state);
+        return 5 + initializer;
     }
 
     @Override
@@ -634,11 +663,6 @@ public final class CodeSize implements IntNodeVisitor<CodeSize.State> {
     }
 
     @Override
-    public int visit(ForEachStatement node, State state) {
-        return visitForIteration(node, state);
-    }
-
-    @Override
     public int visit(ForInStatement node, State state) {
         return visitForIteration(node, state);
     }
@@ -687,6 +711,8 @@ public final class CodeSize implements IntNodeVisitor<CodeSize.State> {
     }
 
     private void visitConciseFunction(FunctionNode node, Supplier<Expression> concise, State state) {
+        checkValidSize(Messages.Key.TooManyParameters, numParameters(node), PARAMETERS_LIMIT);
+        checkValidSize(Messages.Key.TooManyLocals, numLocals(node), LOCALS_LIMIT);
         int parameters = accept(node.getParameters(), new State(node));
         checkValidSize(parameters);
         int expression = accept(concise.get(), new State(node));
@@ -694,10 +720,20 @@ public final class CodeSize implements IntNodeVisitor<CodeSize.State> {
     }
 
     private void visitFunction(FunctionNode node, State state) {
+        checkValidSize(Messages.Key.TooManyParameters, numParameters(node), PARAMETERS_LIMIT);
+        checkValidSize(Messages.Key.TooManyLocals, numLocals(node), LOCALS_LIMIT);
         int parameters = accept(node.getParameters(), new State(node));
         checkValidSize(parameters);
         int statements = statementList(node::getStatements, new State(node), node::setStatements);
         checkValidSize(statements);
+    }
+
+    private int numParameters(FunctionNode node) {
+        return BoundNames(node.getParameters()).size();
+    }
+
+    private int numLocals(FunctionNode node) {
+        return node.getScope().lexicallyDeclaredNames().size() + node.getScope().varDeclaredNames().size();
     }
 
     @Override
@@ -751,6 +787,12 @@ public final class CodeSize implements IntNodeVisitor<CodeSize.State> {
     }
 
     @Override
+    public int visit(ImportCallExpression node, State state) {
+        int expr = accept(node.getArgument(), state);
+        return 10 + expr;
+    }
+
+    @Override
     public int visit(ImportClause node, State state) {
         throw new IllegalStateException();
     }
@@ -758,6 +800,11 @@ public final class CodeSize implements IntNodeVisitor<CodeSize.State> {
     @Override
     public int visit(ImportDeclaration node, State state) {
         return 0;
+    }
+
+    @Override
+    public int visit(ImportMeta node, State state) {
+        return 10;
     }
 
     @Override
@@ -774,46 +821,6 @@ public final class CodeSize implements IntNodeVisitor<CodeSize.State> {
     public int visit(LabelledStatement node, State state) {
         int statement = accept(node.getStatement(), state);
         return 15 + statement;
-    }
-
-    @Override
-    public int visit(LegacyComprehension node, State state) {
-        int list = accept(node.getList(), state);
-        int expression = accept(node.getExpression(), state);
-        return 50 + list + expression;
-    }
-
-    @Override
-    public int visit(LegacyComprehensionFor node, State state) {
-        int binding = accept(node.getBinding(), state);
-        int expression = accept(node.getExpression(), state);
-        return 40 + binding + expression;
-    }
-
-    @Override
-    public int visit(LegacyGeneratorDeclaration node, State state) {
-        visitFunction(node, state);
-        return 0;
-    }
-
-    @Override
-    public int visit(LegacyGeneratorExpression node, State state) {
-        visitFunction(node, state);
-        return 10;
-    }
-
-    @Override
-    public int visit(LetExpression node, State state) {
-        int bindings = accept(node.getBindings(), state);
-        int expression = accept(node.getExpression(), state);
-        return 25 + bindings + expression;
-    }
-
-    @Override
-    public int visit(LetStatement node, State state) {
-        int bindings = accept(node.getBindings(), state);
-        int statements = accept(node.getStatement(), state);
-        return 25 + bindings + statements;
     }
 
     @Override
@@ -904,6 +911,19 @@ public final class CodeSize implements IntNodeVisitor<CodeSize.State> {
     }
 
     @Override
+    public int visit(PrivateNameProperty node, State state) {
+        int propertyName = stringSize(node.toPropertyName().getName());
+        return 5 + propertyName;
+    }
+
+    @Override
+    public int visit(PrivatePropertyAccessor node, State state) {
+        int base = accept(node.getBase(), state);
+        int propertyName = stringSize(node.getPrivateName().getName());
+        return 5 + base + propertyName;
+    }
+
+    @Override
     public int visit(PropertyAccessor node, State state) {
         int base = accept(node.getBase(), state);
         int propertyName = stringSize(node.getName());
@@ -944,12 +964,6 @@ public final class CodeSize implements IntNodeVisitor<CodeSize.State> {
         int statements = statementList(node::getStatements, new State(node), node::setStatements);
         checkValidSize(statements);
         return statements;
-    }
-
-    @Override
-    public int visit(SpreadArrayLiteral node, State state) {
-        // Don't descend into synthetic nodes.
-        return 10;
     }
 
     @Override
@@ -1012,16 +1026,57 @@ public final class CodeSize implements IntNodeVisitor<CodeSize.State> {
         return 15 + expression + statements;
     }
 
+    private int remapLarge(SwitchStatement node, State state, int size) {
+        final int SWITCH_CASE_LIMIT = 768; // SwitchStatementGenerator
+        final int MAX_SWITCH_EXPRESSION = 16384;
+        final int MAX_SWITCH_STATEMENT = 16384;
+        final int MAX_CLAUSE_STATEMENT = MAX_STATEMENT_SIZE / 4;
+        final int METHOD_CALL = 16;
+        final int numClauses = node.getClauses().size();
+        final int expressionLimit = numClauses <= SWITCH_CASE_LIMIT
+                ? Math.min(Math.max(MAX_SWITCH_EXPRESSION / numClauses, METHOD_CALL), 256)
+                : 64;
+        final int statementLimit = numClauses <= SWITCH_CASE_LIMIT
+                ? Math.min(Math.max(MAX_SWITCH_STATEMENT / numClauses, METHOD_CALL), 512)
+                : 64;
+
+        int acc = 0, multiplier = 1;
+        for (SwitchClause clause : node.getClauses()) {
+            int expression = 0;
+            if (!clause.isDefaultClause()) {
+                expression = accept(clause.getExpression(), state, ExpressionMethod::new, clause::setExpression,
+                        expressionLimit);
+            }
+            int statements = 0;
+            if (!clause.getStatements().isEmpty()) {
+                statements = acceptOrMap(clause.getStatements(), state, StatementListMethod::new, clause::setStatements,
+                        Math.min(statementLimit * multiplier, MAX_CLAUSE_STATEMENT));
+                multiplier = 1;
+            } else {
+                // empty case
+                multiplier += 1;
+            }
+            acc += 15 + expression + statements;
+        }
+        return acc;
+    }
+
     @Override
     public int visit(SwitchStatement node, State state) {
         // TODO: Doesn't take optimized switches (int,char,string) into account.
+        checkValidSize(Messages.Key.TooManySwitchCases, node.getClauses().size(), SWITCH_CASE_LIMIT);
         int expression = accept(node.getExpression(), state);
         int clauses = accept(node.getClauses(), state);
+        if (clauses > MAX_SWITCH_SIZE) {
+            clauses = remapLarge(node, state, clauses);
+        }
         return 100 + expression + clauses;
     }
 
     @Override
     public int visit(TemplateCallExpression node, State state) {
+        int templateCallArguments = (node.getTemplate().getElements().size() / 2) + 1;
+        checkValidSize(Messages.Key.FunctionTooManyArguments, templateCallArguments, ARGUMENTS_LIMIT);
         int base = accept(node.getBase(), state);
         int template = accept(node.getTemplate(), state);
         return 30 + base + template;
@@ -1029,6 +1084,9 @@ public final class CodeSize implements IntNodeVisitor<CodeSize.State> {
 
     @Override
     public int visit(TemplateCharacters node, State state) {
+        if (node.getValue() == null) {
+            return 5 + stringSize(node.getRawValue());
+        }
         return stringSize(node.getValue()) + stringSize(node.getRawValue());
     }
 
@@ -1041,7 +1099,7 @@ public final class CodeSize implements IntNodeVisitor<CodeSize.State> {
                 long beginPosition = list.get(0).getBeginPosition();
                 long endPosition = list.get(list.size() - 1).getEndPosition();
                 return new ExpressionMethod(new TemplateLiteral(beginPosition, endPosition, false, list));
-            } , node::setElements, MAX_TEMPLATE_ELEMENTS_SIZE);
+            }, node::setElements, MAX_TEMPLATE_ELEMENTS_SIZE);
         }
         return 25 + elements + listSize(node.getElements(), 10);
     }
@@ -1049,6 +1107,12 @@ public final class CodeSize implements IntNodeVisitor<CodeSize.State> {
     @Override
     public int visit(ThisExpression node, State state) {
         return 10;
+    }
+
+    @Override
+    public int visit(ThrowExpression node, State state) {
+        int expression = accept(node.getExpression(), state);
+        return 10 + expression;
     }
 
     @Override
@@ -1068,6 +1132,12 @@ public final class CodeSize implements IntNodeVisitor<CodeSize.State> {
 
     @Override
     public int visit(UnaryExpression node, State state) {
+        int operand = accept(node.getOperand(), state);
+        return 15 + operand;
+    }
+
+    @Override
+    public int visit(UpdateExpression node, State state) {
         int operand = accept(node.getOperand(), state);
         return 15 + operand;
     }

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -28,7 +28,6 @@ public final class SubscriptionObserverAbstractOperations {
     public static SubscriptionObserverObject CreateSubscriptionObserver(ExecutionContext cx,
             SubscriptionObject subscription) {
         /* step 1 (implicit) */
-        // FIXME: spec bug - typo 'observer'
         /* steps 2-3 */
         SubscriptionObserverObject subscriptionObserver = new SubscriptionObserverObject(cx.getRealm(), subscription,
                 cx.getIntrinsic(Intrinsics.SubscriptionObserverPrototype));

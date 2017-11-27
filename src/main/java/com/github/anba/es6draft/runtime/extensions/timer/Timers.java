@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -19,37 +19,36 @@ import com.github.anba.es6draft.Script;
 import com.github.anba.es6draft.compiler.CompilationException;
 import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.runtime.ExecutionContext;
-import com.github.anba.es6draft.runtime.Task;
+import com.github.anba.es6draft.runtime.Job;
+import com.github.anba.es6draft.runtime.internal.JobSource;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Source;
-import com.github.anba.es6draft.runtime.internal.TaskSource;
 import com.github.anba.es6draft.runtime.types.Callable;
 
 /**
  * Simple <code>Timers</code> implementation.
  * 
- * @see <a
- *      href="http://www.whatwg.org/specs/web-apps/current-work/multipage/webappapis.html#timers">Web
- *      application APIs - Timers</a>
+ * @see <a href="http://www.whatwg.org/specs/web-apps/current-work/multipage/webappapis.html#timers">Web application
+ *      APIs - Timers</a>
  */
-public final class Timers implements TaskSource {
+public final class Timers implements JobSource {
     private static final int MAX_TIMEOUT_NESTING = 5;
     private static final int TIMER_CLAMP_TIMEOUT = 0;
     private static final int TIMER_CLAMP_INTERVAL = 4;
     private static final int MAX_TIMEOUT = Integer.MAX_VALUE;
     private final AtomicInteger timerIds = new AtomicInteger();
-    private final DelayQueue<TimerTask> queue = new DelayQueue<>();
-    private final ConcurrentHashMap<Integer, TimerTask> activeTimers = new ConcurrentHashMap<>(16, 0.75f, 2);
+    private final DelayQueue<TimerJob> queue = new DelayQueue<>();
+    private final ConcurrentHashMap<Integer, TimerJob> activeTimers = new ConcurrentHashMap<>(16, 0.75f, 2);
     private int nestingLevel = 0;
 
-    private abstract class TimerTask implements Task, Delayed {
+    private abstract class TimerJob implements Job, Delayed {
         private final int timerId;
         private final long delay;
         private final boolean interval;
         private boolean cancelled = false;
         private long time;
 
-        protected TimerTask(long delay, boolean interval) {
+        protected TimerJob(long delay, boolean interval) {
             this.timerId = timerIds.incrementAndGet();
             this.delay = delay;
             this.interval = interval;
@@ -80,8 +79,8 @@ public final class Timers implements TaskSource {
             if (o == this) {
                 return 0;
             }
-            if (o instanceof TimerTask) {
-                TimerTask x = (TimerTask) o;
+            if (o instanceof TimerJob) {
+                TimerJob x = (TimerJob) o;
                 long delta = time - x.time;
                 return delta < 0 ? -1 : delta > 0 ? 1 : timerId < x.timerId ? -1 : 1;
             }
@@ -114,12 +113,12 @@ public final class Timers implements TaskSource {
         protected abstract void executeInner();
     }
 
-    private final class CallableTimerTask extends TimerTask {
+    private final class CallableTimerJob extends TimerJob {
         private final ExecutionContext cx;
         private final Callable f;
         private final Object[] args;
 
-        CallableTimerTask(long delay, boolean interval, ExecutionContext cx, Callable f, Object... args) {
+        CallableTimerJob(long delay, boolean interval, ExecutionContext cx, Callable f, Object... args) {
             super(delay, interval);
             this.cx = cx;
             this.f = f;
@@ -132,11 +131,11 @@ public final class Timers implements TaskSource {
         }
     }
 
-    private final class ScriptedTimerTask extends TimerTask {
+    private final class ScriptedTimerJob extends TimerJob {
         private final ExecutionContext cx;
         private final String sourceCode;
 
-        ScriptedTimerTask(long delay, boolean interval, ExecutionContext cx, String sourceCode) {
+        ScriptedTimerJob(long delay, boolean interval, ExecutionContext cx, String sourceCode) {
             super(delay, interval);
             this.cx = cx;
             this.sourceCode = sourceCode;
@@ -144,7 +143,7 @@ public final class Timers implements TaskSource {
 
         @Override
         protected void executeInner() {
-            Source source = new Source(cx.getRealm().sourceInfo(cx), "<Timer>", 1);
+            Source source = new Source(cx.sourceInfo(), "<Timer>", 1);
             Script script;
             try {
                 script = cx.getRealm().getScriptLoader().script(source, sourceCode);
@@ -155,40 +154,40 @@ public final class Timers implements TaskSource {
         }
     }
 
-    private TimerTask scheduleTimer(long delay, boolean interval, ExecutionContext cx, Object f, Object... args) {
-        TimerTask task;
+    private TimerJob scheduleTimer(long delay, boolean interval, ExecutionContext cx, Object f, Object... args) {
+        TimerJob job;
         if (IsCallable(f)) {
-            task = new CallableTimerTask(delay, interval, cx, (Callable) f, args);
+            job = new CallableTimerJob(delay, interval, cx, (Callable) f, args);
         } else {
-            task = new ScriptedTimerTask(delay, interval, cx, ToFlatString(cx, f));
+            job = new ScriptedTimerJob(delay, interval, cx, ToFlatString(cx, f));
         }
-        activeTimers.put(task.getTimerId(), task);
-        queue.offer(task);
-        return task;
+        activeTimers.put(job.getTimerId(), job);
+        queue.offer(job);
+        return job;
     }
 
     private void cancelTimer(int timerId) {
-        TimerTask task = activeTimers.remove(timerId);
-        if (task != null) {
-            task.cancel();
+        TimerJob job = activeTimers.remove(timerId);
+        if (job != null) {
+            job.cancel();
         }
     }
 
     @Override
-    public Task nextTask() throws InterruptedException {
+    public Job nextJob() throws InterruptedException {
         if (queue.isEmpty()) {
             return null;
         }
-        return awaitTask();
+        return awaitJob();
     }
 
     @Override
-    public Task awaitTask() throws InterruptedException {
-        TimerTask task = queue.take();
-        if (!task.isInterval()) {
-            activeTimers.remove(task.getTimerId());
+    public Job awaitJob() throws InterruptedException {
+        TimerJob job = queue.take();
+        if (!job.isInterval()) {
+            activeTimers.remove(job.getTimerId());
         }
-        return task;
+        return job;
     }
 
     @Function(name = "setTimeout", arity = 2)
@@ -197,15 +196,15 @@ public final class Timers implements TaskSource {
         if (nestingLevel > MAX_TIMEOUT_NESTING) {
             delay = Math.max(delay, TIMER_CLAMP_INTERVAL);
         }
-        TimerTask task = scheduleTimer(delay, false, cx, f, args);
-        return task.getTimerId();
+        TimerJob job = scheduleTimer(delay, false, cx, f, args);
+        return job.getTimerId();
     }
 
     @Function(name = "setInterval", arity = 2)
     public int setInterval(ExecutionContext cx, Object f, double timeout, Object... args) {
         int delay = (int) Math.min(Math.max(timeout, TIMER_CLAMP_INTERVAL), MAX_TIMEOUT);
-        TimerTask task = scheduleTimer(delay, true, cx, f, args);
-        return task.getTimerId();
+        TimerJob job = scheduleTimer(delay, true, cx, f, args);
+        return job.getTimerId();
     }
 
     @Function(name = "clearTimeout", arity = 1)

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -8,10 +8,10 @@ package com.github.anba.es6draft.runtime;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.*;
 import static com.github.anba.es6draft.runtime.internal.Errors.newReferenceError;
+import static com.github.anba.es6draft.runtime.language.IteratorOperations.EnumerateObjectProperties;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Set;
 
 import com.github.anba.es6draft.runtime.internal.Messages;
@@ -48,13 +48,7 @@ public final class ObjectEnvironmentRecord implements EnvironmentRecord {
     @Override
     public Set<String> bindingNames() {
         HashSet<String> names = new HashSet<>();
-        for (Iterator<?> keys = bindings.enumerateKeys(cx); keys.hasNext();) {
-            Object key = keys.next();
-            Object propertyKey = ToPropertyKey(cx, key);
-            if (propertyKey instanceof String) {
-                names.add((String) propertyKey);
-            }
-        }
+        EnumerateObjectProperties(cx, bindings).forEachRemaining(names::add);
         return names;
     }
 
@@ -66,26 +60,26 @@ public final class ObjectEnvironmentRecord implements EnvironmentRecord {
         /* step 1 (omitted) */
         /* step 2 */
         ScriptObject bindings = this.bindings;
-        /* steps 3-4 */
+        /* step 3 */
         boolean foundBinding = HasProperty(cx, bindings, name);
-        /* step 5 */
+        /* step 4 */
         if (!foundBinding) {
             return false;
         }
-        /* step 6 */
+        /* step 5 */
         if (!withEnvironment) {
             return true;
         }
-        /* steps 7-8 */
+        /* step 6 */
         Object unscopables = Get(cx, bindings, BuiltinSymbol.unscopables.get());
-        /* step 9 */
+        /* step 7 */
         if (Type.isObject(unscopables)) {
             boolean blocked = ToBoolean(Get(cx, Type.objectValue(unscopables), name));
             if (blocked) {
                 return false;
             }
         }
-        /* step 10 */
+        /* step 8 */
         return true;
     }
 
@@ -138,16 +132,16 @@ public final class ObjectEnvironmentRecord implements EnvironmentRecord {
         /* step 1 (omitted) */
         /* step 2 */
         ScriptObject bindings = this.bindings;
-        /* steps 3-4 */
+        /* step 3 */
         boolean foundBinding = HasProperty(cx, bindings, name);
-        /* step 5 */
+        /* step 4 */
         if (!foundBinding) {
             if (!strict) {
                 return UNDEFINED;
             }
             throw newReferenceError(cx, Messages.Key.UnresolvableReference, name);
         }
-        /* step 6 */
+        /* step 5 */
         return Get(cx, bindings, name);
     }
 

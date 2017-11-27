@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -10,21 +10,20 @@ package com.github.anba.es6draft.ast;
  * Extension: Object Rest Destructuring
  */
 public final class BindingRestProperty extends AstNode {
-    private final BindingIdentifier bindingIdentifier;
+    private final Binding binding;
 
-    public BindingRestProperty(long beginPosition, long endPosition,
-            BindingIdentifier bindingIdentifier) {
+    public BindingRestProperty(long beginPosition, long endPosition, Binding binding) {
         super(beginPosition, endPosition);
-        this.bindingIdentifier = bindingIdentifier;
+        this.binding = binding;
     }
 
     /**
-     * Returns the target binding identifier.
+     * Returns the target binding.
      * 
      * @return the binding node
      */
-    public BindingIdentifier getBindingIdentifier() {
-        return bindingIdentifier;
+    public Binding getBinding() {
+        return binding;
     }
 
     @Override

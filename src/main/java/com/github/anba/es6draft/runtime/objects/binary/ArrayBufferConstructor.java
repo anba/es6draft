@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -8,17 +8,18 @@ package com.github.anba.es6draft.runtime.objects.binary;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.IsConstructor;
 import static com.github.anba.es6draft.runtime.AbstractOperations.SpeciesConstructor;
-import static com.github.anba.es6draft.runtime.AbstractOperations.ToLength;
-import static com.github.anba.es6draft.runtime.AbstractOperations.ToNumber;
+import static com.github.anba.es6draft.runtime.AbstractOperations.ToIndex;
 import static com.github.anba.es6draft.runtime.internal.Errors.newRangeError;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 
+import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
+import com.github.anba.es6draft.runtime.internal.Bytes;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.Initializable;
 import com.github.anba.es6draft.runtime.internal.Messages;
@@ -28,6 +29,7 @@ import com.github.anba.es6draft.runtime.internal.Properties.CompatibilityExtensi
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
+import com.github.anba.es6draft.runtime.objects.bigint.BigIntType;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
@@ -45,7 +47,10 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
  * </ul>
  */
 public final class ArrayBufferConstructor extends BuiltinConstructor implements Initializable {
-    private static final boolean IS_LITTLE_ENDIAN = ByteOrder.nativeOrder() == ByteOrder.LITTLE_ENDIAN;
+    private static final boolean RANDOM_NAN_PAYLOAD_ON_SET = false;
+    private static final boolean MODIFIED_NAN_PAYLOAD_ON_SET = false;
+    private static final boolean IS_LITTLE_ENDIAN = Bytes.DEFAULT_BYTE_ORDER == ByteOrder.LITTLE_ENDIAN;
+    private static final int DIRECT_LIMIT = 10 * 1024;
 
     /**
      * Constructs a new ArrayBuffer constructor function.
@@ -61,11 +66,6 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
     public void initialize(Realm realm) {
         createProperties(realm, this, Properties.class);
         createProperties(realm, this, AdditionalProperties.class);
-    }
-
-    @Override
-    public ArrayBufferConstructor clone() {
-        return new ArrayBufferConstructor(getRealm());
     }
 
     /**
@@ -86,8 +86,13 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
         }
         try {
             /* step 3 */
-            // TODO: Call allocateDirect() if size exceeds predefined limit?
-            return ByteBuffer.allocate((int) size).order(ByteOrder.nativeOrder());
+            ByteBuffer buffer;
+            if (size < DIRECT_LIMIT) {
+                buffer = ByteBuffer.allocate((int) size);
+            } else {
+                buffer = ByteBuffer.allocateDirect((int) size);
+            }
+            return buffer.order(Bytes.DEFAULT_BYTE_ORDER);
         } catch (OutOfMemoryError e) {
             /* step 2 */
             throw newRangeError(cx, Messages.Key.OutOfMemoryVM);
@@ -108,8 +113,8 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
      * @param count
      *            the number of bytes to copy
      */
-    public static void CopyDataBlockBytes(ByteBuffer toBlock, long toIndex, ByteBuffer fromBlock,
-            long fromIndex, long count) {
+    public static void CopyDataBlockBytes(ByteBuffer toBlock, long toIndex, ByteBuffer fromBlock, long fromIndex,
+            long count) {
         /* step 1 */
         assert fromBlock != toBlock;
         /* step 2 */
@@ -118,7 +123,6 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
         assert fromIndex + count <= fromBlock.capacity();
         /* steps 5-6 */
         assert toIndex + count <= toBlock.capacity();
-
         /* steps 7-8 */
         fromBlock.limit((int) (fromIndex + count)).position((int) fromIndex);
         toBlock.limit((int) (toIndex + count)).position((int) toIndex);
@@ -138,16 +142,14 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
      *            the buffer byte length
      * @return the new array buffer object
      */
-    public static ArrayBufferObject AllocateArrayBuffer(ExecutionContext cx,
-            Constructor constructor, long byteLength) {
-        /* steps 1-2 */
-        ScriptObject proto = GetPrototypeFromConstructor(cx, constructor,
-                Intrinsics.ArrayBufferPrototype);
-        /* step 3 */
+    public static ArrayBufferObject AllocateArrayBuffer(ExecutionContext cx, Constructor constructor, long byteLength) {
+        /* step 1 */
+        ScriptObject proto = GetPrototypeFromConstructor(cx, constructor, Intrinsics.ArrayBufferPrototype);
+        /* step 2 */
         assert byteLength >= 0;
-        /* steps 4-5 */
+        /* step 3 */
         ByteBuffer block = CreateByteDataBlock(cx, byteLength);
-        /* steps 1-2, 6-8 */
+        /* steps 1, 4-6 */
         return new ArrayBufferObject(cx.getRealm(), block, byteLength, proto);
     }
 
@@ -181,7 +183,7 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
     }
 
     /**
-     * 24.1.1.4 CloneArrayBuffer (srcBuffer, srcByteOffset)
+     * 24.1.1.4 CloneArrayBuffer ( srcBuffer, srcByteOffset, srcLength, [ , cloneConstructor ] )
      * 
      * @param cx
      *            the execution context
@@ -189,14 +191,28 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
      *            the source buffer
      * @param srcByteOffset
      *            the source offset
+     * @param srcLength
+     *            the source length
      * @return the new array buffer object
      */
-    public static ArrayBufferObject CloneArrayBuffer(ExecutionContext cx, ArrayBuffer srcBuffer, long srcByteOffset) {
-        return CloneArrayBuffer(cx, srcBuffer, srcByteOffset, null);
+    public static ArrayBufferObject CloneArrayBuffer(ExecutionContext cx, ArrayBuffer srcBuffer, long srcByteOffset,
+            long srcLength) {
+        /* step 1 (implicit) */
+        /* step 2 */
+        /* step 2.a */
+        Constructor cloneConstructor = SpeciesConstructor(cx, srcBuffer, Intrinsics.ArrayBuffer);
+        /* step 2.b */
+        // FIXME: spec issue - remove this check, later checks for detached buffers cover this case?
+        // (https://github.com/tc39/ecma262/pull/844)
+        if (IsDetachedBuffer(srcBuffer)) {
+            throw newTypeError(cx, Messages.Key.BufferDetached);
+        }
+        /* steps 3-9 */
+        return CloneArrayBuffer(cx, srcBuffer, srcByteOffset, srcLength, cloneConstructor);
     }
 
     /**
-     * 24.1.1.4 CloneArrayBuffer (srcBuffer, srcByteOffset)
+     * 24.1.1.4 CloneArrayBuffer ( srcBuffer, srcByteOffset, srcLength, [ , cloneConstructor ] )
      * 
      * @param cx
      *            the execution context
@@ -204,46 +220,30 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
      *            the source buffer
      * @param srcByteOffset
      *            the source offset
+     * @param srcLength
+     *            the source length
      * @param cloneConstructor
      *            the intrinsic constructor function
      * @return the new array buffer object
      */
     public static ArrayBufferObject CloneArrayBuffer(ExecutionContext cx, ArrayBuffer srcBuffer, long srcByteOffset,
-            Intrinsics cloneConstructor) {
+            long srcLength, Constructor cloneConstructor) {
         /* step 1 (implicit) */
-        /* steps 2-3 */
-        Constructor bufferConstructor;
-        if (cloneConstructor == null) {
-            /* steps 2.a-b */
-            bufferConstructor = SpeciesConstructor(cx, srcBuffer, Intrinsics.ArrayBuffer);
-            /* step 2.c */
-            if (IsDetachedBuffer(srcBuffer)) {
-                throw newTypeError(cx, Messages.Key.BufferDetached);
-            }
-        } else {
-            /* step 3 */
-            assert IsConstructor(cx.getIntrinsic(cloneConstructor));
-            bufferConstructor = (Constructor) cx.getIntrinsic(cloneConstructor);
-        }
+        /* step 2 (not applicable) */
+        /* step 3 (implicit) */
         /* step 4 */
         ByteBuffer srcBlock = srcBuffer.getData();
         /* step 5 */
-        long srcLength = srcBuffer.getByteLength();
+        ArrayBufferObject targetBuffer = AllocateArrayBuffer(cx, cloneConstructor, srcLength);
         /* step 6 */
-        assert srcByteOffset <= srcLength;
-        /* step 7 */
-        long cloneLength = srcLength - srcByteOffset;
-        /* steps 8-9 */
-        ArrayBufferObject targetBuffer = AllocateArrayBuffer(cx, bufferConstructor, cloneLength);
-        /* step 10 */
         if (IsDetachedBuffer(srcBuffer)) {
             throw newTypeError(cx, Messages.Key.BufferDetached);
         }
-        /* step 11 */
+        /* step 7 */
         ByteBuffer targetBlock = targetBuffer.getData();
-        /* step 12 */
-        CopyDataBlockBytes(targetBlock, 0, srcBlock, srcByteOffset, cloneLength);
-        /* step 13 */
+        /* step 8 */
+        CopyDataBlockBytes(targetBlock, 0, srcBlock, srcByteOffset, srcLength);
+        /* step 9 */
         return targetBuffer;
     }
 
@@ -258,7 +258,7 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
      *            the element type
      * @return the buffer value
      */
-    public static double GetValueFromBuffer(ArrayBuffer arrayBuffer, long byteIndex, ElementType type) {
+    public static Number GetValueFromBuffer(ArrayBuffer arrayBuffer, long byteIndex, ElementType type) {
         return GetValueFromBuffer(arrayBuffer, byteIndex, type, IS_LITTLE_ENDIAN);
     }
 
@@ -275,50 +275,45 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
      *            the little endian flag
      * @return the buffer value
      */
-    public static double GetValueFromBuffer(ArrayBuffer arrayBuffer, long byteIndex, ElementType type,
+    public static Number GetValueFromBuffer(ArrayBuffer arrayBuffer, long byteIndex, ElementType type,
             boolean isLittleEndian) {
         /* step 1 */
         assert !IsDetachedBuffer(arrayBuffer) : "ArrayBuffer is detached";
         /* steps 2-3 */
         assert byteIndex >= 0 && (byteIndex + type.size() <= arrayBuffer.getByteLength());
-        /* step 4 */
-        ByteBuffer block = arrayBuffer.getData();
-        /* steps 7-8 */
-        if ((block.order() == ByteOrder.LITTLE_ENDIAN) != isLittleEndian) {
-            // NB: Byte order is not reset after this call.
-            block.order(isLittleEndian ? ByteOrder.LITTLE_ENDIAN : ByteOrder.BIG_ENDIAN);
-        }
+        /* steps 4, 7-8 */
+        ByteBuffer block = arrayBuffer.getData(isLittleEndian ? ByteOrder.LITTLE_ENDIAN : ByteOrder.BIG_ENDIAN);
 
         int index = (int) byteIndex;
         switch (type) {
+        /* steps 5-6, 9 */
         case Float32: {
-            /* steps 5-6, 9 */
             double rawValue = block.getFloat(index);
             return Double.isNaN(rawValue) ? Double.NaN : rawValue;
         }
+        /* steps 5-6, 10 */
         case Float64: {
-            /* steps 5-6, 10 */
             double rawValue = block.getDouble(index);
             return Double.isNaN(rawValue) ? Double.NaN : rawValue;
         }
-
-        /* steps 5-6, 11, 13 */
+        /* steps 5-6, 11-12 */
         case Uint8:
         case Uint8C:
-            return block.get(index) & 0xff;
+            return (int) (block.get(index) & 0xff);
         case Uint16:
-            return block.getShort(index) & 0xffff;
+            return (int) (block.getShort(index) & 0xffff);
         case Uint32:
-            return block.getInt(index) & 0xffff_ffffL;
-
-            /* steps 5-6, 12-13 */
+            return (long) (block.getInt(index) & 0xffff_ffffL);
         case Int8:
-            return block.get(index);
+            return (int) block.get(index);
         case Int16:
-            return block.getShort(index);
+            return (int) block.getShort(index);
         case Int32:
-            return block.getInt(index);
-
+            return (int) block.getInt(index);
+        case BigInt64:
+            return BigInteger.valueOf(block.getLong(index));
+        case BigUint64:
+            return BigIntType.toUnsigned64(block.getLong(index));
         default:
             throw new AssertionError();
         }
@@ -336,7 +331,7 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
      * @param value
      *            the new element value
      */
-    public static void SetValueInBuffer(ArrayBuffer arrayBuffer, long byteIndex, ElementType type, double value) {
+    public static void SetValueInBuffer(ArrayBuffer arrayBuffer, long byteIndex, ElementType type, Number value) {
         SetValueInBuffer(arrayBuffer, byteIndex, type, value, IS_LITTLE_ENDIAN);
     }
 
@@ -354,66 +349,100 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
      * @param isLittleEndian
      *            the little endian flag
      */
-    public static void SetValueInBuffer(ArrayBuffer arrayBuffer, long byteIndex, ElementType type, double value,
+    public static void SetValueInBuffer(ArrayBuffer arrayBuffer, long byteIndex, ElementType type, Number value,
             boolean isLittleEndian) {
         /* step 1 */
         assert !IsDetachedBuffer(arrayBuffer) : "ArrayBuffer is detached";
         /* steps 2-3 */
         assert byteIndex >= 0 && (byteIndex + type.size() <= arrayBuffer.getByteLength());
         /* step 4 (not applicable) */
-        /* step 5 */
-        ByteBuffer block = arrayBuffer.getData();
-        /* step 6 */
-        assert block != null;
-        /* step 8 */
-        if ((block.order() == ByteOrder.LITTLE_ENDIAN) != isLittleEndian) {
-            // NB: Byte order is not reset after this call.
-            block.order(isLittleEndian ? ByteOrder.LITTLE_ENDIAN : ByteOrder.BIG_ENDIAN);
-        }
+        /* steps 5-7 */
+        ByteBuffer block = arrayBuffer.getData(isLittleEndian ? ByteOrder.LITTLE_ENDIAN : ByteOrder.BIG_ENDIAN);
+
+        // Extension: BigInt
+        assert type.isInt64() ? Type.isBigInt(value) : Type.isNumber(value);
 
         int index = (int) byteIndex;
         switch (type) {
-        case Float32:
-            /* steps 5, 9, 12-13 */
-            block.putFloat(index, (float) value);
+        /* steps 8, 11-12 */
+        case Float32: {
+            double numValue = value.doubleValue();
+            if (RANDOM_NAN_PAYLOAD_ON_SET) {
+                if (Double.isNaN(numValue)) {
+                    // 51 bits random payload data.
+                    long payload = Double.doubleToRawLongBits(Math.random()) & 0x7FFFFFFFFFFFFL;
+                    numValue = Double
+                            .longBitsToDouble((Double.doubleToRawLongBits(numValue) & 0xFFF8000000000000L) | payload);
+                }
+            }
+            if (MODIFIED_NAN_PAYLOAD_ON_SET) {
+                if (Double.isNaN(numValue)) {
+                    // 51 bits modified payload data.
+                    long payload = ~(Double.doubleToRawLongBits(numValue) & 0x7FFFFFFFFFFFFL) | 0xFFFFL;
+                    numValue = Double
+                            .longBitsToDouble((Double.doubleToRawLongBits(numValue) & 0xFFF8000000000000L) | payload);
+                }
+            }
+            block.putFloat(index, (float) numValue);
             return;
-        case Float64:
-            /* steps 5, 10, 12-13 */
-            block.putDouble(index, value);
+        }
+        /* steps 9, 11-12 */
+        case Float64: {
+            double numValue = value.doubleValue();
+            if (RANDOM_NAN_PAYLOAD_ON_SET) {
+                if (Double.isNaN(numValue)) {
+                    // 51 bits random payload data.
+                    long payload = Double.doubleToRawLongBits(Math.random()) & 0x7FFFFFFFFFFFFL;
+                    numValue = Double
+                            .longBitsToDouble((Double.doubleToRawLongBits(numValue) & 0xFFF8000000000000L) | payload);
+                }
+            }
+            if (MODIFIED_NAN_PAYLOAD_ON_SET) {
+                if (Double.isNaN(numValue)) {
+                    // 51 bits modified payload data.
+                    long payload = ~(Double.doubleToRawLongBits(numValue) & 0x7FFFFFFFFFFFFL) | 0xFFFFL;
+                    numValue = Double
+                            .longBitsToDouble((Double.doubleToRawLongBits(numValue) & 0xFFF8000000000000L) | payload);
+                }
+            }
+            block.putDouble(index, numValue);
             return;
-
-            /* steps 5, 11-13 */
+        }
+        /* steps 10-12 */
         case Int8:
-            block.put(index, ElementType.ToInt8(value));
+            block.put(index, ElementType.ToInt8(value.doubleValue()));
             return;
         case Uint8:
-            block.put(index, ElementType.ToUint8(value));
+            block.put(index, ElementType.ToUint8(value.doubleValue()));
             return;
         case Uint8C:
-            block.put(index, ElementType.ToUint8Clamp(value));
+            block.put(index, ElementType.ToUint8Clamp(value.doubleValue()));
             return;
-
         case Int16:
-            block.putShort(index, ElementType.ToInt16(value));
+            block.putShort(index, ElementType.ToInt16(value.doubleValue()));
             return;
         case Uint16:
-            block.putShort(index, ElementType.ToUint16(value));
+            block.putShort(index, ElementType.ToUint16(value.doubleValue()));
             return;
-
         case Int32:
-            block.putInt(index, ElementType.ToInt32(value));
+            block.putInt(index, ElementType.ToInt32(value.doubleValue()));
             return;
         case Uint32:
-            block.putInt(index, ElementType.ToUint32(value));
+            block.putInt(index, ElementType.ToUint32(value.doubleValue()));
             return;
-
+        case BigInt64:
+            block.putLong(index, ElementType.ToBigInt64((BigInteger) value));
+            return;
+        case BigUint64:
+            block.putLong(index, ElementType.ToBigUint64((BigInteger) value));
+            return;
         default:
             throw new AssertionError();
         }
     }
 
     /**
-     * 24.1.2.1 ArrayBuffer(length)
+     * 24.1.2.1 ArrayBuffer ( [ length ] )
      */
     @Override
     public ArrayBufferObject call(ExecutionContext callerContext, Object thisValue, Object... args) {
@@ -422,28 +451,16 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
     }
 
     /**
-     * 24.1.2.1 ArrayBuffer(length)
+     * 24.1.2.1 ArrayBuffer ( [ length ] )
      */
     @Override
-    public ArrayBufferObject construct(ExecutionContext callerContext, Constructor newTarget,
-            Object... args) {
+    public ArrayBufferObject construct(ExecutionContext callerContext, Constructor newTarget, Object... args) {
         ExecutionContext calleeContext = calleeContext();
         Object length = argument(args, 0);
         /* step 1 (not applicable) */
-        // FIXME: spec issue? - missing length parameter same as 0 for bwcompat?
-        if (args.length == 0
-                && getRealm().isEnabled(CompatibilityOption.ArrayBufferMissingLength)) {
-            length = 0;
-        }
         /* step 2 */
-        double numberLength = ToNumber(calleeContext, length);
-        /* steps 3-4 */
-        long byteLength = ToLength(numberLength);
-        /* step 5 */
-        if (numberLength != byteLength) { // SameValueZero
-            throw newRangeError(calleeContext, Messages.Key.InvalidBufferSize);
-        }
-        /* step 6 */
+        long byteLength = ToIndex(calleeContext, length);
+        /* step 3 */
         return AllocateArrayBuffer(calleeContext, newTarget, byteLength);
     }
 
@@ -508,15 +525,15 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
     public enum AdditionalProperties {
         ;
 
-        private static ArrayBufferObject thisArrayBufferObjectChecked(ExecutionContext cx, Object m) {
-            if (m instanceof ArrayBufferObject) {
-                ArrayBufferObject buffer = (ArrayBufferObject) m;
+        private static ArrayBufferObject thisArrayBufferObject(ExecutionContext cx, Object value, String method) {
+            if (value instanceof ArrayBufferObject) {
+                ArrayBufferObject buffer = (ArrayBufferObject) value;
                 if (IsDetachedBuffer(buffer)) {
                     throw newTypeError(cx, Messages.Key.BufferDetached);
                 }
                 return buffer;
             }
-            throw newTypeError(cx, Messages.Key.IncompatibleObject);
+            throw newTypeError(cx, Messages.Key.IncompatibleThis, method, Type.of(value).toString());
         }
 
         /**
@@ -534,15 +551,11 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
          */
         @Function(name = "transfer", arity = 1)
         public static Object transfer(ExecutionContext cx, Object thisValue, Object oldBuffer, Object newByteLength) {
-            ArrayBufferObject oldArrayBuffer = thisArrayBufferObjectChecked(cx, oldBuffer);
+            ArrayBufferObject oldArrayBuffer = thisArrayBufferObject(cx, oldBuffer, "ArrayBuffer.transfer");
             long byteLength;
             if (!Type.isUndefined(newByteLength)) {
-                // Perform same length validation as in new ArrayBuffer(length).
-                double numberLength = ToNumber(cx, newByteLength);
-                byteLength = ToLength(numberLength);
-                if (numberLength != byteLength) { // SameValueZero
-                    throw newRangeError(cx, Messages.Key.InvalidBufferSize);
-                }
+                // Perform the same length conversion as in new ArrayBuffer(length).
+                byteLength = ToIndex(cx, newByteLength);
             } else {
                 // newByteLength defaults to oldBuffer.byteLength
                 byteLength = oldArrayBuffer.getByteLength();

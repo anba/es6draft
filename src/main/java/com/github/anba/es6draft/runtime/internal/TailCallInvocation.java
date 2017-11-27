@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -30,7 +30,7 @@ public abstract class TailCallInvocation {
      * 
      * @param object
      *            the this-argument object
-     * @return the tail call trampoline object
+     * @return the tail-call trampoline object
      */
     // Called from generated code
     public abstract TailCallInvocation toConstructTailCall(ScriptObject object);
@@ -40,30 +40,40 @@ public abstract class TailCallInvocation {
      * 
      * @param envRec
      *            the function environment record
-     * @return the tail call trampoline object
+     * @return the tail-call trampoline object
      */
     // Called from generated code
     public abstract TailCallInvocation toConstructTailCall(FunctionEnvironmentRecord envRec);
 
-    public static TailCallInvocation newTailCallInvocation(Callable function, Object thisValue,
-            Object[] argumentsList) {
-        return new CallTailCallInvocation(function, thisValue, argumentsList);
+    /**
+     * Creates a new {@link TailCallInvocation} object.
+     * 
+     * @param function
+     *            the function object
+     * @param thisValue
+     *            the function this-value
+     * @param arguments
+     *            the arguments list
+     * @return the tail-call trampoline object
+     */
+    public static TailCallInvocation newTailCallInvocation(Callable function, Object thisValue, Object[] arguments) {
+        return new CallTailCallInvocation(function, thisValue, arguments);
     }
 
     private static final class CallTailCallInvocation extends TailCallInvocation {
         private final Callable function;
         private final Object thisValue;
-        private final Object[] argumentsList;
+        private final Object[] arguments;
 
-        CallTailCallInvocation(Callable function, Object thisValue, Object[] argumentsList) {
+        CallTailCallInvocation(Callable function, Object thisValue, Object[] arguments) {
             this.function = function;
             this.thisValue = thisValue;
-            this.argumentsList = argumentsList;
+            this.arguments = arguments;
         }
 
         @Override
         protected Object apply(ExecutionContext callerContext) throws Throwable {
-            return function.tailCall(callerContext, thisValue, argumentsList);
+            return function.tailCall(callerContext, thisValue, arguments);
         }
 
         @Override
@@ -113,8 +123,7 @@ public abstract class TailCallInvocation {
         private final TailCallInvocation invocation;
         private final FunctionEnvironmentRecord envRec;
 
-        ConstructDerivedTailCallInvocation(TailCallInvocation invocation,
-                FunctionEnvironmentRecord envRec) {
+        ConstructDerivedTailCallInvocation(TailCallInvocation invocation, FunctionEnvironmentRecord envRec) {
             this.invocation = invocation;
             this.envRec = envRec;
         }
@@ -145,13 +154,11 @@ public abstract class TailCallInvocation {
         }
     }
 
-    private static final MethodHandle tailCallTrampolineMH = MethodLookup.findStatic(
-            MethodHandles.lookup(), "tailCallTrampoline",
-            MethodType.methodType(Object.class, Object.class, ExecutionContext.class));
+    private static final MethodHandle tailCallTrampolineMH = MethodLookup.findStatic(MethodHandles.lookup(),
+            "tailCallTrampoline", MethodType.methodType(Object.class, Object.class, ExecutionContext.class));
 
-    private static final MethodHandle tailConstructTrampolineMH = MethodLookup.findStatic(
-            MethodHandles.lookup(), "tailConstructTrampoline",
-            MethodType.methodType(ScriptObject.class, Object.class, ExecutionContext.class));
+    private static final MethodHandle tailConstructTrampolineMH = MethodLookup.findStatic(MethodHandles.lookup(),
+            "tailConstructTrampoline", MethodType.methodType(ScriptObject.class, Object.class, ExecutionContext.class));
 
     /**
      * (Object, ExecutionContext) {@literal ->} Object.
@@ -172,8 +179,7 @@ public abstract class TailCallInvocation {
     }
 
     @SuppressWarnings("unused")
-    private static Object tailCallTrampoline(Object result, ExecutionContext callerContext)
-            throws Throwable {
+    private static Object tailCallTrampoline(Object result, ExecutionContext callerContext) throws Throwable {
         // tail-call with trampoline
         while (result instanceof TailCallInvocation) {
             result = ((TailCallInvocation) result).apply(callerContext);
@@ -182,8 +188,8 @@ public abstract class TailCallInvocation {
     }
 
     @SuppressWarnings("unused")
-    private static ScriptObject tailConstructTrampoline(Object result,
-            ExecutionContext callerContext) throws Throwable {
+    private static ScriptObject tailConstructTrampoline(Object result, ExecutionContext callerContext)
+            throws Throwable {
         // tail-call with trampoline
         while (result instanceof TailCallInvocation) {
             result = ((TailCallInvocation) result).apply(callerContext);

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -58,7 +58,7 @@ public final class AsyncGeneratorPrototype extends OrdinaryObject implements Ini
          * AsyncGenerator.prototype.constructor
          */
         @Value(name = "constructor",
-                attributes = @Attributes(writable = false, enumerable = false, configurable = true) )
+                attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static final Intrinsics constructor = Intrinsics.AsyncGenerator;
 
         /**
@@ -75,7 +75,7 @@ public final class AsyncGeneratorPrototype extends OrdinaryObject implements Ini
         @Function(name = "next", arity = 1)
         public static Object next(ExecutionContext cx, Object thisValue, Object value) {
             /* steps 1-3 */
-            return AsyncGeneratorEnqueue(cx, thisValue, value);
+            return AsyncGeneratorEnqueue(cx, thisValue, value, "AsyncGenerator.prototype.next");
         }
 
         /**
@@ -91,7 +91,8 @@ public final class AsyncGeneratorPrototype extends OrdinaryObject implements Ini
          */
         @Function(name = "return", arity = 1)
         public static Object _return(ExecutionContext cx, Object thisValue, Object value) {
-            return AsyncGeneratorEnqueue(cx, thisValue, new ReturnValue(value));
+            /* steps 1-3 */
+            return AsyncGeneratorEnqueue(cx, thisValue, new ReturnValue(value), "AsyncGenerator.prototype.return");
         }
 
         /**
@@ -107,14 +108,16 @@ public final class AsyncGeneratorPrototype extends OrdinaryObject implements Ini
          */
         @Function(name = "throw", arity = 1)
         public static Object _throw(ExecutionContext cx, Object thisValue, Object exception) {
-            return AsyncGeneratorEnqueue(cx, thisValue, ScriptException.create(exception));
+            /* steps 1-3 */
+            return AsyncGeneratorEnqueue(cx, thisValue, ScriptException.create(exception),
+                    "AsyncGenerator.prototype.throw");
         }
 
         /**
          * AsyncGenerator.prototype [ @@toStringTag ]
          */
         @Value(name = "[Symbol.toStringTag]", symbol = BuiltinSymbol.toStringTag,
-                attributes = @Attributes(writable = false, enumerable = false, configurable = true) )
+                attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static final String toStringTag = "AsyncGenerator";
     }
 }

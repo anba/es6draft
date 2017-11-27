@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -12,6 +12,7 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.Get;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToLength;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
+import static com.github.anba.es6draft.runtime.objects.binary.ArrayBufferConstructor.IsDetachedBuffer;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
@@ -27,6 +28,7 @@ import com.github.anba.es6draft.runtime.objects.binary.TypedArrayObject;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
+import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.NativeFunction;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
@@ -64,7 +66,8 @@ public final class ArrayIteratorPrototype extends OrdinaryObject implements Init
      *            the array iteration kind
      * @return the new array iterator
      */
-    public static OrdinaryObject CreateArrayIterator(ExecutionContext cx, ScriptObject array, ArrayIterationKind kind) {
+    public static ArrayIteratorObject CreateArrayIterator(ExecutionContext cx, ScriptObject array,
+            ArrayIterationKind kind) {
         /* step 1 (not applicable) */
         /* steps 2-6 */
         return new ArrayIteratorObject(cx.getRealm(), array, kind, cx.getIntrinsic(Intrinsics.ArrayIteratorPrototype));
@@ -83,7 +86,7 @@ public final class ArrayIteratorPrototype extends OrdinaryObject implements Init
      *            the array iteration kind
      * @return the new array iterator
      */
-    public static OrdinaryObject CreateArrayIterator(ExecutionContext cx, ScriptObject array, long index,
+    public static ArrayIteratorObject CreateArrayIterator(ExecutionContext cx, ScriptObject array, long index,
             ArrayIterationKind kind) {
         /* step 1 (not applicable) */
         /* steps 2-6 */
@@ -133,7 +136,8 @@ public final class ArrayIteratorPrototype extends OrdinaryObject implements Init
         public static Object next(ExecutionContext cx, Object thisValue) {
             /* steps 1-3 */
             if (!(thisValue instanceof ArrayIteratorObject)) {
-                throw newTypeError(cx, Messages.Key.IncompatibleObject);
+                throw newTypeError(cx, Messages.Key.IncompatibleThis, "%ArrayIteratorPrototype%.next",
+                        Type.of(thisValue).toString());
             }
             ArrayIteratorObject iter = (ArrayIteratorObject) thisValue;
             /* step 4 */
@@ -149,7 +153,11 @@ public final class ArrayIteratorPrototype extends OrdinaryObject implements Init
             /* steps 8-9 */
             long len;
             if (array instanceof TypedArrayObject) {
-                len = ((TypedArrayObject) array).getArrayLength();
+                TypedArrayObject typedArray = (TypedArrayObject) array;
+                if (IsDetachedBuffer(typedArray.getBuffer())) {
+                    throw newTypeError(cx, Messages.Key.BufferDetached);
+                }
+                len = typedArray.getArrayLength();
             } else {
                 len = ToLength(cx, Get(cx, array, "length"));
             }
@@ -160,7 +168,7 @@ public final class ArrayIteratorPrototype extends OrdinaryObject implements Init
             }
             /* step 11 */
             iter.setNextIndex(index + 1);
-            /* steps 12-17 */
+            /* steps 12-16 */
             Object result;
             if (itemKind == ArrayIterationKind.Key) {
                 /* step 12 */
@@ -168,18 +176,18 @@ public final class ArrayIteratorPrototype extends OrdinaryObject implements Init
             } else {
                 /* step 13 */
                 long elementKey = index;
-                /* steps 14-15 */
+                /* step 14 */
                 Object elementValue = Get(cx, array, elementKey);
                 if (itemKind == ArrayIterationKind.Value) {
-                    /* step 16 */
+                    /* step 15 */
                     result = elementValue;
                 } else {
-                    /* step 17 */
+                    /* step 16 */
                     assert itemKind == ArrayIterationKind.KeyValue;
                     result = CreateArrayFromList(cx, index, elementValue);
                 }
             }
-            /* steps 12, 18 */
+            /* steps 12, 17 */
             return CreateIterResultObject(cx, result, false);
         }
 

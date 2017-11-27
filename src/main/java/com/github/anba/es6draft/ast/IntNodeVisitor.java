@@ -1,15 +1,15 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
  */
 package com.github.anba.es6draft.ast;
 
+import com.github.anba.es6draft.ast.synthetic.ClassFieldInitializer;
 import com.github.anba.es6draft.ast.synthetic.ExpressionMethod;
 import com.github.anba.es6draft.ast.synthetic.MethodDefinitionsMethod;
 import com.github.anba.es6draft.ast.synthetic.PropertyDefinitionsMethod;
-import com.github.anba.es6draft.ast.synthetic.SpreadArrayLiteral;
 import com.github.anba.es6draft.ast.synthetic.SpreadElementMethod;
 import com.github.anba.es6draft.ast.synthetic.StatementListMethod;
 
@@ -49,6 +49,8 @@ public interface IntNodeVisitor<V> {
 
     int visit(AwaitExpression node, V value);
 
+    int visit(BigIntegerLiteral node, V value);
+
     int visit(BinaryExpression node, V value);
 
     int visit(BindingElement node, V value);
@@ -78,6 +80,10 @@ public interface IntNodeVisitor<V> {
     int visit(ClassDeclaration node, V value);
 
     int visit(ClassExpression node, V value);
+
+    int visit(ClassFieldDefinition node, V value);
+
+    int visit(ClassFieldInitializer node, V value);
 
     int visit(CommaExpression node, V value);
 
@@ -121,8 +127,6 @@ public interface IntNodeVisitor<V> {
 
     int visit(ForAwaitStatement node, V value);
 
-    int visit(ForEachStatement node, V value);
-
     int visit(ForInStatement node, V value);
 
     int visit(FormalParameter node, V value);
@@ -153,27 +157,19 @@ public interface IntNodeVisitor<V> {
 
     int visit(IfStatement node, V value);
 
+    int visit(ImportCallExpression node, V value);
+
     int visit(ImportClause node, V value);
 
     int visit(ImportDeclaration node, V value);
+
+    int visit(ImportMeta node, V value);
 
     int visit(ImportSpecifier node, V value);
 
     int visit(LabelledFunctionStatement node, V value);
 
     int visit(LabelledStatement node, V value);
-
-    int visit(LegacyComprehension node, V value);
-
-    int visit(LegacyComprehensionFor node, V value);
-
-    int visit(LegacyGeneratorDeclaration node, V value);
-
-    int visit(LegacyGeneratorExpression node, V value);
-
-    int visit(LetExpression node, V value);
-
-    int visit(LetStatement node, V value);
 
     int visit(LexicalBinding node, V value);
 
@@ -201,6 +197,10 @@ public interface IntNodeVisitor<V> {
 
     int visit(ObjectLiteral node, V value);
 
+    int visit(PrivateNameProperty node, V value);
+
+    int visit(PrivatePropertyAccessor node, V value);
+
     int visit(PropertyAccessor node, V value);
 
     int visit(PropertyDefinitionsMethod node, V value);
@@ -214,8 +214,6 @@ public interface IntNodeVisitor<V> {
     int visit(ReturnStatement node, V value);
 
     int visit(Script node, V value);
-
-    int visit(SpreadArrayLiteral node, V value);
 
     int visit(SpreadElement node, V value);
 
@@ -247,11 +245,15 @@ public interface IntNodeVisitor<V> {
 
     int visit(ThisExpression node, V value);
 
+    int visit(ThrowExpression node, V value);
+
     int visit(ThrowStatement node, V value);
 
     int visit(TryStatement node, V value);
 
     int visit(UnaryExpression node, V value);
+
+    int visit(UpdateExpression node, V value);
 
     int visit(VariableDeclaration node, V value);
 

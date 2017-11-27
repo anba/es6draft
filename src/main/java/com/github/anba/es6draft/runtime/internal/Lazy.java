@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -12,35 +12,12 @@ import java.util.function.Supplier;
  * Class to perform lazy value computation.
  */
 public abstract class Lazy<VALUE> {
-    private VALUE value;
-
     /**
-     * Returns the current value.
-     * 
-     * @return the current value
-     */
-    protected final VALUE getInternal() {
-        return value;
-    }
-
-    /**
-     * Computes the actual value lazily.
+     * Returns the value for this object.
      * 
      * @return the computed value
      */
-    protected abstract VALUE computeValue();
-
-    /**
-     * Returns the value for this object, calls {@link #computeValue()} to retrieve the value initially.
-     * 
-     * @return the computed value
-     */
-    public final VALUE get() {
-        if (value == null) {
-            value = computeValue();
-        }
-        return value;
-    }
+    public abstract VALUE get();
 
     /**
      * Creates a new lazy value object using a supplier function to create the initial value.
@@ -70,36 +47,44 @@ public abstract class Lazy<VALUE> {
 
     private static final class LazyImpl<V> extends Lazy<V> {
         private Supplier<V> supplier;
+        private V value;
 
         LazyImpl(Supplier<V> supplier) {
             this.supplier = supplier;
         }
 
         @Override
-        protected V computeValue() {
-            V v = supplier.get();
-            supplier = null;
-            return v;
+        public V get() {
+            V value = this.value;
+            if (value == null) {
+                this.value = value = supplier.get();
+                supplier = null;
+            }
+            return value;
         }
     }
 
     private static final class SyncLazyImpl<V> extends Lazy<V> {
         private Supplier<V> supplier;
+        private volatile V value;
 
         SyncLazyImpl(Supplier<V> supplier) {
             this.supplier = supplier;
         }
 
         @Override
-        protected synchronized V computeValue() {
-            Supplier<V> supplier = this.supplier;
-            // Lazy#get() is not synchronized, so supplier can be null here.
-            if (supplier == null) {
-                return getInternal();
+        public V get() {
+            V value = this.value;
+            if (value == null) {
+                synchronized (this) {
+                    value = this.value;
+                    if (value == null) {
+                        this.value = value = supplier.get();
+                        supplier = null;
+                    }
+                }
             }
-            V v = supplier.get();
-            this.supplier = null;
-            return v;
+            return value;
         }
     }
 }

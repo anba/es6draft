@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -51,8 +51,8 @@ final class JSONTokenStream {
     }
 
     /**
-     * Updates line state information for line breaks within literals, does <strong>not</strong> set
-     * the {@link #hasLineTerminator} flag.
+     * Updates line state information for line breaks within literals, does <strong>not</strong> set the
+     * {@link #hasLineTerminator} flag.
      */
     private void incrementLine() {
         line += 1;
@@ -338,8 +338,8 @@ final class JSONTokenStream {
             c = '\t';
             break;
         case 'u':
-            c = (hexDigit(input.getChar()) << 12) | (hexDigit(input.getChar()) << 8)
-                    | (hexDigit(input.getChar()) << 4) | hexDigit(input.getChar());
+            c = (hexDigit(input.getChar()) << 12) | (hexDigit(input.getChar()) << 8) | (hexDigit(input.getChar()) << 4)
+                    | hexDigit(input.getChar());
             if (c < 0) {
                 throw error(Messages.Key.JSONInvalidUnicodeEscape);
             }
@@ -443,7 +443,7 @@ final class JSONTokenStream {
      * @return the parser exception
      */
     private ParserException error(Messages.Key messageKey, String... args) {
-        throw new ParserException(ExceptionType.SyntaxError, parser.getSourceName(), getLine(),
-                getColumn(), messageKey, args);
+        throw new ParserException(ExceptionType.SyntaxError, parser.getSourceName(), getLine(), getColumn(), messageKey,
+                args);
     }
 }

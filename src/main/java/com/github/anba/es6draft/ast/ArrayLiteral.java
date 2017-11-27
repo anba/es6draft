@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -15,12 +15,11 @@ import java.util.List;
  * <li>12.2.5 Array Initializer
  * </ul>
  */
-public class ArrayLiteral extends ArrayInitializer {
+public class ArrayLiteral extends Expression {
     private List<Expression> elements;
     private final boolean trailingComma;
 
-    public ArrayLiteral(long beginPosition, long endPosition, List<Expression> elements,
-            boolean trailingComma) {
+    public ArrayLiteral(long beginPosition, long endPosition, List<Expression> elements, boolean trailingComma) {
         super(beginPosition, endPosition);
         this.elements = elements;
         this.trailingComma = trailingComma;

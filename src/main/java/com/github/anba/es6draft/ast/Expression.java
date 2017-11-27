@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -42,8 +42,8 @@ public abstract class Expression extends AstNode {
     }
 
     /**
-     * Returns a {@link Expression} instance representing this node as a no-value-expression, i.e.
-     * an expression which returns no completion value.
+     * Returns a {@link Expression} instance representing this node as a no-value-expression, i.e. an expression which
+     * returns no completion value.
      * 
      * @return the expression no-value node
      */

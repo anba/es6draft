@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -29,11 +29,3 @@ assertFalse(forOfUndefined);
 let forOfNull = false;
 assertThrows(TypeError, () => { for (let k of null) forOfNull = true; });
 assertFalse(forOfNull);
-
-
-// undefined and null are not ignored in comprehension
-assertThrows(TypeError, () => [for (k of void 0) k]);
-assertThrows(TypeError, () => [for (k of null) k]);
-assertThrows(TypeError, () => (for (k of void 0) k).next());
-assertThrows(TypeError, () => (for (k of null) k).next());
-

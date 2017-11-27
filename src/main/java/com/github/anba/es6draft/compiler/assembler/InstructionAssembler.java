@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -10,7 +10,6 @@ import java.io.PrintWriter;
 import java.util.Arrays;
 import java.util.HashMap;
 
-import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.commons.CodeSizeEvaluator;
@@ -150,9 +149,24 @@ public class InstructionAssembler {
      */
     public InstructionAssembler(MethodCode method) {
         this.method = method;
-        this.methodVisitor = decorate(method.methodVisitor);
+        this.methodVisitor = decorate(method);
         this.constantPool = method.classCode.constantPool;
-        this.stack = createStack(variables);
+        this.stack = createStack();
+    }
+
+    /**
+     * Creates a new instruction assembler
+     * 
+     * @param method
+     *            the method object
+     * @param stack
+     *            the method stack
+     */
+    public InstructionAssembler(MethodCode method, Stack stack) {
+        this.method = method;
+        this.methodVisitor = decorate(method);
+        this.constantPool = method.classCode.constantPool;
+        this.stack = stack;
     }
 
     /**
@@ -182,14 +196,15 @@ public class InstructionAssembler {
         return lastLineNumber;
     }
 
-    protected Stack createStack(Variables variables) {
+    private Stack createStack() {
         if (VERIFY_STACK) {
-            return new Stack(variables);
+            return new Stack();
         }
-        return new EmptyStack(variables);
+        return new EmptyStack();
     }
 
-    protected MethodVisitor decorate(MethodVisitor mv) {
+    private static MethodVisitor decorate(MethodCode method) {
+        MethodVisitor mv = method.methodVisitor;
         if (EVALUATE_SIZE) {
             mv = new $CodeSizeEvaluator(method, mv);
         }
@@ -274,7 +289,7 @@ public class InstructionAssembler {
 
     private void checkParameterType(int index, Type type) {
         if (!method.methodDescriptor.parameterType(index).equals(type)) {
-            throw new IllegalArgumentException();
+            throw new IllegalArgumentException(method.methodDescriptor.parameterType(index) + " != " + type);
         }
     }
 
@@ -282,6 +297,16 @@ public class InstructionAssembler {
         checkParameterType(index, type);
         MethodTypeDescriptor desc = method.methodDescriptor;
         variables.addVariable(name, desc.parameterType(index), parameterSlot(index));
+    }
+
+    protected void setParameterNameUnchecked(String name, int index) {
+        MethodTypeDescriptor desc = method.methodDescriptor;
+        variables.addVariable(name, desc.parameterType(index), parameterSlot(index));
+    }
+
+    public boolean hasParameter(int index, Type type) {
+        MethodTypeDescriptor desc = method.methodDescriptor;
+        return index < desc.parameterCount() && desc.parameterType(index).equals(type);
     }
 
     public boolean hasParameter(int index, Class<?> clazz) {
@@ -295,13 +320,28 @@ public class InstructionAssembler {
         return new Variable<>("(parameter)", desc.parameterType(index), parameterSlot(index));
     }
 
+    public Variable<?> getParameterUnchecked(int index) {
+        MethodTypeDescriptor desc = method.methodDescriptor;
+        return new Variable<>("(parameter)", desc.parameterType(index), parameterSlot(index));
+    }
+
+    public <T> Variable<? extends T> getParameterUnchecked(int index, Class<T> clazz) {
+        MethodTypeDescriptor desc = method.methodDescriptor;
+        return new Variable<>("(parameter)", desc.parameterType(index), parameterSlot(index));
+    }
+
     public <T> void loadParameter(int index, Class<T> clazz) {
         load(getParameter(index, clazz));
     }
 
     public void loadParameter(int index, Type type) {
         checkParameterType(index, type);
-        load(index, type);
+        load(parameterSlot(index), type);
+    }
+
+    public void loadParameterUnchecked(int index) {
+        MethodTypeDescriptor desc = method.methodDescriptor;
+        load(parameterSlot(index), desc.parameterType(index));
     }
 
     public void enterVariableScope() {
@@ -313,14 +353,10 @@ public class InstructionAssembler {
         VariableScope scope = variables.exit();
         methodVisitor.visitLabel(scope.end);
         for (Variable<?> variable : scope) {
-            localVariable(variable, scope.start, scope.end);
-        }
-    }
-
-    private void localVariable(Variable<?> variable, Label start, Label end) {
-        if (variable.hasSlot()) {
-            methodVisitor.visitLocalVariable(variable.getName(), variable.getType().descriptor(), null, start, end,
-                    variable.getSlot());
+            if (variable.hasSlot()) {
+                methodVisitor.visitLocalVariable(variable.getName(), variable.getType().descriptor(), null, scope.start,
+                        scope.end, variable.getSlot());
+            }
         }
     }
 
@@ -341,24 +377,53 @@ public class InstructionAssembler {
     }
 
     /**
-     * Creates a new unnamed variable.
+     * Stores the top stack value into a temporary, load-once value.
      * 
      * @param <T>
      *            the variable class type
      * @param clazz
-     *            the variable class
-     * @return the new variable object
+     *            the variable clazz
+     * @return the temp-value
      */
-    public <T> Variable<T> newScratchVariable(Class<T> clazz) {
-        return variables.newVariable(null, getType(clazz));
+    public <T> Value<T> storeTemporary(Class<T> clazz) {
+        Variable<T> variable = variables.newVariable(null, getType(clazz));
+        store(variable);
+        return new TempValue<>(variable);
     }
 
-    public void freeVariable(Variable<?> variable) {
+    void freeVariable(Variable<?> variable) {
         variables.freeVariable(variable);
     }
 
+    private static final class TempValue<V> implements Value<V> {
+        private final Variable<V> variable;
+
+        TempValue(Variable<V> variable) {
+            this.variable = variable;
+        }
+
+        @Override
+        public void load(InstructionAssembler assembler) {
+            variable.load(assembler);
+
+            // Invalidate variable after loading it.
+            assembler.freeVariable(variable);
+        }
+    }
+
     public <T> MutableValue<T> arrayElement(Value<T[]> array, int index, Class<T> clazz) {
+        assert index >= 0;
         return new ArrayElement<>(array, index, clazz);
+    }
+
+    public MutableValue<Integer> iarrayElement(Value<int[]> array, int index) {
+        assert index >= 0;
+        return new PrimitiveArrayElement<>(array, index, int.class);
+    }
+
+    public MutableValue<Double> darrayElement(Value<double[]> array, int index) {
+        assert index >= 0;
+        return new PrimitiveArrayElement<>(array, index, double.class);
     }
 
     private static final class ArrayElement<V> implements MutableValue<V> {
@@ -379,15 +444,46 @@ public class InstructionAssembler {
 
         @Override
         public void store(InstructionAssembler assembler) {
-            Variable<V> value = assembler.newScratchVariable(clazz);
-            assembler.store(value);
+            Value<V> value = assembler.storeTemporary(clazz);
             assembler.astore(array, index, value);
-            assembler.freeVariable(value);
         }
 
         @Override
         public void store(InstructionAssembler assembler, Value<? extends V> value) {
             assembler.astore(array, index, value);
+        }
+    }
+
+    private static final class PrimitiveArrayElement<V, A> implements MutableValue<V> {
+        private final Value<A> array;
+        private final int index;
+        private final Class<V> clazz;
+
+        PrimitiveArrayElement(Value<A> array, int index, Class<V> clazz) {
+            this.array = array;
+            this.index = index;
+            this.clazz = clazz;
+        }
+
+        @Override
+        public void load(InstructionAssembler assembler) {
+            assembler.load(array);
+            assembler.iconst(index);
+            assembler.aload(Type.of(clazz));
+        }
+
+        @Override
+        public void store(InstructionAssembler assembler) {
+            Value<V> value = assembler.storeTemporary(clazz);
+            store(assembler, value);
+        }
+
+        @Override
+        public void store(InstructionAssembler assembler, Value<? extends V> value) {
+            assembler.load(array);
+            assembler.iconst(index);
+            assembler.load(value);
+            assembler.astore(Type.of(clazz));
         }
     }
 
@@ -398,6 +494,10 @@ public class InstructionAssembler {
     }
 
     /* stack operations */
+
+    public final boolean isUnreachable() {
+        return stack.getStackDirect() == null;
+    }
 
     public final boolean hasStack() {
         return !(stack instanceof EmptyStack);
@@ -450,7 +550,7 @@ public class InstructionAssembler {
             return;
         }
         lastLineNumber = line;
-        Label label = new Label();
+        org.objectweb.asm.Label label = new org.objectweb.asm.Label();
         methodVisitor.visitLabel(label);
         methodVisitor.visitLineNumber(line, label);
     }
@@ -649,6 +749,30 @@ public class InstructionAssembler {
         stack.tconst(type);
     }
 
+    public Value<Boolean> vconst(boolean value) {
+        return asm -> asm.iconst(value);
+    }
+
+    public Value<Integer> vconst(int value) {
+        return asm -> asm.iconst(value);
+    }
+
+    public Value<Long> vconst(long value) {
+        return asm -> asm.lconst(value);
+    }
+
+    public Value<Float> vconst(float value) {
+        return asm -> asm.fconst(value);
+    }
+
+    public Value<Double> vconst(double value) {
+        return asm -> asm.dconst(value);
+    }
+
+    public Value<String> vconst(String value) {
+        return asm -> asm.aconst(value);
+    }
+
     /* local load instructions */
 
     /**
@@ -693,27 +817,27 @@ public class InstructionAssembler {
 
     private void iload(int var) {
         methodVisitor.visitVarInsn(Opcodes.ILOAD, var);
-        stack.iload(var);
+        stack.iload(var, variables.getVariable(var));
     }
 
     private void lload(int var) {
         methodVisitor.visitVarInsn(Opcodes.LLOAD, var);
-        stack.lload(var);
+        stack.lload(var, variables.getVariable(var));
     }
 
     private void fload(int var) {
         methodVisitor.visitVarInsn(Opcodes.FLOAD, var);
-        stack.fload(var);
+        stack.fload(var, variables.getVariable(var));
     }
 
     private void dload(int var) {
         methodVisitor.visitVarInsn(Opcodes.DLOAD, var);
-        stack.dload(var);
+        stack.dload(var, variables.getVariable(var));
     }
 
     private void aload(int var) {
         methodVisitor.visitVarInsn(Opcodes.ALOAD, var);
-        stack.aload(var);
+        stack.aload(var, variables.getVariable(var));
     }
 
     /* array load instructions */
@@ -735,6 +859,21 @@ public class InstructionAssembler {
         load(array);
         iconst(index);
         aload(type);
+    }
+
+    /**
+     * &#x2205; → value.
+     * 
+     * @param array
+     *            the array
+     * @param index
+     *            the array index
+     */
+    public final void iaload(Value<int[]> array, int index) {
+        assert index >= 0;
+        load(array);
+        iconst(index);
+        iaload();
     }
 
     /**
@@ -863,27 +1002,27 @@ public class InstructionAssembler {
 
     private void istore(int var) {
         methodVisitor.visitVarInsn(Opcodes.ISTORE, var);
-        stack.istore(var);
+        stack.istore(var, variables.getVariable(var));
     }
 
     private void lstore(int var) {
         methodVisitor.visitVarInsn(Opcodes.LSTORE, var);
-        stack.lstore(var);
+        stack.lstore(var, variables.getVariable(var));
     }
 
     private void fstore(int var) {
         methodVisitor.visitVarInsn(Opcodes.FSTORE, var);
-        stack.fstore(var);
+        stack.fstore(var, variables.getVariable(var));
     }
 
     private void dstore(int var) {
         methodVisitor.visitVarInsn(Opcodes.DSTORE, var);
-        stack.dstore(var);
+        stack.dstore(var, variables.getVariable(var));
     }
 
     private void astore(int var) {
         methodVisitor.visitVarInsn(Opcodes.ASTORE, var);
-        stack.astore(var);
+        stack.astore(var, variables.getVariable(var));
     }
 
     /* array store instructions */
@@ -928,10 +1067,27 @@ public class InstructionAssembler {
      * @param element
      *            the int element to store
      */
-    public final void astore(Value<int[]> array, int index, int element) {
+    public final void iastore(Value<int[]> array, int index, int element) {
         load(array);
         iconst(index);
         iconst(element);
+        astore(Type.INT_TYPE);
+    }
+
+    /**
+     * &#x2205; → &#x2205;
+     * 
+     * @param array
+     *            the array
+     * @param index
+     *            the array index
+     * @param element
+     *            the int element to store
+     */
+    public final void iastore(Value<int[]> array, int index, Value<Integer> element) {
+        load(array);
+        iconst(index);
+        load(element);
         astore(Type.INT_TYPE);
     }
 
@@ -1091,7 +1247,18 @@ public class InstructionAssembler {
      *            the topmost stack value
      */
     public void dupX(Type ltype, Type rtype) {
-        int lsize = ltype.getSize(), rsize = rtype.getSize();
+        dupX(ltype.getSize(), rtype.getSize());
+    }
+
+    /**
+     * lvalue, rvalue → rvalue, lvalue, rvalue
+     * 
+     * @param lsize
+     *            the size of second topmost stack value
+     * @param rsize
+     *            the size of topmost stack value
+     */
+    public void dupX(int lsize, int rsize) {
         if (lsize == 1 && rsize == 1) {
             dupX1();
         } else if (lsize == 1 && rsize == 2) {
@@ -1911,8 +2078,8 @@ public class InstructionAssembler {
 
     /* switch instructions */
 
-    private static Label[] toLabels(Jump... jumps) {
-        Label[] labels = new Label[jumps.length];
+    private static org.objectweb.asm.Label[] toLabels(Jump... jumps) {
+        org.objectweb.asm.Label[] labels = new org.objectweb.asm.Label[jumps.length];
         for (int i = 0, length = jumps.length; i < length; ++i) {
             labels[i] = jumps[i].target();
         }
@@ -2053,6 +2220,22 @@ public class InstructionAssembler {
     /* invoke instructions */
 
     /**
+     * &#x2205; → value
+     * 
+     * @param method
+     *            the method for the invocation
+     * @param arguments
+     *            additional method call arguments
+     */
+    public void invoke(MethodName method, Value<?>... arguments) {
+        assert method.descriptor.parameterCount() == arguments.length;
+        for (Value<?> value : arguments) {
+            load(value);
+        }
+        invoke(method);
+    }
+
+    /**
      * parameters → value
      * 
      * @param method
@@ -2124,6 +2307,16 @@ public class InstructionAssembler {
     /**
      * &#x2205; → object
      * 
+     * @param init
+     *            the init-method call descriptor
+     */
+    public final void anew(MethodName init) {
+        anew(init.owner, init);
+    }
+
+    /**
+     * &#x2205; → object
+     * 
      * @param type
      *            the type descriptor
      * @param init
@@ -2133,6 +2326,18 @@ public class InstructionAssembler {
         anew(type);
         dup();
         invoke(init);
+    }
+
+    /**
+     * &#x2205; → object
+     * 
+     * @param init
+     *            the init-method call descriptor
+     * @param arguments
+     *            the constructor call arguments
+     */
+    public final void anew(MethodName init, Value<?>... arguments) {
+        anew(init.owner, init, arguments);
     }
 
     /**

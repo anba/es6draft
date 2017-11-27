@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -14,6 +14,7 @@ const standardProperties = [
 "undefined",
 "parseFloat",
 "parseInt",
+"global",
 "isNaN",
 "isFinite",
 "eval",
@@ -63,6 +64,10 @@ const standardProperties = [
 "Observable",
 "Atomics",
 "SharedArrayBuffer",
+"Zone",
+"BigInt",
+"BigInt64Array",
+"BigUint64Array",
 "escape",
 "unescape",
 ];

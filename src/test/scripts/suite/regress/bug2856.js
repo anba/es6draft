@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -14,11 +14,7 @@ const {
 {
   let r = new Reflect.Realm()
   let f = r.eval("function f() {'use strict'} f")
-  let clone = Function.prototype.toMethod.call(f, {})
-  assertSame(Object.getPrototypeOf(f), Object.getPrototypeOf(clone));
 
   let foreignThrower = Object.getOwnPropertyDescriptor(f, "caller");
-  let cloneThrower = Object.getOwnPropertyDescriptor(clone, "caller");
   assertUndefined(foreignThrower);
-  assertUndefined(cloneThrower);
 }

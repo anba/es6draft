@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -70,14 +70,11 @@ public final class DebugInfo {
         public String disassemble() {
             byte[] bytes;
             try {
-                // classBytes is an internal field created in Compiler#defineAndLoad
-                Field classBytes = getDeclaringClass().getDeclaredField("classBytes");
-                classBytes.setAccessible(true);
-                bytes = (byte[]) classBytes.get(null);
+                bytes = classBytes(getDeclaringClass());
             } catch (ReflectiveOperationException e) {
                 throw new RuntimeException(e);
             }
-            return Code.methodToByteCode(bytes, getName());
+            return Code.methodToByteCode(bytes, getName(), handle.type());
         }
     }
 
@@ -93,5 +90,21 @@ public final class DebugInfo {
      */
     public List<Method> getMethods() {
         return methods;
+    }
+
+    /**
+     * Returns the compiled class bytes from {@code declaringClass}.
+     * 
+     * @param declaringClass
+     *            the declaring class
+     * @return the class bytes
+     * @throws ReflectiveOperationException
+     *             if the class bytes could not be retrieved
+     */
+    public static byte[] classBytes(Class<?> declaringClass) throws ReflectiveOperationException {
+        // classBytes is an internal field created in Compiler#defineAndLoad
+        Field classBytes = declaringClass.getDeclaredField("classBytes");
+        classBytes.setAccessible(true);
+        return (byte[]) classBytes.get(null);
     }
 }

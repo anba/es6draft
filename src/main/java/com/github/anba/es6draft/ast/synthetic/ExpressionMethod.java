@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -14,9 +14,8 @@ import com.github.anba.es6draft.ast.VoidNodeVisitor;
 /**
  * {@link Expression} as an external Java method.
  */
-public final class ExpressionMethod extends Expression implements SyntheticNode {
+public final class ExpressionMethod extends Expression {
     private final Expression expression;
-    private boolean resumePoint;
 
     public ExpressionMethod(Expression expression) {
         super(expression.getBeginPosition(), expression.getEndPosition());
@@ -25,16 +24,6 @@ public final class ExpressionMethod extends Expression implements SyntheticNode 
 
     public Expression getExpression() {
         return expression;
-    }
-
-    @Override
-    public boolean hasResumePoint() {
-        return resumePoint;
-    }
-
-    @Override
-    public void setResumePoint(boolean resumePoint) {
-        this.resumePoint = resumePoint;
     }
 
     @Override

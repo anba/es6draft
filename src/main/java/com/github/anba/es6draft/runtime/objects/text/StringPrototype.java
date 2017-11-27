@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -7,6 +7,7 @@
 package com.github.anba.es6draft.runtime.objects.text;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.*;
+import static com.github.anba.es6draft.runtime.internal.Errors.newInternalError;
 import static com.github.anba.es6draft.runtime.internal.Errors.newRangeError;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
@@ -16,7 +17,7 @@ import static com.github.anba.es6draft.runtime.objects.intl.IntlAbstractOperatio
 import static com.github.anba.es6draft.runtime.objects.intl.IntlAbstractOperations.DefaultLocale;
 import static com.github.anba.es6draft.runtime.objects.intl.IntlAbstractOperations.RemoveUnicodeLocaleExtension;
 import static com.github.anba.es6draft.runtime.objects.text.RegExpConstructor.RegExpCreate;
-import static com.github.anba.es6draft.runtime.objects.text.RegExpStringIteratorPrototype.CreateRegExpStringIterator;
+import static com.github.anba.es6draft.runtime.objects.text.RegExpStringIteratorPrototype.MatchAllIterator;
 import static com.github.anba.es6draft.runtime.objects.text.StringIteratorPrototype.CreateStringIterator;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.ArrayObject.ArrayCreate;
@@ -24,6 +25,7 @@ import static com.github.anba.es6draft.runtime.types.builtins.ArrayObject.ArrayC
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.function.Supplier;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
@@ -35,12 +37,14 @@ import com.github.anba.es6draft.runtime.internal.Properties.CompatibilityExtensi
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
+import com.github.anba.es6draft.runtime.internal.StrBuilder;
 import com.github.anba.es6draft.runtime.internal.Strings;
 import com.github.anba.es6draft.runtime.objects.intl.CollatorConstructor;
 import com.github.anba.es6draft.runtime.objects.intl.CollatorObject;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
+import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.ArrayObject;
 import com.github.anba.es6draft.runtime.types.builtins.NativeFunction;
@@ -73,8 +77,9 @@ public final class StringPrototype extends StringObject implements Initializable
         createProperties(realm, this, Properties.class);
         createProperties(realm, this, AdditionalProperties.class);
         createProperties(realm, this, TrimFunctions.class);
-        createProperties(realm, this, PadFunctions.class);
+        createProperties(realm, this, TrimCompatibilityFunctions.class);
         createProperties(realm, this, MatchAllFunction.class);
+        createProperties(realm, this, AtFunction.class);
     }
 
     /**
@@ -108,21 +113,31 @@ public final class StringPrototype extends StringObject implements Initializable
          * 
          * @param cx
          *            the execution context
-         * @param object
-         *            the object value
+         * @param value
+         *            the value
+         * @param method
+         *            the method
          * @return the string value
          */
-        private static CharSequence thisStringValue(ExecutionContext cx, Object object) {
+        private static CharSequence thisStringValue(ExecutionContext cx, Object value, String method) {
             /* step 1 */
-            if (Type.isString(object)) {
-                return Type.stringValue(object);
+            if (Type.isString(value)) {
+                return Type.stringValue(value);
             }
             /* step 2 */
-            if (object instanceof StringObject) {
-                return ((StringObject) object).getStringData();
+            if (value instanceof StringObject) {
+                return ((StringObject) value).getStringData();
             }
             /* step 3 */
-            throw newTypeError(cx, Messages.Key.IncompatibleObject);
+            throw newTypeError(cx, Messages.Key.IncompatibleThis, method, Type.of(value).toString());
+        }
+
+        private static String ensureValidString(ExecutionContext cx, Supplier<String> fn) {
+            try {
+                return StringObject.validateLength(cx, fn.get());
+            } catch (OutOfMemoryError e) {
+                throw newInternalError(cx, e, Messages.Key.InvalidStringSize);
+            }
         }
 
         @Prototype
@@ -131,7 +146,6 @@ public final class StringPrototype extends StringObject implements Initializable
         /**
          * String.prototype.length
          */
-        // FIXME: spec issue - explicitly define length for String.prototype in 21.1.3?
         @Value(name = "length", attributes = @Attributes(writable = false, enumerable = false, configurable = false))
         public static final int length = 0;
 
@@ -152,7 +166,8 @@ public final class StringPrototype extends StringObject implements Initializable
          */
         @Function(name = "toString", arity = 0)
         public static Object toString(ExecutionContext cx, Object thisValue) {
-            return thisStringValue(cx, thisValue);
+            /* step 1 */
+            return thisStringValue(cx, thisValue, "String.prototype.toString");
         }
 
         /**
@@ -166,7 +181,8 @@ public final class StringPrototype extends StringObject implements Initializable
          */
         @Function(name = "valueOf", arity = 0)
         public static Object valueOf(ExecutionContext cx, Object thisValue) {
-            return thisStringValue(cx, thisValue);
+            /* step 1 */
+            return thisStringValue(cx, thisValue, "String.prototype.valueOf");
         }
 
         /**
@@ -184,18 +200,18 @@ public final class StringPrototype extends StringObject implements Initializable
         public static Object charAt(ExecutionContext cx, Object thisValue, Object pos) {
             /* step 1 */
             Object obj = RequireObjectCoercible(cx, thisValue);
-            /* steps 2-3 */
+            /* step 3 */
             CharSequence s = ToString(cx, obj);
-            /* steps 4-5 */
-            double position = ToInteger(cx, pos);
-            /* step 6 */
+            /* step 3 */
+            int position = (int) ToNumber(cx, pos); // ToInteger
+            /* step 4 */
             int size = s.length();
-            /* step 7 */
+            /* step 5 */
             if (position < 0 || position >= size) {
                 return "";
             }
-            /* step 8 */
-            return String.valueOf(s.charAt((int) position));
+            /* step 6 */
+            return String.valueOf(s.charAt(position));
         }
 
         /**
@@ -213,18 +229,18 @@ public final class StringPrototype extends StringObject implements Initializable
         public static Object charCodeAt(ExecutionContext cx, Object thisValue, Object pos) {
             /* step 1 */
             Object obj = RequireObjectCoercible(cx, thisValue);
-            /* steps 2-3 */
+            /* step 2 */
             CharSequence s = ToString(cx, obj);
-            /* steps 4-5 */
-            double position = ToInteger(cx, pos);
-            /* step 6 */
+            /* step 3 */
+            int position = (int) ToNumber(cx, pos); // ToInteger
+            /* step 4 */
             int size = s.length();
-            /* step 7 */
+            /* step 5 */
             if (position < 0 || position >= size) {
                 return Double.NaN;
             }
-            /* step 8 */
-            return (int) s.charAt((int) position);
+            /* step 6 */
+            return (int) s.charAt(position);
         }
 
         /**
@@ -242,18 +258,18 @@ public final class StringPrototype extends StringObject implements Initializable
         public static Object codePointAt(ExecutionContext cx, Object thisValue, Object pos) {
             /* step 1 */
             Object obj = RequireObjectCoercible(cx, thisValue);
-            /* steps 2-3 */
+            /* step 2 */
             String s = ToFlatString(cx, obj);
-            /* steps 4-5 */
-            double position = ToInteger(cx, pos);
-            /* step 6 */
+            /* step 3 */
+            int position = (int) ToNumber(cx, pos); // ToInteger
+            /* step 4 */
             int size = s.length();
-            /* step 7 */
+            /* step 5 */
             if (position < 0 || position >= size) {
                 return UNDEFINED;
             }
-            /* steps 8-12 */
-            return s.codePointAt((int) position);
+            /* steps 6-10 */
+            return s.codePointAt(position);
         }
 
         /**
@@ -271,17 +287,17 @@ public final class StringPrototype extends StringObject implements Initializable
         public static Object concat(ExecutionContext cx, Object thisValue, Object... args) {
             /* step 1 */
             Object obj = RequireObjectCoercible(cx, thisValue);
-            /* steps 2-3 */
+            /* step 2 */
             CharSequence s = ToString(cx, obj);
-            /* step 4 (not applicable) */
+            /* step 3 (not applicable) */
+            /* step 4 */
+            StrBuilder r = new StrBuilder(cx, s);
             /* step 5 */
-            StringBuilder r = new StringBuilder(s);
-            /* step 6 */
             for (int i = 0; i < args.length; ++i) {
                 CharSequence nextString = ToString(cx, args[i]);
                 r.append(nextString);
             }
-            /* step 7 */
+            /* step 6 */
             return r.toString();
         }
 
@@ -299,33 +315,32 @@ public final class StringPrototype extends StringObject implements Initializable
          * @return {@code true} if the string ends with <var>searchString</var>
          */
         @Function(name = "endsWith", arity = 1)
-        public static Object endsWith(ExecutionContext cx, Object thisValue, Object searchString,
-                Object endPosition) {
+        public static Object endsWith(ExecutionContext cx, Object thisValue, Object searchString, Object endPosition) {
             /* step 1 */
             Object obj = RequireObjectCoercible(cx, thisValue);
-            /* steps 2-3 */
+            /* step 2 */
             String s = ToFlatString(cx, obj);
-            /* steps 4-6 */
+            /* steps 3-4 */
             if (IsRegExp(cx, searchString)) {
                 throw newTypeError(cx, Messages.Key.InvalidRegExpArgument);
             }
-            /* steps 7-8 */
+            /* step 5 */
             String searchStr = ToFlatString(cx, searchString);
-            /* step 9 */
+            /* step 6 */
             int len = s.length();
-            /* steps 10-11 */
-            double pos = Type.isUndefined(endPosition) ? len : ToInteger(cx, endPosition);
-            /* step 12 */
-            int end = (int) Math.min(Math.max(pos, 0), len);
-            /* step 13 */
+            /* step 7 */
+            int pos = Type.isUndefined(endPosition) ? len : (int) ToNumber(cx, endPosition); // ToInteger
+            /* step 8 */
+            int end = Math.min(Math.max(pos, 0), len);
+            /* step 9 */
             int searchLength = searchStr.length();
-            /* step 14 */
+            /* step 10 */
             int start = end - searchLength;
-            /* step 15 */
+            /* step 11 */
             if (start < 0) {
                 return false;
             }
-            /* steps 16-17 */
+            /* steps 12-13 */
             return s.startsWith(searchStr, start);
         }
 
@@ -343,27 +358,24 @@ public final class StringPrototype extends StringObject implements Initializable
          * @return {@code true} if the search string was found
          */
         @Function(name = "includes", arity = 1)
-        public static Object includes(ExecutionContext cx, Object thisValue, Object searchString,
-                Object position /* = 0 */) {
+        public static Object includes(ExecutionContext cx, Object thisValue, Object searchString, Object position) {
             /* step 1 */
             Object obj = RequireObjectCoercible(cx, thisValue);
-            /* steps 2-3 */
+            /* step 2 */
             String s = ToFlatString(cx, obj);
-            /* steps 4-6 */
+            /* steps 3-4 */
             if (IsRegExp(cx, searchString)) {
                 throw newTypeError(cx, Messages.Key.InvalidRegExpArgument);
             }
-            /* steps 7-8 */
+            /* step 5 */
             String searchStr = ToFlatString(cx, searchString);
-            /* steps 9-10 */
-            double pos = ToInteger(cx, position);
-            /* step 11 */
+            /* step 6 */
+            int pos = (int) ToNumber(cx, position); // ToInteger
+            /* step 7 */
             int len = s.length();
-            /* step 12 */
-            int start = (int) Math.min(Math.max(pos, 0), len);
-            /* step 13 */
-            // int searchLen = searchStr.length();
-            /* step 14 */
+            /* step 8 */
+            int start = Math.min(Math.max(pos, 0), len);
+            /* steps 9-10 */
             return s.indexOf(searchStr, start) != -1;
         }
 
@@ -381,21 +393,20 @@ public final class StringPrototype extends StringObject implements Initializable
          * @return the result index
          */
         @Function(name = "indexOf", arity = 1)
-        public static Object indexOf(ExecutionContext cx, Object thisValue, Object searchString,
-                Object position) {
+        public static Object indexOf(ExecutionContext cx, Object thisValue, Object searchString, Object position) {
             /* step 1 */
             Object obj = RequireObjectCoercible(cx, thisValue);
-            /* steps 2-3 */
+            /* step 2 */
             String s = ToFlatString(cx, obj);
-            /* steps 4-5 */
+            /* step 3 */
             String searchStr = ToFlatString(cx, searchString);
-            /* steps 6-7 */
-            double pos = ToInteger(cx, position);
-            /* step 8 */
+            /* step 4 */
+            int pos = (int) ToNumber(cx, position); // ToInteger
+            /* step 5 */
             int len = s.length();
-            /* step 9 */
-            int start = (int) Math.min(Math.max(pos, 0), len);
-            /* steps 10-11 */
+            /* step 6 */
+            int start = Math.min(Math.max(pos, 0), len);
+            /* steps 7-8 */
             return s.indexOf(searchStr, start);
         }
 
@@ -413,23 +424,22 @@ public final class StringPrototype extends StringObject implements Initializable
          * @return the result index
          */
         @Function(name = "lastIndexOf", arity = 1)
-        public static Object lastIndexOf(ExecutionContext cx, Object thisValue,
-                Object searchString, Object position) {
+        public static Object lastIndexOf(ExecutionContext cx, Object thisValue, Object searchString, Object position) {
             /* step 1 */
             Object obj = RequireObjectCoercible(cx, thisValue);
-            /* steps 2-3 */
+            /* step 2 */
             String s = ToFlatString(cx, obj);
-            /* steps 4-5 */
+            /* step 3 */
             String searchStr = ToFlatString(cx, searchString);
-            /* steps 6-7 */
+            /* step 4 */
             double numPos = ToNumber(cx, position);
-            /* step 8 */
-            double pos = Double.isNaN(numPos) ? Double.POSITIVE_INFINITY : ToInteger(numPos);
-            /* step 9 */
+            /* step 5 */
+            int pos = Double.isNaN(numPos) ? Integer.MAX_VALUE : (int) numPos; // ToInteger
+            /* step 6 */
             int len = s.length();
-            /* step 10 */
-            int start = (int) Math.min(Math.max(pos, 0), len);
-            /* steps 11-12 */
+            /* step 7 */
+            int start = Math.min(Math.max(pos, 0), len);
+            /* steps 8-9 */
             return s.lastIndexOf(searchStr, start);
         }
 
@@ -450,24 +460,19 @@ public final class StringPrototype extends StringObject implements Initializable
          * @return the locale specific comparison result
          */
         @Function(name = "localeCompare", arity = 1)
-        public static Object localeCompare(ExecutionContext cx, Object thisValue, Object that,
-                Object locales, Object options) {
+        public static Object localeCompare(ExecutionContext cx, Object thisValue, Object that, Object locales,
+                Object options) {
+            // ECMA-402
             /* step 1 */
             Object obj = RequireObjectCoercible(cx, thisValue);
-            /* steps 2-3 */
+            /* step 2 */
             String s = ToFlatString(cx, obj);
-            /* steps 4-5 */
+            /* step 3 */
             String t = ToFlatString(cx, that);
-
-            // ES5/6
-            // return cx.getRealm().getCollator().compare(s, t);
-
-            // ECMA-402
-            /* steps 6-7 */
-            CollatorConstructor ctor = (CollatorConstructor) cx
-                    .getIntrinsic(Intrinsics.Intl_Collator);
+            /* step 4 */
+            CollatorConstructor ctor = (CollatorConstructor) cx.getIntrinsic(Intrinsics.Intl_Collator);
             CollatorObject collator = ctor.construct(cx, ctor, locales, options);
-            /* step 8 */
+            /* step 5 */
             return CompareStrings(collator, s, t);
         }
 
@@ -484,22 +489,22 @@ public final class StringPrototype extends StringObject implements Initializable
          */
         @Function(name = "match", arity = 1)
         public static Object match(ExecutionContext cx, Object thisValue, Object regexp) {
-            /* steps 1-2 */
+            /* step 1 */
             Object obj = RequireObjectCoercible(cx, thisValue);
-            /* step 3 */
+            /* step 2 */
             if (!Type.isUndefinedOrNull(regexp)) {
-                /* steps 3.a-b */
+                /* step 2.a */
                 Callable matcher = GetMethod(cx, regexp, BuiltinSymbol.match.get());
-                /* step 3.c */
+                /* step 3.b */
                 if (matcher != null) {
                     return matcher.call(cx, regexp, obj);
                 }
             }
-            /* steps 4-5 */
+            /* step 3 */
             CharSequence s = ToString(cx, obj);
-            /* steps 6-7 */
+            /* step 4 */
             RegExpObject rx = RegExpCreate(cx, regexp, UNDEFINED);
-            /* step 8 */
+            /* step 5 */
             return Invoke(cx, rx, BuiltinSymbol.match.get(), s);
         }
 
@@ -518,26 +523,148 @@ public final class StringPrototype extends StringObject implements Initializable
         public static Object normalize(ExecutionContext cx, Object thisValue, Object form) {
             /* step 1 */
             Object obj = RequireObjectCoercible(cx, thisValue);
-            /* steps 2-3 */
+            /* step 2 */
             String s = ToFlatString(cx, obj);
-            /* steps 4-6 */
-            String f = "NFC";
-            if (!Type.isUndefined(form)) {
-                f = ToFlatString(cx, form);
-            }
-            /* steps 7-9 */
+            /* steps 3-4 */
+            String f = !Type.isUndefined(form) ? ToFlatString(cx, form) : "NFC";
+            /* step 5 */
+            Normalizer2 normalizer;
             switch (f) {
             case "NFC":
-                return Normalizer2.getNFCInstance().normalize(s);
+                normalizer = Normalizer2.getNFCInstance();
+                break;
             case "NFD":
-                return Normalizer2.getNFDInstance().normalize(s);
+                normalizer = Normalizer2.getNFDInstance();
+                break;
             case "NFKC":
-                return Normalizer2.getNFKCInstance().normalize(s);
+                normalizer = Normalizer2.getNFKCInstance();
+                break;
             case "NFKD":
-                return Normalizer2.getNFKDInstance().normalize(s);
+                normalizer = Normalizer2.getNFKDInstance();
+                break;
             default:
                 throw newRangeError(cx, Messages.Key.InvalidNormalizationForm, f);
             }
+            /* steps 6-7 */
+            return ensureValidString(cx, () -> normalizer.normalize(s));
+        }
+
+        /**
+         * 21.1.3.13 String.prototype.padEnd( maxLength [ , fillString ] )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param maxLength
+         *            the maximum length
+         * @param fillString
+         *            the optional fill string
+         * @return the string with trailing padding applied
+         */
+        @Function(name = "padEnd", arity = 1)
+        public static Object padEnd(ExecutionContext cx, Object thisValue, Object maxLength, Object fillString) {
+            /* step 1 */
+            Object obj = RequireObjectCoercible(cx, thisValue);
+            /* step 2 */
+            String s = ToFlatString(cx, obj);
+            /* step 3 */
+            long intMaxLength = ToLength(cx, maxLength);
+            /* step 4 */
+            int stringLength = s.length();
+            /* step 5 */
+            if (intMaxLength <= stringLength) {
+                return s;
+            }
+            /* steps 6-7 */
+            CharSequence filler = Type.isUndefined(fillString) ? " " : ToString(cx, fillString);
+            /* step 8 */
+            if (filler.length() == 0) {
+                return s;
+            }
+            /* step 9 */
+            if (intMaxLength > StringObject.MAX_LENGTH) {
+                // Likely to exceed heap space, throw RangeError to match String.prototype.repeat.
+                throw newRangeError(cx, Messages.Key.InvalidStringPad);
+            }
+            int fillLen = (int) intMaxLength - stringLength;
+            /* step 10 */
+            String truncatedStringFiller = repeatFill(filler.toString(), fillLen);
+            /* step 11 */
+            return s + truncatedStringFiller;
+        }
+
+        /**
+         * 21.1.3.14 String.prototype.padStart( maxLength [ , fillString ] )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param maxLength
+         *            the maximum length
+         * @param fillString
+         *            the optional fill string
+         * @return the string with leading padding applied
+         */
+        @Function(name = "padStart", arity = 1)
+        public static Object padStart(ExecutionContext cx, Object thisValue, Object maxLength, Object fillString) {
+            /* step 1 */
+            Object obj = RequireObjectCoercible(cx, thisValue);
+            /* step 2 */
+            String s = ToFlatString(cx, obj);
+            /* step 3 */
+            long intMaxLength = ToLength(cx, maxLength);
+            /* step 4 */
+            int stringLength = s.length();
+            /* step 5 */
+            if (intMaxLength <= stringLength) {
+                return s;
+            }
+            /* steps 6-7 */
+            CharSequence filler = Type.isUndefined(fillString) ? " " : ToString(cx, fillString);
+            /* step 8 */
+            if (filler.length() == 0) {
+                return s;
+            }
+            /* step 9 */
+            if (intMaxLength > StringObject.MAX_LENGTH) {
+                // Likely to exceed heap space, throw RangeError to match String.prototype.repeat.
+                throw newRangeError(cx, Messages.Key.InvalidStringPad);
+            }
+            int fillLen = (int) intMaxLength - stringLength;
+            /* step 10 */
+            String truncatedStringFiller = repeatFill(filler.toString(), fillLen);
+            /* step 11 */
+            return truncatedStringFiller + s;
+        }
+
+        private static String repeatFill(String fillStr, int fillLen) {
+            assert !fillStr.isEmpty() && fillLen > 0;
+            final int length = fillStr.length();
+            int c = fillLen / length;
+            if (c == 0) {
+                return fillStr.substring(0, fillLen);
+            }
+            if (c == 1) {
+                int r = fillLen - length;
+                if (r == 0) {
+                    return fillStr;
+                }
+                return fillStr + fillStr.substring(0, r);
+            }
+            char[] ca = new char[fillLen];
+            if (length == 1) {
+                Arrays.fill(ca, fillStr.charAt(0));
+                return new String(ca);
+            }
+            fillStr.getChars(0, length, ca, 0);
+            final int limit = length * Integer.highestOneBit(c);
+            for (int k = length; k < limit; k <<= 1) {
+                System.arraycopy(ca, 0, ca, k, k);
+            }
+            System.arraycopy(ca, 0, ca, limit, fillLen - limit);
+            return new String(ca);
         }
 
         /**
@@ -555,15 +682,15 @@ public final class StringPrototype extends StringObject implements Initializable
         public static Object repeat(ExecutionContext cx, Object thisValue, Object count) {
             /* step 1 */
             Object obj = RequireObjectCoercible(cx, thisValue);
-            /* steps 2-3 */
+            /* step 2 */
             String s = ToFlatString(cx, obj);
-            /* steps 4-5 */
+            /* step 3 */
             double n = ToInteger(cx, count);
-            /* steps 6-7 */
+            /* steps 4-5 */
             if (n < 0 || n == Double.POSITIVE_INFINITY) {
                 throw newRangeError(cx, Messages.Key.InvalidStringRepeat);
             }
-            /* step 8 */
+            /* step 6 */
             if (n == 0 || s.length() == 0) {
                 return "";
             }
@@ -571,11 +698,10 @@ public final class StringPrototype extends StringObject implements Initializable
                 return s;
             }
             double capacity = s.length() * n;
-            if (capacity > 1 << 27) {
+            if (capacity > StringObject.MAX_LENGTH) {
                 // likely to exceed heap space, follow SpiderMonkey and throw RangeError
                 throw newRangeError(cx, Messages.Key.InvalidStringRepeat);
             }
-            /* step 8 */
             final int length = s.length();
             char[] ca = new char[(int) capacity];
             if (length == 1) {
@@ -589,7 +715,7 @@ public final class StringPrototype extends StringObject implements Initializable
                 System.arraycopy(ca, 0, ca, k, k);
             }
             System.arraycopy(ca, 0, ca, limit, (N * length - limit));
-            /* step 9 */
+            /* step 7 */
             return new String(ca);
         }
 
@@ -607,26 +733,25 @@ public final class StringPrototype extends StringObject implements Initializable
          * @return the new string
          */
         @Function(name = "replace", arity = 2)
-        public static Object replace(ExecutionContext cx, Object thisValue, Object searchValue,
-                Object replaceValue) {
-            /* steps 1-2 */
+        public static Object replace(ExecutionContext cx, Object thisValue, Object searchValue, Object replaceValue) {
+            /* step 1 */
             Object obj = RequireObjectCoercible(cx, thisValue);
-            /* step 3 */
+            /* step 2 */
             if (!Type.isUndefinedOrNull(searchValue)) {
-                /* steps 3.a-b */
+                /* step 2.a */
                 Callable replacer = GetMethod(cx, searchValue, BuiltinSymbol.replace.get());
-                /* step 3.c */
+                /* step 2.b */
                 if (replacer != null) {
                     return replacer.call(cx, searchValue, obj, replaceValue);
                 }
             }
-            /* steps 4-5 */
+            /* step 3 */
             String string = ToFlatString(cx, obj);
-            /* steps 6-7 */
+            /* step 4 */
             String searchString = ToFlatString(cx, searchValue);
-            /* step 8 */
+            /* step 5 */
             boolean functionalReplace = IsCallable(replaceValue);
-            /* step 9 */
+            /* step 6 */
             String replaceValueString = null;
             Callable replaceValueCallable = null;
             if (!functionalReplace) {
@@ -634,30 +759,31 @@ public final class StringPrototype extends StringObject implements Initializable
             } else {
                 replaceValueCallable = (Callable) replaceValue;
             }
-            /* step 10 */
+            /* step 7 */
             int pos = string.indexOf(searchString);
             if (pos < 0) {
                 return string;
             }
             String matched = searchString;
-            /* steps 11-12 */
+            /* steps 8-9 */
             String replStr;
             if (functionalReplace) {
                 Object replValue = replaceValueCallable.call(cx, UNDEFINED, matched, pos, string);
                 replStr = ToFlatString(cx, replValue);
             } else {
-                replStr = GetSubstitution(matched, string, pos, replaceValueString);
+                replStr = GetSubstitution(cx, matched, string, pos, replaceValueString);
             }
-            /* step 13 */
+            /* step 10 */
             int tailPos = pos + searchString.length();
-            /* steps 14-15 */
-            return string.substring(0, pos) + replStr + string.substring(tailPos);
+            /* steps 11-12 */
+            return StringObject.validateLength(cx, string.substring(0, pos) + replStr + string.substring(tailPos));
         }
 
         /**
-         * 21.1.3.14.1 Runtime Semantics: GetSubstitution(matched, str, position, captures,
-         * replacement)
+         * 21.1.3.14.1 Runtime Semantics: GetSubstitution(matched, str, position, captures, replacement)
          * 
+         * @param cx
+         *            the execution context
          * @param matched
          *            the matched substring
          * @param string
@@ -668,7 +794,8 @@ public final class StringPrototype extends StringObject implements Initializable
          *            the replacement value
          * @return the replacement string
          */
-        private static String GetSubstitution(String matched, String string, int position, String replacement) {
+        private static String GetSubstitution(ExecutionContext cx, String matched, String string, int position,
+                String replacement) {
             /* step 1 (not applicable) */
             /* step 2 */
             int matchLength = matched.length();
@@ -689,7 +816,7 @@ public final class StringPrototype extends StringObject implements Initializable
             }
             final int length = replacement.length();
             int lastCursor = 0;
-            StringBuilder result = new StringBuilder();
+            StrBuilder result = new StrBuilder(cx);
             for (;;) {
                 if (lastCursor < cursor) {
                     result.append(replacement, lastCursor, cursor);
@@ -743,22 +870,22 @@ public final class StringPrototype extends StringObject implements Initializable
          */
         @Function(name = "search", arity = 1)
         public static Object search(ExecutionContext cx, Object thisValue, Object regexp) {
-            /* steps 1-2 */
+            /* step 1 */
             Object obj = RequireObjectCoercible(cx, thisValue);
-            /* step 3 */
+            /* step 2 */
             if (!Type.isUndefinedOrNull(regexp)) {
-                /* steps 3.a-b */
+                /* step 2.a */
                 Callable searcher = GetMethod(cx, regexp, BuiltinSymbol.search.get());
-                /* step 3.c */
+                /* step 2.b */
                 if (searcher != null) {
                     return searcher.call(cx, regexp, obj);
                 }
             }
-            /* steps 4-5 */
+            /* step 3 */
             CharSequence string = ToString(cx, obj);
-            /* steps 6-7 */
+            /* step 4 */
             RegExpObject rx = RegExpCreate(cx, regexp, UNDEFINED);
-            /* step 8 */
+            /* step 5 */
             return Invoke(cx, rx, BuiltinSymbol.search.get(), string);
         }
 
@@ -779,21 +906,21 @@ public final class StringPrototype extends StringObject implements Initializable
         public static Object slice(ExecutionContext cx, Object thisValue, Object start, Object end) {
             /* step 1 */
             Object obj = RequireObjectCoercible(cx, thisValue);
-            /* steps 2-3 */
+            /* step 2 */
             CharSequence s = ToString(cx, obj);
-            /* step 4 */
+            /* step 3 */
             int len = s.length();
-            /* steps 5-6 */
-            double intStart = ToInteger(cx, start);
-            /* steps 7-8 */
-            double intEnd = Type.isUndefined(end) ? len : ToInteger(cx, end);
-            /* step 9 */
-            int from = (int) (intStart < 0 ? Math.max(len + intStart, 0) : Math.min(intStart, len));
-            /* step 10 */
-            int to = (int) (intEnd < 0 ? Math.max(len + intEnd, 0) : Math.min(intEnd, len));
-            /* step 11 */
+            /* step 4 */
+            int intStart = (int) ToNumber(cx, start); // ToInteger
+            /* step 5 */
+            int intEnd = Type.isUndefined(end) ? len : (int) ToNumber(cx, end); // ToInteger
+            /* step 6 */
+            int from = intStart < 0 ? Math.max(len + intStart, 0) : Math.min(intStart, len);
+            /* step 7 */
+            int to = intEnd < 0 ? Math.max(len + intEnd, 0) : Math.min(intEnd, len);
+            /* step 8 */
             int span = Math.max(to - from, 0);
-            /* step 12 */
+            /* step 9 */
             return s.subSequence(from, from + span);
         }
 
@@ -811,43 +938,42 @@ public final class StringPrototype extends StringObject implements Initializable
          * @return the split array
          */
         @Function(name = "split", arity = 2)
-        public static Object split(ExecutionContext cx, Object thisValue, Object separator,
-                Object limit) {
-            /* steps 1-2 */
+        public static Object split(ExecutionContext cx, Object thisValue, Object separator, Object limit) {
+            /* step 1 */
             Object obj = RequireObjectCoercible(cx, thisValue);
-            /* step 3 */
+            /* step 2 */
             if (!Type.isUndefinedOrNull(separator)) {
-                /* steps 3.a-b */
+                /* step 2.a */
                 Callable splitter = GetMethod(cx, separator, BuiltinSymbol.split.get());
-                /* step 3.c */
+                /* step 2.b */
                 if (splitter != null) {
                     return splitter.call(cx, separator, obj, limit);
                 }
             }
-            /* steps 4-5 */
+            /* step 3 */
             String s = ToFlatString(cx, obj);
-            /* step 6 */
+            /* step 4 */
             ArrayObject a = ArrayCreate(cx, 0);
-            /* step 7 */
+            /* step 5 */
             int lengthA = 0;
-            /* steps 8-9 */
-            long lim = Type.isUndefined(limit) ? 0xFFFF_FFFFL : ToUint32(cx, limit);
-            /* step 10 */
+            /* step 6 */
+            int lim = (int) Math.min(Type.isUndefined(limit) ? 0xFFFF_FFFFL : ToUint32(cx, limit), Integer.MAX_VALUE);
+            /* step 7 */
             int size = s.length();
-            /* step 11 */
+            /* step 8 */
             int p = 0;
-            /* steps 12-13 */
+            /* step 9 */
             String r = ToFlatString(cx, separator);
-            /* step 14 */
+            /* step 10 */
             if (lim == 0) {
                 return a;
             }
-            /* step 15 */
+            /* step 11 */
             if (Type.isUndefined(separator)) {
                 CreateDataProperty(cx, a, 0, s);
                 return a;
             }
-            /* step 16 */
+            /* step 12 */
             if (size == 0) {
                 if (r.length() == 0) {
                     return a;
@@ -855,51 +981,40 @@ public final class StringPrototype extends StringObject implements Initializable
                 CreateDataProperty(cx, a, 0, s);
                 return a;
             }
-            /* step 17 */
+            /* step 13 */
             int q = p;
-            /* step 18 */
+            /* step 14 */
             while (q != size) {
-                int z = SplitMatch(s, q, r);
+                /* step 14.a */
+                int z = s.indexOf(r, q);
+                /* step 14.b */
                 if (z == -1) {
                     break;
+                }
+                /* step 14.c */
+                int e = z + r.length();
+                /* steps 14.c.i-ii */
+                if (e == p) {
+                    /* step 14.c.i */
+                    q = q + 1;
                 } else {
-                    int e = z + r.length();
-                    if (e == p) {
-                        q = q + 1;
-                    } else {
-                        String t = s.substring(p, z);
-                        CreateDataProperty(cx, a, lengthA, t);
-                        lengthA += 1;
-                        if (lengthA == lim) {
-                            return a;
-                        }
-                        p = e;
-                        q = p;
+                    /* step 14.c.ii */
+                    String t = s.substring(p, z);
+                    CreateDataProperty(cx, a, lengthA, t);
+                    lengthA += 1;
+                    if (lengthA == lim) {
+                        return a;
                     }
+                    p = e;
+                    q = p;
                 }
             }
-            /* step 19 */
+            /* step 15 */
             String t = s.substring(p, size);
-            /* steps 20-21 */
+            /* step 16 */
             CreateDataProperty(cx, a, lengthA, t);
-            /* step 22 */
+            /* step 17 */
             return a;
-        }
-
-        /**
-         * 21.1.3.17.1 Runtime Semantics: SplitMatch ( S, q, R )
-         * 
-         * @param s
-         *            the string
-         * @param q
-         *            the start position
-         * @param r
-         *            the search string
-         * @return the index of the first match
-         */
-        private static int SplitMatch(String s, int q, String r) {
-            // returns start instead of end position
-            return s.indexOf(r, q);
         }
 
         /**
@@ -916,31 +1031,31 @@ public final class StringPrototype extends StringObject implements Initializable
          * @return {@code true} if the string starts with <var>searchString</var>
          */
         @Function(name = "startsWith", arity = 1)
-        public static Object startsWith(ExecutionContext cx, Object thisValue, Object searchString,
-                Object position) {
+        public static Object startsWith(ExecutionContext cx, Object thisValue, Object searchString, Object position) {
             /* step 1 */
             Object obj = RequireObjectCoercible(cx, thisValue);
-            /* steps 2-3 */
+            /* step 2 */
             String s = ToFlatString(cx, obj);
-            /* steps 4-6 */
+            /* steps 3-4 */
             if (IsRegExp(cx, searchString)) {
                 throw newTypeError(cx, Messages.Key.InvalidRegExpArgument);
             }
-            /* steps 7-8 */
+            /* step 5 */
             String searchStr = ToFlatString(cx, searchString);
-            /* steps 9-10 */
-            double pos = ToInteger(cx, position);
-            /* step 11 */
+            /* step 6 */
+            int pos = (int) ToNumber(cx, position); // ToInteger
+            /* step 7 */
             int len = s.length();
-            /* step 12 */
-            int start = (int) Math.min(Math.max(pos, 0), len);
-            /* step 13 */
+            /* step 8 */
+            int start = Math.min(Math.max(pos, 0), len);
+            /* step 9 */
             int searchLength = searchStr.length();
-            /* step 14 */
-            if (searchLength + start > len) {
+            /* step 10 */
+            // Note: `searchLength + start` could overflow.
+            if (start > len - searchLength) {
                 return false;
             }
-            /* steps 15-16 */
+            /* steps 11-12 */
             return s.startsWith(searchStr, start);
         }
 
@@ -958,27 +1073,26 @@ public final class StringPrototype extends StringObject implements Initializable
          * @return the substring
          */
         @Function(name = "substring", arity = 2)
-        public static Object substring(ExecutionContext cx, Object thisValue, Object start,
-                Object end) {
+        public static Object substring(ExecutionContext cx, Object thisValue, Object start, Object end) {
             /* step 1 */
             Object obj = RequireObjectCoercible(cx, thisValue);
-            /* steps 2-3 */
+            /* step 2 */
             CharSequence s = ToString(cx, obj);
-            /* step 4 */
+            /* step 3 */
             int len = s.length();
-            /* steps 5-6 */
-            double intStart = ToInteger(cx, start);
-            /* steps 7-8 */
-            double intEnd = Type.isUndefined(end) ? len : ToInteger(cx, end);
-            /* step 9 */
-            int finalStart = (int) Math.min(Math.max(intStart, 0), len);
-            /* step 10 */
-            int finalEnd = (int) Math.min(Math.max(intEnd, 0), len);
-            /* step 11 */
+            /* step 4 */
+            int intStart = (int) ToNumber(cx, start); // ToInteger
+            /* step 5 */
+            int intEnd = Type.isUndefined(end) ? len : (int) ToNumber(cx, end); // ToInteger
+            /* step 6 */
+            int finalStart = Math.min(Math.max(intStart, 0), len);
+            /* step 7 */
+            int finalEnd = Math.min(Math.max(intEnd, 0), len);
+            /* step 8 */
             int from = Math.min(finalStart, finalEnd);
-            /* step 12 */
+            /* step 9 */
             int to = Math.max(finalStart, finalEnd);
-            /* step 13 */
+            /* step 10 */
             return s.subSequence(from, to);
         }
 
@@ -996,29 +1110,30 @@ public final class StringPrototype extends StringObject implements Initializable
          */
         @Function(name = "toLocaleLowerCase", arity = 0)
         public static Object toLocaleLowerCase(ExecutionContext cx, Object thisValue, Object locales) {
+            // ECMA-402
             /* step 1 */
             Object obj = RequireObjectCoercible(cx, thisValue);
-            /* steps 2-3 */
+            /* step 2 */
             String s = ToFlatString(cx, obj);
-
-            // ES5/6
-            // return s.toLowerCase(cx.getRealm().getLocale());
-
-            /* steps 4-5 */
+            /* step 3 */
             Set<String> requestedLocales = CanonicalizeLocaleList(cx, locales);
-            /* steps 6-8 */
-            String requestedLocale = !requestedLocales.isEmpty() ? requestedLocales.iterator()
-                    .next() : DefaultLocale(cx.getRealm());
-            /* step 9 */
+            /* steps 4-6 */
+            String requestedLocale;
+            if (!requestedLocales.isEmpty()) {
+                requestedLocale = requestedLocales.iterator().next();
+            } else {
+                requestedLocale = DefaultLocale(cx.getRealm());
+            }
+            /* step 7 */
             String noExtensionsLocale = RemoveUnicodeLocaleExtension(requestedLocale);
-            /* step 10 */
+            /* step 8 */
             HashSet<String> availableLocales = new HashSet<>(Arrays.asList("az", "lt", "tr"));
-            /* step 11 */
+            /* step 9 */
             String locale = BestAvailableLocale(availableLocales, noExtensionsLocale);
-            /* step 12 */
+            /* step 10 */
             String supportedLocale = locale == null ? "und" : locale;
-            /* steps 13-18 */
-            return UCharacter.toLowerCase(ULocale.forLanguageTag(supportedLocale), s);
+            /* steps 11-16 */
+            return ensureValidString(cx, () -> UCharacter.toLowerCase(ULocale.forLanguageTag(supportedLocale), s));
         }
 
         /**
@@ -1035,29 +1150,30 @@ public final class StringPrototype extends StringObject implements Initializable
          */
         @Function(name = "toLocaleUpperCase", arity = 0)
         public static Object toLocaleUpperCase(ExecutionContext cx, Object thisValue, Object locales) {
+            // ECMA-402
             /* step 1 */
             Object obj = RequireObjectCoercible(cx, thisValue);
-            /* steps 2-3 */
+            /* step 2 */
             String s = ToFlatString(cx, obj);
-
-            // ES5/6
-            // return s.toUpperCase(cx.getRealm().getLocale());
-
-            /* steps 4-5 */
+            /* step 3 */
             Set<String> requestedLocales = CanonicalizeLocaleList(cx, locales);
-            /* steps 6-8 */
-            String requestedLocale = !requestedLocales.isEmpty() ? requestedLocales.iterator()
-                    .next() : DefaultLocale(cx.getRealm());
-            /* step 9 */
+            /* steps 4-6 */
+            String requestedLocale;
+            if (!requestedLocales.isEmpty()) {
+                requestedLocale = requestedLocales.iterator().next();
+            } else {
+                requestedLocale = DefaultLocale(cx.getRealm());
+            }
+            /* step 7 */
             String noExtensionsLocale = RemoveUnicodeLocaleExtension(requestedLocale);
-            /* step 10 */
+            /* step 8 */
             HashSet<String> availableLocales = new HashSet<>(Arrays.asList("az", "lt", "tr"));
-            /* step 11 */
+            /* step 9 */
             String locale = BestAvailableLocale(availableLocales, noExtensionsLocale);
-            /* step 12 */
+            /* step 10 */
             String supportedLocale = locale == null ? "und" : locale;
-            /* steps 13-18 */
-            return UCharacter.toUpperCase(ULocale.forLanguageTag(supportedLocale), s);
+            /* steps 11-16 */
+            return ensureValidString(cx, () -> UCharacter.toUpperCase(ULocale.forLanguageTag(supportedLocale), s));
         }
 
         /**
@@ -1073,9 +1189,9 @@ public final class StringPrototype extends StringObject implements Initializable
         public static Object toLowerCase(ExecutionContext cx, Object thisValue) {
             /* step 1 */
             Object obj = RequireObjectCoercible(cx, thisValue);
-            /* steps 2-3 */
+            /* step 2 */
             String s = ToFlatString(cx, obj);
-            /* steps 4-9 */
+            /* steps 3-8 */
             Latin1: {
                 int index = 0;
                 Lower: {
@@ -1100,7 +1216,7 @@ public final class StringPrototype extends StringObject implements Initializable
                 }
                 return new String(chars);
             }
-            return UCharacter.toLowerCase(ULocale.ROOT, s);
+            return ensureValidString(cx, () -> UCharacter.toLowerCase(ULocale.ROOT, s));
         }
 
         /**
@@ -1116,9 +1232,9 @@ public final class StringPrototype extends StringObject implements Initializable
         public static Object toUpperCase(ExecutionContext cx, Object thisValue) {
             /* step 1 */
             Object obj = RequireObjectCoercible(cx, thisValue);
-            /* steps 2-3 */
+            /* step 2 */
             String s = ToFlatString(cx, obj);
-            /* steps 4-9 */
+            /* steps 3-8 */
             Latin1: {
                 int index = 0;
                 Upper: {
@@ -1143,7 +1259,7 @@ public final class StringPrototype extends StringObject implements Initializable
                 }
                 return new String(chars);
             }
-            return UCharacter.toUpperCase(ULocale.ROOT, s);
+            return ensureValidString(cx, () -> UCharacter.toUpperCase(ULocale.ROOT, s));
         }
 
         /**
@@ -1159,9 +1275,9 @@ public final class StringPrototype extends StringObject implements Initializable
         public static Object trim(ExecutionContext cx, Object thisValue) {
             /* step 1 */
             Object obj = RequireObjectCoercible(cx, thisValue);
-            /* steps 2-3 */
+            /* step 2 */
             String s = ToFlatString(cx, obj);
-            /* steps 4-5 */
+            /* steps 3-4 */
             return Strings.trim(s);
         }
 
@@ -1179,9 +1295,9 @@ public final class StringPrototype extends StringObject implements Initializable
         public static Object iterator(ExecutionContext cx, Object thisValue) {
             /* step 1 */
             Object obj = RequireObjectCoercible(cx, thisValue);
-            /* steps 2-3 */
+            /* step 2 */
             String s = ToFlatString(cx, obj);
-            /* step 4 */
+            /* step 3 */
             return CreateStringIterator(cx, s);
         }
     }
@@ -1207,31 +1323,30 @@ public final class StringPrototype extends StringObject implements Initializable
          * @return the substring
          */
         @Function(name = "substr", arity = 2)
-        public static Object substr(ExecutionContext cx, Object thisValue, Object start,
-                Object length) {
+        public static Object substr(ExecutionContext cx, Object thisValue, Object start, Object length) {
             /* step 1 */
             Object obj = RequireObjectCoercible(cx, thisValue);
-            /* steps 2-3 */
+            /* step 2 */
             CharSequence s = ToString(cx, obj);
-            /* steps 4-5 */
-            double intStart = ToInteger(cx, start);
-            /* steps 6-7 */
-            double end = Type.isUndefined(length) ? Double.POSITIVE_INFINITY : ToInteger(cx, length);
-            /* step 8 */
+            /* step 3 */
+            int intStart = (int) ToNumber(cx, start); // ToInteger
+            /* step 4 */
+            int end = Type.isUndefined(length) ? Integer.MAX_VALUE : (int) ToNumber(cx, length); // ToInteger
+            /* step 5 */
             int size = s.length();
-            /* step 9 */
+            /* step 6 */
             if (intStart < 0) {
                 intStart = Math.max(size + intStart, 0);
             }
-            /* step 10 */
-            double resultLength = Math.min(Math.max(end, 0), size - intStart);
-            /* step 11 */
+            /* step 7 */
+            int resultLength = Math.min(Math.max(end, 0), size - intStart);
+            /* step 8 */
             if (resultLength <= 0) {
                 return "";
             }
             assert 0 <= intStart && intStart + resultLength <= size;
-            /* step 12 */
-            return s.subSequence((int) intStart, (int) (intStart + resultLength));
+            /* step 9 */
+            return s.subSequence(intStart, intStart + resultLength);
         }
 
         /**
@@ -1249,21 +1364,21 @@ public final class StringPrototype extends StringObject implements Initializable
          *            the html attribute value
          * @return the html string
          */
-        private static String CreateHTML(ExecutionContext cx, Object string, String tag,
-                String attribute, Object value) {
+        private static String CreateHTML(ExecutionContext cx, Object string, String tag, String attribute,
+                Object value) {
             /* step 1 */
             Object str = RequireObjectCoercible(cx, string);
-            /* steps 2-3 */
+            /* step 2 */
             String s = ToFlatString(cx, str);
-            /* steps 4-5 */
-            StringBuilder p = new StringBuilder().append('<').append(tag);
+            /* step 3 */
+            StrBuilder p = new StrBuilder(cx).append('<').append(tag);
+            /* step 4 */
             if (!attribute.isEmpty()) {
                 String v = ToFlatString(cx, value);
                 String escapedV = v.replace("\"", "&quot;");
-                p.append(' ').append(attribute).append('=').append('"').append(escapedV)
-                        .append('"');
+                p.append(' ').append(attribute).append('=').append('"').append(escapedV).append('"');
             }
-            /* steps 6-9 */
+            /* steps 5-8 */
             return p.append('>').append(s).append("</").append(tag).append('>').toString();
         }
 
@@ -1472,14 +1587,14 @@ public final class StringPrototype extends StringObject implements Initializable
     }
 
     /**
-     * Extension: String.prototype.trimLeft and trimRight
+     * Extension: String.prototype.trimStart and trimEnd
      */
     @CompatibilityExtension(CompatibilityOption.StringTrim)
     public enum TrimFunctions {
         ;
 
         /**
-         * String.prototype.trimLeft ()
+         * String.prototype.trimStart ()
          * 
          * @param cx
          *            the execution context
@@ -1487,8 +1602,8 @@ public final class StringPrototype extends StringObject implements Initializable
          *            the function this-value
          * @return the string with leading whitespace removed
          */
-        @Function(name = "trimLeft", arity = 0)
-        public static Object trimLeft(ExecutionContext cx, Object thisValue) {
+        @Function(name = "trimStart", arity = 0)
+        public static Object trimStart(ExecutionContext cx, Object thisValue) {
             /* step 1 */
             Object obj = RequireObjectCoercible(cx, thisValue);
             /* steps 2-3 */
@@ -1498,7 +1613,7 @@ public final class StringPrototype extends StringObject implements Initializable
         }
 
         /**
-         * String.prototype.trimRight ()
+         * String.prototype.trimEnd ()
          * 
          * @param cx
          *            the execution context
@@ -1506,8 +1621,8 @@ public final class StringPrototype extends StringObject implements Initializable
          *            the function this-value
          * @return the string with trailing whitespace removed
          */
-        @Function(name = "trimRight", arity = 0)
-        public static Object trimRight(ExecutionContext cx, Object thisValue) {
+        @Function(name = "trimEnd", arity = 0)
+        public static Object trimEnd(ExecutionContext cx, Object thisValue) {
             /* step 1 */
             Object obj = RequireObjectCoercible(cx, thisValue);
             /* steps 2-3 */
@@ -1518,124 +1633,34 @@ public final class StringPrototype extends StringObject implements Initializable
     }
 
     /**
-     * Extension: String.prototype.padStart and padEnd
+     * Extension: String.prototype.trimLeft and trimRight
      */
-    @CompatibilityExtension(CompatibilityOption.StringPad)
-    public enum PadFunctions {
+    @CompatibilityExtension(CompatibilityOption.StringTrim)
+    public enum TrimCompatibilityFunctions {
         ;
 
         /**
-         * String.prototype.padStart( maxLength [ , fillString ] )
+         * String.prototype.trimLeft ()
          * 
          * @param cx
          *            the execution context
-         * @param thisValue
-         *            the function this-value
-         * @param maxLength
-         *            the maximum length
-         * @param fillString
-         *            the optional fill string
-         * @return the string with leading padding applied
+         * @return the trimLeft function
          */
-        @Function(name = "padStart", arity = 1)
-        public static Object padStart(ExecutionContext cx, Object thisValue, Object maxLength, Object fillString) {
-            /* step 1 */
-            Object obj = RequireObjectCoercible(cx, thisValue);
-            /* step 2 */
-            String s = ToFlatString(cx, obj);
-            /* step 3 */
-            long intMaxLength = ToLength(cx, maxLength);
-            /* step 4 */
-            int stringLength = s.length();
-            /* step 5 */
-            if (intMaxLength <= stringLength) {
-                return s;
-            }
-            /* steps 6-7 */
-            CharSequence fillStr = Type.isUndefined(fillString) ? "" : ToString(cx, fillString);
-            /* step 8 */
-            if (fillStr.length() == 0) {
-                fillStr = " ";
-            }
-            /* step 9 */
-            long fillLen = intMaxLength - stringLength;
-            if (fillLen > 1 << 27) {
-                // Likely to exceed heap space, throw RangeError to match String.prototype.repeat.
-                throw newRangeError(cx, Messages.Key.InvalidStringPad);
-            }
-            /* steps 10-11 */
-            return repeatFill(fillStr.toString(), (int) fillLen) + s;
+        @Value(name = "trimLeft")
+        public static Object trimLeft(ExecutionContext cx) {
+            return cx.getIntrinsic(Intrinsics.StringPrototype).lookupOwnProperty("trimStart").getValue();
         }
 
         /**
-         * String.prototype.padEnd( maxLength [ , fillString ] )
+         * String.prototype.trimRight ()
          * 
          * @param cx
          *            the execution context
-         * @param thisValue
-         *            the function this-value
-         * @param maxLength
-         *            the maximum length
-         * @param fillString
-         *            the optional fill string
-         * @return the string with trailing padding applied
+         * @return the trimRight function
          */
-        @Function(name = "padEnd", arity = 1)
-        public static Object padEnd(ExecutionContext cx, Object thisValue, Object maxLength, Object fillString) {
-            /* step 1 */
-            Object obj = RequireObjectCoercible(cx, thisValue);
-            /* step 2 */
-            String s = ToFlatString(cx, obj);
-            /* step 3 */
-            long intMaxLength = ToLength(cx, maxLength);
-            /* step 4 */
-            int stringLength = s.length();
-            /* step 5 */
-            if (intMaxLength <= stringLength) {
-                return s;
-            }
-            /* steps 6-7 */
-            CharSequence fillStr = Type.isUndefined(fillString) ? "" : ToString(cx, fillString);
-            /* step 8 */
-            if (fillStr.length() == 0) {
-                fillStr = " ";
-            }
-            /* step 9 */
-            long fillLen = intMaxLength - stringLength;
-            if (fillLen > 1 << 27) {
-                // Likely to exceed heap space, throw RangeError to match String.prototype.repeat.
-                throw newRangeError(cx, Messages.Key.InvalidStringPad);
-            }
-            /* steps 10-11 */
-            return s + repeatFill(fillStr.toString(), (int) fillLen);
-        }
-
-        private static String repeatFill(String fillStr, int fillLen) {
-            assert !fillStr.isEmpty() && fillLen > 0;
-            final int length = fillStr.length();
-            int c = fillLen / length;
-            if (c == 0) {
-                return fillStr.substring(0, fillLen);
-            }
-            if (c == 1) {
-                int r = fillLen - length;
-                if (r == 0) {
-                    return fillStr;
-                }
-                return fillStr + fillStr.substring(0, r);
-            }
-            char[] ca = new char[fillLen];
-            if (length == 1) {
-                Arrays.fill(ca, fillStr.charAt(0));
-                return new String(ca);
-            }
-            fillStr.getChars(0, length, ca, 0);
-            final int limit = length * Integer.highestOneBit(c);
-            for (int k = length; k < limit; k <<= 1) {
-                System.arraycopy(ca, 0, ca, k, k);
-            }
-            System.arraycopy(ca, 0, ca, limit, fillLen - limit);
-            return new String(ca);
+        @Value(name = "trimRight")
+        public static Object trimRight(ExecutionContext cx) {
+            return cx.getIntrinsic(Intrinsics.StringPrototype).lookupOwnProperty("trimEnd").getValue();
         }
     }
 
@@ -1661,29 +1686,58 @@ public final class StringPrototype extends StringObject implements Initializable
         public static Object matchAll(ExecutionContext cx, Object thisValue, Object regexp) {
             /* step 1 */
             Object obj = RequireObjectCoercible(cx, thisValue);
-            /* steps 2-4 */
-            if (!IsRegExp(cx, regexp)) {
-                throw newTypeError(cx, Messages.Key.IncompatibleObject);
+            /* steps 2-3 */
+            ScriptObject regexpObj;
+            if (IsRegExp(cx, regexp)) {
+                regexpObj = Type.objectValue(regexp);
+            } else {
+                regexpObj = RegExpCreate(cx, regexp, UNDEFINED);
             }
-            /* steps 5-6 */
-            String s = ToFlatString(cx, obj);
-            /* steps 7-8 */
-            String flags = ToFlatString(cx, Get(cx, Type.objectValue(regexp), "flags"));
-            /* step 9 */
-            if (flags.indexOf('g') == -1) {
-                flags = "g" + flags;
+            /* step 4 */
+            Callable matcher = GetMethod(cx, regexpObj, BuiltinSymbol.matchAll.get());
+            /* step 5 */
+            if (matcher != null) {
+                return matcher.call(cx, regexpObj, obj);
             }
-            /* step 10 */
-            // FIXME: spec bug? - species not handled.
-            // FIXME: spec bug - regexp pattern not extracted.
-            String pattern = ToFlatString(cx, Get(cx, Type.objectValue(regexp), "source"));
-            RegExpObject rx = RegExpCreate(cx, pattern, flags);
-            /* steps 11-12 */
-            long lastIndex = ToLength(cx, Get(cx, Type.objectValue(regexp), "lastIndex"));
-            /* steps 13-14 */
-            Set(cx, rx, "lastIndex", lastIndex, true);
-            /* step 15 */
-            return CreateRegExpStringIterator(cx, rx, s);
+            /* step 6 */
+            return MatchAllIterator(cx, regexpObj, obj);
+        }
+    }
+
+    /**
+     * Extension: String.prototype.at
+     */
+    @CompatibilityExtension(CompatibilityOption.StringAt)
+    public enum AtFunction {
+        ;
+
+        /**
+         * String.prototype.at ( pos )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param pos
+         *            the string position
+         * @return the match iterator
+         */
+        @Function(name = "at", arity = 1)
+        public static Object at(ExecutionContext cx, Object thisValue, Object pos) {
+            /* step 1 */
+            Object obj = RequireObjectCoercible(cx, thisValue);
+            /* steps 2-3 */
+            CharSequence s = ToString(cx, obj);
+            /* steps 4-5 */
+            int position = (int) ToNumber(cx, pos); // ToInteger
+            /* step 6 */
+            int size = s.length();
+            /* step 7 */
+            if (position < 0 || position >= size) {
+                return "";
+            }
+            /* steps 8-15 */
+            return Strings.fromCodePoint(Character.codePointAt(s, position));
         }
     }
 }

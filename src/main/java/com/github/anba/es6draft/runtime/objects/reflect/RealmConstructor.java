@@ -1,38 +1,43 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
  */
 package com.github.anba.es6draft.runtime.objects.reflect;
 
+import static com.github.anba.es6draft.runtime.AbstractOperations.DeletePropertyOrThrow;
 import static com.github.anba.es6draft.runtime.AbstractOperations.GetMethod;
+import static com.github.anba.es6draft.runtime.AbstractOperations.SetIntegrityLevel;
 import static com.github.anba.es6draft.runtime.Realm.CreateRealmAndSetRealmGlobalObject;
 import static com.github.anba.es6draft.runtime.Realm.SetDefaultGlobalBindings;
-import static com.github.anba.es6draft.runtime.internal.Errors.newError;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.types.builtins.ProxyObject.ProxyCreate;
 
-import java.io.IOException;
-import java.net.URISyntaxException;
+import java.util.HashSet;
 
-import com.github.anba.es6draft.compiler.CompilationException;
-import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
+import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.Initializable;
 import com.github.anba.es6draft.runtime.internal.Messages;
+import com.github.anba.es6draft.runtime.internal.Permission;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
+import com.github.anba.es6draft.runtime.internal.Properties.CompatibilityExtension;
+import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.objects.Eval;
-import com.github.anba.es6draft.runtime.objects.GlobalObject;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Constructor;
+import com.github.anba.es6draft.runtime.types.IntegrityLevel;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
+import com.github.anba.es6draft.runtime.types.Property;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
+import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
+import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
  * <h1>26 Reflection</h1><br>
@@ -56,11 +61,7 @@ public final class RealmConstructor extends BuiltinConstructor implements Initia
     @Override
     public void initialize(Realm realm) {
         createProperties(realm, this, Properties.class);
-    }
-
-    @Override
-    public RealmConstructor clone() {
-        return new RealmConstructor(getRealm());
+        createProperties(realm, this, FrozenProperties.class);
     }
 
     /**
@@ -91,9 +92,13 @@ public final class RealmConstructor extends BuiltinConstructor implements Initia
      * 26.?.1.1 Reflect.Realm ( [ target , handler ] )
      */
     @Override
-    public RealmObject construct(ExecutionContext callerContext, Constructor newTarget,
-            Object... args) {
+    public RealmObject construct(ExecutionContext callerContext, Constructor newTarget, Object... args) {
         ExecutionContext calleeContext = calleeContext();
+
+        // Disable Realm constructor if only FrozenRealm option is enabled.
+        if (!getRealm().getRuntimeContext().isEnabled(CompatibilityOption.Realm)) {
+            throw newTypeError(calleeContext(), Messages.Key.InvalidCall, "Realm");
+        }
 
         /* steps 2-3 */
         RealmObject realmObject = OrdinaryCreateFromConstructor(calleeContext, newTarget, Intrinsics.RealmPrototype,
@@ -111,22 +116,8 @@ public final class RealmConstructor extends BuiltinConstructor implements Initia
             newGlobal = null;
         }
 
-        /* steps 6-7 */
+        /* steps 6-7, 17 (Moved before extracting extension hooks to avoid uninitialized object state) */
         Realm realm = CreateRealmAndSetRealmGlobalObject(calleeContext, realmObject, newGlobal, newGlobal);
-        /* step 17 (Moved before extracting extension hooks to avoid uninitialized object state) */
-        realmObject.setRealm(realm);
-
-        // Run any initialization scripts, if required. But do _not_ install extensions!
-        try {
-            GlobalObject globalTemplate = realm.getGlobalObjectTemplate();
-            assert globalTemplate != null;
-            globalTemplate.initializeScripted();
-        } catch (ParserException | CompilationException e) {
-            throw e.toScriptException(calleeContext);
-        } catch (IOException | URISyntaxException e) {
-            throw newError(calleeContext, e.getMessage());
-        }
-
         /* steps 8-9 */
         Callable translate = GetMethod(calleeContext, realmObject, "directEval");
         /* steps 10-11 */
@@ -159,19 +150,132 @@ public final class RealmConstructor extends BuiltinConstructor implements Initia
         @Prototype
         public static final Intrinsics __proto__ = Intrinsics.FunctionPrototype;
 
-        @Value(name = "length", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = true))
+        @Value(name = "length", attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static final int length = 0;
 
-        @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = true))
+        @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static final String name = "Realm";
 
         /**
          * 26.?.2.1 Reflect.Realm.prototype
          */
-        @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = false))
+        @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false, configurable = false))
         public static final Intrinsics prototype = Intrinsics.RealmPrototype;
+    }
+
+    /**
+     * Extension: Frozen Realms
+     */
+    @CompatibilityExtension(CompatibilityOption.FrozenRealm)
+    public enum FrozenProperties {
+        ;
+
+        private static void removePermissions(Realm realm) {
+            realm.revoke(Permission.CurrentTime);
+            realm.revoke(Permission.RandomNumber);
+        }
+
+        private static void removeStatefulBuiltins(Realm realm) {
+            ExecutionContext cx = realm.defaultContext();
+            DeletePropertyOrThrow(cx, realm.getIntrinsic(Intrinsics.Date), "now");
+            DeletePropertyOrThrow(cx, realm.getIntrinsic(Intrinsics.Math), "random");
+            if (realm.getRuntimeContext().isEnabled(CompatibilityOption.RegExpStatics)) {
+                OrdinaryObject regExp = realm.getIntrinsic(Intrinsics.RegExp);
+                for (String propertyKey : new String[] { "$_", "input", "$&", "lastMatch", "$+", "lastParen", "$`",
+                        "leftContext", "$'", "rightContext", "$1", "$2", "$3", "$4", "$5", "$6", "$7", "$8", "$9" }) {
+                    DeletePropertyOrThrow(cx, regExp, propertyKey);
+                }
+            }
+            for (String propertyKey : new String[] { "fileName", "lineNumber", "columnNumber", "stack",
+                    "stackTrace" }) {
+                DeletePropertyOrThrow(cx, realm.getIntrinsic(Intrinsics.ErrorPrototype), propertyKey);
+            }
+            if (realm.getRuntimeContext().isEnabled(CompatibilityOption.WeakReference)) {
+                DeletePropertyOrThrow(cx, realm.getIntrinsic(Intrinsics.System), "makeWeakRef");
+            }
+            if (realm.getRuntimeContext().isEnabled(CompatibilityOption.System)) {
+                for (String propertyKey : new String[] { "define", "import", "load", "get", "normalize" }) {
+                    DeletePropertyOrThrow(cx, realm.getIntrinsic(Intrinsics.System), propertyKey);
+                }
+            }
+        }
+
+        private static void immutable(Realm realm) {
+            ExecutionContext cx = realm.defaultContext();
+            HashSet<ScriptObject> visited = new HashSet<>();
+            for (Intrinsics id : Intrinsics.values()) {
+                ScriptObject obj = realm.getIntrinsic(id);
+                if (obj != null) {
+                    immutable(cx, obj, visited);
+                }
+            }
+            immutable(cx, realm.getGlobalThis(), visited);
+            immutable(cx, realm.getGlobalObject(), visited);
+            immutable(cx, realm.getRealmObject(), visited);
+        }
+
+        private static void immutable(ExecutionContext cx, ScriptObject obj, HashSet<ScriptObject> visited) {
+            if (!visited.add(obj)) {
+                return;
+            }
+            if (!SetIntegrityLevel(cx, obj, IntegrityLevel.Frozen)) {
+                throw newTypeError(cx, Messages.Key.ObjectFreezeFailed);
+            }
+            ScriptObject prototype = obj.getPrototypeOf(cx);
+            if (prototype != null) {
+                immutable(cx, prototype, visited);
+            }
+            for (Object propertyKey : obj.ownPropertyKeys(cx)) {
+                Property property = obj.getOwnProperty(cx, propertyKey);
+                if (property != null) {
+                    if (property.isDataDescriptor()) {
+                        Object value = property.getValue();
+                        if (Type.isObject(value)) {
+                            immutable(cx, Type.objectValue(value), visited);
+                        }
+                    } else {
+                        Callable getter = property.getGetter();
+                        if (getter != null) {
+                            immutable(cx, getter, visited);
+                        }
+                        Callable setter = property.getSetter();
+                        if (setter != null) {
+                            immutable(cx, setter, visited);
+                        }
+                    }
+                }
+            }
+        }
+
+        /**
+         * Reflect.Realm.immutableRoot ()
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the evaluation result
+         */
+        @Function(name = "immutableRoot", arity = 0)
+        public static Object immutableRoot(ExecutionContext cx, Object thisValue) {
+            RealmObject realmObject = new RealmObject(cx.getRealm());
+
+            // Request default global object.
+            ScriptObject newGlobal = null;
+            Realm realm = CreateRealmAndSetRealmGlobalObject(cx, realmObject, newGlobal, newGlobal);
+
+            // Set [[Prototype]] to the new Realm.prototype.
+            realmObject.setPrototypeOf(cx, realm.getIntrinsic(Intrinsics.RealmPrototype));
+
+            // Install the default global bindings.
+            SetDefaultGlobalBindings(cx, realm);
+
+            // Make realm immutable.
+            removePermissions(realm);
+            removeStatefulBuiltins(realm);
+            immutable(realm);
+
+            return realmObject;
+        }
     }
 }

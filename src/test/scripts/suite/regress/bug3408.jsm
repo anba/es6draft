@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -25,17 +25,17 @@ assertTrue(Reflect.has(self, Symbol.toStringTag));
 
 // [[GetOwnProperty]] with symbol-valued property key
 assertEquals(
-  {value: "Module", writable: false, enumerable: false, configurable: true},
+  {value: "Module", writable: false, enumerable: false, configurable: false},
   Reflect.getOwnPropertyDescriptor(self, Symbol.toStringTag)
 );
 
 // [[OwnPropertyKeys]]
 assertEquals(["a"], Object.keys(self));
 assertEquals(["a"], Object.getOwnPropertyNames(self));
-assertEquals([Symbol.toStringTag, Symbol.iterator], Object.getOwnPropertySymbols(self));
-assertEquals(["a", Symbol.toStringTag, Symbol.iterator], Reflect.ownKeys(self));
+assertEquals([Symbol.toStringTag], Object.getOwnPropertySymbols(self));
+assertEquals(["a", Symbol.toStringTag], Reflect.ownKeys(self));
 
 // Test [[Exports]] list is copied by executing [[OwnPropertyKeys]] multiple times
-assertEquals(["a", Symbol.toStringTag, Symbol.iterator], Reflect.ownKeys(self));
-assertEquals(["a", Symbol.toStringTag, Symbol.iterator], Reflect.ownKeys(self));
-assertEquals(["a", Symbol.toStringTag, Symbol.iterator], Reflect.ownKeys(self));
+assertEquals(["a", Symbol.toStringTag], Reflect.ownKeys(self));
+assertEquals(["a", Symbol.toStringTag], Reflect.ownKeys(self));
+assertEquals(["a", Symbol.toStringTag], Reflect.ownKeys(self));

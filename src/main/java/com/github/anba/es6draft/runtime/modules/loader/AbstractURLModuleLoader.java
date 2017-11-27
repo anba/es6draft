@@ -1,12 +1,14 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
  */
 package com.github.anba.es6draft.runtime.modules.loader;
 
+import java.net.MalformedURLException;
 import java.net.URI;
+import java.net.URL;
 
 import com.github.anba.es6draft.runtime.internal.RuntimeContext;
 import com.github.anba.es6draft.runtime.modules.MalformedNameException;
@@ -35,17 +37,21 @@ public abstract class AbstractURLModuleLoader<MODULE extends ModuleRecord> exten
      *             if the source identifier is not a {@link URLSourceIdentifier}
      */
     @Override
-    protected final URLModuleSource loadSource(SourceIdentifier identifier) {
+    protected final URLModuleSource loadSource(SourceIdentifier identifier) throws MalformedURLException {
         if (!(identifier instanceof URLSourceIdentifier)) {
             throw new IllegalArgumentException();
         }
         URLSourceIdentifier sourceId = (URLSourceIdentifier) identifier;
-        return new URLModuleSource(sourceId);
+        URL resolvedURL = baseDirectory.resolve(sourceId.toUri()).toURL();
+        String sourceName = baseDirectory.relativize(sourceId.toUri()).toString();
+        return new URLModuleSource(resolvedURL, sourceName);
     }
 
     @Override
     public URLSourceIdentifier normalizeName(String unnormalizedName, SourceIdentifier referrerId)
             throws MalformedNameException {
-        return new URLSourceIdentifier(unnormalizedName, referrerId);
+        URI referrerURI = referrerId != null ? referrerId.toUri() : null;
+        URI normalized = SourceIdentifiers.normalize(unnormalizedName, referrerURI, baseDirectory);
+        return new URLSourceIdentifier(normalized);
     }
 }

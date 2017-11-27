@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-    Copyright (c) 2012-2016 André Bargull
+    Copyright (c) André Bargull
     Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
 
     <https://github.com/anba/es6draft>
@@ -18,6 +18,9 @@
       <!-- SwitchFallthrough: 'findbugs.sf.comment' comment marker does not work properly -->
       <Bug pattern="SF_SWITCH_FALLTHROUGH" />
       <Bug pattern="SF_SWITCH_NO_DEFAULT" />
+      <!-- Style reports -->
+      <Bug pattern="ICAST_INTEGER_MULTIPLY_CAST_TO_LONG" />
+      <Bug pattern="ICAST_QUESTIONABLE_UNSIGNED_RIGHT_SHIFT" />
     </Or>
   </Match>
 
@@ -41,7 +44,11 @@
 
   <Match>
     <Bug pattern="EI_EXPOSE_REP2" />
-    <Class name="com.github.anba.es6draft.runtime.types.builtins.LegacyConstructorFunction$Arguments" />
+    <Or>
+      <Class name="com.github.anba.es6draft.runtime.types.builtins.LegacyConstructorFunction$Arguments" />
+      <Class
+        name="com.github.anba.es6draft.runtime.objects.observable.ObservableConstructor$ObservableOfSubscriberFunction" />
+    </Or>
   </Match>
 
   <!-- Objects.requireNonNull not detected by findbugs? -->
@@ -49,12 +56,8 @@
     <Bug pattern="NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE" />
     <Or>
       <And>
-        <Class name="com.github.anba.es6draft.repl.global.SharedFunctions" />
+        <Class name="com.github.anba.es6draft.repl.functions.SharedFunctions" />
         <Method name="relativePathToScript" />
-      </And>
-      <And>
-        <Class name="com.github.anba.es6draft.runtime.internal.RuntimeFunctions" />
-        <Method name="Include" />
       </And>
       <And>
         <Class name="com.github.anba.es6draft.runtime.internal.ScriptCache" />
@@ -64,22 +67,13 @@
         <Class name="com.github.anba.es6draft.runtime.objects.intl.IntlDataTools" />
         <Method name="jdkTimezoneNames" />
       </And>
-      <And>
-        <Class name="com.github.anba.es6draft.runtime.objects.intl.IntlDataTools" />
-        <Method name="oldStyleLanguageTags" />
-      </And>
     </Or>
   </Match>
 
-  <!-- @SuppressWarnings("unused") on locals not supported in FindBugs. -->
   <!-- FindBugs reports dead store on conditionally compiled code. -->
   <Match>
     <Bug pattern="DLS_DEAD_LOCAL_STORE" />
     <Or>
-      <And>
-        <Class name="com.github.anba.es6draft.runtime.objects.intl.NumberFormatConstructor" />
-        <Method name="InitializeNumberFormat" />
-      </And>
       <And>
         <Class name="com.github.anba.es6draft.parser.JSONParser" />
         <Method name="consume" />
@@ -132,16 +126,8 @@
 
   <Match>
     <Bug pattern="ES_COMPARING_PARAMETER_STRING_WITH_EQ" />
-    <Or>
-      <And>
-        <Class name="com.github.anba.es6draft.regexp.JoniRegExpMatcher" />
-        <Method name="matcher" />
-      </And>
-      <And>
-        <Class name="com.github.anba.es6draft.runtime.internal.JVMNames" />
-        <Method name="addPrefixSuffix" />
-      </And>
-    </Or>
+    <Class name="com.github.anba.es6draft.regexp.JoniRegExpMatcher" />
+    <Method name="matcher" />
   </Match>
 
   <Match>
@@ -156,7 +142,7 @@
         <Method name="errorReporter" />
       </And>
       <And>
-        <Class name="com.github.anba.es6draft.repl.Repl$MultiTaskSource$TaskRunner" />
+        <Class name="com.github.anba.es6draft.repl.Repl$MultiJobSource$JobRunner" />
         <Method name="run" />
       </And>
     </Or>
@@ -180,12 +166,6 @@
         <Class name="com.github.anba.es6draft.repl.console.NativeConsole" />
       </And>
     </Or>
-  </Match>
-
-  <Match>
-    <Bug pattern="AT_OPERATION_SEQUENCE_ON_CONCURRENT_ABSTRACTION" />
-    <Class name="com.github.anba.es6draft.runtime.objects.intl.IntlAbstractOperations" />
-    <Method name="GetMaximizedLocale" />
   </Match>
 
   <!-- CompletableFuture.completedFuture(null) is valid. -->

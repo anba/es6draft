@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -70,15 +70,7 @@ public interface FunctionScope extends TopLevelScope {
     boolean hasEval();
 
     /**
-     * Returns {@code true} if the <code>super</code> keyword is used within this function.
-     * 
-     * @return {@code true} if this function contains a <code>super</code> reference
-     */
-    boolean hasSuperReference();
-
-    /**
-     * Returns {@code true} if the <code>arguments</code> object needs to be allocated for this
-     * function.
+     * Returns {@code true} if the <code>arguments</code> object needs to be allocated for this function.
      * 
      * @return {@code true} if the <code>arguments</code> object needs to be allocated
      */

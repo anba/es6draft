@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -15,6 +15,7 @@ import com.github.anba.es6draft.compiler.assembler.Field;
 import com.github.anba.es6draft.compiler.assembler.FieldName;
 import com.github.anba.es6draft.compiler.assembler.InstructionAssembler;
 import com.github.anba.es6draft.compiler.assembler.MethodName;
+import com.github.anba.es6draft.compiler.assembler.Stack;
 import com.github.anba.es6draft.compiler.assembler.Type;
 import com.github.anba.es6draft.compiler.assembler.Value;
 import com.github.anba.es6draft.runtime.types.Null;
@@ -41,6 +42,10 @@ class InstructionVisitor extends InstructionAssembler {
 
     protected InstructionVisitor(MethodCode method) {
         super(method);
+    }
+
+    protected InstructionVisitor(MethodCode method, Stack stack) {
+        super(method, stack);
     }
 
     /**
@@ -147,18 +152,7 @@ class InstructionVisitor extends InstructionAssembler {
      *            the topmost stack value
      */
     public void dupX(ValType ltype, ValType rtype) {
-        int lsize = ltype.size(), rsize = rtype.size();
-        if (lsize == 1 && rsize == 1) {
-            dupX1();
-        } else if (lsize == 1 && rsize == 2) {
-            dup2X1();
-        } else if (lsize == 2 && rsize == 1) {
-            dupX2();
-        } else if (lsize == 2 && rsize == 2) {
-            dup2X2();
-        } else {
-            throw new AssertionError();
-        }
+        dupX(ltype.size(), rtype.size());
     }
 
     /**

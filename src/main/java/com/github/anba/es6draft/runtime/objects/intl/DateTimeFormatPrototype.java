@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -7,19 +7,20 @@
 package com.github.anba.es6draft.runtime.objects.intl;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.CreateDataProperty;
+import static com.github.anba.es6draft.runtime.AbstractOperations.ToNumber;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
-import static com.github.anba.es6draft.runtime.objects.intl.DateTimeFormatConstructor.InitializeDefaultDateTimeFormat;
+import static com.github.anba.es6draft.runtime.objects.intl.DateTimeFormatConstructor.FormatToPartDateTime;
+import static com.github.anba.es6draft.runtime.objects.intl.DateTimeFormatConstructor.UnwrapDateTimeFormat;
 import static com.github.anba.es6draft.runtime.types.builtins.BoundFunctionObject.BoundFunctionCreate;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.Initializable;
 import com.github.anba.es6draft.runtime.internal.Messages;
+import com.github.anba.es6draft.runtime.internal.Permission;
 import com.github.anba.es6draft.runtime.internal.Properties.Accessor;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
-import com.github.anba.es6draft.runtime.internal.Properties.CompatibilityExtension;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
@@ -27,10 +28,10 @@ import com.github.anba.es6draft.runtime.objects.intl.DateFieldSymbolTable.DateFi
 import com.github.anba.es6draft.runtime.objects.intl.DateFieldSymbolTable.FieldWeight;
 import com.github.anba.es6draft.runtime.objects.intl.DateFieldSymbolTable.Skeleton;
 import com.github.anba.es6draft.runtime.objects.intl.DateTimeFormatConstructor.FormatFunction;
-import com.github.anba.es6draft.runtime.objects.intl.DateTimeFormatConstructor.FormatToPartsFunction;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Property;
+import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.BoundFunctionObject;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 import com.ibm.icu.text.DateTimePatternGenerator;
@@ -41,7 +42,7 @@ import com.ibm.icu.text.DateTimePatternGenerator;
  * <li>12.4 Properties of the Intl.DateTimeFormat Prototype Object
  * </ul>
  */
-public final class DateTimeFormatPrototype extends DateTimeFormatObject implements Initializable {
+public final class DateTimeFormatPrototype extends OrdinaryObject implements Initializable {
     /**
      * Constructs a new DateTimeFormat prototype object.
      * 
@@ -55,10 +56,6 @@ public final class DateTimeFormatPrototype extends DateTimeFormatObject implemen
     @Override
     public void initialize(Realm realm) {
         createProperties(realm, this, Properties.class);
-        createProperties(realm, this, FormatToPartsProperty.class);
-
-        // Initialize Intl.DateTimeFormat.prototype's internal state.
-        InitializeDefaultDateTimeFormat(realm, this);
     }
 
     /**
@@ -67,11 +64,11 @@ public final class DateTimeFormatPrototype extends DateTimeFormatObject implemen
     public enum Properties {
         ;
 
-        private static DateTimeFormatObject thisDateTimeFormatObject(ExecutionContext cx, Object object) {
-            if (object instanceof DateTimeFormatObject) {
-                return (DateTimeFormatObject) object;
+        private static DateTimeFormatObject thisDateTimeFormatObject(ExecutionContext cx, Object value, String method) {
+            if (value instanceof DateTimeFormatObject) {
+                return (DateTimeFormatObject) value;
             }
-            throw newTypeError(cx, Messages.Key.IncompatibleObject);
+            throw newTypeError(cx, Messages.Key.IncompatibleThis, method, Type.of(value).toString());
         }
 
         @Prototype
@@ -101,21 +98,54 @@ public final class DateTimeFormatPrototype extends DateTimeFormatObject implemen
          */
         @Accessor(name = "format", type = Accessor.Type.Getter)
         public static Object format(ExecutionContext cx, Object thisValue) {
-            /* step 1 */
-            DateTimeFormatObject dateTimeFormat = thisDateTimeFormatObject(cx, thisValue);
-            /* step 2 */
+            /* steps 1-3 */
+            DateTimeFormatObject dateTimeFormat = UnwrapDateTimeFormat(cx, thisValue,
+                    "Intl.DateTimeFormat.prototype.format");
+            /* step 4 */
             if (dateTimeFormat.getBoundFormat() == null) {
-                /* step 2.a */
+                /* step 4.a */
                 FormatFunction f = new FormatFunction(cx.getRealm());
-                /* step 2.b */
-                BoundFunctionObject bf = BoundFunctionCreate(cx, f, thisValue);
-                /* step 2.c */
+                /* step 4.b */
+                BoundFunctionObject bf = BoundFunctionCreate(cx, f, dateTimeFormat);
+                /* step 4.c */
                 bf.infallibleDefineOwnProperty("length", new Property(1, false, false, true));
-                /* step 2.d */
+                /* step 4.d */
                 dateTimeFormat.setBoundFormat(bf);
             }
-            /* step 3 */
+            /* step 5 */
             return dateTimeFormat.getBoundFormat();
+        }
+
+        /**
+         * 12.3.4 Intl.DateTimeFormat.prototype.formatToParts ([ date ])
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param date
+         *            the optional date argument
+         * @return the format object
+         */
+        @Function(name = "formatToParts", arity = 1)
+        public static Object formatToParts(ExecutionContext cx, Object thisValue, Object date) {
+            /* steps 1-3 */
+            DateTimeFormatObject dateTimeFormat = thisDateTimeFormatObject(cx, thisValue,
+                    "Intl.DateTimeFormat.prototype.formatToParts");
+            /* steps 4-5 */
+            double x;
+            if (Type.isUndefined(date)) {
+                /* step 4 */
+                if (!cx.getRealm().isGranted(Permission.CurrentTime)) {
+                    throw newTypeError(cx, Messages.Key.NoPermission, "formatToParts");
+                }
+                x = System.currentTimeMillis();
+            } else {
+                /* step 5 */
+                x = ToNumber(cx, date);
+            }
+            /* step 6 */
+            return FormatToPartDateTime(cx, dateTimeFormat, x);
         }
 
         /**
@@ -129,7 +159,8 @@ public final class DateTimeFormatPrototype extends DateTimeFormatObject implemen
          */
         @Function(name = "resolvedOptions", arity = 0)
         public static Object resolvedOptions(ExecutionContext cx, Object thisValue) {
-            DateTimeFormatObject dateTimeFormat = thisDateTimeFormatObject(cx, thisValue);
+            DateTimeFormatObject dateTimeFormat = UnwrapDateTimeFormat(cx, thisValue,
+                    "Intl.DateTimeFormat.prototype.resolvedOptions");
             OrdinaryObject object = OrdinaryObject.ObjectCreate(cx, Intrinsics.ObjectPrototype);
             CreateDataProperty(cx, object, "locale", dateTimeFormat.getLocale());
             CreateDataProperty(cx, object, "calendar", dateTimeFormat.getCalendar());
@@ -138,8 +169,9 @@ public final class DateTimeFormatPrototype extends DateTimeFormatObject implemen
             CreateDataProperty(cx, object, "timeZone", dateTimeFormat.getTimeZone());
             // hour12, weekday, era, year, month, day, hour, minute, second, and timeZoneName
             // properties are restored from pattern field or rather its corresponding skeleton.
+            // FIXME: Pattern->Skeleton conversion not correct, e.g. MMMd -> M月d日 -> Md
             DateTimePatternGenerator generator = DateTimePatternGenerator.getEmptyInstance();
-            Skeleton skeleton = new Skeleton(generator.getSkeleton(dateTimeFormat.getPattern()));
+            Skeleton skeleton = Skeleton.fromSkeleton(generator.getSkeleton(dateTimeFormat.getPattern()));
             for (DateField field : DateField.values()) {
                 if (field == DateField.Quarter || field == DateField.Week || field == DateField.Period) {
                     continue;
@@ -148,55 +180,12 @@ public final class DateTimeFormatPrototype extends DateTimeFormatObject implemen
                 if (weight != null) {
                     CreateDataProperty(cx, object, field.toString(), weight.toString());
                     if (field == DateField.Hour) {
+                        CreateDataProperty(cx, object, "hourCycle", skeleton.hourCycle());
                         CreateDataProperty(cx, object, "hour12", skeleton.isHour12());
                     }
                 }
             }
             return object;
-        }
-    }
-
-    /**
-     * 12.3 Properties of the Intl.DateTimeFormat Prototype Object
-     */
-    @CompatibilityExtension(CompatibilityOption.FormatToParts)
-    public enum FormatToPartsProperty {
-        ;
-
-        private static DateTimeFormatObject thisDateTimeFormatObject(ExecutionContext cx, Object object) {
-            if (object instanceof DateTimeFormatObject) {
-                return (DateTimeFormatObject) object;
-            }
-            throw newTypeError(cx, Messages.Key.IncompatibleObject);
-        }
-
-        /**
-         * get Intl.DateTimeFormat.prototype.formatToParts
-         * 
-         * @param cx
-         *            the execution context
-         * @param thisValue
-         *            the function this-value
-         * @return the bound format function
-         */
-        @Accessor(name = "formatToParts", type = Accessor.Type.Getter)
-        public static Object formatToParts(ExecutionContext cx, Object thisValue) {
-            /* steps 1-3 */
-            DateTimeFormatObject dateTimeFormat = thisDateTimeFormatObject(cx, thisValue);
-            /* step 4 */
-            if (dateTimeFormat.getBoundFormatToParts() == null) {
-                /* step 4.a */
-                FormatToPartsFunction f = new FormatToPartsFunction(cx.getRealm());
-                /* step 4.b (not applicable) */
-                /* step 4.c */
-                BoundFunctionObject bf = BoundFunctionCreate(cx, f, thisValue);
-                // FIXME: spec bug - missing define for .length
-                bf.infallibleDefineOwnProperty("length", new Property(1, false, false, true));
-                /* step 4.d */
-                dateTimeFormat.setBoundFormatToParts(bf);
-            }
-            /* step 5 */
-            return dateTimeFormat.getBoundFormatToParts();
         }
     }
 }

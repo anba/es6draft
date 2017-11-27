@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -34,18 +34,11 @@ public final class GlobalSymbolRegistry {
      */
     public Symbol getSymbol(String key) {
         assert key != null : "key must not be null";
-        Symbol symbol = elements.get(key);
-        if (symbol != null) {
-            return symbol;
-        }
-        Symbol newSymbol = new Symbol(key);
-        elements.put(key, newSymbol);
-        return newSymbol;
+        return elements.computeIfAbsent(key, Symbol::new);
     }
 
     /**
-     * Returns the key which is mapped to {@code symbol}, or returns <code>null</code> if there is
-     * no mapping.
+     * Returns the key which is mapped to {@code symbol}, or returns <code>null</code> if there is no mapping.
      * 
      * @param symbol
      *            the global symbol
@@ -54,10 +47,6 @@ public final class GlobalSymbolRegistry {
     public String getKey(Symbol symbol) {
         assert symbol != null : "symbol must not be null";
         String key = symbol.getDescription();
-        Symbol existingSymbol = elements.get(key);
-        if (existingSymbol == symbol) {
-            return key;
-        }
-        return null;
+        return elements.get(key) == symbol ? key : null;
     }
 }

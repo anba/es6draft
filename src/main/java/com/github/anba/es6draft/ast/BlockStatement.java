@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -21,8 +21,7 @@ public final class BlockStatement extends Statement implements ScopedNode {
     private final BlockScope scope;
     private List<StatementListItem> statements = new ArrayList<>();
 
-    public BlockStatement(long beginPosition, long endPosition, BlockScope scope,
-            List<StatementListItem> statements) {
+    public BlockStatement(long beginPosition, long endPosition, BlockScope scope, List<StatementListItem> statements) {
         super(beginPosition, endPosition);
         this.scope = scope;
         this.statements = statements;

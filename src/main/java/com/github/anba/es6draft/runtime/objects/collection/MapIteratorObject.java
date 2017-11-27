@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -29,10 +29,9 @@ public final class MapIteratorObject extends OrdinaryObject {
 
     MapIteratorObject(Realm realm, Iterator<Entry<Object, Object>> iterator, MapIterationKind kind,
             ScriptObject prototype) {
-        super(realm);
+        super(realm, prototype);
         this.iterator = iterator;
         this.iterationKind = kind;
-        setPrototype(prototype);
     }
 
     /**
@@ -68,5 +67,10 @@ public final class MapIteratorObject extends OrdinaryObject {
      */
     public MapIterationKind getIterationKind() {
         return iterationKind;
+    }
+
+    @Override
+    public String toString() {
+        return String.format("%s, iterationKind=%s", super.toString(), iterationKind);
     }
 }

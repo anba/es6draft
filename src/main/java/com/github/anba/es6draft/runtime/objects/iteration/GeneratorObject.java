@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -79,18 +79,9 @@ public final class GeneratorObject extends OrdinaryObject {
         return lastYieldValue;
     }
 
-    /**
-     * Returns {@code true} for legacy generator objects.
-     * 
-     * @return {@code true} if legacy generator object
-     */
-    public boolean isLegacyGenerator() {
-        return code != null && code.is(RuntimeInfo.FunctionFlags.LegacyGenerator);
-    }
-
     @Override
     public String toString() {
-        return String.format("%s, state=%s, lastYieldValue=%s", super.toString(), state, lastYieldValue);
+        return String.format("%s, state=%s", super.toString(), state);
     }
 
     /**

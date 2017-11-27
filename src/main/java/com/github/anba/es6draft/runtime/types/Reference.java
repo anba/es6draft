@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -16,7 +16,6 @@ import com.github.anba.es6draft.runtime.DeclarativeEnvironmentRecord;
 import com.github.anba.es6draft.runtime.EnvironmentRecord;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.internal.Messages;
-import com.github.anba.es6draft.runtime.internal.Strings;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
@@ -354,8 +353,6 @@ public abstract class Reference<BASE, NAME> {
 
         @Override
         public void putValue(Object w, ExecutionContext cx) {
-            assert Type.isType(w) : "invalid value type";
-
             /* steps 5-6 (not applicable) */
             /* steps 4, 7 */
             getBase().setMutableBinding(getReferencedName(), w, isStrictReference());
@@ -437,8 +434,6 @@ public abstract class Reference<BASE, NAME> {
 
         @Override
         public void putValue(Object w, ExecutionContext cx) {
-            assert Type.isType(w) : "invalid value type";
-
             /* step 5 */
             if (isStrictReference()) {
                 throw newReferenceError(cx, Messages.Key.UnresolvableReference, getReferencedName());
@@ -538,6 +533,8 @@ public abstract class Reference<BASE, NAME> {
             switch (type) {
             case Boolean:
                 return cx.getIntrinsic(Intrinsics.BooleanPrototype);
+            case BigInt:
+                return cx.getIntrinsic(Intrinsics.BigIntPrototype);
             case Number:
                 return cx.getIntrinsic(Intrinsics.NumberPrototype);
             case String:
@@ -555,6 +552,8 @@ public abstract class Reference<BASE, NAME> {
             switch (Type.of(base)) {
             case Boolean:
                 return cx.getIntrinsic(Intrinsics.BooleanPrototype);
+            case BigInt:
+                return cx.getIntrinsic(Intrinsics.BigIntPrototype);
             case Number:
                 return cx.getIntrinsic(Intrinsics.NumberPrototype);
             case String:
@@ -632,7 +631,7 @@ public abstract class Reference<BASE, NAME> {
             /* steps 3, 5.a */
             if (hasPrimitiveBase()) {
                 // base = ToObject(realm, base);
-                return GetValuePrimitive(cx);
+                return getValuePrimitive(cx);
             }
             /* steps 3, 5.b */
             return ((ScriptObject) getBase()).get(cx, referencedName, getThisValue());
@@ -640,8 +639,6 @@ public abstract class Reference<BASE, NAME> {
 
         @Override
         public void putValue(Object w, ExecutionContext cx) {
-            assert Type.isType(w) : "invalid value type";
-
             ScriptObject base = hasPrimitiveBase() ? ToObject(cx, getBase()) : (ScriptObject) getBase();
             boolean succeeded = base.set(cx, referencedName, w, getThisValue());
             if (!succeeded && isStrictReference()) {
@@ -662,7 +659,7 @@ public abstract class Reference<BASE, NAME> {
             return deleteStatus;
         }
 
-        private Object GetValuePrimitive(ExecutionContext cx) {
+        private Object getValuePrimitive(ExecutionContext cx) {
             long refName = referencedName;
             if (type == Type.String && 0 <= refName && refName < 0x7FFF_FFFFL) {
                 int index = (int) refName;
@@ -674,37 +671,74 @@ public abstract class Reference<BASE, NAME> {
             return getPrimitiveBaseProto(cx).get(cx, refName, getBase());
         }
 
+        /**
+         * Returns the property value:<br>
+         * {@code base[referencedName]}.
+         * 
+         * @param cx
+         *            the execution context
+         * @param base
+         *            the base value
+         * @param referencedName
+         *            the property name
+         * @return the property value
+         */
         public static Object GetValue(ExecutionContext cx, Object base, long referencedName) {
-            assert !Type.isUndefinedOrNull(base);
             if (base instanceof ScriptObject) {
                 return ((ScriptObject) base).get(cx, referencedName, base);
             }
-            return GetValuePrimitive(cx, base, referencedName);
-        }
-
-        private static Object GetValuePrimitive(ExecutionContext cx, Object base, long referencedName) {
-            if (Type.isString(base) && 0 <= referencedName && referencedName < 0x7FFF_FFFFL) {
-                int index = (int) referencedName;
+            if (Type.isString(base)) {
                 CharSequence str = Type.stringValue(base);
-                if (index < str.length()) {
-                    return String.valueOf(str.charAt(index));
+                if (referencedName < str.length()) {
+                    return String.valueOf(str.charAt((int) referencedName));
                 }
             }
             return getPrimitiveBaseProto(cx, base).get(cx, referencedName, base);
         }
 
+        /**
+         * Sets the property to:<br>
+         * {@code base[referencedName] = value}.
+         * 
+         * @param cx
+         *            the execution context
+         * @param base
+         *            the base value
+         * @param referencedName
+         *            the property name
+         * @param value
+         *            the new property value
+         * @param strict
+         *            the strict-mode flag
+         */
         public static void PutValue(ExecutionContext cx, Object base, long referencedName, Object value,
                 boolean strict) {
-            assert !Type.isUndefinedOrNull(base);
-            boolean succeeded;
-            if (base instanceof ScriptObject) {
-                succeeded = ((ScriptObject) base).set(cx, referencedName, value, base);
-            } else {
-                succeeded = ToObject(cx, base).set(cx, referencedName, value, base);
-            }
+            boolean succeeded = ToObject(cx, base).set(cx, referencedName, value, base);
             if (!succeeded && strict) {
                 throw newTypeError(cx, Messages.Key.PropertyNotModifiable, ToString(referencedName));
             }
+        }
+
+        /**
+         * Deletes the property:<br>
+         * {@code delete base[referencedName]}.
+         * 
+         * @param cx
+         *            the execution context
+         * @param base
+         *            the base value
+         * @param referencedName
+         *            the property name
+         * @param strict
+         *            the strict-mode flag
+         * @return {@code true} on success
+         */
+        public static boolean Delete(ExecutionContext cx, Object base, long referencedName, boolean strict) {
+            boolean deleteStatus = ToObject(cx, base).delete(cx, referencedName);
+            if (!deleteStatus && strict) {
+                throw newTypeError(cx, Messages.Key.PropertyNotDeletable, Long.toString(referencedName));
+            }
+            return deleteStatus;
         }
     }
 
@@ -740,7 +774,7 @@ public abstract class Reference<BASE, NAME> {
             /* steps 3, 5.a */
             if (hasPrimitiveBase()) {
                 // base = ToObject(realm, base);
-                return GetValuePrimitive(cx);
+                return getValuePrimitive(cx);
             }
             /* steps 3, 5.b */
             return ((ScriptObject) getBase()).get(cx, referencedName, getThisValue());
@@ -748,8 +782,6 @@ public abstract class Reference<BASE, NAME> {
 
         @Override
         public void putValue(Object w, ExecutionContext cx) {
-            assert Type.isType(w) : "invalid value type";
-
             ScriptObject base = hasPrimitiveBase() ? ToObject(cx, getBase()) : (ScriptObject) getBase();
             boolean succeeded = base.set(cx, referencedName, w, getThisValue());
             if (!succeeded && isStrictReference()) {
@@ -770,60 +802,78 @@ public abstract class Reference<BASE, NAME> {
             return deleteStatus;
         }
 
-        private Object GetValuePrimitive(ExecutionContext cx) {
-            if (type == Type.String) {
-                if ("length".equals(referencedName)) {
-                    CharSequence str = Type.stringValue(getBase());
-                    return str.length();
-                }
-                int index = Strings.toStringIndex(referencedName);
-                if (index >= 0) {
-                    CharSequence str = Type.stringValue(getBase());
-                    if (index < str.length()) {
-                        return String.valueOf(str.charAt(index));
-                    }
-                }
+        private Object getValuePrimitive(ExecutionContext cx) {
+            if (type == Type.String && "length".equals(referencedName)) {
+                return Type.stringValue(getBase()).length();
             }
             return getPrimitiveBaseProto(cx).get(cx, referencedName, getBase());
         }
 
+        /**
+         * Returns the property value:<br>
+         * {@code base[referencedName]}.
+         * 
+         * @param cx
+         *            the execution context
+         * @param base
+         *            the base value
+         * @param referencedName
+         *            the property name
+         * @return the property value
+         */
         public static Object GetValue(ExecutionContext cx, Object base, String referencedName) {
-            assert !Type.isUndefinedOrNull(base);
             if (base instanceof ScriptObject) {
                 return ((ScriptObject) base).get(cx, referencedName, base);
             }
-            return GetValuePrimitive(cx, base, referencedName);
-        }
-
-        private static Object GetValuePrimitive(ExecutionContext cx, Object base, String referencedName) {
-            if (Type.isString(base)) {
-                if ("length".equals(referencedName)) {
-                    CharSequence str = Type.stringValue(base);
-                    return str.length();
-                }
-                int index = Strings.toStringIndex(referencedName);
-                if (index >= 0) {
-                    CharSequence str = Type.stringValue(base);
-                    if (index < str.length()) {
-                        return String.valueOf(str.charAt(index));
-                    }
-                }
+            if (Type.isString(base) && "length".equals(referencedName)) {
+                return Type.stringValue(base).length();
             }
             return getPrimitiveBaseProto(cx, base).get(cx, referencedName, base);
         }
 
+        /**
+         * Sets the property to:<br>
+         * {@code base[referencedName] = value}.
+         * 
+         * @param cx
+         *            the execution context
+         * @param base
+         *            the base value
+         * @param referencedName
+         *            the property name
+         * @param value
+         *            the new property value
+         * @param strict
+         *            the strict-mode flag
+         */
         public static void PutValue(ExecutionContext cx, Object base, String referencedName, Object value,
                 boolean strict) {
-            assert !Type.isUndefinedOrNull(base);
-            boolean succeeded;
-            if (base instanceof ScriptObject) {
-                succeeded = ((ScriptObject) base).set(cx, referencedName, value, base);
-            } else {
-                succeeded = ToObject(cx, base).set(cx, referencedName, value, base);
-            }
+            boolean succeeded = ToObject(cx, base).set(cx, referencedName, value, base);
             if (!succeeded && strict) {
                 throw newTypeError(cx, Messages.Key.PropertyNotModifiable, referencedName);
             }
+        }
+
+        /**
+         * Deletes the property:<br>
+         * {@code delete base[referencedName]}.
+         * 
+         * @param cx
+         *            the execution context
+         * @param base
+         *            the base value
+         * @param referencedName
+         *            the property name
+         * @param strict
+         *            the strict-mode flag
+         * @return {@code true} on success
+         */
+        public static boolean Delete(ExecutionContext cx, Object base, String referencedName, boolean strict) {
+            boolean deleteStatus = ToObject(cx, base).delete(cx, referencedName);
+            if (!deleteStatus && strict) {
+                throw newTypeError(cx, Messages.Key.PropertyNotDeletable, referencedName);
+            }
+            return deleteStatus;
         }
     }
 
@@ -859,7 +909,7 @@ public abstract class Reference<BASE, NAME> {
             /* steps 3, 5.a */
             if (hasPrimitiveBase()) {
                 // base = ToObject(realm, base);
-                return GetValuePrimitive(cx);
+                return getPrimitiveBaseProto(cx).get(cx, referencedName, getThisValue());
             }
             /* steps 3, 5.b */
             return ((ScriptObject) getBase()).get(cx, referencedName, getThisValue());
@@ -867,8 +917,6 @@ public abstract class Reference<BASE, NAME> {
 
         @Override
         public void putValue(Object w, ExecutionContext cx) {
-            assert Type.isType(w) : "invalid value type";
-
             ScriptObject base = hasPrimitiveBase() ? ToObject(cx, getBase()) : (ScriptObject) getBase();
             boolean succeeded = base.set(cx, referencedName, w, getThisValue());
             if (!succeeded && isStrictReference()) {
@@ -889,34 +937,68 @@ public abstract class Reference<BASE, NAME> {
             return deleteStatus;
         }
 
-        private Object GetValuePrimitive(ExecutionContext cx) {
-            return getPrimitiveBaseProto(cx).get(cx, referencedName, getBase());
-        }
-
+        /**
+         * Returns the property value:<br>
+         * {@code base[referencedName]}.
+         * 
+         * @param cx
+         *            the execution context
+         * @param base
+         *            the base value
+         * @param referencedName
+         *            the property name
+         * @return the property value
+         */
         public static Object GetValue(ExecutionContext cx, Object base, Symbol referencedName) {
-            assert !Type.isUndefinedOrNull(base);
             if (base instanceof ScriptObject) {
                 return ((ScriptObject) base).get(cx, referencedName, base);
             }
-            return GetValuePrimitive(cx, base, referencedName);
-        }
-
-        private static Object GetValuePrimitive(ExecutionContext cx, Object base, Symbol referencedName) {
             return getPrimitiveBaseProto(cx, base).get(cx, referencedName, base);
         }
 
+        /**
+         * Sets the property to:<br>
+         * {@code base[referencedName] = value}.
+         * 
+         * @param cx
+         *            the execution context
+         * @param base
+         *            the base value
+         * @param referencedName
+         *            the property name
+         * @param value
+         *            the new property value
+         * @param strict
+         *            the strict-mode flag
+         */
         public static void PutValue(ExecutionContext cx, Object base, Symbol referencedName, Object value,
                 boolean strict) {
-            assert !Type.isUndefinedOrNull(base);
-            boolean succeeded;
-            if (base instanceof ScriptObject) {
-                succeeded = ((ScriptObject) base).set(cx, referencedName, value, base);
-            } else {
-                succeeded = ToObject(cx, base).set(cx, referencedName, value, base);
-            }
+            boolean succeeded = ToObject(cx, base).set(cx, referencedName, value, base);
             if (!succeeded && strict) {
                 throw newTypeError(cx, Messages.Key.PropertyNotModifiable, referencedName.toString());
             }
+        }
+
+        /**
+         * Deletes the property:<br>
+         * {@code delete base[referencedName]}.
+         * 
+         * @param cx
+         *            the execution context
+         * @param base
+         *            the base value
+         * @param referencedName
+         *            the property name
+         * @param strict
+         *            the strict-mode flag
+         * @return {@code true} on success
+         */
+        public static boolean Delete(ExecutionContext cx, Object base, Symbol referencedName, boolean strict) {
+            boolean deleteStatus = ToObject(cx, base).delete(cx, referencedName);
+            if (!deleteStatus && strict) {
+                throw newTypeError(cx, Messages.Key.PropertyNotDeletable, referencedName.toString());
+            }
+            return deleteStatus;
         }
     }
 
@@ -1030,8 +1112,6 @@ public abstract class Reference<BASE, NAME> {
 
         @Override
         public void putValue(Object w, ExecutionContext cx) {
-            assert Type.isType(w) : "invalid value type";
-
             boolean succeeded = getBase().set(cx, getReferencedName(), w, getThisValue());
             if (!succeeded && isStrictReference()) {
                 throw newTypeError(cx, Messages.Key.PropertyNotModifiable, getReferencedName());
@@ -1075,8 +1155,6 @@ public abstract class Reference<BASE, NAME> {
 
         @Override
         public void putValue(Object w, ExecutionContext cx) {
-            assert Type.isType(w) : "invalid value type";
-
             boolean succeeded = getBase().set(cx, getReferencedName(), w, getThisValue());
             if (!succeeded && isStrictReference()) {
                 throw newTypeError(cx, Messages.Key.PropertyNotModifiable, getReferencedName().toString());

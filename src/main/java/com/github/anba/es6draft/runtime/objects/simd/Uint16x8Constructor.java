@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -28,8 +28,8 @@ import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
+import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
-import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
 
 /**
  * <h1>SIMD</h1>
@@ -71,27 +71,24 @@ public final class Uint16x8Constructor extends BuiltinConstructor implements Ini
         throw newTypeError(calleeContext(), Messages.Key.SIMDCreate, SIMD_TYPE.name());
     }
 
-    @Override
-    protected BuiltinFunction clone() {
-        return new Uint16x8Constructor(getRealm());
-    }
-
     /**
      * Properties of the SIMD.Uint16x8 Constructor
      */
     public enum Properties {
         ;
 
-        private static SIMDValue anySimdValue(ExecutionContext cx, Object value) {
+        private static SIMDValue anySimdValue(ExecutionContext cx, Object value, String method) {
             if (!(value instanceof SIMDValue)) {
-                throw newTypeError(cx, Messages.Key.IncompatibleObject);
+                throw newTypeError(cx, Messages.Key.SIMDInvalidObject, SIMD_TYPE.name() + method,
+                        Type.of(value).toString());
             }
             return (SIMDValue) value;
         }
 
-        private static SIMDValue simdValue(ExecutionContext cx, Object value, SIMDType type) {
+        private static SIMDValue simdValue(ExecutionContext cx, Object value, SIMDType type, String method) {
             if (!(value instanceof SIMDValue)) {
-                throw newTypeError(cx, Messages.Key.IncompatibleObject);
+                throw newTypeError(cx, Messages.Key.SIMDInvalidObject, SIMD_TYPE.name() + method,
+                        Type.of(value).toString());
             }
             if (((SIMDValue) value).getType() != type) {
                 throw newTypeError(cx, Messages.Key.SIMDInvalidType);
@@ -102,15 +99,14 @@ public final class Uint16x8Constructor extends BuiltinConstructor implements Ini
         @Prototype
         public static final Intrinsics __proto__ = Intrinsics.FunctionPrototype;
 
-        @Value(name = "length", attributes = @Attributes(writable = false, enumerable = false, configurable = true) )
+        @Value(name = "length", attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static final int length = VECTOR_LENGTH;
 
-        @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false, configurable = true) )
+        @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static final String name = SIMD_TYPE.name();
 
         // FIXME: spec bug - missing definition
-        @Value(name = "prototype",
-                attributes = @Attributes(writable = false, enumerable = false, configurable = false) )
+        @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false, configurable = false))
         public static final Intrinsics prototype = Intrinsics.SIMD_Uint16x8Prototype;
 
         /**
@@ -147,7 +143,7 @@ public final class Uint16x8Constructor extends BuiltinConstructor implements Ini
         @Function(name = "check", arity = 1)
         public static Object check(ExecutionContext cx, Object thisValue, Object a) {
             /* steps 1-2 */
-            return simdValue(cx, a, SIMD_TYPE);
+            return simdValue(cx, a, SIMD_TYPE, ".check");
         }
 
         /**
@@ -166,8 +162,8 @@ public final class Uint16x8Constructor extends BuiltinConstructor implements Ini
         @Function(name = "add", arity = 2)
         public static Object add(ExecutionContext cx, Object thisValue, Object a, Object b) {
             /* step 1 */
-            SIMDValue sa = simdValue(cx, a, SIMD_TYPE);
-            SIMDValue sb = simdValue(cx, b, SIMD_TYPE);
+            SIMDValue sa = simdValue(cx, a, SIMD_TYPE, ".add");
+            SIMDValue sb = simdValue(cx, b, SIMD_TYPE, ".add");
             /* steps 2-3 */
             SIMDValue result = SIMDBinaryOpInt(sa, sb, (x, y) -> (x + y) & 0xffff);
             /* step 4 */
@@ -190,8 +186,8 @@ public final class Uint16x8Constructor extends BuiltinConstructor implements Ini
         @Function(name = "sub", arity = 2)
         public static Object sub(ExecutionContext cx, Object thisValue, Object a, Object b) {
             /* step 1 */
-            SIMDValue sa = simdValue(cx, a, SIMD_TYPE);
-            SIMDValue sb = simdValue(cx, b, SIMD_TYPE);
+            SIMDValue sa = simdValue(cx, a, SIMD_TYPE, ".sub");
+            SIMDValue sb = simdValue(cx, b, SIMD_TYPE, ".sub");
             /* steps 2-3 */
             SIMDValue result = SIMDBinaryOpInt(sa, sb, (x, y) -> (x - y) & 0xffff);
             /* step 4 */
@@ -214,8 +210,8 @@ public final class Uint16x8Constructor extends BuiltinConstructor implements Ini
         @Function(name = "mul", arity = 2)
         public static Object mul(ExecutionContext cx, Object thisValue, Object a, Object b) {
             /* step 1 */
-            SIMDValue sa = simdValue(cx, a, SIMD_TYPE);
-            SIMDValue sb = simdValue(cx, b, SIMD_TYPE);
+            SIMDValue sa = simdValue(cx, a, SIMD_TYPE, ".mul");
+            SIMDValue sb = simdValue(cx, b, SIMD_TYPE, ".mul");
             /* steps 2-4 */
             SIMDValue result = SIMDBinaryOpInt(sa, sb, (x, y) -> (x * y) & 0xffff);
             /* step 5 */
@@ -238,8 +234,8 @@ public final class Uint16x8Constructor extends BuiltinConstructor implements Ini
         @Function(name = "max", arity = 2)
         public static Object max(ExecutionContext cx, Object thisValue, Object a, Object b) {
             /* step 1 */
-            SIMDValue sa = simdValue(cx, a, SIMD_TYPE);
-            SIMDValue sb = simdValue(cx, b, SIMD_TYPE);
+            SIMDValue sa = simdValue(cx, a, SIMD_TYPE, ".max");
+            SIMDValue sb = simdValue(cx, b, SIMD_TYPE, ".max");
             /* steps 2-3 */
             SIMDValue result = SIMDBinaryOpInt(sa, sb, (x, y) -> Integer.compareUnsigned(x, y) > 0 ? x : y);
             /* step 4 */
@@ -262,8 +258,8 @@ public final class Uint16x8Constructor extends BuiltinConstructor implements Ini
         @Function(name = "min", arity = 2)
         public static Object min(ExecutionContext cx, Object thisValue, Object a, Object b) {
             /* step 1 */
-            SIMDValue sa = simdValue(cx, a, SIMD_TYPE);
-            SIMDValue sb = simdValue(cx, b, SIMD_TYPE);
+            SIMDValue sa = simdValue(cx, a, SIMD_TYPE, ".min");
+            SIMDValue sb = simdValue(cx, b, SIMD_TYPE, ".min");
             /* steps 2-3 */
             SIMDValue result = SIMDBinaryOpInt(sa, sb, (x, y) -> Integer.compareUnsigned(x, y) < 0 ? x : y);
             /* step 4 */
@@ -284,7 +280,7 @@ public final class Uint16x8Constructor extends BuiltinConstructor implements Ini
         @Function(name = "neg", arity = 1)
         public static Object neg(ExecutionContext cx, Object thisValue, Object a) {
             /* step 1 */
-            SIMDValue sa = simdValue(cx, a, SIMD_TYPE);
+            SIMDValue sa = simdValue(cx, a, SIMD_TYPE, ".neg");
             /* steps 2-3 */
             SIMDValue result = SIMDUnaryOpInt(sa, x -> (-x) & 0xffff);
             /* step 4 */
@@ -307,8 +303,8 @@ public final class Uint16x8Constructor extends BuiltinConstructor implements Ini
         @Function(name = "and", arity = 2)
         public static Object and(ExecutionContext cx, Object thisValue, Object a, Object b) {
             /* step 1 */
-            SIMDValue sa = simdValue(cx, a, SIMD_TYPE);
-            SIMDValue sb = simdValue(cx, b, SIMD_TYPE);
+            SIMDValue sa = simdValue(cx, a, SIMD_TYPE, ".and");
+            SIMDValue sb = simdValue(cx, b, SIMD_TYPE, ".and");
             /* steps 2-3 */
             SIMDValue result = SIMDBinaryOpInt(sa, sb, (x, y) -> (x & y) & 0xffff);
             /* step 4 */
@@ -331,8 +327,8 @@ public final class Uint16x8Constructor extends BuiltinConstructor implements Ini
         @Function(name = "xor", arity = 2)
         public static Object xor(ExecutionContext cx, Object thisValue, Object a, Object b) {
             /* step 1 */
-            SIMDValue sa = simdValue(cx, a, SIMD_TYPE);
-            SIMDValue sb = simdValue(cx, b, SIMD_TYPE);
+            SIMDValue sa = simdValue(cx, a, SIMD_TYPE, ".xor");
+            SIMDValue sb = simdValue(cx, b, SIMD_TYPE, ".xor");
             /* steps 2-3 */
             SIMDValue result = SIMDBinaryOpInt(sa, sb, (x, y) -> (x ^ y) & 0xffff);
             /* step 4 */
@@ -355,8 +351,8 @@ public final class Uint16x8Constructor extends BuiltinConstructor implements Ini
         @Function(name = "or", arity = 2)
         public static Object or(ExecutionContext cx, Object thisValue, Object a, Object b) {
             /* step 1 */
-            SIMDValue sa = simdValue(cx, a, SIMD_TYPE);
-            SIMDValue sb = simdValue(cx, b, SIMD_TYPE);
+            SIMDValue sa = simdValue(cx, a, SIMD_TYPE, ".or");
+            SIMDValue sb = simdValue(cx, b, SIMD_TYPE, ".or");
             /* steps 2-3 */
             SIMDValue result = SIMDBinaryOpInt(sa, sb, (x, y) -> (x | y) & 0xffff);
             /* step 4 */
@@ -377,7 +373,7 @@ public final class Uint16x8Constructor extends BuiltinConstructor implements Ini
         @Function(name = "not", arity = 1)
         public static Object not(ExecutionContext cx, Object thisValue, Object a) {
             /* step 1 */
-            SIMDValue sa = simdValue(cx, a, SIMD_TYPE);
+            SIMDValue sa = simdValue(cx, a, SIMD_TYPE, ".not");
             /* steps 2-3 */
             SIMDValue result = SIMDUnaryOpInt(sa, x -> (~x) & 0xffff);
             /* step 4 */
@@ -400,8 +396,8 @@ public final class Uint16x8Constructor extends BuiltinConstructor implements Ini
         @Function(name = "lessThan", arity = 2)
         public static Object lessThan(ExecutionContext cx, Object thisValue, Object a, Object b) {
             /* step 1 */
-            SIMDValue sa = simdValue(cx, a, SIMD_TYPE);
-            SIMDValue sb = simdValue(cx, b, SIMD_TYPE);
+            SIMDValue sa = simdValue(cx, a, SIMD_TYPE, ".lessThan");
+            SIMDValue sb = simdValue(cx, b, SIMD_TYPE, ".lessThan");
             /* steps 2-3 */
             SIMDValue result = SIMDRelationalOpInt(sa, sb, (x, y) -> Integer.compareUnsigned(x, y) < 0);
             /* step 4 */
@@ -424,8 +420,8 @@ public final class Uint16x8Constructor extends BuiltinConstructor implements Ini
         @Function(name = "lessThanOrEqual", arity = 2)
         public static Object lessThanOrEqual(ExecutionContext cx, Object thisValue, Object a, Object b) {
             /* step 1 */
-            SIMDValue sa = simdValue(cx, a, SIMD_TYPE);
-            SIMDValue sb = simdValue(cx, b, SIMD_TYPE);
+            SIMDValue sa = simdValue(cx, a, SIMD_TYPE, ".lessThanOrEqual");
+            SIMDValue sb = simdValue(cx, b, SIMD_TYPE, ".lessThanOrEqual");
             /* steps 2-3 */
             SIMDValue result = SIMDRelationalOpInt(sa, sb, (x, y) -> Integer.compareUnsigned(x, y) <= 0);
             /* step 4 */
@@ -448,8 +444,8 @@ public final class Uint16x8Constructor extends BuiltinConstructor implements Ini
         @Function(name = "greaterThan", arity = 2)
         public static Object greaterThan(ExecutionContext cx, Object thisValue, Object a, Object b) {
             /* step 1 */
-            SIMDValue sa = simdValue(cx, a, SIMD_TYPE);
-            SIMDValue sb = simdValue(cx, b, SIMD_TYPE);
+            SIMDValue sa = simdValue(cx, a, SIMD_TYPE, ".greaterThan");
+            SIMDValue sb = simdValue(cx, b, SIMD_TYPE, ".greaterThan");
             /* steps 2-3 */
             SIMDValue result = SIMDRelationalOpInt(sa, sb, (x, y) -> Integer.compareUnsigned(x, y) > 0);
             /* step 4 */
@@ -472,8 +468,8 @@ public final class Uint16x8Constructor extends BuiltinConstructor implements Ini
         @Function(name = "greaterThanOrEqual", arity = 2)
         public static Object greaterThanOrEqual(ExecutionContext cx, Object thisValue, Object a, Object b) {
             /* step 1 */
-            SIMDValue sa = simdValue(cx, a, SIMD_TYPE);
-            SIMDValue sb = simdValue(cx, b, SIMD_TYPE);
+            SIMDValue sa = simdValue(cx, a, SIMD_TYPE, ".greaterThanOrEqual");
+            SIMDValue sb = simdValue(cx, b, SIMD_TYPE, ".greaterThanOrEqual");
             /* steps 2-3 */
             SIMDValue result = SIMDRelationalOpInt(sa, sb, (x, y) -> Integer.compareUnsigned(x, y) >= 0);
             /* step 4 */
@@ -496,8 +492,8 @@ public final class Uint16x8Constructor extends BuiltinConstructor implements Ini
         @Function(name = "equal", arity = 2)
         public static Object equal(ExecutionContext cx, Object thisValue, Object a, Object b) {
             /* step 1 */
-            SIMDValue sa = simdValue(cx, a, SIMD_TYPE);
-            SIMDValue sb = simdValue(cx, b, SIMD_TYPE);
+            SIMDValue sa = simdValue(cx, a, SIMD_TYPE, ".equal");
+            SIMDValue sb = simdValue(cx, b, SIMD_TYPE, ".equal");
             /* steps 2-3 */
             SIMDValue result = SIMDRelationalOpInt(sa, sb, (x, y) -> x == y);
             /* step 4 */
@@ -520,8 +516,8 @@ public final class Uint16x8Constructor extends BuiltinConstructor implements Ini
         @Function(name = "notEqual", arity = 2)
         public static Object notEqual(ExecutionContext cx, Object thisValue, Object a, Object b) {
             /* step 1 */
-            SIMDValue sa = simdValue(cx, a, SIMD_TYPE);
-            SIMDValue sb = simdValue(cx, b, SIMD_TYPE);
+            SIMDValue sa = simdValue(cx, a, SIMD_TYPE, ".notEqual");
+            SIMDValue sb = simdValue(cx, b, SIMD_TYPE, ".notEqual");
             /* steps 2-3 */
             SIMDValue result = SIMDRelationalOpInt(sa, sb, (x, y) -> x != y);
             /* step 4 */
@@ -547,9 +543,9 @@ public final class Uint16x8Constructor extends BuiltinConstructor implements Ini
         public static Object select(ExecutionContext cx, Object thisValue, Object selector, Object a, Object b) {
             /* step 1 */
             // FIXME: spec bug - missing type check for selector
-            SIMDValue ss = anySimdValue(cx, selector);
-            SIMDValue sa = simdValue(cx, a, SIMD_TYPE);
-            SIMDValue sb = simdValue(cx, b, SIMD_TYPE);
+            SIMDValue ss = anySimdValue(cx, selector, ".select");
+            SIMDValue sa = simdValue(cx, a, SIMD_TYPE, ".select");
+            SIMDValue sb = simdValue(cx, b, SIMD_TYPE, ".select");
             /* step 2 */
             SIMDType outputDescriptor = SIMDBoolType(SIMD_TYPE);
             /* step 3 */
@@ -589,8 +585,8 @@ public final class Uint16x8Constructor extends BuiltinConstructor implements Ini
         @Function(name = "addSaturate", arity = 2)
         public static Object addSaturate(ExecutionContext cx, Object thisValue, Object a, Object b) {
             /* step 1 */
-            SIMDValue sa = simdValue(cx, a, SIMD_TYPE);
-            SIMDValue sb = simdValue(cx, b, SIMD_TYPE);
+            SIMDValue sa = simdValue(cx, a, SIMD_TYPE, ".addSaturate");
+            SIMDValue sb = simdValue(cx, b, SIMD_TYPE, ".addSaturate");
             /* steps 2-3 */
             SIMDValue result = SIMDBinaryOpInt(sa, sb, (x, y) -> Math.max(Math.min(x + y, MAX_VALUE), MIN_VALUE));
             /* step 4 */
@@ -613,8 +609,8 @@ public final class Uint16x8Constructor extends BuiltinConstructor implements Ini
         @Function(name = "subSaturate", arity = 2)
         public static Object subSaturate(ExecutionContext cx, Object thisValue, Object a, Object b) {
             /* step 1 */
-            SIMDValue sa = simdValue(cx, a, SIMD_TYPE);
-            SIMDValue sb = simdValue(cx, b, SIMD_TYPE);
+            SIMDValue sa = simdValue(cx, a, SIMD_TYPE, ".subSaturate");
+            SIMDValue sb = simdValue(cx, b, SIMD_TYPE, ".subSaturate");
             /* steps 2-3 */
             SIMDValue result = SIMDBinaryOpInt(sa, sb, (x, y) -> Math.max(Math.min(x - y, MAX_VALUE), MIN_VALUE));
             /* step 4 */
@@ -637,7 +633,7 @@ public final class Uint16x8Constructor extends BuiltinConstructor implements Ini
         @Function(name = "shiftLeftByScalar", arity = 2)
         public static Object shiftLeftByScalar(ExecutionContext cx, Object thisValue, Object a, Object bits) {
             /* step 1 */
-            SIMDValue sa = simdValue(cx, a, SIMD_TYPE);
+            SIMDValue sa = simdValue(cx, a, SIMD_TYPE, ".shiftLeftByScalar");
             /* step 2 */
             // FIXME: spec bug - Missing ReturnIfAbrupt
             int scalar = ToInt32(cx, bits);
@@ -665,7 +661,7 @@ public final class Uint16x8Constructor extends BuiltinConstructor implements Ini
         @Function(name = "shiftRightByScalar", arity = 2)
         public static Object shiftRightByScalar(ExecutionContext cx, Object thisValue, Object a, Object bits) {
             /* step 1 */
-            SIMDValue sa = simdValue(cx, a, SIMD_TYPE);
+            SIMDValue sa = simdValue(cx, a, SIMD_TYPE, ".shiftRightByScalar");
             /* step 2 */
             // FIXME: spec bug - Missing ReturnIfAbrupt
             int scalar = ToInt32(cx, bits);
@@ -693,7 +689,7 @@ public final class Uint16x8Constructor extends BuiltinConstructor implements Ini
         @Function(name = "extractLane", arity = 2)
         public static Object extractLane(ExecutionContext cx, Object thisValue, Object simd, Object lane) {
             /* step 1 */
-            SIMDValue sv = simdValue(cx, simd, SIMD_TYPE);
+            SIMDValue sv = simdValue(cx, simd, SIMD_TYPE, ".extractLane");
             /* step 2 */
             return SIMDExtractLaneInt(sv, SIMDToLane(cx, VECTOR_LENGTH, lane)) & 0xffff;
         }
@@ -717,7 +713,7 @@ public final class Uint16x8Constructor extends BuiltinConstructor implements Ini
         public static Object replaceLane(ExecutionContext cx, Object thisValue, Object simd, Object lane,
                 Object value) {
             /* step 1 */
-            SIMDValue sv = simdValue(cx, simd, SIMD_TYPE);
+            SIMDValue sv = simdValue(cx, simd, SIMD_TYPE, ".replaceLane");
             /* step 2 */
             return SIMDReplaceLaneInt(cx, sv, lane, value, AbstractOperations::ToUint16);
         }
@@ -740,9 +736,9 @@ public final class Uint16x8Constructor extends BuiltinConstructor implements Ini
         @Function(name = "store", arity = 3)
         public static Object store(ExecutionContext cx, Object thisValue, Object tarray, Object index, Object simd) {
             /* step 1 */
-            SIMDValue sv = simdValue(cx, simd, SIMD_TYPE);
+            SIMDValue sv = simdValue(cx, simd, SIMD_TYPE, ".store");
             /* step 2 */
-            return SIMDStoreInTypedArray(cx, tarray, index, SIMD_TYPE, sv);
+            return SIMDStoreInTypedArray(cx, tarray, index, SIMD_TYPE, sv, ".store");
         }
 
         /**
@@ -761,7 +757,7 @@ public final class Uint16x8Constructor extends BuiltinConstructor implements Ini
         @Function(name = "load", arity = 2)
         public static Object load(ExecutionContext cx, Object thisValue, Object tarray, Object index) {
             /* step 1 */
-            return SIMDLoadFromTypedArray(cx, tarray, index, SIMD_TYPE);
+            return SIMDLoadFromTypedArray(cx, tarray, index, SIMD_TYPE, ".load");
         }
 
         /**
@@ -778,7 +774,7 @@ public final class Uint16x8Constructor extends BuiltinConstructor implements Ini
         @Function(name = "fromFloat32x4Bits", arity = 1)
         public static Object fromFloat32x4Bits(ExecutionContext cx, Object thisValue, Object value) {
             /* step 1 */
-            SIMDValue simd = simdValue(cx, value, SIMDType.Float32x4);
+            SIMDValue simd = simdValue(cx, value, SIMDType.Float32x4, ".fromFloat32x4Bits");
             /* step 2 */
             return SIMDReinterpretCast(cx, simd, SIMD_TYPE);
         }
@@ -797,7 +793,7 @@ public final class Uint16x8Constructor extends BuiltinConstructor implements Ini
         @Function(name = "fromInt32x4Bits", arity = 1)
         public static Object fromInt32x4Bits(ExecutionContext cx, Object thisValue, Object value) {
             /* step 1 */
-            SIMDValue simd = simdValue(cx, value, SIMDType.Int32x4);
+            SIMDValue simd = simdValue(cx, value, SIMDType.Int32x4, ".fromInt32x4Bits");
             /* step 2 */
             return SIMDReinterpretCast(cx, simd, SIMD_TYPE);
         }
@@ -816,7 +812,7 @@ public final class Uint16x8Constructor extends BuiltinConstructor implements Ini
         @Function(name = "fromInt16x8Bits", arity = 1)
         public static Object fromInt16x8Bits(ExecutionContext cx, Object thisValue, Object value) {
             /* step 1 */
-            SIMDValue simd = simdValue(cx, value, SIMDType.Int16x8);
+            SIMDValue simd = simdValue(cx, value, SIMDType.Int16x8, ".fromInt16x8Bits");
             /* step 2 */
             return SIMDReinterpretCast(cx, simd, SIMD_TYPE);
         }
@@ -835,7 +831,7 @@ public final class Uint16x8Constructor extends BuiltinConstructor implements Ini
         @Function(name = "fromInt8x16Bits", arity = 1)
         public static Object fromInt8x16Bits(ExecutionContext cx, Object thisValue, Object value) {
             /* step 1 */
-            SIMDValue simd = simdValue(cx, value, SIMDType.Int8x16);
+            SIMDValue simd = simdValue(cx, value, SIMDType.Int8x16, ".fromInt8x16Bits");
             /* step 2 */
             return SIMDReinterpretCast(cx, simd, SIMD_TYPE);
         }
@@ -854,7 +850,7 @@ public final class Uint16x8Constructor extends BuiltinConstructor implements Ini
         @Function(name = "fromUint32x4Bits", arity = 1)
         public static Object fromUint32x4Bits(ExecutionContext cx, Object thisValue, Object value) {
             /* step 1 */
-            SIMDValue simd = simdValue(cx, value, SIMDType.Uint32x4);
+            SIMDValue simd = simdValue(cx, value, SIMDType.Uint32x4, ".fromUint32x4Bits");
             /* step 2 */
             return SIMDReinterpretCast(cx, simd, SIMD_TYPE);
         }
@@ -873,7 +869,7 @@ public final class Uint16x8Constructor extends BuiltinConstructor implements Ini
         @Function(name = "fromUint8x16Bits", arity = 1)
         public static Object fromUint8x16Bits(ExecutionContext cx, Object thisValue, Object value) {
             /* step 1 */
-            SIMDValue simd = simdValue(cx, value, SIMDType.Uint8x16);
+            SIMDValue simd = simdValue(cx, value, SIMDType.Uint8x16, ".fromUint8x16Bits");
             /* step 2 */
             return SIMDReinterpretCast(cx, simd, SIMD_TYPE);
         }
@@ -894,7 +890,7 @@ public final class Uint16x8Constructor extends BuiltinConstructor implements Ini
         @Function(name = "swizzle", arity = 1 + 4)
         public static Object swizzle(ExecutionContext cx, Object thisValue, Object a, Object... lanes) {
             /* step 1 */
-            SIMDValue sa = simdValue(cx, a, SIMD_TYPE);
+            SIMDValue sa = simdValue(cx, a, SIMD_TYPE, ".swizzle");
             /* step 2 */
             int[] indices = new int[VECTOR_LENGTH];
             /* step 3 */
@@ -936,8 +932,8 @@ public final class Uint16x8Constructor extends BuiltinConstructor implements Ini
         @Function(name = "shuffle", arity = 2 + 4)
         public static Object shuffle(ExecutionContext cx, Object thisValue, Object a, Object b, Object... lanes) {
             /* step 1 */
-            SIMDValue sa = simdValue(cx, a, SIMD_TYPE);
-            SIMDValue sb = simdValue(cx, b, SIMD_TYPE);
+            SIMDValue sa = simdValue(cx, a, SIMD_TYPE, ".shuffle");
+            SIMDValue sb = simdValue(cx, b, SIMD_TYPE, ".shuffle");
             /* step 2 */
             int[] indices = new int[VECTOR_LENGTH];
             /* step 3 */
@@ -977,9 +973,10 @@ public final class Uint16x8Constructor extends BuiltinConstructor implements Ini
     public enum AdditionalProperties {
         ;
 
-        private static SIMDValue simdValue(ExecutionContext cx, Object value, SIMDType type) {
+        private static SIMDValue simdValue(ExecutionContext cx, Object value, SIMDType type, String method) {
             if (!(value instanceof SIMDValue)) {
-                throw newTypeError(cx, Messages.Key.IncompatibleObject);
+                throw newTypeError(cx, Messages.Key.SIMDInvalidObject, SIMD_TYPE.name() + method,
+                        Type.of(value).toString());
             }
             if (((SIMDValue) value).getType() != type) {
                 throw newTypeError(cx, Messages.Key.SIMDInvalidType);
@@ -1005,9 +1002,9 @@ public final class Uint16x8Constructor extends BuiltinConstructor implements Ini
         @Function(name = "selectBits", arity = 3)
         public static Object selectBits(ExecutionContext cx, Object thisValue, Object selector, Object a, Object b) {
             /* step 1 */
-            SIMDValue ss = simdValue(cx, selector, SIMD_TYPE);
-            SIMDValue sa = simdValue(cx, a, SIMD_TYPE);
-            SIMDValue sb = simdValue(cx, b, SIMD_TYPE);
+            SIMDValue ss = simdValue(cx, selector, SIMD_TYPE, ".selectBits");
+            SIMDValue sa = simdValue(cx, a, SIMD_TYPE, ".selectBits");
+            SIMDValue sb = simdValue(cx, b, SIMD_TYPE, ".selectBits");
             /* step 2 */
             int[] list = new int[VECTOR_LENGTH];
             /* step 3 */
@@ -1033,7 +1030,7 @@ public final class Uint16x8Constructor extends BuiltinConstructor implements Ini
         @Function(name = "fromFloat64x2Bits", arity = 1)
         public static Object fromFloat64x2Bits(ExecutionContext cx, Object thisValue, Object value) {
             /* step 1 */
-            SIMDValue simd = simdValue(cx, value, SIMDType.Float64x2);
+            SIMDValue simd = simdValue(cx, value, SIMDType.Float64x2, ".fromFloat64x2Bits");
             /* step 2 */
             return SIMDReinterpretCast(cx, simd, SIMD_TYPE);
         }

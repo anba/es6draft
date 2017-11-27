@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -26,13 +26,14 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
+import java.util.stream.Collectors;
 
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.io.ByteOrderMark;
 import org.apache.commons.io.input.BOMInputStream;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -54,8 +55,9 @@ import com.github.anba.es6draft.util.Parallelized;
 import com.github.anba.es6draft.util.ParameterizedRunnerFactory;
 import com.github.anba.es6draft.util.Resources;
 import com.github.anba.es6draft.util.TestConfiguration;
-import com.github.anba.es6draft.util.TestGlobals;
 import com.github.anba.es6draft.util.TestInfo;
+import com.github.anba.es6draft.util.TestRealm;
+import com.github.anba.es6draft.util.TestRealms;
 import com.github.anba.es6draft.util.rules.ExceptionHandlers.ScriptExceptionHandler;
 import com.github.anba.es6draft.util.rules.ExceptionHandlers.StandardErrorHandler;
 
@@ -67,6 +69,10 @@ import com.github.anba.es6draft.util.rules.ExceptionHandlers.StandardErrorHandle
 @TestConfiguration(name = "chakra.test", file = "resource:/test-configuration.properties")
 public final class ChakraTest {
     private static final Configuration configuration = loadConfiguration(ChakraTest.class);
+    private static final Set<String> ignoreFlags = Resources.set(configuration, "flags.ignore", Collections.emptySet());
+    private static final Set<String> disableFlags = Resources.set(configuration, "flags.disable",
+            Collections.emptySet());
+    private static final boolean warnUnknownFlag = configuration.getBoolean("flags.warn", false);
 
     @Parameters(name = "{0}")
     public static List<ChakraTestInfo> suiteValues() throws IOException {
@@ -74,13 +80,12 @@ public final class ChakraTest {
     }
 
     @BeforeClass
-    public static void setUpClass() throws IOException {
-        ChakraTestGlobalObject.testLoadInitializationScript();
+    public static void setUpClass() {
+        ChakraTestRealmData.testLoadInitializationScript();
     }
 
     @ClassRule
-    public static TestGlobals<ChakraTestGlobalObject, TestInfo> globals = new TestGlobals<>(configuration,
-            ChakraTestGlobalObject::new);
+    public static TestRealms<TestInfo> realms = new TestRealms<>(configuration, ChakraTestRealmData::new);
 
     @Rule
     public Timeout maxTime = new Timeout(120, TimeUnit.SECONDS);
@@ -106,33 +111,25 @@ public final class ChakraTest {
         }
     }
 
-    private ChakraTestGlobalObject global;
+    @Rule
+    public TestRealm<TestInfo> realm = new TestRealm<>(realms);
 
     @Before
     public void setUp() throws Throwable {
         assumeTrue("Test disabled", test.isEnabled());
 
-        global = globals.newGlobal(new NullConsole(), test);
-        exceptionHandler.setExecutionContext(global.getRealm().defaultContext());
+        realm.initialize(new NullConsole(), test);
+        exceptionHandler.setExecutionContext(realm.get().defaultContext());
 
         if (test.baseline != null && !test.baseline.isEmpty()) {
-            global.createGlobalProperties(new MessageProducer(), MessageProducer.class);
+            realm.get().createGlobalProperties(new MessageProducer(), MessageProducer.class);
             test.expected = lineIterator(test.toFile().resolveSibling(test.baseline));
         }
     }
 
-    @After
-    public void tearDown() {
-        globals.release(global);
-    }
-
     @Test
     public void runTest() throws Throwable {
-        // Evaluate actual test-script
-        global.eval(test.getScript(), test.toFile());
-
-        // Wait for pending tasks to finish
-        global.getRealm().getWorld().runEventLoop();
+        realm.execute(test);
     }
 
     public final class MessageProducer {
@@ -168,56 +165,64 @@ public final class ChakraTest {
 
     private static Map<String, TestSetting> readSettings(Path dir) {
         Path settingsFile = dir.resolve("rlexe.xml");
-        if (Files.isRegularFile(settingsFile)) {
-            try (Reader reader = bomReader(Files.newInputStream(settingsFile))) {
-                Document doc = Resources.xml(reader);
-                NodeList elements = doc.getElementsByTagName("default");
-                HashMap<String, TestSetting> settingMap = new HashMap<>();
-                for (int i = 0, length = elements.getLength(); i < length; ++i) {
-                    Element element = (Element) elements.item(i);
-                    String files = element.getElementsByTagName("files").item(0).getTextContent();
-                    TestSetting setting = new TestSetting();
-                    NodeList baseline = element.getElementsByTagName("baseline");
-                    if (baseline.getLength() > 0) {
-                        setting.baseline = baseline.item(0).getTextContent();
-                    }
-                    NodeList compileFlags = element.getElementsByTagName("compile-flags");
-                    if (compileFlags.getLength() > 0) {
-                        String flags = compileFlags.item(0).getTextContent();
-                        setting.disabled = flags.contains("-verbose") || flags.contains("-dump:")
-                                || flags.contains("-trace:") || flags.contains("-testtrace:")
-                                || flags.contains("-testTrace:");
-                    }
-                    settingMap.putIfAbsent(files, setting);
-                }
-                return settingMap;
-            } catch (IOException e) {
-                throw new UncheckedIOException(e);
-            }
+        if (!Files.isRegularFile(settingsFile)) {
+            return Collections.emptyMap();
         }
-        return Collections.emptyMap();
+        try (Reader reader = bomReader(Files.newInputStream(settingsFile))) {
+            Document doc = Resources.xml(reader);
+            NodeList elements = doc.getElementsByTagName("default");
+            HashMap<String, TestSetting> settingMap = new HashMap<>();
+            for (int i = 0, length = elements.getLength(); i < length; ++i) {
+                Element element = (Element) elements.item(i);
+                String files = element.getElementsByTagName("files").item(0).getTextContent();
+                TestSetting setting = new TestSetting();
+                NodeList baseline = element.getElementsByTagName("baseline");
+                if (baseline.getLength() > 0) {
+                    setting.baseline = baseline.item(0).getTextContent();
+                }
+                NodeList compileFlags = element.getElementsByTagName("compile-flags");
+                if (compileFlags.getLength() > 0) {
+                    String flags = compileFlags.item(0).getTextContent();
+                    for (String flag : flags.split("\\s+")) {
+                        if (!flag.startsWith("-")) {
+                            continue;
+                        }
+                        int sep = flag.indexOf(':');
+                        String name;
+                        if (sep != -1) {
+                            name = flag.substring(0, sep).trim();
+                        } else {
+                            name = flag;
+                        }
+                        if (ignoreFlags.contains(name)) {
+                            // Ignored flags
+                        } else if (disableFlags.contains(name)) {
+                            setting.disabled = true;
+                        } else if (warnUnknownFlag) {
+                            System.err.printf("unknown option '%s': %s%n", flag, settingsFile);
+                        }
+                    }
+                }
+                settingMap.putIfAbsent(files, setting);
+            }
+            return settingMap;
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 
     private static Iterator<String> lineIterator(Path p) throws IOException {
         try (BufferedReader reader = bomReader(Files.newInputStream(p))) {
-            ArrayList<String> list = new ArrayList<>();
-            for (;;) {
-                String line = reader.readLine();
-                if (line == null)
-                    break;
-                list.add(line);
-            }
-            return list.iterator();
+            return reader.lines().collect(Collectors.toCollection(ArrayList::new)).iterator();
         }
     }
 
     private static BufferedReader bomReader(InputStream is) throws IOException {
         BOMInputStream bis = new BOMInputStream(is);
-        Charset cs = charsetFor(bis, StandardCharsets.UTF_8);
-        return new BufferedReader(new InputStreamReader(bis, cs));
+        return new BufferedReader(new InputStreamReader(bis, charsetFor(bis)));
     }
 
-    private static Charset charsetFor(BOMInputStream bis, Charset defaultCharset) throws IOException {
+    private static Charset charsetFor(BOMInputStream bis) throws IOException {
         ByteOrderMark bom = bis.getBOM();
         if (ByteOrderMark.UTF_8.equals(bom)) {
             return StandardCharsets.UTF_8;
@@ -228,6 +233,6 @@ public final class ChakraTest {
         if (ByteOrderMark.UTF_16BE.equals(bom)) {
             return StandardCharsets.UTF_16BE;
         }
-        return defaultCharset;
+        return StandardCharsets.UTF_8;
     }
 }

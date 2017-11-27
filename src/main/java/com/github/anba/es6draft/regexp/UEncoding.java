@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -10,9 +10,12 @@ import org.jcodings.ApplyAllCaseFoldFunction;
 import org.jcodings.CaseFoldCodeItem;
 import org.jcodings.IntHolder;
 import org.jcodings.constants.CharacterType;
+import org.jcodings.exception.CharacterPropertyException;
+import org.jcodings.exception.EncodingError;
 import org.jcodings.unicode.UnicodeEncoding;
 
 import com.github.anba.es6draft.parser.Characters;
+import com.github.anba.es6draft.regexp.UnicodeData.BinaryProperty;
 
 /**
  *
@@ -189,9 +192,75 @@ abstract class UEncoding extends UnicodeEncoding {
         }
     }
 
+    // Values under 512 are reversed by Joni.
+    private static final int BINARY_SHIFT = 9;
+    private static final int ENUM_SHIFT_OFFSET = BINARY_SHIFT + 1;
+    private static final int ENUM_SHIFT_LIMIT = ENUM_SHIFT_OFFSET + UnicodeData.EnumProperty.values().length - 1;
+    private static final int GC_SHIFT = 31; // Uses values in [0, 536870912], so set shift to maximum.
+
+    static {
+        assert UnicodeData.BinaryProperty.values().length <= (1 << BINARY_SHIFT) : "Binary properties overflow shift";
+        assert (ENUM_SHIFT_OFFSET
+                + UnicodeData.EnumProperty.values().length) <= Integer.SIZE : "Enum properties overflow shift";
+        assert UnicodeData.EnumProperty.General_Category.ordinal() == 0 : "General_Category must be first property";
+    }
+
+    private static int binaryMask(UnicodeData.BinaryProperty property) {
+        return property.ordinal() | (1 << BINARY_SHIFT);
+    }
+
+    private static int enumMask(UnicodeData.EnumProperty property) {
+        if (property == UnicodeData.EnumProperty.General_Category) {
+            return 1 << GC_SHIFT;
+        }
+        return 1 << (property.ordinal() + ENUM_SHIFT_OFFSET - 1);
+    }
+
+    private static UnicodeData.Property propertyForMask(int ctype) {
+        int shift = 31 - Integer.numberOfLeadingZeros(ctype);
+        if (shift == BINARY_SHIFT) {
+            return UnicodeData.BinaryProperty.values()[ctype & ~(1 << BINARY_SHIFT)];
+        }
+        if (shift == GC_SHIFT) {
+            return UnicodeData.EnumProperty.General_Category;
+        }
+        if (ENUM_SHIFT_OFFSET <= shift && shift < ENUM_SHIFT_LIMIT) {
+            return UnicodeData.EnumProperty.values()[shift - ENUM_SHIFT_OFFSET + 1];
+        }
+        return null;
+    }
+
     @Override
     public final int propertyNameToCType(byte[] bytes, int p, int end) {
-        return super.propertyNameToCType(bytes, p, end);
+        String name = mbcToString(bytes, p, end);
+        switch (name) {
+        case "Digit":
+            return CharacterType.DIGIT;
+        case "Space":
+            return CharacterType.SPACE;
+        case "Word":
+            return CharacterType.WORD;
+        }
+        int k = name.indexOf('=');
+        if (k == -1) {
+            UnicodeData.Property property = UnicodeData.Property.from(name);
+            if (property instanceof UnicodeData.BinaryProperty) {
+                return binaryMask((BinaryProperty) property);
+            }
+        } else {
+            String value = name.substring(k + 1);
+            UnicodeData.Property property = UnicodeData.Property.from(name.substring(0, k));
+            if (property instanceof UnicodeData.EnumProperty) {
+                UnicodeData.EnumProperty enumProperty = (UnicodeData.EnumProperty) property;
+                // Pack values differently instead of relying on ICU internal representation if we ever run out of bits.
+                int propertyValue = enumProperty.getValue(value);
+                assert 0 <= propertyValue && propertyValue < (enumProperty != UnicodeData.EnumProperty.General_Category
+                        ? (1 << ENUM_SHIFT_OFFSET)
+                        : Integer.MAX_VALUE);
+                return propertyValue | enumMask(enumProperty);
+            }
+        }
+        throw new CharacterPropertyException(EncodingError.ERR_INVALID_CHAR_PROPERTY_NAME, bytes, p, end);
     }
 
     @Override
@@ -209,9 +278,18 @@ abstract class UEncoding extends UnicodeEncoding {
             return Characters.isHexDigit(code);
         case CharacterType.WORD:
             return Characters.isASCIIAlphaNumericUnderscore(code);
-        default:
+        default: {
+            UnicodeData.Property property = propertyForMask(ctype);
+            if (property instanceof UnicodeData.BinaryProperty) {
+                return ((UnicodeData.BinaryProperty) property).has(code);
+            }
+            if (property instanceof UnicodeData.EnumProperty) {
+                UnicodeData.EnumProperty enumProperty = (UnicodeData.EnumProperty) property;
+                return enumProperty.has(code, ctype & ~enumMask(enumProperty));
+            }
             assert false : "unreachable: " + ctype;
             return super.isCodeCType(code, ctype);
+        }
         }
     }
 
@@ -234,14 +312,33 @@ abstract class UEncoding extends UnicodeEncoding {
             return codeRangeWord;
         case CharacterType.SPACE:
             return codeRangeSpace;
-        default:
-            assert false : "unreachable";
+        default: {
+            UnicodeData.Property property = propertyForMask(ctype);
+            if (property instanceof UnicodeData.BinaryProperty) {
+                return ((UnicodeData.BinaryProperty) property).range();
+            }
+            if (property instanceof UnicodeData.EnumProperty) {
+                UnicodeData.EnumProperty enumProperty = (UnicodeData.EnumProperty) property;
+                return enumProperty.range(ctype & ~enumMask(enumProperty));
+            }
+            assert false : "unreachable: " + ctype;
             return super.ctypeCodeRange(ctype);
+        }
         }
     }
 
     @Override
     public final boolean isReverseMatchAllowed(byte[] bytes, int p, int end) {
         return false;
+    }
+
+    protected final String mbcToString(byte[] bytes, int p, int end) {
+        char[] cb = new char[strLength(bytes, p, end)];
+        for (int i = 0; p < end;) {
+            int codePoint = mbcToCode(bytes, p, end);
+            i += Character.toChars(codePoint, cb, i);
+            p += codeToMbcLength(codePoint);
+        }
+        return String.valueOf(cb);
     }
 }

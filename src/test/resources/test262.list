@@ -1,47 +1,42 @@
 #
-# Copyright (c) 2012-2016 André Bargull
+# Copyright (c) André Bargull
 # Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
 #
 # <https://github.com/anba/es6draft>
 #
 
-# Expected change from early reference to syntax error b/c of exponentiation operator
-test/language/asi/S7.9_A5.7_T1.js
+# ICU4J issue <http://bugs.icu-project.org/trac/ticket/10171>?
+test/intl402/NumberFormat/prototype/format/11.3.2_TRP.js
+test/intl402/NumberFormat/prototype/format/11.3.2_TRF.js
 
-# Mongolian Vowel Separator (Unicode 8)
-test/built-ins/Number/S9.3.1_A2.js
-test/built-ins/Number/S9.3.1_A3_T1.js
-test/built-ins/Number/S9.3.1_A3_T2.js
-test/built-ins/parseFloat/S15.1.2.3_A2_T10.js
-test/built-ins/parseInt/S15.1.2.2_A2_T10.js
-test/built-ins/RegExp/S15.10.2.12_A1_T1.js
-test/built-ins/RegExp/S15.10.2.12_A2_T1.js
-test/built-ins/String/prototype/trim/15.5.4.20-3-2.js
-test/built-ins/String/prototype/trim/15.5.4.20-3-3.js
-test/built-ins/String/prototype/trim/15.5.4.20-3-4.js
-test/built-ins/String/prototype/trim/15.5.4.20-3-5.js
-test/built-ins/String/prototype/trim/15.5.4.20-3-6.js
+# ES2017: https://github.com/tc39/ecma262/pull/410
+# https://github.com/tc39/ecma262/issues/787
+test/built-ins/DataView/length.js
 
-# "length" property changed from 3 to 0 in ES2016
-test/built-ins/TypedArray/length.js
+# https://github.com/tc39/ecma262/issues/991
+test/annexB/language/function-code/block-decl-func-skip-arguments.js
 
-# https://github.com/tc39/test262/pull/496
-test/built-ins/Proxy/enumerate/call-parameters.js
-test/built-ins/Proxy/enumerate/result-not-an-object-throws-boolean.js
-test/built-ins/Proxy/enumerate/result-not-an-object-throws-number.js
-test/built-ins/Proxy/enumerate/result-not-an-object-throws-string.js
-test/built-ins/Proxy/enumerate/result-not-an-object-throws-symbol.js
-test/built-ins/Proxy/enumerate/result-not-an-object-throws-undefined.js
-test/built-ins/Proxy/enumerate/return-is-abrupt.js
-test/built-ins/Proxy/enumerate/return-trap-result-no-value.js
-test/built-ins/Proxy/enumerate/return-trap-result.js
-test/built-ins/Proxy/enumerate/trap-is-not-callable.js
-test/built-ins/Reflect/enumerate/does-not-iterate-over-symbol-properties.js
-test/built-ins/Reflect/enumerate/enumerate.js
-test/built-ins/Reflect/enumerate/length.js
-test/built-ins/Reflect/enumerate/name.js
-test/built-ins/Reflect/enumerate/return-abrupt-from-result.js
-test/built-ins/Reflect/enumerate/return-iterator.js
+# lookbehind support too limited in Joni
+test/built-ins/RegExp/lookBehind/alternations.js
+test/built-ins/RegExp/lookBehind/back-references-to-captures.js
+test/built-ins/RegExp/lookBehind/back-references.js
+test/built-ins/RegExp/lookBehind/captures-negative.js
+test/built-ins/RegExp/lookBehind/captures.js
+test/built-ins/RegExp/lookBehind/do-not-backtrack.js
+test/built-ins/RegExp/lookBehind/greedy-loop.js
+test/built-ins/RegExp/lookBehind/misc.js
+test/built-ins/RegExp/lookBehind/mutual-recursive.js
+test/built-ins/RegExp/lookBehind/nested-lookaround.js
+test/built-ins/RegExp/lookBehind/sliced-strings.js
+test/built-ins/RegExp/lookBehind/start-of-line.js
+test/built-ins/RegExp/lookBehind/sticky.js
+test/built-ins/RegExp/lookBehind/variable-length.js
+test/built-ins/RegExp/lookBehind/word-boundary.js
+test/built-ins/RegExp/named-groups/lookbehind.js
 
-# ECMA-402 2nd edition change, length changed from 0 to 1 (TODO: spec bug?)
-test/intl402/DateTimeFormat/prototype/format/12.3.2_1_a_L15.js
+# Missing closing parenthesis in function call.
+test/built-ins/BigInt/value-of-throws.js
+test/built-ins/BigInt/constructor-from-string-syntax-errors.js
+
+# Test case expects `BigInt("0b1")` is 0n
+test/built-ins/BigInt/constructor-from-binary-string.js

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -7,21 +7,20 @@
 (function Internal_Error() {
 "use strict";
 
-const global = %GlobalTemplate();
+const InternalError = %Intrinsic("InternalError");
+const RangeError = %Intrinsic("RangeError");
 
-const {
-  Object, Function, InternalError, RangeError, Symbol,
-} = global;
+const Symbol_hasInstance = %WellKnownSymbol("hasInstance");
+const Function_prototype_hasInstance = %Intrinsic("FunctionPrototype")[Symbol_hasInstance];
+const Object_defineProperty = %Intrinsic("Object").defineProperty;
 
-const hasInstance = Function.prototype[Symbol.hasInstance];
-
-/*
- * Make InternalError instances compatible to `instanceof RangeError`
- */
-Object.defineProperty(RangeError, Symbol.hasInstance, {
+// Make InternalError instances compatible to `instanceof RangeError`
+Object_defineProperty(RangeError, Symbol_hasInstance, {
   value(o) {
-    return %CallFunction(hasInstance, RangeError, o) || %CallFunction(hasInstance, InternalError, o);
-  }, configurable: true
+    return %CallFunction(Function_prototype_hasInstance, RangeError, o) ||
+           %CallFunction(Function_prototype_hasInstance, InternalError, o);
+  },
+  configurable: true
 });
 
 })();

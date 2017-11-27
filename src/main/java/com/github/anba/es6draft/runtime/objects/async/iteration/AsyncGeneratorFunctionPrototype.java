@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -53,20 +53,20 @@ public final class AsyncGeneratorFunctionPrototype extends OrdinaryObject implem
          * AsyncGeneratorFunction.prototype.constructor
          */
         @Value(name = "constructor",
-                attributes = @Attributes(writable = false, enumerable = false, configurable = true) )
+                attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static final Intrinsics constructor = Intrinsics.AsyncGeneratorFunction;
 
         /**
          * AsyncGeneratorFunction.prototype.prototype
          */
-        @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false, configurable = true) )
+        @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static final Intrinsics prototype = Intrinsics.AsyncGeneratorPrototype;
 
         /**
          * AsyncGeneratorFunction.prototype [ @@toStringTag ]
          */
         @Value(name = "[Symbol.toStringTag]", symbol = BuiltinSymbol.toStringTag,
-                attributes = @Attributes(writable = false, enumerable = false, configurable = true) )
+                attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static final String toStringTag = "AsyncGeneratorFunction";
     }
 }

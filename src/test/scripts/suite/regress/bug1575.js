@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -12,12 +12,12 @@ const {
 // https://bugs.ecmascript.org/show_bug.cgi?id=1575
 
 let called = false;
-let r = /a/;
+let r = /a/g;
 r.lastIndex = {
   valueOf() {
     assertFalse(called);
     called = true;
-    r.compile("b", "g");
+    r.compile("b", "");
   }
 };
 let result = r.exec("b")

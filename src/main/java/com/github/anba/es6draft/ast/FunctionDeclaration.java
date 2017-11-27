@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -24,14 +24,13 @@ public final class FunctionDeclaration extends HoistableDeclaration implements F
     private final FormalParameterList parameters;
     private List<StatementListItem> statements;
     private final String functionName;
-    private final String headerSource, bodySource;
+    private final String source;
     private StrictMode strictMode;
     private boolean legacyBlockScoped;
     private int legacyBlockScopeId;
 
     public FunctionDeclaration(long beginPosition, long endPosition, FunctionScope scope, BindingIdentifier identifier,
-            FormalParameterList parameters, List<StatementListItem> statements, String functionName,
-            String headerSource, String bodySource) {
+            FormalParameterList parameters, List<StatementListItem> statements, String functionName, String source) {
         super(beginPosition, endPosition);
         this.scope = scope;
         this.identifier = identifier;
@@ -39,8 +38,7 @@ public final class FunctionDeclaration extends HoistableDeclaration implements F
         this.parameters = parameters;
         this.statements = statements;
         this.functionName = functionName;
-        this.headerSource = headerSource;
-        this.bodySource = bodySource;
+        this.source = source;
     }
 
     @Override
@@ -104,13 +102,8 @@ public final class FunctionDeclaration extends HoistableDeclaration implements F
     }
 
     @Override
-    public String getHeaderSource() {
-        return headerSource;
-    }
-
-    @Override
-    public String getBodySource() {
-        return bodySource;
+    public String getSource() {
+        return source;
     }
 
     @Override

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -10,34 +10,31 @@ import static com.github.anba.es6draft.compiler.BindingInitializationGenerator.B
 import static com.github.anba.es6draft.semantics.StaticSemantics.*;
 
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
-import com.github.anba.es6draft.ast.*;
+import com.github.anba.es6draft.ast.Declaration;
+import com.github.anba.es6draft.ast.FormalParameterList;
+import com.github.anba.es6draft.ast.FunctionNode;
+import com.github.anba.es6draft.ast.HoistableDeclaration;
+import com.github.anba.es6draft.ast.StatementListItem;
 import com.github.anba.es6draft.ast.scope.FunctionScope;
 import com.github.anba.es6draft.ast.scope.Name;
-import com.github.anba.es6draft.compiler.CodeGenerator.FunctionName;
 import com.github.anba.es6draft.compiler.assembler.Code.MethodCode;
 import com.github.anba.es6draft.compiler.assembler.MethodName;
 import com.github.anba.es6draft.compiler.assembler.Type;
+import com.github.anba.es6draft.compiler.assembler.Value;
 import com.github.anba.es6draft.compiler.assembler.Variable;
 import com.github.anba.es6draft.runtime.DeclarativeEnvironmentRecord;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.FunctionEnvironmentRecord;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
-import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.types.Undefined;
 import com.github.anba.es6draft.runtime.types.builtins.ArgumentsObject;
 import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
-import com.github.anba.es6draft.runtime.types.builtins.LegacyConstructorFunction;
-import com.github.anba.es6draft.runtime.types.builtins.OrdinaryAsyncFunction;
-import com.github.anba.es6draft.runtime.types.builtins.OrdinaryAsyncGenerator;
-import com.github.anba.es6draft.runtime.types.builtins.OrdinaryConstructorFunction;
-import com.github.anba.es6draft.runtime.types.builtins.OrdinaryConstructorGenerator;
-import com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction;
-import com.github.anba.es6draft.runtime.types.builtins.OrdinaryGenerator;
 
 /**
  * <h1>9 Ordinary and Exotic Objects Behaviours</h1><br>
@@ -46,8 +43,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryGenerator;
  * <li>9.2.13 FunctionDeclarationInstantiation(func, argumentsList)
  * </ul>
  */
-final class FunctionDeclarationInstantiationGenerator extends
-        DeclarationBindingInstantiationGenerator {
+final class FunctionDeclarationInstantiationGenerator extends DeclarationBindingInstantiationGenerator {
     private static final class Methods {
         // class: Arrays
         static final MethodName Arrays_asList = MethodName.findStatic(Types.Arrays, "asList",
@@ -83,26 +79,29 @@ final class FunctionDeclarationInstantiationGenerator extends
                 Type.methodType(Types.Iterator));
     }
 
-    private static final int EXECUTION_CONTEXT = 0;
-    private static final int FUNCTION = 1;
-    private static final int ARGUMENTS = 2;
-
-    private static final class FunctionDeclInitMethodGenerator extends CodeVisitor {
-        private final String name;
-        private final Type type;
-
-        FunctionDeclInitMethodGenerator(MethodCode method, FunctionNode node, Type type) {
+    private static final class FunctionDeclInitVisitor extends CodeVisitor {
+        FunctionDeclInitVisitor(MethodCode method, FunctionNode node) {
             super(method, node);
-            this.name = targetName(node);
-            this.type = type;
         }
 
         @Override
         public void begin() {
             super.begin();
-            setParameterName("cx", EXECUTION_CONTEXT, Types.ExecutionContext);
-            setParameterName(name, FUNCTION, type);
-            setParameterName("arguments", ARGUMENTS, Types.Object_);
+            setParameterName("cx", 0, Types.ExecutionContext);
+            setParameterNameUnchecked("function", 1);
+            setParameterName("arguments", 2, Types.Object_);
+        }
+
+        Variable<ExecutionContext> getExecutionContext() {
+            return getParameter(0, ExecutionContext.class);
+        }
+
+        Variable<? extends FunctionObject> getFunction() {
+            return getParameterUnchecked(1, FunctionObject.class);
+        }
+
+        Variable<Object[]> getArguments() {
+            return getParameter(2, Object[].class);
         }
     }
 
@@ -110,10 +109,8 @@ final class FunctionDeclarationInstantiationGenerator extends
         super(codegen);
     }
 
-    void generate(FunctionNode function) {
-        MethodCode method = codegen.newMethod(function, FunctionName.Init);
-        CodeVisitor mv = new FunctionDeclInitMethodGenerator(method, function, targetType(function));
-
+    void generate(FunctionNode function, MethodCode method) {
+        FunctionDeclInitVisitor mv = new FunctionDeclInitVisitor(method, function);
         mv.lineInfo(function);
         mv.begin();
         mv.enterScope(function);
@@ -122,54 +119,8 @@ final class FunctionDeclarationInstantiationGenerator extends
         mv.end();
     }
 
-    private Type targetType(FunctionNode node) {
-        if (node.isAsync() && node.isGenerator()) {
-            return Types.OrdinaryAsyncGenerator;
-        } else if (node.isGenerator()) {
-            if (node.isConstructor()) {
-                return Types.OrdinaryConstructorGenerator;
-            }
-            return Types.OrdinaryGenerator;
-        } else if (node.isAsync()) {
-            return Types.OrdinaryAsyncFunction;
-        } else if (isLegacy(node)) {
-            return Types.LegacyConstructorFunction;
-        } else if (node.isConstructor() || isCallConstructor(node)) {
-            return Types.OrdinaryConstructorFunction;
-        } else {
-            return Types.OrdinaryFunction;
-        }
-    }
-
-    private Class<? extends FunctionObject> targetClass(FunctionNode node) {
-        if (node.isAsync() && node.isGenerator()) {
-            return OrdinaryAsyncGenerator.class;
-        } else if (node.isGenerator()) {
-            if (node.isConstructor()) {
-                return OrdinaryConstructorGenerator.class;
-            }
-            return OrdinaryGenerator.class;
-        } else if (node.isAsync()) {
-            return OrdinaryAsyncFunction.class;
-        } else if (isLegacy(node)) {
-            return LegacyConstructorFunction.class;
-        } else if (node.isConstructor() || isCallConstructor(node)) {
-            return OrdinaryConstructorFunction.class;
-        } else {
-            return OrdinaryFunction.class;
-        }
-    }
-
-    private static String targetName(FunctionNode node) {
-        if (node.isGenerator()) {
-            return "generator";
-        } else {
-            return "function";
-        }
-    }
-
-    private void generate(FunctionNode function, CodeVisitor mv) {
-        Variable<ExecutionContext> context = mv.getParameter(EXECUTION_CONTEXT, ExecutionContext.class);
+    private void generate(FunctionNode function, FunctionDeclInitVisitor mv) {
+        Variable<ExecutionContext> context = mv.getExecutionContext();
         Variable<LexicalEnvironment<FunctionEnvironmentRecord>> env = mv.newVariable("env", LexicalEnvironment.class)
                 .uncheckedCast();
         Variable<FunctionEnvironmentRecord> envRec = mv.newVariable("envRec", FunctionEnvironmentRecord.class);
@@ -183,7 +134,7 @@ final class FunctionDeclarationInstantiationGenerator extends
         Variable<Iterator<?>> iterator = null;
         if (hasParameters) {
             iterator = mv.newVariable("iterator", Iterator.class).uncheckedCast();
-            mv.loadParameter(ARGUMENTS, Object[].class);
+            mv.load(mv.getArguments());
             mv.invoke(Methods.Arrays_asList);
             mv.invoke(Methods.List_iterator);
             mv.store(iterator);
@@ -201,7 +152,7 @@ final class FunctionDeclarationInstantiationGenerator extends
         /* step 6 */
         FormalParameterList formals = function.getParameters();
         /* step 7 */
-        List<Name> parameterNames = BoundNames(formals);
+        ArrayList<Name> parameterNames = new ArrayList<>(BoundNames(formals));
         HashSet<Name> parameterNamesSet = new HashSet<>(parameterNames);
         /* step 8 */
         boolean hasDuplicates = parameterNames.size() != parameterNamesSet.size();
@@ -263,8 +214,11 @@ final class FunctionDeclarationInstantiationGenerator extends
                 op.initializeBinding(envRec, paramName, undefined, mv);
             }
         }
-        /* step 22 */
+        /* steps 22-23 */
+        ArrayList<Name> parameterBindings;
+        HashSet<Name> parameterBindingsSet;
         if (argumentsObjectNeeded) {
+            /* step 22 */
             assert arguments != null;
             Variable<ArgumentsObject> argumentsObj = mv.newVariable("argumentsObj", ArgumentsObject.class);
             if (strict || !simpleParameterList) {
@@ -282,10 +236,15 @@ final class FunctionDeclarationInstantiationGenerator extends
                 op.createMutableBinding(envRec, arguments, false, mv);
             }
             op.initializeBinding(envRec, arguments, argumentsObj, mv);
-            parameterNames.add(arguments);
-            parameterNamesSet.add(arguments);
+
+            parameterBindings = new ArrayList<>(parameterNames);
+            parameterBindings.add(arguments);
+            parameterBindingsSet = new HashSet<>(parameterBindings);
+        } else {
+            /* step 23 */
+            parameterBindings = parameterNames;
+            parameterBindingsSet = parameterNamesSet;
         }
-        /* step 23 (not applicable) */
         /* steps 24-26 */
         if (hasParameters) {
             if (hasDuplicates) {
@@ -298,13 +257,13 @@ final class FunctionDeclarationInstantiationGenerator extends
         }
         /* steps 27-28 */
         HashSet<Name> instantiatedVarNames;
-        Variable<? extends LexicalEnvironment<?>> varEnv;
+        Variable<? extends LexicalEnvironment<? extends DeclarativeEnvironmentRecord>> varEnv;
         Variable<? extends DeclarativeEnvironmentRecord> varEnvRec;
         if (!hasParameterExpressions) {
             assert fscope == fscope.variableScope();
             /* step 27.a (note) */
             /* step 27.b */
-            instantiatedVarNames = new HashSet<>(parameterNames);
+            instantiatedVarNames = new HashSet<>(parameterBindings);
             /* step 27.c */
             for (Name varName : varNames) {
                 if (instantiatedVarNames.add(varName)) {
@@ -321,7 +280,8 @@ final class FunctionDeclarationInstantiationGenerator extends
             mv.enterScope(fscope.variableScope());
             /* step 28.a (note) */
             /* step 28.b */
-            varEnv = mv.newVariable("varEnv", LexicalEnvironment.class).uncheckedCast();
+            varEnv = mv.newVariable("varEnv", LexicalEnvironment.class)
+                    .<LexicalEnvironment<? extends DeclarativeEnvironmentRecord>> uncheckedCast();
             newDeclarativeEnvironment(env, mv);
             mv.store(varEnv);
             /* step 28.c */
@@ -337,7 +297,7 @@ final class FunctionDeclarationInstantiationGenerator extends
                 if (instantiatedVarNames.add(varName)) {
                     BindingOp<DeclarativeEnvironmentRecord> op = BindingOp.of(varEnvRec, varName);
                     op.createMutableBinding(varEnvRec, varName, false, mv);
-                    if (!parameterNamesSet.contains(varName) || functionNames.contains(varName)) {
+                    if (!parameterBindingsSet.contains(varName) || functionNames.contains(varName)) {
                         op.initializeBinding(varEnvRec, varName, undefined, mv);
                     } else {
                         BindingOp.of(envRec, varName).getBindingValue(envRec, varName, strict, mv);
@@ -352,16 +312,25 @@ final class FunctionDeclarationInstantiationGenerator extends
         }
 
         /* step 29 (B.3.3 Block-Level Function Declarations Web Legacy Compatibility Semantics) */
+        // FIXME: spec issue - wrong step reference in annexB
         for (Name fname : function.getScope().blockFunctionNames()) {
+            // FIXME: spec issue - typo "initializedBindings" -> "instantiatedVarNames"
+            // FIXME: spec bug - initial binding for "arguments" (https://github.com/tc39/ecma262/issues/991)
             if (instantiatedVarNames.add(fname)) {
                 BindingOp<DeclarativeEnvironmentRecord> op = BindingOp.of(varEnvRec, fname);
                 op.createMutableBinding(varEnvRec, fname, false, mv);
-                op.initializeBinding(varEnvRec, fname, undefined, mv);
+                if (!fname.getIdentifier().equals("arguments") || !argumentsObjectNeeded) {
+                    op.initializeBinding(varEnvRec, fname, undefined, mv);
+                } else {
+                    BindingOp.of(envRec, fname).getBindingValue(envRec, fname, false, mv);
+                    Value<Object> tempValue = mv.storeTemporary(Object.class);
+                    op.initializeBinding(varEnvRec, fname, tempValue, mv);
+                }
             }
         }
 
         /* steps 30-32 */
-        Variable<? extends LexicalEnvironment<?>> lexEnv;
+        Variable<? extends LexicalEnvironment<? extends DeclarativeEnvironmentRecord>> lexEnv;
         Variable<? extends DeclarativeEnvironmentRecord> lexEnvRec;
         assert strict || fscope.variableScope() != fscope.lexicalScope();
         if (!strict || fscope.variableScope() != fscope.lexicalScope()) {
@@ -371,7 +340,8 @@ final class FunctionDeclarationInstantiationGenerator extends
             mv.enterScope(fscope.lexicalScope());
             if (!lexicalNames.isEmpty()) {
                 /* step 30 */
-                lexEnv = mv.newVariable("lexEnv", LexicalEnvironment.class).uncheckedCast();
+                lexEnv = mv.newVariable("lexEnv", LexicalEnvironment.class)
+                        .<LexicalEnvironment<? extends DeclarativeEnvironmentRecord>> uncheckedCast();
                 newDeclarativeEnvironment(varEnv, mv);
                 mv.store(lexEnv);
                 /* step 32 */
@@ -419,7 +389,7 @@ final class FunctionDeclarationInstantiationGenerator extends
             // stack: [fo] -> []
             // Resolve the actual binding name: function(a){ function a(){} }
             // TODO: Can be removed when StaticIdResolution handles this case.
-            Name name = fscope.variableScope().resolveName(fn, false);
+            Name name = fscope.variableScope().resolveName(fn);
             BindingOp<DeclarativeEnvironmentRecord> op = BindingOp.of(varEnvRec, name);
             op.setMutableBinding(varEnvRec, name, fo, false, mv);
         }
@@ -447,46 +417,28 @@ final class FunctionDeclarationInstantiationGenerator extends
         mv.invoke(Methods.ExecutionContext_setLexicalEnvironment);
     }
 
-    private void CreateMappedArgumentsObject(CodeVisitor mv) {
+    private void CreateMappedArgumentsObject(FunctionDeclInitVisitor mv) {
         // stack: [] -> [argsObj]
         mv.loadExecutionContext();
-        mv.loadParameter(FUNCTION, targetClass((FunctionNode) mv.getTopLevelNode()));
-        mv.loadParameter(ARGUMENTS, Object[].class);
+        mv.load(mv.getFunction());
+        mv.load(mv.getArguments());
         mv.invoke(Methods.ArgumentsObject_CreateMappedArgumentsObject_Empty);
     }
 
     private void CreateMappedArgumentsObject(Variable<LexicalEnvironment<FunctionEnvironmentRecord>> env,
-            FormalParameterList formals, CodeVisitor mv) {
+            FormalParameterList formals, FunctionDeclInitVisitor mv) {
         // stack: [] -> [argsObj]
         mv.loadExecutionContext();
-        mv.loadParameter(FUNCTION, targetClass((FunctionNode) mv.getTopLevelNode()));
-        mv.loadParameter(ARGUMENTS, Object[].class);
+        mv.load(mv.getFunction());
+        mv.load(mv.getArguments());
         mv.load(env);
         mv.invoke(Methods.ArgumentsObject_CreateMappedArgumentsObject);
     }
 
-    private void CreateUnmappedArgumentsObject(CodeVisitor mv) {
+    private void CreateUnmappedArgumentsObject(FunctionDeclInitVisitor mv) {
         // stack: [] -> [argsObj]
         mv.loadExecutionContext();
-        mv.loadParameter(ARGUMENTS, Object[].class);
+        mv.load(mv.getArguments());
         mv.invoke(Methods.ArgumentsObject_CreateUnmappedArgumentsObject);
-    }
-
-    private boolean isLegacy(FunctionNode node) {
-        if (IsStrict(node)) {
-            return false;
-        }
-        if (!(node instanceof FunctionDeclaration || node instanceof FunctionExpression)) {
-            return false;
-        }
-        return codegen.isEnabled(CompatibilityOption.FunctionArguments)
-                || codegen.isEnabled(CompatibilityOption.FunctionCaller);
-    }
-
-    private boolean isCallConstructor(FunctionNode node) {
-        if (node instanceof MethodDefinition) {
-            return ((MethodDefinition) node).isCallConstructor();
-        }
-        return false;
     }
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -29,6 +29,7 @@ import com.github.anba.es6draft.runtime.objects.collection.SetIteratorObject.Set
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
+import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.NativeFunction;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
@@ -98,11 +99,11 @@ public final class SetPrototype extends OrdinaryObject implements Initializable 
     public enum Properties {
         ;
 
-        private static SetObject thisSetObject(ExecutionContext cx, Object obj) {
-            if (obj instanceof SetObject) {
-                return (SetObject) obj;
+        private static SetObject thisSetObject(ExecutionContext cx, Object value, String method) {
+            if (value instanceof SetObject) {
+                return (SetObject) value;
             }
-            throw newTypeError(cx, Messages.Key.IncompatibleObject);
+            throw newTypeError(cx, Messages.Key.IncompatibleThis, method, Type.of(value).toString());
         }
 
         @Prototype
@@ -128,7 +129,7 @@ public final class SetPrototype extends OrdinaryObject implements Initializable 
         @Function(name = "add", arity = 1, nativeId = SetPrototypeAdd.class)
         public static Object add(ExecutionContext cx, Object thisValue, Object value) {
             /* steps 1-3 */
-            SetObject s = thisSetObject(cx, thisValue);
+            SetObject s = thisSetObject(cx, thisValue, "Set.prototype.add");
             /* step 4 */
             LinkedMap<Object, Void> entries = s.getSetData();
             /* steps 5-7 */
@@ -149,7 +150,7 @@ public final class SetPrototype extends OrdinaryObject implements Initializable 
         @Function(name = "clear", arity = 0)
         public static Object clear(ExecutionContext cx, Object thisValue) {
             /* steps 1-3 */
-            SetObject s = thisSetObject(cx, thisValue);
+            SetObject s = thisSetObject(cx, thisValue, "Set.prototype.clear");
             /* step 4 */
             LinkedMap<Object, Void> entries = s.getSetData();
             /* step 5 */
@@ -172,7 +173,7 @@ public final class SetPrototype extends OrdinaryObject implements Initializable 
         @Function(name = "delete", arity = 1)
         public static Object delete(ExecutionContext cx, Object thisValue, Object value) {
             /* steps 1-3 */
-            SetObject s = thisSetObject(cx, thisValue);
+            SetObject s = thisSetObject(cx, thisValue, "Set.prototype.delete");
             /* step 4 */
             LinkedMap<Object, Void> entries = s.getSetData();
             /* steps 5-6 */
@@ -191,7 +192,7 @@ public final class SetPrototype extends OrdinaryObject implements Initializable 
         @Function(name = "entries", arity = 0)
         public static Object entries(ExecutionContext cx, Object thisValue) {
             /* steps 1-2 */
-            return CreateSetIterator(cx, thisValue, SetIterationKind.KeyValue);
+            return CreateSetIterator(cx, thisValue, SetIterationKind.KeyValue, "Set.prototype.entries");
         }
 
         /**
@@ -208,10 +209,9 @@ public final class SetPrototype extends OrdinaryObject implements Initializable 
          * @return the undefined value
          */
         @Function(name = "forEach", arity = 1)
-        public static Object forEach(ExecutionContext cx, Object thisValue, Object callbackfn,
-                Object thisArg) {
+        public static Object forEach(ExecutionContext cx, Object thisValue, Object callbackfn, Object thisArg) {
             /* steps 1-3 */
-            SetObject s = thisSetObject(cx, thisValue);
+            SetObject s = thisSetObject(cx, thisValue, "Set.prototype.forEach");
             /* step 4 */
             if (!IsCallable(callbackfn)) {
                 throw newTypeError(cx, Messages.Key.NotCallable);
@@ -242,7 +242,7 @@ public final class SetPrototype extends OrdinaryObject implements Initializable 
         @Function(name = "has", arity = 1)
         public static Object has(ExecutionContext cx, Object thisValue, Object value) {
             /* steps 1-3 */
-            SetObject s = thisSetObject(cx, thisValue);
+            SetObject s = thisSetObject(cx, thisValue, "Set.prototype.has");
             /* step 4 */
             LinkedMap<Object, Void> entries = s.getSetData();
             /* steps 5-6 */
@@ -261,7 +261,7 @@ public final class SetPrototype extends OrdinaryObject implements Initializable 
         @Accessor(name = "size", type = Accessor.Type.Getter)
         public static Object size(ExecutionContext cx, Object thisValue) {
             /* steps 1-3 */
-            SetObject s = thisSetObject(cx, thisValue);
+            SetObject s = thisSetObject(cx, thisValue, "Set.prototype.size");
             /* step 4 */
             LinkedMap<Object, Void> entries = s.getSetData();
             /* steps 5-7 */
@@ -284,7 +284,7 @@ public final class SetPrototype extends OrdinaryObject implements Initializable 
         @AliasFunction(name = "[Symbol.iterator]", symbol = BuiltinSymbol.iterator)
         public static Object values(ExecutionContext cx, Object thisValue) {
             /* steps 1-2 */
-            return CreateSetIterator(cx, thisValue, SetIterationKind.Value);
+            return CreateSetIterator(cx, thisValue, SetIterationKind.Value, "Set.prototype.values");
         }
 
         /**

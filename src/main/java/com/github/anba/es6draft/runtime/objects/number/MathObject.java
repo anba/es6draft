@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -8,13 +8,18 @@ package com.github.anba.es6draft.runtime.objects.number;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToInt32;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToNumber;
+import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
+import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.Initializable;
 import com.github.anba.es6draft.runtime.internal.MathImpl;
+import com.github.anba.es6draft.runtime.internal.Messages;
+import com.github.anba.es6draft.runtime.internal.Permission;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
+import com.github.anba.es6draft.runtime.internal.Properties.CompatibilityExtension;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
@@ -46,6 +51,8 @@ public final class MathObject extends OrdinaryObject implements Initializable {
 
         createProperties(realm, this, ValueProperties.class);
         createProperties(realm, this, FunctionProperties.class);
+        createProperties(realm, this, AdditionalProperties.class);
+        createProperties(realm, this, SignbitProperty.class);
     }
 
     /**
@@ -57,57 +64,49 @@ public final class MathObject extends OrdinaryObject implements Initializable {
         /**
          * 20.2.1.1 Math.E
          */
-        @Value(name = "E", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = false))
+        @Value(name = "E", attributes = @Attributes(writable = false, enumerable = false, configurable = false))
         public static final Double E = Math.E;
 
         /**
          * 20.2.1.2 Math.LN10
          */
-        @Value(name = "LN10", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = false))
+        @Value(name = "LN10", attributes = @Attributes(writable = false, enumerable = false, configurable = false))
         public static final Double LN10 = Math.log(10d);
 
         /**
          * 20.2.1.3 Math.LN2
          */
-        @Value(name = "LN2", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = false))
+        @Value(name = "LN2", attributes = @Attributes(writable = false, enumerable = false, configurable = false))
         public static final Double LN2 = Math.log(2d);
 
         /**
          * 20.2.1.4 Math.LOG10E
          */
-        @Value(name = "LOG10E", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = false))
+        @Value(name = "LOG10E", attributes = @Attributes(writable = false, enumerable = false, configurable = false))
         public static final Double LOG10E = Math.log10(Math.E);
 
         /**
          * 20.2.1.5 Math.LOG2E
          */
-        @Value(name = "LOG2E", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = false))
+        @Value(name = "LOG2E", attributes = @Attributes(writable = false, enumerable = false, configurable = false))
         public static final Double LOG2E = 1d / Math.log(2d);
 
         /**
          * 20.2.1.6 Math.PI
          */
-        @Value(name = "PI", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = false))
+        @Value(name = "PI", attributes = @Attributes(writable = false, enumerable = false, configurable = false))
         public static final Double PI = Math.PI;
 
         /**
          * 20.2.1.7 Math.SQRT1_2
          */
-        @Value(name = "SQRT1_2", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = false))
+        @Value(name = "SQRT1_2", attributes = @Attributes(writable = false, enumerable = false, configurable = false))
         public static final Double SQRT1_2 = Math.sqrt(.5d);
 
         /**
          * 20.2.1.8 Math.SQRT2
          */
-        @Value(name = "SQRT2", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = false))
+        @Value(name = "SQRT2", attributes = @Attributes(writable = false, enumerable = false, configurable = false))
         public static final Double SQRT2 = Math.sqrt(2d);
 
         /**
@@ -651,6 +650,9 @@ public final class MathObject extends OrdinaryObject implements Initializable {
          */
         @Function(name = "random", arity = 0)
         public static Object random(ExecutionContext cx, Object thisValue) {
+            if (!cx.getRealm().isGranted(Permission.RandomNumber)) {
+                throw newTypeError(cx, Messages.Key.NoPermission, "Math.random");
+            }
             return cx.getRealm().getRandom().nextDouble();
         }
 
@@ -795,6 +797,145 @@ public final class MathObject extends OrdinaryObject implements Initializable {
         public static Object trunc(ExecutionContext cx, Object thisValue, Object x) {
             double d = ToNumber(cx, x);
             return d < 0 ? Math.ceil(d) : Math.floor(d);
+        }
+    }
+
+    /**
+     * Math Extensions
+     */
+    @CompatibilityExtension(CompatibilityOption.MathExtensions)
+    public enum AdditionalProperties {
+        ;
+
+        /**
+         * Math.constrain ( x, lower, upper )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param x
+         *            the argument number
+         * @param lower
+         *            the lower bound
+         * @param upper
+         *            the upper bound
+         * @return the constrained number
+         */
+        @Function(name = "constrain", arity = 3)
+        public static Object constrain(ExecutionContext cx, Object thisValue, Object x, Object lower, Object upper) {
+            /* steps 1-4 */
+            return Math.min(Math.max(ToNumber(cx, x), ToNumber(cx, lower)), ToNumber(cx, upper));
+        }
+
+        /**
+         * Math.scale ( x, inLow, inHigh, outLow, outHigh )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param x
+         *            the argument number
+         * @param inLow
+         *            the lower bound of the input
+         * @param inHigh
+         *            the upper bound of the input
+         * @param outLow
+         *            the lower bound of the scaled output
+         * @param outHigh
+         *            the upper bound of the scaled output
+         * @return the scaled number
+         */
+        @Function(name = "scale", arity = 5)
+        public static Object scale(ExecutionContext cx, Object thisValue, Object x, Object inLow, Object inHigh,
+                Object outLow, Object outHigh) {
+            double d = ToNumber(cx, x);
+            double inLo = ToNumber(cx, inLow);
+            double inHi = ToNumber(cx, inHigh);
+            double outLo = ToNumber(cx, outLow);
+            double outHi = ToNumber(cx, outHigh);
+            /* step 1 */
+            if (Double.isNaN(d) || Double.isNaN(inLo) || Double.isNaN(inHi) || Double.isNaN(outLo)
+                    || Double.isNaN(outHi)) {
+                return Double.NaN;
+            }
+            /* step 2 */
+            return ((d - inLo) * (outHi - outLo) / (inHi - inLo)) + outLo;
+        }
+
+        /**
+         * Math.radians ( degrees )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param degrees
+         *            the argument number
+         * @return the argument number in radians
+         */
+        @Function(name = "radians", arity = 1)
+        public static Object radians(ExecutionContext cx, Object thisValue, Object degrees) {
+            /* steps 1-3 */
+            return Math.toRadians(ToNumber(cx, degrees));
+        }
+
+        /**
+         * Math.degrees ( radians )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param radians
+         *            the argument number
+         * @return the argument number in degrees
+         */
+        @Function(name = "degrees", arity = 1)
+        public static Object degrees(ExecutionContext cx, Object thisValue, Object radians) {
+            /* steps 1-3 */
+            return Math.toDegrees(ToNumber(cx, radians));
+        }
+
+        /**
+         * Math.RAD_TO_DEG
+         */
+        @Value(name = "RAD_TO_DEG",
+                attributes = @Attributes(writable = false, enumerable = false, configurable = false))
+        public static final Double RAD_TO_DEG = 180d / Math.PI;
+
+        /**
+         * Math.DEG_TO_RAD
+         */
+        @Value(name = "DEG_TO_RAD",
+                attributes = @Attributes(writable = false, enumerable = false, configurable = false))
+        public static final Double DEG_TO_RAD = Math.PI / 180d;
+    }
+
+    /**
+     * Math.signbit extension
+     */
+    @CompatibilityExtension(CompatibilityOption.MathSignbit)
+    public enum SignbitProperty {
+        ;
+
+        /**
+         * Math.signbit(x)
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param x
+         *            the argument number
+         * @return {@code true} if the sign-bit is set, otherwise {@code false}
+         */
+        @Function(name = "signbit", arity = 1)
+        public static Object signbit(ExecutionContext cx, Object thisValue, Object x) {
+            double d = ToNumber(cx, x);
+            /* steps 1-4 */
+            return !Double.isNaN(d) && Double.compare(d, -0) <= 0;
         }
     }
 }

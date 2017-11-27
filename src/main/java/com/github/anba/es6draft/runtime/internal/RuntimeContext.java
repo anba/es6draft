@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -9,6 +9,8 @@ package com.github.anba.es6draft.runtime.internal;
 import static com.github.anba.es6draft.runtime.internal.RuntimeWorkerThreadFactory.createThreadPoolExecutor;
 import static com.github.anba.es6draft.runtime.internal.RuntimeWorkerThreadFactory.createWorkerThreadPoolExecutor;
 
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodType;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.EnumSet;
@@ -19,25 +21,30 @@ import java.util.TimeZone;
 import java.util.concurrent.ExecutorService;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 import com.github.anba.es6draft.compiler.Compiler;
 import com.github.anba.es6draft.parser.Parser;
 import com.github.anba.es6draft.runtime.ExecutionContext;
+import com.github.anba.es6draft.runtime.Realm;
+import com.github.anba.es6draft.runtime.RealmData;
 import com.github.anba.es6draft.runtime.modules.ModuleLoader;
+import com.github.anba.es6draft.runtime.modules.ModuleRecord;
 import com.github.anba.es6draft.runtime.modules.loader.FileModuleLoader;
-import com.github.anba.es6draft.runtime.objects.GlobalObject;
+import com.github.anba.es6draft.runtime.types.ScriptObject;
 
 /**
  * The new runtime options and configuration class.
  */
 public final class RuntimeContext {
-    private final ObjectAllocator<? extends GlobalObject> globalAllocator;
+    private final Function<Realm, ? extends RealmData> realmData;
     private final BiFunction<RuntimeContext, ScriptLoader, ? extends ModuleLoader> moduleLoader;
     private final Locale locale;
-    private final TimeZone timeZone;
+    private TimeZone timeZone;
     private final Path baseDirectory; // TODO: or/and URI?
 
-    // TODO: Replace with Console interface?
     private Console console;
 
     private final ScriptCache scriptCache;
@@ -45,20 +52,35 @@ public final class RuntimeContext {
     private final boolean shutdownExecutorOnFinalization;
     private final ExecutorService workerExecutor;
     private final boolean shutdownWorkerExecutorOnFinalization;
+    private final BiConsumer<ExecutionContext, Throwable> errorReporter;
     private final BiConsumer<ExecutionContext, Throwable> workerErrorReporter;
     private final Futex futex;
+    private final Consumer<ExecutionContext> debugger;
+    private final BiFunction<String, MethodType, MethodHandle> nativeCallResolver;
+    private final BiConsumer<ScriptObject, ModuleRecord> importMeta;
 
     private final EnumSet<CompatibilityOption> options;
     private final EnumSet<Parser.Option> parserOptions;
     private final EnumSet<Compiler.Option> compilerOptions;
 
-    RuntimeContext(ObjectAllocator<? extends GlobalObject> globalAllocator,
+    public static class Data {
+        // User-overridable data.
+    }
+
+    private final Supplier<? extends RuntimeContext.Data> runtimeData;
+    private final RuntimeContext.Data contextData;
+
+    RuntimeContext(Supplier<? extends RuntimeContext.Data> runtimeData, Function<Realm, ? extends RealmData> realmData,
             BiFunction<RuntimeContext, ScriptLoader, ? extends ModuleLoader> moduleLoader, Locale locale,
             TimeZone timeZone, Path baseDirectory, Console console, ScriptCache scriptCache, ExecutorService executor,
-            ExecutorService workerExecutor, BiConsumer<ExecutionContext, Throwable> workerErrorReporter, Futex futex,
-            EnumSet<CompatibilityOption> options, EnumSet<Parser.Option> parserOptions,
-            EnumSet<Compiler.Option> compilerOptions) {
-        this.globalAllocator = globalAllocator;
+            BiConsumer<ExecutionContext, Throwable> errorReporter, ExecutorService workerExecutor,
+            BiConsumer<ExecutionContext, Throwable> workerErrorReporter, Futex futex,
+            Consumer<ExecutionContext> debugger, BiFunction<String, MethodType, MethodHandle> nativeCallResolver,
+            BiConsumer<ScriptObject, ModuleRecord> importMeta, EnumSet<CompatibilityOption> options,
+            EnumSet<Parser.Option> parserOptions, EnumSet<Compiler.Option> compilerOptions) {
+        this.runtimeData = runtimeData;
+        this.contextData = runtimeData.get();
+        this.realmData = realmData;
         this.moduleLoader = moduleLoader;
         this.locale = locale;
         this.timeZone = timeZone;
@@ -69,13 +91,18 @@ public final class RuntimeContext {
         this.shutdownExecutorOnFinalization = executor == null;
         this.workerExecutor = workerExecutor != null ? workerExecutor : createWorkerThreadPoolExecutor();
         this.shutdownWorkerExecutorOnFinalization = workerExecutor == null;
+        this.errorReporter = errorReporter;
         this.workerErrorReporter = workerErrorReporter;
         this.futex = futex;
+        this.debugger = debugger;
+        this.nativeCallResolver = nativeCallResolver;
+        this.importMeta = importMeta;
         this.options = EnumSet.copyOf(options);
         this.parserOptions = EnumSet.copyOf(parserOptions);
         this.compilerOptions = EnumSet.copyOf(compilerOptions);
     }
 
+    @SuppressWarnings("deprecation")
     @Override
     protected void finalize() throws Throwable {
         if (shutdownExecutorOnFinalization)
@@ -86,12 +113,30 @@ public final class RuntimeContext {
     }
 
     /**
-     * Returns the global object allocator for this instance.
+     * Returns the context data for this instance.
      * 
-     * @return the global object allocator
+     * @return the context data
      */
-    public ObjectAllocator<? extends GlobalObject> getGlobalAllocator() {
-        return globalAllocator;
+    public RuntimeContext.Data getContextData() {
+        return contextData;
+    }
+
+    /**
+     * Returns the runtime context data constructor for this instance.
+     * 
+     * @return the runtime context data constructor
+     */
+    public Supplier<? extends RuntimeContext.Data> getRuntimeData() {
+        return runtimeData;
+    }
+
+    /**
+     * Returns the realm data constructor for this instance.
+     * 
+     * @return the realm data constructor
+     */
+    public Function<Realm, ? extends RealmData> getRealmData() {
+        return realmData;
     }
 
     /**
@@ -119,6 +164,16 @@ public final class RuntimeContext {
      */
     public TimeZone getTimeZone() {
         return timeZone;
+    }
+
+    /**
+     * Changes the default time zone for this instance.
+     * 
+     * @param timeZone
+     *            the new time zone
+     */
+    public void setTimeZone(TimeZone timeZone) {
+        this.timeZone = timeZone;
     }
 
     /**
@@ -168,6 +223,15 @@ public final class RuntimeContext {
     }
 
     /**
+     * Returns the error reporter.
+     * 
+     * @return the error reporter
+     */
+    public BiConsumer<ExecutionContext, Throwable> getErrorReporter() {
+        return errorReporter;
+    }
+
+    /**
      * Returns the executor service for workers.
      * 
      * @return the executor service
@@ -192,6 +256,33 @@ public final class RuntimeContext {
      */
     public Futex getFutex() {
         return futex;
+    }
+
+    /**
+     * Returns the debugger callback.
+     * 
+     * @return the debugger callback
+     */
+    public Consumer<ExecutionContext> getDebugger() {
+        return debugger;
+    }
+
+    /**
+     * Returns the native call resolver function.
+     * 
+     * @return the native call resolver function
+     */
+    public BiFunction<String, MethodType, MethodHandle> getNativeCallResolver() {
+        return nativeCallResolver;
+    }
+
+    /**
+     * Returns the {@code import.meta} callback.
+     * 
+     * @return the {@code import.meta} callback
+     */
+    public BiConsumer<ScriptObject, ModuleRecord> getImportMeta() {
+        return importMeta;
     }
 
     /**
@@ -222,10 +313,50 @@ public final class RuntimeContext {
     }
 
     /**
+     * Returns {@code true} if the specified compatibility option is enabled.
+     * <p>
+     * Convenience method for {@code getOptions().contains(option)}.
+     * 
+     * @param option
+     *            the compatibility option
+     * @return {@code true} if the specified option is enabled
+     */
+    public boolean isEnabled(CompatibilityOption option) {
+        return options.contains(option);
+    }
+
+    /**
+     * Returns {@code true} if the specified parser option is enabled.
+     * <p>
+     * Convenience method for {@code getParserOptions().contains(option)}.
+     * 
+     * @param option
+     *            the parser option
+     * @return {@code true} if the specified option is enabled
+     */
+    public boolean isEnabled(Parser.Option option) {
+        return parserOptions.contains(option);
+    }
+
+    /**
+     * Returns {@code true} if the specified compiler option is enabled.
+     * <p>
+     * Convenience method for {@code getCompilerOptions().contains(option)}.
+     * 
+     * @param option
+     *            the compiler option
+     * @return {@code true} if the specified option is enabled
+     */
+    public boolean isEnabled(Compiler.Option option) {
+        return compilerOptions.contains(option);
+    }
+
+    /**
      * Builder class to create new runtime contexts.
      */
     public static final class Builder {
-        private ObjectAllocator<? extends GlobalObject> allocator;
+        private Supplier<? extends RuntimeContext.Data> runtimeData;
+        private Function<Realm, ? extends RealmData> realmData;
         private BiFunction<RuntimeContext, ScriptLoader, ? extends ModuleLoader> moduleLoader;
         private Locale locale;
         private TimeZone timeZone;
@@ -234,27 +365,43 @@ public final class RuntimeContext {
         private ScriptCache scriptCache;
         private ExecutorService executor;
         private ExecutorService workerExecutor;
+        private BiConsumer<ExecutionContext, Throwable> errorReporter;
         private BiConsumer<ExecutionContext, Throwable> workerErrorReporter;
         private Futex futex;
+        private Consumer<ExecutionContext> debugger;
+        private BiFunction<String, MethodType, MethodHandle> nativeCallResolver;
+        private BiConsumer<ScriptObject, ModuleRecord> importMeta;
         private final EnumSet<CompatibilityOption> options = EnumSet.noneOf(CompatibilityOption.class);
         private final EnumSet<Parser.Option> parserOptions = EnumSet.noneOf(Parser.Option.class);
         private final EnumSet<Compiler.Option> compilerOptions = EnumSet.noneOf(Compiler.Option.class);
 
         public Builder() {
-            allocator = GlobalObject::new;
+            runtimeData = RuntimeContext.Data::new;
+            realmData = RealmData::new;
             moduleLoader = FileModuleLoader::new;
             locale = Locale.getDefault();
             timeZone = TimeZone.getDefault();
             baseDirectory = Paths.get("");
             scriptCache = new ScriptCache();
+            errorReporter = (cx, e) -> {
+                e.printStackTrace();
+            };
             workerErrorReporter = (cx, e) -> {
-                // empty
+                e.printStackTrace();
             };
             futex = new Futex();
+            debugger = cx -> {
+                // empty
+            };
+            nativeCallResolver = (name, type) -> null;
+            importMeta = (meta, module) -> {
+                // empty
+            };
         }
 
         public Builder(RuntimeContext context) {
-            allocator = context.globalAllocator;
+            runtimeData = context.runtimeData;
+            realmData = context.realmData;
             moduleLoader = context.moduleLoader;
             locale = context.locale;
             timeZone = context.timeZone;
@@ -263,8 +410,11 @@ public final class RuntimeContext {
             scriptCache = context.scriptCache;
             executor = context.executor;
             workerExecutor = context.workerExecutor;
+            errorReporter = context.errorReporter;
             workerErrorReporter = context.workerErrorReporter;
             futex = context.futex;
+            debugger = context.debugger;
+            importMeta = context.importMeta;
             options.addAll(context.options);
             parserOptions.addAll(context.parserOptions);
             compilerOptions.addAll(context.compilerOptions);
@@ -276,19 +426,32 @@ public final class RuntimeContext {
          * @return the new runtime context
          */
         public RuntimeContext build() {
-            return new RuntimeContext(allocator, moduleLoader, locale, timeZone, baseDirectory, console, scriptCache,
-                    executor, workerExecutor, workerErrorReporter, futex, options, parserOptions, compilerOptions);
+            return new RuntimeContext(runtimeData, realmData, moduleLoader, locale, timeZone, baseDirectory, console,
+                    scriptCache, executor, errorReporter, workerExecutor, workerErrorReporter, futex, debugger,
+                    nativeCallResolver, importMeta, options, parserOptions, compilerOptions);
         }
 
         /**
-         * Sets the global object allocator.
+         * Sets the runtime context data constructor.
          * 
-         * @param allocator
-         *            the global object allocator
+         * @param runtimeData
+         *            the runtime context data constructor
          * @return this builder
          */
-        public Builder setGlobalAllocator(ObjectAllocator<? extends GlobalObject> allocator) {
-            this.allocator = Objects.requireNonNull(allocator);
+        public Builder setRuntimeData(Supplier<? extends RuntimeContext.Data> runtimeData) {
+            this.runtimeData = Objects.requireNonNull(runtimeData);
+            return this;
+        }
+
+        /**
+         * Sets the realm data constructor.
+         * 
+         * @param realmData
+         *            the realm data constructor
+         * @return this builder
+         */
+        public Builder setRealmData(Function<Realm, ? extends RealmData> realmData) {
+            this.realmData = Objects.requireNonNull(realmData);
             return this;
         }
 
@@ -389,6 +552,18 @@ public final class RuntimeContext {
         }
 
         /**
+         * Sets the error reporter.
+         * 
+         * @param errorReporter
+         *            the error reporter
+         * @return this builder
+         */
+        public Builder setErrorReporter(BiConsumer<ExecutionContext, Throwable> errorReporter) {
+            this.errorReporter = Objects.requireNonNull(errorReporter);
+            return this;
+        }
+
+        /**
          * Sets the worker error reporter.
          * 
          * @param workerErrorReporter
@@ -409,6 +584,42 @@ public final class RuntimeContext {
          */
         public Builder setFutex(Futex futex) {
             this.futex = Objects.requireNonNull(futex);
+            return this;
+        }
+
+        /**
+         * Sets the debugger callback.
+         * 
+         * @param debugger
+         *            the debugger callback
+         * @return this builder
+         */
+        public Builder setDebugger(Consumer<ExecutionContext> debugger) {
+            this.debugger = Objects.requireNonNull(debugger);
+            return this;
+        }
+
+        /**
+         * Sets the native call resolver function.
+         * 
+         * @param nativeCallResolver
+         *            the native call resolver function
+         * @return this builder
+         */
+        public Builder setNativeCallResolver(BiFunction<String, MethodType, MethodHandle> nativeCallResolver) {
+            this.nativeCallResolver = Objects.requireNonNull(nativeCallResolver);
+            return this;
+        }
+
+        /**
+         * Sets the {@code import.meta} callback.
+         * 
+         * @param importMeta
+         *            the {@code import.meta} callback
+         * @return this builder
+         */
+        public Builder setImportMeta(BiConsumer<ScriptObject, ModuleRecord> importMeta) {
+            this.importMeta = importMeta;
             return this;
         }
 

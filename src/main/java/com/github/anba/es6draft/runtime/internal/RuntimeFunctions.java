@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -9,29 +9,27 @@ package com.github.anba.es6draft.runtime.internal;
 import static com.github.anba.es6draft.runtime.internal.Errors.newInternalError;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
-import java.io.IOException;
-import java.nio.file.Path;
-import java.util.Objects;
+import java.util.Arrays;
+import java.util.Iterator;
 
-import com.github.anba.es6draft.Script;
-import com.github.anba.es6draft.compiler.CompilationException;
 import com.github.anba.es6draft.compiler.analyzer.CodeSize;
 import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.runtime.AbstractOperations;
 import com.github.anba.es6draft.runtime.ExecutionContext;
-import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.objects.GlobalObject;
+import com.github.anba.es6draft.runtime.language.ClassOperations;
 import com.github.anba.es6draft.runtime.objects.binary.ArrayBuffer;
 import com.github.anba.es6draft.runtime.objects.binary.ArrayBufferConstructor;
 import com.github.anba.es6draft.runtime.objects.binary.ArrayBufferObject;
 import com.github.anba.es6draft.runtime.objects.binary.TypedArrayObject;
 import com.github.anba.es6draft.runtime.objects.collection.WeakMapObject;
 import com.github.anba.es6draft.runtime.objects.collection.WeakSetObject;
-import com.github.anba.es6draft.runtime.objects.iteration.GeneratorObject;
 import com.github.anba.es6draft.runtime.objects.text.RegExpObject;
 import com.github.anba.es6draft.runtime.objects.text.RegExpPrototype;
+import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
+import com.github.anba.es6draft.runtime.types.Property;
+import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Symbol;
 import com.github.anba.es6draft.runtime.types.Undefined;
@@ -53,42 +51,20 @@ public final class RuntimeFunctions {
         }
     }
 
+    private static BuiltinSymbol getSymbolByName(ExecutionContext cx, String name) {
+        try {
+            return BuiltinSymbol.valueOf(name);
+        } catch (IllegalArgumentException e) {
+            throw newInternalError(cx, Messages.Key.InternalError, "Invalid symbol name: " + name);
+        }
+    }
+
     private static CompatibilityOption getCompatibilityOptionByName(ExecutionContext cx, String name) {
         try {
             return CompatibilityOption.valueOf(name);
         } catch (IllegalArgumentException e) {
             throw newInternalError(cx, Messages.Key.InternalError, "Invalid compatibility option: " + name);
         }
-    }
-
-    /**
-     * Native function: {@code %Include(<file>)}.
-     * <p>
-     * Loads and evaluates the script file.
-     * 
-     * @param cx
-     *            the execution context
-     * @param file
-     *            the file path
-     * @return the script evaluation result
-     */
-    public static Object Include(ExecutionContext cx, CharSequence file) {
-        Realm realm = cx.getRealm();
-        Source base = realm.sourceInfo(cx);
-        if (base == null || base.getFile() == null) {
-            throw newInternalError(cx, Messages.Key.InternalError, "No source: " + Objects.toString(base));
-        }
-        Path path = Objects.requireNonNull(base.getFile().getParent()).resolve(file.toString());
-        Source source = new Source(path, Objects.requireNonNull(path.getFileName()).toString(), 1);
-        Script script;
-        try {
-            script = realm.getScriptLoader().script(source, path);
-        } catch (ParserException | CompilationException e) {
-            throw e.toScriptException(cx);
-        } catch (IOException e) {
-            throw newInternalError(cx, e, Messages.Key.InternalError, e.toString());
-        }
-        return script.evaluate(cx);
     }
 
     /**
@@ -146,16 +122,16 @@ public final class RuntimeFunctions {
     }
 
     /**
-     * Native function: {@code %GlobalTemplate()}.
+     * Native function: {@code %GlobalProperties()}.
      * <p>
-     * Returns the global object template.
+     * Returns the global properties object.
      * 
      * @param cx
      *            the execution context
-     * @return the global object template
+     * @return the global properties object
      */
-    public static GlobalObject GlobalTemplate(ExecutionContext cx) {
-        return cx.getRealm().getGlobalObjectTemplate();
+    public static OrdinaryObject GlobalProperties(ExecutionContext cx) {
+        return cx.getRealm().getGlobalPropertiesObject();
     }
 
     /**
@@ -209,7 +185,7 @@ public final class RuntimeFunctions {
      * @return {@code true} if the compatibility option is enabled
      */
     public static boolean IsCompatibilityOptionEnabled(ExecutionContext cx, String name) {
-        return cx.getRealm().isEnabled(getCompatibilityOptionByName(cx, name));
+        return cx.getRuntimeContext().isEnabled(getCompatibilityOptionByName(cx, name));
     }
 
     /**
@@ -238,25 +214,25 @@ public final class RuntimeFunctions {
         if (!(function instanceof FunctionObject)) {
             return false;
         }
-        FunctionObject funObj = (FunctionObject) function;
-        RuntimeInfo.Function code = funObj.getCode();
-        if (code == null) {
-            return false;
-        }
+        RuntimeInfo.Function code = ((FunctionObject) function).getCode();
         return code.is(RuntimeInfo.FunctionFlags.Expression) && !code.is(RuntimeInfo.FunctionFlags.Arrow);
     }
 
     /**
-     * Native function: {@code %IsGenerator(<value>)}.
+     * Native function: {@code %IsGeneratorFunction(<function>)}.
      * <p>
-     * Tests whether the input argument is a generator object.
+     * Returns {@code true} if <var>function</var> is a generator function.
      * 
-     * @param value
-     *            the input argument
-     * @return {@code true} if the object is a generator
+     * @param function
+     *            the function object
+     * @return {@code true} if <var>function</var> is a generator function
      */
-    public static boolean IsGenerator(Object value) {
-        return value instanceof GeneratorObject;
+    public static boolean IsGeneratorFunction(Callable function) {
+        if (!(function instanceof FunctionObject)) {
+            return false;
+        }
+        RuntimeInfo.Function code = ((FunctionObject) function).getCode();
+        return code.is(RuntimeInfo.FunctionFlags.Generator) && !code.is(RuntimeInfo.FunctionFlags.Async);
     }
 
     /**
@@ -278,26 +254,6 @@ public final class RuntimeFunctions {
     }
 
     /**
-     * Native function: {@code %RegExpReplace(<regexp>, <string>, <replacement>)}.
-     * <p>
-     * Replaces every occurrence of <var>regexp</var> in <var>string</var> with <var>replacement</var>.
-     * 
-     * @param cx
-     *            the execution context
-     * @param regexp
-     *            the regular expression object
-     * @param string
-     *            the input string
-     * @param replacement
-     *            the replacement string
-     * @return the result string
-     */
-    public static String RegExpReplace(ExecutionContext cx, RegExpObject regexp, CharSequence string,
-            CharSequence replacement) {
-        return RegExpPrototype.RegExpReplace(cx, regexp, string.toString(), replacement.toString());
-    }
-
-    /**
      * Native function: {@code %RegExpTest(<regexp>, <string>)}.
      * <p>
      * Returns {@code true} if <var>string</var> matches <var>regexp</var>.
@@ -311,7 +267,40 @@ public final class RuntimeFunctions {
      * @return {@code true} if <var>string</var> matches <var>regexp</var>
      */
     public static boolean RegExpTest(ExecutionContext cx, RegExpObject regexp, CharSequence string) {
-        return RegExpPrototype.RegExpTest(cx, regexp, string.toString());
+        return RegExpPrototype.RegExpTest(cx, regexp, string);
+    }
+
+    /**
+     * Native function: {@code %WellKnownSymbol(<name>)}.
+     * <p>
+     * Returns the well-known symbol by name.
+     * 
+     * @param cx
+     *            the execution context
+     * @param name
+     *            the well-known symbol name
+     * @return the well-known symbol
+     */
+    public static Symbol WellKnownSymbol(ExecutionContext cx, String name) {
+        return getSymbolByName(cx, name).get();
+    }
+
+    /**
+     * Native function: {@code %IsWellKnownSymbol(<symbol>)}.
+     * <p>
+     * Returns {@code true} if <var>symbol</var> is a well-known symbol.
+     * 
+     * @param symbol
+     *            the symbol object
+     * @return {@code true} if <var>symbol</var> is a well-known symbol.
+     */
+    public static boolean IsWellKnownSymbol(Symbol symbol) {
+        for (BuiltinSymbol builtin : BuiltinSymbol.values()) {
+            if (builtin != BuiltinSymbol.NONE && builtin.get() == symbol) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -353,7 +342,7 @@ public final class RuntimeFunctions {
      *            the input argument
      * @return the string
      */
-    public static Object ToString(ExecutionContext cx, Object value) {
+    public static CharSequence ToString(ExecutionContext cx, Object value) {
         return AbstractOperations.ToString(cx, value);
     }
 
@@ -408,6 +397,43 @@ public final class RuntimeFunctions {
     }
 
     /**
+     * Creates new method properties.
+     * 
+     * @param cx
+     *            the execution context
+     * @param object
+     *            the script object
+     * @param methods
+     *            the methods holder
+     */
+    public static void CreateMethodProperties(ExecutionContext cx, ScriptObject object, ScriptObject methods) {
+        for (Object propertyKey : methods.ownPropertyKeys(cx)) {
+            Property property = methods.getOwnProperty(cx, propertyKey);
+            if (property != null) {
+                PropertyDescriptor method = property.toPropertyDescriptor();
+                method.setEnumerable(false);
+                object.defineOwnProperty(cx, propertyKey, method);
+            }
+        }
+    }
+
+    /**
+     * Returns a getter property.
+     * 
+     * @param cx
+     *            the execution context
+     * @param object
+     *            the script object
+     * @param key
+     *            the property key
+     * @return the getter or {@code undefined}
+     */
+    public static Object LookupGetter(ExecutionContext cx, ScriptObject object, Object key) {
+        Property desc = object.getOwnProperty(cx, ToPropertyKey(cx, key));
+        return desc != null && desc.getGetter() != null ? desc.getGetter() : UNDEFINED;
+    }
+
+    /**
      * Returns the array buffer's byte order
      * 
      * @param cx
@@ -434,11 +460,93 @@ public final class RuntimeFunctions {
      */
     public static int CodeSize(ExecutionContext cx, CharSequence sourceCode) {
         try {
-            com.github.anba.es6draft.ast.Script parsedScript = cx.getRealm().getScriptLoader()
-                    .parseScript(new Source("<script>", 1), sourceCode.toString());
-            return CodeSize.calculate(parsedScript);
+            Source source = new Source("<script>", 1);
+            com.github.anba.es6draft.ast.Script parsedScript = cx.getRealm().getScriptLoader().parseScript(source,
+                    sourceCode.toString());
+            return CodeSize.compute(parsedScript);
         } catch (ParserException e) {
             throw e.toScriptException(cx);
         }
+    }
+
+    /**
+     * Returns an iterator over the class fields.
+     * 
+     * @param cx
+     *            the execution context
+     * @return the class fields iterator
+     */
+    public static Object GetClassFields(ExecutionContext cx) {
+        FunctionObject currentFunction = cx.getCurrentFunction();
+        Object[] classFields = ClassOperations.GetClassFields(currentFunction);
+        return Arrays.asList((Object[]) classFields).iterator();
+    }
+
+    /**
+     * Returns the next class field name.
+     * 
+     * @param cx
+     *            the execution context
+     * @param fieldsIterator
+     *            the class field iterator
+     * @return the next class field name
+     */
+    public static Object GetNextClassField(ExecutionContext cx, Object fieldsIterator) {
+        assert fieldsIterator instanceof Iterator;
+        Iterator<?> iterator = (Iterator<?>) fieldsIterator;
+        assert iterator.hasNext();
+        return iterator.next();
+    }
+
+    /**
+     * Native function: {@code %MethodKind(<function>)}.
+     * <p>
+     * Returns the method kind of <var>function</var>.
+     * 
+     * @param function
+     *            the function object
+     * @return the method kind
+     */
+    public static Object MethodKind(Callable function) {
+        if (!(function instanceof FunctionObject)) {
+            return UNDEFINED;
+        }
+        RuntimeInfo.Function code = ((FunctionObject) function).getCode();
+        if (code.is(RuntimeInfo.FunctionFlags.Method)) {
+            if (code.is(RuntimeInfo.FunctionFlags.Async) && code.is(RuntimeInfo.FunctionFlags.Generator)) {
+                return "async*";
+            }
+            if (code.is(RuntimeInfo.FunctionFlags.Async)) {
+                return "async";
+            }
+            if (code.is(RuntimeInfo.FunctionFlags.Generator)) {
+                return "*";
+            }
+            if (code.is(RuntimeInfo.FunctionFlags.Getter)) {
+                return "get";
+            }
+            if (code.is(RuntimeInfo.FunctionFlags.Setter)) {
+                return "set";
+            }
+            return "normal";
+        }
+        return UNDEFINED;
+    }
+
+    /**
+     * Native function: {@code %FunctionName(<function>)}.
+     * <p>
+     * Returns the function name of <var>function</var>.
+     * 
+     * @param function
+     *            the function object
+     * @return the function name
+     */
+    public static Object FunctionName(Callable function) {
+        if (!(function instanceof FunctionObject)) {
+            return UNDEFINED;
+        }
+        RuntimeInfo.Function code = ((FunctionObject) function).getCode();
+        return code.functionName();
     }
 }

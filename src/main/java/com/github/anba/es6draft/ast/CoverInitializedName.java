@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -17,8 +17,8 @@ public final class CoverInitializedName extends PropertyDefinition {
     private final IdentifierReference identifier;
     private final Expression initializer;
 
-    public CoverInitializedName(long beginPosition, long endPosition,
-            IdentifierReference identifier, Expression initializer) {
+    public CoverInitializedName(long beginPosition, long endPosition, IdentifierReference identifier,
+            Expression initializer) {
         super(beginPosition, endPosition);
         this.identifier = identifier;
         this.initializer = initializer;

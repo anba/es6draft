@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-    Copyright (c) 2012-2016 André Bargull
+    Copyright (c) André Bargull
     Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
 
     <https://github.com/anba/es6draft>
@@ -41,6 +41,7 @@
     <exclude name="TooManyMethods" />
   </rule>
   <rule ref="rulesets/java/comments.xml">
+    <exclude name="CommentDefaultAccessModifier" />
     <exclude name="CommentRequired" />
     <exclude name="CommentSize" />
   </rule>
@@ -51,7 +52,6 @@
     <exclude name="AvoidLiteralsInIfCondition" />
     <exclude name="AvoidPrefixingMethodParameters" />
     <exclude name="AvoidUsingShortType" />
-    <exclude name="BooleanInversion" />
     <exclude name="CallSuperInConstructor" />
     <exclude name="DataflowAnomalyAnalysis" />
     <exclude name="DefaultPackage" />
@@ -65,6 +65,7 @@
   </rule>
   <!-- <rule ref="rulesets/java/coupling.xml" /> -->
   <rule ref="rulesets/java/design.xml">
+    <exclude name="AccessorMethodGeneration" />
     <exclude name="AvoidDeeplyNestedIfStmts" />
     <exclude name="AvoidReassigningParameters" />
     <exclude name="AvoidSynchronizedAtMethodLevel" />
@@ -78,6 +79,7 @@
     <exclude name="LogicInversion" />
     <exclude name="MissingBreakInSwitch" />
     <exclude name="MissingStaticMethodInNonInstantiatableClass" />
+    <exclude name="OptimizableToArrayCall" />
     <exclude name="PreserveStackTrace" />
     <exclude name="SimplifyBooleanExpressions" />
     <exclude name="SimplifyBooleanReturns" />
@@ -126,6 +128,7 @@
     <exclude name="VariableNamingConventions" />
   </rule>
   <rule ref="rulesets/java/optimizations.xml">
+    <exclude name="AvoidArrayLoops" />
     <exclude name="AvoidInstantiatingObjectsInLoops" />
     <exclude name="LocalVariableCouldBeFinal" />
     <exclude name="MethodArgumentCouldBeFinal" />

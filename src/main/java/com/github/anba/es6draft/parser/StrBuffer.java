@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -57,7 +57,7 @@ final class StrBuffer {
     public void append(int c) {
         int len = length;
         if (len == array.length) {
-            array = Arrays.copyOf(array, length << 1);
+            array = Arrays.copyOf(array, len << 1);
         }
         array[len] = (char) c;
         length = len + 1;

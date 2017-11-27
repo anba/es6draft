@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -27,8 +27,7 @@ public final class ParserEOFException extends ParserException {
      * @param args
      *            the message arguments
      */
-    public ParserEOFException(String file, int line, int column, Messages.Key messageKey,
-            String... args) {
+    public ParserEOFException(String file, int line, int column, Messages.Key messageKey, String... args) {
         super(ExceptionType.SyntaxError, file, line, column, messageKey, args);
     }
 }

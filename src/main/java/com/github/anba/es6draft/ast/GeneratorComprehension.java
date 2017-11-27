@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -8,7 +8,6 @@ package com.github.anba.es6draft.ast;
 
 import java.util.List;
 
-import com.github.anba.es6draft.ast.GeneratorDefinition.GeneratorKind;
 import com.github.anba.es6draft.ast.scope.FunctionScope;
 
 /**
@@ -16,20 +15,20 @@ import com.github.anba.es6draft.ast.scope.FunctionScope;
  */
 public final class GeneratorComprehension extends Expression implements FunctionNode {
     private final FunctionScope scope;
-    private final GeneratorKind kind;
     private final FormalParameterList parameters;
     private final Comprehension comprehension;
+    private final String source;
     private String functionName, methodName;
     private StrictMode strictMode;
 
-    public GeneratorComprehension(long beginPosition, long endPosition, FunctionScope scope, GeneratorKind kind,
-            FormalParameterList parameters, Comprehension comprehension) {
+    public GeneratorComprehension(long beginPosition, long endPosition, FunctionScope scope,
+            FormalParameterList parameters, Comprehension comprehension, String source) {
         super(beginPosition, endPosition);
         assert parameters.getFormals().isEmpty() : "Non-empty parameter list in comprehension";
         this.scope = scope;
-        this.kind = kind;
         this.parameters = parameters;
         this.comprehension = comprehension;
+        this.source = source;
     }
 
     /**
@@ -88,13 +87,8 @@ public final class GeneratorComprehension extends Expression implements Function
     }
 
     @Override
-    public String getHeaderSource() {
-        return "() ";
-    }
-
-    @Override
-    public String getBodySource() {
-        return " [generator comprehension] ";
+    public String getSource() {
+        return source;
     }
 
     @Override
@@ -129,7 +123,7 @@ public final class GeneratorComprehension extends Expression implements Function
 
     @Override
     public boolean isConstructor() {
-        return kind == GeneratorKind.Constructor;
+        return false;
     }
 
     @Override

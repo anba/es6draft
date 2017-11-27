@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -13,12 +13,12 @@ const {
 
 const GeneratorFunction = function*(){}.constructor;
 
-let GClone = GeneratorFunction.toMethod({});
+let GClone = GeneratorFunction.bind(null);
 Object.defineProperty(GClone, "prototype", {
   value: Array
 });
 
-let g = new GClone("yield this");
+let g = Reflect.construct(GeneratorFunction, ["yield this"], GClone);
 assertSame(Array, Object.getPrototypeOf(g));
 
 assertThrows(TypeError, () => new g());

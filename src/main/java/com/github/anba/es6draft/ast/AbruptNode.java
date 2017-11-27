@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -10,8 +10,8 @@ import java.util.EnumSet;
 import java.util.Set;
 
 /**
- * Base interface for {@link Node} objects which can be exited resp. restarted with {@code break} or
- * {@code continue} statements.
+ * Base interface for {@link Node} objects which can be exited resp. restarted with {@code break} or {@code continue}
+ * statements.
  */
 public interface AbruptNode extends Node {
     /**

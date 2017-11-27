@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -76,8 +76,8 @@ public final class LexicalEnvironment<RECORD extends EnvironmentRecord> {
     }
 
     /**
-     * Retrieves the binding value of the first {@link EnvironmentRecord} which has a binding for
-     * {@code name}. If no such binding exists a ReferenceError is thrown.
+     * Retrieves the binding value of the first {@link EnvironmentRecord} which has a binding for {@code name}. If no
+     * such binding exists a ReferenceError is thrown.
      * 
      * @param lex
      *            the lexical environment
@@ -108,9 +108,8 @@ public final class LexicalEnvironment<RECORD extends EnvironmentRecord> {
      *            the strict mode flag
      * @return the resolved identifier reference
      */
-    public static Reference<?, String> getIdentifierReference(LexicalEnvironment<?> lex,
-            String name, boolean strict) {
-        /* steps 2-6 */
+    public static Reference<?, String> getIdentifierReference(LexicalEnvironment<?> lex, String name, boolean strict) {
+        /* steps 2-5 */
         for (LexicalEnvironment<?> env = lex; env != null; env = env.outer) {
             Reference<? extends EnvironmentRecord, String> ref = env.envRec.getReferenceOrNull(name, strict);
             if (ref != null) {
@@ -246,11 +245,11 @@ public final class LexicalEnvironment<RECORD extends EnvironmentRecord> {
      */
     public static LexicalEnvironment<GlobalEnvironmentRecord> newGlobalEnvironment(ExecutionContext cx, ScriptObject g,
             ScriptObject thisValue) {
-        /* steps 2-7 */
+        /* steps 2-8 */
         GlobalEnvironmentRecord globalRec = new GlobalEnvironmentRecord(cx, g, thisValue);
-        /* steps 1, 8-9 */
+        /* steps 1, 9-10 */
         LexicalEnvironment<GlobalEnvironmentRecord> env = new LexicalEnvironment<>(cx, globalRec);
-        /* step 10 */
+        /* step 11 */
         return env;
     }
 

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -31,11 +31,13 @@ import com.github.anba.es6draft.runtime.ObjectEnvironmentRecord;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.ScriptLoader;
 import com.github.anba.es6draft.runtime.internal.Source;
-import com.github.anba.es6draft.runtime.modules.ModuleExport;
 import com.github.anba.es6draft.runtime.modules.ModuleRecord;
 import com.github.anba.es6draft.runtime.modules.ModuleSource;
+import com.github.anba.es6draft.runtime.modules.ResolvedBinding;
 import com.github.anba.es6draft.runtime.modules.SourceIdentifier;
+import com.github.anba.es6draft.runtime.objects.FunctionConstructor.SourceKind;
 import com.github.anba.es6draft.runtime.types.Callable;
+import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
 
@@ -51,9 +53,8 @@ public final class NodeModuleRecord implements ModuleRecord {
     private ScriptObject moduleObject;
     private LexicalEnvironment<ObjectEnvironmentRecord> environment;
     private ScriptObject namespace;
+    private ScriptObject meta;
     private HashSet<String> exportedNames;
-    private boolean instantiated;
-    private boolean evaluated;
 
     NodeModuleRecord(SourceIdentifier sourceId, Source source, CompiledFunction function) {
         this.sourceId = sourceId;
@@ -61,11 +62,11 @@ public final class NodeModuleRecord implements ModuleRecord {
         this.function = function;
     }
 
-    /*package*/Source getSource() {
+    Source getSource() {
         return this.source;
     }
 
-    /*package*/Object getModuleExports() {
+    Object getModuleExports() {
         return Get(realm.defaultContext(), moduleObject, "exports");
     }
 
@@ -87,18 +88,12 @@ public final class NodeModuleRecord implements ModuleRecord {
     }
 
     private HashSet<String> ownNames(ScriptObject object) {
-        HashSet<String> names = new HashSet<>();
-        for (Object key : object.ownPropertyKeys(realm.defaultContext())) {
-            if (key instanceof String) {
-                names.add((String) key);
-            }
-        }
-        return names;
+        return new HashSet<>(object.ownPropertyNames(realm.defaultContext()));
     }
 
     private Set<String> instantiateAndGetExportedNames() {
         instantiate();
-        if (!instantiated) {
+        if (exportedNames == null) {
             // Recursive call - return the own names of the current module exports.
             return ownNames(getModuleExportsOrEmpty());
         }
@@ -144,13 +139,14 @@ public final class NodeModuleRecord implements ModuleRecord {
     }
 
     @Override
-    public boolean isEvaluated() {
-        return evaluated;
+    public ScriptObject getMeta() {
+        return meta;
     }
 
     @Override
-    public boolean isInstantiated() {
-        return instantiated;
+    public void setMeta(ScriptObject meta) {
+        assert this.meta == null : "meta already created";
+        this.meta = Objects.requireNonNull(meta);
     }
 
     @Override
@@ -160,8 +156,7 @@ public final class NodeModuleRecord implements ModuleRecord {
     }
 
     @Override
-    public ModuleExport resolveExport(String exportName, Map<ModuleRecord, Set<String>> resolveSet,
-            Set<ModuleRecord> exportStarSet) {
+    public ResolvedBinding resolveExport(String exportName, Map<ModuleRecord, Set<String>> resolveSet) {
         assert realm != null : "module is not linked";
         Set<String> resolvedExports = resolveSet.get(this);
         if (resolvedExports == null) {
@@ -171,7 +166,7 @@ public final class NodeModuleRecord implements ModuleRecord {
         }
         resolvedExports.add(exportName);
         if (instantiateAndGetExportedNames().contains(exportName)) {
-            return new ModuleExport(this, exportName);
+            return new ResolvedBinding(this, exportName);
         }
         return null;
     }
@@ -186,7 +181,8 @@ public final class NodeModuleRecord implements ModuleRecord {
             // Compile the module.
             ExecutionContext cx = realm.defaultContext();
             Object compile = Get(cx, moduleObject, "compile");
-            Callable moduleFn = CreateDynamicFunction(cx, source, function.getFunction());
+            Callable moduleFn = CreateDynamicFunction(cx, SourceKind.Function, function,
+                    cx.getIntrinsic(Intrinsics.FunctionPrototype));
             Callable requireFn = NodeFunctions.createRequireFunction(this);
             Call(cx, compile, moduleObject, moduleFn, requireFn);
 
@@ -197,8 +193,6 @@ public final class NodeModuleRecord implements ModuleRecord {
                 environment = newObjectEnvironment(currentExports, realm.getGlobalEnv());
             }
             exportedNames = ownNames(currentExports);
-
-            instantiated = true;
         }
     }
 
@@ -206,7 +200,6 @@ public final class NodeModuleRecord implements ModuleRecord {
     public Object evaluate() {
         assert realm != null : "module is not linked";
         assert environment != null : "module is not instantiated";
-        evaluated = true;
         return UNDEFINED;
     }
 

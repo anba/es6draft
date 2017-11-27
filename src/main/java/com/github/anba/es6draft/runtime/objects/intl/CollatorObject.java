@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -19,29 +19,29 @@ import com.ibm.icu.util.ULocale;
  * <li>10.4 Properties of Intl.Collator Instances
  * </ul>
  */
-public class CollatorObject extends OrdinaryObject {
-    /** [[usage]] */
+public final class CollatorObject extends OrdinaryObject {
+    /** [[Usage]] */
     private String usage;
 
-    /** [[locale]] */
+    /** [[Locale]] */
     private String locale;
 
-    /** [[collation]] */
+    /** [[Collation]] */
     private String collation;
 
-    /** [[numeric]] */
+    /** [[Numeric]] */
     private boolean numeric;
 
-    /** [[caseFirst]] */
+    /** [[CaseFirst]] */
     private String caseFirst;
 
-    /** [[sensitivity]] */
+    /** [[Sensitivity]] */
     private String sensitivity;
 
-    /** [[ignorePunctuation]] */
+    /** [[IgnorePunctuation]] */
     private boolean ignorePunctuation;
 
-    /** [[boundCompare]] */
+    /** [[BoundCompare]] */
     private Callable boundCompare;
 
     private Collator collator;
@@ -84,6 +84,16 @@ public class CollatorObject extends OrdinaryObject {
         case "lower":
             collator.setLowerCaseFirst(true);
             break;
+        case "false":
+            if (collator.isLowerCaseFirst()) {
+                collator.setLowerCaseFirst(false);
+            }
+            if (collator.isUpperCaseFirst()) {
+                collator.setUpperCaseFirst(false);
+            }
+            break;
+        default:
+            throw new AssertionError();
         }
         switch (sensitivity) {
         case "base":
@@ -99,13 +109,15 @@ public class CollatorObject extends OrdinaryObject {
         case "variant":
             collator.setStrength(Collator.TERTIARY);
             break;
+        default:
+            throw new AssertionError();
         }
         collator.setAlternateHandlingShifted(ignorePunctuation);
         return collator;
     }
 
     /**
-     * [[usage]]
+     * [[Usage]]
      * 
      * @return the usage field
      */
@@ -114,7 +126,7 @@ public class CollatorObject extends OrdinaryObject {
     }
 
     /**
-     * [[usage]]
+     * [[Usage]]
      * 
      * @param usage
      *            the new usage value
@@ -124,7 +136,7 @@ public class CollatorObject extends OrdinaryObject {
     }
 
     /**
-     * [[locale]]
+     * [[Locale]]
      * 
      * @return the locale
      */
@@ -133,7 +145,7 @@ public class CollatorObject extends OrdinaryObject {
     }
 
     /**
-     * [[locale]]
+     * [[Locale]]
      * 
      * @param locale
      *            the new locale
@@ -143,7 +155,7 @@ public class CollatorObject extends OrdinaryObject {
     }
 
     /**
-     * [[collation]]
+     * [[Collation]]
      * 
      * @return the collation kind
      */
@@ -152,7 +164,7 @@ public class CollatorObject extends OrdinaryObject {
     }
 
     /**
-     * [[collation]]
+     * [[Collation]]
      * 
      * @param collation
      *            the new collation
@@ -162,7 +174,7 @@ public class CollatorObject extends OrdinaryObject {
     }
 
     /**
-     * [[numeric]]
+     * [[Numeric]]
      * 
      * @return {@code true} if numeric collation should be performed
      */
@@ -171,7 +183,7 @@ public class CollatorObject extends OrdinaryObject {
     }
 
     /**
-     * [[numeric]]
+     * [[Numeric]]
      * 
      * @param numeric
      *            the new numeric value
@@ -181,7 +193,7 @@ public class CollatorObject extends OrdinaryObject {
     }
 
     /**
-     * [[caseFirst]]
+     * [[CaseFirst]]
      * 
      * @return the case-first value
      */
@@ -190,7 +202,7 @@ public class CollatorObject extends OrdinaryObject {
     }
 
     /**
-     * [[caseFirst]]
+     * [[CaseFirst]]
      * 
      * @param caseFirst
      *            the new case-first value
@@ -200,7 +212,7 @@ public class CollatorObject extends OrdinaryObject {
     }
 
     /**
-     * [[sensitivity]]
+     * [[Sensitivity]]
      * 
      * @return the sensitivity value
      */
@@ -209,7 +221,7 @@ public class CollatorObject extends OrdinaryObject {
     }
 
     /**
-     * [[sensitivity]]
+     * [[Sensitivity]]
      * 
      * @param sensitivity
      *            the new sensitivity value
@@ -219,7 +231,7 @@ public class CollatorObject extends OrdinaryObject {
     }
 
     /**
-     * [[ignorePunctuation]]
+     * [[IgnorePunctuation]]
      * 
      * @return the ignorePunctuation flag
      */
@@ -228,7 +240,7 @@ public class CollatorObject extends OrdinaryObject {
     }
 
     /**
-     * [[ignorePunctuation]]
+     * [[IgnorePunctuation]]
      * 
      * @param ignorePunctuation
      *            the new ignorePunctuation flag
@@ -238,7 +250,7 @@ public class CollatorObject extends OrdinaryObject {
     }
 
     /**
-     * [[boundCompare]]
+     * [[BoundCompare]]
      * 
      * @return the bound compare function
      */
@@ -247,12 +259,20 @@ public class CollatorObject extends OrdinaryObject {
     }
 
     /**
-     * [[boundCompare]]
+     * [[BoundCompare]]
      * 
      * @param boundCompare
      *            the new bound compare function
      */
     public void setBoundCompare(Callable boundCompare) {
         this.boundCompare = boundCompare;
+    }
+
+    @Override
+    public String toString() {
+        return String.format(
+                "%s, usage=%s, locale=%s, collation=%s, numeric=%b, caseFirst=%s, sensitivity=%s, ignorePunctuation=%b, collator=%s",
+                super.toString(), usage, locale, collation, numeric, caseFirst, sensitivity, ignorePunctuation,
+                collator);
     }
 }

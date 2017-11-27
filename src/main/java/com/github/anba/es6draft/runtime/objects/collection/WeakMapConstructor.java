@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -7,16 +7,20 @@
 package com.github.anba.es6draft.runtime.objects.collection;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.Get;
-import static com.github.anba.es6draft.runtime.AbstractOperations.GetScriptIterator;
+import static com.github.anba.es6draft.runtime.AbstractOperations.GetIterator;
 import static com.github.anba.es6draft.runtime.AbstractOperations.IsCallable;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
+import static com.github.anba.es6draft.runtime.objects.collection.CollectionAbstractOperations.CollectionCreate;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
+import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.Initializable;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
+import com.github.anba.es6draft.runtime.internal.Properties.CompatibilityExtension;
+import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
@@ -50,11 +54,7 @@ public final class WeakMapConstructor extends BuiltinConstructor implements Init
     @Override
     public void initialize(Realm realm) {
         createProperties(realm, this, Properties.class);
-    }
-
-    @Override
-    public WeakMapConstructor clone() {
-        return new WeakMapConstructor(getRealm());
+        createProperties(realm, this, OfAndFromProperties.class);
     }
 
     /**
@@ -70,36 +70,40 @@ public final class WeakMapConstructor extends BuiltinConstructor implements Init
      * 23.3.1.1 WeakMap ([ iterable ])
      */
     @Override
-    public WeakMapObject construct(ExecutionContext callerContext, Constructor newTarget,
-            Object... args) {
+    public WeakMapObject construct(ExecutionContext callerContext, Constructor newTarget, Object... args) {
         ExecutionContext calleeContext = calleeContext();
         Object iterable = argument(args, 0);
 
         /* step 1 (not applicable) */
-        /* steps 2-4 */
+        /* steps 2-3 */
         WeakMapObject map = OrdinaryCreateFromConstructor(calleeContext, newTarget, Intrinsics.WeakMapPrototype,
                 WeakMapObject::new);
-        /* steps 5-6, 8 */
+        /* steps 4-5, 7 */
         if (Type.isUndefinedOrNull(iterable)) {
             return map;
         }
-        /* step 7 */
+        /* step 6 */
         Object _adder = Get(calleeContext, map, "set");
         if (!IsCallable(_adder)) {
             throw newTypeError(calleeContext, Messages.Key.PropertyNotCallable, "set");
         }
         Callable adder = (Callable) _adder;
-        ScriptIterator<?> iter = GetScriptIterator(calleeContext, iterable);
-        /* step 9 */
+        ScriptIterator<?> iter = GetIterator(calleeContext, iterable);
+        /* step 8 */
         try {
             while (iter.hasNext()) {
+                /* steps 8.a-c */
                 Object nextItem = iter.next();
+                /* step 8.d */
                 if (!Type.isObject(nextItem)) {
                     throw newTypeError(calleeContext, Messages.Key.WeakMapPairNotObject);
                 }
                 ScriptObject item = Type.objectValue(nextItem);
+                /* steps 8.e-f */
                 Object k = Get(calleeContext, item, 0);
+                /* steps 8.g-h */
                 Object v = Get(calleeContext, item, 1);
+                /* steps 8.i-j */
                 adder.call(calleeContext, map, k, v);
             }
             return map;
@@ -118,19 +122,62 @@ public final class WeakMapConstructor extends BuiltinConstructor implements Init
         @Prototype
         public static final Intrinsics __proto__ = Intrinsics.FunctionPrototype;
 
-        @Value(name = "length", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = true))
+        @Value(name = "length", attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static final int length = 0;
 
-        @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = true))
+        @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static final String name = "WeakMap";
 
         /**
          * 23.3.2.1 WeakMap.prototype
          */
-        @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = false))
+        @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false, configurable = false))
         public static final Intrinsics prototype = Intrinsics.WeakMapPrototype;
+    }
+
+    /**
+     * Properties of the WeakMap Constructor
+     */
+    @CompatibilityExtension(CompatibilityOption.CollectionsOfAndFrom)
+    public enum OfAndFromProperties {
+        ;
+
+        /**
+         * WeakMap.of ( ...items )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param items
+         *            the element values
+         * @return the new WeakMap object
+         */
+        @Function(name = "of", arity = 1)
+        public static Object of(ExecutionContext cx, Object thisValue, Object... items) {
+            /* steps 1-4 */
+            return CollectionCreate(cx, thisValue, items);
+        }
+
+        /**
+         * WeakMap.from ( source [ , mapFn [ , thisArg ] ] )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @param source
+         *            the source object
+         * @param mapfn
+         *            the optional mapper function
+         * @param thisArg
+         *            the optional this-argument for the mapper
+         * @return the new WeakMap object
+         */
+        @Function(name = "from", arity = 1)
+        public static Object from(ExecutionContext cx, Object thisValue, Object source, Object mapfn, Object thisArg) {
+            /* steps 1-2 */
+            return CollectionCreate(cx, thisValue, source, mapfn, thisArg);
+        }
     }
 }

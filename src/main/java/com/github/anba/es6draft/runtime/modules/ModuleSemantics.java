@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -51,19 +51,17 @@ public final class ModuleSemantics {
      * @throws CompilationException
      *             if the parsed module source cannot be compiled
      */
-    public static ModuleRecord HostResolveImportedModule(ModuleRecord referencingModule,
-            String specifier) throws IOException, MalformedNameException, ResolutionException,
-            ParserException, CompilationException {
+    public static ModuleRecord HostResolveImportedModule(ModuleRecord referencingModule, String specifier)
+            throws IOException, MalformedNameException, ResolutionException, ParserException, CompilationException {
         Realm realm = referencingModule.getRealm();
         assert realm != null : "module is not linked";
         ModuleLoader moduleLoader = realm.getModuleLoader();
-        SourceIdentifier moduleId = moduleLoader.normalizeName(specifier,
-                referencingModule.getSourceCodeId());
+        SourceIdentifier moduleId = moduleLoader.normalizeName(specifier, referencingModule.getSourceCodeId());
         try {
             return moduleLoader.resolve(moduleId, realm);
         } catch (NoSuchFileException e) {
-            throw new ResolutionException(Messages.Key.ModulesUnresolvedModule,
-                    moduleId.toString(), referencingModule.getSourceCodeId().toString());
+            throw new ResolutionException(Messages.Key.ModulesUnresolvedModule, moduleId.toString(),
+                    referencingModule.getSourceCodeId().toString());
         }
     }
 
@@ -86,27 +84,33 @@ public final class ModuleSemantics {
             throws IOException, MalformedNameException, ResolutionException {
         /* step 1 (not applicable) */
         /* step 2 */
-        ScriptObject namespace = module.getNamespace();
+        // FIXME: spec bug - [[Status]] only defined for Source Text Module Records.
+        assert !(module instanceof SourceTextModuleRecord)
+                || ((SourceTextModuleRecord) module).getStatus() != SourceTextModuleRecord.Status.Uninstantiated;
         /* step 3 */
+        // FIXME: spec bug - [[Status]] only defined for Source Text Module Records.
+        assert !(module instanceof SourceTextModuleRecord)
+                || (((SourceTextModuleRecord) module).getStatus() != SourceTextModuleRecord.Status.Evaluated
+                        || ((SourceTextModuleRecord) module).getEvaluationError() == null);
+        /* step 4 */
+        ScriptObject namespace = module.getNamespace();
+        /* step 5 */
         if (namespace == null) {
-            /* steps 3.a-b */
+            /* step 5.a */
             Set<String> exportedNames = module.getExportedNames(new HashSet<>());
-            /* step 3.c */
+            /* step 5.b */
             Set<String> unambiguousNames = new HashSet<>();
-            /* step 3.d */
+            /* step 5.c */
             for (String name : exportedNames) {
-                ModuleExport resolution = module.resolveExport(name, new HashMap<>(), new HashSet<>());
-                if (resolution == null) {
-                    throw new ResolutionException(Messages.Key.ModulesUnresolvedExport, name);
-                }
-                if (!resolution.isAmbiguous()) {
+                ResolvedBinding resolution = module.resolveExport(name, new HashMap<>());
+                if (resolution != null && !resolution.isAmbiguous()) {
                     unambiguousNames.add(name);
                 }
             }
-            /* step 3.e */
+            /* step 5.d */
             namespace = ModuleNamespaceCreate(cx, module, unambiguousNames);
         }
-        /* step 4 */
+        /* step 6 */
         return namespace;
     }
 
@@ -130,9 +134,8 @@ public final class ModuleSemantics {
      * @throws ResolutionException
      *             if any export binding cannot be resolved
      */
-    public static void ModuleEvaluationJob(Realm realm, SourceIdentifier sourceCodeId,
-            ModuleSource source) throws IOException, MalformedNameException, ParserException,
-            CompilationException, ResolutionException {
+    public static void ModuleEvaluationJob(Realm realm, SourceIdentifier sourceCodeId, ModuleSource source)
+            throws IOException, MalformedNameException, ParserException, CompilationException, ResolutionException {
         ModuleLoader moduleLoader = realm.getModuleLoader();
         /* steps 1-2 (not applicable) */
         /* steps 3-5 */

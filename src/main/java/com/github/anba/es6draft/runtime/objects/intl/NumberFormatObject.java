@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -21,41 +21,41 @@ import com.ibm.icu.util.ULocale;
  * <li>11.5 Properties of Intl.NumberFormat Instances
  * </ul>
  */
-public class NumberFormatObject extends OrdinaryObject {
-    /** [[locale]] */
+public final class NumberFormatObject extends OrdinaryObject {
+    /** [[Locale]] */
     private String locale;
 
-    /** [[numberingSystem]] */
+    /** [[NumberingSystem]] */
     private String numberingSystem;
 
-    /** [[style]] */
+    /** [[Style]] */
     private String style;
 
-    /** [[currency]] */
+    /** [[Currency]] */
     private String currency;
 
-    /** [[currencyDisplay]] */
+    /** [[CurrencyDisplay]] */
     private String currencyDisplay;
 
-    /** [[minimumIntegerDigits]] */
+    /** [[MinimumIntegerDigits]] */
     private int minimumIntegerDigits;
 
-    /** [[minimumFractionDigits]] */
+    /** [[MinimumFractionDigits]] */
     private int minimumFractionDigits;
 
-    /** [[maximumFractionDigits]] */
+    /** [[MaximumFractionDigits]] */
     private int maximumFractionDigits;
 
-    /** [[minimumSignificantDigits]] */
+    /** [[MinimumSignificantDigits]] */
     private int minimumSignificantDigits;
 
-    /** [[maximumSignificantDigits]] */
+    /** [[MaximumSignificantDigits]] */
     private int maximumSignificantDigits;
 
-    /** [[useGrouping]] */
+    /** [[UseGrouping]] */
     private boolean useGrouping;
 
-    /** [[boundFormat]] */
+    /** [[BoundFormat]] */
     private Callable boundFormat;
 
     private NumberFormat numberFormat;
@@ -124,7 +124,7 @@ public class NumberFormatObject extends OrdinaryObject {
     }
 
     /**
-     * [[locale]]
+     * [[Locale]]
      * 
      * @return the locale
      */
@@ -133,7 +133,7 @@ public class NumberFormatObject extends OrdinaryObject {
     }
 
     /**
-     * [[locale]]
+     * [[Locale]]
      * 
      * @param locale
      *            the new locale
@@ -143,7 +143,7 @@ public class NumberFormatObject extends OrdinaryObject {
     }
 
     /**
-     * [[numberingSystem]]
+     * [[NumberingSystem]]
      * 
      * @return the numbering system
      */
@@ -152,7 +152,7 @@ public class NumberFormatObject extends OrdinaryObject {
     }
 
     /**
-     * [[numberingSystem]]
+     * [[NumberingSystem]]
      * 
      * @param numberingSystem
      *            the new numbering system
@@ -162,7 +162,7 @@ public class NumberFormatObject extends OrdinaryObject {
     }
 
     /**
-     * [[style]]
+     * [[Style]]
      * 
      * @return the number format style
      */
@@ -171,7 +171,7 @@ public class NumberFormatObject extends OrdinaryObject {
     }
 
     /**
-     * [[style]]
+     * [[Style]]
      * 
      * @param style
      *            the new number format style
@@ -181,7 +181,7 @@ public class NumberFormatObject extends OrdinaryObject {
     }
 
     /**
-     * [[currency]]
+     * [[Currency]]
      * 
      * @return the currency
      */
@@ -190,7 +190,7 @@ public class NumberFormatObject extends OrdinaryObject {
     }
 
     /**
-     * [[currency]]
+     * [[Currency]]
      * 
      * @param currency
      *            the new currency
@@ -200,7 +200,7 @@ public class NumberFormatObject extends OrdinaryObject {
     }
 
     /**
-     * [[currencyDisplay]]
+     * [[CurrencyDisplay]]
      * 
      * @return the currency display value
      */
@@ -209,7 +209,7 @@ public class NumberFormatObject extends OrdinaryObject {
     }
 
     /**
-     * [[currencyDisplay]]
+     * [[CurrencyDisplay]]
      * 
      * @param currencyDisplay
      *            the new currency display value
@@ -219,7 +219,7 @@ public class NumberFormatObject extends OrdinaryObject {
     }
 
     /**
-     * [[minimumIntegerDigits]]
+     * [[MinimumIntegerDigits]]
      * 
      * @return the minimum number of integer digits
      */
@@ -228,7 +228,7 @@ public class NumberFormatObject extends OrdinaryObject {
     }
 
     /**
-     * [[minimumIntegerDigits]]
+     * [[MinimumIntegerDigits]]
      * 
      * @param minimumIntegerDigits
      *            the new minimum number of integer digits
@@ -238,7 +238,7 @@ public class NumberFormatObject extends OrdinaryObject {
     }
 
     /**
-     * [[minimumFractionDigits]]
+     * [[MinimumFractionDigits]]
      * 
      * @return the minimum number of fraction digits
      */
@@ -247,7 +247,7 @@ public class NumberFormatObject extends OrdinaryObject {
     }
 
     /**
-     * [[minimumFractionDigits]]
+     * [[MinimumFractionDigits]]
      * 
      * @param minimumFractionDigits
      *            the new minimum number of fraction digits
@@ -257,7 +257,7 @@ public class NumberFormatObject extends OrdinaryObject {
     }
 
     /**
-     * [[maximumFractionDigits]]
+     * [[MaximumFractionDigits]]
      * 
      * @return the maximum number of fraction digits
      */
@@ -266,7 +266,7 @@ public class NumberFormatObject extends OrdinaryObject {
     }
 
     /**
-     * [[maximumFractionDigits]]
+     * [[MaximumFractionDigits]]
      * 
      * @param maximumFractionDigits
      *            the new maximum number of fraction digits
@@ -276,7 +276,7 @@ public class NumberFormatObject extends OrdinaryObject {
     }
 
     /**
-     * [[minimumSignificantDigits]]
+     * [[MinimumSignificantDigits]]
      * 
      * @return the minimum number of significant digits
      */
@@ -285,7 +285,7 @@ public class NumberFormatObject extends OrdinaryObject {
     }
 
     /**
-     * [[minimumSignificantDigits]]
+     * [[MinimumSignificantDigits]]
      * 
      * @param minimumSignificantDigits
      *            the new minimum number of significant digits
@@ -295,7 +295,7 @@ public class NumberFormatObject extends OrdinaryObject {
     }
 
     /**
-     * [[maximumSignificantDigits]]
+     * [[MaximumSignificantDigits]]
      * 
      * @return the maximum number of significant digits
      */
@@ -304,7 +304,7 @@ public class NumberFormatObject extends OrdinaryObject {
     }
 
     /**
-     * [[maximumSignificantDigits]]
+     * [[MaximumSignificantDigits]]
      * 
      * @param maximumSignificantDigits
      *            the new maximum number of significant digits
@@ -314,7 +314,7 @@ public class NumberFormatObject extends OrdinaryObject {
     }
 
     /**
-     * [[useGrouping]]
+     * [[UseGrouping]]
      * 
      * @return the grouping flag
      */
@@ -323,7 +323,7 @@ public class NumberFormatObject extends OrdinaryObject {
     }
 
     /**
-     * [[useGrouping]]
+     * [[UseGrouping]]
      * 
      * @param useGrouping
      *            the new grouping flag
@@ -333,7 +333,7 @@ public class NumberFormatObject extends OrdinaryObject {
     }
 
     /**
-     * [[boundFormat]]
+     * [[BoundFormat]]
      * 
      * @return the bound format function
      */
@@ -342,12 +342,23 @@ public class NumberFormatObject extends OrdinaryObject {
     }
 
     /**
-     * [[boundFormat]]
+     * [[BoundFormat]]
      * 
      * @param boundFormat
      *            the bound format function
      */
     public void setBoundFormat(Callable boundFormat) {
         this.boundFormat = boundFormat;
+    }
+
+    @Override
+    public String toString() {
+        return String.format(
+                "%s, locale=%s, numberingSystem=%s, style=%s, currency=%s, currencyDisplay=%s, "
+                        + "minimumIntegerDigits=%d, minimumFractionDigits=%d, maximumFractionDigits=%d, "
+                        + "minimumSignificantDigits=%d, maximumSignificantDigits=%d, useGrouping=%b, numberFormat=%s",
+                super.toString(), locale, numberingSystem, style, currency, currencyDisplay, minimumIntegerDigits,
+                minimumFractionDigits, maximumFractionDigits, minimumSignificantDigits, maximumSignificantDigits,
+                useGrouping, numberFormat);
     }
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -26,6 +26,7 @@ import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.objects.collection.MapIteratorObject.MapIterationKind;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
+import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.NativeFunction;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
@@ -61,12 +62,15 @@ public final class MapIteratorPrototype extends OrdinaryObject implements Initia
      *            the map object
      * @param kind
      *            the map iteration kind
+     * @param method
+     *            the method name
      * @return the new map iterator
      */
-    public static OrdinaryObject CreateMapIterator(ExecutionContext cx, Object obj, MapIterationKind kind) {
+    public static MapIteratorObject CreateMapIterator(ExecutionContext cx, Object obj, MapIterationKind kind,
+            String method) {
         /* steps 1-2 */
         if (!(obj instanceof MapObject)) {
-            throw newTypeError(cx, Messages.Key.IncompatibleObject);
+            throw newTypeError(cx, Messages.Key.IncompatibleThis, method, Type.of(obj).toString());
         }
         MapObject map = (MapObject) obj;
         /* steps 3-7 */
@@ -84,7 +88,7 @@ public final class MapIteratorPrototype extends OrdinaryObject implements Initia
      *            the map iteration kind
      * @return the new map iterator
      */
-    public static OrdinaryObject CreateMapIterator(ExecutionContext cx, Iterator<Entry<Object, Object>> iterator,
+    public static MapIteratorObject CreateMapIterator(ExecutionContext cx, Iterator<Entry<Object, Object>> iterator,
             MapIterationKind kind) {
         /* steps 1-7 */
         return new MapIteratorObject(cx.getRealm(), iterator, kind, cx.getIntrinsic(Intrinsics.MapIteratorPrototype));
@@ -132,7 +136,8 @@ public final class MapIteratorPrototype extends OrdinaryObject implements Initia
         public static Object next(ExecutionContext cx, Object thisValue) {
             /* steps 1-3 */
             if (!(thisValue instanceof MapIteratorObject)) {
-                throw newTypeError(cx, Messages.Key.IncompatibleObject);
+                throw newTypeError(cx, Messages.Key.IncompatibleThis, "%MapIteratorPrototype%.next",
+                        Type.of(thisValue).toString());
             }
             MapIteratorObject o = (MapIteratorObject) thisValue;
             /* steps 4-5 */

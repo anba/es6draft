@@ -1,15 +1,15 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
  */
 package com.github.anba.es6draft.ast;
 
+import com.github.anba.es6draft.ast.synthetic.ClassFieldInitializer;
 import com.github.anba.es6draft.ast.synthetic.ExpressionMethod;
 import com.github.anba.es6draft.ast.synthetic.MethodDefinitionsMethod;
 import com.github.anba.es6draft.ast.synthetic.PropertyDefinitionsMethod;
-import com.github.anba.es6draft.ast.synthetic.SpreadArrayLiteral;
 import com.github.anba.es6draft.ast.synthetic.SpreadElementMethod;
 import com.github.anba.es6draft.ast.synthetic.StatementListMethod;
 
@@ -49,6 +49,8 @@ public interface NodeVisitor<R, V> {
 
     R visit(AwaitExpression node, V value);
 
+    R visit(BigIntegerLiteral node, V value);
+
     R visit(BinaryExpression node, V value);
 
     R visit(BindingElement node, V value);
@@ -78,6 +80,10 @@ public interface NodeVisitor<R, V> {
     R visit(ClassDeclaration node, V value);
 
     R visit(ClassExpression node, V value);
+
+    R visit(ClassFieldDefinition node, V value);
+
+    R visit(ClassFieldInitializer node, V value);
 
     R visit(CommaExpression node, V value);
 
@@ -121,8 +127,6 @@ public interface NodeVisitor<R, V> {
 
     R visit(ForAwaitStatement node, V value);
 
-    R visit(ForEachStatement node, V value);
-
     R visit(ForInStatement node, V value);
 
     R visit(FormalParameter node, V value);
@@ -153,27 +157,19 @@ public interface NodeVisitor<R, V> {
 
     R visit(IfStatement node, V value);
 
+    R visit(ImportCallExpression node, V value);
+
     R visit(ImportClause node, V value);
 
     R visit(ImportDeclaration node, V value);
+
+    R visit(ImportMeta node, V value);
 
     R visit(ImportSpecifier node, V value);
 
     R visit(LabelledFunctionStatement node, V value);
 
     R visit(LabelledStatement node, V value);
-
-    R visit(LegacyComprehension node, V value);
-
-    R visit(LegacyComprehensionFor node, V value);
-
-    R visit(LegacyGeneratorDeclaration node, V value);
-
-    R visit(LegacyGeneratorExpression node, V value);
-
-    R visit(LetExpression node, V value);
-
-    R visit(LetStatement node, V value);
 
     R visit(LexicalBinding node, V value);
 
@@ -201,6 +197,10 @@ public interface NodeVisitor<R, V> {
 
     R visit(ObjectLiteral node, V value);
 
+    R visit(PrivateNameProperty node, V value);
+
+    R visit(PrivatePropertyAccessor node, V value);
+
     R visit(PropertyAccessor node, V value);
 
     R visit(PropertyDefinitionsMethod node, V value);
@@ -214,8 +214,6 @@ public interface NodeVisitor<R, V> {
     R visit(ReturnStatement node, V value);
 
     R visit(Script node, V value);
-
-    R visit(SpreadArrayLiteral node, V value);
 
     R visit(SpreadElement node, V value);
 
@@ -247,11 +245,15 @@ public interface NodeVisitor<R, V> {
 
     R visit(ThisExpression node, V value);
 
+    R visit(ThrowExpression node, V value);
+
     R visit(ThrowStatement node, V value);
 
     R visit(TryStatement node, V value);
 
     R visit(UnaryExpression node, V value);
+
+    R visit(UpdateExpression node, V value);
 
     R visit(VariableDeclaration node, V value);
 

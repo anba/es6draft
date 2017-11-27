@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -56,18 +56,19 @@ public interface ModuleRecord {
     void setNamespace(ScriptObject namespace);
 
     /**
-     * [[Evaluated]]
+     * [[Meta]]
      * 
-     * @return {@code true} if module evaluation has started
+     * @return the module meta object or {@code null}
      */
-    boolean isEvaluated();
+    ScriptObject getMeta();
 
     /**
-     * Returns {@code true} if the module is instantiated.
+     * [[Meta]]
      * 
-     * @return {@code true} if the module is instantiated
+     * @param meta
+     *            the module meta object
      */
-    boolean isInstantiated();
+    void setMeta(ScriptObject meta);
 
     /**
      * GetExportedNames(exportStarSet)
@@ -82,17 +83,15 @@ public interface ModuleRecord {
      * @throws ResolutionException
      *             if the export cannot be resolved
      */
-    Set<String> getExportedNames(Set<ModuleRecord> exportStarSet) throws IOException,
-            MalformedNameException, ResolutionException;
+    Set<String> getExportedNames(Set<ModuleRecord> exportStarSet)
+            throws IOException, MalformedNameException, ResolutionException;
 
     /**
-     * ResolveExport(exportName, resolveSet, exportStarSet)
+     * ResolveExport(exportName, resolveSet)
      * 
      * @param exportName
      *            the requested export name
      * @param resolveSet
-     *            the list of previously visited modules
-     * @param exportStarSet
      *            the list of previously visited modules
      * @return the resolved export binding
      * @throws IOException
@@ -102,9 +101,8 @@ public interface ModuleRecord {
      * @throws ResolutionException
      *             if the export cannot be resolved
      */
-    ModuleExport resolveExport(String exportName, Map<ModuleRecord, Set<String>> resolveSet,
-            Set<ModuleRecord> exportStarSet) throws IOException, MalformedNameException,
-            ResolutionException;
+    ResolvedBinding resolveExport(String exportName, Map<ModuleRecord, Set<String>> resolveSet)
+            throws IOException, MalformedNameException, ResolutionException;
 
     /**
      * ModuleDeclarationInstantiation()

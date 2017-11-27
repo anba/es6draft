@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -20,20 +20,22 @@ import com.github.anba.es6draft.runtime.modules.ModuleSource;
  * 
  */
 public final class URLModuleSource implements ModuleSource {
-    private final URLSourceIdentifier sourceId;
+    private final URL sourceURL;
+    private final String sourceName;
 
-    public URLModuleSource(URLSourceIdentifier sourceId) {
-        this.sourceId = sourceId;
+    public URLModuleSource(URL sourceURL, String sourceName) {
+        this.sourceURL = sourceURL;
+        this.sourceName = sourceName;
     }
 
     @Override
     public String sourceCode() throws IOException {
-        return readFully(sourceId.getURL());
+        return readFully(sourceURL);
     }
 
     @Override
     public Source toSource() {
-        return new Source(sourceId.toUri().toString(), 1);
+        return new Source(new URLSourceIdentifier(sourceURL), sourceName, 1);
     }
 
     private static String readFully(URL url) throws IOException {

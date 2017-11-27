@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -17,30 +17,26 @@ import com.github.anba.es6draft.ast.scope.Name;
  * <li>14.4 Generator Functions Definitions
  * </ul>
  */
-public class GeneratorDeclaration extends HoistableDeclaration implements GeneratorDefinition {
+public final class GeneratorDeclaration extends HoistableDeclaration implements GeneratorDefinition {
     private final FunctionScope scope;
-    private final GeneratorKind kind;
     private final BindingIdentifier identifier;
     private final Name name;
     private final FormalParameterList parameters;
     private List<StatementListItem> statements;
     private final String functionName;
-    private final String headerSource, bodySource;
+    private final String source;
     private StrictMode strictMode;
 
-    public GeneratorDeclaration(long beginPosition, long endPosition, FunctionScope scope, GeneratorKind kind,
-            BindingIdentifier identifier, FormalParameterList parameters, List<StatementListItem> statements,
-            String functionName, String headerSource, String bodySource) {
+    public GeneratorDeclaration(long beginPosition, long endPosition, FunctionScope scope, BindingIdentifier identifier,
+            FormalParameterList parameters, List<StatementListItem> statements, String functionName, String source) {
         super(beginPosition, endPosition);
         this.scope = scope;
-        this.kind = kind;
         this.identifier = identifier;
         this.name = identifier != null ? identifier.getName() : new Name(Name.DEFAULT_EXPORT);
         this.parameters = parameters;
         this.statements = statements;
         this.functionName = functionName;
-        this.headerSource = headerSource;
-        this.bodySource = bodySource;
+        this.source = source;
     }
 
     @Override
@@ -104,13 +100,8 @@ public class GeneratorDeclaration extends HoistableDeclaration implements Genera
     }
 
     @Override
-    public String getHeaderSource() {
-        return headerSource;
-    }
-
-    @Override
-    public String getBodySource() {
-        return bodySource;
+    public String getSource() {
+        return source;
     }
 
     @Override
@@ -130,7 +121,7 @@ public class GeneratorDeclaration extends HoistableDeclaration implements Genera
 
     @Override
     public boolean isConstructor() {
-        return kind == GeneratorKind.Constructor;
+        return false;
     }
 
     @Override

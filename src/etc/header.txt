@@ -1,4 +1,4 @@
-Copyright (c) ${year} ${name}
+Copyright (c) ${name}
 Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
 
 <${url}>

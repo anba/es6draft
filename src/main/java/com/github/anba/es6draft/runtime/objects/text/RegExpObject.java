@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -10,6 +10,8 @@ import java.util.Objects;
 
 import com.github.anba.es6draft.regexp.RegExpMatcher;
 import com.github.anba.es6draft.runtime.Realm;
+import com.github.anba.es6draft.runtime.types.Property;
+import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
@@ -30,14 +32,29 @@ public final class RegExpObject extends OrdinaryObject {
     /** [[RegExpMatcher]] */
     private RegExpMatcher regExpMatcher;
 
+    /** [[Realm]] */
+    private final Realm realm;
+
+    /** [[LegacyFeaturesEnabled]] */
+    private final boolean legacyFeaturesEnabled;
+
+    private final Property lastIndex;
+
     /**
      * Constructs a new RegExp object.
      * 
      * @param realm
      *            the realm object
+     * @param legacyFeaturesEnabled
+     *            the legacyFeaturesEnabled flag
+     * @param prototype
+     *            the prototype object
      */
-    public RegExpObject(Realm realm) {
-        super(realm);
+    public RegExpObject(Realm realm, boolean legacyFeaturesEnabled, ScriptObject prototype) {
+        super(realm, prototype);
+        this.realm = realm;
+        this.legacyFeaturesEnabled = legacyFeaturesEnabled;
+        infallibleDefineOwnProperty("lastIndex", lastIndex = new Property(0, true, false, false));
     }
 
     void initialize(String originalSource, String originalFlags, RegExpMatcher matcher) {
@@ -48,7 +65,7 @@ public final class RegExpObject extends OrdinaryObject {
     }
 
     enum Flags {
-        Global, IgnoreCase, Multiline, Sticky, Unicode;
+        Global, IgnoreCase, Multiline, Sticky, Unicode, DotAll;
 
         int mask() {
             return 1 << ordinal();
@@ -66,6 +83,8 @@ public final class RegExpObject extends OrdinaryObject {
                 return IgnoreCase;
             case 'm':
                 return Multiline;
+            case 's':
+                return DotAll;
             case 'u':
                 return Unicode;
             case 'y':
@@ -86,6 +105,18 @@ public final class RegExpObject extends OrdinaryObject {
 
     boolean isSet(Flags flag) {
         return flag.isSet(flags);
+    }
+
+    Property getLastIndex() {
+        return lastIndex;
+    }
+
+    Realm getRealm() {
+        return realm;
+    }
+
+    boolean isLegacyFeaturesEnabled() {
+        return legacyFeaturesEnabled;
     }
 
     /**

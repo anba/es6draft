@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -50,7 +50,7 @@ public final class IntlAbstractOperations {
      */
     public static String ToUpperCase(String s) {
         char[] ca = s.toCharArray();
-        for (int i = 0, len = ca.length; i < len; ++i) {
+        for (int i = 0; i < ca.length; ++i) {
             char c = ca[i];
             if ('a' <= c && c <= 'z') {
                 c = (char) (c - ('a' - 'A'));
@@ -233,7 +233,7 @@ public final class IntlAbstractOperations {
         if (tag == null) {
             return DEFAULT_LOCALE;
         }
-        String locale = RemoveUnicodeLocaleExtension(tag.canonicalize());
+        String locale = RemoveUnicodeLocaleExtension(CanonicalizeLanguageTag(tag));
         locale = BestLocale(GetAvailableLocales(LanguageData.getAvailableCollatorLocales()), locale);
         if (locale == null) {
             return DEFAULT_LOCALE;
@@ -243,6 +243,10 @@ public final class IntlAbstractOperations {
             return DEFAULT_LOCALE;
         }
         locale = BestLocale(GetAvailableLocales(LanguageData.getAvailableNumberFormatLocales()), locale);
+        if (locale == null) {
+            return DEFAULT_LOCALE;
+        }
+        locale = BestLocale(GetAvailableLocales(LanguageData.getAvailablePluralRulesLocales()), locale);
         if (locale == null) {
             return DEFAULT_LOCALE;
         }
@@ -342,7 +346,11 @@ public final class IntlAbstractOperations {
         }
         /* step 4 */
         return ianaTimeZone;
+        // FIXME: spec bug - remove or reword this note from 6.4.2 CanonicalizeTimeZoneName: "Implementations shall
+        // support UTC and the host environment’s current time zone (if different from UTC) in formatting." ?
     }
+
+    private static final String DEFAULT_TIMEZONE = "UTC";
 
     /**
      * 6.4.3 DefaultTimeZone ()
@@ -352,46 +360,41 @@ public final class IntlAbstractOperations {
      * @return the default time zone
      */
     public static String DefaultTimeZone(Realm realm) {
-        return realm.getTimeZone().getID();
+        String timeZone = realm.getTimeZone().getID();
+        if (!IsValidTimeZoneName(timeZone)) {
+            return DEFAULT_TIMEZONE;
+        }
+        return CanonicalizeTimeZoneName(timeZone);
     }
 
-    private static final HashMap<String, String[]> oldStyleLanguageTags;
-
-    static {
-        // generated from CLDR-2.0.0
-        HashMap<String, String[]> map = new HashMap<>();
-        map.put("az-Latn-AZ", new String[] { "az-AZ" });
-        map.put("ha-Latn-GH", new String[] { "ha-GH" });
-        map.put("ha-Latn-NE", new String[] { "ha-NE" });
-        map.put("ha-Latn-NG", new String[] { "ha-NG" });
-        map.put("kk-Cyrl-KZ", new String[] { "kk-KZ" });
-        map.put("ku-Arab-IQ", new String[] { "ku-IQ" });
-        map.put("ku-Arab-IR", new String[] { "ku-IR" });
-        map.put("ku-Latn-SY", new String[] { "ku-SY" });
-        map.put("ku-Latn-TR", new String[] { "ku-TR" });
-        map.put("mn-Mong-CN", new String[] { "mn-CN" });
-        map.put("mn-Cyrl-MN", new String[] { "mn-MN" });
-        map.put("pa-Guru-IN", new String[] { "pa-IN" });
-        map.put("pa-Arab-PK", new String[] { "pa-PK" });
-        map.put("shi-Latn-MA", new String[] { "shi-MA" });
-        map.put("sr-Latn-BA", new String[] { "sh-BA" });
-        map.put("sr-Latn-RS", new String[] { "sh-CS", "sh-YU" });
-        map.put("sr-Cyrl-BA", new String[] { "sr-BA" });
-        map.put("sr-Cyrl-RS", new String[] { "sr-CS", "sr-RS", "sr-YU" });
-        map.put("sr-Latn-ME", new String[] { "sr-ME" });
-        map.put("tg-Cyrl-TJ", new String[] { "tg-TJ" });
-        map.put("fil-PH", new String[] { "tl-PH" });
-        map.put("tzm-Latn-MA", new String[] { "tzm-MA" });
-        map.put("uz-Arab-AF", new String[] { "uz-AF" });
-        map.put("uz-Cyrl-UZ", new String[] { "uz-UZ" });
-        map.put("vai-Vaii-LR", new String[] { "vai-LR" });
-        map.put("zh-Hans-CN", new String[] { "zh-CN" });
-        map.put("zh-Hant-HK", new String[] { "zh-HK" });
-        map.put("zh-Hant-MO", new String[] { "zh-MO" });
-        map.put("zh-Hans-SG", new String[] { "zh-SG" });
-        map.put("zh-Hant-TW", new String[] { "zh-TW" });
-        oldStyleLanguageTags = map;
-    }
+    // FIXME: spec issue - comment in 9.1 unclear:
+    // "For locales that in current usage would include a script subtag (such as Chinese locales), old-style language
+    // tags without script subtags must be included [...]"
+    // Maybe provide list of 'old-style language tags'?
+    /* @formatter:off */
+    // Generated from CLDR 32
+    private static final String[] oldStyleLanguageTags = {
+        "az-Latn-AZ", "az-AZ",
+        "bs-Latn-BA", "bs-BA",
+        "pa-Guru-IN", "pa-IN",
+        "pa-Arab-PK", "pa-PK",
+        "shi-Tfng-MA", "shi-MA",
+        "sr-Cyrl-BA", "sr-BA",
+        "sr-Latn-ME", "sr-ME",
+        "sr-Cyrl-RS", "sr-RS",
+        "sr-Cyrl-XK", "sr-XK",
+        "uz-Arab-AF", "uz-AF",
+        "uz-Latn-UZ", "uz-UZ",
+        "vai-Vaii-LR", "vai-LR",
+        "yue-Hans-CN", "yue-CN",
+        "yue-Hant-HK", "yue-HK",
+        "zh-Hans-CN", "zh-CN",
+        "zh-Hant-HK", "zh-HK",
+        "zh-Hant-MO", "zh-MO",
+        "zh-Hans-SG", "zh-SG",
+        "zh-Hant-TW", "zh-TW",
+    };
+    /* @formatter:on */
 
     /**
      * 9.1 Internal Properties of Service Constructors
@@ -401,11 +404,11 @@ public final class IntlAbstractOperations {
      * @return the set of available locales
      */
     public static Set<String> GetAvailableLocales(Collection<String> locales) {
-        HashMap<String, String[]> oldTags = oldStyleLanguageTags;
+        String[] oldTags = oldStyleLanguageTags;
         HashSet<String> available = new LRUHashSet(locales);
-        for (Map.Entry<String, String[]> oldTag : oldTags.entrySet()) {
-            if (available.contains(oldTag.getKey())) {
-                available.addAll(Arrays.asList(oldTag.getValue()));
+        for (int i = 0; i < oldTags.length; i += 2) {
+            if (available.contains(oldTags[i])) {
+                available.add(oldTags[i + 1]);
             }
         }
         return available;
@@ -446,6 +449,9 @@ public final class IntlAbstractOperations {
         /** collation */
         co,
 
+        /** hourCycle */
+        hc,
+
         /** colCaseFirst */
         kf,
 
@@ -458,13 +464,18 @@ public final class IntlAbstractOperations {
         static ExtensionKey forName(String name, int index) {
             assert index + 2 <= name.length();
             char c0 = name.charAt(index), c1 = name.charAt(index + 1);
-            if (c0 == 'c') {
+            switch (c0) {
+            case 'c':
                 return c1 == 'a' ? ca : c1 == 'o' ? co : null;
-            }
-            if (c0 == 'k') {
+            case 'h':
+                return c1 == 'c' ? hc : null;
+            case 'k':
                 return c1 == 'f' ? kf : c1 == 'n' ? kn : null;
+            case 'n':
+                return c1 == 'u' ? nu : null;
+            default:
+                return null;
             }
-            return c0 == 'n' && c1 == 'u' ? nu : null;
         }
     }
 
@@ -657,21 +668,20 @@ public final class IntlAbstractOperations {
      */
     public static LocaleMatch LookupMatcher(Realm realm, Lazy<Set<String>> availableLocales,
             Set<String> requestedLocales) {
-        /* steps 1-5 */
+        /* step 2 */
         for (String locale : requestedLocales) {
-            /* step 5.a (not applicable) */
-            /* step 5.b */
+            /* step 2.a */
             LanguageTagUnicodeExtension unicodeExt = UnicodeLocaleExtSequence(locale);
             String noExtensionsLocale = unicodeExt.getLanguageTag();
-            /* step 5.c */
+            /* step 2.b */
             String availableLocale = BestAvailableLocale(availableLocales.get(), noExtensionsLocale);
+            /* step 2.c */
             if (availableLocale != null) {
-                /* steps 6-7, 9 */
+                /* steps 1, 2.c.i-iii */
                 return new LocaleMatch(availableLocale, unicodeExt);
             }
-            /* step 5.d (not applicable) */
         }
-        /* steps 6, 8-9 */
+        /* steps 1, 3-5 */
         return new LocaleMatch(DefaultLocale(realm));
     }
 
@@ -752,7 +762,7 @@ public final class IntlAbstractOperations {
         LocaleEntry entry = maximizedLocales.get(locale);
         if (entry == null) {
             entry = createLocaleEntry(matcher, locale);
-            maximizedLocales.put(locale, entry);
+            maximizedLocales.putIfAbsent(locale, entry);
         }
         return entry;
     }
@@ -1016,13 +1026,18 @@ public final class IntlAbstractOperations {
     }
 
     /**
-     * 9.2.5 UnicodeExtensionSubtags (extension)
+     * 9.2.5 UnicodeExtensionValue ( extension, key )
      * 
      * @param extension
      *            the Unicode locale extension sequence
      * @return the map <code>&laquo; extension key &rarr; extension value &raquo;</code>
      */
-    public static EnumMap<ExtensionKey, String> UnicodeExtensionSubtags(String extension) {
+    public static EnumMap<ExtensionKey, String> UnicodeExtensionValues(String extension) {
+        // Return early if no extensions are present.
+        if (extension.isEmpty()) {
+            return null;
+        }
+
         /*
          * http://unicode.org/reports/tr35/#Unicode_locale_identifier
          *
@@ -1097,7 +1112,7 @@ public final class IntlAbstractOperations {
     public static ResolvedLocale ResolveLocale(Realm realm, Lazy<Set<String>> availableLocales,
             Set<String> requestedLocales, OptionsRecord options, List<ExtensionKey> relevantExtensionKeys,
             LocaleData localeData) {
-        /* steps 1-4 */
+        /* steps 1-3 */
         OptionsRecord.MatcherType matcher = options.getLocaleMatcher();
         LocaleMatch r;
         if (matcher == OptionsRecord.MatcherType.Lookup) {
@@ -1105,125 +1120,93 @@ public final class IntlAbstractOperations {
         } else {
             r = BestFitMatcher(realm, availableLocales, requestedLocales);
         }
-        // fast path for steps 5-16
-        String extension = r.getExtension();
-        if (extension.isEmpty() && options.size() == 0) {
-            return ResolveLocaleNoExtension(r, relevantExtensionKeys, localeData);
-        }
-        /* step 5 */
+        /* step 4 */
         String foundLocale = r.getLocale();
+        /* steps 5-6 (moved) */
+        /* steps 8.a-b */
         LocaleDataInfo foundLocaleData = localeData.info(ULocale.forLanguageTag(foundLocale));
-        /* step 6 */
-        EnumMap<ExtensionKey, String> extensionSubtags = null;
-        if (!extension.isEmpty()) {
-            extensionSubtags = UnicodeExtensionSubtags(extension);
-        }
-        /* steps 7-8 (not applicable) */
-        /* step 9 */
-        StringBuilder supportedExtension = new StringBuilder("-u");
-        /* steps 10-13 */
+
+        // Fast path for steps 7-9 when no Unicode extensions and options are present.
         EnumMap<ExtensionKey, String> values = new EnumMap<>(ExtensionKey.class);
-        for (ExtensionKey key : relevantExtensionKeys) {
-            /* steps 13.a-b (not applicable) */
-            /* step 13.c */
-            List<String> keyLocaleData = foundLocaleData.entries(key);
-            /* step 13.d */
-            String value = keyLocaleData.get(0);
-            /* step 13.e */
-            String supportedExtensionAddition = "";
-            /* steps 13.f, 13.f.i-ii */
-            if (extensionSubtags != null && extensionSubtags.containsKey(key)) {
-                /* steps 13.f.ii.1-2 */
-                if (!extensionSubtags.get(key).isEmpty()) {
-                    /* step 13.f.ii.1 */
-                    String requestedValue = extensionSubtags.get(key);
-                    if (keyLocaleData.contains(requestedValue)) {
-                        value = requestedValue;
-                        supportedExtensionAddition = "-" + key.name() + "-" + value;
+        if (r.getExtension().isEmpty() && options.size() == 0) {
+            /* step 7 (not applicable) */
+            /* step 8 */
+            for (ExtensionKey key : relevantExtensionKeys) {
+                values.put(key, foundLocaleData.defaultValue(key));
+            }
+            /* step 9 (not applicable) */
+        } else {
+            /* step 7 */
+            StringBuilder supportedExtension = new StringBuilder("-u");
+            /* step 8 */
+            EnumMap<ExtensionKey, String> extensionValues = UnicodeExtensionValues(r.getExtension());
+            for (ExtensionKey key : relevantExtensionKeys) {
+                /* steps 8.c-d */
+                List<String> keyLocaleData = foundLocaleData.entries(key);
+                /* steps 8.e-f */
+                String value = keyLocaleData.get(0);
+                /* step 8.g */
+                String supportedExtensionAddition = "";
+                /* step 8.h */
+                if (extensionValues != null) {
+                    /* step 8.h.i */
+                    String requestedValue = extensionValues.get(key);
+                    /* step 8.h.ii */
+                    if (requestedValue != null) {
+                        /* steps 8.h.ii.1-2 */
+                        if (!requestedValue.isEmpty()) {
+                            /* step 8.h.ii.1 */
+                            if (keyLocaleData.contains(requestedValue)) {
+                                value = requestedValue;
+                                supportedExtensionAddition = "-" + key.name() + "-" + value;
+                            }
+                        } else if (keyLocaleData.contains("true")) {
+                            /* step 8.h.ii.2 */
+                            value = "true";
+                        }
                     }
-                } else if (keyLocaleData.contains("true")) {
-                    /* step 13.f.ii.2 */
-                    value = "true";
                 }
-            }
-            /* step 13.g */
-            if (options.contains(key)) {
-                /* step 13.g.i */
-                String optionsValue = options.get(key);
-                /* step 13.g.ii */
-                if (keyLocaleData.contains(optionsValue) && !optionsValue.equals(value)) {
-                    value = optionsValue;
-                    supportedExtensionAddition = "";
+                /* step 8.i */
+                if (options.contains(key)) {
+                    /* steps 8.i.i-ii */
+                    String optionsValue = options.get(key);
+                    /* step 8.i.iii */
+                    if (optionsValue != null && keyLocaleData.contains(optionsValue) && !optionsValue.equals(value)) {
+                        value = optionsValue;
+                        supportedExtensionAddition = "";
+                    }
                 }
+                /* step 8.j */
+                values.put(key, value);
+                /* step 8.k */
+                supportedExtension.append(supportedExtensionAddition);
             }
-            /* step 13.h */
-            values.put(key, value);
-            /* step 13.i */
-            supportedExtension.append(supportedExtensionAddition);
-            /* step 13.j (not applicable) */
-        }
-        /* step 14 */
-        if (supportedExtension.length() > 2) {
-            // FIXME: spec bug - https://bugs.ecmascript.org/show_bug.cgi?id=1456
-            /* step 14.a */
-            int privateIndex = foundLocale.indexOf("-x-");
-            /* steps 14.b-c */
-            if (privateIndex == -1) {
-                /* step 14.b */
-                foundLocale += supportedExtension;
-            } else {
-                /* step 14.c */
-                /* step 14.c.i */
-                String preExtension = foundLocale.substring(0, privateIndex);
-                /* step 14.c.ii */
-                String postExtension = foundLocale.substring(privateIndex);
-                /* step 14.c.iii */
-                foundLocale = preExtension + supportedExtension + postExtension;
+            /* step 9 */
+            if (supportedExtension.length() > 2) {
+                /* step 9.a */
+                int privateIndex = foundLocale.indexOf("-x-");
+                /* steps 9.b-c */
+                if (privateIndex == -1) {
+                    /* step 9.b */
+                    foundLocale += supportedExtension;
+                } else {
+                    /* step 9.c */
+                    /* step 9.c.i */
+                    String preExtension = foundLocale.substring(0, privateIndex);
+                    /* step 9.c.ii */
+                    String postExtension = foundLocale.substring(privateIndex);
+                    /* step 9.c.iii */
+                    foundLocale = preExtension + supportedExtension + postExtension;
+                }
+                /* step 9.d */
+                LanguageTag languageTag = IsStructurallyValidLanguageTag(foundLocale);
+                assert languageTag != null : foundLocale;
+                /* step 9.e */
+                foundLocale = CanonicalizeLanguageTag(languageTag);
             }
-            /* step 14.d */
-            LanguageTag languageTag = IsStructurallyValidLanguageTag(foundLocale);
-            assert languageTag != null : foundLocale;
-            /* step 14.e */
-            foundLocale = CanonicalizeLanguageTag(languageTag);
         }
-        /* steps 15-16 */
+        /* steps 5-6, 10-11 */
         return new ResolvedLocale(r.getLocale(), foundLocale, values);
-    }
-
-    /**
-     * 9.2.6 ResolveLocale (availableLocales, requestedLocales, options, relevantExtensionKeys, localeData)
-     * 
-     * @param realm
-     *            the realm record
-     * @param relevantExtensionKeys
-     *            the list of relevant extension keys
-     * @param localeData
-     *            the locale data
-     * @return the resolved locale
-     */
-    public static ResolvedLocale ResolveDefaultLocale(Realm realm, List<ExtensionKey> relevantExtensionKeys,
-            LocaleData localeData) {
-        /* steps 1-4 */
-        LocaleMatch r = new LocaleMatch(DefaultLocale(realm));
-        /* steps 5-17 */
-        return ResolveLocaleNoExtension(r, relevantExtensionKeys, localeData);
-    }
-
-    private static ResolvedLocale ResolveLocaleNoExtension(LocaleMatch r, List<ExtensionKey> relevantExtensionKeys,
-            LocaleData localeData) {
-        /* steps 1-4 (not applicable) */
-        /* step 5 */
-        LocaleDataInfo foundLocaleData = localeData.info(ULocale.forLanguageTag(r.getLocale()));
-        /* steps 6-8 (not applicable) */
-        assert r.getExtension().isEmpty();
-        /* steps 9-13 */
-        EnumMap<ExtensionKey, String> values = new EnumMap<>(ExtensionKey.class);
-        for (ExtensionKey key : relevantExtensionKeys) {
-            values.put(key, foundLocaleData.defaultValue(key));
-        }
-        /* step 14 (not applicable) */
-        /* steps 15-16 */
-        return new ResolvedLocale(r.getLocale(), r.getLocale(), values);
     }
 
     /**
@@ -1251,21 +1234,20 @@ public final class IntlAbstractOperations {
             }
             return emptyList();
         }
-        /* steps 1-5 */
+        /* step 1 */
         ArrayList<String> subset = new ArrayList<>();
+        /* step 2 */
         for (String locale : requestedLocales) {
-            /* step 5.a (not applicable) */
-            /* step 5.b */
+            /* step 2.a */
             String noExtensionsLocale = RemoveUnicodeLocaleExtension(locale);
-            /* step 5.c */
+            /* step 2.b */
             String availableLocale = BestAvailableLocale(availableLocales, noExtensionsLocale);
-            /* step 5.d */
+            /* step 2.c */
             if (availableLocale != null) {
                 subset.add(locale);
             }
-            /* step 5.e (not applicable) */
         }
-        /* step 6 */
+        /* step 3 */
         return subset;
     }
 
@@ -1327,20 +1309,22 @@ public final class IntlAbstractOperations {
      */
     public static ScriptObject SupportedLocales(ExecutionContext cx, Set<String> availableLocales,
             Set<String> requestedLocales, Object options) {
-        /* step 1 */
-        String matcher = null;
+        /* steps 1-2 */
+        String matcher;
         if (!Type.isUndefined(options)) {
-            matcher = GetStringOption(cx, ToObject(cx, options), "localeMatcher", set("lookup", "best fit"),
-                    "best fit");
+            ScriptObject optionsObj = ToObject(cx, options);
+            matcher = GetStringOption(cx, optionsObj, "localeMatcher", set("lookup", "best fit"), "best fit");
+        } else {
+            matcher = "best fit";
         }
-        /* steps 2-5 */
+        /* steps 3-4 */
         List<String> supportedLocales;
-        if (matcher == null || "best fit".equals(matcher)) {
+        if ("best fit".equals(matcher)) {
             supportedLocales = BestFitSupportedLocales(availableLocales, requestedLocales);
         } else {
             supportedLocales = LookupSupportedLocales(availableLocales, requestedLocales);
         }
-        /* steps 6-8 */
+        /* steps 5-7 */
         ArrayObject subset = ArrayCreate(cx, supportedLocales.size());
         int index = 0;
         for (Object value : supportedLocales) {
@@ -1350,7 +1334,7 @@ public final class IntlAbstractOperations {
         nonConfigurableWritable.setConfigurable(false);
         nonConfigurableWritable.setWritable(false);
         subset.defineOwnProperty(cx, "length", nonConfigurableWritable);
-        /* step 9 */
+        /* step 8 */
         return subset;
     }
 
@@ -1371,22 +1355,21 @@ public final class IntlAbstractOperations {
      */
     public static String GetStringOption(ExecutionContext cx, ScriptObject options, String property, Set<String> values,
             String fallback) {
-        /* step 1 (not applicable) */
-        /* step 2 */
+        /* step 1 */
         Object value = Get(cx, options, property);
-        /* step 3 */
+        /* step 2 */
         if (!Type.isUndefined(value)) {
-            /* steps 3.a-b (not applicable) */
-            /* step 3.c */
+            /* steps 2.a-b (not applicable) */
+            /* step 2.c */
             String val = ToFlatString(cx, value);
-            /* step 3.d */
+            /* step 2.d */
             if (values != null && !values.contains(val)) {
-                throw newRangeError(cx, Messages.Key.IntlInvalidOption, val);
+                throw newRangeError(cx, Messages.Key.IntlInvalidOption, val, property);
             }
-            /* step 3.e */
+            /* step 2.e */
             return val;
         }
-        /* step 4 */
+        /* step 3 */
         return fallback;
     }
 
@@ -1405,21 +1388,56 @@ public final class IntlAbstractOperations {
      */
     public static Boolean GetBooleanOption(ExecutionContext cx, ScriptObject options, String property,
             Boolean fallback) {
-        /* step 1 (not applicable) */
-        /* step 2 */
+        /* step 1 */
         Object value = Get(cx, options, property);
-        /* step 3 */
+        /* step 2 */
         if (!Type.isUndefined(value)) {
-            /* steps 3.a, c-d (not applicable) */
-            /* steps 3.b, e */
+            /* steps 2.a, c-d (not applicable) */
+            /* steps 2.b, e */
             return ToBoolean(value);
         }
-        /* step 4 */
+        /* step 3 */
         return fallback;
     }
 
     /**
-     * 9.2.11 GetNumberOption (options, property, minimum, maximum, fallback)
+     * 9.2.11 DefaultNumberOption ( value, minimum, maximum, fallback )
+     * 
+     * @param cx
+     *            the execution context
+     * @param property
+     *            the property name
+     * @param value
+     *            the property value
+     * @param minimum
+     *            the minimum value
+     * @param maximum
+     *            the maximum value
+     * @param fallback
+     *            the fallback value
+     * @return the number option
+     */
+    public static int DefaultNumberOption(ExecutionContext cx, String property, Object value, int minimum, int maximum,
+            int fallback) {
+        assert minimum <= maximum;
+        assert minimum <= fallback && fallback <= maximum;
+        /* step 1 */
+        if (!Type.isUndefined(value)) {
+            /* step 1.a */
+            double val = ToNumber(cx, value);
+            /* step 1.b */
+            if (Double.isNaN(val) || val < minimum || val > maximum) {
+                throw newRangeError(cx, Messages.Key.IntlInvalidValue, ToString(val), property);
+            }
+            /* step 1.c */
+            return (int) Math.floor(val);
+        }
+        /* step 2 */
+        return fallback;
+    }
+
+    /**
+     * 9.2.12 GetNumberOption (options, property, minimum, maximum, fallback)
      * 
      * @param cx
      *            the execution context
@@ -1437,24 +1455,10 @@ public final class IntlAbstractOperations {
      */
     public static int GetNumberOption(ExecutionContext cx, ScriptObject options, String property, int minimum,
             int maximum, int fallback) {
-        assert minimum <= maximum;
-        assert minimum <= fallback && fallback <= maximum;
-        /* step 1 (not applicable) */
-        /* step 2 */
+        /* step 1 */
         Object value = Get(cx, options, property);
-        /* step 3 */
-        if (!Type.isUndefined(value)) {
-            /* step 3.a */
-            double val = ToNumber(cx, value);
-            /* step 3.b */
-            if (Double.isNaN(val) || val < minimum || val > maximum) {
-                throw newRangeError(cx, Messages.Key.IntlInvalidOption, Double.toString(val));
-            }
-            /* step 3.c */
-            return (int) Math.floor(val);
-        }
-        /* step 4 */
-        return fallback;
+        /* step 2 */
+        return DefaultNumberOption(cx, property, value, minimum, maximum, fallback);
     }
 
     @SafeVarargs

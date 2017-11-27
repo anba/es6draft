@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -19,8 +19,7 @@ public final class NewExpression extends Expression {
     private final Expression expression;
     private final List<Expression> arguments;
 
-    public NewExpression(long beginPosition, long endPosition, Expression expression,
-            List<Expression> arguments) {
+    public NewExpression(long beginPosition, long endPosition, Expression expression, List<Expression> arguments) {
         super(beginPosition, endPosition);
         this.expression = expression;
         this.arguments = arguments;

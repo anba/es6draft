@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -88,11 +88,11 @@ public final class PromiseCapability<PROMISE extends ScriptObject> {
      *            the promise capability record
      * @return the promise capability
      */
-    public static <PROMISE extends ScriptObject> PROMISE IfAbruptRejectPromise(ExecutionContext cx,
-            ScriptException e, PromiseCapability<PROMISE> capability) {
-        /* steps 1.a-1.b */
+    public static <PROMISE extends ScriptObject> PROMISE IfAbruptRejectPromise(ExecutionContext cx, ScriptException e,
+            PromiseCapability<PROMISE> capability) {
+        /* step 1.a */
         capability.getReject().call(cx, UNDEFINED, e.getValue());
-        /* step 1.c */
+        /* step 1.b */
         return capability.getPromise();
     }
 }

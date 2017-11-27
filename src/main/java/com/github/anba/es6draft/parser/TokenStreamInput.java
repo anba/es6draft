@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -34,8 +34,7 @@ final class TokenStreamInput {
     }
 
     /**
-     * Returns the current code point or {@link TokenStreamInput#EOF} when the end of the input has
-     * been reached.
+     * Returns the current code point or {@link TokenStreamInput#EOF} when the end of the input has been reached.
      * 
      * @return the current code point or {@link TokenStreamInput#EOF}
      */
@@ -48,8 +47,7 @@ final class TokenStreamInput {
     }
 
     /**
-     * Returns the current character or {@link TokenStreamInput#EOF} when the end of the input has
-     * been reached.
+     * Returns the current character or {@link TokenStreamInput#EOF} when the end of the input has been reached.
      * 
      * @return the current character or {@link TokenStreamInput#EOF}
      */
@@ -76,8 +74,7 @@ final class TokenStreamInput {
      *            the code point to read back
      */
     public void unget(int c) {
-        assert c != EOF ? source.codePointAt(cursor - Character.charCount(c)) == c
-                : cursor >= length;
+        assert c != EOF ? source.codePointAt(cursor - Character.charCount(c)) == c : cursor >= length;
         if (c != EOF)
             cursor -= Character.charCount(c);
     }

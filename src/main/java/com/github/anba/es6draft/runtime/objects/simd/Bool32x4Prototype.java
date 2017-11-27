@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -22,6 +22,7 @@ import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
+import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
@@ -50,14 +51,14 @@ public final class Bool32x4Prototype extends OrdinaryObject implements Initializ
     public enum Properties {
         ;
 
-        private static SIMDValue thisSIMDValue(ExecutionContext cx, Object obj) {
-            if (obj instanceof SIMDValue) {
-                return (SIMDValue) obj;
+        private static SIMDValue thisSIMDValue(ExecutionContext cx, Object value, String method) {
+            if (value instanceof SIMDValue) {
+                return (SIMDValue) value;
             }
-            if (!(obj instanceof SIMDObject)) {
-                throw newTypeError(cx, Messages.Key.IncompatibleObject);
+            if (!(value instanceof SIMDObject)) {
+                throw newTypeError(cx, Messages.Key.SIMDInvalidThis, SIMD_TYPE + method, Type.of(value).toString());
             }
-            SIMDObject object = (SIMDObject) obj;
+            SIMDObject object = (SIMDObject) value;
             if (object.getData().getType() != SIMD_TYPE) {
                 throw newTypeError(cx, Messages.Key.SIMDInvalidType);
             }
@@ -85,7 +86,7 @@ public final class Bool32x4Prototype extends OrdinaryObject implements Initializ
         @Function(name = "valueOf", arity = 0)
         public static Object valueOf(ExecutionContext cx, Object thisValue) {
             /* steps 1-3 */
-            return thisSIMDValue(cx, thisValue);
+            return thisSIMDValue(cx, thisValue, ".valueOf");
         }
 
         /**
@@ -104,7 +105,7 @@ public final class Bool32x4Prototype extends OrdinaryObject implements Initializ
         @Function(name = "toLocaleString", arity = 0)
         public static Object toLocaleString(ExecutionContext cx, Object thisValue, Object locales, Object options) {
             /* steps 1-2 */
-            SIMDValue value = thisSIMDValue(cx, thisValue);
+            SIMDValue value = thisSIMDValue(cx, thisValue, ".toLocaleString");
             /* step 3 */
             // FIXME: spec issue - retrieve list separator from locale?
             String separator = cx.getRealm().getListSeparator();
@@ -138,16 +139,16 @@ public final class Bool32x4Prototype extends OrdinaryObject implements Initializ
         @Function(name = "toString", arity = 0)
         public static Object toString(ExecutionContext cx, Object thisValue) {
             /* steps 1-2 */
-            SIMDValue value = thisSIMDValue(cx, thisValue);
+            SIMDValue value = thisSIMDValue(cx, thisValue, ".toString");
             /* step 3 */
-            return ToString(cx, value);
+            return SIMD.ToString(value);
         }
 
         /**
          * SIMDConstructor.prototype [ @@toStringTag ]
          */
         @Value(name = "[Symbol.toStringTag]", symbol = BuiltinSymbol.toStringTag,
-                attributes = @Attributes(writable = false, enumerable = false, configurable = true) )
+                attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static final String toStringTag = "SIMD." + SIMD_TYPE.name();
 
         /**
@@ -162,7 +163,7 @@ public final class Bool32x4Prototype extends OrdinaryObject implements Initializ
          * @return the primitive value for this SIMD object
          */
         @Function(name = "[Symbol.toPrimitive]", arity = 1, symbol = BuiltinSymbol.toPrimitive,
-                attributes = @Attributes(writable = false, enumerable = false, configurable = true) )
+                attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static Object toPrimitive(ExecutionContext cx, Object thisValue, Object hint) {
             /* step 1 (omitted) */
             /* step 2 */
@@ -171,7 +172,7 @@ public final class Bool32x4Prototype extends OrdinaryObject implements Initializ
                 return thisValue;
             }
             /* steps 3-6 */
-            return thisSIMDValue(cx, thisValue);
+            return thisSIMDValue(cx, thisValue, "[Symbol.toPrimitive]");
         }
     }
 }

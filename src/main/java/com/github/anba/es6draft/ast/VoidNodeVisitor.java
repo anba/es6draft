@@ -1,15 +1,15 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
  */
 package com.github.anba.es6draft.ast;
 
+import com.github.anba.es6draft.ast.synthetic.ClassFieldInitializer;
 import com.github.anba.es6draft.ast.synthetic.ExpressionMethod;
 import com.github.anba.es6draft.ast.synthetic.MethodDefinitionsMethod;
 import com.github.anba.es6draft.ast.synthetic.PropertyDefinitionsMethod;
-import com.github.anba.es6draft.ast.synthetic.SpreadArrayLiteral;
 import com.github.anba.es6draft.ast.synthetic.SpreadElementMethod;
 import com.github.anba.es6draft.ast.synthetic.StatementListMethod;
 
@@ -49,6 +49,8 @@ public interface VoidNodeVisitor<V> {
 
     void visit(AwaitExpression node, V value);
 
+    void visit(BigIntegerLiteral node, V value);
+
     void visit(BinaryExpression node, V value);
 
     void visit(BindingElement node, V value);
@@ -78,6 +80,10 @@ public interface VoidNodeVisitor<V> {
     void visit(ClassDeclaration node, V value);
 
     void visit(ClassExpression node, V value);
+
+    void visit(ClassFieldDefinition node, V value);
+
+    void visit(ClassFieldInitializer node, V value);
 
     void visit(CommaExpression node, V value);
 
@@ -121,8 +127,6 @@ public interface VoidNodeVisitor<V> {
 
     void visit(ForAwaitStatement node, V value);
 
-    void visit(ForEachStatement node, V value);
-
     void visit(ForInStatement node, V value);
 
     void visit(FormalParameter node, V value);
@@ -153,27 +157,19 @@ public interface VoidNodeVisitor<V> {
 
     void visit(IfStatement node, V value);
 
+    void visit(ImportCallExpression node, V value);
+
     void visit(ImportClause node, V value);
 
     void visit(ImportDeclaration node, V value);
+
+    void visit(ImportMeta node, V value);
 
     void visit(ImportSpecifier node, V value);
 
     void visit(LabelledFunctionStatement node, V value);
 
     void visit(LabelledStatement node, V value);
-
-    void visit(LegacyComprehension node, V value);
-
-    void visit(LegacyComprehensionFor node, V value);
-
-    void visit(LegacyGeneratorDeclaration node, V value);
-
-    void visit(LegacyGeneratorExpression node, V value);
-
-    void visit(LetExpression node, V value);
-
-    void visit(LetStatement node, V value);
 
     void visit(LexicalBinding node, V value);
 
@@ -201,6 +197,10 @@ public interface VoidNodeVisitor<V> {
 
     void visit(ObjectLiteral node, V value);
 
+    void visit(PrivateNameProperty node, V value);
+
+    void visit(PrivatePropertyAccessor node, V value);
+
     void visit(PropertyAccessor node, V value);
 
     void visit(PropertyDefinitionsMethod node, V value);
@@ -214,8 +214,6 @@ public interface VoidNodeVisitor<V> {
     void visit(ReturnStatement node, V value);
 
     void visit(Script node, V value);
-
-    void visit(SpreadArrayLiteral node, V value);
 
     void visit(SpreadElement node, V value);
 
@@ -247,11 +245,15 @@ public interface VoidNodeVisitor<V> {
 
     void visit(ThisExpression node, V value);
 
+    void visit(ThrowExpression node, V value);
+
     void visit(ThrowStatement node, V value);
 
     void visit(TryStatement node, V value);
 
     void visit(UnaryExpression node, V value);
+
+    void visit(UpdateExpression node, V value);
 
     void visit(VariableDeclaration node, V value);
 

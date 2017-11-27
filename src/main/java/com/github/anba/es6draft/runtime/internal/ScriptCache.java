@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -8,8 +8,6 @@ package com.github.anba.es6draft.runtime.internal;
 
 import java.io.IOException;
 import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
@@ -21,6 +19,7 @@ import java.util.Objects;
 import com.github.anba.es6draft.Script;
 import com.github.anba.es6draft.compiler.CompilationException;
 import com.github.anba.es6draft.parser.ParserException;
+import com.github.anba.es6draft.runtime.modules.SourceIdentifier;
 
 /**
  * Simple cache for compiled script files.
@@ -79,11 +78,11 @@ public final class ScriptCache {
 
     private CacheKey keyFor(Path path) throws IOException {
         BasicFileAttributes attributes = Files.readAttributes(path, BasicFileAttributes.class);
-        return new CacheKey(path.toUri(), attributes.size(), attributes.lastModifiedTime().toMillis());
+        return new CacheKey(path.toUri().normalize(), attributes.size(), attributes.lastModifiedTime().toMillis());
     }
 
-    private CacheKey keyFor(URL url) throws URISyntaxException {
-        return new CacheKey(url.toURI(), 0L, 0L);
+    private CacheKey keyFor(URI url) {
+        return new CacheKey(url.normalize(), 0L, 0L);
     }
 
     /**
@@ -120,10 +119,10 @@ public final class ScriptCache {
     /**
      * Compiles {@code file} to a {@link Script} and caches the result.
      * 
-     * @param scriptLoader
-     *            the script loader
      * @param file
      *            the script file path
+     * @param function
+     *            the supplier function
      * @return the compiled script
      * @throws IOException
      *             if there was any I/O error
@@ -132,45 +131,55 @@ public final class ScriptCache {
      * @throws CompilationException
      *             if the parsed source could not be compiled
      */
-    public Script get(ScriptLoader scriptLoader, Path file) throws IOException, ParserException, CompilationException {
+    public Script get(Path file, BiFunctionWithException<Source, Path, Script, IOException> function)
+            throws IOException, ParserException, CompilationException {
+        if (!file.isAbsolute()) {
+            throw new IllegalArgumentException();
+        }
         CacheKey cacheKey = keyFor(file);
         Script cachedScript = cache.get(cacheKey);
         if (cachedScript != null) {
             return cachedScript;
         }
         Source source = new Source(file, Objects.requireNonNull(file.getFileName()).toString(), 1);
-        Script script = scriptLoader.script(source, file);
+        Script script = function.apply(source, file);
         cache.put(cacheKey, script);
         return script;
     }
 
     /**
-     * Compiles {@code file} to a {@link Script} and caches the result.
+     * Compiles {@code sourceId} to a {@link Script} and caches the result.
      * 
-     * @param scriptLoader
-     *            the script loader
-     * @param file
-     *            the script file URL
+     * @param <ID>
+     *            the source identifier type
+     * @param sourceId
+     *            the script source identifier
+     * @param function
+     *            the supplier function
      * @return the compiled script
      * @throws IOException
      *             if there was any I/O error
-     * @throws URISyntaxException
-     *             if the URL is not a valid URI
      * @throws ParserException
      *             if the source contains any syntax errors
      * @throws CompilationException
      *             if the parsed source could not be compiled
      */
-    public Script get(ScriptLoader scriptLoader, URL file)
-            throws IOException, URISyntaxException, ParserException, CompilationException {
-        CacheKey cacheKey = keyFor(file);
+    public <ID extends SourceIdentifier> Script get(ID sourceId,
+            BiFunctionWithException<Source, ID, Script, IOException> function)
+            throws IOException, ParserException, CompilationException {
+        CacheKey cacheKey = keyFor(sourceId.toUri());
         Script cachedScript = cache.get(cacheKey);
         if (cachedScript != null) {
             return cachedScript;
         }
-        Source source = new Source(file.getPath(), 1);
-        Script script = scriptLoader.script(source, file);
+        Source source = new Source(sourceId, sourceId.toUri().getPath(), 1);
+        Script script = function.apply(source, sourceId);
         cache.put(cacheKey, script);
         return script;
+    }
+
+    @FunctionalInterface
+    public interface BiFunctionWithException<T, U, R, E extends Throwable> {
+        R apply(T t, U u) throws E;
     }
 }

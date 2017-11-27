@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -20,9 +20,11 @@ public final class Variables {
     private VariableScope varScope = null;
     private int varCount = 0;
 
-    private static Type[] grow(Type[] types) {
-        int newLength = types.length + (types.length >>> 1);
-        return Arrays.copyOf(types, newLength, Type[].class);
+    private void ensureSpace(int slot, int size) {
+        if (slot + size > types.length) {
+            int newLength = types.length + (types.length >>> 1);
+            types = Arrays.copyOf(types, newLength, Type[].class);
+        }
     }
 
     private void assign(int slot, Type type) {
@@ -137,9 +139,7 @@ public final class Variables {
         assert slot >= 0;
         final int size = type.getSize();
         assert size == 1 || size == 2;
-        if (slot + size > types.length) {
-            types = grow(types);
-        }
+        ensureSpace(slot, size);
         assert types[slot] == null && (size == 1 || types[slot + 1] == null);
         assign(slot, type);
         activate(slot);
@@ -210,9 +210,7 @@ public final class Variables {
         assert size == 1 || size == 2;
         for (int slot = varScope.firstSlot;;) {
             slot = variables.nextClearBit(slot);
-            if (slot + size > types.length) {
-                types = grow(types);
-            }
+            ensureSpace(slot, size);
             Type old = types[slot];
             if (old == null) {
                 if (size == 1 || types[slot + 1] == null) {

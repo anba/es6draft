@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -16,8 +16,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.EnumSet;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.github.anba.es6draft.Module;
@@ -147,7 +145,7 @@ public final class ScriptLoader {
      */
     public Script evalScript(Source source, String sourceCode, EnumSet<Parser.Option> evalOptions)
             throws ParserException, CompilationException {
-        Parser parser = new Parser(source, context.getOptions(), evalOptions);
+        Parser parser = new Parser(context, source, evalOptions);
         com.github.anba.es6draft.ast.Script parsedScript = parser.parseScript(sourceCode);
         if (parsedScript.getStatements().isEmpty()) {
             return null;
@@ -347,12 +345,26 @@ public final class ScriptLoader {
      * 
      * @param parsedScript
      *            the script node
+     * @return the script object
+     */
+    public Script load(com.github.anba.es6draft.ast.Script parsedScript) throws CompilationException {
+        return load(parsedScript, nextScriptName());
+    }
+
+    /**
+     * Returns an executable {@link Script} object for the {@link com.github.anba.es6draft.ast.Script Script} AST-node.
+     * 
+     * @param parsedScript
+     *            the script node
      * @param className
      *            the class name
      * @return the script object
      */
     public Script load(com.github.anba.es6draft.ast.Script parsedScript, String className) throws CompilationException {
-        Script script = Interpreter.script(parsedScript);
+        Script script = null;
+        if (!context.isEnabled(Compiler.Option.NoInterpreter)) {
+            script = Interpreter.script(parsedScript);
+        }
         if (script == null) {
             script = compile(parsedScript, className);
         }
@@ -401,10 +413,8 @@ public final class ScriptLoader {
      */
     public CompiledScript compile(com.github.anba.es6draft.ast.Script parsedScript, String className)
             throws CompilationException {
-        try (CloseableExecutor t = executor()) {
-            Compiler compiler = new Compiler(context, t.executor());
-            return compiler.compile(parsedScript, className);
-        }
+        Compiler compiler = new Compiler(context);
+        return compiler.compile(parsedScript, className);
     }
 
     /**
@@ -421,10 +431,8 @@ public final class ScriptLoader {
      */
     public CompiledModule compile(com.github.anba.es6draft.ast.Module parsedModule, SourceTextModuleRecord moduleRecord,
             String className) throws CompilationException {
-        try (CloseableExecutor t = executor()) {
-            Compiler compiler = new Compiler(context, t.executor());
-            return compiler.compile(parsedModule, moduleRecord, className);
-        }
+        Compiler compiler = new Compiler(context);
+        return compiler.compile(parsedModule, moduleRecord, className);
     }
 
     /**
@@ -437,10 +445,8 @@ public final class ScriptLoader {
      * @return the compiled function
      */
     public CompiledFunction compile(FunctionDefinition function, String className) throws CompilationException {
-        try (CloseableExecutor t = executor()) {
-            Compiler compiler = new Compiler(context, t.executor());
-            return compiler.compile(function, className);
-        }
+        Compiler compiler = new Compiler(context);
+        return compiler.compile(function, className);
     }
 
     /**
@@ -453,10 +459,8 @@ public final class ScriptLoader {
      * @return the compiled generator function
      */
     public CompiledFunction compile(GeneratorDefinition generator, String className) throws CompilationException {
-        try (CloseableExecutor t = executor()) {
-            Compiler compiler = new Compiler(context, t.executor());
-            return compiler.compile(generator, className);
-        }
+        Compiler compiler = new Compiler(context);
+        return compiler.compile(generator, className);
     }
 
     /**
@@ -470,10 +474,8 @@ public final class ScriptLoader {
      */
     public CompiledFunction compile(AsyncFunctionDefinition asyncFunction, String className)
             throws CompilationException {
-        try (CloseableExecutor t = executor()) {
-            Compiler compiler = new Compiler(context, t.executor());
-            return compiler.compile(asyncFunction, className);
-        }
+        Compiler compiler = new Compiler(context);
+        return compiler.compile(asyncFunction, className);
     }
 
     /**
@@ -487,50 +489,8 @@ public final class ScriptLoader {
      */
     public CompiledFunction compile(AsyncGeneratorDefinition asyncGenerator, String className)
             throws CompilationException {
-        try (CloseableExecutor t = executor()) {
-            Compiler compiler = new Compiler(context, t.executor());
-            return compiler.compile(asyncGenerator, className);
-        }
-    }
-
-    private CloseableExecutor executor() {
-        if (context.getExecutor().isShutdown()) {
-            return new TempExecutor();
-        }
-        return new ContextExecutor();
-    }
-
-    interface CloseableExecutor extends AutoCloseable {
-        ExecutorService executor();
-
-        @Override
-        void close();
-    }
-
-    static final class TempExecutor implements CloseableExecutor {
-        final ExecutorService executor = Executors.newFixedThreadPool(2);
-
-        @Override
-        public ExecutorService executor() {
-            return executor;
-        }
-
-        @Override
-        public void close() {
-            executor.shutdown();
-        }
-    }
-
-    final class ContextExecutor implements CloseableExecutor {
-        @Override
-        public ExecutorService executor() {
-            return context.getExecutor();
-        }
-
-        @Override
-        public void close() {
-            // empty
-        }
+        Compiler compiler = new Compiler(context);
+        return compiler.compile(asyncGenerator, className);
     }
 
     private static Reader newReader(InputStream stream) {

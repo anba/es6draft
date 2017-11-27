@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -40,6 +40,7 @@ public final class JLineConsole implements ShellConsole {
     public JLineConsole(String programName) throws IOException {
         this.console = newConsoleReader(programName);
         this.formatter = new Formatter(console.getOutput());
+        this.console.setCopyPasteDetection(true);
     }
 
     private static ConsoleReader newConsoleReader(String programName) throws IOException {

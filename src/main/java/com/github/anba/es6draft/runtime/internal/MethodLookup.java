@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -91,8 +91,7 @@ public final class MethodLookup {
      *            the method type
      * @return method handle for a static method
      */
-    public static MethodHandle findStatic(MethodHandles.Lookup lookup, Class<?> clazz, String name,
-            MethodType type) {
+    public static MethodHandle findStatic(MethodHandles.Lookup lookup, Class<?> clazz, String name, MethodType type) {
         try {
             return lookup.findStatic(clazz, name, type);
         } catch (NoSuchMethodException | IllegalAccessException e) {
@@ -156,10 +155,65 @@ public final class MethodLookup {
      *            the method type
      * @return method handle for a virtual method
      */
-    public static MethodHandle findVirtual(MethodHandles.Lookup lookup, Class<?> clazz,
-            String name, MethodType type) {
+    public static MethodHandle findVirtual(MethodHandles.Lookup lookup, Class<?> clazz, String name, MethodType type) {
         try {
             return lookup.findVirtual(clazz, name, type);
+        } catch (NoSuchMethodException | IllegalAccessException e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
+    /**
+     * Returns a method handle for a constructor method.
+     * 
+     * @param type
+     *            the method type
+     * @return method handle for a constructor method
+     */
+    public MethodHandle findConstructor(MethodType type) {
+        return findConstructor(lookup, lookup.lookupClass(), type);
+    }
+
+    /**
+     * Returns a method handle for a constructor method.
+     * 
+     * @param clazz
+     *            the reference class
+     * @param type
+     *            the method type
+     * @return method handle for a constructor method
+     */
+    public MethodHandle findConstructor(Class<?> clazz, MethodType type) {
+        return findConstructor(lookup, clazz, type);
+    }
+
+    /**
+     * Returns a method handle for a constructor method.
+     * 
+     * @param lookup
+     *            the lookup object
+     * @param type
+     *            the method type
+     * @return method handle for a constructor method
+     */
+    public static MethodHandle findConstructor(MethodHandles.Lookup lookup, MethodType type) {
+        return findConstructor(lookup, lookup.lookupClass(), type);
+    }
+
+    /**
+     * Returns a method handle for a constructor method.
+     * 
+     * @param lookup
+     *            the lookup object
+     * @param clazz
+     *            the reference class
+     * @param type
+     *            the method type
+     * @return method handle for a constructor method
+     */
+    public static MethodHandle findConstructor(MethodHandles.Lookup lookup, Class<?> clazz, MethodType type) {
+        try {
+            return lookup.findConstructor(clazz, type);
         } catch (NoSuchMethodException | IllegalAccessException e) {
             throw new IllegalStateException(e);
         }

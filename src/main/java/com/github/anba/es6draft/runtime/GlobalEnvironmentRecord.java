@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -174,20 +174,20 @@ public final class GlobalEnvironmentRecord implements EnvironmentRecord {
             return declRec.deleteBinding(name);
         }
         /* step 4 (omitted) */
-        /* steps 5-7 */
+        /* steps 5-6 */
         boolean existingProp = HasOwnProperty(cx, globalObject, name);
-        /* step 8 */
+        /* step 7 */
         if (existingProp) {
-            /* steps 8.a-b */
+            /* step 7.a */
             boolean status = objectRec.deleteBinding(name);
-            /* step 8.c */
+            /* step 7.b */
             if (status) {
                 varNames.remove(name);
             }
-            /* step 8.d */
+            /* step 7.c */
             return status;
         }
-        /* step 9 */
+        /* step 8 */
         return true;
     }
 
@@ -260,17 +260,17 @@ public final class GlobalEnvironmentRecord implements EnvironmentRecord {
      */
     public boolean hasRestrictedGlobalProperty(String name) {
         /* steps 1-3 (omitted) */
-        /* steps 4-5 */
+        /* step 4 */
         Property existingProp = globalObject.getOwnProperty(cx, name);
-        /* step 6 */
+        /* step 5 */
         if (existingProp == null) {
             return false;
         }
-        /* step 7 */
+        /* step 6 */
         if (existingProp.isConfigurable()) {
             return false;
         }
-        /* step 8 */
+        /* step 7 */
         return true;
     }
 
@@ -283,13 +283,13 @@ public final class GlobalEnvironmentRecord implements EnvironmentRecord {
      */
     public boolean canDeclareGlobalVar(String name) {
         /* steps 1-3 (omitted) */
-        /* steps 4-5 */
+        /* step 4 */
         boolean hasProperty = HasOwnProperty(cx, globalObject, name);
-        /* step 6 */
+        /* step 5 */
         if (hasProperty) {
             return true;
         }
-        /* step 7 */
+        /* step 6 */
         return IsExtensible(cx, globalObject);
     }
 
@@ -302,21 +302,21 @@ public final class GlobalEnvironmentRecord implements EnvironmentRecord {
      */
     public boolean canDeclareGlobalFunction(String name) {
         /* steps 1-3 (omitted) */
-        /* steps 4-5 */
+        /* step 4 */
         Property existingProp = globalObject.getOwnProperty(cx, name);
-        /* step 6 */
+        /* step 5 */
         if (existingProp == null) {
             return IsExtensible(cx, globalObject);
         }
-        /* step 7 */
+        /* step 6 */
         if (existingProp.isConfigurable()) {
             return true;
         }
-        /* step 8 */
+        /* step 7 */
         if (existingProp.isDataDescriptor() && existingProp.isWritable() && existingProp.isEnumerable()) {
             return true;
         }
-        /* step 9 */
+        /* step 8 */
         return false;
     }
 
@@ -330,20 +330,20 @@ public final class GlobalEnvironmentRecord implements EnvironmentRecord {
      */
     public void createGlobalVarBinding(String name, boolean deletable) {
         /* steps 1-3 (omitted) */
-        /* steps 4-5 */
+        /* step 4 */
         boolean hasProperty = HasOwnProperty(cx, globalObject, name);
-        /* steps 6-7 */
+        /* step 5 */
         boolean extensible = IsExtensible(cx, globalObject);
-        /* step 8 */
+        /* step 6 */
         if (!hasProperty && extensible) {
-            /* steps 8.a-b */
+            /* step 6.a */
             objectRec.createMutableBinding(name, deletable);
-            /* steps 8.c-d */
+            /* step 6.b */
             objectRec.initializeBinding(name, UNDEFINED);
         }
-        /* steps 9-10 */
+        /* steps 7-8 */
         varNames.add(name);
-        /* step 11 (return) */
+        /* step 9 (return) */
     }
 
     /**
@@ -358,21 +358,21 @@ public final class GlobalEnvironmentRecord implements EnvironmentRecord {
      */
     public void createGlobalFunctionBinding(String name, Object value, boolean deletable) {
         /* steps 1-3 (omitted) */
-        /* steps 4-5 */
+        /* step 4 */
         Property existingProp = globalObject.getOwnProperty(cx, name);
-        /* steps 6-7 */
+        /* steps 5-6 */
         PropertyDescriptor desc;
         if (existingProp == null || existingProp.isConfigurable()) {
             desc = new PropertyDescriptor(value, true, true, deletable);
         } else {
             desc = new PropertyDescriptor(value);
         }
-        /* steps 8-9 */
+        /* step 7 */
         DefinePropertyOrThrow(cx, globalObject, name, desc);
-        /* steps 10-12  */
+        /* steps 8-9  */
         Set(cx, globalObject, name, value, false);
-        /* steps 13-14 */
+        /* steps 10-11 */
         varNames.add(name);
-        /* step 15 (return) */
+        /* step 12 (return) */
     }
 }

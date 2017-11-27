@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -7,7 +7,6 @@
 package com.github.anba.es6draft.runtime.types.builtins;
 
 import static com.github.anba.es6draft.runtime.objects.async.iteration.AsyncGeneratorAbstractOperations.AsyncGeneratorStart;
-import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.FunctionInitialize;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
@@ -27,13 +26,8 @@ public final class OrdinaryAsyncGenerator extends FunctionObject {
      * @param realm
      *            the realm object
      */
-    protected OrdinaryAsyncGenerator(Realm realm) {
+    public OrdinaryAsyncGenerator(Realm realm) {
         super(realm);
-    }
-
-    @Override
-    protected OrdinaryAsyncGenerator allocateNew() {
-        return FunctionAllocate(getRealm().defaultContext(), getPrototype(), isStrict(), getFunctionKind());
     }
 
     /**
@@ -67,45 +61,17 @@ public final class OrdinaryAsyncGenerator extends FunctionObject {
      * @return the async generator result value
      */
     public static AsyncGeneratorObject EvaluateBody(ExecutionContext cx, OrdinaryAsyncGenerator functionObject) {
-        /* steps 1-2 */
+        /* step 1 */
         AsyncGeneratorObject gen = OrdinaryCreateFromConstructor(cx, functionObject, Intrinsics.AsyncGeneratorPrototype,
                 AsyncGeneratorObject::new);
-        /* step 3 */
+        /* step 2 */
         AsyncGeneratorStart(cx, gen, functionObject.getCode());
-        /* step 4 */
+        /* step 3 */
         return gen;
     }
 
-    /* ***************************************************************************************** */
-
     /**
-     * 9.2.3 FunctionAllocate (functionPrototype, strict [,functionKind] )
-     * 
-     * @param cx
-     *            the execution context
-     * @param functionPrototype
-     *            the function prototype
-     * @param strict
-     *            the strict mode flag
-     * @param kind
-     *            the function kind
-     * @return the new async enerator function object
-     */
-    public static OrdinaryAsyncGenerator FunctionAllocate(ExecutionContext cx, ScriptObject functionPrototype,
-            boolean strict, FunctionKind kind) {
-        assert kind != FunctionKind.ClassConstructor;
-        Realm realm = cx.getRealm();
-        /* steps 1-5 (implicit) */
-        /* steps 6-9 */
-        OrdinaryAsyncGenerator f = new OrdinaryAsyncGenerator(realm);
-        /* steps 10-14 */
-        f.allocate(realm, functionPrototype, strict, kind, ConstructorKind.Base);
-        /* step 15 */
-        return f;
-    }
-
-    /**
-     * 9.2.6 GeneratorFunctionCreate (kind, ParameterList, Body, Scope, Strict)
+     * AsyncGeneratorFunctionCreate (kind, ParameterList, Body, Scope, Strict)
      * 
      * @param cx
      *            the execution context
@@ -120,12 +86,12 @@ public final class OrdinaryAsyncGenerator extends FunctionObject {
     public static OrdinaryAsyncGenerator AsyncGeneratorFunctionCreate(ExecutionContext cx, FunctionKind kind,
             RuntimeInfo.Function function, LexicalEnvironment<?> scope) {
         assert function.isAsync() && function.isGenerator() && kind != FunctionKind.ClassConstructor;
+        boolean strict = function.isStrict();
         /* step 1 */
         ScriptObject functionPrototype = cx.getIntrinsic(Intrinsics.AsyncGenerator);
         /* step 2 */
-        OrdinaryAsyncGenerator f = FunctionAllocate(cx, functionPrototype, function.isStrict(), kind);
+        OrdinaryAsyncGenerator f = FunctionAllocate(cx, OrdinaryAsyncGenerator::new, functionPrototype, strict, kind);
         /* step 3 */
-        FunctionInitialize(f, kind, function, scope, cx.getCurrentExecutable());
-        return f;
+        return FunctionInitialize(f, kind, function, scope, cx.getCurrentExecutable());
     }
 }

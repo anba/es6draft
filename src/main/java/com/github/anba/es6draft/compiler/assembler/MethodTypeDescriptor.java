@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -15,7 +15,7 @@ import java.util.List;
  * Method type descriptor object.
  */
 public final class MethodTypeDescriptor {
-    private final String descriptor;
+    private String descriptor;
     private final Type returnType;
     private final Type[] parameters;
 
@@ -27,7 +27,7 @@ public final class MethodTypeDescriptor {
     }
 
     private MethodTypeDescriptor(Type returnType, Type[] parameters) {
-        this.descriptor = getMethodDescriptor(returnType, parameters);
+        this.descriptor = null;
         this.returnType = returnType;
         this.parameters = parameters;
     }
@@ -53,8 +53,8 @@ public final class MethodTypeDescriptor {
         return argumentTypes;
     }
 
-    /*package*/org.objectweb.asm.Type type() {
-        return org.objectweb.asm.Type.getMethodType(descriptor);
+    org.objectweb.asm.Type type() {
+        return org.objectweb.asm.Type.getMethodType(descriptor());
     }
 
     /**
@@ -63,7 +63,11 @@ public final class MethodTypeDescriptor {
      * @return the method descriptor string
      */
     public String descriptor() {
-        return descriptor;
+        String desc = descriptor;
+        if (desc == null) {
+            descriptor = desc = getMethodDescriptor(returnType, parameters);
+        }
+        return desc;
     }
 
     /**
@@ -105,6 +109,73 @@ public final class MethodTypeDescriptor {
     }
 
     /**
+     * Changes a parameter to a new type.
+     * 
+     * @param index
+     *            the parameter index
+     * @param type
+     *            the new parameter type
+     * @return the new method descriptor
+     */
+    public MethodTypeDescriptor changeParameterType(int index, Type type) {
+        if (parameterType(index).equals(type)) {
+            return this;
+        }
+        Type[] params = parameters.clone();
+        params[index] = type;
+        return new MethodTypeDescriptor(returnType, params);
+    }
+
+    /**
+     * Appends new parameters to the end of the parameters list.
+     * 
+     * @param types
+     *            the new parameter types
+     * @return the new method descriptor
+     */
+    public MethodTypeDescriptor appendParameterTypes(Type... types) {
+        if (types.length == 0) {
+            return this;
+        }
+        Type[] params = Arrays.copyOf(parameters, parameters.length + types.length, Type[].class);
+        System.arraycopy(types, 0, params, parameters.length, types.length);
+        return new MethodTypeDescriptor(returnType, params);
+    }
+
+    /**
+     * Inserts new parameters at the indexed position.
+     * 
+     * @param index
+     *            the parameter index
+     * @param types
+     *            the new parameter types
+     * @return the new method descriptor
+     */
+    public MethodTypeDescriptor insertParameterTypes(int index, Type... types) {
+        if (types.length == 0) {
+            return this;
+        }
+        Type[] params = Arrays.copyOf(parameters, parameters.length + types.length, Type[].class);
+        System.arraycopy(params, index, params, index + types.length, parameters.length - index);
+        System.arraycopy(types, 0, params, index, types.length);
+        return new MethodTypeDescriptor(returnType, params);
+    }
+
+    /**
+     * Changes the return type to a new type.
+     * 
+     * @param type
+     *            the new return type
+     * @return the new method descriptor
+     */
+    public MethodTypeDescriptor changeReturnType(Type type) {
+        if (returnType().equals(type)) {
+            return this;
+        }
+        return new MethodTypeDescriptor(type, parameters);
+    }
+
+    /**
      * Creates a new method type descriptor.
      * 
      * @param methodType
@@ -139,5 +210,18 @@ public final class MethodTypeDescriptor {
      */
     public static MethodTypeDescriptor methodType(Type returnType, Type... parameters) {
         return new MethodTypeDescriptor(returnType, parameters);
+    }
+
+    /**
+     * Creates a new method type descriptor.
+     * 
+     * @param returnType
+     *            the return type
+     * @param parameters
+     *            the parameter types
+     * @return the method type descriptor
+     */
+    public static MethodTypeDescriptor methodType(Type returnType, List<Type> parameters) {
+        return new MethodTypeDescriptor(returnType, parameters.toArray(new Type[0]));
     }
 }

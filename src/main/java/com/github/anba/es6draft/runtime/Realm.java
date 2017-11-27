@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -9,34 +9,36 @@ package com.github.anba.es6draft.runtime;
 import static com.github.anba.es6draft.runtime.AbstractOperations.DefinePropertyOrThrow;
 import static com.github.anba.es6draft.runtime.ExecutionContext.newDefaultExecutionContext;
 import static com.github.anba.es6draft.runtime.LexicalEnvironment.newGlobalEnvironment;
-import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.AddRestrictedFunctionProperties;
+import static com.github.anba.es6draft.runtime.internal.Errors.newError;
+import static com.github.anba.es6draft.runtime.types.builtins.FunctionObject.AddRestrictedFunctionProperties;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject.ObjectCreate;
 
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.security.SecureRandom;
 import java.text.Collator;
 import java.text.DecimalFormatSymbols;
 import java.util.EnumMap;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Random;
 import java.util.TimeZone;
 
-import com.github.anba.es6draft.Executable;
 import com.github.anba.es6draft.compiler.CompilationException;
 import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.Messages;
+import com.github.anba.es6draft.runtime.internal.Permission;
 import com.github.anba.es6draft.runtime.internal.Properties;
+import com.github.anba.es6draft.runtime.internal.RuntimeContext;
 import com.github.anba.es6draft.runtime.internal.ScriptLoader;
-import com.github.anba.es6draft.runtime.internal.Source;
 import com.github.anba.es6draft.runtime.modules.ModuleLoader;
 import com.github.anba.es6draft.runtime.objects.*;
 import com.github.anba.es6draft.runtime.objects.NativeErrorConstructor.ErrorType;
 import com.github.anba.es6draft.runtime.objects.async.AsyncFunctionConstructor;
 import com.github.anba.es6draft.runtime.objects.async.AsyncFunctionPrototype;
+import com.github.anba.es6draft.runtime.objects.async.iteration.AsyncFromSyncIteratorPrototype;
 import com.github.anba.es6draft.runtime.objects.async.iteration.AsyncGeneratorFunctionConstructor;
 import com.github.anba.es6draft.runtime.objects.async.iteration.AsyncGeneratorFunctionPrototype;
 import com.github.anba.es6draft.runtime.objects.async.iteration.AsyncGeneratorPrototype;
@@ -44,6 +46,8 @@ import com.github.anba.es6draft.runtime.objects.async.iteration.AsyncIteratorPro
 import com.github.anba.es6draft.runtime.objects.atomics.AtomicsObject;
 import com.github.anba.es6draft.runtime.objects.atomics.SharedArrayBufferConstructor;
 import com.github.anba.es6draft.runtime.objects.atomics.SharedArrayBufferPrototype;
+import com.github.anba.es6draft.runtime.objects.bigint.BigIntConstructor;
+import com.github.anba.es6draft.runtime.objects.bigint.BigIntPrototype;
 import com.github.anba.es6draft.runtime.objects.binary.ArrayBufferConstructor;
 import com.github.anba.es6draft.runtime.objects.binary.ArrayBufferPrototype;
 import com.github.anba.es6draft.runtime.objects.binary.DataViewConstructor;
@@ -56,15 +60,7 @@ import com.github.anba.es6draft.runtime.objects.binary.TypedArrayPrototypeProtot
 import com.github.anba.es6draft.runtime.objects.collection.*;
 import com.github.anba.es6draft.runtime.objects.date.DateConstructor;
 import com.github.anba.es6draft.runtime.objects.date.DatePrototype;
-import com.github.anba.es6draft.runtime.objects.intl.CollatorConstructor;
-import com.github.anba.es6draft.runtime.objects.intl.CollatorPrototype;
-import com.github.anba.es6draft.runtime.objects.intl.DateTimeFormatConstructor;
-import com.github.anba.es6draft.runtime.objects.intl.DateTimeFormatPrototype;
-import com.github.anba.es6draft.runtime.objects.intl.IntlObject;
-import com.github.anba.es6draft.runtime.objects.intl.NumberFormatConstructor;
-import com.github.anba.es6draft.runtime.objects.intl.NumberFormatPrototype;
-import com.github.anba.es6draft.runtime.objects.intl.PluralRulesConstructor;
-import com.github.anba.es6draft.runtime.objects.intl.PluralRulesPrototype;
+import com.github.anba.es6draft.runtime.objects.intl.*;
 import com.github.anba.es6draft.runtime.objects.iteration.GeneratorFunctionConstructor;
 import com.github.anba.es6draft.runtime.objects.iteration.GeneratorFunctionPrototype;
 import com.github.anba.es6draft.runtime.objects.iteration.GeneratorPrototype;
@@ -86,6 +82,7 @@ import com.github.anba.es6draft.runtime.objects.reflect.RealmObject;
 import com.github.anba.es6draft.runtime.objects.reflect.RealmPrototype;
 import com.github.anba.es6draft.runtime.objects.reflect.ReflectObject;
 import com.github.anba.es6draft.runtime.objects.reflect.SystemObject;
+import com.github.anba.es6draft.runtime.objects.reflect.WeakRefPrototype;
 import com.github.anba.es6draft.runtime.objects.simd.*;
 import com.github.anba.es6draft.runtime.objects.text.RegExpConstructor;
 import com.github.anba.es6draft.runtime.objects.text.RegExpPrototype;
@@ -93,6 +90,9 @@ import com.github.anba.es6draft.runtime.objects.text.RegExpStringIteratorPrototy
 import com.github.anba.es6draft.runtime.objects.text.StringConstructor;
 import com.github.anba.es6draft.runtime.objects.text.StringIteratorPrototype;
 import com.github.anba.es6draft.runtime.objects.text.StringPrototype;
+import com.github.anba.es6draft.runtime.objects.zone.ZoneConstructor;
+import com.github.anba.es6draft.runtime.objects.zone.ZoneObject;
+import com.github.anba.es6draft.runtime.objects.zone.ZonePrototype;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Property;
@@ -159,23 +159,39 @@ public final class Realm {
      */
     private Callable indirectEval;
 
-    private final Callable builtinEval;
+    /**
+     * [[CurrentZone]]
+     */
+    private ZoneObject currentZone;
 
-    private ExecutionContext scriptContext;
+    /**
+     * [[HostDefined]]
+     */
+    private final RealmData realmData;
+
+    private final Callable builtinEval;
 
     private final World world;
 
     private final ExecutionContext defaultContext;
 
-    private final GlobalObject globalObjectTemplate;
+    private final GlobalObject globalPropertiesObject;
 
     private final SecureRandom random = new SecureRandom();
 
-    /*package*/ Realm(World world) {
+    private final EnumSet<Permission> permissions = EnumSet.allOf(Permission.class);
+
+    /**
+     * Creates a new {@link Realm} object.
+     * 
+     * @param world
+     *            the world instance
+     */
+    public Realm(World world) {
         this.world = world;
         this.defaultContext = newDefaultExecutionContext(this);
-        this.globalObjectTemplate = newGlobal(world, this);
-        this.globalObject = newGlobal(world, this); // TODO: yuk...
+        this.globalPropertiesObject = new GlobalObject(this);
+        this.globalObject = new GlobalObject(this);
         this.globalThis = globalObject;
         this.globalEnv = newGlobalEnvironment(defaultContext, globalObject, globalThis);
         this.realmObject = new RealmObject(this);
@@ -185,6 +201,9 @@ public final class Realm {
 
         // Store reference to built-in eval
         builtinEval = (Callable) intrinsics.get(Intrinsics.eval);
+
+        // Expose realm when we finished constructing the internal state.
+        realmData = world.getRuntimeContext().getRealmData().apply(this);
 
         // [[Prototype]] for default global is implementation-dependent
         globalObject.setPrototypeOf(defaultContext, getIntrinsic(Intrinsics.ObjectPrototype));
@@ -197,7 +216,7 @@ public final class Realm {
     private Realm(World world, RealmObject realmObject, ScriptObject globalObj, ScriptObject thisValue) {
         this.world = world;
         this.defaultContext = newDefaultExecutionContext(this);
-        this.globalObjectTemplate = newGlobal(world, this);
+        this.globalPropertiesObject = new GlobalObject(this);
         this.globalObject = globalObj != null ? globalObj : ObjectCreate(defaultContext, (ScriptObject) null);
         this.globalThis = thisValue != null ? thisValue : globalObject;
         this.globalEnv = newGlobalEnvironment(defaultContext, globalObject, globalThis);
@@ -209,50 +228,15 @@ public final class Realm {
         // Store reference to built-in eval
         builtinEval = (Callable) intrinsics.get(Intrinsics.eval);
 
+        // Expose realm when we finished constructing the internal state.
+        realmData = world.getRuntimeContext().getRealmData().apply(this);
+
         if (globalObj == null) {
             // Set prototype to %ObjectPrototype%, cf. 8.2.3 SetRealmGlobalObject
             globalObject.setPrototypeOf(defaultContext, getIntrinsic(Intrinsics.ObjectPrototype));
         }
-    }
 
-    /**
-     * Creates a new global object.
-     * 
-     * @param realm
-     *            the realm instance
-     * @return the new global object
-     */
-    private static GlobalObject newGlobal(World world, Realm realm) {
-        return world.getContext().getGlobalAllocator().newInstance(realm);
-    }
-
-    /**
-     * Returns the source info from the caller execution context. If no applicable source is attached to the caller
-     * context, the source from the most recent script execution on this realm is returned.
-     * 
-     * @param caller
-     *            the caller context
-     * @return the source info or {@code null} if not available
-     */
-    public Source sourceInfo(ExecutionContext caller) {
-        Executable callerExec = caller.getCurrentExecutable();
-        if (hasSourceInfo(callerExec)) {
-            return callerExec.getSourceObject().toSource();
-        }
-        ExecutionContext scriptContext = getScriptContext();
-        if (scriptContext != null) {
-            Executable currentExec = scriptContext.getCurrentExecutable();
-            if (hasSourceInfo(currentExec)) {
-                return currentExec.getSourceObject().toSource();
-            }
-        }
-        // Neither caller nor realm has source info available, return null
-        return null;
-    }
-
-    private boolean hasSourceInfo(Executable exec) {
-        assert exec == null || exec.getSourceObject() != null || exec == defaultContext.getCurrentExecutable();
-        return exec != null && exec.getSourceObject() != null;
+        realmObject.setRealm(this);
     }
 
     /**
@@ -363,12 +347,72 @@ public final class Realm {
     }
 
     /**
+     * [[CurrentZone]]
+     * 
+     * @return the current zone
+     */
+    public ZoneObject getCurrentZone() {
+        return currentZone;
+    }
+
+    /**
+     * [[CurrentZone]]
+     * 
+     * @param currentZone
+     *            the new zone
+     */
+    public void setCurrentZone(ZoneObject currentZone) {
+        assert currentZone != null;
+        this.currentZone = currentZone;
+    }
+
+    /**
      * Returns the {@link Random} for this realm.
      * 
      * @return the random object
      */
     public Random getRandom() {
         return random;
+    }
+
+    /**
+     * Checks if the given permission is granted.
+     * 
+     * @param permission
+     *            the permission
+     * @return {@code true} if the permission is granted
+     */
+    public boolean isGranted(Permission permission) {
+        return permissions.contains(permission);
+    }
+
+    /**
+     * Grants a permission.
+     * 
+     * @param permission
+     *            the permission
+     */
+    public void grant(Permission permission) {
+        permissions.add(permission);
+    }
+
+    /**
+     * Revokes a permission.
+     * 
+     * @param permission
+     *            the permission
+     */
+    public void revoke(Permission permission) {
+        permissions.remove(permission);
+    }
+
+    /**
+     * Returns the realm data for this realm.
+     * 
+     * @return the realm data
+     */
+    public RealmData getRealmData() {
+        return realmData;
     }
 
     /**
@@ -381,12 +425,21 @@ public final class Realm {
     }
 
     /**
-     * Returns the {@link GlobalObject} for this realm.
+     * Returns the runtime context for this realm.
      * 
-     * @return the global object template
+     * @return the runtime context
      */
-    public GlobalObject getGlobalObjectTemplate() {
-        return globalObjectTemplate;
+    public RuntimeContext getRuntimeContext() {
+        return world.getRuntimeContext();
+    }
+
+    /**
+     * Returns the global properties object for this realm.
+     * 
+     * @return the global properties object
+     */
+    public OrdinaryObject getGlobalPropertiesObject() {
+        return globalPropertiesObject;
     }
 
     /**
@@ -399,31 +452,12 @@ public final class Realm {
     }
 
     /**
-     * Returns the current script execution context for this realm.
-     * 
-     * @return the current script execution context
-     */
-    public ExecutionContext getScriptContext() {
-        return scriptContext;
-    }
-
-    /**
-     * Sets a new script execution context for this realm.
-     * 
-     * @param scriptContext
-     *            the new script execution context
-     */
-    public void setScriptContext(ExecutionContext scriptContext) {
-        this.scriptContext = scriptContext;
-    }
-
-    /**
      * Returns this realm's locale.
      * 
      * @return the locale
      */
     public Locale getLocale() {
-        return world.getContext().getLocale();
+        return getRuntimeContext().getLocale();
     }
 
     /**
@@ -432,7 +466,7 @@ public final class Realm {
      * @return the timezone
      */
     public TimeZone getTimeZone() {
-        return world.getContext().getTimeZone();
+        return getRuntimeContext().getTimeZone();
     }
 
     /**
@@ -487,17 +521,6 @@ public final class Realm {
     }
 
     /**
-     * Tests whether the requested compatibility option is enabled in this code realm.
-     * 
-     * @param option
-     *            the compatibility option
-     * @return {@code true} if the compatibility option is enabled
-     */
-    public boolean isEnabled(CompatibilityOption option) {
-        return world.isEnabled(option);
-    }
-
-    /**
      * Returns the global symbol registry.
      * 
      * @return the global symbol registry
@@ -507,27 +530,51 @@ public final class Realm {
     }
 
     /**
-     * 8.4.1 EnqueueTask ( queueName, task, arguments)
+     * 8.4.1 EnqueueJob (queueName, job, arguments)
      * <p>
-     * Enqueues {@code task} to the queue of pending script-tasks.
+     * Enqueues {@code job} to the queue of pending script-jobs.
      * 
-     * @param task
-     *            the new script task
+     * @param job
+     *            the new script job
      */
-    public void enqueueScriptTask(Task task) {
-        world.enqueueScriptTask(task);
+    public void enqueueScriptJob(Job job) {
+        world.enqueueScriptJob(job);
     }
 
     /**
-     * 8.4.1 EnqueueTask ( queueName, task, arguments)
+     * 8.4.1 EnqueueJob (queueName, job, arguments)
      * <p>
-     * Enqueues {@code task} to the queue of pending promise-tasks.
+     * Enqueues {@code job} to the queue of pending promise-jobs.
      * 
-     * @param task
-     *            the new promise task
+     * @param job
+     *            the new promise job
      */
-    public void enqueuePromiseTask(Task task) {
-        world.enqueuePromiseTask(task);
+    public void enqueuePromiseJob(Job job) {
+        world.enqueuePromiseJob(job);
+    }
+
+    /**
+     * 8.4.1 EnqueueJob (queueName, job, arguments)
+     * <p>
+     * Enqueues {@code job} to the queue of pending finalizer-jobs.
+     * 
+     * @param job
+     *            the new finalizer job
+     */
+    public void enqueueFinalizerJob(Job job) {
+        world.enqueueFinalizerJob(job);
+    }
+
+    /**
+     * 8.4.1 EnqueueJob (queueName, job, arguments)
+     * <p>
+     * Enqueues {@code job} to the queue of pending async-jobs.
+     * 
+     * @param job
+     *            the new async job
+     */
+    public void enqueueAsyncJob(Job job) {
+        world.enqueueAsyncJob(job);
     }
 
     /**
@@ -599,39 +646,6 @@ public final class Realm {
     }
 
     /**
-     * 8.2.1 CreateRealm ( )
-     * <p>
-     * Creates a new {@link Realm} object.
-     * 
-     * @param cx
-     *            the execution context
-     * @return the new realm instance
-     */
-    public static Realm CreateRealm(ExecutionContext cx) {
-        // The operation is not supported in this implementation.
-        throw new UnsupportedOperationException();
-    }
-
-    /**
-     * 8.2.3 SetRealmGlobalObject ( realmRec, globalObj, thisValue )
-     * 
-     * @param cx
-     *            the execution context
-     * @param realm
-     *            the realm instance
-     * @param globalObj
-     *            the global this object or {@code null}
-     * @param thisValue
-     *            the global this value or {@code null}
-     * @return the new realm instance
-     */
-    public static Realm SetRealmGlobalObject(ExecutionContext cx, Realm realm, ScriptObject globalObj,
-            ScriptObject thisValue) {
-        // The operation is not supported in this implementation.
-        throw new UnsupportedOperationException();
-    }
-
-    /**
      * 8.2.1 CreateRealm ( )<br>
      * 8.2.3 SetRealmGlobalObject ( realmRec, globalObj, thisValue )
      * <p>
@@ -650,7 +664,18 @@ public final class Realm {
     public static Realm CreateRealmAndSetRealmGlobalObject(ExecutionContext cx, RealmObject realmObject,
             ScriptObject globalObj, ScriptObject thisValue) {
         World world = cx.getRealm().getWorld();
-        return new Realm(world, realmObject, globalObj, thisValue);
+        Realm realm = new Realm(world, realmObject, globalObj, thisValue);
+
+        // Run any initialization scripts, if required. But do _not_ install extensions!
+        try {
+            realm.getRealmData().initializeScripted();
+        } catch (ParserException | CompilationException e) {
+            throw e.toScriptException(cx);
+        } catch (IOException e) {
+            throw newError(cx, e.getMessage());
+        }
+
+        return realm;
     }
 
     /**
@@ -667,11 +692,11 @@ public final class Realm {
     public static ScriptObject SetDefaultGlobalBindings(ExecutionContext cx, Realm realm) {
         /* step 1 */
         ScriptObject globalObject = realm.getGlobalObject();
-        GlobalObject globalTemplate = realm.getGlobalObjectTemplate();
-        assert globalObject != null && globalTemplate != null;
+        OrdinaryObject globalProperties = realm.getGlobalPropertiesObject();
+        assert globalObject != null && globalProperties != null;
         /* step 2 */
-        for (Object key : globalTemplate.ownPropertyKeys(cx)) {
-            Property prop = globalTemplate.getOwnProperty(cx, key);
+        for (Object key : globalProperties.ownPropertyKeys(cx)) {
+            Property prop = globalProperties.getOwnProperty(cx, key);
             if (prop != null) {
                 PropertyDescriptor desc = prop.toPropertyDescriptor();
                 DefinePropertyOrThrow(cx, globalObject, key, desc);
@@ -682,7 +707,7 @@ public final class Realm {
     }
 
     /**
-     * 8.5.1 InitializeHostDefinedRealm ( realm )
+     * 8.5 InitializeHostDefinedRealm ( )
      * <p>
      * Initializes the global this with the default properties of the Global Object.
      * 
@@ -690,23 +715,44 @@ public final class Realm {
      *            the realm instance
      * @throws IOException
      *             if there was any I/O error
-     * @throws URISyntaxException
-     *             the URL is not a valid URI
      * @throws ParserException
      *             if the source contains any syntax errors
      * @throws CompilationException
      *             if the parsed source could not be compiled
      */
     public static void InitializeHostDefinedRealm(Realm realm)
-            throws IOException, URISyntaxException, ParserException, CompilationException {
-        /* steps 1-2 (not applicable) */
-        GlobalObject globalTemplate = realm.getGlobalObjectTemplate();
+            throws IOException, ParserException, CompilationException {
+        /* steps 1-9 (not applicable) */
+        /* step 10 */
         // Run initialization scripts before installing global bindings and extensions.
-        globalTemplate.initializeScripted();
-        /* steps 3-4 */
+        realm.getRealmData().initializeScripted();
         SetDefaultGlobalBindings(realm.defaultContext(), realm);
-        /* step 5 */
-        globalTemplate.initializeExtensions();
+        /* step 11 */
+        realm.getRealmData().initializeExtensions();
+    }
+
+    /**
+     * 8.5 InitializeHostDefinedRealm ( )
+     * <p>
+     * Creates and initializes a new Realm instance.
+     * 
+     * @param world
+     *            the world instance
+     * @return the new realm instance
+     * @throws IOException
+     *             if there was any I/O error
+     * @throws ParserException
+     *             if the source contains any syntax errors
+     * @throws CompilationException
+     *             if the parsed source could not be compiled
+     */
+    public static Realm InitializeHostDefinedRealm(World world)
+            throws IOException, ParserException, CompilationException {
+        /* steps 1-9 */
+        Realm realm = new Realm(world);
+        /* steps 10-11 */
+        InitializeHostDefinedRealm(realm);
+        return realm;
     }
 
     /**
@@ -725,33 +771,37 @@ public final class Realm {
         initializeReflectModule(realm);
         initializeIterationModule(realm);
         initializePromiseObjects(realm);
+        initializeAsyncModule(realm);
 
         // intrinsics: Internationalization API
         initializeInternationalisation(realm);
 
-        // intrinsics: Async functions
-        if (realm.isEnabled(CompatibilityOption.AsyncFunction)) {
-            initializeAsyncModule(realm);
-        }
-
         // intrinsics: Async generators
-        if (realm.isEnabled(CompatibilityOption.AsyncGenerator)) {
+        if (realm.getRuntimeContext().isEnabled(CompatibilityOption.AsyncIteration)) {
             initializeAsyncIterationModule(realm);
         }
 
         // intrinsics: SIMD
-        if (realm.isEnabled(CompatibilityOption.SIMD)) {
+        if (realm.getRuntimeContext().isEnabled(CompatibilityOption.SIMD)) {
             initializeSIMDModule(realm);
         }
 
         // intrinsics: Observable
-        if (realm.isEnabled(CompatibilityOption.Observable)) {
+        if (realm.getRuntimeContext().isEnabled(CompatibilityOption.Observable)) {
             initializeObservableModule(realm);
         }
 
         // intrinsics: Shared Memory and Atomics
-        if (realm.isEnabled(CompatibilityOption.Atomics)) {
-            initializeAtomicsModule(realm);
+        initializeAtomicsModule(realm);
+
+        // intrinsics: Zones
+        if (realm.getRuntimeContext().isEnabled(CompatibilityOption.Zones)) {
+            initializeZonesModule(realm);
+        }
+
+        // intrinsics: BigInt
+        if (realm.getRuntimeContext().isEnabled(CompatibilityOption.BigInt)) {
+            initializeBigIntModule(realm);
         }
 
         // Initialized last because it accesses other intrinsics.
@@ -884,7 +934,7 @@ public final class Realm {
         Object arrayPrototypeValues = arrayPrototype.lookupOwnProperty("values").getValue();
         intrinsics.put(Intrinsics.ArrayProto_values, (OrdinaryObject) arrayPrototypeValues);
 
-        if (realm.isEnabled(CompatibilityOption.StringMatchAll)) {
+        if (realm.getRuntimeContext().isEnabled(CompatibilityOption.StringMatchAll)) {
             RegExpStringIteratorPrototype regExpStringIteratorPrototype = new RegExpStringIteratorPrototype(realm);
             intrinsics.put(Intrinsics.RegExpStringIteratorPrototype, regExpStringIteratorPrototype);
             regExpStringIteratorPrototype.initialize(realm);
@@ -1017,7 +1067,8 @@ public final class Realm {
         // initialization phase
         proxy.initialize(realm);
 
-        if (realm.isEnabled(CompatibilityOption.Realm)) {
+        if (realm.getRuntimeContext().isEnabled(CompatibilityOption.Realm)
+                || realm.getRuntimeContext().isEnabled(CompatibilityOption.FrozenRealm)) {
             RealmConstructor realmConstructor = new RealmConstructor(realm);
             RealmPrototype realmPrototype = new RealmPrototype(realm);
 
@@ -1028,7 +1079,7 @@ public final class Realm {
             realmPrototype.initialize(realm);
         }
 
-        if (realm.isEnabled(CompatibilityOption.Loader)) {
+        if (realm.getRuntimeContext().isEnabled(CompatibilityOption.Loader)) {
             LoaderConstructor loaderConstructor = new LoaderConstructor(realm);
             LoaderPrototype loaderPrototype = new LoaderPrototype(realm);
 
@@ -1039,7 +1090,18 @@ public final class Realm {
             loaderPrototype.initialize(realm);
         }
 
-        if (realm.isEnabled(CompatibilityOption.System) || realm.isEnabled(CompatibilityOption.SystemGlobal)) {
+        if (realm.getRuntimeContext().isEnabled(CompatibilityOption.WeakReference)) {
+            WeakRefPrototype weakReferencePrototype = new WeakRefPrototype(realm);
+
+            intrinsics.put(Intrinsics.WeakRefPrototype, weakReferencePrototype);
+
+            weakReferencePrototype.initialize(realm);
+        }
+
+        if (realm.getRuntimeContext().isEnabled(CompatibilityOption.System)
+                || realm.getRuntimeContext().isEnabled(CompatibilityOption.SystemGlobal)
+                || realm.getRuntimeContext().isEnabled(CompatibilityOption.WeakReference)
+                || realm.getRuntimeContext().isEnabled(CompatibilityOption.ErrorStacks)) {
             SystemObject systemObject = new SystemObject(realm);
 
             intrinsics.put(Intrinsics.System, systemObject);
@@ -1073,11 +1135,6 @@ public final class Realm {
         generatorFunctionConstructor.initialize(realm);
         generatorPrototype.initialize(realm);
         generator.initialize(realm);
-
-        if (realm.isEnabled(CompatibilityOption.LegacyGenerator)) {
-            OrdinaryObject legacyGeneratorPrototype = ObjectCreate(realm, Intrinsics.ObjectPrototype);
-            intrinsics.put(Intrinsics.LegacyGeneratorPrototype, legacyGeneratorPrototype);
-        }
     }
 
     /**
@@ -1213,9 +1270,23 @@ public final class Realm {
         DateTimeFormatPrototype dateTimeFormatPrototype = new DateTimeFormatPrototype(realm);
         PluralRulesConstructor pluralRulesConstructor = null;
         PluralRulesPrototype pluralRulesPrototype = null;
-        if (realm.isEnabled(CompatibilityOption.PluralRules)) {
+        if (realm.getRuntimeContext().isEnabled(CompatibilityOption.PluralRules)) {
             pluralRulesConstructor = new PluralRulesConstructor(realm);
             pluralRulesPrototype = new PluralRulesPrototype(realm);
+        }
+        SegmenterConstructor segmenterConstructor = null;
+        SegmenterPrototype segmenterPrototype = null;
+        SegmentIteratorPrototype segmentIteratorPrototype = null;
+        if (realm.getRuntimeContext().isEnabled(CompatibilityOption.IntlSegmenter)) {
+            segmenterConstructor = new SegmenterConstructor(realm);
+            segmenterPrototype = new SegmenterPrototype(realm);
+            segmentIteratorPrototype = new SegmentIteratorPrototype(realm);
+        }
+        ListFormatConstructor listFormatConstructor = null;
+        ListFormatPrototype listFormatPrototype = null;
+        if (realm.getRuntimeContext().isEnabled(CompatibilityOption.IntlListFormat)) {
+            listFormatConstructor = new ListFormatConstructor(realm);
+            listFormatPrototype = new ListFormatPrototype(realm);
         }
 
         // registration phase
@@ -1230,6 +1301,15 @@ public final class Realm {
             intrinsics.put(Intrinsics.Intl_PluralRules, pluralRulesConstructor);
             intrinsics.put(Intrinsics.Intl_PluralRulesPrototype, pluralRulesPrototype);
         }
+        if (segmenterConstructor != null) {
+            intrinsics.put(Intrinsics.Intl_Segmenter, segmenterConstructor);
+            intrinsics.put(Intrinsics.Intl_SegmenterPrototype, segmenterPrototype);
+            intrinsics.put(Intrinsics.Intl_SegmentIteratorPrototype, segmentIteratorPrototype);
+        }
+        if (listFormatConstructor != null) {
+            intrinsics.put(Intrinsics.Intl_ListFormat, listFormatConstructor);
+            intrinsics.put(Intrinsics.Intl_ListFormatPrototype, listFormatPrototype);
+        }
 
         // initialization phase
         intlObject.initialize(realm);
@@ -1242,6 +1322,15 @@ public final class Realm {
         if (pluralRulesConstructor != null) {
             pluralRulesConstructor.initialize(realm);
             pluralRulesPrototype.initialize(realm);
+        }
+        if (segmenterConstructor != null) {
+            segmenterConstructor.initialize(realm);
+            segmenterPrototype.initialize(realm);
+            segmentIteratorPrototype.initialize(realm);
+        }
+        if (listFormatConstructor != null) {
+            listFormatConstructor.initialize(realm);
+            listFormatPrototype.initialize(realm);
         }
     }
 
@@ -1281,18 +1370,21 @@ public final class Realm {
         AsyncGeneratorPrototype asyncGeneratorPrototype = new AsyncGeneratorPrototype(realm);
         AsyncGeneratorFunctionPrototype asyncGenerator = new AsyncGeneratorFunctionPrototype(realm);
         AsyncIteratorPrototype asyncIteratorPrototype = new AsyncIteratorPrototype(realm);
+        AsyncFromSyncIteratorPrototype asyncFromSyncIteratorPrototype = new AsyncFromSyncIteratorPrototype(realm);
 
         // registration phase
         intrinsics.put(Intrinsics.AsyncGeneratorFunction, asyncGenFunctionConstructor);
         intrinsics.put(Intrinsics.AsyncGeneratorPrototype, asyncGeneratorPrototype);
         intrinsics.put(Intrinsics.AsyncGenerator, asyncGenerator);
         intrinsics.put(Intrinsics.AsyncIteratorPrototype, asyncIteratorPrototype);
+        intrinsics.put(Intrinsics.AsyncFromSyncIteratorPrototype, asyncFromSyncIteratorPrototype);
 
         // initialization phase
         asyncGenFunctionConstructor.initialize(realm);
         asyncGeneratorPrototype.initialize(realm);
         asyncGenerator.initialize(realm);
         asyncIteratorPrototype.initialize(realm);
+        asyncFromSyncIteratorPrototype.initialize(realm);
     }
 
     /**
@@ -1308,7 +1400,7 @@ public final class Realm {
         SIMD simd = new SIMD(realm);
         Float64x2Constructor float64x2Constructor = null;
         Float64x2Prototype float64x2Prototype = null;
-        if (realm.isEnabled(CompatibilityOption.SIMD_Phase2)) {
+        if (realm.getRuntimeContext().isEnabled(CompatibilityOption.SIMD_Phase2)) {
             float64x2Constructor = new Float64x2Constructor(realm);
             float64x2Prototype = new Float64x2Prototype(realm);
         }
@@ -1328,7 +1420,7 @@ public final class Realm {
         Uint8x16Prototype uint8x16Prototype = new Uint8x16Prototype(realm);
         Bool64x2Constructor bool64x2Constructor = null;
         Bool64x2Prototype bool64x2Prototype = null;
-        if (realm.isEnabled(CompatibilityOption.SIMD_Phase2)) {
+        if (realm.getRuntimeContext().isEnabled(CompatibilityOption.SIMD_Phase2)) {
             bool64x2Constructor = new Bool64x2Constructor(realm);
             bool64x2Prototype = new Bool64x2Prototype(realm);
         }
@@ -1341,7 +1433,7 @@ public final class Realm {
 
         // registration phase
         intrinsics.put(Intrinsics.SIMD, simd);
-        if (realm.isEnabled(CompatibilityOption.SIMD_Phase2)) {
+        if (realm.getRuntimeContext().isEnabled(CompatibilityOption.SIMD_Phase2)) {
             intrinsics.put(Intrinsics.SIMD_Float64x2, float64x2Constructor);
             intrinsics.put(Intrinsics.SIMD_Float64x2Prototype, float64x2Prototype);
         }
@@ -1359,7 +1451,7 @@ public final class Realm {
         intrinsics.put(Intrinsics.SIMD_Uint16x8Prototype, uint16x8Prototype);
         intrinsics.put(Intrinsics.SIMD_Uint8x16, uint8x16Constructor);
         intrinsics.put(Intrinsics.SIMD_Uint8x16Prototype, uint8x16Prototype);
-        if (realm.isEnabled(CompatibilityOption.SIMD_Phase2)) {
+        if (realm.getRuntimeContext().isEnabled(CompatibilityOption.SIMD_Phase2)) {
             intrinsics.put(Intrinsics.SIMD_Bool64x2, bool64x2Constructor);
             intrinsics.put(Intrinsics.SIMD_Bool64x2Prototype, bool64x2Prototype);
         }
@@ -1372,7 +1464,7 @@ public final class Realm {
 
         // initialization phase
         simd.initialize(realm);
-        if (realm.isEnabled(CompatibilityOption.SIMD_Phase2)) {
+        if (realm.getRuntimeContext().isEnabled(CompatibilityOption.SIMD_Phase2)) {
             float64x2Constructor.initialize(realm);
             float64x2Prototype.initialize(realm);
         }
@@ -1390,7 +1482,7 @@ public final class Realm {
         uint16x8Prototype.initialize(realm);
         uint8x16Constructor.initialize(realm);
         uint8x16Prototype.initialize(realm);
-        if (realm.isEnabled(CompatibilityOption.SIMD_Phase2)) {
+        if (realm.getRuntimeContext().isEnabled(CompatibilityOption.SIMD_Phase2)) {
             bool64x2Constructor.initialize(realm);
             bool64x2Prototype.initialize(realm);
         }
@@ -1456,6 +1548,62 @@ public final class Realm {
     }
 
     /**
+     * <h1>Extension: Zones</h1>
+     * 
+     * @param realm
+     *            the realm instance
+     */
+    private static void initializeZonesModule(Realm realm) {
+        EnumMap<Intrinsics, OrdinaryObject> intrinsics = realm.intrinsics;
+
+        // allocation phase
+        ZoneConstructor zoneConstructor = new ZoneConstructor(realm);
+        ZonePrototype zonePrototype = new ZonePrototype(realm);
+
+        // registration phase
+        intrinsics.put(Intrinsics.Zone, zoneConstructor);
+        intrinsics.put(Intrinsics.ZonePrototype, zonePrototype);
+
+        // initialization phase
+        zoneConstructor.initialize(realm);
+        zonePrototype.initialize(realm);
+    }
+
+    /**
+     * <h1>Extension: BigInt</h1>
+     * 
+     * @param realm
+     *            the realm instance
+     */
+    private static void initializeBigIntModule(Realm realm) {
+        EnumMap<Intrinsics, OrdinaryObject> intrinsics = realm.intrinsics;
+
+        // allocation phase
+        BigIntConstructor bigIntConstructor = new BigIntConstructor(realm);
+        BigIntPrototype bigIntPrototype = new BigIntPrototype(realm);
+        TypedArrayConstructor int64ArrayConstructor = new TypedArrayConstructor(realm, ElementType.BigInt64);
+        TypedArrayPrototype int64ArrayPrototype = new TypedArrayPrototype(realm, ElementType.BigInt64);
+        TypedArrayConstructor uint64ArrayConstructor = new TypedArrayConstructor(realm, ElementType.BigUint64);
+        TypedArrayPrototype uint64ArrayPrototype = new TypedArrayPrototype(realm, ElementType.BigUint64);
+
+        // registration phase
+        intrinsics.put(Intrinsics.BigInt, bigIntConstructor);
+        intrinsics.put(Intrinsics.BigIntPrototype, bigIntPrototype);
+        intrinsics.put(Intrinsics.BigInt64Array, int64ArrayConstructor);
+        intrinsics.put(Intrinsics.BigInt64ArrayPrototype, int64ArrayPrototype);
+        intrinsics.put(Intrinsics.BigUint64Array, uint64ArrayConstructor);
+        intrinsics.put(Intrinsics.BigUint64ArrayPrototype, uint64ArrayPrototype);
+
+        // initialization phase
+        bigIntConstructor.initialize(realm);
+        bigIntPrototype.initialize(realm);
+        int64ArrayConstructor.initialize(realm);
+        int64ArrayPrototype.initialize(realm);
+        uint64ArrayConstructor.initialize(realm);
+        uint64ArrayPrototype.initialize(realm);
+    }
+
+    /**
      * <h1>18 The Global Object</h1>
      * 
      * @param realm
@@ -1463,7 +1611,7 @@ public final class Realm {
      */
     private static void initializeGlobalObject(Realm realm) {
         EnumMap<Intrinsics, OrdinaryObject> intrinsics = realm.intrinsics;
-        GlobalObject global = realm.globalObjectTemplate;
+        GlobalObject global = realm.globalPropertiesObject;
 
         global.initialize(realm);
 
@@ -1477,7 +1625,7 @@ public final class Realm {
         intrinsics.put(Intrinsics.parseFloat, getBuiltin(global, "parseFloat"));
         intrinsics.put(Intrinsics.parseInt, getBuiltin(global, "parseInt"));
 
-        if (realm.isEnabled(CompatibilityOption.GlobalObject)) {
+        if (realm.getRuntimeContext().isEnabled(CompatibilityOption.GlobalObject)) {
             intrinsics.put(Intrinsics.escape, getBuiltin(global, "escape"));
             intrinsics.put(Intrinsics.unescape, getBuiltin(global, "unescape"));
         }

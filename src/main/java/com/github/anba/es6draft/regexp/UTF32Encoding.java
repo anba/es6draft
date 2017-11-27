@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -23,18 +23,13 @@ final class UTF32Encoding extends UEncoding {
 
     @Override
     public byte[] toBytes(String s) {
-        int length = 0;
-        for (int cp, i = 0, len = s.length(); i < len; i += Character.charCount(cp)) {
+        byte[] bytes = new byte[Character.codePointCount(s, 0, s.length()) * 4 + 4]; // null-terminated c-string
+        for (int cp, i = 0, j = 0; i < s.length(); i += Character.charCount(cp)) {
             cp = s.codePointAt(i);
-            length += 1;
-        }
-        byte[] bytes = new byte[length * 4 + 4]; // null-terminated c-string
-        for (int cp, i = 0, j = 0, len = s.length(); i < len; i += Character.charCount(cp)) {
-            cp = s.codePointAt(i);
-            bytes[j++] = (byte) ((cp >>> 24) & 0xff);
-            bytes[j++] = (byte) ((cp >>> 16) & 0xff);
-            bytes[j++] = (byte) ((cp >>> 8) & 0xff);
-            bytes[j++] = (byte) ((cp >>> 0) & 0xff);
+            bytes[j++] = (byte) (cp >>> 24);
+            bytes[j++] = (byte) (cp >>> 16);
+            bytes[j++] = (byte) (cp >>> 8);
+            bytes[j++] = (byte) (cp >>> 0);
         }
         return bytes;
     }
@@ -87,10 +82,10 @@ final class UTF32Encoding extends UEncoding {
 
     @Override
     public int codeToMbc(int code, byte[] bytes, int p) {
-        bytes[p + 0] = (byte) ((code >>> 24) & 0xff);
-        bytes[p + 1] = (byte) ((code >>> 16) & 0xff);
-        bytes[p + 2] = (byte) ((code >>> 8) & 0xff);
-        bytes[p + 3] = (byte) ((code >>> 0) & 0xff);
+        bytes[p + 0] = (byte) (code >>> 24);
+        bytes[p + 1] = (byte) (code >>> 16);
+        bytes[p + 2] = (byte) (code >>> 8);
+        bytes[p + 3] = (byte) (code >>> 0);
         return 4;
     }
 

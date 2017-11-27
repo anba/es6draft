@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -15,4 +15,4 @@ import* as self from "./bug2524.jsm";
 
 assertSame("[object Module]", Object.prototype.toString.call(self));
 assertTrue(Object.prototype.hasOwnProperty.call(self, Symbol.toStringTag));
-assertDataProperty(self, Symbol.toStringTag, {value: "Module", writable: false, enumerable: false, configurable: true});
+assertDataProperty(self, Symbol.toStringTag, {value: "Module", writable: false, enumerable: false, configurable: false});

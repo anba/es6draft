@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2016 André Bargull
+ * Copyright (c) André Bargull
  * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
  *
  * <https://github.com/anba/es6draft>
@@ -7,7 +7,6 @@
 package com.github.anba.es6draft.runtime.objects.date;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToFlatString;
-import static com.github.anba.es6draft.runtime.AbstractOperations.ToInteger;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToNumber;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToPrimitive;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
@@ -18,6 +17,7 @@ import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initializable;
 import com.github.anba.es6draft.runtime.internal.Messages;
+import com.github.anba.es6draft.runtime.internal.Permission;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Optional;
@@ -54,11 +54,6 @@ public final class DateConstructor extends BuiltinConstructor implements Initial
         createProperties(realm, this, Properties.class);
     }
 
-    @Override
-    public DateConstructor clone() {
-        return new DateConstructor(getRealm());
-    }
-
     /**
      * 20.3.2.1 Date (year, month [, date [, hours [, minutes [, seconds [, ms ] ] ] ] ] )<br>
      * 20.3.2.2 Date (value)<br>
@@ -69,6 +64,9 @@ public final class DateConstructor extends BuiltinConstructor implements Initial
         ExecutionContext calleeContext = calleeContext();
         /* steps 1-3 (not applicable) */
         /* step 4 */
+        if (!calleeContext.getRealm().isGranted(Permission.CurrentTime)) {
+            throw newTypeError(calleeContext, Messages.Key.NoPermission, "Date");
+        }
         long now = System.currentTimeMillis();
         return DatePrototype.ToDateString(calleeContext.getRealm(), now, DateString.DateTime);
     }
@@ -79,8 +77,7 @@ public final class DateConstructor extends BuiltinConstructor implements Initial
      * 20.3.2.3 Date ( )<br>
      */
     @Override
-    public DateObject construct(ExecutionContext callerContext, Constructor newTarget,
-            Object... args) {
+    public DateObject construct(ExecutionContext callerContext, Constructor newTarget, Object... args) {
         ExecutionContext calleeContext = calleeContext();
         Realm realm = calleeContext.getRealm();
         /* steps 1-2 */
@@ -89,24 +86,38 @@ public final class DateConstructor extends BuiltinConstructor implements Initial
         final double dateValue;
         if (numberOfArgs >= 2) {
             // [20.3.2.1]
+            /* step 3.a */
             double year = ToNumber(calleeContext, args[0]);
+            /* step 3.b */
             double month = ToNumber(calleeContext, args[1]);
+            /* step 3.c */
             double date = (args.length > 2 ? ToNumber(calleeContext, args[2]) : 1);
+            /* step 3.d */
             double hour = (args.length > 3 ? ToNumber(calleeContext, args[3]) : 0);
+            /* step 3.e */
             double min = (args.length > 4 ? ToNumber(calleeContext, args[4]) : 0);
+            /* step 3.f */
             double sec = (args.length > 5 ? ToNumber(calleeContext, args[5]) : 0);
+            /* step 3.g */
             double ms = (args.length > 6 ? ToNumber(calleeContext, args[6]) : 0);
-            if (!Double.isNaN(year) && 0 <= ToInteger(year) && ToInteger(year) <= 99) {
-                year = 1900 + ToInteger(year);
+            /* step 3.h */
+            int intYear = (int) year; // ToInteger
+            if (!Double.isNaN(year) && 0 <= intYear && intYear <= 99) {
+                year = 1900 + intYear;
             }
+            /* step 3.i */
             double finalDate = MakeDate(MakeDay(year, month, date), MakeTime(hour, min, sec, ms));
+            /* step 3.k */
             dateValue = TimeClip(UTC(realm, finalDate));
         } else if (numberOfArgs == 1) {
             // [20.3.2.2]
             double tv;
             if (args[0] instanceof DateObject) {
-                tv = thisTimeValue(calleeContext, args[0]);
+                /* step 3.a */
+                // TODO: spec improvement - inline thisTimeValue() call.
+                tv = ((DateObject) args[0]).getDateValue();
             } else {
+                /* step 3.b */
                 Object v = ToPrimitive(calleeContext, args[0]);
                 if (Type.isString(v)) {
                     tv = (double) Properties.parse(calleeContext, null, v);
@@ -117,6 +128,9 @@ public final class DateConstructor extends BuiltinConstructor implements Initial
             dateValue = TimeClip(tv);
         } else {
             // [20.3.2.3]
+            if (!calleeContext.getRealm().isGranted(Permission.CurrentTime)) {
+                throw newTypeError(calleeContext, Messages.Key.NoPermission, "Date");
+            }
             dateValue = System.currentTimeMillis();
         }
         DateObject obj = OrdinaryCreateFromConstructor(calleeContext, newTarget, Intrinsics.DatePrototype,
@@ -124,22 +138,6 @@ public final class DateConstructor extends BuiltinConstructor implements Initial
         obj.setDateValue(dateValue);
         return obj;
         /* step 4 (not applicable) */
-    }
-
-    /**
-     * Abstract operation thisTimeValue(value)
-     * 
-     * @param cx
-     *            the execution context
-     * @param object
-     *            the date object
-     * @return the date-time value
-     */
-    private static double thisTimeValue(ExecutionContext cx, Object object) {
-        if (object instanceof DateObject) {
-            return ((DateObject) object).getDateValue();
-        }
-        throw newTypeError(cx, Messages.Key.IncompatibleObject);
     }
 
     /**
@@ -151,19 +149,16 @@ public final class DateConstructor extends BuiltinConstructor implements Initial
         @Prototype
         public static final Intrinsics __proto__ = Intrinsics.FunctionPrototype;
 
-        @Value(name = "length", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = true))
+        @Value(name = "length", attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static final int length = 7;
 
-        @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = true))
+        @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static final String name = "Date";
 
         /**
          * 20.3.3.3 Date.prototype
          */
-        @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = false))
+        @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false, configurable = false))
         public static final Intrinsics prototype = Intrinsics.DatePrototype;
 
         /**
@@ -188,7 +183,7 @@ public final class DateConstructor extends BuiltinConstructor implements Initial
         }
 
         /**
-         * 20.3.3.4 Date.UTC (year, month [, date [, hours [, minutes [, seconds [, ms ] ] ] ] ] )
+         * 20.3.3.4 Date.UTC (year, [ month [, date [, hours [, minutes [, seconds [, ms ] ] ] ] ] ] )
          * 
          * @param cx
          *            the execution context
@@ -211,31 +206,33 @@ public final class DateConstructor extends BuiltinConstructor implements Initial
          * @return the new date object
          */
         @Function(name = "UTC", arity = 7)
-        public static Object UTC(ExecutionContext cx, Object thisValue, Object year, Object month,
-                @Optional(value = Default.Number, numberValue = 1) Object date, @Optional(
-                        value = Default.Number, numberValue = 0) Object hours, @Optional(
-                        value = Default.Number, numberValue = 0) Object minutes, @Optional(
-                        value = Default.Number, numberValue = 0) Object seconds, @Optional(
-                        value = Default.Number, numberValue = 0) Object ms) {
-            /* steps 1-2 */
+        public static Object UTC(ExecutionContext cx, Object thisValue, Object year,
+                @Optional(value = Default.Number, numberValue = 0) Object month,
+                @Optional(value = Default.Number, numberValue = 1) Object date,
+                @Optional(value = Default.Number, numberValue = 0) Object hours,
+                @Optional(value = Default.Number, numberValue = 0) Object minutes,
+                @Optional(value = Default.Number, numberValue = 0) Object seconds,
+                @Optional(value = Default.Number, numberValue = 0) Object ms) {
+            /* step 1 */
             double y = ToNumber(cx, year);
-            /* steps 3-4 */
+            /* step 2 */
             double m = ToNumber(cx, month);
-            /* steps 5-6 */
+            /* step 3 */
             double dt = ToNumber(cx, date);
-            /* steps 7-8 */
+            /* step 4 */
             double h = ToNumber(cx, hours);
-            /* steps 9-10 */
+            /* step 5 */
             double min = ToNumber(cx, minutes);
-            /* steps 11-12 */
+            /* step 6 */
             double sec = ToNumber(cx, seconds);
-            /* steps 13-14 */
+            /* step 7 */
             double milli = ToNumber(cx, ms);
-            /* step 15 */
-            if (!Double.isNaN(y) && 0 <= ToInteger(y) && ToInteger(y) <= 99) {
-                y = 1900 + ToInteger(y);
+            /* step 8 */
+            int intYear = (int) y; // ToInteger
+            if (!Double.isNaN(y) && 0 <= intYear && intYear <= 99) {
+                y = 1900 + intYear;
             }
-            /* step 16 */
+            /* step 9 */
             return TimeClip(MakeDate(MakeDay(y, m, dt), MakeTime(h, min, sec, milli)));
         }
 
@@ -250,6 +247,10 @@ public final class DateConstructor extends BuiltinConstructor implements Initial
          */
         @Function(name = "now", arity = 0)
         public static Object now(ExecutionContext cx, Object thisValue) {
+            /* step 1 */
+            if (!cx.getRealm().isGranted(Permission.CurrentTime)) {
+                throw newTypeError(cx, Messages.Key.NoPermission, "Date.now");
+            }
             return (double) System.currentTimeMillis();
         }
     }

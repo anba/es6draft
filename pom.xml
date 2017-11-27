@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-    Copyright (c) 2012-2016 André Bargull
+    Copyright (c) André Bargull
     Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
 
     <https://github.com/anba/es6draft>
@@ -19,7 +19,7 @@
   <name>es6draft</name>
 
   <url>https://github.com/anba/es6draft</url>
-  <description>ECMAScript 2015 compiler and runtime</description>
+  <description>ECMAScript compiler and runtime</description>
   <inceptionYear>2012</inceptionYear>
 
   <organization>
@@ -46,16 +46,11 @@
     <url>https://github.com/anba/es6draft/issues</url>
   </issueManagement>
 
-  <prerequisites>
-    <maven>3.0</maven>
-  </prerequisites>
-
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <maven.build.timestamp.format>yyyy-MM-dd'T'HH:mm:ss</maven.build.timestamp.format>
     <build.timestamp>${maven.build.timestamp}</build.timestamp>
-    <currentYear>2016</currentYear>
     <mainClass>${project.groupId}.${project.artifactId}.repl.Repl</mainClass>
     <distribution.name>${project.artifactId}</distribution.name>
     <shaded.name>${project.artifactId}</shaded.name>
@@ -64,28 +59,45 @@
     <test.user.country>US</test.user.country>
     <test.user.timezone>America/Los_Angeles</test.user.timezone>
     <test.jvmArgs />
+    <test.jacocoArgs />
+    <test.excludes>**/chakra/*, **/mozilla/*, **/test262/*, **/v8/*, **/webkit/*</test.excludes>
   </properties>
 
   <dependencies>
     <dependency>
       <groupId>org.ow2.asm</groupId>
-      <artifactId>asm-debug-all</artifactId>
-      <version>5.0.4</version>
+      <artifactId>asm</artifactId>
+      <version>6.0</version>
+    </dependency>
+    <dependency>
+      <groupId>org.ow2.asm</groupId>
+      <artifactId>asm-commons</artifactId>
+      <version>6.0</version>
+    </dependency>
+    <dependency>
+      <groupId>org.ow2.asm</groupId>
+      <artifactId>asm-util</artifactId>
+      <version>6.0</version>
     </dependency>
     <dependency>
       <groupId>com.ibm.icu</groupId>
       <artifactId>icu4j</artifactId>
-      <version>56.1</version>
+      <version>60.1</version>
     </dependency>
     <dependency>
       <groupId>joda-time</groupId>
       <artifactId>joda-time</artifactId>
-      <version>2.9.2</version>
+      <version>2.9.9</version>
     </dependency>
     <dependency>
       <groupId>org.jruby.joni</groupId>
       <artifactId>joni</artifactId>
-      <version>2.1.9</version>
+      <version>2.1.12</version>
+    </dependency>
+    <dependency>
+      <groupId>org.jruby.jcodings</groupId>
+      <artifactId>jcodings</artifactId>
+      <version>1.0.26</version>
     </dependency>
     <dependency>
       <groupId>jline</groupId>
@@ -124,19 +136,19 @@
     <dependency>
       <groupId>commons-io</groupId>
       <artifactId>commons-io</artifactId>
-      <version>2.4</version>
+      <version>2.6</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.commons</groupId>
       <artifactId>commons-lang3</artifactId>
-      <version>3.4</version>
+      <version>3.7</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.yaml</groupId>
       <artifactId>snakeyaml</artifactId>
-      <version>1.16</version>
+      <version>1.19</version>
       <scope>test</scope>
     </dependency>
   </dependencies>
@@ -147,9 +159,9 @@
       <reporting>
         <plugins>
           <plugin>
-            <groupId>org.codehaus.mojo</groupId>
-            <artifactId>findbugs-maven-plugin</artifactId>
-            <version>3.0.3</version>
+            <groupId>com.github.spotbugs</groupId>
+            <artifactId>spotbugs-maven-plugin</artifactId>
+            <version>3.1.0-RC7</version>
             <configuration>
               <excludeFilterFile>${project.basedir}/src/etc/findbugs-exclude.xml</excludeFilterFile>
               <fork>true</fork>
@@ -159,7 +171,7 @@
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-pmd-plugin</artifactId>
-            <version>3.6</version>
+            <version>3.8</version>
             <configuration>
               <targetJdk>1.8</targetJdk>
               <skipEmptyReport>false</skipEmptyReport>
@@ -178,39 +190,12 @@
         </plugins>
       </reporting>
     </profile>
-    <!-- Profile to skip all external test suites -->
-    <profile>
-      <id>skip-external</id>
-      <activation>
-        <activeByDefault>true</activeByDefault>
-      </activation>
-      <build>
-        <plugins>
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-surefire-plugin</artifactId>
-            <executions>
-              <execution>
-                <id>surefire-test</id>
-                <configuration>
-                  <excludes>
-                    <exclude>**/chakra/*.java</exclude>
-                    <exclude>**/mozilla/*</exclude>
-                    <exclude>**/test262/*</exclude>
-                    <exclude>**/traceur/*</exclude>
-                    <exclude>**/v8/*</exclude>
-                    <exclude>**/webkit/*</exclude>
-                  </excludes>
-                </configuration>
-              </execution>
-            </executions>
-          </plugin>
-        </plugins>
-      </build>
-    </profile>
     <!-- Profile to run external test suites except for test262 -->
     <profile>
       <id>external</id>
+      <properties>
+        <test.excludes />
+      </properties>
       <build>
         <plugins>
           <plugin>
@@ -224,7 +209,6 @@
                   <includes>
                     <include>**/chakra/*.java</include>
                     <include>**/mozilla/*.java</include>
-                    <include>**/traceur/*.java</include>
                     <include>**/v8/*.java</include>
                     <include>**/webkit/*.java</include>
                   </includes>
@@ -238,6 +222,9 @@
     <!-- Profile to run the test262 test suite -->
     <profile>
       <id>test262</id>
+      <properties>
+        <test.excludes />
+      </properties>
       <build>
         <plugins>
           <plugin>
@@ -262,6 +249,7 @@
     <profile>
       <id>test262-travisci</id>
       <properties>
+        <test.excludes />
         <!-- Explicit fork+memory settings to avoid exceeding the 3GB limit. -->
         <test.jvmArgs>-Xms256m -Xmx1536m</test.jvmArgs>
       </properties>
@@ -276,10 +264,190 @@
                 <configuration>
                   <testFailureIgnore>true</testFailureIgnore>
                   <includes>
-                    <include>**/test262/*.java</include>
+                    <include>**/test262/DescriptorTest.java</include>
+                    <include>**/test262/Test262Web.java</include>
+                    <include>**/test262/Test262Strict.java</include>
                   </includes>
                   <forkCount>1</forkCount>
                   <reuseForks>false</reuseForks>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+    <!-- Java 8 Profile -->
+    <profile>
+      <id>java8</id>
+      <activation>
+        <jdk>1.8</jdk>
+      </activation>
+      <properties>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
+      </properties>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>build-helper-maven-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>add-source-java8</id>
+                <phase>generate-sources</phase>
+                <goals>
+                  <goal>add-source</goal>
+                </goals>
+                <configuration>
+                  <sources>
+                    <source>${project.basedir}/src/main/java8</source>
+                  </sources>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+    <!-- Java 9 Profile -->
+    <profile>
+      <id>java9</id>
+      <activation>
+        <jdk>!1.8</jdk>
+      </activation>
+      <properties>
+        <maven.compiler.source>1.9</maven.compiler.source>
+        <maven.compiler.target>1.9</maven.compiler.target>
+        <maven.compiler.release>9</maven.compiler.release>
+      </properties>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>build-helper-maven-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>add-source-java9</id>
+                <phase>generate-sources</phase>
+                <goals>
+                  <goal>add-source</goal>
+                </goals>
+                <configuration>
+                  <sources>
+                    <source>${project.basedir}/src/main/java9</source>
+                  </sources>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+    <!-- Coverage -->
+    <profile>
+      <id>test262-coverage</id>
+      <properties>
+        <test.excludes />
+        <jacoco.file>${project.build.directory}/coverage-reports/jacoco-test262.exec</jacoco.file>
+      </properties>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>surefire-test</id>
+                <configuration>
+                  <testFailureIgnore>true</testFailureIgnore>
+                  <includes>
+                    <include>**/test262/Test262Web.java</include>
+                  </includes>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.jacoco</groupId>
+            <artifactId>jacoco-maven-plugin</artifactId>
+            <version>0.7.9</version>
+            <executions>
+              <execution>
+                <id>default-prepare-agent</id>
+                <goals>
+                  <goal>prepare-agent</goal>
+                </goals>
+                <configuration>
+                  <append>false</append>
+                  <propertyName>test.jacocoArgs</propertyName>
+                  <destFile>${jacoco.file}</destFile>
+                </configuration>
+              </execution>
+              <execution>
+                <id>default-report</id>
+                <phase>test</phase>
+                <goals>
+                  <goal>report</goal>
+                </goals>
+                <configuration>
+                  <dataFile>${jacoco.file}</dataFile>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+    <!-- Coverage -->
+    <profile>
+      <id>test262-coverage-work</id>
+      <properties>
+        <test.excludes />
+        <jacoco.file>${project.build.directory}/coverage-reports/jacoco-test262.exec</jacoco.file>
+      </properties>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>surefire-test</id>
+                <configuration>
+                  <testFailureIgnore>true</testFailureIgnore>
+                  <includes>
+                    <include>**/test262/Test262Web.java</include>
+                    <include>**/test262/Script262Test.java</include>
+                  </includes>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.jacoco</groupId>
+            <artifactId>jacoco-maven-plugin</artifactId>
+            <version>0.7.9</version>
+            <executions>
+              <execution>
+                <id>default-prepare-agent</id>
+                <goals>
+                  <goal>prepare-agent</goal>
+                </goals>
+                <configuration>
+                  <append>false</append>
+                  <propertyName>test.jacocoArgs</propertyName>
+                  <destFile>${jacoco.file}</destFile>
+                </configuration>
+              </execution>
+              <execution>
+                <id>default-report</id>
+                <phase>test</phase>
+                <goals>
+                  <goal>report</goal>
+                </goals>
+                <configuration>
+                  <dataFile>${jacoco.file}</dataFile>
                 </configuration>
               </execution>
             </executions>
@@ -327,7 +495,7 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-assembly-plugin</artifactId>
-          <version>2.6</version>
+          <version>3.1.0</version>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
@@ -342,12 +510,12 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-compiler-plugin</artifactId>
-          <version>3.5</version>
+          <version>3.7.0</version>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-dependency-plugin</artifactId>
-          <version>2.10</version>
+          <version>3.0.2</version>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
@@ -357,7 +525,7 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-enforcer-plugin</artifactId>
-          <version>1.4.1</version>
+          <version>3.0.0-M1</version>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
@@ -367,7 +535,7 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-jar-plugin</artifactId>
-          <version>2.6</version>
+          <version>3.0.2</version>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
@@ -377,39 +545,71 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-resources-plugin</artifactId>
-          <version>2.7</version>
+          <version>3.0.2</version>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-shade-plugin</artifactId>
-          <version>2.4.3</version>
+          <version>3.1.0</version>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-site-plugin</artifactId>
-          <version>3.4</version>
+          <version>3.6</version>
+          <!--
+            https://issues.apache.org/jira/browse/MSITE-796
+            Order of dependencies is important to avoid this exception:
+            org.apache.velocity.exception.ResourceNotFoundException: Unable to find resource 'default-site-macros.vm'
+          -->
+          <dependencies>
+            <dependency>
+              <groupId>org.apache.maven.doxia</groupId>
+              <artifactId>doxia-site-renderer</artifactId>
+              <version>1.7.5</version>
+            </dependency>
+            <dependency>
+              <groupId>org.apache.maven.doxia</groupId>
+              <artifactId>doxia-doc-renderer</artifactId>
+              <version>1.7.5</version>
+            </dependency>
+            <dependency>
+              <groupId>org.apache.maven.doxia</groupId>
+              <artifactId>doxia-integration-tools</artifactId>
+              <version>1.7.5</version>
+            </dependency>
+            <dependency>
+              <groupId>org.apache.maven.doxia</groupId>
+              <artifactId>doxia-skin-model</artifactId>
+              <version>1.7.5</version>
+            </dependency>
+            <dependency>
+              <groupId>org.apache.maven.doxia</groupId>
+              <artifactId>doxia-decoration-model</artifactId>
+              <version>1.7.5</version>
+            </dependency>
+          </dependencies>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-surefire-plugin</artifactId>
-          <version>2.19.1</version>
+          <version>2.20.1</version>
           <dependencies>
             <dependency>
               <groupId>org.apache.maven.surefire</groupId>
               <artifactId>surefire-junit47</artifactId>
-              <version>2.19.1</version>
+              <version>2.20.1</version>
             </dependency>
           </dependencies>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-surefire-report-plugin</artifactId>
-          <version>2.19.1</version>
+          <version>2.20.1</version>
         </plugin>
         <plugin>
           <groupId>org.codehaus.mojo</groupId>
           <artifactId>build-helper-maven-plugin</artifactId>
-          <version>1.10</version>
+          <version>3.0.0</version>
         </plugin>
         <plugin>
           <groupId>org.codehaus.mojo</groupId>
@@ -419,17 +619,12 @@
         <plugin>
           <groupId>org.codehaus.mojo</groupId>
           <artifactId>license-maven-plugin</artifactId>
-          <version>1.8</version>
-        </plugin>
-        <plugin>
-          <groupId>com.googlecode.maven-download-plugin</groupId>
-          <artifactId>download-maven-plugin</artifactId>
-          <version>1.2.1</version>
+          <version>1.14</version>
         </plugin>
         <plugin>
           <groupId>com.mycila</groupId>
           <artifactId>license-maven-plugin</artifactId>
-          <version>2.11</version>
+          <version>3.0</version>
         </plugin>
         <plugin>
           <groupId>org.eclipse.m2e</groupId>
@@ -471,19 +666,6 @@
                     <versionRange>[1.7,)</versionRange>
                     <goals>
                       <goal>run</goal>
-                    </goals>
-                  </pluginExecutionFilter>
-                  <action>
-                    <execute />
-                  </action>
-                </pluginExecution>
-                <pluginExecution>
-                  <pluginExecutionFilter>
-                    <groupId>com.googlecode.maven-download-plugin</groupId>
-                    <artifactId>download-maven-plugin</artifactId>
-                    <versionRange>[1.2.0,)</versionRange>
-                    <goals>
-                      <goal>wget</goal>
                     </goals>
                   </pluginExecutionFilter>
                   <action>
@@ -540,8 +722,6 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
         <configuration>
-          <source>1.8</source>
-          <target>1.8</target>
           <debug>true</debug>
         </configuration>
       </plugin>
@@ -560,12 +740,13 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-jar-plugin</artifactId>
         <configuration>
-          <useDefaultManifestFile>true</useDefaultManifestFile>
           <archive>
             <manifest>
               <mainClass>${mainClass}</mainClass>
               <addClasspath>true</addClasspath>
               <classpathPrefix>dependencies/</classpathPrefix>
+              <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+              <useUniqueVersions>true</useUniqueVersions>
             </manifest>
           </archive>
         </configuration>
@@ -609,38 +790,25 @@
                   encoding="${project.build.sourceEncoding}" outputencoding="${project.build.sourceEncoding}">
                   <fileset dir="${project.basedir}/src/main/scripts">
                     <include name="cyclic.js" />
-                    <include name="object.js" />
-                    <include name="stringtrim.js" />
                   </fileset>
                 </concat>
                 <concat destfile="${project.build.outputDirectory}/scripts/mozlegacy.js"
                   encoding="${project.build.sourceEncoding}" outputencoding="${project.build.sourceEncoding}">
                   <fileset dir="${project.basedir}/src/main/scripts">
                     <include name="arraybuffer.js" />
-                    <include name="collection.js" />
+                    <include name="console-stub.js" />
                     <include name="global.js" />
-                    <include name="iterator.js" />
-                    <include name="legacy-generator.js" />
-                    <include name="object.js" />
-                    <include name="proxy.js" />
-                    <include name="simd.js" />
                     <include name="source.js" />
                     <include name="statics.js" />
-                    <include name="string.js" />
-                    <include name="stringtrim.js" />
                   </fileset>
                 </concat>
                 <concat destfile="${project.build.outputDirectory}/scripts/v8legacy.js"
                   encoding="${project.build.sourceEncoding}" outputencoding="${project.build.sourceEncoding}">
                   <fileset dir="${project.basedir}/src/main/scripts">
                     <include name="cyclic.js" />
-                    <include name="generator.js" />
                     <include name="global.js" />
                     <include name="internal-error.js" />
-                    <include name="object.js" />
-                    <include name="proxy.js" />
                     <include name="stacktrace.js" />
-                    <include name="stringtrim.js" />
                   </fileset>
                 </concat>
                 <concat destfile="${project.build.outputDirectory}/scripts/webkitlegacy.js"
@@ -648,8 +816,6 @@
                   <fileset dir="${project.basedir}/src/main/scripts">
                     <include name="cyclic.js" />
                     <include name="global.js" />
-                    <include name="object.js" />
-                    <include name="stringtrim.js" />
                   </fileset>
                 </concat>
               </target>
@@ -689,26 +855,6 @@
                   </filterset>
                 </copy>
               </target>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-
-      <plugin>
-        <groupId>com.googlecode.maven-download-plugin</groupId>
-        <artifactId>download-maven-plugin</artifactId>
-        <executions>
-          <execution>
-            <id>download-chai.js</id>
-            <phase>process-test-resources</phase>
-            <goals>
-              <goal>wget</goal>
-            </goals>
-            <configuration>
-              <url>https://raw.github.com/chaijs/chai/1.10.0/chai.js</url>
-              <outputDirectory>${project.build.testOutputDirectory}/scripts/</outputDirectory>
-              <sha1>80a81da918cc1a355fd23c104379920817ef5b78</sha1>
-              <md5>1cb71b76f05af501e68ed82a69bd2b1e</md5>
             </configuration>
           </execution>
         </executions>
@@ -795,8 +941,8 @@
             <exclude>src/main/third_party/**</exclude>
             <exclude>src/main/resources/build-date</exclude>
             <exclude>src/main/resources/version</exclude>
-            <exclude>src/test/scripts/reflect/**</exclude>
             <exclude>src/test/scripts/promise/**</exclude>
+            <exclude>src/test/scripts/test262/**</exclude>
             <exclude>src/test/scripts/suite/simd/resources/*</exclude>
           </excludes>
           <includes>
@@ -807,7 +953,6 @@
             <list>SCRIPT_STYLE</list>
           </mapping>
           <properties>
-            <year>${project.inceptionYear}-${currentYear}</year>
             <name>${project.organization.name}</name>
             <url>${project.url}</url>
           </properties>
@@ -849,10 +994,14 @@
               </systemPropertyVariables>
               <argLine>
                 ${test.jvmArgs}
+                @{test.jacocoArgs}
                 -Duser.language=${test.user.language}
                 -Duser.country=${test.user.country}
                 -Duser.timezone=${test.user.timezone}
               </argLine>
+              <excludes>
+                <exclude>${test.excludes}</exclude>
+              </excludes>
             </configuration>
           </execution>
         </executions>
@@ -862,7 +1011,7 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-report-plugin</artifactId>
         <configuration>
-          <outputName>es6draft-report</outputName>
+          <outputName>${project.name}-report</outputName>
           <showSuccess>false</showSuccess>
         </configuration>
       </plugin>
@@ -874,7 +1023,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-project-info-reports-plugin</artifactId>
-        <version>2.8.1</version>
+        <version>2.9</version>
         <reportSets>
           <reportSet>
             <reports>
@@ -896,7 +1045,7 @@
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>license-maven-plugin</artifactId>
-        <version>1.8</version>
+        <version>1.14</version>
         <reportSets>
           <reportSet>
             <reports>
@@ -906,16 +1055,21 @@
         </reportSets>
       </plugin>
 
+      <!-- Doesn't work with Java9. -->
+      <!--
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-report-plugin</artifactId>
-        <version>2.19.1</version>
+        <version>2.20.1</version>
       </plugin>
+      -->
 
+      <!-- Doesn't work with Java9. -->
+      <!--
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-javadoc-plugin</artifactId>
-        <version>2.10.3</version>
+        <version>3.0.0-M1</version>
         <configuration>
           <sourcepath>${project.build.sourceDirectory}</sourcepath>
           <show>protected</show>
@@ -931,6 +1085,7 @@
           </reportSet>
         </reportSets>
       </plugin>
+      -->
 
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -1000,7 +1155,7 @@
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>versions-maven-plugin</artifactId>
-        <version>2.2</version>
+        <version>2.5</version>
         <reportSets>
           <reportSet>
             <configuration>
