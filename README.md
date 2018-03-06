@@ -7,18 +7,18 @@ ECMAScript compiler and runtime written in Java.
 
 ## Implementation Status ##
 
-Implements [ES2018 Draft 2018-10-25] [ecma262], [ES2018 Intl Draft 2018-10-24] [ecma402], and some of the current [proposals] [proposals].
+Implements [ES2018 Draft 2018-10-25][ecma262], [ES2018 Intl Draft 2018-10-24][ecma402], and some of the current [proposals][proposals].
 
 ECMAScript proposals below stage 3 are not enabled by default. To enable them use the `--stage` command line parameter.
 
-Note: Support of stage 2 (or below) proposals is highly experimental (cf. [TC39 Process] [process]), implementation incompatibilities are to be expected.
+Note: Support of stage 2 (or below) proposals is highly experimental (cf. [TC39 Process][process]), implementation incompatibilities are to be expected.
 
 ## Build Instructions and Shell ##
 
 ### Prerequisites ###
 
-* Download and install [JDK 8 or later] [java]
-* Download and install [Apache Maven 3 or later] [maven]
+* Download and install [JDK 8 or later][java]
+* Download and install [Apache Maven 3 or later][maven]
 * Set-up the `JAVA_HOME` environment variable to point to the JDK installation directory
 
 ### Build Instructions ###
@@ -64,7 +64,7 @@ See [here](src/test/resources/test-configuration.properties) for the test262 def
 
 ### External Test Suites ###
 
-Additional test suites are available to run tests from [ChakraCore] [chakra], [Mozilla] [mozilla], [V8] [v8], and [WebKit] [webkit] using the `external` Maven profile.
+Additional test suites are available to run tests from [ChakraCore][chakra], [Mozilla][mozilla], [V8][v8], and [WebKit][webkit] using the `external` Maven profile.
 
 The following environment variables need to be set to run these tests:
 * `CHAKRA_PATH`: ChakraCore main directory
