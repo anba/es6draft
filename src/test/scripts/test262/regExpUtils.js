@@ -19,3 +19,11 @@ function testPropertyEscapes(regex, string, expression) {
     }
   }
 }
+
+function matchValidator(expectedEntries, expectedIndex, expectedInput) {
+  return function(match) {
+    assert.compareArray(match, expectedEntries, 'Match entries');
+    assert.sameValue(match.index, expectedIndex, 'Match index');
+    assert.sameValue(match.input, expectedInput, 'Match input');
+  }
+}

@@ -169,7 +169,6 @@ public final class Messages {
         UndeclaredPrivateName("parser.undeclared_private_name"),
         InvalidUseStrictDirective("parser.invalid_use_strict_directive"),
         PrivateDelete("parser.private_delete"),
-        InvalidTailCall("parser.invalid_tail_call"),
         InvalidExponentiationExpression("parser.invalid_exponentiation_expression"),
         InvalidImportMeta("parser.invalid_import_meta"),
 
@@ -332,6 +331,7 @@ public final class Messages {
         InvalidBufferSize("binary.invalid_buffersize"),
         InvalidTypedArrayLength("binary.invalid_typed_array_length"),
         TypedArrayCreate("binary.typed_array_create"),
+        IncompatibleElementTypes("binary.incompatible_element_types"),
 
         // 25.3 Generator Objects
         GeneratorExecuting("generator.executing"),
@@ -400,7 +400,7 @@ public final class Messages {
         BigIntFromSIMD("bigint.from_simd"),
         BigIntDivideByZero("bigint.divide_by_zero"),
         BigIntNegativeExponent("bigint.negative_exponent"),
-        BigIntExponentTooLarge("bigint.exponent_too_large"),
+        BigIntValueTooLarge("bigint.value_too_large"),
         BigIntUnsignedRightShift("bigint.unsigned_right_shift"),
         BigIntCannotJSONStringify("bigint.cannot_json_stringify"),
 

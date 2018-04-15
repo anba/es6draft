@@ -28,6 +28,9 @@ public final class SourceCompressor {
             super(size);
         }
 
+        // TODO: Provided by default starting with Java 10.
+        // @Override
+        @SuppressWarnings("all")
         public String toString(Charset cs) {
             return new String(buf, 0, count, cs);
         }

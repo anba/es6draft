@@ -62,99 +62,94 @@ public final class DatePrototype extends OrdinaryObject implements Initializable
         createProperties(realm, this, AdditionalProperties.class);
     }
 
-    private static String toISOString(double t) {
-        assert !Double.isNaN(t);
-        int year = (int) YearFromTime(t);
-        int month = (int) MonthFromTime(t) + 1;
-        int date = (int) DateFromTime(t);
-        int hour = (int) HourFromTime(t);
-        int min = (int) MinFromTime(t);
-        int sec = (int) SecFromTime(t);
-        int milli = (int) msFromTime(t);
-
-        if (year < 0 || year > 9999) {
-            return String.format("%+07d-%02d-%02dT%02d:%02d:%02d.%03dZ", year, month, date, hour, min, sec, milli);
-        }
-        return String.format("%04d-%02d-%02dT%02d:%02d:%02d.%03dZ", year, month, date, hour, min, sec, milli);
-    }
-
-    private static String toUTCString(double t) {
-        assert !Double.isNaN(t);
-        int year = (int) YearFromTime(t);
-        String month = MonthNameFromTime(t);
-        int date = (int) DateFromTime(t);
-        String weekday = WeekDayName(t);
-        int hour = (int) HourFromTime(t);
-        int min = (int) MinFromTime(t);
-        int sec = (int) SecFromTime(t);
-
-        if (year < 0) {
-            return String.format("%s, %02d %s %+05d %02d:%02d:%02d GMT", weekday, date, month, year, hour, min, sec);
-        }
-        return String.format("%s, %02d %s %04d %02d:%02d:%02d GMT", weekday, date, month, year, hour, min, sec);
-    }
-
     private static boolean isFinite(double d) {
         return !(Double.isNaN(d) || Double.isInfinite(d));
     }
 
-    public enum DateString {
-        Date, Time, DateTime
+    /**
+     * 20.3.4.41.1 Runtime Semantics: TimeString( tv )
+     * 
+     * @param tv
+     *            the date-time value
+     * @return the time string representation
+     */
+    public static String TimeString(double tv) {
+        /* step 1 */
+        /* step 2 */
+        assert !Double.isNaN(tv);
+        /* steps 3-6 */
+        return String.format("%02d:%02d:%02d GMT", (int) HourFromTime(tv), (int) MinFromTime(tv),
+                (int) SecFromTime(tv));
     }
 
     /**
-     * 20.3.4.41.1 Runtime Semantics: ToDateString(tv)
+     * 20.3.4.41.2 Runtime Semantics: DateString( tv )
      * 
-     * @param realm
-     *            the realm instance
      * @param tv
      *            the date-time value
-     * @param dateString
-     *            the date string modifier
-     * @return the date-time string representation
+     * @return the date string representation
      */
-    public static String ToDateString(Realm realm, double tv, DateString dateString) {
-        /* step 1 (not applicable) */
+    public static String DateString(double tv) {
+        /* step 1 */
         /* step 2 */
-        if (Double.isNaN(tv)) {
-            return "Invalid Date";
-        }
-        /* step 3 */
-        switch (dateString) {
-        case Date:
-            return ToDateString(realm, tv);
-        case Time:
-            return ToTimeString(realm, tv);
-        case DateTime:
-            return ToDateString(realm, tv) + ' ' + ToTimeString(realm, tv);
-        default:
-            throw new AssertionError();
-        }
-    }
-
-    private static String ToDateString(Realm realm, double tv) {
         assert !Double.isNaN(tv);
-        double t = LocalTime(realm, tv);
-        int year = (int) YearFromTime(t);
-        String month = MonthNameFromTime(t);
-        int date = (int) DateFromTime(t);
-        String weekday = WeekDayName(t);
+        /* step 3 */
+        String weekday = WeekDayName(tv);
+        /* step 4 */
+        String month = MonthNameFromTime(tv);
+        /* step 5 */
+        int date = (int) DateFromTime(tv);
+        /* step 6 */
+        int year = (int) YearFromTime(tv);
+        /* step 7 */
         if (year < 0) {
             return String.format("%s %s %02d %+05d", weekday, month, date, year);
         }
         return String.format("%s %s %02d %04d", weekday, month, date, year);
     }
 
-    private static String ToTimeString(Realm realm, double tv) {
+    /**
+     * 20.3.4.41.3 Runtime Semantics: TimeZoneString( tv )
+     * 
+     * @param realm
+     *            the realm instance
+     * @param tv
+     *            the date-time value
+     * @return the time zone string representation
+     */
+    public static String TimeZoneString(Realm realm, double tv) {
+        /* step 1 */
+        /* step 2 */
         assert !Double.isNaN(tv);
+        /* steps 3-7 */
         long date = (long) tv;
         TimeZone tz = realm.getTimeZone();
         int tzOffset = TimeZoneInfo.getDefault().getOffset(tz, date) / 60000;
         tzOffset = (tzOffset / 60) * 100 + tzOffset % 60;
-        double t = LocalTime(realm, tv);
         String timeZoneDisplayName = TimeZoneInfo.getDefault().getDisplayName(tz, date);
-        return String.format("%02d:%02d:%02d GMT%+05d (%s)", (int) HourFromTime(t), (int) MinFromTime(t),
-                (int) SecFromTime(t), tzOffset, timeZoneDisplayName);
+        /* step 8 */
+        return String.format("%+05d (%s)", tzOffset, timeZoneDisplayName);
+    }
+
+    /**
+     * 20.3.4.41.4 Runtime Semantics: ToDateString(tv)
+     * 
+     * @param realm
+     *            the realm instance
+     * @param tv
+     *            the date-time value
+     * @return the date-time string representation
+     */
+    public static String ToDateString(Realm realm, double tv) {
+        /* step 1 (not applicable) */
+        /* step 2 */
+        if (Double.isNaN(tv)) {
+            return "Invalid Date";
+        }
+        /* step 3 */
+        double t = LocalTime(realm, tv);
+        /* step 4 */
+        return DateString(t) + " " + TimeString(t) + TimeZoneString(realm, tv);
     }
 
     /**
@@ -1082,8 +1077,16 @@ public final class DatePrototype extends OrdinaryObject implements Initializable
          */
         @Function(name = "toDateString", arity = 0)
         public static Object toDateString(ExecutionContext cx, Object thisValue) {
+            /* steps 1-2 */
             double tv = thisTimeValue(cx, thisValue, "Date.prototype.toDateString");
-            return ToDateString(cx.getRealm(), tv, DateString.Date);
+            /* step 3 */
+            if (Double.isNaN(tv)) {
+                return "Invalid Date";
+            }
+            /* step 4 */
+            double t = LocalTime(cx.getRealm(), tv);
+            /* step 5 */
+            return DateString(t);
         }
 
         /**
@@ -1101,7 +1104,19 @@ public final class DatePrototype extends OrdinaryObject implements Initializable
             if (!isFinite(dateValue)) {
                 throw newRangeError(cx, Messages.Key.InvalidDateValue);
             }
-            return DatePrototype.toISOString(dateValue);
+
+            int year = (int) YearFromTime(dateValue);
+            int month = (int) MonthFromTime(dateValue) + 1;
+            int date = (int) DateFromTime(dateValue);
+            int hour = (int) HourFromTime(dateValue);
+            int min = (int) MinFromTime(dateValue);
+            int sec = (int) SecFromTime(dateValue);
+            int milli = (int) msFromTime(dateValue);
+
+            if (year < 0 || year > 9999) {
+                return String.format("%+07d-%02d-%02dT%02d:%02d:%02d.%03dZ", year, month, date, hour, min, sec, milli);
+            }
+            return String.format("%04d-%02d-%02dT%02d:%02d:%02d.%03dZ", year, month, date, hour, min, sec, milli);
         }
 
         /**
@@ -1239,8 +1254,10 @@ public final class DatePrototype extends OrdinaryObject implements Initializable
          */
         @Function(name = "toString", arity = 0)
         public static Object toString(ExecutionContext cx, Object thisValue) {
+            /* step 1 */
             double tv = thisTimeValue(cx, thisValue, "Date.prototype.toString");
-            return ToDateString(cx.getRealm(), tv, DateString.DateTime);
+            /* step 2 */
+            return ToDateString(cx.getRealm(), tv);
         }
 
         /**
@@ -1254,8 +1271,16 @@ public final class DatePrototype extends OrdinaryObject implements Initializable
          */
         @Function(name = "toTimeString", arity = 0)
         public static Object toTimeString(ExecutionContext cx, Object thisValue) {
+            /* steps 1-2 */
             double tv = thisTimeValue(cx, thisValue, "Date.prototype.toTimeString");
-            return ToDateString(cx.getRealm(), tv, DateString.Time);
+            /* step 3 */
+            if (Double.isNaN(tv)) {
+                return "Invalid Date";
+            }
+            /* step 4 */
+            double t = LocalTime(cx.getRealm(), tv);
+            /* step 5 */
+            return TimeString(t) + TimeZoneString(cx.getRealm(), tv);
         }
 
         /**
@@ -1269,11 +1294,25 @@ public final class DatePrototype extends OrdinaryObject implements Initializable
          */
         @Function(name = "toUTCString", arity = 0)
         public static Object toUTCString(ExecutionContext cx, Object thisValue) {
-            double dateValue = thisTimeValue(cx, thisValue, "Date.prototype.toUTCString");
-            if (Double.isNaN(dateValue)) {
+            /* steps 1-2 */
+            double tv = thisTimeValue(cx, thisValue, "Date.prototype.toUTCString");
+            /* step 3 */
+            if (Double.isNaN(tv)) {
                 return "Invalid Date";
             }
-            return DatePrototype.toUTCString(dateValue);
+            /* step 4 */
+            String weekday = WeekDayName(tv);
+            /* step 5 */
+            String month = MonthNameFromTime(tv);
+            /* step 6 */
+            int day = (int) DateFromTime(tv);
+            /* step 7 */
+            int year = (int) YearFromTime(tv);
+            /* step 8 */
+            if (year < 0) {
+                return String.format("%s, %02d %s %+05d ", weekday, day, month, year) + TimeString(tv);
+            }
+            return String.format("%s, %02d %s %04d ", weekday, day, month, year) + TimeString(tv);
         }
 
         /**

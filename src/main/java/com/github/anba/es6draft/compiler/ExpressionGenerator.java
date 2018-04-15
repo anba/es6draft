@@ -3945,8 +3945,15 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
         mv.lineInfo(node);
         invokeDynamicSuper(mv);
 
+        /* steps 9-10 */
+        // stack: [result] -> [result]
+        mv.dup();
+        mv.loadExecutionContext();
+        mv.lineInfo(node);
+        mv.invoke(Methods.ClassOperations_BindThisValue);
+
         // Extension: Class Fields
-        if (codegen.isEnabled(CompatibilityOption.ClassFields)) {
+        if (codegen.isEnabled(CompatibilityOption.InstanceClassFields)) {
             ClassDefinition classDef = classDefinition(mv);
             if (classDef == null || HasClassInstanceDefinitions(classDef)) {
                 // stack: [result] -> [result]
@@ -3956,13 +3963,6 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
                 mv.invoke(Methods.ClassOperations_InitializeInstanceFields);
             }
         }
-
-        /* steps 9-10 */
-        // stack: [result] -> [result]
-        mv.dup();
-        mv.loadExecutionContext();
-        mv.lineInfo(node);
-        mv.invoke(Methods.ClassOperations_BindThisValue);
 
         return ValType.Object;
     }

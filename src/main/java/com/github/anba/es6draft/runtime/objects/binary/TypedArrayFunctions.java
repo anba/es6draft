@@ -179,9 +179,7 @@ abstract class TypedArrayFunctions {
 
     final void construct(ExecutionContext cx, TypedArrayObject typedArray, ArrayBufferObject data,
             ElementType elementType) {
-        if (typedArray.getArrayLength() > 0) {
-            elementType.throwIfIncompatibleNumericType(cx, typedArray.getElementType());
-        }
+        assert typedArray.getElementType().isCompatibleNumericType(elementType);
         switch (elementType) {
         case Int8:
             constructInt8(typedArray, data);
@@ -404,9 +402,7 @@ abstract class TypedArrayFunctions {
         }
         int targetIndex = index(targetOffset);
         /* steps 26-28 */
-        if (srcLength > 0) {
-            target.getElementType().throwIfIncompatibleNumericType(cx, typedArray.getElementType());
-        }
+        assert typedArray.getElementType().isCompatibleNumericType(target.getElementType());
         switch (target.getElementType()) {
         case Int8:
             setInt8(srcBuffer, srcByteIndex, target, targetIndex, srcLength);

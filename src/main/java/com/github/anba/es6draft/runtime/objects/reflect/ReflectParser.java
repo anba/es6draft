@@ -1669,21 +1669,6 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
     }
 
     @Override
-    public Object visit(GuardedCatchNode node, Void value) {
-        Object param = node.getCatchParameter().accept(this, value);
-        Object guard = node.getGuard().accept(this, value);
-        Object body = node.getCatchBlock().accept(this, value);
-        if (hasBuilder(Type.CatchClause)) {
-            return call(Type.CatchClause, node, param, guard, body);
-        }
-        OrdinaryObject catchClause = createNode(node, Type.CatchClause);
-        addProperty(catchClause, "param", param);
-        addProperty(catchClause, "guard", guard);
-        addProperty(catchClause, "body", body);
-        return catchClause;
-    }
-
-    @Override
     public Object visit(IdentifierName node, Void value) {
         String name = node.getName();
         if (hasBuilder(Type.Identifier)) {
@@ -2329,15 +2314,13 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
     public Object visit(TryStatement node, Void value) {
         Object block = node.getTryBlock().accept(this, value);
         Object handler = acceptOrNull(node.getCatchNode(), value);
-        ArrayObject guardedHandlers = createList(node.getGuardedCatchNodes(), value);
         Object finalizer = acceptOrNull(node.getFinallyBlock(), value);
         if (hasBuilder(Type.TryStatement)) {
-            return call(Type.TryStatement, node, block, guardedHandlers, handler, finalizer);
+            return call(Type.TryStatement, node, block, handler, finalizer);
         }
         OrdinaryObject statement = createStatement(node, Type.TryStatement);
         addProperty(statement, "block", block);
         addProperty(statement, "handler", handler);
-        addProperty(statement, "guardedHandlers", guardedHandlers);
         addProperty(statement, "finalizer", finalizer);
         return statement;
     }

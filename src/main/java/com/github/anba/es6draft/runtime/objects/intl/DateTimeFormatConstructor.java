@@ -11,6 +11,7 @@ import static com.github.anba.es6draft.runtime.internal.Errors.newRangeError;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.language.Operators.InstanceofOperator;
+import static com.github.anba.es6draft.runtime.objects.date.DateAbstractOperations.TimeClip;
 import static com.github.anba.es6draft.runtime.objects.intl.IntlAbstractOperations.*;
 import static com.github.anba.es6draft.runtime.types.builtins.ArrayObject.ArrayCreate;
 import static java.util.Arrays.asList;
@@ -310,9 +311,17 @@ public final class DateTimeFormatConstructor extends BuiltinConstructor implemen
         /* step 5, 7 */
         OptionsRecord opt = new OptionsRecord(OptionsRecord.MatcherType.forName(matcher));
         /* step 8 */
+        Boolean hour12 = GetBooleanOption(cx, options, "hour12", null);
         String hc = GetStringOption(cx, options, "hourCycle", set("h11", "h12", "h23", "h24"), null);
-        /* step 9 */
-        opt.set(ExtensionKey.hc, hc);
+        if (hour12 != null) {
+            // Explicitly set hc to null.
+            opt.set(ExtensionKey.hc, null);
+        } else {
+            /* step 9 */
+            if (hc != null) {
+                opt.set(ExtensionKey.hc, hc);
+            }
+        }
         /* step 10 */
         DateTimeFormatLocaleData localeData = new DateTimeFormatLocaleData();
         /* step 11 */
@@ -364,7 +373,7 @@ public final class DateTimeFormatConstructor extends BuiltinConstructor implemen
         String formatMatcher = GetStringOption(cx, options, "formatMatcher", set("basic", "best fit"), "best fit");
         /* steps 26-28 (moved) */
         /* step 29 */
-        Boolean hour12 = GetBooleanOption(cx, options, "hour12", null);
+        // TODO: update step comments.
         /* steps 21, 23-24, 26-28, 30-31 */
         FormatMatcherRecord formatRecord = new FormatMatcherRecord(weekday, era, year, month, day, hour, minute, second,
                 timeZoneName, hour12, hourCycleSymbol(r));
@@ -905,8 +914,18 @@ public final class DateTimeFormatConstructor extends BuiltinConstructor implemen
         return pattern;
     }
 
+    private static Date numberToDate(ExecutionContext cx, double x) {
+        /* PartitionDateTimePattern, step 1 */
+        x = TimeClip(x);
+        /* PartitionDateTimePattern, step 2 */
+        if (Double.isNaN(x)) {
+            throw newRangeError(cx, Messages.Key.InvalidDateValue);
+        }
+        return new Date((long) x);
+    }
+
     /**
-     * 12.1.6 FormatDateTime (dateTimeFormat, x)
+     * 12.1.7 FormatDateTime (dateTimeFormat, x)
      * 
      * @param cx
      *            the execution context
@@ -917,17 +936,12 @@ public final class DateTimeFormatConstructor extends BuiltinConstructor implemen
      * @return the formatted date-time string
      */
     public static String FormatDateTime(ExecutionContext cx, DateTimeFormatObject dateTimeFormat, double x) {
-        /* step 1 */
-        if (Double.isInfinite(x) || Double.isNaN(x)) {
-            throw newRangeError(cx, Messages.Key.InvalidDateValue);
-        }
-        // FIXME: spec bug - Apply TimeClip to x.
-        /* steps 2-15 */
-        return dateTimeFormat.getDateFormat().format(new Date((long) x));
+        /* steps 1-4 */
+        return dateTimeFormat.getDateFormat().format(numberToDate(cx, x));
     }
 
     /**
-     * CreateDateTimeParts(dateTimeFormat, x)
+     * 12.1.6 PartitionDateTimePattern ( dateTimeFormat, x )
      * 
      * @param dateTimeFormat
      *            the date format object
@@ -935,7 +949,8 @@ public final class DateTimeFormatConstructor extends BuiltinConstructor implemen
      *            the date object
      * @return the formatted date-time object
      */
-    private static List<Map.Entry<String, String>> CreateDateTimeParts(DateTimeFormatObject dateTimeFormat, Date date) {
+    private static List<Map.Entry<String, String>> PartitionDateTimePattern(DateTimeFormatObject dateTimeFormat,
+            Date date) {
         ArrayList<Map.Entry<String, String>> parts = new ArrayList<>();
         DateFormat dateFormat = dateTimeFormat.getDateFormat();
         AttributedCharacterIterator iterator = dateFormat.formatToCharacterIterator(date);
@@ -1003,7 +1018,7 @@ public final class DateTimeFormatConstructor extends BuiltinConstructor implemen
     }
 
     /**
-     * FormatToPartDateTime(dateTimeFormat, x)
+     * 12.1.8 FormatDateTimeToParts ( dateTimeFormat, x )
      * 
      * @param cx
      *            the execution context
@@ -1013,13 +1028,10 @@ public final class DateTimeFormatConstructor extends BuiltinConstructor implemen
      *            the number value
      * @return the formatted date-time object
      */
-    public static ArrayObject FormatToPartDateTime(ExecutionContext cx, DateTimeFormatObject dateTimeFormat, double x) {
-        if (Double.isInfinite(x) || Double.isNaN(x)) {
-            throw newRangeError(cx, Messages.Key.InvalidDateValue);
-        }
-        // FIXME: spec bug - Apply TimeClip to x.
+    public static ArrayObject FormatDateTimeToParts(ExecutionContext cx, DateTimeFormatObject dateTimeFormat,
+            double x) {
         /* step 1 */
-        List<Map.Entry<String, String>> parts = CreateDateTimeParts(dateTimeFormat, new Date((long) x));
+        List<Map.Entry<String, String>> parts = PartitionDateTimePattern(dateTimeFormat, numberToDate(cx, x));
         /* step 2 */
         ArrayObject result = ArrayCreate(cx, 0);
         /* step 3 */

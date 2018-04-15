@@ -20,17 +20,22 @@ public final class RegExpStringIteratorObject extends OrdinaryObject {
     /** [[IteratedString]] */
     private final String iteratedString;
 
-    /** [[PreviousIndex]] */
-    private long previousIndex;
+    /** [[Global]] */
+    private boolean global;
+
+    /** [[Unicode]] */
+    private boolean unicode;
 
     /** [[Done]] */
     private boolean done;
 
-    RegExpStringIteratorObject(Realm realm, ScriptObject regexp, String string, ScriptObject prototype) {
+    RegExpStringIteratorObject(Realm realm, ScriptObject regexp, String string, boolean global, boolean unicode,
+            ScriptObject prototype) {
         super(realm, prototype);
         this.iteratedRegExp = regexp;
         this.iteratedString = string;
-        this.previousIndex = -1;
+        this.global = global;
+        this.unicode = unicode;
         this.done = false;
     }
 
@@ -53,22 +58,21 @@ public final class RegExpStringIteratorObject extends OrdinaryObject {
     }
 
     /**
-     * [[PreviousIndex]]
+     * [[Global]]
      * 
-     * @return the previous index
+     * @return the global flag
      */
-    public long getPreviousIndex() {
-        return previousIndex;
+    public boolean isGlobal() {
+        return global;
     }
 
     /**
-     * [[PreviousIndex]]
+     * [[Unicode]]
      * 
-     * @param previousIndex
-     *            the new previous index value
+     * @return the unicode flag
      */
-    public void setPreviousIndex(long previousIndex) {
-        this.previousIndex = previousIndex;
+    public boolean isUnicode() {
+        return unicode;
     }
 
     /**

@@ -74,14 +74,6 @@ public interface FunctionNode extends TopLevelNode<StatementListItem>, ScopedNod
     StrictMode getStrictMode();
 
     /**
-     * Sets the strict-mode for this object.
-     * 
-     * @param strictMode
-     *            the new strict-mode
-     */
-    void setStrictMode(StrictMode strictMode);
-
-    /**
      * Returns the source string for this function.
      * 
      * @return the source string

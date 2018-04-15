@@ -20,6 +20,13 @@ public interface FunctionScope extends TopLevelScope {
     FunctionNode getNode();
 
     /**
+     * Returns the parameters scope.
+     * 
+     * @return the parameters scope
+     */
+    Scope parametersScope();
+
+    /**
      * Returns the variable scope.
      * 
      * @return the variable scope
@@ -39,6 +46,13 @@ public interface FunctionScope extends TopLevelScope {
      * @return the parameter names
      */
     Set<Name> parameterNames();
+
+    /**
+     * Returns the set of parameter names.
+     * 
+     * @return the parameter names
+     */
+    Set<Name> parameterVarNames();
 
     /**
      * Returns the implicit {@code arguments} binding or {@code null} if not applicable.

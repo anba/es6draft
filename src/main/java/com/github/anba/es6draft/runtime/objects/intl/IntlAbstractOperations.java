@@ -1168,10 +1168,11 @@ public final class IntlAbstractOperations {
                 }
                 /* step 8.i */
                 if (options.contains(key)) {
+                    // NB: Undefined values are encoded as absent options in this implementation.
                     /* steps 8.i.i-ii */
                     String optionsValue = options.get(key);
                     /* step 8.i.iii */
-                    if (optionsValue != null && keyLocaleData.contains(optionsValue) && !optionsValue.equals(value)) {
+                    if (keyLocaleData.contains(optionsValue) && !Objects.equals(optionsValue, value)) {
                         value = optionsValue;
                         supportedExtensionAddition = "";
                     }

@@ -1292,19 +1292,14 @@ public final class StaticSemantics {
      * @return the set of tail call nodes
      */
     public static Set<Expression> TailCallNodes(Expression expr) {
-        while (expr instanceof CommaExpression) {
-            expr = last(((CommaExpression) expr).getOperands());
-        }
+        expr = peelCommaExpression(expr);
         if (IsTailCallExpression(expr)) {
             return singleton(expr);
         }
         if (expr instanceof ConditionalExpression || IsLogicalExpression(expr)) {
             HashSet<Expression> tail = new HashSet<>(8);
             for (ArrayDeque<Expression> queue = new ArrayDeque<>(singleton(expr)); !queue.isEmpty();) {
-                Expression e = queue.remove();
-                while (e instanceof CommaExpression) {
-                    e = last(((CommaExpression) e).getOperands());
-                }
+                Expression e = peelCommaExpression(queue.remove());
                 if (IsTailCallExpression(e)) {
                     tail.add(e);
                 } else if (e instanceof ConditionalExpression) {
@@ -1317,6 +1312,13 @@ public final class StaticSemantics {
             return tail;
         }
         return emptySet();
+    }
+
+    private static Expression peelCommaExpression(Expression expr) {
+        while (expr instanceof CommaExpression) {
+            expr = last(((CommaExpression) expr).getOperands());
+        }
+        return expr;
     }
 
     private static boolean IsLogicalExpression(Expression expr) {

@@ -9,8 +9,9 @@ package com.github.anba.es6draft.runtime.objects.text;
 import static com.github.anba.es6draft.runtime.AbstractOperations.*;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
+import static com.github.anba.es6draft.runtime.objects.text.RegExpConstructor.RegExpCreate;
 import static com.github.anba.es6draft.runtime.objects.text.RegExpPrototype.RegExpExec;
-import static com.github.anba.es6draft.runtime.types.Null.NULL;
+import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
@@ -59,34 +60,51 @@ public final class RegExpStringIteratorPrototype extends OrdinaryObject implemen
      */
     public static OrdinaryObject MatchAllIterator(ExecutionContext cx, Object r, Object o) {
         /* step 1 */
-        if (!IsRegExp(cx, r)) {
-            throw newTypeError(cx, Messages.Key.NotObjectType);
-        }
-        ScriptObject rObj = Type.objectValue(r);
-        /* step 2 */
         String s = ToFlatString(cx, o);
-        /* step 3 */
-        Constructor constructor = SpeciesConstructor(cx, rObj, Intrinsics.RegExp);
-        /* step 4 */
-        String flags = ToFlatString(cx, Get(cx, rObj, "flags"));
-
-        // FIXME: spec bug - global flag not added.
-        if (flags.indexOf('g') < 0) {
-            flags = flags + "g";
+        /* step 2 */
+        ScriptObject matcher;
+        boolean global, fullUnicode;
+        if (IsRegExp(cx, r)) {
+            ScriptObject rObj = Type.objectValue(r);
+            /* step 2.a */
+            Constructor constructor = SpeciesConstructor(cx, rObj, Intrinsics.RegExp);
+            /* step 2.b */
+            String flags = ToFlatString(cx, Get(cx, rObj, "flags"));
+            /* step 2.c */
+            matcher = constructor.construct(cx, rObj, flags);
+            /* step 2.d */
+            global = ToBoolean(Get(cx, matcher, "global"));
+            /* step 2.e */
+            fullUnicode = ToBoolean(Get(cx, matcher, "unicode"));
+            /* step 2.f */
+            long lastIndex = ToLength(cx, Get(cx, rObj, "lastIndex"));
+            /* step 2.g */
+            Set(cx, matcher, "lastIndex", lastIndex, true);
+        } else {
+            /* step 3.a */
+            String flags = "g";
+            /* step 3.b */
+            RegExpObject matcherRx = RegExpCreate(cx, r, flags);
+            matcher = matcherRx;
+            /* step 3.c */
+            if (!IsRegExp(cx, matcher)) {
+                throw newTypeError(cx, Messages.Key.InvalidRegExpArgument);
+            }
+            /* step 3.d */
+            global = true;
+            /* step 3.e */
+            fullUnicode = false;
+            /* step 3.f */
+            if (!StrictEqualityComparison(matcherRx.getLastIndex().getValue(), 0)) {
+                throw newTypeError(cx, Messages.Key.InvalidRegExpArgument);
+            }
         }
-
-        /* step 5 */
-        ScriptObject matcher = constructor.construct(cx, rObj, flags);
-        /* step 6 */
-        long lastIndex = ToLength(cx, Get(cx, rObj, "lastIndex"));
-        /* step 7 */
-        Set(cx, matcher, "lastIndex", lastIndex, true);
-        /* step 8 */
-        return CreateRegExpStringIterator(cx, matcher, s);
+        /* step 4 */
+        return CreateRegExpStringIterator(cx, matcher, s, global, fullUnicode);
     }
 
     /**
-     * CreateRegExpStringIterator( regexp, string )
+     * CreateRegExpStringIterator( regexp, string, global, fullUnicode )
      * 
      * @param cx
      *            the execution context
@@ -94,12 +112,17 @@ public final class RegExpStringIteratorPrototype extends OrdinaryObject implemen
      *            the regular expression object
      * @param string
      *            the string value
+     * @param global
+     *            the global flag
+     * @param fullUnicode
+     *            the unicode flag
      * @return the new regexp string iterator
      */
-    public static OrdinaryObject CreateRegExpStringIterator(ExecutionContext cx, ScriptObject regexp, String string) {
+    public static OrdinaryObject CreateRegExpStringIterator(ExecutionContext cx, ScriptObject regexp, String string,
+            boolean global, boolean fullUnicode) {
         /* step 1 (implicit) */
         /* steps 2-7 */
-        return new RegExpStringIteratorObject(cx.getRealm(), regexp, string,
+        return new RegExpStringIteratorObject(cx.getRealm(), regexp, string, global, fullUnicode,
                 cx.getIntrinsic(Intrinsics.RegExpStringIteratorPrototype));
     }
 
@@ -131,36 +154,44 @@ public final class RegExpStringIteratorPrototype extends OrdinaryObject implemen
             RegExpStringIteratorObject iterator = (RegExpStringIteratorObject) thisValue;
             /* step 4 */
             if (iterator.isDone()) {
-                return CreateIterResultObject(cx, NULL, true);
+                return CreateIterResultObject(cx, UNDEFINED, true);
             }
             /* step 5 */
             ScriptObject regexp = iterator.getIteratedRegExp();
             /* step 6 */
             String string = iterator.getIteratedString();
             /* step 7 */
-            ScriptObject match = RegExpExec(cx, regexp, string);
+            boolean global = iterator.isGlobal();
             /* step 8 */
+            boolean fullUnicode = iterator.isUnicode();
+            /* step 9 */
+            ScriptObject match = RegExpExec(cx, regexp, string);
+            /* step 10 */
             if (match == null) {
-                /* step 8.a */
+                /* step 10.a */
                 iterator.setDone(true);
-                /* step 8.b */
-                return CreateIterResultObject(cx, NULL, true);
-            }
-            /* steps 9.a-b */
-            long previousIndex = iterator.getPreviousIndex();
-            /* step 9.c */
-            long index = ToLength(cx, Get(cx, match, "index"));
-            /* step 9.d */
-            if (previousIndex == index) {
-                /* step 9.d.i */
-                iterator.setDone(true);
-                /* step 9.d.ii */
-                return CreateIterResultObject(cx, NULL, true);
+                /* step 10.b */
+                return CreateIterResultObject(cx, UNDEFINED, true);
             } else {
-                /* step 9.e.i */
-                iterator.setPreviousIndex(index);
-                /* step 9.e.ii */
-                return CreateIterResultObject(cx, match, false);
+                /* steps 11.a-b */
+                if (global) {
+                    /* step 11.a.i */
+                    CharSequence matchStr = ToString(cx, Get(cx, match, 0));
+                    /* step 11.a.ii */
+                    if (matchStr.length() == 0) {
+                        long thisIndex = ToLength(cx, Get(cx, regexp, "lastIndex"));
+                        long nextIndex = RegExpPrototype.AdvanceStringIndex(string, thisIndex, fullUnicode);
+                        Set(cx, regexp, "lastIndex", nextIndex, true);
+                    }
+                    /* step 11.a.iii */
+                    return CreateIterResultObject(cx, match, false);
+                } else {
+                    /* step 11.b */
+                    /* step 11.b.i */
+                    iterator.setDone(true);
+                    /* step 11.b.ii */
+                    return CreateIterResultObject(cx, match, false);
+                }
             }
         }
 

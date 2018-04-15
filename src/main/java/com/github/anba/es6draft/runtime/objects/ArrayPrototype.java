@@ -2253,39 +2253,35 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
         ;
 
         /**
-         * Array.prototype.flatMap ( callbackfn [ , thisArg ] )
+         * Array.prototype.flatMap ( mapperFunction [ , thisArg ] )
          * 
          * @param cx
          *            the execution context
          * @param thisValue
          *            the function this-value
-         * @param callbackfn
-         *            the callback function
+         * @param mapperFunction
+         *            the mapper function
          * @param thisArg
          *            the optional this-argument for the callback function
          * @return the flattened array
          */
         @Function(name = "flatMap", arity = 1)
-        public static Object flatMap(ExecutionContext cx, Object thisValue, Object callbackfn, Object thisArg) {
+        public static Object flatMap(ExecutionContext cx, Object thisValue, Object mapperFunction, Object thisArg) {
             /* step 1 */
             ScriptObject o = ToObject(cx, thisValue);
             /* step 2 */
-            if (!IsCallable(callbackfn)) {
+            long sourceLen = ToLength(cx, Get(cx, o, "length"));
+            /* step 3 */
+            if (!IsCallable(mapperFunction)) {
                 throw newTypeError(cx, Messages.Key.NotCallable);
             }
-            Callable callback = (Callable) callbackfn;
-            /* step 3 (omitted) */
-            /* step 4 */
-            long sourceLen = ToLength(cx, Get(cx, o, "length"));
+            Callable mapper = (Callable) mapperFunction;
+            /* step 4 (omitted) */
             /* step 5 */
             ScriptObject a = ArraySpeciesCreate(cx, o, 0);
             /* step 6 */
-            long lastIndex = FlattenIntoArray(cx, a, o, o, sourceLen, 0, 1, callback, thisArg);
+            FlattenIntoArray(cx, a, o, sourceLen, 0, 1, mapper, thisArg);
             /* step 7 */
-            assert lastIndex <= ARRAY_LENGTH_LIMIT;
-            // FIXME: spec bug - `lastIndex` already has the correct value, no need to compute `lastIndex + 1`
-            Set(cx, a, "length", lastIndex, true);
-            /* step 8 */
             return a;
         }
 
@@ -2305,34 +2301,28 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
             /* step 1 */
             ScriptObject o = ToObject(cx, thisValue);
             /* step 2 */
-            long depthNum = 1;
+            long sourceLen = ToLength(cx, Get(cx, o, "length"));
             /* step 3 */
+            long depthNum = 1;
+            /* step 4 */
             if (!Type.isUndefined(depth)) {
                 depthNum = (long) ToNumber(cx, depth); // ToInteger
             }
-            /* step 4 */
-            long sourceLen = ToLength(cx, Get(cx, o, "length"));
             /* step 5 */
             ScriptObject a = ArraySpeciesCreate(cx, o, 0);
             /* step 6 */
-            long lastIndex = FlattenIntoArray(cx, a, o, o, sourceLen, 0, depthNum);
+            FlattenIntoArray(cx, a, o, sourceLen, 0, depthNum);
             /* step 7 */
-            assert lastIndex <= ARRAY_LENGTH_LIMIT;
-            // FIXME: spec bug - `lastIndex` already has the correct value, no need to compute `lastIndex + 1`
-            Set(cx, a, "length", lastIndex, true);
-            /* step 8 */
             return a;
         }
 
         /**
-         * FlattenIntoArray(target, original, source, sourceLen, start, depth [ , mapperFunction, thisArg ])
+         * FlattenIntoArray(target, source, sourceLen, start, depth [ , mapperFunction, thisArg ])
          * 
          * @param cx
          *            the execution context
          * @param target
          *            the target array
-         * @param original
-         *            the original array
          * @param source
          *            the source array
          * @param sourceLen
@@ -2343,20 +2333,18 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
          *            the maximum depth
          * @return the assigned last index
          */
-        private static long FlattenIntoArray(ExecutionContext cx, ScriptObject target, ScriptObject original,
-                ScriptObject source, long sourceLen, long start, long depth) {
-            return FlattenIntoArray(cx, target, original, source, sourceLen, start, depth, null, null);
+        private static long FlattenIntoArray(ExecutionContext cx, ScriptObject target, ScriptObject source,
+                long sourceLen, long start, long depth) {
+            return FlattenIntoArray(cx, target, source, sourceLen, start, depth, null, null);
         }
 
         /**
-         * FlattenIntoArray(target, original, source, sourceLen, start, depth [ , mapperFunction, thisArg ])
+         * FlattenIntoArray(target, source, sourceLen, start, depth [ , mapperFunction, thisArg ])
          * 
          * @param cx
          *            the execution context
          * @param target
          *            the target array
-         * @param original
-         *            the original array
          * @param source
          *            the source array
          * @param sourceLen
@@ -2371,15 +2359,14 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
          *            the this-argument for the mapper function
          * @return the assigned last index
          */
-        private static long FlattenIntoArray(ExecutionContext cx, ScriptObject target, ScriptObject original,
-                ScriptObject source, long sourceLen, long start, long depth, Callable mapperFunction, Object thisArg) {
+        private static long FlattenIntoArray(ExecutionContext cx, ScriptObject target, ScriptObject source,
+                long sourceLen, long start, long depth, Callable mapperFunction, Object thisArg) {
             /* step 1 */
             long targetIndex = start;
             /* steps 2-3 */
             for (long sourceIndex = 0; sourceIndex < sourceLen; ++sourceIndex) {
                 /* step 3.a (not applicable) */
                 /* step 3.b */
-                // FIXME: spec issue - newer Array.prototype methods no longer call HasProperty.
                 boolean exists = HasProperty(cx, source, sourceIndex);
                 /* step 3.c */
                 if (exists) {
@@ -2387,36 +2374,27 @@ public final class ArrayPrototype extends ArrayObject implements Initializable {
                     Object element = Get(cx, source, sourceIndex);
                     /* step 3.c.ii */
                     if (mapperFunction != null) {
-                        // FIXME: spec bug - why is `original` passed instead of `source`? `original` and `source`
-                        // are always the same object at this point.
-                        assert original == source;
-                        element = Call(cx, mapperFunction, thisArg, element, sourceIndex, original);
+                        element = Call(cx, mapperFunction, thisArg, element, sourceIndex, source);
                     }
-                    /* step 3.c.iii */
-                    // FIXME: spec issue - misleading variable name
-                    boolean spreadable = IsArray(cx, element);
-                    /* steps 3.c.iv-v */
-                    if (spreadable && depth > 0) {
-                        /* step 3.c.iv.1 */
-                        long elementLen = ToLength(cx, Get(cx, Type.objectValue(element), "length"));
-                        /* step 3.c.iv.2 */
-                        long nextIndex = FlattenIntoArray(cx, target, original, Type.objectValue(element), elementLen,
-                                targetIndex, depth - 1);
-                        /* step 3.c.iv.3 */
-                        targetIndex = nextIndex - 1;
-                    } else {
+                    /* steps 3.c.iii-iv */
+                    boolean shouldFlatten = depth > 0 && IsArray(cx, element);
+                    /* steps 3.c.v-vi */
+                    if (shouldFlatten) {
                         /* step 3.c.v.1 */
+                        long elementLen = ToLength(cx, Get(cx, Type.objectValue(element), "length"));
+                        /* step 3.c.v.2 */
+                        targetIndex = FlattenIntoArray(cx, target, Type.objectValue(element), elementLen, targetIndex,
+                                depth - 1);
+                    } else {
+                        /* step 3.c.vi.1 */
                         if (targetIndex >= ARRAY_LENGTH_LIMIT) {
                             throw newTypeError(cx, Messages.Key.InvalidArrayLength);
                         }
-                        /* step 3.c.v.2 */
+                        /* step 3.c.vi.2 */
                         CreateDataPropertyOrThrow(cx, target, targetIndex, element);
+                        /* step 3.c.vi.3 */
+                        targetIndex += 1;
                     }
-                    /* step 3.c.vi */
-                    // FIXME: spec issue - it's clearer to move this into steps 3.c.iv-v
-                    // - step 3.c.iv: just assign to `targetIndex = FlattenIntoArray(...)`
-                    // - step 3.c.v: increment targetIndex by one
-                    targetIndex += 1;
                 }
                 /* step 3.d (omitted) */
             }

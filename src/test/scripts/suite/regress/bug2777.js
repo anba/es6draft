@@ -11,4 +11,4 @@ const {
 // 21.2.5.2.2 RegExpBuiltinExec: Captured group may be undefined
 // https://bugs.ecmascript.org/show_bug.cgi?id=2777
 
-assertEquals(Object.assign(["b", void 0, "b"], {index: 0, input: "b"}), /(a)?(b)/.exec("b"));
+assertEquals(Object.assign(["b", void 0, "b"], {index: 0, input: "b", groups: undefined}), /(a)?(b)/.exec("b"));

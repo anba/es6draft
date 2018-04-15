@@ -7,14 +7,12 @@
 package com.github.anba.es6draft.runtime.objects.binary;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToNumber;
-import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.objects.bigint.BigIntAbstractOperations.ToBigInt;
 
 import java.math.BigInteger;
 
 import com.github.anba.es6draft.runtime.AbstractOperations;
 import com.github.anba.es6draft.runtime.ExecutionContext;
-import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.objects.bigint.BigIntAbstractOperations;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Type;
@@ -153,32 +151,14 @@ public enum ElementType {
     }
 
     /**
-     * Throws a {@code TypeError} if the given numeric value is not compatible for this element type.
+     * Returns {@code true} if the given value is compatible to this element type.
      * 
-     * @param cx
-     *            the execution context
      * @param value
-     *            the numeric type
+     *            the source element value
+     * @return {@code true} if the given value is compatible to this element type
      */
-    public void throwIfIncompatibleNumericType(ExecutionContext cx, Number value) {
-        assert Type.isNumber(value) || Type.isBigInt(value);
-        if (Type.isNumber(value) != !isInt64()) {
-            throw newTypeError(cx, Type.isNumber(value) ? Messages.Key.BigIntFromNumber : Messages.Key.BigIntNumber);
-        }
-    }
-
-    /**
-     * Throws a {@code TypeError} if the given element type is not compatible for this element type.
-     * 
-     * @param cx
-     *            the execution context
-     * @param sourceType
-     *            the source element type
-     */
-    public void throwIfIncompatibleNumericType(ExecutionContext cx, ElementType sourceType) {
-        if (!isCompatibleNumericType(sourceType)) {
-            throw newTypeError(cx, isInt64() ? Messages.Key.BigIntFromNumber : Messages.Key.BigIntNumber);
-        }
+    public boolean isCompatibleNumericValue(Number value) {
+        return isInt64() ? Type.isBigInt(value) : Type.isNumber(value);
     }
 
     /**

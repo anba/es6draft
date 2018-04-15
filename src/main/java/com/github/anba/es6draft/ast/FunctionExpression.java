@@ -22,17 +22,18 @@ public final class FunctionExpression extends Expression implements FunctionDefi
     private final FormalParameterList parameters;
     private List<StatementListItem> statements;
     private final String source;
+    private final StrictMode strictMode;
     private String functionName, methodName;
-    private StrictMode strictMode;
 
     public FunctionExpression(long beginPosition, long endPosition, FunctionScope scope, BindingIdentifier identifier,
-            FormalParameterList parameters, List<StatementListItem> statements, String source) {
+            FormalParameterList parameters, List<StatementListItem> statements, String source, StrictMode strictMode) {
         super(beginPosition, endPosition);
         this.scope = scope;
         this.identifier = identifier;
         this.parameters = parameters;
         this.statements = statements;
         this.source = source;
+        this.strictMode = strictMode;
     }
 
     @Override
@@ -89,11 +90,6 @@ public final class FunctionExpression extends Expression implements FunctionDefi
     @Override
     public StrictMode getStrictMode() {
         return strictMode;
-    }
-
-    @Override
-    public void setStrictMode(StrictMode strictMode) {
-        this.strictMode = strictMode;
     }
 
     @Override

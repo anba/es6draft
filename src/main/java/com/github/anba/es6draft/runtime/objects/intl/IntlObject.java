@@ -155,7 +155,7 @@ public final class IntlObject extends OrdinaryObject implements Initializable {
     /**
      * Locale Operations
      */
-    @CompatibilityExtension(CompatibilityOption.Locale)
+    @CompatibilityExtension(CompatibilityOption.IntlLocaleOperations)
     public enum LocaleProperties {
         ;
 

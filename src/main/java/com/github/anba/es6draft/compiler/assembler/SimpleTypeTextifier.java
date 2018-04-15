@@ -38,6 +38,7 @@ public final class SimpleTypeTextifier extends Textifier {
 
     @Override
     public void visitInvokeDynamicInsn(String name, String desc, Handle bsm, Object... bsmArgs) {
+        StringBuilder buf = stringBuilder;
         buf.setLength(0);
         buf.append(tab2).append("INVOKEDYNAMIC").append(' ').append(name);
         appendDescriptor(METHOD_DESCRIPTOR, desc);
@@ -64,9 +65,9 @@ public final class SimpleTypeTextifier extends Textifier {
                     buf.append(", ");
                 }
             }
-            buf.append("]");
+            buf.append(']');
         }
-        buf.append("\n");
+        buf.append('\n');
 
         text.add(buf.toString());
     }
@@ -77,6 +78,7 @@ public final class SimpleTypeTextifier extends Textifier {
             Handle handle = (Handle) cst;
             handle = new Handle(handle.getTag(), handle.getOwner(), handle.getName(),
                     getMethodDescriptor(handle.getDesc()), handle.isInterface());
+            StringBuilder buf = stringBuilder;
             buf.setLength(0);
             buf.append(tab2).append("LDC ");
             buf.append(handle.getOwner()).append('.').append(handle.getName()).append(handle.getDesc());

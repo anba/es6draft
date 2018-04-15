@@ -331,7 +331,7 @@ public final class NumberFormatConstructor extends BuiltinConstructor implements
      */
     private static int CurrencyDigits(String c) {
         // https://www.currency-iso.org/dam/downloads/lists/list_one.xml
-        // Last updated: 2017-01-01
+        // Last updated: 2017-09-22
         switch (c) {
         case "BIF":
         case "CLP":

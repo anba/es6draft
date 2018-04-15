@@ -347,11 +347,6 @@ public final class CompletionValueVisitor extends DefaultNodeVisitor<Completion,
             node.getCatchNode().getCatchBlock().accept(this, state);
             innerComputeValue |= state.computeValue;
         }
-        for (GuardedCatchNode guardedCatchNode : node.getGuardedCatchNodes()) {
-            state.computeValue = computeValue;
-            guardedCatchNode.getCatchBlock().accept(this, state);
-            innerComputeValue |= state.computeValue;
-        }
         if (node.getFinallyBlock() != null) {
             state.computeValue = computeValue;
             node.getFinallyBlock().accept(this, state);

@@ -1463,7 +1463,7 @@ public final class RegExpParser {
                 if (state.depth == 0) {
                     throw error(Messages.Key.RegExpUnmatchedCharacter, ")");
                 }
-                boolean lookaround = false;
+                boolean lookaround = false, lookbehind = false;
                 if (state.capturingGroup.get(state.depth)) {
                     state.capturingGroup.clear(state.depth);
                     // update group information after parsing ")"
@@ -1473,6 +1473,8 @@ public final class RegExpParser {
                         negativeLAGroups.set(g);
                     }
                 } else if (state.negativeGroup.get(state.depth)) {
+                    lookaround = true;
+                    lookbehind = state.lookbehindGroup.get(state.depth);
                     state.negativeGroup.clear(state.depth);
                     state.lookbehindGroup.clear(state.depth);
                     // invalidate all capturing groups created within the negative lookaround
@@ -1480,14 +1482,14 @@ public final class RegExpParser {
                     for (int v = state.groups; v != g; --v) {
                         state.validGroups.clear(v);
                     }
-                    lookaround = true;
                 } else if (state.positiveGroup.get(state.depth)) {
+                    lookaround = true;
+                    lookbehind = state.lookbehindGroup.get(state.depth);
                     state.positiveGroup.clear(state.depth);
                     state.lookbehindGroup.clear(state.depth);
-                    lookaround = true;
                 }
                 state.depth -= 1;
-                if (lookaround && (!web || unicode)) {
+                if ((lookaround && (!web || unicode)) || lookbehind) {
                     continue term;
                 }
                 break atom;

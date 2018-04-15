@@ -18,7 +18,6 @@ import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
-import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.IntegerIndexedObject;
 
 /**
@@ -208,7 +207,7 @@ public final class TypedArrayObject extends IntegerIndexedObject implements Arra
         assert !IsDetachedBuffer(buffer);
         /* steps 6-9 (not applicable) */
         /* steps 10-15 */
-        assert elementType.isInt64() ? Type.isBigInt(numValue) : Type.isNumber(numValue);
+        assert elementType.isCompatibleNumericValue(numValue);
         SetValueInBuffer(buffer, byteIndex(index), getElementType(), numValue);
         /* step 16 (return) */
     }

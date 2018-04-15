@@ -848,7 +848,12 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
 
         @Function(name = "[Symbol.matchAll]", symbol = BuiltinSymbol.matchAll, arity = 1)
         public static Object matchAll(ExecutionContext cx, Object thisValue, Object string) {
-            /* steps 1-2 */
+            /* step 1 (omitted) */
+            /* step 2 */
+            if (!Type.isObject(thisValue)) {
+                throw newTypeError(cx, Messages.Key.NotObjectType);
+            }
+            /* step 3 */
             return MatchAllIterator(cx, thisValue, string);
         }
     }
@@ -1193,14 +1198,17 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
             CreateDataProperty(cx, array, i, (capture != null ? capture : UNDEFINED));
         }
         // Extension: Named capturing groups.
-        if (!m.groups().isEmpty()) {
-            CreateDataProperty(cx, array, "groups", createGroupsObject(cx, m));
+        if (cx.getRuntimeContext().isEnabled(CompatibilityOption.RegExpNamedCapture)) {
+            CreateDataProperty(cx, array, "groups", createGroupsObjectOrUndefined(cx, m));
         }
         /* step 25 */
         return array;
     }
 
-    private static OrdinaryObject createGroupsObject(ExecutionContext cx, MatcherResult m) {
+    private static Object createGroupsObjectOrUndefined(ExecutionContext cx, MatcherResult m) {
+        if (m.groups().isEmpty()) {
+            return UNDEFINED;
+        }
         OrdinaryObject groups = ObjectCreate(cx, (ScriptObject) null);
         for (String name : m.groups()) {
             String capture = m.group(name);
@@ -1250,7 +1258,7 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
      *            the unicode flag
      * @return the next string index
      */
-    private static long AdvanceStringIndex(String s, long index, boolean unicode) {
+    public static long AdvanceStringIndex(String s, long index, boolean unicode) {
         /* steps 1-3 (not applicable) */
         /* step 4 */
         if (!unicode) {
@@ -1756,17 +1764,6 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
         }
         assert matchResult instanceof MatcherResult;
         MatcherResult result = (MatcherResult) matchResult;
-        if (cx.getIntrinsic(Intrinsics.ArrayPrototype).hasOwnProperty(cx, "groups")
-                || cx.getIntrinsic(Intrinsics.ObjectPrototype).hasOwnProperty(cx, "groups")) {
-            // FIXME: spec issue - result array reification intended?
-            // Reify result array.
-            ArrayObject matchArray = toMatchArray(cx, s, result);
-            Object groups = Get(cx, matchArray, "groups");
-            if (Type.isUndefined(groups)) {
-                return null;
-            }
-            return new ScriptNamedGroups(cx, ToObject(cx, groups));
-        }
         if (result.groups().isEmpty()) {
             return null;
         }
@@ -1779,18 +1776,7 @@ public final class RegExpPrototype extends OrdinaryObject implements Initializab
             return Get(cx, scriptMatchResult.object, "groups");
         }
         assert matchResult instanceof MatcherResult;
-        MatcherResult result = (MatcherResult) matchResult;
-        if (cx.getIntrinsic(Intrinsics.ArrayPrototype).hasOwnProperty(cx, "groups")
-                || cx.getIntrinsic(Intrinsics.ObjectPrototype).hasOwnProperty(cx, "groups")) {
-            // FIXME: spec issue - result array reification intended?
-            // Reify result array.
-            ArrayObject matchArray = toMatchArray(cx, s, result);
-            return Get(cx, matchArray, "groups");
-        }
-        if (result.groups().isEmpty()) {
-            return UNDEFINED;
-        }
-        return createGroupsObject(cx, result);
+        return createGroupsObjectOrUndefined(cx, (MatcherResult) matchResult);
     }
 
     private interface NamedGroups {

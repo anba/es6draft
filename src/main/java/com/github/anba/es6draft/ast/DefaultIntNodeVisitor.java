@@ -425,11 +425,6 @@ public abstract class DefaultIntNodeVisitor<V> implements IntNodeVisitor<V> {
     }
 
     @Override
-    public int visit(GuardedCatchNode node, V value) {
-        return visit((Node) node, value);
-    }
-
-    @Override
     public int visit(IdentifierName node, V value) {
         return visit((Node) node, value);
     }

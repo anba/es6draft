@@ -21,6 +21,7 @@ public final class BigIntType {
     private BigIntType() {
     }
 
+    private static final BigInteger NEGATIVE_ONE = BigInteger.valueOf(-1);
     private static final BigInteger TWO_64 = BigInteger.valueOf(2).pow(64);
 
     public static BigInteger toUnsigned64(long value) {
@@ -75,19 +76,25 @@ public final class BigIntType {
         if (exponent.signum() < 0) {
             throw newRangeError(cx, Messages.Key.BigIntNegativeExponent);
         }
-        /* step 2 */
-        if (base.signum() == 0 && exponent.signum() == 0) {
+        /* steps 2-3 */
+        if (exponent.signum() == 0) {
             return BigInteger.ONE;
         }
-        /* step 3 */
-        int exponentAsInt;
-        try {
-            exponentAsInt = exponent.intValueExact();
-        } catch (ArithmeticException e) {
-            // Exponent too large for BigInteger.
-            throw newRangeError(cx, Messages.Key.BigIntExponentTooLarge);
+        if (base.signum() == 0) {
+            return BigInteger.ZERO;
         }
-        return base.pow(exponentAsInt);
+        if (base.equals(BigInteger.ONE) || base.equals(NEGATIVE_ONE)) {
+            return base.signum() > 0 || !exponent.testBit(0) ? BigInteger.ONE : NEGATIVE_ONE;
+        }
+        if (exponent.bitLength() > 31) {
+            throw newRangeError(cx, Messages.Key.BigIntValueTooLarge);
+        }
+        int exponentAsInt = exponent.intValueExact();
+        try {
+            return base.pow(exponentAsInt);
+        } catch (ArithmeticException e) {
+            throw newRangeError(cx, Messages.Key.BigIntValueTooLarge);
+        }
     }
 
     /**
@@ -128,19 +135,19 @@ public final class BigIntType {
      * 
      * @param cx
      *            the execution context
-     * @param x
-     *            the x value
-     * @param y
-     *            the y value
-     * @return the remainder of dividing {@code x} by {@code y}
+     * @param n
+     *            the n value
+     * @param d
+     *            the d value
+     * @return the remainder of dividing {@code n} by {@code d}
      */
-    public static BigInteger remainder(ExecutionContext cx, BigInteger x, BigInteger y) {
+    public static BigInteger remainder(ExecutionContext cx, BigInteger n, BigInteger d) {
         /* step 1 */
-        if (y.signum() == 0) {
+        if (d.signum() == 0) {
             throw newRangeError(cx, Messages.Key.BigIntDivideByZero);
         }
         /* steps 2-3 */
-        return x.remainder(y);
+        return n.remainder(d);
     }
 
     /**
@@ -181,15 +188,24 @@ public final class BigIntType {
      * @return the result of left-shifting {@code x} by {@code y}
      */
     public static BigInteger leftShift(ExecutionContext cx, BigInteger x, BigInteger y) {
-        // TODO: Special case x==0n to allow arbitrary large y?
-        int yAsInt;
-        try {
-            yAsInt = y.intValueExact();
-        } catch (ArithmeticException e) {
-            // Exponent too large for BigInteger.
-            throw newRangeError(cx, Messages.Key.BigIntExponentTooLarge);
+        if (x.signum() == 0) {
+            return BigInteger.ZERO;
         }
-        return x.shiftLeft(yAsInt);
+        if (y.signum() == 0) {
+            return x;
+        }
+        if (y.bitLength() > 31) {
+            if (y.signum() > 0) {
+                throw newRangeError(cx, Messages.Key.BigIntValueTooLarge);
+            }
+            return BigInteger.ZERO;
+        }
+        int yAsInt = y.intValueExact();
+        try {
+            return x.shiftLeft(yAsInt);
+        } catch (ArithmeticException e) {
+            throw newRangeError(cx, Messages.Key.BigIntValueTooLarge);
+        }
     }
 
     /**
@@ -204,15 +220,24 @@ public final class BigIntType {
      * @return the result of right-shifting {@code x} by {@code y}
      */
     public static BigInteger signedRightShift(ExecutionContext cx, BigInteger x, BigInteger y) {
-        // TODO: Special case x==0n to allow arbitrary large y?
-        int yAsInt;
-        try {
-            yAsInt = y.intValueExact();
-        } catch (ArithmeticException e) {
-            // Exponent too large for BigInteger.
-            throw newRangeError(cx, Messages.Key.BigIntExponentTooLarge);
+        if (x.signum() == 0) {
+            return BigInteger.ZERO;
         }
-        return x.shiftRight(yAsInt);
+        if (y.signum() == 0) {
+            return x;
+        }
+        if (y.bitLength() > 31) {
+            if (y.signum() < 0) {
+                throw newRangeError(cx, Messages.Key.BigIntValueTooLarge);
+            }
+            return BigInteger.ZERO;
+        }
+        int yAsInt = y.intValueExact();
+        try {
+            return x.shiftRight(yAsInt);
+        } catch (ArithmeticException e) {
+            throw newRangeError(cx, Messages.Key.BigIntValueTooLarge);
+        }
     }
 
     /**

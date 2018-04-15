@@ -22,11 +22,11 @@ public final class AsyncFunctionDeclaration extends HoistableDeclaration impleme
     private List<StatementListItem> statements;
     private final String functionName;
     private final String source;
-    private StrictMode strictMode;
+    private final StrictMode strictMode;
 
     public AsyncFunctionDeclaration(long beginPosition, long endPosition, FunctionScope scope,
             BindingIdentifier identifier, FormalParameterList parameters, List<StatementListItem> statements,
-            String functionName, String source) {
+            String functionName, String source, StrictMode strictMode) {
         super(beginPosition, endPosition);
         this.scope = scope;
         this.identifier = identifier;
@@ -35,6 +35,7 @@ public final class AsyncFunctionDeclaration extends HoistableDeclaration impleme
         this.statements = statements;
         this.functionName = functionName;
         this.source = source;
+        this.strictMode = strictMode;
     }
 
     @Override
@@ -90,11 +91,6 @@ public final class AsyncFunctionDeclaration extends HoistableDeclaration impleme
     @Override
     public StrictMode getStrictMode() {
         return strictMode;
-    }
-
-    @Override
-    public void setStrictMode(StrictMode strictMode) {
-        this.strictMode = strictMode;
     }
 
     @Override

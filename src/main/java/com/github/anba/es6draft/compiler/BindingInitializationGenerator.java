@@ -33,6 +33,7 @@ import com.github.anba.es6draft.runtime.DeclarativeEnvironmentRecord;
 import com.github.anba.es6draft.runtime.EnvironmentRecord;
 import com.github.anba.es6draft.runtime.FunctionEnvironmentRecord;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
+import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.IndexedMap;
 import com.github.anba.es6draft.runtime.internal.ScriptIterator;
 
@@ -543,6 +544,8 @@ final class BindingInitializationGenerator {
                 /* step 1 (+ optimization if no direct eval present in formal parameter) */
                 node.getElement().accept(iteratorBindingInit, iterator);
             } else {
+                assert !codegen.isEnabled(CompatibilityOption.SingleParameterEnvironment);
+
                 /* steps 2-5 (not applicable) */
                 /* steps 6-8 */
                 newParameterEnvironment(env);

@@ -7,7 +7,6 @@
 package com.github.anba.es6draft.runtime.objects.binary;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.IsConstructor;
-import static com.github.anba.es6draft.runtime.AbstractOperations.SpeciesConstructor;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToIndex;
 import static com.github.anba.es6draft.runtime.internal.Errors.newRangeError;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
@@ -183,36 +182,7 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
     }
 
     /**
-     * 24.1.1.4 CloneArrayBuffer ( srcBuffer, srcByteOffset, srcLength, [ , cloneConstructor ] )
-     * 
-     * @param cx
-     *            the execution context
-     * @param srcBuffer
-     *            the source buffer
-     * @param srcByteOffset
-     *            the source offset
-     * @param srcLength
-     *            the source length
-     * @return the new array buffer object
-     */
-    public static ArrayBufferObject CloneArrayBuffer(ExecutionContext cx, ArrayBuffer srcBuffer, long srcByteOffset,
-            long srcLength) {
-        /* step 1 (implicit) */
-        /* step 2 */
-        /* step 2.a */
-        Constructor cloneConstructor = SpeciesConstructor(cx, srcBuffer, Intrinsics.ArrayBuffer);
-        /* step 2.b */
-        // FIXME: spec issue - remove this check, later checks for detached buffers cover this case?
-        // (https://github.com/tc39/ecma262/pull/844)
-        if (IsDetachedBuffer(srcBuffer)) {
-            throw newTypeError(cx, Messages.Key.BufferDetached);
-        }
-        /* steps 3-9 */
-        return CloneArrayBuffer(cx, srcBuffer, srcByteOffset, srcLength, cloneConstructor);
-    }
-
-    /**
-     * 24.1.1.4 CloneArrayBuffer ( srcBuffer, srcByteOffset, srcLength, [ , cloneConstructor ] )
+     * 24.1.1.4 CloneArrayBuffer ( srcBuffer, srcByteOffset, srcLength, cloneConstructor )
      * 
      * @param cx
      *            the execution context
@@ -223,22 +193,21 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
      * @param srcLength
      *            the source length
      * @param cloneConstructor
-     *            the intrinsic constructor function
+     *            the constructor function
      * @return the new array buffer object
      */
     public static ArrayBufferObject CloneArrayBuffer(ExecutionContext cx, ArrayBuffer srcBuffer, long srcByteOffset,
             long srcLength, Constructor cloneConstructor) {
         /* step 1 (implicit) */
-        /* step 2 (not applicable) */
-        /* step 3 (implicit) */
-        /* step 4 */
-        ByteBuffer srcBlock = srcBuffer.getData();
-        /* step 5 */
+        /* step 2 (implicit) */
+        /* step 3 */
         ArrayBufferObject targetBuffer = AllocateArrayBuffer(cx, cloneConstructor, srcLength);
-        /* step 6 */
+        /* step 4 */
         if (IsDetachedBuffer(srcBuffer)) {
             throw newTypeError(cx, Messages.Key.BufferDetached);
         }
+        /* step 5 */
+        ByteBuffer srcBlock = srcBuffer.getData();
         /* step 7 */
         ByteBuffer targetBlock = targetBuffer.getData();
         /* step 8 */
@@ -360,7 +329,7 @@ public final class ArrayBufferConstructor extends BuiltinConstructor implements 
         ByteBuffer block = arrayBuffer.getData(isLittleEndian ? ByteOrder.LITTLE_ENDIAN : ByteOrder.BIG_ENDIAN);
 
         // Extension: BigInt
-        assert type.isInt64() ? Type.isBigInt(value) : Type.isNumber(value);
+        assert type.isCompatibleNumericValue(value);
 
         int index = (int) byteIndex;
         switch (type) {

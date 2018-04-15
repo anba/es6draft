@@ -176,46 +176,48 @@ public final class TypedArrayConstructor extends BuiltinConstructor implements I
         if (IsDetachedBuffer(srcData)) {
             throw newTypeError(cx, Messages.Key.BufferDetached);
         }
-        /* steps 8-9 */
+        /* step 8 */
         ElementType elementType = this.elementType;
-        /* step 10 */
+        /* step 9 */
         long elementLength = srcArray.getArrayLength();
-        /* steps 11-12 */
+        /* steps 10-11 */
         ElementType srcType = srcArray.getElementType();
-        /* step 13 (omitted) */
-        /* step 14 */
+        /* step 12 (omitted) */
+        /* step 13 */
         long srcByteOffset = srcArray.getByteOffset();
-        /* steps 15-16 */
+        /* steps 14-15 */
         long byteLength = elementType.toBytes(elementLength);
-        /* steps 17-18 */
+        /* steps 16-17 */
+        Constructor bufferConstructor;
+        if (!IsSharedArrayBuffer(srcData)) {
+            bufferConstructor = SpeciesConstructor(cx, srcData, Intrinsics.ArrayBuffer);
+        } else {
+            bufferConstructor = (Constructor) cx.getIntrinsic(Intrinsics.ArrayBuffer);
+        }
+        /* steps 18-19 */
         ArrayBufferObject data;
         if (elementType == srcType) {
             /* step 17.a */
-            if (!IsSharedArrayBuffer(srcData)) {
-                data = CloneArrayBuffer(cx, srcData, srcByteOffset, byteLength);
-            } else {
-                data = CloneArrayBuffer(cx, srcData, srcByteOffset, byteLength,
-                        (Constructor) cx.getIntrinsic(Intrinsics.ArrayBuffer));
-            }
+            data = CloneArrayBuffer(cx, srcData, srcByteOffset, byteLength, bufferConstructor);
         } else {
             /* step 18 */
             /* step 18.a */
-            Constructor bufferConstructor;
-            if (!IsSharedArrayBuffer(srcData)) {
-                bufferConstructor = SpeciesConstructor(cx, srcData, Intrinsics.ArrayBuffer);
-            } else {
-                bufferConstructor = (Constructor) cx.getIntrinsic(Intrinsics.ArrayBuffer);
-            }
-            /* step 18.b */
             data = AllocateArrayBuffer(cx, bufferConstructor, byteLength);
-            /* step 18.c */
+            /* step 18.b */
             if (IsDetachedBuffer(srcData)) {
                 throw newTypeError(cx, Messages.Key.BufferDetached);
             }
-            /* steps 18.d-g */
+
+            // Extension: BigInt
+            // FIXME: spec issue - move before array buffer allocation?
+            if (!elementType.isCompatibleNumericType(srcType)) {
+                throw newTypeError(cx, Messages.Key.IncompatibleElementTypes);
+            }
+
+            /* steps 18.c-f */
             srcArray.functions().construct(cx, srcArray, data, elementType);
         }
-        /* steps 4, 19-23 */
+        /* steps 4, 20-24 */
         return new TypedArrayObject(cx.getRealm(), elementType, data, byteLength, 0, elementLength, proto);
     }
 
@@ -520,7 +522,14 @@ public final class TypedArrayConstructor extends BuiltinConstructor implements I
         /* step 3 */
         Constructor constructor = SpeciesConstructor(cx, exemplar, defaultConstructor);
         /* step 4 */
-        return TypedArrayCreate(cx, method, constructor, length);
+        TypedArrayObject result = TypedArrayCreate(cx, method, constructor, length);
+
+        // Extension: BigInt
+        if (!exemplar.getElementType().isCompatibleNumericType(result.getElementType())) {
+            throw newTypeError(cx, Messages.Key.IncompatibleElementTypes);
+        }
+
+        return result;
     }
 
     /**
@@ -544,7 +553,14 @@ public final class TypedArrayConstructor extends BuiltinConstructor implements I
         /* step 3 */
         Constructor constructor = SpeciesConstructor(cx, exemplar, defaultConstructor);
         /* step 4 */
-        return TypedArrayCreate(cx, method, constructor, args);
+        TypedArrayObject result = TypedArrayCreate(cx, method, constructor, args);
+
+        // Extension: BigInt
+        if (!exemplar.getElementType().isCompatibleNumericType(result.getElementType())) {
+            throw newTypeError(cx, Messages.Key.IncompatibleElementTypes);
+        }
+
+        return result;
     }
 
     private static Intrinsics prototypeForType(ElementType elementType) {

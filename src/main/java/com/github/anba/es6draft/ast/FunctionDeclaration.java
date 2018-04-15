@@ -25,12 +25,13 @@ public final class FunctionDeclaration extends HoistableDeclaration implements F
     private List<StatementListItem> statements;
     private final String functionName;
     private final String source;
-    private StrictMode strictMode;
+    private final StrictMode strictMode;
     private boolean legacyBlockScoped;
     private int legacyBlockScopeId;
 
     public FunctionDeclaration(long beginPosition, long endPosition, FunctionScope scope, BindingIdentifier identifier,
-            FormalParameterList parameters, List<StatementListItem> statements, String functionName, String source) {
+            FormalParameterList parameters, List<StatementListItem> statements, String functionName, String source,
+            StrictMode strictMode) {
         super(beginPosition, endPosition);
         this.scope = scope;
         this.identifier = identifier;
@@ -39,6 +40,7 @@ public final class FunctionDeclaration extends HoistableDeclaration implements F
         this.statements = statements;
         this.functionName = functionName;
         this.source = source;
+        this.strictMode = strictMode;
     }
 
     @Override
@@ -94,11 +96,6 @@ public final class FunctionDeclaration extends HoistableDeclaration implements F
     @Override
     public StrictMode getStrictMode() {
         return strictMode;
-    }
-
-    @Override
-    public void setStrictMode(StrictMode strictMode) {
-        this.strictMode = strictMode;
     }
 
     @Override

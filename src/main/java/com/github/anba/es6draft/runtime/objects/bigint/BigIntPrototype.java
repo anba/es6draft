@@ -21,6 +21,8 @@ import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
+import com.github.anba.es6draft.runtime.objects.intl.NumberFormatConstructor;
+import com.github.anba.es6draft.runtime.objects.intl.NumberFormatObject;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Type;
@@ -100,7 +102,17 @@ public final class BigIntPrototype extends OrdinaryObject implements Initializab
          */
         @Function(name = "toLocaleString", arity = 0)
         public static Object toLocaleString(ExecutionContext cx, Object thisValue, Object locales, Object options) {
-            return toString(cx, thisValue, 10);
+            // N.B. permissible but not encouraged:
+            // return toString(cx, thisValue, 10);
+
+            // ECMA-402 <https://github.com/tc39/ecma402/issues/218>
+            /* steps 1-2 */
+            BigInteger x = thisBigIntValue(cx, thisValue, "BigInt.prototype.toLocaleString");
+            /* steps 3-4 */
+            NumberFormatConstructor ctor = (NumberFormatConstructor) cx.getIntrinsic(Intrinsics.Intl_NumberFormat);
+            NumberFormatObject numberFormat = ctor.construct(cx, ctor, locales, options);
+            /* step 5 */
+            return numberFormat.getNumberFormat().format(x);
         }
 
         /**

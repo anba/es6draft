@@ -11,7 +11,7 @@ const {
 // String.prototype.search(null) causes TypeError, different from ES5
 // https://bugs.ecmascript.org/show_bug.cgi?id=4327
 
-assertEquals(Object.assign(["null"], {index: 0, input: "null"}), "null".match(null));
+assertEquals(Object.assign(["null"], {index: 0, input: "null", groups: undefined}), "null".match(null));
 assertSame("ok", "null".replace(null, "ok"));
 assertSame(0, "null".search(null));
 assertEquals(["", ""], "null".split(null));

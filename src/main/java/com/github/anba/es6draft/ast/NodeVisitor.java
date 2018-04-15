@@ -149,8 +149,6 @@ public interface NodeVisitor<R, V> {
 
     R visit(GeneratorExpression node, V value);
 
-    R visit(GuardedCatchNode node, V value);
-
     R visit(IdentifierName node, V value);
 
     R visit(IdentifierReference node, V value);

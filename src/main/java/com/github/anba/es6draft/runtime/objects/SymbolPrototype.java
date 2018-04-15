@@ -8,12 +8,16 @@ package com.github.anba.es6draft.runtime.objects;
 
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
+import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
+import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.Initializable;
 import com.github.anba.es6draft.runtime.internal.Messages;
+import com.github.anba.es6draft.runtime.internal.Properties.Accessor;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
+import com.github.anba.es6draft.runtime.internal.Properties.CompatibilityExtension;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
@@ -45,6 +49,7 @@ public final class SymbolPrototype extends OrdinaryObject implements Initializab
     @Override
     public void initialize(Realm realm) {
         createProperties(realm, this, Properties.class);
+        createProperties(realm, this, SymbolDescriptionAccessor.class);
     }
 
     /**
@@ -70,31 +75,31 @@ public final class SymbolPrototype extends OrdinaryObject implements Initializab
     }
 
     /**
+     * Abstract operation thisSymbolValue(value)
+     * 
+     * @param cx
+     *            the execution context
+     * @param value
+     *            the value
+     * @param method
+     *            the method
+     * @return the symbol value
+     */
+    private static Symbol thisSymbolValue(ExecutionContext cx, Object value, String method) {
+        if (Type.isSymbol(value)) {
+            return (Symbol) value;
+        }
+        if (value instanceof SymbolObject) {
+            return ((SymbolObject) value).getSymbolData();
+        }
+        throw newTypeError(cx, Messages.Key.IncompatibleThis, method, Type.of(value).toString());
+    }
+
+    /**
      * 19.4.3 Properties of the Symbol Prototype Object
      */
     public enum Properties {
         ;
-
-        /**
-         * Abstract operation thisSymbolValue(value)
-         * 
-         * @param cx
-         *            the execution context
-         * @param value
-         *            the value
-         * @param method
-         *            the method
-         * @return the symbol value
-         */
-        private static Symbol thisSymbolValue(ExecutionContext cx, Object value, String method) {
-            if (Type.isSymbol(value)) {
-                return (Symbol) value;
-            }
-            if (value instanceof SymbolObject) {
-                return ((SymbolObject) value).getSymbolData();
-            }
-            throw newTypeError(cx, Messages.Key.IncompatibleThis, method, Type.of(value).toString());
-        }
 
         @Prototype
         public static final Intrinsics __proto__ = Intrinsics.ObjectPrototype;
@@ -161,5 +166,31 @@ public final class SymbolPrototype extends OrdinaryObject implements Initializab
         @Value(name = "[Symbol.toStringTag]", symbol = BuiltinSymbol.toStringTag,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static final String toStringTag = "Symbol";
+    }
+
+    /**
+     * Extension: Symbol.prototype.description
+     */
+    @CompatibilityExtension(CompatibilityOption.SymbolDescription)
+    public enum SymbolDescriptionAccessor {
+        ;
+
+        /**
+         * get Symbol.prototype.description
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the stack string
+         */
+        @Accessor(name = "description", type = Accessor.Type.Getter)
+        public static Object get_description(ExecutionContext cx, Object thisValue) {
+            /* steps 1-2 */
+            Symbol sym = thisSymbolValue(cx, thisValue, "get Symbol.prototype.description");
+            /* step 3 */
+            String desc = sym.getDescription();
+            return desc != null ? desc : UNDEFINED;
+        }
     }
 }

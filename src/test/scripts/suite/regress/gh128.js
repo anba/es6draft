@@ -14,7 +14,7 @@ const {
 assertSame("\u{1F632}", "\uD83D\uDE32");
 
 function result({index, input}, ...matches) {
-  return Object.assign(matches, {index, input});
+  return Object.assign(matches, {index, input, groups: undefined});
 }
 
 {

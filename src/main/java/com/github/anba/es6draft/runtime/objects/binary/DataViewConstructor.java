@@ -24,6 +24,7 @@ import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
+import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
 
@@ -208,9 +209,13 @@ public final class DataViewConstructor extends BuiltinConstructor implements Ini
                 throw newRangeError(calleeContext, Messages.Key.ArrayOffsetOutOfRange);
             }
         }
+        /* PR1025 */
+        ScriptObject prototype = GetPrototypeFromConstructor(calleeContext, newTarget, Intrinsics.DataViewPrototype);
+        if (IsDetachedBuffer(bufferObj)) {
+            throw newTypeError(calleeContext, Messages.Key.BufferDetached);
+        }
         /* steps 10-15 */
-        return new DataViewObject(calleeContext.getRealm(), bufferObj, viewByteLength, offset,
-                GetPrototypeFromConstructor(calleeContext, newTarget, Intrinsics.DataViewPrototype));
+        return new DataViewObject(calleeContext.getRealm(), bufferObj, viewByteLength, offset, prototype);
     }
 
     /**

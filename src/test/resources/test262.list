@@ -6,15 +6,15 @@
 #
 
 # ICU4J issue <http://bugs.icu-project.org/trac/ticket/10171>?
-test/intl402/NumberFormat/prototype/format/11.3.2_TRP.js
-test/intl402/NumberFormat/prototype/format/11.3.2_TRF.js
-
-# ES2017: https://github.com/tc39/ecma262/pull/410
-# https://github.com/tc39/ecma262/issues/787
-test/built-ins/DataView/length.js
+test/intl402/NumberFormat/prototype/format/format-fraction-digits.js
+test/intl402/NumberFormat/prototype/format/format-significant-digits.js
 
 # https://github.com/tc39/ecma262/issues/991
 test/annexB/language/function-code/block-decl-func-skip-arguments.js
+
+# JSON super set proposal
+test/language/line-terminators/S7.3_A2.3.js
+test/language/line-terminators/S7.3_A2.4.js
 
 # lookbehind support too limited in Joni
 test/built-ins/RegExp/lookBehind/alternations.js
@@ -33,10 +33,3 @@ test/built-ins/RegExp/lookBehind/sticky.js
 test/built-ins/RegExp/lookBehind/variable-length.js
 test/built-ins/RegExp/lookBehind/word-boundary.js
 test/built-ins/RegExp/named-groups/lookbehind.js
-
-# Missing closing parenthesis in function call.
-test/built-ins/BigInt/value-of-throws.js
-test/built-ins/BigInt/constructor-from-string-syntax-errors.js
-
-# Test case expects `BigInt("0b1")` is 0n
-test/built-ins/BigInt/constructor-from-binary-string.js

@@ -119,11 +119,6 @@ public enum CompatibilityOption {
     FunctionCaller,
 
     /**
-     * Moz-Extension: guarded catch
-     */
-    GuardedCatch,
-
-    /**
      * Moz-Extension: expression closure
      */
     ExpressionClosure,
@@ -154,27 +149,27 @@ public enum CompatibilityOption {
     ArrayBufferTransfer,
 
     /**
-     * Decorators (Stage 2 proposal)
-     */
-    Decorator,
-
-    /**
-     * Object Rest/Spread Properties (Stage 3 proposal)
+     * Object Rest/Spread Properties (Stage 4 proposal)
      */
     ObjectRestSpreadProperties,
 
     /**
-     * String.prototype.trimStart and trimEnd (Stage 2 proposal)
+     * String.prototype.trimStart and trimEnd (Stage 3 proposal)
      */
     StringTrim,
 
     /**
-     * Class Fields (Stage 3 proposal)
+     * Class Public Instance Fields & Private Instance Fields & Methods (Stage 3 proposal)
      */
-    ClassFields,
+    InstanceClassFields,
 
     /**
-     * String.prototype.matchAll (Stage 2 proposal)
+     * Class Static Fields (Public & Private) (Stage 2 proposal)
+     */
+    StaticClassFields,
+
+    /**
+     * String.prototype.matchAll (Stage 3 proposal)
      */
     StringMatchAll,
 
@@ -199,12 +194,7 @@ public enum CompatibilityOption {
     PluralRules,
 
     /**
-     * Locale Operations (Stage 2 proposal)
-     */
-    Locale,
-
-    /**
-     * Asynchronous Iteration (Stage 3 proposal)
+     * Asynchronous Iteration (Stage 4 proposal)
      */
     AsyncIteration,
 
@@ -214,18 +204,18 @@ public enum CompatibilityOption {
     FunctionToString,
 
     /**
-     * RegExp Lookbehind Assertions (Stage 3 proposal)<br>
+     * RegExp Lookbehind Assertions (Stage 4 proposal)<br>
      * <strong>NOTE: Only a very rudimentary implementation is available due to Joni limitations.</strong>
      */
     RegExpLookBehind,
 
     /**
-     * RegExp Named Capture Groups (Stage 3 proposal)
+     * RegExp Named Capture Groups (Stage 4 proposal)
      */
     RegExpNamedCapture,
 
     /**
-     * RegExp Unicode Properties (Stage 3 proposal)
+     * RegExp Unicode Properties (Stage 4 proposal)
      */
     RegExpUnicodeProperties,
 
@@ -245,11 +235,6 @@ public enum CompatibilityOption {
     FrozenRealm,
 
     /**
-     * Syntactic Tail Calls (inactive)
-     */
-    SyntacticTailCalls,
-
-    /**
      * String.prototype.at (Stage 0 proposal)
      */
     StringAt,
@@ -265,7 +250,7 @@ public enum CompatibilityOption {
     MathExtensions,
 
     /**
-     * Promise.prototype.finally (Stage 3 proposal)
+     * Promise.prototype.finally (Stage 4 proposal)
      */
     PromiseFinally,
 
@@ -295,6 +280,21 @@ public enum CompatibilityOption {
     IntlListFormat,
 
     /**
+     * Intl.RelativeTimeFormat (Stage 2 proposal)
+     */
+    IntlRelativeTimeFormat,
+
+    /**
+     * Intl.Locale (Stage 2 proposal)
+     */
+    IntlLocale,
+
+    /**
+     * Exposing Abstract Operations & Locale Info (Stage 2 proposal)
+     */
+    IntlLocaleOperations,
+
+    /**
      * Error Stacks (Stage 1 proposal)
      */
     ErrorStacks,
@@ -315,7 +315,7 @@ public enum CompatibilityOption {
     CollectionsOfAndFrom,
 
     /**
-     * s/dotAll flag for regular expressions (Stage 3 proposal)
+     * s/dotAll flag for regular expressions (Stage 4 proposal)
      */
     RegExpDotAll,
 
@@ -355,6 +355,36 @@ public enum CompatibilityOption {
     ThrowExpression,
 
     /**
+     * Atomics.waitAsync (Stage 2 proposal)
+     */
+    AtomicsWaitAsync,
+
+    /**
+     * JSON super-set (Stage 3 proposal)
+     */
+    JSONSuperset,
+
+    /**
+     * Symbol description accessor (Stage 2 proposal)
+     */
+    SymbolDescription,
+
+    /**
+     * Decorators (Stage 2 proposal)
+     */
+    Decorator,
+
+    /**
+     * Single parameter environment (spec PR)
+     */
+    SingleParameterEnvironment,
+
+    /**
+     * Realm-wide template cache removed (spec PR)
+     */
+    TemplateParseNodeCache,
+
+    /**
      * SIMD (deferred)
      */
     SIMD,
@@ -368,6 +398,11 @@ public enum CompatibilityOption {
      * Atomics.fence() function
      */
     AtomicsFence,
+
+    /**
+     * Old Decorators proposal
+     */
+    OldDecorator,
 
     /**
      * Type annotations (limited parser support only).
@@ -446,7 +481,7 @@ public enum CompatibilityOption {
      * @return the options set for mozilla extensions
      */
     public static final Set<CompatibilityOption> MozExtensions() {
-        return EnumSet.of(GuardedCatch, ExpressionClosure, ReflectParse);
+        return EnumSet.of(ExpressionClosure, ReflectParse);
     }
 
     /**
@@ -522,15 +557,16 @@ public enum CompatibilityOption {
             return EnumSet.of(ExportNamespaceFrom, ExportDefaultFrom, Observable, WeakReference, FrozenRealm,
                     MathExtensions, CollectionsOfAndFrom, PromiseTry, MathSignbit, ErrorStacks, DoExpression);
         case Draft:
-            return EnumSet.of(FunctionSent, StringTrim, Decorator, NumericSeparators, ArrayPrototypeFlatMapFlatten,
-                    ThrowExpression, StringMatchAll, IntlListFormat, Locale);
+            return EnumSet.of(StaticClassFields, FunctionSent, ThrowExpression, AtomicsWaitAsync, SymbolDescription,
+                    Decorator, IntlRelativeTimeFormat, IntlListFormat, IntlLocaleOperations, IntlLocale);
         case Candidate:
-            return EnumSet.of(FunctionToString, GlobalProperty, ObjectRestSpreadProperties, AsyncIteration,
-                    DynamicImport, RegExpLookBehind, RegExpUnicodeProperties, RegExpNamedCapture, RegExpDotAll,
-                    LegacyRegExp, PromiseFinally, BigInt, ClassFields, OptionalCatchBinding, ImportMeta, PrivateMethods,
-                    IntlSegmenter);
+            return EnumSet.of(FunctionToString, GlobalProperty, DynamicImport, LegacyRegExp, BigInt,
+                    OptionalCatchBinding, ImportMeta, PrivateMethods, ArrayPrototypeFlatMapFlatten, NumericSeparators,
+                    InstanceClassFields, JSONSuperset, StringTrim, StringMatchAll, IntlSegmenter,
+                    TemplateParseNodeCache);
         case Finished:
-            return EnumSet.of(PluralRules);
+            return EnumSet.of(PluralRules, RegExpDotAll, ObjectRestSpreadProperties, AsyncIteration,
+                    RegExpUnicodeProperties, RegExpNamedCapture, RegExpLookBehind, PromiseFinally);
         default:
             throw new AssertionError();
         }

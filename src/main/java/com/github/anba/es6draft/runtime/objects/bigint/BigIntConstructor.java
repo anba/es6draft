@@ -6,12 +6,8 @@
  */
 package com.github.anba.es6draft.runtime.objects.bigint;
 
-import static com.github.anba.es6draft.runtime.AbstractOperations.ToFlatString;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToIndex;
-import static com.github.anba.es6draft.runtime.AbstractOperations.ToInt32;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToPrimitive;
-import static com.github.anba.es6draft.runtime.internal.Errors.newRangeError;
-import static com.github.anba.es6draft.runtime.internal.Errors.newSyntaxError;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.objects.bigint.BigIntAbstractOperations.NumberToBigInt;
@@ -28,7 +24,6 @@ import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
-import com.github.anba.es6draft.runtime.internal.Strings;
 import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
@@ -109,71 +104,6 @@ public final class BigIntConstructor extends BuiltinConstructor implements Initi
         public static final Intrinsics prototype = Intrinsics.BigIntPrototype;
 
         /**
-         * BigInt.parseInt (string, radix)
-         * 
-         * @param cx
-         *            the execution context
-         * @param thisValue
-         *            the function this-value
-         * @param string
-         *            the string
-         * @param radix
-         *            the radix value
-         * @return the parsed BigInt
-         */
-        @Function(name = "parseInt", arity = 2)
-        public static Object parseInt(ExecutionContext cx, Object thisValue, Object string, Object radix) {
-            /* step 1 */
-            String inputString = ToFlatString(cx, string);
-            /* step 2 */
-            String s = Strings.trimLeft(inputString);
-            int len = s.length();
-            int index = 0;
-            /* steps 3-5 */
-            boolean isPos = true;
-            if (index < len && (s.charAt(index) == '+' || s.charAt(index) == '-')) {
-                isPos = s.charAt(index) == '+';
-                index += 1;
-            }
-            /* step 6 */
-            int r = ToInt32(cx, radix);
-            /* step 7 */
-            boolean stripPrefix = true;
-            if (r != 0) {
-                /* step 8 */
-                if (r < 2 || r > 36) {
-                    throw newSyntaxError(cx, Messages.Key.InvalidNumberLiteral);
-                }
-                stripPrefix = r == 16;
-            } else {
-                /* step 9 */
-                r = 10;
-            }
-            /* step 10 */
-            if (stripPrefix && index + 1 < len && s.charAt(index) == '0'
-                    && (s.charAt(index + 1) == 'x' || s.charAt(index + 1) == 'X')) {
-                r = 16;
-                index += 2;
-            }
-            /* step 11 */
-            int endIndex = index;
-            for (; endIndex < s.length(); endIndex++) {
-                char c = s.charAt(endIndex);
-                if (c > 0x7f || Character.digit(c, r) < 0) {
-                    break;
-                }
-            }
-            /* step 12 */
-            if (index == endIndex) {
-                throw newSyntaxError(cx, Messages.Key.InvalidNumberLiteral);
-            }
-            /* step 13 */
-            BigInteger number = new BigInteger(s.substring(index, endIndex), r);
-            /* steps 14-15 */
-            return isPos ? number : number.negate();
-        }
-
-        /**
          * BigInt.asUintN ( bits, bigint )
          * 
          * @param cx
@@ -193,8 +123,8 @@ public final class BigIntConstructor extends BuiltinConstructor implements Initi
             /* step 2 */
             BigInteger bigIntValue = ToBigInt(cx, bigint);
             /* step 3 */
-            if (bitsIndex > Integer.MAX_VALUE) {
-                throw newRangeError(cx, Messages.Key.BigIntExponentTooLarge);
+            if (bitsIndex >= Integer.MAX_VALUE) {
+                return bigIntValue;
             }
             BigInteger m = BigInteger.valueOf(2).pow((int) bitsIndex);
             return bigIntValue.mod(m);
@@ -220,14 +150,12 @@ public final class BigIntConstructor extends BuiltinConstructor implements Initi
             /* step 2 */
             BigInteger bigIntValue = ToBigInt(cx, bigint);
             /* steps 3-4 */
-            if (bitsIndex > Integer.MAX_VALUE) {
-                throw newRangeError(cx, Messages.Key.BigIntExponentTooLarge);
+            if (bitsIndex >= Integer.MAX_VALUE) {
+                return bigIntValue;
             }
-
             if (bitsIndex == 0) {
                 return BigInteger.ZERO;
             }
-
             BigInteger m = BigInteger.valueOf(2).pow((int) bitsIndex);
             BigInteger mod = bigIntValue.mod(m);
             if (mod.compareTo(m.shiftRight(1)) >= 0)

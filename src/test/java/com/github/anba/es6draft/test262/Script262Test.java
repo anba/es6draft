@@ -118,12 +118,18 @@ public final class Script262Test {
             errorHandler.match(StandardErrorHandler.defaultMatcher());
             exceptionHandler.match(ScriptExceptionHandler.defaultMatcher());
         } else {
-            if (test.getErrorPhase() == Test262Info.ErrorPhase.Early) {
+            switch (test.getErrorPhase()) {
+            case Parse:
+            case Resolution:
                 expected.expect(StandardErrorHandler.defaultMatcher());
                 exceptionHandler.match(ScriptExceptionHandler.defaultMatcher());
-            } else {
+                break;
+            case Runtime:
                 expected.expect(ScriptExceptionHandler.defaultMatcher());
                 errorHandler.match(StandardErrorHandler.defaultMatcher());
+                break;
+            default:
+                throw new AssertionError();
             }
             expected.expect(hasErrorMessage(realm.get().defaultContext(), matchesPattern(test.getErrorType())));
         }

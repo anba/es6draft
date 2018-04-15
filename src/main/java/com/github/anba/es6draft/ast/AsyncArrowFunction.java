@@ -19,27 +19,29 @@ public final class AsyncArrowFunction extends Expression implements FunctionNode
     private List<StatementListItem> statements;
     private final Expression expression;
     private final String source;
+    private final StrictMode strictMode;
     private String functionName, methodName;
-    private StrictMode strictMode;
 
     public AsyncArrowFunction(long beginPosition, long endPosition, FunctionScope scope, FormalParameterList parameters,
-            List<StatementListItem> statements, String source) {
+            List<StatementListItem> statements, String source, StrictMode strictMode) {
         super(beginPosition, endPosition);
         this.scope = scope;
         this.parameters = parameters;
         this.statements = statements;
         this.expression = null;
         this.source = source;
+        this.strictMode = strictMode;
     }
 
     public AsyncArrowFunction(long beginPosition, long endPosition, FunctionScope scope, FormalParameterList parameters,
-            Expression expression, String source) {
+            Expression expression, String source, StrictMode strictMode) {
         super(beginPosition, endPosition);
         this.scope = scope;
         this.parameters = parameters;
         this.statements = null;
         this.expression = expression;
         this.source = source;
+        this.strictMode = strictMode;
     }
 
     @Override
@@ -106,11 +108,6 @@ public final class AsyncArrowFunction extends Expression implements FunctionNode
     @Override
     public StrictMode getStrictMode() {
         return strictMode;
-    }
-
-    @Override
-    public void setStrictMode(StrictMode strictMode) {
-        this.strictMode = strictMode;
     }
 
     @Override

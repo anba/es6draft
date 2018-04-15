@@ -32,6 +32,7 @@ import com.github.anba.es6draft.runtime.DeclarativeEnvironmentRecord;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.FunctionEnvironmentRecord;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
+import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.types.Undefined;
 import com.github.anba.es6draft.runtime.types.builtins.ArgumentsObject;
 import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
@@ -61,9 +62,10 @@ final class FunctionDeclarationInstantiationGenerator extends DeclarationBinding
                 Types.ArgumentsObject, "CreateMappedArgumentsObject",
                 Type.methodType(Types.ArgumentsObject, Types.ExecutionContext, Types.FunctionObject, Types.Object_));
 
-        static final MethodName ArgumentsObject_CreateMappedArgumentsObject = MethodName
-                .findStatic(Types.ArgumentsObject, "CreateMappedArgumentsObject", Type.methodType(Types.ArgumentsObject,
-                        Types.ExecutionContext, Types.FunctionObject, Types.Object_, Types.LexicalEnvironment));
+        static final MethodName ArgumentsObject_CreateMappedArgumentsObject = MethodName.findStatic(
+                Types.ArgumentsObject, "CreateMappedArgumentsObject",
+                Type.methodType(Types.ArgumentsObject, Types.ExecutionContext, Types.FunctionObject, Types.Object_,
+                        Types.DeclarativeEnvironmentRecord));
 
         static final MethodName ArgumentsObject_CreateUnmappedArgumentsObject = MethodName.findStatic(
                 Types.ArgumentsObject, "CreateUnmappedArgumentsObject",
@@ -206,12 +208,50 @@ final class FunctionDeclarationInstantiationGenerator extends DeclarationBinding
                 argumentsObjectNeeded = false;
             }
         }
+
+        Variable<? extends LexicalEnvironment<? extends DeclarativeEnvironmentRecord>> paramsEnv;
+        Variable<? extends DeclarativeEnvironmentRecord> paramsEnvRec;
+        if (codegen.isEnabled(CompatibilityOption.SingleParameterEnvironment)) {
+            assert hasParameterExpressions || fscope.parameterVarNames().isEmpty();
+
+            if (hasParameterExpressions) {
+                // Var-scoped bindings from do-expressions in parameter expressions.
+                for (Name varName : fscope.parameterVarNames()) {
+                    BindingOp<DeclarativeEnvironmentRecord> op = BindingOp.of(envRec, varName);
+                    op.createMutableBinding(envRec, varName, false, mv);
+                    op.initializeBinding(envRec, varName, undefined, mv);
+                }
+
+                boolean hasParameterBindings = !parameterNames.isEmpty();
+                assert fscope.parametersScope().isPresent() == (hasParameterBindings || argumentsObjectNeeded);
+                if (hasParameterBindings || argumentsObjectNeeded) {
+                    paramsEnv = newDeclarativeEnvironment("paramsEnv", env, mv);
+                    paramsEnvRec = getDeclarativeEnvironmentRecord("paramsEnvRec", paramsEnv, mv);
+                    setLexicalEnvironment(paramsEnv, mv);
+                } else {
+                    // Optimization: Skip environment allocation if no parameters are present.
+                    paramsEnv = env;
+                    paramsEnvRec = envRec;
+                }
+            } else {
+                paramsEnv = env;
+                paramsEnvRec = envRec;
+            }
+        } else {
+            paramsEnv = env;
+            paramsEnvRec = envRec;
+        }
+
+        if (fscope.parametersScope() != fscope) {
+            mv.enterScope(fscope.parametersScope());
+        }
+
         /* step 21 */
         for (Name paramName : function.getScope().parameterNames()) {
-            BindingOp<FunctionEnvironmentRecord> op = BindingOp.of(envRec, paramName);
-            op.createMutableBinding(envRec, paramName, false, mv);
+            BindingOp<DeclarativeEnvironmentRecord> op = BindingOp.of(paramsEnvRec, paramName);
+            op.createMutableBinding(paramsEnvRec, paramName, false, mv);
             if (hasDuplicates) {
-                op.initializeBinding(envRec, paramName, undefined, mv);
+                op.initializeBinding(paramsEnvRec, paramName, undefined, mv);
             }
         }
         /* steps 22-23 */
@@ -226,16 +266,16 @@ final class FunctionDeclarationInstantiationGenerator extends DeclarationBinding
             } else if (formals.getFormals().isEmpty()) {
                 CreateMappedArgumentsObject(mv);
             } else {
-                CreateMappedArgumentsObject(env, formals, mv);
+                CreateMappedArgumentsObject(paramsEnvRec, formals, mv);
             }
             mv.store(argumentsObj);
-            BindingOp<FunctionEnvironmentRecord> op = BindingOp.of(envRec, arguments);
+            BindingOp<DeclarativeEnvironmentRecord> op = BindingOp.of(paramsEnvRec, arguments);
             if (strict) {
-                op.createImmutableBinding(envRec, arguments, false, mv);
+                op.createImmutableBinding(paramsEnvRec, arguments, false, mv);
             } else {
-                op.createMutableBinding(envRec, arguments, false, mv);
+                op.createMutableBinding(paramsEnvRec, arguments, false, mv);
             }
-            op.initializeBinding(envRec, arguments, argumentsObj, mv);
+            op.initializeBinding(paramsEnvRec, arguments, argumentsObj, mv);
 
             parameterBindings = new ArrayList<>(parameterNames);
             parameterBindings.add(arguments);
@@ -252,7 +292,7 @@ final class FunctionDeclarationInstantiationGenerator extends DeclarationBinding
                 BindingInitialization(codegen, function, env, iterator, mv);
             } else {
                 /* step 25 */
-                BindingInitialization(codegen, function, env, envRec, iterator, mv);
+                BindingInitialization(codegen, function, env, paramsEnvRec, iterator, mv);
             }
         }
         /* steps 27-28 */
@@ -277,16 +317,13 @@ final class FunctionDeclarationInstantiationGenerator extends DeclarationBinding
             varEnvRec = envRec;
         } else {
             assert fscope != fscope.variableScope();
+            assert fscope.variableScope().isPresent();
             mv.enterScope(fscope.variableScope());
             /* step 28.a (note) */
             /* step 28.b */
-            varEnv = mv.newVariable("varEnv", LexicalEnvironment.class)
-                    .<LexicalEnvironment<? extends DeclarativeEnvironmentRecord>> uncheckedCast();
-            newDeclarativeEnvironment(env, mv);
-            mv.store(varEnv);
+            varEnv = newDeclarativeEnvironment("varEnv", paramsEnv, mv);
             /* step 28.c */
-            varEnvRec = mv.newVariable("varEnvRec", DeclarativeEnvironmentRecord.class);
-            getEnvironmentRecord(varEnv, varEnvRec, mv);
+            varEnvRec = getDeclarativeEnvironmentRecord("varEnvRec", varEnv, mv);
             /* step 28.d */
             setVariableEnvironment(varEnv, mv);
             /* step 28.e */
@@ -300,7 +337,8 @@ final class FunctionDeclarationInstantiationGenerator extends DeclarationBinding
                     if (!parameterBindingsSet.contains(varName) || functionNames.contains(varName)) {
                         op.initializeBinding(varEnvRec, varName, undefined, mv);
                     } else {
-                        BindingOp.of(envRec, varName).getBindingValue(envRec, varName, strict, mv);
+                        BindingOp<DeclarativeEnvironmentRecord> opp = BindingOp.of(paramsEnvRec, varName);
+                        opp.getBindingValue(paramsEnvRec, varName, strict, mv);
                         if (tempValue == null) {
                             tempValue = mv.newVariable("tempValue", Object.class);
                         }
@@ -322,7 +360,8 @@ final class FunctionDeclarationInstantiationGenerator extends DeclarationBinding
                 if (!fname.getIdentifier().equals("arguments") || !argumentsObjectNeeded) {
                     op.initializeBinding(varEnvRec, fname, undefined, mv);
                 } else {
-                    BindingOp.of(envRec, fname).getBindingValue(envRec, fname, false, mv);
+                    BindingOp<DeclarativeEnvironmentRecord> opp = BindingOp.of(paramsEnvRec, fname);
+                    opp.getBindingValue(paramsEnvRec, fname, false, mv);
                     Value<Object> tempValue = mv.storeTemporary(Object.class);
                     op.initializeBinding(varEnvRec, fname, tempValue, mv);
                 }
@@ -338,15 +377,12 @@ final class FunctionDeclarationInstantiationGenerator extends DeclarationBinding
             // scope for functions with deferred strict-ness, even if this scope is not present in
             // the specification.
             mv.enterScope(fscope.lexicalScope());
+            assert fscope.lexicalScope().isPresent() == !lexicalNames.isEmpty();
             if (!lexicalNames.isEmpty()) {
                 /* step 30 */
-                lexEnv = mv.newVariable("lexEnv", LexicalEnvironment.class)
-                        .<LexicalEnvironment<? extends DeclarativeEnvironmentRecord>> uncheckedCast();
-                newDeclarativeEnvironment(varEnv, mv);
-                mv.store(lexEnv);
+                lexEnv = newDeclarativeEnvironment("lexEnv", varEnv, mv);
                 /* step 32 */
-                lexEnvRec = mv.newVariable("lexEnvRec", DeclarativeEnvironmentRecord.class);
-                getEnvironmentRecord(lexEnv, lexEnvRec, mv);
+                lexEnvRec = getDeclarativeEnvironmentRecord("lexEnvRec", lexEnv, mv);
             } else {
                 // Optimization: Skip environment allocation if no lexical names are defined.
                 /* step 30 */
@@ -397,10 +433,23 @@ final class FunctionDeclarationInstantiationGenerator extends DeclarationBinding
         mv._return();
     }
 
-    private void newDeclarativeEnvironment(Variable<? extends LexicalEnvironment<?>> env, CodeVisitor mv) {
-        // stack: [] -> [env]
+    private Variable<? extends LexicalEnvironment<? extends DeclarativeEnvironmentRecord>> newDeclarativeEnvironment(
+            String name, Variable<? extends LexicalEnvironment<?>> env, CodeVisitor mv) {
+        Variable<? extends LexicalEnvironment<? extends DeclarativeEnvironmentRecord>> newEnv = mv
+                .newVariable(name, LexicalEnvironment.class)
+                .<LexicalEnvironment<? extends DeclarativeEnvironmentRecord>> uncheckedCast();
         mv.load(env);
         mv.invoke(Methods.LexicalEnvironment_newDeclarativeEnvironment);
+        mv.store(newEnv);
+        return newEnv;
+    }
+
+    private Variable<? extends DeclarativeEnvironmentRecord> getDeclarativeEnvironmentRecord(String name,
+            Variable<? extends LexicalEnvironment<? extends DeclarativeEnvironmentRecord>> env, CodeVisitor mv) {
+        Variable<? extends DeclarativeEnvironmentRecord> envRec = mv.newVariable(name,
+                DeclarativeEnvironmentRecord.class);
+        getEnvironmentRecord(env, envRec, mv);
+        return envRec;
     }
 
     private void setVariableEnvironment(Variable<? extends LexicalEnvironment<?>> env, CodeVisitor mv) {
@@ -425,7 +474,7 @@ final class FunctionDeclarationInstantiationGenerator extends DeclarationBinding
         mv.invoke(Methods.ArgumentsObject_CreateMappedArgumentsObject_Empty);
     }
 
-    private void CreateMappedArgumentsObject(Variable<LexicalEnvironment<FunctionEnvironmentRecord>> env,
+    private void CreateMappedArgumentsObject(Variable<? extends DeclarativeEnvironmentRecord> env,
             FormalParameterList formals, FunctionDeclInitVisitor mv) {
         // stack: [] -> [argsObj]
         mv.loadExecutionContext();

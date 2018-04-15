@@ -17,7 +17,7 @@ const {
   assertEquals(["B"], "aba".match(regExpLike));
 
   let notRegExpLike = {[Symbol.match]: null, toString(){ return "a"; }};
-  assertEquals(Object.assign(["a"], {index: 0, input: "aba"}), "aba".match(notRegExpLike));
+  assertEquals(Object.assign(["a"], {index: 0, input: "aba", groups: undefined}), "aba".match(notRegExpLike));
 }
 
 // String.prototype.replace

@@ -122,7 +122,7 @@ final class UCS2Encoding extends UEncoding {
         if (isAscii(codePoint)) {
             // Fast path for ASCII characters.
             if (Characters.isASCIIAlpha(codePoint)) {
-                return new CaseFoldCodeItem[] { new CaseFoldCodeItem(2, 1, new int[] { codePoint ^ 0x20 }) };
+                return new CaseFoldCodeItem[] { CaseFoldCodeItem.create(2, codePoint ^ 0x20) };
             }
             return EMPTY_FOLD_CODES;
         }
@@ -132,7 +132,7 @@ final class UCS2Encoding extends UEncoding {
             if (to != null) {
                 return caseFoldCodesByString(codePoint, 2, caseFold, to);
             }
-            return new CaseFoldCodeItem[] { new CaseFoldCodeItem(2, 1, new int[] { caseFold }) };
+            return new CaseFoldCodeItem[] { CaseFoldCodeItem.create(2, caseFold) };
         }
         int[] to = CaseFoldDataBMP.caseUnfold(codePoint);
         if (to != null) {

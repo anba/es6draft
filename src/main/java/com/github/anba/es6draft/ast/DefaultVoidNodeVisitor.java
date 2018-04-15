@@ -425,11 +425,6 @@ public abstract class DefaultVoidNodeVisitor<V> implements VoidNodeVisitor<V> {
     }
 
     @Override
-    public void visit(GuardedCatchNode node, V value) {
-        visit((Node) node, value);
-    }
-
-    @Override
     public void visit(IdentifierName node, V value) {
         visit((Node) node, value);
     }

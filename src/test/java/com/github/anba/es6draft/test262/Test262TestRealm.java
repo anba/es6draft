@@ -35,6 +35,7 @@ import com.github.anba.es6draft.runtime.modules.ModuleSource;
 import com.github.anba.es6draft.runtime.modules.ResolutionException;
 import com.github.anba.es6draft.runtime.modules.SourceIdentifier;
 import com.github.anba.es6draft.runtime.modules.loader.StringModuleSource;
+import com.github.anba.es6draft.test262.Test262Info.ErrorPhase;
 import com.github.anba.es6draft.test262.Test262Info.MalformedDataException;
 import com.github.anba.es6draft.util.SystemConsole;
 import com.github.anba.es6draft.util.TestRealms;
@@ -127,15 +128,12 @@ final class Test262TestRealm extends ExternalResource {
      *             if there was any I/O error
      * @throws MalformedNameException
      *             if any imported module request cannot be normalized
-     * @throws ResolutionException
-     *             if any export binding cannot be resolved
      * @throws ParserException
      *             if the module source contains any syntax errors
      * @throws CompilationException
      *             if the parsed module source cannot be compiled
      */
-    void execute(Test262Info test)
-            throws ParserException, CompilationException, IOException, MalformedNameException, ResolutionException {
+    void execute(Test262Info test) throws ParserException, CompilationException, IOException, MalformedNameException {
         // Return early if no source code is available.
         if (sourceCode == null) {
             return;
@@ -153,6 +151,16 @@ final class Test262TestRealm extends ExternalResource {
             ModuleRecord module = moduleLoader.define(moduleId, source, realm);
             try {
                 module.instantiate();
+            } catch (ResolutionException e) {
+                throw e.toScriptException(realm.defaultContext());
+            }
+
+            // Return after module instantiation if we test for module resolution errors.
+            if (test.getErrorPhase() == ErrorPhase.Resolution) {
+                return;
+            }
+
+            try {
                 module.evaluate();
             } catch (ResolutionException e) {
                 throw e.toScriptException(realm.defaultContext());
@@ -172,19 +180,12 @@ final class Test262TestRealm extends ExternalResource {
      * 
      * @param test
      *            the test-info object
-     * @throws IOException
-     *             if there was any I/O error
-     * @throws MalformedNameException
-     *             if any imported module request cannot be normalized
-     * @throws ResolutionException
-     *             if any export binding cannot be resolved
      * @throws ParserException
      *             if the module source contains any syntax errors
      * @throws CompilationException
      *             if the parsed module source cannot be compiled
      */
-    void executeStrict(Test262Info test)
-            throws ParserException, CompilationException, IOException, MalformedNameException, ResolutionException {
+    void executeStrict(Test262Info test) throws ParserException, CompilationException {
         // Return early if no source code is available.
         if (sourceCode == null) {
             return;

@@ -25,9 +25,9 @@ public final class MethodDefinition extends PropertyDefinition implements Functi
     private final FormalParameterList parameters;
     private List<StatementListItem> statements;
     private final String source;
+    private final StrictMode strictMode;
     private String className;
     private String methodName;
-    private StrictMode strictMode;
     private boolean isSynthetic;
 
     public enum MethodType {
@@ -40,7 +40,7 @@ public final class MethodDefinition extends PropertyDefinition implements Functi
 
     public MethodDefinition(long beginPosition, long endPosition, FunctionScope scope, MethodType type,
             MethodAllocation allocation, List<Expression> decorators, ClassElementName classElementName,
-            FormalParameterList parameters, List<StatementListItem> statements, String source) {
+            FormalParameterList parameters, List<StatementListItem> statements, String source, StrictMode strictMode) {
         super(beginPosition, endPosition);
         this.scope = scope;
         this.type = type;
@@ -50,6 +50,7 @@ public final class MethodDefinition extends PropertyDefinition implements Functi
         this.parameters = parameters;
         this.statements = statements;
         this.source = source;
+        this.strictMode = strictMode;
     }
 
     @Override
@@ -229,11 +230,6 @@ public final class MethodDefinition extends PropertyDefinition implements Functi
     @Override
     public StrictMode getStrictMode() {
         return strictMode;
-    }
-
-    @Override
-    public void setStrictMode(StrictMode strictMode) {
-        this.strictMode = strictMode;
     }
 
     public boolean isSynthetic() {

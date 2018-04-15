@@ -32,7 +32,7 @@ class RE extends RegExp {
 }
 
 function ExecResult(s, index, input) {
-  return Object.assign([s], {index, input});
+  return Object.assign([s], {index, input, groups: undefined});
 }
 
 {

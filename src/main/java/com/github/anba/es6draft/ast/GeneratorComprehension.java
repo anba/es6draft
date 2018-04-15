@@ -18,17 +18,18 @@ public final class GeneratorComprehension extends Expression implements Function
     private final FormalParameterList parameters;
     private final Comprehension comprehension;
     private final String source;
+    private final StrictMode strictMode;
     private String functionName, methodName;
-    private StrictMode strictMode;
 
     public GeneratorComprehension(long beginPosition, long endPosition, FunctionScope scope,
-            FormalParameterList parameters, Comprehension comprehension, String source) {
+            FormalParameterList parameters, Comprehension comprehension, String source, StrictMode strictMode) {
         super(beginPosition, endPosition);
         assert parameters.getFormals().isEmpty() : "Non-empty parameter list in comprehension";
         this.scope = scope;
         this.parameters = parameters;
         this.comprehension = comprehension;
         this.source = source;
+        this.strictMode = strictMode;
     }
 
     /**
@@ -79,11 +80,6 @@ public final class GeneratorComprehension extends Expression implements Function
     @Override
     public StrictMode getStrictMode() {
         return strictMode;
-    }
-
-    @Override
-    public void setStrictMode(StrictMode strictMode) {
-        this.strictMode = strictMode;
     }
 
     @Override

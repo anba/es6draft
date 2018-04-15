@@ -19,6 +19,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.yaml.snakeyaml.LoaderOptions;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.Constructor;
 import org.yaml.snakeyaml.error.YAMLException;
@@ -45,7 +46,7 @@ final class Test262Info extends TestInfo {
     }
 
     enum ErrorPhase {
-        Early, Runtime
+        Parse, Resolution, Runtime
     }
 
     private String description, errorType;
@@ -249,19 +250,18 @@ final class Test262Info extends TestInfo {
 
         Matcher m;
         if (location == Location.Local && (m = yamlMultiContentPattern.matcher(fileContent)).lookingAt()) {
-            readYaml(m.group(1), error == ErrorHandler.Ignore);
+            readYaml(m.group(1), error);
         } else if ((m = yamlContentPattern.matcher(fileContent)).lookingAt()) {
-            readYaml(m.group(1), error == ErrorHandler.Ignore);
+            readYaml(m.group(1), error);
         } else {
             throw new MalformedDataException("Invalid test file: " + this);
         }
 
         boolean containsDone = fileContent.contains("$DONE");
         if (error != ErrorHandler.Ignore) {
-            // FIXME: Commented out to ignore current test file violations.
-            // if (this.async && !containsDone) {
-            // throw new MalformedDataException("'async' flag without $DONE");
-            // }
+            if (this.async && !containsDone && errorPhase != ErrorPhase.Parse) {
+                throw new MalformedDataException("'async' flag without $DONE");
+            }
             if (!this.async && containsDone) {
                 throw new MalformedDataException("Missing 'async' flag");
             }
@@ -273,8 +273,9 @@ final class Test262Info extends TestInfo {
 
     private static final ConcurrentLinkedQueue<Yaml> yamlQueue = new ConcurrentLinkedQueue<>();
 
-    private void readYaml(String descriptor, boolean lenient) throws MalformedDataException {
+    private void readYaml(String descriptor, ErrorHandler error) throws MalformedDataException {
         assert descriptor != null && !descriptor.isEmpty();
+        boolean lenient = error == ErrorHandler.Ignore;
         Yaml yaml = null;
         if (lenient) {
             yaml = yamlQueue.poll();
@@ -287,6 +288,10 @@ final class Test262Info extends TestInfo {
                 constructor.setPropertyUtils(utils);
             }
             yaml = new Yaml(constructor);
+            if (!lenient) {
+                LoaderOptions loaderOptions = new LoaderOptions();
+                loaderOptions.setAllowDuplicateKeys(false);
+            }
         }
         TestDescriptor desc;
         try {
@@ -317,13 +322,30 @@ final class Test262Info extends TestInfo {
             this.raw = desc.getFlags().contains("raw");
             this.async = desc.getFlags().contains("async");
         }
+        if (!lenient && errorPhase == ErrorPhase.Resolution && !module) {
+            throw new MalformedDataException(String.format("Invalid error phase 'resolution' for non-module test"));
+        }
     }
 
+    // FIXME: Not all tests are updated to use parse.
+    private static final HashSet<String> allowedErrorPhases = new HashSet<>(
+            Arrays.asList("early", "parse", "resolution", "runtime"));
+
     private static ErrorPhase from(String phase, boolean lenient) throws MalformedDataException {
-        if (!lenient && !("early".equals(phase) || "runtime".equals(phase))) {
+        if (!lenient && !allowedErrorPhases.contains(phase)) {
             throw new MalformedDataException(String.format("Unknown error phase '%s'", phase));
         }
-        return "early".equals(phase) ? ErrorPhase.Early : ErrorPhase.Runtime;
+        switch (phase) {
+        case "early":
+        case "parse":
+            return ErrorPhase.Parse;
+        case "resolution":
+            return ErrorPhase.Resolution;
+        case "runtime":
+            return ErrorPhase.Runtime;
+        default:
+            return ErrorPhase.Runtime;
+        }
     }
 
     private static final HashSet<String> allowedFlags = new HashSet<>(

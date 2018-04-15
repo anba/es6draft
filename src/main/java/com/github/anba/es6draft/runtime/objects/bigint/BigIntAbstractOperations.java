@@ -163,21 +163,16 @@ public final class BigIntAbstractOperations {
     /**
      * ToBigInt64 ( argument )
      * 
-     * @param cx
-     *            the execution context
-     * @param argument
+     * @param n
      *            the argument value
-     * @return the BigInt result value
+     * @return the {@code long} result value
      */
-    public static BigInteger ToBigInt64(ExecutionContext cx, Object argument) {
-        // TODO: spec issue - maybe assert argument is a number/bigint?
-        /* step 1 */
-        BigInteger n = ToBigInt(cx, argument);
+    private static BigInteger ToBigInt64Raw(BigInteger n) {
+        /* step 1 (not applicable) */
         /* step 2 */
         BigInteger int64bit = n.mod(TWO_64);
         /* step 3 */
-        // TODO: Directly return long value.
-        return int64bit.compareTo(TWO_64) >= 0 ? int64bit.subtract(TWO_63) : int64bit;
+        return int64bit.compareTo(TWO_63) >= 0 ? int64bit.subtract(TWO_64) : int64bit;
     }
 
     /**
@@ -188,30 +183,23 @@ public final class BigIntAbstractOperations {
      * @return the {@code long} result value
      */
     public static long ToBigInt64(BigInteger n) {
-        /* step 1 (not applicable) */
-        /* step 2 */
-        BigInteger int64bit = n.mod(TWO_64);
-        /* step 3 */
-        return int64bit.compareTo(TWO_64) >= 0 ? int64bit.subtract(TWO_63).longValue() : int64bit.longValue();
+        assert ToBigInt64Raw(n).equals(BigInteger.valueOf(n.longValue()));
+        /* steps 1-3 */
+        return n.longValue();
     }
 
     /**
      * ToBigUint64 ( argument )
      * 
-     * @param cx
-     *            the execution context
-     * @param argument
+     * @param n
      *            the argument value
-     * @return the BigInt result value
+     * @return the {@code long} result value
      */
-    public static BigInteger ToBigUint64(ExecutionContext cx, Object argument) {
-        // TODO: spec issue - maybe assert argument is a number/bigint?
-        /* step 1 */
-        BigInteger n = ToBigInt(cx, argument);
+    private static BigInteger ToBigUint64Raw(BigInteger n) {
+        /* step 1 (not applicable) */
         /* step 2 */
         BigInteger int64bit = n.mod(TWO_64);
         /* step 3 */
-        // TODO: Directly return long value.
         return int64bit;
     }
 
@@ -223,11 +211,10 @@ public final class BigIntAbstractOperations {
      * @return the {@code long} result value
      */
     public static long ToBigUint64(BigInteger n) {
-        /* step 1 (not applicable) */
-        /* step 2 */
-        BigInteger int64bit = n.mod(TWO_64);
-        /* step 3 */
-        return int64bit.longValue();
+        assert ToBigUint64Raw(n)
+                .equals(BigInteger.valueOf(n.longValue()).add(n.longValue() >= 0 ? BigInteger.ZERO : TWO_64));
+        /* steps 1-3 */
+        return n.longValue();
     }
 
     /**

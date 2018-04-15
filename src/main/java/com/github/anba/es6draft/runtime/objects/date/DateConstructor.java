@@ -24,7 +24,6 @@ import com.github.anba.es6draft.runtime.internal.Properties.Optional;
 import com.github.anba.es6draft.runtime.internal.Properties.Optional.Default;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
-import com.github.anba.es6draft.runtime.objects.date.DatePrototype.DateString;
 import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Type;
@@ -68,7 +67,7 @@ public final class DateConstructor extends BuiltinConstructor implements Initial
             throw newTypeError(calleeContext, Messages.Key.NoPermission, "Date");
         }
         long now = System.currentTimeMillis();
-        return DatePrototype.ToDateString(calleeContext.getRealm(), now, DateString.DateTime);
+        return DatePrototype.ToDateString(calleeContext.getRealm(), now);
     }
 
     /**

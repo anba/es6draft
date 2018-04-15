@@ -63,11 +63,6 @@ public final class BigIntObject extends OrdinaryObject {
     }
 
     @Override
-    public String className() {
-        return "BigInt";
-    }
-
-    @Override
     public String toString() {
         return String.format("%s, bigIntData=%s", super.toString(), bigIntData);
     }

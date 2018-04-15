@@ -9,7 +9,6 @@ package com.github.anba.es6draft.runtime.types.builtins;
 import java.util.BitSet;
 
 import com.github.anba.es6draft.runtime.DeclarativeEnvironmentRecord;
-import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
 
 /**
@@ -21,13 +20,12 @@ import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
  */
 final class ParameterMap {
     private static final long MAX_LENGTH = 0x7FFF_FFFF;
-    private final LexicalEnvironment<? extends DeclarativeEnvironmentRecord> env;
+    private final DeclarativeEnvironmentRecord env;
     private final String[] parameters;
     private final int length;
     private BitSet unmapped; // lazily instantiated
 
-    private ParameterMap(LexicalEnvironment<? extends DeclarativeEnvironmentRecord> env, String[] parameterNames,
-            int length) {
+    private ParameterMap(DeclarativeEnvironmentRecord env, String[] parameterNames, int length) {
         this.env = env;
         this.parameters = parameterNames;
         this.length = length;
@@ -65,11 +63,10 @@ final class ParameterMap {
      * @param len
      *            the actual number of function arguments
      * @param env
-     *            the current lexical environment
+     *            the environment record of the current lexical environment
      * @return a new parameter map if mapped parameters are present, otherwise {@code null}
      */
-    static ParameterMap create(FunctionObject func, int len,
-            LexicalEnvironment<? extends DeclarativeEnvironmentRecord> env) {
+    static ParameterMap create(FunctionObject func, int len, DeclarativeEnvironmentRecord env) {
         assert func.getCode().is(RuntimeInfo.FunctionFlags.MappedArguments);
         // Directly return null if no arguments were passed.
         if (len == 0) {
@@ -114,7 +111,7 @@ final class ParameterMap {
         assert (0 <= index && index < length && parameters[index] != null);
         assert !isUnmapped(index);
         String name = parameters[index];
-        return env.getEnvRec().getBindingValue(name, false);
+        return env.getBindingValue(name, false);
     }
 
     /**
@@ -130,7 +127,7 @@ final class ParameterMap {
         assert (0 <= index && index < length && parameters[index] != null);
         assert !isUnmapped(index);
         String name = parameters[index];
-        env.getEnvRec().setMutableBinding(name, value, false);
+        env.setMutableBinding(name, value, false);
     }
 
     /**

@@ -10,7 +10,7 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.CreateDataProp
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToNumber;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
-import static com.github.anba.es6draft.runtime.objects.intl.DateTimeFormatConstructor.FormatToPartDateTime;
+import static com.github.anba.es6draft.runtime.objects.intl.DateTimeFormatConstructor.FormatDateTimeToParts;
 import static com.github.anba.es6draft.runtime.objects.intl.DateTimeFormatConstructor.UnwrapDateTimeFormat;
 import static com.github.anba.es6draft.runtime.types.builtins.BoundFunctionObject.BoundFunctionCreate;
 
@@ -145,7 +145,7 @@ public final class DateTimeFormatPrototype extends OrdinaryObject implements Ini
                 x = ToNumber(cx, date);
             }
             /* step 6 */
-            return FormatToPartDateTime(cx, dateTimeFormat, x);
+            return FormatDateTimeToParts(cx, dateTimeFormat, x);
         }
 
         /**

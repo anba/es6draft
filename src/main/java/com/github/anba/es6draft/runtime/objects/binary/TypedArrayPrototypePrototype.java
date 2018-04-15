@@ -281,13 +281,12 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
                     /* step 21.a */
                     long pk = k;
                     /* step 21.b */
-                    Number kNumber = ToNumeric(cx, Get(cx, src, pk));
+                    Number kNumber = target.getElementType().toElementValue(cx, Get(cx, src, pk));
                     /* step 21.c */
                     if (IsDetachedBuffer(targetBuffer)) {
                         throw newTypeError(cx, Messages.Key.BufferDetached);
                     }
                     /* step 21.d */
-                    target.getElementType().throwIfIncompatibleNumericType(cx, kNumber);
                     SetValueInBuffer(targetBuffer, targetByteIndex, targetType, kNumber);
                 }
                 /* step 22 */
@@ -323,6 +322,12 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
                 if (targetOffset + srcLength > targetLength) {
                     throw newRangeError(cx, Messages.Key.ArrayOffsetOutOfRange);
                 }
+
+                // Extension: BigInt
+                if (!typedArray.getElementType().isCompatibleNumericType(target.getElementType())) {
+                    throw newTypeError(cx, Messages.Key.IncompatibleElementTypes);
+                }
+
                 /* steps 13-19, 21, 23-28 */
                 typedArray.functions().set(cx, typedArray, target, (long) targetOffset);
                 /* step 29 */
@@ -506,7 +511,6 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
                 if (IsDetachedBuffer(o.getBuffer())) {
                     throw newTypeError(cx, Messages.Key.BufferDetached);
                 }
-                a.getElementType().throwIfIncompatibleNumericType(cx, o.getElementType());
                 o.functions().slice(o, a, k, finall);
             }
             /* step 16 */
@@ -884,7 +888,7 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
             /* steps 11-12 */
             for (int n = 0; n < captured; ++n) {
                 Number e = kept[n];
-                a.elementSetUnchecked(cx, n, e);
+                a.elementSetUnchecked(n, e);
             }
             /* step 13 */
             return a;
@@ -1085,7 +1089,7 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
             /* step 3 */
             long len = o.getArrayLength();
             /* step 4 */
-            Number fillValue = ToNumeric(cx, value);
+            Number fillValue = o.getElementType().toElementValue(cx, value);
             /* steps 5-6 */
             long k = ToArrayIndex(cx, start, len);
             /* steps 7-8 */
@@ -1096,7 +1100,6 @@ public final class TypedArrayPrototypePrototype extends OrdinaryObject implement
             }
             /* step 10 */
             if (k < finall) {
-                o.getElementType().throwIfIncompatibleNumericType(cx, fillValue);
                 o.functions().fill(o, fillValue, k, finall);
             }
             /* step 11 */

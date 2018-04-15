@@ -733,7 +733,8 @@ public final class CodeSize implements IntNodeVisitor<CodeSize.State> {
     }
 
     private int numLocals(FunctionNode node) {
-        return node.getScope().lexicallyDeclaredNames().size() + node.getScope().varDeclaredNames().size();
+        return node.getScope().lexicallyDeclaredNames().size() + node.getScope().varDeclaredNames().size()
+                + node.getScope().parameterVarNames().size();
     }
 
     @Override
@@ -758,14 +759,6 @@ public final class CodeSize implements IntNodeVisitor<CodeSize.State> {
     public int visit(GeneratorExpression node, State state) {
         visitFunction(node, state);
         return 10;
-    }
-
-    @Override
-    public int visit(GuardedCatchNode node, State state) {
-        int catchParameter = accept(node.getCatchParameter(), state);
-        int guard = accept(node.getGuard(), state);
-        int catchBlock = accept(node.getCatchBlock(), state);
-        return 45 + catchParameter + guard + catchBlock;
     }
 
     @Override
@@ -1125,9 +1118,8 @@ public final class CodeSize implements IntNodeVisitor<CodeSize.State> {
     public int visit(TryStatement node, State state) {
         int tryBlock = accept(node.getTryBlock(), state);
         int catchNode = acceptIfPresent(node.getCatchNode(), state);
-        int guardedNodes = accept(node.getGuardedCatchNodes(), state);
         int finallyBlock = acceptIfPresent(node.getFinallyBlock(), state);
-        return 40 + tryBlock + catchNode + guardedNodes + finallyBlock + listSize(node.getGuardedCatchNodes(), 20);
+        return 40 + tryBlock + catchNode + finallyBlock;
     }
 
     @Override

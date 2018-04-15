@@ -6,8 +6,6 @@
  */
 package com.github.anba.es6draft.ast;
 
-import java.util.List;
-
 /**
  * <h1>13 ECMAScript Language: Statements and Declarations</h1>
  * <ul>
@@ -18,14 +16,12 @@ public final class TryStatement extends Statement {
     private final BlockStatement tryBlock;
     private final CatchNode catchNode;
     private final BlockStatement finallyBlock;
-    private final List<GuardedCatchNode> guardedCatchNodes;
 
     public TryStatement(long beginPosition, long endPosition, BlockStatement tryBlock, CatchNode catchNode,
-            List<GuardedCatchNode> guardedCatchNodes, BlockStatement finallyBlock) {
+            BlockStatement finallyBlock) {
         super(beginPosition, endPosition);
         this.tryBlock = tryBlock;
         this.catchNode = catchNode;
-        this.guardedCatchNodes = guardedCatchNodes;
         this.finallyBlock = finallyBlock;
     }
 
@@ -45,15 +41,6 @@ public final class TryStatement extends Statement {
      */
     public CatchNode getCatchNode() {
         return catchNode;
-    }
-
-    /**
-     * Returns the list of guarded <code>Catch</code> blocks.
-     * 
-     * @return the list of guarded <code>Catch</code> blocks
-     */
-    public List<GuardedCatchNode> getGuardedCatchNodes() {
-        return guardedCatchNodes;
     }
 
     /**

@@ -32,10 +32,12 @@ final class JoniSyntax implements SyntaxProperties {
     private static final int op2 = OP2_QMARK_GROUP_EFFECT | OP2_OPTION_PERL | OP2_ESC_V_VTAB | OP2_ESC_U_HEX4
             | OP2_ESC_P_BRACE_CHAR_PROPERTY | OP2_PLUS_POSSESSIVE_REPEAT | OP2_PLUS_POSSESSIVE_INTERVAL;
 
+    private static final int op3 = 0;
+
     private static final int behaviour = BACKSLASH_ESCAPE_IN_CC | ALLOW_EMPTY_RANGE_IN_CC
             | DIFFERENT_LEN_ALT_LOOK_BEHIND;
 
-    public static final Syntax ECMAScript = new Syntax(op, op2, behaviour, Option.NONE,
+    public static final Syntax ECMAScript = new Syntax("ECMAScript", op, op2, op3, behaviour, Option.NONE,
             new MetaCharTable('\\', /* esc */
                     INEFFECTIVE_META_CHAR, /* anychar '.' */
                     INEFFECTIVE_META_CHAR, /* anytime '*' */

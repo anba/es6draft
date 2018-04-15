@@ -149,8 +149,6 @@ public interface VoidNodeVisitor<V> {
 
     void visit(GeneratorExpression node, V value);
 
-    void visit(GuardedCatchNode node, V value);
-
     void visit(IdentifierName node, V value);
 
     void visit(IdentifierReference node, V value);

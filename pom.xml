@@ -67,22 +67,22 @@
     <dependency>
       <groupId>org.ow2.asm</groupId>
       <artifactId>asm</artifactId>
-      <version>6.0</version>
+      <version>6.1.1</version>
     </dependency>
     <dependency>
       <groupId>org.ow2.asm</groupId>
       <artifactId>asm-commons</artifactId>
-      <version>6.0</version>
+      <version>6.1.1</version>
     </dependency>
     <dependency>
       <groupId>org.ow2.asm</groupId>
       <artifactId>asm-util</artifactId>
-      <version>6.0</version>
+      <version>6.1.1</version>
     </dependency>
     <dependency>
       <groupId>com.ibm.icu</groupId>
       <artifactId>icu4j</artifactId>
-      <version>60.1</version>
+      <version>61.1</version>
     </dependency>
     <dependency>
       <groupId>joda-time</groupId>
@@ -92,12 +92,12 @@
     <dependency>
       <groupId>org.jruby.joni</groupId>
       <artifactId>joni</artifactId>
-      <version>2.1.12</version>
+      <version>2.1.16</version>
     </dependency>
     <dependency>
       <groupId>org.jruby.jcodings</groupId>
       <artifactId>jcodings</artifactId>
-      <version>1.0.26</version>
+      <version>1.0.29</version>
     </dependency>
     <dependency>
       <groupId>jline</groupId>
@@ -148,7 +148,7 @@
     <dependency>
       <groupId>org.yaml</groupId>
       <artifactId>snakeyaml</artifactId>
-      <version>1.19</version>
+      <version>1.20</version>
       <scope>test</scope>
     </dependency>
   </dependencies>
@@ -158,10 +158,12 @@
       <id>code-analysis</id>
       <reporting>
         <plugins>
+          <!-- Both plugins don't work with Java 10 -->
+          <!--
           <plugin>
             <groupId>com.github.spotbugs</groupId>
             <artifactId>spotbugs-maven-plugin</artifactId>
-            <version>3.1.0-RC7</version>
+            <version>3.1.3</version>
             <configuration>
               <excludeFilterFile>${project.basedir}/src/etc/findbugs-exclude.xml</excludeFilterFile>
               <fork>true</fork>
@@ -171,7 +173,7 @@
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-pmd-plugin</artifactId>
-            <version>3.8</version>
+            <version>3.9.0</version>
             <configuration>
               <targetJdk>1.8</targetJdk>
               <skipEmptyReport>false</skipEmptyReport>
@@ -182,6 +184,7 @@
               </rulesets>
             </configuration>
           </plugin>
+          -->
           <plugin>
             <groupId>org.codehaus.mojo</groupId>
             <artifactId>jdepend-maven-plugin</artifactId>
@@ -314,7 +317,7 @@
     <profile>
       <id>java9</id>
       <activation>
-        <jdk>!1.8</jdk>
+        <jdk>9</jdk>
       </activation>
       <properties>
         <maven.compiler.source>1.9</maven.compiler.source>
@@ -329,6 +332,40 @@
             <executions>
               <execution>
                 <id>add-source-java9</id>
+                <phase>generate-sources</phase>
+                <goals>
+                  <goal>add-source</goal>
+                </goals>
+                <configuration>
+                  <sources>
+                    <source>${project.basedir}/src/main/java9</source>
+                  </sources>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+    <!-- Java 10 Profile -->
+    <profile>
+      <id>java10</id>
+      <activation>
+        <jdk>10</jdk>
+      </activation>
+      <properties>
+        <maven.compiler.source>1.10</maven.compiler.source>
+        <maven.compiler.target>1.10</maven.compiler.target>
+        <maven.compiler.release>10</maven.compiler.release>
+      </properties>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>build-helper-maven-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>add-source-java10</id>
                 <phase>generate-sources</phase>
                 <goals>
                   <goal>add-source</goal>
@@ -371,7 +408,7 @@
           <plugin>
             <groupId>org.jacoco</groupId>
             <artifactId>jacoco-maven-plugin</artifactId>
-            <version>0.7.9</version>
+            <version>0.8.1</version>
             <executions>
               <execution>
                 <id>default-prepare-agent</id>
@@ -427,7 +464,7 @@
           <plugin>
             <groupId>org.jacoco</groupId>
             <artifactId>jacoco-maven-plugin</artifactId>
-            <version>0.7.9</version>
+            <version>0.8.1</version>
             <executions>
               <execution>
                 <id>default-prepare-agent</id>
@@ -515,7 +552,7 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-dependency-plugin</artifactId>
-          <version>3.0.2</version>
+          <version>3.1.0</version>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
@@ -550,61 +587,29 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-shade-plugin</artifactId>
-          <version>3.1.0</version>
+          <version>3.1.1</version>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-site-plugin</artifactId>
-          <version>3.6</version>
-          <!--
-            https://issues.apache.org/jira/browse/MSITE-796
-            Order of dependencies is important to avoid this exception:
-            org.apache.velocity.exception.ResourceNotFoundException: Unable to find resource 'default-site-macros.vm'
-          -->
-          <dependencies>
-            <dependency>
-              <groupId>org.apache.maven.doxia</groupId>
-              <artifactId>doxia-site-renderer</artifactId>
-              <version>1.7.5</version>
-            </dependency>
-            <dependency>
-              <groupId>org.apache.maven.doxia</groupId>
-              <artifactId>doxia-doc-renderer</artifactId>
-              <version>1.7.5</version>
-            </dependency>
-            <dependency>
-              <groupId>org.apache.maven.doxia</groupId>
-              <artifactId>doxia-integration-tools</artifactId>
-              <version>1.7.5</version>
-            </dependency>
-            <dependency>
-              <groupId>org.apache.maven.doxia</groupId>
-              <artifactId>doxia-skin-model</artifactId>
-              <version>1.7.5</version>
-            </dependency>
-            <dependency>
-              <groupId>org.apache.maven.doxia</groupId>
-              <artifactId>doxia-decoration-model</artifactId>
-              <version>1.7.5</version>
-            </dependency>
-          </dependencies>
+          <version>3.7</version>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-surefire-plugin</artifactId>
-          <version>2.20.1</version>
+          <version>2.21.0</version>
           <dependencies>
             <dependency>
               <groupId>org.apache.maven.surefire</groupId>
               <artifactId>surefire-junit47</artifactId>
-              <version>2.20.1</version>
+              <version>2.21.0</version>
             </dependency>
           </dependencies>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-surefire-report-plugin</artifactId>
-          <version>2.20.1</version>
+          <version>2.21.0</version>
         </plugin>
         <plugin>
           <groupId>org.codehaus.mojo</groupId>
@@ -619,7 +624,7 @@
         <plugin>
           <groupId>org.codehaus.mojo</groupId>
           <artifactId>license-maven-plugin</artifactId>
-          <version>1.14</version>
+          <version>1.15</version>
         </plugin>
         <plugin>
           <groupId>com.mycila</groupId>
@@ -1045,7 +1050,7 @@
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>license-maven-plugin</artifactId>
-        <version>1.14</version>
+        <version>1.15</version>
         <reportSets>
           <reportSet>
             <reports>
@@ -1060,7 +1065,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-report-plugin</artifactId>
-        <version>2.20.1</version>
+        <version>2.21.0</version>
       </plugin>
       -->
 
@@ -1069,7 +1074,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-javadoc-plugin</artifactId>
-        <version>3.0.0-M1</version>
+        <version>3.0.0</version>
         <configuration>
           <sourcepath>${project.build.sourceDirectory}</sourcepath>
           <show>protected</show>

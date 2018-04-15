@@ -24,11 +24,11 @@ assertEquals([], "undefined".split(void 0, 0));
 assertEquals([], "null".split(null, 0));
 
 // String.prototype.match
-assertEquals(Object.assign([""], {index: 0, input: "abc"}), "abc".match());
-assertEquals(Object.assign([""], {index: 0, input: "abc"}), "abc".match(void 0));
+assertEquals(Object.assign([""], {index: 0, input: "abc", groups: undefined}), "abc".match());
+assertEquals(Object.assign([""], {index: 0, input: "abc", groups: undefined}), "abc".match(void 0));
 assertNull("abc".match(null));
-assertEquals(Object.assign([""], {index: 0, input: "undefined"}), "undefined".match(void 0));
-assertEquals(Object.assign(["null"], {index: 0, input: "null"}), "null".match(null));
+assertEquals(Object.assign([""], {index: 0, input: "undefined", groups: undefined}), "undefined".match(void 0));
+assertEquals(Object.assign(["null"], {index: 0, input: "null", groups: undefined}), "null".match(null));
 
 // String.prototype.search
 assertSame(0, "abc".search());

@@ -23,4 +23,4 @@ r.lastIndex = {
 let result = r.exec("b")
 
 assertTrue(called);
-assertEquals(Object.assign(["b"], {input: "b", index: 0}), result);
+assertEquals(Object.assign(["b"], {input: "b", index: 0, groups: undefined}), result);

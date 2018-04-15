@@ -7,46 +7,49 @@
 
 
 # no special [[Class]] for TypedArray/DataView prototypes
-js1_8_5/extensions/dataview.js
+non262/extensions/dataview.js
 
 # SM disallows changing the [[Prototype]] of an ArrayBuffer
-ecma_6/Proxy/regress-bug950407.js
+non262/Proxy/regress-bug950407.js
 
 # Detached ArrayBuffer object issues, maybe request spec changes?
-ecma_6/extensions/DataView-construct-arguments-detaching.js
+non262/extensions/DataView-construct-arguments-detaching.js
 
 # ES6: completion reform
 ecma/Statements/12.6.3-2.js
 
 # Invalid test: Annex B calls CreateGlobalFunctionBinding which overrides accessor properties
-ecma_6/LexicalEnvironment/block-scoped-functions-annex-b-property.js
+non262/lexical-environment/block-scoped-functions-annex-b-property.js
 
 # wrong realm for thrown type error
-ecma_7/TypedArray/slice-validation.js
-ecma_7/TypedArray/subarray-validation.js
-ecma_2018/RegExp/prototype-different-global.js
+non262/TypedArray/slice-validation.js
+non262/TypedArray/subarray-validation.js
+non262/RegExp/prototype-different-global.js
 
 # https://github.com/tc39/ecma262/issues/913
-ecma_6/LexicalEnvironment/block-scoped-functions-deprecated-redecl.js
+non262/lexical-environment/block-scoped-functions-deprecated-redecl.js
 
 # ECMA2018 iteration protocol change
-ecma_6/Destructuring/order.js
-ecma_6/Destructuring/order-super.js
-ecma_6/Generators/delegating-yield-3.js
+non262/destructuring/order.js
+non262/destructuring/order-super.js
+non262/generators/delegating-yield-3.js
 
 # Different results in ICU4J and ICU4C for
 # `Intl.NumberFormat("en-US", {style:"currency", currency:"USD", currencyDisplay:"code"}).format(1)`
-Intl/NumberFormat/formatToParts.js
+non262/Intl/NumberFormat/formatToParts.js
 
 # Different results in ICU4J and ICU4C for `new Intl.PluralRules("en-us").select(-1)`?
-Intl/PluralRules/select.js
+non262/Intl/PluralRules/select.js
+
+# invalid test case - expects TypeError for zero-length detached typedarray
+non262/object/values-entries-typedarray.js
 
 
 ####################################
 # Intl only partially supported    #
 ####################################
 
-Intl/NumberFormat/StringBuffer.js
+non262/Intl/NumberFormat/StringBuffer.js
 
 
 ##################
@@ -54,23 +57,23 @@ Intl/NumberFormat/StringBuffer.js
 ##################
 
 # Non standard SIMD extensions
-ecma_7/SIMD/typedobjects.js
-ecma_7/SIMD/bug1023145.js
+non262/SIMD/typedobjects.js
+non262/SIMD/bug1023145.js
 
 # SIMD spec issue: `SIMD.Int32x4(0,0,0,0).valueOf()` allowed or TypeError?
-ecma_7/SIMD/toString.js
+non262/SIMD/toString.js
 
 # Invalid test: SIMDLoadFromTypedArray, step 5 throws a TypeError
-ecma_7/SIMD/load-floats.js
-ecma_7/SIMD/load-unsigned-integers.js
+non262/SIMD/load-floats.js
+non262/SIMD/load-unsigned-integers.js
 
 # Other SIMD issues (TODO: write bug reports)
-ecma_7/SIMD/swizzle-shuffle.js
+non262/SIMD/swizzle-shuffle.js
 
 # Different errors in SIMD
-ecma_7/SIMD/load-int8x16.js
-ecma_7/SIMD/load-int16x8.js
-ecma_7/SIMD/load-int32x4.js
+non262/SIMD/load-int8x16.js
+non262/SIMD/load-int16x8.js
+non262/SIMD/load-int32x4.js
 
 
 ###################
@@ -79,24 +82,24 @@ ecma_7/SIMD/load-int32x4.js
 
 # Java-Pattern vs ECMAScript-RegExp issues
 ecma_3/RegExp/15.10.2-1.js
-ecma_3/RegExp/perlstress-001.js
-ecma_3/RegExp/regress-209919.js
-ecma_5/RegExp/regress-613820-2.js
-ecma_5/RegExp/regress-613820-3.js
-ecma_5/RegExp/exec.js
+non262/RegExp/perlstress-001.js
+non262/RegExp/regress-209919.js
+non262/RegExp/regress-613820-2.js
+non262/RegExp/regress-613820-3.js
+non262/RegExp/exec.js
 
 # Time zone validation more strict in SM
-Intl/DateTimeFormat/format_timeZone.js
-Intl/DateTimeFormat/timeZone.js
-Intl/DateTimeFormat/timeZone_backward_links.js
-Intl/DateTimeFormat/timeZone_backzone.js
-Intl/DateTimeFormat/timeZone_backzone_links.js
-Intl/DateTimeFormat/timeZone_notbackward_links.js
-Intl/DateTimeFormat/tz-environment-variable.js
+non262/Intl/DateTimeFormat/format_timeZone.js
+non262/Intl/DateTimeFormat/timeZone.js
+non262/Intl/DateTimeFormat/timeZone_backward_links.js
+non262/Intl/DateTimeFormat/timeZone_backzone.js
+non262/Intl/DateTimeFormat/timeZone_backzone_links.js
+non262/Intl/DateTimeFormat/timeZone_notbackward_links.js
+non262/Intl/DateTimeFormat/tz-environment-variable.js
 
 # Time zone can only be set to PST8PDT in Java, not PST or PDT
-ecma_6/Date/time-zone-2038-pst.js
-ecma_6/Date/time-zone-pst.js
+non262/Date/time-zone-2038-pst.js
+non262/Date/time-zone-pst.js
 
 
 ############################################
@@ -104,117 +107,117 @@ ecma_6/Date/time-zone-pst.js
 ############################################
 
 # different function source representation
-ecma_5/Function/function-bind.js
-ecma_2017/Function/Object-toSource.js
+non262/Function/function-bind.js
+non262/Function/Object-toSource.js
 
 # Date parser
-ecma_6/Date/non-iso.js
-ecma_6/Date/two-digit-years.js
-js1_5/Date/regress-301738-01.js
+non262/Date/non-iso.js
+non262/Date/two-digit-years.js
+non262/Date/regress-301738-01.js
 
 # Reflect.parse
-js1_8_5/reflect-parse/destructuring-function-parameters.js
-js1_8_5/reflect-parse/expressionClosures.js
+non262/reflect-parse/destructuring-function-parameters.js
+non262/reflect-parse/expressionClosures.js
 
 # Spidermonkey embraces bad DST
-js1_5/Regress/regress-58116.js
+non262/regress/regress-58116.js
 
 # auto-assigned function names in Error.prototype.stack
-js1_5/Exceptions/errstack-001.js
+non262/Exceptions/errstack-001.js
 
 # different error message
 ecma_3/Array/15.4.5.1-01.js
 ecma_3/extensions/7.9.1.js
-ecma_3/extensions/regress-274152.js
+non262/extensions/regress-274152.js
 ecma_3/LexicalConventions/7.8.3-01.js
 ecma_3/LexicalConventions/7.9.1.js
 ecma_3/RegExp/15.10.4.1-6.js
-ecma_3/Unicode/regress-352044-01.js
-ecma_3_1/Object/regress-444787.js
-ecma_6/Array/iterator_edge_cases.js
-ecma_6/Class/derivedConstructorInlining.js
-ecma_6/Class/derivedConstructorTDZExplicitThis.js
-ecma_6/Class/derivedConstructorTDZOffEdge.js
-ecma_6/Class/derivedConstructorTDZReturnUndefined.js
-ecma_6/Class/newTargetDVG.js
-ecma_6/Class/superPropDVG.js
-ecma_6/Class/uninitializedThisError.js
-ecma_6/Expressions/inNotObjectError.js
-ecma_6/Generators/yield-error.js
-ecma_6/String/iterator_edge_cases.js
-ecma_2017/AsyncFunctions/await-error.js
-ecma_2017/AsyncFunctions/ErrorStack.js
-ecma_2018/AsyncGenerators/for-await-of-error.js
-js1_5/extensions/regress-352291.js
-js1_5/extensions/regress-352372.js
-js1_5/LexicalConventions/regress-469940.js
-js1_5/Regress/regress-328664.js
-js1_5/Regress/regress-355556.js
-js1_5/Regress/regress-356693.js
-js1_5/Regress/regress-372364.js
-js1_5/Regress/regress-420919.js
-js1_5/Scope/regress-446026-01.js
-js1_6/extensions/regress-470310.js
-js1_6/Array/regress-304828.js
-js1_6/extensions/regress-465443.js
-js1_7/regress/regress-363040-01.js
-js1_8/extensions/regress-353116.js
-js1_8/extensions/regress-469625.js
-js1_8/regress/regress-384758.js
-js1_8/regress/regress-455981-01.js
-js1_8/regress/regress-455981-02.js
-js1_8/regress/regress-469625-03.js
-js1_8_1/regress/regress-452498-092.js
-js1_8_1/regress/regress-452498-112.js
-js1_8_1/regress/regress-452498-185.js
-js1_8_1/regress/regress-452498-191.js
-js1_8_5/extensions/decompile-for-of.js
-js1_8_5/extensions/non_syntactic.js
-js1_8_5/extensions/redeclaration-of-catch-warning.js
-js1_8_5/regress/regress-469758.js
-js1_8_5/regress/regress-619003-1.js
-js1_8_5/regress/regress-618572.js
-js1_8_5/regress/regress-1383630.js
+non262/Unicode/regress-352044-01.js
+non262/object/regress-444787.js
+non262/Array/iterator_edge_cases.js
+non262/class/derivedConstructorInlining.js
+non262/class/derivedConstructorTDZExplicitThis.js
+non262/class/derivedConstructorTDZOffEdge.js
+non262/class/derivedConstructorTDZReturnUndefined.js
+non262/class/newTargetDVG.js
+non262/class/superPropDVG.js
+non262/class/uninitializedThisError.js
+non262/expressions/inNotObjectError.js
+non262/generators/yield-error.js
+non262/String/iterator_edge_cases.js
+non262/async-functions/await-error.js
+non262/async-functions/ErrorStack.js
+non262/AsyncGenerators/for-await-of-error.js
+non262/extensions/regress-352291.js
+non262/extensions/regress-352372.js
+non262/lexical-conventions/regress-469940.js
+non262/regress/regress-328664.js
+non262/regress/regress-355556.js
+non262/regress/regress-356693.js
+non262/regress/regress-372364.js
+non262/regress/regress-420919.js
+non262/Scope/regress-446026-01.js
+non262/extensions/regress-470310.js
+non262/Array/regress-304828.js
+non262/extensions/regress-465443.js
+non262/regress/regress-363040-01.js
+non262/extensions/regress-353116.js
+non262/extensions/regress-469625-01.js
+non262/regress/regress-384758.js
+non262/regress/regress-455981-01.js
+non262/regress/regress-455981-02.js
+non262/regress/regress-469625-03.js
+non262/regress/regress-452498-092.js
+non262/regress/regress-452498-112.js
+non262/regress/regress-452498-185.js
+non262/regress/regress-452498-191.js
+non262/extensions/decompile-for-of.js
+non262/extensions/non_syntactic.js
+non262/extensions/redeclaration-of-catch-warning.js
+non262/regress/regress-469758.js
+non262/regress/regress-619003-1.js
+non262/regress/regress-618572.js
+non262/regress/regress-1383630.js
 
 # column number support in stack traces
-js1_8_5/extensions/column-numbers.js
-ecma_6/TemplateStrings/debugLineNumber.js
+non262/extensions/column-numbers.js
+non262/template-strings/debugLineNumber.js
 
 # ignore marked as 'fail' test
-ecma_3/String/15.5.4.11.js
-ecma_3/String/regress-392378.js
-ecma_3_1/RegExp/regress-305064.js
-js1_8_1/String/regress-305064.js
+non262/RegExp/15.5.4.11.js
+non262/String/regress-392378.js
+non262/RegExp/regress-305064.js
+non262/String/regress-305064.js
 
 # SpiderMonkey restriction test
-js1_8_5/regress/regress-610026.js
-js1_8_5/regress/regress-665355.js
+non262/regress/regress-610026.js
+non262/regress/regress-665355.js
 
 # legacy .caller and .arguments are implemented as accessors on Function.prototype in SM
-ecma_5/extensions/function-caller-strict-cross-global.js
-ecma_6/Generators/runtime.js
+non262/extensions/function-caller-strict-cross-global.js
+non262/generators/runtime.js
 
 # Tests SM limitations
-ecma_6/extensions/element-setting-ToNumber-detaches.js
-js1_5/Regress/regress-422348.js
+non262/extensions/element-setting-ToNumber-detaches.js
+non262/regress/regress-422348.js
 
 # Non-standard replacement substitution symbol "$+"
-ecma_6/RegExp/replace.js
-ecma_6/extensions/RegExp-replace-lastParen.js
+non262/RegExp/replace.js
+non262/extensions/RegExp-replace-lastParen.js
 
 # Different parsing strategy resulting in different error (SyntaxError vs. ReferenceError)
-ecma_6/Object/destructuring-shorthand-defaults.js
-ecma_2017/Statements/for-in-with-assignment-syntax.js
+non262/object/destructuring-shorthand-defaults.js
+non262/statements/for-in-with-assignment-syntax.js
 
 # Different properties order for built-in objects
-ecma_6/Error/prototype-properties.js
-ecma_6/RegExp/prototype.js
+non262/Error/prototype-properties.js
+non262/RegExp/prototype.js
 
 # RegExp.leftContext is non-configurable in SM
-js1_8_5/regress/regress-591846.js
+non262/regress/regress-591846.js
 
 # TypedArrays limited to `(INT32_MAX / BYTES_PER_ELEMENT) - 1` in SM
-ecma_6/TypedArray/constructor-length-too-large.js
+non262/TypedArray/constructor-length-too-large.js
 
 
 #######################################
@@ -222,7 +225,7 @@ ecma_6/TypedArray/constructor-length-too-large.js
 #######################################
 
 # tail-call semantics change test setup
-js1_8_5/extensions/censor-strict-caller.js
+non262/extensions/censor-strict-caller.js
 
 
 #######################################
@@ -230,13 +233,13 @@ js1_8_5/extensions/censor-strict-caller.js
 #######################################
 
 # ES6-change: CallExpression no longer valid LHS
-js1_5/Regress/regress-319391.js
-js1_5/Regress/regress-350253.js
-js1_5/Regress/regress-462292.js
-js1_8_5/regress/regress-609617.js
-ecma_5/extensions/inc-dec-functioncall.js
-ecma_6/Expressions/destructuring-pattern-parenthesized.js
-ecma_6/Statements/for-of-iterator-close.js
+non262/regress/regress-319391.js
+non262/regress/regress-350253.js
+non262/regress/regress-462292.js
+non262/regress/regress-609617.js
+non262/extensions/inc-dec-functioncall.js
+non262/expressions/destructuring-pattern-parenthesized.js
+non262/statements/for-of-iterator-close.js
 
 
 ############################################
@@ -244,11 +247,11 @@ ecma_6/Statements/for-of-iterator-close.js
 ############################################
 
 # Error.prototype.columnNumber
-ecma/extensions/errorcolumnblame.js
+non262/extensions/errorcolumnblame.js
 
 # Debugger API
-js1_8_5/regress/regress-698028-2.js
-ecma_6/Promise/dependent-promises.js
+non262/regress/regress-698028-2.js
+non262/Promise/dependent-promises.js
 
 
 #######################################
@@ -257,57 +260,57 @@ ecma_6/Promise/dependent-promises.js
 
 # Spidermonkey strict/werror options
 ecma_3/Object/8.6.1-01.js
-ecma_5/extensions/8.12.5-01.js
-ecma_5/extensions/misplaced-inconsistent-directive.js
-js1_5/Exceptions/regress-315147.js
-js1_5/extensions/regress-365869.js
-js1_5/Regress/regress-323314-1.js
-js1_8_1/extensions/strict-warning.js
-js1_8_5/regress/regress-736792.js
+non262/extensions/8.12.5-01.js
+non262/extensions/misplaced-inconsistent-directive.js
+non262/Exceptions/regress-315147.js
+non262/extensions/regress-365869.js
+non262/regress/regress-323314-1.js
+non262/extensions/strict-warning.js
+non262/regress/regress-736792.js
 
 # clone() not supported
 js1_8_5/extensions/regress-677589.js
-ecma_2017/AsyncFunctions/clone.js
+non262/async-functions/clone.js
 
 # serialize()/deserialize() not supported
-js1_8_5/extensions/clone-complex-object.js
-js1_8_5/extensions/clone-errors.js
-js1_8_5/extensions/clone-forge.js
-js1_8_5/extensions/clone-leaf-object.js
-js1_8_5/extensions/clone-many-transferables.js
-js1_8_5/extensions/clone-object.js
-js1_8_5/extensions/clone-object-deep.js
-js1_8_5/extensions/clone-regexp.js
-js1_8_5/extensions/clone-sab.js
-js1_8_5/extensions/clone-simple.js
-js1_8_5/extensions/clone-transferables.js
-js1_8_5/extensions/clone-typed-array.js
-js1_8_5/extensions/clone-v1-typed-array.js
-js1_8_5/extensions/sharedtypedarray.js
+non262/extensions/clone-complex-object.js
+non262/extensions/clone-errors.js
+non262/extensions/clone-forge.js
+non262/extensions/clone-leaf-object.js
+non262/extensions/clone-many-transferables.js
+non262/extensions/clone-object.js
+non262/extensions/clone-object-deep.js
+non262/extensions/clone-regexp.js
+non262/extensions/clone-sab.js
+non262/extensions/clone-simple.js
+non262/extensions/clone-transferables.js
+non262/extensions/clone-typed-array.js
+non262/extensions/clone-v1-typed-array.js
+non262/extensions/sharedtypedarray.js
 
 # enableSPSProfilingAssertions() not supported
-js1_8_5/extensions/sps-generators.js
+non262/extensions/sps-generators.js
 
 # objectEmulatingUndefined() not supported
-Intl/extensions/options-value-emulates-undefined.js
+non262/Intl/extensions/options-value-emulates-undefined.js
 
 # getSelfHostedValue('GetWaitForAllPromise')
-ecma_6/Promise/get-wait-for-all-promise.js
+non262/Promise/get-wait-for-all-promise.js
 
 # setPromiseRejectionTrackerCallback
-ecma_6/Promise/promise-rejection-tracking.js
+non262/Promise/promise-rejection-tracking.js
 
 # enableLastWarning
-js1_6/String/generics-deprecated.js
+non262/String/generics-deprecated.js
 
 # gcparam
-js1_8_5/extensions/typedarray.js
+non262/extensions/typedarray.js
 
 # options
-ecma_5/extensions/strict-function-toSource.js
+non262/extensions/strict-function-toSource.js
 
 # grayRoot
-js1_8_5/extensions/collect-gray.js
+non262/extensions/collect-gray.js
 
 
 #######################################
@@ -315,7 +318,7 @@ js1_8_5/extensions/collect-gray.js
 #######################################
 
 # SpiderMonkey also treats U+FFFE as BOM
-ecma_3/extensions/regress-368516.js
+non262/extensions/regress-368516.js
 
 
 #######################################
@@ -327,104 +330,104 @@ ecma_3/extensions/regress-368516.js
 ecma/FunctionObjects/15.3.1.1-3.js
 ecma/FunctionObjects/15.3.2.1-3.js
 ecma/FunctionObjects/15.3.5-1.js
-js1_5/Regress/regress-290575.js
+non262/regress/regress-290575.js
 # too many arguments in call expression
-js1_5/Regress/regress-396684.js
+non262/regress/regress-396684.js
 
 # Class file too large
-js1_5/Regress/regress-155081.js
-js1_5/Regress/regress-155081-2.js
-js1_5/Regress/regress-366601.js
-js1_5/Regress/regress-367561-01.js
-js1_5/Regress/regress-367561-03.js
+non262/regress/regress-155081.js
+non262/regress/regress-155081-2.js
+non262/regress/regress-366601.js
+non262/regress/regress-367561-01.js
+non262/regress/regress-367561-03.js
 
 # StackOverflow (CodeAnalyzer recursion)
-js1_5/Expressions/regress-394673.js
-js1_5/Regress/regress-98901.js
+non262/expressions/regress-394673.js
+non262/regress/regress-98901.js
 
 # Intermittent StackOverflow error
-js1_5/Regress/regress-89443.js
-js1_8_5/extensions/recursion.js
+non262/regress/regress-89443.js
+non262/extensions/recursion.js
 
 # StackOverflowError during invokedynamic linking (intermittent)
-js1_5/GC/regress-348532.js
+non262/GC/regress-348532.js
 
 # OutOfMemory: Java heap space
-ecma_5/String/string-object-length.js
-ecma_5/String/replace-math.js
-ecma_5/RegExp/regress-617935.js
+non262/String/string-object-length.js
+non262/String/replace-math.js
+non262/RegExp/regress-617935.js
 
 # floods ClassLoader with empty functions
-js1_8/regress/regress-477234.js
+non262/regress/regress-477234.js
 
 # Timeout (slow)
 ecma/Date/15.9.5.10-2.js
 ecma/Date/15.9.5.11-2.js
 ecma/Date/15.9.5.12-2.js
-ecma_6/Expressions/destructuring-array-default-call.js
-ecma_6/Expressions/destructuring-array-default-class.js
-ecma_6/Expressions/destructuring-array-default-function-nested.js
-ecma_6/Expressions/destructuring-array-default-function.js
-ecma_6/Expressions/destructuring-array-default-simple.js
-ecma_6/Expressions/destructuring-array-default-yield.js
-ecma_6/String/normalize-generateddata-input.js
-ecma_6/String/normalize-generateddata-part1-not-listed.js
-js1_5/extensions/regress-311161.js
-js1_5/extensions/regress-363988.js
-js1_5/GC/regress-203278-2.js
-js1_5/Regress/regress-203278-1.js
-js1_5/Regress/regress-280769-1.js
-js1_5/Regress/regress-280769-2.js
-js1_5/Regress/regress-280769-4.js
-js1_5/Regress/regress-280769-5.js
-js1_5/Regress/regress-312588.js
+non262/expressions/destructuring-array-default-call.js
+non262/expressions/destructuring-array-default-class.js
+non262/expressions/destructuring-array-default-function-nested.js
+non262/expressions/destructuring-array-default-function.js
+non262/expressions/destructuring-array-default-simple.js
+non262/expressions/destructuring-array-default-yield.js
+non262/String/normalize-generateddata-input.js
+non262/String/normalize-generateddata-part1-not-listed.js
+non262/extensions/regress-311161.js
+non262/extensions/regress-363988.js
+non262/GC/regress-203278-2.js
+non262/regress/regress-203278-1.js
+non262/regress/regress-280769-1.js
+non262/regress/regress-280769-2.js
+non262/regress/regress-280769-4.js
+non262/regress/regress-280769-5.js
+non262/regress/regress-312588.js
 
 # Timeout
-js1_5/Array/regress-330812.js
-js1_5/Regress/regress-244470.js
-js1_5/Regress/regress-303213.js
-js1_5/Regress/regress-321971.js
-ecma_5/Object/15.2.3.6-dictionary-redefinition-01-of-32.js
-ecma_5/Object/15.2.3.6-dictionary-redefinition-02-of-32.js
-ecma_5/Object/15.2.3.6-dictionary-redefinition-03-of-32.js
-ecma_5/Object/15.2.3.6-dictionary-redefinition-04-of-32.js
-ecma_5/Object/15.2.3.6-dictionary-redefinition-05-of-32.js
-ecma_5/Object/15.2.3.6-dictionary-redefinition-06-of-32.js
-ecma_5/Object/15.2.3.6-dictionary-redefinition-07-of-32.js
-ecma_5/Object/15.2.3.6-dictionary-redefinition-08-of-32.js
-ecma_5/Object/15.2.3.6-dictionary-redefinition-09-of-32.js
-ecma_5/Object/15.2.3.6-dictionary-redefinition-10-of-32.js
-ecma_5/Object/15.2.3.6-dictionary-redefinition-11-of-32.js
-ecma_5/Object/15.2.3.6-dictionary-redefinition-12-of-32.js
-ecma_5/Object/15.2.3.6-dictionary-redefinition-13-of-32.js
-ecma_5/Object/15.2.3.6-dictionary-redefinition-14-of-32.js
-ecma_5/Object/15.2.3.6-dictionary-redefinition-15-of-32.js
-ecma_5/Object/15.2.3.6-dictionary-redefinition-16-of-32.js
-ecma_5/Object/15.2.3.6-dictionary-redefinition-17-of-32.js
-ecma_5/Object/15.2.3.6-dictionary-redefinition-18-of-32.js
-ecma_5/Object/15.2.3.6-dictionary-redefinition-19-of-32.js
-ecma_5/Object/15.2.3.6-dictionary-redefinition-20-of-32.js
-ecma_5/Object/15.2.3.6-dictionary-redefinition-21-of-32.js
-ecma_5/Object/15.2.3.6-dictionary-redefinition-22-of-32.js
-ecma_5/Object/15.2.3.6-dictionary-redefinition-23-of-32.js
-ecma_5/Object/15.2.3.6-dictionary-redefinition-24-of-32.js
-ecma_5/Object/15.2.3.6-dictionary-redefinition-25-of-32.js
-ecma_5/Object/15.2.3.6-dictionary-redefinition-26-of-32.js
-ecma_5/Object/15.2.3.6-dictionary-redefinition-27-of-32.js
-ecma_5/Object/15.2.3.6-dictionary-redefinition-28-of-32.js
-ecma_5/Object/15.2.3.6-dictionary-redefinition-29-of-32.js
-ecma_5/Object/15.2.3.6-dictionary-redefinition-30-of-32.js
-ecma_5/Object/15.2.3.6-dictionary-redefinition-31-of-32.js
-ecma_5/Object/15.2.3.6-dictionary-redefinition-32-of-32.js
-ecma_5/Object/15.2.3.6-middle-redefinition-1-of-8.js
-ecma_5/Object/15.2.3.6-middle-redefinition-2-of-8.js
-ecma_5/Object/15.2.3.6-middle-redefinition-3-of-8.js
-ecma_5/Object/15.2.3.6-middle-redefinition-4-of-8.js
-ecma_5/Object/15.2.3.6-middle-redefinition-5-of-8.js
-ecma_5/Object/15.2.3.6-middle-redefinition-6-of-8.js
-ecma_5/Object/15.2.3.6-middle-redefinition-7-of-8.js
-ecma_5/Object/15.2.3.6-middle-redefinition-8-of-8.js
-ecma_5/Object/15.2.3.6-redefinition-1-of-4.js
-ecma_5/Object/15.2.3.6-redefinition-2-of-4.js
-ecma_5/Object/15.2.3.6-redefinition-3-of-4.js
-ecma_5/Object/15.2.3.6-redefinition-4-of-4.js
+non262/Array/regress-330812.js
+non262/regress/regress-244470.js
+non262/regress/regress-303213.js
+non262/regress/regress-321971.js
+non262/object/15.2.3.6-dictionary-redefinition-01-of-32.js
+non262/object/15.2.3.6-dictionary-redefinition-02-of-32.js
+non262/object/15.2.3.6-dictionary-redefinition-03-of-32.js
+non262/object/15.2.3.6-dictionary-redefinition-04-of-32.js
+non262/object/15.2.3.6-dictionary-redefinition-05-of-32.js
+non262/object/15.2.3.6-dictionary-redefinition-06-of-32.js
+non262/object/15.2.3.6-dictionary-redefinition-07-of-32.js
+non262/object/15.2.3.6-dictionary-redefinition-08-of-32.js
+non262/object/15.2.3.6-dictionary-redefinition-09-of-32.js
+non262/object/15.2.3.6-dictionary-redefinition-10-of-32.js
+non262/object/15.2.3.6-dictionary-redefinition-11-of-32.js
+non262/object/15.2.3.6-dictionary-redefinition-12-of-32.js
+non262/object/15.2.3.6-dictionary-redefinition-13-of-32.js
+non262/object/15.2.3.6-dictionary-redefinition-14-of-32.js
+non262/object/15.2.3.6-dictionary-redefinition-15-of-32.js
+non262/object/15.2.3.6-dictionary-redefinition-16-of-32.js
+non262/object/15.2.3.6-dictionary-redefinition-17-of-32.js
+non262/object/15.2.3.6-dictionary-redefinition-18-of-32.js
+non262/object/15.2.3.6-dictionary-redefinition-19-of-32.js
+non262/object/15.2.3.6-dictionary-redefinition-20-of-32.js
+non262/object/15.2.3.6-dictionary-redefinition-21-of-32.js
+non262/object/15.2.3.6-dictionary-redefinition-22-of-32.js
+non262/object/15.2.3.6-dictionary-redefinition-23-of-32.js
+non262/object/15.2.3.6-dictionary-redefinition-24-of-32.js
+non262/object/15.2.3.6-dictionary-redefinition-25-of-32.js
+non262/object/15.2.3.6-dictionary-redefinition-26-of-32.js
+non262/object/15.2.3.6-dictionary-redefinition-27-of-32.js
+non262/object/15.2.3.6-dictionary-redefinition-28-of-32.js
+non262/object/15.2.3.6-dictionary-redefinition-29-of-32.js
+non262/object/15.2.3.6-dictionary-redefinition-30-of-32.js
+non262/object/15.2.3.6-dictionary-redefinition-31-of-32.js
+non262/object/15.2.3.6-dictionary-redefinition-32-of-32.js
+non262/object/15.2.3.6-middle-redefinition-1-of-8.js
+non262/object/15.2.3.6-middle-redefinition-2-of-8.js
+non262/object/15.2.3.6-middle-redefinition-3-of-8.js
+non262/object/15.2.3.6-middle-redefinition-4-of-8.js
+non262/object/15.2.3.6-middle-redefinition-5-of-8.js
+non262/object/15.2.3.6-middle-redefinition-6-of-8.js
+non262/object/15.2.3.6-middle-redefinition-7-of-8.js
+non262/object/15.2.3.6-middle-redefinition-8-of-8.js
+non262/object/15.2.3.6-redefinition-1-of-4.js
+non262/object/15.2.3.6-redefinition-2-of-4.js
+non262/object/15.2.3.6-redefinition-3-of-4.js
+non262/object/15.2.3.6-redefinition-4-of-4.js

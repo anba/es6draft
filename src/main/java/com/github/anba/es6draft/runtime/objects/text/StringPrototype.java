@@ -44,7 +44,6 @@ import com.github.anba.es6draft.runtime.objects.intl.CollatorObject;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
-import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.ArrayObject;
 import com.github.anba.es6draft.runtime.types.builtins.NativeFunction;
@@ -1686,21 +1685,17 @@ public final class StringPrototype extends StringObject implements Initializable
         public static Object matchAll(ExecutionContext cx, Object thisValue, Object regexp) {
             /* step 1 */
             Object obj = RequireObjectCoercible(cx, thisValue);
-            /* steps 2-3 */
-            ScriptObject regexpObj;
-            if (IsRegExp(cx, regexp)) {
-                regexpObj = Type.objectValue(regexp);
-            } else {
-                regexpObj = RegExpCreate(cx, regexp, UNDEFINED);
+            /* step 2 */
+            if (!Type.isUndefinedOrNull(regexp)) {
+                /* step 2.a */
+                Callable matcher = GetMethod(cx, regexp, BuiltinSymbol.matchAll.get());
+                /* step 2.b */
+                if (matcher != null) {
+                    return matcher.call(cx, regexp, obj);
+                }
             }
-            /* step 4 */
-            Callable matcher = GetMethod(cx, regexpObj, BuiltinSymbol.matchAll.get());
-            /* step 5 */
-            if (matcher != null) {
-                return matcher.call(cx, regexpObj, obj);
-            }
-            /* step 6 */
-            return MatchAllIterator(cx, regexpObj, obj);
+            /* step 3 */
+            return MatchAllIterator(cx, regexp, obj);
         }
     }
 

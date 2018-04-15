@@ -15,6 +15,7 @@ import java.util.Map;
 
 import com.github.anba.es6draft.compiler.CompiledObject;
 import com.github.anba.es6draft.runtime.ExecutionContext;
+import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.types.IntegrityLevel;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.builtins.ArrayObject;
@@ -65,13 +66,23 @@ public final class TemplateOperations {
         /* steps 1, 5 */
         String[] strings = evaluateTemplateStrings(handle);
         assert (strings.length & 1) == 0;
-        /* steps 2-3 */
-        Map<String, ArrayObject> templateRegistry = cx.getRealm().getTemplateMap();
-        /* step 4 */
-        String templateKey = templateStringKey(strings);
-        if (templateRegistry.containsKey(templateKey)) {
-            return templateRegistry.get(templateKey);
+
+        boolean templateParseNodeCache = cx.getRuntimeContext().isEnabled(CompatibilityOption.TemplateParseNodeCache);
+        Map<String, ArrayObject> templateRegistry;
+        String templateKey;
+        if (!templateParseNodeCache) {
+            /* steps 2-3 */
+            templateRegistry = cx.getRealm().getTemplateMap();
+            /* step 4 */
+            templateKey = templateStringKey(strings);
+            if (templateRegistry.containsKey(templateKey)) {
+                return templateRegistry.get(templateKey);
+            }
+        } else {
+            templateRegistry = null;
+            templateKey = null;
         }
+
         /* step 6 */
         int count = strings.length >>> 1;
         /* steps 7-8 */
@@ -93,7 +104,9 @@ public final class TemplateOperations {
         template.defineOwnProperty(cx, "raw", new PropertyDescriptor(rawObj, false, false, false));
         SetIntegrityLevel(cx, template, IntegrityLevel.Frozen);
         /* step 14 */
-        templateRegistry.put(templateKey, template);
+        if (!templateParseNodeCache) {
+            templateRegistry.put(templateKey, template);
+        }
         /* step 15 */
         return template;
     }

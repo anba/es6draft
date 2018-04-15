@@ -20,7 +20,7 @@ import com.github.anba.es6draft.runtime.Realm;
  * <li>20.3.1 Overview of Date Objects and Definitions of Abstract Operations
  * </ul>
  */
-final class DateAbstractOperations {
+public final class DateAbstractOperations {
     private DateAbstractOperations() {
     }
 

@@ -18,6 +18,7 @@ import java.util.List;
 import org.apache.commons.configuration.Configuration;
 import org.junit.Before;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -42,6 +43,7 @@ import com.github.anba.es6draft.util.rules.ExceptionHandlers.StandardErrorHandle
 /**
  * The standard test262-parser test suite
  */
+@Ignore
 @RunWith(Parallelized.class)
 @UseParametersRunnerFactory(ParameterizedRunnerFactory.class)
 @TestConfiguration(name = "test262-parser", file = "resource:/test-configuration.properties")

@@ -71,6 +71,32 @@ public final class SegmentIteratorPrototype extends OrdinaryObject implements In
     }
 
     /**
+     * Constants for line break rule limits.
+     * 
+     * @see ICU4C ULineBreakTag in common/unicode/ubrk.h
+     */
+    private enum LineBreakTag {
+        ;
+        static final int SOFT = 0;
+        static final int SOFT_LIMIT = 100;
+        static final int HARD = 100;
+        static final int HARD_LIMIT = 200;
+    }
+
+    /**
+     * Constants for sentence break rule limits.
+     * 
+     * @see ICU4C USentenceBreakTag in common/unicode/ubrk.h
+     */
+    private enum SentenceBreakTag {
+        ;
+        static final int TERM = 0;
+        static final int TERM_LIMIT = 100;
+        static final int SEP = 100;
+        static final int SEP_LIMIT = 200;
+    }
+
+    /**
      * AdvanceSegmentIterator ( iterator, direction )
      * 
      * @param iterator
@@ -123,12 +149,20 @@ public final class SegmentIteratorPrototype extends OrdinaryObject implements In
             }
             case "line": {
                 int ruleStatus = breakIterator.getRuleStatus();
-                breakType = ruleStatus != 0 ? "hard" : "soft";
+                if (LineBreakTag.SOFT <= ruleStatus && ruleStatus < LineBreakTag.SOFT_LIMIT) {
+                    breakType = "soft";
+                } else if (LineBreakTag.HARD <= ruleStatus && ruleStatus < LineBreakTag.HARD_LIMIT) {
+                    breakType = "hard";
+                }
                 break;
             }
             case "sentence": {
                 int ruleStatus = breakIterator.getRuleStatus();
-                breakType = ruleStatus != 0 ? "term" : "sep";
+                if (SentenceBreakTag.TERM <= ruleStatus && ruleStatus < SentenceBreakTag.TERM_LIMIT) {
+                    breakType = "term";
+                } else if (SentenceBreakTag.SEP <= ruleStatus && ruleStatus < SentenceBreakTag.SEP_LIMIT) {
+                    breakType = "sep";
+                }
                 break;
             }
             default:

@@ -1069,12 +1069,13 @@ final class TokenStream {
         case '`':
             return Token.TEMPLATE;
         case '@':
-            if (isEnabled(CompatibilityOption.Decorator)) {
+            if (isEnabled(CompatibilityOption.OldDecorator)) {
                 return Token.AT;
             }
             return Token.ERROR;
         case '#':
-            if (isEnabled(CompatibilityOption.ClassFields) || isEnabled(CompatibilityOption.PrivateMethods)) {
+            if (isEnabled(CompatibilityOption.InstanceClassFields) || isEnabled(CompatibilityOption.StaticClassFields)
+                    || isEnabled(CompatibilityOption.PrivateMethods)) {
                 return readPrivateName();
             }
             return Token.ERROR;
@@ -1610,6 +1611,11 @@ final class TokenStream {
                 break;
             }
             if (isLineTerminator(c)) {
+                // TODO: spec issue - JSON super-set proposal should update 14.1.1 "Directive Prologues and the Use
+                // Strict Directive" to mention LS and PS.
+                if ((c == 0x2028 || c == 0x2029) && isEnabled(CompatibilityOption.JSONSuperset)) {
+                    continue;
+                }
                 throw error(Messages.Key.UnterminatedStringLiteral);
             }
             if (c != '\\') {

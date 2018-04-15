@@ -44,7 +44,6 @@ import com.github.anba.es6draft.runtime.DeclarativeEnvironmentRecord;
 import com.github.anba.es6draft.runtime.EnvironmentRecord;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
-import com.github.anba.es6draft.runtime.internal.ScriptException;
 import com.github.anba.es6draft.runtime.internal.ScriptIterator;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
@@ -1710,7 +1709,7 @@ final class StatementGenerator extends DefaultCodeGenerator<StatementGenerator.C
         if (node.hasCompletionValue()) {
             mv.storeUndefinedAsCompletionValue();
         }
-        boolean hasCatch = node.getCatchNode() != null || !node.getGuardedCatchNodes().isEmpty();
+        boolean hasCatch = node.getCatchNode() != null;
         if (hasCatch && node.getFinallyBlock() != null) {
             return visitTryCatchFinally(node, mv);
         } else if (hasCatch) {
@@ -1875,8 +1874,7 @@ final class StatementGenerator extends DefaultCodeGenerator<StatementGenerator.C
             TryCatchLabel handlerCatch, TryCatchLabel handlerCatchStackOverflow, CodeVisitor mv) {
         boolean hasFinally = node.getFinallyBlock() != null;
         CatchNode catchNode = node.getCatchNode();
-        List<GuardedCatchNode> guardedCatchNodes = node.getGuardedCatchNodes();
-        assert catchNode != null || !guardedCatchNodes.isEmpty();
+        assert catchNode != null;
 
         // StackOverflowError -> ScriptException
         mv.catchHandler(handlerCatchStackOverflow, Types.Error);
@@ -1889,38 +1887,7 @@ final class StatementGenerator extends DefaultCodeGenerator<StatementGenerator.C
         if (hasFinally) {
             mv.enterWrapped();
         }
-        Completion catchResult;
-        if (!guardedCatchNodes.isEmpty()) {
-            mv.enterVariableScope();
-            Variable<ScriptException> exception = mv.newVariable("exception", ScriptException.class);
-            Jump catchWithGuardedLabel = new Jump();
-
-            mv.store(exception);
-            Completion result = null;
-            for (GuardedCatchNode guardedCatchNode : guardedCatchNodes) {
-                mv.load(exception);
-                Completion guardedResult = CatchClauseEvaluation(guardedCatchNode, catchWithGuardedLabel, mv);
-                result = result != null ? result.select(guardedResult) : guardedResult;
-            }
-            assert result != null;
-            if (catchNode != null) {
-                mv.load(exception);
-                catchResult = CatchClauseEvaluation(catchNode, mv);
-            } else {
-                mv.load(exception);
-                mv.athrow();
-                catchResult = Completion.Abrupt;
-            }
-
-            if (!result.isAbrupt()) {
-                mv.mark(catchWithGuardedLabel);
-            }
-            mv.exitVariableScope();
-
-            catchResult = catchResult.select(result);
-        } else {
-            catchResult = CatchClauseEvaluation(catchNode, mv);
-        }
+        Completion catchResult = CatchClauseEvaluation(catchNode, mv);
         if (hasFinally) {
             mv.exitWrapped();
         }
@@ -2000,35 +1967,6 @@ final class StatementGenerator extends DefaultCodeGenerator<StatementGenerator.C
 
         /* step 8 */
         exitCatchScope(node, result, mv);
-
-        /* step 9 */
-        return result;
-    }
-
-    /**
-     * Extension: 'catch-if' statement
-     */
-    private Completion CatchClauseEvaluation(GuardedCatchNode node, Jump catchWithGuardedLabel, CodeVisitor mv) {
-        /* steps 1-6 */
-        enterCatchScope(node, mv);
-
-        /* step 7 */
-        Jump l0 = new Jump();
-        Completion result;
-        testExpressionBailout(node.getGuard(), l0, mv);
-        {
-            result = node.getCatchBlock().accept(this, mv);
-            if (!result.isAbrupt()) {
-                if (node.getScope().isPresent()) {
-                    popLexicalEnvironment(mv);
-                }
-                mv.goTo(catchWithGuardedLabel);
-            }
-        }
-        mv.mark(l0);
-
-        /* step 8 */
-        exitCatchScope(node, Completion.Normal, mv);
 
         /* step 9 */
         return result;

@@ -25,10 +25,11 @@ public final class GeneratorDeclaration extends HoistableDeclaration implements 
     private List<StatementListItem> statements;
     private final String functionName;
     private final String source;
-    private StrictMode strictMode;
+    private final StrictMode strictMode;
 
     public GeneratorDeclaration(long beginPosition, long endPosition, FunctionScope scope, BindingIdentifier identifier,
-            FormalParameterList parameters, List<StatementListItem> statements, String functionName, String source) {
+            FormalParameterList parameters, List<StatementListItem> statements, String functionName, String source,
+            StrictMode strictMode) {
         super(beginPosition, endPosition);
         this.scope = scope;
         this.identifier = identifier;
@@ -37,6 +38,7 @@ public final class GeneratorDeclaration extends HoistableDeclaration implements 
         this.statements = statements;
         this.functionName = functionName;
         this.source = source;
+        this.strictMode = strictMode;
     }
 
     @Override
@@ -92,11 +94,6 @@ public final class GeneratorDeclaration extends HoistableDeclaration implements 
     @Override
     public StrictMode getStrictMode() {
         return strictMode;
-    }
-
-    @Override
-    public void setStrictMode(StrictMode strictMode) {
-        this.strictMode = strictMode;
     }
 
     @Override

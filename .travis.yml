@@ -16,24 +16,25 @@ env:
 matrix:
   include:
     # Run the default profile with Java 8-9 (latest through installer)
+    # Java 10 not yet supported outside of travisci-staging.
     - addons: {apt: {packages: oracle-java8-installer}}
       jdk: oraclejdk8
       env: PROFILE='skip-external' JAVA_VERSION=8
-    # - addons: {apt: {packages: oracle-java9-installer}}
-    #   # jdk: oraclejdk9
-    #   env: PROFILE='skip-external' JAVA_VERSION=9
+    - addons: {apt: {packages: oracle-java9-installer}}
+      jdk: oraclejdk9
+      env: PROFILE='skip-external' JAVA_VERSION=9
     # Run test262 profile with Java 8-9
     - addons: {apt: {packages: oracle-java8-installer}}
       jdk: oraclejdk8
       env: PROFILE='test262-travisci' JAVA_VERSION=8
-    # - addons: {apt: {packages: oracle-java9-installer}}
-    #   # jdk: oraclejdk9
-    #   env: PROFILE='test262-travisci' JAVA_VERSION=9
+    - addons: {apt: {packages: oracle-java9-installer}}
+      jdk: oraclejdk9
+      env: PROFILE='test262-travisci' JAVA_VERSION=9
 
 before_install:
-  - remove_dir_from_path $JAVA_HOME/bin
-  - export JAVA_HOME=/usr/lib/jvm/java-$JAVA_VERSION-oracle
-  - export PATH=$JAVA_HOME/bin:$PATH
+  # - remove_dir_from_path $JAVA_HOME/bin
+  # - export JAVA_HOME=/usr/lib/jvm/java-$JAVA_VERSION-oracle
+  # - export PATH=$JAVA_HOME/bin:$PATH
   - java -version
   - if [[ $JAVA_VERSION = '9' ]]; then echo "export MAVEN_OPTS='-Dmaven.repo.local=$HOME/.m2/repository -Xmx512m'" > ~/.mavenrc; else true; fi
 
@@ -55,3 +56,21 @@ notifications:
   email:
     on_success: always
     on_failure: always
+
+# Setup for automatic release tagging.
+# before_deploy:
+#   - git config --local user.name "es6draft automatic release"
+#   - git config --local user.email "release@es6draft.invalid"
+#   - git tag "$(date +'%Y-%m-%dT%H:%M:%S') at $(git log --format=%h -1)"
+
+deploy:
+  provider: releases
+  api_key:
+    secure: MNgtyI7F8Xbhl5zeowUZcIll7LfexKKyHqcRGaryOPTVbTcIGG01yl8682ypJ6h1HZT8kJ/8hpcUYnPdd3FE0CET4/gpnzuM92yFZNKeRrNQ8jtrL4ElPacOx8Yvaa+yKkhFjU6zirCIiLug/3C3smFaIdrCNlb/3P2DNUo+dlQ=
+  file: target/es6draft.zip
+  skip_cleanup: true
+  on:
+    repo: anba/es6draft
+    tags: true
+    jdk: oraclejdk8
+    condition: $PROFILE = 'skip-external'

@@ -143,7 +143,7 @@ abstract class UEncoding extends UnicodeEncoding {
             if (to != null) {
                 return caseFoldCodesByString(codePoint, length, caseFold, to);
             }
-            return new CaseFoldCodeItem[] { new CaseFoldCodeItem(length, 1, new int[] { caseFold }) };
+            return new CaseFoldCodeItem[] { CaseFoldCodeItem.create(length, caseFold) };
         }
         int[] to = CaseFoldData.caseUnfold(codePoint);
         if (to != null) {
@@ -161,10 +161,10 @@ abstract class UEncoding extends UnicodeEncoding {
         }
         int k = 0;
         CaseFoldCodeItem[] items = new CaseFoldCodeItem[n];
-        items[k++] = new CaseFoldCodeItem(length, 1, new int[] { caseFold });
+        items[k++] = CaseFoldCodeItem.create(length, caseFold);
         for (int i = 0; i < to.length; ++i) {
             if (to[i] != codePoint) {
-                items[k++] = new CaseFoldCodeItem(length, 1, new int[] { to[i] });
+                items[k++] = CaseFoldCodeItem.create(length, to[i]);
             }
         }
         return items;
@@ -173,7 +173,7 @@ abstract class UEncoding extends UnicodeEncoding {
     protected final CaseFoldCodeItem[] caseFoldCodesByString(int codePoint, int length, int[] to) {
         CaseFoldCodeItem[] items = new CaseFoldCodeItem[to.length];
         for (int i = 0; i < to.length; ++i) {
-            items[i] = new CaseFoldCodeItem(length, 1, new int[] { to[i] });
+            items[i] = CaseFoldCodeItem.create(length, to[i]);
         }
         return items;
     }

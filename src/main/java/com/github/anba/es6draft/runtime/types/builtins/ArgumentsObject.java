@@ -8,7 +8,6 @@ package com.github.anba.es6draft.runtime.types.builtins;
 
 import com.github.anba.es6draft.runtime.DeclarativeEnvironmentRecord;
 import com.github.anba.es6draft.runtime.ExecutionContext;
-import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
@@ -254,11 +253,11 @@ public final class ArgumentsObject extends OrdinaryObject {
      * @param argumentsList
      *            the function arguments
      * @param env
-     *            the current lexical environment
+     *            the environment record of the current lexical environment
      * @return the mapped arguments object
      */
     public static ArgumentsObject CreateMappedArgumentsObject(ExecutionContext cx, FunctionObject func,
-            Object[] argumentsList, LexicalEnvironment<? extends DeclarativeEnvironmentRecord> env) {
+            Object[] argumentsList, DeclarativeEnvironmentRecord env) {
         ParameterMap map = ParameterMap.create(func, argumentsList.length, env);
         return CreateMappedArgumentsObject(cx, func, argumentsList, map);
     }

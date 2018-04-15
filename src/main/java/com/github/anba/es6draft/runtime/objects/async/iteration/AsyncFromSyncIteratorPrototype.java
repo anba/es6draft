@@ -136,7 +136,7 @@ public final class AsyncFromSyncIteratorPrototype extends OrdinaryObject impleme
                 if (!Type.isObject(returnResult)) {
                     /* step 10.a */
                     promiseCapability.getReject().call(cx, UNDEFINED,
-                            newTypeError(cx, Messages.Key.NotObjectTypeReturned, "return"));
+                            newTypeError(cx, Messages.Key.NotObjectTypeReturned, "return").getValue());
                     /* step 10.b */
                     return promiseCapability.getPromise();
                 }
@@ -209,7 +209,7 @@ public final class AsyncFromSyncIteratorPrototype extends OrdinaryObject impleme
                 if (!Type.isObject(throwResult)) {
                     /* step 10.a */
                     promiseCapability.getReject().call(cx, UNDEFINED,
-                            newTypeError(cx, Messages.Key.NotObjectTypeReturned, "throw"));
+                            newTypeError(cx, Messages.Key.NotObjectTypeReturned, "throw").getValue());
                     /* step 10.b */
                     return promiseCapability.getPromise();
                 }

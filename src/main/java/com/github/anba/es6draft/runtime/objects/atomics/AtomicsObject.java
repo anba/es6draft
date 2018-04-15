@@ -13,6 +13,7 @@ import static com.github.anba.es6draft.runtime.internal.Properties.createPropert
 import static com.github.anba.es6draft.runtime.objects.bigint.BigIntAbstractOperations.ToBigInt;
 import static com.github.anba.es6draft.runtime.objects.bigint.BigIntAbstractOperations.ToBigInt64;
 import static com.github.anba.es6draft.runtime.objects.bigint.BigIntAbstractOperations.ToBigUint64;
+import static com.github.anba.es6draft.runtime.objects.promise.PromiseAbstractOperations.PromiseBuiltinCapability;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import java.math.BigInteger;
@@ -34,6 +35,8 @@ import com.github.anba.es6draft.runtime.objects.bigint.BigIntType;
 import com.github.anba.es6draft.runtime.objects.binary.ArrayBuffer;
 import com.github.anba.es6draft.runtime.objects.binary.ElementType;
 import com.github.anba.es6draft.runtime.objects.binary.TypedArrayObject;
+import com.github.anba.es6draft.runtime.objects.promise.PromiseCapability;
+import com.github.anba.es6draft.runtime.objects.promise.PromiseObject;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Type;
@@ -676,7 +679,7 @@ public final class AtomicsObject extends OrdinaryObject implements Initializable
             // Extension: BigInt
             if (array.getElementType().isInt64()) {
                 /* step 3 */
-                long v = ToBigInt64(ToBigInt64(cx, value));
+                long v = ToBigInt64(ToBigInt(cx, value));
                 /* steps 4-5 */
                 double q = ToNumber(cx, timeout);
                 double t = Double.isNaN(q) ? Double.POSITIVE_INFINITY : Math.max(0, q);
@@ -810,6 +813,110 @@ public final class AtomicsObject extends OrdinaryObject implements Initializable
         public static Object fence(ExecutionContext cx, Object thisValue) {
             Atomics.fullFence();
             return UNDEFINED;
+        }
+    }
+
+    @CompatibilityExtension(CompatibilityOption.AtomicsWaitAsync)
+    public enum WaitAsyncFunction {
+        ;
+
+        /**
+         * Atomics.waitAsync( typedArray, index, value, timeout )
+         * 
+         * @param cx
+         *            the execution context
+         * @param thisValue
+         *            the function this-value
+         * @return the undefined value
+         * @throws InterruptedException
+         *             if interrupted while waiting
+         */
+        @Function(name = "waitAsync", arity = 4)
+        public static Object waitAsync(ExecutionContext cx, Object thisValue, Object typedArray, Object index,
+                Object value, Object timeout) throws InterruptedException {
+            /* step 1 */
+            TypedArrayObject array = ValidateSharedIntegerTypedArray(cx, typedArray, true, "Atomics.waitAsync");
+            /* step 2 */
+            long i = ValidateAtomicAccess(cx, array, index);
+
+            // Extension: BigInt
+            if (array.getElementType().isInt64()) {
+                /* step 3 */
+                long v = ToBigInt64(ToBigInt(cx, value));
+                /* steps 4-5 */
+                double q = ToNumber(cx, timeout);
+                double t = Double.isNaN(q) ? Double.POSITIVE_INFINITY : Math.max(0, q);
+                /* steps 6-7 */
+                // AgentCanSuspend()
+                /* step 8 */
+                SharedByteBuffer bufferVal = ((SharedArrayBufferObject) array.getBuffer()).getSharedData();
+                /* steps 9-10 */
+                int indexedPosition = toByteIndex(array, i);
+                /* steps 11-21 */
+                PromiseCapability<PromiseObject> promiseCapability = PromiseBuiltinCapability(cx);
+                Futex futex = cx.getRuntimeContext().getFutex();
+                switch (futex.waitAsync(bufferVal, indexedPosition, v, (long) t, TimeUnit.MILLISECONDS, (state, e) -> {
+                    switch (state) {
+                    case OK:
+                        promiseCapability.getResolve().call(cx, UNDEFINED, "ok");
+                        break;
+                    case Timedout:
+                        promiseCapability.getResolve().call(cx, UNDEFINED, "timed-out");
+                        break;
+                    case NotEqual:
+                    default:
+                        throw new AssertionError();
+                    }
+                })) {
+                case NotEqual:
+                    promiseCapability.getResolve().call(cx, UNDEFINED, "not-equal");
+                    break;
+                case OK:
+                    break;
+                case Timedout:
+                default:
+                    throw new AssertionError();
+                }
+                return promiseCapability.getPromise();
+            }
+
+            /* step 3 */
+            int v = ToInt32(cx, value);
+            /* steps 4-5 */
+            double q = ToNumber(cx, timeout);
+            double t = Double.isNaN(q) ? Double.POSITIVE_INFINITY : Math.max(0, q);
+            /* steps 6-7 */
+            // AgentCanSuspend()
+            /* step 8 */
+            SharedByteBuffer bufferVal = ((SharedArrayBufferObject) array.getBuffer()).getSharedData();
+            /* steps 9-10 */
+            int indexedPosition = toByteIndex(array, i);
+            /* steps 11-21 */
+            PromiseCapability<PromiseObject> promiseCapability = PromiseBuiltinCapability(cx);
+            Futex futex = cx.getRuntimeContext().getFutex();
+            switch (futex.waitAsync(bufferVal, indexedPosition, v, (long) t, TimeUnit.MILLISECONDS, (state, e) -> {
+                switch (state) {
+                case OK:
+                    promiseCapability.getResolve().call(cx, UNDEFINED, "ok");
+                    break;
+                case Timedout:
+                    promiseCapability.getResolve().call(cx, UNDEFINED, "timed-out");
+                    break;
+                case NotEqual:
+                default:
+                    throw new AssertionError();
+                }
+            })) {
+            case NotEqual:
+                promiseCapability.getResolve().call(cx, UNDEFINED, "not-equal");
+                break;
+            case OK:
+                break;
+            case Timedout:
+            default:
+                throw new AssertionError();
+            }
+            return promiseCapability.getPromise();
         }
     }
 }

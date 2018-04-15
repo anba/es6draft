@@ -21,7 +21,4 @@ Function("g`bla`")();
 Function("g`bla`")();
 
 assertSame(5, sites.length);
-assertSame(sites[0], sites[1]);
-assertSame(sites[0], sites[2]);
-assertSame(sites[0], sites[3]);
-assertSame(sites[0], sites[4]);
+assertSame(5, new Set(sites).size);
