@@ -21,6 +21,7 @@ import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.repl.functions.StopExecutionException;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
+import com.github.anba.es6draft.runtime.modules.ResolutionException;
 import com.github.anba.es6draft.util.TestAssertions;
 
 /**
@@ -42,12 +43,12 @@ public final class ExceptionHandlers {
     }
 
     /**
-     * {@link ExceptionHandler} for {@link ParserException}, {@link CompilationException} and {@link StackOverflowError}
-     * errors.
+     * {@link ExceptionHandler} for {@link ParserException}, {@link CompilationException}, {@link StackOverflowError}
+     * and {@link ResolutionException} errors.
      */
     public static final class StandardErrorHandler extends ExceptionHandler {
         private static final Matcher<Object> defaultMatcher = anyInstanceOf(ParserException.class,
-                CompilationException.class, StackOverflowError.class);
+                CompilationException.class, StackOverflowError.class, ResolutionException.class);
 
         public StandardErrorHandler() {
             this(defaultMatcher());
@@ -110,11 +111,12 @@ public final class ExceptionHandlers {
 
     /**
      * {@link ExceptionHandler} for {@link ParserException}, {@link CompilationException}, {@link StackOverflowError}
-     * and {@link ScriptException} errors.
+     * {@link ScriptException}, and {@link ResolutionException} errors.
      */
     public static final class IgnoreExceptionHandler extends ExceptionHandler {
         private static final Matcher<Object> defaultMatcher = anyInstanceOf(ParserException.class,
-                CompilationException.class, StackOverflowError.class, ScriptException.class);
+                CompilationException.class, StackOverflowError.class, ScriptException.class,
+                ResolutionException.class);
 
         public IgnoreExceptionHandler() {
             this(defaultMatcher());
