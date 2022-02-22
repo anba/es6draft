@@ -61,6 +61,7 @@
     <test.jvmArgs />
     <test.jacocoArgs />
     <test.excludes>**/chakra/*, **/mozilla/*, **/test262/*, **/v8/*, **/webkit/*</test.excludes>
+    <closeTestReports>true</closeTestReports>
   </properties>
 
   <dependencies>
@@ -209,6 +210,7 @@
                 <id>surefire-test</id>
                 <configuration>
                   <testFailureIgnore>true</testFailureIgnore>
+                  <disableXmlReport>${closeTestReports}</disableXmlReport>
                   <includes>
                     <include>**/chakra/*.java</include>
                     <include>**/mozilla/*.java</include>
